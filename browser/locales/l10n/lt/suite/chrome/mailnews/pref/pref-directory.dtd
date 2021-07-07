@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+
+<!ENTITY pref.ldap.window.title    "LDAP katalogų serveriai">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP katalogų serveris:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Pasirinkite katalogų serverį:">
+<!ENTITY directoriesText.accesskey "P">
+<!ENTITY addDirectory.label        "Pridėti…">
+<!ENTITY addDirectory.accesskey    "d">
+<!ENTITY editDirectory.label       "Taisyti…">
+<!ENTITY editDirectory.accesskey   "T">
+<!ENTITY deleteDirectory.label     "Pašalinti">
+<!ENTITY deleteDirectory.accesskey "š">

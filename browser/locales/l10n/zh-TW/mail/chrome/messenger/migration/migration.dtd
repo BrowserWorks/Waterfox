@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "匯入精靈">
+
+<!ENTITY importFromWin.label            "匯入選項、帳號設定、通訊錄、篩選器以及其它資料從：">
+<!ENTITY importFromNonWin.label         "匯入偏好設定、帳號設定、通訊錄、篩選條件以及其它資料從：">
+<!ENTITY importSourceNotFound.label     "沒有找到可匯入資料的應用程式。">
+
+<!ENTITY importFromNothing.label        "不要匯入任何東西">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 或更新版本">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "由下列來源匯入設定與郵件匣:">
+<!ENTITY importItems.title              "要匯入的項目">
+<!ENTITY importItems.label              "選取要匯入的項目:">
+
+<!ENTITY migrating.title                "匯入中…">
+<!ENTITY migrating.label                "正在匯入下列項目…">
+
+<!ENTITY selectProfile.title            "選取設定檔">
+<!ENTITY selectProfile.label            "可匯入下列設定檔的內容:">
+
+<!ENTITY done.title                     "匯入完成">
+<!ENTITY done.label                     "成功匯入下列項目:">

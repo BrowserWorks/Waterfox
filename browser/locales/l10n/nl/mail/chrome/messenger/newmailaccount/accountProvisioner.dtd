@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Welkom bij &brandShortName;">
+<!ENTITY header2.label "Wilt u een nieuw e-mailadres?">
+<!ENTITY other.languages "Er worden alleen providers met adressen uit uw regio weergegeven. Klik hier om alle providers te tonen.">
+<!ENTITY error.line1 "Sorry, we kunnen geen voorgestelde e-mailadressen vinden.">
+<!ENTITY error.line2 "U kunt op bijnamen of andere termen zoeken om meer e-mailadressen te vinden.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "U kunt ook een van de ">
+<!ENTITY error.suggest.middle "gratis e-mailaccount-alternatieven">
+<!ENTITY error.suggest.after " proberen.">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hallo ">
+<!ENTITY success.title.after ", de volgende e-mailadressen zijn voor u beschikbaar:">
+<!ENTITY success.tip "(U kunt ook zoeken op bijnamen of andere termen om meer e-mailadressen te vinden)">
+<!ENTITY partnership.description "In samenwerking met een aantal providers kan &brandShortName; u een nieuwe e-mailaccount aanbieden. Vul in de bovenstaande velden uw voor- en achternaam of andere woorden die u bevallen in om te beginnen.">
+<!ENTITY existing.header "Hebt u al een adres dat u wilt gebruiken?">
+<!ENTITY tinyheader.title "Al een adres?">
+<!ENTITY tinyheader.existing "Dit overslaan en mijn bestaande e-mailadres gebruiken">
+<!ENTITY content.close "Ik denk dat ik mijn account later configureer.">
+<!ENTITY successful.title "Gefeliciteerd!">
+<!ENTITY successful.successMessage "U hebt uw account met succes ingesteld.">
+<!ENTITY successful.write "Een e-mail schrijven">
+<!ENTITY successful.write.desc "Laat uw vrienden en familie uw nieuwe adres weten.<br/> Daarom hebt u deze nieuwe account, nietwaar?">
+<!ENTITY successful.customize "&brandShortName; aanpassen met een aantal leuke add-ons">
+<!ENTITY successful.customize.desc "Er zijn duizenden add-ons die u kunt gebruiken om &brandShortName; naar wens aan te passen.">
+<!ENTITY successful.attach "Een persoonlijke ondertekening aan mijn e-mailadres koppelen">
+<!ENTITY successful.attach.desc "U kunt automatisch een citaat of bepaalde informatie over uzelf koppelen aan het einde van elk e-mailbericht dat u verstuurt.">
+<!ENTITY successful.close "Dit venster sluiten">
+<!ENTITY input.namePlaceholder "Uw naam of bijnaam">
+<!ENTITY input.search "Zoeken">
+<!ENTITY search_engine.title "Uw zoekmachine aanpassen">
+<!ENTITY search_engine.message "Uw e-mailprovider kan ook webzoekmogelijkheden aanbieden.">
+<!ENTITY search_engine.button "Voltooien">

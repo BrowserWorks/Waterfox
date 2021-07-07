@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "隱私權與安全性">
+
+<!ENTITY tracking.label                   "使用者追蹤">
+<!ENTITY trackingIntro.label              "某些網站可能會追蹤您的使用方式，這可能會影響您的隱私權。">
+
+<!ENTITY doNotTrack.label                 "告訴網站我不想被追蹤">
+<!ENTITY doNotTrack.accesskey             "T">
+<!ENTITY trackProtect.label               "防止已知網站的追蹤行為">
+<!ENTITY trackProtect.accesskey           "n">
+<!ENTITY warnTrackContent.label           "偵測到追蹤行為時警告我">
+<!ENTITY warnTrackContent.accesskey       "W">
+
+<!ENTITY geoLocation.label                "位置感知瀏覽">
+<!ENTITY geoIntro.label                   "網站可能會向您請求所在位置的準確資訊。">
+
+<!ENTITY geoEnabled.label                 "收到請求時向我確認">
+<!ENTITY geoEnabled.accesskey             "m">
+<!ENTITY geoDisabled.label                "停用此功能並拒絕所有請求">
+<!ENTITY geoDisabled.accesskey            "D">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "安全瀏覽">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; 可以封鎖被回報包含了有害內容的網站">
+
+<!ENTITY blockAttackSites.label           "封鎖被回報有攻擊內容 (病毒、惡意程式) 的網站">
+<!ENTITY blockAttackSites.accesskey       "B">
+
+<!ENTITY blockWebForgeries.label          "封鎖被回報有詐騙內容 (釣魚) 的網站">
+<!ENTITY blockWebForgeries.accesskey      "P">

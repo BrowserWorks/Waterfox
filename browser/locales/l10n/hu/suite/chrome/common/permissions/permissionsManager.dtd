@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Engedélyezett webhelyek">
+<!ENTITY treehead.sitename.label        "Webhely">
+<!ENTITY treehead.status.label          "Állapot">
+<!ENTITY remove.label                   "Eltávolítás">
+<!ENTITY remove.accesskey               "t">
+<!ENTITY removeall.label                "Minden webhely eltávolítása">
+<!ENTITY removeall.accesskey            "l">
+<!ENTITY address.label                  "Webhely:">
+<!ENTITY address.accesskey              "W">
+<!ENTITY block.label                    "Tiltás">
+<!ENTITY block.accesskey                "T">
+<!ENTITY session.label                  "Engedélyezés a munkamenetben">
+<!ENTITY session.accesskey              "m">
+<!ENTITY allow.label                    "Engedélyezés">
+<!ENTITY allow.accesskey                "E">

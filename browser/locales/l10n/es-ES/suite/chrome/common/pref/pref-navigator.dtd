@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title "Navegador">
+<!ENTITY navRadio.label "Mostrar en">
+<!ENTITY navRadio.accesskey "o">
+<!ENTITY navStartPageMenu.label "Inicio del navegador">
+<!ENTITY newWinPageMenu.label "Ventana nueva">
+<!ENTITY newTabPageMenu.label "Pestaña nueva">
+<!ENTITY blankPageRadio.label "Página en blanco">
+<!ENTITY blankPageRadio.accesskey "B">
+<!ENTITY homePageRadio.label "Página de inicio">
+<!ENTITY homePageRadio.accesskey "n">
+<!ENTITY lastPageRadio.label "Última página visitada">
+<!ENTITY lastPageRadio.accesskey "L">
+<!ENTITY restoreSessionRadio.label "Restaurar sesión anterior">
+<!ENTITY restoreSessionRadio.accesskey "e">
+<!ENTITY restoreSessionIntro.label "Al restaurar sesiones y ventanas">
+<!ENTITY restoreImmediately.label "Restaurar todas las pestañas inmediatamente">
+<!ENTITY restoreImmediately.accesskey "a">
+<!ENTITY restoreTabs.label "Restaurar">
+<!ENTITY restoreTabs.accesskey "s">
+<!ENTITY restoreTabsAtATime.label "pestaña(s) a la vez">
+<!ENTITY restoreDeferred.label "Restaurar pestañas sólo cuando las necesite">
+<!ENTITY restoreDeferred.accesskey "i">
+<!ENTITY homePageIntro.label "Pulsar el botón Inicio le lleva a este grupo de páginas:">
+<!ENTITY useCurrent.label "Usar página actual">
+<!ENTITY useCurrent.accesskey "U">
+<!ENTITY useCurrentGroup.label "Usar grupo actual">
+<!ENTITY useCurrentGroup.accesskey "G">
+<!ENTITY browseFile.label "Elegir archivo…">
+<!ENTITY browseFile.accesskey "C">
+<!ENTITY useDefault.label "Rest. valores predet.">
+<!ENTITY useDefault.accesskey "R">
+<!ENTITY defaultBrowserGroup.label "Navegador predeterminado">
+<!ENTITY defaultBrowserButton.label "Establecer navegador predeterminado">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText "&brandShortName; ya es su navegador predeterminado.">
+<!ENTITY defaultPendingText "&brandShortName; se convertirá en su navegador predeterminado cuando pulse Aceptar.">
+<!ENTITY wasMadeDefaultText "&brandShortName; se ha establecido como su navegador predeterminado.">
+<!ENTITY makeDefaultText "Establecer &brandShortName; como su navegador predeterminado.">

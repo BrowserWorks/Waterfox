@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Richiesta posta HTML">
+<!ENTITY recipient.label "Alcuni dei destinatari in rubrica non sono indicati come in grado di ricevere posta HTML.">
+<!ENTITY question.label "Convertire il messaggio in testo semplice o inviarlo ugualmente in HTML?">
+<!ENTITY plainTextAndHtml.label "Invia in testo semplice e HTML">
+<!ENTITY plainTextAndHtml.accesskey "s">
+<!ENTITY plainTextOnly.label "Invia solo in testo semplice">
+<!ENTITY plainTextOnly.accesskey "m">
+<!ENTITY htmlOnly.label "Invia solo in HTML">
+<!ENTITY htmlOnly.accesskey "H">
+<!ENTITY send.label "Invia">
+<!ENTITY send.accesskey "I">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Sobre o anti-spam">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "O &brandShortName; pode identificar, assim que forem recebidas, mensagens que podem ser spam. Mensagens que o &brandShortName; considerar indesejadas exibirão um ícone no campo “Spam”.">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Inicialmente, você deve dizer ao &brandShortName; que uma mensagem é (ou não é) um spam através do botão da barra de ferramentas.">
+<!ENTITY info3.label   "Quando o &brandShortName; estiver detectando spans corretamente, você pode ativar a opção de movê-los para a pasta Spam assim que forem recebidos.">
+<!ENTITY info4.label   "Para mais informações, clique em Ajuda.">

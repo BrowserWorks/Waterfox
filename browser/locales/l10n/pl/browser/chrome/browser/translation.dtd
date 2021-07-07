@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY translation.thisPageIsIn.label "Język strony:">
+<!ENTITY translation.translateThisPage.label "Przetłumaczyć tę stronę?">
+<!ENTITY translation.translate.button "Przetłumacz">
+<!ENTITY translation.notNow.button "Nie teraz">
+
+<!ENTITY translation.translatingContent.label "Tłumaczenie strony…">
+
+<!ENTITY translation.translatedFrom.label "Oryginalny język strony:">
+<!ENTITY translation.translatedTo.label "Obecny język strony:">
+<!ENTITY translation.translatedToSuffix.label "">
+
+<!ENTITY translation.showOriginal.button "Wyświetl w oryginale">
+<!ENTITY translation.showTranslation.button "Wyświetl przetłumaczoną wersję">
+
+<!ENTITY translation.errorTranslating.label "Wystąpił błąd podczas tłumaczenia tej strony.">
+<!ENTITY translation.tryAgain.button "Spróbuj ponownie">
+
+<!ENTITY translation.serviceUnavailable.label "Serwis tłumaczeń jest obecnie niedostępny. Proszę spróbować później.">
+
+<!ENTITY translation.options.menu "Ustawienia">
+<!ENTITY translation.options.neverForSite.label "Nigdy nie tłumacz tej strony">
+<!ENTITY translation.options.neverForSite.accesskey "s">
+<!ENTITY translation.options.preferences.label "Preferencje tłumaczenia">
+<!ENTITY translation.options.preferences.accesskey "P">
+

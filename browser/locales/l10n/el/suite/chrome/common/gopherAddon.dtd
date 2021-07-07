@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "Σφάλμα φόρτωσης σελίδας">
+<!ENTITY gopherAddon.title      "Πρωτόκολλο Gopher">
+<!ENTITY gopherAddon.shortDesc  "Το gopher δεν είναι καταχωρημένο πρωτόκολλο.">
+<!ENTITY gopherAddon.longDesc   "Αυτή η διεύθυνση καθορίζει το πρωτόκολλο gopher που δεν υποστηρίζεται πλέον, επομένως το πρόγραμμα περιήγησης δεν μπορεί να συνδεθεί στην ιστοσελίδα. Μπορείτε να λάβετε ένα συμβατό πρόσθετο για πρόσβαση σε αυτό τον διακομιστή από τα Πρόσθετα Mozilla.">
+<!ENTITY goToAddOn.label        "Μεταβείτε στη σελίδα προσθέτων">

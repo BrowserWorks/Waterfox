@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "新增即時搜尋資料夾">
+<!ENTITY name.label                    "名稱:">
+<!ENTITY name.accesskey                "N">
+<!ENTITY description.label             "在下列位置建立子資料夾:">
+<!ENTITY description.accesskey         "C">
+
+<!ENTITY searchTermCaption.label       "設定此即時搜尋資料夾的搜尋方式:">
+
+<!ENTITY folderSelectionCaption.label  "選取要搜尋的資料夾:">
+<!ENTITY chooseFoldersButton.label     "選擇…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label            "線上即時搜尋（可取得 IMAP 與新聞群組中最新的內容，不過開啟資料夾時會比較慢）">
+<!ENTITY searchOnline.accesskey        "S">
+<!ENTITY newFolderButton.label         "建立">
+<!ENTITY newFolderButton.accesskey     "r">
+<!ENTITY editFolderButton.label        "更新">
+<!ENTITY editFolderButton.accesskey    "U">
+

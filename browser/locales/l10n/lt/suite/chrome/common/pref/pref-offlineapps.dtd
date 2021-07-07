@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+
+<!ENTITY pref.offlineapps.title             "Duomenys darbui neprisijungus">
+<!ENTITY pref.offlineCache.caption          "Duomenys darbui neprisijungus">
+
+<!ENTITY clearOfflineAppCache.label         "Išvalyti">
+<!ENTITY clearOfflineAppCache.accesskey     "v">
+
+<!ENTITY offlineAlwaysAllow.label           "Leisti visoms svetainėms kompiuteryje saugoti duomenis darbui neprisijungus">
+<!ENTITY offlineAlwaysAllow.accesskey       "L">
+<!ENTITY offlineExplicit.label              "Kiekvienai svetainei prašyti atskiro leidimo">
+<!ENTITY offlineExplicit.accesskey          "K">
+<!ENTITY offlineNotifyAsk.label             "Įspėti, kai svetainės bando įrašyti duomenis darbui neprisijungus">
+<!ENTITY offlineNotifyAsk.accesskey         "s">
+<!ENTITY offlineNotifyPermissions.label     "Tvarkyti leidimus">
+<!ENTITY offlineNotifyPermissions.accesskey "T">
+
+<!ENTITY offlineAppsUsage.label             "Šioms svetainėms leidžiama išsaugoti darbui neprisijungus reikalingų duomenų:">
+<!ENTITY offlineAppsListRemove.label        "Išvalyti duomenis…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

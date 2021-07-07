@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importar libreta de direcciones">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Datos importados para el registro: ">
+<!ENTITY fieldMapImport.next.label "Siguiente">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Anterior">
+<!ENTITY fieldMapImport.previous.accesskey "A">
+<!ENTITY fieldMapImport.text "Use Subir y Bajar para elegir el orden de los campos de la libreta de direcciones de la izquierda para importar en la parte derecha. Desmarque los elementos que no quiera importar.">
+<!ENTITY fieldMapImport.up.label "Subir">
+<!ENTITY fieldMapImport.up.accesskey "S">
+<!ENTITY fieldMapImport.down.label "Bajar">
+<!ENTITY fieldMapImport.down.accesskey "B">
+<!ENTITY fieldMapImport.fieldListTitle "Campos de la libreta de direcciones">
+<!ENTITY fieldMapImport.dataTitle "Registros de datos a importar:">
+<!ENTITY fieldMapImport.skipFirstRecord.label "El primer registro contiene nombres de campo">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "r">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "คำถามจดหมาย HTML">
+
+<!ENTITY recipient.label "ผู้รับบางคนไม่ได้อยู่ในรายชื่อที่สามารถรับจดหมาย HTML ได้">
+
+<!ENTITY question.label "คุณต้องการแปลงข้อความเป็นข้อความธรรมดาหรือส่งเป็น HTML ต่อไป?">
+
+<!ENTITY plainTextAndHtml.label "ส่งเป็นข้อความธรรมดาและ HTML">
+<!ENTITY plainTextAndHtml.accesskey "ล">
+<!ENTITY plainTextOnly.label "ส่งเป็นข้อความธรรมดาเท่านั้น">
+<!ENTITY plainTextOnly.accesskey "ข">
+<!ENTITY htmlOnly.label "ส่งเป็น HTML เท่านั้น">
+<!ENTITY htmlOnly.accesskey "ป">
+
+<!ENTITY send.label "ส่ง">
+<!ENTITY send.accesskey "ส">

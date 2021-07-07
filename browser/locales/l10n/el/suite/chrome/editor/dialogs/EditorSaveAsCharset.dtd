@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are generic to all or most of the editor's dialogs. -->
+
+<!-- This button is for the progressive disclosure of additional editing functionality -->
+
+<!-- These strings are for use specifically in the editor's link dialog. -->
+<!ENTITY windowTitle2.label "Αποθήκευση και αλλαγή κωδικοποίησης κειμένου">
+<!ENTITY documentTitleTitle.label "Τίτλος σελίδας">
+<!ENTITY documentCharsetTitle2.label "Κωδικοποίηση κειμένου">
+<!ENTITY documentCharsetDesc2.label "Επιλέξτε την κωδικοποίηση κειμένου που θέλετε να αποθηκεύσετε το έγγραφο:">
+<!ENTITY documentExportToText.label "Εξαγωγή σε κείμενο">
+
+
+

@@ -1,0 +1,39 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Modificare questo file e copiarlo come userContent.css nel proprio
+ * profilo-directory/chrome/
+ */
+
+/*
+ * Questo file può essere utile per applicare uno stile a tutte le pagine visualizzate.
+ * Le regole senza !important vengono sovrascritte dalle impostazioni
+ * dell'autore, se esistenti.  Le regole con !important sovrascrivono quelle dell'autore.
+ */
+
+/*
+ * esempio: disattivare il lampeggio dell'elemento "blink"
+ *
+ * blink { text-decoration: none ! important; }
+ *
+ */
+
+/*
+ * esempio:  imposta un bordo di 2px a tutte le tabelle
+ *
+ * table { border: 2px solid; }
+ */
+
+/*
+ * esempio: disattiva l'elemento  "marquee"
+ *
+ * marquee { -moz-binding: none; }
+ *
+ */
+ 
+/* 
+ * Per altri esempi consultare http://www.mozilla.org/unix/customizing.html
+ */
+

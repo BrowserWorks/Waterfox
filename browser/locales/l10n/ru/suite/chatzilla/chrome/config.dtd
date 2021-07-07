@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Настройки ChatZilla">
+<!ENTITY loading.label "Загружается. Пожалуйста, подождите… ">
+<!ENTITY homepage.url "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "Домашняя страница ChatZilla">
+<!ENTITY object.add.label "Добавить…">
+<!ENTITY object.add.hint "Добавить новую сеть, канал или пользователя для установления настроек">
+<!ENTITY object.add.accesskey "Д">
+<!ENTITY object.del.label "Удалить">
+<!ENTITY object.del.hint "Удалить текущий объект и все его настройки">
+<!ENTITY object.del.accesskey "У">
+<!ENTITY object.reset.label "Сброс">
+<!ENTITY object.reset.hint "Установить настройки объекта по умолчанию">
+<!ENTITY object.reset.accesskey "С">
+<!ENTITY dialog.apply "Применить">
+<!ENTITY network "Сеть">
+<!ENTITY channel "Канал">
+<!ENTITY user "Пользователь">
+<!ENTITY config.add.title "Добавить объект настройки">
+<!ENTITY config.type.label "Тип:">
+<!ENTITY config.type.hint "Тип объекта для которого добавляются настройки">
+<!ENTITY config.type.accesskey "Т">
+<!ENTITY config.network.label "Сеть:">
+<!ENTITY config.network.hint "Известное имя сети или сервера ">
+<!ENTITY config.network.accesskey "С">
+<!ENTITY config.target.label "Цель:">
+<!ENTITY config.target.hint "Имя канала или пользователя">
+<!ENTITY config.target.accesskey "Ц">

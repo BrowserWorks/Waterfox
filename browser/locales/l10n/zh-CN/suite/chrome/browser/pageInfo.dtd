@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "复制">
+<!ENTITY  copy.accesskey         "C">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "选择全部">
+<!ENTITY  selectall.accesskey    "A">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "复制链接(s)">
+<!ENTITY  copyLinks.accesskey       "L">
+<!ENTITY  openInNewTab.label        "在新标签页中打开">
+<!ENTITY  openInNewTab.accesskey    "T">
+<!ENTITY  openInNewWindow.label     "新窗口中打开">
+<!ENTITY  openInNewWindow.accesskey "W">
+
+<!ENTITY  generalTab            "综述">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "标题：">
+<!ENTITY  generalURL            "地址：">
+<!ENTITY  generalType           "类型：">
+<!ENTITY  generalMode           "渲染模式：">
+<!ENTITY  generalSize           "大小:">
+<!ENTITY  generalReferrer       "来源网址：">
+<!ENTITY  generalSource         "来源：">
+<!ENTITY  generalModified       "修改时间：">
+<!ENTITY  generalEncoding2      "文字编码：">
+<!ENTITY  generalMetaName       "类别">
+<!ENTITY  generalMetaContent    "内容">
+<!ENTITY  generalSecurityDetails           "细节">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "窗体">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "窗体行为">
+<!ENTITY  formMethod            "方法">
+<!ENTITY  formName              "类别">
+<!ENTITY  formEncoding          "编码:">
+<!ENTITY  formTarget            "目标:">
+<!ENTITY  formFields            "字段:">
+<!ENTITY  formLabel             "标签">
+<!ENTITY  formFName             "字段名">
+<!ENTITY  formType              "类型">
+<!ENTITY  formCValue            "当前值">
+
+<!ENTITY  linksTab              "链接">
+<!ENTITY  linksTab.accesskey    "L">
+<!ENTITY  linkName              "类别">
+<!ENTITY  linkAddress           "地址">
+<!ENTITY  linkType              "类型">
+<!ENTITY  linkTarget            "目标">
+<!ENTITY  linkAccessKey         "访问键">
+
+<!ENTITY  mediaTab              "媒体">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "地址：">
+<!ENTITY  mediaAlt              "变换文本:">
+<!ENTITY  mediaLocation         "位置：">
+<!ENTITY  mediaText             "候补文本：">
+<!ENTITY  mediaAltHeader        "备用文字">
+<!ENTITY  mediaAddress          "地址">
+<!ENTITY  mediaType             "类型">
+<!ENTITY  mediaSize             "大小">
+<!ENTITY  mediaCount            "数量">
+<!ENTITY  mediaDimensions       "指定尺寸:">
+<!ENTITY  mediaPhysDimensions   "实际尺寸:">
+<!ENTITY  mediaTitle            "标题:">
+<!ENTITY  mediaDimension        "尺寸：">
+<!ENTITY  mediaLongdesc         "详细描述：">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "另存为…">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "媒体预览：">
+
+<!ENTITY  feedTab               "收取点">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "订阅">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "权限">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permUseDefault        "使用默认设置">
+<!ENTITY  permAskAlways         "每次都问我">
+<!ENTITY  permAllow             "是">
+<!ENTITY  permAllowSession      "在当前会话中允许">
+<!ENTITY  permBlock             "阻止">
+<!ENTITY  permissionsFor        "权限，对于:">
+<!ENTITY  permImage             "载入图像">
+<!ENTITY  permPopup             "打开弹出窗口">
+<!ENTITY  permCookie            "设置 Cookie">
+<!ENTITY  permNotifications     "显示通知">
+<!ENTITY  permInstall           "安装扩展或主题">
+<!ENTITY  permGeo               "共享位置信息">
+
+<!ENTITY  securityTab           "安全">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityHeader        "此页的安全信息">
+<!ENTITY  securityView.certView "查看证书">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "未知">
+
+
+<!ENTITY  securityView.identity.header   "网站身份">
+<!ENTITY  securityView.identity.owner    "Owner: ">
+<!ENTITY  securityView.identity.domain   "Web site: ">
+<!ENTITY  securityView.identity.verifier "Verified by: ">
+
+<!ENTITY  securityView.identity.validity "过期时间：">
+
+<!ENTITY  securityView.privacy.header                   "隐私和历史记录">
+<!ENTITY  securityView.privacy.history                  "在今天之前我访问过这个网站吗?">
+<!ENTITY  securityView.privacy.cookies                  "此网站在我的计算机上存储了 Cookie 信息吗？ ">
+<!ENTITY  securityView.privacy.viewCookies              "查看 Cookie">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "我保存过该网站的任何密码吗？ ">
+<!ENTITY  securityView.privacy.viewPasswords            "查看已保存密码">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "技术细节">

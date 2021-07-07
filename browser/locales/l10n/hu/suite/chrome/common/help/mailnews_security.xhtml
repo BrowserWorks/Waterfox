@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Üzenetek aláírása és titkosítása</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="signing_and_encrypting_messages">Üzenetek aláírása és titkosítása</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#about_digital_signatures_and_encryption">Digitális aláírások és titkosítás – Áttekintés</a></li>
+    <li><a href="#getting_other_peoples_certificates">Mások tanúsítványának beszerzése</a></li>
+    <li><a href="#configuring_security_settings">Biztonsági beállítások megadása</a></li>
+    <li><a href="#signing_and_encrypting_a_new_message">Új üzenet aláírása és titkosítása</a></li>
+    <li><a href="#reading_signed_and_encrypted_messages">Aláírt és titkosított üzenetek olvasása</a></li>
+    <li><a href="#message_security_compose_window">Üzenetek biztonsága – Új üzenet ablak</a></li>
+    <li><a href="#message_security_recieved_message">Üzenetek biztonsága – Beérkezett üzenetek</a></li>
+  </ul>
+</div>
+
+<h2 id="about_digital_signatures_and_encryption">Digitális aláírások és titkosítás – áttekintés </h2>
+
+<p>Levél írásakor eldönthetjük, hogy kívánunk-e digitális aláírást mellékelni. A <a href="glossary.xhtml#digital_signature">digitális aláírás</a> segítségével a címzettek ellenőrizhetik, hogy a levél valóban tőlünk érkezett-e, és elküldése óta nem változtatták-e meg.</p>
+
+<p>Emellett a levél titkosítását is választhatjuk.
+  <a href="glossary.xhtml#encryption">titkosítás</a> szinte lehetetlenné teszi, hogy a címzetteken kívül más is elolvassa az üzenetet, amíg áthalad az interneten.</p>
+
+<p>Az aláírás és a titkosítás a hírcsoportüzeneteknél nem áll rendelkezésre.</p>
+
+<p>A levél aláírása és titkosítása előtt a következő lépéseket kell végrehajtani:</p>
+
+<ol>
+  <li>Be kell szerezni egy vagy több <a href="glossary.xhtml#certificate">tanúsítványt</a>
+    (ez a személyazonosító igazolvány digitális megfelelője). További tudnivalók:
+    <a href="using_certs_help.xhtml#getting_your_own_certificate">Saját tanúsítvány beszerzése</a>.</li>
+  <li>Meg kell adni a levelezési postafiók biztonsági beállításait. További tudnivalók
+    <a href="mail_help.xhtml#security">Biztonsági beállítások megadása</a>.
+  </li>
+</ol>
+
+<p>A fenti lépések teljesítése után következhet az
+  <a href="#signing_and_encrypting_a_new_message">Új üzenet aláírása és titkosítása</a> témakör utasításainak végrehajtása.</p>
+
+<p>Az itt következő részek rövid áttekintést nyújtanak a digitális aláírás és a titkosítás működéséről. A témakör részletes műszaki ismertetése a következő online dokumentumban olvasható
+  <a href="http://developer.mozilla.org/en/docs/Introduction_to_Public-Key_Cryptography">Introduction
+  to Public-Key Cryptography</a>.</p>
+
+<h3 id="how_digital_signatures_work">A digitális aláírás működése</h3>
+
+<p>A digitális aláírás minden üzenetnél egyedi, a <a href="glossary.xhtml#public-key_cryptography">nyilvános kulcsú titkosítással</a> előállított különleges kód.</p>
+
+<p>Habár a digitális aláírásnak semmi köze nincs a hagyományos kézi aláíráshoz, jogi értelemben sokszor hasonlónak tekintendő.</p>
+
+<p>Elküldendő elektronikus levélüzenet digitális aláírásának létrehozásához két dolog szükséges:</p>
+
+<ul>
+  <li>Egy <a href="glossary.xhtml#signing_certificate">aláíró tanúsítvány</a>
+    amely az erre a célra szolgáló azonosítást hajtja végre. Valahányszor aláírunk egy üzenetet, ez az aláíró tanúsítvány is bekerül a levélbe. A tanúsítvány egy <a href="glossary.xhtml#public_key">nyilvános kulcsot</a> tartalmaz. Az üzenetben lévő tanúsítvány segítségével tudja ellenőrizni a címzett digitális aláírásunkat.
+
+    <p>A tanúsítvány a telefonkönyvben megjelenő névhez és telefonszámhoz hasonlítható: ezek olyan nyilvános adatok, amelyek segítségével mások kapcsolatba léphetnek velünk.</p>
+  </li>
+  <li>Egy <a href="glossary.xhtml#private_key">személyes kulcs</a>, amely a tanúsítvány első beszerzésekor készül, és a saját számítógépen tárolódik.
+
+    <p>Az aláíró tanúsítványhoz tartozó személyes kulcsot a saját
+      <a href="glossary.xhtml#master_password">mesterjelszó</a>, védi, és a
+      &brandShortName; program senki másnak sem fedi fel. A Levelező és hírolvasó szoftver ezt a személyes kulcsot használja egyedi, ellenőrizhető digitális aláírás létrehozásához az egyes aláírni kívánt üzenetekhez.</p>
+  </li>
+</ul>
+
+<h3 id="how_encryption_works">A titkosítás működése</h3>
+
+<p>Elektronikus levélüzenet titkosításához az összes címzetthez
+  <a href="glossary.xhtml#encryption_certificate">titkosító tanúsítvány</a>
+  szükséges. Az egyes tanúsítványok nyilvános kulcsát használja a rendszer az üzenet titkosításához az adott címzett számára.</p>
+
+<p>Ha akár csak egy címzett tanúsítványa is hiányzik, az üzenet nem titkosítható.</p>
+
+<p>Az üzenet visszafejtéséhez a címzett szoftvere az adott számítógépen található személyes kulcsot használja.</p>
+  
+<p>[<a href="#signing_and_encrypting_messages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="getting_other_peoples_certificates">Mások tanúsítványának beszerzése</h2>
+
+<p>Valahányszor digitálisan aláírt üzenetet küldünk, saját titkosító tanúsítványunk automatikusan bekerül az üzenetbe. Ezért mások tanúsítványa az egyik legegyszerűbb módon úgy szerezhető be, hogy megkérjük egy digitálisan aláírt üzenet küldésére.</p>
+
+<p>Amikor ilyen üzenetet kapunk, a böngésző részét képező és a tanúsítványok nyomon követésével foglalkozó <a href="certs_help.xhtml">Tanúsítványkezelő</a> automatikusan tárolja az adott személy tanúsítványát. Ez hasznos, hiszen a titkosított formában elküldeni kívánt levelek valamennyi címzettjének tanúsítványa szükséges a művelethez.</p>
+
+<p>A tanúsítványok beszerzésének másik módja, hogy megkeressük ezeket egy nyilvános címtárban – számos vállalat fenntart ilyen  <q>„telefonkönyvet”</q>.</p>
+
+<p>A tanúsítványok automatikusan is lekérhetők.  Ezt a szolgáltatást a
+  is controlled by <a href="mail_help.xhtml#addressing_preferences">Levelező és hírolvasó beállításai - Címjegyzék</a> vagy a 
+  <a href="mail_help.xhtml#addressing">Postafiók beállításai -
+  Címzés</a>, kezeli, amely beállítható a címzettek címtárakban lévő e-mail címeinek automatikus kikeresésére.</p>
+
+<p>Ha a címek kikeresésére beállított postafiókot használunk, ugyanabban a címtárban fogja keresni a rendszer a megfelelő tanúsítványokat, ha titkosított üzenet küldésénél egy vagy több címzett tanúsítványa nem áll rendelkezésre.</p>
+
+<p>Ugyancsak ebben keresi a rendszer a hiányzó tanúsítványokat, ha az Új üzenet ablakban lenyitjuk a Biztonság ikon menüjét, és a Biztonsági adatok megtekintése parancsot választjuk.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="configuring_security_settings">Biztonsági beállítások megadása</h2>
+
+<p>OnAz e-mail tanúsítvány (vagy tanúsítványok) beszerzése után meg kell adni az üzenetek aláírásához és titkosításához használni kívánt tanúsítványokat.</p> 
+
+<p>Az e-mail tanúsítványok eléréséről lásd
+  <a href="using_certs_help.xhtml#getting_your_own_certificate">Saját tanúsítvány beszerzése</a>.</p>
+
+<p>Az adott fióknál használni kívánt aláíró és titkosító tanúsítvány megadásához induljunk ki a Levelező ablakából:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát.</li>
+  <li>Kattintsunk a Biztonság kategóriára annak a postafióknak a neve alatt, amelynek biztonsági beállításait meg szeretnénk adni.</li>
+  <li>Digitális aláírás csoportban kattintsunk a Kiválasztás gombra. (A továbblépéshez szükség lehet a
+    <a href="glossary.xhtml#master_password">mesterjelszó</a> megadására.)
+
+    <p>A megjelenő párbeszédpanelen választhatunk a rendelkezésre álló aláíró tanúsítványok közül.</p>
+  </li>
+  <li>Jelöljük ki a használni kívánt tanúsítványt, majd kattintsunk az OK gombra.</li>
+  <li>Hajtsuk végre ugyanezeket a lépéseket a Titkosítás csoportban: kattintsunk a Kiválasztás gombra, jelöljük ki a kívánt titkosító tanúsítványt, és kattintsunk az OK gombra.</li>
+
+  <p>Bizonyos esetekben ugyanaz a tanúsítvány adható meg a titkosításhoz és a digitális aláíráshoz, erről a lehetőségről a rendszergazdát kell megkérdezni.</p>
+</ol>
+
+<p>Azt is megadható, hogy az adott postafiókról az összes üzenetet digitális aláírással és titkosítással szeretnénk-e elküldeni. Ezek a postafiókra vonatkozó beállítások csak a kényelmet szolgálják, az alapértelmezett beállítások az egyes üzeneteknél felülbírálhatók.</p>
+
+<p>Az alapértelmezett aláírási és titkosítási beállítások a postafiók fent említett Biztonság párbeszédpanelén adhatók meg:</p>
+
+<ul>
+  <li>Digitális aláírás csoport:
+    <ul>
+      <li><strong>Üzenetek digitális aláírása</strong>: ha bejelöljük a négyzetet, az erről a postafiókról küldött valamennyi üzenetre digitális aláírás kerül, de ez az üzenet elküldése előtt megváltoztatható. Az alapértelmezett beállítás kikapcsolásához töröljük a négyzet jelölését.</li>
+    </ul>
+  </li>
+  <li>Titkosítás csoport (egy beállítás választható):
+    <ul>
+      <li><strong>Soha</strong>: a beállítás választásakor az erről a postafiókról küldött üzenetek nem lesznek titkosítva, de ez az üzenet elküldése előtt megváltoztatható.</li>
+      <li><strong>Mindig</strong>: a beállítás választásakor az erről a postafiókról küldött valamennyi üzenet titkosítva lesz, de csak akkor, ha rendelkezünk az üzenet összes címzettjének érvényes tanúsítványával. Ha ez nem áll fenn, az üzenetet mindaddig nem tudjuk elküldeni, míg ki nem kapcsoljuk a titkosítást az adott üzenetnél.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>A biztonsági beállítások megadása után érvénybe léptetésükhöz kattintsunk az OK gombra.</p>
+ 
+<p>[<a href="#signing_and_encrypting_messages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="signing_and_encrypting_a_new_message">Új üzenet aláírása és titkosítása</h2>
+
+<p>Az üzenetek digitális aláírása és titkosítása csak akkor hajtható végre, ha beszereztünk legalább egy e-mail tanúsítványt, és megfelelően megadtuk a levelezés biztonsági beállításait. A feladatok ismertetését lásd
+  <a href="#about_digital_signatures_and_encryption">Digitális aláírások és titkosítás
+  - áttekintés</a>.</p>
+
+<p>A <a href="mail_help.xhtml#security">Postafiókok beállításai - Biztonság</a> lapon megadott beállítások lesznek érvényesek minden újonnan megnyitott Új üzenet ablakban, amikor elektronikus levelet írunk.</p>
+
+<p>Az Új üzenet ablak megnyitásához a Levelező ablakban kattintsunk az Új üzenet gombra. Az ablak jobb alsó sarkában a következő ikonok megléte vagy hiánya azonnal jelzi a biztonsági alapbeállításokat:</p>
+
+<table>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif"
+      alt="digital signature icon"/></td><td>Az üzenetre digitális aláírás kerül (feltéve, hogy rendelkezünk az azonosításunkra szolgáló érvényes e-mail tanúsítvánnyal).</td>
+  </tr>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif"
+      alt="encryption icon"/></td><td>Az üzenet titkosítva lesz (feltéve, hogy rendelkezünk az összes címzetthez tartozó érvényes tanúsítvánnyal).</td>
+  </tr>
+</table>
+
+<p>Ezek a beállítások ki- vagy bekapcsolhatók: ehhez kattintsunk a Levelező eszköztáron a Biztonság ikon alatti nyílra, majd a lenyíló listán válasszuk ki a kívánt beállítást:</p>
+
+<ul>
+  <li><strong>Ne titkosítsa ezt az üzenetet</strong>: választásával kikapcsoljuk az üzenet titkosítását. Az üzenet titkosítása elmarad, amikor elküldjük az interneten.</li>
+  <li><strong>Titkosítás megkövetelése</strong>: választásával bekapcsoljuk az üzenet titkosítását, azaz az üzenet titkosított formában kerül elküldésre. Ez azonban csak akkor történhet meg, ha rendelkezünk az összes címzett érvényes tanúsítványával.</li>
+  <li><strong>Üzenet digitális aláírása</strong>: a beállítással az üzenet digitális aláírása kapcsolható be vagy ki. A pipa a digitális aláírás bekapcsolását jelzi.</li> 
+  <li><strong>Biztonsági adatok megtekintése</strong>: akkor jelöljük be, ha részletes adatokat szeretnénk látni az üzenet biztonsági állapotáról &mdash; ez segít például annak eldöntésében, hogy be kell-e szerezni tanúsítványt valamelyik címzetthez.</li>
+</ul>
+
+<p>Az üzenet biztonsági állapotáról az adatok a kulcs vagy a lakat ikonra kattintással is megjeleníthetők, erről lásd
+  <a href="#message_security_compose_window">Üzenetek biztonsága - Új üzenet ablak</a>.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="reading_signed_and_encrypted_messages">Aláírt és titkosított üzenetek olvasása</h2>
+
+<p>Amikor digitálisan aláírt vagy titkosított üzenetet tekintünk meg a Levelező ablakban, az üzenet fejlécének jobb felső sarkában az alábbi ikonok az üzenet biztonsági állapotáról tájékoztatnak:</p>
+  
+<table>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif"
+      alt="digital signature icon"/></td><td>Az üzenet digitálisan aláírt és érvényesített. Ha probléma merült fel az aláírással kapcsolatban, megtört toll jelenik meg.</td>
+  </tr>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrSignUnknown.gif"
+      alt="unknown icon"/></td><td>Az üzenet digitálisan aláírt, de nagyméretű melléklettel rendelkezik, amely még nincs letöltve az IMAP kiszolgálóról, így az aláírás nem érvényesíthető. A melléklet letöltéséhez és az álírás érvényesítéséhez kattintsunk az ikonra.</td>
+  </tr>
+  <tr>
+    <td><img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif"
+      alt="encryption icon"/></td><td>Az üzenet titkosítva van. Ha probléma merült fel a titkosítással kapcsolatban, megtört kulcs jelenik meg.</td>
+  </tr>
+</table>
+
+<p>A tanúsítvány érvényesítéséről lásd
+  <a href="using_certs_help.xhtml#controlling_validation">Az érvényesség ellenőrzése</a>.</p>
+
+<p>Az üzenetek biztonságával kapcsolatos további tudnivalók jeleníthetők meg, ha a kulcs vagy a lakat ikonra kattintunk, vagy követjük a következő útmutatót
+  <a href="#message_security_recieved_message">Üzenetek biztonsága - Beérkezett üzenetek</a>.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="message_security_compose_window">Üzenetek biztonsága - Új üzenet ablak</h2>
+
+<p>Ez a fejezet az Üzenet biztonsága ablakot ismerteti, amelyet minden készülő üzenetnél megnyithatunk. Ha még nem látható az Üzenet biztonsága ablak, kattintsunk az Új üzenet ablak eszköztárán a Biztonság ikonra.</p>
+
+<p>Az Üzenet biztonsága ablak az üzenet elküldési módjáról tájékoztat:</p>
+
+<ul>
+  <li><strong>Digitálisan aláírt</strong>: ez a sor az üzenet digitális aláírásának állapotát írja le. A három lehetőség a következő:
+    <ul>
+      <li><strong>Igen</strong>: a digitális aláírás engedélyezve van az üzenetnél, az azonosításhoz rendelkezünk érvényes tanúsítvánnyal, így az üzenet aláírható.</li>
+      <li><strong>Nem</strong>: a digitális aláírás tiltva van az üzenetnél.</li>
+      <li><strong>Nem lehetséges</strong>: a digitális aláírás engedélyezve van az üzenetnél, azonban az erre a célra szolgáló azonosításunkhoz szükséges érvényes
+        <a href="glossary.xhtml#certificate">tanúsítvány</a> nem áll rendelkezésre, vagy más probléma miatt a digitális aláírás nem hajtható végre.</li>
+    </ul>
+  </li>
+  <li><strong>Titkosított</strong>: ez a sor az üzenet titkosításának állapotát írja le. A három lehetőség a következő:
+    <ul>
+      <li><strong>Igen</strong>: Encryption has been enabled for this message,
+        valid certificates for all listed recipients are available, and the
+        message can be encrypted.</li>
+      <li><strong>Nem</strong>: a titkosítás tiltva van, vagy nem hajtható végre az üzenetnél.</li>
+      <li><strong>Nem lehetséges</strong>: a titkosítás engedélyezve van az üzenetnél, azonban a felsorolt címzettek legalább egyikénél hiányzik az érvényes tanúsítvány, vagy nincsenek megadva a címzettek, illetve más probléma miatt a titkosítás nem hajtható végre.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Az Üzenet biztonsága ablak felsorolja az üzenet címzettjeinek rendelkezésre álló tanúsítványait is:</p>
+
+<ul>
+  <li><strong>Megjelenítés</strong>: a listán szereplő tanúsítványok részletes adatainak megtekintéséhez jelöljük ki a nevet, és kattintsunk a Megjelenítés gombra.</li>
+</ul>
+
+<p>A tanúsítványok beszerzéséről és az üzenetek biztonsági beállításairól lásd <a href="#signing_and_encrypting_messages">Üzenetek aláírása és titkosítása</a>.</p>
+
+<p>Adott üzenet digitális aláírási és titkosítási beállításainak megadásához kattintsunk az Új üzenet ablakban a Biztonság gomb melletti nyílra, és válasszuk a kívánt beállításokat.</p>
+
+<p>Az összes üzenetre vonatkozó digitális aláírási és titkosítási alapbeállításokról lásd <a href="mail_help.xhtml#security">Postafiókok beállításai - Biztonság</a></p>
+
+<p>[<a href="#signing_and_encrypting_messages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="message_security_recieved_message">Üzenetek biztonsága - Beérkezett üzenetek</h2>
+
+<p>Ez a rész az Üzenet biztonsága ablakot ismerteti, amelyet minden beérkezett üzenetnél megnyithatunk. Ha a beérkezett üzenetnél még nem látható az Üzenet biztonsága ablak, hajtsuk végre a következő lépéseket:</p>
+
+<ol>
+  <li>A Levelező ablakban jelöljük ki azt az üzenetet, amelynek biztonsági adatait látni szeretnénk.</li>
+  <li>Válasszuk a Nézet menü Üzenet biztonsági adatai parancsát.</li>
+</ol>
+
+<p>Az Üzenet biztonsága ablak a következő adatokat jeleníti meg:</p>
+
+<ul>
+  <li><strong>Digitális aláírás</strong>: A felső rész az üzenet digitális aláírásáról, és ha van ilyen, ennek érvényességéről tájékoztat.</li>
+  
+  <p>Ha az érvényesítés az OCSP engedélyezése mellett is sikertelen volt, ellenőrizzük az OCSP beállításait az
+    <a href="validation_help.xhtml#privacy_and_security_preferences_validation">Adatvédelmi és biztonsági beállítások – Érvényesítés</a>. Ha nem vagyunk jártasak az OCSP beállításaiban, kérjük a rendszergazda segítségét. Ha a beállítások megfelelőek, valószínűleg az OCSP szolgáltatással lehet probléma, vagy az aláírás létrehozásához használt tanúsítvány vált időközben érvénytelenné.</p>
+  
+  <p>Ha az aláírás a tanúsítvány megbízhatósági beállításai miatt érvénytelen, a <a href="certs_help.xhtml">Tanúsítványkezelő</a> segítségével megtekinthetők és módosíthatók ezek a beállítások.</p>
+
+  <li><strong>Aláírás tanúsítványának megtekintése</strong>: Ha az üzenet digitálisan alá van írva, erre a gombra kattintva megtekinthető az aláíráshoz használt tanúsítvány.</li>
+  <li><strong>Titkosítás</strong>: Az alsó részen az üzenet titkosításáról és az ezzel kapcsolatos problémákról olvashatunk.
+    <ul>
+      <li>Ha az üzenet tartalma megváltozott az átvitel során, meg kell kérni a feladót, hogy küldje el újból. A módosításokat hálózati problémák is okozhatják.</li>
+      <li>Ha a saját tanúsítvány másolata (amelyet a feladó az üzenet titkosításhoz használt) nem áll rendelkezésre a számítógépünkön, az üzenet visszafejtéséhez szükséges személyes kulcs nem kérhető le. Ekkor az egyetlen megoldás a saját tanúsítvány és az ehhez tartozó személyes kulcs importálása egy biztonsági mentésből (további tudnivalók
+        <a href="certs_help.xhtml#your_certificates">Saját tanúsítványok</a>). Ha nem férünk hozzá a tanúsítvány biztonsági másolatához, nem tudjuk visszafejteni az üzenetet.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#signing_and_encrypting_messages">Vissza a fejezet elejére</a>]</p>
+
+
+</body>
+</html>

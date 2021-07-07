@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Xóa">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "Tên:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Email:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Sổ địa chỉ:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "Xong">
+<!ENTITY editContactPanelDone.accesskey "D">
+
+<!ENTITY contactMoveDisabledWarning.description "Bạn không thể thay đổi sổ địa chỉ vì tên liên hệ này nằm trong một danh sách thư.">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Välj adresser">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Till->"> 
+<!ENTITY toButton.accesskey                  "i"> 
+<!ENTITY ccButton.label                      "Kopia->"> 
+<!ENTITY ccButton.accesskey                  "K"> 
+<!ENTITY bccButton.label                     "Dold kopia->">  
+<!ENTITY bccButton.accesskey                 "D">  
+<!ENTITY newButton.label                     "Nytt…"> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "Redigera…"> 
+<!ENTITY editButton.accesskey                "R">
+<!ENTITY removeButton.label                  "Ta bort"> 
+<!ENTITY removeButton.accesskey              "T"> 
+<!ENTITY lookIn.label                        "Sök i:"> 
+<!ENTITY lookIn.accesskey                    "S"> 
+<!ENTITY for.label                           "efter:"> 
+<!ENTITY for.accesskey                       "e"> 
+<!ENTITY for.placeholder                     "Namn eller e-post">
+<!ENTITY addressMessageTo.label              "Adressera meddelande till:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip "Skapa ett nytt kort i adressboken">
+<!ENTITY addressPickerEditButton.tooltip     "Redigera det markerade adresskortet">

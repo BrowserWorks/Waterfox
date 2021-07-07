@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Fjern konto og data">
+<!ENTITY removeButton.label           "Fjern">
+<!ENTITY removeButton.accesskey       "F">
+<!ENTITY removeAccount.label          "Fjern kontoinformasjon">
+<!ENTITY removeAccount.accesskey      "s">
+<!ENTITY removeAccount.desc           "Tar berre bort &brandShortName; kunnskap om denne kontoen. Påverkar ikkje sjølve kontoen på tenaren.">
+<!ENTITY removeData.label             "Fjern meldingsdata">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Fjern samtaledata">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Fjernar alle meldingar, mapper og filter som er knytt til denne kontoen fr den lokale disken din. Detta påverkar ikkje meldingar som framleis ligg på tenaren. Ikkje vel dette om du planlegg å aktivera lokale data eller bruka dei omatt i &brandShortName; seinare.">
+<!ENTITY removeDataServerAccount.desc "Fjernar alle meldingar, mapper og filter som er knytte til denne kontoen frå den lokale disken din. Meldingar og mapper ligg framleis på tenaren.">
+<!ENTITY removeDataChatAccount.desc   "Fjernar alle loggar for samtalar som er lagra for denne kontoen på den lokale disken din.">
+<!ENTITY showData.label               "Vis dataplassering">
+<!ENTITY showData.accesskey           "V">
+<!ENTITY progressPending              "Fjernar valde data…">
+<!ENTITY progressSuccess              "Vellukka fjerning.">
+<!ENTITY progressFailure              "Mislukka fjerning.">

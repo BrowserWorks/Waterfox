@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-mail">
+<!ENTITY readMsgsLink.label           "Berichten lezen">
+<!ENTITY composeMsgLink.label         "Nieuw bericht opstellen">
+
+<!ENTITY newsSectionHdr.label         "Nieuwsgroepen">
+<!ENTITY subscribeNewsLink.label      "Nieuwsgroepabonnementen beheren">
+
+<!ENTITY accountsSectionHdr.label     "Accounts">
+<!ENTITY subscribeImapFolders.label   "Mapabonnementen beheren">
+<!ENTITY settingsLink.label           "Instellingen voor deze account bekijken">
+<!ENTITY newAcctLink.label            "Nieuwe account aanmaken">
+
+<!ENTITY advFeaturesSectionHdr.label  "Geavanceerde functies">
+<!ENTITY searchMsgsLink.label         "Berichten zoeken">
+<!ENTITY filtersLink.label            "Berichtenfilters beheren">
+<!ENTITY junkSettings.label           "Ongewensteberichtenfilters instellen">
+<!ENTITY offlineLink.label            "Offline-instellingen">
+
+<!ENTITY feedsSectionHdr.label        "Feeds">
+<!ENTITY subscribeFeeds.label         "Abonnementen beheren">

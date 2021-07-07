@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Visa meddelanden">
+<!ENTITY style.label                      "Variant:">
+<!ENTITY style.accesskey                  "t">
+<!ENTITY regular.label                    "Normal">
+<!ENTITY bold.label                       "Halvfet">
+<!ENTITY italic.label                     "Kursiv">
+<!ENTITY boldItalic.label                 "Halvfet kursiv">
+<!ENTITY size.label                       "Storlek:">
+<!ENTITY size.accesskey                   "S">
+<!ENTITY bigger.label                     "Större">
+<!ENTITY smaller.label                    "Mindre">
+<!ENTITY color.label                      "Färg:">
+<!ENTITY color.accesskey                  "ä">
+<!ENTITY displayPlainText.caption         "Oformaterade textmeddelanden">
+<!ENTITY fontPlainText.label              "Teckensnitt:">
+<!ENTITY fontPlainText.accesskey          "c">
+<!ENTITY displayQuoted.label              "Inställningar för citerad text:">
+<!ENTITY wrapInMsg.label                  "Radbryt text till fönsterbredd">
+<!ENTITY wrapInMsg.accesskey              "R">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Visa humörsymboler som grafik">
+<!ENTITY convertEmoticons.accesskey       "i">
+<!ENTITY generalMessageDisplay.caption     "Allmänt">
+<!ENTITY autoMarkAsRead.label             "Märk automatiskt meddelanden som lästa">
+<!ENTITY autoMarkAsRead.accesskey         "M">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Enbart efter visning under">
+<!ENTITY markAsReadAfter.accesskey        "f">
+<!ENTITY secondsLabel.label              "sekunder">
+
+<!ENTITY openingMessages.label            "När meddelanden öppnas, visa dem i:">
+<!ENTITY newWindowRadio.label             "Ett nytt fönster">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "Ett befintligt fönster">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "Blockera bilder och annat innehåll från externa källor">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "Visa endast skärmnamn på personer i min adressbok">
+<!ENTITY showCondensedAddresses.accesskey "V">
+<!ENTITY closeMsgWindowOnDelete.label     "Stäng meddelandefönstret när meddelandet tas bort">
+<!ENTITY closeMsgWindowOnDelete.accesskey "g">

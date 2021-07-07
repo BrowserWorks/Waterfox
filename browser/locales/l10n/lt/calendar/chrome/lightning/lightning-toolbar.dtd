@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Kalendoriaus juosta">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Darbų juosta">
+<!ENTITY lightning.toolbar.task.name.accesskey "D">
+
+<!ENTITY lightning.toolbar.sync.label "Sinchronizuoti">
+<!ENTITY lightning.toolbar.sync.tooltip "Atsiųsti kalendorius iš naujo ir sinchronizuoti pakeitimus">
+<!ENTITY lightning.toolbar.delete.label "Pašalinti">
+<!ENTITY lightning.toolbar.delete.tooltip "Šalinti pažymėtus įvykius ar darbus">
+<!ENTITY lightning.toolbar.edit.label "Taisyti">
+<!ENTITY lightning.toolbar.edit.tooltip "Keisti pažymėtą įvykį ir darbą">
+<!ENTITY lightning.toolbar.gototoday.label "Eiti į šiandieną">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Eiti į šios dienos kalendorių">
+<!ENTITY lightning.toolbar.print.label "Spausdinti">
+<!ENTITY lightning.toolbar.print.tooltip "Spausdinti įvykius arba darbus">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Kalendorius">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Atverti kalendoriaus kortelę">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Darbai">
+<!ENTITY lightning.toolbar.task.tooltip       "Atverti darbų kortelę">
+<!ENTITY lightning.toolbar.task.accesskey     "D">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Įvykis">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Aprašyti naują įvykį">
+<!ENTITY lightning.toolbar.newtask.label      "Darbas">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Aprašyti naują darbą">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Diena">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Savaitė">
+<!ENTITY lightning.toolbar.week.accesskey            "S">
+<!ENTITY lightning.toolbar.multiweek.label           "Kelios savaitės">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "K">
+<!ENTITY lightning.toolbar.month.label               "Mėnuo">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Programos meniu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Atverti programos „&brandShortName;“ meniu">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Kalendoriaus polangis">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "p">
+<!ENTITY lightning.toolbar.calendarpane.label        "Rodyti kalendoriaus polangį">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "p">

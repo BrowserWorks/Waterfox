@@ -1,0 +1,371 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.key "S">
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "포맷없이 붙여넣기">
+<!ENTITY pasteNoFormatting.accesskey "o">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAs.label "다른 이름으로 붙여넣기">
+<!ENTITY pasteAs.accesskey "a">
+<!ENTITY pasteAsQuotationCmd.label "인용 형식으로 붙여넣기">
+<!ENTITY pasteAsQuotationCmd.accesskey "q">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY findBarCmd.label "찾기…">
+<!ENTITY findReplaceCmd.label "찾아서 바꾸기…">
+<!ENTITY enableInlineSpellChecker.label "입력시 맞춤법 검사">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY checkSpellingCmd2.label "맞춤법 검사">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY checkSpellingCmd2.key "p">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "삽입">
+<!ENTITY insertMenu.accesskey "i">
+<!ENTITY insertLinkCmd2.label "링크…">
+<!ENTITY insertLinkCmd2.accesskey "L">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "내부 링크…">
+<!ENTITY insertAnchorCmd.accesskey "A">
+<!ENTITY insertImageCmd.label "이미지…">
+<!ENTITY insertImageCmd.accesskey "i">
+<!ENTITY insertHLineCmd.label "가로선">
+<!ENTITY insertHLineCmd.accesskey "o">
+<!ENTITY insertTableCmd.label "표…">
+<!ENTITY insertTableCmd.accesskey "t">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "h">
+<!ENTITY insertMathCmd.label "수식…">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "문자 및 기호…">
+<!ENTITY insertCharsCmd.accesskey "C">
+<!ENTITY insertBreakAllCmd.label "이미지 줄바꿈">
+<!ENTITY insertBreakAllCmd.accesskey "k">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "링크 만들기…">
+<!ENTITY createLinkCmd.accesskey "k">
+<!ENTITY editLinkCmd.label "새 편집기에서 링크 편집">
+<!ENTITY editLinkCmd.accesskey "i">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.title "글꼴">
+<!ENTITY FontFaceSelect.tooltip "글꼴 선택">
+<!ENTITY fontfaceMenu.label "글꼴">
+<!ENTITY fontfaceMenu.accesskey "f">
+<!ENTITY fontVarWidth.label "가변폭">
+<!ENTITY fontVarWidth.accesskey "v">
+<!ENTITY fontFixedWidth.label "고정폭">
+<!ENTITY fontFixedWidth.accesskey "x">
+<!ENTITY fontFixedWidth.key "t">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "순서">
+<!ENTITY fontTimes.accesskey "t">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "c">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.title "글꼴 크기">
+<!ENTITY FontSizeSelect.tooltip "글꼴 크기 선택">
+<!ENTITY decreaseFontSize.label "작게">
+<!ENTITY decreaseFontSize.accesskey "r">
+<!ENTITY decrementFontSize.key "-">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "크게">
+<!ENTITY increaseFontSize.accesskey "g">
+<!ENTITY incrementFontSize.key "+">
+<!ENTITY incrementFontSize.key2 "="> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "크기">
+<!ENTITY fontSizeMenu.accesskey "z">
+<!ENTITY size-tinyCmd.label "아주 작게">
+<!ENTITY size-tinyCmd.accesskey "t">
+<!ENTITY size-smallCmd.label "작게">
+<!ENTITY size-smallCmd.accesskey "s">
+<!ENTITY size-mediumCmd.label "보통">
+<!ENTITY size-mediumCmd.accesskey "d">
+<!ENTITY size-largeCmd.label "크게">
+<!ENTITY size-largeCmd.accesskey "l">
+<!ENTITY size-extraLargeCmd.label "매우 크게">
+<!ENTITY size-extraLargeCmd.accesskey "x">
+<!ENTITY size-hugeCmd.label "거대하게">
+<!ENTITY size-hugeCmd.accesskey "H">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "글자 모양">
+<!ENTITY fontStyleMenu.accesskey "s">
+<!ENTITY styleBoldCmd.label "굵게">
+<!ENTITY styleBoldCmd.accesskey "b">
+<!ENTITY styleBoldCmd.key "b">
+<!ENTITY styleItalicCmd.label "기울임">
+<!ENTITY styleItalicCmd.accesskey "I">
+<!ENTITY styleItalicCmd.key "i">
+<!ENTITY styleUnderlineCmd.label "밑줄">
+<!ENTITY styleUnderlineCmd.accesskey "u">
+<!ENTITY styleUnderlineCmd.key "u">
+<!ENTITY styleStrikeThruCmd.label "취소선">
+<!ENTITY styleStrikeThruCmd.accesskey "k">
+<!ENTITY styleSuperscriptCmd.label "위첨자">
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "아래 첨자">
+<!ENTITY styleSubscriptCmd.accesskey "S">
+<!ENTITY styleNonbreakingCmd.label "줄바꿈 없음">
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+<!ENTITY styleEm.label "강조">
+<!ENTITY styleEm.accesskey "e">
+<!ENTITY styleStrong.label "매우 강조">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "인용">
+<!ENTITY styleCite.accesskey "c">
+<!ENTITY styleAbbr.label "약자 기호">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "머릿글자">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "코드">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "샘플 출력">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "변수">
+<!ENTITY styleVar.accesskey "v">
+
+<!ENTITY formatFontColor.label "글자색…">
+<!ENTITY formatFontColor.accesskey "c">
+<!ENTITY tableOrCellColor.label "표 및 셀 배경색…">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "내부 링크 없애기">
+<!ENTITY formatRemoveNamedAnchors.accesskey "R">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "문단">
+<!ENTITY paragraphMenu.accesskey "P">
+<!ENTITY paragraphParagraphCmd.label "문단">
+<!ENTITY paragraphParagraphCmd.accesskey "P">
+<!ENTITY heading1Cmd.label "제목1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "제목2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "제목3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "제목4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "제목5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "제목6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "주소">
+<!ENTITY paragraphAddressCmd.accesskey "a">
+<!ENTITY paragraphPreformatCmd.label "Pre 태그">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "목록">
+<!ENTITY formatlistMenu.accesskey "l">
+<!ENTITY noneCmd.label "없음">
+<!ENTITY noneCmd.accesskey "N">
+<!ENTITY listBulletCmd.label "기호로">
+<!ENTITY listBulletCmd.accesskey "b">
+<!ENTITY listNumberedCmd.label "숫자로">
+<!ENTITY listNumberedCmd.accesskey "m">
+<!ENTITY listTermCmd.label "단어">
+<!ENTITY listTermCmd.accesskey "t">
+<!ENTITY listDefinitionCmd.label "정의">
+<!ENTITY listDefinitionCmd.accesskey "d">
+<!ENTITY listPropsCmd.label "목록 속성…">
+<!ENTITY listPropsCmd.accesskey "l">
+
+<!ENTITY ParagraphSelect.title "문단">
+<!ENTITY ParagraphSelect.tooltip "문단 형식 선택">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "본문 글자">
+<!ENTITY bodyTextCmd.accesskey "T">
+<!-- isn't used in menu now, but may be added in future -->
+<!ENTITY advancedPropertiesCmd.label "고급 설정">
+<!ENTITY advancedPropertiesCmd.accesskey "v">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "맞춤">
+<!ENTITY alignMenu.accesskey "">
+<!ENTITY alignLeft.label "왼쪽 맞춤">
+<!ENTITY alignLeft.accesskey "l">
+<!ENTITY alignLeft.tooltip "왼쪽으로 맞춤">
+<!ENTITY alignCenter.label "가운데 맞춤">
+<!ENTITY alignCenter.accesskey "c">
+<!ENTITY alignCenter.tooltip "가운데로 맞춤">
+<!ENTITY alignRight.label "오른쪽 맞춤">
+<!ENTITY alignRight.accesskey "r">
+<!ENTITY alignRight.tooltip "오른쪽으로 맞춤">
+<!ENTITY alignJustify.label "양쪽 맞춤">
+<!ENTITY alignJustify.accesskey "j">
+<!ENTITY alignJustify.tooltip "양쪽으로 맞춤">
+
+<!-- Layer toolbar items -->
+<!ENTITY absolutePosition.label "위치 지정">
+<!ENTITY layer.tooltip "레이어">
+<!ENTITY decreaseZIndex.label "뒤로 보내기">
+<!ENTITY layerSendToBack.tooltip "뒤로 보내기">
+<!ENTITY increaseZIndex.label "앞으로 가져오기">
+<!ENTITY layerBringToFront.tooltip "앞으로 보내기">
+
+<!ENTITY increaseIndent.label "들여쓰기 증가">
+<!ENTITY increaseIndent.accesskey "i">
+<!ENTITY increaseIndent.key "=">
+<!ENTITY decreaseIndent.label "들여쓰기 감소">
+<!ENTITY decreaseIndent.accesskey "D">
+<!ENTITY decreaseIndent.key "-">
+
+<!ENTITY colorsAndBackground.label "페이지 색상 및 배경…">
+<!ENTITY colorsAndBackground.accesskey "u">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "표">
+<!ENTITY tableMenu.accesskey "b">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "선택">
+<!ENTITY tableSelectMenu.accesskey "s">
+
+<!ENTITY tableSelectMenu2.label "표 선택">
+<!ENTITY tableSelectMenu2.accesskey "S">
+<!ENTITY tableInsertMenu2.label "표 삽입">
+<!ENTITY tableInsertMenu2.accesskey "I">
+<!ENTITY tableDeleteMenu2.label "표 삭제">
+<!ENTITY tableDeleteMenu2.accesskey "D">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "삽입">
+<!ENTITY tableInsertMenu.accesskey "I">
+<!ENTITY tableTable.label "표">
+<!ENTITY tableTable.accesskey "t">
+<!ENTITY tableRow.label "행">
+<!ENTITY tableRows.label "행">
+<!ENTITY tableRow.accesskey "R">
+<!ENTITY tableRowAbove.label "위쪽 행 추가">
+<!ENTITY tableRowAbove.accesskey "R">
+<!ENTITY tableRowBelow.label "아래쪽 행 추가">
+<!ENTITY tableRowBelow.accesskey "B">
+<!ENTITY tableColumn.label "열">
+<!ENTITY tableColumns.label "열">
+<!ENTITY tableColumn.accesskey "o">
+<!ENTITY tableColumnBefore.label "앞쪽 열 추가">
+<!ENTITY tableColumnBefore.accesskey "o">
+<!ENTITY tableColumnAfter.label "뒤쪽 열 추가">
+<!ENTITY tableColumnAfter.accesskey "A">
+<!ENTITY tableCell.label "셀">
+<!ENTITY tableCells.label "셀">
+<!ENTITY tableCell.accesskey "C">
+<!ENTITY tableCellContents.label "셀 내용">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "모든 셀">
+<!ENTITY tableAllCells.accesskey "a">
+<!ENTITY tableCellBefore.label "앞쪽 셀">
+<!ENTITY tableCellBefore.accesskey "C">
+<!ENTITY tableCellAfter.label "뒤쪽 셀">
+<!ENTITY tableCellAfter.accesskey "f">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "삭제">
+<!ENTITY tableDeleteMenu.accesskey "D">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableJoinCells.accesskey "j">
+<!ENTITY tableSplitCell.label "셀 병합">
+<!ENTITY tableSplitCell.accesskey "c">
+<!ENTITY convertToTable.label "선택에서 표 만들기">
+<!ENTITY convertToTable.accesskey "r">
+<!ENTITY tableProperties.label "표 설정…">
+<!ENTITY tableProperties.accesskey "o">
+
+<!-- Toolbar-only items -->
+<!ENTITY menuBar.tooltip "도구 모음">
+<!ENTITY formatToolbar.tooltip "서식 도구 모음">
+<!ENTITY cutToolbarCmd.tooltip "잘라내기">
+<!ENTITY copyToolbarCmd.tooltip "복사">
+<!ENTITY pasteToolbarCmd.tooltip "붙여넣기">
+<!ENTITY printToolbarCmd.label "인쇄">
+<!ENTITY printToolbarCmd.tooltip "페이지 인쇄">
+<!ENTITY findToolbarCmd.label "찾기">
+<!ENTITY findToolbarCmd.tooltip "페이지에서 단어 찾기">
+<!ENTITY spellToolbarCmd.label "맞춤법">
+<!ENTITY spellToolbarCmd.tooltip "선택된 모든 페이지에서 맞춤법 검사">
+<!ENTITY imageToolbarCmd.label "이미지">
+<!ENTITY imageToolbarCmd.tooltip "새 이미지을 삽입하거나 선택된 이미지 편집">
+<!ENTITY hruleToolbarCmd.label "가로선">
+<!ENTITY hruleToolbarCmd.tooltip "새 가로선을 삽입하거나 선택된 가로선 편집">
+<!ENTITY tableToolbarCmd.label "표">
+<!ENTITY tableToolbarCmd.tooltip "새 표를 삽입하거나 선택된 표 편집">
+<!ENTITY linkToolbarCmd.label "링크">
+<!ENTITY linkToolbarCmd.tooltip "새 링크를 삽입하거나 선택된 링크 편집">
+<!ENTITY anchorToolbarCmd.label "내부 링크">
+<!ENTITY anchorToolbarCmd.tooltip "새 내부 링크를 삽입하거나 선택된 내부 링크 편집">
+<!ENTITY colorButtons.title "색상">
+<!ENTITY TextColorButton.tooltip "글자색 선택">
+<!ENTITY BackgroundColorButton.tooltip "배경색 선택">
+<!ENTITY throbber.tooltip "&vendorShortName; 홈 페이지 가기">
+<!ENTITY throbber.tooltip2 "&brandShortName; 홈페이지 가기">
+<!ENTITY HighlightColorButton.label "형광펜">
+<!ENTITY HighlightColorButton.tooltip "글자 강조색 선택">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSize.label "글꼴 크기">
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "글꼴 크기 설정">
+<!ENTITY smaller.label "작게">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "글꼴 크기 작게">
+<!ENTITY larger.label "크게">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "글꼴 크기 크게">
+<!ENTITY bold.label "굵게">
+<!ENTITY boldToolbarCmd.tooltip "굵게">
+<!ENTITY italic.label "기울임">
+<!ENTITY italicToolbarCmd.tooltip "기울임">
+<!ENTITY underline.label "밑줄">
+<!ENTITY underlineToolbarCmd.tooltip "밑줄">
+<!ENTITY bullets.label "목록">
+<!ENTITY bulletListToolbarCmd.tooltip "글머리 적용/제거">
+<!ENTITY numbers.label "숫자 목록">
+<!ENTITY numberListToolbarCmd.tooltip "번호 매김 적용/제거">
+<!ENTITY outdent.label "내어쓰기">
+<!ENTITY outdentToolbarCmd.tooltip "내어쓰기(왼쪽으로)">
+<!ENTITY indent.label "들여쓰기">
+<!ENTITY indentToolbarCmd.tooltip "들여쓰기(오른쪽으로)">
+<!ENTITY AlignPopupButton.label "맞춤">
+<!ENTITY AlignPopupButton.tooltip "텍스트 맞춤 방식 선택">
+<!ENTITY InsertPopupButton.label "삽입">
+<!ENTITY InsertPopupButton.tooltip "링크 또는 이미지, 가로선, 표 삽입">
+<!ENTITY alignLeftButton.label "왼쪽으로 정렬">
+<!ENTITY alignLeftButton.tooltip "왼쪽으로 맞춤">
+<!ENTITY alignCenterButton.label "가운데로 정렬">
+<!ENTITY alignCenterButton.tooltip "가운데로 맞춤">
+<!ENTITY alignRightButton.label "오른쪽으로 정렬">
+<!ENTITY alignRightButton.tooltip "오른쪽으로 맞춤">
+<!ENTITY alignJustifyButton.label "양쪽 맞춤">
+<!ENTITY alignJustifyButton.tooltip "좌우 여백에 따라 맞춤">
+
+<!-- Structure Toolbar Context Menu items -->
+<!ENTITY structSelect.label         "선택">
+<!ENTITY structSelect.accesskey     "s">
+<!ENTITY structRemoveTag.label      "태그 제거">
+<!ENTITY structRemoveTag.accesskey  "r">
+<!ENTITY structChangeTag.label      "태그 변경">
+<!ENTITY structChangeTag.accesskey  "c">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "삽입">
+<!ENTITY insertTOC.accesskey      "i">
+<!ENTITY updateTOC.label          "업데이트">
+<!ENTITY updateTOC.accesskey      "u">
+<!ENTITY removeTOC.label          "제거">
+<!ENTITY removeTOC.accesskey      "r">
+<!ENTITY tocMenu.label            "목차…">
+<!ENTITY tocMenu.accesskey        "b">

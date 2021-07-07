@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxy">
+<!ENTITY  pref.proxies.desc             "En nätverksproxy kan öka säkerhet och prestanda i en Internet-anslutning.">
+<!ENTITY  proxyTitle.label              "Konfigurerar proxy för Internetåtkomst">
+<!ENTITY  directTypeRadio.label         "Direktansluten till Internet">
+<!ENTITY  directTypeRadio.accesskey     "D">
+<!ENTITY  systemTypeRadio.label         "Använd systemets proxyinställningar">
+<!ENTITY  systemTypeRadio.accesskey     "v">
+<!ENTITY  manualTypeRadio.label         "Manuell proxykonfiguration">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  wpadTypeRadio.label           "Automatisk identifiering av proxykonfigurationen">
+<!ENTITY  wpadTypeRadio.accesskey       "A">
+<!ENTITY  autoTypeRadio.label           "Automatisk proxykonfiguration, URL:">
+<!ENTITY  autoTypeRadio.accesskey       "u">
+<!ENTITY  reload.label                  "Uppdatera">
+<!ENTITY  reload.accesskey              "t">
+<!ENTITY  http.label                    "Proxy:">
+<!ENTITY  http.accesskey                "x">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Avancerat…">
+<!ENTITY  advanced.accesskey            "c">
+<!ENTITY  noproxy.label                 "Undantag:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "Exempel: .mozilla.org, .net.nz, 192.168.1.0/24">

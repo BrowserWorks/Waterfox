@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Üzenetek megjelenítése">
+<!ENTITY style.label                      "Stílus:">
+<!ENTITY style.accesskey                  "t">
+<!ENTITY regular.label                    "Normál">
+<!ENTITY bold.label                       "Félkövér">
+<!ENTITY italic.label                     "Dőlt">
+<!ENTITY boldItalic.label                 "Félkövér dőlt">
+<!ENTITY size.label                       "Méret:">
+<!ENTITY size.accesskey                   "M">
+<!ENTITY bigger.label                     "Nagyobb">
+<!ENTITY smaller.label                    "Kisebb">
+<!ENTITY color.label                      "Szín:">
+<!ENTITY color.accesskey                  "S">
+<!ENTITY displayPlainText.caption         "Normál szöveges levelek">
+<!ENTITY fontPlainText.label              "Betű:">
+<!ENTITY fontPlainText.accesskey          "B">
+<!ENTITY displayQuoted.label              "Idézett üzenetek beállításai:">
+<!ENTITY wrapInMsg.label                  "Szöveg tördelése az ablak méretének megfelelően">
+<!ENTITY wrapInMsg.accesskey              "t">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Hangulatjelek megjelenítése grafikaként">
+<!ENTITY convertEmoticons.accesskey       "m">
+<!ENTITY generalMessageDisplay.caption    "Általános">
+<!ENTITY autoMarkAsRead.label             "Üzenetek automatikus olvasottnak jelölése">
+<!ENTITY autoMarkAsRead.accesskey         "j">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Megjelenítés után">
+<!ENTITY markAsReadAfter.accesskey        "u">
+<!ENTITY secondsLabel.label               "másodperccel">
+
+<!ENTITY openingMessages.label            "Megnyitott üzenetek megjelenítése:">
+<!ENTITY newWindowRadio.label             "Új üzenetablakban">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "Létező üzenetablakban">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "Távoli képek és tartalmak blokkolása az üzenetekben">
+<!ENTITY disableContent.accesskey         "T">
+<!ENTITY showCondensedAddresses.label     "Csak a név megjelenítése a címjegyzékben szereplő személyeknél">
+<!ENTITY showCondensedAddresses.accesskey "k">
+<!ENTITY closeMsgWindowOnDelete.label     "Üzenetablak bezárása az üzenet törlésekor">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

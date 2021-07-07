@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Анти-спам фильтр">
+<!ENTITY trainingDescription.label "Если включено, то сначала вам нужно научить &brandShortName; определять спам. Для этого отмечайте сообщения как спам или не спам, используя кнопку «Спам» на панели инструментов. Вам нужно явно отмечать как спамерские, так и обычные сообщения. После этого &brandShortName; сможет автоматически помечать спамерские сообщения.">
+<!ENTITY level.label "Включить анти-спам фильтры для этой учётной записи">
+<!ENTITY level.accesskey "к">
+
+<!ENTITY move.label "Перемещать новые сообщения, определённые как спам, в:">
+<!ENTITY move.accesskey "м">
+<!ENTITY junkFolderOn.label "Папку «Спам» в:">
+<!ENTITY junkFolderOn.accesskey "п">
+<!ENTITY otherFolder.label "Другую папку:">
+<!ENTITY otherFolder.accesskey "г">
+<!ENTITY purge1.label "Автоматически удалять спам из этой папки через">
+<!ENTITY purge1.accesskey "в">
+<!ENTITY purge2.label "дней">
+
+<!ENTITY whitelistHeader.label "Не помечать автоматически сообщения как спам, если отправитель находится в адресных книгах: ">
+<!ENTITY whitelistHeader.accesskey "е">
+
+<!ENTITY ispHeadersWarning.label "Если включено, &brandShortName; будет автоматически считать спамом сообщения, помеченные этим внешним классификатором.">
+<!ENTITY ispHeaders.label "Использовать поля в заголовках писем установленные:">
+<!ENTITY ispHeaders.accesskey "с">
+
+<!ENTITY junkClassification.label "Выделение">
+<!ENTITY junkActions.label "Папка назначения и условия хранения">
+
+<!ENTITY globalJunkPrefs.label "Глобальные настройки анти-спама…">
+<!ENTITY globalJunkPrefs.accesskey "а">

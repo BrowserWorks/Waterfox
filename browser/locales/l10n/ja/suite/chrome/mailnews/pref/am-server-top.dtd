@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY messageStorage.label "メッセージの保存">
+<!ENTITY securitySettings.label "セキュリティ設定">
+<!ENTITY serverSettings.label "サーバー設定">
+<!ENTITY serverType.label "サーバーの種類:">
+<!ENTITY serverName.label "サーバー名:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "ユーザー名:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "ポート:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "既定値:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "新着メッセージがないか">
+<!ENTITY biffStart.accesskey "y">
+<!ENTITY biffEnd.label "分ごとに確認する">
+<!ENTITY useIdleNotifications.label "新着メッセージが届いた時のサーバー通知を許可する">
+<!ENTITY useIdleNotifications.accesskey "w">
+<!ENTITY connectionSecurity.label "接続の保護:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "なし">
+<!ENTITY connectionSecurityType-1.label "STARTTLS (可能な場合)">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "認証方式:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "ダウンロード後もサーバーにメッセージを残す">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "ヘッダーのみ取得する">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "ダウンロードしてから">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "日以上経過したメッセージは削除する">
+<!ENTITY deleteOnServer2.label "ダウンロードしたメッセージを削除したらサーバーからも削除する">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "新着メッセージを自動的にダウンロードする">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "メッセージを削除する時:">
+<!ENTITY modelMoveToTrash.label "次のフォルダーに移動する:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "削除済みとマークする">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "すぐに削除する">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label		"終了時に受信トレイを整理 (expunge) する"><!-- &quot; 除去可 -->
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "終了時にごみ箱を空にする">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "新着メッセージがないか起動時に確認する">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+     maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+     of messages between them
+-->
+<!ENTITY maxMessagesStart.label "ダウンロードするメッセージ数が">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "以上になる場合は確認する">
+<!ENTITY alwaysAuthenticate.label "サーバーへ接続するときは必ず認証を要求する">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY newsrcFilePath.label "newsrc ファイル:">
+<!ENTITY newsrcPicker.label "newsrc ファイルを選択してください">
+<!ENTITY abbreviate.label "ニュースグループ名の表示形式:">
+<!ENTITY abbreviateOn.label "Full names (For example, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "完全名 (例: netscape.public.mozilla.mail-news)">
+<!ENTITY advancedButton.label "詳細...">
+<!ENTITY serverDefaultCharset2.label "既定のテキストエンコーディング:">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY localPath.label "メッセージの保存先:"><!-- en-US: Local directory -->
+<!ENTITY localFolderPicker.label "メッセージデータの保存先を選択してください">
+<!ENTITY browseFolder.label "参照...">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "参照...">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "アカウント設定">
+<!ENTITY accountSettingsDesc.label "これは特殊なアカウントであり、特定の差出人情報はありません。">
+<!ENTITY storeType.label "メッセージの格納形式:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "フォルダー単位 (mbox 形式)">
+<!ENTITY maildirStore.label "メッセージごとのファイル (maildir 形式)">

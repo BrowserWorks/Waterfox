@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Tinklalapio spalvos ir fonas">
+<!ENTITY pageColors.label "Tinklalapio spalvos">
+<!ENTITY defaultColorsRadio.label "Spalvų neparinkti">
+<!ENTITY defaultColorsRadio.accessKey "e">
+<!ENTITY defaultColorsRadio.tooltip "Bus panaudotos naršyklės nuostatose parinktos spalvos">
+<!ENTITY customColorsRadio.label "Spalvas parinkti:">
+<!ENTITY customColorsRadio.accessKey "p">
+<!ENTITY customColorsRadio.tooltip "Bus panaudotos žemiau parinktos spalvos, nepaisant parinktų naršyklės nuostatose">
+
+<!ENTITY normalText.label "Normalus tekstas">
+<!ENTITY normalText.accessKey "e">
+<!ENTITY linkText.label "Saito tekstas">
+<!ENTITY linkText.accessKey "S">
+<!ENTITY activeLinkText.label "Aktyvaus saito tekstas">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Aplankyto saito tekstas">
+<!ENTITY visitedLinkText.accessKey "n">
+<!ENTITY background.label "Fonas:">
+<!ENTITY background.accessKey "F">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Fono piešinys:">
+<!ENTITY backgroundImage.accessKey "o">
+<!ENTITY backgroundImage.tooltip "Fono piešinio failas">
+<!ENTITY backgroundImage.shortenedDataURI "Sutrumpintas duomenų URI (kopijuojant įkels ilgąjį URI į mainų sritį)">

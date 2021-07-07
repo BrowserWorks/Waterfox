@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "محرر الخصائص المتقدمة">
+<!ENTITY AttName.label                  "صفة: ">
+<!ENTITY AttValue.label                 "قيمة: ">
+<!ENTITY PropertyName.label             "خاصية: ">
+<!ENTITY currentattributesfor.label     "الصفات الحالية ل‍: ">
+<!ENTITY tree.attributeHeader.label     "صفة">
+<!ENTITY tree.propertyHeader.label      "خاصية">
+<!ENTITY tree.valueHeader.label         "قيمة">
+<!ENTITY tabHTML.label                  "صفات HTML">
+<!ENTITY tabCSS.label                   "أسلوب ضمن السياق">
+<!ENTITY tabJSE.label                   "أحداث جافا سكربت">
+
+<!ENTITY editAttribute.label    "انقر على عنصر من أعلى لتحرير قيمته">
+<!ENTITY removeAttribute.label  "احذف">

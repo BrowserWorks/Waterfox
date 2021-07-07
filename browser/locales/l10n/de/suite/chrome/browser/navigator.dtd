@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Privater Modus">
+
+<!ENTITY editPageCmd.label "Seite bearbeiten">
+<!ENTITY editPageCmd.accesskey "r">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Navigations-Symbolleiste">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "Lesezeichen-Symbolleiste">
+<!ENTITY bookmarksToolbarCmd.accesskey "L">
+
+<!ENTITY closeWindow.label "Fenster schließen">
+<!ENTITY closeWindow.accesskey "F">
+
+<!ENTITY minimizeButton.tooltip       "Minimieren">
+<!ENTITY restoreButton.tooltip        "Wiederherstellen">
+
+<!ENTITY feedsMenu.label "Diese Seite abonnieren">
+<!ENTITY feedsMenu.accesskey "D">
+
+<!ENTITY menuBar.tooltip                  "Menüleiste">
+<!ENTITY bookmarksToolbar.tooltip         "Lesezeichen-Symbolleiste">
+<!ENTITY navigationToolbar.tooltip        "Navigations-Symbolleiste">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Zurück">
+<!ENTITY backButton.tooltip           "Eine Seite zurück gehen">
+<!ENTITY forwardButton.label          "Vor">
+<!ENTITY forwardButton.tooltip        "Eine Seite vor gehen">
+<!ENTITY reloadButton.label           "Neu laden">
+<!ENTITY reloadButton.tooltip         "Aktuelle Seite neu laden">
+<!ENTITY stopButton.label             "Stopp">
+<!ENTITY stopButton.tooltip           "Laden dieser Seite stoppen">
+<!ENTITY searchButton.label           "Suchen">
+<!ENTITY searchButton.tooltip         "Geben Sie ein Wort in das Feld auf der linken Seite ein, dann klicken Sie &quot;Suchen&quot;">
+<!ENTITY goButton.label               "Gehe zu">
+<!ENTITY goButton.tooltip             "Geben Sie eine Adresse in das Feld auf der linken Seite ein, dann klicken Sie &quot;Gehe zu&quot;">
+<!ENTITY printButton.label            "Drucken">
+<!ENTITY printButton.tooltip          "Diese Seite drucken">
+
+<!ENTITY throbber.tooltip             "&vendorShortName;-Homepage aufrufen">
+
+<!ENTITY locationBar.tooltip          "Geben Sie einen Suchbegriff, ein Schlüsselwort oder eine Web-Adresse ein">
+<!ENTITY locationBar.accesskey        "s">
+<!ENTITY locationBar.title            "Adresse">
+<!ENTITY proxyIcon.tooltip            "Ziehen Sie dieses Symbol, um einen Link zu dieser Seite zu erstellen">
+
+<!ENTITY searchItem.title             "Suchen">
+
+<!ENTITY bookmarksButton.label        "Lesezeichen">
+<!ENTITY bookmarksButton.tooltip      "Lesezeichen-Liste">
+<!ENTITY homeButton.label             "Startseite">
+<!ENTITY bookmarksToolbarItem.label   "Elemente der Lesezeichen-Symbolleiste">
+<!ENTITY bookmarksToolbarChevron.tooltip "Weitere Lesezeichen anzeigen">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Fertig">
+
+<!ENTITY popupIcon.tooltiptext      "Pop-ups von dieser Website nicht mehr blockieren">
+
+<!ENTITY viewSecurityInfo.label      "Sicherheitsinformationen anzeigen">
+<!ENTITY viewSecurityInfo.accesskey  "S">
+<!ENTITY viewCertificate.label       "Zertifikat ansehen">
+<!ENTITY viewCertificate.accesskey   "Z">
+<!ENTITY viewCertManager.label       "Zertifikatverwaltung öffnen">
+<!ENTITY viewCertManager.accesskey   "M">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Bienvenido a Correo y Noticias &brandShortName;">
+<!ENTITY headline.label '¡Bienvenido a Correo y noticias <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label "Correo y Noticias &brandShortName; es un potente cliente de correo y noticias de código
+abierto, que incluye detección avanzada de correo basura y otras útiles características.">
+<!ENTITY features.title "Características">
+<!ENTITY feat_multiacc.label "Admite múltiples cuentas">
+<!ENTITY feat_junk.label "Detección de correo basura">
+<!ENTITY feat_feeds.label "Lector de canales">
+<!ENTITY feat_filters.label "Filtros de mensajes">
+<!ENTITY feat_htmlmsg.label "Soporte de mensajes HTML">
+<!ENTITY feat_abook.label "Libreta de direcciones">
+<!ENTITY feat_tags.label "Etiquetas y vistas de correo personalizables">
+<!ENTITY feat_integration.label "Fuerte integración con la suite de aplicaciones &brandShortName;">
+<!ENTITY dict.title "Diccionarios">
+<!ENTITY dict_intro.label "Los diccionarios se usan para comprobar la ortografía de sus mensajes.">
+<!ENTITY dict_info.label2 'Pueden instalarse muchos idiomas adicionales desde la sección de <a href="dictURL">diccionarios</a> de <a href="https://addons.thunderbird.net/seamonkey/">Add-ons de SeaMonkey y Thunderbird</a>.'>
+<!ENTITY info.title "Más información">
+<!ENTITY info_bugs.label '<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Nosotros</a> agradecemos los informes
+de fallos y solicitudes de nuevas características, pero, por favor, lea antes las <a id="releaseNotesURL" href="">notas de la versión</a> y consulte primero <a href="http://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

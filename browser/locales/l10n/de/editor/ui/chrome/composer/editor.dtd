@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Bearbeiten-Symbolleiste">
+<!ENTITY previewToolbarCmd.label "Vorschau">
+<!ENTITY previewToolbarCmd.tooltip "Diese Seite im Browser laden">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Als Text exportieren…">
+<!ENTITY exportToTextCmd.accesskey "x">
+<!ENTITY previewCmd.label "Seite im Browser ansehen">
+<!ENTITY previewCmd.accesskey "B">
+<!ENTITY sendPageCmd.label "Seite senden…">
+<!ENTITY sendPageCmd.accesskey "S">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Bearbeiten-Symbolleiste">
+<!ENTITY compositionToolbarCmd.accesskey "B">
+<!ENTITY formattingToolbarCmd.label "Format-Symbolleiste">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Bearbeitungsmodus-Symbolleiste">
+<!ENTITY editmodeToolbarCmd.accesskey "e">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "F">
+<!ENTITY grid.label "Positionierungsgitter">
+<!ENTITY grid.accesskey "P">
+<!ENTITY pageProperties.label "Seitentitel und -einstellungen…">
+<!ENTITY pageProperties.accesskey "t">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "HTML validieren">
+<!ENTITY validateCmd.accesskey "v">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Normaler Bearbeitungsmodus">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Tabellenränder und benannte Anker anzeigen">
+<!ENTITY AllTagsModeTab.label "HTML-Tags">
+<!ENTITY AllTagsMode.label "HTML-Tags">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Symbole für alle HTML-Tags anzeigen">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Quelle">
+<!ENTITY HTMLSourceMode.label "HTML-Quelle">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "HTML-Quelle bearbeiten">
+<!ENTITY PreviewModeTab.label "Vorschau">
+<!ENTITY PreviewMode.label "Vorschau">
+<!ENTITY PreviewMode.accesskey "V">
+<!ENTITY PreviewMode.tooltip "Als WYSIWYG (wie im Browser) anzeigen">

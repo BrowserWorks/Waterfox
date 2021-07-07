@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title "Przewijanie myszką">
+<!ENTITY mouseWheelPanel.label "Przewijanie dokumentów za pomocą rolki myszki może zostać zmodyfikowane przez dodatkowe użycie jednego z systemowych przycisków. Użycie rolki myszy z następującym modyfikatorem spowoduje: ">
+<!ENTITY usingJustTheWheel.label "bez modyfikatora">
+<!ENTITY usingWheelAndAlt.label "z przyciskiem &altKey.label;">
+<!ENTITY usingWheelAndCtrl.label "z przyciskiem &ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label "z przyciskiem &shiftKey.label;">
+<!ENTITY mouseWheelGroup.label "Przewijanie pionowe">
+<!ENTITY mouseWheelHorizGroup.label "Przewijanie poziome">
+<!ENTITY sameAsVertical.label "Tak samo, jak przy przewijaniu pionowym">
+<!ENTITY sameAsVertical.accesskey "T">
+<!ENTITY doNothing.label "nie rób nic">
+<!ENTITY doNothing.accesskey "n">
+<!ENTITY doNothingHoriz.accesskey "e">
+<!ENTITY scrollDocument.label "przewijaj dokument">
+<!ENTITY scrollDocument.accesskey "r">
+<!ENTITY scrollDocumentHoriz.accesskey "c">
+<!ENTITY history.label "Przejście do następnej/poprzednio odwiedzonej strony">
+<!ENTITY history.accesskey "o">
+<!ENTITY historyHoriz.accesskey "p">
+<!ENTITY zoom.label "Powiększ bądź pomniejsz stronę">
+<!ENTITY zoom.accesskey "k">
+<!ENTITY zoomHoriz.accesskey "o">
+<!ENTITY wheelSpeed.label "Szybkość przewijania myszką:">
+<!ENTITY wheelSpeed.accesskey "w">
+<!ENTITY wheelSpeedHoriz.accesskey "z">
+<!ENTITY reverseDirection.label "Odwrotny kierunek">
+<!ENTITY reverseDirection.accesskey "w">
+<!ENTITY reverseDirectionHoriz.accesskey "O">

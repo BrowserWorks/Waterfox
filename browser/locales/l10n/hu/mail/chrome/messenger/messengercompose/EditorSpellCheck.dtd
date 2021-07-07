@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Helyesírás-ellenőrzés">
+
+<!ENTITY misspelledWord.label "Helytelen szó:">
+<!ENTITY wordEditField.label "Csere erre:">
+<!ENTITY wordEditField.accessKey "C">
+<!ENTITY checkwordButton.label "Szó ellenőrzése">
+<!ENTITY checkwordButton.accessKey "S">
+<!ENTITY suggestions.label "Javaslatok:">
+<!ENTITY suggestions.accessKey "J">
+<!ENTITY ignoreButton.label "Kihagyás">
+<!ENTITY ignoreButton.accessKey "h">
+<!ENTITY ignoreAllButton.label "Mindet kihagyja">
+<!ENTITY ignoreAllButton.accessKey "M">
+<!ENTITY replaceButton.label "Csere">
+<!ENTITY replaceButton.accessKey "C">
+<!ENTITY replaceAllButton.label "Mindet cseréli">
+<!ENTITY replaceAllButton.accessKey "i">
+<!ENTITY stopButton.label "Leállítás">
+<!ENTITY stopButton.accessKey "L">
+<!ENTITY userDictionary.label "Saját szótár:">
+<!ENTITY moreDictionaries.label "További szótárak letöltése…">
+<!ENTITY addToUserDictionaryButton.label "Szó felvétele">
+<!ENTITY addToUserDictionaryButton.accessKey "f">
+<!ENTITY editUserDictionaryButton.label "Szerkesztés…">
+<!ENTITY editUserDictionaryButton.accessKey "z">
+<!ENTITY recheckButton2.label "Szöveg újraellenőrzése">
+<!ENTITY recheckButton2.accessKey "v">
+<!ENTITY closeButton.label "Bezárás">
+<!ENTITY closeButton.accessKey "B">
+<!ENTITY sendButton.label "Küldés">
+<!ENTITY sendButton.accessKey "K">
+<!ENTITY languagePopup.label "Nyelv:">
+<!ENTITY languagePopup.accessKey "N">

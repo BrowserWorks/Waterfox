@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "초대">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "초대 항목을 갱신 합니다.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "초대 항목이 없습니다.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "허가">
+<!ENTITY calendar.invitations.list.decline.button.label                 "거절">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "이벤트 반복">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "종일">
+<!ENTITY calendar.invitations.list.location.text                        "장소: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "주최자: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "참가자: ">
+<!ENTITY calendar.invitations.list.none.text                            "없음">

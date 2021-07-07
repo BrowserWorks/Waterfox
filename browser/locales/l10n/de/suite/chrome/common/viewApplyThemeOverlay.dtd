@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY applyTheme.label            "Theme anwenden">
+<!ENTITY applyTheme.accesskey        "T">
+<!ENTITY getMoreThemesCmd.label      "Weitere Themes herunterladen">
+<!ENTITY getMoreThemesCmd.accesskey  "W">
+<!ENTITY getBackgroundsCmd.label     "Hintergrund-Themes herunterladen">
+<!ENTITY getBackgroundsCmd.accesskey "H">

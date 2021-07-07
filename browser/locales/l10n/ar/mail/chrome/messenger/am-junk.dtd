@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "إعدادات السُّخام">
+<!ENTITY trainingDescription.label "عند تفعيله سيتعيّن عليك أولا تدريب &brandShortName; ليتعرّف على بريد السّخام باستخدام زر سخام في شريط الأدوات لتحديد البريد السّخام من عدمه. سيكون عليك تحديد السّخام وغير السّخام. بعد ذلك سيستطيع &brandShortName; التعرف على السّخام تلقائيا.">
+<!ENTITY level.label "فعّل التحكم التكيفي في السُّخام لهذا الحساب">
+<!ENTITY level.accesskey "ف">
+
+<!ENTITY move.label "انقل السخام إلى:">
+<!ENTITY move.accesskey "ن">
+<!ENTITY junkFolderOn.label "مجلّد ”السخام“ في:">
+<!ENTITY junkFolderOn.accesskey "خ">
+<!ENTITY otherFolder.label "غير ذلك:">
+<!ENTITY otherFolder.accesskey "غ">
+<!ENTITY purge1.label "احذف تلقائيا السخام الأقدم من">
+<!ENTITY purge1.accesskey "ل">
+<!ENTITY purge2.label "أيام">
+
+<!ENTITY whitelistHeader.label "لا تعتبر البريد سخام تلقائيا إذا كان المرسل ضمن: ">
+<!ENTITY whitelistHeader.accesskey "ض">
+
+<!ENTITY ispHeadersWarning.label "عند تفعيله سيعتبر &brandShortName; تلقائيا البريد المحدد بهذا المصنّف الخارجي سخاما.">
+<!ENTITY ispHeaders.label "ثق في ترويسات السخام الموضوعة بواسطة: ">
+<!ENTITY ispHeaders.accesskey "ث">
+
+<!ENTITY junkClassification.label "التحديد">
+<!ENTITY junkActions.label "الوجهة والاحتفاظ">
+
+<!ENTITY globalJunkPrefs.label "تفضيلات السخام العامة…">
+<!ENTITY globalJunkPrefs.accesskey "س">

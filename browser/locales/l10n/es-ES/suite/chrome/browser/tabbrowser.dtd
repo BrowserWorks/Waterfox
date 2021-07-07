@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY untitledTab "(Sin título)">
+<!ENTITY newTab.label "Pestaña nueva">
+<!ENTITY newTab.accesskey "N">
+<!ENTITY closeTab.label "Cerrar pestaña">
+<!ENTITY closeTab.accesskey "C">
+<!ENTITY closeOtherTabs.label "Cerrar las otras pestañas">
+<!ENTITY closeOtherTabs.accesskey "o">
+<!ENTITY closeTabsToTheEnd.label "Cerrar pestañas a la derecha">
+<!ENTITY closeTabsToTheEnd.accesskey "d">
+<!ENTITY reloadAllTabs.label "Recargar todas las pestañas">
+<!ENTITY reloadAllTabs.accesskey "a">
+<!ENTITY reloadTab.label "Recargar pestaña">
+<!ENTITY reloadTab.accesskey "R">
+<!ENTITY bookmarkGroup.label "Añadir a marcadores este grupo de pestañas">
+<!ENTITY bookmarkGroup.accesskey "m">
+<!ENTITY closeTabButton.tooltip "Cerrar pestaña actual">
+<!ENTITY newTabButton.tooltip "Abrir una pestaña nueva">
+<!ENTITY listAllTabs.tooltip "Listar todas las pestañas">
+<!ENTITY undoCloseTab.label "Deshacer cerrar pestaña">
+<!ENTITY undoCloseTab.accesskey "h">

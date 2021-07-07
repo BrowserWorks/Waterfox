@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Eliminar cuenta y datos">
+<!ENTITY removeButton.label           "Eliminar">
+<!ENTITY removeButton.accesskey       "R">
+<!ENTITY removeAccount.label          "Eliminar información de cuenta">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Elimina solamente el conocimiento de &brandShortName; de esta cuenta. No afecta la cuenta en sí misma en el servidor.">
+<!ENTITY removeData.label             "Eliminar datos de mensajes">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Eliminar datos de la conversación">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Elimina todos los mensajes, carpetas y filtros asociados con esta cuenta del disco local. Esto no afecta algunos mensajes que aún pueden mantenerse en el servidor. No seleccionar si se planea archivar los datos locales o re-usarlos en &brandShortName; más tarde.">
+<!ENTITY removeDataServerAccount.desc "Elimina todos los mensajes, carpetas y filtros asociados con esta cuenta del disco local. Los mensajes y carpetas aún se mantienen en el servidor.">
+<!ENTITY removeDataChatAccount.desc   "Elimina todos los registros de conversaciones de esta cuenta guardados en el disco local.">
+<!ENTITY showData.label               "Mostrar ubicación de datos">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "Eliminando datos seleccionados…">
+<!ENTITY progressSuccess              "Eliminación exitosa.">
+<!ENTITY progressFailure              "Eliminación fallida.">

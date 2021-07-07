@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Tulajdonságok">
+
+<!ENTITY generalInfo.label                       "Általános információk">
+<!ENTITY folderCharsetFallback2.label            "Tartalék szövegkódolás:">
+<!ENTITY folderCharsetFallback2.accesskey        "d">
+<!ENTITY folderCharsetEnforce2.label             "A kódolás alkalmazása a mappa összes üzeneténél (az üzenet egyedi karakterkódolás-beállításai és az automatikus felismerés figyelmen kívül hagyása)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Összefoglaló fájlindex újraépítése">
+<!ENTITY folderRebuildSummaryFile2.label         "Mappa javítása">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "M">
+<!ENTITY folderRebuildSummaryFile.explanation    "Néha a mappaindex (.msf) fájlja megsérül, és az üzenetek nem jelennek meg, vagy a törölt üzenetek megjelennek; a mappa javítása megszüntetheti ezeket a problémákat.">
+<!ENTITY folderIncludeInGlobalSearch.label       "A mappa üzeneteinek megjelenítése a globális keresés eredményei között">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Megőrzési házirend">
+<!ENTITY retentionUseAccount.label  "A postafiók beállításainak megfelelően">
+<!ENTITY retentionUseAccount.accesskey "p">
+<!ENTITY daysOld.label "nap">
+<!ENTITY message.label "üzenet">
+<!ENTITY retentionCleanup.label "Lemezhely felszabadítása céljából a régi üzenetek véglegesen törölhetők.">
+<!ENTITY retentionCleanupImap.label "Lemezhely felszabadítása céljából a régi üzenetek véglegesen törölhetők, a helyi másolatok és a távoli kiszolgálón lévők egyaránt.">
+<!ENTITY retentionCleanupPop.label "Lemezhely felszabadítása céljából a régi üzenetek véglegesen törölhetők, beleértve a távoli kiszolgálón lévő eredetieket is.">
+<!ENTITY retentionDeleteMsg.label "Üzenetek törlése, ha régebbiek, mint">
+<!ENTITY retentionDeleteMsg.accesskey "z">
+<!ENTITY retentionKeepAll.label "Minden üzenet megtartása">
+<!ENTITY retentionKeepAll.accesskey "M">
+<!ENTITY retentionKeepRecent.label "Minden üzenet törlése, kivéve az utolsó">
+<!ENTITY retentionKeepRecent.accesskey "u">
+<!ENTITY retentionApplyToFlagged.label "Csillagozott üzenetek megtartása">
+<!ENTITY retentionApplyToFlagged.accesskey "C">
+
+<!ENTITY folderSynchronizationTab.label          "Szinkronizálás">
+<!ENTITY folderCheckForNewMessages2.label         "Ha új üzenetet érkezik ebbe a postafiókba, mindig nézze meg ezt a mappát.">
+<!ENTITY folderCheckForNewMessages2.accesskey     "H">
+
+<!ENTITY offlineFolder.check.label               "Mappa kiválasztása kapcsolat nélküli munkához">
+<!ENTITY offlineFolder.check.accesskey           "M">
+<!ENTITY offlineFolder.button.label              "Letöltés">
+<!ENTITY offlineFolder.button.accesskey          "L">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Hírcsoport kiválasztása kapcsolat nélküli munkához">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "H">
+<!ENTITY offlineNewsgroup.button.label           "Letöltés">
+<!ENTITY offlineNewsgroup.button.accesskey       "L">
+
+<!ENTITY folderProps.name.label                  "Név:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Ikon színe:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Alapértelmezett szín visszaállítása">
+<!ENTITY folderProps.location.label              "Hely:">
+<!ENTITY folderProps.location.accesskey          "H">
+
+<!ENTITY folderSharingTab.label                  "Megosztás">
+<!ENTITY privileges.button.label                 "Jogosultságok…">
+<!ENTITY privileges.button.accesskey             "J">
+<!ENTITY permissionsDesc.label                   "A következő jogosultságai vannak:">
+<!ENTITY folderOtherUsers.label                  "Mások, akik hozzáférnek ehhez a mappához:">
+<!ENTITY folderType.label                        "Mappatípus:">
+
+<!ENTITY folderQuotaTab.label                    "Kvóta">
+<!ENTITY folderQuotaUsage.label                  "Használat:">
+<!ENTITY folderQuotaStatus.label                 "Állapot:">
+
+<!ENTITY numberOfMessages.label                  "Üzenetek száma:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "ismeretlen">
+<!ENTITY sizeOnDisk.label                        "Méret a lemezen:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "ismeretlen">

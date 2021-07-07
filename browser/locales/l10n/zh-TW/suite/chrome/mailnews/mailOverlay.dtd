@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  newMessageCmd.key               "M">
+<!ENTITY  newMessageCmd.label             "郵件">
+<!ENTITY  newMessageCmd.accesskey         "M">
+ 
+<!ENTITY  newContactCmd.label             "聯絡人…">
+<!ENTITY  newContactCmd.accesskey         "C">
+ 
+<!ENTITY printButton.label "列印">
+<!ENTITY printButton.tooltip "列印此訊息">
+

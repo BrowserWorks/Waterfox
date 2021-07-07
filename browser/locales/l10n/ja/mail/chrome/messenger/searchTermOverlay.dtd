@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label		"すべての条件に一致">
+<!ENTITY matchAll.accesskey	"a">
+<!ENTITY matchAny.label		"いずれかの条件に一致">
+<!ENTITY matchAny.accesskey	"o">
+<!ENTITY matchAllMsgs.label	"条件なし"><!-- 条件を設定しない場合の選択肢 -->
+<!ENTITY matchAllMsgs.accesskey	"m">
+
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the search widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+<!-- Bug 743974 参照  -->
+<!ENTITY searchTermListAttributesFlexValue	"1">
+<!ENTITY searchTermListOperatorsFlexValue	"1">
+<!ENTITY searchTermListValueFlexValue		"3">

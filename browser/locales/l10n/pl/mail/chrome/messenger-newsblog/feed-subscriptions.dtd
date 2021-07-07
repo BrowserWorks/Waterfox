@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY feedSubscriptions.label "Subskrypcje">
+<!ENTITY learnMore.label "Więcej informacji o subskrypcjach">
+
+<!ENTITY feedTitle.label "Tytuł:">
+<!ENTITY feedTitle.accesskey "T">
+
+<!ENTITY feedLocation.label "Adres URL:">
+<!ENTITY feedLocation.accesskey "A">
+<!ENTITY feedLocation2.placeholder "Wprowadź poprawny adres URL kanału">
+<!ENTITY locationValidate.label "Sprawdź poprawność">
+<!ENTITY validateText.label "Sprawdź poprawność i pobierz prawidłowy adres URL.">
+
+<!ENTITY feedFolder.label "Przechowuj artykuły w">
+<!ENTITY feedFolder.accesskey "w">
+
+<!ENTITY biffStart.label "Sprawdzaj, czy są nowe artykuły co ">
+<!ENTITY biffStart.accesskey "k">
+<!ENTITY biffMinutes.label "minut">
+<!ENTITY biffMinutes.accesskey "n">
+<!ENTITY biffDays.label "dni">
+<!ENTITY biffDays.accesskey "d">
+<!ENTITY recommendedUnits.label "Zalecenie wydawcy:">
+
+<!ENTITY quickMode.label "Pokazuj podsumowanie artykułu, zamiast wczytywać stronę internetową">
+<!ENTITY quickMode.accesskey "P">
+
+<!ENTITY autotagEnable.label "Automatyczne tworzenie etykiet na podstawie nazw w elementach &lt;category&gt; kanału">
+<!ENTITY autotagEnable.accesskey "A">
+<!ENTITY autotagUsePrefix.label "Przedrostek etykiet:">
+<!ENTITY autotagUsePrefix.accesskey "P">
+<!ENTITY autoTagPrefix.placeholder "przedrostek etykiet">
+
+<!ENTITY button.addFeed.label "Dodaj">
+<!ENTITY button.addFeed.accesskey "D">
+<!ENTITY button.verifyFeed.label "Zweryfikuj">
+<!ENTITY button.verifyFeed.accesskey "w">
+<!ENTITY button.updateFeed.label "Uaktualnij">
+<!ENTITY button.updateFeed.accesskey "a">
+<!ENTITY button.removeFeed.label "Usuń">
+<!ENTITY button.removeFeed.accesskey "U">
+<!ENTITY button.importOPML.label "Importuj">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label "Eksportuj">
+<!ENTITY button.exportOPML.accesskey "k">
+<!ENTITY button.exportOPML.tooltip "Eksport źródeł subskrypcji z zachowaniem struktury folderów; eksport jako lista z przytrzymanym klawiszem ctrl">
+
+<!ENTITY cmd.close.commandKey "w">
+<!ENTITY button.close.label "Zamknij">

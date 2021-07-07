@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Tabbed Browsing">
+
+<!ENTITY tabDisplay.label "Tab Display">
+<!ENTITY autoHide.label "Hide the tab bar when only one tab is open">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "Switch to new tabs opened from links">
+<!ENTITY background.accesskey "S">
+<!ENTITY warnOnClose.label "Warn me when closing a window with multiple tabs">
+<!ENTITY warnOnClose.accesskey "n">
+<!ENTITY relatedAfterCurrent.label "Open related tabs after current tab">
+<!ENTITY relatedAfterCurrent.accesskey "O">
+
+<!ENTITY loadGroup.label "When opening a bookmark group">
+<!ENTITY loadGroupAppend.label "Add tabs">
+<!ENTITY loadGroupAppend.accesskey "A">
+<!ENTITY loadGroupReplace.label "Replace existing tabs">
+<!ENTITY loadGroupReplace.accesskey "R">
+
+<!ENTITY openTabs.label "Open tabs instead of windows for">
+
+<!ENTITY middleClick.label "Middle-click, Ctrl+click or Ctrl+Enter on links in a Web page">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Middle-click, &#8984;+click or &#8984;+Return on links in a Web page">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "Ctrl+Enter in the Location bar">
+<!ENTITY urlbar.accesskey "L">
+<!ENTITY urlbarMac.label "&#8984;+Return in the Location bar">
+<!ENTITY urlbarMac.accesskey "L">
+
+<!ENTITY openManagers.label "Open in a new tab instead of a stand-alone window">
+<!ENTITY openDataManager.label "Data Manager">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "Add-ons Manager">
+<!ENTITY openAddOnsManager.accesskey "n">

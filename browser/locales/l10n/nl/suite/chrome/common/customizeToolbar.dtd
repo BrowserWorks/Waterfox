@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "Werkbalk aanpassen">
+<!ENTITY dialog.dimensions        "width: 115ch; height: 45em;">
+<!ENTITY instructions.description "U kunt items toevoegen of verwijderen door ze naar of van de werkbalken te slepen.">
+<!ENTITY show.label               "Tonen:">
+<!ENTITY iconsAndText.label       "Pictogrammen en tekst">
+<!ENTITY icons.label              "Pictogrammen">
+<!ENTITY text.label               "Tekst">
+<!ENTITY useSmallIcons.label      "Kleine pictogrammen">
+<!ENTITY restoreDefaultSet.label  "Standaardset herstellen">
+<!ENTITY addNewToolbar.label      "Nieuwe werkbalk">
+<!ENTITY saveChanges.label        "Gereed">
+<!ENTITY undoChanges.label        "Wijzigingen ongedaan maken">

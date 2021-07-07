@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Сквозное шифрование">
+<!ENTITY e2eLearnMore.label "Подробнее">
+
+<!ENTITY e2eEnc.description "Без сквозного шифрования содержимое сообщений легко может быть прочтено вашим провайдером электронной почты или системой прослушивания.">
+<!ENTITY e2eeReqWarning.description "Если вам требуется шифрование, то для отправки сообщений у вас должен быть открытый ключ или сертификат каждого получателя.">
+
+<!ENTITY e2eSigning.description "Цифровая подпись позволяет получателям удостовериться, что сообщение было отправлено именно вами, и что его содержимое не было изменено.">
+<!ENTITY e2eTechPref.description "Предпочитаемая технология шифрования:">
+
+<!ENTITY doNotEncrypt.label "Не включать шифрование по умолчанию">
+<!ENTITY doNotEncrypt.accesskey "е">
+<!ENTITY requireEncryptMessage.label "Требовать шифрование по умолчанию">
+<!ENTITY requireEncryptMessage.accesskey "в">
+<!ENTITY encryptionCert2.message "Личный сертификат для шифрования:">
+<!ENTITY digitalSign.certificate.button "Выбрать…">
+<!ENTITY digitalSign.certificate.accesskey "ы">
+<!ENTITY digitalSign.certificate_clear.button "Очистить">
+<!ENTITY digitalSign.certificate_clear.accesskey "ч">
+<!ENTITY encryption.certificate.button "Выбрать…">
+<!ENTITY encryption.certificate.accesskey "б">
+<!ENTITY encryption.certificate_clear.button "Очистить">
+<!ENTITY encryption.certificate_clear.accesskey "и">
+<!ENTITY signingGroupTitle.label "Цифровая подпись">
+<!ENTITY signMessage2.label "Добавлять цифровую подпись по умолчанию">
+<!ENTITY signMessage.accesskey "д">
+
+<!ENTITY signingCert2.message "Личный сертификат для цифровой подписи:">
+
+<!ENTITY sendingDefaults.label "Настройки по умолчанию для отправки сообщений">
+
+<!ENTITY technologyAutomatic.label "Автовыбор на основе доступных ключей или сертификатов">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Управление сертификатами S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Устройства защиты S/MIME">
+<!ENTITY manageDevices2.accesskey "а">
+
+<!ENTITY technologySMIME.label "Предпочитать S/MIME">
+<!ENTITY technologyOpenPGP.label "Предпочитать OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Выбор сертификата">
+<!ENTITY certPicker.info  "Сертификат:">
+<!ENTITY certPicker.detailsLabel "Информация о выбранном сертификате:">
+
+<!ENTITY openpgpKey.message "Личный ключ для шифрования и цифровой подписи:">
+<!ENTITY openpgpKey.button "Установить личный ключ…">
+<!ENTITY openpgpKey.accesskey "ы">

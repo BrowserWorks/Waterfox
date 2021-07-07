@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Vel skrivebordsbakgrunn">
+
+<!ENTITY position.label             "Posisjon:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Side ved side">
+<!ENTITY position.stretch.label     "Strekt">
+<!ENTITY position.center.label      "Sentrert">
+<!ENTITY position.fill.label        "Fyll">
+<!ENTITY position.fit.label         "Tilpass">
+<!ENTITY picker.label               "Farge:">
+<!ENTITY picker.accesskey           "F">
+<!ENTITY preview.caption            "Førehandsvis">
+<!ENTITY apply.label                "Bruk">
+<!ENTITY apply.accesskey            "B">
+<!ENTITY close.label                "Lat att">

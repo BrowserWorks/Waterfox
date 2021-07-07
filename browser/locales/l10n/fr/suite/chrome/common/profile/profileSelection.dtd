@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Sélection d’un profil utilisateur">
+<!ENTITY            profileManager.title "Gestionnaire de profils de &brandShortName;">
+
+<!ENTITY            manage.label     "Gérer les profils…">
+<!ENTITY            manage.accesskey "G">
+<!ENTITY            select.label     "Utiliser ce profil">
+
+<!ENTITY            availableProfiles.label "Profils disponibles">
+
+<!ENTITY            introStart.label         "Pour accéder à votre profil personnel, qui contient vos messages stockés, vos réglages et autres informations personnalisées, veuillez choisir votre profil dans la liste et cliquez sur &start.label; pour commencer votre session.">
+<!ENTITY            introSwitch.label        "Pour basculer vers un autre profil, qui contient les messages stockés, les réglages et autres informations personnalisées, veuillez choisir ce profil dans la liste et cliquez sur &select.label; pour commencer à utiliser ce profil.">
+<!ENTITY            profileManagerText.label "&brandShortName; stocke vos réglages, préférences, marque-pages, courriers et autres informations personnelles dans votre profil d’utilisateur.">
+
+<!ENTITY            autoSelect.label         "Utiliser par défaut le profil sélectionné">
+<!ENTITY            autoSelect.accesskey     "U">
+
+<!ENTITY            start.label              "Démarrer &brandShortName;">
+<!ENTITY            exit.label               "Quitter">
+
+<!ENTITY            newButton.label          "Créer un profil…">
+<!ENTITY            newButton.accesskey      "C">
+<!ENTITY            renameButton.label       "Renommer un profil…">
+<!ENTITY            renameButton.accesskey   "R">
+<!ENTITY            deleteButton.label       "Supprimer un profil…">
+<!ENTITY            deleteButton.accesskey   "S">
+
+<!ENTITY            offlineState.label       "Travailler hors connexion">
+<!ENTITY            offlineState.accesskey   "T">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "웹 페이지 나가기">
+<!ENTITY safeb.palm.decline.label "경고 무시">
+<!ENTITY safeb.palm.reportPage.label "차단 이유 상세 정보">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "<a id='advisory_provider'/>의 자문을 받음">
+
+<!ENTITY safeb.blocked.malwarePage.title "공격 사이트 보고!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> 사이트는 공격 의심 사이트로 보고가 되어 보안 설정에 따라 차단합니다.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>공격 사이트에서 개인 정보를 탈취하거나, 다른 곳을 공격하려고 당신의 컴퓨터를 이용하거나 또는 당신의 시스템에 피해를 주려고 악성 프로그램을 설치하려고 합니다.</p><p>어떤 공격 사이트는 의도적으로 악성 소프트웨어를 배포하지만 그것들에 대한 지식이나 권한이 없어 많은 시스템들이 제대로 대처를 하지 못합니다.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "의심스러운 사이트!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "<span id='phishing_sitename'/> 웹 페이지는 의심스러운 사이트로 신고되어 보안 설정에 따라 차단되었습니다.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>의심스러운 사이트들은 소프트웨어를 설치하거나 비밀번호, 휴대 전화 번호 또는 신용카드와 같은 개인 정보를 유출시키는 위험한 행동을 몰래하도록 설계되어있습니다.</p><p>이 웹 페이지에서 어떠한 정보를 입력한다면 정보 유출이나 다른 사기범죄로 연결 될 수 있습니다.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Reported Unwanted Software Site!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> 서버의 웹페이지는 원치 않는 소프트웨어를 포함하고 있는 것으로 보고되어 사용자의 보안 설정에 맞춰 차단되었습니다.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "원치 않는 소프트웨어 페이지들은 예상치 못한 방식으로 사용자의 시스템에 피해를 줄 수 있는 소프트웨어를 설치하려 합니다.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "방문하려는 사이트에 악성 코드가 있을 수 있음">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "사용자 정보(예를 들어 사진, 비밀번호, 메시지, 신용카드 등)를 훔치거나 지울 수 있는 위험한 앱을 설치할 수 있기 때문에 &brandShortName;가 페이지를 차단하였습니다.">

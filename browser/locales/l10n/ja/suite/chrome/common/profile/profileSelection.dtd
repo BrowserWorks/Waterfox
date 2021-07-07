@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label		"プロファイルを選択">
+<!ENTITY profileManager.title		"&brandShortName; プロファイルマネージャー">
+
+<!ENTITY manage.label			"プロファイルの管理...">
+<!ENTITY manage.accesskey		"M">
+<!ENTITY select.label			"このプロファイルに切り換え">
+
+<!ENTITY availableProfiles.label	"利用可能なプロファイル">
+
+<!ENTITY introStart.label		"あなたのプロファイル (保存されたメッセージ、設定とその他の個人情報を含みます) にアクセスしてセッションを開始するために、あなたのプロファイルをリストから選んで、&start.label; をクリックしてください。">
+<!ENTITY introSwitch.label		"別のプロファイル (保存されたメッセージ、設定と他の個人情報を含みます) に切り換えるには、リストから切り換えたいプロファイルを選択して、[&select.label;] をクリックしてください。">
+<!ENTITY profileManagerText.label	"&brandShortName; は、ユーザー設定、設定、ブックマーク、保存したメール、その他の情報をユーザープロファイルに保存します。">
+
+<!ENTITY autoSelect.label		"このプロファイルを既定に設定する">
+<!ENTITY autoSelect.accesskey		"S">
+
+<!ENTITY start.label			"&brandShortName; を起動">
+<!ENTITY exit.label			"終了">
+
+<!ENTITY newButton.label		"プロファイルを作成...">
+<!ENTITY newButton.accesskey		"C">
+<!ENTITY renameButton.label		"プロファイル名を変更...">
+<!ENTITY renameButton.accesskey		"R">
+<!ENTITY deleteButton.label		"プロファイルを削除...">
+<!ENTITY deleteButton.accesskey		"D">
+
+<!ENTITY offlineState.label		"オフライン作業">
+<!ENTITY offlineState.accesskey		"o">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Nešifruoti">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "o">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Būtinai šifruoti">
+<!ENTITY menu_securityEncryptRequire.accesskey "Š">
+
+<!ENTITY menu_securitySign.label "Pasirašyti skaitmeniškai">
+<!ENTITY menu_securitySign.accesskey "k">
+
+<!ENTITY menu_securityAttachMyKey.label "Pridėti mano viešą raktą">
+<!ENTITY menu_securityAttachMyKey.accesskey "A">
+
+<!ENTITY menu_securityTech.label "Šifravimo technologija">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "„OpenPGP“">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Laiško saugumas">
+<!ENTITY menu_securityStatus.accesskey "s">
+
+<!ENTITY securityButton.label "Saugumas">
+<!ENTITY securityButton.tooltip "Peržiūrėti arba pakeisti saugumo nuostatas">
+
+<!ENTITY menu_viewSecurityStatus.label "Informacija apie laiško saugumą">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

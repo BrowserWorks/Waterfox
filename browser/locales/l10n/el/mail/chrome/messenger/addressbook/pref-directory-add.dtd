@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Όνομα: ">
+<!ENTITY directoryName.accesskey           "μ">
+<!ENTITY directoryHostname.label           "Όνομα συστήματος: ">
+<!ENTITY directoryHostname.accesskey       "ν">
+<!ENTITY directoryBaseDN.label             "DN βάσης: ">
+<!ENTITY directoryBaseDN.accesskey         "β">
+<!ENTITY findButton.label                  "Εύρεση">
+<!ENTITY findButton.accesskey              "ρ">
+<!ENTITY directorySecure.label             "Χρήση ασφαλούς σύνδεσης (SSL)">
+<!ENTITY directorySecure.accesskey         "Χ">
+<!ENTITY directoryLogin.label              "DN σύνδεσης: ">
+<!ENTITY directoryLogin.accesskey          "σ">
+<!ENTITY General.tab                       "Γενικά">
+<!ENTITY Offline.tab                       "Εκτός σύνδεσης">
+<!ENTITY Advanced.tab                      "Σύνθετα">
+<!ENTITY portNumber.label                  "Αριθμός θύρας: ">
+<!ENTITY portNumber.accesskey              "θ">
+<!ENTITY searchFilter.label                "Φίλτρο αναζήτησης: ">
+<!ENTITY searchFilter.accesskey            "Φ">
+<!ENTITY scope.label                       "Εμβέλεια: ">
+<!ENTITY scope.accesskey                   "β">
+<!ENTITY scopeOneLevel.label               "Ένα επίπεδο">
+<!ENTITY scopeOneLevel.accesskey           "π">
+<!ENTITY scopeSubtree.label                "Υποφάκελος">
+<!ENTITY scopeSubtree.accesskey            "Υ">
+<!ENTITY return.label                      "Ανώτατο όριο αποτελεσμάτων:">
+<!ENTITY return.accesskey                  "σ">
+<!ENTITY results.label                     "αποτελέσματα">
+<!ENTITY offlineText.label                 "Μπορείτε να κάνετε λήψη ενός τοπικού αντιγράφου αυτού του καταλόγου ώστε να είναι διαθέσιμο για εργασία εκτός σύνδεσης.">
+<!ENTITY saslMechanism.label               "Μέθοδος σύνδεσης: ">
+<!ENTITY saslMechanism.accesskey           "θ">
+<!ENTITY saslOff.label                     "Απλή">
+<!ENTITY saslOff.accesskey                 "λ">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "40em">

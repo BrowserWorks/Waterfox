@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title   "Teckenkodning">
+<!ENTITY messageDisplay.caption          "Visning av meddelanden">
+<!ENTITY viewFallbackCharset2.label       "Reservteckenkodning:">
+<!ENTITY viewFallbackCharset2.accesskey   "R">
+<!ENTITY viewFallbackCharset.desc        "(Används för gammalt innehåll som inte innehåller uppgift om teckenkodning.)">
+
+<!ENTITY composingMessages.caption       "Skriva meddelanden">
+<!ENTITY useMIME.label                   "För meddelanden som innehåller 8-bitarstecken, använd MIME-kodning 'quoted printable'. Är rutan inte markerad skickas meddelanden som de är.">
+<!ENTITY useMIME.accesskey               "m">
+<!ENTITY sendDefaultCharset2.label        "Förinställd teckenkodning:">
+<!ENTITY sendDefaultCharset2.accesskey    "t">
+<!ENTITY replyInDefaultCharset3.label    "Om möjligt, använd den förinställda teckenkodningen i svar. (Är rutan inte markerad används denna teckenkodning bara för nya meddelanden.)">
+<!ENTITY replyInDefaultCharset3.accesskey "O">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Cài đặt thư rác">
+<!ENTITY trainingDescription.label "Nếu được bật, trước tiên bạn phải đào tạo &brandShortName; để xác định thư rác bằng cách sử dụng nút thanh công cụ Thư rác để đánh dấu thư là rác hay không. Bạn cần xác định cả thư rác và không rác. Sau đó &brandShortName; sẽ có thể đánh dấu thư rác tự động.">
+<!ENTITY level.label "Kích hoạt nút điều khiển thư rác tích hợp cho tài khoản này">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Chuyển thư rác mới vào:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "Thư mục &quot;thư rác&quot; trên:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "Khác:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Tự động xóa thư rác sau">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "ngày">
+
+<!ENTITY whitelistHeader.label "Không tự động đánh dấu thư là rác nếu người gửi ở trong: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "Nếu được bật, &brandShortName; sẽ tự động coi các thư được đánh dấu bởi bộ phân loại bên ngoài này là rác.">
+<!ENTITY ispHeaders.label "Tin tưởng bộ lọc đầu đề thư rác của: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Phần được chọn">
+<!ENTITY junkActions.label "Đích đến và thời gian lưu trữ">
+
+<!ENTITY globalJunkPrefs.label "Tuỳ chỉnh thư rác bao quát…">
+<!ENTITY globalJunkPrefs.accesskey "G">

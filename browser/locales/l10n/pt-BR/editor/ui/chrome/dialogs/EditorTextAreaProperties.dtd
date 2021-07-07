@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propriedades da área textual">
+
+<!ENTITY Settings.label "Configurações">
+
+<!ENTITY TextAreaName.label "Nome do campo:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Linhas:">
+<!ENTITY TextAreaRows.accessKey "L">
+<!ENTITY TextAreaCols.label "Colunas:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "Somente leitura">
+<!ENTITY TextAreaReadOnly.accessKey "S">
+<!ENTITY TextAreaDisabled.label "Desativado">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "Índice da tabela:">
+<!ENTITY TextAreaTabIndex.accessKey "P">
+<!ENTITY TextAreaAccessKey.label "Tecla de acesso:">
+<!ENTITY TextAreaAccessKey.accessKey "T">
+<!ENTITY InitialText.label "Texto inicial:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Modo de contorno:">
+<!ENTITY TextAreaWrap.accessKey "M">
+<!ENTITY WrapDefault.value "Padrão">
+<!ENTITY WrapOff.value "Desativada">
+<!ENTITY WrapHard.value "Rígida">
+<!ENTITY WrapSoft.value "Flexível">
+<!ENTITY WrapPhysical.value "Física">
+<!ENTITY WrapVirtual.value "Virtual">

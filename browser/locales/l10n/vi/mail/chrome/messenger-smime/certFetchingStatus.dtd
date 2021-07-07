@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE shown while obtaining certificates from a directory -->
+
+<!ENTITY title.label "Đang tải xuống chứng chỉ">
+<!ENTITY info.message "Đang tìm chứng chỉ của người nhận trong thư mục. Có thể sẽ mất vài phút.">
+<!ENTITY stop.label "Dừng tìm kiếm">

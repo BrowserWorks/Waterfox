@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "進階">
+
+<!ENTITY systemPref.caption               "系統設定">
+<!ENTITY systemPrefCheck.label            "使用系統的設定">
+<!ENTITY systemPrefCheck.accesskey        "U">
+<!ENTITY systemPref.desc                  "勾選此項以使用系統設定取代 &brandShortName; 的設定">
+
+<!ENTITY prefCheckDefault.caption         "系統整合">
+<!ENTITY prefCheckDefaultClient.label     "檢查啟動時的預設應用程式設定">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY printing.label                   "列印">
+<!ENTITY useNativePrintDialog.label       "若支援，使用原生的列印對話框">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "使用全域列印設定">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "程式錯誤回報員">
+<!ENTITY submitCrashes.label              "送出錯誤報告">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "開發者工具">
+<!ENTITY allowDebugger.label              "允許除錯器連線至 &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "A">
+<!ENTITY allowRemoteConnections.label     "允許來自其他電腦的連線">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "連入連線提示">
+<!ENTITY connectionPrompt.accesskey       "P">
+<!ENTITY remoteDebuggerPort.label         "用來連線的埠號:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

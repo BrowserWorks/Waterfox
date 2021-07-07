@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "กำหนดการตั้งค่าสำหรับข้อมูลประจำตัวนี้:">
+
+<!ENTITY settingsTab.label       "การตั้งค่า">
+<!ENTITY copiesFoldersTab.label "สำเนาและโฟลเดอร์">
+<!ENTITY addressingTab.label    "การเขียนและการกำหนดที่อยู่">
+
+<!ENTITY publicData.label        "ข้อมูลสาธารณะ">
+<!ENTITY privateData.label       "ข้อมูลส่วนตัว">
+<!ENTITY identityAlias.label     "ป้ายกำกับข้อมูลประจำตัว:">
+<!ENTITY identityAlias.accesskey "ป">

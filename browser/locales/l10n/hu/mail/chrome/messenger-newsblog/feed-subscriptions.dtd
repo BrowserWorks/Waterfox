@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Feliratkozás hírforrásokra">
+<!ENTITY learnMore.label             "További tudnivalók">
+
+<!ENTITY feedTitle.label             "Cím:">
+<!ENTITY feedTitle.accesskey         "C">
+
+<!ENTITY feedLocation.label          "Hírforrás URL:">
+<!ENTITY feedLocation.accesskey      "H">
+<!ENTITY feedLocation2.placeholder   "Adjon meg érvényes hírforrást">
+<!ENTITY locationValidate.label      "Ellenőrzés">
+<!ENTITY validateText.label          "Ellenőrzés és érvényes URL lekérése.">
+
+<!ENTITY feedFolder.label            "Letöltött cikkek tárolása:">
+<!ENTITY feedFolder.accesskey        "L">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Új cikkek ellenőrzése ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "perceként">
+<!ENTITY biffMinutes.accesskey       "r">
+<!ENTITY biffDays.label              "naponta">
+<!ENTITY biffDays.accesskey          "n">
+<!ENTITY recommendedUnits.label      "Közzétevő ajánlja:">
+
+<!ENTITY quickMode.label             "A cikk összefoglalójának megjelenítése a weboldal letöltése helyett">
+<!ENTITY quickMode.accesskey         "m">
+
+<!ENTITY autotagEnable.label         "Címkék automatikus létrehozása a hírforrás &lt;kategória&gt; neveiből">
+<!ENTITY autotagEnable.accesskey     "a">
+<!ENTITY autotagUsePrefix.label      "Címkék előtagja:">
+<!ENTITY autotagUsePrefix.accesskey  "k">
+<!ENTITY autoTagPrefix.placeholder   "Írjon be egy címkeelőtagot">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Hozzáadás">
+<!ENTITY button.addFeed.accesskey    "H">
+<!ENTITY button.verifyFeed.label     "Ellenőrzés">
+<!ENTITY button.verifyFeed.accesskey "E">
+<!ENTITY button.updateFeed.label     "Frissítés">
+<!ENTITY button.updateFeed.accesskey "F">
+<!ENTITY button.removeFeed.label     "Eltávolítás">
+<!ENTITY button.removeFeed.accesskey "E">
+<!ENTITY button.importOPML.label     "Importálás">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportálás">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Hírforrások exportálása mappaszerkezettel; Ctrl+kattintás vagy Ctrl+Enter a hírforrások listaként való exportálásához">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Bezárás">

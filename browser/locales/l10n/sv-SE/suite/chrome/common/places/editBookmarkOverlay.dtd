@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Namn:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Plats:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "P">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Kanaladress:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "K">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Platsadress:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "a">
+<!ENTITY editBookmarkOverlay.folder.label                    "Mapp:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Visa alla bokmärkesmappar">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Dölj">
+<!ENTITY editBookmarkOverlay.tags.label                      "Etiketter:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "E">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Separera etiketter med komman">
+<!ENTITY editBookmarkOverlay.description.label               "Beskrivning:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "B">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Nyckelord:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "o">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Visa alla etiketter">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Öppna bokmärket i sidofältet">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "s">
+<!ENTITY editBookmarkOverlay.choose.label                    "Välj…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Ny mapp">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "m">

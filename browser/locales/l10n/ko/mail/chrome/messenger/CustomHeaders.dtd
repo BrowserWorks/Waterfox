@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "머리말 설정">
+<!ENTITY addButton.label "추가">
+<!ENTITY addButton.accesskey "A">
+<!ENTITY removeButton.label "제거">
+<!ENTITY removeButton.accesskey "R">
+<!ENTITY newMsgHeader.label "새 메시지 머리말:">
+<!ENTITY newMsgHeader.accesskey "N">

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Tråd">
+<!ENTITY fromColumn.label "Från">
+<!ENTITY recipientColumn.label "Mottagare">
+<!ENTITY attachmentColumn.label "Bilagor">
+<!ENTITY subjectColumn.label "Ämne">
+<!ENTITY dateColumn.label "Datum">
+<!ENTITY priorityColumn.label "Prioritet">
+<!ENTITY tagsColumn.label "Etiketter">
+<!ENTITY accountColumn.label "Konto">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Storlek">
+<!ENTITY junkStatusColumn.label "Skräppoststatus">
+<!ENTITY unreadColumn.label "Olästa i tråd">
+<!ENTITY totalColumn.label "Totalt i tråd">
+<!ENTITY readColumn.label "Lästa">
+<!ENTITY receivedColumn.label "Mottagningsdatum">
+<!ENTITY flagColumn.label "Flagga">
+<!ENTITY locationColumn.label "Plats">
+<!ENTITY idColumn.label "Mottagningsföljd">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Välj vilka kolumner som ska visas">
+<!ENTITY threadColumn2.tooltip "Visa meddelandtråden">
+<!ENTITY fromColumn2.tooltip "Ordna efter frånraden">
+<!ENTITY recipientColumn2.tooltip "Ordna efter mottagare">
+<!ENTITY attachmentColumn2.tooltip "Ordna efter bilagor">
+<!ENTITY subjectColumn2.tooltip "Ordna efter ämne">
+<!ENTITY dateColumn2.tooltip "Ordna efter datum">
+<!ENTITY priorityColumn2.tooltip "Ordna efter prioritet">
+<!ENTITY tagsColumn2.tooltip "Ordna efter etiketter">
+<!ENTITY accountColumn2.tooltip "Ordna efter konto">
+<!ENTITY statusColumn2.tooltip "Ordna efter status">
+<!ENTITY sizeColumn2.tooltip "Ordna efter storlek">
+<!ENTITY junkStatusColumn2.tooltip "Ordna efter skräppoststatus">
+<!ENTITY unreadColumn2.tooltip "Antal olästa meddelanden i tråden">
+<!ENTITY totalColumn2.tooltip "Totalt antal meddelanden i tråden">
+<!ENTITY readColumn2.tooltip "Ordna efter lästa">
+<!ENTITY receivedColumn2.tooltip "Ordna efter mottagningsdatum">
+<!ENTITY flagColumn2.tooltip "Ordna efter flaggade">
+<!ENTITY locationColumn2.tooltip "Ordna efter plats">
+<!ENTITY idColumn2.tooltip "Ordna efter mottagningsföljd">

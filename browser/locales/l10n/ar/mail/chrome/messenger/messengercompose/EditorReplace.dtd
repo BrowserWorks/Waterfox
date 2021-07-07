@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "ابحث واستبدل">
+<!ENTITY findField.label "ابحث عن نص:">
+<!ENTITY findField.accesskey "ب">
+<!ENTITY replaceField.label "استبدل ب‍:">
+<!ENTITY replaceField.accesskey "س">
+<!ENTITY caseSensitiveCheckbox.label "طابق حالة الحرف (كبير أم صغير)">
+<!ENTITY caseSensitiveCheckbox.accesskey "ط">
+<!ENTITY wrapCheckbox.label "لف حول">
+<!ENTITY wrapCheckbox.accesskey "ل">
+<!ENTITY backwardsCheckbox.label "ابحث للخلف">
+<!ENTITY backwardsCheckbox.accesskey "خ">
+<!ENTITY findNextButton.label "ابحث عن التالي">
+<!ENTITY findNextButton.accesskey "ب">
+<!ENTITY replaceButton.label "استبدل">
+<!ENTITY replaceButton.accesskey "س">
+<!ENTITY replaceAndFindButton.label "استبدل وابحث">
+<!ENTITY replaceAndFindButton.accesskey "ب">
+<!ENTITY replaceAllButton.label "استبدل الكل">
+<!ENTITY replaceAllButton.accesskey "ك">
+<!ENTITY closeButton.label "أغلق">
+<!ENTITY closeButton.accesskey "غ">

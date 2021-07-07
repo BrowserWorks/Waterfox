@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Al fine di risparmiare spazio su disco, non scaricare:">
+<!ENTITY doNotDownloadNntp.label "Al fine di risparmiare spazio su disco, non scaricare per l’uso “non in linea”:">
+<!ENTITY doNotDownloadImap.label "Al fine di risparmiare spazio su disco, è possibile gestire la copia locale dei messaggi in base all’età e alla dimensione.">
+<!ENTITY allFoldersOffline2.label "Conserva in questo computer i messaggi di qualunque cartella di questo account">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Nota: la modifica riguarda tutte le cartelle di questo account. Per impostare le singole cartelle, utilizzare il pulsante Avanzate… .">
+<!ENTITY offlineNotDownload.label "Messaggi più grandi di">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "Non scaricare messaggi più grandi di">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "kB">
+<!ENTITY daysOld.label "giorni">
+<!ENTITY message.label "messaggi più recenti">
+<!ENTITY nntpNotDownloadRead.label "Messaggi già letti">
+<!ENTITY nntpNotDownloadRead.accesskey "g">
+<!ENTITY nntpDownloadMsg.label "Messaggi più vecchi di">
+<!ENTITY nntpDownloadMsg.accesskey "v">
+<!ENTITY retentionCleanup.label "Per recuperare spazio su disco è possibile eliminare definitivamente i vecchi messaggi.">
+<!ENTITY retentionCleanupImap.label "Per recuperare spazio su disco è possibile eliminare definitivamente i vecchi messaggi, sia le copie locali sia quelle memorizzate nel server remoto.">
+<!ENTITY retentionCleanupPop.label "Per recuperare spazio su disco è possibile eliminare definitivamente i vecchi messaggi, incluse le copie memorizzate nel server remoto.">
+<!ENTITY retentionKeepMsg.label "Elimina i messaggi più vecchi di">
+<!ENTITY retentionKeepMsg.accesskey "h">
+<!ENTITY retentionKeepAll.label "Non eliminare alcun messaggio">
+<!ENTITY retentionKeepAll.accesskey "c">
+<!ENTITY retentionKeepRecent.label "Elimina tutti eccetto i">
+<!ENTITY retentionKeepRecent.accesskey "n">
+<!ENTITY retentionApplyToFlagged.label "Conserva sempre i messaggi speciali">
+<!ENTITY retentionApplyToFlagged.accesskey "r">
+<!ENTITY nntpRemoveMsgBody.label "Elimina il corpo del messaggio per messaggi più grandi di">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "Selezionare i gruppi di discussione per uso non in linea…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "Avanzate…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "v">
+<!ENTITY syncGroupTitle.label "Sincronizzazione messaggi">
+<!ENTITY diskspaceGroupTitle.label "Spazio su disco">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Sincronizza in locale i messaggi di qualunque età">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Limita la sincronizzazione a">
+<!ENTITY ageAutosync.accesskey           "a">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "giorni">
+<!ENTITY weekAgeInterval.label           "settimane">
+<!ENTITY monthAgeInterval.label          "mesi">
+<!ENTITY yearAgeInterval.label           "anni">
+<!ENTITY ageAutosyncAfter.label          "">

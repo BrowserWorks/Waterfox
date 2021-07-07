@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Συνδρομή">
+<!ENTITY subscribeButton.label        "Εγγραφή">
+<!ENTITY subscribeButton.accesskey    "Ε">
+<!ENTITY unsubscribeButton.label      "Κατάργηση εγγραφής">
+<!ENTITY unsubscribeButton.accesskey  "Κ">
+<!ENTITY newGroupsTab.label           "Νέες ομάδες">
+<!ENTITY newGroupsTab.accesskey       "ν">
+<!ENTITY refreshButton.label          "Ανανέωση">
+<!ENTITY refreshButton.accesskey      "ν">
+<!ENTITY stopButton.label             "Διακοπή">
+<!ENTITY stopButton.accesskey         "Δ">
+<!ENTITY server.label                 "Λογαριασμός:">
+<!ENTITY server.accesskey             "γ">
+<!ENTITY subscribedHeader.label       "Συνδρομή">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Προβολή αντικειμένων που περιέχουν:">
+<!ENTITY namefield.accesskey          "χ">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Trình đơn Các trang Gần đây">
+<!ENTITY  documentsInMenu.label         "Số trang tối đa trong danh sách:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Khi Lưu hoặc Xuất bản Trang">
+<!ENTITY  preserveExisting.label        "Giữ nguyên định dạng gốc">
+<!ENTITY  preserveExisting.accesskey    "G">
+<!ENTITY  preserveExisting.tooltip      "Giữ nguyên các dấu ngắt dòng và định dạng gốc của trang">
+<!ENTITY  saveAssociatedFiles.label     "Lưu hình và các tập tin kèm theo khi lưu trang">
+<!ENTITY  saveAssociatedFiles.accesskey "L">
+<!ENTITY  showPublishDialog.label       "Luôn hiện hộp thoại Xuất bản khi xuất bản trang">
+<!ENTITY  showPublishDialog.accesskey   "a">
+<!ENTITY  composerEditing.label         "Chỉnh sửa">
+<!ENTITY  maintainStructure.label       "Duy trì bố cục trang khi chèn hoặc xóa ô">
+<!ENTITY  maintainStructure.tooltip     "Giữ nguyên hình dạng vuông vắn của bảng bằng cách tự động thêm ô mới sau khi chèn hoặc xóa">
+<!ENTITY  maintainStructure.accesskey   "D">
+<!ENTITY  useCSS.label                  "Sử dụng style CSS thay cho phần tử và thuộc tính HTML">
+<!ENTITY  useCSS.accesskey              "u">
+<!ENTITY  crInPCreatesNewP.label        "Khi quay trở lại một đoạn thì cũng sẽ luôn tạo ra một đoạn mới">
+<!ENTITY  crInPCreatesNewP.accesskey    "r">
+

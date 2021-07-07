@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "セキュリティ">
+<!ENTITY securityTab.label "セキュリティ">
+<!ENTITY securityHeading.label "署名や暗号化されたメッセージを送受信するには、デジタル署名証明書と暗号化証明書の両方を指定する必要があります。">
+<!ENTITY encryptionGroupTitle.label "暗号化">
+<!ENTITY encryptionChoiceLabel.label "メッセージ送信時に使用する標準の暗号化設定:">
+<!ENTITY neverEncrypt.label "暗号化しない">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "暗号化する (すべての受信者が証明書を持っていなければ送信できません)">
+<!ENTITY alwaysEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert.message "あなたへのメッセージの暗号化と復号に使用する証明書:">
+<!ENTITY digitalSign.certificate.button "選択...">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "消去">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "選択...">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "消去">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "デジタル署名">
+<!ENTITY signMessage.label "メッセージにデジタル署名する (標準の動作)">
+<!ENTITY signMessage.accesskey "D">
+<!ENTITY signingCert.message "メッセージのデジタル署名に使用する証明書:">
+
+<!ENTITY certificates.label "証明書">
+<!ENTITY manageCerts2.label "証明書の管理...">
+<!ENTITY manageCerts2.accesskey "M">
+<!ENTITY manageDevices.label "セキュリティデバイスの管理...">
+<!ENTITY manageDevices.accesskey "g">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "証明書の選択">
+<!ENTITY certPicker.info "証明書:">
+<!ENTITY certPicker.detailsLabel "選択した証明書の詳細:">

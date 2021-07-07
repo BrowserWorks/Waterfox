@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip "Menu principale">
+<!ENTITY Toolbar.tooltip "Barra degli strumenti principale">
+<!ENTITY multiline-expand.tooltip "Passa alla casella di testo su più linee (Ctrl+su)">
+<!ENTITY multiline-contract.tooltip "Passa a una sola riga di inserimento (Ctrl+giù)">
+<!ENTITY multiline-send.tooltip "Invia il testo (Ctrl+invio)">
+<!ENTITY server-nick.tooltip "Cambia il soprannome o lo stato. Per selezionare la casella di inserimento, premere Esc.">
+<!ENTITY Underline.label "Sottolineato">
+<!ENTITY Bold.label "Grassetto">
+<!ENTITY Reverse.label "Video invertito">
+<!ENTITY Normal.label "Normale">
+<!ENTITY Color.label "Colore">
+<!ENTITY ForeBack.label "xx=Avanti yy=Indietro">

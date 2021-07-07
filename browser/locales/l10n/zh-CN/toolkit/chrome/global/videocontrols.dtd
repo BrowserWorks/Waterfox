@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "播放">
+<!ENTITY playButton.pauseLabel "暂停">
+<!ENTITY muteButton.muteLabel "静音">
+<!ENTITY muteButton.unmuteLabel "恢复声音">
+<!ENTITY fullscreenButton.enterfullscreenlabel "全屏">
+<!ENTITY fullscreenButton.exitfullscreenlabel "退出全屏">
+<!ENTITY castingButton.castingLabel "投射到屏幕">
+<!ENTITY closedCaption.off "关">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "音量滑块">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "画中画">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "画中画观看">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "让您在 &brandShortName; 做其他事时，同时能在前台观看视频。">
+
+<!ENTITY error.aborted "视频载入已停止。">
+<!ENTITY error.network "视频播放因网络错误中止。">
+<!ENTITY error.decode "视频无法播放，因为该文件已损坏。">
+<!ENTITY error.srcNotSupported "视频格式或 MIME 类型不受支持。">
+<!ENTITY error.noSource2 "没有找到支持的视频格式和 MIME 类型。">
+<!ENTITY error.generic "视频播放因未知错误中止。">
+
+<!ENTITY status.pictureInPicture "正以画中画模式播放此视频。">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

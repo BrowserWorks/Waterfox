@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Biblioteca">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizar">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organize os seus marcadores">
+
+<!ENTITY file.close.label               "Fechar">
+<!ENTITY file.close.accesskey           "c">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vistas">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Altere a sua vista">
+<!ENTITY view.columns.label             "Mostrar colunas">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Ordenar">
+<!ENTITY view.sort.accesskey            "O">
+<!ENTITY view.unsorted.label            "Não ordenados">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "Ordem A - Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ordem Z - A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importar marcadores a partir de HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportar marcadores para HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importar dados de outro navegador…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Cópia de segurança…">
+<!ENTITY cmd.backup.accesskey           "C">
+<!ENTITY cmd.restore2.label             "Restaurar">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Escolher ficheiro…">
+<!ENTITY cmd.restoreFromFile.accesskey  "c">
+
+<!ENTITY cmd.deleteDomainData.label     "Esquecer este site">
+<!ENTITY cmd.deleteDomainData.accesskey "s">
+
+<!ENTITY cmd.open.label                  "Abrir">
+<!ENTITY cmd.open.accesskey              "A">
+<!ENTITY cmd.open_window.label           "Abrir numa nova janela">
+<!ENTITY cmd.open_window.accesskey       "n">
+<!ENTITY cmd.open_private_window.label     "Abrir numa nova janela privada">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Abrir num novo separador">
+<!ENTITY cmd.open_tab.accesskey          "s">
+<!ENTITY cmd.open_all_in_tabs.label      "Abrir tudo em separadores">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "o">
+
+<!ENTITY cmd.properties.label      "Propriedades">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "Ordenar por nome">
+<!ENTITY cmd.sortby_name.accesskey          "O">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Novo marcador…">
+<!ENTITY cmd.new_bookmark.accesskey        "m">
+<!ENTITY cmd.new_folder.label              "Nova pasta…">
+<!ENTITY cmd.new_folder.accesskey          "o">
+<!ENTITY cmd.context_new_folder.accesskey  "p">
+<!ENTITY cmd.new_separator.label           "Novo separador">
+<!ENTITY cmd.new_separator.accesskey       "s">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Recarregar marcador dinâmico">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY col.name.label          "Nome">
+<!ENTITY col.tags.label          "Etiquetas">
+<!ENTITY col.url.label           "Localização">
+<!ENTITY col.mostrecentvisit.label "Visita mais recente">
+<!ENTITY col.visitcount.label    "Número de visitas">
+<!ENTITY col.description.label   "Descrição">
+<!ENTITY col.dateadded.label     "Adicionado">
+<!ENTITY col.lastmodified.label  "Última modificação">
+
+<!ENTITY search.placeholder  "Pesquisar">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "Mais">
+<!ENTITY detailsPane.more.accesskey "s">
+<!ENTITY detailsPane.less.label "Menos">
+<!ENTITY detailsPane.less.accesskey "s">
+<!ENTITY detailsPane.selectAnItemText.description "Selecione um item para ver e editar as suas propriedades">
+
+<!ENTITY view.label               "Ver">
+<!ENTITY view.accesskey           "V">
+<!ENTITY byDate.label             "Por data">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Por site">
+<!ENTITY bySite.accesskey         "s">
+<!ENTITY byMostVisited.label      "Por mais visitados">
+<!ENTITY byMostVisited.accesskey  "v">
+<!ENTITY byLastVisited.label      "Por última visita">
+<!ENTITY byLastVisited.accesskey  "l">
+<!ENTITY byDayAndSite.label       "Por data e site">
+<!ENTITY byDayAndSite.accesskey   "t">

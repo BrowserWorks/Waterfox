@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey "p">
+<!ENTITY findOnCmd.commandkey "F">
+<!ENTITY findAgainCmd.commandkey "G">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY backButton.label "Indietro">
+<!ENTITY backButton.accesskey "n">
+<!ENTITY backButton.tooltip "Torna indietro di una pagina">
+<!ENTITY forwardButton.label "Avanti">
+<!ENTITY forwardButton.accesskey "A">
+<!ENTITY forwardButton.tooltip "Vai avanti di una pagina">
+<!ENTITY copyCmd.label "Copia">
+<!ENTITY copyCmd.accesskey "C">
+<!ENTITY selectAllCmd.label "Seleziona tutto">
+<!ENTITY selectAllCmd.accesskey "S">
+<!ENTITY goBackCmd.commandkey "[">
+<!ENTITY goForwardCmd.commandkey "]">
+<!ENTITY homeButton.label "Pagina iniziale">
+<!ENTITY homeButton.tooltip "Vai alla pagina iniziale della guida">
+<!ENTITY printButton.label "Stampa">
+<!ENTITY printButton.tooltip "Stampa questa pagina">
+<!ENTITY closeWindow.commandkey "W">
+<!ENTITY search.emptytext "Cerca">
+<!ENTITY searchHeader.label "Risultati della ricerca">
+<!ENTITY toctab.label "Contenuti">
+<!ENTITY toctab.accesskey "C">
+<!ENTITY fullZoomReduceCmd.commandkey "-">
+<!ENTITY fullZoomReduceCmd.commandkey2 "">
+<!ENTITY fullZoomEnlargeCmd.commandkey "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "=">
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey "0">
+<!ENTITY fullZoomResetCmd.commandkey2 "">
+<!ENTITY helpSearch.commandkey "k">
+<!ENTITY zLevel.label "Sempre in primo piano">
+<!ENTITY zLevel.accesskey "e">
+<!ENTITY fullZoomReduceBtn.label "Riduci zoom">
+<!ENTITY fullZoomReduceBtn.accesskey "R">
+<!ENTITY fullZoomEnlargeBtn.label "Aumenta zoom">
+<!ENTITY fullZoomEnlargeBtn.accesskey "u">

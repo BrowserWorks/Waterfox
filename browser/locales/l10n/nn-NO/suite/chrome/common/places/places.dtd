@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliotek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organiser">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organiser bokmerka dine">
+
+<!ENTITY file.close.label               "Lat att">
+<!ENTITY file.close.accesskey           "L">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Visingar">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Endre vising">
+<!ENTITY view.columns.label             "Vis kolonner">
+<!ENTITY view.columns.accesskey         "k">
+<!ENTITY view.sort.label                "Sorter">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Usortert">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "Sorteringsrekkjefølgje A -> Å">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Sorteringsrekkjefølgje Å -> A">
+<!ENTITY view.sortDescending.accesskey  "Å">
+
+<!ENTITY importBookmarksFromHTML.label     "Importer bokmerke frå HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksporter bokmerke til HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importer data frå ein annan nettlesar…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Tryggingskopier…">
+<!ENTITY cmd.backup.accesskey           "k">
+<!ENTITY cmd.restore2.label             "Gjenopprett">
+<!ENTITY cmd.restore2.accesskey         "r">
+<!ENTITY cmd.restoreFromFile.label      "Vel fil…">
+<!ENTITY cmd.restoreFromFile.accesskey  "e">
+
+<!ENTITY cmd.deleteDomainData.label     "Gløym denne nettstaden">
+<!ENTITY cmd.deleteDomainData.accesskey "t">
+
+<!ENTITY cmd.open.label                  "Opne">
+<!ENTITY cmd.open.accesskey              "p">
+<!ENTITY cmd.open_window.label           "Opne i nytt vindauge">
+<!ENTITY cmd.open_window.accesskey       "n">
+<!ENTITY cmd.open_private_window.label     "Opne i nytt privat vindauge">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Opne i ny fane">
+<!ENTITY cmd.open_tab.accesskey          "y">
+<!ENTITY cmd.open_all_in_tabs.label      "Opne alle i faner">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "a">
+
+<!ENTITY cmd.properties.label      "Eigenskaper">
+<!ENTITY cmd.properties.accesskey  "e">
+
+<!ENTITY cmd.sortby_name.label              "Sorter etter namn">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Nytt bokmerke…">
+<!ENTITY cmd.new_bookmark.accesskey        "b">
+<!ENTITY cmd.new_folder.label              "Ny mappe…">
+<!ENTITY cmd.new_folder.accesskey          "a">
+<!ENTITY cmd.context_new_folder.accesskey  "e">
+<!ENTITY cmd.new_separator.label           "Ny skiljelinje">
+<!ENTITY cmd.new_separator.accesskey       "s">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Oppdater levande bokmerke">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "r">
+
+<!ENTITY col.name.label          "Namn">
+<!ENTITY col.tags.label          "Etikettar">
+<!ENTITY col.url.label           "Adresse">
+<!ENTITY col.mostrecentvisit.label "Sist besøkt">
+<!ENTITY col.visitcount.label    "Tal på besøk">
+<!ENTITY col.description.label   "Skildring">
+<!ENTITY col.dateadded.label     "Lagt til">
+<!ENTITY col.lastmodified.label  "Sist endra">
+
+<!ENTITY search.placeholder  "Søk">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "Meir">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "Mindre">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "Vel elementet du vil vise og redigere">
+
+<!ENTITY view.label               "Vis">
+<!ENTITY view.accesskey           "s">
+<!ENTITY byDate.label             "Etter dato">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Etter nettstad">
+<!ENTITY bySite.accesskey         "s">
+<!ENTITY byMostVisited.label      "Etter mest besøkt">
+<!ENTITY byMostVisited.accesskey  "b">
+<!ENTITY byLastVisited.label      "Etter sist besøkt">
+<!ENTITY byLastVisited.accesskey  "b">
+<!ENTITY byDayAndSite.label       "Etter dato og nettstad">
+<!ENTITY byDayAndSite.accesskey   "t">

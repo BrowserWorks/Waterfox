@@ -1,0 +1,411 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Naptár">
+<!ENTITY calendar.calendar.accesskey "N">
+
+<!ENTITY calendar.newevent.button.tooltip         "Új elem létrehozása" >
+<!ENTITY calendar.newtask.button.tooltip          "Új feladat létrehozása" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "Feladatok" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Befejezett feladatok megjelenítése">
+
+<!ENTITY calendar.today.button.label          "Ma">
+<!ENTITY calendar.tomorrow.button.label       "Holnap">
+<!ENTITY calendar.upcoming.button.label       "Várakozó">
+
+<!ENTITY calendar.events.filter.all.label "Minden esemény">
+<!ENTITY calendar.events.filter.today.label "Mai események">
+<!ENTITY calendar.events.filter.future.label "Az összes jövőbeli esemény">
+<!ENTITY calendar.events.filter.current.label "A most kiválasztott nap">
+<!ENTITY calendar.events.filter.currentview.label "Események az Aktuális nézetben">
+<!ENTITY calendar.events.filter.next7Days.label "Események a következő 7 napban">
+<!ENTITY calendar.events.filter.next14Days.label "Események a következő 14 napban">
+<!ENTITY calendar.events.filter.next31Days.label "Események a következő 31 napban">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "Események ebben a naptári hónapban">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Kész">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "Rendezés elkészülés szerint">
+<!ENTITY calendar.unifinder.tree.priority.label            "Prioritás">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Rendezés sürgősség szerint">
+<!ENTITY calendar.unifinder.tree.title.label               "Cím">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Rendezés cím szerint">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#037; kész">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Rendezés &#037;-os készültség szerint">
+<!ENTITY calendar.unifinder.tree.startdate.label           "Kezdés">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Rendezés kezdési dátum szerint">
+<!ENTITY calendar.unifinder.tree.enddate.label             "Befejezés">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Rendezés befejezési dátum szerint">
+<!ENTITY calendar.unifinder.tree.duedate.label             "Határidő">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "Rendezés határidő szerint">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Elkészült">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "Rendezés elkészülési dátum szerint">
+<!ENTITY calendar.unifinder.tree.categories.label          "Kategória">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "Rendezés kategória szerint">
+<!ENTITY calendar.unifinder.tree.location.label            "Hely">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Rendezés hely szerint">
+<!ENTITY calendar.unifinder.tree.status.label              "Állapot">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Rendezés állapot szerint">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "Naptár neve">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "Rendezés naptárnév szerint">
+<!ENTITY calendar.unifinder.tree.duration.label            "Esedékes">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "Rendezés esedékesség szerint">
+<!ENTITY calendar.unifinder.close.tooltip                  "Az eseménykereső és az eseménylista bezárása">
+
+<!ENTITY calendar.today.button.tooltip          "Ugrás a mai napra" >
+<!ENTITY calendar.todaypane.button.tooltip      "A Ma panel megjelenítése" >
+
+<!ENTITY calendar.day.button.tooltip            "Átváltás napi nézetre" >
+<!ENTITY calendar.week.button.tooltip           "Átváltás heti nézetre" >
+<!ENTITY calendar.month.button.tooltip          "Átváltás havi nézetre" >
+<!ENTITY calendar.multiweek.button.tooltip      "Átváltás többheti nézetre" >
+
+<!ENTITY calendar.nextday.label                 "Következő nap" >
+<!ENTITY calendar.prevday.label                 "Előző nap" >
+<!ENTITY calendar.nextday.accesskey             "k" >
+<!ENTITY calendar.prevday.accesskey             "E" >
+<!ENTITY calendar.nextweek.label                "Következő hét" >
+<!ENTITY calendar.prevweek.label                "Előző hét" >
+<!ENTITY calendar.nextweek.accesskey            "k" >
+<!ENTITY calendar.prevweek.accesskey            "E" >
+<!ENTITY calendar.nextmonth.label               "Következő hónap" >
+<!ENTITY calendar.prevmonth.label               "Előző hónap" >
+<!ENTITY calendar.nextmonth.accesskey           "k" >
+<!ENTITY calendar.prevmonth.accesskey           "E" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "Egy napot előre" >
+<!ENTITY calendar.navigation.prevday.tooltip    "Egy napot vissza" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "Egy hetet előre" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "Egy hetet vissza" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "Egy hónapot vissza" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "Egy hónapot előre" >
+
+<!ENTITY calendar.newevent.button.label         "Új esemény" >
+<!ENTITY calendar.newtask.button.label          "Új feladat" >
+<!ENTITY calendar.print.button.label            "Nyomtatás" >
+<!ENTITY calendar.print.button.accesskey        "N">
+
+<!ENTITY calendar.day.button.label              "Nap" >
+<!ENTITY calendar.week.button.label             "Hét" >
+<!ENTITY calendar.month.button.label            "Hónap" >
+<!ENTITY calendar.multiweek.button.label        "Több hét" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "Csak munkanap" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "C" >
+<!ENTITY calendar.displaytodos.checkbox.label   "Feladatok a nézetben" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "z" >
+<!ENTITY calendar.completedtasks.checkbox.label     "Befejezett feladatok megjelenítése" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "B" >
+
+<!ENTITY calendar.orientation.label "Nézet elforgatása" >
+<!ENTITY calendar.orientation.accesskey "N" >
+
+<!ENTITY calendar.search.options.searchfor " ha tartalmazza">
+
+<!ENTITY calendar.list.header.label                 "Naptár">
+
+<!ENTITY calendar.task.filter.title.label           "Megjelenítés">
+<!ENTITY calendar.task.filter.all.label             "Összes">
+<!ENTITY calendar.task.filter.all.accesskey         "s">
+<!ENTITY calendar.task.filter.today.label           "Ma">
+<!ENTITY calendar.task.filter.today.accesskey       "M">
+<!ENTITY calendar.task.filter.next7days.label       "Következő hét nap">
+<!ENTITY calendar.task.filter.next7days.accesskey   "K">
+<!ENTITY calendar.task.filter.notstarted.label      "El nem kezdett feladatok">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "E">
+<!ENTITY calendar.task.filter.overdue.label         "Lejárt határidejű feladatok">
+<!ENTITY calendar.task.filter.overdue.accesskey     "L">
+<!ENTITY calendar.task.filter.completed.label       "Befejezett feladatok">
+<!ENTITY calendar.task.filter.completed.accesskey   "B">
+<!ENTITY calendar.task.filter.open.label            "Befejezetlen feladatok">
+<!ENTITY calendar.task.filter.open.accesskey        "f">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "Aktuális feladatok">
+<!ENTITY calendar.task.filter.current.accesskey     "A">
+
+<!ENTITY calendar.task-details.title.label           "cím">
+<!ENTITY calendar.task-details.organizer.label       "ettől:">
+<!ENTITY calendar.task-details.priority.label        "sürgősség">
+<!ENTITY calendar.task-details.priority.low.label    "Alacsony">
+<!ENTITY calendar.task-details.priority.normal.label "Normál">
+<!ENTITY calendar.task-details.priority.high.label   "Magas">
+<!ENTITY calendar.task-details.status.label          "állapot">
+<!ENTITY calendar.task-details.category.label        "kategória">
+<!ENTITY calendar.task-details.repeat.label          "ismétlődés">
+<!ENTITY calendar.task-details.attachments.label     "mellékletek">
+<!ENTITY calendar.task-details.start.label           "kezdő dátum">
+<!ENTITY calendar.task-details.due.label             "határidő">
+
+<!ENTITY calendar.task.category.button.tooltip  "Feladat kategorizálása">
+<!ENTITY calendar.task.complete.button.tooltip  "Kijelölt feladatok befejezettnek jelölése">
+<!ENTITY calendar.task.priority.button.tooltip  "Prioritás változtatása">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "Feladatok szűrése #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "Megnyitás">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "s">
+<!ENTITY calendar.context.modifyorviewtask.label      "Feladat megnyitása…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "F">
+<!ENTITY calendar.context.newevent.label              "Új esemény…">
+<!ENTITY calendar.context.newevent.accesskey          "e">
+<!ENTITY calendar.context.newtodo.label               "Új feladat…">
+<!ENTITY calendar.context.newtodo.accesskey           "f">
+<!ENTITY calendar.context.deletetask.label            "Feladat törlése">
+<!ENTITY calendar.context.deletetask.accesskey        "s">
+<!ENTITY calendar.context.deleteevent.label           "Esemény törlése">
+<!ENTITY calendar.context.deleteevent.accesskey       "l">
+<!ENTITY calendar.context.cutevent.label              "Kivágás">
+<!ENTITY calendar.context.cutevent.accesskey          "K">
+<!ENTITY calendar.context.copyevent.label             "Másolás">
+<!ENTITY calendar.context.copyevent.accesskey         "M">
+<!ENTITY calendar.context.pasteevent.label            "Beillesztés">
+<!ENTITY calendar.context.pasteevent.accesskey        "B">
+<!ENTITY calendar.context.button.label                "Ma panel">
+<!ENTITY calendar.context.button.accesskey            "M">
+
+<!ENTITY calendar.context.attendance.menu.label                 "Részvétel">
+<!ENTITY calendar.context.attendance.menu.accesskey             "R">
+<!ENTITY calendar.context.attendance.occurrence.label           "Ez alkalommal">
+<!ENTITY calendar.context.attendance.all2.label                 "Teljes sorozat">
+<!ENTITY calendar.context.attendance.send.label                 "Értesítés küldése most">
+<!ENTITY calendar.context.attendance.send.accesskey             "k">
+<!ENTITY calendar.context.attendance.dontsend.label             "Ne küldjön értesítést">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "N">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "E">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "Elfogadva">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "F">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "Feltételesen elfogadva">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "t">
+<!ENTITY calendar.context.attendance.occ.declined.label         "Elutasítva">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "v">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "Átadva">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "M">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "Még mindig művelet szükséges">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "o">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "Folyamatban">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "B">
+<!ENTITY calendar.context.attendance.occ.completed.label        "Befejezve">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "l">
+<!ENTITY calendar.context.attendance.all.accepted.label         "Elfogadva">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "s">
+<!ENTITY calendar.context.attendance.all.tentative.label        "Feltételesen elfogadva">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "u">
+<!ENTITY calendar.context.attendance.all.declined.label         "Elutasítva">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "d">
+<!ENTITY calendar.context.attendance.all.delegated.label        "Átadva">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "g">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "Még mindig művelet szükséges">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "a">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "Folyamatban">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "j">
+<!ENTITY calendar.context.attendance.all.completed.label        "Befejezve">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Készültségi fok">
+<!ENTITY calendar.context.progress.accesskey          "K">
+<!ENTITY calendar.context.priority.label              "Prioritás">
+<!ENTITY calendar.context.priority.accesskey          "P">
+<!ENTITY calendar.context.postpone.label              "Feladat elhalasztása">
+<!ENTITY calendar.context.postpone.accesskey          "e">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "Jelölés befejezettnek">
+<!ENTITY calendar.context.markcompleted.accesskey "J">
+
+<!ENTITY progress.level.0             "0&percnt; kész">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt; kész">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt; kész">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt; kész">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt; kész">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "Nem megadott">
+<!ENTITY priority.level.none.accesskey      "n">
+<!ENTITY priority.level.low                 "Alacsony">
+<!ENTITY priority.level.low.accesskey       "A">
+<!ENTITY priority.level.normal              "Normál">
+<!ENTITY priority.level.normal.accesskey    "N">
+<!ENTITY priority.level.high                "Magas">
+<!ENTITY priority.level.high.accesskey      "M">
+
+<!ENTITY calendar.context.postpone.1hour.label      "1 óra">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "r">
+<!ENTITY calendar.context.postpone.1day.label       "1 nap">
+<!ENTITY calendar.context.postpone.1day.accesskey   "n">
+<!ENTITY calendar.context.postpone.1week.label      "1 hét">
+<!ENTITY calendar.context.postpone.1week.accesskey  "h">
+
+<!ENTITY calendar.copylink.label       "Hivatkozás címének másolása">
+<!ENTITY calendar.copylink.accesskey   "H">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Törlés">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "Új naptár…">
+<!ENTITY calendar.context.newserver.accesskey          "n">
+<!ENTITY calendar.context.findcalendar.label           "Naptár keresése…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "k" >
+<!ENTITY calendar.context.deleteserver2.label          "Naptár törlése…">
+<!ENTITY calendar.context.deleteserver2.accesskey      "t">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "Naptár eltávolítása…">
+<!ENTITY calendar.context.removeserver.accesskey       "e">
+<!ENTITY calendar.context.unsubscribeserver.label      "Leiratkozás a naptárról…">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "L">
+<!ENTITY calendar.context.synccalendars.label          "Naptárak szinkronizálása">
+<!ENTITY calendar.context.synccalendars.accesskey      "s">
+<!ENTITY calendar.context.publish.label                "Naptár közzététele…">
+<!ENTITY calendar.context.publish.accesskey            "k">
+<!ENTITY calendar.context.export.label                 "Naptár exportálása…">
+<!ENTITY calendar.context.export.accesskey             "x">
+<!ENTITY calendar.context.properties.label             "Tulajdonságok">
+<!ENTITY calendar.context.properties.accesskey         "T">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "m">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "r">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "c">
+<!ENTITY calendar.context.showall.label                "Minden naptár megjelenítése">
+<!ENTITY calendar.context.showall.accesskey            "a">
+
+<!ENTITY calendar.context.convertmenu.label              "Konvertálás">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "n">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "v">
+<!ENTITY calendar.context.convertmenu.event.label        "Esemény…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "E">
+<!ENTITY calendar.context.convertmenu.message.label      "Üzenet…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "z">
+<!ENTITY calendar.context.convertmenu.task.label         "Feladat…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "F">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "Mini hónap">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "M">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "Naptárlista">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "l">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "Feladatok szűrése">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "F">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Hely:" >
+<!ENTITY calendar.alarm.details.label               "Részletek…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "Szundi" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "Összes késleltetése" >
+<!ENTITY calendar.alarm.title.label                 "Naptár-emlékeztetők" >
+<!ENTITY calendar.alarm.dismiss.label               "Eltüntetés" >
+<!ENTITY calendar.alarm.dismissall.label            "Mindet eltünteti" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 perc" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 perc" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 perc" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 perc" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 perc" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 óra" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 óra" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 nap" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "Szundi törlése">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "Naptár szerkesztése">
+<!ENTITY calendar.server.dialog.name.label          "Naptár neve:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "Szín:">
+<!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.wcap.label                     "Sun Java System Calendar Server (WCAP)">
+<!ENTITY calendarproperties.format.label                   "Formátum:">
+<!ENTITY calendarproperties.location.label                 "Hely:">
+<!ENTITY calendarproperties.refreshInterval.label          "Naptár frissítése:">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "Kézzel">
+<!ENTITY calendarproperties.name.label                     "Név:">
+<!ENTITY calendarproperties.readonly.label                 "Csak olvasható">
+<!ENTITY calendarproperties.firealarms.label               "Emlékeztetők megjelenítése">
+<!ENTITY calendarproperties.cache3.label                   "Kapcsolat nélküli munka">
+<!ENTITY calendarproperties.enabled.label                  "Naptár bekapcsolása">
+<!ENTITY calendarproperties.enabled2.label                 "E naptár engedélyezése">
+<!ENTITY calendarproperties.forceDisabled.label            "A naptár szolgáltatója nem található. Ez gyakran előfordul, ha letilt vagy eltávolít egyes kiegészítőket.">
+<!ENTITY calendarproperties.unsubscribe.label              "Leiratkozás">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "L">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "Naptár közzététele">
+<!ENTITY calendar.publish.url.label                 "Közzétételi hely (URL)">
+<!ENTITY calendar.publish.publish.button      "Közzététel">
+<!ENTITY calendar.publish.close.button      "Bezárás">
+
+<!ENTITY calendar.publish.example.url.description   "Például: http://www.sajatszerver.hu/webdav/test.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "Naptár kiválasztása">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "Naptár nyomtatása">
+<!ENTITY calendar.print.title.label "Cím:">
+<!ENTITY calendar.print.layout.label "Elrendezés:">
+<!ENTITY calendar.print.range.label "Nyomtatandó elemek">
+<!ENTITY calendar.print.currentView2.label "Aktuális nézet">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "Kijelölt események/feladatok">
+<!ENTITY calendar.print.tasks.label "Feladatok">
+<!ENTITY calendar.print.events.label "Események">
+<!ENTITY calendar.print.custom.label "Egyéni dátumtartomány:">
+<!ENTITY calendar.print.from.label "Ettől:">
+<!ENTITY calendar.print.to.label "Eddig:">
+<!ENTITY calendar.print.settingsGroup.label "Nyomtatási beállítások">
+<!ENTITY calendar.print.optionsGroup.label "Beállítások">
+<!ENTITY calendar.print.taskswithnoduedate.label "Határidő nélküli feladatok">
+<!ENTITY calendar.print.completedtasks.label "Befejezett feladatok">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Részletek…">
+<!ENTITY calendar.error.code "Hibakód:">
+<!ENTITY calendar.error.description "Leírás:">
+<!ENTITY calendar.error.title "Hiba történt">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "Felvétel eseményként">
+<!ENTITY calendar.extract.task.button          "Felvétel feladatként">
+<!ENTITY calendar.extract.event.button.tooltip "Naptár-információk kinyerése az üzenetből, és azok felvétele a naptárba eseményként">
+<!ENTITY calendar.extract.task.button.tooltip  "Naptár-információk kinyerése az üzenetből, és azok felvétele a naptárba feladatként">

@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Penuntun Pembuatan Akun">
+<!ENTITY accountWizard.size "width: 45em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Untuk menerima pesan, Anda diwajibkan membuat sebuah akun.">
+<!ENTITY accountTypeTitle.label "Membuat Akun Baru">
+<!ENTITY accountTypeDesc2.label "Penuntun ini akan mengumpulkan informasi yang dibutuhkan untuk mengatur akun. Jika Anda tidak mengetahui informasi yang diminta, silakan hubungi Administrator Sistem atau Internet Service Provider Anda.">
+<!ENTITY accountTypeDirections.label "Pilih jenis akun yang ingin Anda atur:">
+<!ENTITY accountTypeMail.label "Akun email">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "Akun newsgroup">
+<!ENTITY accountTypeNews.accesskey "w">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitas">
+<!ENTITY identityDesc.label "Setiap akun memiliki satu identitas. Identitas ini akan digunakan oleh orang lain untuk mengenali Anda saat mereka menerima pesan Anda.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Masukkan nama yang ingin ditampilkan pada kolom &quot;Dari&quot; pada setiap pesan keluar Anda">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(contohnya, &quot;Budi Putra&quot;).">
+<!ENTITY fullnameLabel.label "Nama Anda:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "Alamat Email:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informasi Server Penerima">
+<!ENTITY incomingServerTypeDesc.label "Pilih jenis server penerima yang Anda gunakan.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Tinggalkan pesan di server">
+<!ENTITY leaveMsgsOnSrvr.accesskey "l">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Bawaan:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Masukkan nama server penerima Anda (misalnya, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "Server Penerima:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Masukkan nama pengguna server penerima yang diberikan oleh penyedia layanan jasa email Anda (misalnya, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "Nama Pengguna:">
+<!ENTITY incomingUsername.accesskey "u">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Masukkan nama server news (NNTP) Anda (contohnya, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Server Newsgroup:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Informasi Server Pengirim">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Masukkan nama server pengirim Anda (SMTP) (misalnya, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Server Pengirim:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "Enter Masukkan nama pengguna server pengirim yang diberikan oleh penyedia layanan jasa email Anda (pada umumnya sama dengan nama pengguna server penerima).">
+<!ENTITY outgoingUsername.label "Nama Pengguna Pengirim:">
+<!ENTITY outgoingUsername.accesskey "u">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Anda dapat mengubah server keluar di setelan akun.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Server pengirim (SMTP) yang sudah ada, &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot; akan digunakan.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Nama pengguna server pengirim (SMTP) yang sudah ada &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot; akan digunakan.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Server pengirim (SMTP) Anda, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot; sama dengan server penerima Anda, nama pengguna server penerima Anda akan digunakan untuk mengakses server ini.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nama Akun">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Masukkan nama yang ingin Anda jadikan sebagai referensi akun ini (contohnya, &quot;Akun Kantor&quot;, &quot;Akun Pribadi&quot;, atau &quot;Akun News&quot;).">
+<!ENTITY accnameLabel.label "Nama Akun:">
+<!ENTITY accnameLabel.accesskey "a">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Selamat!">
+<!ENTITY completionText.label "Periksa apakah informasi berikut telah sesuai.">
+<!ENTITY serverTypePrefix.label "Jenis Server Penerima:">
+<!ENTITY serverNamePrefix.label "Nama Server Penerima:">
+<!ENTITY smtpServerNamePrefix.label "Nama Server Pengirim (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Nama Server news NNTP):">
+<!ENTITY downloadOnLogin.label "Unduh pesan sekarang">
+<!ENTITY downloadOnLogin.accesskey "s">
+<!ENTITY deferStorageDesc.label "Matikan pilihan ini untuk menyimpan email akun ini pada direktori secara terpisah. Jika ya, akun ini akan tampil sebagai akun tersendiri. Jika tidak, email akan disimpan sebagai bagian dari akun Kotak Masuk Global Folder Lokal.">
+<!ENTITY deferStorage.label "Gunakan Kotak Masuk Global (simpan email pada Folder Lokal)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Klik Selesai untuk menyimpan pengaturan dan keluar dari Penuntun Pembuatan Akun.">
+<!ENTITY clickFinish.labelMac "Klik Selesai untuk menyimpan pengaturan dan keluar dari Penuntun Pembuatan Akun.">

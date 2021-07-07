@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Nápověda">
+<!ENTITY helpMenu.accesskey "v">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Nápověda">
+<!ENTITY helpMenuWin.accesskey "v">
+<!ENTITY aboutProduct2.label "O aplikaci &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "O">
+<!ENTITY helpTroubleshootingInfo.label     "Technické informace">
+<!ENTITY helpTroubleshootingInfo.accesskey "T">
+<!ENTITY helpSafeMode.label     "Restartovat se zakázanými doplňky…">
+<!ENTITY helpSafeMode.accesskey "R">
+<!ENTITY helpSafeMode.stop.label     "Restartovat s povolenými doplňky">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "Nápověda aplikace &brandShortName;">
+<!ENTITY productHelp.accesskey "N">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Klávesové zkratky">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Odeslat zpětnou vazbu…">
+<!ENTITY helpFeedbackPage.accesskey "O">
+
+<!ENTITY helpShowTour2.label "Průvodce aplikací &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "a">
+
+<!ENTITY helpGetInvolvedPage.label "Zapojte se">
+<!ENTITY helpGetInvolvedPage.accesskey "Z">
+
+<!ENTITY helpDonationsPage.label "Darujte příspěvek">
+<!ENTITY helpDonationsPage.accesskey "D">

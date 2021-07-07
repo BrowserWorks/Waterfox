@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title "Wyświetlanie wiadomości">
+<!ENTITY style.label "Styl:">
+<!ENTITY style.accesskey "t">
+<!ENTITY regular.label "Normalny">
+<!ENTITY bold.label "Pogrubiona">
+<!ENTITY italic.label "Kursywa">
+<!ENTITY boldItalic.label "Pogrubiona kursywa">
+<!ENTITY size.label "Rozmiar:">
+<!ENTITY size.accesskey "R">
+<!ENTITY bigger.label "Większy">
+<!ENTITY smaller.label "Mniejszy">
+<!ENTITY color.label "Kolor:">
+<!ENTITY color.accesskey "K">
+<!ENTITY displayPlainText.caption "Wiadomości tekstowe">
+<!ENTITY fontPlainText.label "Czcionka:">
+<!ENTITY fontPlainText.accesskey "C">
+<!ENTITY displayQuoted.label "Ustawienia cytowanych wiadomości:">
+<!ENTITY wrapInMsg.label "Zawijaj tekst, aby mieścił się w oknie">
+<!ENTITY wrapInMsg.accesskey "m">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label "Wyświetlaj emotikonki">
+<!ENTITY convertEmoticons.accesskey "W">
+<!ENTITY generalMessageDisplay.caption "Ogólne">
+<!ENTITY autoMarkAsRead.label "Automatycznie oznaczaj wiadomości jako przeczytane">
+<!ENTITY autoMarkAsRead.accesskey "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label "Wyłącznie po wyświetleniu przez">
+<!ENTITY markAsReadAfter.accesskey "u">
+<!ENTITY secondsLabel.label "sekund">
+
+<!ENTITY openingMessages.label "Otwierając wiadomości wyświetl je w:">
+<!ENTITY newWindowRadio.label "Nowym oknie">
+<!ENTITY newWindowRadio.accesskey "N">
+<!ENTITY existingWindowRadio.label "Istniejącym oknie">
+<!ENTITY existingWindowRadio.accesskey "e">
+<!ENTITY disableContent.label "Blokuj obrazy i inną treść ze zdalnych serwerów">
+<!ENTITY disableContent.accesskey "B">
+<!ENTITY showCondensedAddresses.label "Pokazuj tylko nazwy kontaktów dla nadawców z mojej książki adresowej">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label "Zamykaj okno komponowania wiadomości w przypadku usunięcia tej wiadomości">
+<!ENTITY closeMsgWindowOnDelete.accesskey "Z">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Подписки на ленты новостей">
+<!ENTITY learnMore.label             "Узнать больше о лентах новостей">
+
+<!ENTITY feedTitle.label             "Заголовок:">
+<!ENTITY feedTitle.accesskey         "л">
+
+<!ENTITY feedLocation.label          "Адрес ленты новостей:">
+<!ENTITY feedLocation.accesskey      "ы">
+<!ENTITY feedLocation.placeholder    "Введите корректный адрес ленты новостей">
+<!ENTITY feedLocation2.placeholder   "Введите корректный адрес ленты новостей">
+<!ENTITY locationValidate.label      "Валидация">
+<!ENTITY validateText.label          "Проверьте корректность и получите корректную ссылку.">
+
+<!ENTITY feedFolder.label            "Хранить статьи в:">
+<!ENTITY feedFolder.accesskey        "ь">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Проверять наличие новых статей каждые ">
+<!ENTITY biffStart.accesskey         "о">
+<!ENTITY biffMinutes.label           "минут">
+<!ENTITY biffMinutes.accesskey       "и">
+<!ENTITY biffDays.label              "дней">
+<!ENTITY biffDays.accesskey          "е">
+<!ENTITY recommendedUnits.label      "Издатель рекомендует:">
+
+<!ENTITY quickMode.label             "Показывать краткое описание статьи вместо загрузки веб-страницы">
+<!ENTITY quickMode.accesskey         "а">
+
+<!ENTITY autotagEnable.label         "Автоматически создавать метки из имён &lt;категорий&gt; лент">
+<!ENTITY autotagEnable.accesskey     "з">
+<!ENTITY autotagUsePrefix.label      "Префикс меток:">
+<!ENTITY autotagUsePrefix.accesskey  "к">
+<!ENTITY autoTagPrefix.placeholder   "Введите префикс метки">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Добавить">
+<!ENTITY button.addFeed.accesskey    "б">
+<!ENTITY button.verifyFeed.label     "Проверить">
+<!ENTITY button.verifyFeed.accesskey "в">
+<!ENTITY button.updateFeed.label     "Обновить">
+<!ENTITY button.updateFeed.accesskey "в">
+<!ENTITY button.removeFeed.label     "Удалить">
+<!ENTITY button.removeFeed.accesskey "д">
+<!ENTITY button.importOPML.label     "Импортировать">
+<!ENTITY button.importOPML.accesskey "м">
+<!ENTITY button.exportOPML.label     "Экспортировать">
+<!ENTITY button.exportOPML.accesskey "с">
+<!ENTITY button.exportOPML.tooltip   "Экспорт лент новостей со структурой папок; ctrl щелчок или ctrl enter экспортирует ленты в виде списка">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Закрыть">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Inscrições RSS">
+<!ENTITY learnMore.label             "Saiba mais sobre Feeds RSS">
+
+<!ENTITY feedTitle.label             "Título:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL do RSS:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation.placeholder    "Forneça uma URL de RSS válida a adicionar">
+<!ENTITY feedLocation2.placeholder   "Forneça um URL de RSS válido">
+<!ENTITY locationValidate.label      "Validar">
+<!ENTITY validateText.label          "Verificar validação e carregar uma URL válida.">
+
+<!ENTITY feedFolder.label            "Armazenar artigos em:">
+<!ENTITY feedFolder.accesskey        "r">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Verificar se há novos artigos a cada ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minutos">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dias">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Editor recomenda:">
+
+<!ENTITY quickMode.label             "Exibir o conteúdo do item em vez de carregar a página web">
+<!ENTITY quickMode.accesskey         "E">
+
+<!ENTITY autotagEnable.label         "Criar tags automaticamente dos nomes das &lt;categorias&gt; do feed.">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "Tags com prefixo:">
+<!ENTITY autotagUsePrefix.accesskey  "p">
+<!ENTITY autoTagPrefix.placeholder   "Digite um prefixo de tag">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Adicionar">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Verificar">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Atualizar">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "Remover">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportar">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Exporta mantendo a estrutura de pastas; clique segurando Ctrl ou pressione Ctrl + Enter para exportar como uma lista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Fechar">

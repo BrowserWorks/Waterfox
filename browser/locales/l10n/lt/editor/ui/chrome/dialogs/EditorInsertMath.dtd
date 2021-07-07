@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Formulės įterpimas">
+
+<!ENTITY sourceEditField.label "Įveskite „LaTeX“ pirminį tekstą:">
+
+<!ENTITY options.label "Parinktys">
+<!ENTITY optionInline.label "Kaip teksto dalį">
+<!ENTITY optionInline.accesskey "t">
+<!ENTITY optionDisplay.label "Kaip iliustraciją">
+<!ENTITY optionDisplay.accesskey "u">
+<!ENTITY optionLTR.label "Kryptis iš kairės į dešinę">
+<!ENTITY optionLTR.accesskey "k">
+<!ENTITY optionRTL.label "Kryptis iš dešinės į kairę">
+<!ENTITY optionRTL.accesskey "d">
+
+<!ENTITY insertButton.label "Įterpti">
+<!ENTITY insertButton.accesskey "t">

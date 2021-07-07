@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "페이지 읽기 오류">
+<!ENTITY retry.label "재시도">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "연결 실패">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "제한된 주소">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "서버를 찾을 수 없음">
+<!ENTITY dnsNotFound.longDesc "<ul><li>주소를 오타로 <strong>www</strong>.example.com 대신 <strong>ww</strong>.example.com과 같이 입력하지 않았는지 확인해 보시기 바랍니다.</li><li>어떤 페이지에도 접속을 할 수 없다면, 네트워크 상태를 확인해 보시기 바랍니다.</li><li>컴퓨터나 네트워크가 방화벽이나 프록시 서버에 의해 보호받고 있다면 &brandShortName;가 웹에 접속을 할 수 있도록 설정되어 있는지 확인해 주시기 바랍니다.</li></ul>">
+
+<!ENTITY fileNotFound.title "파일을 찾을 수 없음">
+<!ENTITY fileNotFound.longDesc "<ul><li>파일 이름의 대소문자를 비롯한 오타가 없는지 확인해 보시기 바랍니다.</li><li>이동되었거나, 이름이 변경되었거나, 삭제된 파일을 보려고 하는 것은 아닌지 확인해 보시기 바랍니다.</li></ul>">
+
+<!ENTITY fileAccessDenied.title "파일 접근이 거부됨">
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>파일이 지워졌거나, 옮겨졌거나, 파일 권한 문제로 접근이 거부될 수 있습니다.</li></ul>">
+
+<!ENTITY generic.title "이런.">
+<!ENTITY generic.longDesc "<p>&brandShortName;가 어떠한 이유로 인하여 현재 페이지를 읽을 수 없습니다.</p>">
+
+<!ENTITY malformedURI.title "주소가 유효하지 않음">
+<!ENTITY malformedURI.longDesc "<ul><li>웹 주소는 보통 <strong>http://www.example.com/</strong>과 같이 작성됩니다.</li><li>오른쪽 위에서 왼쪽 아래로 그어진 슬래쉬(<strong>/</strong>)를 사용했는지 확인해 보시기 바랍니다.</li></ul>">
+
+<!ENTITY netInterrupt.title "연결이 끊어짐">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "문서 만료">
+<!ENTITY notCached.longDesc "<p>요청한 문서는 더 이상 &brandShortName; 캐시에 저장되어 있지 않습니다.</p><ul><li>보안 문제로 인해 &brandShortName;는 자동적으로 문서를 재 호출 합니다.</li><li>웹 사이트에서 문서를 재 요청 하시려면 다시 시도를 눌러주십시오.</li></ul>">
+
+<!ENTITY netOffline.title "오프라인 모드">
+<!ENTITY netOffline.longDesc2 "<ul><li>온라인 모드로 바꾸고 페이지를 새로 고침하려면 &quot;다시 시도&quot;를 눌러 주십시오.</li></ul>">
+
+<!ENTITY contentEncodingError.title "콘텐츠 인코딩 오류">
+<!ENTITY contentEncodingError.longDesc "<ul><li>웹 사이트 관리자에게 현재 문제를 알려 주시기 바랍니다.</li></ul>">
+
+<!ENTITY unsafeContentType.title "안전하지 않은 파일 유형">
+<!ENTITY unsafeContentType.longDesc "<ul><li>웹 사이트 관리자에게 현재 문제를 알려 주시기 바랍니다.</li></ul>">
+
+<!ENTITY netReset.title "연결 초기화">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "연결 시간 초과">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "인식할 수 없는 주소">
+<!ENTITY unknownProtocolFound.longDesc "<ul><li>이 주소를 열기 위해서는 다른 프로그램을 설치할 필요가 있습니다.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "프록시 서버가 연결을 거부함">
+<!ENTITY proxyConnectFailure.longDesc "<ul><li>프록시 설정이 올바로 되어있는지 확인해 보시기 바랍니다.</li><li>프록시 서버가 확실히 작동 중인지 네트워크 관리자에게 문의 하시기 바랍니다.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "프록시 서버를 찾을 수 없음">
+<!ENTITY proxyResolveFailure.longDesc "<ul><li>프록시 설정이 올바로 되어있는지 확인해 보시기 바랍니다.</li><li>사용자 컴퓨터가 활성화된 네트워크 연결을 사용하는지 확인해 보시기 바랍니다.</li><li>사용자의 컴퓨터나 네트워크가 방화벽 또는 프록시로 보호되고 있다면, &brandShortName;가 웹에 접속할 수 있도록 허용되어 있는지 확인해 주시기 바랍니다.</li></ul>">
+
+<!ENTITY redirectLoop.title "페이지 자동 바꾸기가 제대로 안 됨">
+<!ENTITY redirectLoop.longDesc "<ul><li>이 문제는 드물게 해당 사이트에서 요구하는 쿠키를 차단하여 발생할 수 있습니다.</li></ul>">
+
+<!ENTITY unknownSocketType.title "서버로부터 기대하지 않은 응답을 받음">
+<!ENTITY unknownSocketType.longDesc "<ul><li>시스템에 개인 보안 관리자가 설치 되어 있는지 확인해 보시기 바랍니다.</li><li>서버의 정상적이지 않은 설정 때문일 수도 있습니다.</li></ul>">
+
+<!ENTITY nssFailure2.title "보안 연결 실패">
+<!ENTITY nssFailure2.longDesc2 "<ul><li>받은 데이터의 내용 사실 검증을 할 수 없기 때문에 보려고 시도하신 페이지를 보여드릴 수 없습니다.</li><li>웹 사이트 관리자에게 현재 문제를 알려 주시거나, 다른 방법으로 도움말 메뉴의 웹 사이트 문제 보고를 이용해 주시기 바랍니다.</li></ul>">
+
+<!ENTITY nssBadCert.title "보안 연결 실패">
+<!ENTITY nssBadCert.longDesc2 "<ul><li>현재 웹 서버 설정에 문제가 있거나 누군가가 원래 접속하려던 진짜 서버처럼 가장하고 있을 가능성이 있습니다.</li><li>만약 이전에 이 웹 서버에 정상적으로 접속을 한적이 있다면, 일시적인 문제일 수 있으니 나중에 다시 접속해 보시기 바랍니다.</li></ul>">
+
+<!ENTITY sharedLongDesc "<ul><li>서버가 일시적으로 사용할 수 없거나 또는 너무 많은 접속이 몰리는 상태일 수 있습니다. 잠시 후에 재시도해 보시기 바랍니다.</li><li>어떤 페이지도 열 수 없다면, 컴퓨터의 네트워크 연결을 확인해 보시기 바랍니다.</li><li>사용자의 컴퓨터나 네트워크가 방화벽 또는 프록시로 보호되고 있다면, &brandShortName;가 웹에 접속할 수 있도록 허용되어 있는지 확인해 주시기 바랍니다.</li></ul>">
+
+<!ENTITY cspBlocked.title "콘텐츠 보안 정책에 의해 차단되었습니다">
+<!ENTITY cspBlocked.longDesc "<p>콘텐츠 보안 정책에 의해 읽기가 금지된 콘텐츠가 포함되어 있기 때문에 이 페이지의 읽기를 중지했습니다.</p>">
+
+<!ENTITY xfoBlocked.title "X-Frame-Options 정책에 의해 차단됨">
+<!ENTITY xfoBlocked.longDesc "<p>페이지에 허용하지 않는 X-Frame-Options 정책이 있으므로 &brandShortName;가 이 컨텍스트에서 이 페이지를 로드하지 못했습니다.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "손상된 콘텐츠 오류">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>데이터 전송에 오류가 발생하여서 페이지를 표시할 수 없습니다.</p><ul><li>이 문제를 웹사이트 소유자에게 알려주세요.</li></ul>">
+
+<!ENTITY securityOverride.linkText "예외 추가…">
+<!ENTITY securityOverride.getMeOutOfHereButton "페이지 나가기">
+<!ENTITY securityOverride.exceptionButtonLabel "예외 추가…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>사용자가 완전히 신뢰할 수 없는 인터넷 연결을 사용하는 중이거나 이 서버에서 예전에 이러>한 경고를 본 적이 없는 경우에는 예외로 추가해서는 안 됩니다.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "원격 XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 보고해 주시기 바랍니다.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "연결이 안전하지 않음">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>가 사용하는 보안 기술은 오래되어서 공격에 노출될 수 있습니다. 안전하다고 생각된 정보가 공격자에 의해 쉽게 노출될 수 있습니다. 사이트를 방문하기 전에 웹사이트의 관리자가 서버를 고쳐야 합니다.</p><p>오류 코드: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "차단된 페이지">
+
+<!ENTITY networkProtocolError.title "네트워크 프로토콜 오류">
+<!ENTITY networkProtocolError.longDesc "<p>네트워크 프로토콜에 오류가 발생하여서 페이지를 표시할 수 없습니다.</p><ul><li>이 문제를 웹사이트 소유자에게 알려주세요.</li></ul>">

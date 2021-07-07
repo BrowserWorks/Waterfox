@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Tangentnavigering">
+<!ENTITY tabNavigationBehavior.label "Tabulatornavigering">
+<!ENTITY tabNavigationLinks.label "Länkar">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Knappar, alternativknappar, markeringsalternativ och urvalslistor">
+<!ENTITY tabNavigationForms.accesskey "K">
+<!ENTITY tabNavigationTextboxes.label "Observera att textfält alltid utgör en del i tabulatorkedjan.">
+<!ENTITY tabNavigationDesc.label "När tab- eller skift- och tab-tangenterna trycks ned, flytta mellan:">
+<!ENTITY accessibilityBrowseWithCaret.label "Markörbläddring">
+<!ENTITY browseWithCaretDesc.label "Markörbläddring låter dig navigera och markera text på en webbsida genom att flytta en synlig markör med hjälp av piltangenterna.">
+<!ENTITY browseWithCaretUse.label "Använd markörbläddring">
+<!ENTITY browseWithCaretUse.accesskey "A">
+<!ENTITY browseWithCaretShortCut.label "Tryck på knappen F7 för att slå av och på markörbläddring">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Varna mig innan markörbläddring slås igång">
+<!ENTITY browseWithCaretWarn.accesskey "V">
+
+<!ENTITY modifiers.label "Modifierare">
+<!ENTITY acceleratorKey.label "Snabbknapp:">
+<!ENTITY acceleratorKey.accesskey "k">
+<!ENTITY menuAccessKey.label "Menyåtkomstknapp:">
+<!ENTITY menuAccessKey.accesskey "M">
+<!ENTITY modifiersDesc.label "Obs! Ett värde på noll inaktiverar en modifieringsknapp.">

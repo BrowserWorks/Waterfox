@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.security.title "Privacy e Sicurezza">
+<!ENTITY tracking.label "Tracciamento utente">
+<!ENTITY trackingIntro.label "I siti web possono tracciare il comportamento dei visitatori; questo comporta problemi relativi alla privacy.">
+<!ENTITY doNotTrack.label "Comunica ai siti visitati la volontà di non essere tracciato">
+<!ENTITY doNotTrack.accesskey "R">
+<!ENTITY trackProtect.label "Impedisci attività di tracciamento da parte di siti conosciuti">
+<!ENTITY trackProtect.accesskey "m">
+<!ENTITY warnTrackContent.label "Avvertimi quando vengono rilevate attività di tracciamento conosciute">
+<!ENTITY warnTrackContent.accesskey "v">
+<!ENTITY geoLocation.label "Navigazione geolocalizzata">
+<!ENTITY geoIntro.label "I siti web potrebbero richiedere maggiori informazioni sulla propria posizione.">
+<!ENTITY geoEnabled.label "Chiedimi cosa fare se viene effettuata una richiesta">
+<!ENTITY geoEnabled.accesskey "C">
+<!ENTITY geoDisabled.label "Disabilita questa funzione e nega tutte le richieste">
+<!ENTITY geoDisabled.accesskey "D">
+<!ENTITY safeBrowsing.label "Safe Browsing">
+<!ENTITY safeBrowsingIntro.label "&brandShortName; può bloccare i siti web che sono stati segnalati come ospitanti contenuto dannoso.">
+<!ENTITY blockAttackSites.label "Blocca i siti segnalati come minaccia (malware, virus)">
+<!ENTITY blockAttackSites.accesskey "M">
+<!ENTITY blockWebForgeries.label "Blocca i siti segnalati come contraffazione (Phishing)">
+<!ENTITY blockWebForgeries.accesskey "P">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Επαναφορά συνεδρίας">
+<!ENTITY restorepage.pagetitle      "Θέλετε να επαναφέρετε τη συνεδρία σας;">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Η προηγούμενη συνεδρία σας στο &brandShortName; έκλεισε απροσδόκητα. Ζητούμε συγγνώμη για την αναστάτωση. Μπορείτε να ανακτήσετε τις καρτέλες και τα παράθυρα από την προηγούμενη συνεδρία σας, ή να ξεκινήσετε μια νέα συνεδρία αν δεν τα χρειάζεστε πλέον.">
+<!ENTITY restorepage.remedies       "Αν το &brandShortName; κλείνει επανειλημμένα:">
+<!ENTITY restorepage.dueToChrome    "Δοκιμάστε να απενεργοποιήσετε τυχόν επεκτάσεις που προσθέσατε πρόσφατα στη Διαχείριση προσθέτων.">
+<!ENTITY restorepage.dueToContent   "Δοκιμάστε να επαναφέρετε τη συνεδρία σας χωρίς τις ιστοσελίδες που υποψιάζεστε ότι προκαλούν το πρόβλημα:">
+
+<!ENTITY restorepage.restoreButton  "Επαναφορά προηγούμενης συνεδρίας">
+<!ENTITY restorepage.restore.access "Ε">
+<!ENTITY restorepage.cancelButton   "Έναρξη νέας συνεδρίας">
+<!ENTITY restorepage.cancel.access  "Έ">
+
+<!ENTITY restorepage.restoreHeader  "Επαναφορά">
+<!ENTITY restorepage.listHeader     "Παραθύρων και καρτελών">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Παραθύρου &#37;S">

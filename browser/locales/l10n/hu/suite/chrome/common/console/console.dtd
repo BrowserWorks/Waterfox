@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Hibakonzol">
+
+<!ENTITY errFile.label        "Forrásfájl:">
+<!ENTITY errLine.label        "Sor:">
+<!ENTITY errColumn.label      "Oszlop:">
+
+<!ENTITY all.label            "Mind">
+<!ENTITY all.accesskey        "M">
+<!ENTITY errors.label         "Hibák">
+<!ENTITY errors.accesskey     "H">
+<!ENTITY warnings.label       "Figyelmeztetések">
+<!ENTITY warnings.accesskey   "F">
+<!ENTITY messages.label       "Üzenetek">
+<!ENTITY messages.accesskey   "z">
+<!ENTITY clear.label          "Törlés">
+<!ENTITY clear.accesskey      "T">
+<!ENTITY codeEval.label       "Kód:">
+<!ENTITY codeEval.accesskey   "d">
+<!ENTITY evaluate.label       "Kiértékelés">
+<!ENTITY evaluate.accesskey   "K">
+<!ENTITY filter2.label        "Szűrő:">
+<!ENTITY filter2.accesskey    "r">
+
+<!ENTITY copyCmd.label         "Másolás">
+<!ENTITY copyCmd.accesskey     "M">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Első > Utolsó sorrend">
+<!ENTITY sortFirst.accesskey   "E">
+<!ENTITY sortLast.label        "Utolsó > Első sorrend">
+<!ENTITY sortLast.accesskey    "U">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Menüsor">
+<!ENTITY modeToolbar.tooltip   "Üzemmód eszköztár">
+<!ENTITY entryToolbar.tooltip  "JavaScript eszköztár">
+<!ENTITY toolbarsCmd.label     "Megjelenítés/Elrejtés">
+<!ENTITY toolbarsCmd.accesskey "w">
+<!ENTITY toolbarMode.label     "Üzemmód">
+<!ENTITY toolbarMode.accesskey "m">
+<!ENTITY toolbarEval.label     "JavaScript bejegyzés">
+<!ENTITY toolbarEval.accesskey "J">

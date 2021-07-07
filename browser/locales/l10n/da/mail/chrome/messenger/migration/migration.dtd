@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title "Importguide">
+
+<!ENTITY importFromWin.label "Importer indstillinger, kontoindstillinger, adressebøger og andre data fra:">
+<!ENTITY importFromNonWin.label "Importer indstillinger, kontoindstillinger, adressebøger og andre data fra:">
+<!ENTITY importSourceNotFound.label     "Kunne ikke finde et program til at importere data fra.">
+
+<!ENTITY importFromNothing.label "Importer ikke">
+<!ENTITY importFromNothing.accesskey "i">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 eller senere">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label "Outlook">
+<!ENTITY importFromOutlook.accesskey "O">
+
+<!ENTITY importSource.title "Importer Indstillinger og data fra">
+<!ENTITY importItems.title "Importer objekter">
+<!ENTITY importItems.label "Vælg hvilke objekter, der skal importeres:">
+
+<!ENTITY migrating.title "Importerer…">
+<!ENTITY migrating.label "De følgende objekter er ved at blive importeret…">
+
+<!ENTITY selectProfile.title "Vælg profil">
+<!ENTITY selectProfile.label "De følgende profiler er tilgængelige til import fra:">
+
+<!ENTITY done.title "Import fuldført">
+<!ENTITY done.label "De følgende elementer blev importeret korrekt:">

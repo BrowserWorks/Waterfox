@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label "Tworzenie i adresowanie wiadomości">
+
+<!ENTITY addressingGroupTitle.label "Adresowanie">
+<!ENTITY addressingText.label "Podczas poszukiwania adresów:">
+<!ENTITY useGlobal.label "Użyj globalnych ustawień serwera LDAP dla tego konta">
+<!ENTITY useGlobal.accesskey "U">
+<!ENTITY editDirectories.label "Edytuj katalogi…">
+<!ENTITY editDirectories.accesskey "E">
+<!ENTITY directories.label "Użyj innego serwera LDAP:">
+<!ENTITY directories.accesskey "L">
+<!ENTITY directoriesNone.label "brak">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "Tworzenie wiadomości">
+<!ENTITY useHtml.label "Twórz wiadomości w formacie HTML">
+<!ENTITY useHtml.accesskey "T">
+<!ENTITY autoQuote.label "Podczas tworzenia odpowiedzi automatycznie cytuj oryginalną wiadomość">
+<!ENTITY autoQuote.accesskey "P">
+<!ENTITY quoting.label "podczas cytowania">
+<!ENTITY quoting.accesskey "c">
+<!ENTITY aboveQuote.label "rozpocznij odpowiedź powyżej cytowanego tekstu">
+<!ENTITY belowQuote.label "rozpocznij odpowiedź poniżej cytowanego tekstu">
+<!ENTITY selectAndQuote.label "zaznacz zacytowany tekst">
+<!ENTITY place.label "Dołączaj sygnaturkę">
+<!ENTITY place.accesskey "D">
+<!ENTITY belowText.label "pod cytowanym tekstem (zalecane)">
+<!ENTITY aboveText.label "poniżej odpowiedzi (ponad cytowanym tekstem)">
+<!ENTITY includeSigOnReply.label "Dołączaj sygnaturkę przy odpowiadaniu">
+<!ENTITY includeSigOnReply.accesskey "s">
+<!ENTITY includeSigOnForward.label "Dołączaj sygnaturkę przy przekazywaniu">
+<!ENTITY includeSigOnForward.accesskey "n">
+
+<!ENTITY globalComposingPrefs.label "Globalne preferencje tworzenia wiadomości…">
+<!ENTITY globalComposingPrefs.accesskey "w">
+
+<!ENTITY globalAddressingPrefs.label "Globalne preferencje adresowania…">
+<!ENTITY globalAddressingPrefs.accesskey "G">

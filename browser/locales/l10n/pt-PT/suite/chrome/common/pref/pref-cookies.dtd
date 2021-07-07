@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookies">
+<!-- cookies -->
+
+
+<!ENTITY cookiePolicy.label             "Política de aceitação de cookies">
+
+<!ENTITY disableCookies.label           "Bloquear cookies">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "Permitir cookies apenas para o website de origem (sem cookies de terceiros)">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "Permitir cookies de terceiros apenas para websites visitados anteriormente">
+<!ENTITY acc3rdPartyVisited.accesskey   "v">
+
+<!ENTITY accAllCookies.label            "Permitir todos os cookies">
+<!ENTITY accAllCookies.accesskey        "c">
+
+<!ENTITY cookieRetentionPolicy.label    "Política de retenção de Cookie">
+
+<!ENTITY acceptNormally.label           "Aceitar cookies normalmente">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Aceitar apenas para a sessão atual">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "Aceitar cookies para">
+<!ENTITY acceptforNDays.accesskey       "p">
+<!ENTITY days.label                     "dias">
+
+<!ENTITY manageCookies.label            "Gerir cookies e sites">
+<!ENTITY manageCookiesDescription.label "Permite-lhe ver e gerir cookies guardados e definir por website se aceita ou rejeita cookies. Definições por website sobrepõem-se às definições acima.">
+
+<!ENTITY viewCookies.label              "Gestor de cookies">
+<!ENTITY viewCookies.accesskey          "G">
+

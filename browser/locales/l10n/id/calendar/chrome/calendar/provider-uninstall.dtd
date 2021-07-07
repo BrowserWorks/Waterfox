@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Hapus Provider">
+<!ENTITY providerUninstall.accept.label                    "Berhenti Berlangganan">
+<!ENTITY providerUninstall.accept.accesskey                "B">
+<!ENTITY providerUninstall.cancel.label                    "Simpan Pengaya">
+<!ENTITY providerUninstall.cancel.accesskey                "S">
+<!ENTITY providerUninstall.preName.label                   "Anda bermaksud menghapus pemasangan atau menonaktifkan:">
+<!ENTITY providerUninstall.postName.label                  "Hal ini dapat menyebabkan kalender berikut menjadi nonaktif.">
+<!ENTITY providerUninstall.reinstallNote.label             "Jika Anda memasang ulang provider ini, Anda dapat cukup berhenti berlangganan dari provider kalender ini.">

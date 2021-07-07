@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Utseende">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "När &brandShortName; startar, öppna:">
+<!ENTITY navCheck.label                         "Webbläsare">
+<!ENTITY navCheck.accesskey                     "W">
+<!ENTITY showToolsLegend.label                  "Visa verktygsfält som">
+<!ENTITY picsNtextRadio.label                   "Bilder och text">
+<!ENTITY picsNtextRadio.accesskey               "B">
+<!ENTITY picsOnlyRadio.label                    "Endast bilder">
+<!ENTITY picsOnlyRadio.accesskey                "d">
+<!ENTITY textonlyRadio.label                    "Endast text">
+<!ENTITY textonlyRadio.accesskey                "t">
+<!ENTITY showHideTooltips.label                 "Visa verktygstips">
+<!ENTITY showHideTooltips.accesskey             "V">
+
+<!ENTITY showHideGrippies.label                 "Dölj verktygsfältens handtag">
+<!ENTITY showHideGrippies.accesskey             "h">
+
+<!ENTITY pref.locales.title                     "Gränssnittsspråk">
+<!ENTITY selectLocale.label                     "Välj språk för text i dialogrutor, menyer, verktygsfält och knappetiketter:">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "Formatering av datum och tid">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "Inställningar för språk och formatering får effekt när du startar om &brandShortName;.">

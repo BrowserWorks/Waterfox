@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Oldalsáv">
+<!ENTITY sidebar.reload.label           "Frissítés">
+<!ENTITY sidebar.reload.accesskey       "F">
+<!ENTITY sidebar.picker.label           "Panellapok">
+<!ENTITY sidebar.customize.label        "Az Oldalsáv testreszabása…">
+<!ENTITY sidebar.customize.accesskey    "A">
+<!ENTITY sidebar.hide.label             "Panel elrejtése">
+<!ENTITY sidebar.hide.accesskey         "P">
+<!ENTITY sidebar.switch.label           "Váltás erre a panelre">
+<!ENTITY sidebar.switch.accesskey       "V">
+<!ENTITY sidebarCmd.label               "Oldalsáv">
+<!ENTITY sidebarCmd.accesskey           "O">
+<!ENTITY sidebar.loading.label          "Betöltés…">
+<!ENTITY sidebar.loadstopped.label      "Betöltés leállítva">
+<!ENTITY sidebar.loading.stop.label     "Leállítás">
+<!ENTITY sidebar.loading.stop.accesskey "L">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "Az Oldalsáv jelenleg üres.">
+<!ENTITY sidebar.no-panels.add       'Hozzáadhat panellapokat az Oldalsávhoz, ha a fenti Panellapok gombra kattint.'>
+<!ENTITY sidebar.no-panels.hide      'Ha szeretné teljesen elrejteni az Oldalsávot, kattintson a fenti &quot;Nézet&quot; menüre, és a &quot;Megjelenítés/Elrejtés&quot; almenüből válassza az &quot;Oldalsáv&quot; parancsot.'>
+<!ENTITY sidebar.sbDirectory.label   "Oldalsáv-katalógus…">
+
+<!ENTITY sidebar.pagenotfound.label  "Ez a panellap most nem áll rendelkezésre.">
+<!ENTITY sidebar.close.tooltip       "Bezárás">
+<!ENTITY sidebar.open.tooltip        "Megnyitás">
+
+<!ENTITY sidebar.search.label         "Keresés">
+<!ENTITY sidebar.client-bookmarks.label     "Könyvjelzők">
+<!ENTITY sidebar.client-history.label       "Előzmények">
+<!ENTITY sidebar.client-addressbook.label   "Címjegyzék">

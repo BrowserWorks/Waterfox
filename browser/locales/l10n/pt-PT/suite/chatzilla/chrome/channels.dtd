@@ -1,0 +1,33 @@
+﻿<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Entrar no Canal">
+
+<!ENTITY network.label     "Rede :">
+<!ENTITY network.accesskey "R">
+
+<!ENTITY channel.label     "Sala :">
+<!ENTITY channel.accesskey "S">
+
+<!ENTITY topics.label     "Pesquisar tópicos assim como nomes dos canais">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label     "Entrar">
+<!ENTITY join.accesskey "E">
+
+<!ENTITY minusers.label     "Min. utilizadores:">
+<!ENTITY minusers.accesskey "n">
+
+<!ENTITY maxusers.label     "Máx. utilizadores:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "Recarregar Agora">
+<!ENTITY refresh.accesskey "">
+
+<!ENTITY network.hint.label "Escreva um nome de uma rede ou servidor (pode incluir uma porta) e um canal para se ligar.">
+
+<!ENTITY col.network "Rede">
+<!ENTITY col.name  "Nome">
+<!ENTITY col.users "Utilizadores">
+<!ENTITY col.topic "Tópico">

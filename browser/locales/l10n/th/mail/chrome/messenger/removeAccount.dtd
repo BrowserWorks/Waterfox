@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "เอาบัญชีและข้อมูลออก">
+<!ENTITY removeButton.label           "เอาออก">
+<!ENTITY removeButton.accesskey       "อ">
+<!ENTITY removeAccount.label          "เอาข้อมูลบัญชีออก">
+<!ENTITY removeAccount.accesskey      "ข">
+<!ENTITY removeAccount.desc           "เอาเฉพาะบัญชีที่ &brandShortName; รู้จักออกเท่านั้นโดยไม่มีผลต่อบัญชีที่อยู่บนเซิร์ฟเวอร์">
+<!ENTITY removeData.label             "เอาข้อมูลข้อความออก">
+<!ENTITY removeData.accesskey         "ม">
+<!ENTITY removeDataChat.label         "เอาข้อมูลการสนทนาออก">
+<!ENTITY removeDataChat.accesskey     "ม">
+<!ENTITY removeDataLocalAccount.desc  "เอาข้อความ, โฟลเดอร์ และตัวกรองทั้งหมดที่เกี่ยวข้องกับบัญชีนี้ออกจากดิสก์ในเครื่องของคุณ โดยจะไม่มีผลต่อข้อความบางส่วนซึ่งอาจยังคงถูกเก็บไว้บนเซิร์ฟเวอร์ อย่าเลือกตัวเลือกนี้หากคุณวางแผนที่จะเก็บข้อมูลในเครื่องหรือนำกลับมาใช้ใหม่ใน &brandShortName; ในภายหลัง">
+<!ENTITY removeDataServerAccount.desc "เอาข้อความ, โฟลเดอร์ และตัวกรองทั้งหมดที่เกี่ยวข้องกับบัญชีนี้ออกจากดิสก์ในเครื่องของคุณ ข้อความและโฟลเดอร์ของคุณจะยังคงอยู่บนเซิร์ฟเวอร์">
+<!ENTITY removeDataChatAccount.desc   "เอาไฟล์บันทึกการสนทนาทั้งหมดที่เก็บไว้สำหรับบัญชีนี้ออกจากดิสก์ในเครื่องของคุณ">
+<!ENTITY showData.label               "แสดงตำแหน่งที่ตั้งข้อมูล">
+<!ENTITY showData.accesskey           "ส">
+<!ENTITY progressPending              "กำลังเอาข้อมูลที่เลือกออก…">
+<!ENTITY progressSuccess              "การเอาออกสำเร็จ">
+<!ENTITY progressFailure              "การเอาออกล้มเหลว">

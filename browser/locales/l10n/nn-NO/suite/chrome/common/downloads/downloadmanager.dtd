@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Nedlastingshandsamar">
+
+<!ENTITY menuBar.tooltip                 "Menylinje">
+<!ENTITY searchBar.tooltip               "Søkjelinje">
+
+<!ENTITY search.placeholder              "Søk i nedlastingar">
+<!ENTITY search.label                    "Søk i nedlastingar">
+<!ENTITY search.accesskey                "S">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Tøm lista">
+<!ENTITY cmd.clearList.tooltip           "Fjerner fullførte, avbrotne og mislykka nedlastingar frå lista">
+<!ENTITY cmd.clearList.accesskey         "T">
+
+<!ENTITY col.name.label                  "Namn">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Filnamn">
+<!ENTITY col.status.label                "Status">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "Status">
+<!ENTITY col.actionPlay.label            "Pause/Fortset/Prøv på nytt">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "Pause/Fortset/Prøv på nytt">
+<!ENTITY col.actionStop.label            "Avbryt/fjern">
+<!ENTITY col.actionStop.accesskey        "A">
+<!ENTITY col.actionStop.tooltip          "Avbryt/fjern">
+<!ENTITY col.progress.label              "Framdrift">
+<!ENTITY col.progress.accesskey          "F">
+<!ENTITY col.progress.tooltip            "Framdrift">
+<!ENTITY col.timeremaining.label         "Tid att">
+<!ENTITY col.timeremaining.accesskey     "T">
+<!ENTITY col.timeremaining.tooltip       "Tid att">
+<!ENTITY col.transferred.label           "Overført">
+<!ENTITY col.transferred.accesskey       "O">
+<!ENTITY col.transferred.tooltip         "Overført">
+<!ENTITY col.transferrate.label          "Fart">
+<!ENTITY col.transferrate.accesskey      "F">
+<!ENTITY col.transferrate.tooltip        "Fart">
+<!ENTITY col.timeelapsed.label           "Tid brukt">
+<!ENTITY col.timeelapsed.accesskey       "b">
+<!ENTITY col.timeelapsed.tooltip         "Tid brukt">
+<!ENTITY col.starttime.label             "Starttid">
+<!ENTITY col.starttime.accesskey         "S">
+<!ENTITY col.starttime.tooltip           "Starttid">
+<!ENTITY col.endtime.label               "Sluttid">
+<!ENTITY col.endtime.accesskey           "u">
+<!ENTITY col.endtime.tooltip             "Sluttid">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Framdrift (&#37;)">
+<!ENTITY col.source.label                "Kjelde">
+<!ENTITY col.source.accesskey            "K">
+<!ENTITY col.source.tooltip              "Kjelde">
+
+<!ENTITY view.columns.label              "Vis kolonner">
+<!ENTITY view.columns.accesskey          "V">
+<!ENTITY view.sortBy.label               "Sorter etter">
+<!ENTITY view.sortBy.accesskey           "S">
+
+<!ENTITY view.unsorted.label             "Usortert">
+<!ENTITY view.unsorted.accesskey         "U">
+<!ENTITY view.sortAscending.label        "Sorteringsrekkjefølgje A -> Å">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Sorteringsrekkefølge Å > A">
+<!ENTITY view.sortDescending.accesskey   "Å">
+
+<!ENTITY cmd.pause.label                 "Pause">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "Fortset">
+<!ENTITY cmd.resume.accesskey            "F">
+<!ENTITY cmd.retry.label                 "Prøv igjen">
+<!ENTITY cmd.retry.accesskey             "P">
+<!ENTITY cmd.cancel.label                "Avbryt">
+<!ENTITY cmd.cancel.accesskey            "A">
+<!ENTITY cmd.remove.label                "Fjern frå lista">
+<!ENTITY cmd.remove.accesskey            "F">
+<!ENTITY cmd.open.label                  "Opne">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Opne mappa med fila">
+<!ENTITY cmd.show.accesskey              "m">
+<!ENTITY cmd.goToDownloadPage.label      "Gå til nedlastingssida">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "Kopier nedlastingslenkje">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY cmd.properties.label            "Eigenskapar…">
+<!ENTITY cmd.properties.accesskey        "E">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Tillat nedlasting">
+<!ENTITY cmd.unblock2.accesskey           "l">

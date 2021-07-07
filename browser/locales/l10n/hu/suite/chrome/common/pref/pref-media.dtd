@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "Média">
+<!ENTITY mediaHTML5Preferences.label    "Hang/videó">
+<!ENTITY allowMediaAutoplay.label       "HTML5 médiatartalom automatikus lejátszásának engedélyezése">
+<!ENTITY allowMediaAutoplay.accesskey   "a">
+
+<!ENTITY enableDrmMedia.label           "Digitális jogkezelő (DRM) engedélyezése:">
+<!ENTITY enableEmeForSuite.label        "Harmadik féltől származó tartalom-visszafejtő modulok">
+<!ENTITY enableEmeForSuite.accesskey    "H">
+
+<!ENTITY animLoopingTitle.label         "Az animált képek lejátszhatóak">
+<!ENTITY animLoopAsSpecified.label      "Ahányszor a képben meg van határozva">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "Egyszer">
+<!ENTITY animLoopOnce.accesskey         "E">
+<!ENTITY animLoopNever.label            "Soha">
+<!ENTITY animLoopNever.accesskey        "S">

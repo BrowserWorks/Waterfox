@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "通讯录">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "类别">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "电子邮件">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "组织">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "小名">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "呢称">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "附加电子邮件">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "部门">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "职位">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "移动电话">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "传呼机">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "传真">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "家庭电话">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "工作电话">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ScreenName.label                      "显示名">
+<!ENTITY ScreenName.accesskey                  "S">
+<!ENTITY ChatName.label                        "聊天名称">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "升序">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "降序">
+<!ENTITY sortDescending.accesskey              "D">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "编写邮件给">
+<!ENTITY composeEmail.accesskey                "C">
+<!ENTITY copyAddress.label                     "复制邮件地址">
+<!ENTITY copyAddress.accesskey                 "A">
+<!ENTITY deleteAddrBookCard.label              "删除">
+<!ENTITY deleteAddrBookCard.accesskey          "D">
+<!ENTITY newAddrBookCard.label                 "新卡片…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "新的邮件发送清单">
+<!ENTITY newAddrBookMailingList.accesskey      "M">
+<!ENTITY addrBookCardProperties.label          "属性">
+<!ENTITY addrBookCardProperties.accesskey      "P">

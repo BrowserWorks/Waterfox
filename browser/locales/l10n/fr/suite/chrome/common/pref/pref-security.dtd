@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Confidentialité et sécurité">
+
+<!ENTITY tracking.label                   "Pistage de l’utilisateur">
+<!ENTITY trackingIntro.label              "Les sites web peuvent pister la façon dont vous les utilisez, ce qui affecte votre vie privée.">
+
+<!ENTITY doNotTrack.label                 "Indiquer aux sites que je ne souhaite pas être pisté·e">
+<!ENTITY doNotTrack.accesskey             "I">
+<!ENTITY trackProtect.label               "Empêcher les sites connus de me pister">
+<!ENTITY trackProtect.accesskey           "E">
+<!ENTITY warnTrackContent.label           "Me prévenir lorsque des tentatives de pistage sont détectées">
+<!ENTITY warnTrackContent.accesskey       "v">
+
+<!ENTITY geoLocation.label                "Navigation géolocalisée">
+<!ENTITY geoIntro.label                   "Les sites web peuvent demander des informations sur votre emplacement actuel.">
+
+<!ENTITY geoEnabled.label                 "Demander ma permission à chaque fois">
+<!ENTITY geoEnabled.accesskey             "m">
+<!ENTITY geoDisabled.label                "Désactiver cette fonctionnalité et refuser toute demande">
+<!ENTITY geoDisabled.accesskey            "D">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Blocage de sites malveillants">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; peut bloquer les sites web signalés comme possédant du contenu malveillant.">
+
+<!ENTITY blockAttackSites.label           "Bloquer les sites signalés comme étant malveillants (logiciels malveillants, virus)">
+<!ENTITY blockAttackSites.accesskey       "B">
+
+<!ENTITY blockWebForgeries.label          "Bloquer les sites signalés comme étant des contrefaçons (hameçonnage)">
+<!ENTITY blockWebForgeries.accesskey      "l">

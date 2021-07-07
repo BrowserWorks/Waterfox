@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "在以下文件夹中搜索消息:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "搜索子文件夹">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnServer.label        "在服务器上运行搜索">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "清除">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "打开">
+<!ENTITY openButton.accesskey        "n">
+<!ENTITY deleteButton.label          "删除">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "搜索消息">
+<!ENTITY results.label               "结果">
+<!ENTITY moveButton.label            "移动到">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "在文件夹中打开">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "将搜索结果保存作为文件夹">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "搜索在:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "属性">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "编写">
+<!ENTITY composeButton.accesskey     "W">
+<!ENTITY deleteCardButton.label      "删除">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "通讯录高级搜索">
+

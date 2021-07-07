@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Importvegvisar">
+
+<!ENTITY importAllFrom.label             "Importer alle element frå:">
+<!ENTITY importBookmarksFrom.label       "Importer bokmerke frå:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Fil">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "Ikkje importer noko">
+<!ENTITY importFromNothing.accesskey     "I">
+
+<!ENTITY importSource.title              "Importer innstillingar og data">
+<!ENTITY importItems.title               "Element som skal importerast">
+<!ENTITY importItems.label               "Velg kva for element som skal importerast:">
+
+<!ENTITY selectProfile.title             "Vel profil">
+<!ENTITY selectProfile.label             "Følgjande profilar er tilgjengelege å importere frå:">
+
+<!ENTITY migrating.title                 "Importerer…">
+<!ENTITY migrating.label                 "Følgjande element vert importerte…">
+
+<!ENTITY done.title                      "Import fullført">
+<!ENTITY done.label                      "Følgjande element er importerte:">

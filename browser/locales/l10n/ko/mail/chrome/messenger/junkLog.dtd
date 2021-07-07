@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "스팸 메일 기록">
+<!ENTITY adaptiveJunkLogInfo.label "스팸 메일 적응 필터의 동작 기록입니다.">
+<!ENTITY clearLog.label "기록 삭제">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY closeLog.label "닫기">
+<!ENTITY closeLog.accesskey "o">

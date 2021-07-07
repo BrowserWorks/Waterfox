@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Keluarkan saya dari sini!">
+<!ENTITY safeb.palm.decline.label "Abaikan peringatan ini">
+<!ENTITY safeb.palm.reportPage.label "Mengapa laman ini diblokir?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Nasihat disediakan oleh <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Telah Dilaporkan sebagai Situs Penyerang!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Situs web di <span id='malware_sitename'/> telah dilaporkan sebagai situs penyerang dan telah diblokir berdasarkan pengaturan keamanan Anda.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Situs penyerang mencoba memasang program yang dapat mencuri informasi pribadi, menggunakan komputer untuk menyerang komputer lain, atau merusak sistem.</p> <p>Beberapa situs penyerang secara sengaja mendistribusikan perangkat lunak perusak dan banyak komputer telah terserang tanpa diketahui atau diizinkan pemiliknya.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Situs Tipuan!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Laman web di <span id='phishing_sitename'/> telah dilaporkan sebagai situs tipuan dan telah diblokir berdasarkan pengaturan keamanan Anda.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Situs tipuan dirancang untuk mengelabui Anda agar melakukan hal berbahaya seperti memasang program, atau mengungkapkan informasi pribadi seperti kata sandi, nomor telepon, atau kartu kredit.</p><p>Memasukan informasi di laman web tersebut mungkin bisa menyebabkan pencurian identitas atau penipuan lainnya.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Telah Dilaporkan Sebagai Situs Perangkat Lunak yang Tidak Diinginkan!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Situs web di <span id='unwanted_sitename'/> telah dilaporkan melayani perangkat lunak yang tidak diinginkan dan telah diblokir berdasarkan pengaturan keamanan Anda.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Laman perangkat lunak yang tidak diinginkan mencoba menginstal perangkat lunak yang mungkin menipu dan mempengaruhi sistem Anda dalam cara yang tidak diinginkan.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Situs tujuan mungkin mengandung malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; memblokir laman ini karena laman ini mungkin mencoba memasang aplikasi berbahaya yang dapat mencuri atau menghapus informasi Anda (seperti foto, sandi, pesan dan kartu kredit).">

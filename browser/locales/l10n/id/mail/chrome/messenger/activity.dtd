@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Pengelola Aktivitas">
+
+<!ENTITY cmd.pause.label                  "Tunda">
+<!ENTITY cmd.pause.accesskey              "T">
+<!ENTITY cmd.resume.label                 "Lanjutkan">
+<!ENTITY cmd.resume.accesskey             "L">
+<!ENTITY cmd.cancel.label                 "Batalkan">
+<!ENTITY cmd.cancel.accesskey             "t">
+<!ENTITY cmd.undo.label                   "Batal">
+<!ENTITY cmd.undo.accesskey               "B">
+<!ENTITY cmd.recover.label                "Kembalikan">
+<!ENTITY cmd.recover.accesskey            "K">
+<!ENTITY cmd.retry.label                  "Coba ulang">
+<!ENTITY cmd.retry.accesskey              "C">
+<!ENTITY cmd.removeFromList.label         "Hapus dari Daftar">
+<!ENTITY cmd.removeFromList.accesskey     "H">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Bersihkan Daftar">
+<!ENTITY cmd.clearList.tooltip            "Hapus item yang telah selesai, dibatalkan, atau gagal dari daftar">
+<!ENTITY cmd.clearList.accesskey          "D">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Cari…">

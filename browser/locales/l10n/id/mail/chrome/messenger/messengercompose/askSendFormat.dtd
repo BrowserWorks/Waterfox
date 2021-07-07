@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Pertanyaan Email Format HTML">
+
+<!ENTITY recipient.label "Beberapa penerima tidak didaftarkan dapat menerima email HTML.">
+
+<!ENTITY question.label "Apakah Anda ingin untuk mengubah email dalam format teks polos atau tetap mengirim dalam format HTML?">
+
+<!ENTITY plainTextAndHtml.label "Kirim dalam format Teks Polos dan HTML sekaligus">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Kirim hanya dalam Format Teks Polos">
+<!ENTITY plainTextOnly.accesskey "t">
+<!ENTITY htmlOnly.label "Kirim hanya dalam Format HTML">
+<!ENTITY htmlOnly.accesskey "h">
+
+<!ENTITY send.label "Kirim">
+<!ENTITY send.accesskey "K">

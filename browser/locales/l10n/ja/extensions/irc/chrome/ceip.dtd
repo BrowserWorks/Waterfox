@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla Customer Experience Improvement Program">
+<!ENTITY window.size   "width: 48em;"><!-- en-US: "width: 42em;" -->
+
+<!ENTITY intro.label "ChatZilla Customer Experience Improvement Program は、あなたの ChatZilla の利用状況についての情報を収集します。この情報は、開発者が ChatZilla の改善すべき機能を知る手がかりになります。あなたの個人情報や連絡先を特定できる情報は使用しません。">
+
+<!ENTITY groupSend.label        "次のデータが送信されます:">
+<!ENTITY sendClient.label       "ChatZilla を開いたとき、または閉じたとき">
+<!ENTITY sendClient.accesskey   "o">
+<!ENTITY sendCommand.label      "使用したコマンド、メニュー、ダイアログ">
+<!ENTITY sendCommand.accesskey  "C">
+<!ENTITY sendID.label           "あなたのユニーク ID:">
+<!ENTITY sendIDSrc.label        "(ランダムな値が生成されます)">
+
+<!ENTITY groupNotSent.label     "送信されないデータ:">
+<!ENTITY notsentNickname.label  "あなたのニックネーム">
+<!ENTITY notsentMessages.label  "操作と通知を含めたメッセージの内容">
+<!ENTITY notsentArguments.label "すべてのコマンド、メニュー、ダイアログに与えた引数">
+<!ENTITY notsentURLs.label      "ネットワーク名と URL、サービス、チャンネル、ユーザー">
+<!ENTITY notsentFiles.label     "送受信したファイルの名前と内容">

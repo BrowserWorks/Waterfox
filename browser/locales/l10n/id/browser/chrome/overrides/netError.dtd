@@ -1,0 +1,144 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Memuat laman bermasalah">
+<!ENTITY retry.label "Coba Lagi">
+<!ENTITY returnToPreviousPage.label "Mundur">
+<!ENTITY returnToPreviousPage1.label "Kembali (Disarankan)">
+<!ENTITY advanced2.label "Tingkat Lanjut…">
+<!ENTITY viewCertificate.label "Tampilkan Sertifikat">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Server Tidak Ditemukan">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Jika alamatnya benar, berikut tiga hal yang dapat Anda coba:</strong>
+<ul>
+  <li>Coba lagi nanti.</li>
+  <li>Periksa sambungan jaringan Anda.</li>
+  <li>Jika Anda tersambung tetapi berada di balik tembok api, periksa apakah &brandShortName; diizinkan mengakses Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Periksa penggunaan huruf besar/kecil pada nama berkas atau kesalahan pengetikan lain.</li> <li>Periksa apakah berkas sudah dipindah, diganti namanya, atau dihapus.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>Berkas mungkin sudah dihapus, dipindahkan, atau hak akses yang ada mencegah akses terhadap berkas.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "<p>Untuk alasan tertentu &brandShortName; tidak dapat memuat laman ini.</p>">
+
+<!ENTITY captivePortal.title "Masuk ke jaringan">
+<!ENTITY captivePortal.longDesc2 "<p>Anda harus masuk ke dalam jaringan ini sebelum dapat mengakses Internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Buka Laman Masuk Jaringan">
+
+<!ENTITY malformedURI.pageTitle "URL tidak valid">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Dokumen yang diminta tidak tersedia pada tembolok &brandShortName;.</p><ul><li>Sebagai tindakan pencegahan keamanan, &brandShortName; tidak meminta ulang dokumen sensitif secara otomatis.</li><li>Klik Coba Lagi untuk meminta ulang dokumen dari situs web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Tekan &quot;Coba Lagi&quot; untuk kembali ke mode daring dan memuat ulang lamannya.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Mohon hubungi pemilik situs web mengenai masalah ini.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Mohon hubungi pemilik situs web mengenai masalah ini.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Anda mungkin perlu untuk menginstal perangkat lunak lain untuk membuka alamat ini.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Periksa pengaturan proksi, pastikan sudah benar.</li> <li>Hubungi administrator jaringan Anda untuk memastikan server proksi sudah berjalan.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Periksa pengaturan proksi, pastikan sudah benar.</li> <li>Pastikan sambungan ke jaringan komputer Anda berjalan dengan baik.</li> <li>Apabila komputer atau jaringan Anda dilindungi firewall atau proksi, pastikan bahwa &brandShortName; diizinkan mengakses Web.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Masalah ini kadangkala disebabkan karena mematikan fungsi atau menolak menerima kuki.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Pastikan sistem Anda telah terpasang Pengelola Keamanan Pribadi.</li> <li>Hal ini mungkin disebabkan konfigurasi server yang tidak standar.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Laman yang ingin dibuka tidak dapat ditampilkan karena keaslian data yang diterima tidak bisa diverifikasi.</li> <li>Mohon hubungi pemilik situs web mengenai masalah ini.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; mendeteksi potensi ancaman keamanan dan tidak melanjutkan ke <span class='hostname'/>. Jika Anda mengunjungi situs ini, penyerang bisa saja mencuri informasi seperti sandi, surel, atau rincian kartu kredit Anda.">
+<!ENTITY certerror.sts.introPara "&brandShortName; mendeteksi potensi ancaman keamanan dan tidak dapat melanjutkan ke <span class='hostname'/> karena situs ini memerlukan sambungan aman.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; mendeteksi masalah dan tidak melanjutkan ke <span class='hostname'/>. Situs web salah dikonfigurasi atau jam komputer Anda disetel ke waktu yang salah.">
+<!ENTITY certerror.expiredCert.secondPara2 "Sepertinya sertifikat situs ini telah kedaluwarsa, yang mencegah &brandShortName; tersambung secara aman. Jika Anda mengunjungi situs ini, penyerang dapat mencoba mencuri informasi seperti kata sandi, surel, atau rincian kartu kredit Anda.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Sepertinya sertifikat situs web telah kedaluwarsa, yang menghalangi &brandShortName; untuk menyambungkan dengan aman.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Apa yang bisa Anda lakukan mengenai masalah ini?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Masalahnya mungkin berasal dari situs webnya, dan tidak ada yang bisa Anda lakukan untuk mengatasinya.</p>
+<p>Jika Anda berada di jaringan kantor atau menggunakan perangkat lunak antivirus, Anda bisa menghubungi tim dukungan untuk mendapatkan bantuan. Anda juga bisa memberi tahu administrator situs web tentang masalahnya.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Jam komputer Anda disetel ke <span id='wrongSystemTime_systemDate2'/>. Pastikan waktu komputer Anda disetel ke tanggal, jam, dan zona waktu yang benar pada pengaturan sistem Anda, lalu segarkan <span class='hostname'/>.</p>
+<p>Jika jam Anda telah disetel ke waktu yang benar, situs web mungkin salah dikonfigurasikan, dan tidak ada yang bisa Anda lakukan untuk mengatasi masalahnya. Anda bisa memberi tahu administrator situs web tentang masalahnya.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Masalahnya sangat mungkin bersumber pada situs web, dan tidak ada yang bisa Anda lakukan untuk mengatasi masalahnya. Anda bisa memberi tahu administrator sistem tentang masalahnya.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>Sementara ini mungkin situs terlalu sibuk atau tidak menyala. Cobalah beberapa saat lagi.</li> <li>Apabila Anda tidak dapat memuat laman apa pun, periksa sambungan jaringan komputer Anda.</li> <li>Apabila komputer atau jaringan Anda dilindungi firewall atau proksi, pastikan bahwa &brandShortName; diizinkan mengakses Web.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; mencegah pemuatan laman dengan cara ini karena laman mengandung kebijakan keamanan konten yang tidak mengizinkan hal ini.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; mencegah pemuatan laman dalam konteks ini karena laman mengandung kebijakan X-Frame-Options yang tidak mengizinkan hal ini.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Laman yang akan dibuka tidak dapat ditampilkan karena ada terdeteksi galat pada pengiriman data.</p><ul><li>Mohon hubungi pemilik situs web mengenai masalah ini.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Terima Risikonya dan Lanjutkan">
+
+<!ENTITY errorReporting.automatic2 "Laporkan kesalahan seperti ini untuk membantu Mozilla mengidentifikasi dan memblokir situs yang mencurigakan.">
+<!ENTITY errorReporting.learnMore "Pelajari lebih lanjut…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Hubungi pemilik situs web untuk memberitahukan masalah ini.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Info lebih lanjut: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Peringatan: Potensi Risiko Keamanan Menghadang">
+<!ENTITY certerror.sts.pagetitle  "Tidak Tersambung: Dugaan Masalah Keamanan">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> memiliki kebijakan keamanan yang disebut sebagai HTTP Strict Transport Security (HSTS), yang berarti &brandShortName; hanya bisa tersambung dengannya secara aman. Anda tidak bisa menambahkan pengecualian untuk mengunjungi situs.">
+<!ENTITY certerror.copyToClipboard.label "Salin teks ke papan klip">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> menggunakan teknologi keamanan yang sudah kedaluwarsa dan rentan diserang. Penyerang dapat dengan mudah mengungkapkan informasi yang Anda anggap aman. Administrator situs web perlu memperbaiki server terlebih dahulu sebelum Anda dapat mengunjungi situsnya.</p><p>Kode galat: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Laman Diblokir">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> sepertinya situs yang aman, tapi sambungan yang aman tidak terjalin. Masalah ini disebabkan oleh <span class='mitm-name'/>, yang bisa berasal dari peranti lunak dalam komputer atau jaringan Anda. ">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Jika perangkat lunak antivirus Anda menyertakan fitur pemindai koneksi terenkripsi (sering disebut “pemindaian web” atau “pemindaian https”), Anda dapat menonaktifkan fitur ini. Jika tidak berhasil, Anda dapat menghapus dan menginstal ulang perangkat lunak antivirus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Jika Anda berada di jaringan perusahaan, Anda dapat menghubungi departemen TI Anda.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Jika Anda tidak akrab dengan <span class='mitm-name'/>, bisa jadi ini sebuah serangan dan Anda sebaiknya tidak melanjutkan ke situs.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Jika Anda tidak akrab dengan <span class='mitm-name'/>, bisa jadi ini sebuah serangan, dan tidak ada yang dapat Anda lakukan untuk mengakses situs.">
+
+<!ENTITY clockSkewError.longDesc "Menurut komputer Anda waktu sekarang adalah <span id='wrongSystemTime_systemDate1'/>, yang mencegah &brandShortName; tersambung dengan aman. Untuk mengunjungi <span class='hostname'></span>, perbarui jam komputer Anda di pengaturan sistem agar diatur ke tanggal, jam, dan zona waktu yang benar, lalu segarkan <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Tampaknya setelan keamanan jaringan Anda yang mungkin menyebabkan ini. Ingin setelan baku dipulihkan?">
+<!ENTITY prefReset.label "Pulihkan setelan baku">
+
+<!ENTITY enableTls10.longDesc "Situs web ini mungkin tidak mendukung protokol TLS 1.2, yang merupakan versi minimum yang didukung oleh &brandShortName;. Pengaktifkan TLS 1.0 dan TLS 1.1 mungkin bisa membuat koneksi bisa dilanjutkan.">
+<!ENTITY enableTls10.note "TLS 1.0 dan TLS 1.1 akan dinonaktifkan secara permanen dalam rilis yang akan datang.">
+<!ENTITY enableTls10.label "Aktifkan TLS 1.0 dan 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Laman yang ingin Anda lihat tidak dapat ditampilkan karena ada yang salah dalam protokol jaringan.</p><ul><li>Harap hubungi pemilik situs web untuk memberi tahu mereka tentang masalah ini.</li></ul>">

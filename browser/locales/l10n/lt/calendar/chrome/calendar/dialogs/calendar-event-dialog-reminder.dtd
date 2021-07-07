@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Priminimų nustatymas">
+<!ENTITY reminder.add.label                                "Pridėti">
+<!ENTITY reminder.add.accesskey                            "P">
+<!ENTITY reminder.remove.label                             "Pašalinti">
+<!ENTITY reminder.remove.accesskey                         "š">
+
+<!ENTITY reminder.reminderDetails.label                    "Priminimo savybės">
+<!ENTITY reminder.action.label                             "Parinkite priminimo būdą">
+
+<!ENTITY reminder.action.alert.label                       "Rodyti pranešimą">
+<!ENTITY reminder.action.email.label                       "Atsiųsti laišką el. paštu">
+
+<!ENTITY alarm.units.minutes                               "min." >
+<!ENTITY alarm.units.hours                                 "val." >
+<!ENTITY alarm.units.days                                  "d." >

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Berkas Tersimpan">
+<!ENTITY aboutDownloads.empty                      "Tidak Ada Berkas Tersimpan">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Buka Foldernya">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "Tampilkan di Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Buka">
+<!ENTITY cmd.open.accesskey                        "B">
+<!ENTITY cmd.removeFromHistory.label               "Hapus dari Riwayat">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "Bersihkan Daftar">
+<!ENTITY cmd.clearList.accesskey                   "C">
+<!ENTITY cmd.clearList.tooltip                     "Hapus semua entri dari daftar berkas yang disimpan, kecuali unduhan yang sedang berlangsung.">
+<!ENTITY cmd.searchDownloads.label                 "Cari…">
+<!ENTITY cmd.searchDownloads.key                   "F">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Encodage du texte">
+<!ENTITY messageDisplay.caption          "Affichage des messages">
+<!ENTITY viewFallbackCharset2.label      "Encodage de texte de dernier recours :">
+<!ENTITY viewFallbackCharset2.accesskey  "n">
+<!ENTITY viewFallbackCharset.desc        "(Utilisé pour le contenu obsolète qui ne déclare pas correctement son encodage.)">
+
+<!ENTITY composingMessages.caption       "Rédaction des messages">
+<!ENTITY useMIME.label                   "Utiliser l’encodage MIME « quoted printable » pour les messages qui contiennent des caractères 8 bits. Ne pas cocher pour envoyer les messages tels quels.">
+<!ENTITY useMIME.accesskey               "U">
+<!ENTITY sendDefaultCharset2.label       "Encodage par défaut du texte :">
+<!ENTITY sendDefaultCharset2.accesskey   "E">
+<!ENTITY replyInDefaultCharset3.label    "Quand c’est possible, utiliser cet encodage de texte par défaut dans les réponses. (Si décoché, seuls les nouveaux messages utiliseront cet encodage par défaut).">
+<!ENTITY replyInDefaultCharset3.accesskey "Q">

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smiley">
+<!ENTITY insertSmiley.accesskey "m">
+
+<!ENTITY smiley1Cmd.label "Glimlach">
+<!ENTITY smiley1Cmd.accesskey "G">
+<!ENTITY smiley1Cmd.tooltip "Een smiley invoegen">
+<!ENTITY smiley2Cmd.label "Frons">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "Een gefronst gezicht invoegen">
+<!ENTITY smiley3Cmd.label "Knipoog">
+<!ENTITY smiley3Cmd.accesskey "n">
+<!ENTITY smiley3Cmd.tooltip "Een knipogend gezicht invoegen">
+<!ENTITY smiley4Cmd.label "Tong uitsteken">
+<!ENTITY smiley4Cmd.accesskey "u">
+<!ENTITY smiley4Cmd.tooltip "Een gezicht met uitgestoken tong invoegen">
+<!ENTITY smiley5Cmd.label "Lach">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "Een lachend gezicht invoegen">
+<!ENTITY smiley6Cmd.label "Verlegen">
+<!ENTITY smiley6Cmd.accesskey "V">
+<!ENTITY smiley6Cmd.tooltip "Een blozend gezicht invoegen">
+<!ENTITY smiley7Cmd.label "Twijfel">
+<!ENTITY smiley7Cmd.accesskey "T">
+<!ENTITY smiley7Cmd.tooltip "Een twijfelend gezicht invoegen">
+<!ENTITY smiley8Cmd.label "Verbazing">
+<!ENTITY smiley8Cmd.accesskey "e">
+<!ENTITY smiley8Cmd.tooltip "Een verbaasd gezicht invoegen">
+<!ENTITY smiley9Cmd.label "Kus">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Een kussend gezicht invoegen">
+<!ENTITY smiley10Cmd.label "Schreeuw">
+<!ENTITY smiley10Cmd.accesskey "S">
+<!ENTITY smiley10Cmd.tooltip "Een schreeuwend gezicht invoegen">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Een cool gezicht invoegen">
+<!ENTITY smiley12Cmd.label "Hebzucht">
+<!ENTITY smiley12Cmd.accesskey "H">
+<!ENTITY smiley12Cmd.tooltip "Een hebzuchtig gezicht invoegen">
+<!ENTITY smiley13Cmd.label "Mond vol tanden">
+<!ENTITY smiley13Cmd.accesskey "M">
+<!ENTITY smiley13Cmd.tooltip "Een gezicht met de mond vol tanden invoegen">
+<!ENTITY smiley14Cmd.label "Onschuldig">
+<!ENTITY smiley14Cmd.accesskey "O">
+<!ENTITY smiley14Cmd.tooltip "Een onschuldig gezicht invoegen">
+<!ENTITY smiley15Cmd.label "Huilen">
+<!ENTITY smiley15Cmd.accesskey "n">
+<!ENTITY smiley15Cmd.tooltip "Een huilend gezicht invoegen">
+<!ENTITY smiley16Cmd.label "Lippen zijn verzegeld">
+<!ENTITY smiley16Cmd.accesskey "z">
+<!ENTITY smiley16Cmd.tooltip "Een gezicht met verzegelde lippen invoegen">
+<!ENTITY SmileButton.label "Smiley invoegen">
+<!ENTITY SmileButton.tooltip "Een smiley invoegen">

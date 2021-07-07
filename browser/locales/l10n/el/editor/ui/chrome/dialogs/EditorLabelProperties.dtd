@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Ιδιότητες ετικέτας">
+
+<!ENTITY Settings.label "Ρυθμίσεις">
+<!ENTITY Settings.accesskey "θ">
+
+<!ENTITY EditLabelText.label "Επεξεργασία κειμένου:">
+<!ENTITY EditLabelText.accesskey "ξ">
+<!ENTITY LabelFor.label "Για έλεγχο:">
+<!ENTITY LabelFor.accesskey "λ">
+<!ENTITY AccessKey.label "Πλήκτρο συντόμευσης:">
+<!ENTITY AccessKey.accesskey "Π">
+
+<!ENTITY RemoveLabel.label "Αφαίρεση ετικέτας">
+<!ENTITY RemoveLabel.accesskey "ρ">

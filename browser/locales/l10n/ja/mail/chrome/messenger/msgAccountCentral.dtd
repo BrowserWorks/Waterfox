@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label		"メール">
+<!ENTITY readMsgsLink.label		"メッセージを読む">
+<!ENTITY composeMsgLink.label		"メッセージを書く">
+
+<!ENTITY newsSectionHdr.label		"ニュースグループ">
+<!ENTITY subscribeNewsLink.label	"購読するニュースグループを管理する">
+
+<!ENTITY feedsSectionHdr.label		"フィード">
+<!ENTITY subscribeFeeds.label		"購読するブログやニュースを管理する">
+
+<!ENTITY chat.label			"チャット">
+<!ENTITY movemail.label			"Movemail">
+
+<!ENTITY accountsSectionHdr.label	"アカウント">
+<!ENTITY subscribeImapFolders.label	"購読するフォルダーを管理する">
+<!ENTITY settingsLink.label		"このアカウントの設定を表示する">
+<!ENTITY setupNewAcct.label		"アカウントのセットアップ:">
+
+<!ENTITY advFeaturesSectionHdr.label	"高度な機能">
+<!ENTITY searchMsgsLink.label		"メッセージを検索する">
+<!ENTITY filtersLink.label		"メッセージフィルターの設定を変更する">
+<!ENTITY junkSettings.label		"迷惑メールフィルターの設定を変更する">
+<!ENTITY offlineLink.label		"オフライン作業の設定を変更する">

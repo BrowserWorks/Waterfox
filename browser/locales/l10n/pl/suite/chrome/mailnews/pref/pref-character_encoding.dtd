@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title "Kodowanie tekstu">
+<!ENTITY messageDisplay.caption "Wyświetlanie wiadomości">
+<!ENTITY viewFallbackCharset2.label "Rezerwowe kodowanie tekstu:">
+<!ENTITY viewFallbackCharset2.accesskey "R">
+<!ENTITY viewFallbackCharset.desc "(Używany dla zawartości, które same nie określają zestawu znaków.)">
+
+<!ENTITY composingMessages.caption "Tworzenie wiadomości">
+<!ENTITY useMIME.label "Dla wiadomości, które zawierają 8-bitowe znaki, użyj kodowania MIME „quoted printable”. Pozostaw bez zaznaczenia, aby wysłać wiadomość taką, jaka jest.">
+<!ENTITY useMIME.accesskey "k">
+<!ENTITY sendDefaultCharset2.label "Domyślne kodowanie tekstu:">
+<!ENTITY sendDefaultCharset2.accesskey "D">
+<!ENTITY replyInDefaultCharset3.label "Używaj domyślnego kodowania tekstu w odpowiedziach zawsze, kiedy to możliwe. (Gdy nie zaznaczono, tylko nowe wiadomości będą używać domyślne kodowanie.)">
+<!ENTITY replyInDefaultCharset3.accesskey "U">

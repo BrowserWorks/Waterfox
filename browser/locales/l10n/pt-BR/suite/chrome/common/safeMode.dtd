@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Modo de segurança do &brandShortName;">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; está sendo executado no modo de segurança, que desativa temporariamente suas configurações personalizadas, temas e complementos.">
+<!ENTITY safeModeDescription2.label   "Você pode tornar algumas ou todas essas mudanças permanentes:">
+
+<!ENTITY disableAddons.label          "Desativar todos os complementos">
+<!ENTITY disableAddons.accesskey      "D">
+
+<!ENTITY resetToolbars.label          "Restaurar o tamanho das janelas e barras de ferramentas">
+<!ENTITY resetToolbars.accesskey      "R">
+
+<!ENTITY deleteBookmarks.label        "Excluir todos os favoritos, exceto os backups">
+<!ENTITY deleteBookmarks.accesskey    "b">
+
+<!ENTITY resetUserPrefs.label         "Restaurar todas preferências de usuário para os padrões do &brandShortName;">
+<!ENTITY resetUserPrefs.accesskey     "p">
+
+<!ENTITY restoreSearch.label          "Restaurar mecanismos de pesquisa padrão">
+<!ENTITY restoreSearch.accesskey      "R">
+
+<!ENTITY changeAndRestartButton.label "Aplicar alterações e reiniciar">
+<!ENTITY continueButton.label         "Continuar em modo de segurança">

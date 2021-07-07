@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "網址列">
+
+<!ENTITY autoComplete.label                    "自動完成">
+<!ENTITY autoCompleteMatchHistory.label        "自動依照瀏覽紀錄建議網站">
+<!ENTITY autoCompleteMatchHistory.accesskey    "A">
+<!ENTITY autoCompleteMatchBookmarks.label      "自動依照書籤建議網站">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "B">
+<!ENTITY autoCompleteAutoFill.label            "自動把最適合的結果輸入進去">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "顯示結果列表">
+<!ENTITY autoCompleteShowPopup.accesskey       "S">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "只列出您先前輸入過的網站">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "o">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "符合">
+<!ENTITY autoCompleteMatch.accesskey           "M">
+<!ENTITY autoCompleteMatchAnywhere             "網址或網頁標題當中的任何地方">
+<!ENTITY autoCompleteMatchWordsFirst           "皆可，但偏好於字尾">
+<!ENTITY autoCompleteMatchWords                "只在字尾">
+<!ENTITY autoCompleteMatchStart                "只於網址或標題的開頭">
+<!ENTITY showInternetSearch.label              "顯示預設搜尋引擎">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "格式">
+<!ENTITY domainFormatting.label                "強調網站與 FTP 伺服器的實際網域名稱">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "強調顯示使用較高等級連線安全性的網頁">
+<!ENTITY highlightSecure.accesskey             "c">
+
+<!ENTITY unknownLocations.label                "未知位置">
+<!ENTITY domainGuessing.label                  "找不到網頁時，在網址中加上「www.」與「.com」">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "若輸入的文字不是網址時，進行網頁搜尋">
+<!ENTITY keywords.accesskey                    "P">
+

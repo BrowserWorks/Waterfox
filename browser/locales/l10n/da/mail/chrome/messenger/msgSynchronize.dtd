@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Hent og synkroniser meddelelser">
+<!ENTITY MsgSelect.label "Elementer til anvendelse offline">
+<!ENTITY MsgSyncDesc.label "Hvis du allerede har valgt mailmapper eller nyhedsgrupper til anvendelse offline, kan du hente og/eller synkronisere dem nu. Ellers brug &quot;Vælg&quot; knappen til at vælge mailmapper og nyhedsgrupper til anvendelse offline.">
+<!ENTITY MsgSyncDirections.label "Hent og/eller synkroniser følgende:">
+<!ENTITY syncTypeMail.label "Mailmeddelelser">
+<!ENTITY syncTypeMail.accesskey "E">
+<!ENTITY syncTypeNews.label "Nyhedsgruppemeddelelser">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Send meddelelser fra mappen Udbakke">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "Arbejd offline når hentning og/eller synkronisering er afsluttet">
+<!ENTITY workOffline.accesskey "o">
+<!ENTITY selectButton.label "Vælg…">
+<!ENTITY selectButton.accesskey "æ">
+<!ENTITY MsgSelectDesc.label "Vælg mailmapper og nyhedsgrupper til anvendelse offline.">
+<!ENTITY MsgSelectInd.label "Hent">
+<!ENTITY MsgSelectItems.label "Mapper og nyhedsgrupper">

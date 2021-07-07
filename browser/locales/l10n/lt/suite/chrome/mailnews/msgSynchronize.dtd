@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!ENTITY MsgSynchronize.label "Atsiųsti ir suvienodinti laiškus">
+<!ENTITY MsgSelect.label "Elementai, naudotini neprisijungus prie tinklo">
+<!ENTITY MsgSyncDesc.label "Jei pažymėjote naujienų grupes ir pašto aplankus, su kuriais norėsite dirbti neprisijungę prie tinklo, galite juos atsiųsti ir (arba) suvienodinti dabar. Priešingu atveju paspauskite mygtuką „Pasirinkti…“ ir pažymėkite tokių aplankų ir naujienų grupių pavadinimus.">
+<!ENTITY MsgSyncDirections.label "Ką atsiųsti ir (arba) suvienodinti:">
+<!ENTITY syncTypeMail.label "El. pašto laiškai">
+<!ENTITY syncTypeMail.accesskey "E">
+<!ENTITY syncTypeNews.label "Naujienų grupių laiškai">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Išsiųsti laiškus">
+<!ENTITY sendMessage.accesskey "s">
+<!ENTITY workOffline.label "Atsiuntus ir (arba) suvienodinus atsijungti nuo tinklo">
+<!ENTITY workOffline.accesskey "t">
+<!ENTITY selectButton.label "Pasirinkti…">
+<!ENTITY selectButton.accesskey "r">
+<!ENTITY MsgSelectDesc.label "Pažymėkite naujienų grupes ir pašto aplankus, su kuriais norėsite dirbti neprisijungę prie tinklo (jų laiškai bus atsiunčiami į jūsų kompiuterį).">
+<!ENTITY MsgSelectInd.label "Atsiųsti">
+<!ENTITY MsgSelectItems.label "Aplankai ir naujienų grupės">

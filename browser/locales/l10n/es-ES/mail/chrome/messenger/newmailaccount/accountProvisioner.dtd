@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Bienvenido a &brandShortName;">
+<!ENTITY header2.label "¿Le gustaría tener una nueva dirección de correo?">
+<!ENTITY other.languages "Sólo mostramos los proveedores que ofrecen direcciones en su área. Pulse aquí para mostrar todos los proveedores.">
+<!ENTITY error.line1 "Lo sentimos, no podemos encontrar ninguna dirección de correo sugerida.">
+<!ENTITY error.line2 "Puede probar a buscar apodos o cualquier otro término de búsqueda para encontrar más mensajes.">
+
+<!ENTITY error.suggest.before "También puede querer probar una de las ">
+<!ENTITY error.suggest.middle "alternativas de cuentas de correo gratuitas">
+<!ENTITY error.suggest.after ".">
+
+<!ENTITY success.title.before "Hola ">
+<!ENTITY success.title.after ", están disponibles para usted las siguientes direcciones de correo:">
+<!ENTITY success.tip "(también puede buscar apodos o cualquier otro término para encontrar más mensajes)">
+<!ENTITY partnership.description "En colaboración con varios proveedores, &brandShortName; puede ofrecerle una nueva cuenta de correo. Para ello, sólo tiene que rellenar su nombre y apellidos, o cualesquiera otras palabras que desee, en los campos anteriores.">
+<!ENTITY existing.header "¿Ya tiene una dirección que quiere usar?">
+<!ENTITY tinyheader.title "¿Ya tiene una dirección?">
+<!ENTITY tinyheader.existing "Saltarse esto y usar mi cuenta de correo existente">
+<!ENTITY content.close "Creo que configuraré mi cuenta más tarde.">
+<!ENTITY successful.title "¡Felicidades!">
+<!ENTITY successful.successMessage "Ha configurado con éxito su cuenta.">
+<!ENTITY successful.write "Escrib algún mensaje">
+<!ENTITY successful.write.desc "Comunique a sus amigos y familia su nueva dirección de correo.<br /> Para eso se ha creado esta nueva cuenta, ¿no es así?">
+<!ENTITY successful.customize "Personalice &brandShortName; con algunos complementos atractivos">
+<!ENTITY successful.customize.desc "Hay miles de complementos que le permiten personalizar &brandShortName; para hacer que se adapte a sus necesidades específicas.">
+<!ENTITY successful.attach "Añadir una firma personal a mi correo">
+<!ENTITY successful.attach.desc "Puede adjuntar automáticamente una cita o alguna información sobre sí mismo al final de cada mensaje que envíe.">
+<!ENTITY successful.close "Cerrar esta ventana.">
+<!ENTITY input.namePlaceholder "Su nombre o apodo">
+<!ENTITY input.search "Buscar">
+<!ENTITY search_engine.title "Personalice su motor de búsqueda">
+<!ENTITY search_engine.message "Su proveedor de correo electrónico también puede ofrecer servicios de búsqueda web.">
+<!ENTITY search_engine.button "Terminar">

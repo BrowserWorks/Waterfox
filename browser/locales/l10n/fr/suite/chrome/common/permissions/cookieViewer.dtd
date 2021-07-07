@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Cookies stockés">
+<!ENTITY     tab.bannedservers.label        "Sites avec cookies">
+<!ENTITY     div.bannedservers.label        "Gérer les sites autorisés à stocker des cookies sur votre ordinateur.">
+<!ENTITY     div.cookiesonsystem.label      "Afficher et supprimer les cookies stockés sur votre ordinateur.">
+<!ENTITY     treehead.cookiename.label      "Nom de cookie">
+<!ENTITY     treehead.cookiedomain.label    "Site">
+<!ENTITY     treehead.cookieexpires.label   "Expire le">
+<!ENTITY     treehead.infoselected.label    "Informations sur le cookie sélectionné">
+<!ENTITY     button.removecookie.label      "Supprimer le cookie">
+<!ENTITY     button.removecookie.accesskey  "S">
+<!ENTITY     button.removeallcookies.label  "Supprimer tous les cookies">
+<!ENTITY     button.removeallcookies.accesskey "t">
+
+<!ENTITY     search.placeholder             "Rechercher des cookies">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Nom :">
+<!ENTITY     props.value.label              "Contenu :">
+<!ENTITY     props.domain.label             "Hôte :">
+<!ENTITY     props.path.label               "Chemin :">
+<!ENTITY     props.secure.label             "Envoyé pour :">
+<!ENTITY     props.expires.label            "Expire le :">
+
+<!ENTITY     treehead.sitename.label        "Site">
+<!ENTITY     treehead.scheme.label          "Schéma">
+<!ENTITY     treehead.status.label          "État">
+<!ENTITY     windowtitle.label              "Gestionnaire de cookies">
+
+<!ENTITY     blockSite.label                "Interdire">
+<!ENTITY     blockSite.accesskey            "I">
+<!ENTITY     allowSite.label                "Autoriser">
+<!ENTITY     allowSite.accesskey            "A">
+<!ENTITY     allowSiteSession.label         "Session">
+<!ENTITY     allowSiteSession.accesskey     "e">
+<!ENTITY     removepermission.label         "Supprimer le site">
+<!ENTITY     removepermission.accesskey     "S">
+<!ENTITY     removeallpermissions.label     "Supprimer tous les sites">
+<!ENTITY     removeallpermissions.accesskey "t">
+
+<!ENTITY     futureCookies.label            "Ne pas autoriser les sites dont les cookies ont été supprimés à en définir d’autres">
+<!ENTITY     futureCookies.accesskey        "N">

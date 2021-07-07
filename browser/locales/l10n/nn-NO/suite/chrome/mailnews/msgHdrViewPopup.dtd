@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY EditContact.label                 "Rediger kontakt…">
+<!ENTITY EditContact.accesskey             "R">
+<!ENTITY ViewContact.label                 "Vis kontakt">
+<!ENTITY ViewContact.accesskey             "V">
+<!ENTITY SendMailTo.label                  "Skriv e-post til…">
+<!ENTITY SendMailTo.accesskey              "S">
+<!ENTITY CopyEmailAddress.label            "Kopier e-postadresse">
+<!ENTITY CopyEmailAddress.accesskey        "K">
+<!ENTITY CreateFilterFrom.label            "Lag filter på…">
+<!ENTITY CreateFilterFrom.accesskey        "L">
+<!ENTITY openInBrowser.label               "Opne i nettlesar">
+<!ENTITY openInBrowser.accesskey           "n">
+<!ENTITY bookmarkLinkCmd.label             "Bokmerk denne lenkja…">
+<!ENTITY bookmarkLinkCmd.accesskey         "B">
+<!ENTITY copyLinkCmd.label                 "Kopier lenkjeadresse">
+<!ENTITY copyLinkCmd.accesskey             "K">
+<!ENTITY CopyMessageId.label               "Kopier meldings-ID">
+<!ENTITY CopyMessageId.accesskey           "K">

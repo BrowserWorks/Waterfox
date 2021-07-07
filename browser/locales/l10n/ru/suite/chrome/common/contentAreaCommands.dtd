@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Запретить всплывающие окна этого веб-сайта">
+<!ENTITY popupWindowRejectCmd.accesskey "е">
+<!ENTITY popupWindowAllowCmd.label      "Разрешить всплывающие окна этого веб-сайта">
+<!ENTITY popupWindowAllowCmd.accesskey  "е">
+<!ENTITY openLinkCmdInTab.label       "Открыть ссылку в новой вкладке">
+<!ENTITY openLinkCmdInTab.accesskey   "к">
+<!ENTITY openLinkCmd.label            "Открыть ссылку в новом окне">
+<!ENTITY openLinkCmd.accesskey        "н">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Открыть ссылку в приватном окне">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "ы">
+<!ENTITY openLinkInWindowCmd.label    "Открыть">
+<!ENTITY openLinkInWindowCmd.accesskey "т">
+<!ENTITY openFrameCmd.label           "Открыть фрейм в новом окне">
+<!ENTITY openFrameCmd.accesskey       "н">
+<!ENTITY openFrameCmdInTab.label      "Открыть фрейм в новой вкладке">
+<!ENTITY openFrameCmdInTab.accesskey  "к">
+<!ENTITY keywordfield.label           "Добавить краткое имя для данного поиска…">
+<!ENTITY keywordfield.accesskey       "с">
+<!ENTITY showOnlyThisFrameCmd.label     "Показать только этот фрейм">
+<!ENTITY showOnlyThisFrameCmd.accesskey "о">
+<!ENTITY goBackCmd.label              "Назад">
+<!ENTITY goBackCmd.accesskey          "з">
+<!ENTITY goForwardCmd.label           "Вперёд">
+<!ENTITY goForwardCmd.accesskey       "п">
+<!ENTITY goUpCmd.label                "Вверх">
+<!ENTITY goUpCmd.accesskey            "х">
+<!ENTITY reloadCmd.label              "Обновить">
+<!ENTITY reloadCmd.accesskey          "и">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Остановить">
+<!ENTITY stopCmd.accesskey            "с">
+<!ENTITY reloadFrameCmd.label         "Обновить фрейм">
+<!ENTITY reloadFrameCmd.accesskey     "ф">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Исходный код выделенного фрагмента">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Исходный код MathML">
+<!ENTITY viewPartialSourceCmd.accesskey "с">
+<!ENTITY viewPageSourceCmd.label      "Исходный код страницы">
+<!ENTITY viewPageSourceCmd.accesskey  "х">
+<!ENTITY viewFrameSourceCmd.label     "Исходный код фрейма">
+<!ENTITY viewFrameSourceCmd.accesskey "х">
+<!ENTITY viewPageInfoCmd.label        "Информация о странице">
+<!ENTITY viewPageInfoCmd.accesskey    "р">
+<!ENTITY viewFrameInfoCmd.label       "Информация о фрейме">
+<!ENTITY viewFrameInfoCmd.accesskey   "ц">
+<!ENTITY fitImageCmd.label            "Растянуть изображение до размеров окна">
+<!ENTITY fitImageCmd.accesskey        "с">
+<!ENTITY reloadImageCmd.label         "Перезагрузить изображение">
+<!ENTITY reloadImageCmd.accesskey     "р">
+<!ENTITY viewImageCmd.label           "Открыть изображение">
+<!ENTITY viewImageCmd.accesskey       "р">
+<!ENTITY viewImageInfoCmd.label       "Информация об изображении">
+<!ENTITY viewImageInfoCmd.accesskey   "ж">
+<!ENTITY viewVideoCmd.label           "Открыть видео">
+<!ENTITY viewVideoCmd.accesskey       "к">
+<!ENTITY viewBGImageCmd.label         "Открыть фоновое изображение">
+<!ENTITY viewBGImageCmd.accesskey     "р">
+<!ENTITY setDesktopBackgroundCmd.label     "Сделать фоном рабочего стола…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "ф">
+<!ENTITY bookmarkPageCmd.label        "Добавить страницу в закладки…">
+<!ENTITY bookmarkPageCmd.accesskey    "б">
+<!ENTITY bookmarkLinkCmd.label        "Добавить ссылку в закладки…">
+<!ENTITY bookmarkLinkCmd.accesskey    "з">
+<!ENTITY bookmarkFrameCmd.label       "Добавить фрейм в закладки…">
+<!ENTITY bookmarkFrameCmd.accesskey   "б">
+<!ENTITY savePageAsCmd.label          "Сохранить как…">
+<!ENTITY savePageCmd.label            "Сохранить страницу">
+<!ENTITY savePageCmd.accesskey        "а">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Сохранить фрейм как…">
+<!ENTITY saveFrameCmd.label           "Сохранить фрейм">
+<!ENTITY saveFrameCmd.accesskey       "р">
+<!ENTITY printFrameCmd.label          "Печатать фрейм…">
+<!ENTITY printFrameCmd.accesskey      "е">
+<!ENTITY saveLinkAsCmd.label          "Сохранить объект как…">
+<!ENTITY saveLinkCmd.label            "Сохранить объект">
+<!ENTITY saveLinkCmd.accesskey        "о">
+<!ENTITY saveImageAsCmd.label         "Сохранить изображение как…">
+<!ENTITY saveImageCmd.label           "Сохранить изображение">
+<!ENTITY saveImageCmd.accesskey       "х">
+<!ENTITY saveVideoCmd.label           "Сохранить видео как…">
+<!ENTITY saveVideoCmd.accesskey       "х">
+<!ENTITY saveAudioCmd.label           "Сохранить аудио как…">
+<!ENTITY saveAudioCmd.accesskey       "х">
+<!ENTITY copyLinkCmd.label            "Копировать ссылку">
+<!ENTITY copyLinkCmd.accesskey        "п">
+<!ENTITY copyImageCmd.label           "Копировать изображение">
+<!ENTITY copyImageCmd.accesskey       "и">
+<!ENTITY copyVideoURLCmd.label        "Копировать ссылку на видео">
+<!ENTITY copyVideoURLCmd.accesskey    "п">
+<!ENTITY copyAudioURLCmd.label        "Копировать ссылку на аудио">
+<!ENTITY copyAudioURLCmd.accesskey    "п">
+<!ENTITY metadataCmd.label            "Свойства">
+<!ENTITY metadataCmd.accesskey        "й">
+<!ENTITY copyEmailCmd.label           "Копировать адрес электронной почты">
+<!ENTITY copyEmailCmd.accesskey       "р">
+<!ENTITY thisFrameMenu.label          "В этом фрейме">
+<!ENTITY thisFrameMenu.accesskey      "ф">
+<!ENTITY mediaPlay.label              "Воспроизвести">
+<!ENTITY mediaPlay.accesskey          "с">
+<!ENTITY mediaPause.label             "Приостановить">
+<!ENTITY mediaPause.accesskey         "с">
+<!ENTITY mediaMute.label              "Убрать звук">
+<!ENTITY mediaMute.accesskey          "б">
+<!ENTITY mediaUnmute.label            "Восстановить звук">
+<!ENTITY mediaUnmute.accesskey        "т">
+<!ENTITY mediaPlaybackRate.label        "Скорость воспроизведения">
+<!ENTITY mediaPlaybackRate.accesskey    "к">
+<!ENTITY mediaPlaybackRate050.label     "Замедленное движение (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "м">
+<!ENTITY mediaPlaybackRate100.label     "Нормальная скорость">
+<!ENTITY mediaPlaybackRate100.accesskey "о">
+<!ENTITY mediaPlaybackRate125.label     "Повышенная скорость (1¼×)">
+<!ENTITY mediaPlaybackRate125.accesskey "ш">
+<!ENTITY mediaPlaybackRate150.label     "Высокая скорость (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "ы">
+<!ENTITY mediaPlaybackRate200.label     "Двойная скорость">
+<!ENTITY mediaPlaybackRate200.accesskey "в">
+<!ENTITY mediaLoop.label              "Повторять">
+<!ENTITY mediaLoop.accesskey          "я">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Показать пульт управления">
+<!ENTITY mediaShowControls.accesskey  "а">
+<!ENTITY mediaHideControls.label      "Скрыть пульт управления">
+<!ENTITY mediaHideControls.accesskey  "к">
+<!ENTITY videoFullScreen.label        "Полный экран">
+<!ENTITY videoFullScreen.accesskey    "э">
+<!ENTITY videoSaveImage.label         "Сохранить кадр как…">
+<!ENTITY videoSaveImage.accesskey     "х">
+<!ENTITY videoShowStats.label         "Показать статистику">
+<!ENTITY videoShowStats.accesskey     "к">
+<!ENTITY videoHideStats.label         "Скрыть статистику">
+<!ENTITY videoHideStats.accesskey     "к">
+<!ENTITY search.accesskey             "П">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Переключить направление текста на странице">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "н">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Переключить направление текста на странице">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "т">
+<!ENTITY spellAddToDictionary.label     "Добавить в словарь">
+<!ENTITY spellAddToDictionary.accesskey "в">
+<!ENTITY spellUndoAddToDictionary.label      "Отменить добавление в словарь">
+<!ENTITY spellUndoAddToDictionary.accesskey  "м">
+<!ENTITY spellIgnoreWord.label          "Пропустить слово">
+<!ENTITY spellIgnoreWord.accesskey      "п">
+<!ENTITY spellCheckEnable.label         "Проверка орфографии">
+<!ENTITY spellCheckEnable.accesskey     "р">
+<!ENTITY spellNoSuggestions.label       "(вариантов не найдено)">
+<!ENTITY spellDictionaries.label        "Языки">
+<!ENTITY spellDictionaries.accesskey    "Я">
+<!ENTITY spellAddDictionaries.label     "Загрузить дополнительные словари…">
+<!ENTITY spellAddDictionaries.accesskey "З">
+
+<!ENTITY fillLoginMenu.label          "Ввести логин">
+<!ENTITY fillLoginMenu.accesskey      "е">
+<!ENTITY fillPasswordMenu.label       "Ввести пароль">
+<!ENTITY fillPasswordMenu.accesskey   "е">
+<!ENTITY fillUsernameMenu.label       "Ввести имя пользователя">
+<!ENTITY fillUsernameMenu.accesskey   "е">
+<!ENTITY noLoginSuggestions.label     "(Нет предложений для логинов)">
+<!ENTITY viewSavedLogins.label        "Просмотр сохранённых логинов">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "Исследовать элемент">
+<!ENTITY devtoolsInspect.accesskey      "е">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!ENTITY MsgSynchronize.label "下载/同步消息">
+<!ENTITY MsgSelect.label "脱机使用项">
+<!ENTITY MsgSyncDesc.label "如果您已选择了邮件夹或者新闻组供脱机使用，那么您可以现在进行下载/同步。或者，使用“选择”按钮来选择邮件夹或者新闻组供脱机使用。">
+<!ENTITY MsgSyncDirections.label "下载/同步下列：">
+<!ENTITY syncTypeMail.label "邮件消息">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "新闻组消息">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "发送尚未发送的消息">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "下载或同步完成之后马上脱机工作">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "选择…">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "选择供脱机工作的邮件夹和新闻组。">
+<!ENTITY MsgSelectInd.label "下载">
+<!ENTITY MsgSelectItems.label "文件夹及新闻组">

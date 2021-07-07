@@ -1,0 +1,184 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Gặp vấn đề khi tải trang">
+<!ENTITY retry.label "Thử Lại">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Không thể kết nối">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Địa chỉ này đã bị chặn">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Không tìm thấy máy chủ">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Kiểm tra các lỗi gõ địa chỉ như là
+    <strong>ww</strong>.example.com thay vì
+    <strong>www</strong>.example.com</li>
+  <li>Nếu bạn không thể mở bất kì trang nào, hãy kiểm tra kết nối mạng của bạn.</li>
+  <li>Nếu máy tính hoặc mạng của bạn được bảo vệ bởi tường lửa hoặc proxy, hãy chắc rằng &brandShortName; được phép truy cập Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Không tìm thấy tập tin">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kiểm tra tên xem có lỗi gõ HOA-thường hay lỗi nào khác không.</li>
+  <li>Kiểm tra xem tập tin có bị chuyển, đổi tên hay bị xóa không.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Truy cập tập tin bị từ chối">
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>Nó có thể đã bị xóa, chuyển đi, hay quyền truy cập tập tin đã bị chặn.</li>
+</ul>">
+
+<!ENTITY generic.title "Oái.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; không thể mở trang này vì nguyên nhân nào đó.</p>
+">
+
+<!ENTITY malformedURI.title "Địa chỉ không hợp lệ">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Địa chỉ Web thường được viết như sau
+    <strong>http://www.example.com/</strong></li>
+  <li>Hãy chắc rằng bạn đang dùng dấu chéo lên (vd.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Kết nối bị ngắt">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Tài liệu bị Hết hạn">
+<!ENTITY notCached.longDesc "<p>Tài liệu được yêu cầu không có sẵn trong bộ đệm.</p><ul><li>Để phòng ngừa bảo mật, &brandShortName; không tự động yêu cầu lại các tài liệu nhạy cảm.</li><li>Nhấp vào Thử lại để yêu cầu lại tài liệu từ trang web.</li></ul>">
+
+<!ENTITY netOffline.title "Chế độ ngoại tuyến">
+<!ENTITY netOffline.longDesc2 "<ul>
+ <li>Bấm &quot;Thử lại&quot; để vào chế độ trực tuyến và tải lại trang.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Lỗi bảng mã">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Vui lòng liên hệ với chủ trang web để báo họ vấn đề này.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Kiểu tập tin nguy hiểm">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Vui lòng liên hệ với chủ trang web để báo họ vấn đề này.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Kết nối bị khởi tạo lại">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Đã hết thời gian kết nối">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Không nhận dạng được địa chỉ này">
+<!ENTITY unknownProtocolFound.longDesc "<ul>
+  <li>Bạn có thể cần cài đặt phần mềm khác để mở địa chỉ này.</li>
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "Máy chủ proxy từ chối kết nối">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kiểm tra thiết lập proxy để chắc chắn rằng mọi thứ đều đúng.</li>
+  <li>Liên hệ với quản trị mạng của bạn để chắc chắn rằng máy chủ proxy vẫn đang hoạt động.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Không thể tìm thấy máy chủ proxy">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Kiểm tra thiết lập proxy để chắc chắn rằng mọi thứ đều đúng.</li>
+  <li>Kiểm tra để chắc rằng máy tính của bạn vẫn đang có kết nối mạng.</li>
+  <li>Nếu máy tính hoặc mạng của bạn được bảo vệ bởi tường lửa hoặc proxy, hãy chắc chắn rằng &brandShortName; được phép truy cập Web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Trang không chuyển hướng đúng">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Vấn đề này thỉnh thoảng có thể xảy ra do vô hiệu hóa hoặc từ chối cookie.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Phản hồi bất ngờ từ máy chủ">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Kiểm tra để chắc chắn rằng hệ thống của bạn có Trình quản lí Bảo mật Cá nhân.</li>
+  <li>Điều này có thể là do cấu hình không chuẩn trên máy chủ.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Kết nối An toàn bị Thất bại">
+<!ENTITY nssFailure2.longDesc2 "<ul>
+  <li>Không thể hiển thị trang bạn đang cố xem vì tính xác thực của dữ liệu nhận được không thể được xác minh.</li>
+  <li>Vui lòng liên hệ với chủ sở hữu trang web để thông báo cho họ về vấn đề này.</li>
+</ul>">
+
+<!ENTITY nssBadCert.title "Kết nối an toàn bị thất bại">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Đây có thể là vấn đề ở phần cấu hình của máy chủ, hoặc có thể do ai đó đang cố mạo nhận là máy chủ.</li>
+  <li>Nếu bạn đã từng kết nối tới máy chủ này thành công trong quá khứ, lỗi này có thể chỉ là tạm thời, bạn có thể thử lại sau.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Trang có thể bị gián đoạn tạm thời hoặc do quá tải. Hãy thử lại trong chốc lát.</li>
+  <li>Nếu bạn không thể mở bất kì trang nào, hãy kiểm tra kết nối mạng của bạn.</li>
+  <li>Nếu máy tính hoặc mạng của bạn được bảo vệ bởi tường lửa hoặc proxy, hãy chắc chắn rằng &brandShortName; được phép truy cập Web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Bị chặn bởi Chính sách bảo mật nội dung">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; không tải trang này vì nó có một chính sách bảo vệ nội dung không cho phép việc tải theo cách này.</p>">
+
+<!ENTITY xfoBlocked.title "Bị chặn bởi chính sách X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; đã ngăn trang này tải trong ngữ cảnh này vì trang có chính sách X-Frame-Options mà nó không cho phép.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Lỗi nội dung bị hỏng">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Không thể hiển thị được trang mà bạn muốn xem vì có lỗi trong truyền tải dữ liệu.</p><ul><li>Vui lòng liên hệ chủ trang web để báo họ về vấn đề này.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Hoặc bạn có thể thêm một ngoại lệ…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Đưa tôi ra khỏi đây!">
+<!ENTITY securityOverride.exceptionButtonLabel "Thêm Ngoại Lệ…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Bạn không nên thêm ngoại lệ nếu bạn đang dùng một kết nối mạng mà bạn không tin tưởng hoàn toàn hoặc bạn không quen thấy cảnh báo cho máy chủ này.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "XUL từ xa">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Vui lòng liên hệ với chủ trang web để báo họ vấn đề này.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Kết nối của bạn không an toàn">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> sử dụng công nghệ bảo mật lỗi thời và dễ bị tấn công. Một kẻ tấn công có thể dễ dàng làm lộ những thông tin mà bạn nghĩ là an toàn. Người quản lý trang web trước tiên sẽ cần phải sửa lỗi máy chủ trước khi bạn có thể vào trang.</p><p>Mã lỗi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Trang bị chặn">
+
+<!ENTITY networkProtocolError.title "Lỗi giao thức mạng">
+<!ENTITY networkProtocolError.longDesc "<p>Không thể hiển thị trang bạn đang cố xem vì lỗi trong giao thức mạng đã được phát hiện.</p><ul><li>Vui lòng liên hệ với chủ sở hữu trang web để thông báo cho họ về sự cố này.</li></ul>">

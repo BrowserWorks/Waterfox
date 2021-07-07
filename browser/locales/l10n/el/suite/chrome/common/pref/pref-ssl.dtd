@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "Εκδόσεις πρωτοκόλλου SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption             "Προειδοποιήσεις SSL/TLS">
+<!ENTITY SSLMixedContent.caption            "Μεικτό περιεχόμενο">
+<!ENTITY SSLClientAuthMethod.caption        "Επιλογή πιστοποιητικού προγράμματος">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "Μπορείτε να περιορίσετε ποια πρωτόκολλα κρυπτογράφησης χρησιμοποιούνται για ασφαλείς συνδέσεις. Επιλέξτε μία ή ένα συνεχόμενο εύρος εκδόσεων.">
+<!ENTITY limit.enable.label                 "Ενεργοποίηση:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "Το &brandShortName; μπορεί να σας ειδοποιήσει για την κατάσταση ασφαλείας της ιστοσελίδας που βλέπετε. Ρυθμίστε το &brandShortName; ώστε να εμφανίζει προειδοποίηση όταν γίνεται:">
+<!ENTITY warn.enteringsecure                "Φόρτωση σελίδας που υποστηρίζει κρυπτογράφηση">
+<!ENTITY warn.enteringsecure.accesskey      "Φ">
+<!ENTITY warn.insecurepost                  "Αποστολή δεδομένων φόρμας από μη κρυπτογραφημένη σελίδα σε μη κρυπτογραφημένη σελίδα">
+<!ENTITY warn.insecurepost.accesskey        "Α">
+<!ENTITY warn.leavingsecure                 "Αποχώρηση από σελίδα που υποστηρίζει κρυπτογράφηση">
+<!ENTITY warn.leavingsecure.accesskey       "ώ">
+
+<!ENTITY mixed.description                  "Οι κρυπτογραφημένες σελίδες ενδέχεται να περιέχουν μη κρυπτογραφημένο περιεχόμενο που είναι ευάλωτο σε υποκλοπές ή πλαστογράφηση. Το &brandShortName; μπορεί να το εντοπίσει και να το αποκλείσει:">
+<!ENTITY warn.mixedactivecontent            "Προειδοποίηση όταν κρυπτογραφημένες σελίδες περιέχουν επισφαλές περιεχόμενο">
+<!ENTITY warn.mixedactivecontent.accesskey  "Π">
+<!ENTITY block.activecontent                "Να μην φορτώνεται επισφαλές περιεχόμενο σε κρυπτογραφημένες σελίδες">
+<!ENTITY block.activecontent.accesskey      "Ν">
+<!ENTITY warn.mixeddisplaycontent           "Προειδοποίηση όταν κρυπτογραφημένες σελίδες περιέχουν άλλους τύπους μικτού περιεχομένου">
+<!ENTITY warn.mixeddisplaycontent.accesskey "δ">
+<!ENTITY block.displaycontent               "Να μην φορτώνονται άλλοι τύποι μεικτού περιεχομένου σε κρυπτογραφημένες σελίδες">
+<!ENTITY block.displaycontent.accesskey     "μ">
+
+<!ENTITY certselect.description             "Αποφασίστε τον τρόπο επιλογής ασφαλούς πιστοποιητικού στο &brandShortName; για παρουσίαση σε ιστοσελίδες που το απαιτούν:">
+<!ENTITY certselect.auto                    "Αυτόματη επιλογή">
+<!ENTITY certselect.auto.accesskey          "Α">
+<!ENTITY certselect.ask                     "Ερώτηση κάθε φορά">
+<!ENTITY certselect.ask.accesskey           "Ε">

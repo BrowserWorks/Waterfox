@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Menyn för senaste sidor">
+<!ENTITY  documentsInMenu.label         "Maximalt antal sidor på listan:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "När webbsidor sparas eller publiceras">
+<!ENTITY  preserveExisting.label        "Behåll ursprunglig formatering">
+<!ENTITY  preserveExisting.accesskey    "u">
+<!ENTITY  preserveExisting.tooltip      "Bevarar radbrytningar och sidans originalformatering">
+<!ENTITY  saveAssociatedFiles.label     "Spara bilder och andra kopplade filer när sidor sparas">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Visa alltid publiceringsdialogen när sidor publiceras">
+<!ENTITY  showPublishDialog.accesskey   "V">
+<!ENTITY  composerEditing.label         "Redigering">
+<!ENTITY  maintainStructure.label       "Behåll tabellens layout när du infogar eller tar bort celler">
+<!ENTITY  maintainStructure.tooltip     "Bevarar tabellers rektangulära struktur genom att automatiskt lägga till celler efter infogning eller borttagning av celler">
+<!ENTITY  maintainStructure.accesskey   "B">
+<!ENTITY  useCSS.label                  "Använd CSS i stället för HTML-element och -attribut">
+<!ENTITY  useCSS.accesskey              "A">
+<!ENTITY  crInPCreatesNewP.label        "Retur i ett stycke skapar alltid ett nytt stycke">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

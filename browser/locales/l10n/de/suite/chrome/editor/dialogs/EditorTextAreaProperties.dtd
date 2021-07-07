@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Textfeld-Eigenschaften">
+
+<!ENTITY Settings.label "Einstellungen">
+
+<!ENTITY TextAreaName.label "Feldname:">
+<!ENTITY TextAreaName.accessKey "n">
+<!ENTITY TextAreaRows.label "Zeilen:">
+<!ENTITY TextAreaRows.accessKey "Z">
+<!ENTITY TextAreaCols.label "Spalten:">
+<!ENTITY TextAreaCols.accessKey "p">
+<!ENTITY TextAreaReadOnly.label "Schreibgeschützt">
+<!ENTITY TextAreaReadOnly.accessKey "g">
+<!ENTITY TextAreaDisabled.label "Deaktiviert">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "Tab-Index:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "Zugriffstaste:">
+<!ENTITY TextAreaAccessKey.accessKey "t">
+<!ENTITY InitialText.label "Anfänglicher Text:">
+<!ENTITY InitialText.accessKey "x">
+
+<!ENTITY TextAreaWrap.label "Umbruchsmodus:">
+<!ENTITY TextAreaWrap.accessKey "U">
+<!ENTITY WrapDefault.value "Standard">
+<!ENTITY WrapOff.value "Aus">
+<!ENTITY WrapHard.value "Hart">
+<!ENTITY WrapSoft.value "Weich">
+<!ENTITY WrapPhysical.value "Physisch">
+<!ENTITY WrapVirtual.value "Virtuell">

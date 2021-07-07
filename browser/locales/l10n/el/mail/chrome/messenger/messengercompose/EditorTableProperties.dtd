@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Ιδιότητες πίνακα">
+<!ENTITY applyButton.label                "Εφαρμογή">
+<!ENTITY applyButton.accesskey            "φ">
+<!ENTITY closeButton.label                "Κλείσιμο">
+<!ENTITY tableTab.label                   "Πίνακας">
+<!ENTITY cellTab.label                    "Κελιά">
+<!ENTITY tableRows.label                  "Σειρές:">
+<!ENTITY tableRows.accessKey              "ρ">
+<!ENTITY tableColumns.label               "Στήλες:">
+<!ENTITY tableColumns.accessKey           "τ">
+<!ENTITY tableHeight.label                "Ύψος:">
+<!ENTITY tableHeight.accessKey            "ψ">
+<!ENTITY tableWidth.label                 "Πλάτος:">
+<!ENTITY tableWidth.accessKey             "Π">
+<!ENTITY tableBorderSpacing.label         "Πλαίσια και διάστιχο">
+<!ENTITY tableBorderWidth.label           "Πλαίσιο:">
+<!ENTITY tableBorderWidth.accessKey       "σ">
+<!ENTITY tableSpacing.label               "Διάστιχο:">
+<!ENTITY tableSpacing.accessKey           "χ">
+<!ENTITY tablePadding.label               "Γέμισμα:">
+<!ENTITY tablePadding.accessKey           "Γ">
+<!ENTITY tablePxBetwCells.label           "εικονοστοιχεία μεταξύ κελιών">
+<!ENTITY tablePxBetwBrdrCellContent.label "εικονοστοιχεία μεταξύ  πλαισίου κελιών και περιεχομένου">
+<!ENTITY tableAlignment.label             "Στοίχιση πίνακα:">
+<!ENTITY tableAlignment.accessKey         "ο">
+<!ENTITY tableCaption.label               "Λεζάντα:">
+<!ENTITY tableCaption.accessKey           "ζ">
+<!ENTITY tableCaptionAbove.label          "Πάνω από τον πίνακα">
+<!ENTITY tableCaptionBelow.label          "Κάτω από τον πίνακα">
+<!ENTITY tableCaptionLeft.label           "Αριστερά του πίνακα">
+<!ENTITY tableCaptionRight.label          "Δεξιά του πίνακα">
+<!ENTITY tableCaptionNone.label           "Καμία">
+<!ENTITY tableInheritColor.label           "(Εμφάνιση χρώματος σελίδας)">
+
+<!ENTITY cellSelection.label              "Επιλογή">
+<!ENTITY cellSelectCell.label             "Κελί">
+<!ENTITY cellSelectRow.label              "Σειρά">
+<!ENTITY cellSelectColumn.label           "Στήλη">
+<!ENTITY cellSelectNext.label             "Επόμενο">
+<!ENTITY cellSelectNext.accessKey         "ν">
+<!ENTITY cellSelectPrevious.label         "Προηγούμενο">
+<!ENTITY cellSelectPrevious.accessKey     "π">
+<!ENTITY applyBeforeChange.label          "Οι τρέχουσες αλλαγές θα εφαρμοσθούν πριν να γίνει αλλαγή στην επιλογή.">
+<!ENTITY cellContentAlignment.label       "Στοίχιση περιεχομένου">
+<!ENTITY cellHorizontal.label             "Οριζόντια:">
+<!ENTITY cellHorizontal.accessKey         "ζ">
+<!ENTITY cellVertical.label               "Κάθετη:">
+<!ENTITY cellVertical.accessKey           "θ">
+<!ENTITY cellStyle.label                  "Στυλ κελιού:">
+<!ENTITY cellStyle.accessKey              "φ">
+<!ENTITY cellNormal.label                 "Κανονικό">
+<!ENTITY cellHeader.label                 "Κεφαλίδα">
+<!ENTITY cellTextWrap.label               "Αναδίπλωση κειμένου:">
+<!ENTITY cellTextWrap.accessKey           "δ">
+<!ENTITY cellWrap.label                   "Αναδίπλωση">
+<!ENTITY cellNoWrap.label                 "Χωρίς αναδίπλωση">
+<!ENTITY cellAlignTop.label               "Πάνω">
+<!ENTITY cellAlignMiddle.label            "Μέση">
+<!ENTITY cellAlignBottom.label            "Κάτω">
+<!ENTITY cellAlignJustify.label           "Στοίχιση">
+<!ENTITY cellInheritColor.label           "(Να φαίνεται το χρώμα του πίνακα)">
+<!ENTITY cellUseCheckboxHelp.label        "Xρήση κουμπιών επιλογής για να ρυθμίσετε ποιες ιδιότητες θα εφαρμοστούν σε όλα τα επιλεγμένα κελιά">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Μέγεθος">
+<!ENTITY pixels.label                     "εικονοστοιχεία">
+<!ENTITY backgroundColor.label            "Χρώμα παρασκηνίου:">
+<!ENTITY backgroundColor.accessKey        "χ">
+<!ENTITY AlignLeft.label                  "Αριστερά">
+<!ENTITY AlignCenter.label                "Κέντρο">
+<!ENTITY AlignRight.label                 "Δεξιά">

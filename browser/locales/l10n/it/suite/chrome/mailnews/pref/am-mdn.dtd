@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "Ricevute di ritorno">
+<!ENTITY useGlobalPrefs.label "Utilizza le preferenze globali delle ricevute di ritorno per questo account">
+<!ENTITY useGlobalPrefs.accesskey "U">
+<!ENTITY globalReceipts.label "Preferenze globali…">
+<!ENTITY globalReceipts.accesskey "P">
+<!ENTITY useCustomPrefs.label "Personalizza le ricevute di ritorno per questo account">
+<!ENTITY useCustomPrefs.accesskey "P">
+<!ENTITY requestReceipt.label "All'invio di un messaggio, richiedi sempre una ricevuta di ritorno">
+<!ENTITY requestReceipt.accesskey "R">
+<!ENTITY receiptArrive.label "All'arrivo di una ricevuta di ritorno:">
+<!ENTITY leaveIt.label "Lasciala nella cartella In arrivo">
+<!ENTITY leaveIt.accesskey "L">
+<!ENTITY moveToSent.label "Spostala nella cartella Inviata">
+<!ENTITY moveToSent.accesskey "S">
+<!ENTITY requestMDN.label "Se viene richiesta una ricevuta di ritorno:">
+<!ENTITY returnSome.label "Permetti ricevuta di ritorno per alcuni messaggi">
+<!ENTITY returnSome.accesskey "C">
+<!ENTITY never.label "Non inviare mai la ricevuta di ritorno">
+<!ENTITY never.accesskey "m">
+<!ENTITY notInToCc.label "Se il proprio indirizzo non compare in A: o CC:">
+<!ENTITY notInToCc.accesskey "o">
+<!ENTITY outsideDomain.label "Se il mittente non appartiene al proprio dominio:">
+<!ENTITY outsideDomain.accesskey "d">
+<!ENTITY otherCases.label "Negli altri casi:">
+<!ENTITY otherCases.accesskey "N">
+<!ENTITY askMe.label "Chiedi">
+<!ENTITY alwaysSend.label "Spedisci">
+<!ENTITY neverSend.label "Non inviare">

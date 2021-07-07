@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "Ρύθμιση &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "Ρ">
+<!ENTITY weaveDesc.label            "Το &syncBrand.fullName.label; σάς παρέχει πρόσβαση στο ιστορικό, τους σελιδοδείκτες, τους κωδικούς πρόσβασης και τις ανοικτές σας καρτέλες σε όλες τις συσκευές σας.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "Λογαριασμός &syncBrand.fullName.label;">
+<!ENTITY accountName.label            "Όνομα λογαριασμού:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Ενημέρωση">
+<!ENTITY updatePass.accesskey         "Ε">
+<!ENTITY resetPass.label              "Επαναφορά">
+<!ENTITY resetPass.accesskey          "φ">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Διαχείριση λογαριασμού">
+<!ENTITY manageAccount.accesskey      "λ">
+<!ENTITY viewQuota.label              "Προβολή ορίου">
+<!ENTITY viewQuota.accesskey          "Π">
+<!ENTITY changePassword.label         "Αλλαγή κωδικού πρόσβασης">
+<!ENTITY changePassword.accesskey     "Α">
+<!ENTITY myRecoveryKey.label          "Το κλειδί ανάκτησής μου">
+<!ENTITY myRecoveryKey.accesskey      "Τ">
+<!ENTITY resetSync.label              "Επαναφορά Sync">
+<!ENTITY resetSync.accesskey          "Ε">
+<!ENTITY unlinkDevice.label           "Αποσύνδεση συσκευής">
+<!ENTITY unlinkDevice.accesskey       "σ">
+<!ENTITY addDevice.label              "Προσθήκη συσκευής">
+<!ENTITY addDevice.accesskey          "Π">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Όνομα υπολογιστή:">
+<!ENTITY syncComputerName.accesskey   "Ό">
+
+<!ENTITY syncMy2.label              "Συγχρονισμός:">
+<!ENTITY engine.addons.label        "Πρόσθετα">
+<!ENTITY engine.addons.accesskey    "Π">
+<!ENTITY engine.bookmarks.label     "Σελιδοδείκτες">
+<!ENTITY engine.bookmarks.accesskey "Σ">
+<!ENTITY engine.tabs.label          "Καρτέλες">
+<!ENTITY engine.tabs.accesskey      "Κ">
+<!ENTITY engine.history.label       "Ιστορικό">
+<!ENTITY engine.history.accesskey   "ρ">
+<!ENTITY engine.passwords.label     "Κωδικοί πρόσβασης">
+<!ENTITY engine.passwords.accesskey "π">
+<!ENTITY engine.prefs.label         "Προτιμήσεις">
+<!ENTITY engine.prefs.accesskey     "Π">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Όροι υπηρεσίας">
+<!ENTITY prefs.ppLink.label         "Πολιτική απορρήτου">

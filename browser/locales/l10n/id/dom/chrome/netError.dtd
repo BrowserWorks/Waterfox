@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Kesalahan Memuat Laman">
+<!ENTITY retry.label "Coba Lagi">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Gagal Tersambung">
+<!ENTITY connectionFailure.longDesc "<p>Walau pun tampaknya benar, program peramban tidak dapat tersambung ke situs yang dituju.</p><ul><li>Apakah situs tersebut sedang tidak berfungsi? Coba lagi nanti.</li><li>Apakah Anda tidak bisa membuka situs lain? Periksa sambungan jaringan komputer.</li><li>Apakah komputer Anda dilindungi firewall atau proksi? Kesalahan pengaturan dapat mengganggu nikmatnya menjelajah web.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Port Dibatasi untuk Alasan Keamanan">
+<!ENTITY deniedPortAccess.longDesc "<p>Alamat yang diminta mengandung port tertentu (misalnya <q>mozilla.org:80</q> untuk port 80 di mozilla.org) yang pada umumnya digunakan untuk keperluan <em>selain</em> menjelajah Web. Program peramban telah membatalkan permintaan untuk perlindungan dan keamanan Anda.</p>">
+
+<!ENTITY dnsNotFound.title "Alamat Tidak Ditemukan">
+<!ENTITY dnsNotFound.longDesc "<p>Program peramban tidak dapat menemukan server dengan nama yang diberikan pada alamat yang disebutkan.</p><ul><li>Apakah Anda membuat kesalahan ketika sedang menulis nama domain? (misal. <q><strong>ww</strong>.mozilla.org</q> seharusnya <q><strong>www</strong>.mozilla.org</q>)</li><li>Yakinkah Anda alamat domain tersebut benar dan ada? Pendaftaran domain tersebut mungkin sudah kedaluwarsa.</li><li>Apakah bisa menjelajah situs web lain? Periksa sambungan jaringan Anda dan pengaturan server DNS.</li><li>Apakah komputer atau jaringan Anda dilindungi firewall atau proksi? Pengaturan yang salah dapat mengganggu saat sedang menjelajah Web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Berkas Tidak Ditemukan">
+<!ENTITY fileNotFound.longDesc "<ul><li>Apakah objek telah diganti namanya, dibuang, atau dipindahkan?</li><li>Apa tidak ada kesalahan ejaan, huruf besar, atau <em>kesaalhan keitk</em> lainnya pada penulisan alamat?</li><li>Apakah Anda memiliki hak akses untuk mengakses objek yang diminta?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Akses terhadap berkas ditolak">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Berkas mungkin sudah dihapus, dipindahkan, atau hak akses yang ada mencegah akses terhadap berkas.</li></ul>">
+
+<!ENTITY generic.title "Tidak Dapat Menyelesaikan Permintaan">
+<!ENTITY generic.longDesc "<p>Informasi lanjut tentang masalah atau kesalahan tidak tersedia saat ini.</p>">
+
+<!ENTITY malformedURI.title "Alamat Salah">
+<!ENTITY malformedURI.longDesc "<p>Alamat yang diberikan tidak dalam format yang bisa dikenali program. Periksa ulang Bilah Lokasi kemudian coba lagi.</p>">
+
+<!ENTITY netInterrupt.title "Transfer Data Terganggu">
+<!ENTITY netInterrupt.longDesc "<p>Program peramban tersambung dengan sukses tetapi sambungan terganggu saat sedang mentransfer informasi. Silakan coba lagi.</p><ul><li>Apakah Anda tidak bisa menjelajah situs lain? Periksa sambungan jaringan komputer Anda.</li><li>Masih bermasalah? Tanyakan pada administrator jaringan Anda atau Penyedia Jasa Layanan Internet (Internet Service Provider).</li></ul>">
+
+<!ENTITY notCached.title "Dokumen Kedaluwarsa">
+<!ENTITY notCached.longDesc "<p>Dokumen yang diminta tidak tersedia pada tembolok peramban.</p><ul><li>Sebagai tindakan pencegahan keamanan, peramban tidak meminta ulang dokumen sensitif secara otomatis.</li><li>Klik Coba Lagi untuk meminta ulang dokumen dari situs web.</li></ul>">
+
+<!ENTITY netOffline.title "Mode Luring">
+<!ENTITY netOffline.longDesc2 "<p>Program peramban sedang berjalan dalam mode luring dan tidak dapat tersambung pada objek yang diminta.</p><ul><li>Apakah komputer tersambung pada jaringan yang berfungsi?</li><li>Tekan &quot;Coba Lagi&quot; untuk kembali ke mode daring dan memuat ulang lamannya.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Kesalahan Pengodean Isi">
+<!ENTITY contentEncodingError.longDesc "<p>Laman yang ingin dibuka tidak bisa ditampilkan karena menggunakan format kompresi yang tidak didukung atau tidak dikenali.</p><ul><li>Mohon hubungi pemilik situs web mengenai masalah ini.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Jenis Berkas Tidak Aman">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Mohon hubungi pemilik situs web mengenai masalah ini.</li> </ul>">
+
+<!ENTITY netReset.title "Sambungan Terputus">
+<!ENTITY netReset.longDesc "<p>Sambungan jaringan terganggu saat sedang membangun sambungan. Silakan coba lagi.</p>">
+
+<!ENTITY netTimeout.title "Sambungan Jaringan Time-out">
+<!ENTITY netTimeout.longDesc "<p>Situs yang diminta tidak menjawab permintaan sambungan dan program peramban menghentikan proses menunggu jawaban.</p><ul><li>Mungkinkah server sedang dalam keadaan sibuk atau mati sementara? Coba lagi nanti.</li><li>Apakah Anda bisa menjelajah situs web lain? Periksa sambungan jaringan komputer Anda.</li><li>Apakah komputer atau jaringan Anda dilindungi firewall atau proksi? Pengaturan yang salah dapat mengganggu saat menjelajah Web.</li><li>Masih bermasalah? Tanyakan pada administrator jaringan Anda atau Penyedia Jasa Layanan Internet (Internet Service Provider).</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Protokol Tidak Dikenal">
+<!ENTITY unknownProtocolFound.longDesc "<p>Alamat menyebutkan protokol (mis. <q>wxyz://</q>) yang tidak dikenali peramban sehingga peramban tidak dapat tersambung ke situs dengan benar.</p><ul><li>Yakin Anda sedang mencoba mengakses layanan multimedia atau layanan lain yang tidak berbasis teks? Periksa situs tersebut untuk persyaratan lainnya.</li><li>Beberapa protokol mungkin membutuhkan perangkat lunak pihak ketiga atau plugin agar peramban dapat mengenali protokol tersebut.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Server Proksi Menolak Sambungan">
+<!ENTITY proxyConnectFailure.longDesc "<p>Program peramban diatur untuk menggunakan server proksi, tetapi server proksi menolak sambungan.</p><ul><li>Apakah pengaturan proksi program peramban sudah benar? Periksa lagi pengaturan tersebut dan coba lagi.</li><li>Apakah layanan proxy mengizinkan sambungan dari jaringan komputer kita?</li><li>Masih bermasalah? Tanyakan pada administrator jaringan Anda atau Penyedia Jasa Layanan Internet (Internet Service Provider).</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Server Proksi Tidak Ditemukan">
+<!ENTITY proxyResolveFailure.longDesc "<p>Program peramban diatur untuk menggunakan server proksi, tetapi server proksi tidak bisa ditemukan.</p><ul><li>Apakah pengaturan proksi program peramban sudah benar? Periksa lagi pengaturan tersebut dan coba lagi.</li><li>Apakah komputer tersambung pada jaringan yang berfungsi?</li><li>Masih bermasalah? Tanyakan pada administrator jaringan Anda atau Penyedia Jasa Layanan Internet (Internet Service Provider).</li></ul>">
+
+<!ENTITY redirectLoop.title "Peralihan Berkalang">
+<!ENTITY redirectLoop.longDesc "<p>Program peramban menghentikan proses pengambilan permintaan. Situs yang dimaksud mengalihkan permintaan sedemikian rupa hingga tidak akan pernah berakhir.</p><ul><li>Apakah Anda mematikan atau memblokir kuki yang dibutuhkan untuk mengakses situs ini?</li><li><em>CATATAN</em>: Jika dengan menerima kuki dari situs tidak dapat menyelesaikan masalah, kemungkinan besar hal tersebut merupakan masalah konfigurasi server dan bukan masalah komputer Anda.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Respons Salah">
+<!ENTITY unknownSocketType.longDesc "<p>Situs menjawab permintaan lewat jaringan dengan cara yang tidak diharapkan dan program peramban tidak dapat melanjutkan.</p>">
+
+<!ENTITY nssFailure2.title "Sambungan Aman Gagal">
+<!ENTITY nssFailure2.longDesc2 "<p>Laman yang ingin dibuka tidak dapat ditampilkan karena keaslian data yang diterima tidak bisa diverifikasi.</p><ul><li>Mohon hubungi pemilik situs web mengenai masalah ini.</li></ul>">
+
+<!ENTITY nssBadCert.title "Sambungan Aman Gagal">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Hal ini mungkin terjadi karena masalah pada konfigurasi server atau pihak tertentu mencoba menyamar menjadi server pada alamat di atas.</li> <li>Jika Anda pernah tersambung dengan baik, kesalahan ini mungkin hanya sementara dan Anda dapat mencoba lagi nanti.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Atau dapat ditambahkan pada pengecualian…">
+<!ENTITY securityOverride.warningContent "<p>Sebaiknya Anda tidak menambahkan pengecualian jika Anda sedang menggunakan jaringan internet yang tidak Anda percayai atau jika biasanya Anda tidak melihat peringatan tentang server ini.</p> <p>Jika Anda masih ingin membuat pengecualian untuk situs ini, Anda dapat menambahkannya pada pengaturan enkripsi canggih.</p>">
+
+<!ENTITY cspBlocked.title "Diblokir oleh Kebijakan Keamanan Konten">
+<!ENTITY cspBlocked.longDesc "<p>Peramban mencegah pemuatan laman dengan cara ini karena laman mengandung kebijakan keamanan konten yang tidak mengizinkan hal ini.</p>">
+
+<!ENTITY xfoBlocked.title "Diblokir oleh Kebijakan X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>Peramban mencegah pemuatan laman dalam konteks ini karena laman mengandung kebijakan X-Frame-Options yang tidak mengizinkan hal ini.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Galat Konten Rusak">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Laman yang akan dibuka tidak dapat ditampilkan karena ada terdeteksi galat pada pengiriman data.</p><ul><li>Mohon hubungi pemilik situs web mengenai masalah ini.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL Jarak Jauh">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Hubungi pemilik situs web untuk memberitahukan masalah ini.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Sambungan Anda tidak aman">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> menggunakan teknologi keamanan yang sudah kedaluwarsa dan rentan diserang. Penyerang dapat dengan mudah mengungkapkan informasi yang Anda anggap aman. Administrator situs web perlu memperbaiki server terlebih dahulu sebelum Anda dapat mengunjungi situsnya.</p><p>Kode galat: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Laman Diblokir">
+
+<!ENTITY networkProtocolError.title "Protokol Jaringan Bermasalah">
+<!ENTITY networkProtocolError.longDesc "<p>Laman yang ingin dibuka tidak dapat ditampilkan karena terdeteksi masalah protokol jaringan.</p><ul><li>Mohon hubungi pemilik situs web mengenai masalah ini.</li></ul>">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY windowTitle.label "Egenskaber for linje">
+
+<!ENTITY dimensionsBox.label "Dimensioner">
+<!ENTITY heightEditField.label "Højde:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Bredde:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY pixelsPopup.value "pixler">
+<!ENTITY alignmentBox.label "Justering">
+<!ENTITY leftRadio.label "Venstre">
+<!ENTITY leftRadio.accessKey "V">
+<!ENTITY centerRadio.label "Centrer">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "Højre">
+<!ENTITY rightRadio.accessKey "H">
+
+<!ENTITY threeDShading.label "3-D-skygge">
+<!ENTITY threeDShading.accessKey "3">
+<!ENTITY saveSettings.label "Brug som standard">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "Gem disse indstillinger og brug dem som standard ved indsættelse af vandrette linjer">

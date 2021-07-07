@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "キャッシュ">
+<!ENTITY pref.cache.caption              "キャッシュの設定">
+<!ENTITY cachePara                       "キャッシュは、よく見るページのコピーをディスクに記録しておく仕組みです。(再読み込みボタンをクリックすると、コピーを捨ててそのページのすべてのデータを読み込み直します)">
+<!ENTITY cacheCheck.label                "&brandShortName; のキャッシュサイズを自動で管理する">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "キャッシュの許容サイズ:">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB">
+<!ENTITY diskCacheFolder.label           "キャッシュの保存先:">
+<!ENTITY clearDiskCache.label            "キャッシュをすべて消去">
+<!ENTITY clearDiskCache.accesskey        "C">
+<!ENTITY chooseDiskCacheFolder.label     "フォルダーを選択...">
+<!ENTITY chooseDiskCacheFolder.accesskey "F">
+<!ENTITY diskCacheFolderExplanation      "キャッシュファイルは指定したディレクトリー内の &quot;Cache&quot; サブフォルダーに保存されます。変更を有効にするには &brandShortName; を再起動してください。">
+<!ENTITY docCache.label                  "ネットワーク上のページとキャッシュしたページを比較する:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "セッションごと">
+<!ENTITY checkEveryTime.label            "ページを表示するたび">
+<!ENTITY checkNever.label                "確認しない">
+<!ENTITY checkAutomatically.label        "キャッシュしたページが古いとき">
+
+<!ENTITY prefetchTitle.label             "リンク先読み">
+<!ENTITY enablePrefetch.label            "リンク先読み機能を有効にする。この機能に対応したサイトでは、各ページのダウンロード完了後に、次に表示すると思われるページを先取りして読み込むことで見かけ上の表示速度を高速化します。">
+<!ENTITY enablePrefetch.accesskey        "P">
+
+<!ENTITY debugCache.label                "デバッグ">
+<!ENTITY debugEnableMemCache.label       "メモリーキャッシュを有効にする">
+<!ENTITY debugEnableMemCache.accesskey   "E">
+<!ENTITY debugEnableDiskCache.label      "ディスクキャッシュを有効にする">
+<!ENTITY debugEnableDiskCache.accesskey  "D">

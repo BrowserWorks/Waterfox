@@ -1,0 +1,229 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Sổ địa chỉ">
+<!ENTITY blankResultsPaneMessage.label                  "Sổ địa chỉ này chỉ hiển thị liên hệ sau khi tìm kiếm">
+<!ENTITY localResultsOnlyMessage.label                  "Liên hệ từ sổ địa chỉ từ xa không được hiển thị cho đến khi bạn tìm kiếm">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Tập tin">
+<!ENTITY fileMenu.accesskey                             "T">
+<!ENTITY newMenu.label                                  "Mới">
+<!ENTITY newMenu.accesskey                              "M">
+<!ENTITY newContact.label                               "Liên hệ trong sổ địa chỉ…">
+<!ENTITY newContact.accesskey                           "c">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Danh sách thư…">
+<!ENTITY newListCmd.accesskey                           "D">
+<!ENTITY newAddressBookCmd.label                        "Sổ địa chỉ…">
+<!ENTITY newAddressBookCmd.accesskey                    "S">
+<!ENTITY newCardDAVBookCmd.label                        "Sổ địa chỉ CardDAV…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "Thư mục LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newMessageCmd.label                            "Thư">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "T">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Sử dụng sổ địa chỉ Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Đóng">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "g">
+<!ENTITY printSetupCmd.label                            "Thiết lập trang…">
+<!ENTITY printSetupCmd.accesskey                        "p">
+<!ENTITY printPreviewContactCmd.label                   "Xem trước bản in danh bạ">
+<!ENTITY printPreviewContactCmd.accesskey               "X">
+<!ENTITY printPreviewAddressBook.label                  "Xem trước bản in sổ địa chỉ">
+<!ENTITY printPreviewAddressBook.accesskey              "a">
+<!ENTITY printContactCmd.label                          "In danh bạ…">
+<!ENTITY printContactCmd.accesskey                      "I">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "In sổ địa chỉ…">
+<!ENTITY printAddressBook.accesskey                     "S">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Chỉnh sửa">
+<!ENTITY editMenu.accesskey                             "E">
+<!ENTITY deleteCmd.label                                "Xóa">
+<!ENTITY deleteAbCmd.label                              "Xóa sổ địa chỉ">
+<!ENTITY deleteAbCmd.accesskey                          "D">
+<!ENTITY removeAbCmd.label                              "Xóa sổ địa chỉ">
+<!ENTITY removeAbCmd.accesskey                          "d">
+<!ENTITY deleteContactCmd.label                         "Xóa Danh Bạ">
+<!ENTITY deleteContactsCmd.label                        "Xóa Danh Bạ">
+<!ENTITY deleteListCmd.label                            "Xóa danh sách">
+<!ENTITY deleteListsCmd.label                           "Xóa các danh sách">
+<!ENTITY deleteItemsCmd.label                           "Xóa Các Mục">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Thuộc tính">
+<!ENTITY propertiesMenu.accesskey                       "i">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Thuộc tính sổ địa chỉ">
+<!ENTITY abPropertiesMenu.accesskey                     "i">
+<!ENTITY contactPropertiesMenu.label                    "Thuộc tính liên hệ">
+<!ENTITY contactPropertiesMenu.accesskey                "i">
+<!ENTITY mailingListPropertiesMenu.label                "Thuộc tính danh sách gửi thư">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Hiển thị">
+<!ENTITY viewMenu.accesskey                             "H">
+<!ENTITY viewToolbarsMenu.label                         "Thanh công cụ">
+<!ENTITY viewToolbarsMenu.accesskey                     "C">
+<!ENTITY menubarCmd.label                               "Thanh menu">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Thanh công cụ sổ địa chỉ">
+<!ENTITY showAbToolbarCmd.accesskey                     "S">
+<!ENTITY showTaskbarCmd.label                           "Thanh trạng thái">
+<!ENTITY showTaskbarCmd.accesskey                       "a">
+<!ENTITY customizeToolbar.label                         "Tùy biến…">
+<!ENTITY customizeToolbar.accesskey                     "b">
+<!ENTITY layoutMenu.label                               "Bố cục">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "Ngăn thư mục">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "Ngăn liên lạc">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "Hiện tên dưới dạng">
+<!ENTITY menu_ShowNameAs.accesskey                      "T">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Tên Họ">
+<!ENTITY firstLastCmd2.accesskey                        "F">
+<!ENTITY lastFirstCmd.label                             "Họ, Tên">
+<!ENTITY lastFirstCmd.accesskey                         "H">
+<!ENTITY displayNameCmd.label                           "Tên hiển thị">
+<!ENTITY displayNameCmd.accesskey                       "i">
+<!ENTITY sortMenu.label                                 "Sắp xếp theo">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Công cụ">
+<!ENTITY tasksMenu.accesskey                            "C">
+<!ENTITY messengerCmd.label                             "Thư &amp; nhóm tin">
+<!ENTITY messengerCmd.accesskey                         "T">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Tìm kiếm địa chỉ…">
+<!ENTITY searchAddressesCmd.accesskey                   "m">
+<!ENTITY importCmd.label                                "Nhập…">
+<!ENTITY importCmd.accesskey                            "N">
+<!ENTITY exportCmd.label                                "Xuất…">
+<!ENTITY exportCmd.accesskey                            "X">
+<!ENTITY preferencesCmd2.label                          "Tùy chọn">
+<!ENTITY preferencesCmd2.accesskey                      "O">
+<!ENTITY preferencesCmdUnix.label                       "Tùy chỉnh">
+<!ENTITY preferencesCmdUnix.accesskey                   "y">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Liên hệ mới">
+<!ENTITY newContactButton.accesskey                     "b">
+<!ENTITY newlistButton.label                            "Danh sách mới">
+<!ENTITY newlistButton.accesskey                        "D">
+<!ENTITY showAsDefault.label                            "Thư mục khởi động mặc định">
+<!ENTITY showAsDefault.accesskey                        "S">
+<!ENTITY editPropertiesButton.label                     "Chỉnh sửa">
+<!ENTITY propertiesContext.label                        "Thuộc tính">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "Thuộc tính">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY syncContext.label                              "Đồng bộ hoá">
+<!ENTITY syncContext.accesskey                          "y">
+<!ENTITY editContactContext.label                       "Chỉnh sửa liên hệ">
+<!ENTITY editContactContext.accesskey                   "E">
+<!ENTITY editMailingListContext.label                   "Chỉnh sửa danh sách">
+<!ENTITY editMailingListContext.accesskey               "E">
+<!ENTITY newmsgButton.label                             "Viết thư">
+<!ENTITY newmsgButton.accesskey                         "V">
+<!ENTITY newIM.label                                    "Tin nhắn nhanh">
+<!ENTITY newIM.accesskey                                "i">
+<!ENTITY printButton.label                              "In…">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY deleteButton2.label                            "Xóa">
+<!ENTITY deleteButton2.accesskey                        "X">
+
+<!ENTITY removeButton.label                             "Xóa">
+<!ENTITY removeButton.accesskey                         "R">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Chọn các cột để hiển thị">
+<!ENTITY newContactButton.tooltip                       "Tạo một tên liên hệ mới trên sổ địa chỉ">
+<!ENTITY newlistButton.tooltip                          "Tạo một danh sách mới">
+<!ENTITY editPropertiesButton.tooltip                   "Chỉnh sửa mục đã chọn">
+<!ENTITY editAbPropertiesButton.tooltip                 "Chỉnh sửa các thuộc tính của sổ địa chỉ đã chọn">
+<!ENTITY editContactPropertiesButton.tooltip            "Chỉnh sửa liên hệ đã chọn">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Chỉnh sửa danh sách gửi thư đã chọn">
+<!ENTITY newmsgButton.tooltip                           "Gửi một lá thư">
+<!ENTITY newIM.tooltip                                  "Gửi tin nhắn nhanh hoặc chat">
+<!ENTITY deleteButton2.tooltip                          "Xóa mục đã chọn">
+
+<!ENTITY removeButton.tooltip                           "Xóa sổ địa chỉ đã chọn">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Tên hoặc Email">
+<!ENTITY SearchNameOrEmail.accesskey                    "n">
+<!ENTITY advancedButton.tooltip                         "Tìm kiếm địa chỉ nâng cao">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Tìm Nhanh">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Sổ địa chỉ">
+<!ENTITY Addrbook.accesskey                             "B">
+<!ENTITY GeneratedName.label                            "Tên">
+<!ENTITY GeneratedName.accesskey                        "T">
+<!ENTITY PrimaryEmail.label                             "Email">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Tên trò chuyện">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "Tổ chức">
+<!ENTITY Company.accesskey                              "h">
+<!ENTITY NickName.label                                 "Tên hiệu">
+<!ENTITY NickName.accesskey                             "u">
+<!ENTITY SecondEmail.label                              "Email phụ">
+<!ENTITY SecondEmail.accesskey                          "P">
+<!ENTITY Department.label                               "Bộ phận">
+<!ENTITY Department.accesskey                           "B">
+<!ENTITY JobTitle.label                                 "Chức vụ">
+<!ENTITY JobTitle.accesskey                             "C">
+<!ENTITY CellularNumber.label                           "Di động">
+<!ENTITY CellularNumber.accesskey                       "D">
+<!ENTITY PagerNumber.label                              "Máy nhắn tin">
+<!ENTITY PagerNumber.accesskey                          "M">
+<!ENTITY FaxNumber.label                                "Fax">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Điện thoại nhà">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "Điện thoại công ty">
+<!ENTITY WorkPhone.accesskey                            "W">
+<!ENTITY sortAscending.label                            "Tăng dần">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "Giảm dần">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "Tên ngữ âm">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Danh bạ">
+<!ENTITY home.heading                                   "Nhà">
+<!ENTITY other.heading                                  "Khác">
+<!ENTITY chat.heading                                   "Trò chuyện">
+<!ENTITY phone.heading                                  "Điện thoại">
+<!ENTITY work.heading                                   "Công ty">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Mô tả">
+<!ENTITY addresses.heading                              "Địa chỉ">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Lấy Bản Đồ">
+<!ENTITY mapIt.tooltip                                  "Hiển thị bản đồ của địa chỉ này trên Web">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Cửa sổ">
+<!ENTITY minimizeWindow.label                           "Thu nhỏ">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Đưa Tất Cả ra Tiền Cảnh">
+<!ENTITY zoomWindow.label                               "Thu phóng">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "タイプ検索 (Find As You Type)">
+<!ENTITY findAsYouTypeBehavior.label "タイプ検索">
+<!ENTITY findAsYouTypeTip.label "豆知識: / キーを押すとタイプ検索を開始できます。リンクだけを対象に検索するには ' キーを押してください。">
+<!ENTITY findAsYouTypeTimeout.label "文字を探しているときに少し時間が経過したら検索を取りやめる">
+<!ENTITY findAsYouTypeTimeout.accesskey "C">
+<!ENTITY findAsYouTypeSound.label "見つからなかったときは音を鳴らす">
+<!ENTITY findAsYouTypeSound.accesskey "P">
+<!ENTITY findAsYouTypeEnableAuto.label "入力した文字と同じ部分をページから自動的に探す:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "F">
+<!ENTITY findAsYouTypeAutoText.label "ページ中のすべての文字">
+<!ENTITY findAsYouTypeAutoText.accesskey "A">
+<!ENTITY findAsYouTypeAutoLinks.label "リンクのみ">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "L">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "検索中は検索ツールバーを表示し続ける">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "S">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "注意: 検索ツールバーを使わない場合、タイプ検索では国際的な文字入力による検索ができません。">

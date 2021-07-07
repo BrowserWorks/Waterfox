@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Anpassa inställningarna för den här identiteten:">
+
+<!ENTITY settingsTab.label       "Inställningar">
+<!ENTITY copiesFoldersTab.label "Kopior &amp; mappar">
+<!ENTITY addressingTab.label    "Skriva &amp; adressera">
+
+<!ENTITY publicData.label        "Publik data">
+<!ENTITY privateData.label       "Privat data">
+<!ENTITY identityAlias.label     "Identitetsetikett:">
+<!ENTITY identityAlias.accesskey "k">

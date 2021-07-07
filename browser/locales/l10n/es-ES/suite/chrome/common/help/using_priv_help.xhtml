@@ -1,0 +1,1245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Usar las características de privacidad</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="using_the_cookie_manager">Usar el administrador de cookies</h1>
+
+<p>Una <em>cookie</em> es una pequeña cantidad de información en su ordenador
+  utilizada por algunos sitios. Para una breve descripción, vea <a href=
+  "privacy_help.xhtml#what_are_cookies_and_how_do_they_work">&iquest;Qué
+  son las cookies y cómo funcionan?</a></p>
+
+<p>Antes de cargar una página web que utilice cookies, su navegador
+  gestiona las cookies de la página de una de estas dos maneras:</p>
+
+<ul>
+  <li>Acepta o rechaza cualquier solicitud del sitio web para
+    <strong>establecer</strong> (almacenar) una o más cookies en su
+    ordenador.</li>
+  <li>Acepta o rechaza cualquier solicitud del sitio web para
+    <strong>leer</strong> cookies que previamente almacenó en su ordenador. En
+    realidad, un sitio web no puede leer directamente cookies ni ninguna otra
+    información de su ordenador; en su lugar, es su navegador quien lee las
+    cookies y las envía al servidor.</li>
+</ul>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#enabling_and_disabling_cookies">Activar y desactivar
+      cookies</a></li>
+    <li><a href="#managing_cookies_site-by-site">Administrar cookies sitio web
+      por sitio web</a></li>
+    <li><a href="#viewing_cookies">Ver cookies</a></li>
+    <li><a href="#removing_cookies">Eliminar cookies</a></li>
+    <li><a href="#cookie_manager_settings">Configuración del
+      administrador de cookies</a></li>
+  </ul>
+</div>
+
+<h2 id="enabling_and_disabling_cookies">Activar y desactivar cookies</h2>
+
+<p>Puede especificar cómo deben gestionarse las cookies si configura
+  sus preferencias de cookies. La configuración por defecto es "Permitir
+  todas las cookies".</p>
+
+<p>Para cambiar sus preferencias de cookies:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Privacidad y seguridad, escoja Cookies (si no
+    hay subcategorías visibles, haga doble clic en Privacidad y
+    seguridad para expandir la lista).</li>
+  <li>Establezca sus preferencias de cookies.</li>
+</ol>
+
+<p>Para más información sobre el efecto de cada parámetro, vea
+  <a href="#cookies">Preferencias de privacidad y seguridad - Cookies</a>.</p>
+
+<p>[<a href="#using_the_cookie_manager">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="managing_cookies_site-by-site">Administrar cookies sitio web por sitio
+  web</h2>
+
+<p>Para establecer los permisos de cookies para el sitio web que está
+  visitando:</p>
+
+<ol>
+  <li>Abra el menú Tareas y escoja Administrador de cookies.</li>
+  <li>Elija una de las siguientes opciones:
+    <ul>
+      <li><strong>Bloquear cookies de este sitio web</strong>: bloquear al
+        sitio web actual la capacidad de enviar cookies.</li>
+      <li><strong>Usar permisos predeterminados para cookies</strong>:
+        reiniciar los permisos de cookies del sitio web actual y usar los
+        <a href="#cookie_manager_settings">valores por omisión</a>.</li>
+      <li><strong>Permitir cookies de sesión de este sitio web</strong>:
+        permitir al sitio web actual enviar cookies de sesión. Las cookies
+        persistentes de este sitio web se tratarán com cookies de sesión.</li>
+      <li><strong>Permitir cookies de este sitio web</strong>: permitir al
+        sitio web actual enviar cookies.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>Para <a href="#add_cookie_sites">establecer permisos para cookies</a> para
+  varios sitios web o un sitio web que no está visitando, utilice el
+  administrador de cookies.</p>
+
+<p>Otras opciones del diálogo:</p>
+
+<ul>
+  <li><strong>Usar mi elección para todas las cookies de este sitio web</strong>:
+    si marca esta opción, no se le preguntará la próxima vez que este sitio
+    web intente enviar o modificar una cookie, y su respuesta <q>Permitir</q>
+    o <q>Denegar</q> seguirá teniendo validez.</li>
+  <li><strong>Mostrar detalles</strong>/<strong>Ocultar detalles</strong>:
+    pulse el botón para mostrar u ocultar <a href="#viewing_cookies">información
+    detallada</a> de la cookie.</li>
+</ul>
+
+<p>Si más tarde quiere cambiar una respuesta recordada, use el administrador
+  de cookie para editar las <a href="#stored_cookies">cookies guardadas</a> y
+  <a href="#cookie_sites">añadir o eliminar sitios web de cookies</a>.</p>
+
+<p>Para dejar de aceptar o rechazar automáticamente cookies de un sitio
+  web:</p>
+
+<ol>
+  <li>Abra el menú Tareas y escoja Administrador de cookies.</li>
+  <li>Escoja Administrar cookies almacenadas del submenú. La ventana del
+    administrador de cookies se abre con una lista de todas las cookies
+    almacenadas en su ordenador.</li>
+  <li>Pulse la pestaña Sitios web que usan cookies. Aparecerá una lista de los
+    sitios web para los cuales ha permitido o denegado el uso de cookies.</li>
+  <li>Pulse sobre el sitio web al que quiere denegar el permiso automático para
+    establecer cookies, y a continuación pulse en el botón Eliminar sitio.</li>
+</ol>
+
+<p>[<a href="#using_the_cookie_manager">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="viewing_cookies">Ver cookies</h2>
+
+<p>Para ver información detallada sobre las cookies:</p>
+
+<ol>
+  <li>Abra el menú Tareas y escoja Administrador de cookies.</li>
+  <li>Escoja Administrar cookies almacenadas del submenú. La ventana del
+    administrador de cookies se abre con una lista de todas las cookies
+    almacenadas en su ordenador.</li>
+  <li>Seleccione una cookie para ver sus detalles.</li>
+</ol>
+
+<p>Para más detalles sobre la información mostrada, vea
+  <a href="#stored_cookies">Cookies guardadas</a>.</p>
+
+<p>[<a href="#using_the_cookie_manager">Volver al principio de esta
+  sección</a>]</p>
+
+<h2 id="removing_cookies">Eliminar cookies</h2>
+
+<p><strong>Importante</strong>: para eliminar cookies, siga los pasos de
+  esta sección. No intente editar el archivo de cookies directamente.</p>
+
+<p>Para eliminar una o más cookies de su ordenador:</p>
+
+<ol>
+  <li>Abra el menú Tareas y escoja Administrador de cookies.</li>
+  <li>Escoja Administrar cookies almacenadas del submenú. La ventana
+    del administrador de cookies se abrirá con una lista de todas las
+    cookies almacenadas en su ordenador.</li>
+  <li>Seleccione una o más cookies y pulse el botón Eliminar
+    cookie, o bien pulse el botón Eliminar todas las cookies.</li>
+</ol>
+
+<p>Incluso aunque haya eliminado las cookies, volverán a ser creadas
+  por el sitio web la próxima vez que lo visite.</p>
+
+<p>Para evitar que esto suceda, puede seleccionar la casilla <q>No permitir que
+  los sitios web que escribieron cookies eliminadas puedan escribir cookies en
+  el futuro</q>. Esto provocará que los sitios web a los que pertenezcan las
+  cookies que elimine se añadan a la lista de sitios web para los cuales se
+  rechazan automáticamente las cookies.</p>
+
+<p>Debe pulsar Aceptar para que los cambios tengan efecto.</p>
+
+<p>[<a href="#using_the_cookie_manager">Volver al principio de la
+  sección</a>]</p>
+
+<h1 id="cookie_manager_settings">Configuración del administrador de
+  cookies</h1>
+
+<p>Esta sección describe cómo configurar sus preferencias de
+  cookies y controlar otros aspectos del manejo de cookies.</p>
+
+<p>Para descripciones paso a paso de varias tareas relacionadas con las
+  cookies, vea <a href="#using_the_cookie_manager">Usar el administrador de
+  cookies</a>.</p>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#cookies">Preferencias de privacidad y seguridad -
+      Cookies</a></li>
+    <li><a href="#stored_cookies">Cookies guardadas</a></li>
+    <li><a href="#cookie_sites">Sitios web que usan cookies</a></li>
+  </ul>
+</div>
+
+<h2 id="cookies">Preferencias de privacidad y seguridad - Cookies</h2>
+
+<p>Su navegador está configurado por defecto para aceptar todas las cookies.
+  Esta sección describe cómo utilizar el panel de preferencias de cookies. Si
+  no tiene el panel abierto aún, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Privacidad y seguridad, escoja Cookies (si no
+    hay subcategorías visibles, haga doble clic en Privacidad y
+    seguridad para expandir la lista).</li>
+</ol>
+
+<p>Las cookies ayudan a los sitios web a mantener información para usted, tal
+  como los contenidos de su carrito de la compra en línea, o la lista de
+  ciudades de las que Vd. quiere saber el tiempo que hará. Para una breve
+  descripción, vea <a href=
+  "privacy_help.xhtml#what_are_cookies_and_how_do_they_work">&iquest;Qué
+  son las cookies y cómo funcionan?</a></p>
+
+<p>Puede seleccionar una de estas opciones:</p>
+
+<ul>
+  <li><strong>Bloquear cookies</strong>: seleccione esta opción para rechazar
+    todas las cookies de sitios web que no tengan permitido explícitamente
+    establecer cookies.</li>
+  <li><strong>Permitir sólo las cookies que se devuelvan al mismo servidor del
+    que proceden</strong>: seleccione esta opción si no quiere aceptar o
+    devolver <a href="privacy_help.xhtml#what_are_thid-party_cookies">cookies
+    de terceros</a> de ningún sitio web excepto el que está visitando
+    explícitamente.</li>
+  <li><strong>Permitir cookies de terceros sólo para los sitios web
+    visitados previamente</strong>: seleccione esta opción si quiere aceptar
+    o devolver <a href="privacy_help.xhtml#what_are_third-party_cookies">cookies
+    de terceros</a> sólo para sitios web que guardaron cookies cuando usted los
+    visitó explícitamente en el pasado.</li>
+  <li><strong>Permitir todas las cookies</strong>: seleccione esta opción para
+    permitir establecer cookies a todos los sitios web que no hayan sido
+    explícitamente bloqueados.</li>
+</ul>
+  
+<p><strong>Nota</strong>: bloquear las cookies no elimina las cookies
+  anteriores. En su lugar, sólo impide que los sitios web envíen nuevas
+  cookies, pero las antiguas seguirán siendo enviadas a los sitios web. Para
+  bloquear por completo la capacidad de un sitio web de recibir cookies
+  antiguas, necesita <a href="#removing_cookies">eliminar sus cookies</a>.</p>
+
+<p><strong>Nota</strong>: <a href="#cookie_sites">los permisos de cookies por
+  sitio web</a> prevalecen sobre la configuración predeterminada para cookies.
+  Por ejemplo, si permite a un sitio web enviar cookies, ese sitio puede enviar
+  cookies incluso si usted elige con carácter general <q>Bloquear
+  cookies</q>.</p>
+
+<p>Si permite las cookies o no cambia la configuración predeterminada,
+  también puede seleccionar las siguientes preferencias:</p>
+
+<ul>
+  <li><strong>Aceptar cookies normalmente</strong>: seleccione esta opción si
+    quiere que los sitios web envíen o modifiquen cookies sin
+    restricciones.</li>
+  <li><strong>Aceptar sólo para la sesión en curso</strong>: seleccione esta
+    opción para borrar la cookie la próxima vez que salga de su navegador.</li>
+  <li><strong>Aceptar cookies durante [__] días</strong>: escoja esta opción si
+    quiere limitar la cantidad de tiempo que puede permanecer una cookie en su
+    ordenador, y escriba el número de días.</li>
+</ul>
+
+<p>También puede obtener más información sobre sus cookies guardadas:</p>
+
+<ul>
+  <li><strong>Aministrador de cookies</strong>: pulse este botón para ver
+    información sobre las cookies actualmente guardadas en su ordenador y qué
+    sitios web tienen permitido guardarlas.</li>
+</ul>
+
+<h2 id="stored_cookies">Cookies guardadas</h2>
+
+<p>Esta sección describe cómo usar la pestaña Cookies guardadas del
+  administrador de cookies. Si no tiene aún visible esa pestaña, siga estos
+  pasos:</p>
+
+<ol>
+  <li>Abra el menú Herramientas y elija Administrador de cookies.</li>
+  <li>Elija Administrar cookies guardadas del submenú. Se abrirá la
+    ventana del administrador de cookies con una lista de todas las cookies
+    guardadas en su ordenador.</li>
+</ol>
+
+<p>La pestaña Cookies guardadas lista todas las cookies almacenadas en su
+  ordenador, los sitios web a los que pertenecen, y su estado actual.</p>
+
+<p>Cuando selecciona una cookie de esta lista, aparece la siguiente información
+  sobre esa cookie en la parte inferior de la pestaña:</p>
+
+<table class="defaultTable">
+  <thead>
+    <tr>
+      <th>Elemento</th>
+      <th>Explicación</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Nombre</td>
+      <td>El nombre asignado a la cookie por el sitio de origen.</td>
+    </tr>
+    <tr class="even">
+      <td>Información</td>
+      <td>Una cadena de caracteres que contiene la información que el sitio web
+        mantiene sobre usted. Puede contener un nombre o clave de usuario por
+        la cual se le identifica en el sitio web, información sobre sus
+        aficiones, etc.</td>
+    </tr>
+    <tr>
+      <td>Host (o dominio)</td>
+      <td>
+        Proporciona el nombre del host o dominio de la cookie.
+
+        <p>Una cookie de <strong>host</strong> es devuelta, durante las visitas
+        subsiguientes, únicamente al <a href=
+        "glossary.xhtml#server">servidor</a> que la creó.</p>
+
+        <p>Una cookie de <strong>dominio</strong> es devuelta a cualquier sitio
+        web que pertenezca al mismo dominio que el sitio web que la creó. El
+        dominio de un sitio web es la parte de su URL que contiene el nombre de
+        una organización, negocio, o centro educativo, tal como netscape.com
+        o washington.org.</p>
+      </td>
+    </tr>
+    <tr class="even">
+      <td>Ruta</td>
+      <td>Esta es la ruta de archivo. Sólo se proporciona si la cookie
+      debería ser enviada de vuelta a todas las URLs que estén
+      en esa ruta o una inferior. Por ejemplo, <tt>http://a.b/x/y/z.html</tt>
+      significa que la cookie también puede ser creada por la ruta
+      <tt>x/</tt>.</td>
+    </tr>
+    <tr>
+      <td>Enviar para</td>
+      <td>Cuando este valor es <q>Sólo para conexiones
+      cifradas</q> quiere decir que el navegador verifica la conexión
+      siempre que el servidor solicita una cookie, y no la envía a menos
+      que la conexión esté cifrada (HTTPS).</td>
+    </tr>
+    <tr class="even">
+      <td>Caduca</td>
+      <td>La fecha y hora en la cual la cookie será desactivada. El
+      navegador elimina las cookies de su ordenador cada cierto tiempo.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Para eliminar cookies, pulse uno de estos botones:</p>
+
+<ul>
+  <li><strong>Eliminar cookie</strong>: elimina la(s) cookie(s)
+    seleccionada(s) de la lista.</li>
+  <li><strong>Eliminar todas las cookies</strong>: elimina todas las cookies
+    de la lista.</li>
+  </ul>
+
+<p>Seleccione la siguiente casilla para evitar que las cookies que elimine
+  sean añadidas de nuevo a la lista si vuelve a visitar el sitio web:</p>
+
+<ul>
+  <li><strong>No permitir que los sitios web que escribieron cookies eliminadas
+    puedan escribir cookies en el futuro</strong></li>
+</ul>
+
+<p>Incluso aunque haya eliminado las cookies, volverán a ser creadas por el
+  sitio web la próxima vez que lo visite. Para evitar que esto suceda, puede
+  seleccionar esta casilla. Esto provocará que los sitios web a los que
+  pertenezcan las cookies que elimine se añadan a la lista de sitios web para
+  los cuales se rechazan automáticamente las cookies.</p>
+
+<p>Debe pulsar Cerrar para que los cambios tengan efecto.</p>
+
+<h2 id="cookie_sites">Sitios que usan cookies</h2>
+
+<p>Esta sección describe cómo usar la pestaña Sitios que usan cookies del
+  administrador de cookies. Si no tiene abierta aún esa pestaña, siga estos
+  pasos:</p>
+
+<ol>
+  <li>Abra el menú Herramientas y elija Administrador de cookies.</li>
+  <li>Elija Administrar cookies guardadas del submenú. Se abrirá la
+    ventana del administrador de cookies con una lista de todas las cookies
+    guardadas en su ordenador.</li>
+  <li>Pulse la pestaña Sitios web que usan cookies.</li>
+</ol>
+
+<p>La pestaña Sitios web que usan cookies del administrador de cookies lista
+  los sitios web para los cuales se recuerdan sus decisiones, y cuáles son
+  éstas (aceptar o rechazar). También le permite eliminar sitios web de la
+  lista.</p>
+
+<h3 id="add_cookie_sites">Añadir un sitio web que usa cookies</h3>
+
+<p>Para añadir manualmente sitios web que usan cookies:</p>
+
+<ul>
+  <li>Introduzca la dirección del sitio web, p.e. <tt>www.mozilla.org</tt></li>
+  <li>Establezca los permisos para cookies del sitio web:
+    <ul>
+      <li><strong>Bloquear</strong>: pulse este botón para añadir el sitio web
+        como sitio web bloqueado para enviar cookies.</li>
+      <li><strong>Sesión</strong>: pulse este botón para añadir el sitio web
+        como sitio web que puede enviar cookies de sesión. Las cookies
+        persistentes de este sitio web serán convertidas en cookies de
+        sesión.</li>
+      <li><strong>Permitir</strong>: pulse este botón para añadir el sitio web
+        como sitio web que puede enviar cookies.</li>
+    </ul>
+  </li>
+  <li>Repita los pasos para añadir más sitios web.</li>
+</ul>
+
+<h3 id="remove_cookie_sites">Eliminar un sitio web que usa cookies</h3>
+
+<p>Para eliminar un sitio web que usa cookies:</p>
+
+<ul>
+  <li><strong>Eliminar sitio web</strong>: elimina de la lista el sitio web o
+    sitios web seleccionados.</li>
+  <li><strong>Eliminar todos los sitios web</strong>: eliminar todos los sitios
+    web de la lista.</li>
+</ul>
+
+<p>Una vez que ha eliminado un sitio web de esta lista, el administrador de
+  cookies no recuerda nada sobre él.</p>
+
+<h1 id="using_the_password_manager">Usar el administrador de contraseñas</h1>
+
+<p>Muchos sitios web requieren que introduzca un nombre de usuario y una
+  contraseña antes de que pueda acceder al sitio web. Por ejemplo, las páginas
+  personalizadas y los sitios web que contienen su información financiera
+  suelen requerir que inicie sesión en ellos.</p>
+
+<p>El nombre de usuario y la contraseña que utiliza en un sitio web en
+  particular puede ser leída por el administrador del sitio web.
+  Potencialmente, esa persona podría entonces intentar iniciar sesión en otros
+  sitios web donde usted pueda haber usado la misma combinación de nombre de
+  usuario y contraseña. Si esto le preocupa, puede querer usar una contraseña
+  diferente en cada sitio web en el que se registre.</p>
+
+<p>El administrador de contraseñas puede ayudarle a recordar algunas o todas de
+  esas combinaciones de nombre de usuario y contraseña guardándolas en el disco
+  duro de su ordenador, e introduciéndolas automáticamente por usted cuando
+  visite esos sitios web.</p>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#using_password_manager_to_remember_user_names_and_passwords">Usar
+      el administrador de contraseñas para recordar nombres de usuario
+      y contraseñas</a></li>
+    <li><a href="#entering_user_names_and_paswords_automatically">Introducir
+      nombres de usuario y contraseñas de manera automática</a></li>
+    <li><a href="#turning_password_manager_on_and_off">Activar y desactivar
+      el administrador de contraseñas</a></li>
+    <li><a href="#viewing_and_managing_stored_passwords">Ver y
+      administrar contraseñas guardadas</a></li>
+    <li><a href="passwords_help.xhtml">Configuración de contraseñas</a></li>
+  </ul>
+</div>
+
+<h2 id="using_password_manager_to_remember_user_names_and_passwords">Usar el
+  administrador de contraseñas para recordar nombres de usuario y
+  contraseñas</h2>
+
+<p>Cuando el administrador de contraseñas está activo (que es como está por
+  defecto), le ofrece la oportunidad de guardar en su disco duro los nombres de
+  usuario y las contraseñas que usted introduce mientras navega por
+  Internet.</p>
+
+<p>Por ejemplo, después de haber iniciado sesión en un sitio web desde una
+  página que pide nombre de usuario y contraseña, aparece un cuadro de diálogo
+  preguntando <q>&iquest;Quiere que el administrador de contraseñas recuerde
+  este inicio de sesión?</q>. Cuando vea este cuadro de diálogo, puede pulsar
+  uno de los botones siguientes:</p>
+
+<ul>
+  <li><strong>Sí</strong>: la próxima vez que vuelva al sitio web observará
+    que los campos que hay que rellenar con el nombre de usuario y contraseña
+    ya han sido rellenados. Lo único que tiene que hacer es pulsar el botón
+    Iniciar sesión (o similar) para enviarlos al servidor.</li>
+  <li><strong>Nunca para este sitio</strong>: el administrador de contraseñas
+    no le preguntará en el futuro si quiere guardar su nombre de usuario y
+    contraseña para este sitio web.</li>
+  <li><strong>No</strong>: el administrador de contraseñas no recordará el
+    nombre de usuario y contraseña, pero volverá a preguntarle la próxima vez
+    que visite el sitio web.</li>
+</ul>
+
+<p>De igual modo, cuando inicie sesión en una cuenta de correo o un sitio FTP,
+  o lleve a cabo cualquier otra acción que obligue al propio navegador a
+  mostrar un cuadro de diálogo especial para su información de la sesión, podrá
+  seleccionar esta opción en el propio cuadro de diálogo:</p>
+
+<ul>
+  <li><strong>Utilizar el administrador de contraseñas para recordar
+    estos valores</strong></li>
+</ul>
+
+<p>La próxima vez que compruebe su correo electrónico o lleve a
+  cabo cualquier otra tarea que tan sólo requiera una contraseña,
+  ésta será enviada directamente sin necesidad de ninguna otra
+  intervención por su parte. En aquellas tareas para las que sea
+  necesario que introduzca tanto un nombre de usuario como una
+  contraseña, deberá hacer clic en algún botón como
+  "Iniciar sesión" o equivalente después de que el administrador
+  de contraseñas haya rellenado la información.</p>
+
+<p>El administrador de contraseñas guarda sus nombres de usuario y
+  contraseñas en su propio ordenador, en un archivo que es
+  difícil, pero no imposible, de leer para un intruso. Vea <a href=
+  "#encrypting_stored_sensitive_information">Cifrar la información
+  confidencial guardada</a> para más información sobre
+  cómo proteger sus nombres de usuario y contraseñas con
+  tecnología de cifrado.</p>
+
+<p>Si el cuadro de diálogo del administrador de contraseñas descrito
+  anteriormente no aparece cuando pulsa Enviar tras escribir su nombre
+  de usuario y contraseña, el administrador de contraseñas puede
+  estar deshabilitado o el sitio web puede impedir su uso.</p>
+
+<p>Para comprobar si el administrador de contraseñas está actualmente activo,
+  vea <a href="#turning_password_manager_on_and_off">Activar y desactivar el
+  administrador de contraseñas</a>.</p>
+
+<p>[<a href="#using_the_password_manager">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="entering_user_names_and_passwords_automatically">Introducir nombres
+  de usuario y contraseñas de manera automática</h2>
+
+<p>El administrador de contraseñas puede rellenar por usted sus
+  nombres de usuario y sus contraseñas de dos maneras distintas:</p>
+
+<ul>
+  <li>Puede utilizar el administrador de contraseñas para recordar su
+    nombre de usuario y su contraseña para un sitio web (usando el
+    cuadro de diálogo con tres botones descrito en <a href=
+    "#using_password_manager_to_remember_user_names_and_passwords">Usar el
+    administrador de contraseñas para recordar nombres de usuario y
+    contraseñas</a>).
+
+    <p>La próxima vez que visite el sitio web, el administrador de contraseñas
+      colocará automáticamente su nombre de usuario y su contraseña en el
+      inicio de sesión del sitio web en la página. Entonces podrá pulsar el
+      botón "Iniciar sesión" o similar para enviar la información al
+      servidor.</p>
+  </li>
+  <li>Puede utilizar el administrador de contraseñas para recordar su nombre de
+    usuario y su contraseña para una cuenta de correo, un sitio FTP o cualquier
+    otra situación donde introduzca información de inicio de sesión en un
+    cuadro de diálogo que muestra un recuadro de selección llamado <q>Usar el
+    administrador de contraseñas para recordar estos valores</q>.
+
+    <p>En muchos casos, la próxima vez que intente acceder al servidor, el
+      administrador de contraseñas colocará automáticamente su nombre de
+      usuario y su contraseña en el mismo cuadro de diálogo. Podrá entonces
+      hacer clic en Aceptar para enviar la información al servidor.</p>
+
+    <p>En algunos casos, tales como cuando abra su cuenta de correo,
+      &brandShortName; necesita enviar al servidor sólo la
+      contraseña, y lo hace inmediatamente sin mostrar el cuadro de
+      diálogo y sin necesidad de ninguna otra acción por su
+      parte.</p>
+  </li>
+</ul>
+
+<p>[<a href="#using_the_password_manager">Volver al principio de esta
+  sección</a>]</p>
+
+<h2 id="turning_password_manager_on_and_off">Activar y desactivar el
+  administrador de contraseñas</h2>
+
+<p>El administrador de contraseñas está activado por defecto.
+  Para desactivarlo:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Privacidad y seguridad, escoja
+    Contraseñas (si no hay subcategorías visibles, haga doble
+    clic en Privacidad y seguridad para expandir la lista).</li>
+  <li>En la sección Administrador de contraseñas, desmarque
+    <q>Recordar las contraseñas</q> para desactivar el
+    administrador de contraseñas.</li>
+</ol>
+
+<p>Para activar el administrador de contraseñas siga los pasos 1 y 2,
+  pero marque la casilla del paso 3 en lugar de desmarcarla.</p>
+
+<p>[<a href="#using_the_password_manager">Volver al principio de esta
+  sección</a>]</p>
+
+ <h2 id="viewing_and_managing_stored_passwords">Ver y administrar las
+  contraseñas guardadas</h2>
+
+<p>Para ver los nombres de usuario y contraseñas que ha guardado y para mostrar
+  una lista de los sitios web de los cuales nunca se guarda información de
+  inicio de sesión:</p>
+
+<ul>
+  <li>Abra el menú Tareas, escoja Administrador de contraseñas, y entonces
+    elija Gestionar contraseñas guardadas del submenú. Podrá ver la ventana del
+    administrador de contraseñas con la pestaña Contraseñas guardadas
+    seleccionada.
+    <ul>
+      <li>Para ver sus contraseñas guardadas, pulse Mostrar contraseñas y
+        confirme su decisión.</li>
+      <li>Para ocultar sus contraseñas, pulse Ocultar contraseñas.</li>
+      <li>Para eliminar una entrada de la lista, selecciónela y a continuación
+        pulse Eliminar. La próxima vez que visite el sitio web, tendrá que
+        introducir su nombre de usuario y contraseña de nuevo, puesto que el
+        administrador de contraseñas ya no tendrá esa información.</li>
+      </ul>
+
+    Pulse la pestaña Contraseñas que nunca se guardarán para ver una lista de
+    los sitios web para los cuales ha indicado al administrador de contraseñas
+    que nunca guarde los nombres de usuario. Para eliminar un sitio web de esta
+    lista, selecciónelo y pulse Eliminar. La próxima vez que inicie sesión en
+    ese sitio web, podrá usar el nombre de usuario y la contraseña guardados
+    (si están disponibles) o indicar al administrador de contraseñas que quiere
+    que guarde la información para ese sitio web.</li>
+  </ul>
+
+<p>[<a href="#using_the_password_manager">Volver al principio de la
+  sección</a>]</p>
+
+<h1 id="clearing_private_data">Limpiar datos privados</h1>
+
+<p>Al navegar por la web pueden ser recogidos y almacenados por
+  &brandShortName; diversos elementos de información potencialmente privada.
+  Esta sección describe los tipos de tales datos privados y las opciones para
+  eliminarlos ya sea manualmente bajo petición o automáticamente al cerrar
+  &brandShortName;.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#types_of_private_data">Tipos de datos privados</a></li>
+    <li><a href="#private_data_prefs">Preferencias sobre datos privados</a></li>
+    <li><a href="#clear_private_data_now">Limpiar datos privados ahora</a></li>
+  </ul>
+</div>
+
+<h2 id="types_of_private_data">Tipos de datos privados</h2>
+
+<p>Diferentes tipos de información son recogidos y conservados por
+  &brandShortName; mientras está navegando por Internet. Algunos de estos datos
+  son necesarios para que esos sitios funcionen correctamente o de modo más
+  eficiente, otros se recogen para su comodidad.</p>
+
+<p>Las implicaciones de privacidad varían de un tipo a otro. Por ejemplo, el
+  historial de navegación y la caché de contenido proporcionan una instantánea
+  de su actividad de navegación reciente que es local a su equipo; las cookies
+  o el contenido web sin conexión pueden ser usados por un sitio web para
+  rastrear a un usuario en diferentes visitas (por ejemplo, para propósitos
+  estadísticos o para anuncios dirigidos).</p>
+
+<p>En el <a href="#browsing_in_a_private_window">modo de navegación privada</a>
+  no se conservarán datos privados más allá de la duración de la sesión privada.</p>
+
+<p>&brandShortName; puede guardar localmente la siguiente información
+  privada:</p>
+
+<table class="defaultTable">
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Explicación</th>
+    </tr>
+  </thead>
+  <tbody class="tbody-default">
+    <tr>
+      <td>Historial de navegación</td>
+      <td>Si se activa en las 
+        <a href="cs_nav_prefs_navigator.xhtml#history">preferencias del
+        historial</a>, se conserva un historial de todas las páginas de
+        cualquier sitio web que haya <em>visitado</em> y pueden ser
+        sugeridas para completar direcciones en la barra de direcciones.</td>
+    </tr>
+    <tr>
+      <td>Historial de la barra de direcciones</td>
+      <td>Éste es un historial de direcciones web que fueron
+        <em>introducidas</em> manualmente o copiadas y pegadas en la barra
+        de direcciones del navegador. Esta lista está disponible en el menú
+        de la barra de direcciones.</td>
+    </tr>
+    <tr>
+      <td>Historial de descargas</td>
+      <td>Dependiendo de las opciones seleccionadas en las
+        <a href="cs_nav_prefs_navigator.xhtml#downloads">preferencias
+        de descargas</a>, se mantiene un historial de <em>archivos
+        descargados</em> de los sitios web en el administrador de
+        descargas.</td>
+    </tr>
+    <tr>
+      <td>Historial de formularios y búsquedas guardados</td>
+      <td>Si se activa en las
+        <a href="cs_nav_prefs_navigator.xhtml#history">preferencias del
+        historial</a>, el texto introducido en los <em>elementos de
+        formularios</em> (p.e., nombres de usuario, pero no contraseñas) será
+        guardado durante un número de días especificado; las coincidencias se
+        sugieren en una lista cuando vuelve a visitar esa página. Si pone la
+        caja de búsqueda en su barra de herramientas, el historial de los
+        <em>términos de búsqueda</em> también se guardará.</td>
+    </tr>
+    <tr>
+      <td>Caché</td>
+      <td>La caché es un <em>almacenamiento de corto plazo</em> de páginas web
+        y otros datos (como adjuntos de correo de cuentas IMAP o imágenes
+        remotas en mensajes) para evitar tener que volver a solicitar esos
+        elementos del servidor si se acaba de acceder a ellos. La caché en
+        su disco puede contener datos hasta el límite específicado en las
+        <a href="cs_nav_prefs_advanced.xhtml#cache">preferencias de
+        caché</a>.</td>
+    </tr>
+    <tr>
+      <td>Cookies</td>
+      <td>Las cookies son <em>pequeños trozos de información</em> que los
+        sitios web usan para realizar un seguimiento de usuarios y sesiones,
+        o para guardar preferncias del sitio web. Use las
+        <a href="using_priv_help.xhtml#cookies">preferencias de cookies</a>
+        para especificar hasta qué punto se permiten las coookies y por cuánto
+        tiempo se conservan.</td>
+    </tr>
+    <tr>
+      <td>Datos de sitios web sin conexión</td>
+      <td>Los sitios web pueden tener permitido guardar el contenido de sus
+        páginas y los datos relacionados localmente para que estén disponibles
+        para su uso <em>sin una conexión de red</em>. Vea las
+        <a href="cs_nav_prefs_advanced.xhtml#offline_apps">preferencias de
+        aplicaciones sin conexión</a> para saber las opciones disponibles para
+        controlar este comportamiento e inspeccionar el contenido de los datos
+        de sitios web sin conexión guardados.</td>
+    </tr>
+    <tr>
+      <td>Contraseñas guardadas</td>
+      <td>Si se activa en las
+        <a href="passwords_help.xhtml#passwords">preferencias de contraseñas</a>,
+        &brandShortName; conserva <em>contraseñas introducidas</em> para su uso
+        posterior, de manera que no tenga que reescribirlo cada vez que visita
+        un sitio web.</td>
+    </tr>
+    <tr>
+      <td>Sesiones iniciadas</td>
+      <td>Los sitios web pueden necesitar una <em>identificación</em> (nombre
+        de usuario y contraseña solicitados mediante un diálogo emergente) y
+        pueden llevar la lista de tales sesiones identificadas. Un sitio le
+        preguntará sus credenciales nuevamente cuando pase a la siguiente página
+        una vez se limpie esta información.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>[<a href="#clearing_private_data">Volver al principio de la sección</a>]</p>
+
+<h2 id="private_data_prefs">Preferencias de privacidad y seguridad - Datos
+  privados</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de datos privados
+  para determinar cuándo y qué tipo de datos privados deben ser eliminados. Si
+  no está ya viéndolo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija Preferencias.</li>
+  <li>Bajo la categoría Privacidad y seguridad, haga clic en Datos privados
+    (si no hay subcategorías visibles, haga doble clic en Privacidad y
+    seguridad para expandir la lista).</li>
+</ol>
+
+<p>La sección <strong>Limpiar datos privados</strong> proporciona las
+  siguientes opciones:</p>
+
+<ul>
+  <li><strong>Limpiar siempre mis datos privados cuando cierre
+    &brandShortName;</strong>: marque esta casilla para iniciar siempre la
+    limpieza de los datos privados seleccionados cuando se cierre la
+    aplicación.</li>
+  <li><strong>Preguntarme antes de borrar datos privados</strong>: marque esta
+    casilla para que &brandShortName; le presente un cuadro de diálogo antes de
+    limpiar los datos privados seleccionados. El cuadro de diálogo también le
+    permite cambiar la selección, en lugar de limpiarlos sin ninguna
+    interacción.</li>
+  <li><strong>Cuando pida a &brandShortName; limpiar mis datos privados,
+    debería borrar</strong>: para cada <a href="#types_of_private_data">tipo
+    de datos privados</a>, se proporciona una opción separada sobre si limpiar
+    o no los elementos guardados de ese tipo específico. Marque la casilla
+    respectiva para cada elemento que debe eliminarse por defecto cuando se
+    solicite por usted o al iniciarse el cierre.</li>
+  <li><strong>Limpiar ahora</strong>: pulse este botón para iniciar la limpieza
+    de los datos privados inmediatamente, dependiendo de las preferencias
+    seleccionadas en este panel:
+    <ul>
+      <li>Cuando está marcada la opción <q>Preguntarme antes de borrar datos
+        privados</q>, &brandShortName; abre un cuadro de diálogo donde puede
+        confirmar y cambiar los elementos que serán eliminados.</li>
+      <li>Cuando <q>Preguntarme antes de borrar datos privados</q> <em>no</em>
+        está marcada, se limpiarán inmediatamente todos los tipos marcados
+        para ser eliminados por defecto, sin que se muestre el cuadro de
+        diálogo.</li>
+    </ul>
+  </li>
+</ul>
+
+<!-- link up "Data Manager" below once bug 599097 has been taken care of -->
+
+<p><strong>Nota</strong>: considere también otras alternativas más selectivas
+  para eliminar datos privados. Por ejemplo los paneles de preferencias
+  individuales para cada tipo pueden proporcionar opciones adicionales y el
+  administrador de datos permite limpiar datos privados por tipo y dominio
+  específico de un sitio web. En lugar de limpiar todas las cookies al cerrar
+  &brandShortName;, podría especificar permitir sólo las cookies de sesión,
+  dándole la oportunidad de establecer excepciones para sitios web concretos
+  para los que quiere retener las cookies.</p>
+
+<p>[<a href="#clearing_private_data">Volver al principio de la sección</a>]</p>
+
+<h2 id="clear_private_data_now">Limpiar datos privados ahora</h2>
+
+<p>Los datos privados pueden eliminarse en cualquier momento, ya sea desde las
+  <a href="#private_data_prefs">preferencias de datos privados</a> al pulsar el
+  botón Limpiar ahora, o seleccionando Limpiar datos privados del menú
+  Herramientas de una ventana del navegador. Esto inicia una de las siguientes
+  acciones:</p>
+
+<ul>
+  <li>Cuando está marcada la <q>Preguntarme antes de borrar datos privados</q>
+    en el <a href="#private_data_prefs">panel de preferencias de datos
+    privados</a>, &brandShortName; abre una ventana de diálogo donde puede
+    confirmar y cambiar los <a href="#types_of_private_data">tipos de datos
+    privados</a> que se deben eliminar, de la siguiente forma:
+    <ul>
+      <li>Los valores por defecto de cada tipo individual se determinan por
+        las <a href="#private_data_prefs">preferencias de datos privados</a>.
+        Observe que las casillas puden estar desactivadas individualmente si
+        no hay elementos disponibles para su eliminación.</li>
+      <li>Marque o desmarque casillas según desee si quiere limpiar una
+        combinación diferente de datos privados.</li>
+      <li>Pulse <q>Limpiar datos privados ahora</q> para limpiar los elementos
+        seleccionados, o Cancelar para salir del diálogo.</li>
+    </ul>
+  </li>
+  <li>Cuando <q>Preguntarme antes de borrar datos privados</q> <em>no</em>
+    está marcada, todos los tipos marcados en las
+    <a href="#private_data_prefs">preferencias de datos privados</a> para ser
+    eliminados por defecto se limpiarán inmediatamente, sin que se muestre el
+    cuadro de diálogo.</li>
+</ul>
+
+<p>[<a href="#clearing_private_data">Volver al principio de la
+  sección</a>]</p>
+
+<h1 id="browsing_in_a_private_window">Navegar en una ventana privada</h1>
+
+<p>Puede haber ocasiones en las que no desee que &brandShortName; conserve un
+  registro de su actividad de navegación. Por ejemplo, cuando alguien más
+  quiere usar a continuación su equipo y no quiere que su contexto actual de
+  navegación sea alterado; o para tareas confidenciales tales como banca en
+  Internet.</p>
+
+<p>Abrir una ventana privada supone comenzar una sesión de
+  <a href="glossary.xhtml#private_browsing">navegación privada</a> en la cual no
+  estarán disponibles <a href="#types_of_private_data">datos privados</a> de los
+  sitios y páginas que visite más allá del ámbito y duración de esa sesión. Cada
+  ventana privada abierta a partir de ese momento se convierte en parte de la
+  misma sesión privada. Ésta terminará cuando la última ventana privada sea
+  cerrada.</p>
+
+<p>Las ventanas privadas no están completamente aisladas de las ventanas
+  no privadas; la navegación privada sólo implica que &brandShortName; no
+  guardará ningún registro local de su actividad en esas ventanas. Pueden
+  compartirse algunos datos privados entre ventanas privadas pero no con
+  las no privadas, y viceversa, y otros datos podrían ser accedidos en
+  modo de sólo lectura desde una ventana privada.</p>
+
+<p>Tenga en cuenta que los <a href="customize_help.xhtml#add-ons">complementos</a>
+  como los plugins y las extensiones pueden no verse afectados por estas políticas
+  y podrían cambiar su configuración o modificar sus datos conservados en local
+  incluso en una ventana privada.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#opening_a_private_window">Abrir una ventana privada</a></li>
+    <li><a href="#behavior_of_a_private_window">Comportamiento de una ventana
+      privada</a></li>
+    <li><a href="#leaving_the_private_browsing_mode">Abandonar el modo de
+      navegación privada</a></li>
+  </ul>
+</div>
+
+<h2 id="opening_a_private_window">Abrir una ventana privada</h2>
+
+<p>Una ventana de navegador puede estar bien en modo de navegación normal
+  (no privada) o en modo de navegación privada. No es posible convertir una
+  ventana de navegación no privada en el modo privado, pero puede abrir una
+  nueva ventana privada de dos maneras:</p>
+
+<ul>
+  <li>Desde una ventana de navegador, abra el menú Archivo, elija Nuevo y luego
+    Ventana privada. La nueva ventana se abre con una página que explica que se
+    encuentra en modo de navegación privada.</li>
+  <li>Haga clic con el botón derecho en un enlace en una página web que esté
+    viendo y seleccione <q>Abrir enlace en ventana privada</q> desde el menú.
+    Se abrirá la nueva ventana privada, mostrando la página referenciada por el
+    enlace seleccionado.</li>
+</ul>
+
+<p>Pueden abrirse cualquier número de ventanas privadas y no privadas al mismo
+  tiempo, pero tenga presente en este caso para qué ventanas se conservará la
+  información del historial.</p>
+
+<p>[<a href="#browsing_in_a_private_window">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="behavior_of_a_private_window">Comportamiento de una ventana privada</h2>
+
+<p>Una ventana privada se comporta de manera diferente que una ventana no
+  privada en cuanto a cómo maneja los datos privados (vea
+  <a href="#types_of_private_data">Tipos de datos privados</a> para una
+  información detallada de las categorías individuales). Específicamente, tras
+  cerrar una sesión privada cuando se cierra la última ventana privada, no se
+  conservará ninguna información relacionada con esa sesión en &brandShortName;.
+  Los datos privados recopilados en una sesión privada tampoco estarán
+  disponibles para ninguna sesión privada posterior.</p>
+
+<h3>Reconocer una ventana privada</h3>
+
+<p>Para determinar si una ventana está o no en modo privado, eche un vistazo a
+  su barra de título. Las ventanas privadas muestran
+  <q>-&nbsp;<span class="noMac">&brandShortName; </span>navegación privada</q>
+  <span class="noMac">en lugar de simplemente
+  <q>-&nbsp;&brandShortName;</q></span> al final del título de la ventana.</p>
+
+<h3>Navegación y marcadores</h3>
+
+<ul>
+  <li>Navegar en una ventana privada es idéntico a una ventana no privada.
+    Puede usar los botones Atrás y Adelante también así como el menú Ir del
+    modo habitual.</li>
+  <li>Los enlaces no serán marcados como visitados cuando navegue en una ventana
+    privada.</li>
+  <li>Los marcadores pueden añadirse desde una ventana privada de la misma forma
+    que en una ventana no privada. No serán eliminados una vez haya concluido
+    la sesión privada.</li>
+</ul>
+
+<h3>Historial de navegación y otros historiales</h3>
+
+<ul>
+  <li>Los historiales ya existentes de navegación y de la barra de direcciones
+    estarán disponibles para una ventana privada, pero los nuevos sitios
+    visitados y las direcciones introducidas en la barra de dirección no serán
+    registrados ni guardados.</li>
+  <li>Se pueden descargar archivos del modo habitual, pero no se añadirán
+    entradas al administrador de descargas. Los archivos descargados en sí
+    mismos no serán eliminados.</li>
+  <li>El historial de búsquedas y el de formularios guardados estarán
+    disponibles para las ventanas privadas, proporcionando por tanto
+    sugerencias para los campos de formularios o búsquedas. Sin embargo,
+    cualquier elemento o término de búsqueda nuevos no se registrarán ni
+    serán guardados.</li>
+</ul>
+
+<h3>Cookies</h3>
+
+<ul>
+  <li>Una ventana privada puede recopilar cookies de los sitios que visita,
+    pero una ventana privada no comparte cookies con una ventana no privada
+    y viceversa. Por ejemplo, si inicia sesión en un sitio web en una ventana
+    normal, luego abre una ventana privada para continuar, probablemente se
+    le pedirá introducir sus credenciales de nuevo.</li>
+  <li>Las cookies en una sesión privada se aceptan de acuerdo a las
+    preferencias, pero sólo se retienen durante la duración de esa sesión,
+    con independencia de la longevidad permitida en una ventana no
+    privada.</li>
+  <li>Las excepciones existentes a la política de cookies serán respetadas en
+    en las ventanas privadas, y cualquier excepción nueva que cree será
+    conservada una vez que haya finalizado la sesión privada.</li>
+</ul>
+
+<h3>Contenido cacheado y sin conexión</h3>
+
+<ul>
+  <li>Aunque una ventana privada puede usar la memoria caché para mejorar el
+    rendimiento, no tiene permitido acceder al caché de disco con independencia
+    de las preferencias para una ventana no privada. Por tanto, no habrá ningún
+    contenido cacheado disponible tras reiniciar &brandShortName;.</li>
+  <li>Una ventana privada no puede usar ningún contenido sin conexión guardado
+    por sitios web. En consecuencia, no podrá usar aplicaciones web en modo sin
+    conexión, incluso si ya han guardado el contenido sin conexión
+    localmente.</li>
+</ul>
+
+<h3>Contraseñas y sesiones identificadas</h3>
+
+<ul>
+  <li>No se guardarán nuevas contraseñas en el administrador de contraseñas
+    cuando se introduzcan en una ventana privada.</li>
+  <li>Las sesiones iniciadas no se pueden traspasar de una ventana no privada a
+    una privada. Por ello, no puede continuar una sesión iniciada en una ventana
+    no privada en otra privada, y viceversa.</li>
+</ul>
+
+<h3>Preferencias y permisos</h3>
+
+<ul>
+  <li>Cualquier cambio en las preferencias y permisos que se hagan en una
+    ventana privada se manejan del mismo modo que en una ventana no privada
+    y se conservan una vez concluida la sesión privada.</li>
+  <li>Las preferencias personalizadas para cada sitio, tales como el nivel
+    de ampliación o las ubicaciones de descarga son tenidas en cuenta en una
+    ventana privada. Sin embargo, cualquier cambio que haga no será conservado,
+    p.e. los niveles de ampliación revertirán al valor inicial cuando navegue
+    o cambie de pestaña.</li>
+</ul>
+
+<p>[<a href="#browsing_in_a_private_window">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="leaving_the_private_browsing_mode">Abandonar el modo de navegación
+  privada</h2>
+
+<p>No hay una función u orden especiales para abandonar el modo privado y no es
+  posible continuar trabajando en el modo no privado con una ventana
+  privada.</p>
+
+<p>Para terminar una sesión de navegación privada, simplemente cierre todas
+  las ventanas privadas. no habrá ningún registro por parte de &brandShortName;
+  sobre la actividad de navegación realizada en cualquiera de las ventanas
+  privadas asociadas.</p>
+
+<p>[<a href="#browsing_in_a_private_window">Volver al principio de la
+  sección</a>]</p>
+
+  <h1 id="encrypting_stored_sensitive_information">Cifrar la
+  información confidencial guardada</h1>
+
+  <p>Si utiliza el administrador de contraseñas para guardar contraseñas,
+  esa información confidencial es almacenada en su ordenador en un
+  archivo que es difícil, pero no imposible, de leer para un intruso.</p>
+
+  <p>Por ejemplo, si su ordenador está en un sitio donde alguien puede
+  tener acceso sin autorización, es posible que una persona determinada
+  pueda leer el archivo que contiene su información confidencial.</p>
+
+  <p>Para tener un mayor grado de seguridad, puede querer proteger el archivo
+  mediante el cifrado. Gracias al cifrado, a una persona no autorizada le
+  resultará mucho más dificil poder ver su información
+  confidencial guardada.</p>
+
+  <p>Su decisión sobre el uso del cifrado para los datos confidenciales
+  guardados es un compromiso entre mayor seguridad y conveniencia.</p>
+
+  <p>Si utiliza el cifrado, necesitará introducir una contraseña
+  maestra, lo cual puede ser un inconveniente. Si no lo utiliza, puede
+  resultarle más fácil a un extraño que tenga acceso a su ordenador robar sus
+  contraseñas.</p>
+
+  <div class="contentsBox">En esta sección:
+    <ul>
+      <li><a href="#setting_a_master_password">Establecer una contraseña
+        maestra</a></li>
+      <li><a href="#changing_your_master_password">Cambiar su contraseña
+        maestra</a></li>
+      <li><a href="#logging_out_of_your_master_password">Desconectarse de su
+        contraseña maestra</a></li>
+      <li><a href="#what_to_do_if_you_forget_your_master_password">&iquest;Qué
+        hacer si olvida su contraseña maestra?</a></li>
+    </ul>
+  </div>
+
+  <h2 id="setting_a_master_password">Establecer una contraseña
+  maestra</h2>
+
+  <p>Para activar el cifrado de contraseñas necesita establecer una contraseña
+  maestra. Si su contraseña maestra no se ha establecido previamente, puede
+  hacerlo en este momento:</p>
+
+  <ol>
+    <li>Abra el menú <span class="mac">&brandShortName;</span>
+      <span class="noMac">Editar</span> y escoja Preferencias.</li>
+    <li>Bajo la categoría Privacidad y seguridad, haga clic en Contraseñas
+      maestras (si no hay subcategorías visibles, haga doble clic en
+      Privacidad y seguridad para expandir la lista).</li>
+    <li>En la sección Cambiar contraseña maestra, haga clic en Cambiar
+      contraseña... para abrir el cuadro de diálogo de cambio de contraseña.</li>
+    <li>Introduzca la contraseña maestra elegida, y repítala
+    debajo para confirmarla.</li>
+    <li>Pulse Aceptar.</li>
+  </ol>
+
+  <p>Asegúrese de que su nueva contraseña es difícil de
+  averiguar. Para algunos consejos al respecto, vea
+  <a href="passwords.xhtml#choosing_a_good_password">Elegir una buena
+  contraseña</a>.</p>
+
+  <p>[<a href="#encrypting_stored_sensitive_information">Volver al principio
+  de la sección</a>]</p>
+
+  <h2 id="changing_your_master_password">Cambiar su contraseña maestra</h2>
+
+  <p>Para cambiar su contraseña maestra:</p>
+
+  <ol>
+    <li>Abra el menú <span class="mac">&brandShortName;</span>
+      <span class="noMac">Editar</span> y escoja Preferencias.</li>
+    <li>Bajo la categoría Privacidad y seguridad, haga clic en Contraseñas
+      maestras (si no hay subcategorías visibles, haga doble clic en
+      Privacidad y seguridad para expandir la lista).</li>
+    <li>En la sección Cambiar contraseña maestra, haga clic en Cambiar
+      contraseña... para abrir el cuadro de diálogo de cambio de contraseña.</li>
+    <li>Introduzca su contraseña maestra actual.</li>
+    <li>Introduzca su nueva contraseña maestra, y repítala
+      debajo para confirmarla.</li>
+    <li>Pulse Aceptar.</li>
+  </ol>
+
+  <p>Asegúrese de que su nueva contraseña es difícil de
+  averiguar. Para algunos consejos al respecto, vea
+  <a href="passwords.xhtml#choosing_a_good_password">Elegir una buena
+  contraseña</a>.</p>
+
+  <p>[<a href="#encrypting_stored_sensitive_information">Volver al principio
+  de la sección</a>]</p>
+
+  <h2 id="logging_out_of_your_master_password">Desconectarse de su
+  contraseña maestra</h2>
+
+  <p>Normalmente, se le solicita su contraseña maestra una vez durante
+  cada sesión con &brandShortName; en la cual acceda a alguno de sus
+  datos confidenciales guardados.</p>
+
+  <p>Puede &quot;desconectarse&quot; de su contraseña maestra de manera
+  que deba ser introducida de nuevo antes de que sea posible leer o guardar
+  cualquier información confidencial. Esto es útil si va a
+  alejarse de su ordenador durante unos minutos.</p>
+
+  <p>Para desconectarse de su contraseña maestra:</p>
+
+  <ol>
+    <li>Abra el menú Tareas y seleccione Administrador de
+    contraseñas.</li>
+    <li>Seleccione Cerrar sesión del submenú.</li>
+  </ol>
+
+  <p>[<a href="#encrypting_stored_sensitive_information">Volver al principio
+  de la sección</a>]</p>
+
+  <h2 id="what_to_do_if_you_forget_your_master_password">&iquest;Qué
+  hacer si olvida su contraseña maestra?</h2>
+
+  <p>Si olvida su contraseña maestra no podrá acceder a ninguna de las
+  contraseñas guardadas que protege (suponiendo que haya activado el cifrado).
+  Su contraseña maestra es su contraseña más importante. Asegúrese de
+  recordarla o de guardarla escrita en un lugar seguro.</p>
+
+  <p>Como último recurso, es posible inicializar la contraseña maestra si
+  está absolutamente seguro de que no va a recordarla. Sin embargo, al
+  inicializar su contraseña maestra se perderán para siempre todas las
+  contraseñas de páginas web y correo que pudieran haberse guardado por
+  el administrador de contraseñas. También se perderán sus certificados
+  personales asociados con el <a href=
+  "glossary.xhtml#software_security_device">dispositivo de seguridad de
+  software</a>.</p>
+
+  <p>Antes de llevar a cabo esta acción tan drástica, vea
+  <a href="passwords_help.xhtml#reset_master_password">Inicializar la
+  contraseña maestra</a>.</p>
+
+  <p>Si está seguro de que no puede recordar o recuperar de otra forma
+  su contraseña maestra, siga estas instrucciones para
+  inicializarla:</p>
+
+  <ol>
+    <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+    <li>Bajo la categoría Privacidad y seguridad, escoja
+    Contraseñas maestras (si no hay subcategorías visibles, haga
+    doble clic en Privacidad y seguridad para expandir la lista).</li>
+    <li>Pulse Reiniciar contraseña maestra.</li>
+    <li>En el cuadro de diálogo que aparecerá, pulse
+    Restablecer.</li>
+  </ol>
+
+  <p>[<a href="#encrypting_stored_sensitive_information">Volver al principio
+  de la sección</a>]</p>
+
+  <h1 id="managing_images">Administrar imágenes</h1>
+
+  <p>Si lo desea, puede elegir no descargar ninguna imagen cuando navega por la
+  web. Esto limita enormemente lo que puede ver en línea, pero puede ser
+  útil si tiene una conexión lenta y desea acortar el tiempo
+  necesario para descargar las páginas.</p>
+
+  <p>También puede controlar con qué frecuencia se repiten las
+  imágenes animadas, o desactivar por completo la animación.</p>
+
+  <p>La siguiente sección describe cómo controlar estas
+  propiedades de las imágenes. La configuración por defecto
+  permite que todas las imágenes sean aceptadas y les permite repetir su
+  animación.</p>
+
+  <h2 id="images">Preferencias de privacidad y seguridad - Imágenes</h2>
+
+  <p>Esta sección describe cómo establecer preferencias para las
+  imágenes. Para ver la configuración de preferencias para
+  imágenes:</p>
+
+  <ol>
+    <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+    <li>Bajo la categoría Privacidad y seguridad, escoja Imágenes
+    (si no hay subcategorías visibles, haga doble clic en Privacidad y
+    seguridad para expandir la lista).</li>
+  </ol>
+
+  <h3 id="image_acceptance_policy">Política de aceptación de
+  imágenes</h3>
+
+  <p>Las preferencias de aceptación de imágenes le permiten controlar si
+  &brandShortName; debe mostrar imágenes, o bajo qué condiciones:</p>
+
+  <ul>
+    <li><strong>No mostrar ninguna imagen</strong>: seleccione esta opción
+      si no quiere que el navegador de &brandShortName; muestre imágenes.</li>
+    <li><strong>Cargar sólo las imágenes que provengan del servidor
+      originario</strong>: seleccione esta opción si no quiere cargar
+      imágenes de sitios web ajenos al que está visitando.</li>
+    <li><strong>Cargar todas las imágenes</strong>: seleccione esta opción si
+      quiere mostrar todas las imágenes (esta opción está seleccionada de
+      manera predeterminada).</li>
+  </ul>
+
+</body>
+</html>

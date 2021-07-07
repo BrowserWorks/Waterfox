@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smilis">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Ler">
+<!ENTITY smiley1Cmd.accesskey "L">
+<!ENTITY smiley1Cmd.tooltip "Infoga ett leende ansiktsuttryck">
+<!ENTITY smiley2Cmd.label "Bister">
+<!ENTITY smiley2Cmd.accesskey "B">
+<!ENTITY smiley2Cmd.tooltip "Infoga ett bistert ansiktsuttryck">
+<!ENTITY smiley3Cmd.label "Blinkar">
+<!ENTITY smiley3Cmd.accesskey "i">
+<!ENTITY smiley3Cmd.tooltip "Infoga ett blinkande ansiktsuttryck">
+<!ENTITY smiley4Cmd.label "Dreglar">
+<!ENTITY smiley4Cmd.accesskey "D">
+<!ENTITY smiley4Cmd.tooltip "Infoga ett dreglande ansiktsuttryck">
+<!ENTITY smiley5Cmd.label "Skrattar">
+<!ENTITY smiley5Cmd.accesskey "S">
+<!ENTITY smiley5Cmd.tooltip "Infoga ett skrattande ansiktsuttryck">
+<!ENTITY smiley6Cmd.label "Generad">
+<!ENTITY smiley6Cmd.accesskey "G">
+<!ENTITY smiley6Cmd.tooltip "Infoga ett generat ansiktsuttryck">
+<!ENTITY smiley7Cmd.label "Rådvill">
+<!ENTITY smiley7Cmd.accesskey "å">
+<!ENTITY smiley7Cmd.tooltip "Infoga ett rådvillt ansiktsuttryck">
+<!ENTITY smiley8Cmd.label "Överraskad">
+<!ENTITY smiley8Cmd.accesskey "Ö">
+<!ENTITY smiley8Cmd.tooltip "Infoga ett överraskat ansiktsuttryck">
+<!ENTITY smiley9Cmd.label "Puss">
+<!ENTITY smiley9Cmd.accesskey "P">
+<!ENTITY smiley9Cmd.tooltip "Infoga ett pussande ansiktsuttryck">
+<!ENTITY smiley10Cmd.label "Skriker">
+<!ENTITY smiley10Cmd.accesskey "k">
+<!ENTITY smiley10Cmd.tooltip "Infoga ett skrikande ansiktsuttryck">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Infoga ett coolt ansiktsuttryck">
+<!ENTITY smiley12Cmd.label "Skrytmåns">
+<!ENTITY smiley12Cmd.accesskey "r">
+<!ENTITY smiley12Cmd.tooltip "Infoga ett skrytande ansiktsuttryck">
+<!ENTITY smiley13Cmd.label "Bortgjord">
+<!ENTITY smiley13Cmd.accesskey "j">
+<!ENTITY smiley13Cmd.tooltip "Infoga ett bortgjort ansiktsuttryck">
+<!ENTITY smiley14Cmd.label "Oskyldig">
+<!ENTITY smiley14Cmd.accesskey "O">
+<!ENTITY smiley14Cmd.tooltip "Infoga ett oskyldigt ansiktsuttryck">
+<!ENTITY smiley15Cmd.label "Lipar">
+<!ENTITY smiley15Cmd.accesskey "a">
+<!ENTITY smiley15Cmd.tooltip "Infoga ett gråtande ansiktsuttryck">
+<!ENTITY smiley16Cmd.label "Tiger">
+<!ENTITY smiley16Cmd.accesskey "e">
+<!ENTITY smiley16Cmd.tooltip "Infoga ett tigande ansiktsuttryck">
+<!ENTITY SmileButton.label "Infoga smiley">
+<!ENTITY SmileButton.tooltip "Infoga ett leende ansiktsuttryck">

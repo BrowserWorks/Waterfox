@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Новое событие…">
+<!ENTITY event.new.event.accesskey              "с">
+
+<!ENTITY event.new.task                         "Новая задача…">
+<!ENTITY event.new.task.accesskey               "д">
+
+<!ENTITY calendar.import.label                  "Импорт…">
+<!ENTITY calendar.import.accesskey              "И">
+
+<!ENTITY calendar.export.label                  "Экспорт календаря…">
+<!ENTITY calendar.export.accesskey              "Э">
+
+<!ENTITY calendar.publish.label                 "Публикация…">
+<!ENTITY calendar.publish.accesskey             "у">
+
+<!ENTITY calendar.deletecalendar.label          "Удалить выбранный календарь…">
+<!ENTITY calendar.deletecalendar.accesskey      "а">
+<!ENTITY calendar.unsubscribecalendar.label     "Отписаться от выбранного календаря…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "п">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Удалить выбранный календарь…">
+<!ENTITY calendar.removecalendar.accesskey      "и">
+
+
+<!ENTITY calendar.menu.customize.label          "Настроить…">
+<!ENTITY calendar.menu.customize.accesskey      "Н">
+
+<!ENTITY showUnifinderCmd.label                 "Найти события">
+<!ENTITY showUnifinderCmd.accesskey             "й">
+<!ENTITY showUnifinderCmd.tooltip               "Переключение отображения панели поиска событий">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Показывать задачи в календаре">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "П">
+
+<!ENTITY goTodayCmd.label                       "Сегодня">
+<!ENTITY goTodayCmd.accesskey                   "С">
+
+<!ENTITY showCurrentView.label                  "Текущий обзор">
+<!ENTITY showCurrentView.accesskey              "Т">
+
+<!ENTITY calendar.properties.label              "Свойства календаря…">
+<!ENTITY calendar.properties.accesskey          "в">

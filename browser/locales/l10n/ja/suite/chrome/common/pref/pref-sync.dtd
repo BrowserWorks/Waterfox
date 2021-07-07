@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "&syncBrand.fullName.label; をセットアップ">
+<!ENTITY setupButton.accesskey      "S">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; を使えば、SeaMonkey の履歴、ブックマーク、パスワード、開いているタブに、様々な端末からアクセスできます。">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label; アカウント">
+<!ENTITY accountName.label            "アカウント名:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "更新">
+<!ENTITY updatePass.accesskey         "U">
+<!ENTITY resetPass.label              "リセット">
+<!ENTITY resetPass.accesskey          "R">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "アカウントを管理">
+<!ENTITY manageAccount.accesskey      "M">
+<!ENTITY viewQuota.label              "サーバー使用量を表示">
+<!ENTITY viewQuota.accesskey          "V">
+<!ENTITY changePassword.label         "パスワードを変更">
+<!ENTITY changePassword.accesskey     "C">
+<!ENTITY myRecoveryKey.label          "自分のリカバリーキー">
+<!ENTITY myRecoveryKey.accesskey      "M">
+<!ENTITY resetSync.label              "Sync をリセット">
+<!ENTITY resetSync.accesskey          "R">
+<!ENTITY unlinkDevice.label           "この端末を切り離す">
+<!ENTITY unlinkDevice.accesskey       "D">
+<!ENTITY addDevice.label              "端末を追加">
+<!ENTITY addDevice.accesskey          "A">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "端末名:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy2.label              "同期するデータ:">
+<!ENTITY engine.addons.label        "アドオン">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "ブックマーク">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "タブ">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "履歴">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "パスワード">
+<!ENTITY engine.passwords.accesskey "w">
+<!ENTITY engine.prefs.label         "個人設定">
+<!ENTITY engine.prefs.accesskey     "P">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "利用規約">
+<!ENTITY prefs.ppLink.label         "プライバシーポリシー">

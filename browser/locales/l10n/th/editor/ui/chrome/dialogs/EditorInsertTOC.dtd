@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "สารบัญ">
+<!ENTITY buildToc.label      "สร้างสารบัญจาก:">
+<!ENTITY tag.label           "ป้ายกำกับ:">
+<!ENTITY class.label         "คลาส:">
+<!ENTITY header1.label       "ระดับ 1">
+<!ENTITY header2.label       "ระดับ 2">
+<!ENTITY header3.label       "ระดับ 3">
+<!ENTITY header4.label       "ระดับ 4">
+<!ENTITY header5.label       "ระดับ 5">
+<!ENTITY header6.label       "ระดับ 6">
+<!ENTITY makeReadOnly.label  "ทำให้สารบัญเป็นแบบอ่านอย่างเดียว">
+<!ENTITY orderedList.label   "เรียงรายการทั้งหมดในสารบัญตามลำดับเลข">

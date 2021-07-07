@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Gairės">
+<!ENTITY pref.tags.caption          "Individualizuokite gaires">
+<!ENTITY pref.tags.description      "Pagal gaires galima grupuoti laiškus ir nustatyti jų prioritetus. Parinkite gairių pavadinimus ir spalvas. Aukščiau esančios gairės yra svarbesnės.">
+<!ENTITY tagColumn.label            "Gairė">
+<!ENTITY colorColumn.label          "Spalva">
+<!ENTITY defaultTagName.label       "Neįvardinta gairė">
+<!ENTITY addTagButton.label         "Pridėti">
+<!ENTITY addTagButton.accesskey     "P">
+<!ENTITY deleteTagButton.label      "Pašalinti">
+<!ENTITY deleteTagButton.accesskey  "P">
+<!ENTITY raiseTagButton.label       "Didinti svarbą">
+<!ENTITY raiseTagButton.accesskey   "r">
+<!ENTITY lowerTagButton.label       "Mažinti svarbą">
+<!ENTITY lowerTagButton.accesskey   "M">
+<!ENTITY restoreButton.label        "Atstatyti numatytąsias">
+<!ENTITY restoreButton.accesskey    "s">

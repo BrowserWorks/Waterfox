@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(无标题)">
+<!ENTITY  newTab.label           "新建标签页">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "关闭标签页">
+<!ENTITY  closeTab.accesskey         "C">
+<!ENTITY  closeOtherTabs.label   "关闭其他标签页">
+<!ENTITY  closeOtherTabs.accesskey         "O">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "关闭右侧标签页">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "重新载入全部标签页">
+<!ENTITY  reloadAllTabs.accesskey         "A">
+<!ENTITY  reloadTab.label        "重载标签页">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "将这组标签添加为书签">
+<!ENTITY  bookmarkGroup.accesskey  "B">
+<!ENTITY  closeTabButton.tooltip   "关闭当前标签页">
+<!ENTITY  newTabButton.tooltip   "打开新标签页">
+<!ENTITY  listAllTabs.tooltip    "列出全部标签页">
+<!ENTITY  undoCloseTab.label    "恢复关闭的标签页">
+<!ENTITY  undoCloseTab.accesskey  "U">

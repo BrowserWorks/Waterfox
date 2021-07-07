@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Scripts et plugins">
+
+<!ENTITY navigator.label                 "le navigateur">
+<!ENTITY navigator.accesskey             "n">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Activer JavaScript pour">
+<!ENTITY allowScripts.label              "Autoriser les scripts à :">
+<!ENTITY allowScripts.accesskey          "u">
+<!ENTITY allowWindowMoveResize.label     "Déplacer ou redimensionner des fenêtres existantes">
+<!ENTITY allowWindowFlip.label           "Faire passer une fenêtre devant ou derrière les autres fenêtres">
+<!ENTITY allowWindowStatusChange.label   "Changer le texte de la barre d’état">
+<!ENTITY allowContextmenuDisable.label   "Désactiver ou remplacer le menu contextuel d’une page">
+<!ENTITY allowHideStatusBar.label        "Masquer la barre d’état">
+
+<!ENTITY debugging.label                  "Débogage JavaScript">
+<!ENTITY debugEnableDump.label            "Activer la sortie JavaScript dump()">
+<!ENTITY debugEnableDump.accesskey        "e">
+<!ENTITY debugStrictJavascript.label      "Afficher les avertissements JavaScript stricts">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "Afficher les erreurs et avertissements JavaScript chrome">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "Activer les plugins pour">
+<!ENTITY enablePluginForSuite.label      "la Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Quand une page nécessite des plugins">
+<!ENTITY activateAllPlugins.label        "Activer tous les plugins par défaut">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "M’avertir si des plugins supplémentaires ont besoin d’être installés">
+<!ENTITY warnPluginsRequired.accesskey   "M">

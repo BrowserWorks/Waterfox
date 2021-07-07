@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Skripte &amp; Plugins">
+
+<!ENTITY navigator.label                 "Browser">
+<!ENTITY navigator.accesskey             "B">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "JavaScript aktivieren für">
+<!ENTITY allowScripts.label              "Skripten erlauben, dass sie:">
+<!ENTITY allowScripts.accesskey          "S">
+<!ENTITY allowWindowMoveResize.label     "Existierende Fenster verschieben oder deren Größe ändern">
+<!ENTITY allowWindowFlip.label           "Fenster vor oder hinter andere Fenster legen">
+<!ENTITY allowWindowStatusChange.label   "Statuszeilentext ändern">
+<!ENTITY allowContextmenuDisable.label   "Kontextmenü einer Seite deaktivieren oder ersetzen">
+<!ENTITY allowHideStatusBar.label        "Statusleiste verstecken">
+
+<!ENTITY enableDrmMedia.label            "Digitales Rechte-Management aktivieren für">
+<!ENTITY enableEmeForSuite.label         "Inhalts-Entschlüsselungs-Module von Drittpartnern">
+<!ENTITY enableEmeForSuite.accesskey     "E">
+
+<!ENTITY enablePlugins.label             "Plugins aktivieren für">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Wenn eine Seite Plugins benötigt">
+<!ENTITY activateAllPlugins.label        "Alle Plugins standardmäßig aktivieren">
+<!ENTITY activateAllPlugins.accesskey    "A">
+<!ENTITY warnPluginsRequired.label       "Warnen, wenn zusätzliche Plugins installiert werden müssen">
+<!ENTITY warnPluginsRequired.accesskey   "W">

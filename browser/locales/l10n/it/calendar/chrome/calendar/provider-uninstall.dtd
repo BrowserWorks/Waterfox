@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY providerUninstall.title "Disinstalla un gestore">
+<!ENTITY providerUninstall.accept.label "Rimuovi sottoscrizione per la selezione">
+<!ENTITY providerUninstall.accept.accesskey "R">
+<!ENTITY providerUninstall.cancel.label "Mantieni il componente aggiuntivo">
+<!ENTITY providerUninstall.cancel.accesskey "M">
+<!ENTITY providerUninstall.preName.label "Si è richiesto di disinstallare o disattivare:">
+<!ENTITY providerUninstall.postName.label "Questo causerà la disattivazione dei calendari seguenti.">
+<!ENTITY providerUninstall.reinstallNote.label "A meno che non si voglia reinstallare questo gestore, si potrebbe voler rimuovere la sottoscrizione ai calendari di questo gestore.">

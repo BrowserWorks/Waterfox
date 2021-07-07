@@ -1,0 +1,4 @@
+<!ENTITY options.title "Alternativ utvecklingsverktyg">
+<!ENTITY options.status.label "Status:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Tillåt anslutningar från andra datorer">

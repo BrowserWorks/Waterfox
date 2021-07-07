@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY mailViewSetupTitle.label "การตั้งค่ามุมมองข้อความ">
+<!ENTITY mailViewHeading.label "ชื่อมุมมองข้อความ:">
+<!ENTITY mailViewHeading.accesskey "ช">
+<!ENTITY searchTermCaption.label "เมื่อเลือกมุมมองนี้แล้ว ให้แสดงเฉพาะข้อความที่:">

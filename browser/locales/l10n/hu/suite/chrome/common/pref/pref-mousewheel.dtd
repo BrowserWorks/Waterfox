@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Egérgörgő">
+<!ENTITY mouseWheelPanel.label           "Válassza ki a görgő viselkedését, ha az alábbi módosító billentyűvel együtt használják: ">
+<!ENTITY usingJustTheWheel.label         "Nincs módosító billentyű">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Beállítás">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "Függőleges görgetés">
+<!ENTITY mouseWheelHorizGroup.label      "Vízszintes görgetés">
+<!ENTITY sameAsVertical.label            "Megegyezik a függőleges görgetéssel">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "Nincs művelet">
+<!ENTITY doNothing.accesskey             "N">
+<!ENTITY doNothingHoriz.accesskey        "i">
+<!ENTITY scrollDocument.label            "Dokumentum görgetése">
+<!ENTITY scrollDocument.accesskey        "g">
+<!ENTITY scrollDocumentHoriz.accesskey   "r">
+<!ENTITY history.label                   "Előre/Vissza az előzmények közt">
+<!ENTITY history.accesskey               "E">
+<!ENTITY historyHoriz.accesskey          "l">
+<!ENTITY zoom.label                      "Nagyítás és kicsinyítés">
+<!ENTITY zoom.accesskey                  "N">
+<!ENTITY zoomHoriz.accesskey             "k">
+<!ENTITY wheelSpeed.label                "Egérgörgő-sebesség">
+<!ENTITY wheelSpeed.accesskey            "b">
+<!ENTITY wheelSpeedHoriz.accesskey       "e">
+<!ENTITY reverseDirection.label          "Fordított irány">
+<!ENTITY reverseDirection.accesskey      "o">
+<!ENTITY reverseDirectionHoriz.accesskey "t">

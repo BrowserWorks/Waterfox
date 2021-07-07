@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Εύρεση και αντικατάσταση">
+<!ENTITY findField.label "Εύρεση κειμένου:">
+<!ENTITY findField.accesskey "κ">
+<!ENTITY replaceField.label "Αντικατάσταση με:">
+<!ENTITY replaceField.accesskey "κ">
+<!ENTITY caseSensitiveCheckbox.label "Συμφωνία πεζών/κεφαλαίων">
+<!ENTITY caseSensitiveCheckbox.accesskey "Σ">
+<!ENTITY wrapCheckbox.label "Αναδίπλωση">
+<!ENTITY wrapCheckbox.accesskey "δ">
+<!ENTITY backwardsCheckbox.label "Αναζήτηση προς τα πίσω">
+<!ENTITY backwardsCheckbox.accesskey "π">
+<!ENTITY findNextButton.label "Εύρεση επόμενου">
+<!ENTITY findNextButton.accesskey "π">
+<!ENTITY replaceButton.label "Αντικατάσταση">
+<!ENTITY replaceButton.accesskey "Α">
+<!ENTITY replaceAndFindButton.label "Αντικατάσταση και εύρεση">
+<!ENTITY replaceAndFindButton.accesskey "κ">
+<!ENTITY replaceAllButton.label "Αντικατάσταση όλων">
+<!ENTITY replaceAllButton.accesskey "λ">
+<!ENTITY closeButton.label "Κλείσιμο">
+<!ENTITY closeButton.accesskey "Κ">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Νέος φάκελος">
+<!ENTITY name.label                 "Όνομα:">
+<!ENTITY name.accesskey             "ν">
+<!ENTITY description.label          "Δημιουργία ως υποφακέλου σε:">
+<!ENTITY description.accesskey      "π">
+<!ENTITY folderRestriction1.label   "Σε αυτόν τον διακομιστή υποστηρίζονται μόνο δύο είδη φακέλων">
+<!ENTITY folderRestriction2.label   "Καθορίστε αν ο νέος φάκελος θα περιέχει:">
+<!ENTITY foldersOnly.label          "Μόνο φάκελους">
+<!ENTITY messagesOnly.label         "Μόνο μηνύματα">
+<!ENTITY accept.label               "Δημιουργία φακέλου">
+<!ENTITY accept.accesskey           "μ">

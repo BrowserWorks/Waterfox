@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Grafiken">
+
+<!ENTITY imageBlocking.label            "Grafik-Anzeigeregeln">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Geben Sie an, wie &brandShortName; Grafiken behandelt.">
+
+<!ENTITY loadAllImagesRadio.label       "Alle Grafiken laden">
+<!ENTITY loadAllImagesRadio.accesskey   "A">
+<!ENTITY loadOrgImagesRadio.label       "Nur Grafiken laden, die vom Ursprungsserver kommen">
+<!ENTITY loadOrgImagesRadio.accesskey   "u">
+<!ENTITY loadNoImagesRadio.label        "Keine Grafiken laden">
+<!ENTITY loadNoImagesRadio.accesskey    "K">
+<!ENTITY viewPermissions.label          "Berechtigungen verwalten">
+<!ENTITY viewPermissions.accesskey      "B">
+<!ENTITY animLoopingTitle.label         "Wiederholen von animierten Grafiken">
+<!ENTITY animLoopAsSpecified.label      "So oft, wie in der Grafik angegeben">
+<!ENTITY animLoopAsSpecified.accesskey  "S">
+<!ENTITY animLoopOnce.label             "Ein Mal">
+<!ENTITY animLoopOnce.accesskey         "E">
+<!ENTITY animLoopNever.label            "Nie">
+<!ENTITY animLoopNever.accesskey        "N">

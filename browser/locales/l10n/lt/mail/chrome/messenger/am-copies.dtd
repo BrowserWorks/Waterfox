@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Laiškai ir aplankai">
+<!ENTITY sendingPrefix.label "Išsiunčiant laiškus: ">
+<!ENTITY fccMailFolder.label "jų kopijas dėti į:">
+<!ENTITY fccMailFolder.accesskey "k">
+<!ENTITY fccReplyFollowsParent.label "atsakymus dėti į aplanką, kuriame yra originalus laiškas">
+<!ENTITY fccReplyFollowsParent.accesskey "o">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "siųsti kopiją šiais adresais:">
+<!ENTITY ccAddress.accesskey "k">
+<!ENTITY ccAddressList.placeholder "Adresus atskirkite kableliais">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "siųsti nematomąją kopiją šiais adresais:">
+<!ENTITY bccAddress.accesskey "m">
+<!ENTITY bccAddressList.placeholder "Adresus atskirkite kableliais">
+<!ENTITY saveMessageDlg.label "Informuoti, kad laiškas įrašytas">
+<!ENTITY saveMessageDlg.accesskey "r">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "išsiųstų laiškų aplanką">
+<!ENTITY sentFolderOn.accesskey "s">
+<!ENTITY sentInOtherFolder.label "kitą aplanką:">
+<!ENTITY sentInOtherFolder.accesskey "t">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Laiškų archyvavimas">
+<!ENTITY keepArchives.label "Laiškus archyvuoti į:">
+<!ENTITY keepArchives.accesskey "a">
+<!ENTITY archiveHierarchyButton.label "Archyvavimo nuostatos…">
+<!ENTITY archiveHierarchyButton.accesskey "n">
+<!ENTITY archivesFolderOn.label "archyvo aplanką">
+<!ENTITY archivesFolderOn.accesskey "c">
+<!ENTITY archiveInOtherFolder.label "kitą aplanką:">
+<!ENTITY archiveInOtherFolder.accesskey "l">
+<!ENTITY specialFolders.label "Juodraščiai ir šablonai">
+<!ENTITY keepDrafts2.label "Laiškų juodraščius dėti į:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "juodraščių aplanką">
+<!ENTITY draftsFolderOn.accesskey "u">
+<!ENTITY draftInOtherFolder.label "kitą aplanką:">
+<!ENTITY draftInOtherFolder.accesskey "p">
+<!ENTITY keepTemplates.label "Laiškų šablonus dėti į:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "šablonų aplanką">
+<!ENTITY templatesFolderOn.accesskey "b">
+<!ENTITY templateInOtherFolder.label "kitą aplanką:">
+<!ENTITY templateInOtherFolder.accesskey "n">

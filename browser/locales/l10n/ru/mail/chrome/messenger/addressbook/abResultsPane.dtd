@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Адресная книга">
+<!ENTITY Addrbook.accesskey                    "н">
+<!ENTITY GeneratedName.label                   "Имя">
+<!ENTITY GeneratedName.accesskey               "И">
+<!ENTITY PrimaryEmail.label                    "Электронная почта">
+<!ENTITY PrimaryEmail.accesskey                "Э">
+<!ENTITY Company.label                         "Организация">
+<!ENTITY Company.accesskey                     "О">
+<!ENTITY _PhoneticName.label                   "Произношение">
+<!ENTITY _PhoneticName.accesskey               "П">
+<!ENTITY NickName.label                        "Псевдоним">
+<!ENTITY NickName.accesskey                    "П">
+<!ENTITY SecondEmail.label                     "Доп. адрес электронной почты">
+<!ENTITY SecondEmail.accesskey                 "А">
+<!ENTITY Department.label                      "Отдел">
+<!ENTITY Department.accesskey                  "т">
+<!ENTITY JobTitle.label                        "Должность">
+<!ENTITY JobTitle.accesskey                    "Д">
+<!ENTITY CellularNumber.label                  "Мобильный">
+<!ENTITY CellularNumber.accesskey              "М">
+<!ENTITY PagerNumber.label                     "Пейджер">
+<!ENTITY PagerNumber.accesskey                 "е">
+<!ENTITY FaxNumber.label                       "Факс">
+<!ENTITY FaxNumber.accesskey                   "Ф">
+<!ENTITY HomePhone.label                       "Домашний телефон">
+<!ENTITY HomePhone.accesskey                   "а">
+<!ENTITY WorkPhone.label                       "Рабочий телефон">
+<!ENTITY WorkPhone.accesskey                   "Р">
+<!ENTITY ChatName.label                        "Имя в чате">
+<!ENTITY ChatName.accesskey                    "м">
+<!ENTITY sortAscending.label                   "По возрастанию">
+<!ENTITY sortAscending.accesskey               "в">
+<!ENTITY sortDescending.label                  "По убыванию">
+<!ENTITY sortDescending.accesskey              "б">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Lentelės įterpimas">
+
+<!ENTITY size.label "Lentelės dydis">
+<!ENTITY numRowsEditField.label "Eilučių sk.:">
+<!ENTITY numRowsEditField.accessKey "E">
+<!ENTITY numColumnsEditField.label "Stulpelių sk.:">
+<!ENTITY numColumnsEditField.accessKey "S">
+<!ENTITY widthEditField.label "Plotis:">
+<!ENTITY widthEditField.accessKey "P">
+<!ENTITY borderEditField.label "Rėmelių storis:">
+<!ENTITY borderEditField.accessKey "R">
+<!ENTITY borderEditField.tooltip "Surinkite skaičių – lentelės rėmelio storį; nulis (0) reiškia nematomą lentelės rėmelį">
+<!ENTITY pixels.label "taškai(-ų)">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Formos savybės">
+
+<!ENTITY Settings.label "Nuostatos">
+
+<!ENTITY FormName.label "Formos vardas:">
+<!ENTITY FormName.accesskey "v">
+<!ENTITY FormAction.label "Veikos URL:">
+<!ENTITY FormAction.accesskey "U">
+<!ENTITY FormMethod.label "Metodas:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Koduotė:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Paskirties kadras:">
+<!ENTITY FormTarget.accesskey "P">
+
+<!ENTITY RemoveForm.label "Pašalinti formą">
+<!ENTITY RemoveForm.accesskey "š">

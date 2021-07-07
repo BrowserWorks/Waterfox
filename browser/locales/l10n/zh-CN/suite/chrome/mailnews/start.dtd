@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "欢迎使用 &brandShortName; 邮件 &amp; 新闻组">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'欢迎使用 <a id="vendorURL" href="">&brandShortName;</a> 邮件 &amp; 新闻组!'>
+<!ENTITY description.label
+"&brandShortName; 邮件 &amp; 新闻组是一个功能强大的开源邮件和新闻客户端，带有高级垃圾邮件检测和其他很多有用的特性。">
+<!ENTITY features.title "特性">
+<!ENTITY feat_multiacc.label "支持多账户">
+<!ENTITY feat_junk.label "垃圾邮件检测">
+<!ENTITY feat_feeds.label "订阅阅读器">
+<!ENTITY feat_filters.label "消息过滤器">
+<!ENTITY feat_htmlmsg.label "支持HTML邮件">
+<!ENTITY feat_abook.label "通讯录">
+<!ENTITY feat_tags.label "可定制的标签和邮件视图">
+<!ENTITY feat_integration.label
+"和 &brandShortName; 应用程序套件紧密集成">
+<!ENTITY dict.title "字典">
+<!ENTITY dict_intro.label "用于消息的拼写检查的字典.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'更多的附加的语言可以从<a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>的<a id="dictURL" href="">dictionaries</a>部分安装.'>
+<!ENTITY dict_info.label2
+'在 <a href="https://addons.thunderbird.net/seamonkey/">SeaMonkey 与 Thunderbird 附加组件</a>网站的<a id="dictURL" href="">字典</a>板块可以安装更多种语言。'>
+<!ENTITY info.title "更多信息">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">我们</a>欢迎 Bug 报告、功能请求，
+但请先阅读<a id="releaseNotesURL" href="">发布说明</a>和查询 
+<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>。'>

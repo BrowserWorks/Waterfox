@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title "Chiave &syncBrand.fullName.label;">
+<!ENTITY syncKey.page.description "Questa chiave viene utilizzata per decifrare i dati salvati nell'account &syncBrand.fullName.label;. È necessario digitare la chiave ogni volta che si configura SeaMonkey Sync su un nuovo computer o un nuovo dispositivo.">
+<!ENTITY syncKey.keepItSecret.heading "Segretezza">
+<!ENTITY syncKey.keepItSecret.description "L'account &syncBrand.fullName.label; è cifrato per garantire la privacy degli utenti. Senza questa chiave servirebbero anni per decifrare le informazioni personali archiviate. L'utente è l'unico proprietario di questa chiave e questo gli garantisce un accesso esclusivo alle informazioni salvate nell'account &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading "Sicurezza">
+<!ENTITY syncKey.keepItSafe1.description "Non perdere questa chiave.">
+<!ENTITY syncKey.keepItSafe2.description " Non conserviamo una copia della chiave (non sarebbe più segreta!), per cui ">
+<!ENTITY syncKey.keepItSafe3.description "non è possibile recuperarla">
+<!ENTITY syncKey.keepItSafe4.description " in caso di smarrimento. Questa chiave è necessaria ogni volta che si desidera collegare un nuovo computer o un nuovo dispositivo a &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label "Per ulteriori informazioni su &syncBrand.fullName.label; e la privacy visitare il sito ">
+<!ENTITY syncKey.findOutMore2.label ".">
+<!ENTITY syncKey.footer1.label "Le condizioni di utilizzo di &syncBrand.fullName.label; sono disponibili all'indirizzo ">
+<!ENTITY syncKey.footer2.label ". L'informativa sulla privacy è disponibile all'indirizzo ">
+<!ENTITY syncKey.footer3.label ".">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "저장된 파일들">
+<!ENTITY aboutDownloads.empty                      "저장된 파일이 없음">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "저장 폴더 열기">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "파인더 에서 보기">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "열기">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "기록에서 삭제">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "목록 지우기">
+<!ENTITY cmd.clearList.accesskey                   "C">
+<!ENTITY cmd.clearList.tooltip                     "현재 진행중인 다운로드 이외의 모든 항목 지우기.">
+<!ENTITY cmd.searchDownloads.label                 "검색…">
+<!ENTITY cmd.searchDownloads.key                   "F">

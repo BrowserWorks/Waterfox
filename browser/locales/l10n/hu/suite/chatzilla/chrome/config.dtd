@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla beállítások">
+
+<!ENTITY loading.label  "Kis türelmet, betöltés…">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZilla honlap">
+
+<!ENTITY object.add.label       "Hozzáadás…">
+<!ENTITY object.add.hint        "Adjon hozzá egy új hálózatot, csatornát vagy felhasználót a beállítások megadásához">
+<!ENTITY object.add.accesskey   "A">
+
+<!ENTITY object.del.label       "Eltávolítás">
+<!ENTITY object.del.hint        "A jelenlegi objektum eltávolítása, törölve az összes beállítását">
+<!ENTITY object.del.accesskey   "E">
+
+<!ENTITY object.reset.label     "Visszaállítás">
+<!ENTITY object.reset.hint      "Az objektum beállításainak visszaállítása az alapértelmezett értékekre">
+<!ENTITY object.reset.accesskey "V">
+
+<!ENTITY dialog.apply   "Alkalmaz">
+
+<!ENTITY network "Hálózat">
+<!ENTITY channel "Csatorna">
+<!ENTITY user    "Felhasználó">
+
+<!ENTITY config.add.title "Beállításobjektum hozzáadása">
+
+<!ENTITY config.type.label        "Típus:">
+<!ENTITY config.type.hint         "Az objektum típusa, amelyhez hozzá szeretné adni a beállításokat">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "Hálózat:">
+<!ENTITY config.network.hint      "A hálózat ismert neve vagy a kiszolgáló neve">
+<!ENTITY config.network.accesskey "H">
+<!ENTITY config.target.label      "Cél:">
+<!ENTITY config.target.hint       "A cél csatorna vagy felhasználónév">
+<!ENTITY config.target.accesskey  "C">

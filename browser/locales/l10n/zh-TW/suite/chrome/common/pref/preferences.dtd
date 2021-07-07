@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "偏好設定">
+<!ENTITY  preferencesDefaultTitleWin.title "選項">
+<!ENTITY  preferencesCloseButton.label "關閉">
+<!ENTITY  preferencesCloseButton.accesskey "C">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "偏好設定">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;">
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;">
+<!ENTITY categoryHeader "類別">
+
+<!ENTITY appear.label "外觀設定">
+<!ENTITY content.label "內容">
+<!ENTITY fonts.label "字型">
+<!ENTITY colors.label "色彩">
+<!ENTITY media.label "媒體">
+<!ENTITY spellingPane.label "拼字檢查">
+
+<!ENTITY navigator.label "網頁瀏覽器">
+<!ENTITY history.label "歷史">
+<!ENTITY languages.label "語言">
+<!ENTITY applications.label "輔助應用程式">
+<!ENTITY locationBar.label "網址列">
+<!ENTITY search.label "網際網路搜尋">
+<!ENTITY tabWindows.label "分頁瀏覽">
+<!ENTITY links.label "鏈結行為">
+<!ENTITY download.label "下載">
+
+<!ENTITY security.label "隱私權與安全性">
+<!ENTITY privatedata.label "私人資料">
+<!ENTITY cookies.label "Cookie">
+<!ENTITY images.label "圖片">
+<!ENTITY popups.label "彈出型視窗 (Popup)">
+<!ENTITY passwords.label "密碼">
+<!ENTITY masterpass.label "主控密碼">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "憑證">
+
+<!ENTITY sync.label "同步">
+
+<!ENTITY advance.label "進階">
+<!ENTITY scriptsAndWindows.label "指令碼與外掛程式">
+<!ENTITY keynav.label "鍵盤瀏覽">
+<!ENTITY findAsYouType.label "隨打即找">
+<!ENTITY cache.label "快取">
+<!ENTITY offlineApps.label "離線應用程式">
+<!ENTITY proxies.label "代理伺服器">
+<!ENTITY httpnetworking.label "HTTP 網路">
+<!ENTITY smart.label "軟體安裝">
+<!ENTITY mousewheel.label "滾輪滑鼠">
+
+<!ENTITY debugging.label "除錯">
+
+<!ENTITY focusSearch.key "f">

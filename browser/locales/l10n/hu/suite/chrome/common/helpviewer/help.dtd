@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey            "p">
+
+<!ENTITY findOnCmd.commandkey           "F">
+<!ENTITY findAgainCmd.commandkey        "G">
+<!ENTITY findAgainCmd.commandkey2       "VK_F3">
+
+<!ENTITY backButton.label               "Vissza">
+<!ENTITY backButton.accesskey           "V">
+<!ENTITY backButton.tooltip             "Ugrás az előző oldalra">
+<!ENTITY forwardButton.label            "Előre">
+<!ENTITY forwardButton.accesskey        "E">
+<!ENTITY forwardButton.tooltip          "Ugrás a következő oldalra">
+<!ENTITY copyCmd.label                  "Másolás">
+<!ENTITY copyCmd.accesskey              "M">
+<!ENTITY selectAllCmd.label             "Minden kijelölése">
+<!ENTITY selectAllCmd.accesskey         "n">
+<!ENTITY goBackCmd.commandkey           "V">
+<!ENTITY goForwardCmd.commandkey        "E">
+<!ENTITY homeButton.label               "Kezdőlap">
+<!ENTITY homeButton.tooltip             "Ugrás a súgó kezdőoldalára">
+<!ENTITY printButton.label              "Nyomtatás">
+<!ENTITY printButton.tooltip            "Oldal kinyomtatása">
+<!ENTITY closeWindow.commandkey         "W">
+
+<!ENTITY search.emptytext               "Keresés">
+<!ENTITY searchHeader.label             "Találatok">
+<!ENTITY toctab.label                   "Tartalom">
+<!ENTITY toctab.accesskey               "T">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomReduceCmd.commandkey   "">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY helpSearch.commandkey          "k">
+
+<!ENTITY zLevel.label                   "Mindig előtérben">
+<!ENTITY zLevel.accesskey               "e">
+
+<!ENTITY fullZoomReduceBtn.label        "Kicsinyítés">
+<!ENTITY fullZoomReduceBtn.accesskey    "K">
+<!ENTITY fullZoomEnlargeBtn.label       "Nagyítás">
+<!ENTITY fullZoomEnlargeBtn.accesskey   "N">

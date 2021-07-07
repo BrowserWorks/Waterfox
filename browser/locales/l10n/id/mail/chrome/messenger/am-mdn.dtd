@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Tanda Konfirmasi Diterima">
+<!ENTITY useGlobalPrefs.label         "Gunakan pengaturan global tanda konfirmasi diterima untuk akun ini">
+<!ENTITY useGlobalPrefs.accesskey     "u">
+<!ENTITY globalReceipts.label         "Pengaturan Global…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Atur tanda konfirmasi diterima untuk akun ini">
+<!ENTITY useCustomPrefs.accesskey     "k">
+<!ENTITY requestReceipt.label         "Ketika mengirim, selalu minta tanda konfirmasi diterima">
+<!ENTITY requestReceipt.accesskey     "K">
+<!ENTITY receiptArrive.label          "Saat tanda konfirmasi datang:">
+<!ENTITY leaveIt.label                "Tinggalkan pada Kotak Masuk">
+<!ENTITY leaveIt.accesskey            "i">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Pindahkan ke folder &quot;Terkirim&quot;">
+<!ENTITY moveToSent.accesskey         "m">
+<!ENTITY requestMDN.label             "Ketika saya menerima permintaan untuk tanda konfirmasi diterima:">
+<!ENTITY returnSome.label             "Izinkan pengiriman tanda konfirmasi diterima untuk pesan tertentu">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Jangan kirim tanda konfirmasi diterima">
+<!ENTITY never.accesskey              "t">
+<!ENTITY notInToCc.label              "Jika saya tidak termasuk dalam isian Kepada atau Cc:">
+<!ENTITY notInToCc.accesskey          "t">
+<!ENTITY outsideDomain.label          "Jika pengirim berada di luar domain saya:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "Selain itu:">
+<!ENTITY otherCases.accesskey         "S">
+<!ENTITY askMe.label                  "Tanya saya">
+<!ENTITY alwaysSend.label             "Selalu kirim">
+<!ENTITY neverSend.label              "Tidak pernah dikirim">

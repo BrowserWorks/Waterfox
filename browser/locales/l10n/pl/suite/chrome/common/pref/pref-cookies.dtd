@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title "Ciasteczka">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label "Zasady akceptowania ciasteczek">
+
+<!ENTITY disableCookies.label "Blokuj ciasteczka">
+<!ENTITY disableCookies.accesskey "z">
+
+<!ENTITY accNo3rdPartyCookies.label "Akceptuj ciasteczka tylko z serwera, z którym nawiązano pierwotne połączenie (ciasteczka z innych witryn będą odrzucane)">
+<!ENTITY accNo3rdPartyCookies.accesskey "s">
+
+<!ENTITY acc3rdPartyVisited.label "Akceptuj z innych witryn tylko, gdy te witryny zostały poprzednio odwiedzone przez użytkownika">
+<!ENTITY acc3rdPartyVisited.accesskey "o">
+
+<!ENTITY accAllCookies.label "Akceptuj wszystkie ciasteczka">
+<!ENTITY accAllCookies.accesskey "A">
+
+<!ENTITY cookieRetentionPolicy.label "Zapamiętywanie ciasteczek">
+
+<!ENTITY acceptNormally.label "Akceptuj ciasteczka standardowo">
+<!ENTITY acceptNormally.accesskey "n">
+
+<!ENTITY acceptForSession.label "Akceptuj tylko na czas bieżącej sesji">
+<!ENTITY acceptForSession.accesskey "s">
+
+<!ENTITY acceptforNDays.label "Akceptuj ciasteczka na okres">
+<!ENTITY acceptforNDays.accesskey "a">
+<!ENTITY days.label "dni">
+
+<!ENTITY manageCookies.label "Menedżer ciasteczek i witryn">
+<!ENTITY manageCookiesDescription.label "Pozwala na wyświetlanie i zarządzanie zachowanymi ciasteczkami, jak i ustawieniami akceptowania oraz odrzucania ciasteczek dla konkretnych witryn. Ustawienia dla konkretnych witryn nadpiszą powyższe ustawienia.">
+
+<!ENTITY viewCookies.label "Menedżer ciasteczek">
+<!ENTITY viewCookies.accesskey "M">
+

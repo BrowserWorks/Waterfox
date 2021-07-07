@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Créer un nouvel agenda" >
+<!ENTITY wizard.label             "Créer un nouvel agenda" >
+<!ENTITY wizard.description       "Choisissez l’emplacement de votre agenda" >
+
+<!ENTITY initialpage.description    "Votre agenda peut être stocké sur votre ordinateur ou sur un serveur afin d’y accéder à distance ou de le partager avec vos amis ou vos collègues de travail." >
+<!ENTITY initialpage.computer.label  "Sur mon ordinateur">
+<!ENTITY initialpage.network.label  "Sur le réseau">
+
+<!ENTITY locationpage.description         "Fournit les informations nécessaires pour accéder à votre agenda distant" >
+<!ENTITY locationpage.login.description   "Optionnel : saisissez un nom d’utilisateur et un mot de passe" >
+<!ENTITY locationpage.username.label      "Nom d’utilisateur :" >
+<!ENTITY locationpage.password.label      "Mot de passe :" >
+
+<!ENTITY custompage.shortdescription  "Personnaliser votre agenda" >
+<!ENTITY custompage.longdescription   "Vous pouvez donner un nom à votre agenda et affecter des couleurs aux évènements." >
+
+<!ENTITY finishpage.shortdescription  "Agenda créé" >
+<!ENTITY finishpage.longdescription   "Votre agenda a été créé." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Autre">
+
+<!ENTITY buttons.create.label "Créer un agenda">
+<!ENTITY buttons.create.accesskey "C">
+
+<!ENTITY buttons.find.label "Rechercher des agendas">
+<!ENTITY buttons.find.accesskey "a">
+
+<!ENTITY buttons.back.label "Retour">
+<!ENTITY buttons.back.accesskey "R">
+
+<!ENTITY buttons.subscribe.label "S’abonner">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Type d’agenda :">
+<!ENTITY location.label "Adresse :">
+<!ENTITY location.placeholder "Adresse web ou nom d’hôte du serveur de l’agenda">
+
+<!ENTITY network.nocredentials.label "Cette adresse ne demande pas d’identifiants de connexion">
+<!ENTITY network.loading.description "Veuillez patienter pendant que vos agendas sont découverts.">
+<!ENTITY network.notfound.description "Aucun agenda à cette adresse. Veuillez vérifier les paramètres.">
+<!ENTITY network.authfail.description "Les identifiants de connexion saisis n’ont pas été acceptés. Veuillez vérifier les paramètres.">
+
+<!ENTITY network.subscribe.single.description "Sélectionnez les agendas auxquels vous souhaitez vous abonner.">
+<!ENTITY network.subscribe.multiple.description "Plusieurs types d’agendas sont disponibles pour cette adresse. Sélectionnez le type d’agenda, puis choisissez les agendas auxquels vous souhaitez vous abonner.">

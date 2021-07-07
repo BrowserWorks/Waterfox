@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title             "Удаление личных данных">
+
+<!-- LOCALIZATION NOTE (sanitizeDialog.width): width of the Clear Recent
+     History dialog -->
+<!ENTITY sanitizeDialog.width             "34em">
+
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear"
+     dropdown. -->
+<!ENTITY clearTimeDuration.label          "Удалить:">
+<!ENTITY clearTimeDuration.accesskey      "т">
+<!ENTITY clearTimeDuration.lastHour       "За последний час">
+<!ENTITY clearTimeDuration.last2Hours     "За последние два часа">
+<!ENTITY clearTimeDuration.last4Hours     "За последние четыре часа">
+<!ENTITY clearTimeDuration.today          "За сегодня">
+<!ENTITY clearTimeDuration.everything     "Всё">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for
+     languages that require it. -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!--  LOCALIZATION NOTE (sanitizeSelectedWarning): Warning that appears
+      when not all items are selected in the in Clear Private data dialog. -->
+<!ENTITY sanitizeSelectedWarning          "Данные всех выделенных пунктов будут удалены.">
+
+<!-- LOCALIZATION NOTE (sanitizeUndoWarning): Second warning
+     paragraph that always appears. -->
+<!ENTITY sanitizeUndoWarning              "Это действие нельзя отменить.">
+
+<!ENTITY sanitizeItems.label              "Удалить следующие данные:">
+
+<!-- LOCALIZATION NOTE : Try to make sure to not have overlapped  accesskeys
+     with pref-privatedata.dtd. These entities are also used in the private
+     data preferences dialog. -->
+<!ENTITY itemHistory.label                "Журнал посещений">
+<!ENTITY itemHistory.accesskey            "п">
+<!ENTITY itemHistoryS.accesskey           "е">
+<!ENTITY itemUrlBar.label                 "Журнал посещений панели адреса">
+<!ENTITY itemUrlBar.accesskey             "а">
+<!ENTITY itemUrlBarS.accesskey            "у">
+<!ENTITY itemDownloads.label              "Журнал загрузок">
+<!ENTITY itemDownloads.accesskey          "з">
+<!ENTITY itemDownloadsS.accesskey         "к">
+<!ENTITY itemFormSearchHistory.label      "Сохранённые данные форм и историю поиска">
+<!ENTITY itemFormSearchHistory.accesskey  "ф">
+<!ENTITY itemFormSearchHistoryS.accesskey "м">
+<!ENTITY itemCache.label                  "Кэш">
+<!ENTITY itemCache.accesskey              "э">
+<!ENTITY itemCacheS.accesskey             "ш">
+<!ENTITY itemCookies.label                "Куки">
+<!ENTITY itemCookies.accesskey            "у">
+<!ENTITY itemCookiesS.accesskey           "и">
+<!ENTITY itemOfflineApps.label            "Данные автономных веб-сайтов">
+<!ENTITY itemOfflineApps.accesskey        "н">
+<!ENTITY itemOfflineAppsS.accesskey       "ы">
+<!ENTITY itemPasswords.label              "Сохранённые пароли">
+<!ENTITY itemPasswords.accesskey          "р">
+<!ENTITY itemPasswordsS.accesskey         "х">
+<!ENTITY itemSessions.label               "Сессии аутентификации">
+<!ENTITY itemSessions.accesskey           "с">
+
+<!ENTITY itemSessionsS.accesskey          "ф">
+
+<!ENTITY sanitizeButton.label            "Удалить личные данные">
+<!ENTITY itemSitePreferences.label        "Настройки сайтов">
+<!ENTITY itemSitePreferences.accesskey    "о">
+<!ENTITY itemSitePreferencesS.accesskey   "й">

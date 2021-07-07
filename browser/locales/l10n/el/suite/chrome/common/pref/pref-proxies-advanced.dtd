@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Προηγμένες προτιμήσεις διακομιστή μεσολάβησης">
+<!ENTITY  protocols.caption           "Ειδικοί διακομιστές μεσολάβησης πρωτοκόλλου">
+<!ENTITY  protocols.description       "Κανονικά, ο ίδιος διακομιστής μεσολάβησης μπορεί να διαχειριστεί όλα τα παρακάτω πρωτόκολλα.">
+<!ENTITY  http.label                  "Διακομιστής μεσολάβησης HTTP:">
+<!ENTITY  http.accesskey              "μ">
+<!ENTITY  ssl.label                   "Διακομιστής μεσολάβησης SSL:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "Διακομιστής μεσολάβησης FTP:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Χρήση ρυθμίσεων διακομιστή μεσολάβησης HTTP για όλα τα πρωτόκολλα">
+<!ENTITY  reuseProxy.accesskey        "Χ">
+<!ENTITY  port.label                  "Θύρα:">
+<!ENTITY  HTTPPort.accesskey          "Θ">
+<!ENTITY  SSLPort.accesskey           "ύ">
+<!ENTITY  FTPPort.accesskey           "ρ">
+
+<!ENTITY  socks.caption               "Γενικός διακομιστής μεσολάβησης">
+<!ENTITY  socks.description           "Ένας διακομιστής SOCKS είναι ένας γενικός διακομιστής μεσολάβησης που χρησιμοποιείται μερικές φορές σε εταιρικά ή παρόμοια περιβάλλοντα.">
+<!ENTITY  socks.label                 "Διακομιστής μεσολάβησης SOCKS:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Χρήση για επίλυση ονομάτων κεντρικών υπολογιστών (προτείνεται για SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "η">
+<!ENTITY  SOCKSport.accesskey         "ρ">

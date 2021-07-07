@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "خصائص منطقة النص">
+
+<!ENTITY Settings.label "الإعدادات">
+
+<!ENTITY TextAreaName.label "اسم الحقل:">
+<!ENTITY TextAreaName.accessKey "س">
+<!ENTITY TextAreaRows.label "الصفوف:">
+<!ENTITY TextAreaRows.accessKey "ص">
+<!ENTITY TextAreaCols.label "الأعمدة:">
+<!ENTITY TextAreaCols.accessKey "ع">
+<!ENTITY TextAreaReadOnly.label "للقراءة فقط">
+<!ENTITY TextAreaReadOnly.accessKey "ف">
+<!ENTITY TextAreaDisabled.label "معطّل">
+<!ENTITY TextAreaDisabled.accessKey "م">
+<!ENTITY TextAreaTabIndex.label "فهرس الشريط:">
+<!ENTITY TextAreaTabIndex.accessKey "ف">
+<!ENTITY TextAreaAccessKey.label "مفتاح الوصول:">
+<!ENTITY TextAreaAccessKey.accessKey "م">
+<!ENTITY InitialText.label "النص الأولي:">
+<!ENTITY InitialText.accessKey "ن">
+
+<!ENTITY TextAreaWrap.label "نمط التسطير:">
+<!ENTITY TextAreaWrap.accessKey "ط">
+<!ENTITY WrapDefault.value "المبدئي">
+<!ENTITY WrapOff.value "مغلق">
+<!ENTITY WrapHard.value "جامد">
+<!ENTITY WrapSoft.value "ليّن">
+<!ENTITY WrapPhysical.value "حقيقي">
+<!ENTITY WrapVirtual.value "افتراضي">

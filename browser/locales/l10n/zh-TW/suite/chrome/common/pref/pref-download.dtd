@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "下載">
+
+<!ENTITY downloadBehavior.label         "當開始下載時">
+<!ENTITY doNothing.label                "不開啟任何視窗">
+<!ENTITY doNothing.accesskey            "D">
+<!ENTITY openProgressDialog.label       "開啟進度顯示窗">
+<!ENTITY openProgressDialog.accesskey   "O">
+<!ENTITY openDM.label                   "開啟下載管理員">
+<!ENTITY openDM.accesskey               "m">
+<!ENTITY flashWhenOpen.label            "若已開啟下載管理員，僅閃爍視窗">
+<!ENTITY flashWhenOpen.accesskey        "f">
+
+<!ENTITY downloadLocation.label         "下載檔案存放設定">
+<!ENTITY saveTo.label                   "儲存檔案到">
+<!ENTITY saveTo.accesskey               "v">
+<!ENTITY chooseDownloadFolder.label     "選擇資料夾…">
+<!ENTITY chooseDownloadFolder.accesskey "C">
+<!ENTITY alwaysAsk.label                "每次都問我要存到何處">
+<!ENTITY alwaysAsk.accesskey            "A">
+
+<!ENTITY downloadHistory.label          "下載紀錄">
+<!ENTITY removeEntries.label            "移除下載項目">
+<!ENTITY removeEntries.accesskey        "R">
+<!ENTITY whenCompleted.label            "當完成時">
+<!ENTITY whenQuittingApp.label          "當結束 &brandShortName; 時">
+<!ENTITY neverRemove.label              "從不">
+
+<!ENTITY finishedBehavior.label         "當下載完成時">
+<!ENTITY playSound.label                "播放音效">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY showAlert.label                "顯示警告視窗">
+<!ENTITY showAlert.accesskey            "S">
+<!ENTITY browse.label                   "瀏覽…">
+<!ENTITY browse.accesskey               "B">
+<!ENTITY playButton.label               "播放">
+<!ENTITY playButton.accesskey           "l">
+

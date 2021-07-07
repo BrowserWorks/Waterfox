@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Taupant vietą diske, neparsiųsti:">
+<!ENTITY doNotDownloadNntp.label "Taupant vietą diske, naudojimui neprisijungus prie tinklo neparsiųsti:">
+<!ENTITY doNotDownloadImap.label "Taupant vietą diske, galima apriboti laiškų, parsiunčiamų iš serverio ir laikomų diske naudojimui neprisijungus, amžių bei dydį.">
+<!ENTITY allFoldersOffline2.label "Šios paskyros visų aplankų laiškus laikyti šiame kompiuteryje">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Pastaba: šis pakeitimas įtakos visus šios paskyros aplankus. Norėdami nustatyti atskirus aplankus, naudokite mygtuką „Papilldomai…“.">
+<!ENTITY offlineNotDownload.label "laiškų, didesnių kaip">
+<!ENTITY offlineNotDownload.accesskey "d">
+<!ENTITY autosyncNotDownload.label "Neparsiųsti laiškų, didesnių kaip">
+<!ENTITY autosyncNotDownload.accesskey "d">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "d.">
+<!ENTITY message.label "laiškų">
+<!ENTITY nntpNotDownloadRead.label "skaitytų laiškų">
+<!ENTITY nntpNotDownloadRead.accesskey "k">
+<!ENTITY nntpDownloadMsg.label "laiškų, senesnių nei">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Taupant vietą diske, senus laiškus galima negrąžinamai šalinti.">
+<!ENTITY retentionCleanupImap.label "Taupant vietą diske, senus laiškus (tiek vietines kopijas, tiek jų originalus serveryje) galima negrąžinamai šalinti.">
+<!ENTITY retentionCleanupPop.label "Taupant vietą diske, senus laiškus (taip pat ir jų originalus serveryje) galima negrąžinamai šalinti.">
+<!ENTITY retentionKeepMsg.label "Šalinti laiškus, senesnius nei">
+<!ENTITY retentionKeepMsg.accesskey "s">
+<!ENTITY retentionKeepAll.label "Nešalinti laiškų">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Šalinti visus, išskyrus paskiausius">
+<!ENTITY retentionKeepRecent.accesskey "p">
+<!ENTITY retentionApplyToFlagged.label "Visada palikti žvaigždute pažymėtus laiškus">
+<!ENTITY retentionApplyToFlagged.accesskey "ž">
+<!ENTITY nntpRemoveMsgBody.label "Šalinti laiškus, senesnius nei">
+<!ENTITY nntpRemoveMsgBody.accesskey "s">
+<!ENTITY offlineSelectNntp.label "Parinkti naujienų grupes darbui neprisijungus…">
+<!ENTITY offlineSelectNntp.accesskey "P">
+<!ENTITY offlineImapAdvancedOffline.label "Papildomai…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "P">
+<!ENTITY syncGroupTitle.label "Laiškų sinchronizavimas">
+<!ENTITY diskspaceGroupTitle.label "Disko atmintinė">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Sinchronizuoti visus laiškus, neatsižvelgiant į jų amžių">
+<!ENTITY allAutosync.accesskey           "v">
+<!ENTITY ageAutosyncBefore.label         "Sinchronizuoti tik pastarųjų">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "dienų">
+<!ENTITY weekAgeInterval.label           "savaičių">
+<!ENTITY monthAgeInterval.label          "mėnesių">
+<!ENTITY yearAgeInterval.label           "metų">
+<!ENTITY ageAutosyncAfter.label          "laiškus">

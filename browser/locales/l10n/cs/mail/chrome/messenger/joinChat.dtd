@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title "Připojit se k chatu">
+<!ENTITY name.label "Místnost">
+<!ENTITY optional.label "(volitelné)">
+<!ENTITY account.label "Účet">
+<!ENTITY autojoin.label "Automaticky se připojit do místnosti">
+<!ENTITY autojoin.accesskey "A">

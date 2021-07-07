@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title          "เปลี่ยนชื่อโฟลเดอร์">
+<!ENTITY rename.label                      "ป้อนชื่อใหม่สำหรับโฟลเดอร์ของคุณ:">
+<!ENTITY rename.accesskey                  "ป">
+<!ENTITY accept.label                      "เปลี่ยนชื่อ">
+<!ENTITY accept.accesskey                  "ล">

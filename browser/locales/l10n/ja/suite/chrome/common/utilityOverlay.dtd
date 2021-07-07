@@ -1,0 +1,208 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label	"オフラインにする">
+<!ENTITY  offlineGoOfflineCmd.accesskey	"k">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label			"ファイル">
+<!ENTITY fileMenu.accesskey		"F">
+<!ENTITY newMenu.label			"新規作成">
+<!ENTITY newMenu.accesskey		"N">
+<!ENTITY newBlankPageCmd.label		"ページを作成">
+<!ENTITY newBlankPageCmd.accesskey	"P">
+<!ENTITY newBlankPageCmd.key		"n">
+<!ENTITY newPageFromTemplateCmd.label	"テンプレートからページを作成">
+<!ENTITY newPageFromTemplateCmd.accesskey	"t">
+<!ENTITY newPageFromDraftCmd.label	"下書きからページを作成">
+<!ENTITY newPageFromDraftCmd.accesskey	"d">
+<!ENTITY newNavigatorCmd.label		"ブラウザーウィンドウ">
+<!ENTITY newNavigatorCmd.key		"N">
+<!ENTITY newNavigatorCmd.accesskey	"B">
+<!ENTITY newPrivateWindowCmd.label	"プライベートウィンドウ">
+<!ENTITY newPrivateWindowCmd.key	"B">
+<!ENTITY newPrivateWindowCmd.accesskey	"W">
+<!ENTITY closeCmd.label			"閉じる">
+<!ENTITY closeCmd.key			"W">
+<!ENTITY closeCmd.accesskey		"C">
+<!ENTITY printSetupCmd.label		"ページ設定...">
+<!ENTITY printSetupCmd.accesskey	"u">
+<!ENTITY printPreviewCmd.label		"印刷プレビュー">
+<!ENTITY printPreviewCmd.accesskey	"v">
+<!ENTITY printCmd.label			"印刷">
+<!ENTITY printCmd.accesskey		"P">
+<!ENTITY printCmd.key			"P">
+
+<!-- LOCALIZATION NOTE (.modifiers): The following entites are for the
+     application menu. Never change the modifiers unless you are 100% sure that
+     they are different on your locale (should be very rare). -->
+<!ENTITY preferencesCmdMac.label          "環境設定...">
+<!ENTITY preferencesCmdMac.key            ",">
+<!ENTITY preferencesCmdMac.modifiers      "accel">
+<!ENTITY servicesMenu.label               "サービス">
+<!ENTITY hideThisAppCmd.label             "&brandShortName; を隠す">
+<!ENTITY hideThisAppCmd.key               "H">
+<!ENTITY hideThisAppCmd.modifiers         "accel">
+<!ENTITY hideOtherAppsCmd.label           "ほかを隠す">
+<!ENTITY hideOtherAppsCmd.key             "H">
+<!ENTITY hideOtherAppsCmd.modifiers       "accel,alt">
+<!ENTITY showAllAppsCmd.label             "すべて表示">
+<!ENTITY openHelpCmdMac.label             "&brandShortName; ヘルプ">
+<!ENTITY openHelpCmdMac.accesskey         "H">
+<!ENTITY openHelpCmdMac.key               "?">
+<!ENTITY openHelpCmdMac.modifiers         "accel">
+
+<!ENTITY quitApplicationCmd.label         "終了">
+<!ENTITY quitApplicationCmd.key           "Q">
+<!ENTITY quitApplicationCmd.accesskey     "x">
+<!ENTITY quitApplicationCmdMac.label      "&brandShortName; を終了">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">
+<!ENTITY quitApplicationCmdUnix.label     "終了">
+<!ENTITY quitApplicationCmdUnix.accesskey "Q">
+
+<!ENTITY editMenu.label			"編集">
+<!ENTITY editMenu.accesskey		"E">
+<!ENTITY undoCmd.label			"元に戻す">
+<!ENTITY undoCmd.key			"Z">
+<!ENTITY undoCmd.accesskey		"U">
+<!ENTITY redoCmd.label			"やり直し">
+<!ENTITY redoCmd.key			"Y">
+<!ENTITY redoCmdMac.key			"Z">
+<!ENTITY redoCmd.accesskey		"R">
+<!ENTITY cutCmd.label			"切り取り">
+<!ENTITY cutCmd.key			"X">
+<!ENTITY cutCmd.accesskey		"t">
+<!ENTITY copyCmd.label			"コピー">
+<!ENTITY copyCmd.key			"C">
+<!ENTITY copyCmd.accesskey		"C">
+<!ENTITY pasteCmd.label			"貼り付け">
+<!ENTITY pasteCmd.key			"V">
+<!ENTITY pasteCmd.accesskey		"P">
+<!ENTITY pasteGoCmd.label		"貼り付けて移動">
+<!ENTITY pasteGoCmd.accesskey		"G">
+
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+<!ENTITY pasteSearchCmd.label		"貼り付けて検索">
+<!ENTITY pasteSearchCmd.accesskey	"e">
+<!ENTITY deleteCmd.label		"削除">
+<!ENTITY deleteCmd.accesskey		"D">
+<!ENTITY selectAllCmd.label		"すべて選択">
+<!ENTITY selectAllCmd.key		"A">
+<!ENTITY selectAllCmd.accesskey		"A">
+<!ENTITY clearHistoryCmd.label		"検索履歴を消去">
+<!ENTITY clearHistoryCmd.accesskey	"H">
+<!ENTITY showSuggestionsCmd.label	"検索候補を表示">
+<!ENTITY showSuggestionsCmd.accesskey	"S">
+<!ENTITY preferencesCmd.label		"設定...">
+<!ENTITY preferencesCmd.key		"E">
+<!ENTITY preferencesCmd.accesskey	"e">
+<!ENTITY findBarCmd.key			"F">
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findBarCmd.accesskey		"F">
+<!ENTITY findCmd.key2			"VK_F19">
+<!ENTITY findReplaceCmd.key		"H">
+<!ENTITY findReplaceCmdMac.key		"F">
+<!ENTITY findReplaceCmd.accesskey	"l">
+<!ENTITY findAgainCmd.label		"次を検索">
+<!ENTITY findAgainCmd.key		"G">
+<!ENTITY findAgainCmd.accesskey		"g">
+<!ENTITY findAgainCmd.key2		"VK_F3">
+<!ENTITY findPrevCmd.label		"前を検索">
+<!ENTITY findPrevCmd.key		"G">
+<!ENTITY findPrevCmd.key2		"VK_F3">
+<!ENTITY findPrevCmd.accesskey		"v">
+<!ENTITY findTypeTextCmd.label		"テキストをタイプ検索">
+<!ENTITY findTypeTextCmd.key		"/">
+<!ENTITY findTypeTextCmd.accesskey	"x">
+<!ENTITY findTypeLinksCmd.label		"リンクをタイプ検索">
+<!ENTITY findTypeLinksCmd.key		"'">
+<!ENTITY findTypeLinksCmd.accesskey	"k">
+
+<!ENTITY viewMenu.label			"表示">
+<!ENTITY viewMenu.accesskey		"V">
+<!ENTITY viewToolbarsMenu.label		"表示/隠す">
+<!ENTITY viewToolbarsMenu.accesskey	"w">
+<!ENTITY showTaskbarCmd.label		"ステータスバー">
+<!ENTITY showTaskbarCmd.accesskey	"S">
+
+<!ENTITY helpMenu.label			"ヘルプ">
+<!ENTITY helpMenu.accesskey		"H">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+     for the help button in the menubar. -->
+<!ENTITY helpMenuWin.label		"ヘルプ">
+<!ENTITY helpMenuWin.accesskey		"H">
+<!ENTITY openHelpCmd.label		"ヘルプ目次">
+<!ENTITY openHelpCmd.accesskey		"H">
+<!ENTITY openHelpCmd.key		"VK_F1">
+
+<!ENTITY helpForIEUsers.label		"Internet Explorer ユーザーのために">
+<!ENTITY helpForIEUsers.accesskey	"I">
+<!ENTITY helpTroubleshootingInfo.label	"トラブルシューティング情報">
+<!ENTITY helpTroubleshootingInfo.accesskey	"T">
+<!ENTITY releaseCmd.label		"リリースノート">
+<!ENTITY releaseCmd.accesskey		"N">
+<!ENTITY helpSafeMode.label		"アドオンを無効にして再起動">
+<!ENTITY helpSafeMode.accesskey		"R">
+<!ENTITY updateCmd.label		"&brandShortName; の更新を確認...">
+<!ENTITY updateCmd.accesskey		"C">
+<!ENTITY aboutCmd.label			"&brandShortName; について">
+<!ENTITY aboutCmd.accesskey		"A">
+<!ENTITY aboutCommPluginsCmd.label	"プラグインについて">
+<!ENTITY aboutCommPluginsCmd.accesskey	"p">
+
+<!ENTITY direct.label			"オンライン (プロキシー: なし)">
+<!ENTITY direct.accesskey		"N">
+<!ENTITY manual.label			"オンライン (プロキシー: 手動設定)">
+<!ENTITY manual.accesskey		"M">
+<!ENTITY pac.label			"オンライン (プロキシー: 設定ファイルの URL を指定)">
+<!ENTITY pac.accesskey			"A">
+<!ENTITY wpad.label			"オンライン (プロキシー: 自動検出)">
+<!ENTITY wpad.accesskey			"D">
+<!ENTITY system.label			"オンライン (プロキシー: システムの設定)">
+<!ENTITY system.accesskey		"S">
+
+<!ENTITY proxy.label			"プロキシー設定...">
+<!ENTITY proxy.accesskey		"C">
+
+<!ENTITY bidiSwitchTextDirectionItem.label		"テキストの記述方向を切り換える">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey		"w">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey		"X">
+
+<!ENTITY menubarCmd.label				"メニューバー">
+<!ENTITY menubarCmd.accesskey				"e">
+
+<!ENTITY customizeToolbarContext.label			"カスタマイズ...">
+<!ENTITY customizeToolbarContext.accesskey		"C">
+
+<!ENTITY customizeToolbar.toolbarmode.label		"このツールバーの設定">
+<!ENTITY customizeToolbar.toolbarmode.accesskey		"e">
+<!ENTITY customizeToolbar.iconsAndText.label		"アイコンとテキスト">
+<!ENTITY customizeToolbar.iconsAndText.accesskey	"a">
+<!ENTITY customizeToolbar.icons.label			"アイコンのみ">
+<!ENTITY customizeToolbar.icons.accesskey		"o">
+<!ENTITY customizeToolbar.text.label			"テキストのみ">
+<!ENTITY customizeToolbar.text.accesskey		"T">
+<!ENTITY customizeToolbar.useSmallIcons.label		"小さいアイコンを使用">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey	"s">
+<!ENTITY customizeToolbar.labelAlignEnd.label		"アイコンの横にテキストを表示">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey	"b">
+<!ENTITY customizeToolbar.useDefault.label		"初期設定に戻す">
+<!ENTITY customizeToolbar.useDefault.accesskey		"U">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY allowPopups.accesskey		"p">
+<!ENTITY showPopupManager.label		"ポップアップの管理">
+<!ENTITY showPopupManager.accesskey	"M">
+<!ENTITY dontShowMessage.label		"ポップアップをブロックしたときにこのメッセージを表示しない">
+<!ENTITY dontShowMessage.accesskey	"D">
+
+<!ENTITY throbber.title			"Throbber">
+<!ENTITY throbber.tooltip2		"&brandShortName; のホームページへ移動します">
+
+<!ENTITY syncToolbarButton.label	"Sync">

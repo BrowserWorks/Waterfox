@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Tata Alarm">
+<!ENTITY reminder.add.label                                "Tambah">
+<!ENTITY reminder.add.accesskey                            "T">
+<!ENTITY reminder.remove.label                             "Hapus">
+<!ENTITY reminder.remove.accesskey                         "H">
+
+<!ENTITY reminder.reminderDetails.label                    "Detail Alarm">
+<!ENTITY reminder.action.label                             "Pilih Aksi Alarm">
+
+<!ENTITY reminder.action.alert.label                       "Tampilkan Peringatan">
+<!ENTITY reminder.action.email.label                       "Kirim Surel">
+
+<!ENTITY alarm.units.minutes                               "menit" >
+<!ENTITY alarm.units.hours                                 "jam" >
+<!ENTITY alarm.units.days                                  "hari" >

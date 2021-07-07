@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importieren">
+<!ENTITY importAll.label          "Alles importieren">
+<!ENTITY importAll.accesskey      "o">
+<!ENTITY importMail.label         "Mail">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "Feed-Abonnements">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Adressbücher">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Einstellungen">
+<!ENTITY importSettings.accesskey "E">
+<!ENTITY importFilters.label      "Filter">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; Import-Assistent">
+<!ENTITY importShortDesc.label    "Mail, Adressbücher, Einstellungen und Filter aus anderen Programmen importieren">
+
+<!ENTITY importDescription1.label "Dieser Assistent importiert Mail-Nachrichten, Adressbucheinträge, Feed-Abonnements, Einstellungen und/oder Filter aus anderen Mailprogrammen und üblichen Adressbuchformaten in &brandShortName;.">
+<!ENTITY importDescription2.label "Wenn diese importiert wurden, können Sie auf diese von &brandShortName; zugreifen.">
+
+<!ENTITY selectDescription.label  "Bitte wählen Sie den Typ der Datei, die importiert werden soll:">
+<!ENTITY selectDescriptionB.label "Bitte wählen Sie einen existenten Account oder erstellen Sie einen neuen:">
+<!ENTITY selectDescription.accesskey "B">
+<!ENTITY acctName.label           "Name:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Programm oder dessen zu importierende Daten nicht gefunden.">
+
+<!ENTITY back.label               "&lt; Zurück">
+<!ENTITY forward.label            "Weiter &gt;">
+<!ENTITY finish.label             "Fertigstellen">
+<!ENTITY cancel.label             "Abbrechen">
+
+<!ENTITY select.label             "oder wählen Sie den Typ des zu importierenden Materials:">
+
+<!ENTITY title.label              "Titel">
+<!ENTITY processing.label         "Importieren…">

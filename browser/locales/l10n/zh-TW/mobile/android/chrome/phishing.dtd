@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "帶我離開這裡！">
+<!ENTITY safeb.palm.decline.label "忽略此警告">
+<!ENTITY safeb.palm.reportPage.label "為什麼要封鎖此網頁？">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "公告內容由 <a id='advisory_provider'/> 提供">
+
+<!ENTITY safeb.blocked.malwarePage.title "已知的有害網頁！">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "這個在 <span id='malware_sitename'/> 的網頁已被回報為有害網頁，依據您所選擇的安全設定予以封鎖。">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>有害網頁會嘗試安裝能竊取隱私資訊、利用您的電腦攻擊他人或破壞作業系統等的惡意軟體到您的電腦上。</p><p>某些有害網頁會故意安裝有害軟體到電腦上，但更多網頁是在連網頁擁有者都不知情的情況下，成為有害軟體散佈的溫床。</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "詐騙網站！">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "位於 <span id='phishing_sitename'/> 的這張網頁已被回報為詐騙網站，並已依照您的安全性偏好設定封鎖。">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>詐騙網站會設計來誤導您做某些危險的事情，例如安裝軟體或提供密碼、手機號碼、信用卡號等個人資訊。</p><p>在這些網頁中輸入任何資訊可能會導致個人身分被盜用，或其他詐騙事件。</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "已回報為不安全的軟體網站！">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "此網頁 <span id='unwanted_sitename'/> 已被回報為疑似提供不安全的軟體。依照您的安全性偏好設定已封鎖此網頁。">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "提供不安全軟體的網站可能會嘗試安裝詐騙軟體，並以您預期外的方式影響系統。">
+
+<!ENTITY safeb.blocked.harmfulPage.title "此網站可能含有惡意軟體">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; 已封鎖此頁面載入，因為這張網頁可能會嘗試安裝危險程式，用來偷竊或刪除您的資訊（例如相片、密碼、訊息、信用卡號等）。">

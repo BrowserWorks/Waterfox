@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vlastnosti obrázku">
+
+<!ENTITY pixelsPopup.value "bodů">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Adresa obrázku:">
+<!ENTITY locationEditField.accessKey "d">
+<!ENTITY locationEditField.tooltip "Vyberte adresu a název obrázku">
+<!ENTITY locationEditField.shortenedDataURI "Zkrácená datová URI (zkopírování vloží do schránky celou URI)">
+<!ENTITY title.label "Vysvětlivka:">
+<!ENTITY title.accessKey "P">
+<!ENTITY title.tooltip "HTML atribut 'title' se používá jako vysvětlivka">
+<!ENTITY altText.label "Alternativní text:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Vytvořte popis zobrazující se v místě obrázku">
+<!ENTITY noAltText.label "Nepoužít alternativní text">
+<!ENTITY noAltText.accessKey "N">
+
+<!ENTITY previewBox.label "Náhled obrázku">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Skutečná velikost:">
+<!ENTITY actualSizeRadio.label "Skutečná velikost">
+<!ENTITY actualSizeRadio.accessKey "a">
+<!ENTITY actualSizeRadio.tooltip "Zpět ke skutečné velikosti obrázku">
+<!ENTITY customSizeRadio.label "Nová velikost">
+<!ENTITY customSizeRadio.accessKey "s">
+<!ENTITY customSizeRadio.tooltip "Změna velikosti obrázku na stránce">
+<!ENTITY heightEditField.label "Výška:">
+<!ENTITY heightEditField.accessKey "V">
+<!ENTITY widthEditField.label "Šířka:">
+<!ENTITY widthEditField.accessKey "k">
+<!ENTITY constrainCheckbox.label "Zachovat">
+<!ENTITY constrainCheckbox.accessKey "Z">
+<!ENTITY constrainCheckbox.tooltip "Zachová poměr stran">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Obrazová mapa">
+<!ENTITY removeImageMapButton.label "Odebrat">
+<!ENTITY removeImageMapButton.accessKey "O">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Zarovnání textu kolem obrázku">
+<!ENTITY bottomPopup.value "Naspod">
+<!ENTITY topPopup.value "Navrch">
+<!ENTITY centerPopup.value "Na střed">
+<!ENTITY wrapRightPopup.value "Zalomení vpravo">
+<!ENTITY wrapLeftPopup.value "Zalomení vlevo">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Rozestupy">
+<!ENTITY leftRightEditField.label "Levý a pravý:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "Horní a dolní:">
+<!ENTITY topBottomEditField.accessKey "H">
+<!ENTITY borderEditField.label "Plný okraj:">
+<!ENTITY borderEditField.accessKey "l">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Zobrazit okraje okolo obrázku">
+<!ENTITY showImageLinkBorder.accessKey "o">
+<!ENTITY LinkAdvancedEditButton.label "Rozšířené úpravy odkazu…">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Vložení nebo úprava HTML atributů, stylů a JavaScriptu">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formulář">
+<!ENTITY imageLocationTab.label "Adresa">
+<!ENTITY imageDimensionsTab.label "Rozměry">
+<!ENTITY imageAppearanceTab.label "Vzhled">
+<!ENTITY imageLinkTab.label "Odkaz">

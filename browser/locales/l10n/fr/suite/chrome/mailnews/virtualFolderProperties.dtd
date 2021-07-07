@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nouveau dossier virtuel">
+<!ENTITY name.label                    "Nom :">
+<!ENTITY name.accesskey                "N">
+<!ENTITY description.label             "Créer comme sous-dossier de :">
+<!ENTITY description.accesskey         "C">
+
+<!ENTITY searchTermCaption.label       "Configurer les critères de recherche utilisés pour ce dossier virtuel : ">
+
+<!ENTITY folderSelectionCaption.label  "Choisir les dossiers dans lesquels rechercher : ">
+<!ENTITY chooseFoldersButton.label     "Choisir…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label            "Rechercher en ligne (donne des résultats à jour pour les dossiers IMAP et les dossiers de groupes mais augmente le temps d’ouverture du dossier)">
+<!ENTITY searchOnline.accesskey        "l">
+<!ENTITY newFolderButton.label         "Créer">
+<!ENTITY newFolderButton.accesskey     "r">
+<!ENTITY editFolderButton.label        "Mettre à jour">
+<!ENTITY editFolderButton.accesskey    "M">

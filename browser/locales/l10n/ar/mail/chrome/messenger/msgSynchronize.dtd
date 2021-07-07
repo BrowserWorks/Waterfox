@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "نزِّل وزامِن الرسائل">
+<!ENTITY MsgSelect.label "عناصر للاستخدام في طور اللا اتصال">
+<!ENTITY MsgSyncDesc.label "إذا كنت قد اخترت مسبقًا مجلدات بريد أو مجموعات أخبار لتُستخدم بلا اتصال فيُمكنك تنزيلها و/أو مزامنتها الآن. وإلا فاستخدم زر ”اختر“ لتختار المجلدات ومجموعات الأخبار التي تريد استخدامها بلا اتصال.">
+<!ENTITY MsgSyncDirections.label "نزِّل و/أو زامن التالي:">
+<!ENTITY syncTypeMail.label "رسائل البريد">
+<!ENTITY syncTypeMail.accesskey "ب">
+<!ENTITY syncTypeNews.label "مجموعات الأخبار">
+<!ENTITY syncTypeNews.accesskey "م">
+<!ENTITY sendMessage.label "أرسِل الرسائل غير المرسلة">
+<!ENTITY sendMessage.accesskey "ر">
+<!ENTITY workOffline.label "اعمل بلا اتصال بمجرّد انتهاء التنزيل و/أو المزامنة">
+<!ENTITY workOffline.accesskey "ع">
+<!ENTITY selectButton.label "اختر…">
+<!ENTITY selectButton.accesskey "خ">
+<!ENTITY MsgSelectDesc.label "اختر مجلدات بريد ومجموعات أخبار لتستخدم بلا اتصال.">
+<!ENTITY MsgSelectInd.label "نزّل">
+<!ENTITY MsgSelectItems.label "المجلدات و مجموعات أخبار">

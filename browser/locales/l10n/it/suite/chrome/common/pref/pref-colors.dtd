@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.colors.title "Colori">
+<!ENTITY color "Testo e sfondo">
+<!ENTITY textColor.label "Testo:">
+<!ENTITY textColor.accesskey "T">
+<!ENTITY backgroundColor.label "Sfondo:">
+<!ENTITY backgroundColor.accesskey "S">
+<!ENTITY useSystemColors.label "Utilizza i colori di sistema">
+<!ENTITY useSystemColors.accesskey "U">
+<!ENTITY underlineLinks.label "Collegamenti sottolineati">
+<!ENTITY underlineLinks.accesskey "o">
+<!ENTITY links "Colore collegamento">
+<!ENTITY linkColor.label "Collegamenti non visitati:">
+<!ENTITY linkColor.accesskey "n">
+<!ENTITY activeLinkColor.label "Collegamenti attivi:">
+<!ENTITY activeLinkColor.accesskey "C">
+<!ENTITY visitedLinkColor.label "Collegamenti visitati:">
+<!ENTITY visitedLinkColor.accesskey "v">
+<!ENTITY someProvColors "Quando una pagina fornisce colori di testo e sfondo personalizzati">
+<!ENTITY alwaysUseDocumentColors.label "Utilizza sempre i colori e lo sfondo specificati nella pagina web">
+<!ENTITY alwaysUseDocumentColors.accesskey "z">
+<!ENTITY useMyColors.label "Utilizza i colori scelti, ignorando l'immagine di sfondo e i colori specificati nella pagina">
+<!ENTITY useMyColors.accesskey "a">
+<!ENTITY automaticColors.label "Ignora i colori della pagina solamente quando si usa un tema ad alto contrasto">
+<!ENTITY automaticColors.accesskey "I">

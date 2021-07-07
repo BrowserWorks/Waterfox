@@ -1,0 +1,348 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Nieuw bericht: (geen onderwerp)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Bestand">
+<!ENTITY fileMenu.accesskey "B">
+<!ENTITY newMenu.label "Nieuw">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Bericht">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "B">
+<!ENTITY newContact.label "Adresboekcontact…">
+<!ENTITY newContact.accesskey "A">
+<!ENTITY attachMenu.label "Bijlage">
+<!ENTITY attachMenu.accesskey "B">
+<!ENTITY attachFileCmd.label "Bestand(en)…">
+<!ENTITY attachFileCmd.accesskey "B">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Webpagina…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Persoonlijke visitekaart (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY remindLater.label "Later herinneren">
+<!ENTITY remindLater.accesskey "L">
+<!ENTITY closeCmd.label "Sluiten">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "S">
+<!ENTITY saveCmd.label "Opslaan">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "O">
+<!ENTITY saveAsCmd.label "Opslaan als">
+<!ENTITY saveAsCmd.accesskey "l">
+<!ENTITY saveAsFileCmd.label "Bestand…">
+<!ENTITY saveAsFileCmd.accesskey "B">
+<!ENTITY saveAsDraftCmd.label "Concept">
+<!ENTITY saveAsDraftCmd.accesskey "C">
+<!ENTITY saveAsTemplateCmd.label "Sjabloon">
+<!ENTITY saveAsTemplateCmd.accesskey "S">
+<!ENTITY sendNowCmd.label "Nu verzenden">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "u">
+<!ENTITY sendLaterCmd.label "Later verzenden">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "z">
+<!ENTITY printSetupCmd.label "Pagina-instellingen…">
+<!ENTITY printSetupCmd.accesskey "i">
+<!ENTITY printPreviewCmd.label "Afdrukvoorbeeld">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Afdrukken…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "d">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Bewerken">
+<!ENTITY editMenu.accesskey "w">
+<!ENTITY undoCmd.label "Ongedaan maken">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "O">
+<!ENTITY redoCmd.label "Opnieuw uitvoeren">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "u">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "f">
+<!ENTITY deleteCmd.label "Verwijderen">
+<!ENTITY deleteCmd.accesskey "V">
+<!ENTITY editRewrapCmd.label "Opnieuw afbreken">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Bijlage hernoemen…">
+<!ENTITY renameAttachmentCmd.accesskey "B">
+<!ENTITY reorderAttachmentsCmd.label "Volgorde van bijlagen wijzigen…">
+<!ENTITY reorderAttachmentsCmd.accesskey "V">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Bijlagenpaneel">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "B">
+<!ENTITY selectAllCmd.accesskey "A">
+<!ENTITY findBarCmd.label "Zoeken…">
+<!ENTITY findBarCmd.accesskey "Z">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Zoeken en vervangen…">
+<!ENTITY findReplaceCmd.accesskey "e">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Opnieuw zoeken">
+<!ENTITY findAgainCmd.accesskey "w">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Vorige zoeken">
+<!ENTITY findPrevCmd.accesskey "i">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Volgorde van bijlagen wijzigen">
+<!ENTITY moveAttachmentTopPanelBtn.label "Bovenaan plaatsen">
+<!ENTITY moveAttachmentUpPanelBtn.label "Omhoog verplaatsen">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Samen plaatsen">
+<!ENTITY moveAttachmentDownPanelBtn.label "Omlaag verplaatsen">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Onderaan plaatsen">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Sorteren: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Sorteren: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Selectie sorteren: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Selectie sorteren: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Beeld">
+<!ENTITY viewMenu.accesskey "l">
+<!ENTITY viewToolbarsMenuNew.label "Werkbalken">
+<!ENTITY viewToolbarsMenuNew.accesskey "W">
+<!ENTITY menubarCmd.label "Menubalk">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "Compositiewerkbalk">
+<!ENTITY showCompositionToolbarCmd.accesskey "C">
+<!ENTITY showFormattingBarCmd.label "Opmaakwerkbalk">
+<!ENTITY showFormattingBarCmd.accesskey "O">
+<!ENTITY showTaskbarCmd.label "Statusbalk">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Aanpassen…">
+<!ENTITY customizeToolbar.accesskey "A">
+
+<!ENTITY addressSidebar.label "Adressenzijbalk">
+<!ENTITY addressSidebar.accesskey "A">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Opmaak">
+<!ENTITY formatMenu.accesskey "m">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Opties">
+<!ENTITY optionsMenu.accesskey "O">
+<!ENTITY checkSpellingCmd2.label "Spelling controleren…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "c">
+<!ENTITY enableInlineSpellChecker.label "Spelling controleren tijdens het typen">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY quoteCmd.label "Bericht citeren">
+<!ENTITY quoteCmd.accesskey "B">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Persoonlijke visitekaart (vCard) koppelen">
+<!ENTITY attachVCard.accesskey "P">
+
+<!ENTITY returnReceiptMenu.label "Leesbevestiging">
+<!ENTITY returnReceiptMenu.accesskey "L">
+<!ENTITY dsnMenu.label "Afleverstatusnotificatie">
+<!ENTITY dsnMenu.accesskey "A">
+<!ENTITY deliveryFormatMenu.label "Afleveropmaak">
+<!ENTITY deliveryFormatMenu.accesskey "m">
+<!ENTITY autoFormatCmd.label "Automatisch herkennen">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Alleen platte tekst">
+<!ENTITY plainTextFormatCmd.accesskey "p">
+<!ENTITY htmlFormatCmd.label "Alleen HTML-tekst">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Platte en HTML-tekst">
+<!ENTITY bothFormatCmd.accesskey "e">
+<!ENTITY priorityMenu.label "Prioriteit">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.title "Prioriteit">
+<!ENTITY priorityButton.tooltiptext "De prioriteit van het bericht wijzigen">
+<!ENTITY priorityButton.label "Prioriteit:">
+<!ENTITY lowestPriorityCmd.label "Laagst">
+<!ENTITY lowestPriorityCmd.accesskey "a">
+<!ENTITY lowPriorityCmd.label "Laag">
+<!ENTITY lowPriorityCmd.accesskey "L">
+<!ENTITY normalPriorityCmd.label "Normaal">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Hoog">
+<!ENTITY highPriorityCmd.accesskey "H">
+<!ENTITY highestPriorityCmd.label "Hoogst">
+<!ENTITY highestPriorityCmd.accesskey "o">
+<!ENTITY fileCarbonCopyCmd.label "Bericht kopiëren naar">
+<!ENTITY fileCarbonCopyCmd.accesskey "k">
+<!ENTITY fileHereMenu.label "Hier opslaan">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Extra">
+<!ENTITY tasksMenu.accesskey "x">
+<!ENTITY messengerCmd.label "E-mail &amp; nieuwsgroepen">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Adresboek">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Accountinstellingen">
+<!ENTITY accountManagerCmd2.accesskey "c">
+<!ENTITY accountManagerCmdUnix2.accesskey "i">
+<!ENTITY preferencesCmd2.label "Opties">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label "Voorkeuren">
+<!ENTITY preferencesCmdUnix.accesskey "V">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Minimaliseren">
+<!ENTITY bringAllToFront.label "Alles naar voren brengen">
+<!ENTITY zoomWindow.label "Zoom">
+<!ENTITY windowMenu.label "Venster">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Verzenden">
+<!ENTITY quoteButton.label "Citaat">
+<!ENTITY addressButton.label "Adresboek">
+<!ENTITY attachButton.label "Bijlage">
+<!ENTITY spellingButton.label "Spelling">
+<!ENTITY saveButton.label "Opslaan">
+<!ENTITY printButton.label "Afdrukken">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Dit bericht nu verzenden">
+<!ENTITY sendlaterButton.tooltip "Dit bericht later verzenden">
+<!ENTITY quoteButton.tooltip "Het vorige bericht citeren">
+<!ENTITY addressButton.tooltip "Een ontvanger uit een adresboek selecteren">
+<!ENTITY attachButton.tooltip2 "Een bijlage toevoegen">
+<!ENTITY spellingButton.tooltip "Spelling van selectie of hele bericht controleren">
+<!ENTITY saveButton.tooltip "Dit bericht opslaan">
+<!ENTITY cutButton.tooltip              "Knippen">
+<!ENTITY copyButton.tooltip             "Kopiëren">
+<!ENTITY pasteButton.tooltip            "Plakken">
+<!ENTITY printButton.tooltip "Dit bericht afdrukken">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Andere soorten adresvelden">
+<!ENTITY fromAddr2.label "Van">
+<!ENTITY fromAddr.accesskey "V">
+<!ENTITY toAddr2.label "Aan">
+<!ENTITY ccAddr2.label "Cc">
+<!ENTITY bccAddr2.label "Bcc">
+<!ENTITY replyAddr2.label "Antwoord-naar">
+<!ENTITY newsgroupsAddr2.label "Nieuwsgroep">
+<!ENTITY followupAddr2.label "Opvolgen-aan">
+<!ENTITY subject2.label "Onderwerp">
+<!ENTITY subject.accesskey "n">
+<!ENTITY attachmentBucketCloseButton.tooltip "Het bijlagenpaneel verbergen">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Een smiley invoegen">
+<!ENTITY smiley1Cmd.label "Glimlach">
+<!ENTITY smiley2Cmd.label "Frons">
+<!ENTITY smiley3Cmd.label "Knipoog">
+<!ENTITY smiley4Cmd.label "Tong uitsteken">
+<!ENTITY smiley5Cmd.label "Lach">
+<!ENTITY smiley6Cmd.label "Verlegen">
+<!ENTITY smiley7Cmd.label "Twijfel">
+<!ENTITY smiley8Cmd.label "Verbazing">
+<!ENTITY smiley9Cmd.label "Kus">
+<!ENTITY smiley10Cmd.label "Schreeuw">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley12Cmd.label "Hebzucht">
+<!ENTITY smiley13Cmd.label "Mond vol tanden">
+<!ENTITY smiley14Cmd.label "Onschuldig">
+<!ENTITY smiley15Cmd.label "Huilen">
+<!ENTITY smiley16Cmd.label "Lippen zijn verzegeld">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Geen suggesties gevonden">
+<!ENTITY spellCheckIgnoreWord.label "Woord negeren">
+<!ENTITY spellCheckIgnoreWord.accesskey "d">
+<!ENTITY spellCheckAddToDictionary.label "Toevoegen aan woordenboek">
+<!ENTITY spellCheckAddToDictionary.accesskey "T">
+<!ENTITY undo.label "Ongedaan maken">
+<!ENTITY undo.accesskey "O">
+<!ENTITY cut.label "Knippen">
+<!ENTITY cut.accesskey "n">
+<!ENTITY copy.label "Kopiëren">
+<!ENTITY copy.accesskey "K">
+<!ENTITY paste.label "Plakken">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "Plakken als citaat">
+<!ENTITY pasteQuote.accesskey "t">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Openen">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "Verwijderen">
+<!ENTITY delete.accesskey "V">
+<!ENTITY removeAttachment.label "Bijlage verwijderen">
+<!ENTITY removeAttachment.accesskey "v">
+<!ENTITY renameAttachment.label "Hernoemen…">
+<!ENTITY renameAttachment.accesskey "H">
+<!ENTITY reorderAttachments.label "Volgorde van bijlagen wijzigen…">
+<!ENTITY reorderAttachments.accesskey "d">
+<!ENTITY removeAllAttachments.label "Alle bijlagen verwijderen">
+<!ENTITY removeAllAttachments.accesskey "b">
+<!ENTITY selectAll.label "Alles selecteren">
+<!ENTITY selectAll.accesskey "A">
+<!ENTITY attachFile.label "Bestand(en) koppelen…">
+<!ENTITY attachFile.accesskey "B">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "F">
+<!ENTITY convertCloud.label "Converteren naar…">
+<!ENTITY convertCloud.accesskey "C">
+<!ENTITY cancelUpload.label "Uploaden annuleren">
+<!ENTITY cancelUpload.accesskey "n">
+<!ENTITY convertRegularAttachment.label "Normale bijlage">
+<!ENTITY convertRegularAttachment.accesskey "b">
+<!ENTITY attachPage.label "Webpagina koppelen…">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Bijlagenpaneel initieel tonen">
+<!ENTITY initiallyShowAttachmentPane.accesskey "B">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Woordenboeken toevoegen…">
+<!ENTITY spellAddDictionaries.accesskey "W">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Adresboek">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Van-adres aanpassen…">
+<!ENTITY customizeFromAddress.accesskey "V">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Berichttekst">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Taal van spellingcontrole">
+<!ENTITY encodingStatusPanel.tooltip "Tekstcodering">

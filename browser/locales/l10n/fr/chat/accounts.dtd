@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Comptes - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "État de la messagerie instantanée">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Nouveau compte">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Fermer">
+<!ENTITY accountManager.close.accesskey      "F">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Aucun compte configuré">
+<!ENTITY accountManager.noAccount.description "Cliquer sur le bouton « &accountManager.newAccount.label; » pour laisser &brandShortName; vous guider dans le processus de configuration.">
+<!ENTITY account.autoSignOn.label     "S’identifier au démarrage">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "Connecter">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Déconnecter">
+<!ENTITY account.disconnect.accesskey "D">
+<!ENTITY account.delete.label         "Supprimer">
+<!ENTITY account.delete.accesskey     "u">
+<!ENTITY account.edit.label           "Propriétés">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Monter">
+<!ENTITY account.movedown.label       "Descendre">
+<!ENTITY account.cancelReconnection.label         "Annuler la reconnexion">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "Copier le journal de débogage">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "Afficher le journal de débogage">
+<!ENTITY account.showDebugLog.accesskey "h">
+<!ENTITY account.connecting           "Connexion en cours…">
+<!ENTITY account.disconnecting        "Déconnexion en cours…">
+<!ENTITY account.disconnected         "Non connecté">

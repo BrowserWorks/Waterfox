@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Cookie memorizzati">
+<!ENTITY     tab.bannedservers.label        "Siti per cookie">
+<!ENTITY     div.bannedservers.label        "Gestione dei siti che possono o meno impostare cookie sul computer.">
+<!ENTITY     div.cookiesonsystem.label      "Visualizza e rimuove cookie memorizzati sul computer.">
+<!ENTITY     treehead.cookiename.label      "Nome cookie">
+<!ENTITY     treehead.cookiedomain.label    "Sito">
+<!ENTITY     treehead.cookieexpires.label   "Scadenza">
+<!ENTITY     treehead.infoselected.label    "Informazioni sul cookie selezionato">
+<!ENTITY     button.removecookie.label      "Elimina cookie">
+<!ENTITY     button.removecookie.accesskey  "k">
+<!ENTITY     button.removeallcookies.label  "Elimina tutti i cookie">
+<!ENTITY     button.removeallcookies.accesskey "E">
+
+<!ENTITY     search.placeholder             "Cerca nei cookie">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Nome:">
+<!ENTITY     props.value.label              "Contenuto:">
+<!ENTITY     props.domain.label             "Sito:">
+<!ENTITY     props.path.label               "Percorso:">
+<!ENTITY     props.secure.label             "Invia per:">
+<!ENTITY     props.expires.label            "Scadenza:">
+
+<!ENTITY     treehead.sitename.label        "Sito">
+<!ENTITY     treehead.scheme.label          "Schema">
+<!ENTITY     treehead.status.label          "Stato">
+<!ENTITY     windowtitle.label              "Gestione cookie">
+
+<!ENTITY     blockSite.label                "Blocca">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Permetti">
+<!ENTITY     allowSite.accesskey            "P">
+<!ENTITY     allowSiteSession.label         "Sessione">
+<!ENTITY     allowSiteSession.accesskey     "S">
+<!ENTITY     removepermission.label         "Rimuovi sito">
+<!ENTITY     removepermission.accesskey     "R">
+<!ENTITY     removeallpermissions.label     "Rimuovi tutti i siti">
+<!ENTITY     removeallpermissions.accesskey "t">
+
+<!ENTITY     futureCookies.label            "Non permettere ai siti di cui hai rimosso i cookie di impostarne altri in futuro">
+<!ENTITY     futureCookies.accesskey        "N">

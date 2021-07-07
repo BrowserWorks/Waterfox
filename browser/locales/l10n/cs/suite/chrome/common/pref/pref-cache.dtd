@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Mezipaměť">
+<!ENTITY pref.cache.caption              "Nastavení mezipaměti">
+<!ENTITY cachePara                       "Často navštěvované webové stránky jsou ukládány do mezipaměti na vašem disku. (Klepnutím na tlačítko Obnovit zobrazíte vždy aktuální verzi stránky.)">
+<!ENTITY cacheCheck.label                "&brandShortName; nastaví velikost automaticky.">
+<!ENTITY cacheCheck.accesskey            "S">
+<!ENTITY diskCacheUpTo.label             "Použít maximálně">
+<!ENTITY diskCacheUpTo.accesskey         "m">
+<!ENTITY spaceMbytes                     "MB diskového prostoru.">
+<!ENTITY diskCacheFolder.label           "Umístění diskové mezipaměti:">
+<!ENTITY clearDiskCache.label            "Vyčistit diskovou mezipaměť">
+<!ENTITY clearDiskCache.accesskey        "d">
+<!ENTITY chooseDiskCacheFolder.label     "Vybrat složku…">
+<!ENTITY chooseDiskCacheFolder.accesskey "b">
+<!ENTITY diskCacheFolderExplanation      "Dočasné soubory budou uloženy v podadresáři „Cache“ zadaného adresáře. Pro potvrzení změn je potřeba restartovat aplikaci &brandShortName;.">
+<!ENTITY docCache.label                  "Porovnat stránku v mezipaměti se stránkou v síti:">
+<!ENTITY docCache.accesskey              "P">
+<!ENTITY checkOncePerSession.label       "Jednou za relaci">
+<!ENTITY checkEveryTime.label            "Při každém zhlédnutí stránky">
+<!ENTITY checkNever.label                "Nikdy">
+<!ENTITY checkAutomatically.label        "Pokud vyprší platnost stránky">
+
+<!ENTITY prefetchTitle.label             "Načítat odkazy dopředu">
+<!ENTITY enablePrefetch.label            "V době nečinnosti načítat dopředu odkazy ze stránky. Odkazy se potom zobrazí rychleji">
+<!ENTITY enablePrefetch.accesskey        "n">
+
+<!ENTITY debugCache.label                "Ladění">
+<!ENTITY debugEnableMemCache.label       "Povolit mezipaměť">
+<!ENTITY debugEnableMemCache.accesskey   "e">
+<!ENTITY debugEnableDiskCache.label      "Povolit mezipaměť disku">
+<!ENTITY debugEnableDiskCache.accesskey  "d">

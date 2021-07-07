@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label "Activar actualizaciones en todos los canales">
+<!ENTITY biffAll.accesskey "d">
+<!ENTITY newFeedSettings.label "Configuración predeterminada para canales nuevos">
+<!ENTITY manageSubscriptions.label "Administrar suscripciones…">
+<!ENTITY manageSubscriptions.accesskey "A">
+<!ENTITY feeds.accountName "Canales de Blogs y Noticias">
+<!ENTITY feeds.wizardShortName "Canales">
+<!ENTITY feeds.wizardLongName "Canales de Blogs y Noticias">
+<!ENTITY feeds.wizardLongName.accesskey "N">

@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Pro ušetření místa na disku nestahovat:">
+<!ENTITY doNotDownloadNntp.label "Pro ušetření místa na disku nestahovat pro použití v režimu offline:">
+<!ENTITY doNotDownloadImap.label "Pro ušetření místa na disku lze stahování zpráv ze serveru a uchovávání jejich místní kopie omezit velikostí či stářím.">
+<!ENTITY allFoldersOffline2.label "Uchovávat místní kopie zpráv všech složek tohoto účtu">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Poznámka: Tato změna ovlivní všechny složky tohoto účtu. Pro změnu jednotlivých složek použijte tlačítko Rozšířené….">
+<!ENTITY offlineNotDownload.label "Zprávy větší než">
+<!ENTITY offlineNotDownload.accesskey "n">
+<!ENTITY autosyncNotDownload.label "Nestahovat zprávy větší než">
+<!ENTITY autosyncNotDownload.accesskey "N">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "dny(ů)">
+<!ENTITY message.label "zpráv">
+<!ENTITY nntpNotDownloadRead.label "Přečtené zprávy">
+<!ENTITY nntpNotDownloadRead.accesskey "P">
+<!ENTITY nntpDownloadMsg.label "Zprávy starších než">
+<!ENTITY nntpDownloadMsg.accesskey "t">
+<!ENTITY retentionCleanup.label "Pro ušetření místa na disku lze automaticky mazat staré zprávy.">
+<!ENTITY retentionCleanupImap.label "Pro ušetření místa na disku lze automaticky mazat staré zprávy, jak místní kopie, tak originály na vzdáleném serveru.">
+<!ENTITY retentionCleanupPop.label "Pro ušetření místa na disku lze automaticky mazat staré zprávy, včetně originálů na vzdáleném serveru.">
+<!ENTITY retentionKeepMsg.label "Smazat zprávy starší než">
+<!ENTITY retentionKeepMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Nemazat žádné zprávy">
+<!ENTITY retentionKeepAll.accesskey "e">
+<!ENTITY retentionKeepRecent.label "Smazat vše mimo posledních">
+<!ENTITY retentionKeepRecent.accesskey "S">
+<!ENTITY retentionApplyToFlagged.label "Vždy ukládat zprávy s hvězdičkou">
+<!ENTITY retentionApplyToFlagged.accesskey "u">
+<!ENTITY nntpRemoveMsgBody.label "Smazat těla zpráv starších než">
+<!ENTITY nntpRemoveMsgBody.accesskey "s">
+<!ENTITY offlineSelectNntp.label "Vybrat diskusní skupiny pro použití v režimu offline…">
+<!ENTITY offlineSelectNntp.accesskey "V">
+<!ENTITY offlineImapAdvancedOffline.label "Rozšířené…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "R">
+<!ENTITY syncGroupTitle.label "Synchronizace zpráv">
+<!ENTITY diskspaceGroupTitle.label "Místo na disku">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Synchronizovat zprávy bez ohledu na jejich stáří">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Synchronizovat zprávy za posledních">
+<!ENTITY ageAutosync.accesskey           "h">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "dnů">
+<!ENTITY weekAgeInterval.label           "týdnů">
+<!ENTITY monthAgeInterval.label          "měsíců">
+<!ENTITY yearAgeInterval.label           "roků">
+<!ENTITY ageAutosyncAfter.label          "">

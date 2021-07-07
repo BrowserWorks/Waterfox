@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- (^m^) チャットの "Add contact" ダイアログ -->
+<!ENTITY addBuddyWindow.title	"連絡先追加"><!-- en-US: "Add contact" -->
+<!ENTITY name.label		"ユーザー名">
+<!ENTITY account.label		"アカウント">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (newsError.title): The title of the news error page.
+     Not generally visible. -->
+<!ENTITY newsError.title "Gặp vấn đề khi tải bài viết">
+
+<!-- LOCALIZATION NOTE (articleNotFound.title): The main heading for the news
+     error page. -->
+<!ENTITY articleNotFound.title "Không tìm thấy bài viết">
+
+<!-- LOCALIZATION NOTE (articleNotFound.desc): A longer description for the news
+     error page. -->
+<!ENTITY articleNotFound.desc "Máy chủ nhóm tin báo cáo rằng nó không tìm thấy bài viết nào.">
+
+<!-- LOCALIZATION NOTE (serverResponded.title): A string preceding the text
+     response from the newsgroup server describing the error. -->
+<!ENTITY serverResponded.title "Máy chủ nhóm tin đã trả lời:">
+
+<!-- LOCALIZATION NOTE (articleExpired.title): A string explaining that the
+     article may have expired. -->
+<!ENTITY articleExpired.title "Có lẽ bài viết đã hết hạn?">
+
+<!-- LOCALIZATION NOTE (trySearching.title): A string preceding the message's
+     ID. -->
+<!ENTITY trySearching.title "Hãy thử tìm kiếm bài viết:">
+
+<!-- LOCALIZATION NOTE (removeExpiredArticles.title): The label for the button
+     to remove all expired articles from the newsgroup. -->
+<!ENTITY removeExpiredArticles.title "Xóa tất cả các bài viết đã hết hạn">

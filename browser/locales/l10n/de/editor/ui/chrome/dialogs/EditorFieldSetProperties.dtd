@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Felderbereichs-Eigenschaften">
+
+<!ENTITY Legend.label "Legende">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Legende bearbeiten:">
+<!ENTITY EditLegendText.accesskey "L">
+<!ENTITY LegendAlign.label "Legende ausrichten:">
+<!ENTITY LegendAlign.accesskey "a">
+<!ENTITY AlignDefault.label "Standard">
+<!ENTITY AlignLeft.label "Links">
+<!ENTITY AlignCenter.label "Mitte">
+<!ENTITY AlignRight.label "Rechts">
+
+<!ENTITY RemoveFieldSet.label "Felderbereich entfernen">
+<!ENTITY RemoveFieldSet.accesskey "E">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "垃圾與可疑郵件">
+<!ENTITY junkSettings.caption "全域垃圾郵件設定">
+<!ENTITY junkMail.intro "可以到「帳號設定」調整各個帳號自己的處理方式。">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "當標示郵件為垃圾信時:">
+<!ENTITY manualMark.accesskey           "W">
+<!ENTITY manualMarkModeMove.label       "移動到該帳號的「垃圾郵件」資料夾">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "刪除它">
+<!ENTITY manualMarkModeDelete.accesskey "D">
+
+<!ENTITY markAsRead.intro               "將訊息標為已讀:">
+<!ENTITY autoMarkAsRead.label           "當 &brandShortName; 認為那些信是垃圾信時">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "當我手動將其標示為垃圾信時">
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "啟動垃圾郵件篩選記錄">
+<!ENTITY enableJunkLogging.accesskey    "E">
+<!ENTITY openJunkLog.label              "顯示記錄">
+<!ENTITY openJunkLog.accesskey          "S">
+<!ENTITY resetTrainingData.label        "重設訓練資料">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "可疑郵件">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "電子郵件詐騙">
+<!ENTITY enablePhishingDetector.label     "當我閱讀可能是詐騙信的郵件時告訴我">
+<!ENTITY enablePhishingDetector.accesskey "T">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "防毒">
+<!ENTITY antiVirus.label                  "讓防毒軟體能更簡單的掃瞄新進郵件">
+<!ENTITY antiVirus.accesskey              "A">

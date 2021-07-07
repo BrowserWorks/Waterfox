@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importálás varázsló">
+
+<!ENTITY importFromWin.label            "Beállítások, postafiókok, címjegyzékek, szűrők és egyéb adatok importálása:">
+<!ENTITY importFromNonWin.label         "Beállítások, postafiókok, címjegyzékek, szűrők és egyéb adatok importálása:">
+<!ENTITY importSourceNotFound.label     "Nem található alkalmazás az adatok importálásához.">
+
+<!ENTITY importFromNothing.label        "Nincs importálás">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 vagy újabb">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Beállítások és levélmappák importálása">
+<!ENTITY importItems.title              "Importálandó elemek">
+<!ENTITY importItems.label              "Válassza ki az importálni kívánt elemeket:">
+
+<!ENTITY migrating.title                "Importálás…">
+<!ENTITY migrating.label                "A következő elemek importálása folyik…">
+
+<!ENTITY selectProfile.title            "Profil kiválasztása">
+<!ENTITY selectProfile.label            "A következő profilokból lehet importálni:">
+
+<!ENTITY done.title                     "Importálás befejeződött">
+<!ENTITY done.label                     "A következő elemek sikeresen importálva lettek:">

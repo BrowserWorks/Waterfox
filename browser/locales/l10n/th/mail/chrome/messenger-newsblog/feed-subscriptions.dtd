@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "การบอกรับฟีด">
+<!ENTITY learnMore.label             "เรียนรู้เพิ่มเติมเกี่ยวกับฟีด">
+
+<!ENTITY feedTitle.label             "ชื่อเรื่อง:">
+<!ENTITY feedTitle.accesskey         "ช">
+
+<!ENTITY feedLocation.label          "URL ฟีด:">
+<!ENTITY feedLocation.accesskey      "ฟ">
+<!ENTITY feedLocation2.placeholder   "ป้อน URL ฟีดที่ถูกต้อง">
+<!ENTITY locationValidate.label      "ตรวจสอบ">
+<!ENTITY validateText.label          "ตรวจสอบความถูกต้องและดึง URL ที่ถูกต้อง">
+
+<!ENTITY feedFolder.label            "เก็บบทความใน:">
+<!ENTITY feedFolder.accesskey        "ก">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "ตรวจสอบบทความใหม่ทุก ๆ ">
+<!ENTITY biffStart.accesskey         "ต">
+<!ENTITY biffMinutes.label           "นาที">
+<!ENTITY biffMinutes.accesskey       "น">
+<!ENTITY biffDays.label              "วัน">
+<!ENTITY biffDays.accesskey          "ว">
+<!ENTITY recommendedUnits.label      "บทความแนะนำของผู้เผยแพร่:">
+
+<!ENTITY quickMode.label             "แสดงข้อมูลสรุปของบทความแทนการโหลดหน้าเว็บ">
+<!ENTITY quickMode.accesskey         "ส">
+
+<!ENTITY autotagEnable.label         "สร้างป้ายกำกับจากชื่อ &lt;category&gt; ฟีดโดยอัตโนมัติ">
+<!ENTITY autotagEnable.accesskey     "อ">
+<!ENTITY autotagUsePrefix.label      "เติมคำนำหน้าป้ายกำกับด้วย:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "ป้อนคำนำหน้าป้ายกำกับ">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "เพิ่ม">
+<!ENTITY button.addFeed.accesskey    "พ">
+<!ENTITY button.verifyFeed.label     "ยืนยัน">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "อัปเดต">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "เอาออก">
+<!ENTITY button.removeFeed.accesskey "า">
+<!ENTITY button.importOPML.label     "นำเข้า">
+<!ENTITY button.importOPML.accesskey "ข">
+<!ENTITY button.exportOPML.label     "ส่งออก">
+<!ENTITY button.exportOPML.accesskey "ง">
+<!ENTITY button.exportOPML.tooltip   "ส่งออกฟีดพร้อมโครงสร้างโฟลเดอร์; กดปุ่ม ctrl พร้อมกับคลิกหรือกดปุ่ม ctrl พร้อมกับ enter เพื่อส่งออกฟีดเป็นรายการ">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "ปิด">

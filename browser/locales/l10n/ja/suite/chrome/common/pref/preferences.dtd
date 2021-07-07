@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "環境設定">
+<!ENTITY  preferencesDefaultTitleWin.title "オプション">
+<!ENTITY  preferencesCloseButton.label "閉じる">
+<!ENTITY  preferencesCloseButton.accesskey "C">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "設定">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;"><!-- en-US: width: 102ch; height: 44em; -->
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;"><!-- en-US: width: 62em; height: 41em; -->
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;"><!-- en-US: width: 115ch; height: 43em; -->
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;"><!-- en-US: width: 70em; height: 41em; -->
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;"><!-- en-US: width: 125ch; height: 44em; -->
+<!ENTITY categoryHeader "カテゴリー">
+
+<!ENTITY appear.label "表示">
+<!ENTITY content.label "コンテンツ">
+<!ENTITY fonts.label "フォント">
+<!ENTITY colors.label "配色">
+<!ENTITY media.label "メディア">
+<!ENTITY spellingPane.label "スペルチェック">
+
+<!ENTITY navigator.label "ブラウザー">
+<!ENTITY history.label "履歴">
+<!ENTITY languages.label "言語">
+<!ENTITY applications.label "ヘルパーアプリケーション">
+<!ENTITY locationBar.label "アドレスバー">
+<!ENTITY search.label "インターネット検索">
+<!ENTITY tabWindows.label "タブブラウズ">
+<!ENTITY links.label "リンクの動作">
+<!ENTITY download.label "ダウンロード">
+
+<!ENTITY security.label "プライバシーとセキュリティ">
+<!ENTITY privatedata.label "プライバシー情報">
+<!ENTITY cookies.label "Cookie">
+<!ENTITY images.label "画像">
+<!ENTITY popups.label "ポップアップウィンドウ">
+<!ENTITY passwords.label "パスワード">
+<!ENTITY masterpass.label "マスターパスワード">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "証明書">
+
+<!ENTITY sync.label "同期">
+
+<!ENTITY advance.label "詳細">
+<!ENTITY scriptsAndWindows.label "スクリプトとプラグイン">
+<!ENTITY keynav.label "キーボードナビゲーション">
+<!ENTITY findAsYouType.label "タイプ検索">
+<!ENTITY cache.label "キャッシュ">
+<!ENTITY offlineApps.label "オフラインアプリケーション">
+<!ENTITY proxies.label "プロキシー">
+<!ENTITY httpnetworking.label "HTTP ネットワーク">
+<!ENTITY smart.label "ソフトウェアのインストール">
+<!ENTITY mousewheel.label "マウスホイール">
+
+<!ENTITY debugging.label "デバッグ">
+
+<!ENTITY focusSearch.key "f">

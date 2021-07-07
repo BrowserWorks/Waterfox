@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Inställningar">
+<!ENTITY  preferencesDefaultTitleWin.title "Alternativ">
+<!ENTITY  preferencesCloseButton.label "Stäng">
+<!ENTITY  preferencesCloseButton.accesskey "S">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Inställningar">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;">
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;">
+<!ENTITY categoryHeader "Kategori">
+
+<!ENTITY appear.label "Utseende">
+<!ENTITY content.label "Innehåll">
+<!ENTITY fonts.label "Teckensnitt">
+<!ENTITY colors.label "Färger">
+<!ENTITY media.label "Media">
+<!ENTITY spellingPane.label "Stavningskontroll">
+
+<!ENTITY navigator.label "Webbläsare">
+<!ENTITY history.label "Historik">
+<!ENTITY languages.label "Språk">
+<!ENTITY applications.label "Hjälpprogram">
+<!ENTITY locationBar.label "Adressfält">
+<!ENTITY search.label "Sökning på Internet">
+<!ENTITY tabWindows.label "Flikar">
+<!ENTITY links.label "Länkar">
+<!ENTITY download.label "Hämtning av filer">
+
+<!ENTITY security.label "Integritet och säkerhet">
+<!ENTITY privatedata.label "Personliga data">
+<!ENTITY cookies.label "Kakor">
+<!ENTITY images.label "Bilder">
+<!ENTITY popups.label "Extrafönster">
+<!ENTITY passwords.label "Lösenord">
+<!ENTITY masterpass.label "Huvudlösenord">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Certifikat">
+
+<!ENTITY sync.label "Synkronisering">
+
+<!ENTITY advance.label "Avancerat">
+<!ENTITY scriptsAndWindows.label "Skript/Insticksmoduler">
+<!ENTITY keynav.label "Tangentnavigering">
+<!ENTITY findAsYouType.label "Sök medan du skriver">
+<!ENTITY cache.label "Cache">
+<!ENTITY offlineApps.label "Appar för nedkopplat läge">
+<!ENTITY proxies.label "Proxy">
+<!ENTITY httpnetworking.label "HTTP-anslutning">
+<!ENTITY smart.label "Programinstallation">
+<!ENTITY mousewheel.label "Mushjul">
+
+<!ENTITY debugging.label "Felsökning">
+
+<!ENTITY focusSearch.key "f">

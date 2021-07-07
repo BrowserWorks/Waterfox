@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "自訂工具列">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "您可以藉由拖放的動作新增或移除工具列上的項目。">
+<!ENTITY show.label               "顯示:">
+<!ENTITY iconsAndText.label       "圖示與文字">
+<!ENTITY icons.label              "圖示">
+<!ENTITY text.label               "文字">
+<!ENTITY useSmallIcons.label      "使用小圖示">
+<!ENTITY restoreDefaultSet.label  "回復預設設定">
+<!ENTITY addNewToolbar.label      "新增工具列">
+<!ENTITY saveChanges.label        "完成">
+<!ENTITY undoChanges.label        "取消變更">

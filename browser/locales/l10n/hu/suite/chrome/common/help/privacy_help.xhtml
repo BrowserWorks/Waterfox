@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Adatvédelem az interneten</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="using_privacy_features">Adatvédelmi funkciók használata</h1>
+
+<p>A böngésző rendelkezik olyan funkciókkal, amelyek segítségével személyes adataink biztonságát védhetjük meg. A következő fejezetek leírják, hogy hogyan segít a böngésző a sütik, jelszavak, űrlapok és képek kezelésében, miközben az interneten böngészünk.</p>
+
+<p>Egyes webhelyek közzéteszik az adatvédelmi házirendjüket a P3P (Platform for Privacy Preferences) szabvány szerint. További tudnivalók a böngésző e szabványhoz való beállításával kapcsolatban:
+  <a href="using_priv_help.xhtml#setting_privacy_levels">Adatvédelmi szintek beállítása</a>.</p>
+
+<p>For information about related &brandShortName; security features, see
+  <a href="mailnews_security.xhtml">Signing &amp; Encrypting Messages</a> and
+  <a href="using_certs_help.xhtml">Using Certificates</a>.</p>
+
+<div class="contentsBox">Privacy topics:
+  <ul>
+    <li><a href="#privacy_on_the_internet">Adatvédelem az interneten</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_cookie_manager">A Sütikezelő használata</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_password_manager">A Jelszókezelő használata</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_form_manager">Az Űrlapkezelő használata</a></li>
+    <li><a href="using_priv_help.xhtml#encrypting_stored_sensitive_information">Encrypting
+      Stored Sensitive Information</a></li>
+    <li><a href="using_priv_help.xhtml#managing_images">Képek kezelése</a></li>
+    <li><a href="cs_priv_prefs_popup.xhtml#controlling_popups">Controlling Popups</a></li>
+    <li><a href="privsec_help.xhtml">Privacy &amp; Security Preferences</a></li>
+  </ul>
+</div>
+
+<h1 id="privacy_on_the_internet">Adatvédelem az interneten</h1>
+
+<p>Ez a fejezet összefoglalja az internetes adatvédelem kérdésének hátterét. Sok jó tanácsot is olvashatunk itt a saját adataink védelmével kapcsolatban. Nem tekinthető azonban az internetes adatvédelmi téma teljes kifejtésének.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#what_information_does_my_browser_give_to_a_web_site">Milyen információkat ad át a böngésző a webhelynek?</a></li>
+    <li><a href="#what_are_cookies_and_how_do_they_work">Mik azok a sütik, és hogy működnek?</a></li>
+    <li><a href="#how_can_i_control_web_pages_in_email_messages">Hogyan szabályozhatjuk az elektronikus levélben érkező weboldalak viselkedését?</a></li>
+    <li><a href="#how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">How
+      Can I Make Sure Unauthorized People Don&apos;t Use Information About
+      Me?</a></li>
+    </ul>
+</div>
+
+<h2 id="what_information_does_my_browser_give_to_a_web_site">Milyen információkat ad át a böngésző a webhelynek?</h2>
+
+<p>Amikor a böngésző megjelenít egy weboldalt &mdash;például minden alkalommal, amikor egy URL-re kattintunk, vagy egy elektronikus levélbe ágyazott weboldalt nézünk &mdash; átküld bizonyos adatokat a webhelynek. Ezek az adatok tartalmazhatják többek között a szoftverkörnyezetünket, az internetes címünket és az oldalt, ahonnan érkezünk.</p>
+
+<h3>Szoftverkörnyezet</h3>
+
+<p>A webhely értesül a szoftverkörnyezetünkről, azaz a böngészőnk és az operációs rendszerünk típusáról. Ez segít a webhelynek, hogy a képernyőnknek legmegfelelőbb módon adja át az oldalt. Például a webhely megtudhatja, hogy magyar nyelvű Mozilla 1.7-et használunk Windows 2000 operációs rendszeren.</p>
+
+<h3 id="internet_address">Internetcím</h3>
+
+<p>A böngészőnek el kell árulnia a webhelynek az internetcímünket (vagy más néven IP-címünket), hiszen a webhelynek tudnia kell, hogy hová küldje a kért oldalt. A webhely nem tudja elküldeni az oldalt, ha nem ismeri az IP-címünket.</p>
+
+<p>Az IP-cím lehet ideiglenes vagy állandó (static).</p>
+
+<p>Ha szabványos telefonos modemmel csatlakozunk az internethez, az internetszolgáltatónk valószínűleg minden bejelentkezéskor más IP-címet oszt ki. Az ideiglenes IP-címet csak az internetezés befejezéséig használjuk, például amíg ki nem lépünk, nem bontjuk a kapcsolatot, vagy másképpen nem szakad meg a számítógép összeköttetése az internettel. Minden internetszolgáltató sok IP-címmel rendelkezik, amelyeket véletlenszerűen osztanak ki a felhasználóknak.</p>
+
+<p>Ha DSL, kábelmodemes vagy száloptikás kapcsolattal rendelkezünk, valószínűleg állandó IP-címünk van, amelyet minden csatlakozás alkalmával használunk.</p>
+
+<p>Az IP-cím nem egyezik meg az e-mail címmel.</p>
+
+<h3>Hivatkozó oldal</h3>
+
+<p>A webhely szintén megtudja, hogy melyik weboldalt olvastuk, mielőtt az egyik hivatkozásán keresztül a webhelyre jutottunk. Ebből a webhely össze tudja gyűjteni, hogy melyik másik webhelyek hivatkoznak rá. Ugyanazon a webhelyen belül kalandozva, a webhely tudni fogja, hogy melyik oldaláról melyik oldalára lépünk.</p>
+
+<p>[<a href="#privacy_on_the_internet">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="what_are_cookies_and_how_do_they_work">Mik azok a sütik, és hogy működnek?</h2>
+
+<p>A sütik kis adatcsomagok, amelyeket bizonyos webhelyek használnak. Amikor egy ilyen webhelyet látogatunk meg, a webhely megkéri a böngészőt, hogy egy vagy több sütit elhelyezhessen a merevlemezen.</p>
+
+<p>Ha később visszatérünk ugyanarra a webhelyre, a böngésző elküldi a hozzá tartozó sütit.</p>
+
+<p>When you are using the default cookie settings, this activity is invisible
+  to you, and you won&apos;t know when a site is setting a cookie or when your
+  browser is sending a web site&apos;s cookie back. Beállíthatjuk viszont, hogy a böngésző minden alkalommal kérjen engedélyt a süti elfogadása előtt. További tudnivalók ezzel kapcsolatban:
+  <a href="using_priv_help.xhtml#setting_privacy_levels">Adatvédelmi szintek beállítása</a>.</p>
+
+<h3>Hogyan használják fel a webhelyek a sütik információit?</h3>
+
+<p>A sütik lehetővé teszik, hogy a webhely emlékezzen az előző látogatásainkra. Például ha a helyi időjárás érdekel minket, vagy könyvet veszünk egy webhelyen, a webhely a sütik használatával megjegyezheti, hogy hol lakunk, vagy milyen szerzőket szeretünk, így a következő látogatás könnyebb és hasznosabb lesz.</p>
+
+<p>Sok webhely közzéteszi az adatvédelmi házirendjét, amely leírja a kapott információk felhasználását.</p>
+
+<p>Ha az alapértelmezett sütibeállításokat használjuk, semmit sem fogunk észrevenni abból, hogy egyes webhelyek sütit helyeznek el nálunk, vagy hogy a böngésző visszaküldi a webhelynek a sütijét. Beállíthatjuk viszont, hogy a böngésző minden alkalommal kérjen engedélyt a süti elfogadása előtt. További tudnivalók ezzel kapcsolatban:
+  <a href="using_priv_help.xhtml#viewing_privacy_policies">Adatvédelmi házirend megtekintése</a>.</p>
+
+<p>További tudnivalók a sütik kezelése a közzétett adatvédelmi házirend segítségével témakörében: <a href="using_priv_help.xhtml#setting_privacy_levels">Adatvédelmi szintek beállítása</a>.</p>
+
+<h3 id="what_are_third-party_cookies">Mik azok az idegen sütik?</h3>
+
+<p>A böngészőnk egy webhelytől érkezett sütit csak ugyanannak a webhelynek küld vissza. A böngésző nem adja oda más webhely sütijét. Mivel a webhely csak a saját sütijét kaphatja vissza, csak azt tudja megállapítani, hogy milyen tevékenységet végzünk az ő webhelyén, de nem tudja, hogy általában merre járunk a világhálón.</p>
+
+<p>Néha előfordul azonban, hogy a webhely olyan tartalmat jelenít meg, amely egy másik webhelyről származik. Ez a tartalom bármi lehet: kép, szöveg, hirdetés stb.
+  A másik webhely szintén elhelyezhet egy sütit a böngészőnkben, bár nem közvetlenül azt látogattuk meg.
+</p>
+
+<p>Az olyan sütiket, amelyeket nem a meglátogatott webhely helyezett el a gépünkön, idegen sütinek vagy harmadik fél sütijének hívjuk. A webhelyek néha átlátszó GIF-ekhez kötik az idegen sütiket. Az átlátszó GIF-ek különleges képek, amelyeket a webhely felhasználóinak megszámolására, elektronikus levelek célbaérésének megfigyelésére, a webhely használatának megfigyelésére vagy a weboldal elrendezésének kialakítására használnak. (Az átlátszó GIF-eket webes jelzőfényeknek vagy webbogaraknak is nevezik.)</p>
+
+<p>A sütik beállításainál megadhatjuk, hogy a webhelyek csak közönséges sütit küldhessenek, idegent ne.</p>
+
+<p>[<a href="#privacy_on_the_internet">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="how_can_i_control_web_pages_in_email_messages">Hogyan szabályozhatjuk az elektronikus levélben érkező weboldalak viselkedését?</h2>
+
+<p>Az elektronikus levelek részeként érkező weboldalakon teljesen megtilthatjuk a süti, a képek, a JavaScript és a bővítmények használatát.</p>
+
+<p>Ezek a dolgok hasznosak lehetnek a web böngészésekor, de esetleg szükségtelennek érezzük őket az üzenetek mellékleteiként küldött weboldalakon.</p>
+
+<p>A következő fejezetek ismertetik a sütik, képek, JavaScript és bővítmények letiltását az elektronikus levelekben:</p>
+  
+<ul>
+  <li><a href="using_priv_help.xhtml#cookies">Adatvédelmi és biztonsági beállítások - Sütik</a></li>
+  <li><a href="mail_help.xhtml#message_display">Mail &amp; Newsgroups
+    Preferences - Message Display</a></li>
+  <li><a href="cs_nav_prefs_advanced.xhtml#scripts_and_plug-ins">Haladó beállítások - Parancsfájlok és bővítmények</a></li>
+</ul>
+
+<p>[<a href="#privacy_on_the_internet">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">Hogyan győződhetünk meg arról, hogy illetéktelen személyek nem használják fel személyes adatainkat?</h2>
+
+<p>A legjobban úgy vigyázhatunk személyes adatainkra, hogy elolvassuk az általunk látogatott webhelyek és az általunk használt internetes szolgáltatások adatvédelmi házirendjét, és óvatosak vagyunk személyes adataink on-line átadásával kapcsolatban.</p>
+
+<p>Az internet nyilvános hálózat. Amikor elküldjük a nevünket, telefonszámunkat, lakcímünket és más személyes adatunkat a hálózaton keresztül (weboldalon keresztül, elektronikus levélben vagy más módon), lehetséges, hogy illetéktelen személy is a birtokába jut ezeknek az adatoknak.</p>
+
+<p>A következő néhány kérdést érdemes feltenni a webhely adatvédelmi házirendjével kapcsolatban:</p>
+
+<ul>
+  <li>Milyen személyes adatokat kérnek el?</li>
+  <li>Mire használják ezeket az adatokat?</li>
+  <li>Megosztják-e másokkal is ezeket az adatokat, és van-e lehetőségünk a megosztott információ felhasználásának korlátozására?</li>
+  <li>El tudjuk-e érni a rólunk tárolt adatok egy részét vagy egészét, hogy megvizsgáljuk vagy frissítsük?</li>
+  <li>Hogyan védi a webhely az adatokat?</li>
+  <li>Hogyan léphetünk kapcsolatba a webhellyel, ha kérdésünk vagy problémánk van?</li>
+</ul>
+
+<p>További tudnivalók egy webhely adatvédelmi házirendjének lekérdezésével kapcsolatban
+  <a href="using_priv_help.xhtml#viewing_privacy_policies">Adatvédelmi házirend megtekintése</a>.</p>
+
+<p>[<a href="#privacy_on_the_internet">Vissza a fejezet elejére</a>]</p>
+
+</body>
+</html>

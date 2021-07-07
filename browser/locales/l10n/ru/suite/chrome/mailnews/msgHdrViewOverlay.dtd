@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Кому: ">
+<!ENTITY fromField.label "От: ">
+<!ENTITY senderField.label "Отправитель: ">
+<!ENTITY organizationField.label "Организация: ">
+<!ENTITY replyToField.label "Обратный адрес: ">
+
+<!ENTITY subjectField.label "Тема: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Копия: ">
+<!ENTITY bccField.label "Скрытая копия: ">
+<!ENTITY newsgroupsField.label "Группы новостей: ">
+<!ENTITY followupToField.label "Ответ в группу новостей: ">
+
+<!ENTITY tagsHdr.label "Метки: ">
+<!ENTITY dateField.label "Дата: ">
+<!ENTITY userAgentField.label "Программа: ">
+<!ENTITY referencesField.label "Ссылки: ">
+<!ENTITY messageIdField.label "Идентификатор: ">
+<!ENTITY inReplyToField.label "В ответ на: ">
+<!ENTITY originalWebsite.label "Веб-сайт: ">
+
+<!ENTITY editMessage.label                 "Изменить черновик…">
+<!ENTITY editMessage.accesskey             "з">
+
+<!ENTITY attachmentsTree.label             "Вложения:">
+<!ENTITY attachmentsTree.accesskey         "ж">
+<!ENTITY openAttachmentCmd.label           "Открыть">
+<!ENTITY openAttachmentCmd.accesskey       "т">
+<!ENTITY viewAttachmentCmd.label           "Показать исходник">
+<!ENTITY viewAttachmentCmd.accesskey       "д">
+<!ENTITY saveAsAttachmentCmd.label         "Сохранить как…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "к">
+<!ENTITY detachAttachmentCmd.label         "Отделить…">
+<!ENTITY detachAttachmentCmd.accesskey     "д">
+<!ENTITY deleteAttachmentCmd.label         "Удалить">
+<!ENTITY deleteAttachmentCmd.accesskey     "а">
+<!ENTITY saveAllAttachmentsCmd.label       "Сохранить все…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "х">
+<!ENTITY detachAllAttachmentsCmd.label     "Отделить все…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "е">
+<!ENTITY deleteAllAttachmentsCmd.label     "Удалить все…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "и">

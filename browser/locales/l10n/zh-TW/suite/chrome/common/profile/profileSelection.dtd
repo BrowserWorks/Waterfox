@@ -1,0 +1,36 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "選擇使用者設定檔">
+<!ENTITY            profileManager.title "&brandShortName; 設定檔管理員">
+
+<!ENTITY            manage.label     "管理使用者設定檔…">
+<!ENTITY            manage.accesskey "M">
+<!ENTITY            select.label     "使用設定檔">
+
+<!ENTITY            availableProfiles.label "可用的設定檔">
+
+<!ENTITY            introStart.label         "要存取包含您已存的訊息、設定值，以及其他個人化資訊的設定檔，請從以下清單選擇您的設定檔，並點下 &start.label; 以開始。">
+<!ENTITY            introSwitch.label        "若要切換到其他包含您已存的訊息、設定值，以及其他個人化資訊的設定檔，請從以下清單選擇該設定檔，並點下 &select.label; 以開始使用該設定檔。">
+<!ENTITY            profileManagerText.label "&brandShortName; 會將關於您的設定值、偏好、書籤、已存訊息，以及其他使用者資訊儲存於您的使用者設定檔。">
+
+<!ENTITY            autoSelect.label         "預設使用此設定檔">
+<!ENTITY            autoSelect.accesskey     "S">
+
+<!ENTITY            start.label              "啟動 &brandShortName;">
+<!ENTITY            exit.label               "結束">
+
+<!ENTITY            newButton.label          "建立設定檔…">
+<!ENTITY            newButton.accesskey      "C">
+<!ENTITY            renameButton.label       "設定檔更名…">
+<!ENTITY            renameButton.accesskey   "R">
+<!ENTITY            deleteButton.label       "刪除設定檔…">
+<!ENTITY            deleteButton.accesskey   "D">
+
+<!ENTITY            offlineState.label       "離線模式">
+<!ENTITY            offlineState.accesskey   "o">
+

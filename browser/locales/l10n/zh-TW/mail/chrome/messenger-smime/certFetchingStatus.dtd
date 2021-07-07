@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE shown while obtaining certificates from a directory -->
+
+<!ENTITY title.label "下載憑證">
+<!ENTITY info.message "搜尋收件者的憑證中。這會花一些時間，請稍候。">
+<!ENTITY stop.label "停止搜尋">
+

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "選擇編輯中被變動的處理方式">
+<!ENTITY conflictWarning.label "這個頁面已經被其他程式修改，但您還沒有儲存您目前於設計師內的變動。">
+<!ENTITY conflictResolve.label "選擇要保留的版本:">
+<!ENTITY keepCurrentPageButton.label "保留目前頁面的改變">
+<!ENTITY useOtherPageButton.label "使用其它程式修改的版本">
+

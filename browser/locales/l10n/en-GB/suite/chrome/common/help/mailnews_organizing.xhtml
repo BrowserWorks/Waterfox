@@ -1,0 +1,849 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Organising Your Messages and Controlling Junk</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+<h1 id="organizing_your_messages">Organising Your Messages</h1>
+
+<div class="contentsBox">
+  <ul>
+    <li><a href="#creating_a_folder">Creating a Folder</a></li>
+    <li><a href="#renaming_a_folder">Renaming a Folder</a></li>
+    <li><a href="#moving_or_copying_a_folder">Moving or Copying a
+      Folder</a></li>
+    <li><a href="#filing_messages_in_folders">Filing Messages in
+      Folders</a></li>
+    <li><a href="#sharing_folders_with_other_users">Sharing Folders With Other
+      Users (IMAP Only)</a></li>
+    <li><a href="#tagging_messages">Tagging Messages</a></li>
+    <li><a href="#marking_or_flagging_messages">Marking or Flagging
+      Messages</a></li>
+    <li><a href="#using_message_views">Using Message Views</a></li>
+    <li><a href="#creating_message_filters">Creating Message Filters</a></li>
+    <li><a href="#searching_through_messages">Searching Through
+      Messages</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_folder">Creating a Folder</h2>
+
+<p>To create a message folder, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the File menu, choose New, and then Folder. You see the New Folder
+    dialogue box.</li>
+  <li>Type the name of the folder.</li>
+  <li>Click the drop-down list and choose a folder location and click OK. Your
+    new folder appears in your Mail Folders list.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="renaming_a_folder">Renaming a Folder</h2>
+
+<p>To rename an existing folder, begin from the Mail window:</p>
+
+<ol>
+  <li>Select the folder you want to rename.</li>
+  <li>Open the File menu and choose Rename Folder. You see the Rename Folder
+    dialogue box.</li>
+  <li>Type the new name and click OK.</li>
+</ol>
+
+<p><strong>Note</strong>: If you rename a folder that you&apos;ve been using to
+  store <a href="#creating_message_filters">filtered messages</a>, the filter
+  will automatically update to use the renamed folder.</p>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="moving_or_copying_a_folder">Moving or Copying a Folder</h2>
+
+<p>You can copy a folder and its contents to another mail account, or move a
+  folder within the same mail account.</p>
+
+<p>To move or copy a folder, begin from the Mail window:</p>
+
+<ol>
+  <li>Select the folder you want to move or copy.</li>
+  <li>Do one of the following:
+    <ul>
+      <li>To move the folder under another folder within the same account, drag
+        the folder over the name of the other folder. The folder you moved
+        becomes a subfolder of the other folder.</li>
+      <li>To copy the folder to another account, drag the folder over the name
+        of another account.</li>
+      <li>To copy the folder under another folder in another account, drag the
+        folder over the name of another folder in another account. The folder
+        you copied becomes a subfolder of the other folder.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="filing_messages_in_folders">Filing Messages in Folders</h2>
+
+<p>You can move messages from one folder to another by using either of these
+  methods:</p>
+
+<ul>
+  <li>Select the message, click the File button on the toolbar, and choose the
+    destination folder.</li>
+  <li>Drag and drop messages into the desired folder.
+
+    <p><strong>Note</strong>: If you drag and drop a message from an IMAP or
+      POP mail server folder to a local folder on your hard drive, the message
+      is moved to the local folder and removed from the server folder.</p>
+  </li>
+</ul>
+
+<p>To copy a message from one folder to another:</p>
+
+<ol>
+  <li>Select the message and right-click to display the pop-up menu.</li>
+  <li>Select <q>Copy To</q> and then select the destination account and folder
+    from the drop-down list.</li>
+</ol>
+
+<p><strong>Tip</strong>: Alternatively, you can copy a message between folders
+  by holding down the Shift key while dragging the message from the message
+  list over another folder.</p>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="sharing_folders_with_other_users">Sharing Folders With Other Users
+  (IMAP Only)</h2>
+
+<p>Users with IMAP mail accounts can share mail folders with other users on the
+  same network. Sharing folders allows several users to see and work with the
+  same messages, similar to a newsgroup. To use shared folders, your IMAP mail
+  server must support Access Control List (ACL) management. Check with your
+  system administrator or help desk if you are not sure that shared folders
+  are supported by your IMAP mail server.</p>
+
+<p>To share a mail folder with other users on your network, or to view sharing
+  information for a folder, begin from the Mail window:</p>
+
+<ol>
+  <li>Within an IMAP account, select a folder that you want to share, or select
+    a folder whose sharing privileges you want to view.
+
+    <p>Folders listed under Local Folders, or folders listed under a POP mail
+      account cannot be shared.</p>
+  </li>
+  <li>Open the Edit menu, and choose Folder Properties.</li>
+  <li>Click the Sharing tab.</li>
+  <li>Click Privileges. You may be prompted to enter your network user name and
+    password.
+
+    <p>The Privileges button is only available if the IMAP mail server allows
+      you to set folder sharing privileges. If this button is not available,
+      you can view the folder sharing privileges for this folder but cannot
+      change them.</p>
+  </li>
+  <li>Follow the instructions on the screen to add users and to set their
+    folder access privileges.
+    <ul>
+      <li><strong>Read privileges</strong>: Users can read messages and copy
+        their contents, but they cannot modify or delete messages, or copy
+        messages into the folder. Users can flag messages as read or unread.
+        See <a href="#marking_or_flagging_messages">Marking or Flagging
+        Messages</a> for instructions on flagging messages.</li>
+      <li><strong>Read and Write privileges</strong>: In addition to Read
+        privileges, users can modify and delete messages. Users can also copy
+        or move messages into the folder.</li>
+      <li><strong>Manage privileges</strong>: In addition to Read and Write
+        privileges, users can add and remove users and change their folder
+        permissions.</li>
+    </ul>
+  </li>
+  <li>Click OK to confirm your changes.</li>
+  <li>Click OK to close the Folder Properties dialogue box.</li>
+</ol>
+
+<p>In the list of folders for your mail account, a shared folder displays a
+  distinctive folder icon to indicate that it is shared.</p>
+
+<p>To send a message that tells others how they can subscribe to your shared
+  folder, begin from the Mail window:</p>
+
+<ol>
+  <li>Select the shared folder.</li>
+  <li>Right-click to display a pop-up menu, and choose Copy Folder
+    Location.</li>
+  <li>Click Compose to display a Mail compose window.</li>
+  <li>Click in the message body, open the Edit menu, and choose Paste.</li>
+  <li>Address the message, type a subject, and type the message text. Tell
+    message recipients that they can subscribe to the shared folder by clicking
+    the link you pasted into the message.
+
+    <p>Only message recipients who share the same network will be able to
+      subscribe to your shared folder.</p>
+  </li>
+  <li>Click Send.</li>
+</ol>
+
+<h3 id="subscribing_to_a_shared_folder">Subscribing to a Shared Folder</h3>
+
+<p>Subscribing to a shared folder is similar to subscribing to a newsgroup. To
+  subscribe to a shared folder, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the File menu and choose Subscribe. You see the Subscribe dialogue
+    box.</li>
+  <li>If necessary, click the Account drop-down list to choose another IMAP
+    mail account.</li>
+  <li>Select the folder that you want to subscribe to.</li>
+  <li>Click Subscribe or click in the Subscribe column next to the folder. You
+    see a tick mark next to each folder to which you subscribe. Click
+    Unsubscribe to cancel a selection.</li>
+  <li>Click OK. The list of your subscribed folders appears in the Mail
+    window.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="tagging_messages">Tagging Messages</h2>
+
+<p>You can apply tags to messages to help you organise and prioritise them.
+  You can apply a standard colour and tag text to messages, or you can create
+  your own colour and tag text to suit your needs.</p>
+
+<p>One powerful way to use tags is to set up a message filter to
+  automatically tag incoming messages from a specific sender. For example,
+  you can set up a message filter so that incoming messages from your boss are
+  tagged <q>Important</q> and appear in red. See
+  <a href="#creating_message_filters">Creating Message Filters</a> for more
+  information.</p>
+
+<h3 id="applying_a_tag">Applying a Tag</h3>
+
+<p>To apply a tag to a message, begin from the Mail window:</p>
+
+<ol>
+  <li>Select the message you want to tag.</li>
+  <li>Open the Message menu, and choose Tag.</li>
+  <li>Choose the tag you want to apply from the list.</li>
+</ol>
+
+<p>The message summary row changes to the colour of the tag with the topmost
+  priority. To see the tag text, you must display the Tags column in the Mail
+  window.</p>
+
+<p><strong>Tip</strong>: To quickly tag messages or remove a tag, select
+  one or more messages and press one of the number keys 1-9 on your keyboard.
+  Press 0 to remove all tags.</p>
+
+<p>To display the Tags column, begin from the Mail window:</p>
+
+<ul>
+  <li>Click the Show/Hide Columns icon <img src="images/columns.png" alt=""/>
+    and select Tags from the list.</li>
+</ul>
+
+<p><strong>Note</strong>: Message tags apply on a per-account basis. For
+  example, if you move or copy a tagged message to another mail account, the
+  tags are not preserved. Similarly, if you forward a tagged message to
+  another recipient, the tags are not preserved. For IMAP mail accounts, if
+  your IMAP server supports user-defined keywords, message tags will persist
+  when you log in to your mail account from a different location.</p>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h3 id="customizing_tags">Customising Tags</h3>
+
+<p>You can customise tag colours and text and their order to suit your
+  needs.</p>
+
+<p>To customise tags, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences. You see the
+    Preferences dialogue box.</li>
+  <li>Under the Mail &amp; Newsgroups category, click Tags. (If no
+    subcategories are visible, double-click Mail &amp; Newsgroups to expand the
+    list.)</li>
+  <li>Edit the tag text, or replace it with your own tag text. The tag
+    can be up to 32 characters long.</li>
+  <li>To change the tag colour, click the colour block next to that tag and
+    select a new colour.</li>
+  <li>Click the Move Up and Move Down buttons to reorder the tags. Tags at
+    the top will have higher priority when colouring messages.</li>
+  <li>Click OK.</li>
+</ol>
+
+<p>Your changes are immediately applied to all tagged messages in all your
+  mail accounts.</p>
+
+<p><strong>Tip</strong>: To undo all customisations and restore just the
+  default tags' text and colours, follow the steps above to display the tag
+  settings, and click Restore Defaults.</p>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h3 id="sorting_messages_by_tags">Sorting Messages by Tags</h3>
+
+<p>To sort messages by tags, begin from the Mail window:</p>
+
+<ol>
+  <li>To display the Tags column if it is hidden, click the Show/Hide Columns
+    icon <img src="images/columns.png" alt=""/> and select Tags from the
+    list.</li>
+  <li>Click the Tags column to sort messages by tags, and within each tag
+    type, to sort messages by date.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h3 id="removing_tags">Removing Tags</h3>
+
+<p>To remove a message tag, begin from the Mail window:</p>
+
+<ol>
+  <li>Select one or more tagged messages.</li>
+  <li>Open the Message menu, and choose Tag.</li>
+  <li>Choose the tag you want to remove or <q>None</q> to remove all tags
+    from this message.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="marking_or_flagging_messages">Marking or Flagging Messages</h2>
+
+<p>You might want to mark a message you&apos;ve read as unread if you later
+  want to re-read the message or respond to it.</p>
+
+<p>To mark a message as unread, begin from the Mail window:</p>
+
+<ol>
+  <li>Select a Mail or Newsgroup folder to display its messages.</li>
+  <li>Click in the Read column of each message you want to mark as unread.
+    Messages marked as unread display a <img src="images/mail_unread.png"
+    alt=""/> symbol in the Read column. Messages marked as read display a
+    <img src="images/mail_read.png" alt=""/> symbol in the Read column. If the
+    Read column is not visible, click the Show/Hide Columns icon
+    <img src="images/columns.png" alt=""/> and select Read from the list.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_read_column.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td><strong>Read column</strong></td>
+  </tr>
+</table>
+
+<p>You can flag messages that you later want to download for
+  <a href="mailnews_offline.xhtml#downloading_selected_or_flagged_messages_for_offline_use">offline
+  use</a>.</p>
+
+<p>To flag messages, begin from the Mail window:</p>
+
+<ol>
+  <li>Select a Mail or Newsgroup folder to display its messages.</li>
+  <li>Click in the Flag column of each message you want to download. A flag
+    <img src="images/mail_flag.png" alt=""/> appears where you clicked to
+    indicate that the message has been flagged. If the Flag column is not
+    visible, click the Show/Hide Columns icon <img src="images/columns.png"
+    alt=""/> and select Flag from the list.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_flag_column.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td><strong>Flag column</strong></td>
+  </tr>
+</table>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="using_message_views">Using Message Views</h2>
+
+<p>You can apply preset or custom message views to help you manage messages by
+  filtering displayed messages.</p>
+
+<p>To use a message view, open the View menu and choose Messages. Choose an
+  option from the submenu.</p>
+
+<ul>
+  <li><strong>All</strong>: Choose this option to view all messages.</li>
+  <li><strong>Unread</strong>: Choose this option to view only unread
+    messages.</li>
+  <li><strong>Tags</strong>: Choose a <a href="#tagging_messages">tag</a>
+    to view tagged messages.</li>
+  <li><strong>Custom Views</strong>: Choose a custom view. By default you have
+    five preset views: <q>People I Know</q>, <q>Recent Mail</q>, <q>Last 5
+    Days</q>, <q>Not Junk</q>, and <q>Has Attachments</q>.</li>
+  <li><strong>Customise</strong>: Choose this option to view or modify
+    settings for custom views or create your own custom view.</li>
+</ul>
+
+<p><strong>Tip</strong>: You can quickly change the message view from the View 
+  box in the Search Bar. If you do not see the Search Bar, open the View menu,
+  choose Show/Hide, and then choose Search Bar.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_quicksearch.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 80px;"></td>
+    <td><strong>Quick mail search bar</strong></td>
+  </tr>
+</table>
+
+<h3 id="creating_a_custom_view">Creating a Custom View</h3>
+
+<p>You can create custom message views to only display messages matching
+  certain criteria.</p>
+
+<p>To change or create a custom message view:</p>
+
+<ol>
+  <li>Open the View menu, choose Messages, and then choose Customise.</li>
+  <li>To create a new view, click New. To modify a view, select a view and
+    click Edit.</li>
+  <li>Type a name for the message view.</li>
+  <li>Select the matching option you want Mail to use: <q><em>all</em> of the
+    following</q> conditions (criteria) you choose, or <q><em>any</em> of the
+    following</q>.</li>
+  <li>Use the drop-down lists to choose the search criteria (for example,
+    <q>Subject</q>, <q>Sender</q>, <q>contains</q>, <q>doesn&apos;t
+    contain</q>) and then type the text or phrase you want to match.
+
+    <p><strong>Tip</strong>: To search for messages that contain a header not
+      listed in the first drop-down menu (for example, if you want to search
+      for messages that include the header Resent-From), choose Customise and
+      type the header you want to search for. &brandShortName; Mail &amp;
+      Newsgroups adds your custom header to the drop-down list, so you can then
+      choose it to search for matching entries. Make sure you enter the custom
+      header correctly, since Mail will only find entries that exactly match
+      what you type.</p>
+  </li>
+  <li>Click More to add criteria and Fewer to remove them.</li>
+  <li>Click OK to confirm your settings.</li>
+  <li>Click OK in the Customise Message Views dialogue box. The selected view 
+    setting applies automatically.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="creating_message_filters">Creating Message Filters</h2>
+
+<p>Message filters allow you to manage and organise your messages. You can
+  create message filters that &brandShortName; Mail &amp; Newsgroups uses to
+  automatically perform certain actions on incoming messages based on criteria
+  you specify. For example, you can create a message filter that automatically
+  moves incoming messages to a particular folder. Message filters operate on a
+  per-account basis.</p>
+
+<p>If you are not already viewing the Message Filters dialogue box, begin from
+  the Mail window:</p>
+
+<ol>
+  <li>Open the Tools menu and choose Message Filters. You see the Message
+    Filters dialogue box.</li>
+  <li>If you have multiple mail accounts, choose the one to which you want to
+    apply the filter.</li>
+  <li>Click New. You use the Filter Rules dialogue box to specify the types of
+    messages to act on, and the actions you want the filter to perform.</li>
+  <li>Type a name for the filter.</li>
+  <li>Select when you want the filter to be applied. This setting enables you
+    to define some filters to be applied in an automatic way (when checking
+    mail), on demand (manually run), or both. <q>After classification</q> means
+    that junk and phishing controls will be run before applying the
+    filter.</li>
+  <li>Select the matching option you want Mail to use: <q><em>all</em> of the
+    following</q> conditions (criteria) you choose, <q><em>any</em> of the
+    following</q> conditions you choose, or <q><em>all messages</em></q>.</li>
+  <li>Use the drop-down lists to choose the search criteria (for example,
+    <q>Subject</q>, <q>Sender</q>, <q>contains</q>, <q>doesn&apos;t
+    contain</q>) and then type the text or phrase you want to match.
+
+    <p><strong>Tip</strong>: To search for messages that contain a header not
+      listed in the first drop-down menu (for example, if you want to search
+      for messages that include the header Resent-From), choose Customise and
+      type the header you want to search for. &brandShortName; Mail &amp;
+      Newsgroups adds your custom header to the drop-down list, so you can then
+      choose it to search for matching entries. Make sure you enter the custom
+      header correctly, since Mail will only find entries that exactly match
+      what you type.</p>
+  </li>
+  <li>Click <q>+</q> to add criteria and <q>-</q> to remove them.</li>
+  <li>Use the list to choose the action you want the filter to perform on the
+    messages (for example, Move Message To). Use <q>+</q> and <q>-</q> to add
+    or remove additional actions.
+
+    <p><strong>Tip</strong>: To automatically tag incoming messages, choose
+      <q>Tag Message</q> from the drop-down list.</p>
+
+    <p><strong>Tip</strong>: Message filters are applied one after another. It
+      could be that you don&apos;t want all filters to be run if one or more
+      messages match some conditions. For instance, you may want to tag all
+      messages from your boss&apos;s email address as <q>Important</q>, and
+      you may want all messages containing the word <q>Memorandum</q> in their
+      subject to be moved to a folder named <q>Pending Reads</q>, but you
+      don&apos;t want any message from your boss to be moved to another folder,
+      even if it contains <q>Memorandum</q> in the subject. So the first
+      message filter you define should match your boss&apos;s email address,
+      and would contain two actions: <q>Tag Message</q> as <q>Important</q> and
+      <q>Stop Filter Execution</q>.</p>
+  </li>
+  <li>If you have chosen <q>Move</q> or <q>Copy</q> message to a folder, then
+    select a destination folder in which to store the messages, or create a
+    new folder.</li>
+  <li>Click OK to confirm your settings.</li>
+  <li>To run filters on existing messages in a folder, select the folder
+    in the bottom dropdown list and click the <q>Run Now</q> button.</li>
+  <li>Click OK in the Message Filters dialogue box. The filter begins filtering
+    incoming messages as soon as you click OK.</li>
+</ol>
+
+<p><strong>Note</strong>: You can also run message filters manually at any
+  time. In the Mail window, choose Tools, and then select Run Filters on Folder
+  to apply filters to the current folder, or Run Filters on Message to apply
+  filters to the selected message (if any).</p>
+
+<p>To manage your filters, begin from the Mail window:</p>
+
+<ol>
+  <li>Open the Tools menu and choose Message Filters. You see the Message
+    Filters dialogue box.</li>
+  <li>If you have multiple mail accounts, choose the one to which you want to
+    apply the filter.</li>
+  <li>Choose from the following:
+    <ul>
+      <li><strong>To turn a filter on or off</strong>: Click the tickbox to
+        the right of the filter name to enable it, or click it again to turn it
+        off.</li>
+      <li><strong>To edit a filter</strong>: Select the filter name and click
+        Edit (or double-click the filter name). Use the Filter Rules dialogue
+        box to make your changes.</li>
+      <li><strong>To delete a filter</strong>: Select the filter name and click
+        Delete.</li>
+      <li><strong>To change the order in which filters are applied</strong>: In
+        the filter list, click a filter&apos;s name, and click <q>Move Up</q>
+        or <q>Move Down</q> to move it.
+
+        <p><strong>Note</strong>: Filters are applied to each incoming message
+          in the order you choose, until a filter action results in the message
+          being deleted or moved from the Inbox folder.</p>
+      </li>
+    </ul>
+  </li>
+  <li>Click OK when you are done managing your filters. If you created a new
+    filter, it begins filtering incoming messages as soon as you click OK.</li>
+</ol>
+
+<p><strong>Note</strong>: If you delete a folder that you&apos;ve been using to
+  store filtered messages, the filter will no longer work. Incoming messages
+  that match the filter criteria will appear in your Inbox. If you rename or
+  move the folder, the filter will automatically update to use the renamed or
+  moved folder.</p>
+
+<p><strong>Tip</strong>: If you have existing messages that you want to move to
+  another folder, use the Run Filters on Messages option in the Tools menu.</p>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h3 id="filtering_messages_from_a_specific_sender">Filtering Messages From a
+  Specific Sender</h3>
+
+<p>You can quickly create a filter for messages from a particular sender. For
+  example, if you want to automatically move all incoming messages from your
+  child&apos;s teacher into a folder called <q>School</q>, you can quickly set
+  up a filter to do this.</p>
+
+<p>To create a filter for messages from a specific sender, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Select a message from a specific sender.</li>
+  <li>Open the Message menu and choose Create Filter From Message. Or, in the
+    message header pane, right click the sender name and choose Create Filter
+    From.</li>
+  <li>You see the Filter Rules dialogue box. Using the sender&apos;s email
+    address, &brandShortName; prefills the filter matching criteria and the
+    filter action (Move Message to). You can change or add new rules to the
+    matching criteria.</li>
+  <li>Choose a destination folder in which to store the incoming messages from
+    the specified sender, or create a new folder. You can also choose other
+    actions for this filter, or change the default one.</li>
+  <li>Note that, if you leave the filter name empty, &brandShortName; will
+    provide a name for it based on the first criterion.</li>
+  <li>Click OK to confirm your settings. You see the
+    <a href="#creating_message_filters">Message Filters</a> dialogue box, where
+    you can create, delete, or edit message filters.</li>
+  <li>Click OK. The filter begins filtering incoming messages from the
+    specified sender as soon as you click OK.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h2 id="searching_through_messages">Searching Through Messages</h2>
+
+<p>&brandShortName; Mail &amp; Newsgroups lets you quickly find text in a
+  single message, search messages by subject or sender, or use a combination of
+  criteria to perform a thorough search through all messages in a specific mail
+  folder, newsgroup, or account.</p>
+
+<p>To locate text in a single message, begin from the Mail window:</p>
+
+<ol>
+  <li>Select the message, open the Edit menu, and choose Find in This
+    Message.</li>
+  <li>Type the text that you want to locate in the dialogue box.</li>
+  <li>Click Find to locate the first occurrence of the text.</li>
+  <li>Continue clicking Find to locate additional occurrences, or click Cancel
+    when you are done.</li>
+  <li>Choose Find Again from the Edit menu to continue searching for the text
+    throughout the rest of the message.</li>
+</ol>
+
+<p>To quickly search for messages in a selected folder by subject or sender,
+  begin from the Mail window:</p>
+
+<ol>
+  <li>To the right of <q>Subject or Sender contains:</q>, type the subject text
+    or sender name that you want to find. You can type only part of the subject
+    or sender, or you can type the exact word or name that you want to find.
+
+    <p>As soon as you stop typing, &brandShortName; Mail &amp; Newsgroups
+      displays only those messages in the selected folder where the subject or
+      sender contains the search text you entered.</p>
+  </li>
+  <li>Click Clear to erase the search text and show all messages in the
+    selected folder.</li>
+</ol>
+
+<h3 id="searching_for_specific_messages">Searching for Specific Messages</h3>
+
+<p>You can search mail folders or newsgroups for specific messages. If you are
+  not already viewing the Search Messages dialogue box, begin from the Mail
+  window:</p>
+
+<ol>
+  <li>Open the Tools menu and choose Search Messages. You see the Search
+    Messages dialogue box.</li>
+  <li>Next to <q>Search for messages in</q>, choose the account, newsgroup, or
+    folder through which you want to search.</li>
+  <li>Select <q>Search subfolders</q> to include all subfolders in the
+    search.</li>
+  <li>Next to <q>Perform search operations on</q>, select an option where to
+    search for messages in newsgroups or IMAP accounts:
+    <ul>
+      <li>Choose <q>Local system</q> to use only the information stored locally
+        for the search without any network activity. This mode includes all
+        major message headers. You can&apos;t search the message body locally
+        unless the account and its folders have been set up for
+        <a href="mailnews_account_settings.xhtml#synchronization_and_storage">synchronisation</a>.
+      </li>
+      <li>Choose <q>Remote server</q> to perform all searches on the server
+        where the messages are located. This will allow you to also search for
+        contents in message bodies which have not been synchronised.</li>
+    </ul>
+    <p><strong>Note</strong>: This menu will be disabled if it&apos;s not
+      possible to search remotely on the server (e.g., for POP accounts).</p>
+  </li>
+  <li>Select which matching option Mail &amp; Newsgroups will use to search for
+    messages that match all or at least one of the conditions (criteria) that
+    you choose.</li>
+  <li>Use the drop-down lists to indicate the search criteria (for example,
+    <q>Subject</q> and <q>contains</q>) and then type the text or phrase that
+    you want to match.
+
+    <p><strong>Tip</strong>: To search for messages that contain a header not
+      listed in the first drop-down menu (for example, if you want to search
+      for messages that include the header Resent-From), choose Customise and
+      type the header you want to search for. &brandShortName; Mail &amp;
+      Newsgroups adds your custom header to the drop-down list, so you can then
+      choose it to search for matching entries. Make sure you enter the custom
+      header correctly, since Mail will only find entries that exactly match
+      what you type.</p>
+  </li>
+  <li>Click More to add criteria and Fewer to remove them.</li>
+  <li>Click Search to begin, or click Clear to reset your entries. The search
+    results appear in lower part of the Search Messages dialogue box.
+    <ul>
+      <li>To open a message so you can read it, select the message and click
+        Open, or double-click the message.</li>
+      <li>To sort the messages in a different order, click the column that you
+        want to sort by.</li>
+      <li>To move or copy a message in the Results area to another folder,
+        select the message and then choose the destination folder from the File
+        drop-down list. If the destination folder is within the same account,
+        the message is moved to that folder. If the destination folder is
+        within a different account, the message is copied to that folder.</li>
+      <li>To delete a message in the Results area, select the message and then
+        click Delete.</li>
+      <li>To open the folder where the message is stored, select the message
+        and click Open Message Folder.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Return to beginning of section</a>]</p>
+
+<h1 id="controlling_junk_mail">Controlling Junk Mail</h1>
+
+<p>This section describes how to use &brandShortName;&apos;s Junk Mail Controls
+to filter unwanted mail, and how phishing detection works.</p>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#using_junk_mail_controls">Using Junk Mail Controls</a></li>
+    <li><a href="#junk_controls_options">Junk Mail Controls Options</a></li>
+    <li><a href="#junk_controls_and_filters">Junk Mail Controls and
+      Filters</a></li>
+    <li><a href="#phishing_detection">Phishing Detection</a></li>
+  </ul>
+</div>
+
+
+<h2 id="using_junk_mail_controls">Using Junk Mail Controls</h2>
+
+<p>&brandShortName;&apos;s Junk Mail Controls feature can evaluate your
+  incoming messages and identify possible junk (or unsolicited) messages. The
+  feature uses the Bayesian classification method. You first train
+  &brandShortName; by showing it a bunch of mail that is junk, and a bunch of
+  mail that is not. Then, you let it auto-classify new mail for you. If
+  &brandShortName; makes any mistakes, you can correct them.</p>
+
+<p>To use Junk Mail Controls:</p>
+
+<ol>
+  <li>First, train &brandShortName; to recognise Junk messages and Non-Junk
+    messages. There are three ways to toggle junk status of the selected
+    message(s):
+    <ul>
+      <li>Open the Message menu, select <q>Mark</q> and choose <q>As Junk</q>
+        or <q>As Not Junk</q>.</li>
+      <li>Click on the Junk toolbar button.</li>
+      <li><img src="images/mail_junk_column.png" style="float:right" alt=""/>
+
+        <p>Click to toggle the Junk Status column in the message list. (If you
+          do not see it, click the right-most button (
+          <img src="images/columns.png" alt=""/>) in the list header bar and
+          select Junk Status from the pop-up menu.)</p>
+      </li>
+    </ul>
+
+    <p>When you toggle junk status, a wastebasket icon will appear or disappear
+      in the Junk status column to indicate the junk status of the selected
+      message.</p>
+  </li>
+  
+  <li>Open the Edit menu, and choose Mail &amp; Newsgroups Account Settings.
+    You see the Mail &amp; Newsgroups Account Settings dialogue box.</li>
+  <li>Click the Junk Settings category for your mail account.</li>
+  <li>Enable the feature and &brandShortName; will automatically classify
+    incoming messages. (See
+    <a href="#junk_controls_options">Junk Mail Controls Options</a>.
+    Details on the other settings there can be found in the 
+    <a href="mailnews_account_settings.xhtml#junk_settings">Junk Settings</a>
+    preference panel description.)
+  </li>
+  <li>If you have trained it on virus mail, consider disabling the white
+    listing (many mail viruses send bulk messages to people in the address book
+    of the infected computer).</li>
+  <li>Make sure to correct the Junk Mail Controls when it incorrectly labels
+    messages either as junk or not junk.</li>
+  <li>To analyse existing messages, select messages, open the Tools menu
+    and choose <q>Run Junk Mail Controls</q>.</li>
+</ol>
+
+<p><strong>Note</strong>: &brandShortName; will only run Junk Mail Controls
+  when the training database has information on non-Junk messages. If Junk Mail
+  Controls do not work, select some messages and explicitly mark them as Not
+  Junk.</p>
+
+<p>[<a href="#controlling_junk_mail">Return to beginning of section</a>]</p>
+
+<h2 id="junk_controls_options">Junk Mail Controls Options</h2>
+
+<p>To fine-tune how Junk Mail Controls work, use the 
+  <a href="mailnews_preferences.xhtml#junk_and_suspect_preferences">Junk &amp;
+  Suspect Mail preference panel</a> for account-independent settings and the
+  account manager's <a href="mailnews_account_settings.xhtml#junk_settings">Junk
+  Settings</a> for settings of a specific mail account.</p>
+
+<p>[<a href="#controlling_junk_mail">Return to beginning of section</a>]</p>
+
+<h2 id="junk_controls_and_filters">Junk Mail Controls and Filters</h2>
+
+<p>Junk Mail Controls run after mail filters (unless you set the filter to run
+  after classification, where <q>classification</q> includes junk and phishing
+  scanning) and apply only to the Inbox folder and its sub-folders. Use this to
+  your advantage, for example, you can filter mail you are sure not to be Junk
+  to a special folder outside of Inbox so that the messages will not be
+  classified as Junk (especially useful if you subscribe to newsletters or if
+  you are on a moderated mailing list).</p>
+
+<p>[<a href="#controlling_junk_mail">Return to beginning of section</a>]</p>
+
+<h2 id="phishing_detection">Phishing Detection</h2>
+
+<p>Phishing is a particularly common fraudulent business scheme in which
+  a party creates counterfeit web sites designed to trick recipients into
+  divulging personal data such as credit card numbers, account usernames,
+  passwords and social security numbers. Hijacking brand names of banks,
+  e-retailers and credit card companies, phishers often convince
+  recipients to respond.</p>
+
+<p>In many cases, you&apos;ll receive a link to a phishing page via an email
+  which claims to come from an official-looking address. You can also end up
+  at these pages by following links that you find on the Web or in IM
+  messages.</p>
+
+<p><strong>Tip</strong>: Since a forged <a href="glossary.xhtml#url">URL</a>
+  can look very similar to a genuine one, it&apos;s safer to use a bookmark
+  you&apos;ve created or to type the URL into the location bar by hand instead
+  of following a link in an email message. Always consider the risk of a forged
+  URL if you&apos;re asked to log in or provide private information on a
+  web site.</p>
+
+<p>&brandShortName; Mail phishing detector is enabled by default. When it
+  encounters a mail which seems to be scam, it will show a warning bar in the
+  message window.</p>
+
+<p>If you think that the email is a valid one, you can click on the <q>Not
+  Scam</q> button, and the warning bar will disappear.</p>
+
+<p>When a user clicks on a link in an email that appears to be a phishing URL,
+  &brandShortName; will prompt the user with a dialogue box before the web site
+  is opened.</p>
+
+<p>This prompt will appear if either of the following is true: the host name of
+  the actual URL is an <a href="glossary.xhtml#ip_address">IP address</a>, or
+  the link text is a URL whose host name does not match the host name of the
+  actual URL.</p>
+
+<p><strong>Note</strong>: Phishing detection has a higher precedence than Junk
+  Mail detection.</p>
+
+<p>For more technical details on this subject, see the online document
+  <a href="http://www.honeynet.org/papers/phishing/">Know your Enemy:
+  Phishing</a>.</p>
+
+<p>[<a href="#controlling_junk_mail">Return to beginning of section</a>]</p>
+</body>
+</html>

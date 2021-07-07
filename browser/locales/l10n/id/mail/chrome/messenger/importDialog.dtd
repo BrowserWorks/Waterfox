@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Impor">
+<!ENTITY importAll.label          "Import Semuanya">
+<!ENTITY importAll.accesskey      "S">
+<!ENTITY importMail.label         "Email">
+<!ENTITY importMail.accesskey     "m">
+<!ENTITY importFeeds.label        "Langganan Umpan">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Buku Alamat">
+<!ENTITY importAddressbook.accesskey "B">
+<!ENTITY importSettings.label     "Pengaturan">
+<!ENTITY importSettings.accesskey "P">
+<!ENTITY importFilters.label      "Filter">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Penuntun Impor &brandShortName;">
+<!ENTITY importShortDesc.label    "Impor Email, Buku Alamat, Pengaturan, dan Filter dari program lainnya">
+
+<!ENTITY importDescription1.label "Penuntun berikut akan mengimpor pesan email, item buku alamat, pengaturan, dan/atau filter dari program pembaca email lainnya dan buku alamat dalam format yang umum ke &brandShortName;.">
+<!ENTITY importDescription2.label "Setelah selesai diimpor, Anda akan dapat mengakses informasi tersebut dari &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Pilih jenis berkas yang ingin diimpor:">
+<!ENTITY selectDescriptionB.label "Silahkan pilih akun yang ada atau membuat akun baru:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Nama:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Tidak ada aplikasi atau file untuk darimana mengimpor data yang ditemukan.">
+
+<!ENTITY back.label               "&lt; Mundur">
+<!ENTITY forward.label            "Maju &gt;">
+<!ENTITY finish.label             "Selesai">
+<!ENTITY cancel.label             "Batal">
+
+<!ENTITY select.label             "atau pilih yang ingin diimpor:">
+
+<!ENTITY title.label              "Judul">
+<!ENTITY processing.label         "Mengimpor…">

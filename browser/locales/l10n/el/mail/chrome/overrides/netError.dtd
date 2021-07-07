@@ -1,0 +1,201 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Πρόβλημα φόρτωσης σελίδας">
+<!ENTITY retry.label "Δοκιμή ξανά">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Αδυναμία σύνδεσης">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Αυτή η διεύθυνση είναι περιορισμένη">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Δεν βρέθηκε ο διακομιστής">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Ελέγξτε τη διεύθυνση για τυχόν ορθογραφικά λάθη, όπως
+    <strong>ww</strong>.example.com αντί για
+    <strong>www</strong>.example.com</li>
+  <li>Αν δεν μπορείτε να φορτώσετε καμία σελίδα, ελέγξτε τη σύνδεση του υπολογιστή σας
+    στο δίκτυο.</li>
+  <li>Αν ο υπολογιστής ή το δίκτυό σας προστατεύονται από τείχος προστασίας ή διακομιστή μεσολάβησης, βεβαιωθείτε
+    ότι επιτρέπεται στο &brandShortName; η πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Το αρχείο δεν βρέθηκε">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Ελέγξτε το όνομα αρχείου για λάθος κεφαλαία ή άλλα ορθογραφικά λάθη.</li>
+  <li>Ελέγξτε αν το αρχείο μετακινήθηκε, μετονομάστηκε ή διαγράφηκε.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Άρνηση πρόσβασης στο αρχείο">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Ενδέχεται να έχει διαγραφεί, μετακινηθεί, ή να μην επιτρέπεται η πρόσβαση λόγω των δικαιωμάτων του αρχείου.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Ωχ!">
+<!ENTITY generic.longDesc "
+<p>Το &brandShortName; δεν μπορεί να φορτώσει αυτή τη σελίδα για κάποιο λόγο.</p>
+">
+
+<!ENTITY malformedURI.title "Η διεύθυνση δεν είναι έγκυρη">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Οι διεύθυνσεις στον ιστό συνήθως γράφονται όπως
+    <strong>http://www.example.com/</strong></li>
+  <li>Βεβαιωθείτε ότι χρησιμοποιείται δεξιές slashes (i.e.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Η σύνδεση διακόπηκε">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Το έγγραφο έληξε">
+<!ENTITY notCached.longDesc '<p>Το ζητούμενο έγγραφο δεν είναι πλέον διαθέσιμο στην κρυφή μνήμη.</p><ul><li>Ως μέτρο ασφαλείας, το &brandShortName; δεν ζητά εκ νέου ευαίσθητα έγγραφα.</li><li>Κάντε κλικ στο "Δοκιμή ξανά" για εκ νέου απαίτηση του εγγράφου από την ιστοσελίδα.</li></ul>'>
+
+<!ENTITY netOffline.title "Λειτουργία εκτός σύνδεσης">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Πατήστε το &quot;Δοκιμή ξανά&quot; για εναλλαγή σε λειτουργία εντός σύνδεσης και εκ νέου φόρτωση της σελίδας.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Σφάλμα κωδικοποίησης περιεχομένου">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους πληροφορήσετε για το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Μη ασφαλής τύπος αρχείου">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε για το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Έγινε επαναφορά της σύνδεσης">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Υπέρβαση ορίου χρόνου της σύνδεσης">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Δεν έγινε κατανοητή η διεύθυνση">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Ίσως να χρειάζεται να εγκαταστήσετε κάποιο άλλο πρόγραμμα για να ανοίξετε αυτή τη διεύθυνση.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Ο διακομιστής μεσολάβησης αρνείται συνδέσεις">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Ελέγξτε τις ρυθμίσεις διακομιστή μεσολάβησης για να επιβεβαιώσετε ότι είναι σωστές.</li>
+  <li>Επικοινωνήστε με τον διαχειριστή του δικτύου σας για να βεβαιωθείτε ότι ο διακομιστής μεσολάβησης
+    λειτουργεί.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Δεν ήταν δυνατή η εύρεση διακομιστή μεσολάβησης">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Ελέγξτε τις ρυθμίσεις διακομιστή μεσολάβησης για να επιβεβαιώσετε ότι είναι σωστές.</li>
+  <li>Ελέγξτε αν ο υπολογιστής σας διαθέτει λειτουργική σύνδεση δικτύου.</li>
+  <li>Αν ο υπολογιστής ή το δίκτυό σας προστατεύονται από τείχος προστασίας ή διακομιστή μεσολάβησης, βεβαιωθείτε
+    ότι επιτρέπεται στο &brandShortName; η πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Η σελίδα δεν ανακατευθύνει σωστά">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Αυτό μπορεί το πρόβλημα να προέρχεται από την απενεργοποίηση ή την άρνηση 
+    cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Απρόσμενη απάντηση από τον διακομιστή">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Βεβαιωθείτε ότι έχετε εγκατεστημένο το Personal Security Manager.</li>
+  <li>Αυτό μπορεί να προέρχεται από μια μη-τυπική ρύθμιση του διακομιστή.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Αποτυχία ασφαλούς σύνδεσης">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Η σελίδα που προσπαθείτε να δείτε δεν μπορεί να εμφανιστεί επειδή δεν είναι δυνατή η πιστοποίηση της αυθεντικότητας των ληφθέντων δεδομένων.</li>
+  <li>Επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους πληροφορήσετε για το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Αποτυχία ασφαλούς σύνδεσης">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Μπορεί να υπάρχει πρόβλημα με τις ρυθμίσεις του διακομιστής ή κάποιος προσπαθεί να μιμηθεί κακόβουλα 
+τον διακομιστή.</li>
+  <li>Αν έχετε συνδεθεί ξανά στο παρελθόν με αυτόν τον διακομιστή, το σφάλμα μπορεί να είναι προσωρινό,\
+και μπορείτε να προσπαθήσετε ξανά.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Η ιστοσελίδα ενδέχεται να είναι προσωρινά μη διαθέσιμη ή πολύ απασχολημένη. Δοκιμάστε ξανά σε λίγο.</li>
+  <li>Αν δεν μπορείτε να φορτώσετε καμία σελίδα, ελέγξτε τη σύνδεση δικτύου
+    του υπολογιστή σας.</li>
+  <li>Αν ο υπολογιστής ή το δίκτυό σας προστατεύονται από τείχος προστασίας ή διακομιστή μεσολάβησης, βεβαιωθείτε
+    ότι επιτρέπεται στο &brandShortName; η πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Έχει φραγεί από την πολιτική προστασίας περιεχομένου">
+<!ENTITY cspBlocked.longDesc "<p>Το &brandShortName; εμπόδισε τη φόρτωση της σελίδας με αυτό τον τρόπο, επειδή η σελίδα έχει μια πολιτική προστασίας περιεχομένου που δεν τον επιτρέπει.</p>">
+
+<!ENTITY xfoBlocked.title "Μπλοκαρίστηκε από την πολιτική X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>Το &brandShortName; εμπόδισε τη φόρτωση της σελίδας, επειδή η σελίδα έχει μια πολιτική X-Frame-Options που δεν το επιτρέπει.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Σφάλμα κατεστραμμένου περιεχομένου">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Η σελίδα που προσπαθείτε να δείτε δεν μπορεί να εμφανιστεί επειδή εντοπίστηκε σφάλμα στην μετάδοση των δεδομένων.</p><ul><li>Επικοινωνήστε με τους ιδιοκτήτες του ιστοτόπου για να τους ενημερώσετε για το πρόβλημα</li></ul>">
+
+<!ENTITY securityOverride.linkText "Ή μπορείτε να προσθέσετε μια εξαίρεση…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Θέλω να φύγω από εδώ!">
+<!ENTITY securityOverride.exceptionButtonLabel "Προσθήκη εξαίρεσης…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Δεν πρέπει να προσθέσετε μια εξαίρεση αν χρησιμοποιείτε μια σύνδεση στο διαδίκτυο που δεν εμπιστεύεστε πλήρως ή αν δεν έχετε ξαναδεί προειδοποίηση για αυτόν τον διακομιστή.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Απομακρυσμένο XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Παρακαλούμε επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε για αυτό το πρόβλημα.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Η σύνδεσή σας δεν είναι ασφαλής">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "Το <p><span class='hostname'></span> χρησιμοποιεί τεχνολογία που είναι παρωχημένη και ευάλωτη σε επιθέσεις. Ένας εισβολέας θα μπορούσε εύκολα να αποκαλύψει πληροφορίες που πιστεύατε ότι ήταν ασφαλείς. Ο διαχειριστής του ιστοτόπου θα πρέπει να διορθώσει τον διακομιστή προτού επισκεφθείτε ξανά τον ιστοτόπο.</p><p>Κωδικός σφάλματος: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Αποκλεισμένη σελίδα">
+
+<!ENTITY networkProtocolError.title "Σφάλμα πρωτοκόλλου δικτύου">
+<!ENTITY networkProtocolError.longDesc "<p>Η σελίδα που προσπαθείτε να δείτε δεν μπορεί να εμφανιστεί γιατί εντοπίστηκε ένα σφάλμα στο πρωτόκολλο δικτύου.</p><ul><li>Επικοινωνήστε με τους ιδιοκτήτες τους ιστοτόπου για να τους ενημερώσετε για το πρόβλημα.</li></ul>">

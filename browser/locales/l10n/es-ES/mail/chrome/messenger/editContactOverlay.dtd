@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Eliminar">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "Nombre:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Correo electrónico:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Libreta de direcciones:">
+<!ENTITY editContactAddressBook.accesskey "L">
+
+<!ENTITY editContactPanelDone.label "Hecho">
+<!ENTITY editContactPanelDone.accesskey "H">
+
+<!ENTITY contactMoveDisabledWarning.description "No puede cambiar la libreta de direcciones porque el contacto está en una lista de correo.">

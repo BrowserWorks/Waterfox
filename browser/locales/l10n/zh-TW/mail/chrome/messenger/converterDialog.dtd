@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "訊息儲存空間類型轉換器">
+<!ENTITY converterDialog.continueButton "繼續">
+<!ENTITY converterDialog.cancelButton "取消">
+<!ENTITY converterDialog.finishButton "完成">
+<!ENTITY converterDialog.complete "轉換完成。&brandShortName; 將重新啟動。">
+<!ENTITY converterDialog.error "轉換失敗。">
+

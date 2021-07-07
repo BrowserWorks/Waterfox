@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "สำเนาและโฟลเดอร์">
+<!ENTITY sendingPrefix.label "เมื่อส่งข้อความ ให้ทำสิ่งนี้โดยอัตโนมัติ: ">
+<!ENTITY fccMailFolder.label "วางสำเนาใน:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "วางการตอบกลับในโฟลเดอร์ของข้อความที่กำลังตอบกลับ">
+<!ENTITY fccReplyFollowsParent.accesskey "R">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "ส่งสำเนา (Cc) ถึงที่อยู่อีเมลเหล่านี้:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "คั่นที่อยู่ด้วยจุลภาค">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "ส่งสำเนาลับ (Bcc) ถึงที่อยู่อีเมลเหล่านี้:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "คั่นที่อยู่ด้วยจุลภาค">
+<!ENTITY saveMessageDlg.label "แสดงไดอะล็อกยืนยันเมื่อข้อความถูกบันทึกแล้ว">
+<!ENTITY saveMessageDlg.accesskey "w">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "โฟลเดอร์ &quot;ส่ง&quot; บน:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "อื่น ๆ:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "การเก็บถาวรข้อความ">
+<!ENTITY keepArchives.label "เก็บการเก็บถาวรข้อความใน:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "ตัวเลือกการเก็บถาวร…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "โฟลเดอร์ &quot;การเก็บถาวร&quot; บน:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "อื่น ๆ:">
+<!ENTITY archiveInOtherFolder.accesskey "h">
+<!ENTITY specialFolders.label "ฉบับร่างและแม่แบบ">
+<!ENTITY keepDrafts2.label "เก็บข้อความฉบับร่างใน:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "โฟลเดอร์ &quot;ฉบับร่าง&quot; บน:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "อื่น ๆ:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "เก็บแม่แบบข้อความใน:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "โฟลเดอร์ &quot;แม่แบบ&quot; บน:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "อื่น ๆ:">
+<!ENTITY templateInOtherFolder.accesskey "e">

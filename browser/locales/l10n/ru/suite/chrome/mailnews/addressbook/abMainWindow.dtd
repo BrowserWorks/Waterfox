@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Адресная книга">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!ENTITY blankResultsPaneMessage.label                  "Это адресная книга покажет контакты только после поиска">
+<!ENTITY localResultsOnlyMessage.label                  "Контакты из удаленных адресных книг не будут показаны, пока вы не выполните поиск">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Контакт…">
+<!ENTITY newContact.accesskey                           "н">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Список рассылки…">
+<!ENTITY newListCmd.accesskey                           "п">
+<!ENTITY newAddressBookCmd.label                        "Адресную книгу…">
+<!ENTITY newAddressBookCmd.accesskey                    "д">
+<!ENTITY newLDAPDirectoryCmd.label                      "Каталог LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "Мгновенное сообщение">
+<!ENTITY printContactViewCmd.label                      "Печать контакта…">
+<!ENTITY printContactViewCmd.accesskey                  "ч">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Предварительный просмотр контакта">
+<!ENTITY printPreviewContactViewCmd.accesskey           "в">
+<!ENTITY printAddressBook.label                         "Печать адресной книги…">
+<!ENTITY printAddressBook.accesskey                     "а">
+<!ENTITY printPreviewAddressBook.label                  "Предварительный просмотр адресной книги">
+<!ENTITY printPreviewAddressBook.accesskey              "а">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Удалить адресную книгу">
+<!ENTITY deleteContactCmd.label                         "Удалить контакт">
+<!ENTITY deleteContactsCmd.label                        "Удалить выбранные контакты">
+<!ENTITY deleteListCmd.label                            "Удалить список">
+<!ENTITY deleteListsCmd.label                           "Удалить выбранные списки">
+<!ENTITY deleteItemsCmd.label                           "Удалить выбранные элементы">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Поменять местами имя и фамилию">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "П">
+<!ENTITY propertiesCmd.label                            "Свойства…">
+<!ENTITY propertiesCmd.accesskey                        "в">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Панель адресной книги">
+<!ENTITY showAbToolbarCmd.accesskey                     "а">
+<!ENTITY layoutMenu.label                               "Разбивка окна">
+<!ENTITY layoutMenu.accesskey                           "б">
+<!ENTITY showDirectoryPane.label                        "Панель каталогов">
+<!ENTITY showDirectoryPane.accesskey                    "а">
+<!ENTITY showContactPane2.label                         "Панель контактов">
+<!ENTITY showContactPane2.accesskey                     "к">
+<!ENTITY menu_ShowNameAs.label                          "Показывать имя как">
+<!ENTITY menu_ShowNameAs.accesskey                      "П">
+<!ENTITY firstLastCmd.label                             "Имя Фамилия">
+<!ENTITY firstLastCmd.accesskey                         "И">
+<!ENTITY lastFirstCmd.label                             "Фамилия Имя">
+<!ENTITY lastFirstCmd.accesskey                         "Ф">
+<!ENTITY displayNameCmd.label                           "Отображаемое имя">
+<!ENTITY displayNameCmd.accesskey                       "О">
+
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Импорт…">
+<!ENTITY importCmd.accesskey                            "И">
+<!ENTITY exportCmd.label                                "Экспорт…">
+<!ENTITY exportCmd.accesskey                            "Э">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Создать контакт">
+<!ENTITY newContactButton.accesskey                     "к">
+<!ENTITY newlistButton.label                            "Создать список">
+<!ENTITY newlistButton.accesskey                        "С">
+<!ENTITY editItemButton.label                           "Свойства">
+<!ENTITY editItemButton.accesskey                       "в">
+<!ENTITY newmsgButton.label                             "Сообщение">
+<!ENTITY newmsgButton.accesskey                         "б">
+<!ENTITY deleteItemButton.label                         "Удалить">
+<!ENTITY deleteItemButton.accesskey                     "д">
+<!ENTITY newimButton.label                              "Мгновенное сообщение">
+<!ENTITY newimButton.accesskey                          "М">
+<!ENTITY printButton.label                              "Печать">
+<!ENTITY printButton.accesskey                          "ч">
+<!ENTITY searchNameAndEmail.placeholder                 "Поиск по имени и адресу">
+<!ENTITY searchBox.title                                "Поиск">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Панель адресной книги">
+<!ENTITY newContactButton.tooltip                       "Создание нового контакта адресной книги">
+<!ENTITY newlistButton.tooltip                          "Создание нового списка рассылки">
+<!ENTITY editItemButton.tooltip                         "Изменение выбранного элемента">
+<!ENTITY newmsgButton.tooltip                           "Создание сообщения">
+<!ENTITY newIM.tooltip                                  "Отправить мгновенное сообщение или начать беседу">
+<!ENTITY printButton.tooltip                            "Печать выбранного элемента">
+<!ENTITY deleteItemButton.tooltip                       "Удаление выбранного элемента">
+<!ENTITY throbber.tooltip                               "Перейти на домашнюю страницу &vendorShortName;">
+<!ENTITY throbber.tooltip2                              "Перейти на домашнюю страницу &brandShortName;">
+<!ENTITY advancedButton.tooltip                         "Расширенный режим поиска адресов">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Адресные книги">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Контакт">
+<!ENTITY home.heading                                   "Дом">
+<!ENTITY other.heading                                  "Прочее">
+<!ENTITY chat.heading                                   "Чат">
+<!ENTITY phone.heading                                  "Телефоны">
+<!ENTITY work.heading                                   "Рабочий">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Описание">
+<!ENTITY addresses.heading                              "Адреса">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Показать на карте">
+<!ENTITY mapIt.tooltip                                  "Показать адрес на карте в Интернете">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

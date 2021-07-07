@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Diese Seite verlassen">
+<!ENTITY safeb.palm.decline.label "Diese Warnung ignorieren">
+<!ENTITY safeb.palm.reportPage.label "Warum wurde diese Seite blockiert?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Als attackierend gemeldete Webseite!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Die Webseite auf <span id='malware_sitename'/> wurde als attackierende Seite gemeldet und auf Grund Ihrer Sicherheitseinstellungen blockiert.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Attackierende Webseiten versuchen, Programme zu installieren, die private Informationen stehlen, Ihren Computer verwenden, um andere zu attackieren, oder Ihr System beschädigen.</p><p>Manche Webseiten vertreiben bewusst Viren und ähnlich schädliche Software, aber viele Webseiten sind auch ohne das Wissen oder die Erlaubnis des Betreibers kompromittiert.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Als Seite mit unerwünschter Software gemeldet!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Die Website auf <span id='unwanted_sitename'/> wurde als Seite gemeldet, welche unerwünschte Software enthält, und wurde auf Grund Ihrer Sicherheitseinstellungen blockiert.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Seiten mit unerwünschter Software versuchen, Software zu installieren, die betrügerisch sein und Ihr System in unerwarteter Weise beeinflussen kann.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Als Betrugsversuch gemeldete Webseite!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "&quot;Die Webseite auf <span id='phishing_sitename'/> wurde als Betrugsversuch gemeldet und gemäß Ihrer Sicherheitseinstellungen blockiert">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Mit Betrugsseiten versuchen Kriminelle Sie dazu zu bringen, persönliche oder finanzielle Daten preiszugeben. Dabei ahmen sie in betrügerischer Absicht Webseiten oder E-Mails nach, denen Sie eventuell vertrauen.</p><p>Falls Sie hier persönliche Daten eingeben, müssen Sie mit Identitätsdiebstahl oder sonstigem Betrug rechnen.</p>">
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+<!ENTITY reportDeceptiveSite.label "Betrugsversuch melden…">
+<!ENTITY reportDeceptiveSite.accesskey "B">
+<!ENTITY notADeceptiveSite.label "Dies ist kein Betrugsversuch…">
+<!ENTITY notADeceptiveSite.accesskey "B">
+

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Поиск по мере набора">
+<!ENTITY findAsYouTypeBehavior.label "Поиск по мере набора">
+<!ENTITY findAsYouTypeTip.label "Совет: чтобы самостоятельно включить быстрый поиск по мере набора, нажмите / (поиск текста) или ' (поиск в ссылках), а затем — искомый текст.">
+<!ENTITY findAsYouTypeTimeout.label "Очищать текущие результаты поиска после нескольких секунд бездействия">
+<!ENTITY findAsYouTypeTimeout.accesskey "ч">
+<!ENTITY findAsYouTypeSound.label "Подать звуковой сигнал, если набранный текст не найден">
+<!ENTITY findAsYouTypeSound.accesskey "д">
+<!ENTITY findAsYouTypeEnableAuto.label "Использовать автоматически для поиска:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "п">
+<!ENTITY findAsYouTypeAutoText.label "Любого текста на странице">
+<!ENTITY findAsYouTypeAutoText.accesskey "б">
+<!ENTITY findAsYouTypeAutoLinks.label "Только ссылок">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "л">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Отображать панель поиска при поиске по мере набора">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "о">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Примечание: Поиск по мере набора без отображения панели поиска не позволяет вводить символы не на латинице.">

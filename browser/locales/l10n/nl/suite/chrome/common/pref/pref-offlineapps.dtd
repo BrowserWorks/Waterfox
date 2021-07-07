@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Offline Webtoepassingen">
+<!ENTITY pref.offlineCache.caption          "Offline webinhoud en gebruikersgegevens">
+
+<!ENTITY clearOfflineAppCache.label         "Wissen">
+<!ENTITY clearOfflineAppCache.accesskey     "W">
+
+<!ENTITY offlineAlwaysAllow.label           "Alle websites toestaan om gegevens op te slaan voor offlinegebruik">
+<!ENTITY offlineAlwaysAllow.accesskey       "A">
+<!ENTITY offlineExplicit.label              "Alleen websites met expliciete machtigingen toestaan">
+<!ENTITY offlineExplicit.accesskey          "e">
+<!ENTITY offlineNotifyAsk.label             "Mij waarschuwen wanneer websites gegevens willen opslaan voor offlinegebruik.">
+<!ENTITY offlineNotifyAsk.accesskey         "n">
+<!ENTITY offlineNotifyPermissions.label     "Toestemmingen beheren">
+<!ENTITY offlineNotifyPermissions.accesskey "T">
+
+<!ENTITY offlineAppsUsage.label             "De volgende websites gebruiken offlineopslag:">
+<!ENTITY offlineAppsListRemove.label        "Gegevens wissen…">
+<!ENTITY offlineAppsListRemove.accesskey    "G">

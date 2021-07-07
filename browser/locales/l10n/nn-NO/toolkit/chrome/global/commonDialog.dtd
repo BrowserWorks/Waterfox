@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editfield0.label "Brukarnamn:"> 
+<!ENTITY editfield1.label "Passord:"> 
+<!ENTITY copyCmd.label    "Kopier">
+<!ENTITY copyCmd.accesskey "K">
+<!ENTITY selectAllCmd.label "Merk alt">
+<!ENTITY selectAllCmd.accesskey "M">

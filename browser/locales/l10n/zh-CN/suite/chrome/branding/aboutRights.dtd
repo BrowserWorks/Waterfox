@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "关于您的权利">
+<!ENTITY rights.intro "&brandFullName; 是一款自由开源软件，由来自世界各地成千上万的社区志愿者共同完成。以下几点您应该了解：">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; 提供给您时依照的条款为 ">
+<!ENTITY rights.intro-point1b "Mozilla 公共许可证（MPL）">
+<!ENTITY rights.intro-point1c "。这表示您可以使用、复制和向他人分发 &brandShortName;。我们也非常欢迎您按自己的需要修改 &brandShortName; 的源代码。Mozilla 公共许可证也允许您分发您自己修改过的软件版本。">
+
+<!ENTITY rights.intro-point2a "Mozilla 不授予您任何关于 Mozilla 和 SeaMonkey 商标或标志的权利。点击">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; 不授予您任何关于“&brandFullName;”商标或标志的权利。点击">
+<!ENTITY rights.intro-point2b "此处">
+<!ENTITY rights.intro-point2c "了解更多关于商标的信息。">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "&brandShortName; 的一些功能（例如崩溃报告器）使您可以向 &vendorShortName; 提供反馈。提交反馈的同时，您授权 &vendorShortName; 和 Mozilla 使用反馈信息改进其应用程序、在其网站上发布反馈信息，以及分发反馈内容。">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "&brandShortName; 的一些功能（例如崩溃报告器）使您可以向 &vendorShortName; 提供反馈。提交反馈的同时，您授权 &vendorShortName; 使用反馈信息改进其应用程序、在其网站上发布反馈信息，以及分发反馈内容。">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "单击">
+<!ENTITY rights.intro-point3b "此处">
+<!ENTITY rights.intro-point3c "了解 &brandShortName; 的隐私条款。">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; 也提供了可选的网站信息服务，例如附加组件或安全浏览服务；然而，我们不能保证它们始终运行地 100&#037; 准确、无错。更多信息请点击">
+<!ENTITY rights.intro-point4b "服务条款">
+<!ENTITY rights.intro-point4c "展开更多细节信息，如怎样禁用服务等。">
+
+<!ENTITY rights.webservices-header "&brandFullName; 网站服务">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a "&brandFullName; 提供可选的基于网络的服务，您可在如下所述的 &brandShortName; 二进制版本中使用这些功能。一些服务（例如附加组件的推荐和更新服务、安全浏览服务、位置感知浏览及通知功能）是默认启用。如果您完全不想使用这些服务，或者无法接受如下条款，您可以禁用服务，操作方法见">
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "&vendorShortName; 提供可选的基于网络的服务，您可在如下所述的 &brandShortName; 二进制版本中使用这些功能。一些服务（例如附加组件的推荐和更新服务、安全浏览服务、位置感知浏览及通知功能）是默认启用。如果您完全不想使用这些服务，或者无法接受如下条款，您可以禁用服务，操作方法见">
+<!ENTITY rights3.webservices-b "这里">
+<!ENTITY rights3.webservices-c "。其他功能和服务可以在应用程序首选项中启用或禁用。">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "附加组件服务：">
+<!ENTITY rights.addons-b "默认情况下，&brandShortName; 将在 &view.discover.label; 页面提供附加组件推荐并定期检查更新。如果您想禁用这些功能以避免信息已安装的附加组件的信息到达服务器，请按下列步骤操作：">
+<!ENTITY rights.addons-term1 "打开应用程序首选项">
+<!ENTITY rights.addons-term2 "选择 &advance.label; 中的 &smart.label; 面板">
+<!ENTITY rights.addons-term3 "取消选中 &quot;&autoAddOnsUpdates.label;&quot; 和&quot;&enablePersonalized.label;&quot; 选项">
+<!ENTITY rights.addons-term4 "就这样，附加组件服务已被禁用了">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "安全浏览：">
+<!ENTITY rights.safebrowsing-b "不推荐您禁用安全浏览功能，因为那样可能会导致您到达不安全的网站。如果您确定想完全禁用此功能，请按照下列步骤操作：">
+<!ENTITY rights.safebrowsing-term1 "打开应用程序首选项">
+<!ENTITY rights.safebrowsing-term2 "选择 &security.label; 面板">
+<!ENTITY rights.safebrowsing-term3 "取消选中“&blockAttackSites.label;”和“&blockWebForgeries.label;”选项">
+<!ENTITY rights.safebrowsing-term4 "安全浏览现在已禁用">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "位置感知浏览：">
+<!ENTITY rights.locationawarebrowsing-b "始终可选退出。没有位置信息会未经您的授权发送。如果您希望完全禁用此功能，请按照下列步骤操作：">
+<!ENTITY rights.locationawarebrowsing-term1 "打开应用程序首选项">
+<!ENTITY rights.locationawarebrowsing-term2 "选择主要 &security.label; 面板">
+<!ENTITY rights.locationawarebrowsing-term3 "选择”&geoDisabled.label;“的选项">
+<!ENTITY rights.locationawarebrowsing-term4 "位置感知浏览现在已禁用">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "&vendorShortName; 和与 Mozilla 相关的贡献者、许可者以及合作伙伴一起致力于提供最精确和最新的服务。然而，我们并不保证信息是全面且毫无错误的。例如我们的安全浏览服务可能还不能识别出部分危险的网站，甚至还可能出错而误判一些安全的网站，以及由我们的位置感知服务商提供的位置也仅仅是一个大概的位置。我们和我们的服务提供商都不为位置信息的准确性提供保证。">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "&vendorShortName; 和它的贡献者、许可者以及合作伙伴一起致力于提供最精确和最新的服务。然而，我们并不保证信息是全面且毫无错误的。例如我们的安全浏览服务可能还不能识别出部分危险的网站，甚至还可能出错而误判一些安全的网站，以及由我们的位置感知服务商提供的位置也仅仅是一个大概的位置，我们和我们的服务提供商都不为该位置信息的准确性提供保证。">
+<!ENTITY rights.webservices-term1 "&vendorShortName; 可以保留中止或修改服务的权利。">
+<!ENTITY rights.webservices-term2 "欢迎通过 &brandShortName; 使用这些服务，并且您完全有权利使用。 &vendorShortName; 以及其授权者保留服务的所有其他的权利。这些条款并非用于限制任何开源许可给予您关于 &brandShortName; 的权利，而且是与 &brandShortName; 源代码条款一致。">
+<!ENTITY rights.webservices-term2a "欢迎通过 &brandShortName; 使用这些服务，并且您完全有权利使用。 &vendorShortName; 以及其授权者保留服务的所有其他的权利。这些条款并非用于限制任何开源许可给予您关于 &brandShortName; 的权利，而且是与 &brandShortName; 源代码条款一致。">
+<!ENTITY rights.webservices-term3 "本服务是由 &vendorShortName; 及其贡献者、授权者和分销者提供，拒绝所有担保，无论明示或暗示，包括但不限于保证该服务是可交易或适合您的特定目的的担保。您承担选择适合您目的、质量和性能要求之服务的全部风险。某些司法管辖区不允许除外或限制隐含的保证，因此，此免责声明可能对您不适用。">
+<!ENTITY rights.webservices-term4 "除法律规定，&vendorShortName; 其贡献者、授权者和分销商将不承担以任何方式由使用 &brandShortName; 和服务而引起的任何间接、特殊、偶然、必然、惩罚或象征性的损害造成的损失。集体责任相关的赔偿额度也不得超过500美元。某些司法管辖区不允许排除或限制某些损害，所以此声明和限制可能对您不适用。">
+<!ENTITY rights.webservices-term5 "&vendorShortName; 可在必要时更新这些条款。不得在未得到　&vendorShortName;　书面协议的前提下修改或取消这些条款。">
+<!ENTITY rights.webservices-term6 "这些条款均受美国加利福尼亚州法律的管辖，排除与法律冲突的部分。若这些条款的任何部分被裁定为无效或不可执行，其余部分仍将完全保留其有效性。若这些条款的翻译版本与英文版本发生冲突，以英文版本为准。">
+
+<!ENTITY rights.webservices-term6a "本条款内容受德意志联邦共和国法律管辖，并应根据德意志联邦共和国法律予以解释，与本条款有关的所有纠纷均应呈交德意志联邦共和国具管辖权的法院行使专属管辖。若本条款中有任何部分被视为无效，或是无法执行，均不影响其余条款的效力。若本条款的简体中文版本与其英语版本之间存在冲突，应以英语版本为准。">

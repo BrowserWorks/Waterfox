@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Neuen Kalender erstellen">
+<!ENTITY wizard.label             "Einen neuen Kalender erstellen">
+<!ENTITY wizard.description       "Ort Ihres Kalenders feststellen">
+
+<!ENTITY initialpage.description    "Ihr Kalender kann auf Ihrem Computer oder auf einem Server gespeichert werden, sodass Sie von anderen Orten darauf zugreifen bzw. ihn mit Freunden oder Arbeitskollegen gemeinsam verwenden können.">
+<!ENTITY initialpage.computer.label  "Auf meinem Computer">
+<!ENTITY initialpage.network.label  "Im Netzwerk">
+
+<!ENTITY locationpage.description         "Geben Sie die benötigten Informationen an, um auf Ihren externen Kalender zuzugreifen">
+<!ENTITY locationpage.login.description   "Optional: Geben Sie Benutzernamen und Passwort an">
+<!ENTITY locationpage.username.label      "Benutzername:">
+<!ENTITY locationpage.password.label      "Passwort:">
+
+<!ENTITY custompage.shortdescription  "Ihren Kalender anpassen">
+<!ENTITY custompage.longdescription   "Sie können Ihrem Kalender einen Namen geben und Ereignisse dieses Kalenders einfärben.">
+
+<!ENTITY finishpage.shortdescription  "Kalender erstellt">
+<!ENTITY finishpage.longdescription   "Ihr Kalender wurde erstellt.">
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Sonstiges">
+
+<!ENTITY buttons.create.label "Kalender erstellen">
+<!ENTITY buttons.create.accesskey "e">
+
+<!ENTITY buttons.find.label "Kalender suchen">
+<!ENTITY buttons.find.accesskey "s">
+
+<!ENTITY buttons.back.label "Zurück">
+<!ENTITY buttons.back.accesskey "Z">
+
+<!ENTITY buttons.subscribe.label "Abonnieren">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Kalendertyp:">
+<!ENTITY location.label "Adresse:">
+<!ENTITY location.placeholder "Adresse oder Host-Name des Kalender-Servers">
+
+<!ENTITY network.nocredentials.label "Diese Adresse verlangt keine Zugangsdaten.">
+<!ENTITY network.loading.description "Bitte warten, es wird nach Kalendern gesucht.">
+<!ENTITY network.notfound.description "Keine Kalender unter dieser Adresse gefunden. Bitte die Einstellungen überprüfen.">
+<!ENTITY network.authfail.description "Die eingegebenen Zugangsdaten wurden abgelehnt. Bitte die Einstellungen überprüfen.">
+
+<!ENTITY network.subscribe.single.description "Bitte die zu abonnierenden Kalender auswählen.">
+<!ENTITY network.subscribe.multiple.description "Unter dieser Adresse stehen verschiedene Kalendertypen zur Auswahl. Wählen Sie zuerst den Kalendertyp und anschließend die zu abonnierenden Kalender.">

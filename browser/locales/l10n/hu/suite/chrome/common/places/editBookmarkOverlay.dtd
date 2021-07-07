@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Név:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Hely:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "H">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Hírforrás helye:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "f">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Webhely helye:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "W">
+<!ENTITY editBookmarkOverlay.folder.label                    "Mappa:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Minden könyvjelzőmappa megjelenítése">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Elrejtés">
+<!ENTITY editBookmarkOverlay.tags.label                      "Címkék:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "C">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "A címkéket vesszővel válassza el.">
+<!ENTITY editBookmarkOverlay.description.label               "Leírás:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "L">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Kulcsszó:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Minden címke megjelenítése">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Könyvjelző betöltése az oldalsávba">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "o">
+<!ENTITY editBookmarkOverlay.choose.label                    "Tallózás…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Új mappa">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "m">

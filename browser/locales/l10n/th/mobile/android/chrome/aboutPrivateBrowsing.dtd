@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "การเรียกดูแบบส่วนตัว">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ การป้องกันการติดตาม">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "คุณไม่ได้อยู่ในการเรียกดูแบบส่วนตัว">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; ปิดกั้นบางส่วนของหน้าที่อาจติดตามกิจกรรมการเรียกดูของคุณ">
+<!ENTITY privatebrowsingpage.description.privateDetails "เราจะไม่จดจำประวัติใด ๆ แต่จะยังคงบันทึกไฟล์ที่ดาวน์โหลดและที่คั่นหน้าใหม่ไว้ในอุปกรณ์ของคุณ">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "ในการเรียกดูแบบส่วนตัว เราจะไม่เก็บประวัติการเรียกดูหรือคุกกี้ใด ๆ ของคุณ ที่คั่นหน้าที่คุณเพิ่มและไฟล์ที่คุณดาวน์โหลดจะยังคงถูกบันทึกไว้ในอุปกรณ์ของคุณ">
+
+<!ENTITY privatebrowsingpage.link.private "ต้องการเรียนรู้เพิ่มเติม?">
+<!ENTITY privatebrowsingpage.link.normal "เปิดแท็บส่วนตัวใหม่">

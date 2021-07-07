@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Atverti failą…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Atverti tinklalapį…">
+<!ENTITY openRemoteCmd.accesskey "v">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Paskiausiai atverti tinklalapiai">
+<!ENTITY fileRecentMenu.accesskey "P">
+<!ENTITY saveCmd.label "Įrašyti">
+<!ENTITY saveCmd.accesskey "r">
+<!ENTITY saveAsCmd.label "Įrašyti kaip…">
+<!ENTITY saveAsCmd.accesskey "k">
+<!ENTITY saveAsChangeEncodingCmd2.label "Įrašyti ir pakeisti koduotę">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "Publikuoti">
+<!ENTITY publishCmd.accesskey "P">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publikuoti kitaip…">
+<!ENTITY publishAsCmd.accesskey "i">
+<!ENTITY fileRevert.label "Grįžti prie paskiausiai įrašyto">
+<!ENTITY fileRevert.accesskey "G">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Publikavimo nuostatos…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Naujas">
+<!ENTITY newToolbarCmd.tooltip "Kurti naują tinklalapį">
+<!ENTITY openToolbarCmd.label "Atverti">
+<!ENTITY openToolbarCmd.tooltip "Atverti failą iš šio kompiuterio">
+<!ENTITY saveToolbarCmd.tooltip "Įrašyti failą į diską">
+<!ENTITY publishToolbarCmd.tooltip "Nusiųsti failą į nuotolinį kompiuterį">
+<!ENTITY printToolbarCmd.label "Spausdinimas">
+<!ENTITY printToolbarCmd.tooltip "Spausdinti šį lapą">

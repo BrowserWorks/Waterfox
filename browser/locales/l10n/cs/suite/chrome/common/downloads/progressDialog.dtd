@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title "Průběh stahování…">
+<!ENTITY closeWindow.key "w">
+<!ENTITY cmd.pause.tooltip "Pozastavit">
+<!ENTITY cmd.resume.tooltip "Pokračovat">
+<!ENTITY cmd.retry.tooltip "Opakovat">
+<!ENTITY cmd.cancel.tooltip "Zrušit">
+<!ENTITY cmd.open.label "Otevřít">
+<!ENTITY cmd.open.accesskey "O">
+<!ENTITY cmd.show.label "Otevřít složku">
+<!ENTITY cmd.show.accesskey "s">
+<!ENTITY cmd.goToDownloadPage.label "Přejít na stránku stahování">
+<!ENTITY cmd.goToDownloadPage.accesskey "e">
+<!ENTITY cmd.copyDownloadLink.label "Kopírovat stahovaný odkaz">
+<!ENTITY cmd.copyDownloadLink.accesskey "K">
+<!ENTITY closeWhenDone.label "Zavřít toto okno při dokončení stahování.">
+<!ENTITY closeWhenDone.accesskey "a">

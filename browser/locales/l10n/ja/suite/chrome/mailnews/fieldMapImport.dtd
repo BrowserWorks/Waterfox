@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "アドレス帳をインポート">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "インポートするデータを取り込み中: ">
+<!ENTITY fieldMapImport.next.label "次へ">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "前へ">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "左側に表示されたアドレス帳のフィールドを [上へ] ボタンと [下へ] ボタンでインポートする右側のフィールドと適切に合わせてください。インポートしないものはチェックを外してください。">
+<!ENTITY fieldMapImport.up.label "上へ移動">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "下へ移動">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "アドレス帳のフィールド">
+<!ENTITY fieldMapImport.dataTitle "インポートする記録データ">
+<!ENTITY fieldMapImport.skipFirstRecord.label "最初の記録はフィールド名です">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

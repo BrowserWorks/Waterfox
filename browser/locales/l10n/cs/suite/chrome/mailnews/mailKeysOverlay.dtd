@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY markAsReadCmd.label     "Přečtené">
+<!ENTITY markAsReadCmd.accesskey "P">
+<!ENTITY markAsReadCmd.key       "m">
+
+<!ENTITY markAsUnreadCmd.label     "Nepřečtené">
+<!ENTITY markAsUnreadCmd.accesskey "n">
+<!ENTITY markAsUnreadCmd.key       "m">
+
+<!ENTITY markFlaggedCmd.label     "Praporek">
+<!ENTITY markFlaggedCmd.accesskey "p">
+<!ENTITY markFlaggedCmd.key       "i">
+
+<!ENTITY openMessageWindowCmd.label     "Otevřít zprávu">
+<!ENTITY openMessageWindowCmd.accesskey "v">
+<!ENTITY openMessageWindowCmd.key       "o">
+
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">

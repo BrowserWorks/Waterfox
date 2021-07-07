@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Táblázattá alakítás">
+<!ENTITY instructions1.label   "A HTML-szerkesztő a kijelölés minden sorát egy-egy táblázatsorrá alakítja.">
+<!ENTITY instructions2.label   "Válassza ki az oszlopokat elválasztó karaktert a kijelölésben:">
+<!ENTITY commaRadio.label      "vessző">
+<!ENTITY spaceRadio.label      "szóköz">
+<!ENTITY otherRadio.label      "más karakter:">
+<!ENTITY deleteCharCheck.label "Elválasztó karakter törlése">
+<!ENTITY collapseSpaces.label  "Felesleges szóközök figyelmen kívül hagyása">
+<!ENTITY collapseSpaces.tooltip "Az egymás melletti szóközökből egy elválasztó lesz.">

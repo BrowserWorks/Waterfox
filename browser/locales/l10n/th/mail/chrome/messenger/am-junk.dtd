@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "การตั้งค่าขยะ">
+<!ENTITY trainingDescription.label "หากเปิดใช้งาน คุณจะต้องสอนให้ &brandShortName; ระบุจดหมายขยะโดยกดปุ่มแถบเครื่องมือขยะเพื่อทำเครื่องหมายข้อความว่าเป็นขยะหรือไม่ก่อน คุณจะต้องระบุข้อความทั้งที่เป็นขยะและไม่เป็นขยะ &brandShortName; จึงจะสามารถทำเครื่องหมายขยะได้โดยอัตโนมัติ">
+<!ENTITY level.label "เปิดใช้งานการควบคุมจดหมายขยะแบบปรับเปลี่ยนได้สำหรับบัญชีนี้">
+<!ENTITY level.accesskey "ป">
+
+<!ENTITY move.label "ย้ายข้อความขยะใหม่ไปที่:">
+<!ENTITY move.accesskey "ย">
+<!ENTITY junkFolderOn.label "โฟลเดอร์ &quot;ขยะ&quot; บน:">
+<!ENTITY junkFolderOn.accesskey "ข">
+<!ENTITY otherFolder.label "อื่น ๆ:">
+<!ENTITY otherFolder.accesskey "อ">
+<!ENTITY purge1.label "ลบจดหมายขยะที่เก่ากว่า">
+<!ENTITY purge1.accesskey "ล">
+<!ENTITY purge2.label "วันโดยอัตโนมัติ">
+
+<!ENTITY whitelistHeader.label "ไม่ต้องทำเครื่องหมายจดหมายว่าเป็นขยะโดยอัตโนมัติหากผู้ส่งอยู่ใน: ">
+<!ENTITY whitelistHeader.accesskey "ม">
+
+<!ENTITY ispHeadersWarning.label "หากเปิดใช้งาน &brandShortName; จะพิจารณาข้อความที่ถูกทำเครื่องหมายโดยตัวจำแนกภายนอกนี้ว่าเป็นขยะโดยอัตโนมัติ">
+<!ENTITY ispHeaders.label "เชื่อถือส่วนหัวจดหมายขยะที่ตั้งโดย: ">
+<!ENTITY ispHeaders.accesskey "ช">
+
+<!ENTITY junkClassification.label "ส่วนที่เลือก">
+<!ENTITY junkActions.label "ตำแหน่งปลายทางและการเก็บข้อมูล">
+
+<!ENTITY globalJunkPrefs.label "การตั้งค่าขยะกลาง…">
+<!ENTITY globalJunkPrefs.accesskey "ก">

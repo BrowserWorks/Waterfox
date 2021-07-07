@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Slet">
+<!ENTITY editContactPanelDeleteContact.accesskey "S">
+
+<!ENTITY editContactName.label "Navn:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Mail:">
+<!ENTITY editContactEmail.accesskey "M">
+
+<!ENTITY editContactAddressBook.label "Adressebog:">
+<!ENTITY editContactAddressBook.accesskey "d">
+
+<!ENTITY editContactPanelDone.label "Færdig">
+<!ENTITY editContactPanelDone.accesskey "F">
+
+<!ENTITY contactMoveDisabledWarning.description "Du kan ikke skifte adressebog, eftersom kontakten er i en mailingliste.">

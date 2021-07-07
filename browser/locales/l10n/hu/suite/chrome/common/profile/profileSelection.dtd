@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Felhasználói profil kiválasztása">
+<!ENTITY            profileManager.title "&brandShortName; – Profilkezelő">
+
+<!ENTITY            manage.label     "Profilkezelő…">
+<!ENTITY            manage.accesskey "P">
+<!ENTITY            select.label     "Profil használata">
+
+<!ENTITY            availableProfiles.label "Rendelkezésre álló profilok">
+
+<!ENTITY            introStart.label         "A személyes profilja eléréséhez, amelyben a mentett üzenetei, beállításai és egyéb személyhez kötődő adatai tárolva vannak, válassza ki a listából a megfelelő profilt, és nyomja meg a &start.label; gombot a kezdéshez.">
+<!ENTITY            introSwitch.label        "Egy másik profilra váltáshoz, amelyben a mentett üzenetei, beállításai és egyéb személyhez kötődő adatai tárolva vannak, válassza ki a listából a megfelelő profilt, és nyomja meg a &select.label; gombot a kezdéshez.">
+<!ENTITY            profileManagerText.label "A &brandShortName; személyes profiljában tárolja el a beállításait, a könyvjelzőit, a mentett üzeneteit és egyéb személyhez kötődő adatait.">
+
+<!ENTITY            autoSelect.label         "Alapértelmezett ehhez a profilhoz">
+<!ENTITY            autoSelect.accesskey     "A">
+
+<!ENTITY            start.label              "&brandShortName; indítása">
+<!ENTITY            exit.label               "Kilépés">
+
+<!ENTITY            newButton.label          "Profil létrehozása…">
+<!ENTITY            newButton.accesskey      "l">
+<!ENTITY            renameButton.label       "Profil átnevezése…">
+<!ENTITY            renameButton.accesskey   "n">
+<!ENTITY            deleteButton.label       "Profil törlése…">
+<!ENTITY            deleteButton.accesskey   "t">
+
+<!ENTITY            offlineState.label       "Kapcsolat nélküli munka">
+<!ENTITY            offlineState.accesskey   "k">

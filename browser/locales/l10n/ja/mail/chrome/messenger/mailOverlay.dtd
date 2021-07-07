@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- create by matsuba -->
+<!ENTITY  newMessageCmd2.key		"N">
+<!ENTITY  newMessageCmd.key		"M">
+<!ENTITY  newMessageCmd.label		"メッセージ">
+<!ENTITY  newMessageCmd.accesskey	"m">
+
+<!ENTITY  newContactCmd.label		"連絡先...">
+<!ENTITY  newContactCmd.accesskey	"C">

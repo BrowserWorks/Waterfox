@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Hämtningar">
+<!ENTITY aboutDownloads.header                     "Dina hämtningar">
+<!ENTITY aboutDownloads.empty                      "Inga hämtningar">
+
+<!ENTITY aboutDownloads.open                       "Öppna">
+<!ENTITY aboutDownloads.remove                     "Ta bort">
+<!ENTITY aboutDownloads.removeAll                  "Ta bort alla">
+<!ENTITY aboutDownloads.pause                      "Pausa">
+<!ENTITY aboutDownloads.resume                     "Återuppta">
+<!ENTITY aboutDownloads.cancel                     "Avbryt">
+<!ENTITY aboutDownloads.retry                      "Försök igen">

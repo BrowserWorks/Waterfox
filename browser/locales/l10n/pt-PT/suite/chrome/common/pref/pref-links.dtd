@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Comportamento da ligação">
+<!ENTITY newWindow.label "Comportamento da abertura da ligação">
+<!ENTITY newWindowDescription.label "Abrir ligações que deviam abrir uma nova janela em:">
+<!ENTITY newWindowRestriction.label "Quando os scripts querem abrir uma nova janela:">
+<!ENTITY external.label "Ligações de outras aplicações">
+<!ENTITY externalDescription.label "Abrir ligações de outras aplicações em:">
+
+<!ENTITY openCurrent.label "No separador/janela atual">
+<!ENTITY newWindowGroupCurrent.accesskey "j">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "Um novo separador na janela atual">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "Numa nova janela">
+<!ENTITY newWindowGroupWindow.accesskey "w">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "Alterar sempre janelas para separadores">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "Não alterar janelas personalizadas para separadores">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "Abrir sempre novas janelas">
+<!ENTITY dontDivert.accesskey "n">

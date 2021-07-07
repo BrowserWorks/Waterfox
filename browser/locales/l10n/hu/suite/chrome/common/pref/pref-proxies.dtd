@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxyk">
+<!ENTITY  pref.proxies.desc             "A proxy egy hálózati szolgáltatás, amely szűri és felgyorsítja az internetkapcsolatot.">
+<!ENTITY  proxyTitle.label              "Proxy beállítása az internet eléréséhez">
+<!ENTITY  directTypeRadio.label         "Közvetlen internetkapcsolat">
+<!ENTITY  directTypeRadio.accesskey     "K">
+<!ENTITY  systemTypeRadio.label         "Rendszerbeállítások használata">
+<!ENTITY  systemTypeRadio.accesskey     "R">
+<!ENTITY  manualTypeRadio.label         "Kézi proxybeállítás:">
+<!ENTITY  manualTypeRadio.accesskey     "z">
+<!ENTITY  wpadTypeRadio.label           "Proxybeállítások automatikus felfedezése">
+<!ENTITY  wpadTypeRadio.accesskey       "x">
+<!ENTITY  autoTypeRadio.label           "Automatikus proxybeállítás URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "Frissítés">
+<!ENTITY  reload.accesskey              "F">
+<!ENTITY  http.label                    "Proxy:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Speciális…">
+<!ENTITY  advanced.accesskey            "a">
+<!ENTITY  noproxy.label                 "Nincs proxy a következőhöz:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "Például: .mozilla.org, .net.nz, 192.168.1.0/24">

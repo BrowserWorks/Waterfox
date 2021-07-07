@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navigálás a billentyűzettel">
+<!ENTITY tabNavigationBehavior.label "Navigálás a Tab billentyűvel">
+<!ENTITY tabNavigationLinks.label "Hivatkozások">
+<!ENTITY tabNavigationLinks.accesskey "H">
+<!ENTITY tabNavigationForms.label "Gombok, választógombok, jelölőnégyzetek és választólisták">
+<!ENTITY tabNavigationForms.accesskey "G">
+<!ENTITY tabNavigationTextboxes.label "Megjegyzés: a szövegmezők és a gördíthető régiók mindig részei a bejárási sorrendnek.">
+<!ENTITY tabNavigationDesc.label "A Tab vagy a Shift+Tab lenyomására mozogjon a következők között:">
+<!ENTITY accessibilityBrowseWithCaret.label "Kurzoros böngészés">
+<!ENTITY browseWithCaretDesc.label "Ebben az üzemmódban egy mozgatható kurzor jelenik meg a weboldalakon, lehetővé téve a szöveg kijelölését a billentyűzettel.">
+<!ENTITY browseWithCaretUse.label "Kurzoros böngészés használata">
+<!ENTITY browseWithCaretUse.accesskey "u">
+<!ENTITY browseWithCaretShortCut.label "Az F7 gomb kapcsolja be, illetve ki a kurzoros böngészést.">
+<!ENTITY browseWithCaretShortCut.accesskey "k">
+<!ENTITY browseWithCaretWarn.label "Figyelmeztetés, a kurzoros böngészés bekapcsolásakor">
+<!ENTITY browseWithCaretWarn.accesskey "F">
+
+<!ENTITY modifiers.label "Módosítók">
+<!ENTITY acceleratorKey.label "Gyorsbillentyű:">
+<!ENTITY acceleratorKey.accesskey "A">
+<!ENTITY menuAccessKey.label "Menüelérési billentyű:">
+<!ENTITY menuAccessKey.accesskey "M">
+<!ENTITY modifiersDesc.label "Megjegyzés: A nulla érték letiltja a módosítóbillentyűt.">

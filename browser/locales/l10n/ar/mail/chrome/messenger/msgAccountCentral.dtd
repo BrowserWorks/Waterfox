@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "البريد">
+<!ENTITY readMsgsLink.label           "الرسائل المقروءة">
+<!ENTITY composeMsgLink.label         "اكتب رسالة جديدة">
+
+<!ENTITY newsSectionHdr.label         "مجموعات الأخبار">
+<!ENTITY subscribeNewsLink.label      "أدر اشتراكات مجموعات الأخبار">
+
+<!ENTITY feedsSectionHdr.label        "تلقيمات المدونات و الأخبار">
+<!ENTITY subscribeFeeds.label         "أدر الاشتراكات">
+
+<!ENTITY chat.label                   "دردشة">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "الحسابات">
+<!ENTITY subscribeImapFolders.label   "أدر اشتراكات المجلدات">
+<!ENTITY settingsLink.label           "اعرض إعدادات هذا الحساب">
+<!ENTITY setupNewAcct.label           "اضبط حسابا:">
+
+<!ENTITY advFeaturesSectionHdr.label  "الميزات المتقدمة">
+<!ENTITY searchMsgsLink.label         "ابحث في الرسائل">
+<!ENTITY filtersLink.label            "أدر مرشِّحات الرسائل">
+<!ENTITY junkSettings.label           "إعدادات السخام">
+<!ENTITY offlineLink.label            "إعدادات طور اللا اتصال">

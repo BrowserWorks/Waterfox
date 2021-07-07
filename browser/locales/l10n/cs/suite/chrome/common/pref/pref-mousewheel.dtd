@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Kolečko myši">
+<!ENTITY mouseWheelPanel.label           "Určete chování kolečka myši při použití modifikační klávesy: ">
+<!ENTITY usingJustTheWheel.label         "Žádná modifikační klávesa">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "Vertikální posun">
+<!ENTITY mouseWheelHorizGroup.label      "Horizontální posun">
+<!ENTITY sameAsVertical.label            "Stejně jako vertikální posun">
+<!ENTITY sameAsVertical.accesskey        "S">
+<!ENTITY doNothing.label                 "Nedělat nic">
+<!ENTITY doNothing.accesskey             "N">
+<!ENTITY doNothingHoriz.accesskey        "e">
+<!ENTITY scrollDocument.label            "Posunout dokument">
+<!ENTITY scrollDocument.accesskey        "P">
+<!ENTITY scrollDocumentHoriz.accesskey   "u">
+<!ENTITY history.label                   "Jít zpět nebo dopředu v historii">
+<!ENTITY history.accesskey               "J">
+<!ENTITY historyHoriz.accesskey          "d">
+<!ENTITY zoom.label                      "Zvětšit nebo zmenšit stránku">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "v">
+<!ENTITY wheelSpeed.label                "Rychlost kolečka myši">
+<!ENTITY wheelSpeed.accesskey            "R">
+<!ENTITY wheelSpeedHoriz.accesskey       "y">
+<!ENTITY reverseDirection.label          "Obrátit směr">
+<!ENTITY reverseDirection.accesskey      "O">
+<!ENTITY reverseDirectionHoriz.accesskey "b">

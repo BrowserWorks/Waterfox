@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "عن &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; تجريبي و قد لا يكون مستقرا.">
+<!ENTITY aboutPage.checkForUpdates.link         "التمس التحديثات »">
+<!ENTITY aboutPage.checkForUpdates.checking     "يبحث عن التحديثات…">
+<!ENTITY aboutPage.checkForUpdates.none         "لا تحديثات متوفرة">
+<!ENTITY aboutPage.checkForUpdates.available2   "نزّل التحديث">
+<!ENTITY aboutPage.checkForUpdates.downloading  "يُنزّل التحديث…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "نصّب التحديث">
+<!ENTITY aboutPage.faq.label                    "الأسئلة الأكثر شيوعًا">
+<!ENTITY aboutPage.support.label                "الدعم">
+<!ENTITY aboutPage.privacyPolicy.label          "سياسة الخصوصية">
+<!ENTITY aboutPage.rights.label                 "اعرف حقوقك">
+<!ENTITY aboutPage.relNotes.label               "ملاحظات الإصدار">
+<!ENTITY aboutPage.credits.label                "المساهمون">
+<!ENTITY aboutPage.license.label                "معلومات الترخيص">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "‏Firefox وشعاراته علامات تجارية لمؤسسة Mozilla.">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title "Przeglądarka">
+
+<!ENTITY navRadio.label "Wyświetlaj">
+<!ENTITY navRadio.accesskey "t">
+<!ENTITY navStartPageMenu.label "po uruchomieniu przeglądarki">
+<!ENTITY newWinPageMenu.label "po otwarciu okna">
+<!ENTITY newTabPageMenu.label "po otwarciu karty">
+
+<!ENTITY blankPageRadio.label "Pustą stronę">
+<!ENTITY blankPageRadio.accesskey "n">
+<!ENTITY homePageRadio.label "Stronę domową">
+<!ENTITY homePageRadio.accesskey "d">
+<!ENTITY lastPageRadio.label "Ostatnio odwiedzoną stronę">
+<!ENTITY lastPageRadio.accesskey "O">
+<!ENTITY restoreSessionRadio.label "Przywróć poprzednią sesję">
+<!ENTITY restoreSessionRadio.accesskey "y">
+
+<!ENTITY restoreSessionIntro.label "Podczas przywracania sesji i okien">
+<!ENTITY restoreImmediately.label "Zawsze wczytuj wszystkie karty">
+<!ENTITY restoreImmediately.accesskey "Z">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label "Liczba jednocześnie przywracanych kart:">
+<!ENTITY restoreTabs.accesskey "j">
+<!ENTITY restoreTabsAtATime.label "">
+<!ENTITY restoreDeferred.label "Wczytuj karty tylko, jeśli są one potrzebne">
+<!ENTITY restoreDeferred.accesskey "c">
+
+<!ENTITY homePageIntro.label "Naciśnięcie przycisku Strona domowa wyświetli poniższą grupę stron w oddzielnych kartach:">
+<!ENTITY useCurrent.label "Użyj bieżącej strony">
+<!ENTITY useCurrent.accesskey "u">
+<!ENTITY useCurrentGroup.label "Użyj bieżących kart">
+<!ENTITY useCurrentGroup.accesskey "k">
+<!ENTITY browseFile.label "Wybierz plik…">
+<!ENTITY browseFile.accesskey "W">
+<!ENTITY useDefault.label "Przywróć domyślne">
+<!ENTITY useDefault.accesskey "r">
+
+<!ENTITY defaultBrowserGroup.label "Domyślna przeglądarka">
+<!ENTITY defaultBrowserButton.label "Ustaw jako domyślną przeglądarkę">
+<!ENTITY defaultBrowserButton.accesskey "e">
+<!ENTITY alreadyDefaultText "Program &brandShortName; jest już domyślną przeglądarką.">
+<!ENTITY defaultPendingText "Program &brandShortName; zostanie domyślną przeglądarką po potwierdzeniu wyboru.">
+<!ENTITY wasMadeDefaultText "Program &brandShortName; został ustawiony jako domyślna przeglądarka.">
+<!ENTITY makeDefaultText "Ustaw &brandShortName; jako domyślną przeglądarkę.">

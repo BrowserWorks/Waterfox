@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Zobrazit:">
+<!ENTITY viewPicker.accesskey "Z">
+<!ENTITY viewAll.label "Vše">
+<!ENTITY viewAll.accesskey "V">
+<!ENTITY viewUnread.label "Nepřečtené">
+<!ENTITY viewUnread.accesskey "N">
+<!ENTITY viewNotDeleted.label "Nesmazané">
+<!ENTITY viewNotDeleted.accesskey "s">
+<!ENTITY viewTags.label "Štítky">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "Vlastní pohledy">
+<!ENTITY viewCustomViews.accesskey "l">
+<!ENTITY viewVirtualFolder.label "Uložit pohled jako složku…">
+<!ENTITY viewVirtualFolder.accesskey "U">
+<!ENTITY viewCustomizeView.label "Přizpůsobit…">
+<!ENTITY viewCustomizeView.accesskey "P">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Recebimento e sincronização de mensagens">
+<!ENTITY MsgSelect.label "Itens para uso desconectado">
+<!ENTITY MsgSyncDesc.label "Se você já selecionou pastas de mensagens ou grupos de notícias para uso desconectado, agora pode receber e/ou sincronizar. Caso contrário, use o botão &quot;Selecionar&quot; para escolher pastas de email e grupos de notícias para uso desconectado.">
+<!ENTITY MsgSyncDirections.label "Receber e/ou sincronizar estes itens:">
+<!ENTITY syncTypeMail.label "Mensagens de email">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Mensagens de newsgroup">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Enviar mensagens não enviadas">
+<!ENTITY sendMessage.accesskey "E">
+<!ENTITY workOffline.label "Entrar no modo desconectado ao terminar de baixar e/ou sincronizar">
+<!ENTITY workOffline.accesskey "t">
+<!ENTITY selectButton.label "Selecionar…">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Selecione pastas de mensagens e newsgroups para uso desconectado.">
+<!ENTITY MsgSelectInd.label "Receber">
+<!ENTITY MsgSelectItems.label "Pastas e newsgroups">

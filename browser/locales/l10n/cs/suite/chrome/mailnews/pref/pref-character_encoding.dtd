@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Znaková sada textu">
+<!ENTITY messageDisplay.caption          "Zobrazení zpráv">
+<!ENTITY viewFallbackCharset2.label      "Výchozí znaková sada:">
+<!ENTITY viewFallbackCharset2.accesskey  "z">
+<!ENTITY viewFallbackCharset.desc        "(Použita pro původní obsah, který neobsahuje definici o své znakové sadě.)">
+
+<!ENTITY composingMessages.caption       "Vytváření zpráv">
+<!ENTITY useMIME.label                   "Pro zprávy obsahující osmibitové znaky (např. diakritiku) použít MIME kódování 'quoted printable'. (Není-li zaškrtnuto, zprávy se budou odesílat nezměněny.)">
+<!ENTITY useMIME.accesskey               "r">
+<!ENTITY sendDefaultCharset2.label       "Výchozí znaková sada textu:">
+<!ENTITY sendDefaultCharset2.accesskey   "n">
+<!ENTITY replyInDefaultCharset3.label    "Pokud je to možné, použít u odpovědi výchozí znakovou sadu textu. (Není-li zaškrtnuto, bude použita pouze u nových zpráv.)">
+<!ENTITY replyInDefaultCharset3.accesskey "u">

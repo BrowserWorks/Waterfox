@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Vlastnosti tabulky">
+<!ENTITY applyButton.label                "Použít">
+<!ENTITY applyButton.accesskey            "P">
+<!ENTITY closeButton.label                "Zavřít">
+<!ENTITY tableTab.label                   "Tabulka">
+<!ENTITY cellTab.label                    "Buňky">
+<!ENTITY tableRows.label                  "Řádky:">
+<!ENTITY tableRows.accessKey              "d">
+<!ENTITY tableColumns.label               "Sloupce:">
+<!ENTITY tableColumns.accessKey           "c">
+<!ENTITY tableHeight.label                "Výška:">
+<!ENTITY tableHeight.accessKey            "V">
+<!ENTITY tableWidth.label                 "Šířka:">
+<!ENTITY tableWidth.accessKey             "k">
+<!ENTITY tableBorderSpacing.label         "Okraje a rozestupy">
+<!ENTITY tableBorderWidth.label           "Okraje:">
+<!ENTITY tableBorderWidth.accessKey       "O">
+<!ENTITY tableSpacing.label               "Rozestupy:">
+<!ENTITY tableSpacing.accessKey           "R">
+<!ENTITY tablePadding.label               "Výplň:">
+<!ENTITY tablePadding.accessKey           "l">
+<!ENTITY tablePxBetwCells.label           "body mezi buňkami">
+<!ENTITY tablePxBetwBrdrCellContent.label "body mezi okrajem a obsahem buněk">
+<!ENTITY tableAlignment.label             "Zarovnání tabulky:">
+<!ENTITY tableAlignment.accessKey         "t">
+<!ENTITY tableCaption.label               "Popisek:">
+<!ENTITY tableCaption.accessKey           "i">
+<!ENTITY tableCaptionAbove.label          "Nad tabulkou">
+<!ENTITY tableCaptionBelow.label          "Pod tabulku">
+<!ENTITY tableCaptionLeft.label           "Levá část tabulky">
+<!ENTITY tableCaptionRight.label          "Pravá část tabulky">
+<!ENTITY tableCaptionNone.label           "Žádný">
+<!ENTITY tableInheritColor.label           "(Průhledné pozadí tabulky)">
+
+<!ENTITY cellSelection.label              "Výběr">
+<!ENTITY cellSelectCell.label             "Buňka">
+<!ENTITY cellSelectRow.label              "Řádek">
+<!ENTITY cellSelectColumn.label           "Sloupec">
+<!ENTITY cellSelectNext.label             "Další">
+<!ENTITY cellSelectNext.accessKey         "D">
+<!ENTITY cellSelectPrevious.label         "Předchozí">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "Stávající změny budou uplatněny před změnou označení.">
+<!ENTITY cellContentAlignment.label       "Zarovnání obsahu">
+<!ENTITY cellHorizontal.label             "Vodorovně:">
+<!ENTITY cellHorizontal.accessKey         "V">
+<!ENTITY cellVertical.label               "Svisle:">
+<!ENTITY cellVertical.accessKey           "v">
+<!ENTITY cellStyle.label                  "Styl buňky:">
+<!ENTITY cellStyle.accessKey              "y">
+<!ENTITY cellNormal.label                 "Normální">
+<!ENTITY cellHeader.label                 "Záhlaví">
+<!ENTITY cellTextWrap.label               "Zalamovat text:">
+<!ENTITY cellTextWrap.accessKey           "l">
+<!ENTITY cellWrap.label                   "Zalamovat">
+<!ENTITY cellNoWrap.label                 "Nezalamovat">
+<!ENTITY cellAlignTop.label               "Nahoru">
+<!ENTITY cellAlignMiddle.label            "Na střed">
+<!ENTITY cellAlignBottom.label            "Dolů">
+<!ENTITY cellAlignJustify.label           "Do bloku">
+<!ENTITY cellInheritColor.label           "(Průhledné pozadí buňky)">
+<!ENTITY cellUseCheckboxHelp.label        "Pomocí zaškrtávací nabídky určíte, které vlastnosti se použijí na všechny označené buňky">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Velikost">
+<!ENTITY pixels.label                     "bodů">
+<!ENTITY backgroundColor.label            "Barva pozadí:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "Doleva">
+<!ENTITY AlignCenter.label                "Na střed">
+<!ENTITY AlignRight.label                 "Doprava">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offline.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+
+
+<!ENTITY pref.network.title               "Tinklas ir disko atmintis">
+<!ENTITY pref.offline.caption             "Darbas neprisijungus prie tinklo">
+<!ENTITY textStartUp                      "Paleidžiant programą:">
+<!ENTITY textStartUp.accesskey            "P">
+<!ENTITY menuitemRememberPrevState        "prisiminti ankstesnę prisijungimo būseną">
+<!ENTITY menuitemAskMe                    "paklausti, ar prisijungti prie tinklo">
+<!ENTITY menuitemAlwaysOnline             "visada prisijungti prie tinklo">
+<!ENTITY menuitemAlwaysOffline            "visada pradėti darbą neprisijungus">
+<!ENTITY menuitemAutomatic                "aptikti tinklo būseną automatiškai">
+<!ENTITY textGoingOnline                  "Prisijungiant prie tinklo:">
+<!ENTITY radioAutoSend                    "automatiškai išsiųsti laiškus">
+<!ENTITY radioAutoSend.accesskey          "u">
+<!ENTITY radioNotSend                     "laiškų neišsiųsti">
+<!ENTITY radioNotSend.accesskey           "n">
+<!ENTITY radioAskUnsent                   "paklausti">
+<!ENTITY radioAskUnsent.accesskey         "l">
+<!ENTITY textGoingOffline                 "Atsijungiant nuo tinklo:">
+<!ENTITY radioAutoDownload                "automatiškai atsiųsti laiškus">
+<!ENTITY radioAutoDownload.accesskey      "o">
+<!ENTITY radioNotDownload                 "laiškų neatsiųsti">
+<!ENTITY radioNotDownload.accesskey       "e">
+<!ENTITY radioAskDownload                 "paklausti">
+<!ENTITY radioAskDownload.accesskey       "s">
+<!ENTITY mailConnections.caption          "Ryšys">
+<!ENTITY mailnewsTimeout.label            "Ryšio laiko limitas:">
+<!ENTITY mailnewsTimeout.accesskey        "R">
+<!ENTITY mailnewsTimeoutSeconds.label     "sek.">
+<!ENTITY Diskspace                        "Disko atmintinė">
+<!ENTITY offlineCompactFolders.label      "Suglaudinti visus aplankus, jei sumoje tai padės sutaupyti daugiau kaip">
+<!ENTITY offlineCompactFolders.accesskey  "S">
+<!ENTITY offlineCompactFoldersMB.label    "MB">

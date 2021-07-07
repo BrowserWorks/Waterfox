@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "Αυτή η σελίδα είναι στα">
+<!ENTITY translation.translateThisPage.label    "Μετάφραση σελίδας;">
+<!ENTITY translation.translate.button           "Μετάφραση">
+<!ENTITY translation.notNow.button              "Όχι τώρα">
+
+<!ENTITY translation.translatingContent.label   "Μετάφραση περιεχόμενου σελίδας…">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "Η σελίδα έχει μεταφραστεί από τα">
+<!ENTITY translation.translatedTo.label         "στα">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "Εμφάνιση πρωτοτύπου">
+<!ENTITY translation.showTranslation.button     "Εμφάνιση μετάφρασης">
+
+<!ENTITY translation.errorTranslating.label     "Προέκυψε σφάλμα κατά τη μετάφραση της σελίδας.">
+<!ENTITY translation.tryAgain.button            "Δοκιμή ξανά">
+
+<!ENTITY translation.serviceUnavailable.label   "Η μετάφραση δεν είναι διαθέσιμη προς το παρόν. Παρακαλώ δοκιμάστε ξανά αργότερα.">
+
+<!ENTITY translation.options.menu               "Επιλογές">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Να μην μεταφράζεται ποτέ αυτός ο ιστότοπος">
+<!ENTITY translation.options.neverForSite.accesskey "π">
+<!ENTITY translation.options.preferences.label  "Προτιμήσεις μετάφρασης">
+<!ENTITY translation.options.preferences.accesskey "μ">

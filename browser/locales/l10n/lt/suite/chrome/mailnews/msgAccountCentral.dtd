@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Elektroninis paštas"> 
+<!ENTITY readMsgsLink.label           "Skaityti laiškus"> 
+<!ENTITY composeMsgLink.label         "Rašyti naują laišką"> 
+
+<!ENTITY newsSectionHdr.label         "Naujienų grupės"> 
+<!ENTITY subscribeNewsLink.label      "Naujienų grupių prenumerata"> 
+
+<!ENTITY accountsSectionHdr.label     "Paskyros"> 
+<!ENTITY subscribeImapFolders.label   "Aplanko prenumerata"> 
+<!ENTITY settingsLink.label           "Paskyros nuostatos"> 
+<!ENTITY newAcctLink.label            "Užregistruoti naują abonentą"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "Kitkas"> 
+<!ENTITY searchMsgsLink.label         "Laiškų paieška"> 
+<!ENTITY filtersLink.label            "Laiškų filtrai">
+<!ENTITY junkSettings.label           "Brukalo nuostatos">
+<!ENTITY offlineLink.label            "Darbo neprisijungus prie tinklo nuostatos">
+
+<!ENTITY feedsSectionHdr.label        "Sklaidos kanalai">
+<!ENTITY subscribeFeeds.label         "Tvarkyti prenumeratas">
+

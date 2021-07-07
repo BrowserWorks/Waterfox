@@ -1,0 +1,125 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Skriv: (emnelaus)">
+
+<!ENTITY fromAddr.label "Frå:">
+<!ENTITY fromAddr.accesskey "å">
+<!ENTITY subject.label  "Emne:">
+<!ENTITY subject.accesskey "E">
+<!ENTITY attachments.label "Vedlegg:">
+<!ENTITY attachments.accesskey "d">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Lagre">
+<!ENTITY saveCmd.accesskey "L">
+<!ENTITY saveAsCmd.label "Lagre som">
+<!ENTITY saveAsCmd.accesskey "o">
+<!ENTITY saveAsFileCmd.label "Fil…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Utkast">
+<!ENTITY saveAsDraftCmd.accesskey "U">
+<!ENTITY saveAsTemplateCmd.label "Mal">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY attachMenu.label "Legg ved">
+<!ENTITY attachMenu.accesskey "L">
+<!ENTITY attachFileCmd.label "Fil(er)…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Nettside…">
+<!ENTITY attachPageCmd.accesskey "N">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Personleg adressekort (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "Send no">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "S">
+<!ENTITY sendLaterCmd.label "Send seinare">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "e">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Tekstbryting">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "B">
+<!ENTITY accountManagerCmd.label "Kontoinstillingar for e-post og nyheitsgrupper…">
+<!ENTITY accountManagerCmd.accesskey "K">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "E-postverktøylinje">
+<!ENTITY showComposeToolbarCmd.accesskey "E">
+<!ENTITY showFormatToolbarCmd.label "Formateringsverktøylinje">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formatering">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Innstillingar">
+<!ENTITY optionsMenu.accesskey "I">
+
+<!ENTITY quoteCmd.label "Siter melding">
+<!ENTITY quoteCmd.accesskey "S">
+<!ENTITY selectAddressCmd.label "Vel adresser…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "V">
+
+<!ENTITY priorityMenu.label "Prioritet">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY lowestPriorityCmd.label "Lågaste">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "Låg">
+<!ENTITY lowPriorityCmd.accesskey "å">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Høg">
+<!ENTITY highPriorityCmd.accesskey "H">
+<!ENTITY highestPriorityCmd.label "Høgste">
+<!ENTITY highestPriorityCmd.accesskey "H">
+
+<!ENTITY returnReceiptMenu.label "Mottakskvitteringar">
+
+<!ENTITY outputFormatMenu.label "Format">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "Automatisk attkjenning">
+<!ENTITY autoFormatCmd.accesskey "A">
+
+<!ENTITY fileCarbonCopyCmd.label "Send ein kopi til">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "Arkiver her">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Send">
+<!ENTITY addressButton.label "Adresser">
+<!ENTITY attachButton.label "Legg ved">
+<!ENTITY spellingButton.label "Stavekontroll">
+<!ENTITY saveButton.label "Lagre">
+<!ENTITY stopButton.label "Stopp">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Adresselinje">
+<!ENTITY formatToolbar.tooltip "Formateringsverktøylinje">
+<!ENTITY sendButton.tooltip "Send denne meldingen no"> 
+<!ENTITY sendlaterButton.tooltip "Send denne meldinga seinare"> 
+<!ENTITY addressButton.tooltip "Vel ein mottakar frå adresseboka"> 
+<!ENTITY attachButton.tooltip "Inkluder eit vedlegg"> 
+<!ENTITY saveButton.tooltip "Lagre denne meldinga"> 
+<!ENTITY stopButton.tooltip "Stopp denne overføringa"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Opne">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "Byt namn…">
+<!ENTITY renameAttachment.accesskey "B">
+<!ENTITY deleteAttachment.accesskey "S">
+<!ENTITY selectAllAttachments.accesskey "a">
+<!ENTITY attachFile.label "Legg ved filer…">
+<!ENTITY attachFile.accesskey "L">
+<!ENTITY attachPage.label "Legg ved nettside…">
+<!ENTITY attachPage.accesskey "v">

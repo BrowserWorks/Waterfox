@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Paramètres pour les indésirables">
+<!ENTITY trainingDescription.label "Quand cette fonctionnalité est activée, vous devez d’abord entraîner &brandShortName; à identifier les courriels indésirables en utilisant le bouton « Indésirables » de la barre d’outils pour marquer les messages comme indésirables ou pas. Vous devez identifier à la fois les courriels indésirables et ceux qui ne le sont pas. Par la suite, &brandShortName; sera en mesure de détecter les indésirables automatiquement.">
+<!ENTITY level.label "Activer les contrôles adaptatifs de courriels indésirables pour ce compte">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Déplacer les nouveaux courriels indésirables vers :">
+<!ENTITY move.accesskey "D">
+<!ENTITY junkFolderOn.label "Dossier « Indésirables » sur :">
+<!ENTITY junkFolderOn.accesskey "I">
+<!ENTITY otherFolder.label "Autre :">
+<!ENTITY otherFolder.accesskey "r">
+<!ENTITY purge1.label "Supprimer automatiquement les courriels indésirables âgés de plus de ">
+<!ENTITY purge1.accesskey "S">
+<!ENTITY purge2.label "jours">
+
+<!ENTITY whitelistHeader.label "Ne pas marquer automatiquement les messages comme indésirables si l’expéditeur est dans : ">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "Quand cette fonctionnalité est activée, &brandShortName; considère automatiquement les messages désignés par cet outil externe comme indésirables.">
+<!ENTITY ispHeaders.label "Se fier aux en-têtes de courrier indésirable placés par : ">
+<!ENTITY ispHeaders.accesskey "f">
+
+<!ENTITY junkClassification.label "Sélection">
+<!ENTITY junkActions.label "Destination et rétention">
+
+<!ENTITY globalJunkPrefs.label "Préférences globales des indésirables…">
+<!ENTITY globalJunkPrefs.accesskey "P">

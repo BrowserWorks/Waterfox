@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Převodník formátů uložených zpráv">
+<!ENTITY converterDialog.continueButton "Pokračovat">
+<!ENTITY converterDialog.cancelButton "Zrušit">
+<!ENTITY converterDialog.finishButton "Dokončit">
+<!ENTITY converterDialog.complete "Převod dokončen. &brandShortName; se nyní restartuje.">
+<!ENTITY converterDialog.error "Převod selhal.">
+

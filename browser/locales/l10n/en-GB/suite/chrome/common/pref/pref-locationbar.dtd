@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Location Bar">
+
+<!ENTITY autoComplete.label                    "Autocomplete">
+<!ENTITY autoCompleteMatchHistory.label        "Automatically suggest web sites from History">
+<!ENTITY autoCompleteMatchHistory.accesskey    "A">
+<!ENTITY autoCompleteMatchBookmarks.label      "Automatically suggest web sites from Bookmarks">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "B">
+<!ENTITY autoCompleteAutoFill.label            "Automatically prefill the best match">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Show list of matching results">
+<!ENTITY autoCompleteShowPopup.accesskey       "S">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Match only web sites you've typed previously">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "o">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Match">
+<!ENTITY autoCompleteMatch.accesskey           "M">
+<!ENTITY autoCompleteMatchAnywhere             "Anywhere in the location or title">
+<!ENTITY autoCompleteMatchWordsFirst           "Anywhere but preferring word boundaries">
+<!ENTITY autoCompleteMatchWords                "Only on word boundaries">
+<!ENTITY autoCompleteMatchStart                "Only at the beginning of the location or title">
+<!ENTITY showInternetSearch.label              "Show default Internet search engine">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "Formatting">
+<!ENTITY domainFormatting.label                "Highlight the effective domain for web sites and FTP servers">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Highlight web pages with a high level of connection security">
+<!ENTITY highlightSecure.accesskey             "c">
+
+<!ENTITY unknownLocations.label                "Unknown Locations">
+<!ENTITY domainGuessing.label                  "Add &quot;www.&quot; and &quot;.com&quot; to the location if a web page is not found">
+<!ENTITY domainGuessing.accesskey              "d">
+<!ENTITY keywords.label                        "Perform a web search when entered text is not a web location">
+<!ENTITY keywords.accesskey                    "P">

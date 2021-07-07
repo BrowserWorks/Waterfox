@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "أدرج محرفا">
+<!ENTITY category.label "الفِئة">
+<!ENTITY letter.label "حرف:">
+<!ENTITY letter.accessKey "ح">
+<!ENTITY character.label "محرف:">
+<!ENTITY character.accessKey "م">
+<!ENTITY accentUpper.label "حروف كبيرة بحركات">
+<!ENTITY accentLower.label "حروف صغيرة بحركات">
+<!ENTITY otherUpper.label "حروف كبيرة أخرى">
+<!ENTITY otherLower.label "حروف صغيرة أخرى">
+<!ENTITY commonSymbols.label "رموز شائعة">
+<!ENTITY insertButton.label "أدرج">
+<!ENTITY closeButton.label "أغلق">

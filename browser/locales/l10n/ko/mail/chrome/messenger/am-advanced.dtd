@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "보내는 서버 (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "여러개의 계정을 관리하는 경우 사용하는 송신 (SMTP) 서버를 이 리스트에서 선택 해 주십시오. &quot;기본 서버&quot;를 선택하면 기본 서버를 사용하게 됩니다.">
+
+<!ENTITY smtpListAdd.label  "추가…">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "편집…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "제거">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "기본 설정">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "선택된 서버 세부 사항:">
+<!ENTITY serverDescription.label "상세 설명: ">
+<!ENTITY serverName.label "서버 이름: ">
+<!ENTITY serverPort.label "포트: ">
+<!ENTITY userName.label   "사용자 이름: ">
+<!ENTITY connectionSecurity.label "보안 연결: ">
+<!ENTITY authMethod.label   "인증 방식: ">

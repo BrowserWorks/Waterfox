@@ -1,0 +1,134 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+
+<!ENTITY msgComposeWindow.title "Laiško rašymas">
+
+<!ENTITY fromAddr.label "Kas:">
+<!ENTITY fromAddr.accesskey "K">
+<!ENTITY subject.label  "Tema:">
+<!ENTITY subject.accesskey "m">
+<!ENTITY attachments.label "Priedai:">
+<!ENTITY attachments.accesskey "e">
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+<!-- File menu items -->
+
+
+<!ENTITY saveCmd.label "Įrašyti">
+<!ENTITY saveCmd.accesskey "r">
+<!ENTITY saveAsCmd.label "Įrašyti kaip">
+<!ENTITY saveAsCmd.accesskey "k">
+<!ENTITY saveAsFileCmd.label "Failas…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Juodraštis">
+<!ENTITY saveAsDraftCmd.accesskey "J">
+<!ENTITY saveAsTemplateCmd.label "Šablonas">
+<!ENTITY saveAsTemplateCmd.accesskey "Š">
+<!ENTITY attachMenu.label "Pridėti">
+<!ENTITY attachMenu.accesskey "d">
+<!ENTITY attachFileCmd.label "failą(-us)…">
+<!ENTITY attachFileCmd.accesskey "f">
+<!ENTITY attachPageCmd.label "tinklalapį…">
+<!ENTITY attachPageCmd.accesskey "t">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "asmeninę kortelę (vCard)">
+<!ENTITY attachVCardCmd.accesskey "a">
+<!ENTITY sendNowCmd.label "Išsiųsti">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "I">
+<!ENTITY sendLaterCmd.label "Išsiųsti vėliau">
+<!ENTITY sendLaterCmd.keycode "VK_ENTER">
+<!ENTITY sendLaterCmd.accesskey "v">
+<!-- Edit menu items -->
+
+<!ENTITY editRewrapCmd.label "Laužyti iš naujo">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "n">
+<!ENTITY accountManagerCmd.label "Paskyrų nuostatos…">
+<!ENTITY accountManagerCmd.accesskey "P">
+<!-- View menu items -->
+
+<!ENTITY showComposeToolbarCmd.label "Pašto mygtukų juosta">
+<!ENTITY showComposeToolbarCmd.accesskey "P">
+<!ENTITY showFormatToolbarCmd.label "Formatavimo juosta">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Formatas">
+<!ENTITY formatMenu.accesskey "F">
+<!-- Options menu items -->
+
+<!ENTITY optionsMenu.label "Parinktys">
+<!ENTITY optionsMenu.accesskey "a">
+
+<!ENTITY quoteCmd.label "Cituoti originalų laišką">
+<!ENTITY quoteCmd.accesskey "C">
+<!ENTITY selectAddressCmd.label "Parinkti adresatus…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "d">
+
+<!ENTITY priorityMenu.label "Prioritetas">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY lowestPriorityCmd.label "Žemiausias">
+<!ENTITY lowestPriorityCmd.accesskey "Ž">
+<!ENTITY lowPriorityCmd.label "Žemas">
+<!ENTITY lowPriorityCmd.accesskey "e">
+<!ENTITY normalPriorityCmd.label "Normalus">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Aukštas">
+<!ENTITY highPriorityCmd.accesskey "u">
+<!ENTITY highestPriorityCmd.label "Aukščiausias">
+<!ENTITY highestPriorityCmd.accesskey "A">
+
+<!ENTITY returnReceiptMenu.label "Prašyti laiško gavimo pažymos">
+<!ENTITY returnReceiptMenu.accesskey "g">
+<!ENTITY dsnMenu.label "Prašyti laiško pristatymo pažymos">
+<!ENTITY dsnMenu.accesskey "r">
+
+<!ENTITY outputFormatMenu.label "Siunčiamo teksto tipas">
+<!ENTITY outputFormatMenu.accesskey  "t">
+<!ENTITY autoFormatCmd.label "Parenka programa">
+<!ENTITY autoFormatCmd.accesskey "P">
+<!ENTITY plainTextFormatCmd.label "Grynasis tekstas">
+<!ENTITY plainTextFormatCmd.accesskey "G">
+<!ENTITY htmlFormatCmd.label "Raiškusis tekstas (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "R">
+<!ENTITY bothFormatCmd.label "Abiejų tipų tekstai (grynasis ir raiškusis)">
+<!ENTITY bothFormatCmd.accesskey "A">
+
+<!ENTITY fileCarbonCopyCmd.label "Laiško kopiją įdėti į">
+<!ENTITY fileCarbonCopyCmd.accesskey "L">
+<!ENTITY fileHereMenu.label "Perkelti į aplanką">
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+
+<!ENTITY sendButton.label "Išsiųsti">
+<!ENTITY addressButton.label "Adresatai">
+<!ENTITY attachButton.label "Pridėti">
+<!ENTITY spellingButton.label "Tikrinti rašybą">
+<!ENTITY saveButton.label "Įrašyti">
+<!ENTITY stopButton.label "Stabdyti">
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+
+<!ENTITY addressBar.tooltip "Adresų juosta">
+<!ENTITY formatToolbar.tooltip "Formatavimo mygtukų juosta">
+<!ENTITY sendButton.tooltip "Išsiųsti laišką dabar"> 
+<!ENTITY sendlaterButton.tooltip "Išsiųsti laišką vėliau"> 
+<!ENTITY addressButton.tooltip "Parinkti laiško gavėjus iš adresų knygos"> 
+<!ENTITY attachButton.tooltip "Pridėti priedą prie šio laiško"> 
+<!ENTITY saveButton.tooltip "Įrašyti šį laišką"> 
+<!ENTITY stopButton.tooltip "Stabdyti atsiuntimą"> 
+<!-- context menu items -->
+
+<!ENTITY openAttachment.label "Atverti">
+<!ENTITY openAttachment.accesskey "A">
+<!ENTITY renameAttachment.label "Pervardinti…">
+<!ENTITY renameAttachment.accesskey "P">
+<!ENTITY deleteAttachment.accesskey "š">
+<!ENTITY selectAllAttachments.accesskey "v">
+<!ENTITY attachFile.label "Pridėti failą">
+<!ENTITY attachFile.accesskey "d">
+<!ENTITY attachPage.label "Pridėti tinklalapį…">
+<!ENTITY attachPage.accesskey "t">

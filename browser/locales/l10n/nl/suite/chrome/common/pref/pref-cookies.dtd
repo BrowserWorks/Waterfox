@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookies">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Acceptatiebeleid voor cookies">
+
+<!ENTITY disableCookies.label           "Cookies blokkeren">
+<!ENTITY disableCookies.accesskey       "b">
+
+<!ENTITY accNo3rdPartyCookies.label     "Cookies alleen toestaan voor de oorspronkelijke website (geen cookies van derden)">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "Cookies van derden van eerder bezochte websites toestaan">
+<!ENTITY acc3rdPartyVisited.accesskey   "d">
+
+<!ENTITY accAllCookies.label            "Alle cookies toestaan">
+<!ENTITY accAllCookies.accesskey        "t">
+
+<!ENTITY cookieRetentionPolicy.label    "Behoudbeleid voor cookies">
+
+<!ENTITY acceptNormally.label           "Cookies standaard accepteren">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Alleen accepteren voor huidige sessie">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "Cookies accepteren voor">
+<!ENTITY acceptforNDays.accesskey       "a">
+<!ENTITY days.label                     "dagen">
+
+<!ENTITY manageCookies.label            "Cookies en webpagina’s beheren">
+<!ENTITY manageCookiesDescription.label "Laat u opgeslagen cookies bekijken en beheren, evenals instellingen per website voor het accepteren en weigeren van cookies. Instellingen per website hebben voorrang op de bovenstaande instellingen.">
+
+<!ENTITY viewCookies.label              "Cookiebeheerder">
+<!ENTITY viewCookies.accesskey          "C">

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "메시지 저장">
+<!ENTITY securitySettings.label "보안 설정">
+<!ENTITY serverSettings.label "서버 설정">
+<!ENTITY serverType.label "서버 종류:">
+<!ENTITY serverName.label "서버 이름:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "아이디">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "포트:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "기본:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "새 메시지 확인">
+<!ENTITY biffStart.accesskey "y">
+<!ENTITY biffEnd.label "분 마다">
+<!ENTITY useIdleNotifications.label "새 메시지에 대한 즉시 서버 알림 허용">
+<!ENTITY useIdleNotifications.accesskey "w">
+<!ENTITY connectionSecurity.label "보안 연결:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "없음">
+<!ENTITY connectionSecurityType-1.label "STARTTLS (가능시)">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "인증 방식:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "메시지를 서버에 보관">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "헤더만 가져오기">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "최대">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "일 동안">
+<!ENTITY deleteOnServer2.label "삭제하기 전까지만">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "새 메시지를 자동으로 받아오기">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "메시지 삭제 설정:">
+<!ENTITY modelMoveToTrash.label "현재 폴더로 이동:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "삭제로 표시">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "바로 삭제">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "받은 편지함을 비우고 닫기">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "지운 편지함을 비우고 닫기">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "프로그램 시작할 때 새 메시지 확인">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "받아오기 전 확인">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "메시지">
+<!ENTITY alwaysAuthenticate.label "서버에 접속할 때 항상 인증 요청">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY newsrcFilePath1.label "News.rc 파일:">
+<!ENTITY newsrcPicker1.label "News.rc 파일 선택">
+<!ENTITY abbreviate.label "메일 폴더에 뉴스 그룹 이름 보이기:">
+<!ENTITY abbreviateOn.label "뉴스 그룹 이름 (예: 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "약어 이름 (예: 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "고급…">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY serverDefaultCharset2.label "기본 문자 인코딩:">
+<!ENTITY localPath1.label "로컬 디렉토리:">
+<!ENTITY localFolderPicker.label "로컬 디렉터리 위치">
+<!ENTITY browseFolder.label "찾아보기…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "찾아보기…">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "계정 설정">
+<!ENTITY accountSettingsDesc.label "이는 특수한 계정으로 특정 정보가 없습니다.">
+<!ENTITY storeType.label "메시지 저장 타입:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "폴더별 파일로 저장 (mbox)">
+<!ENTITY maildirStore.label "메시지별 파일로 저장 (maildir)">

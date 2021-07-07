@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Επεξεργασία στοιχείου" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Διατήρηση της διάρκειας κατά την αλλαγή της ημερομηνίας λήξης">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Από" >
+<!ENTITY newevent.to.label                  "Έως" >
+
+<!ENTITY newevent.status.label                    "Κατάσταση" >
+<!ENTITY newevent.status.accesskey                "Κ" >
+<!ENTITY newevent.eventStatus.none.label          "Μη καθορισμένη" >
+<!ENTITY newevent.eventStatus.none.accesskey      "Μ" >
+<!ENTITY newevent.todoStatus.none.label           "Μη καθορισμένο" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Ακυρωμένο" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "Α" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Ακυρωμένη" >
+<!ENTITY newevent.status.tentative.label          "Με επιφύλαξη" >
+<!ENTITY newevent.status.tentative.accesskey      "φ" >
+<!ENTITY newevent.status.confirmed.label          "Επιβεβαιωμένο" >
+<!ENTITY newevent.status.confirmed.accesskey      "Ε" >
+<!ENTITY newevent.status.needsaction.label        "Απαιτείται ενέργεια" >
+<!ENTITY newevent.status.inprogress.label         "Σε εξέλιξη" >
+<!ENTITY newevent.status.completed.label          "Ολοκληρώθηκε στις" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; ολοκληρωμένο">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Ειδοποίηση συμμετεχόντων">
+<!ENTITY event.attendees.notify.accesskey            "π">
+<!ENTITY event.attendees.notifyundisclosed.label     "Χωριστή πρόσκληση ανά συμμετέχοντα">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "Χ">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Αυτή η επιλογή αποστέλλει μία πρόσκληση με ηλεκτρονικό ταχυδρομείο ανά συμμετέχοντα. Κάθε πρόσκληση περιέχει μόνο τον αποδέκτη συμμετέχοντα, έτσι ώστε οι ταυτότητες των άλλων συμμετεχόντων να μην αποκαλύπτονται.">
+<!ENTITY event.attendees.disallowcounter.label       "Απαγόρευση αντιπροτάσεων">
+<!ENTITY event.attendees.disallowcounter.accesskey   "α">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Υποδηλώνει αν θα δέχεστε αντιπροτάσεις">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Νέο">
+<!ENTITY  event.menu.item.new.accesskey                   "Ν">
+<!ENTITY  event.menu.item.new.event.label                 "Εκδήλωση">
+<!ENTITY  event.menu.item.new.event.accesskey             "κ">
+<!ENTITY  event.menu.item.new.task.label                  "Εργασία">
+<!ENTITY  event.menu.item.new.task.accesskey              "Ε">
+<!ENTITY  event.menu.item.new.message.label               "Μήνυμα">
+<!ENTITY  event.menu.item.new.message.accesskey           "Μ">
+<!ENTITY  event.menu.item.new.contact.label               "Επαφή βιβλίου διευθύνσεων">
+<!ENTITY  event.menu.item.new.contact.accesskey           "φ">
+<!ENTITY  event.menu.item.close.label                     "Κλείσιμο">
+<!ENTITY  event.menu.item.close.accesskey                 "Κ">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Αποθήκευση">
+<!ENTITY  event.menu.item.save.accesskey                  "Α">
+<!ENTITY  event.menu.item.save.tab.accesskey              "α">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Αποθήκευση και κλείσιμο">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "θ">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "κ">
+
+<!ENTITY  event.menu.item.delete.label                    "Διαγραφή…">
+<!ENTITY  event.menu.item.delete.accesskey                "Δ">
+<!ENTITY  event.menu.item.page.setup.label                "Διαμόρφωση σελίδας">
+<!ENTITY  event.menu.item.page.setup.accesskey            "μ">
+<!ENTITY  event.menu.item.print.label                     "Εκτύπωση">
+<!ENTITY  event.menu.item.print.accesskey                 "Ε">
+
+<!ENTITY  event.menu.edit.label                           "Επεξεργασία">
+<!ENTITY  event.menu.edit.accesskey                       "Ε">
+<!ENTITY  event.menu.edit.undo.label                      "Αναίρεση">
+<!ENTITY  event.menu.edit.undo.accesskey                  "ρ">
+<!ENTITY  event.menu.edit.redo.label                      "Επανάληψη">
+<!ENTITY  event.menu.edit.redo.accesskey                  "Ε">
+<!ENTITY  event.menu.edit.cut.label                       "Αποκοπή">
+<!ENTITY  event.menu.edit.cut.accesskey                   "κ">
+<!ENTITY  event.menu.edit.copy.label                      "Αντιγραφή">
+<!ENTITY  event.menu.edit.copy.accesskey                  "γ">
+<!ENTITY  event.menu.edit.paste.label                     "Επικόλληση">
+<!ENTITY  event.menu.edit.paste.accesskey                 "λ">
+<!ENTITY  event.menu.edit.select.all.label                "Επιλογή όλων">
+<!ENTITY  event.menu.edit.select.all.accesskey            "λ">
+
+<!ENTITY  event.menu.view.label                           "Προβολή">
+<!ENTITY  event.menu.view.accesskey                       "Π">
+<!ENTITY  event.menu.view.toolbars.label                  "Γραμμές εργαλείων">
+<!ENTITY  event.menu.view.toolbars.accesskey              "Γ">
+<!ENTITY  event.menu.view.toolbars.event.label            "Γραμμή εργαλείων εκδηλώσεων">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "Γ">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Προσαρμογή…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "Π">
+<!ENTITY  event.menu.view.showlink.label                  "Εμφάνιση σχετικού συνδέσμου">
+<!ENTITY  event.menu.view.showlink.accesskey              "Ε">
+
+<!ENTITY  event.menu.options.label                            "Επιλογές">
+<!ENTITY  event.menu.options.accesskey                        "λ">
+<!ENTITY  event.menu.options.attendees.label                  "Πρόσκληση συμμετεχόντων…">
+<!ENTITY  event.menu.options.attendees.accesskey              "σ">
+<!ENTITY  event.menu.options.timezone2.label                  "Εμφάνιση ζωνών ώρας">
+<!ENTITY  event.menu.options.timezone2.accesskey              "ζ">
+<!ENTITY  event.menu.options.priority2.label                  "Προτεραιότητα">
+<!ENTITY  event.menu.options.priority2.accesskey              "Π">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Μη καθορισμένη">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "Μ">
+<!ENTITY  event.menu.options.priority.low.label               "Χαμηλή">
+<!ENTITY  event.menu.options.priority.low.accesskey           "Χ">
+<!ENTITY  event.menu.options.priority.normal.label            "Κανονική">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "Κ">
+<!ENTITY  event.menu.options.priority.high.label              "Υψηλή">
+<!ENTITY  event.menu.options.priority.high.accesskey          "Υ">
+<!ENTITY  event.menu.options.privacy.label                    "Ιδιωτικότητα">
+<!ENTITY  event.menu.options.privacy.accesskey                "Α">
+<!ENTITY  event.menu.options.privacy.public.label             "Δημόσια εκδήλωση">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "Δ">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Εμφάνιση μόνο ώρας και ημερομηνίας">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "Ε">
+<!ENTITY  event.menu.options.privacy.private.label            "Ιδιωτική εκδήλωση">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "Ι">
+<!ENTITY  event.menu.options.show.time.label                  "Διαθεσιμότητα">
+<!ENTITY  event.menu.options.show.time.accesskey              "Δ">
+<!ENTITY  event.menu.options.show.time.busy.label             "Απασχολημένος">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "Α">
+<!ENTITY  event.menu.options.show.time.free.label             "Διαθέσιμος">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "Δ">
+
+<!ENTITY event.invite.attendees.label                     "Πρόσκληση συμμετεχόντων…">
+<!ENTITY event.invite.attendees.accesskey                 "σ">
+<!ENTITY event.email.attendees.label                      "Σύνταξη email προς κάθε συμμετέχοντα…">
+<!ENTITY event.email.attendees.accesskey                  "χ">
+<!ENTITY event.email.tentative.attendees.label            "Σύνταξη email προς τους αναποφάσιστους συμμετέχοντες…">
+<!ENTITY event.email.tentative.attendees.accesskey        "φ">
+<!ENTITY event.remove.attendees.label2                    "Αφαίρεση όλων των συμμετεχόντων">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Αφαίρεση συμμετέχοντα">
+<!ENTITY event.remove.attendee.accesskey                  "μ">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Αποθήκευση">
+<!ENTITY  event.toolbar.saveandclose.label                "Αποθήκευση και κλείσιμο">
+<!ENTITY  event.toolbar.delete.label                      "Διαγραφή">
+<!ENTITY  event.toolbar.attendees.label                   "Πρόσκληση συμμετεχόντων">
+<!ENTITY  event.toolbar.privacy.label                     "Ιδιωτικότητα">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Αποθήκευση">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Αποθήκευση και κλείσιμο">
+<!ENTITY  event.toolbar.delete.tooltip                    "Διαγραφή">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Πρόσκληση συμμετεχόντων">
+<!ENTITY  event.toolbar.attachments.tooltip               "Προσθήκη επισυνάψεων">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Αλλαγή ιδιωτικότητας">
+<!ENTITY  event.toolbar.priority.tooltip                  "Αλλαγή προτεραιότητας">
+<!ENTITY  event.toolbar.status.tooltip                    "Αλλαγή κατάστασης">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Αλλαγή της εμφάνισης ως διαθέσιμος/απασχολημένος">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Εφαρμογή αντιπρότασης">
+<!ENTITY counter.button.proposal.accesskey                "φ">
+<!ENTITY counter.button.proposal.tooltip2                 "Τα πεδία εκδήλωσης θα συμπληρωθούν με τις τιμές της αντιπρότασης, με την αποθήκευση με ή χωρίς επιπρόσθετες αλλαγές θα ειδοποιηθούν όλοι οι συμμετέχοντες αντίστοιχα">
+<!ENTITY counter.button.original.label                    "Εφαρμογή αρχικών δεδομένων">
+<!ENTITY counter.button.original.accesskey                "ρ">
+<!ENTITY counter.button.original.tooltip2                 "Τα πεδία θα συμπληρωθούν με τις τιμές από την αρχική εκδήλωση, προτού γίνει η αντιπρόταση">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Τίτλος:" >
+<!ENTITY event.title.textbox.accesskey                    "Τ">
+<!ENTITY event.location.label                             "Τοποθεσία:" >
+<!ENTITY event.location.accesskey                         "θ">
+<!ENTITY event.categories.label                           "Κατηγορία:">
+<!ENTITY event.categories.accesskey                       "γ">
+<!ENTITY event.categories.textbox.label                   "Προσθήκη νέας κατηγορίας" >
+<!ENTITY event.calendar.label                             "Ημερολόγιο:" >
+<!ENTITY event.calendar.accesskey                         "Η">
+<!ENTITY event.attendees.label                            "Συμμετέχοντες:" >
+<!ENTITY event.attendees.accesskey                        "μ">
+<!ENTITY event.alldayevent.label                          "Ολοήμερη εκδήλωση" >
+<!ENTITY event.alldayevent.accesskey                      "Ο">
+<!ENTITY event.from.label                                 "Έναρξη:" >
+<!ENTITY event.from.accesskey                             "ν">
+<!ENTITY task.from.label                                  "Έναρξη:" >
+<!ENTITY task.from.accesskey                              "ν">
+<!ENTITY event.to.label                                   "Λήξη:" >
+<!ENTITY event.to.accesskey                               "ξ">
+<!ENTITY task.to.label                                    "Προθεσμία:" >
+<!ENTITY task.to.accesskey                                "Π">
+<!ENTITY task.status.label                                "Κατάσταση:" >
+<!ENTITY task.status.accesskey                            "Κ">
+<!ENTITY event.repeat.label                               "Επανάληψη:" >
+<!ENTITY event.repeat.accesskey                           "ψ">
+<!ENTITY event.until.label                                "Έως:">
+<!ENTITY event.until.accesskey                            "ω">
+<!ENTITY event.reminder.label                             "Υπενθύμιση:" >
+<!ENTITY event.reminder.accesskey                         "Υ">
+<!ENTITY event.description.label                          "Περιγραφή:" >
+<!ENTITY event.description.accesskey                      "φ">
+<!ENTITY event.attachments.label                          "Συνημμένα:" >
+<!ENTITY event.attachments.accesskey                      "Σ" >
+<!ENTITY event.attachments.menubutton.label               "Επισύναψη">
+<!ENTITY event.attachments.menubutton.accesskey           "Ε">
+<!ENTITY event.attachments.url.label                      "Ιστοσελίδα…">
+<!ENTITY event.attachments.url.accesskey                  "Ι">
+<!ENTITY event.attachments.popup.remove.label             "Αφαίρεση" >
+<!ENTITY event.attachments.popup.remove.accesskey         "Α" >
+<!ENTITY event.attachments.popup.open.label               "Άνοιγμα" >
+<!ENTITY event.attachments.popup.open.accesskey           "Ά" >
+<!ENTITY event.attachments.popup.removeAll.label          "Αφαίρεση όλων" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "Α" >
+<!ENTITY event.attachments.popup.attachPage.label         "Επισύναψη ιστοσελίδας…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "δ" >
+<!ENTITY event.url.label                                  "Σχετικός σύνδεσμος:" >
+<!ENTITY event.priority2.label                            "Προτεραιότητα:">
+
+<!ENTITY event.reminder.none.label                        "Χωρίς υπενθύμιση " >
+<!ENTITY event.reminder.0minutes.before.label             "0 λεπτά πριν" >
+<!ENTITY event.reminder.5minutes.before.label             "5 λεπτά πριν" >
+<!ENTITY event.reminder.15minutes.before.label            "15 λεπτά πριν" >
+<!ENTITY event.reminder.30minutes.before.label            "30 λεπτά πριν" >
+<!ENTITY event.reminder.1hour.before.label                "1 ώρα πριν" >
+<!ENTITY event.reminder.2hours.before.label               "2 ώρες πριν" >
+<!ENTITY event.reminder.12hours.before.label              "12 ώρες πριν" >
+<!ENTITY event.reminder.1day.before.label                 "1 ημέρα πριν" >
+<!ENTITY event.reminder.2days.before.label                "2 ημέρες πριν" >
+<!ENTITY event.reminder.1week.before.label                "1 εβδομάδα πριν" >
+<!ENTITY event.reminder.custom.label                      "Προσαρμογή…" >
+
+<!ENTITY event.reminder.multiple.label                    "Πολλαπλές υπενθυμίσεις…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Διαθεσιμότητα:">
+<!ENTITY event.statusbarpanel.privacy.label               "Ιδιωτικότητα:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Επεξεργασία επανάληψης">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Δεν επαναλαμβάνεται">
+<!ENTITY event.repeat.daily.label                       "Ημερησίως">
+<!ENTITY event.repeat.weekly.label                      "Εβδομαδιαίως">
+<!ENTITY event.repeat.every.weekday.label               "Μόνο τις καθημερινές">
+<!ENTITY event.repeat.bi.weekly.label                   "Ανά δεκαπενθήμερο">
+<!ENTITY event.repeat.monthly.label                     "Μηνιαίως">
+<!ENTITY event.repeat.yearly.label                      "Ετησίως">
+<!ENTITY event.repeat.custom.label                      "Προσαρμογή…">
+
+<!ENTITY event.recurrence.pattern.label                 "Μοτίβο επανάληψης">
+<!ENTITY event.recurrence.occurs.label                  "Να επαναλαμβάνεται" >
+<!ENTITY event.recurrence.day.label                     "ημερησίως" >
+<!ENTITY event.recurrence.week.label                    "εβδομαδιαίως" >
+<!ENTITY event.recurrence.month.label                   "μηνιαίως" >
+<!ENTITY event.recurrence.year.label                    "ετησίως" >
+
+<!ENTITY event.recurrence.pattern.every.label           "ανά" >
+<!ENTITY repeat.units.days.both                         "ημέρα/ες" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "μόνο τις καθημερινές" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "ανά" >
+<!ENTITY repeat.units.weeks.both                        "εβδομάδα/ες" >
+<!ENTITY event.recurrence.on.label                      "κάθε:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "ανά" >
+<!ENTITY repeat.units.months.both                       "μήνα/ες" >
+<!ENTITY event.recurrence.monthly.every.label           "κάθε" >
+<!ENTITY event.recurrence.monthly.first.label           "κάθε πρώτη">
+<!ENTITY event.recurrence.monthly.second.label          "κάθε δεύτερη">
+<!ENTITY event.recurrence.monthly.third.label           "κάθε τρίτη">
+<!ENTITY event.recurrence.monthly.fourth.label          "κάθε τέταρτη">
+<!ENTITY event.recurrence.monthly.fifth.label           "κάθε πέμπτη">
+<!ENTITY event.recurrence.monthly.last.label            "κάθε τελευταία">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Κυριακή" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Δευτέρα" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Τρίτη" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Τετάρτη" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Πέμπτη" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Παρασκευή" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Σάββατο" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "ημέρα του μήνα">
+<!ENTITY event.recurrence.repeat.recur.label            "Επανάληψη την/τις">
+
+<!ENTITY event.recurrence.every.label                        "ανά:" >
+<!ENTITY repeat.units.years.both                             "έτος/η" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "κάθε" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Ιανουαρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Φεβρουαρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Μαρτίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Απριλίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Μαΐου" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Ιουνίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Ιουλίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Αυγούστου" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Σεπτεμβρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Οκτωβρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Νοεμβρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Δεκεμβρίου" >
+<!ENTITY event.recurrence.yearly.every.label                 "κάθε">
+<!ENTITY event.recurrence.yearly.first.label                 "κάθε πρώτη">
+<!ENTITY event.recurrence.yearly.second.label                "κάθε δεύτερη">
+<!ENTITY event.recurrence.yearly.third.label                 "κάθε τρίτη">
+<!ENTITY event.recurrence.yearly.fourth.label                "κάθε τέταρτη">
+<!ENTITY event.recurrence.yearly.fifth.label                 "κάθε πέμπτη">
+<!ENTITY event.recurrence.yearly.last.label                  "κάθε τελευταία">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Κυριακή" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Δευτέρα" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Τρίτη" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Τετάρτη" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Πέμπτη" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Παρασκευή" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Σάββατο" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "ημέρα" >
+<!ENTITY event.recurrence.of.label                           "του" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Ιανουαρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Φεβρουαρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Μαρτίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Απριλίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Μαΐου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Ιουνίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Ιουλίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Αυγούστου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Σεπτεμβρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Οκτωβρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Νοεμβρίου" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Δεκεμβρίου" >
+
+<!ENTITY event.recurrence.range.label                   "Εμβέλεια επανάληψης">
+<!ENTITY event.recurrence.forever.label                 "Χωρίς τέλος" >
+<!ENTITY event.recurrence.repeat.for.label              "Δημιουργία" >
+<!ENTITY event.recurrence.appointments.label            "Συνάντηση(εις)" >
+<!ENTITY event.repeat.until.label                       "Να επαναλαμβάνεται μέχρι και τις" >
+<!ENTITY event.recurrence.preview.label                 "Προεπισκόπηση">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Πρόσκληση συμμετεχόντων">
+<!ENTITY event.organizer.label                  "Διοργανωτής">
+<!ENTITY event.freebusy.suggest.slot            "Προτεινόμενο χρονικό περιθώριο:">
+<!ENTITY event.freebusy.button.next.slot        "Επόμενο περιθώριο">
+<!ENTITY event.freebusy.button.previous.slot    "Προηγούμενο περιθώριο">
+<!ENTITY event.freebusy.zoom                    "Ζουμ:">
+<!ENTITY event.freebusy.legend.free             "Διαθέσιμος/η" >
+<!ENTITY event.freebusy.legend.busy             "Απασχολημένος/η" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Με επιφύλαξη" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Εκτός γραφείου" >
+<!ENTITY event.freebusy.legend.unknown          "Χωρίς πληροφορία" >
+<!ENTITY event.attendee.role.required           "Απαιτούμενη συμμετοχή">
+<!ENTITY event.attendee.role.optional           "Προαιρετική συμμετοχή">
+<!ENTITY event.attendee.role.chair              "Επικεφαλής">
+<!ENTITY event.attendee.role.nonparticipant     "Μη συμμετέχων">
+<!ENTITY event.attendee.usertype.individual     "Μεμονωμένο άτομο">
+<!ENTITY event.attendee.usertype.group          "Ομάδα">
+<!ENTITY event.attendee.usertype.resource       "Πόρος">
+<!ENTITY event.attendee.usertype.room           "Αίθουσα">
+<!ENTITY event.attendee.usertype.unknown        "Άγνωστο">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Παρακαλώ καθορίστε τη ζώνη ώρας">
+<!ENTITY event.timezone.custom.label     "Περισσότερες ζώνες ώρας…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Γενικά">
+<!ENTITY read.only.title.label           "Τίτλος:">
+<!ENTITY read.only.calendar.label        "Ημερολόγιο:">
+<!ENTITY read.only.event.start.label     "Ημερομηνία έναρξης:">
+<!ENTITY read.only.task.start.label      "Ημερομηνία έναρξης:">
+<!ENTITY read.only.event.end.label       "Ημερομηνία λήξης:">
+<!ENTITY read.only.task.due.label        "Προθεσμία:">
+<!ENTITY read.only.repeat.label          "Επανάληψη:">
+<!ENTITY read.only.location.label        "Τοποθεσία:">
+<!ENTITY read.only.category.label        "Κατηγορία:">
+<!ENTITY read.only.organizer.label       "Διοργανωτής:">
+<!ENTITY read.only.reminder.label        "Υπενθύμιση:">
+<!ENTITY read.only.attachments.label     "Συνημμένα:">
+<!ENTITY read.only.attendees.label       "Συμμετέχοντες">
+<!ENTITY read.only.description.label     "Περιγραφή">
+<!ENTITY read.only.link.label            "Σχετικός σύνδεσμος">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Αποθήκευση και κλείσιμο">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Αποθήκευση αλλαγών και κλείσιμο του παραθύρου χωρίς αλλαγή της κατάστασης συμμετοχής και αποστολής απόκρισης">
+<!ENTITY summary.dialog.accept.label            "Αποδοχή">
+<!ENTITY summary.dialog.accept.tooltiptext      "Αποδοχή της πρόσκλησης">
+<!ENTITY summary.dialog.tentative.label         "Με επιφύλαξη">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Αποδοχή της πρόσκλησης με επιφύλαξη">
+<!ENTITY summary.dialog.decline.label           "Απόρριψη">
+<!ENTITY summary.dialog.decline.tooltiptext     "Απόρριψη της πρόσκλησης">
+<!ENTITY summary.dialog.dontsend.label          "Να μην αποσταλεί απόκριση">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Αλλαγή της κατάστασης συμμετοχής χωρίς αποστολή απάντησης στον οργανωτή και κλείσιμο του παραθύρου">
+<!ENTITY summary.dialog.send.label              "Αποστολή μιας απάντησης τώρα">
+<!ENTITY summary.dialog.send.tooltiptext        "Αποστολή μιας απάντησης στον οργανωτή  και κλείσιμο του παραθύρου">

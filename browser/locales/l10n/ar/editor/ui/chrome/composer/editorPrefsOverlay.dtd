@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!--LOCALIZATION NOTE (editorCheck.label): DONT_TRANSLATE -->
+<!ENTITY editorCheck.label "المحرر">
+<!ENTITY editorCheck.accesskey "c">
+
+<!ENTITY compose.label "المحرر">
+<!ENTITY editing.label "إعدادات الصفحة الجديدة">
+<!ENTITY toolbars.label "أشرطة الأدوات">
+<!ENTITY publish.label "النشر">

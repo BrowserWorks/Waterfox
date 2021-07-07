@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Thư mời">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Cập nhật danh sách thư mời.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Không tìm thấy các thư mời chưa có xác nhận.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "Chấp nhận">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Từ chối">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Lặp lại sự kiện">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Sự kiện cả ngày">
+<!ENTITY calendar.invitations.list.location.text                        "Địa chỉ: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Người tổ chức: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Người tham dự: ">
+<!ENTITY calendar.invitations.list.none.text                            "Không có">

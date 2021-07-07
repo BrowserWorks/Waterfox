@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Αποθηκευμένα cookies">
+<!ENTITY     tab.bannedservers.label        "Ιστοσελίδες cookie">
+<!ENTITY     div.bannedservers.label        "Διαχειριστείτε ιστοσελίδες που μπορούν ή όχι, να αποθηκεύσουν cookies στον υπολογιστή σας.">
+<!ENTITY     div.cookiesonsystem.label      "Δείτε και αφαιρέστε cookies που είναι αποθηκευμένα στον υπολογιστή σας.">
+<!ENTITY     treehead.cookiename.label      "Όνομα cookie">
+<!ENTITY     treehead.cookiedomain.label    "Ιστοσελίδα">
+<!ENTITY     treehead.cookieexpires.label   "Λήξη">
+<!ENTITY     treehead.infoselected.label    "Πληροφορίες για το επιλεγμένο cookie">
+<!ENTITY     button.removecookie.label      "Αφαίρεση cookie">
+<!ENTITY     button.removecookie.accesskey  "Α">
+<!ENTITY     button.removeallcookies.label  "Αφαίρεση όλων των cookies">
+<!ENTITY     button.removeallcookies.accesskey "φ">
+
+<!ENTITY     search.placeholder             "Αναζήτηση cookies">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Όνομα:">
+<!ENTITY     props.value.label              "Περιεχόμενο:">
+<!ENTITY     props.domain.label             "Κεντρικός υπολογιστής:">
+<!ENTITY     props.path.label               "Διαδρομή:">
+<!ENTITY     props.secure.label             "Αποστολή για:">
+<!ENTITY     props.expires.label            "Λήγει:">
+
+<!ENTITY     treehead.sitename.label        "Ιστοσελίδα">
+<!ENTITY     treehead.scheme.label          "Σχέδιο">
+<!ENTITY     treehead.status.label          "Κατάσταση">
+<!ENTITY     windowtitle.label              "Διαχείριση cookies">
+
+<!ENTITY     blockSite.label                "Φραγή">
+<!ENTITY     blockSite.accesskey            "Φ">
+<!ENTITY     allowSite.label                "Αποδοχή">
+<!ENTITY     allowSite.accesskey            "Α">
+<!ENTITY     allowSiteSession.label         "Συνεδρία">
+<!ENTITY     allowSiteSession.accesskey     "Σ">
+<!ENTITY     removepermission.label         "Αφαίρεση ιστοσελίδας">
+<!ENTITY     removepermission.accesskey     "Α">
+<!ENTITY     removeallpermissions.label     "Αφαίρεση όλων των ιστοσελίδων">
+<!ENTITY     removeallpermissions.accesskey "φ">
+
+<!ENTITY     futureCookies.label            "Απόρριψη μελλοντικών cookies από ιστοσελίδες με διαγραμμένα cookies">
+<!ENTITY     futureCookies.accesskey        "Α">

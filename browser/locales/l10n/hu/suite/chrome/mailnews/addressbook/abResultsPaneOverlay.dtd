@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Címjegyzék">
+<!ENTITY Addrbook.accesskey                    "C">
+<!ENTITY GeneratedName.label                   "Név">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-mail">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Szervezet">
+<!ENTITY Company.accesskey                     "S">
+<!ENTITY _PhoneticName.label                   "Fonetikus név">
+<!ENTITY _PhoneticName.accesskey               "F">
+<!ENTITY NickName.label                        "Becenév">
+<!ENTITY NickName.accesskey                    "B">
+<!ENTITY SecondEmail.label                     "További e-mail">
+<!ENTITY SecondEmail.accesskey                 "T">
+<!ENTITY Department.label                      "Részleg">
+<!ENTITY Department.accesskey                  "R">
+<!ENTITY JobTitle.label                        "Beosztás">
+<!ENTITY JobTitle.accesskey                    "B">
+<!ENTITY CellularNumber.label                  "Mobil">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Személyhívó">
+<!ENTITY PagerNumber.accesskey                 "h">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Otthoni telefon">
+<!ENTITY HomePhone.accesskey                   "O">
+<!ENTITY WorkPhone.label                       "Munkahelyi telefon">
+<!ENTITY WorkPhone.accesskey                   "u">
+<!ENTITY ScreenName.label                      "Felhasználói név">
+<!ENTITY ScreenName.accesskey                  "F">
+<!ENTITY ChatName.label                        "Csevegési név">
+<!ENTITY ChatName.accesskey                    "e">
+<!ENTITY sortAscending.label                   "Növekvő sorrendben">
+<!ENTITY sortAscending.accesskey               "N">
+<!ENTITY sortDescending.label                  "Csökkenő sorrendben">
+<!ENTITY sortDescending.accesskey              "C">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Levél írása">
+<!ENTITY composeEmail.accesskey                "L">
+<!ENTITY copyAddress.label                     "E-mail cím másolása">
+<!ENTITY copyAddress.accesskey                 "E">
+<!ENTITY deleteAddrBookCard.label              "Törlés">
+<!ENTITY deleteAddrBookCard.accesskey          "T">
+<!ENTITY newAddrBookCard.label                 "Új névjegy…">
+<!ENTITY newAddrBookCard.accesskey             "n">
+<!ENTITY newAddrBookMailingList.label          "Új címlista…">
+<!ENTITY newAddrBookMailingList.accesskey      "c">
+<!ENTITY addrBookCardProperties.label          "Tulajdonságok">
+<!ENTITY addrBookCardProperties.accesskey      "T">

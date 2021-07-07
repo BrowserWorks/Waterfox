@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Nokre gongar er nettsider tilgjengelege på fleire språk. Vel kva for språk du vil vise.">
+<!ENTITY languages.customize.title                      "Språk">
+<!ENTITY langtitle.label                                "Språk for nettsider">
+<!ENTITY languages.customize.prefAddLangDescript        "Velg kva for språk du vil leggje til.">
+<!ENTITY languages.customize.addButton.label            "Legg til…">
+<!ENTITY languages.customize.addButton.accesskey        "L">
+<!ENTITY languages.customize.deleteButton.label         "Fjern">
+<!ENTITY languages.customize.deleteButton.accesskey     "F">
+<!ENTITY languages.customize.add.title.label            "Legg til språk">
+<!ENTITY languages.customize.available.label            "Språk:">
+<!ENTITY languages.customize.active.label               "Språk i føretrekt rekkjefølgje:">
+<!ENTITY languages.customize.active.accesskey           "S">
+<!ENTITY languages.customize.others.label               "Andre:">
+<!ENTITY languages.customize.others.accesskey           "A">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Teiknkoding for eldre innhald">
+<!ENTITY languages.customize.Fallback2.label            "Reserve-teiknkoding:">
+<!ENTITY languages.customize.Fallback2.accesskey        "R">
+<!ENTITY languages.customize.Fallback2.desc             "Vert brukt for eldre innhald som ikkje spesifiserer kva for teiknkoding som vert brukt.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "t.d. nn, en-us">
+<!ENTITY languages.customize.moveUp.label               "Flytt opp">
+<!ENTITY languages.customize.moveUp.accesskey           "O">
+<!ENTITY languages.customize.moveDown.label             "Flytt ned">
+<!ENTITY languages.customize.moveDown.accesskey         "N">

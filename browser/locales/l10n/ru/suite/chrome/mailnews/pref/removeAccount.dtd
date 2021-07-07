@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Удаление учётной записи и данных">
+<!ENTITY removeButton.label           "Удалить">
+<!ENTITY removeButton.accesskey       "а">
+<!ENTITY removeAccount.label          "Удаление информации об учётной записи">
+<!ENTITY removeAccount.accesskey      "е">
+<!ENTITY removeAccount.desc           "Стирает эту учетную запись только из памяти &brandShortName;. Не влияет на саму учетную запись на сервере.">
+<!ENTITY removeData.label             "Удаление данных сообщений">
+<!ENTITY removeData.accesskey         "н">
+<!ENTITY removeDataChat.label         "Удаление данных разговоров">
+<!ENTITY removeDataChat.accesskey     "л">
+<!ENTITY removeDataLocalAccount.desc  "Удаляет все сообщения, папки и фильтры, связанные с этой учетной записью, с локального диска. Это не повлияет на некоторые сообщения, которые всё ещё могут храниться на сервере. Не выбирайте это, если вы планируете архивировать локальные данные или повторно использовать их позже в &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Удаляет все сообщения, папки и фильтры, связанные с этой учетной записью, с локального диска. Ваши сообщения и папки по-прежнему будут хранится на сервере.">
+<!ENTITY removeDataChatAccount.desc   "Удаляет все журналы разговоров, сохранённые для этой учётной записи на локальном диске.">
+<!ENTITY showData.label               "Показать расположение данных">
+<!ENTITY showData.accesskey           "к">
+<!ENTITY progressPending              "Удаление выбранных данных…">
+<!ENTITY progressSuccess              "Удаление прошло успешно.">
+<!ENTITY progressFailure              "Не удалось провести удаление.">

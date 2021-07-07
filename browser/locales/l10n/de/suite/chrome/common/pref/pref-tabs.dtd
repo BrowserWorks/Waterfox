@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Tabbed Browsing">
+
+<!ENTITY tabDisplay.label "Tab-Anzeige">
+<!ENTITY autoHide.label "Tab-Leiste verstecken, wenn nur ein Tab angezeigt wird">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "Zu neuen Tabs, die von Links geöffnet werden, umschalten">
+<!ENTITY background.accesskey "Z">
+<!ENTITY warnOnClose.label "Warnung beim Schließen von Fenstern mit mehreren Tabs">
+<!ENTITY warnOnClose.accesskey "W">
+<!ENTITY relatedAfterCurrent.label "Verbundene Tabs neben aktuellem Tab öffnen">
+<!ENTITY relatedAfterCurrent.accesskey "V">
+
+<!ENTITY loadGroup.label "Beim Öffnen einer Lesezeichengruppe">
+<!ENTITY loadGroupAppend.label "Tabs hinzufügen">
+<!ENTITY loadGroupAppend.accesskey "h">
+<!ENTITY loadGroupReplace.label "Existierende Tabs ersetzen">
+<!ENTITY loadGroupReplace.accesskey "E">
+
+<!ENTITY openTabs.label "Tabs statt Fenster öffnen bei">
+
+<!ENTITY openManagers.label "In neuem Tab statt eines alleinstehenden Fensters öffnen">
+<!ENTITY openDataManager.label "Datenverwaltung">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "Add-on-Verwaltung">
+<!ENTITY openAddOnsManager.accesskey "A">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Najít a nahradit">
+<!ENTITY findField.label "Najít:">
+<!ENTITY findField.accesskey "N">
+<!ENTITY replaceField.label "Nahradit čím:">
+<!ENTITY replaceField.accesskey "h">
+<!ENTITY caseSensitiveCheckbox.label "Rozlišovat malá a velká písmena">
+<!ENTITY caseSensitiveCheckbox.accesskey "l">
+<!ENTITY wrapCheckbox.label "Zalamovat">
+<!ENTITY wrapCheckbox.accesskey "Z">
+<!ENTITY backwardsCheckbox.label "Hledat pozpátku">
+<!ENTITY backwardsCheckbox.accesskey "p">
+<!ENTITY findNextButton.label "Najít další">
+<!ENTITY findNextButton.accesskey "d">
+<!ENTITY replaceButton.label "Nahradit">
+<!ENTITY replaceButton.accesskey "r">
+<!ENTITY replaceAndFindButton.label "Nahradit a najít">
+<!ENTITY replaceAndFindButton.accesskey "i">
+<!ENTITY replaceAllButton.label "Nahradit vše">
+<!ENTITY replaceAllButton.accesskey "v">
+<!ENTITY closeButton.label "Zavřít">
+<!ENTITY closeButton.accesskey "t">

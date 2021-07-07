@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "图片">
+
+<!ENTITY imageBlocking.label            "图片接收策略">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "定义 &brandShortName; 处理图片的方式。">
+
+<!ENTITY loadAllImagesRadio.label       "载入所有图像">
+<!ENTITY loadAllImagesRadio.accesskey   "L">
+<!ENTITY loadOrgImagesRadio.label       "仅载入来自原服务器的图像">
+<!ENTITY loadOrgImagesRadio.accesskey   "n">
+<!ENTITY loadNoImagesRadio.label        "不载入任何图片">
+<!ENTITY loadNoImagesRadio.accesskey    "D">
+<!ENTITY viewPermissions.label          "管理权限">
+<!ENTITY viewPermissions.accesskey      "P">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Welcome to &brandShortName; Mail &amp; Newsgroups">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Welcome to <a id="vendorURL" href="">&brandShortName;</a> Mail &amp; Newsgroups!'>
+<!ENTITY description.label
+"&brandShortName; Mail &amp; Newsgroups is a powerful open-source mail and news
+client, supporting advanced junk mail detection and other useful features.">
+<!ENTITY features.title "Features">
+<!ENTITY feat_multiacc.label "Support for multiple accounts">
+<!ENTITY feat_junk.label "Junk Mail detection">
+<!ENTITY feat_feeds.label "Feed Reader">
+<!ENTITY feat_filters.label "Message Filters">
+<!ENTITY feat_htmlmsg.label "HTML message support">
+<!ENTITY feat_abook.label "Address Book">
+<!ENTITY feat_tags.label "Customisable Tags and Mail Views">
+<!ENTITY feat_integration.label
+"Tight integration with the &brandShortName; application suite">
+<!ENTITY dict.title "Dictionaries">
+<!ENTITY dict_intro.label "Dictionaries are used to check the spelling of your messages.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label2
+'Many additional languages can be installed from the
+<a id="dictURL" href="">dictionaries</a> section on
+<a href="https://addons.thunderbird.net/seamonkey/">SeaMonkey and Thunderbird Add-ons</a>.'>
+<!ENTITY info.title "More Information">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">We</a> welcome bug reports and feature
+requests, but please read the <a id="releaseNotesURL" href="">release notes</a> and query
+<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> first.'>

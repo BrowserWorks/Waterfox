@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP protokolas">
+<!-- Network-->
+
+<!ENTITY prefDirect.label                    "Tiesioginio ryšio parinktys">
+<!ENTITY prefProxy.label                     "Ryšio per įgaliotąjį serverį parinktys">
+<!ENTITY prefEnableHTTP10.label              "HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "H">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "1">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "Šios parinktys gali pagerinti HTTP ryšius. Pavyzdžiui, yra įgaliotųjų serverių, reikalaujančių HTTP/1.0 protokolo (daugiau apie tai rašoma programų paketo laidos informacijoje).">
+<!ENTITY prefUseragent.label                 "Naršyklės identifikacinė eilutė">
+<!ENTITY prefFirefoxCompat.label             "Skelbti apie suderinamumą su „Firefox“">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+
+
+

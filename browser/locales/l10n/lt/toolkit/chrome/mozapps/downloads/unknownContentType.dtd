@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Pasirinkote atverti failą:">
+<!ENTITY  from.label                  "iš:">
+<!ENTITY  actionQuestion.label        "Ką „&brandShortName;“ turėtų daryti su šiuo failu?">
+
+<!ENTITY  openWith.label              "atverti programa:">
+<!ENTITY  openWith.accesskey          "t">
+<!ENTITY  other.label                 "Kita…">
+
+<!ENTITY  saveFile.label              "įrašyti į diską">
+<!ENTITY  saveFile.accesskey          "r">
+
+<!ENTITY  rememberChoice.label        "Aukščiau parinktą nuostatą taikyti visiems šio tipo failams.">
+<!ENTITY  rememberChoice.accesskey    "o">
+
+<!ENTITY  whichIs.label              "tipas:">
+
+<!ENTITY  chooseHandlerMac.label      "Parinkti…">
+<!ENTITY  chooseHandlerMac.accesskey  "r">
+<!ENTITY  chooseHandler.label         "Parinkti…">
+<!ENTITY  chooseHandler.accesskey     "r">
+
+<!ENTITY  unknownPromptText.label     "Ar įrašyti šį failą?">

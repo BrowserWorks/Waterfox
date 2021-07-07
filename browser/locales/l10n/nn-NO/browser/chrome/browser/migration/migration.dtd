@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importvegvisar">
+
+<!ENTITY importFrom.label               "Importer innstillingar, bokmerke, historikk, passord og annan informasjon frå:">
+<!ENTITY importFromUnix.label           "Importer innstillingar, bokmerke, historikk, passord og annan informasjon frå:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Ikkje importer noko">
+<!ENTITY importFromNothing.accesskey    "I">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "F">
+<!ENTITY importFrom360se.label          "360 sikker nettlesar">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Klarte ikkje å finne program som inneheld bokmerke, historikk eller passordinformasjon.">
+
+<!ENTITY importSource.title             "Importer innstillingar og data">
+<!ENTITY importItems.title              "Element som skal importerast">
+<!ENTITY importItems.label              "Vel kva for element som skal importerast:">
+
+<!ENTITY migrating.title                "Importerer…">
+<!ENTITY migrating.label                "Følgjande element vert no importerte…">
+
+<!ENTITY selectProfile.title            "Vel profil">
+<!ENTITY selectProfile.label            "Du kan importere frå følgjande profilar:">
+
+<!ENTITY done.title                     "Import fullført">
+<!ENTITY done.label                     "Følgjande element er importerte:">
+
+<!ENTITY closeSourceBrowser.label       "Kontroller at den valde nettlesaren er attlaten før du held fram.">

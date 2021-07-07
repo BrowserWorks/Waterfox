@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importeerwizard">
+
+<!ENTITY importFromWin.label            "Opties, accountinstellingen, adresboek, filters en andere gegevens importeren uit:">
+<!ENTITY importFromNonWin.label         "Voorkeuren, accountinstellingen, adresboek en andere gegevens importeren uit:">
+<!ENTITY importSourceNotFound.label     "Er is geen toepassing gevonden om gegevens uit te importeren.">
+
+<!ENTITY importFromNothing.label        "Niets importeren">
+<!ENTITY importFromNothing.accesskey    "t">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 of nieuwer">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Instellingen en e-mailmappen importeren">
+<!ENTITY importItems.title              "Te importeren items">
+<!ENTITY importItems.label              "Selecteer de te importeren items:">
+
+<!ENTITY migrating.title                "Importeren…">
+<!ENTITY migrating.label                "De volgende items worden momenteel geïmporteerd…">
+
+<!ENTITY selectProfile.title            "Profiel selecteren">
+<!ENTITY selectProfile.label            "De volgende profielen zijn beschikbaar om uit te importeren:">
+
+<!ENTITY done.title                     "Importeren voltooid">
+<!ENTITY done.label                     "De volgende items zijn met succes geïmporteerd:">

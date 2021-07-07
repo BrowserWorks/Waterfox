@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label                 "Arbeid fråkopla">
+<!ENTITY  offlineGoOfflineCmd.accesskey             "f">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+<!ENTITY fileMenu.label                   "Fil">
+<!ENTITY fileMenu.accesskey               "f">
+<!ENTITY newMenu.label                    "Ny">
+<!ENTITY newMenu.accesskey                "N">
+<!ENTITY newBlankPageCmd.label            "Lag ny side">
+<!ENTITY newBlankPageCmd.accesskey        "s">
+<!ENTITY newBlankPageCmd.key              "n">
+<!ENTITY newPageFromTemplateCmd.label "Side frå mal">
+<!ENTITY newPageFromTemplateCmd.accesskey "m">
+<!ENTITY newPageFromDraftCmd.label "Side frå utkast">
+<!ENTITY newPageFromDraftCmd.accesskey "u">
+<!ENTITY newNavigatorCmd.label "Nettlesarvindauge">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "N">
+<!ENTITY newPrivateWindowCmd.label "Privat vindauge">
+<!ENTITY newPrivateWindowCmd.key "B">
+<!ENTITY newPrivateWindowCmd.accesskey "v">
+<!ENTITY printSetupCmd.label "Utskriftsformat…">
+<!ENTITY printSetupCmd.accesskey "k">
+<!ENTITY printPreviewCmd.label "Førehandsvising">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Skriv ut…">
+<!ENTITY printCmd.accesskey "u">
+<!ENTITY printCmd.key "P">
+
+<!ENTITY editMenu.label                   "Rediger">
+<!ENTITY editMenu.accesskey               "R">
+<!ENTITY undoCmd.label                    "Angre">
+<!ENTITY undoCmd.key                      "Z">
+<!ENTITY undoCmd.accesskey                "A">
+<!ENTITY redoCmd.label                    "Gjenta">
+<!ENTITY redoCmd.key                      "Y">
+<!ENTITY redoCmd.accesskey                "G">
+<!ENTITY cutCmd.label                     "Klipp ut">
+<!ENTITY cutCmd.key                       "X">
+<!ENTITY cutCmd.accesskey                 "u">
+<!ENTITY copyCmd.label                    "Kopier">
+<!ENTITY copyCmd.key                      "C">
+<!ENTITY copyCmd.accesskey                "k">
+<!ENTITY pasteCmd.label                   "Lim inn">
+<!ENTITY pasteCmd.key                     "V">
+<!ENTITY pasteCmd.accesskey               "L">
+<!ENTITY pasteGoCmd.label                 "Lim inn og opne">
+<!ENTITY pasteGoCmd.accesskey             "n">
+
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+<!ENTITY pasteSearchCmd.label             "Lim inn og søk">
+<!ENTITY pasteSearchCmd.accesskey         "ø">
+<!ENTITY deleteCmd.label                  "Slett">
+<!ENTITY deleteCmd.accesskey              "t">
+<!ENTITY selectAllCmd.label               "Merk alt">
+<!ENTITY selectAllCmd.key                 "A">
+<!ENTITY selectAllCmd.accesskey           "M">
+<!ENTITY clearHistoryCmd.label				"Tøm søkjehistorikk">  
+<!ENTITY clearHistoryCmd.accesskey			"T"> 
+<!ENTITY showSuggestionsCmd.label			"Vis forslag">  
+<!ENTITY showSuggestionsCmd.accesskey		"f"> 
+<!ENTITY preferencesCmd.label				"Innstillingar…">
+<!ENTITY preferencesCmd.key					"E">  
+<!ENTITY preferencesCmd.accesskey			"I"> 
+<!ENTITY findBarCmd.key "F">
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findBarCmd.accesskey "F">
+<!ENTITY findReplaceCmd.accesskey "l">
+<!ENTITY findAgainCmd.label "Finn igjen">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Finn førre">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "o">
+<!ENTITY findTypeTextCmd.label "Finn tekst medan du skriv">
+<!ENTITY findTypeTextCmd.accesskey "t">
+<!ENTITY findTypeLinksCmd.label "Finn lenkjer medan du skriv">
+<!ENTITY findTypeLinksCmd.accesskey "k">
+
+<!ENTITY viewMenu.label					"Vis"> 
+<!ENTITY viewMenu.accesskey               "V">
+<!ENTITY viewToolbarsMenu.label				"Vis/Gøym"> 
+<!ENTITY viewToolbarsMenu.accesskey			"v"> 
+<!ENTITY showTaskbarCmd.label					"Statuslinje">  
+<!ENTITY showTaskbarCmd.accesskey				"s"> 
+
+<!ENTITY helpMenu.label					"Hjelp"> 
+<!ENTITY helpMenu.accesskey				"h"> 
+
+<!ENTITY helpTroubleshootingInfo.label      "Feilsøkingsinfo">
+<!ENTITY helpTroubleshootingInfo.accesskey  "e">
+<!ENTITY releaseCmd.label                   "Versjonsnotat">
+<!ENTITY releaseCmd.accesskey               "V">
+<!ENTITY helpSafeMode.label                 "Start på nytt med avslåtte utvidingar">
+<!ENTITY helpSafeMode.accesskey             "t">
+<!ENTITY updateCmd.label                    "Søk etter oppdateringar…">
+<!ENTITY updateCmd.accesskey                "S">
+<!ENTITY aboutCmd.label					"Om &brandShortName;">
+<!ENTITY aboutCmd.accesskey				"O">
+<!ENTITY aboutCommPluginsCmd.label			"Om programtillegg">
+<!ENTITY aboutCommPluginsCmd.accesskey			"p">
+
+<!ENTITY direct.label                                   "Tilkopla (ingenmellomtenar)">
+<!ENTITY direct.accesskey                               "n">
+<!ENTITY manual.label                                   "Tilkopla (manuell mellomtenar)">
+<!ENTITY manual.accesskey                               "m">
+<!ENTITY pac.label                                      "Tilkopla (automatisk mellomtenar)">
+<!ENTITY pac.accesskey                                  "a">
+<!ENTITY wpad.label                                     "Tilkopla (automatisk oppdaging av mellomtenar)">
+<!ENTITY wpad.accesskey                                 "u">
+<!ENTITY system.label                                   "Tilkopla (system-mellomtenar)">
+<!ENTITY system.accesskey                               "s">
+
+<!ENTITY proxy.label                                    "Innstillingar for mellomtenar…">
+<!ENTITY proxy.accesskey                                "o">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "Bytt tekstretning">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "e">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY customizeToolbarContext.label            "Tilpass…">
+<!ENTITY customizeToolbarContext.accesskey        "T">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "Innstillingar for denne verktøylinja">
+<!ENTITY customizeToolbar.toolbarmode.accesskey   "n">
+<!ENTITY customizeToolbar.iconsAndText.label      "Ikon og tekst">
+<!ENTITY customizeToolbar.iconsAndText.accesskey  "k">
+<!ENTITY customizeToolbar.icons.label             "Ikon">
+<!ENTITY customizeToolbar.icons.accesskey         "I">
+<!ENTITY customizeToolbar.text.label              "Tekst">
+<!ENTITY customizeToolbar.text.accesskey          "T">
+<!ENTITY customizeToolbar.useSmallIcons.label     "Bruk små ikon">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "B">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "Vis tekst ved sidan av ikon">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "V">
+<!ENTITY customizeToolbar.useDefault.label        "Bruk standardinnstillingar">
+<!ENTITY customizeToolbar.useDefault.accesskey    "s">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY allowPopups.accesskey        "B">
+<!ENTITY showPopupManager.label       "Handter sprettoppvindauge">
+<!ENTITY showPopupManager.accesskey   "e">
+<!ENTITY dontShowMessage.label        "Ikkje vis denne meldinga når sprettoppvindauge vert blokkerte">
+<!ENTITY dontShowMessage.accesskey    "k">
+
+<!ENTITY syncToolbarButton.label "Sync">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Arkiv">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organiser">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Hold styr på dine bogmærker">
+
+<!ENTITY file.close.label               "Luk">
+<!ENTITY file.close.accesskey           "L">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Visning">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Skift din visning">
+<!ENTITY view.columns.label             "Vis kolonner">
+<!ENTITY view.columns.accesskey         "k">
+<!ENTITY view.sort.label                "Sorter">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Usorteret">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "Stigende sorteringsorden">
+<!ENTITY view.sortAscending.accesskey   "S">
+<!ENTITY view.sortDescending.label      "Faldende sorteringsorden">
+<!ENTITY view.sortDescending.accesskey  "F">
+
+<!ENTITY importBookmarksFromHTML.label     "Importer bogmærker fra HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksporter bogmærker til HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importer data fra en anden browser…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "Sikkerhedskopier…">
+<!ENTITY cmd.backup.accesskey           "S">
+<!ENTITY cmd.restore2.label             "Gendan">
+<!ENTITY cmd.restore2.accesskey         "G">
+<!ENTITY cmd.restoreFromFile.label      "Vælg fil…">
+<!ENTITY cmd.restoreFromFile.accesskey  "V">
+
+<!ENTITY col.name.label          "Navn">
+<!ENTITY col.tags.label          "Mærkater">
+<!ENTITY col.url.label           "Adresse">
+<!ENTITY col.mostrecentvisit.label "Seneste besøg">
+<!ENTITY col.visitcount.label    "Besøg">
+<!ENTITY col.dateadded.label     "Tilføjet">
+<!ENTITY col.lastmodified.label  "Sidst ændret">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Funktioner">
+<!ENTITY maintenance.accesskey  "u">
+<!ENTITY maintenance.tooltip    "Importer og sikkerhedskopier dine bogmærker">
+
+<!ENTITY backButton.tooltip  "Gå tilbage">
+
+<!ENTITY forwardButton.tooltip  "Gå frem">
+
+<!ENTITY detailsPane.selectAnItemText.description "Vælg et element til visning og redigering af dets egenskaber">
+

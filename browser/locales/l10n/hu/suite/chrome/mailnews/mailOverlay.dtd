@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  newMessageCmd.key               "M">
+<!ENTITY  newMessageCmd.label             "Üzenet">
+<!ENTITY  newMessageCmd.accesskey         "Ü">
+ 
+<!ENTITY  newContactCmd.label             "Névjegykártya…">
+<!ENTITY  newContactCmd.accesskey         "N">
+ 
+<!ENTITY printButton.label "Nyomtatás">
+<!ENTITY printButton.tooltip "Az üzenet kinyomtatása">

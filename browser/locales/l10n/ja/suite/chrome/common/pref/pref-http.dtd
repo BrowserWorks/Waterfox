@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP ネットワーク">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "直接接続設定">
+<!ENTITY prefProxy.label                     "プロキシー接続設定">
+<!ENTITY prefEnableHTTP10.label              "HTTP 1.0 を使用する">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "HTTP 1.1 を使用する">
+<!ENTITY prefEnableHTTP11.accesskey          "E">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "これらのオプションで HTTP 接続のパフォーマンスや互換性を向上させることができます。いくつかのプロキシーサーバーは、例えば HTTP/1.0 を必要とすることが知られています (詳細はリリースノートを参照してください)。">
+<!ENTITY prefUseragent.label                 "ユーザーエージェント文字列の設定">
+<!ENTITY prefFirefoxStrict.label             "Firefox のユーザーエージェント">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "SeaMonkey のユーザーエージェント">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "SeaMonkey のユーザーエージェントで Firefox 互換">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "警告: この設定を変更するとウェブサイトやサービスが正しく動作しなくなる可能性があります。">

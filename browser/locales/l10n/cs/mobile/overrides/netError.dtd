@@ -1,0 +1,213 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Chyba při načítání stránky">
+<!ENTITY retry.label "Zkusit znovu">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Chyba spojení">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Omezení přístupu k adrese">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server nenalezen">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Zkontrolujte, zda je adresa napsána správně a neobsahuje chyby jako
+    <strong>ww</strong>.example.com místo
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Vyhledat</button>
+    </div>
+  <li>Pokud se vám nezobrazují ani ostatní stránky, zkontrolujte datové či Wi-Fi připojení svého zařízení.
+    <button id='wifi'>Povolit Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Soubor nenalezen">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Zkontrolujte, že je název souboru napsán správně, a to včetně velikosti písmen.</li>
+  <li>Zkontrolujte, že soubor nebyl přesunut, přejmenován nebo smazán.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Přístup k souboru byl odepřen">
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>Možná byl smazán, přesunut nebo jeho oprávnění zabraňují přístupu.</li>
+</ul>">
+
+<!ENTITY generic.title "Nepodařilo se dokončit požadavek">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; nemůže tuto stránku načíst.</p>
+">
+
+<!ENTITY malformedURI.title "Neplatná adresa">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Adresa webové stránky má zpravidla tvar
+    <strong>http://www.example.com</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Vyhledat</button>
+    </div>
+  <li>Zkontrolujte, zda používáte správná lomítka (tj.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Spojení bylo přerušeno">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Platnost dokumentu vypršela">
+<!ENTITY notCached.longDesc "<p>Požadovaný dokument už není dostupný v mezipaměti aplikace &brandShortName;.</p><ul><li>Z bezpečnostních důvodů &brandShortName; automaticky nestahuje důvěrné dokumenty.</li><li>Pro opětovné stažení dokumentu z webového serveru klepněte na tlačítko „Zkusit znovu“.</li></ul>">
+
+<!ENTITY netOffline.title "Režim offline">
+
+<!ENTITY contentEncodingError.title "Chyba znakové sady obsahu">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Nebezpečný typ souboru">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Spojení přerušeno">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Vypršel čas spojení">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Adresa nebyla rozpoznána">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Pro otevření této adresy budete patrně potřebovat nainstalovat další software.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Proxy server odmítl spojení">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Zkontrolujte nastavení proxy serveru.</li>
+  <li>Kontaktujte správce vaší sítě, jestli je proxy server v provozu.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Proxy server nenalezen">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Zkontrolujte nastavení proxy serveru.</li>
+  <li>Zkontrolujte datové či Wi-Fi připojení svého zařízení.
+    <button id='wifi'>Povolit Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Smyčka při přesměrování">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Tento problém může být způsoben zakázáním nebo odmítnutím
+    cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Neplatná odpověď serveru">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Zkontrolujte, že je ve vašem systému nainstalován
+Personal Security Manager.</li>
+  <li>Tato chyba může být také způsobena nestandardní konfigurací serveru.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Chyba zabezpečeného spojení">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Požadovanou stránku nelze zobrazit, protože nelze ověřit autenticitu přijatých dat.</li>
+  <li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Chyba zabezpečeného spojení">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+<li>Tato chyba může být způsobena chybnou konfigurací serveru nebo někým,
+kdo se snaží vydávat za server.</li>
+<li>Pokud jste se k tomuto serveru  připojili úspěšně již v minulosti, je možná
+ chyba jenom dočasná, a můžete to zkusit znovu později.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Server je dočasně nedostupný. Zkuste to prosím znovu za chvíli.</li>
+  <li>Pokud nemůžete načíst ani ostatní stránky, zkontrolujte datové či Wi-Fi připojení svého zařízení.
+    <button id='wifi'>Povolit Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Zablokováno dle bezpečnostních pravidel obsahu">
+<!ENTITY cspBlocked.longDesc "<p>Aplikace &brandShortName; zabránila načtení této stránky, protože takovýto způsob načtení bezpečnostní pravidla této stránky zakazují.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Chyba v obsahu stránky">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Požadovanou stránku nelze zobrazit, protože při přenosu dat došlo k chybě.</p><ul><li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Nebo můžete přidat výjimku…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Rychle odsud pryč!">
+<!ENTITY securityOverride.exceptionButtonLabel "Přidat výjimku…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Není doporučováno přidávat výjimku, pokud nemůžete svému internetovému spojení plně důvěřovat nebo pokud nejste u tohoto serveru zvyklí vídat podobná varování.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Vzdálené XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Nelze navázat zabezpečené spojení">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Podrobné informace: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Vaše připojení není zabezpečené">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Podrobné informace: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Vaše připojení není zabezpečené">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "Server <p><span class='hostname'></span> používá technologii, která je zastaralá a zranitelná vůči útokům. Útočník může snadno získat informace, které považujete za zabezpečené. Správce serveru musí server opravit, než budete moci stránku navštívit.</p><p>Kód chyby: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Chyba síťového protokolu">
+<!ENTITY networkProtocolError.longDesc "<p>Požadovanou stránku nelze zobrazit, protože došlo k chybě v síťovém protokolu.</p><ul><li>Kontaktujte prosím vlastníky webového serveru a informujte je o tomto problému.</li></ul>">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "恢复会话">
+<!ENTITY restorepage.pagetitle      "您想要恢复会话吗？">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "您 &brandShortName; 之前的会话意外关闭了。我们对造成的不便深感抱歉。您现在可以恢复之前打开的标签页和窗口，或者启动新的会话。">
+<!ENTITY restorepage.remedies       "如果 &brandShortName; 反复关闭：">
+<!ENTITY restorepage.dueToChrome    "请尝试在附加组件管理器中关闭您最近添加的扩展。">
+<!ENTITY restorepage.dueToContent   "尝试恢复会话，但是不载入如下可能导致崩溃的网页：">
+
+<!ENTITY restorepage.restoreButton  "恢复上一次会话">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "启动新会话">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "恢复">
+<!ENTITY restorepage.listHeader     "窗口和标签页">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "窗口 &#037;S">

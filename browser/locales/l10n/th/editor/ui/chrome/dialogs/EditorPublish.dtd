@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "เผยแพร่หน้า">
+<!ENTITY windowTitleSettings.label    "การตั้งค่าการเผยแพร่">
+<!ENTITY publishTab.label             "เผยแพร่">
+<!ENTITY settingsTab.label            "การตั้งค่า">
+<!ENTITY publishButton.label          "เผยแพร่">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "ชื่อไซต์:">
+<!ENTITY siteList.accesskey           "ช">
+<!ENTITY siteList.tooltip             "เลือกไซต์ที่คุณต้องการเผยแพร่">
+<!ENTITY newSiteButton.label          "ไซต์ใหม่">
+<!ENTITY newSiteButton.accesskey      "ต">
+<!ENTITY docDirList.label             "ไดเรกทอรีย่อยของไซต์สำหรับหน้านี้:">
+<!ENTITY docDirList.accesskey         "ด">
+<!ENTITY docDirList.tooltip           "เลือกหรือป้อนชื่อของไดเรกทอรีย่อยระยะไกลสำหรับหน้านี้">
+<!ENTITY publishImgCheckbox.label     "รวมภาพและไฟล์อื่น ๆ">
+<!ENTITY publishImgCheckbox.accesskey "ร">
+<!ENTITY publishImgCheckbox.tooltip   "เผยแพร่ภาพและไฟล์อื่น ๆ ที่อ้างอิงโดยหน้านี้">
+<!ENTITY sameLocationRadio.label      "ใช้ตำแหน่งที่ตั้งเดียวกับหน้า">
+<!ENTITY sameLocationRadio.accesskey  "ใ">
+<!ENTITY sameLocationRadio.tooltip    "เผยแพร่ไฟล์ไปยังตำแหน่งที่ตั้งเดียวกับหน้า">
+<!ENTITY useSubdirRadio.label         "ใช้ไดเรกทอรีย่อยไซต์นี้:">
+<!ENTITY useSubdirRadio.accesskey     "ไ">
+<!ENTITY useSubdirRadio.tooltip       "เผยแพร่ไฟล์ไปยังไดเรกทอรีย่อยระยะไกลที่เลือก">
+<!ENTITY otherDirList.tooltip         "เลือกหรือป้อนชื่อไดเรกทอรีย่อยระยะไกลที่จะเผยแพร่ไฟล์">
+<!ENTITY pageTitle.label              "ชื่อเรื่องหน้า:">
+<!ENTITY pageTitle.accesskey          "ง">
+<!ENTITY pageTitle.tooltip            "ป้อนชื่อเรื่องเพื่อระบุหน้าในหน้าต่างและในที่คั่นหน้า">
+<!ENTITY pageTitleExample.label       "เช่น: &quot;เว็บเพจของฉัน&quot;">
+<!ENTITY filename.label               "ชื่อไฟล์:">
+<!ENTITY filename.accesskey           "ฟ">
+<!ENTITY filename.tooltip             "ป้อนชื่อสำหรับไฟล์นี้ รวมถึง '.html' สำหรับหน้าเว็บ">
+<!ENTITY filenameExample.label        "เช่น: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "ตั้งเป็นค่าเริ่มต้น">
+<!ENTITY setDefaultButton.accesskey   "ค">
+<!ENTITY removeButton.label           "เอาไซต์ออก">
+<!ENTITY removeButton.accesskey       "อ">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "ไซต์การเผยแพร่">
+<!ENTITY serverInfo.label             "ข้อมูลเซิร์ฟเวอร์">
+<!ENTITY loginInfo.label              "ข้อมูลการเข้าสู่ระบบ">
+<!ENTITY siteName.label               "ชื่อไซต์:">
+<!ENTITY siteName.accesskey           "ซ">
+<!ENTITY siteName.tooltip             "ชื่อเล่นที่ระบุไซต์การเผยแพร่นี้ (เช่น: 'ไซต์ของฉัน')">
+<!ENTITY siteUrl.label                "ที่อยู่การเผยแพร่ (เช่น: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "ท">
+<!ENTITY siteUrl.tooltip              "ที่อยู่ FTP:// หรือ HTTP:// ที่ให้โดย ISP หรือบริการโฮสต์เว็บของคุณ">
+<!ENTITY browseUrl.label              "ที่อยู่ HTTP ของหน้าแรกของคุณ (เช่น: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "ย">
+<!ENTITY browseUrl.tooltip            "ที่อยู่ HTTP:// ของไดเรกทอรีหลักของคุณ (ไม่รวมชื่อไฟล์)">
+<!ENTITY username.label               "ชื่อผู้ใช้:">
+<!ENTITY username.accesskey           "ผ">
+<!ENTITY username.tooltip             "ชื่อผู้ใช้ที่คุณใช้เข้าสู่ระบบไปยัง ISP หรือบริการโฮสต์เว็บของคุณ">
+<!ENTITY password.label               "รหัสผ่าน:">
+<!ENTITY password.accesskey           "ห">
+<!ENTITY password.tooltip             "รหัสผ่านที่เชื่อมโยงกับชื่อผู้ใช้ของคุณ">
+<!ENTITY savePassword.label           "บันทึกรหัสผ่าน">
+<!ENTITY savePassword.accesskey       "บ">
+<!ENTITY savePassword.tooltip         "เลือกตัวเลือกนี้เพื่อบันทึกรหัสผ่านของคุณอย่างปลอดภัยโดยใช้ตัวจัดการรหัสผ่าน">

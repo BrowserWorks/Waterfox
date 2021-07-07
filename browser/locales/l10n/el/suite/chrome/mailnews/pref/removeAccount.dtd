@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Διαγραφή λογαριασμού και δεδομένων">
+<!ENTITY removeButton.label           "Αφαίρεση">
+<!ENTITY removeButton.accesskey       "Α">
+<!ENTITY removeAccount.label          "Αφαίρεση πληροφοριών λογαριασμού">
+<!ENTITY removeAccount.accesskey      "λ">
+<!ENTITY removeAccount.desc           "Αφαιρεί μόνο τις πληροφορίες του &brandShortName; για αυτό τον λογαριασμό. Δεν επηρεάζει τον ίδιο τον λογαριασμό στον διακομιστή.">
+<!ENTITY removeData.label             "Αφαίρεση δεδομένων μηνυμάτων">
+<!ENTITY removeData.accesskey         "δ">
+<!ENTITY removeDataChat.label         "Διαγραφή δεδομένων συζήτησης">
+<!ENTITY removeDataChat.accesskey     "δ">
+<!ENTITY removeDataLocalAccount.desc  "Διαγράφει όλα τα μηνύματα, τους φακέλους και τα φίλτρα που σχετίζονται με αυτό τον λογαριασμό από τον τοπικό σας δίσκο. Δεν επηρεάζει τα μηνύματα που υπάρχουν στον διακομιστή. Μην το επιλέξετε αν σκοπεύετε να αρχειοθετήσετε τα τοπικά δεδομένα ή να τα χρησιμοποιήσετε ξανά στο &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Διαγράφει όλα τα μηνύματα, τους φακέλους και τα φίλτρα που σχετίζονται αυτό τον λογαριασμό από τον τοπικό σας δίσκο. Τα μηνύματα και οι φάκελοί σας θα διατηρηθούν στον διακομιστή.">
+<!ENTITY removeDataChatAccount.desc   "Αφαιρεί όλα τα αρχεία συζητήσεων από τον τοπικό σας δίσκο για αυτό τον λογαριασμό.">
+<!ENTITY showData.label               "Εμφάνιση τοποθεσίας δεδομένων">
+<!ENTITY showData.accesskey           "Ε">
+<!ENTITY progressPending              "Αφαίρεση επιλεγμένων δεδομένων…">
+<!ENTITY progressSuccess              "Επιτυχής αφαίρεση.">
+<!ENTITY progressFailure              "Αποτυχία αφαίρεσης.">

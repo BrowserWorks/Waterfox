@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+    <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Información y decisiones sobre certificados</title>
+  <link rel="stylesheet" type="text/css" href="helpFileLayout.css"/>
+</head>
+
+<body>
+<div class="boilerplate">Este documento ha sido proporcionado sólo para aportar
+  información. Puede ayudarle a dar ciertos pasos a la hora de decidir la forma
+  de proteger la privacidad y seguridad de su información personal en Internet.
+  Este documento, sin embargo, no trata de todos los aspectos existentes en
+  materia de privacidad y seguridad, ni representa recomendaciones sobre lo que
+  constituye unas medidas de protección adecuadas en materia de privacidad y
+  seguridad en Internet.</div>
+
+<h1 id="certificate_information_and_decisions">Información y decisiones sobre
+  certificados</h1>
+
+<p>Esta sección describe cómo utilizar varias de las ventanas mostradas por el
+  administrador de certificados. La información adicional proporcionada aquí
+  aparece al hacer clic en el botón de ayuda de una de esas ventanas.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+	<li><a href="#certificate_viewer">Visor de certificados</a></li>
+	<li><a href="#choose_security_device">Elegir dispositivo de
+	  seguridad</a></li>
+	<li><a href="#encryption_key_copy">Copia de la clave de cifrado</a></li>
+	<li><a href="#certificate_backup">Copia de seguridad de certificados</a></li>
+	<li><a href="#user_identification_request">Solicitud de identificación de
+	  usuario</a></li>
+	<li><a href="#new_certificate_authority">Nueva autoridad de
+	  certificación</a></li>
+	<li><a href="#website_certificates">Certificados de sitio web</a></li>
+  </ul>
+</div>
+
+<h2 id="certificate_viewer">Visor de certificados</h2>
+
+
+<p>El visor de certificados muestra información sobre un certificado que
+  seleccione en alguna de las pestañas del administrador de certificados. La
+  pestaña &quot;General&quot; resume información acerca de quién emitió el
+  certificado, su estado de verificación, para qué puede ser usado el
+  certificado, y similares. La pestaña &quot;Detalles&quot; proporciona todos
+  los detalles del contenido del certificado.</p>
+
+<p>Si no está viendo el visor de certificados, siga estos pasos:</p>
+
+<ol>
+   <li>Abra el menú <span class="mac">&brandShortName;</span><span
+     class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+   <li>Dentro de la categoría &quot;Privacidad y seguridad&quot;, haga clic en
+     Certificados (si no se muestra ninguna sub-categoría, haga doble clic en
+     &quot;Privacidad y seguridad&quot; para expandir la lista).</li>
+   <li>Haga clic en &quot;Administrar certificados&quot;.</li>
+   <li>Haga clic en la pestaña para elegir el tipo de certificado que desee
+     ver.</li>
+   <li>Seleccione el certificado cuyos detalles desee ver.</li>
+   <li>Haga clic en &quot;Ver&quot;.</li>
+</ol>
+
+<div class="contentsbox">En esta sección:
+  <ul>
+    <li><a href="#general_tab">La pestaña &quot;General&quot;</a></li>
+    <li><a href="#details_tab">La pestaña &quot;Detalles&quot;</a></li>
+  </ul>
+</div>
+
+<h3 id="general_tab">La pestaña &quot;General&quot;</h3>
+
+<p>Cuando abra el visor de certificados, la pestaña General mostrará
+varios tipos de información sobre el certificado seleccionado:</p>
+
+<ul>
+  <li><strong>Este certificado ha sido comprobado para los siguientes
+    usos</strong>: vea <a
+    href="glossary.xhtml#certificate_verification">Comprobación de
+    certificados</a> para una explicación de cómo el administrador de
+    certificados comprueba los certificados. Los usos pueden ser:
+    <ul>
+      <li><strong>Certificado SSL de cliente</strong>: certificado utilizado
+        para identificarle en sitios web.</li>
+      <li><strong>Certificado SSL de servidor</strong>: certificado utilizado
+        para identificar a un servidor web ante navegadores.</li>
+      <li><strong>Certificado de firma de correo</strong>: certificado
+        utilizado para identificarle a la hora de firmar digitalmente mensajes
+        de correo electrónico.</li>
+      <li><strong>Certificado de receptor de mensaje de correo</strong>:
+        certificado utilizado para identificar a otra persona, por ejemplo,
+        para que pueda enviarle un mensaje de correo cifrado.</li>
+      <li><strong>Certificado de estado de contestador</strong>: certificado
+        para identificar el estado de conexión de un contestatario que utilice
+        OCSP (Online Certificate Status Protocol) para comprobar la validez de
+        los certificados. Para más información sobre OCSP, vea
+        <a href="certs_prefs_help.xhtml">Ajustes de certificados</a>.</li>
+      <li><strong>Certificado SSL de autoridad</strong>: certificado utilizado
+        para identificar a una autoridad, es decir, un servicio que expide
+        certificados para que sean utilizados como identificación en redes
+        informáticas.</li>
+    </ul>
+  </li>
+  <li><strong>Expedido a</strong>: resume la siguiente información sobre el
+    certificado:
+    <ul>
+      <li><strong>Nombre común</strong>: nombre de la persona o la entidad a la
+        que identifica el certificado.</li>
+      <li><strong>Organización</strong>: nombre de la organización a la que
+        pertenece la entidad (por ejemplo, el nombre de una empresa).</li>
+      <li><strong>Unidad de la organización</strong>: nombre de la unidad de la
+        organización a la que pertenece la entidad (por ejemplo, departamento
+        de contabilidad).</li>
+      <li><strong>Número de serie</strong>: número de serie del
+        certificado.</li>
+    </ul>
+  </li>
+  <li><strong>Expedido por</strong>: resume la información (de forma similar a
+    la mostrada en <q>Expedido a</q>; ver arriba) sobre la autoridad de
+    certificación (CA) que expidió el certificado.</li>
+  <li><strong>Validez</strong>: indica el período de validez del
+    certificado.</li>
+  <li><strong>Huella digital</strong>: muestra las huellas digitales del
+    certificado. Una huella digital es un número único generado mediante la
+    aplicación de una función matemática a los contenidos del certificado. La
+    huella digital de un certificado puede ser utilizada para comprobar que el
+    certificado no haya sido alterado.</li>
+</ul>
+
+<h3 id="details_tab">La pestaña &quot;Detalles&quot;</h3>
+
+<p>Haga clic en la pestaña &quot;Detalles&quot; de la parte superior del visor
+  de certificados para ver información más detallada sobre el certificado
+  seleccionado. Para examinar la información de cualquier certificado en la
+  sección &quot;Jerarquía de certificados&quot;, seleccione el campo que desee
+  examinar y mire en &quot;Valor del campo&quot;:</p>
+
+<ul>
+  <li><strong>Jerarquía de certificados</strong>: muestra la cadena de
+    certificados, con los certificados que seleccionó originalmente en la parte
+    inferior. Una cadena de certificados es una serie jerárquica de
+    certificados firmados por sucesivas autoridades de certificación (CA). Un
+    certificado de CA identifica una <a
+    href="glossary.xhtml#certificate_authority">autoridad de certificación</a>
+    y es utilizado para firmar los certificados expedidos por dicha autoridad.
+    Un certificado de CA puede a su vez ser firmado por el certificado de CA de
+    una CA superior y así sucesivamente hasta una <a
+    href="glossary.xhtml#root_ca">CA raíz</a>.</li>
+  <li><strong>Campos del certificado</strong>: muestra los campos del
+    certificado seleccionado en &quot;Jerarquía de certificados&quot;</li>
+  <li><strong>Valor del campo</strong>: muestra el valor el campo seleccionado
+    en &quot;Campos del certificado&quot;.</li>
+</ul>
+
+<p>El visor de certificados, siempre que puede, usa tipografías básicas ANSI
+  para mostrar los datos en un formato legible para el ser humano. En los
+  campos cuyo contenido no pueda interpretar el administrador de certificados,
+  éste mostrará directamente los valores contenidos en el certificado.</p>
+
+<h2 id="choose_security_device">Elegir dispositivo de seguridad</h2>
+
+<p>Un dispositivo de seguridad (a veces llamado &quot;token&quot;) es un dispositivo de hardware
+o software, que proporciona servicios criptográficos tales como cifrado y descifrado
+y almacena certificados y claves. La ventana &quot;Elegir dispositivo de seguridad&quot;
+aparece cuando el administrador de certificados necesita ayuda para decidir qué
+dispositivo de seguridad utilizar al importar un certificado o realizar una operación
+criptográfica, como puede ser generar claves para un nuevo certificado. Dicha ventana
+le permite seleccionar uno, dos o más dispositivos que el administrador de certificados
+haya detectado en su máquina.</p>
+
+<p>Una tarjeta inteligente (&quot;smart card&quot;) es un ejemplo de dispositivo de seguridad.
+Por ejemplo, si un lector de tarjetas inteligentes está conectado a su ordenador y tiene
+insertada una tarjeta, el nombre de dicha tarjeta será mostrado en el menú
+desplegable. En su caso, debería seleccionar en el menú desplegable el nombre
+de la tarjeta para que el administrador de certificados sepá que desea utilizarla.</p>
+
+<p>El administrador de certificados también trae por defecto su propio dispositivo de
+seguridad integrado, que siempre puede ser utilizado, independientemente de si hay o no otros
+dispositivos.</p>
+
+
+<h2 id="encryption_key_copy">Copia de la clave de cifrado</h2>
+
+<p>Las <a href="glossary.xhtml#certificate_authority">Autoridades de certificación (CA)</a>
+que expiden certificados separados de firma y cifrado de correo normalmente hacen copias de
+seguridad de su <a href="glossary.xhtml#encryption_key">clave de cifrado</a> privada durante
+el proceso de registro del certificado.</p>
+
+<p>El cuadro de diálogo &quot;Copia de la clave de cifrado&quot; le permite dar el
+visto bueno a dicha copia o cancelar la petición del certificado. Una CA que haya
+guardado una copia de seguridad de su clave de cifrado tendría la posibilidad de
+descifrar cualquier mensaje que usted reciba y que estuviese cifrado con su correspondiente
+clave pública.</p>
+
+<p>Puede llevar a cabo las siguientes acciones en el cuadro de diálogo &quot;Copia de
+la clave de cifrado&quot;:</p>
+
+<ul>
+  <li><strong>Ver certificado</strong>: para ver el certificado que identifica a la CA que
+      solicita la copia de seguridad.<br/></li>
+  <li><strong>Aceptar</strong>: si confía en la CA que identifica el certificado para
+      descifrar mensajes, haga clic aquí.
+      <p>Si no está seguro de si confiar en la CA que solicita la copia de
+      seguridad, consulte con su administrador.</p>
+  </li>
+  <li><strong>Cancelar</strong>: si no confía en la CA que solicita la copia de
+    seguridad, no le solicite ningún certificado. Haga clic en
+    &quot;Cancelar&quot; para detener tanto el proceso de copia, como el de
+    solicitud de certificado.</li>
+</ul>
+
+<p>Después de que su CA haga una copia de seguridad de la clave de cifrado, podrá
+utilizar dicha clave para acceder a su correo cifrado, incluso si pierde su contrasea o su
+propia copia de la clave. Si no hubiese ninguna copia de seguridad y usted perdiera su
+contraseña o la clave, no habría ninguna forma de leer los mensajes de correo
+que hubiesen sido cifrados con dicha clave.</p>
+
+
+<h2 id="certificate_backup">Copia de seguridad de certificados</h2>
+
+<p>Cuando reciba un certificado, haga una copia de seguridad de él y de su clave privada
+y almacénela en un sitio seguro. Por ejemplo, puede copiarlo a un disquete y guardarlo
+bajo llave. Así, en caso de problemas con el disco duro, podría restaurar
+fácilmente el certificado.</p>
+
+<p>Perder su certificado, en el mejor de lo casos, sería un inconveniente, pudiendo
+llegar a ser catastrófico, dependiendo del uso que le diese al certificado. Por ejemplo:</p>
+
+<ul>
+  <li>Si pierde un certificado que le identifica ante sitios web importantes, no
+      podrá volver a acceder a ellos hasta que obtenga un certificado nuevo.</li>
+  <li>Si pierde el certificado que utilizaba para cifrar mensajes, no podrá
+      leer ninguno de sus mensajes cifrados, tanto los que haya enviado, como los
+      que haya recibido. En este caso, si no puede obtener una copia de seguridad
+      de la clave de cifrado privada asociada al certificado, ya no podrá
+      leer ninguno de los mensajes cifrados con dicha clave.</li>
+</ul>
+
+<p>Como con cualquier otra información de valor, se debería hacer una copia de
+seguridad de los certificados, para evitar problemas en el futuro. Hágalo ahora para
+que luego no se le olvide.</p>
+
+<h2 id="user_identification_request">Solicitud de identificación de usuario</h2>
+
+<p>Algunos sitios web requieren que se identifique con un certificado en vez de con un nombre
+de usuario y una contraseña, ya que los certificados son una forma más segura de
+identificación. Esté método de identificación a veces es llamado
+<a href="glossary.xhtml#client_authentication">identificación de cliente</a>.</p>
+
+<p>Sin embargo, el administrador de certificados puede tener más de un certificado para
+estos fines. En tal caso, mostrará el cuadro &quot;Solicitud de identificación
+de usuario&quot;, que muestra dos tipos de información:</p>
+
+<p><strong>Este sitio ha solicitado que se identifique con un certificado</strong>: en esta
+sección del cuadro aparece la siguiente información:</p>
+
+<ul>
+  <li><strong>Nombre de &quot;host&quot;</strong>: nombre del servidor que solicita la
+      identificación, utilizado como parte de su dirección URL.
+      Por ejemplo, el nombre de &quot;host&quot; para la página de
+      Netscape es <tt>home.netscape.com</tt>.</li>
+  <li><strong>Organización</strong>: nombre de la organización a la que
+      pertenece el sitio web.</li>
+  <li><strong>Expedido por</strong>: nombre de la
+      <a href="glossary.xhtml#certificate_authority_(CA)">autoridad de
+      certificación (CA)</a> que ha expedido el certificado.</li>
+</ul>
+
+<p><strong>Elija un certificado para presentar como identificación</strong>: los certificados
+que tenga para identificarse ante un sitio web son mostrados en la lista desplegable de esta
+sección del cuadro de diálogo. Elija el certificado que tenga más
+probabilidades de ser reconocido por el sitios web que desee visitar.</p>
+
+<p>Para ayudarle a decidir, se muestran los siguientes datos del certificado seleccionado:</p>
+
+<ul>
+  <li><strong>Expedido a</strong>: muestra información sobre la persona a la cual
+      identifica  el certificado (por ejemplo, nombre y dirección de correo)
+      y el número de serie y las fechas de validez del certificado.</li>
+  <li><strong>Expedido por</strong>: resume la información de la CA que ha expedido
+      el certificado, tal como su nombre, dirección y estado.</li>
+</ul>
+
+<h2 id="new_certificate_authority">Nueva autoridad de certificación</h2>
+
+<p>Los certificados del administrador de certificados, almacenados en su ordenador o en un
+dispositivo de seguridad externo, tal como una tarjeta inteligente (&quot;smart card&quot;),
+incluyen a los certificados que identifican a las
+<a href="glossary.xhtml#certificate_authority">autoridades de certificación (CA)</a>.
+Para poder reconocer a cualquier otro certificado, el administrador de certificados ha de
+tener los certificados de las CA que han expedido o autorizado esos certificados.</p>
+
+<p>Cuando usted decide confiar en una CA, el administrador de certificados descarga el
+certificado de ella, pudiendo después reconocer los certificados que haya expedido esa
+CA.</p>
+
+<p>Antes de descargar el nuevo certificado de CA, el administrador de certificados le permite
+especificar los fines del certificado en los que confiará, cuando no todos. Puede
+elegir cualquiera de las siguientes opciones:</p>
+
+<ul>
+  <li><strong>Confiar en esta CA para identificar sitios web</strong>: los certificados de
+      sitios web en ciertos sitios web, como los que manejan transacciones financieras,
+      pueden ser muy importantes y una identificación inadecuada o falsa
+      podría tener consecuencias negativas.</li>
+  <li><strong>Confiar en esta CA para identificar usuarios de correo electrónico</strong>:
+      si tiene intención de enviar información confidencial cifrada a
+      través del correo electrónico o si por cualquier otra razón
+      la identificación de usuarios de correo es importante para usted,
+      debería considerar cuidadosamente los procedimientos de la CA para
+      identificar a los propietarios de los certificados y si son adecuados para sus
+      propósitos antes de seleccionar esta opción.</li>
+  <li><strong>Confiar en esta CA para identificar desarrolladores de software</strong>: si elige
+      esta opción significa que confía en los certificados que la CA
+      expide para identificar el origen de &quot;applets&quot; Java y de
+      &quot;scripts&quot; JavaScript que soliciten acceso especial a su ordenador, tal
+      como la potestad de modificar archivos. Dado que este tipo de privilegios pueden
+      ser utilizados con fines malignos, como la eliminación de datos de su
+      disco duro, tenga mucho cuidado con elegir esta opción, excepto si
+      está totalmente seguro de que desea confiar en la CA para este
+      propósito.</li>
+</ul>
+
+<p>Antes de que decida confiar en una nueva CA, asegúrese de que sabe quién la
+maneja y de que sus políticas y procedimientos se corresponden con el tipo de
+certificados que expide. Por ejemplo, si la CA expide certificados para identificar sitios web
+que usted utilice para hacer transacciones financieras, asegúrese de que está
+satisfecho con el nivel de seguridad que proporciona la CA.</p>
+
+<ul>
+  <li><strong>Ver</strong>: haga clic en este botón para ver el certificado de CA que
+      está a punto de descargar. Si decide que no desea descargarlo, haga clic
+      en &quot;Cancelar&quot;.</li>
+</ul>
+
+<h2 id="website_certificates">Certificados de sitios web</h2>
+
+<p>Cuando intenta ir a un sitio web que admite el uso de <a
+  href="glossary.xhtml#ssl">SSL</a> para la <a
+  href="glossary.xhtml#authentication">identificación</a> y el
+  <a href="glossary.xhtml#encryption">cifrado</a>, puede encontrarse una página
+  de error. Hay dos tipos, una llamada <a
+  href="#secure_connection_failed_page">Conexión segura fallida</a> y una
+  llamada <a href="#untrusted_connection_page">Conexión no confiable</a>.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#secure_connection_failed_page">Página de conexión segura
+      fallida</a></li>
+    <li><a href="#untrusted_connection_page">Página de conexión no
+      confiable</a></li>
+    <li><a href="#secure_connection_failed_dialog">Diálogo de conexión segura
+      fallida</a></li>
+    <li><a href="#certificate_expired">Certificado de servidor
+      caducado</a></li>
+    <li><a href="#certificate_not_yet_valid">Certificado de servidor no válido
+      aún</a></li>
+    <li><a href="#domain_name_mismatch">Discrepancia del nombre de
+      dominio</a></li>
+  </ul>
+</div>
+
+<h3 id="secure_connection_failed_page">Página de conexión segura fallida</h3>
+
+<p>En el caso de que haya desactivado el protocolo SSL (p.e. a través de las
+  <a href="ssl_help.xhtml#ssltls_settings">opciones SSL/TLS</a>) o el sitio web
+  al que está accediendo use una versión más antigua e insegura del protocolo
+  SSL, entonces verá una página titulada &quot;Conexión segura fallida&quot;.
+  Esa página contiene cierta información técnica básica (incluyendo el
+  <strong>código de error</strong> que identifica inequívocamente el tipo de
+  problema que detectó &brandShortName; con el sitio web) y un botón
+  <strong>Reintentar</strong> que provocará una recarga de página.</p>
+
+<h3 id="untrusted_connection_page">Página de conexión no confiable</h3>
+
+<p>Si SSL está activado entonces la página de error que se le mostrará se
+  titulará &quot;No se confía en esta conexión&quot;. Hay muchas razones
+  diferentes por las que una conexión puede parecer no confiable. Aquí hay
+  algunas de las más comunes:</p>
+
+<ul>
+  <li>el certificado del sitio web <a href="#certificate_expired">ya no es
+    válido (ha caducado)</a></li>
+  <li>el certificado del sitio web <a href="#certificate_not_yet_valid">aún no
+    es válido</a></li>
+  <li>el certificado del sitio web sólo es válido para otro sitio web
+    (<a href="#domain_name_mismatch">discrepancia en el nombre de
+    dominio</a>)</li>
+  <li>el certificado del sitio web está auto-firmado (y, por tanto, la
+    identidad del sitio web no puede ser verificada)</li>
+  <li>no se confía en el emisor del certificado (&brandShortName; no puede
+    verificar la identidad del sitio web porque no reconoce la <a
+    href="glossary.xhtml#certificate_authority">autoridad certificadora
+    (CA)</a> que emitió el certificado del sitio web)</li>
+</ul>
+
+<p>La página mostrada en los casos anteriores está pensada para ayudarle a
+  comprender por qué &brandShortName; no pudo establecer una conexión segura
+  con el sitio web. Comienza diciéndole que la identidad del sitio web no pudo
+  ser verificada, luego le ofrece abandonar la página haciendo clic en el
+  botón <strong>Esto tiene mala pinta, mejor llévame a mi página de
+  inicio</strong>. Si no está seguro de qué hacer se recomienda que siga este
+  consejo.</p>
+
+<p>Si quiere saber algo más sobre el problema concreto puede expandir la
+  sección correspondiente haciendo clic en el galón que hay delante de
+  <strong>Detalles técnicos</strong>. Esa sección también contiene el
+  <strong>código de error</strong> que identifica inequívocamente el tipo de
+  problema que ha detectado &brandShortName; con el sitio web.</p>
+
+<h4 id="add_security_exception">Añadir una excepción de seguridad</h4>
+
+<p>La sección <strong>Entiendo los riesgos</strong> de la página Conexión no
+  confiable le permite ordenar a &brandShortName; que ignore explícitamente los
+  controles de seguridad para este sitio web añadiendo una excepción. Si
+  expande la sección haciendo clic en el galón delante de ella, verá un botón  
+  <strong>Añadir excepción</strong> que le llevará a un diálogo que le
+  permitirá recuperar y visualizar el certificado del sitio web y,
+  opcionalmente, añadir una excepción de seguridad para él (ya sea permanente o
+  sólo para la sesión actual). Esas excepciones pueden administrarse a través
+  de la pestaña <a href="certs_help.xhtml#servers">Servidores</a> del
+  administrador de certificados.</p>
+
+<h3 id="secure_connection_failed_dialog">Diálogo de conexión segura
+  fallida</h3>
+
+<p>En los casos donde &brandShortName; no puede determinar la causa real del
+  problema, se muestra un diálogo titulado &quot;Conexión segura fallida&quot;
+  además de la <a href="#untrusted_connection_page">página de conexión no
+  confiable</a>. Ese diálogo incluye un botón <strong>Ver certificado</strong>
+  que le permite examinar el certificado del sitio web más en detalle.</p>
+
+<h3 id="certificate_expired">Certificado caducado</h3>
+
+<p>Como una tarjeta de crédito, un permiso de conducción y muchas otras formas
+  de identificación, un <a href="glossary.xhtml#certificate">certificado</a> es
+  válido durante un cierto período de tiempo. Cuando caduca, el propietario ha
+  de conseguir uno nuevo.</p>
+
+<p>&brandShortName; <a href="#untrusted_connection_page">le advierte</a> cuando
+  intenta visitar un sitio web cuyo certificado de servidor ha caducado. La
+  primera cosa que debería hacer es asegurarse de que la fecha y hora mostrada
+  en su ordenador es correcta. Si el reloj de su ordenador está fijado a una
+  fecha posterior a la fecha de caducidad, &brandShortName; trata el
+  certificado del sitio web como caducado.</p>
+
+<p>Si la fecha de su ordenador es correcta, ha de decidir si confiar en dicho
+  sitio web. La decisión dependerá de qué quería hacer en ese sitio web y qué
+  sabe de él. La mayoría de sitios comerciales se aseguran de reemplazar sus
+  certificados antes de que caduquen. Si elige continuar necesitará
+  <a href="#add_security_exception">añadir una excepción de seguridad</a>.</p>
+
+<h3 id="certificate_not_yet_valid">Certificado aún no válido</h3>
+
+<p>Como una tarjeta de crédito, un permiso de conducción y muchas otras formas
+  de identificación, un <a href="glossary.xhtml#certificate">certificado</a> es
+  válido durante un cierto período de tiempo.</p>
+
+<p>&brandShortName; <a href="#untrusted_connection_page">le avisará</a> cuando
+  intente visitar un sitio web en el que el período de validez del certificado
+  del servidor todavía no haya comenzado. La primera cosa que ha de hacer es
+  asegurarse de que la fecha y la hora de su ordenador son correctas. Si no lo
+  son, el administrador de certificados podría considerar el certificado como
+  todavía no válido incluso si lo es.</p>
+
+<p>Si la fecha de su ordenador es correcta, ha de decidir si confiar en dicho
+  sitio web. La decisión dependerá de qué quería hacer en ese sitio web y qué
+  sabe de él. La mayoría de sitios comerciales se aseguran de que el período
+  de validez de sus certificados haya comenzado antes de empezar a
+  utilizarlos. Si elige continuar necesitará
+  <a href="#add_security_exception">añadir una excepción de seguridad</a>.</p>
+
+<h3 id="domain_name_mismatch">Discrepancia del nombre de dominio</h3>
+
+<p>Un <a href="glossary.xhtml#certificate">certificado</a> de servidor
+  especifica el nombre del servidor bajo la forma del nombre de dominio del
+  sitio web. Por ejemplo, el nombre de dominio del sitio web de Netscape es
+  <tt>home.netscape.com</tt>. Si el nombre de dominio de un certificado de
+  servidor no coincide con el nombre real de dominio del sitio web, puede ser
+  un indicio de que alguien esté intentando interceptar su comunicación con
+  dicho sitio.</p>
+
+<p>&brandShortName; <a href="#untrusted_connection_page">le advierte</a> cuando
+  intenta visitar un sitio web si el dominio de su certificado de servidor no
+  corresponde con el dominio del sitio web que está intentando visitar. La
+  decisión de si confiar en dicho sitio web dependerá de qué quería hacer en él
+  y qué sabe de él. La mayoría de sitios comerciales se asegurarán de que el
+  nombre de dominio de sus certificados coincide con el nombre real del sitio
+  web. Si elige continuar necesitará <a href="#add_security_exception">añadir
+  una excepción de seguridad</a>.</p>
+
+<p>If you decide to accept the certificate anyway (either for this session or
+  permanently), you should be cautious about what you do on the website, and you
+  should treat any information you find there as potentially suspect.</p>
+
+<p>Si decide aceptar el certificado (ya sea durante esta sesión o
+  permanentemente), tenga precaución con cualquier cosa que haga durante su
+  visita al sitio y considere sospechosa cualquier información que encuentre en
+  él.</p>
+
+</body>
+</html>

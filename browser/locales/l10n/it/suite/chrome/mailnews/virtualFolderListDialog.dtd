@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY server.label "Account: ">
+<!ENTITY server.accesskey "A">
+
+<!ENTITY virtualFolderListTitle.title        "Scegli cartella(e)">
+<!ENTITY virtualFolderDesc.label       "Scegli le cartelle per la ricerca:">
+
+
+<!ENTITY folderName.label "Nome cartella">
+<!ENTITY folderSearch.label "Cerca">

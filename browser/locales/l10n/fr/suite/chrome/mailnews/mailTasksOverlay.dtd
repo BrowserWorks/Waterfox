@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- LOCALIZATION NOTE (messengerCmd.label): DONT_TRANSLATE -->
+<!ENTITY messengerCmd.label					"Courrier et groupes">
+<!ENTITY messengerCmd.accesskey				"C">
+<!ENTITY messengerCmd.commandkey			"2">
+<!ENTITY addressBookCmd.label				"Carnet d’adresses">  
+<!ENTITY addressBookCmd.accesskey			"a">
+<!ENTITY addressBookCmd.commandkey			"5">
+
+<!ENTITY taskMessenger.tooltip  "Courrier et groupes">
+<!ENTITY taskAddressBook.tooltip  "Carnet d’adresses">
+
+<!-- searchAddressesCmd is also used by addressbook -->
+<!ENTITY searchAddressesCmd.label                       "Rechercher dans les adresses…">
+<!ENTITY searchAddressesCmd.accesskey                   "a">
+
+<!ENTITY searchMailCmd.label "Rechercher dans le courrier…">
+<!ENTITY searchMailCmd.accesskey "c">
+<!ENTITY searchMailCmd.key "f">

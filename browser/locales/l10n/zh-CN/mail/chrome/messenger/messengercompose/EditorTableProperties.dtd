@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "表格属性">
+<!ENTITY applyButton.label                "应用">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "关闭">
+<!ENTITY tableTab.label                   "表格">
+<!ENTITY cellTab.label                    "单元">
+<!ENTITY tableRows.label                  "行：">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "列：">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "高度:">
+<!ENTITY tableHeight.accessKey            "g">
+<!ENTITY tableWidth.label                 "宽度：">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "边界和间隔">
+<!ENTITY tableBorderWidth.label           "边界：">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "间隔：">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "填充：">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "像素间隔两个单元">
+<!ENTITY tablePxBetwBrdrCellContent.label "单元边界和内容间的象素">
+<!ENTITY tableAlignment.label             "表格对齐:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "标题：">
+<!ENTITY tableCaption.accessKey           "n">
+<!ENTITY tableCaptionAbove.label          "表格上方">
+<!ENTITY tableCaptionBelow.label          "表格之后">
+<!ENTITY tableCaptionLeft.label           "表格左侧">
+<!ENTITY tableCaptionRight.label          "表格右侧">
+<!ENTITY tableCaptionNone.label           "无">
+<!ENTITY tableInheritColor.label           "（允许页面颜色透过）">
+
+<!ENTITY cellSelection.label              "选择">
+<!ENTITY cellSelectCell.label             "单元">
+<!ENTITY cellSelectRow.label              "行">
+<!ENTITY cellSelectColumn.label           "列">
+<!ENTITY cellSelectNext.label             "下一个">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "上一个">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "当前变更将在更改选择项之前应用">
+<!ENTITY cellContentAlignment.label       "内容对齐">
+<!ENTITY cellHorizontal.label             "水平：">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "垂直：">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "单元格样式：">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "常规">
+<!ENTITY cellHeader.label                 "页眉">
+<!ENTITY cellTextWrap.label               "文本折行：">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "折行">
+<!ENTITY cellNoWrap.label                 "不换行">
+<!ENTITY cellAlignTop.label               "顶部">
+<!ENTITY cellAlignMiddle.label            "中部">
+<!ENTITY cellAlignBottom.label            "底部">
+<!ENTITY cellAlignJustify.label           "调整">
+<!ENTITY cellInheritColor.label           "（允许表格颜色透过）">
+<!ENTITY cellUseCheckboxHelp.label        "使用复选框决定哪个特性将应用于所选择的单元">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "大小">
+<!ENTITY pixels.label                     "像素">
+<!ENTITY backgroundColor.label            "背景颜色：">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "左对齐">
+<!ENTITY AlignCenter.label                "居中">
+<!ENTITY AlignRight.label                 "右对齐">

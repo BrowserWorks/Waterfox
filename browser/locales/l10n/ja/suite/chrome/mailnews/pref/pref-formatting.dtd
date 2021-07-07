@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "送信形式">
+<!ENTITY sendMaildesc.label           "HTML 形式のメールを送信するとき、宛先の中に HTML を受け取り可能でない人が含まれている場合:">
+<!ENTITY askMe.label                  "処理方法を確認する (送信形式を選択します)">
+<!ENTITY askMe.accesskey              "k">
+<!ENTITY convertPlain2.label          "プレーンテキストに変換して送信する (書式が失われます)">
+<!ENTITY convertPlain2.accesskey      "C">
+<!ENTITY sendHTML2.label              "HTML 形式のまま送信する (相手がメッセージを正しく表示できない場合があります)">
+<!ENTITY sendHTML2.accesskey          "S">
+<!ENTITY sendBoth2.label              "プレーンテキストと HTML の両形式を送信する (メッセージサイズが大きくなります)">
+<!ENTITY sendBoth2.accesskey          "n">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML メールとテキストメールのドメイン設定">
+<!ENTITY domaindesc.label             "以下のリストのドメインにメールを送信する場合、リストに従って送信メールの形式 (テキスト/HTML) を自動的に選択します。">
+<!ENTITY HTMLdomaintitle.label        "HTML 形式を使用するドメイン">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "プレーンテキスト形式を使用するドメイン">
+<!ENTITY PlainTexttitle.accesskey     "P">
+<!ENTITY AddButton.label              "追加...">
+<!ENTITY AddHtmlDomain.accesskey      "A">
+<!ENTITY AddPlainText.accesskey       "d">
+<!ENTITY DeleteButton.label           "削除">
+<!ENTITY DeleteHtmlDomain.accesskey   "e">
+<!ENTITY DeletePlainText.accesskey    "t">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "HTML 形式を使用するドメインの追加">
+<!ENTITY add.htmldomain               "HTML メールのドメイン名:">
+<!ENTITY add.plaintexttitle           "プレーンテキスト形式を使用するドメイン名の追加">
+<!ENTITY add.plaintextdomain          "テキストメールのドメイン名:">
+
+<!ENTITY domainnameError.title        "ドメイン名のエラー">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "ドメイン名 @string@ が無効なため設定は無視されます。有効なドメイン名は、文字の間に少なくとも一つの '.' を含まなければなりません。">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "メッセージの書式が特に設定されていない場合は、自動的にプレーンテキスト形式で送信する (他の設定より優先します)">
+<!ENTITY autoDowngrade.accesskey      "o">

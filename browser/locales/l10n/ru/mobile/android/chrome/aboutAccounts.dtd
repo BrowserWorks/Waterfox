@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Аккаунты Firefox">
+<!ENTITY aboutAccounts.connected.description "Вы подключились как">
+<!ENTITY aboutAccounts.syncPreferences.label "Нажмите здесь, чтобы проверить настройки синхронизации">
+
+<!ENTITY aboutAccounts.noConnection.title "Нет соединения с Интернетом">
+<!ENTITY aboutAccounts.retry.label "Попробовать снова">
+
+<!ENTITY aboutAccounts.restrictedError.title "Ограничено">
+<!ENTITY aboutAccounts.restrictedError.description "Вы не можете управлять Аккаунтами Firefox из этого профиля.">

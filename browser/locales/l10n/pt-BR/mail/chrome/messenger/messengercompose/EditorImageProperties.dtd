@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Propriedades da imagem">
+
+<!ENTITY pixelsPopup.value "pixels">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Localização da imagem:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "Digite o nome do arquivo ou a localização da imagem">
+<!ENTITY locationEditField.shortenedDataURI "URI encurtada (a cópia substituirá a URI completa na área de transferência)">
+<!ENTITY title.label "Dica da ferramenta:">
+<!ENTITY title.accessKey "D">
+<!ENTITY title.tooltip "O atributo html 'title' que é exibido como uma dica da ferramenta">
+<!ENTITY altText.label "Texto alternativo:">
+<!ENTITY altText.accessKey "T">
+<!ENTITY altTextEditField.tooltip "Digite o texto para ser exibido no lugar da imagem">
+<!ENTITY noAltText.label "Não usar o texto alternativo">
+<!ENTITY noAltText.accessKey "u">
+
+<!ENTITY previewBox.label "Visualizar imagem">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Tamanho real:">
+<!ENTITY actualSizeRadio.label "Tamanho real">
+<!ENTITY actualSizeRadio.accessKey "r">
+<!ENTITY actualSizeRadio.tooltip "Reverter para o tamanho real da imagem">
+<!ENTITY customSizeRadio.label "Tamanho personalizado">
+<!ENTITY customSizeRadio.accessKey "z">
+<!ENTITY customSizeRadio.tooltip "Alterar como o tamanho da imagem é exibido na página">
+<!ENTITY heightEditField.label "Altura:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Largura:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Restringir">
+<!ENTITY constrainCheckbox.accessKey "M">
+<!ENTITY constrainCheckbox.tooltip "Manter a proporção da imagem">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Mapa da imagem">
+<!ENTITY removeImageMapButton.label "Remover">
+<!ENTITY removeImageMapButton.accessKey "R">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Alinha texto à imagem">
+<!ENTITY bottomPopup.value "Embaixo">
+<!ENTITY topPopup.value "Em cima">
+<!ENTITY centerPopup.value "No meio">
+<!ENTITY wrapRightPopup.value "Contornar à direita">
+<!ENTITY wrapLeftPopup.value "Contornar à esquerda">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Espaçamento">
+<!ENTITY leftRightEditField.label "Esquerdo e direito:">
+<!ENTITY leftRightEditField.accessKey "E">
+<!ENTITY topBottomEditField.label "Superior e inferior:">
+<!ENTITY topBottomEditField.accessKey "o">
+<!ENTITY borderEditField.label "Borda sólida:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Mostrar borda ao redor da imagem com link">
+<!ENTITY showImageLinkBorder.accessKey "k">
+<!ENTITY LinkAdvancedEditButton.label "Edição avançada do link…">
+<!ENTITY LinkAdvancedEditButton.accessKey "l">
+<!ENTITY LinkAdvancedEditButton.tooltip "Adicionar ou modificar os atributos HTML, atributos de estilo e JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formulário">
+<!ENTITY imageLocationTab.label "Localização">
+<!ENTITY imageDimensionsTab.label "Dimensões">
+<!ENTITY imageAppearanceTab.label "Aparência">
+<!ENTITY imageLinkTab.label "Link">

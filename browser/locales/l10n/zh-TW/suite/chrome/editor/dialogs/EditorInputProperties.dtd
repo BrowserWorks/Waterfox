@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "表單欄位屬性">
+<!ENTITY windowTitleImage.label "表單圖片屬性">
+
+<!ENTITY InputType.label "欄位型態">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "文字">
+<!ENTITY password.value "密碼">
+<!ENTITY checkbox.value "核對方塊">
+<!ENTITY radio.value "單選按鈕(Radio Button)">
+<!ENTITY submit.value "送出按鈕">
+<!ENTITY reset.value "重設按鈕">
+<!ENTITY file.value "檔案">
+<!ENTITY hidden.value "隱藏">
+<!ENTITY image.value "圖片">
+<!ENTITY button.value "按鈕">
+
+<!ENTITY InputSettings.label "欄位設定">
+<!ENTITY InputName.label "欄位名稱:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "群組名稱:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "欄位內含值:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "初始值:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "初始時自動選擇">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "初始時自動選取">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "唯讀">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "已停用">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "選取順序(Tab Index):">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "欄位大小:">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "最大長度:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "快速鍵:">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "接受型態:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "圖片屬性…">
+<!ENTITY ImageProperties.accesskey "e">
+

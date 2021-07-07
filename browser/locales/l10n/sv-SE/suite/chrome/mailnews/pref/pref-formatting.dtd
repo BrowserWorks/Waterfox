@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Skicka i format">
+<!ENTITY sendMaildesc.label           "Gör så här när meddelanden i HTML-format ska skickas till mottagare som inte är registrerade för att ta emot den här typen av meddelanden:">
+<!ENTITY askMe.label                  "Fråga hur det ska skickas (e-postklienten ber dig att välja ett format)">
+<!ENTITY askMe.accesskey              "F">
+<!ENTITY convertPlain2.label          "Konvertera meddelandet till oformaterad text (formatering kan gå förlorad)">
+<!ENTITY convertPlain2.accesskey      "K">
+<!ENTITY sendHTML2.label              "Skicka meddelandet i enbart HTML-format (koder kan visas i texten i enklare läsare)">
+<!ENTITY sendHTML2.accesskey          "S">
+<!ENTITY sendBoth2.label              "Skicka meddelandet som både oformaterad text och HTML (större storlek)">
+<!ENTITY sendBoth2.accesskey          "c">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Domäner för HTML respektive oformaterad text">
+<!ENTITY domaindesc.label             "När meddelanden skickas till en adress inom följande domäner, kommer e-postklienten automatiskt att skicka meddelandet i önskat format (formaterad eller oformaterad text).">
+<!ENTITY HTMLdomaintitle.label        "HTML-domäner">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Oformaterad text">
+<!ENTITY PlainTexttitle.accesskey     "O">
+<!ENTITY AddButton.label              "Lägg till…">
+<!ENTITY AddHtmlDomain.accesskey      "l">
+<!ENTITY AddPlainText.accesskey       "t">
+<!ENTITY DeleteButton.label           "Ta bort">
+<!ENTITY DeleteHtmlDomain.accesskey   "b">
+<!ENTITY DeletePlainText.accesskey    "r">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Lägg till HTML-domännamn">
+<!ENTITY add.htmldomain               "HTML-domännamn:">
+<!ENTITY add.plaintexttitle           "Lägg till textdomännamn">
+<!ENTITY add.plaintextdomain          "Textdomännamn:">
+
+<!ENTITY domainnameError.title        "Felaktigt domännamn">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Domännamnet @string@ är ogiltigt och kommer att ignoreras. Giltiga domännamns måste ha minst en '.' och bokstäver på var sida om den.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Skicka meddelandet som oformaterad text automatiskt om ingen märkbar formatering finns (oavsett övriga inställningar)">
+<!ENTITY autoDowngrade.accesskey      "o">

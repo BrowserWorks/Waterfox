@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Overfør side">
+<!ENTITY windowTitleSettings.label    "Indstillinger for overførsel">
+<!ENTITY publishTab.label             "Overfør">
+<!ENTITY settingsTab.label            "Indstillinger">
+<!ENTITY publishButton.label          "Overfør">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Stedets navn:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Vælg det sted som du vil overføre til">
+<!ENTITY newSiteButton.label          "Nyt sted">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Stedets undermappe til denne side:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Vælg eller angiv navnet på stedets undermappe til denne side">
+<!ENTITY publishImgCheckbox.label     "Inkluder billeder og andre filer">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Overfør billeder og andre filer som er inkluderet i denne side">
+<!ENTITY sameLocationRadio.label      "Placer sammen med siden">
+<!ENTITY sameLocationRadio.accesskey  "s">
+<!ENTITY sameLocationRadio.tooltip    "Overfør filer til samme placering som siden">
+<!ENTITY useSubdirRadio.label         "Brug dette sites undermappe:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Overfør filer til den valgte undermappe">
+<!ENTITY otherDirList.tooltip         "Vælg eller angiv navnet på undermappen, som filerne skal overføres til">
+<!ENTITY pageTitle.label              "Sidens titel:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Angiv sidens titel. Titlen bruges bl.a. i bogmærker og på faneblade.">
+<!ENTITY pageTitleExample.label       "fx &quot;Min webside&quot;">
+<!ENTITY filename.label               "Filnavn:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Angiv et filnavn, inklusive filtype">
+<!ENTITY filenameExample.label        "fx &quot;Min webside.html&quot;">
+<!ENTITY setDefaultButton.label       "Brug som standard">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "Fjern sted">
+<!ENTITY removeButton.accesskey       "R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Overførselssteder">
+<!ENTITY serverInfo.label             "Server-information">
+<!ENTITY loginInfo.label              "Log-in-information">
+<!ENTITY siteName.label               "Stedets navn:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Et valgfrit navn til at identificere stedet, fx &quot;Familiesiden&quot;">
+<!ENTITY siteUrl.label                "Overførselsadresse (fx &quot;ftp://ftp.minwebside.dk&quot;):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Den FTP://- eller HTTP://-adresse som du har fået oplyst af dit webhotel">
+<!ENTITY browseUrl.label              "Din websides adresse (fx &quot;http://www.minwebside.dk&quot;):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "HTTP://-adressen til din mappe på serveren">
+<!ENTITY username.label               "Brugernavn:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "Det brugernavn, som du bruger for at logge ind på webhotellet">
+<!ENTITY password.label               "Adgangskode:">
+<!ENTITY password.accesskey           "A">
+<!ENTITY password.tooltip             "Den adgangskode du bruger for at logge ind på webhotellet">
+<!ENTITY savePassword.label           "Husk adgangskode">
+<!ENTITY savePassword.accesskey       "H">
+<!ENTITY savePassword.tooltip         "Vælg dette for at gemme din adgsangskode sikkert med Adgangskode-håndteringen">

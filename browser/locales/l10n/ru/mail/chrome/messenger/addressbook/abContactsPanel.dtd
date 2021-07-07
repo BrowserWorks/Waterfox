@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Свойства">
+<!ENTITY propertiesMenu.accesskey           "в">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Свойства адресной книги">
+<!ENTITY abPropertiesMenu.accesskey         "в">
+<!ENTITY contactPropertiesMenu.label        "Свойства контакта">
+<!ENTITY contactPropertiesMenu.accesskey    "в">
+<!ENTITY mailingListPropertiesMenu.label    "Свойства списка рассылки">
+<!ENTITY mailingListPropertiesMenu.accesskey "в">
+
+<!ENTITY abContextMenuButton.tooltip        "Отобразить контекстное меню адресной книги">
+<!ENTITY addressbookPicker.label            "Адресная книга:">
+<!ENTITY addressbookPicker.accesskey        "е">
+<!ENTITY searchContacts.label               "Поиск контактов:">
+<!ENTITY searchContacts.accesskey           "к">
+<!ENTITY SearchNameOrEmail.label            "Имя или e-mail адрес">
+
+<!ENTITY addtoToFieldMenu.label             "Кому">
+<!ENTITY addtoToFieldMenu.accesskey         "о">
+<!ENTITY addtoCcFieldMenu.label             "Копия">
+<!ENTITY addtoCcFieldMenu.accesskey         "я">
+<!ENTITY addtoBccFieldMenu.label            "Скрытая копия">
+<!ENTITY addtoBccFieldMenu.accesskey        "ы">
+<!ENTITY deleteAddrBookCard.label           "Удалить">
+<!ENTITY deleteAddrBookCard.accesskey       "л">
+<!ENTITY propertiesContext.label            "Свойства">
+<!ENTITY propertiesContext.accesskey        "в">
+<!ENTITY abPropertiesContext.label          "Свойства">
+<!ENTITY abPropertiesContext.accesskey      "в">
+<!ENTITY editContactContext.label           "Изменить контакт">
+<!ENTITY editContactContext.accesskey       "м">
+<!ENTITY editMailingListContext.label       "Изменить список">
+<!ENTITY editMailingListContext.accesskey   "м">
+
+<!ENTITY newContactAbContext.label          "Новый контакт">
+<!ENTITY newContactAbContext.accesskey      "ы">
+<!ENTITY newListAbContext.label             "Новый список">
+<!ENTITY newListAbContext.accesskey         "и">
+
+<!ENTITY toButton.label                     "Кому:">
+<!ENTITY toButton.accesskey                 "о">
+<!ENTITY ccButton.label                     "Копия:">
+<!ENTITY ccButton.accesskey                 "п">
+<!ENTITY bccButton.label                    "Скрытая копия:">
+<!ENTITY bccButton.accesskey                "ы">

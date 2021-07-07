@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Thuộc tính danh sách chọn">
+
+<!ENTITY Select.label "Danh sách chọn">
+<!ENTITY SelectName.label "Tên danh sách:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Chiều cao:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Nhiều lựa chọn">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "Đã tắt">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Chỉ mục thẻ:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Tùy chọn nhóm">
+<!ENTITY OptGroupLabel.label "Nhãn:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Đã tắt">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Tùy chọn">
+<!ENTITY OptionText.label "Văn bản:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Giá trị:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Được chọn đầu tiên">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Đã tắt">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Văn bản">
+<!ENTITY ValueHeader.label "Giá trị">
+<!ENTITY SelectedHeader.label "Đã chọn">
+
+<!ENTITY AddOption.label "Thêm tùy chọn">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "Thêm nhóm">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Xóa">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "Di chuyển lên">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "Di chuyển xuống">
+<!ENTITY MoveElementDown.accesskey "D">

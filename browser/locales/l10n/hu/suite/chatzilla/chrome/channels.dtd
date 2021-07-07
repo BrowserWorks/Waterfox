@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Csatlakozás a csatornához">
+
+<!ENTITY network.label     "Hálózat:">
+<!ENTITY network.accesskey "H">
+
+<!ENTITY channel.label     "Csatorna:">
+<!ENTITY channel.accesskey "C">
+
+<!ENTITY topics.label     "Témakörök és csatornanevek keresése">
+<!ENTITY topics.accesskey "T">
+
+<!ENTITY join.label     "Csatlakozás">
+<!ENTITY join.accesskey "k">
+
+<!ENTITY minusers.label     "Min. felhasználók:">
+<!ENTITY minusers.accesskey "M">
+
+<!ENTITY maxusers.label     "Max. felhasználók:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "Frissítés most">
+<!ENTITY refresh.accesskey "">
+
+<!ENTITY network.hint.label "Adjon meg egy tetszőleges hálózati vagy kiszolgálónevet (portot is megadhat) és egy csatornát, amelyhez csatlakozna.">
+
+<!ENTITY col.network "Hálózat">
+<!ENTITY col.name  "Név">
+<!ENTITY col.users "Felhasználók">
+<!ENTITY col.topic "Téma">

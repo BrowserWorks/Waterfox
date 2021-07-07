@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Email">
+<!ENTITY readMsgsLink.label           "Αναγνωσμένα μηνύματα">
+<!ENTITY composeMsgLink.label         "Σύνταξη νέου μηνύματος">
+
+<!ENTITY newsSectionHdr.label         "Ομάδες συζήτησης">
+<!ENTITY subscribeNewsLink.label      "Διαχείριση συνδρομών ομάδων συζήτησης">
+
+<!ENTITY accountsSectionHdr.label     "Λογαριασμοί">
+<!ENTITY subscribeImapFolders.label   "Διαχείριση συνδρομών φακέλων">
+<!ENTITY settingsLink.label           "Προβολή ρυθμίσεων λογαριασμού">
+<!ENTITY newAcctLink.label            "Δημιουργία νέου λογαριασμού">
+
+<!ENTITY advFeaturesSectionHdr.label  "Προηγμένες λειτουργίες">
+<!ENTITY searchMsgsLink.label         "Αναζήτηση μηνυμάτων">
+<!ENTITY filtersLink.label            "Διαχείριση φίλτρων μηνυμάτων">
+<!ENTITY junkSettings.label           "Ρυθμίσεις ανεπιθύμητων email">
+<!ENTITY offlineLink.label            "Ρυθμίσεις εκτός σύνδεσης">
+
+<!ENTITY feedsSectionHdr.label        "Ροές">
+<!ENTITY subscribeFeeds.label         "Διαχείριση συνδρομών">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "默认客户端">
+<!ENTITY defaultClient.intro  "使用 &brandShortName; 作为下列应用的默认客户端：">
+
+<!ENTITY browser.label "浏览器">
+<!ENTITY email.label "电子邮件">
+<!ENTITY newsgroups.label "新闻组">
+<!ENTITY feeds.label "收取点">
+
+<!ENTITY checkOnStartup.label "每次启动 &brandShortName; 时都进行此项检查">
+<!ENTITY checkOnStartup.accesskey "A">

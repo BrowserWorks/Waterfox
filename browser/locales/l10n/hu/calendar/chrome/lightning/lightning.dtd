@@ -1,0 +1,110 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Naptár">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Esemény…">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "Feladat…">
+<!ENTITY lightning.menupopup.new.task.accesskey "F">
+<!ENTITY lightning.menupopup.new.calendar.label "Naptár…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "N">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Naptárfájl…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "N">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Naptár">
+<!ENTITY lightning.menu.view.calendar.accesskey        "N">
+<!ENTITY lightning.menu.view.tasks.label               "Feladatok">
+<!ENTITY lightning.menu.view.tasks.accesskey           "F">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Események és feladatok">
+<!ENTITY lightning.menu.eventtask.accesskey            "E">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-mail:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Ügyféloldali e-mail ütemezés előnyben részesítése">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Jelenleg csak azután engedélyezheti ezt a beállítást, ha úgy állította be a naptárat a tulajdonságok párbeszédablakon, hogy a kiszolgáló intézi az ütemezést.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Ez a beállítás csak akkor érhető el, ha a naptárkiszolgáló kezeli az ütemezést. Az engedélyezés után visszaáll szabványos e-mail alapú ütemezésre, ahelyett hogy a kiszolgálóra hagyná azt.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Elfogadás">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Eseménymeghívó elfogadása">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Összes elfogadása">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Eseménymeghívó elfogadása az esemény minden előfordulására">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Hozzáadás">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Az esemény hozzáadása a naptárhoz">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Elutasítás">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Eseménymeghívó elutasítása">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Összes elutasítása">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Eseménymeghívó elutasítása az esemény minden előfordulására">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Elutasítás">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Az ellenjavaslat elutasítása">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Törlés">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Törlés a naptárból">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Részletek…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Esemény részleteinek megjelenítése">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Ne mutassa ezeket az üzeneteket">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Naptár">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Ugrás a naptár lapra">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Több">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Kattintson további lehetőségekért">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Újra megerősítés">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Ismételt megerősítés küldése a szervezőnek">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Átütemezés">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Az esemény átütemezése">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Másolat mentése">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Az esemény másolatának mentése a naptárba a szervezőnek küldött választól függetlenül. A résztvevők listája törlésre kerül.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Feltételes">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Eseménymeghívó feltételes elfogadása">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Összes feltételes">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Eseménymeghívó elfogadása feltételesen az esemény minden előfordulására">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Frissítés">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Esemény frissítése a naptárban">
+<!ENTITY lightning.imipbar.description                                      "Ez az üzenet egy eseményre szóló meghívót tartalmaz.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Válasz küldése most">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Válasz küldése a szervezőnek">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Válasz küldése a szervezőnek az egész sorozattal kapcsolatban">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Ne küldjön választ">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "A részvételi állapot megváltoztatása a szervezőnek küldött válasz nélkül">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "A részvételi állapot megváltoztatása a teljes sorozatra a szervezőnek küldött válasz nélkül">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Új naptár létrehozása">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Mini hónap megjelenítése">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Mini nap megjelenítése">
+<!ENTITY todaypane.showMiniday.accesskey  "n">
+<!ENTITY todaypane.showNone.label "Nincs megjelenítés">
+<!ENTITY todaypane.showNone.accesskey "i">
+<!ENTITY todaypane.showTodayPane.label "A Ma panel megjelenítése">
+<!ENTITY todaypane.showTodayPane.accesskey "p">
+<!ENTITY todaypane.statusButton.label "Ma panel">

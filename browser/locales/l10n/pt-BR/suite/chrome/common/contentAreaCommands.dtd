@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Bloquear popups deste site">
+<!ENTITY popupWindowRejectCmd.accesskey "o">
+<!ENTITY popupWindowAllowCmd.label      "Desbloquear popups deste site">
+<!ENTITY popupWindowAllowCmd.accesskey  "o">
+<!ENTITY openLinkCmdInTab.label       "Abrir em nova aba">
+<!ENTITY openLinkCmdInTab.accesskey   "n">
+<!ENTITY openLinkCmd.label            "Abrir em nova janela">
+<!ENTITY openLinkCmd.accesskey        "A">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Abrir em nova janela privativa">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "v">
+<!ENTITY openLinkInWindowCmd.label    "Abrir">
+<!ENTITY openLinkInWindowCmd.accesskey "b">
+<!ENTITY openFrameCmd.label           "Abrir quadro em nova janela">
+<!ENTITY openFrameCmd.accesskey       "A">
+<!ENTITY openFrameCmdInTab.label      "Abrir quadro em nova aba">
+<!ENTITY openFrameCmdInTab.accesskey  "n">
+<!ENTITY keywordfield.label           "Criar palavra-chave da pesquisa…">
+<!ENTITY keywordfield.accesskey       "h">
+<!ENTITY showOnlyThisFrameCmd.label     "Exibir somente este quadro">
+<!ENTITY showOnlyThisFrameCmd.accesskey "m">
+<!ENTITY goBackCmd.label              "Voltar">
+<!ENTITY goBackCmd.accesskey          "V">
+<!ENTITY goForwardCmd.label           "Avançar">
+<!ENTITY goForwardCmd.accesskey       "A">
+<!ENTITY goUpCmd.label                "Um nível acima">
+<!ENTITY goUpCmd.accesskey            "c">
+<!ENTITY reloadCmd.label              "Recarregar">
+<!ENTITY reloadCmd.accesskey          "R">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Parar">
+<!ENTITY stopCmd.accesskey            "P">
+<!ENTITY reloadFrameCmd.label         "Recarregar quadro">
+<!ENTITY reloadFrameCmd.accesskey     "R">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Código-fonte da seleção">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Código-fonte MathML">
+<!ENTITY viewPartialSourceCmd.accesskey "f">
+<!ENTITY viewPageSourceCmd.label      "Código-fonte">
+<!ENTITY viewPageSourceCmd.accesskey  "f">
+<!ENTITY viewFrameSourceCmd.label     "Código-fonte deste quadro">
+<!ENTITY viewFrameSourceCmd.accesskey "f">
+<!ENTITY viewPageInfoCmd.label        "Propriedades da página">
+<!ENTITY viewPageInfoCmd.accesskey    "o">
+<!ENTITY viewFrameInfoCmd.label       "Propriedades do quadro">
+<!ENTITY viewFrameInfoCmd.accesskey   "o">
+<!ENTITY fitImageCmd.label            "Redimensionar imagem">
+<!ENTITY fitImageCmd.accesskey        "R">
+<!ENTITY reloadImageCmd.label         "Recarregar imagem">
+<!ENTITY reloadImageCmd.accesskey     "R">
+<!ENTITY viewImageCmd.label           "Ver imagem">
+<!ENTITY viewImageCmd.accesskey       "V">
+<!ENTITY viewImageInfoCmd.label       "Ver informações da imagem">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewVideoCmd.label           "Exibir vídeo">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Exibir plano de fundo">
+<!ENTITY viewBGImageCmd.accesskey     "x">
+<!ENTITY setDesktopBackgroundCmd.label     "Definir papel de parede…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "a">
+<!ENTITY bookmarkPageCmd.label        "Criar marcador">
+<!ENTITY bookmarkPageCmd.accesskey    "m">
+<!ENTITY bookmarkLinkCmd.label        "Criar marcador para este link">
+<!ENTITY bookmarkLinkCmd.accesskey    "l">
+<!ENTITY bookmarkFrameCmd.label       "Criar marcador para este quadro">
+<!ENTITY bookmarkFrameCmd.accesskey   "c">
+<!ENTITY savePageAsCmd.label          "Salvar página como...">
+<!ENTITY savePageCmd.label            "Salvar como...">
+<!ENTITY savePageCmd.accesskey        "l">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Salvar quadro como...">
+<!ENTITY saveFrameCmd.label           "Salvar quadro como...">
+<!ENTITY saveFrameCmd.accesskey       "v">
+<!ENTITY printFrameCmd.label          "Imprimir quadro…">
+<!ENTITY printFrameCmd.accesskey      "p">
+<!ENTITY saveLinkAsCmd.label          "Salvar link como...">
+<!ENTITY saveLinkCmd.label            "Salvar link como...">
+<!ENTITY saveLinkCmd.accesskey        "c">
+<!ENTITY saveImageAsCmd.label         "Salvar imagem como...">
+<!ENTITY saveImageCmd.label           "Salvar imagem como...">
+<!ENTITY saveImageCmd.accesskey       "i">
+<!ENTITY saveVideoCmd.label           "Salvar vídeo como…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "Salvar áudio como…">
+<!ENTITY saveAudioCmd.accesskey       "v">
+<!ENTITY copyLinkCmd.label            "Copiar endereço do link">
+<!ENTITY copyLinkCmd.accesskey        "o">
+<!ENTITY copyImageCmd.label           "Copiar endereço da imagem">
+<!ENTITY copyImageCmd.accesskey       "r">
+<!ENTITY copyVideoURLCmd.label        "Copiar localização do vídeo">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Copiar localização do áudio">
+<!ENTITY copyAudioURLCmd.accesskey    "l">
+<!ENTITY metadataCmd.label            "Propriedades do objeto">
+<!ENTITY metadataCmd.accesskey        "t">
+<!ENTITY copyEmailCmd.label           "Copiar email">
+<!ENTITY copyEmailCmd.accesskey       "a">
+<!ENTITY thisFrameMenu.label          "Este quadro">
+<!ENTITY thisFrameMenu.accesskey      "q">
+<!ENTITY mediaPlay.label              "Play">
+<!ENTITY mediaPlay.accesskey          "P">
+<!ENTITY mediaPause.label             "Pausar">
+<!ENTITY mediaPause.accesskey         "P">
+<!ENTITY mediaMute.label              "Silenciar">
+<!ENTITY mediaMute.accesskey          "S">
+<!ENTITY mediaUnmute.label            "Ativar som">
+<!ENTITY mediaUnmute.accesskey        "s">
+<!ENTITY mediaPlaybackRate.label        "Velocidade de reprodução">
+<!ENTITY mediaPlaybackRate.accesskey    "d">
+<!ENTITY mediaPlaybackRate050.label     "Câmera lenta (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "C">
+<!ENTITY mediaPlaybackRate100.label     "Velocidade normal">
+<!ENTITY mediaPlaybackRate100.accesskey "n">
+<!ENTITY mediaPlaybackRate125.label     "Velocidade rápida (1¼ ×)">
+<!ENTITY mediaPlaybackRate125.accesskey "F">
+<!ENTITY mediaPlaybackRate150.label     "Velocidade alta (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "V">
+<!ENTITY mediaPlaybackRate200.label     "Velocidade dobrada">
+<!ENTITY mediaPlaybackRate200.accesskey "d">
+<!ENTITY mediaLoop.label              "Repetir">
+<!ENTITY mediaLoop.accesskey          "o">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Exibir controles de mídia">
+<!ENTITY mediaShowControls.accesskey  "a">
+<!ENTITY mediaHideControls.label      "Ocultar controles de mídia">
+<!ENTITY mediaHideControls.accesskey  "a">
+<!ENTITY videoFullScreen.label        "Tela inteira">
+<!ENTITY videoFullScreen.accesskey    "c">
+<!ENTITY videoSaveImage.label         "Salvar a captura como…">
+<!ENTITY videoSaveImage.accesskey     "S">
+<!ENTITY videoShowStats.label         "Mostrar estatísticas">
+<!ENTITY videoShowStats.accesskey     "t">
+<!ENTITY videoHideStats.label         "Ocultar estatísticas">
+<!ENTITY videoHideStats.accesskey     "t">
+<!ENTITY search.accesskey             "P">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Alternar a direção da página">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "g">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Alternar a direção do texto">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "t">
+<!ENTITY spellAddToDictionary.label     "Adicionar ao dicionário">
+<!ENTITY spellAddToDictionary.accesskey "d">
+<!ENTITY spellUndoAddToDictionary.label      "Desfazer memorizar como correta">
+<!ENTITY spellUndoAddToDictionary.accesskey  "i">
+<!ENTITY spellIgnoreWord.label          "Ignorar palavra">
+<!ENTITY spellIgnoreWord.accesskey      "I">
+<!ENTITY spellCheckEnable.label         "Verificar ortografia">
+<!ENTITY spellCheckEnable.accesskey     "V">
+<!ENTITY spellNoSuggestions.label       "(Nenhuma sugestão)">
+<!ENTITY spellDictionaries.label        "Idiomas">
+<!ENTITY spellDictionaries.accesskey    "I">
+<!ENTITY spellAddDictionaries.label     "Baixar mais dicionários...">
+<!ENTITY spellAddDictionaries.accesskey "x">
+
+<!ENTITY fillLoginMenu.label          "Preencher conta de acesso">
+<!ENTITY fillLoginMenu.accesskey      "P">
+<!ENTITY fillPasswordMenu.label       "Preencher senha">
+<!ENTITY fillPasswordMenu.accesskey   "P">
+<!ENTITY fillUsernameMenu.label       "Preencher nome de usuário">
+<!ENTITY fillUsernameMenu.accesskey   "P">
+<!ENTITY noLoginSuggestions.label     "(nenhuma sugestão de conta de acesso)">
+<!ENTITY viewSavedLogins.label        "Ver contas de acesso salvas">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "Inspecionar elemento">
+<!ENTITY devtoolsInspect.accesskey      "n">

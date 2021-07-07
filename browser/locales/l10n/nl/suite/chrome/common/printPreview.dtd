@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Afdrukken…">
+<!ENTITY print.accesskey      "A">
+<!ENTITY pageSetup.label      "Pagina-instellingen…">
+<!ENTITY pageSetup.accesskey  "n">
+<!ENTITY page.label           "Pagina:">
+<!ENTITY page.accesskey       "P">
+<!ENTITY of.label             "van">
+<!ENTITY scale.label          "Schaal:">
+<!ENTITY scale.accesskey      "c">
+<!ENTITY portrait.label       "Staand">
+<!ENTITY portrait.accesskey   "t">
+<!ENTITY landscape.label      "Liggend">
+<!ENTITY landscape.accesskey  "L">
+<!ENTITY close.label          "Sluiten">
+<!ENTITY close.accesskey      "S">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Aangepast…">
+<!ENTITY ShrinkToFit.label    "Verkleinen tot papierformaat">
+<!ENTITY customPrompt.title   "Aangepaste schaal…">
+
+<!ENTITY homearrow.tooltip    "Eerste pagina">
+<!ENTITY endarrow.tooltip     "Laatste pagina">
+<!ENTITY rightarrow.tooltip   "Volgende pagina">
+<!ENTITY leftarrow.tooltip    "Vorige pagina">

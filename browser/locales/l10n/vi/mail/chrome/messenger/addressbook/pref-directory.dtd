@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "Máy chủ thư mục LDAP">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Máy chủ Thư mục LDAP:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Chọn một Máy chủ Thư mục LDAP:">
+<!ENTITY directoriesText.accesskey "M">
+<!ENTITY addDirectory.label        "Thêm">
+<!ENTITY addDirectory.accesskey    "T">
+<!ENTITY editDirectory.label       "Chỉnh sửa">
+<!ENTITY editDirectory.accesskey   "e">
+<!ENTITY deleteDirectory.label     "Xóa">
+<!ENTITY deleteDirectory.accesskey "X">

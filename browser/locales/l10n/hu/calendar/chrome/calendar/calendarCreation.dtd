@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Új naptár létrehozása" >
+<!ENTITY wizard.label             "Új naptár létrehozása" >
+<!ENTITY wizard.description       "A naptár helye" >
+
+<!ENTITY initialpage.description    "A naptár tárolható a saját számítógépen vagy egy kiszolgálón, hogy távolról is elérhető legyen, illetve megosztható legyen az ismerősökkel vagy munkatársakkal." >
+<!ENTITY initialpage.computer.label  "A saját gépen">
+<!ENTITY initialpage.network.label  "A hálózaton">
+
+<!ENTITY locationpage.description         "Adja meg a távoli naptár eléréséhez szükséges adatokat" >
+<!ENTITY locationpage.login.description   "Opcionális: adja meg felhasználónevet és jelszót" >
+<!ENTITY locationpage.username.label      "Felhasználónév:" >
+<!ENTITY locationpage.password.label      "Jelszó:" >
+
+<!ENTITY custompage.shortdescription  "A naptár testreszabása" >
+<!ENTITY custompage.longdescription   "A naptárnak nevet adhat, és kiszínezheti az ebből a naptárból származó eseményeket." >
+
+<!ENTITY finishpage.shortdescription  "A naptár létrejött" >
+<!ENTITY finishpage.longdescription   "Elkészült a naptárja." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Egyéb">
+
+<!ENTITY buttons.create.label "Naptár létrehozása">
+<!ENTITY buttons.create.accesskey "l">
+
+<!ENTITY buttons.find.label "Naptárak keresése">
+<!ENTITY buttons.find.accesskey "k">
+
+<!ENTITY buttons.back.label "Vissza">
+<!ENTITY buttons.back.accesskey "V">
+
+<!ENTITY buttons.subscribe.label "Feliratkozás">
+<!ENTITY buttons.subscribe.accesskey "F">
+
+<!ENTITY calendartype.label "Naptár típusa:">
+<!ENTITY location.label "Hely:">
+<!ENTITY location.placeholder "A naptár-kiszolgáló URL-e vagy gépneve">
+
+<!ENTITY network.nocredentials.label "Ez a hely nem igényel hitelesítő adatokat">
+<!ENTITY network.loading.description "Várjon amíg a naptárai felfedezésre kerülnek.">
+<!ENTITY network.notfound.description "Ezen a helyen nem találhatóak naptárak. Ellenőrizze a beállításait.">
+<!ENTITY network.authfail.description "A megadott hitelesítő adatok nem lettek elfogadva. Ellenőrizze a beállításait.">
+
+<!ENTITY network.subscribe.single.description "Válassza ki a naptárakat, amelyekre fel szeretne iratkozni.">
+<!ENTITY network.subscribe.multiple.description "Több naptártípus is elérhető ehhez a helyhez. Válasszon egy naptártípust, és jelölje meg a naptárakat, amelyekre fel akar iratkozni.">

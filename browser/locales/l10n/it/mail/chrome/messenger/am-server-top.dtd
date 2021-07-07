@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Cartella messaggi">
+<!ENTITY securitySettings.label "Impostazioni di sicurezza">
+<!ENTITY serverSettings.label "Impostazioni server">
+<!ENTITY serverType.label "Tipo di server:">
+<!ENTITY serverName.label "Nome server:">
+<!ENTITY serverName.accesskey "r">
+<!ENTITY userName.label "Nome utente:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Porta:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Predefinito:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Controlla nuovi messaggi ogni ">
+<!ENTITY biffStart.accesskey "n">
+<!ENTITY biffEnd.label "minuti">
+<!ENTITY useIdleNotifications.label "Consentire la notifica immediata da parte del server quando arriva un nuovo messaggio">
+<!ENTITY useIdleNotifications.accesskey "C">
+<!ENTITY connectionSecurity.label "Sicurezza della connessione:">
+<!ENTITY connectionSecurity.accesskey "d">
+<!ENTITY connectionSecurityType-0.label "Nessuna">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, se disponibile">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Metodo di autenticazione:">
+<!ENTITY authMethod.accesskey "A">
+<!ENTITY leaveOnServer.label "Lascia i messaggi sul server">
+<!ENTITY leaveOnServer.accesskey "L">
+<!ENTITY headersOnly.label "Preleva soltanto le intestazioni">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "non più di">
+<!ENTITY deleteByAgeFromServer.accesskey "ù">
+<!ENTITY daysEnd.label "giorni">
+<!ENTITY deleteOnServer2.label "finché non vengono eliminati">
+<!ENTITY deleteOnServer2.accesskey "f">
+<!ENTITY downloadOnBiff.label "Scarica automaticamente nuovi messaggi">
+<!ENTITY downloadOnBiff.accesskey "t">
+<!ENTITY deleteMessagePrefix.label "Quando si elimina un messaggio:">
+<!ENTITY modelMoveToTrash.label "Spostalo in questa cartella:">
+<!ENTITY modelMoveToTrash.accesskey "q">
+<!ENTITY modelMarkDeleted.label "Segnalo eliminato">
+<!ENTITY modelMarkDeleted.accesskey "e">
+<!ENTITY modelDeleteImmediately.label "Eliminalo subito">
+<!ENTITY modelDeleteImmediately.accesskey "b">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "All’uscita pulisci (&quot;Expunge&quot;) la Posta in arrivo">
+<!ENTITY expungeOnExit.accesskey "o">
+<!ENTITY emptyTrashOnExit.label "Svuota Cestino all’uscita">
+<!ENTITY emptyTrashOnExit.accesskey "c">
+<!ENTITY loginAtStartup.label "Controlla nuovi messaggi all’avvio">
+<!ENTITY loginAtStartup.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Chiedi prima di scaricare più di">
+<!ENTITY maxMessagesStart.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "messaggi">
+<!ENTITY alwaysAuthenticate.label "Chiedi sempre l’autenticazione alla connessione a questo server">
+<!ENTITY alwaysAuthenticate.accesskey "h">
+<!ENTITY newsrcFilePath1.label "File News.rc:">
+<!ENTITY newsrcPicker1.label "Seleziona il file News.rc">
+<!ENTITY abbreviate.label "Mostra nome del gruppo di discussione nel pannello della posta così:">
+<!ENTITY abbreviateOn.label "Nomi completi (ad esempio, “netscape.public.mozilla.mail-news”)">
+<!ENTITY abbreviateOff.label "Nomi abbreviati (ad esempio, “n.p.m.mail-news”)">
+<!ENTITY advancedButton.label "Avanzate…">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY serverDefaultCharset2.label "Codifica testo predefinita:">
+<!ENTITY localPath1.label "Cartella locale:">
+<!ENTITY localFolderPicker.label "Scegliere la cartella locale">
+<!ENTITY browseFolder.label "Sfoglia…">
+<!ENTITY browseFolder.accesskey "S">
+<!ENTITY browseNewsrc.label "Sfoglia…">
+<!ENTITY browseNewsrc.accesskey "o">
+
+<!ENTITY accountTitle.label "Impostazioni account">
+<!ENTITY accountSettingsDesc.label "Questo è un account speciale. Non ci sono identità associate a esso.">
+<!ENTITY storeType.label "Modalità di salvataggio dei messaggi:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "File per cartella (mbox)">
+<!ENTITY maildirStore.label "Un file per ogni messaggio (maildir)">

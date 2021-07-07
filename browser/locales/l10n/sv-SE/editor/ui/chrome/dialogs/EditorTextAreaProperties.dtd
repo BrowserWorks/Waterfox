@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Textareaegenskaper">
+
+<!ENTITY Settings.label "Inställningar">
+
+<!ENTITY TextAreaName.label "Fältnamn:">
+<!ENTITY TextAreaName.accessKey "F">
+<!ENTITY TextAreaRows.label "Rader:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Kolumner:">
+<!ENTITY TextAreaCols.accessKey "K">
+<!ENTITY TextAreaReadOnly.label "Skrivskyddat">
+<!ENTITY TextAreaReadOnly.accessKey "S">
+<!ENTITY TextAreaDisabled.label "Inte tillgänglig">
+<!ENTITY TextAreaDisabled.accessKey "n">
+<!ENTITY TextAreaTabIndex.label "Tabindex:">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Snabbtangent:">
+<!ENTITY TextAreaAccessKey.accessKey "b">
+<!ENTITY InitialText.label "Inledande text:">
+<!ENTITY InitialText.accessKey "l">
+
+<!ENTITY TextAreaWrap.label "Radbrytningsläge:">
+<!ENTITY TextAreaWrap.accessKey "a">
+<!ENTITY WrapDefault.value "Grundinställning">
+<!ENTITY WrapOff.value "Av">
+<!ENTITY WrapHard.value "Hård">
+<!ENTITY WrapSoft.value "Mjuk">
+<!ENTITY WrapPhysical.value "Fysisk">
+<!ENTITY WrapVirtual.value "Virtuell">

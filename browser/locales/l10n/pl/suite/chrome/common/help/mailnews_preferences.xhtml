@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > %brandDTD;]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Preferencje Kuriera Poczty</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="mail_and_newsgroup_preferences">Preferencje Kuriera Poczty</h1>
+
+<p>Poniższy rozdział opisuje preferencje Kuriera Poczty, które dotyczą wszystkich kont pocztowych i grup dyskusyjnych. Aby wyświetlić te preferencje należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>Podwójnie kliknąć na Kurier Poczty, aby rozwinąć listę.</li>
+</ol>
+
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#mail_and_newsgroups">Preferencje Kuriera Poczty</a></li>
+    <li><a href="#message_display">Wiadomości</a></li>
+    <li><a href="#notifications">Powiadomienia</a></li>
+    <li><a href="#composition">Komponowanie</a></li>
+    <li><a href="#send_format">Formatowanie</a></li>
+    <li><a href="#addressing_preferences">Adresowanie</a></li>
+    <li><a href="#junk_and_suspect_preferences">Niechciana i podejrzana poczta</a></li>
+    <li><a href="#tags">Etykiety</a></li>
+    <li><a href="#return_receipts_preferences">Potwierdzenia odbioru</a></li>
+    <li><a href="#character_encoding">Kodowanie znaków</a></li>
+    <li><a href="#network_and_storage_preferences">Sieć i miejsce na dysku</a></li>
+  </ul>
+</div>
+
+<h2 id="mail_and_newsgroups">Preferencje Kuriera Poczty</h2>
+
+<p>Ten rozdział opisuje główne preferencje Kuriera Poczty. Jeżeli nie są jeszcze widoczne, należy wykonać następujące kroki:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>Wybrać kategorię Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>Wymagaj potwierdzenia przy usuwaniu folderów do kosza</strong>: należy wybrać tę opcję, jeżeli użytkownik chce każdorazowo potwierdzać usuwanie folderów wiadomości.</li>
+  <li><strong>Zapamiętaj ostatnio wybraną wiadomość</strong>: należy wybrać tę opcję, jeżeli użytkownik chce, aby przy następnym otwarciu danego folderu wyświetlona została wiadomość, która była wyświetlana jako ostatnia przed opuszczeniem tego folderu.</li>
+  <li><strong>Zachowuj wątki podczas sortowania</strong>: należy wybrać tę opcję, jeżeli użytkownik chce żeby &brandShortName; zachowywała grupowanie wiadomości w wątki <a href="mailnews_using_mail.xhtml#sorting_and_threading_messages">podczas sortowania wiadomości</a>. Jeżeli ta opcja nie jest zaznaczona, to &brandShortName; będzie wyświetlała wiadomości bez zachowania grupowania po posortowaniu ich przez kliknięcie na nagłówku wybranej kolumny.</li>
+<!-- TODO: start localizing -->
+  <li><strong>Only check for new mail after opening Mail &amp;
+    Newsgroups</strong>: By default, &brandShortName; checks for new messages
+    even if only a browser window is open. Choose this option if you want to
+    delay checking for new messages until after the Mail &amp; Newsgroups window
+    has been opened at least once (be it automatically <a
+    href="cs_nav_prefs_appearance.xhtml#appearance">on startup</a> or
+    manually).</li>
+  <li class="win"><strong>Make &brandShortName; the default application
+    for</strong>: Select &brandShortName; as the default mail, news or feeds
+    application for Windows and from within other applications such as Microsoft
+    Word.
+
+    <p><strong>Note</strong>: Setting &brandShortName; as the default
+      mail, news or feeds application may remove the connection that other
+      applications had with these tasks. Refer to the documentation of the
+      respective applications in order to find how to restore the defaults.</p>
+  </li>
+<!-- TODO: stop localizing -->
+  <li><strong>Sprawdzaj pocztę dopiero po uruchomieniu Kuriera Poczty</strong>: należy wybrać tę opcję, jeżeli użytkownich chce aby konta pocztowe były sprawdzane na obecność nowych wiadomości dopiero po uruchomieniu Kuriera Poczty, a nie dowolnego innego składnika pakietu &brandShortName;.</li>
+  <li><strong>Po uruchomieniu Kuriera Poczty wyświetl poniższą stronę startową w oknie wiadomości</strong>: należy zaznaczyć tę opcję, jeżeli użytkownik chce, aby strona startowa była wyświetlana przy pierwszym uruchomieniu Kuriera Poczty. Adres domyślnej strony jest wstawiany automatycznie, ale użytkownik może wstawić adres dowolnej strony. Naciśnięcie przycisku Przywróć domyślną przywróci adres domyślnej strony &brandShortName;.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="message_display">Wiadomości</h2>
+
+<p>Preferencje wyświetlania wiadomości pozwalają wybrać sposób w jaki wiadomości te są wyświetlane dla wszystkich kont. Jeżeli ustawienia te są jeszcze niewidoczne, należy wykonać następujące kroki:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Wiadomości. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>Otwierając wiadomości wyświetl je w:</strong>: <!-- TODO: start localizing -->These options
+    control the behavior when opening messages in a separate window, e.g., by
+    double-clicking on it in the message list of a folder:
+    <ul>
+      <li><strong>A new message window</strong>: Choose this if you want to
+        open each message in a new window.</li>
+      <li><strong>An existing message window</strong>: Choose this if you want
+        to reuse an already opened message window for the next mail.</li>
+      <li><strong>Close message window when deleting a message</strong>: Check
+        this if you want the message window to be closed automatically when
+        the message you are viewing in it is deleted.</li>
+    </ul>
+    <!-- TODO: stop localizing -->
+  </li>
+  <li><strong>Blokuj obrazki i inną treść ze zdalnych serwerów</strong>: należy wybrać tę opcję, jeżeli użytkownik nie chce wyświetlać w treści wiadomości obrazków i innych elementów, które mają zostać pobrane ze zdalnych serwerów, z wyjątkiem nadawców, których adresy znajdują się w książce adresowej użytkownika i opcja pobierania zdalnej treści dla danego adresu jest aktywna. Opcja blokowania jest domyślnie włączona.</li>
+  <li><strong>Pokazuj tylko nazwy kontaktów dla nadawców z mojej książki adresowej</strong>: <!-- TODO: start localizing -->Check this if you want to save some space in the message headers where email addresses are shown. If selected, known senders and recipients are only listed with their display names, their email addresses are hidden. You can see the full email addresses when hovering over such entries with the mouse.<!-- TODO: stop localizing --></li>
+  <li><strong>Automatycznie oznaczaj wiadomości jako przeczytane</strong>: <!-- TODO: start localizing -->Check this option to mark messages as read once they are opened. (This checkbox is selected by default.)
+    <ul>
+      <li><strong>Only after displaying for [__] seconds</strong>: Check this
+        option if you do not want a message to be marked as read when you are
+        only taking a brief look at it. Enter the number of seconds you want a
+        message to be displayed before it gets marked as read automatically.
+        If this box is not checked, messages are marked as read as soon as
+        they are opened.</li>
+    </ul></li>
+  <!-- TODO: stop localizing -->
+  <li><strong>Wiadomości tekstowe</strong>: <!-- TODO: start localizing -->These settings control how
+    plain-text messages are displayed. These options do not have any effect
+    when viewing HTML (rich-text) messages, or when writing new messages.
+     <ul>
+      <li><strong>Font</strong>: Select the font you prefer for viewing
+        plain-text messages: fixed width or variable width.</li>
+      <!-- TODO: stop localizing -->
+      <li><strong>Zawijaj tekst, aby zmieścił się w oknie</strong>: należy wybrać tę opcję, jeżeli użytkownik chce, aby treści przychodzących wiadomości były zawijane w oknie Kuriera Poczty.</li>
+      <li><strong>Wyświetlaj emotikonki</strong>: należy wybrać tę opcję, jeżeli użytkownik chce, aby w treści przychodzących wiadomości emotikonki były wyświetlane przez Kuriera Poczty jako obrazki. Przykładowo:
+        <table border="1">
+          <tr align="center">
+            <td><strong>To</strong>:</td>
+            <td><strong>Konwertuje do</strong>:</td>
+          </tr>
+          <tr align="center">
+            <td>:-)</td>
+            <td><span class="smiley moz-smiley-s1"/></td>
+          </tr>
+          <tr align="center">
+            <td>:)</td>
+            <td><span class="smiley moz-smiley-s1"/></td>
+          </tr>
+          <tr align="center">
+            <td>:-(</td>
+            <td><span class="smiley moz-smiley-s2"/></td>
+          </tr>
+          <tr align="center">
+            <td>:(</td>
+            <td><span class="smiley moz-smiley-s2"/></td>
+          </tr>
+          <tr align="center">
+            <td>;-)</td>
+            <td><span class="smiley moz-smiley-s3"/></td>
+          </tr>
+          <tr align="center">
+            <td>;-p</td>
+            <td><span class="smiley moz-smiley-s4"/></td>
+          </tr>
+        </table>
+        <!-- TODO: start localizing -->
+        This option also controls some common plain-text formatting conventions:
+        <table border="1">
+          <tr align="center">
+            <td><strong>This</strong>:</td>
+            <td><strong>Displays as</strong>:</td>
+          </tr>
+          <tr align="center">
+            <td>mm^2</td>
+            <td>mm<sup>2</sup></td>
+          </tr>
+          <tr align="center">
+            <td>+/-1</td>
+            <td>±1</td>
+          </tr>
+        </table>
+      </li>
+      <li><strong>Ustawienia cytowanych wiadomości</strong>: wybór stylu, rozmiaru i koloru czcionki jaką mają być wyświetlane cytowane fragmenty wiadomości (przy odpowiadaniu lub przesyłaniu dalej) pozwala na wygodniejsze postrzeganie takiej treści.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="notifications">Powiadomienia</h2>
+
+<p>Preferencje powiadomień pozwalają wybrać sposób powiadamiania o odebraniu nowej wiadomości. Nie będzie więc konieczności sprawdzania zawartości folderów z odebraną pocztą.</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Powiadomienia. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>Wyświetl informację przez [__] sekund</strong>: należy wybrać tę opcję, aby Kurier Poczty &brandShortName; wyświetlał powiadomienie o odebraniu nowej poczty na pulpicie
+Te powiadomienie wyświetlają się zazwyczaj w prawym dolnym rogu ekranu. Powiadomienie pojawia się tylko jeden raz po odebraniu poczty, wyświetla się przez określony czas i nie pojawi się ponownie aż do <!-- TODO: start localizing -->you have visited one of your folders with new mail, read one of the new messages, or checked for new messages manually.<!-- TODO: stop localizing -->
+    <table>
+      <tr>
+        <td colspan="2"><img src="images/mail_newmail_alert.png" alt=""/></td>
+      </tr>
+      <tr>
+        <td style="width: 20px;"></td>
+        <td><strong>Powiadomienie pulpitowe o nowej poczcie</strong></td>
+      </tr>
+    </table>
+
+    <!-- TODO: start localizing -->
+    The following options determine which message-specific items are shown in
+    the alert for each new message:
+    <ul>
+      <li><strong>Show a preview of the message text</strong>: Check this to
+        show the first few words of the message received in the alert.</li>
+      <li><strong>Show the subject</strong>: Check this to show the subject
+        line of the message in the alert.</li>
+      <li><strong>Show the sender</strong>: Check this to show the sender&apos;s
+        name or email address in the alert.</li>
+    </ul>
+    <p>When the alert appears, clicking an entry for a message will take you
+      to the respective folder and opens that message. You can close the alert
+      using the <strong>x</strong> button.
+    </p>
+    <!-- TODO: stop localizing -->
+
+    <p>Powiadamiacz będzie wyświetlany nawet po zamknięciu okna Kuriera Poczty (tak długo jak będzie otwarte jakiekolwiek okno programu &brandShortName;).
+    </p>
+  </li>
+
+  <li class="win"><strong>Wyświetl ikonę w pasku systemowym</strong>: należy wybrać tę opcję, jeżeli użytkownik chce, aby Kurier Poczty &brandShortName; wyświetlał w pasku systemowym (najczęściej w dolnym lewym rogu ekranu) ikonę po odebraniu nowej wiadomości. Ikona będzie wyświetlana dopóki użytkownik nie otworzy jednego z folderów zawierającego nowe wiadomości, przeczyta jedną z nowych wiadomości lub wybierze ręczne sprawdzanie nowych wiadomości.
+    <p style="text-indent: 20px"><img src="images/mail_newmail_trayicon.png"
+      alt=""/>&nbsp;&nbsp;<strong>Ikona nowej wiadomości w pasku systemowym</strong></p>
+    <p>Po pojawieniu się ikony podwójne kliknięcie na niej otwiera główne okno Kuriera Poczty &brandShortName;.</p>
+    <!-- TODO: start localizing -->
+    <p><strong>Note</strong>: On Windows 7 and above, the Notification Area
+      Icons settings for &brandShortName; must read <q>Show icon and
+      notifications</q> for the icon to stay visible. Otherwise, it may be
+      hidden after a short period of time.</p>
+    <ul>
+      <li><strong>Show a balloon alert</strong>: As an alternative to the
+        desktop alert described above, you can use the operating system&apos;s
+        balloon notification. When new mail arrives, this will show the icon
+        along with a balloon indicating the number of new messages available
+        for the account.
+        <p style="text-indent: 20px"><img src="images/mail_newmail_balloon.png"
+          alt=""/><strong>Balloon&nbsp;alert</strong></p>
+        <p>When the balloon appears, clicking into it will open the Main &amp;
+          Newsgroup main window. The duration of the balloon alert depends on
+          the respective setting in your operating system. You can close the
+          balloon using the <strong>x</strong> button.</p>
+
+        <p>The new message alert will continue to work even after you close the
+          Mail window (as long as another &brandShortName; window is open).</p>
+
+        <p><strong>Note</strong>: <q>Show an alert for [__] seconds</q> and
+          <q>Show a balloon alert</q> cannot be selected at the same time.
+          Checking one option will uncheck the other.</p>
+<!-- TODO: stop localizing -->
+      </li>
+    </ul>
+  </li>
+
+  <li class="mac"><strong>Animowana ikona w Doku</strong>: należy wybrać tę opcję, jeżeli użytkownik chce aby Kurier Poczty spowodował podskakiwanie ikony &brandShortName; w doku po odebraniu nowej wiadomości.</li>
+  <li><strong>Odtwórz dźwięk</strong>: należy wybrać tę opcję jeżeli użytkownik chce, aby Kurier Poczty &brandShortName; odtwarzał dźwięk po odebraniu nowej wiadomości. Możliwy jest wybór pomiędzy domyślnym dźwiękiem systemu operacyjnego i wskazanym przez użytkownika w pliku w formacie WAV. Plik dźwiękowy użytkownika wskazuje się w oknie dialogowym otwieranym po naciśnięciu przycisku Przeglądaj. Naciśnięcie przycisku Odtwórz pozwala odsłuchać wskazany plik.
+
+    <p>Po uruchomieniu Kuriera Poczty &brandShortName; dźwięk powiadomienia o nowej wiadomości będzie odtwarzany nawet po zamknięciu okna Kuriera Poczty (tak długo jak długo otwarte będzie dowolne okno z pakietu &brandShortName;).</p>
+
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="composition">Komponowanie</h2>
+
+<p>Preferencje komponowania mają wpływ na sposób tworzenia wiadomości (na przykład na opcje przesyłania dalej i automatycznego uzupełniania adresu) dla wszystkich kont. Jeżeli preferencje komponowania nie są jeszcze widoczne, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Tworzenie. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>Przekaż wiadomości</strong>: należy wybrać sposób przekazywania wiadomości: bezpośrednio w treści wiadomości czy jako załącznik.</li>
+  <li><strong>Podczas komponowania odpowiedzi cytuj załączniki pokazane w treści wiadomości</strong>: jeżeli ta opcja jest wybrana, to wtedy załączniki do wiadomości (takiej jak obrazki, teksty dokumentów, inne wiadomości) widoczne w treści wiadomości są dołączane do cytowanego tekstu w trakcie komponowania odpowiedzi na taką wiadomość.</li>
+  <li><strong>Automatycznie zapisuj wiadomość co [__] minut</strong>: jeżeli ta opcja jest wybrana to co określony czas Kurier Poczty będzie zapisywał aktualnie tworzoną wiadomość. Po błędzie programu lub systemu operacyjnego będzie można odnaleźć ostatnią zapisaną wersję wiadomości w katalogu Szkice.</li>
+  <li><strong>Wymagaj potwierdzenia, gdy do wysłania wiadomości użyty został skrót klawiaturowy</strong>: jeżeli ta opcja jest wybrana, to użytkownik będzie pytany o potwierdzenie wysłania aktualnie komponowanej wiadomości po naciśnięciu klawiszy Ctrl+<span class="mac">Return</span><span class="nomac">Enter</span>. Uniemożliwia to przypadkowe wysłanie wiadomości po naciśnięciu klawiszy skrótu.</li>
+<!-- TODO: start localizing -->
+  <li><strong>Select reply header type</strong>:
+    Select the type of reply header you wish to use. There are four choices
+    available:
+    <ol>
+      <li>No Reply Header</li>
+      <li>[Author] wrote:<br/>
+        This setting is based on the mailnews.reply_header_authorwrote 
+        preference.</li>
+      <li>On [date], [author] wrote:<br/>
+        This setting is based on a combination of the mailnews.reply_header_ondate, 
+        mailnews.reply_header_separator and mailnews.reply_header_authorwrote 
+        preferences.</li>
+      <li>[Author] wrote, On [date]:<br/>
+        This setting is based on a combination of the 
+        mailnews.reply_header_authorwrote, mailnews.reply_header_separator and 
+        mailnews.reply_header_ondate preferences.</li>
+    </ol>
+  </li>
+<!-- TODO: stop localizing -->
+  <li><strong>Zawijaj linie wiadomości zawierające zwykły tekst o długości powyżej [__] znaków</strong>: należy podać wartość odpowiadającą prawemu marginesowi w obszarze treści wiadomości. Domyślnie są to 72 znaki.</li>
+  <li><strong>Domyślne ustawienia wiadomości HTML</strong>: w tym miejscu można ustawić domyślną czcionkę, jej rozmiar i kolory treści wiadomości w formacie HTML.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="send_format">Formatowanie</h2>
+
+<p>Preferencje formatu wysyłania umożliwiają określenie sposobu w jaki mają być sformatowane wiadomości wysyłana przez użytkownika. Jeżeli preferencje formatu wysyłania nie są jeszcze widoczne, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Formatowanie. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>Zapytaj jakiego formatu użyć przy wysyłaniu wiadomości</strong>: jeżeli ta opcja jest wybrana, to Kurier Poczty każdorazowo będzie pytał o format przed wysłaniem wiadomości utworzonej w formacie HTML.</li>
+  <li><strong>Przekształć wiadomość na format tekstowy</strong>: wybór tej opcji spowoduje, że część formatowania, np. wytłuszczenie tekstu, zostanie utracona.</li>
+  <li><strong>Użyj formatu HTML</strong>: wybór tej opcji spowoduje, że część programów pocztowych może nie być w stanie wyświetlić ich użytkownikom treści takiej wiadomości.</li>
+  <li><strong>Prześlij wiadomość w obydwu formatach: HTML oraz tekstowym</strong>: wybór tej opcji spowoduje zwiększenie rozmiaru wysyłanej wiadomości.
+
+    <p>Użytkownik może zawsze zmienić powyższe ustawienia dla indywidualnej wiadomości przy pomocy opcji Wyślij wiadomość jako w menu Opcje okna komponowania wiadomości.</p>
+  </li>
+  <li><strong>Domeny dla formatu HTML i formatu tekstowego</strong>: należy użyć przycisku Dodaj aby dodać nazwy domen, do których wiadomości mają być wysyłane w określonym formacie.</li>
+</ul>
+
+<p>Przykładowo, jeżeli użytkownik często wysyła wiadomości do wielu użytkowników w jednej domenie, np. <q>mozilla.com</q>, o których wiadomo, że mogą oni odczytywać wiadomości w formacie HTML, to może dodać domenę mozilla.com do listy domen obsługujących HTML. Do użytkowników tej domeny Kurier Poczty będzie automatycznie wysyłał wiadomości w takim formacie.</p>
+
+<p>Podobnie, jeżeli użytkownik często wysyła wiadomości do wielu użytkowników w jednej domenie, o których wiadomo, że mogą odczytywać tylko wiadomości tekstowe, to może dodać taką domenę do listy domen obsługujących tylko format tekstowy. Do użytkowników tej domeny Kurier Poczty będzie automatycznie wysyłał wiadomości tylko w formacie tekstowym.</p>
+
+<p><strong>Uwaga</strong>: jeżeli użytkownik często tworzy wiadomości w formacie HTML, to powinien zdawać sobie sprawę z tego, że nie wszystkie programy pocztowe umożliwiają odczytywanie takich wiadomości w sposób poprawny. Preferencje formatu wysyłania umożliwiają określenie sposobu formatowania wiadomości do odbiorców używających takich programów. Czy mają być wysłane czystym tekście, w formacie HTML czy w obu formatach naraz. Te preferencje dotyczą wszystkich kont pocztowych, ale nie dotyczą kont grup dyskusyjnych.</p>
+
+<p>Podczas dodawania adresu osoby do książki adresowej użytkownik może określić czy ten adresat może odbierać wiadomości w formacie HTML. Jeżeli jednak ta informacja nie jest znana, to należy odpowiednio ustawić preferencje formatu dla takich wiadomości.</p>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="addressing_preferences">Adresowanie</h2>
+
+<p>Preferencje adresowania umożliwiają określenie ustawień dla książek adresowych Kuriera poczty &brandShortName; (np. ustawienia gromadzenia adresów i ich automatycznego uzupełniania). Jeżeli preferencje adresowania nie są jeszcze widoczne, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Adresowanie. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>Automatyczne zachowywanie adresów e-mail</strong>: należy wybrać tę opcję, jeżeli Kurier Poczty ma automatycznie zbierać adresy e-mail odbiorców wysyłanych wiadomości. Z rozwijalnej listy należy wybrać czy te adresy mają być dodawane do książki Zebrane adresy, czy do Osobistej książki adresowej.</li>
+  <li id="address_autocompletion"><strong>Autouzupełnianie adresu</strong>: autouzupełnianie adresów umożliwia szybkie zaadresowanie wiadomości bez wyszukiwania w książce adresowej lub wpisywania kompletnego adresu odbiorcy. Należy wybrać gdzie Kurier Poczty ma szukać adresów: <q>W lokalnych książkach adresowych</q> (Osobista książka adresowa, Zebrane adresy lub dowolnej innej książce na komputerze) lub na <q>serwerze usług katalogowych</q> (należy wybrać zdefiniowany serwer katalogowy LDAP) albo w obu miejscach. Dodatkowo Kurier Poczty może zaznaczać adresy, które nie zostaną automatycznie uzupełnione, co można włączyć przez zaznaczenie opcji o tej nazwie.
+
+    <p><strong>Uwaga</strong>: jeżeli podczas adresowania zostanie odnalezionych więcej pasujących adresów, to Kurier Poczty wyświetli listę wszystkich dostępnych do wyboru.</p>
+
+    <p>Jeżeli użytkownik wybierze <q>Na serwerze usług katalogowych</q>, to należy wybrać z listy zdefiniowany wcześniej serwer. Serwer usług katalogowych pozwala na wyszukanie adresu, który nie jest dostępny w książkach adresowych na lokalnym komputerze. Katalog będzie przeszukiwany również na obecność certyfikatów adresatów, do których użytkownik będzie chciał wysłać zaszyfrowaną wiadomość a nie będzie posiadał tych certyfikatów.</p>
+
+    <p>Więcej informacji o ustawieniach serwera uslug katalogowych w rozdziale <a href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Dodawanie i usuwanie katalogów LDAP</a>.</p>
+
+    <p><strong>Uwaga</strong>: serwer usług katalogowych wskazany w powyższych preferencjach będzie wykorzystywany dla wszystkich kont pocztowych użytkownika. Można te ustawienia zmienić dla każdego konta indywidualnie określając odpowiednie serwery LDAP lub ustawienia serwerów dla każdego z kont w jego preferencjach Tworzenia i adresowania wiadomości. Aby ustawić inne preferencje adresowania dla danego konta należy wybrać Konfiguracja kont z menu Edycja.</p>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="junk_and_suspect_preferences">Niechciana i podejrzana poczta</h2>
+
+<p>Ten rozdział opisuje w jaki sposób należy używać preferencji Niechcianej i podejrzanej poczty. Jeżeli panel preferencji nie jest jeszcze widoczny, należy wykonać następujące kroki:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Niechciana i podejrzana poczta. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>W przypadku oznaczania wiadomości jako niechcianej:</strong>: należy wybrać tę opcję, jeżeli użytkownik chce, aby zdefiniować co &brandShortName; ma robić po ręcznym oznaczenia wiadomości jako niechcianej.
+    <ul>
+      <li><strong>Przenieś wiadomości do folderu <q>Niechciane</q></strong>: należy wybrać tę opcję, aby wiadomości ręcznie oznaczone jako niechciane były automatycznie przenoszone do folderu Niechciane.</li>
+      <li><strong>Usuń wiadomości</strong>: należy wybrać tę opcję, aby wiadomości ręcznie oznaczone jako niechciane były automatycznie przenoszone do Kosza.</li>
+    </ul>
+  </li>
+  <li><strong>Oznacz wiadomości jako przeczytane</strong>: należy wybrać z poniższych opcji kiedy &brandShortName; ma oznaczać niechciane wiadomości jako przeczytane. Nie będą one wtedy wyświetlane jako nowe.
+    <ul>
+	  <li><strong>Kiedy program &brandShortName; rozpozna wiadomości jako niechciane</strong></li>
+	  <li><strong>W przypadku ręcznego oznaczenia ich jako niechciane</strong></li>
+	</ul>
+  </li>	
+  <li><strong>Włącz dziennik niechcianej poczty</strong>: należy włączyć tę opcję, aby oznaczanie poczty jako niechcianej było rejestrowane w dzienniku. Naciśnięcie przycisku <strong>Pokaż dziennik</strong> wyświetli okno zawierające wpisy w dzienniku.</li>
+  <li><strong>Resetuj dane treningowe</strong>: naciśnięcie tego przycisku powoduje wyczyszczenie danych treningowych adaptacyjnego filtru niechcianej poczty. Ze względu na całkowite zniszczenie osobistego profilu niechcianej poczty wyświetlona zostanie prośba o potwierdzenie wykonania tej czynności.</li>
+  <li><strong>Informuj, jeżeli wyświetlana wiadomość może być próbą oszustwa</strong>: należy włączyć tę opcję, aby program &brandShortName; analizował wiadomości w celu rozpoznawania prób oszustwa.</li>
+  <li><strong>Ułatw programom antywirusowym analizowanie przychodzących wiadomości pocztowych</strong>: należy włączyć tę opcję, aby program &brandShortName; umożliwiał programom antywirusowym sprawdzanie przychodzących wiadomości pocztowych zanim zostaną one zapisane na dysku użytkownika.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="tags">Etykiety</h2>
+
+<p>Ten rozdział opisuje w jaki sposób należy używać preferencji Etykiet. Używa się ich do definiowania tekstu etykiet, ich kolorów i kolejności ich ważności. Jeżeli panel preferencji nie jest jeszcze widoczny, należy wykonać następujące kroki:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Etykiety. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <li><strong>Dostosuj etykiety</strong>: można określić tekst opisu i kolor etykiet, którymi można oznaczyć wiadomości pocztowe. Domyślny tekst można zmienić wpisując własny, o maksymalnej długości 32 znaków. Zmienić kolor etykiety można poprzez naciśnięcie przycisku z danym kolorem i wybór odpowiedniego koloru z wyświetlonego zestawu. Można również zmienić ważność etykiet w porządku malejącym za pomocą przycisków Zwiększ ważność i Zmniejsz ważność, co spowoduje ich przesuwanie na liście. Wiadomości z większą ilością etykiet będą kolorowane na liście wiadomości kolorem etykiety o największej ważności.</li>
+  <li><strong>Przywróć domyślne</strong>: powoduje usunięcie zdefiniowanych przez użytkownika etykiet, ich opisów i kolorów oraz przywrócenie tych standardowo zdefiniowanych w programie.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="return_receipts_preferences">Potwierdzenia odbioru</h2>
+
+<p>Ten rozdział opisuje w jaki sposób należy używać preferencji Potwierdzenia dostarczenia wiadomości. Jeżeli panel preferencji nie jest jeszcze widoczny, należy wykonać następujące kroki:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Potwierdzenia. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<p>Preferencje potwierdzenia dostarczenia wiadomości umożliwiają zdefiniowanie ustawień obsługi potwierdzeń dostarczenia wiadomości, zarówno w stosunku do wiadomości wysyłanych jaki i żądań w wiadomościach odbieranych.</p>
+
+<ul>
+  <li><strong>Podczas wysyłania wiadomości, zawsze żądaj potwierdzenia dostarczenia</strong>: zaznaczenie tej opcji powoduje automatyczne dołączanie do każdej wysyłanej wiadomości żądania potwierdzenia dostarczenia wiadomości dla wszystkich kont pocztowych.</li>
+  <li><strong>Pozostaw w folderze Odebrane</strong>: otrzymane potwierdzenia dostarczenia wiadomości są umieszczane w folderze Odebrane danego konta.
+
+    <p><strong>Wskazówka</strong>: należy wybrać tę opcję, jeżeli użytkownik będzie używał filtru, który będzie przenosił takie wiadomości do wskazanego folderu. Więcej informacji w rozdziale <a href="mailnews_organizing.xhtml#creating_message_filters">Tworzenie filtrów wiadomości</a>.</p>
+  </li>
+  <li><strong>Przenieś do folderu Wysłane</strong>: należy wybrać tę opcję, aby przychodzące potwierdzenia dostarczenia wiadomości były przenoszone automatycznie do folderu wysłane danego konta.</li>
+  <li><strong>Nigdy nie wysyłaj potwierdzenia dostarczenia wiadomości</strong>: należy wybrać tę opcję jeżeli użytkownik nie chce, aby potwierdzenia dostarczenia wiadomości były wysyłane do nadawców wiadomości.</li>
+  <li><strong>Wysyłaj potwierdzenia dostarczenia wiadomości tylko w poniższych przypadkach</strong>: należy wybrać jak postępować w przypadku odebrania wiadomości z żądaniem wysłania potwierdzenia dostarczenia wiadomości od określonych adresatów.</li>
+</ul>
+
+<p>Informacje o tym, jak zmienić te ustawienia dla poszczególnych kont zawarte są w rozdziale <a href="mailnews_account_settings.xhtml#return_receipts">Potwierdzenia odbioru</a>.</p>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="character_encoding">Kodowanie znaków</h2>
+
+<p>Preferencje kodowania znaków umożliwiają wybór domyślnego kodowania znaków w czaie wyświetlania i komponowania wiadomości dla wszystkich kont. Jeżeli panel preferencji nie jest jeszcze widoczny, należy wykonać następujące kroki:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Kodowanie znaków. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<ul>
+  <!-- TODO: start localizing -->
+  <li><strong>Fallback Character Encoding</strong>: Click this drop-down list
+    to select the character encoding you want Mail &amp; Newsgroups to use as
+    the fallback for incoming mail and newsgroup messages. Senders are supposed
+    to declare the character encoding in which they are to be displayed, but
+    legacy content (e.g., from mailing lists or in international newsgroups)
+    may not do so. This encoding is used for such messages you&apos;ve received
+    in which the character encoding (MIME charset) is not specified.
+
+    <p><strong>Note</strong>: Individual folders may override this setting in
+      the General Information tab of the Folder Properties. This dialog can be
+      accessed from the Edit menu of a Mail &amp; Newsgroup window when a
+      folder is selected.</p>
+
+    <p><strong>Tip</strong>: You can later view or change the character
+      encoding for a specific message. Select a folder, then the message to
+      display. Open the View menu, and choose Character Encoding.</p>
+  </li>
+  <!-- TODO: stop localizing -->
+  <li><strong>Dla wiadomości, które zawierają 8-bitowe znaki, użyj kodowania MIME <q>quoted printable</q></strong>. <!-- TODO: start localizing -->Choose to have Mail &amp;
+    Newsgroups use <q>quoted printable</q> MIME encoding when sending regular
+    messages that use an 8-bit character encoding (for example, Latin
+    ISO-8859-3). This is usually only necessary when communicating via a legacy
+    server that doesn&apos;t process 8-bit encoding correctly.</li>
+  <!-- TODO: stop localizing -->
+
+  <li><strong>Domyślne kodowanie znaków</strong>: należy wybrać domyślne kodowanie znaków dla wszystkich wysyłanych wiadomości.</li>
+
+  <li><strong>Używaj domyślnego zestawu znaków w odpowiedziach zawsze, kiedy to jest możliwe. (Gdy odznaczone, tylko nowe wiadomości będą używać ten zestaw znaków.)</strong>: jeżeli ta opcja nie jest wybrana, to w czasie odpowiadania na wiadomość będzie używane kodowanie znaków użyte w wiadomości, na którą się odpowiada. Jeżeli ta opcja zostanie wybrana, to każda komponowana wiadomość będzie z użyciem domyślnego kodowania znaków, <!-- TODO: start localizing -->as long as the quoted characters can be represented in the selected encoding<!-- TODO: stop localizing -->.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="network_and_storage_preferences">Sieć i miejsce na dysku</h2>
+
+<p>Ten rozdział opisuje w jaki sposób należy używać preferencji Sieci i miejsca na dysku. Jeżeli panel preferencji nie jest jeszcze widoczny, należy wykonać następujące kroki:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Sieć i miejsce na dysku. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+</ol>
+
+<p>Preferencje Sieci i miejsca na dysku umożliwiają skonfigurowanie zachowania Kuriera Poczty &brandShortName; przy braku i nawiązaniu połączenia z siecią, przy połączeniach pocztowych jak i konserwacji miejsca zajmowanego przez wiadomości na dysku komputera.</p>
+
+<ul>
+  <li><strong>Tryb offline</strong>: należy wybrać, jak Kurier Poczty ma się zachowywać przy uruchamianiu oraz po nawiązaniu połączenia z siecią i przechodzenia w tryb offline.</li>
+  <li><strong>Połączenia pocztowe</strong>: należy wybrać, jak długo Kurier Poczty ma próbować połączyć się z serwerem.</li>
+  <li><strong>Miejsce na dysku</strong>: należy wybrać opcję <q>Automatycznie porządkuj foldery, gdy zaoszczędzi to więcej niż [__] kB</q>, aby foldery wiadomości były porządkowane po operacjach usuwania i przenoszenia wiadomości, które powodują <q>dziury</q> w treści plików przechowujących wiadomości na dysku komputera.</li>
+</ul>
+
+<p>Więcej informacji o pracy w trybie offline w rozdziale <a href="mailnews_offline.xhtml#working_offline">Praca w trybie offline</a>.</p>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

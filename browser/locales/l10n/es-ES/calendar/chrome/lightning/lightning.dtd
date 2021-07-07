@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.preferencesLabel "Calendario">
+<!ENTITY lightning.menupopup.new.event.label "Evento…">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label "Tarea…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Calendario…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "C">
+<!ENTITY lightning.menupopup.open.label "Abrir">
+<!ENTITY lightning.menupopup.open.accesskey "A">
+<!ENTITY lightning.menupopup.open.message.label "Mensaje guardado…">
+<!ENTITY lightning.menupopup.open.message.accesskey "M">
+<!ENTITY lightning.menupopup.open.calendar.label "Archivo de calendario…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey "C">
+<!ENTITY lightning.menu.view.calendar.label "Calendario">
+<!ENTITY lightning.menu.view.calendar.accesskey "a">
+<!ENTITY lightning.menu.view.tasks.label "Tareas">
+<!ENTITY lightning.menu.view.tasks.accesskey "s">
+<!ENTITY lightning.menu.eventtask.label "Eventos y tareas">
+<!ENTITY lightning.menu.eventtask.accesskey "n">
+<!ENTITY lightning.calendarproperties.email.label "Correo-e:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label "Preferir planificación de correo en el lado del cliente">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1 "Desde ahora, solo puede activar esto tras configurar este calendario en su diálogo de propiedades si el servidor del calendario maneja planificaciones.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2 "Esta opción solo está disponible si el servidor de calendario gestiona planificaciones. Activarlo le permitirá recurrir a la planificación estándar basada en correo electrónico en lugar de dejarla en manos del servidor.">
+<!ENTITY lightning.imipbar.btnAccept.label "Aceptar">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext "Aceptar invitación al evento">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label "Aceptar todo">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext "Aceptar invitación a todas las repeticiones del evento ">
+<!ENTITY lightning.imipbar.btnAdd.label "Añadir">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext "Añadir el evento al calendario">
+<!ENTITY lightning.imipbar.btnDecline.label "Rechazar">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext "Declinar invitación al evento">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label "Declinar todo">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext "Declinar invitación a todas las repeticiones del evento">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label "Rechazar">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext "Declinar la contrapropuesta">
+<!ENTITY lightning.imipbar.btnDelete.label "Eliminar">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext "Eliminar del calendario">
+<!ENTITY lightning.imipbar.btnDetails.label "Detalles…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext "Mostrar detalles del evento">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label "No mostrarse estos mensajes">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label "Calendario">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext "Ir a la pestaña de calendario">
+<!ENTITY lightning.imipbar.btnMore.label "Más">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext "Pulse para mostrar más opciones">
+<!ENTITY lightning.imipbar.btnReconfirm2.label "Reconfirmar">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext "Envía una reconfirmación al organizador">
+<!ENTITY lightning.imipbar.btnReschedule.label "Replanificar">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext "Replanificar el evento">
+<!ENTITY lightning.imipbar.btnSaveCopy.label "Guardar una copia">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext "Guardar una copia del evento en el calendario con independencia de la respuesta al organizador. Se vaciará la lista de asistentes.">
+<!ENTITY lightning.imipbar.btnTentative.label "Provisional">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext "Aceptar invitación al evento provisionalmente">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label "Todo provisional">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext "Aceptar invitación a todas las repeticiones del evento provisonalmente">
+<!ENTITY lightning.imipbar.btnUpdate.label "Actualizar">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext "Actualizar evento en el calendario">
+<!ENTITY lightning.imipbar.description "Este mensaje contiene una invitación a un evento.">
+<!ENTITY lightning.imipbar.btnSend.label "Enviar respuesta ahora">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext "Enviar respuesta al organizador">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext "Enviar respuesta para la serie completa al organizador">
+<!ENTITY lightning.imipbar.btnDontSend.label "No enviar respuesta">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext "Cambiar su estado de participación sin enviar respuesta al organizador">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext "Cambiar su estado de participación para toda la serie sin enviar respuesta al organizador">
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+<!ENTITY lightning.acctCentral.newCalendar.label "Crear un nuevo calendario">
+<!ENTITY todaypane.showMinimonth.label "Mostrar mini-mes">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Mostrar mini-día">
+<!ENTITY todaypane.showMiniday.accesskey "d">
+<!ENTITY todaypane.showNone.label "No mostrar nada">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Mostrar el panel de hoy">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "Panel Para hoy">

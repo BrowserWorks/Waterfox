@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Ορθογραφία">
+<!ENTITY generalSpelling.label                "Γενικά">
+<!ENTITY checkSpellingWhenTyping.label        "Κατά την πληκτρολόγηση, να γίνεται ορθογραφικός έλεγχος:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "Κ">
+<!ENTITY dontCheckSpelling.label              "Ποτέ">
+<!ENTITY multilineCheckSpelling.label         "Σε πλαίσια πολλαπλών γραμμών">
+<!ENTITY alwaysCheckSpelling.label            "Σε όλα τα πλαίσια">
+<!ENTITY spellForMailAndNews.label            "Αλληλογραφία &amp; ομάδες συζήτησης">
+<!ENTITY checkSpellingBeforeSend.label        "Ορθογραφικός έλεγχος πριν την αποστολή">
+<!ENTITY checkSpellingBeforeSend.accesskey    "Ο">
+<!ENTITY spellCheckInline.label               "Ορθογραφικός έλεγχος κατά την πληκτρολόγηση">
+<!ENTITY spellCheckInline.accesskey           "ρ">
+<!ENTITY languagePopup.label                  "Γλώσσα:">
+<!ENTITY languagePopup.accessKey              "Γ">
+<!ENTITY moreDictionaries.label               "Λήψη περισσότερων λεξικών&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Κανένα διαθέσιμο λεξικό.">

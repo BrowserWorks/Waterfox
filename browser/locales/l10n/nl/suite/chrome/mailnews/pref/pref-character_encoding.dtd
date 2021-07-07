@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Tekstcodering">
+<!ENTITY messageDisplay.caption          "Berichtenweergave">
+<!ENTITY viewFallbackCharset2.label      "Terugvaltekstcodering:">
+<!ENTITY viewFallbackCharset2.accesskey  "T">
+<!ENTITY viewFallbackCharset.desc        "(Deze tekstcodering wordt gebruikt voor legacy-inhoud die geen eigen codering kan aangeven.)">
+
+<!ENTITY composingMessages.caption       "Berichten opstellen">
+<!ENTITY useMIME.label                   "‘Quoted printable’ MIME-codering gebruiken voor berichten die 8-bits tekens bevatten">
+<!ENTITY useMIME.accesskey               "o">
+<!ENTITY sendDefaultCharset2.label       "Standaard tekstcodering:">
+<!ENTITY sendDefaultCharset2.accesskey   "t">
+<!ENTITY replyInDefaultCharset3.label    "Wanneer mogelijk, deze standaard tekstcodering gebruiken in antwoorden. (Wanneer niet aangevinkt, gebruiken alleen nieuwe berichten deze standaardwaarde.)">
+<!ENTITY replyInDefaultCharset3.accesskey "W">

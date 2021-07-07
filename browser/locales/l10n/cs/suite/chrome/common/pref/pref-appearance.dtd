@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Vzhled">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "Po spuštění &brandShortName; se otevře">
+<!ENTITY navCheck.label                         "Prohlížeč">
+<!ENTITY navCheck.accesskey                     "P">
+<!ENTITY showToolsLegend.label                  "Zobrazit lištu navigace jako">
+<!ENTITY picsNtextRadio.label                   "Obrázky a text">
+<!ENTITY picsNtextRadio.accesskey               "b">
+<!ENTITY picsOnlyRadio.label                    "Pouze obrázky">
+<!ENTITY picsOnlyRadio.accesskey                "u">
+<!ENTITY textonlyRadio.label                    "Pouze text">
+<!ENTITY textonlyRadio.accesskey                "t">
+<!ENTITY showHideTooltips.label                 "Zobrazovat vysvětlivky">
+<!ENTITY showHideTooltips.accesskey             "Z">
+
+<!ENTITY showHideGrippies.label                 "Skrýt úchopy panelu nástrojů">
+<!ENTITY showHideGrippies.accesskey             "S">
+
+<!ENTITY pref.locales.title                     "Jazyk uživatelského rozhraní">
+<!ENTITY selectLocale.label                     "Zvolte jazyk, ve kterém se mají zobrazovat texty dialogů, nabídek, nástrojových lišt a tlačítek:">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "Formátování data a času">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "Předvolby jazyka a formátování se uplatní až po restartu aplikace &brandShortName;.">

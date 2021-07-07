@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xhtml -->
+<!ENTITY searchHeading.label         "Αναζήτηση σε:">
+<!ENTITY searchHeading.accesskey     "ζ">
+<!ENTITY searchSubfolders.label      "Αναζήτηση σε υποφακέλους">
+<!ENTITY searchSubfolders.accesskey  "ν">
+<!ENTITY searchOnServer.label        "Εκτέλεση αναζήτησης στον διακομιστή">
+<!ENTITY searchOnServer.accesskey    "κ">
+<!ENTITY resetButton.label           "Εκκαθάριση">
+<!ENTITY resetButton.accesskey       "θ">
+<!ENTITY openButton.label            "Άνοιγμα">
+<!ENTITY openButton.accesskey        "γ">
+<!ENTITY deleteButton.label          "Διαγραφή">
+<!ENTITY deleteButton.accesskey      "Δ">
+<!ENTITY searchDialogTitle.label     "Αναζήτηση μηνυμάτων">
+<!ENTITY results.label               "Αποτελέσματα">
+<!ENTITY moveButton.label            "Μετακίνηση σε">
+<!ENTITY moveButton.accesskey        "α">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "Άνοιγμα σε φάκελο">
+<!ENTITY openInFolder.accesskey      "φ">
+<!ENTITY saveAsVFButton.label        "Αποθήκευση ως φάκελος αναζήτησης">
+<!ENTITY saveAsVFButton.accesskey    "φ">
+
+<!-- for abSearchDialog.xhtml -->
+<!ENTITY abSearchHeading.label       "Αναζήτηση σε:">
+<!ENTITY abSearchHeading.accesskey   "ν">
+<!ENTITY propertiesButton.label      "Ιδιότητες">
+<!ENTITY propertiesButton.accesskey  "δ">
+<!ENTITY composeButton.label         "Σύνταξη">
+<!ENTITY composeButton.accesskey     "Σ">
+<!ENTITY deleteCardButton.label      "Διαγραφή">
+<!ENTITY deleteCardButton.accesskey  "ι">
+<!ENTITY abSearchDialogTitle.label   "Σύνθετη αναζήτηση ευρετηρίου">

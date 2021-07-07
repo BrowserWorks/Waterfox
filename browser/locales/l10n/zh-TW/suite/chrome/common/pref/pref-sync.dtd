@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "設定 &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "s">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; 可以讓您存取多個裝置的歷史資訊、書籤、密碼、開啟分頁。">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label; 帳號">
+<!ENTITY accountName.label            "帳號名稱:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "更新">
+<!ENTITY updatePass.accesskey         "U">
+<!ENTITY resetPass.label              "重設">
+<!ENTITY resetPass.accesskey          "R">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "管理帳號">
+<!ENTITY manageAccount.accesskey      "M">
+<!ENTITY viewQuota.label              "檢視配額">
+<!ENTITY viewQuota.accesskey          "V">
+<!ENTITY changePassword.label         "變更密碼">
+<!ENTITY changePassword.accesskey     "C">
+<!ENTITY myRecoveryKey.label          "我的救援金鑰">
+<!ENTITY myRecoveryKey.accesskey      "M">
+<!ENTITY resetSync.label              "重設同步">
+<!ENTITY resetSync.accesskey          "R">
+<!ENTITY unlinkDevice.label           "解除此裝置的連結">
+<!ENTITY unlinkDevice.accesskey       "D">
+<!ENTITY addDevice.label              "新增裝置">
+<!ENTITY addDevice.accesskey          "A">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "電腦名稱:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy2.label              "同步我的:">
+<!ENTITY engine.addons.label        "附加元件">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "書籤">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "分頁">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "瀏覽紀錄">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "密碼">
+<!ENTITY engine.passwords.accesskey "w">
+<!ENTITY engine.prefs.label         "偏好設定">
+<!ENTITY engine.prefs.accesskey     "P">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "服務條款">
+<!ENTITY prefs.ppLink.label         "隱私權保護政策">
+

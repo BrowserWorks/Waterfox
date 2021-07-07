@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY menu_securityEncryptRequire.label "Zaszyfruj tę wiadomość">
+<!ENTITY menu_securityEncryptRequire.accesskey "w">
+
+<!ENTITY menu_securitySign.label "Podpisz cyfrowo tę wiadomość">
+<!ENTITY menu_securitySign.accesskey "P">
+
+<!ENTITY menu_securityStatus.label "Pokaż informacje o zabezpieczeniach">
+<!ENTITY menu_securityStatus.accesskey "z">
+
+<!ENTITY securityButton.label "Zabezpieczenia">
+<!ENTITY securityButton.tooltip "Wyświetl lub zmień ustawienia zabezpieczeń">
+
+<!ENTITY menu_viewSecurityStatus.label "Informacje o zabezpieczeniach wiadomości">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

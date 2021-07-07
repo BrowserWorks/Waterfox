@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "页面载入出错">
+<!ENTITY gopherAddon.title      "Gopher 协议">
+<!ENTITY gopherAddon.shortDesc  "gopher 不是一个注册协议。">
+<!ENTITY gopherAddon.longDesc   "该地址使用的 gopher 协议已经不再被支持，因此浏览器无法连接到这个网站。您可以从 Mozilla 附加组件网站下载一个兼容附加组件以便访问这个服务器。">
+<!ENTITY goToAddOn.label        "转到附加组件页">

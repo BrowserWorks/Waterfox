@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>danish@dictionaries.addons.mozilla.org</em:id>
+    <em:version>2.4</em:version>
+    <em:type>64</em:type>
+    <em:unpack>true</em:unpack>
+    <em:name>Dansk ordbog til stavekontrollen</em:name>
+    <em:description>Dansk stavekontrol i mails, forums, blogs osv.</em:description>
+    <em:creator>MozillaDanmark og Foreningen for Frit Tilgængelige Sprogværktøjer</em:creator>
+    <em:homepageURL>http://mozilladanmark.dk/stavekontrol/</em:homepageURL>
+
+    <!-- Firefox -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>10.0a1</em:minVersion>
+        <em:maxVersion>*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+
+    <!-- Thunderbird -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{3550f703-e582-4d05-9a08-453d09bdfdc6}</em:id>
+        <em:minVersion>10.0a1</em:minVersion>
+        <em:maxVersion>63.0</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+
+    <!-- SeaMonkey -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
+        <em:minVersion>2.7a1</em:minVersion>
+        <em:maxVersion>*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "コピーと特別なフォルダー"><!-- (^^; Copies &amp; Folders -->
+<!ENTITY sendingPrefix.label "メッセージを送信するとき:">
+<!ENTITY fccMailFolder.label "コピーを次の場所に保存:"><!-- en-US: "Automatically place a copy in:" -->
+<!ENTITY fccMailFolder.accesskey "u">
+<!ENTITY fccReplyFollowsParent.label "返信元のメッセージと同じフォルダーに返信を保存する">
+<!ENTITY fccReplyFollowsParent.accesskey "P">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "次のメールアドレスを Cc に追加する:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "カンマ区切りで複数入力できます">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "次のメールアドレスを Bcc に追加:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "カンマ区切りで複数入力できます">
+<!ENTITY saveMessageDlg.label "メッセージを保存するとき確認ダイアログを表示する">
+<!ENTITY saveMessageDlg.accesskey "w">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "次のアカウントの &quot;送信済みトレイ&quot; フォルダー:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "その他のフォルダーを指定する:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "メッセージの保管">
+<!ENTITY keepArchives.label "アーカイブの保存先:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "アーカイブオプション...">
+<!ENTITY archiveHierarchyButton.accesskey "n">
+<!ENTITY archivesFolderOn.label "次のアカウントの &quot;アーカイブ&quot; フォルダー:">
+<!ENTITY archivesFolderOn.accesskey "v">
+<!ENTITY archiveInOtherFolder.label "その他のフォルダーを指定する:">
+<!ENTITY archiveInOtherFolder.accesskey "l">
+<!ENTITY specialFolders.label "下書きとテンプレート">
+<!ENTITY keepDrafts2.label "下書きの保存先:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "次のアカウントの &quot;下書き&quot; フォルダー:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "その他のフォルダーを指定する:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "テンプレートの保存先:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "次のアカウントの &quot;テンプレート&quot; フォルダー:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "その他のフォルダーを指定する:">
+<!ENTITY templateInOtherFolder.accesskey "e">

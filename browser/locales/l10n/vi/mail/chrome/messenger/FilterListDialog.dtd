@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Bộ lọc thư">
+<!ENTITY nameColumn.label "Tên bộ lọc">
+<!ENTITY activeColumn.label "Đã bật">
+<!ENTITY newButton.label "Mới…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Sao chép…">
+<!ENTITY newButton.popupCopy.accesskey "C">
+<!ENTITY editButton.label "Chỉnh sửa…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Xóa">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderTopButton "Chuyển lên trên cùng">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Sắp xếp lại bộ lọc để nó thực thi trước tất cả các bộ lọc khác">
+<!ENTITY reorderUpButton.label "Di chuyển lên">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "Di chuyển xuống">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY reorderBottomButton "Chuyển xuống dưới cùng">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Sắp xếp lại bộ lọc để nó thực thi sau tất cả các bộ lọc khác">
+<!ENTITY filterHeader.label "Các bộ lọc đã kích hoạt sẽ được chạy tự động theo thứ tự bên dưới.">
+<!ENTITY filtersForPrefix.label "Bộ lọc cho:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Nhật kí bộ lọc">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Chạy ngay">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "Dừng">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Chạy các bộ lọc đã chọn cho:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "Trợ giúp">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Tìm kiếm bộ lọc theo tên…">

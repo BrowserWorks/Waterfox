@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "侧栏">
+<!ENTITY sidebar.reload.label           "重新加载">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "标签项">
+<!ENTITY sidebar.customize.label        "自定义侧栏…">
+<!ENTITY sidebar.customize.accesskey    "u">
+<!ENTITY sidebar.hide.label             "隐藏标签页">
+<!ENTITY sidebar.hide.accesskey         "H">
+<!ENTITY sidebar.switch.label           "切换至标签页">
+<!ENTITY sidebar.switch.accesskey       "T">
+<!ENTITY sidebarCmd.label               "侧栏 ">
+<!ENTITY sidebarCmd.accesskey           "b">
+<!ENTITY sidebar.loading.label          "载入中…">
+<!ENTITY sidebar.loadstopped.label      "停止载入">
+<!ENTITY sidebar.loading.stop.label     "停止">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "当前侧栏为空。">
+<!ENTITY sidebar.no-panels.add       '点击上方的&quot;标签页&quot;按钮打开新标签。'>
+<!ENTITY sidebar.no-panels.hide      '单击上方“查看”菜单，然后从“显示/隐藏”子菜单选择“侧栏”，即可完全隐藏侧栏。'>
+<!ENTITY sidebar.sbDirectory.label   "侧栏目录…">
+
+<!ENTITY sidebar.pagenotfound.label  "此标签当前不可用。">
+<!ENTITY sidebar.close.tooltip       "关闭侧栏">
+<!ENTITY sidebar.open.tooltip        "打开侧栏">
+
+<!ENTITY sidebar.search.label         "搜索">
+<!ENTITY sidebar.client-bookmarks.label     "书签">
+<!ENTITY sidebar.client-history.label       "历史记录">
+<!ENTITY sidebar.client-addressbook.label   "通讯录">

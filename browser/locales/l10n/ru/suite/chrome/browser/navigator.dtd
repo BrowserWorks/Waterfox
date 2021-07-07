@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Приватный просмотр">
+
+<!ENTITY editPageCmd.label "Редактировать страницу">
+<!ENTITY editPageCmd.accesskey "е">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Панель навигации">
+<!ENTITY navbarCmd.accesskey "н">
+<!ENTITY bookmarksToolbarCmd.label     "Панель закладок">
+<!ENTITY bookmarksToolbarCmd.accesskey "з">
+
+<!ENTITY closeWindow.label "Закрыть окно">
+<!ENTITY closeWindow.accesskey "о">
+
+<!ENTITY minimizeButton.tooltip       "Свернуть">
+<!ENTITY restoreButton.tooltip        "Восстановить">
+
+<!ENTITY feedsMenu.label "Подписаться на ленты новостей">
+<!ENTITY feedsMenu.accesskey "п">
+
+<!ENTITY menuBar.tooltip                  "Панель меню">
+<!ENTITY bookmarksToolbar.tooltip         "Панель закладок">
+<!ENTITY navigationToolbar.tooltip        "Панель навигации">
+
+<!ENTITY editBookmark.done.label "Готово">
+<!ENTITY editBookmark.cancel.label "Отмена">
+<!ENTITY editBookmark.removeBookmark.accessKey "а">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Назад">
+<!ENTITY backButton.tooltip           "На предыдущую страницу">
+<!ENTITY forwardButton.label          "Вперёд">
+<!ENTITY forwardButton.tooltip        "На следующую страницу">
+<!ENTITY reloadButton.label           "Обновить">
+<!ENTITY reloadButton.tooltip         "Обновить текущую страницу">
+<!ENTITY stopButton.label             "Остановить">
+<!ENTITY stopButton.tooltip           "Прервать загрузку страницы">
+<!ENTITY searchButton.label           "Поиск">
+<!ENTITY searchButton.tooltip         "Введите слово в поле слева и нажмите «Поиск»">
+<!ENTITY goButton.label               "Перейти">
+<!ENTITY goButton.tooltip             "Введите адрес в поле адреса и нажмите «Перейти»">
+<!ENTITY printButton.label            "Печать">
+<!ENTITY printButton.tooltip          "Распечатать эту страницу">
+
+<!ENTITY throbber.tooltip             "Перейти на домашнюю страницу &vendorShortName;">
+
+<!ENTITY throbber.tooltip2            "Перейти на домашнюю страницу &brandShortName;">
+
+<!ENTITY locationBar.tooltip          "Введите выражение для поиска, краткое имя закладки или веб-адрес">
+<!ENTITY locationBar.accesskey        "д">
+<!ENTITY locationBar.title            "Расположение">
+<!ENTITY proxyIcon.tooltip            "Перетащите этот значок, чтобы создать ссылку на эту страницу">
+
+<!ENTITY searchItem.title             "Поиск">
+
+<!ENTITY bookmarksButton.label        "Закладки">
+<!ENTITY bookmarksButton.tooltip      "Отображает ваши закладки">
+<!ENTITY homeButton.label             "Домой">
+<!ENTITY bookmarksToolbarItem.label   "Элементы панели закладок">
+<!ENTITY bookmarksToolbarChevron.tooltip "Показать больше закладок">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Готово">
+
+<!ENTITY popupIcon.tooltiptext      "Разрешать открытие всплывающих окон с этих веб-сайтов">
+
+<!ENTITY viewSecurityInfo.label      "Просмотреть информацию о защите">
+<!ENTITY viewSecurityInfo.accesskey  "о">
+<!ENTITY viewCertificate.label       "Просмотреть сертификат">
+<!ENTITY viewCertificate.accesskey   "м">
+<!ENTITY viewCertManager.label       "Открыть окно управления сертификатами">
+<!ENTITY viewCertManager.accesskey   "ы">
+
+<!ENTITY zoomIn.tooltiptext          "Больше">
+<!ENTITY zoomOut.tooltiptext         "Меньше">

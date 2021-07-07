@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "알림 설정">
+<!ENTITY reminder.add.label                                "추가">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "삭제">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "알림 설정">
+<!ENTITY reminder.action.label                             "알림 액션 선택">
+
+<!ENTITY reminder.action.alert.label                       "경고 보기">
+<!ENTITY reminder.action.email.label                       "메일 보내기">
+
+<!ENTITY alarm.units.minutes                               "분" >
+<!ENTITY alarm.units.hours                                 "시간" >
+<!ENTITY alarm.units.days                                  "일" >

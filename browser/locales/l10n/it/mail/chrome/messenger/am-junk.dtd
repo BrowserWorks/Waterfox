@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Posta indesiderata">
+<!ENTITY trainingDescription.label "Se attivata è necessario istruire &brandShortName; a identificare la posta indesiderata usando il tasto Posta indesiderata per segnare i messaggi indesiderati o no. Si devono identificare sia i messaggi indesiderati sia quelli non indesiderati. In questo modo &brandShortName; sarà in grado di contrassegnare la posta indesiderata autonomamente.">
+<!ENTITY level.label "Attiva i controlli incrementali di posta indesiderata per questo account">
+<!ENTITY level.accesskey "v">
+
+<!ENTITY move.label "Sposta i nuovi messaggi di posta indesiderata in:">
+<!ENTITY move.accesskey "S">
+<!ENTITY junkFolderOn.label "Cartella &quot;Indesiderata&quot; su:">
+<!ENTITY junkFolderOn.accesskey "C">
+<!ENTITY otherFolder.label "Altra:">
+<!ENTITY otherFolder.accesskey "r">
+<!ENTITY purge1.label "Elimina automaticamente la posta indesiderata più vecchia di">
+<!ENTITY purge1.accesskey "m">
+<!ENTITY purge2.label "giorni">
+
+<!ENTITY whitelistHeader.label "Non segnare la posta come indesiderata se il mittente è in: ">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "Se attivato &brandShortName; considererà automaticamente come indesiderati i messaggi contrassegnati indesiderati da questo valutatore esterno.">
+<!ENTITY ispHeaders.label "Fidati se le intestazioni di posta indesiderata sono impostate da: ">
+<!ENTITY ispHeaders.accesskey "t">
+
+<!ENTITY junkClassification.label "Selezione">
+<!ENTITY junkActions.label "Destinazione e memorizzazione">
+
+<!ENTITY globalJunkPrefs.label "Preferenze globali posta indesiderata…">
+<!ENTITY globalJunkPrefs.accesskey "G">

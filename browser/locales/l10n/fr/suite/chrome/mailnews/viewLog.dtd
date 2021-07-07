@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Journal de filtrage">
+<!ENTITY viewLogInfo.text "Le journal de filtrage consigne les filtres exécutés pour ce compte. Utilisez la case à cocher ci-dessous pour activer le journal.">
+<!ENTITY clearLog.label "Vider le journal">
+<!ENTITY clearLog.accesskey "V">
+<!ENTITY enableLog.label "Activer le journal de filtrage">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Fermer">
+<!ENTITY closeLog.accesskey "F">

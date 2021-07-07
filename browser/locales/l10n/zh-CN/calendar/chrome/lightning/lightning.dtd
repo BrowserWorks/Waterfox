@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "日历">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "事件…">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "任务…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "日历…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "打开">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "已保存消息…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "日历文件…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "C">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "日历">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "任务">
+<!ENTITY lightning.menu.view.tasks.accesskey           "k">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "事件和任务">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "电子邮箱：">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "偏好由客户端安排定时发送邮件">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "现在起，必须先在其属性对话框里设置好此日历，并且对应的日历服务器有定时发送功能时，您才能启用这个选项。">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "此选项仅在日历服务器可以处理定时发送时才能启用。启用后，将不使用日历服务器提供的定时发送功能，而仍使用基于邮件的标准定时发送流程。">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "接受">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "接受事件邀请">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "全部接受">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "接受该事件的每次邀请">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "添加">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "添加事件到日历">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "谢绝">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "拒绝事件邀请">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "全部拒绝">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "拒绝该事件的每次邀请">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "拒绝">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "拒绝计数提案">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "删除">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "从日历中删除">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "详细信息…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "显示事件详情">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "不再显示此信息">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "日历">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "前往日历选项卡">
+<!ENTITY lightning.imipbar.btnMore.label                                    "更多">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "点击显示更多选项">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "重新确认">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "发送一个再次确认到组织者">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "重新安排">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "重新安排该事件">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "保存副本">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "在日历中保存一份只回复组织者的独立事件副本，参与者列表被清空。">
+<!ENTITY lightning.imipbar.btnTentative.label                               "暂定">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "暂时接受事件邀请">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "暂定全部">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "暂时接受该事件的每次邀请">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "更新">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "更新日历中的事件">
+<!ENTITY lightning.imipbar.description                                      "本信息包含一个事件的邀请。">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "立刻发送回复">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "发送回复给组织者">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "发送针对整个系列的回复给组织者">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "不要发送回复">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "变更您的参与状态，而不发送回复给组织者">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "变更您在整个系列活动的参与状态，而不发送回复给组织者">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "创建一个新日历">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "显示迷你月历">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "显示迷你日">
+<!ENTITY todaypane.showMiniday.accesskey  "D">
+<!ENTITY todaypane.showNone.label "不显示">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "显示今日窗格">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "今日窗格">

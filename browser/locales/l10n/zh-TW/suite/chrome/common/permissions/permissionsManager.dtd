@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "例外">
+<!ENTITY treehead.sitename.label        "網站">
+<!ENTITY treehead.status.label          "狀態">
+<!ENTITY remove.label                   "移除網站">
+<!ENTITY remove.accesskey               "R">
+<!ENTITY removeall.label                "移除所有網站">
+<!ENTITY removeall.accesskey            "e">
+<!ENTITY address.label                  "網站網址:">
+<!ENTITY address.accesskey              "d">
+<!ENTITY block.label                    "封鎖">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "此次瀏覽階段允許">
+<!ENTITY session.accesskey              "S">
+<!ENTITY allow.label                    "允許">
+<!ENTITY allow.accesskey                "A">

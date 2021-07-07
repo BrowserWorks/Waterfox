@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLMixedContent.caption            "Mišrus turinys">
+<!ENTITY SSLClientAuthMethod.caption        "Liudijimo pasirinkimas">
+
+<!ENTITY limit.description                  "Galite apriboti saugiems ryšiams naudojamų šifravimo protokolų aibę. Galite pasirinkti vieną protokolo versiją arba vientisą versijų rėžį.">
+<!ENTITY limit.enable.label                 "Įgalinti:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+
+
+
+<!ENTITY warn.description2                  "Programa „&brandShortName;“ gali informuoti apie skaitomo tinklalapio saugumą. Rodyti įspėjimus:">
+<!ENTITY warn.enteringsecure                "įkeliant tinklalapį, turintį šifravimo priemones">
+<!ENTITY warn.enteringsecure.accesskey      "k">
+<!ENTITY warn.insecurepost                  "persiunčiant formų duomenis tarp dviejų nešifruotų tinklalapių">
+<!ENTITY warn.insecurepost.accesskey        "f">
+<!ENTITY warn.leavingsecure                 "užveriant tinklalapį, turintį šifravimo priemones">
+<!ENTITY warn.leavingsecure.accesskey       "u">
+
+<!ENTITY mixed.description                  "Šifruotuose tinklalapiuose gali būti ir nešifruoto turinio, kurį gali matyti ir pašaliniai. Programa „&brandShortName;“ tokį turinį gali aptikti ir jo neįkelti.">
+<!ENTITY warn.mixedactivecontent            "Įspėti, kai šifruotame tinklalapyje yra prastai šifruoto turinio">
+<!ENTITY warn.mixedactivecontent.accesskey  "p">
+<!ENTITY block.activecontent                "Neįkelti prastai šifruoto turinio šifruotuose tinklalapiuose">
+<!ENTITY block.activecontent.accesskey      "N">
+<!ENTITY warn.mixeddisplaycontent           "Įspėti, kai šifruotame tinklalapyje yra kito tipo mišraus turinio">
+<!ENTITY warn.mixeddisplaycontent.accesskey "m">
+<!ENTITY block.displaycontent               "Neįkelti kito tipo mišraus turinio šifruotuose tinklalapiuose">
+<!ENTITY block.displaycontent.accesskey     "e">
+
+<!ENTITY certselect.description             "Kai svetainė paprašo liudijimo, naršyklė turi jį parinkti:">
+<!ENTITY certselect.auto                    "savaime">
+<!ENTITY certselect.auto.accesskey          "s">
+<!ENTITY certselect.ask                     "paklausti">
+<!ENTITY certselect.ask.accesskey           "p">

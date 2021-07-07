@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Paieška įrašant radinius">
+<!ENTITY name.label                 "Vardas aplanko, į kurį bus įrašomi radiniai:">
+<!ENTITY name.accesskey             "V">
+<!ENTITY description.label          "Įdėti į šį aplanką:">
+<!ENTITY description.accesskey      "d">
+
+<!ENTITY searchTermCaption.label "Nurodykite paieškos sąlygas: ">
+
+<!ENTITY folderSelectionCaption.label "Parinkite aplankus, kuriuose bus atliekama paieška: ">
+<!ENTITY chooseFoldersButton.label "Parinkti…">
+<!ENTITY chooseFoldersButton.accesskey "r">
+
+<!ENTITY searchOnline.label "Ieškoti prisijungus prie tinklo (gaunami naujausi paieškos IMAP ir naujienų grupių aplankuose rezultatai, tačiau aplankai atveriami lėčiau)">
+<!ENTITY searchOnline.accesskey "e">
+<!ENTITY newFolderButton.label       "Sukurti">
+<!ENTITY newFolderButton.accesskey   "k">
+<!ENTITY editFolderButton.label      "Atnaujinti">
+<!ENTITY editFolderButton.accesskey  "n">

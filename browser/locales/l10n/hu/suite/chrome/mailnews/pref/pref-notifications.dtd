@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Értesítések">
+<!ENTITY notifications.caption            "Értesítések">
+<!ENTITY newMessagesArrive.label          "Új üzenet érkezésekor:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Értesítés megjelenítése">
+<!ENTITY showAlertFor.accesskey           "r">
+<!ENTITY showAlertTimeEnd.label           "másodpercig">
+
+<!ENTITY showAlertPreviewText.label       "Idézet megjelenítése az üzenet szövegéből">
+<!ENTITY showAlertPreviewText.accesskey   "I">
+<!ENTITY showAlertSubject.label           "Tárgy megjelenítése">
+<!ENTITY showAlertSubject.accesskey       "T">
+<!ENTITY showAlertSender.label            "Feladó megjelenítése">
+<!ENTITY showAlertSender.accesskey        "F">
+<!ENTITY useSystemAlert.label             "Használja az operációs rendszer értesítéseit">
+<!ENTITY useSystemAlert.accesskey         "o">
+<!ENTITY useBuiltInAlert.label            "Használja a &brandShortName; saját értesítéseit">
+<!ENTITY useBuiltInAlert.accesskey        "s">
+
+<!ENTITY showTrayIcon.label               "Tálcaikon megjelenítése">
+<!ENTITY showTrayIcon.accesskey           "T">
+<!ENTITY showBalloon.label                "Felugró értesítési ablak megjelenítése">
+<!ENTITY showBalloon.accesskey            "e">
+<!ENTITY bounceSystemDockIcon.label       "Dokkolóikon animálása">
+<!ENTITY bounceSystemDockIcon.accesskey   "a">
+
+<!ENTITY playSound.label                  "Hangjelzés">
+<!ENTITY playSound.accesskey              "H">
+<!ENTITY playButton.label                 "Lejátszás">
+<!ENTITY playButton.accesskey             "L">
+<!ENTITY systemsound.label                "Új üzenethez tartozó rendszerhang">
+<!ENTITY systemsound.accesskey            "z">
+<!ENTITY customsound.label                "Saját WAV-fájl">
+<!ENTITY customsound.accesskey            "S">
+<!ENTITY browse.label                     "Tallózás…">
+<!ENTITY browse.accesskey                 "T">
+<!ENTITY browse.title                     "Fájlválasztás">

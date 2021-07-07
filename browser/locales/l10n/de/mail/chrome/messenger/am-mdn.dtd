@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Empfangsbestätigungen (MDN)">
+<!ENTITY useGlobalPrefs.label         "Globale Einstellungen für dieses Konto verwenden">
+<!ENTITY useGlobalPrefs.accesskey     "G">
+<!ENTITY globalReceipts.label         "Globale Einstellungen…">
+<!ENTITY globalReceipts.accesskey     "u">
+<!ENTITY useCustomPrefs.label         "Einstellungen für dieses Konto anpassen">
+<!ENTITY useCustomPrefs.accesskey     "E">
+<!ENTITY requestReceipt.label         "Immer eine Empfangsbestätigung anfordern">
+<!ENTITY requestReceipt.accesskey     "I">
+<!ENTITY receiptArrive.label          "Wenn eine Empfangsbestätigung ankommt:">
+<!ENTITY leaveIt.label                "Im Posteingang belassen">
+<!ENTITY leaveIt.accesskey            "P">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "In den Ordner für gesendete Nachrichten verschieben">
+<!ENTITY moveToSent.accesskey         "v">
+<!ENTITY requestMDN.label             "Wenn aufgefordert wird, eine Empfangsbestätigung zu senden:">
+<!ENTITY returnSome.label             "Bei manchen Nachrichten Empfangsbestätigungen erlauben">
+<!ENTITY returnSome.accesskey         "B">
+<!ENTITY never.label                  "Nie eine Empfangsbestätigung senden">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Wenn ich nicht in der An-/CC-Zeile stehe:">
+<!ENTITY notInToCc.accesskey          "t">
+<!ENTITY outsideDomain.label          "Wenn der Absender außerhalb meiner Domain ist:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "In allen anderen Fällen:">
+<!ENTITY otherCases.accesskey         "F">
+<!ENTITY askMe.label                  "Fragen">
+<!ENTITY alwaysSend.label             "Immer senden">
+<!ENTITY neverSend.label              "Nie senden">

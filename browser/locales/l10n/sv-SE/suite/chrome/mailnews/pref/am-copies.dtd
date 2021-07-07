@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Kopior och mappar">
+<!ENTITY sendingPrefix.label "När ett meddelande skickas, gör följande automatiskt: ">
+<!ENTITY fccMailFolder.label "Lägg en kopia i:">
+<!ENTITY fccMailFolder.accesskey "p">
+<!ENTITY fccReplyFollowsParent.label "Lägg svarsmeddelande i samma mapp som besvarat meddelande">
+<!ENTITY fccReplyFollowsParent.accesskey "s">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc till dessa adresser:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separera adresser med komman">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc till dessa adresser:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Separera adresser med komman">
+<!ENTITY saveMessageDlg.label "Visa varskoendetext när meddelanden sparas">
+<!ENTITY saveMessageDlg.accesskey "V">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Mappen &quot;Skickat&quot; i:">
+<!ENTITY sentFolderOn.accesskey "c">
+<!ENTITY sentInOtherFolder.label "Annan mapp:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Mappen &quot;Utkast&quot; i:">
+<!ENTITY draftsFolderOn.accesskey "U">
+<!ENTITY draftInOtherFolder.label "Annan mapp:">
+<!ENTITY draftInOtherFolder.accesskey "n">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Meddelandearkiv">
+<!ENTITY keepArchives.label "Spara arkiv i:">
+<!ENTITY keepArchives.accesskey "k">
+<!ENTITY archiveHierarchyButton.label "Arkiveringsinställningar">
+<!ENTITY archiveHierarchyButton.accesskey "n">
+<!ENTITY archivesFolderOn.label "Mappen &quot;Arkiv&quot; i:">
+<!ENTITY archivesFolderOn.accesskey "i">
+<!ENTITY archiveInOtherFolder.label "Annan mapp:">
+<!ENTITY archiveInOtherFolder.accesskey "p">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Mappen &quot;Mallar&quot; i:">
+<!ENTITY templatesFolderOn.accesskey "r">
+<!ENTITY templateInOtherFolder.label "Annan mapp:">
+<!ENTITY templateInOtherFolder.accesskey "m">
+<!ENTITY specialFolders.label "Utkast och mallar">
+<!ENTITY keepDrafts2.label "Spara utkast i:">
+<!ENTITY keepTemplates.label "Spara mallar i:">

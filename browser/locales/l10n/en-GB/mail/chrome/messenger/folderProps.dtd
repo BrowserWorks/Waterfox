@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Properties">
+
+<!ENTITY generalInfo.label                       "General Information">
+<!ENTITY folderCharsetFallback2.label            "Fallback Text Encoding:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "Apply encoding to all messages in the folder (individual message text encoding settings and auto-detection will be ignored)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Rebuild Summary File Index">
+<!ENTITY folderRebuildSummaryFile2.label         "Repair Folder">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Sometimes the folder index (.msf) file becomes damaged and messages may appear missing or deleted messages continue showing; repairing the folder may fix these issues.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Include messages in this folder in Global Search results">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Retention Policy">
+<!ENTITY retentionUseAccount.label  "Use my account settings">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "days old">
+<!ENTITY message.label "messages">
+<!ENTITY retentionCleanup.label "To recover disk space, old messages can be permanently deleted">
+<!ENTITY retentionCleanupImap.label "To recover disk space, old messages can be permanently deleted, both local copies and originals on the remote server.">
+<!ENTITY retentionCleanupPop.label "To recover disk space, old messages can be permanently deleted, including originals on the remote server.">
+<!ENTITY retentionDeleteMsg.label "Delete messages more than">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Don't delete any messages">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "Delete all but the most recent">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Always keep starred messages">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronisation">
+<!ENTITY folderCheckForNewMessages2.label         "When getting new messages for this account, always check this folder">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Select this folder for offline use">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Download Now">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Select this newsgroup for offline use">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Download Now">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Name:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Icon Colour:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Restore default colour">
+<!ENTITY folderProps.location.label              "Location:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Sharing">
+<!ENTITY privileges.button.label                 "Privileges…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "You have the following permissions:">
+<!ENTITY folderOtherUsers.label                  "Others with access to this folder:">
+<!ENTITY folderType.label                        "Folder Type:">
+
+<!ENTITY folderQuotaTab.label                    "Quota">
+<!ENTITY folderQuotaUsage.label                  "Usage:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Number of messages:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "unknown">
+<!ENTITY sizeOnDisk.label                        "Size on disk:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "unknown">

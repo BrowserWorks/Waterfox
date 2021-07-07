@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Junk &amp; Suspect Mail">
+<!ENTITY junkSettings.caption "Global Junk Mail Settings">
+<!ENTITY junkMail.intro "Goto Account Settings to configure account specific junk mail settings.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "When I mark messages as junk:">
+<!ENTITY manualMark.accesskey           "W">
+<!ENTITY manualMarkModeMove.label       "Move them to the account's &quot;Junk&quot; folder">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "Delete them">
+<!ENTITY manualMarkModeDelete.accesskey "D">
+
+<!ENTITY markAsRead.intro               "Mark messages as read:">
+<!ENTITY autoMarkAsRead.label           "When &brandShortName; determines that they are junk">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "When I manually mark them as junk">
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "Enable junk filter logging">
+<!ENTITY enableJunkLogging.accesskey    "E">
+<!ENTITY openJunkLog.label              "Show log">
+<!ENTITY openJunkLog.accesskey          "S">
+<!ENTITY resetTrainingData.label        "Reset training data">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "Suspect Mail">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Email Scams">
+<!ENTITY enablePhishingDetector.label     "Tell me if the message I'm reading is a suspected email scam">
+<!ENTITY enablePhishingDetector.accesskey "T">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Anti-Virus">
+<!ENTITY antiVirus.label                  "Allow anti-virus clients to scan incoming messages more easily">
+<!ENTITY antiVirus.accesskey              "A">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label		"アカウント設定">
+<!ENTITY accountName.label		"アカウント名:">
+<!ENTITY accountName.accesskey		"N">
+<!ENTITY identityTitle.label		"既定の差出人情報">
+<!ENTITY identityDesc.label		"このアカウントで使用する既定の差出人情報を設定してください。これはメッセージの差出人が誰であるかを表すために使用されます。"><!-- (^^; 表現変更 en-US: Each account has an identity, which is the information that other people see when they read your messages. -->
+<!ENTITY name.label			"名前:">
+<!ENTITY name.accesskey			"Y">
+<!ENTITY email.label			"メールアドレス:">
+<!ENTITY email.accesskey		"E">
+<!ENTITY catchAll.label			"送信ヘッダーが一致する場合はこの差出人から返信する:">
+<!ENTITY catchAll.accesskey		"d">
+<!ENTITY replyTo.label			"返信先 (Reply-to):">
+<!ENTITY replyTo.accesskey		"s">
+<!ENTITY replyTo.placeholder		"受信者からの返信を受け取るアドレス">
+<!ENTITY organization.label		"組織 (Organization):">
+<!ENTITY organization.accesskey		"O">
+<!ENTITY signatureText.label		"署名編集:">
+<!ENTITY signatureText.accesskey	"x">
+<!ENTITY signatureHtml.label		"HTML 形式で記述する (例: &lt;b&gt;太字&lt;/b&gt;、改行は &lt;br&gt;)">
+<!ENTITY signatureHtml.accesskey	"L">
+<!ENTITY signatureFile.label		"ファイルから署名を挿入する (テキストまたは HTML、画像ファイル):">
+<!ENTITY signatureFile.accesskey	"t">
+<!ENTITY edit.label			"編集...">
+<!ENTITY choose.label			"参照...">
+<!ENTITY choose.accesskey		"C">
+<!ENTITY editVCard.label		"vCard を編集...">
+<!ENTITY editVCard.accesskey		"d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label		"メッセージに vCard を添付する">
+<!ENTITY attachVCard.accesskey		"v">
+
+<!ENTITY manageIdentities.label		"差出人情報を管理...">
+<!ENTITY manageIdentities.accesskey	"M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label			"送信 (SMTP) サーバー:">
+<!ENTITY smtpName.accesskey		"u">
+<!ENTITY smtpDefaultServer.label	"既定のサーバーを使用する">
+
+<!ENTITY smtpServerEdit.label		"SMTP サーバーを編集...">
+<!ENTITY smtpServerEdit.accesskey	"P">

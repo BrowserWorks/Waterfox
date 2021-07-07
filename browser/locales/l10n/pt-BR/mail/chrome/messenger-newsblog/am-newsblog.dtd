@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Ativar atualizações para todos os feeds">
+<!ENTITY biffAll.accesskey             "A">
+
+<!ENTITY newFeedSettings.label         "Configurações padrão para novos feeds">
+
+<!ENTITY manageSubscriptions.label     "Inscrições RSS…">
+<!ENTITY manageSubscriptions.accesskey "I">
+
+<!ENTITY feedWindowTitle.label         "Assistente de contas de Feed">
+<!ENTITY feeds.accountName             "RSS de blogs e notícias">

@@ -1,0 +1,139 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "مشكلة في تحميل الصفحة">
+<!ENTITY retry.label "حاول مجددًا">
+<!ENTITY returnToPreviousPage.label "عُد للخلف">
+<!ENTITY returnToPreviousPage1.label "عُد للخلف (يُنصح به)">
+<!ENTITY advanced2.label "متقدم…">
+<!ENTITY viewCertificate.label "اعرض الشهادة">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "الخادوم غير موجود">
+<!ENTITY dnsNotFound.longDesc1 "<strong>إن كان العنوان صحيحا، فهذه ثلاث أمور يمكنك تجربتها:</strong>
+<ul>
+  <li>معاودة المحاولة لاحقا.</li>
+  <li>فحص اتصال الشبكة لديك.</li>
+  <li>إن كنت متصلا بالإنترنت ولكن عبر جدار ناري، فتحقق من امتلاك &brandShortName; تصريح النفاذ إلى الوِب.</li>
+</ul>">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>افحص اسم الملف بحثًا عن أخطاء في الكتابة.</li> <li>تأكد أن الملف لم يُنقل، أو يتغير اسمه، أو يُحذف.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>قد يكون حُذِف أو نُقِل أو أن صلاحيّات الملف تمنع الوصول إليه.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>لا يستطيع &brandShortName; تحميل هذه الصفحة لسبب ما.</p>">
+
+<!ENTITY captivePortal.title "لِج إلى الشبكة">
+<!ENTITY captivePortal.longDesc2 "<p>تحتاج الولوج إلى هذه الشبكة أولا لتستطيع الوصول إلى الإنترنت.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "افتح صفحة الولوج إلى الشبكة">
+
+<!ENTITY malformedURI.pageTitle "مسار غير صحيح">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>المستند المطلوب لم يعد متوفرًا في ذاكرة &brandShortName; الخبيئة.</p><ul><li>كإجراء وقائي، &brandShortName; لا يعيد طلب المستندات الحساسة بشكل آلي.</li><li>اضغط على ”حاول مرة أخرى“ لإعادة طلب المستند من الموقع.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>اضغط على ”حاول مجددًا“ للتبديل إلى وضع الاتصال و إعادة تحميل الصفحة.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>من فضلك اتصل بمالكي الموقع لإعلامهم بهذه المشكلة.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>من فضلك اتصل بمالكي الموقع لإعلامهم بهذه المشكلة.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>قد تحتاج تنصيب برمجيات أخرى لفتح هذا العنوان.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>افحص إعدادات الوسيط لتتأكد أنها صحيحة.</li> <li>اتصل بمدير الشبكة لتتأكد أن الخادوم الوسيط يعمل.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>افحص إعدادات الوسيط لتتأكد أنها صحيحة.</li> <li>تأكد من أن اتصالك الشبكي يعمل.</li> <li>إذا كان حاسوبك محميًا بجدار ناري أو وسيط، تأكد من السماح ل‍&brandShortName; بالنفاذ إلى الوِب.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>سبب هذه المشكلة هو تعطيل الكعكات أو عدم قبولها.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>تأكّد أنّ مدير الأمن الشخصي منصّب في نظامك.</li> <li>قد يكون سبب هذا هو إعداد مخالف للمعايير في الخادوم.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>لا يمكن عرض الصفحة التي تحاول زيارتها لعدم إمكانية الاستيثاق من البيانات المستقبلة.</li> <li>من فضلك اتصل بمالكي الموقع لإعلامهم بهذه المشكلة.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "اكتشف &brandShortName; خطرًا أمنيًا محتملًا ولم يُتابع نحو <span class='hostname'/>. إن زرت هذا الموقع فقد يحاول المهاجمون سرقة المعلومات منك مثل كلمات السر أو البُرد الإلكترونية أو تفاصيل بطاقات الائتمان.">
+<!ENTITY certerror.sts.introPara "اكتشف &brandShortName; خطرا أمنيا محتملا ولم يُتابع نحو <span class='hostname'/> لأن هذا الموقع يطلب اتّصال آمن.">
+
+<!ENTITY certerror.expiredCert.introPara "اكتشف &brandShortName; مشكلة ولم يُتابع نحو <span class='hostname'/>. إمّا أن الموقع لم يُضبط كما ينبغي أو أن ساعة الحاسوب لديك مضبوطة على وقت خطأ.">
+<!ENTITY certerror.expiredCert.secondPara2 "أغلب الظن هو أن شهادة الموقع قد انقضت، ما يمنع &brandShortName; من الاتصال بطريقة آمنة. إن أردت زيارة الموقع، فيمكن أن يحاول المهاجمون سرقة المعلومات مثل كلمات السر أو عناوين البريد أو تفاصيل البطاقات الائتمانية.">
+<!ENTITY certerror.expiredCert.sts.secondPara "أغلب الظن هو أن شهادة الموقع قد انقضت، ما يمنع &brandShortName; من الاتصال بطريقة آمنة.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "إليك ما تستطيع فعله حيال هذا">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>أغلب الظن بأن المشكلة هي بالموقع نفسه، وليس هنالك ما يمكنك فعله لحلها.</p>
+<p>إن كنت متصلا عبر شبكة للشركات أو كنت تستخدم برمجية مضادة للفيروسات، فيمكنك إيصال الأمر إلى فرق الدعم لمساعدتك. يمكنك أيضا إعلام مدير الموقع عن هذه المشكلة.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>ضُبطت ساعة الحاسوب على <span id='wrongSystemTime_systemDate2'/>. تحقّق من أن الحاسوب قد ضُبط حسب التاريخ والوقت والمنطقة الزمنية في إعدادات النظام، بعد ذلك أنعِش <span class='hostname'/>.</p>
+<p>إن كانت الساعة مضبوطة على الوقت الصحيح، فأغلب الظن بأن الموقع لم يُضبط كما ينبغي، وليس ثمة ما تقدر على فعله لحل المشكلة. يمكنك إخطار مدير الموقع عن هذه المشكلة.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>أغلب الظن بأن المشكلة هي بالموقع نفسه، وليس هنالك ما يمكنك فعله لحلها. يمكنك إعلام مدير الموقع عن هذه المشكلة.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>قد يكون الموقع متوقفًا مؤقتًا أو مشغولا جدًا. حاول ثانية بعد عدّة دقائق.</li> <li>إذا كنت غير قادر على تحميل أي صفحة، افحص اتصال الحاسوب بالشبكة.</li> <li>إذا كان حاسوبك محميًا بجدار ناري أو وسيط، تأكد من السماح ل‍&brandShortName; بالنفاذ إلى الوِب.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>منع &brandShortName; هذه الصفحة من التحميل بهذه الطريقة لأن للصفحة سياسة أمن محتوى تمنع ذلك.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>منع &brandShortName; هذه الصفحة من التحميل بهذا السياق إذ أنّ سياسة X-Frame-Options في الصفحة تمنع ذلك.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>تعذر عرض الصفحة التي تريد مشاهدتها بسبب خطأ أثناء نقل البيانات.</p><ul><li>الرجاء التواصل مع مالك الموقع لإبلاغه بهذه المشكلة.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "أقبلُ المخاطرة فتابِع">
+
+<!ENTITY errorReporting.automatic2 "أبلغ عن مثل هذه الأعطال لمساعدة Mozilla في التعرف على المواقع الخبيثة و حجبها">
+<!ENTITY errorReporting.learnMore "اطّلع على المزيد…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>الرجاء التواصل مع مالك الموقع لإبلاغه بهذه المشكلة.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "معلومات متقدمة: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "تحذير: أمامك خطر أمني محتمل">
+<!ENTITY certerror.sts.pagetitle  "لم يجري الاتصال: مشكلة أمنية محتملة">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "يستخدم الموقع <span class='hostname'></span> سياسة النقل الصارمة (HSTS)، ما يعني بأن &brandShortName; لا يستطيع الاتصال به إلا بأمان. لا يمكنك إضافة استثناء لزيارة هذا الموقع.">
+<!ENTITY certerror.copyToClipboard.label "انسخ النص إلى الحافظة">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>يستخدم <span class='hostname'></span> تقنية أمنية عتيقة و عرضة للهجوم. يمكن لمهاجم بسهولة الاطلاع على معلومات تظنها بمأمن. على مدير الموقع إصلاح الخادوم قبل أن يمكنك زيارة الموقع.</p><p>رمز العطل: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "الصفحة محجوبة">
+
+<!ENTITY certerror.mitm.longDesc "أغلب الظن بأن <span class='hostname'></span> موقع آمن، إلّا أنه تعذر إجراء اتصال آمن معه. هذه المشكلة بسبب <span class='mitm-name'/>، وهي إمّا برمجية في الحاسوب لديك أو في الشبكة.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "إن كان لمضادّ الفيروسات لديك ميزة تفحص الاتصالات المعمّاة (غالبًا ما تُسمى بِ‍”فحص الوِب Web scanning“ أو ”فحص https“)، فيمكنك تعطيل تلك الميزة. إن لم يعمل ذلك فيمكنك إزالة وإعادة تثبيت برمجية مضادّ الفيروسات.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "إن كت في شبكة في شركة، فيمكنك مراسلة قسم تقنية المعلومات فيها.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "إن لم تكن تعلم ما يعني <span class='mitm-name'/>، فهذا قد يكون هجومًا وعليك ألا تُواصل نحو الموقع.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "إن لم تكن تعلم ما يعني <span class='mitm-name'/>، فهذا قد يكون هجومًا وليس ثمة شيء تفعله لتدخل الموقع.">
+
+<!ENTITY clockSkewError.longDesc "يظن الحاسوب لديك بأنه <span id='wrongSystemTime_systemDate1'/>، ما يمنع &brandShortName; من الاتصال كما ينبغي. لتقدر على زيارة <span class='hostname'></span> حدّث ساعة الحاسوب في إعدادات النظام لتطابق الوقت والتاريخ والمنطقة الزمنية الحالية، بعدها أنعِش <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "يبدو أن إعدادات أمان الشبكة قد تكون السبب وراء هذا. أتريد استعادة الإعدادات المبدئية؟">
+<!ENTITY prefReset.label "استرجع الإعدادات الأصلية">
+
+<!ENTITY enableTls10.longDesc "قد لا يكون يدعم هذا الموقع بروتوكول TLS 1.2 وهو يُعد أدنى إصدارة يدعمها &brandShortName;. قد يسمح تفعيل الإصدارتين 1.0 و1.1 من بروتوكول TLS نجاح هذا الاتصال.">
+<!ENTITY enableTls10.note "سيُعطّل إصدارا 1.0 و1.1 من بروتوكول TLS بصورة دائمة في الإصدارات المستقبلية.">
+<!ENTITY enableTls10.label "فعّل TLS 1.0 و 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>تعذر عرض الصفحة التي تريد مشاهدتها لاكتشاف عُطل في بروتوكول الشبكة.</p><ul><li>من فضلك تواصل مع مالكي الموقع لإبلاغهم بهذه المشكلة.</li></ul>">

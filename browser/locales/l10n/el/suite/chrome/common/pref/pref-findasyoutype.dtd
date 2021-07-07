@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Εύρεση κατά την πληκτρολόγηση">
+<!ENTITY findAsYouTypeBehavior.label "Εύρεση κατά την πληκτρολόγηση">
+<!ENTITY findAsYouTypeTip.label "Συμβουλή: Για να αρχίσει χειροκίνητα η εύρεση κατά την πληκτρολόγηση, πληκτρολογήστε / για εύρεση κειμένου ή ' για εύρεση συνδέσμων, ακολουθούμενα από το κείμενο που θέλετε να βρείτε.">
+<!ENTITY findAsYouTypeTimeout.label "Απαλοιφή τρέχουσας αναζήτησης μετά από μερικά δευτερόλεπτα αδράνειας">
+<!ENTITY findAsYouTypeTimeout.accesskey "Α">
+<!ENTITY findAsYouTypeSound.label "Αναπαραγωγή ήχου αν δεν βρεθεί το ζητούμενο κείμενο">
+<!ENTITY findAsYouTypeSound.accesskey "Α">
+<!ENTITY findAsYouTypeEnableAuto.label "Αυτόματη εύρεση κατά την πληκτρολόγηση σε μια ιστοσελίδα:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "ε">
+<!ENTITY findAsYouTypeAutoText.label "Οποιοδήποτε κείμενο στη σελίδα">
+<!ENTITY findAsYouTypeAutoText.accesskey "Ο">
+<!ENTITY findAsYouTypeAutoLinks.label "Μόνο σύνδεσμοι">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "Μ">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Εμφάνιση γραμμής εύρεσης όταν γίνεται εύρεση κατά την πληκτρολόγηση">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "Ε">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Σημείωση: Η εύρεση κατά την πληκτρολόγηση χωρίς εμφάνιση γραμμής εύρεσης δεν επιτρέπει διεθνή εισαγωγή κειμένου.">

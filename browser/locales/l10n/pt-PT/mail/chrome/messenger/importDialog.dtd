@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importar">
+<!ENTITY importAll.label          "Importar tudo">
+<!ENTITY importAll.accesskey      "t">
+<!ENTITY importMail.label         "Correio">
+<!ENTITY importMail.accesskey     "C">
+<!ENTITY importFeeds.label        "Fontes subscritas">
+<!ENTITY importFeeds.accesskey    "o">
+<!ENTITY importAddressbook.label  "Livros de endereços">
+<!ENTITY importAddressbook.accesskey "v">
+<!ENTITY importSettings.label     "Definições">
+<!ENTITY importSettings.accesskey "D">
+<!ENTITY importFilters.label      "Filtros">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Assistente de importação do &brandShortName;">
+<!ENTITY importShortDesc.label    "Importar correio, livros de endereços, definições e filtros de outros programas">
+
+<!ENTITY importDescription1.label "Este assistente irá importar as mensagens, livros de endereços, fontes, preferências e filtros de outros programas para o &brandShortName;.">
+<!ENTITY importDescription2.label "Ao terminar a importação, os dados importados estarão disponíveis no &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Por favor selecione o tipo de ficheiro que deseja importar:">
+<!ENTITY selectDescriptionB.label "Por favor selecione uma conta existente ou crie uma nova:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Nome:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Não foi encontrada uma aplicação ou ficheiro para importar os dados.">
+
+<!ENTITY back.label               "&lt; Recuar">
+<!ENTITY forward.label            "Seguinte &gt;">
+<!ENTITY finish.label             "Concluir">
+<!ENTITY cancel.label             "Cancelar">
+
+<!ENTITY select.label             "ou selecione o tipo de dados a importar:">
+
+<!ENTITY title.label              "Título">
+<!ENTITY processing.label         "A importar...">

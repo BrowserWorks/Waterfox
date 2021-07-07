@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Nincs beállított tulajdonság.">
+
+<!ENTITY caption.label         "Elem tulajdonságai">
+<!ENTITY image-sec.label       "Kép tulajdonságai">
+<!ENTITY image-url.label       "Hely:">
+<!ENTITY image-desc.label      "Leírás:">
+<!ENTITY image-alt.label       "Magyarázó szöveg:">
+<!ENTITY image-width.label     "Szélesség:">
+<!ENTITY image-height.label    "Magasság:">
+<!ENTITY image-filesize.label  "Fájlméret:">
+<!ENTITY image-filesize.value  "Ismeretlen">
+<!ENTITY insdel-sec.label      "Tulajdonság beszúrása/törlése">
+<!ENTITY insdel-cite.label     "Információ:">
+<!ENTITY insdel-date.label     "Dátum:">
+<!ENTITY link-sec.label        "Hivatkozás tulajdonságai">
+<!ENTITY link-url.label        "Cím:">
+<!ENTITY link-target.label     "Megnyitás a következőben:">
+<!ENTITY link-type.label       "Céltípus:">
+<!ENTITY link-lang.label       "Célnyelv:">
+<!ENTITY link-rel.label        "Viszony:">
+<!ENTITY link-rev.label        "Fordított viszony:">
+<!ENTITY misc-sec.label        "Egyéb tulajdonságok">
+<!ENTITY misc-lang.label       "Szöveg nyelve:">
+<!ENTITY misc-title.label      "Cím:">
+<!ENTITY misc-tblsummary.label "Táblázat összefoglalója:">
+<!ENTITY quote-sec.label       "Idézés tulajdonságai">
+<!ENTITY quote-cite.label      "Információ:">

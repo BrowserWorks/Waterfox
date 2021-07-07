@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filterreglar">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Filternamn:">
+
+<!ENTITY recentFolders.label "Siste">
+
+<!ENTITY junk.label "Uønskt">
+<!ENTITY notJunk.label "Ønskt">
+
+<!ENTITY lowestPriorityCmd.label "Lågaste">
+<!ENTITY lowPriorityCmd.label "Låg">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Høg">
+<!ENTITY highestPriorityCmd.label "Høgste">
+
+<!ENTITY contextDesc.label "Bruk filteret når:">
+
+
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Flytt melding til">
+<!ENTITY copyMessage.label "Kopier melding til">
+<!ENTITY forwardTo.label "Vidaresend meldinga til">
+<!ENTITY replyWithTemplate.label "Svar med mal">
+<!ENTITY markMessageRead.label "Marker som lesen">
+<!ENTITY markMessageUnread.label "Marker som ulesen">
+<!ENTITY markMessageStarred.label "Merk med flagg">
+<!ENTITY setPriority.label "Sett prioritet til">
+<!ENTITY setJunkScore.label "Sett uønskt-status til">
+<!ENTITY deleteMessage.label "Slett melding">
+<!ENTITY deleteFromPOP.label "Slett frå POP-serveren">
+<!ENTITY fetchFromPOP.label "Hent frå POP-serveren">
+<!ENTITY ignoreThread.label "Ignorer tråd">
+<!ENTITY ignoreSubthread.label "Ignorer undertråd">
+<!ENTITY watchThread.label "Følg tråd">
+<!ENTITY stopExecution.label "Stopp filtreringa">
+
+<!ENTITY addAction.tooltip "Legg til ei ny handling">
+<!ENTITY removeAction.tooltip "Fjern denne handlinga">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

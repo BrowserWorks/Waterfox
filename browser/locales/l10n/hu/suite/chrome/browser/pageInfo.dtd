@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 30em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "Másolás">
+<!ENTITY  copy.accesskey         "M">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Minden kijelölése">
+<!ENTITY  selectall.accesskey    "d">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Hivatkozás címének másolása">
+<!ENTITY  copyLinks.accesskey       "v">
+<!ENTITY  openInNewTab.label        "Megnyitás új lapon">
+<!ENTITY  openInNewTab.accesskey    "l">
+<!ENTITY  openInNewWindow.label     "Megnyitás új ablakban">
+<!ENTITY  openInNewWindow.accesskey "a">
+
+<!ENTITY  generalTab            "Általános">
+<!ENTITY  generalTab.accesskey  "l">
+<!ENTITY  generalTitle          "Cím:">
+<!ENTITY  generalURL            "URL:">
+<!ENTITY  generalType           "Típus:">
+<!ENTITY  generalMode           "Megjelenítési mód:">
+<!ENTITY  generalSize           "Méret:">
+<!ENTITY  generalReferrer       "Hivatkozó URL:">
+<!ENTITY  generalSource         "Gyorsítótárforrás:">
+<!ENTITY  generalModified       "Módosítva:">
+<!ENTITY  generalEncoding2      "Szöveg kódolás:">
+<!ENTITY  generalMetaName       "Név">
+<!ENTITY  generalMetaContent    "Tartalom">
+<!ENTITY  generalSecurityDetails           "Részletek">
+<!ENTITY  generalSecurityDetails.accesskey "I">
+
+<!ENTITY  formsTab              "Űrlapok">
+<!ENTITY  formsTab.accesskey    "r">
+<!ENTITY  formAction            "Űrlapművelet">
+<!ENTITY  formMethod            "Módszer">
+<!ENTITY  formName              "Név">
+<!ENTITY  formEncoding          "Kódolás:">
+<!ENTITY  formTarget            "Cél:">
+<!ENTITY  formFields            "Mezők:">
+<!ENTITY  formLabel             "Címke">
+<!ENTITY  formFName             "Mező neve">
+<!ENTITY  formType              "Típus">
+<!ENTITY  formCValue            "Jelenlegi érték">
+
+<!ENTITY  linksTab              "Hivatkozások">
+<!ENTITY  linksTab.accesskey    "z">
+<!ENTITY  linkName              "Név">
+<!ENTITY  linkAddress           "Cím">
+<!ENTITY  linkType              "Típus">
+<!ENTITY  linkTarget            "Cél">
+<!ENTITY  linkAccessKey         "Gyorsbillentyű">
+
+<!ENTITY  mediaTab              "Média">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "URL:">
+<!ENTITY  mediaAlt              "Alternatív szöveg:">
+<!ENTITY  mediaLocation         "Hely:">
+<!ENTITY  mediaText             "Kapcsolódó szöveg:">
+<!ENTITY  mediaAltHeader        "Alternatív szöveg">
+<!ENTITY  mediaAddress          "Cím">
+<!ENTITY  mediaType             "Típus">
+<!ENTITY  mediaSize             "Méret">
+<!ENTITY  mediaCount            "Darab">
+<!ENTITY  mediaDimensions       "Megadott méretek:">
+<!ENTITY  mediaPhysDimensions   "Tényleges méretek:">
+<!ENTITY  mediaTitle            "Cím:">
+<!ENTITY  mediaDimension        "Méretek:">
+<!ENTITY  mediaLongdesc         "Hosszú leírás:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Mentés másként…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Média-előnézet:">
+
+<!ENTITY  feedTab               "Hírforrások">
+<!ENTITY  feedTab.accesskey     "f">
+<!ENTITY  feedSubscribe         "Feliratkozás">
+<!ENTITY  feedSubscribe.accesskey "k">
+
+<!ENTITY  permTab               "Engedélyek">
+<!ENTITY  permTab.accesskey     "E">
+<!ENTITY  permUseDefault        "Alapértelmezés használata">
+<!ENTITY  permAskAlways         "Mindig megkérdez">
+<!ENTITY  permAllow             "Engedélyezés">
+<!ENTITY  permAllowSession      "Engedélyezés a munkamenetben">
+<!ENTITY  permBlock             "Tiltás">
+<!ENTITY  permissionsFor        "Engedélyezés:">
+<!ENTITY  permImage             "Képek betöltése">
+<!ENTITY  permPopup             "Felugró ablak megnyitása">
+<!ENTITY  permCookie            "Süti elhelyezése">
+<!ENTITY  permNotifications     "Értesítések megjelenítése">
+<!ENTITY  permInstall           "Kiterjesztés vagy téma telepítése">
+<!ENTITY  permGeo               "Földrajzi hely adatainak megosztása">
+
+<!ENTITY  securityTab           "Biztonság">
+<!ENTITY  securityTab.accesskey "s">
+<!ENTITY  securityHeader        "Biztonsági információ erről az oldalról">
+<!ENTITY  securityView.certView "Tanúsítvány megtekintése">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Ismeretlen">
+
+
+<!ENTITY  securityView.identity.header   "Webhely azonosítása">
+<!ENTITY  securityView.identity.owner    "Tulajdonos: ">
+<!ENTITY  securityView.identity.domain   "Webhely: ">
+<!ENTITY  securityView.identity.verifier "Ellenőrizte: ">
+
+<!ENTITY  securityView.identity.validity "Lejárat:">
+
+<!ENTITY  securityView.privacy.header                   "Adatvédelem és előzmények">
+<!ENTITY  securityView.privacy.history                  "Megnéztem már ezt a webhelyet korábban?">
+<!ENTITY  securityView.privacy.cookies                  "Tárol ez a webhely adatokat (sütiket) a számítógépemen?">
+<!ENTITY  securityView.privacy.viewCookies              "Sütik megtekintése">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Mentettem jelszavakat ehhez a webhelyhez?">
+<!ENTITY  securityView.privacy.viewPasswords            "Mentett jelszavak megtekintése">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "m">
+
+<!ENTITY  securityView.technical.header                 "Technikai részletek">

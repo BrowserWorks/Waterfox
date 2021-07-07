@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookie">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Cookie 接受原則">
+
+<!ENTITY disableCookies.label           "拒絕 Cookie">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "只接受把資料送回原網站的 Cookies（不接受第三方 Cookies）">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "只允許來自先前拜訪過網站的第三方 Cookies">
+<!ENTITY acc3rdPartyVisited.accesskey   "v">
+
+<!ENTITY accAllCookies.label            "所有網站都可使用 Cookie">
+<!ENTITY accAllCookies.accesskey        "c">
+
+<!ENTITY cookieRetentionPolicy.label    "Cookie 保留策略">
+
+<!ENTITY acceptNormally.label           "接受 cookie">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "只接受此次連線">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "接受 Cookie 於">
+<!ENTITY acceptforNDays.accesskey       "f">
+<!ENTITY days.label                     "天">
+
+<!ENTITY manageCookies.label            "管理 Cookie 與網站">
+<!ENTITY manageCookiesDescription.label "允許您檢視與管理已存的 Cookie 和設定各網站是否能存取 Cookie。">
+
+<!ENTITY viewCookies.label              "Cookie 管理員">
+<!ENTITY viewCookies.accesskey          "M">
+
+

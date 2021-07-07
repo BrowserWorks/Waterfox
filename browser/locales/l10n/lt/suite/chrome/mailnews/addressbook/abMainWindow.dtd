@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY addressbookWindow.title                        "Adresų knyga">
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+<!-- File Menu -->
+
+
+<!ENTITY newContact.label                               "&amp;Adresatas…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newListCmd.label                               "Adresatų sąrašas…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY newListCmd.accesskey                           "L">  
+<!ENTITY newAddressBookCmd.label                        "Adresų knyga…"> 
+<!ENTITY newAddressBookCmd.accesskey                    "k">  
+<!ENTITY newLDAPDirectoryCmd.label                      "Katalogas…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "Žinutė">
+<!ENTITY printContactViewCmd.label                      "Spausdinti adresato kortelę…">
+<!ENTITY printContactViewCmd.accesskey                  "S">
+<!ENTITY printPreviewContactViewCmd.label               "Spausdinsimos adresato kortelės peržiūra">
+<!ENTITY printPreviewContactViewCmd.accesskey           "o">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printAddressBook.label                         "Spausdinti adresų knygą…"> 
+<!ENTITY printAddressBook.accesskey                     "a"> 
+<!ENTITY printPreviewAddressBook.label                  "Spausdinsimos adresų knygos peržiūra"> 
+<!ENTITY printPreviewAddressBook.accesskey              "d">
+<!-- Edit Menu -->
+
+<!ENTITY deleteAbCmd.label                              "Pašalinti adresų knygą">  
+<!ENTITY deleteContactCmd.label                         "Pašalinti adresatą">
+<!ENTITY deleteContactsCmd.label                        "Pašalinti pažymėtus adresatus">
+<!ENTITY deleteListCmd.label                            "Pašalinti sąrašą">
+<!ENTITY deleteListsCmd.label                           "Pašalinti sąrašus">
+<!ENTITY deleteItemsCmd.label                           "Pašalinti elementus">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Sukeisti vietomis vardą ir pavardę">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "u">  
+<!ENTITY propertiesCmd.label                            "Savybės…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY propertiesCmd.accesskey                        "i">  
+<!ENTITY propertiesCmd.key                              "i">  
+<!-- View Menu -->
+
+<!ENTITY showAbToolbarCmd.label                         "Mygtukų juosta"> 
+<!ENTITY showAbToolbarCmd.accesskey                     "M">  
+<!ENTITY layoutMenu.label                               "Polangiai">
+<!ENTITY layoutMenu.accesskey                           "P">
+<!ENTITY showDirectoryPane.label                        "Katalogai">
+<!ENTITY showDirectoryPane.accesskey                    "K">
+<!ENTITY showContactPane2.label                         "Adresatas">
+<!ENTITY showContactPane2.accesskey                     "A">
+<!ENTITY menu_ShowNameAs.label                          "Asmenvardžio rodymas"> 
+<!ENTITY menu_ShowNameAs.accesskey                      "A"> 
+<!ENTITY firstLastCmd.label                             "Vardas Pavardė">  
+<!ENTITY firstLastCmd.accesskey                         "V"> 
+<!ENTITY lastFirstCmd.label                             "Pavardė, Vardas">  
+<!ENTITY lastFirstCmd.accesskey                         "P"> 
+<!ENTITY displayNameCmd.label                           "Kaip surinkta kortelėje">  
+<!ENTITY displayNameCmd.accesskey                       "s"> 
+<!-- Tasks Menu -->
+
+<!ENTITY importCmd.label                                "Importuoti…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksportuoti…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!-- Toolbar and Popup items -->  
+
+<!ENTITY newContactButton.label                         "Naujas adresatas">
+<!ENTITY newContactButton.accesskey                     "a">
+<!ENTITY newlistButton.label                            "Naujas sąrašas">  
+<!ENTITY newlistButton.accesskey                        "r">  
+<!ENTITY editItemButton.label                           "Savybės">
+<!ENTITY editItemButton.accesskey                       "S">
+<!ENTITY newmsgButton.label                             "Rašyti">  
+<!ENTITY newmsgButton.accesskey                         "R">  
+<!ENTITY deleteItemButton.label                         "Pašalinti">
+<!ENTITY deleteItemButton.accesskey                     "š">
+<!ENTITY newimButton.label                              "Žinutė">  
+<!ENTITY newimButton.accesskey                          "i">  
+<!ENTITY searchNameAndEmail.placeholder                 "Ieškoti asmenvardžio ar el. pašto">
+<!ENTITY searchBox.title                                "Paieška">
+<!-- Tooltips -->
+
+<!ENTITY addressbookToolbar.tooltip                     "Adresų knygos mygtukų juosta">
+<!ENTITY newContactButton.tooltip                       "Sukurti naują adresatą">
+<!ENTITY newlistButton.tooltip                          "Sukurti naują adresatų sąrašą"> 
+<!ENTITY editItemButton.tooltip                         "Taisyti pažymėtą elementą">
+<!ENTITY newmsgButton.tooltip                           "Rašyti laišką"> 
+<!ENTITY newIM.tooltip                                  "Siųsti žinutę arba pradėti pokalbį"> 
+<!ENTITY deleteItemButton.tooltip                       "Pašalinti pažymėtą elementą">
+<!ENTITY throbber.tooltip                               "Atverti &vendorShortName; pradžios tinklalapį">
+<!ENTITY advancedButton.tooltip                         "Papildoma adresų paieška">
+<!-- Dir Tree header -->
+
+<!ENTITY dirTreeHeader.label                            "Adresų knygos">
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+
+<!ENTITY contact.heading                                "Adresatas">
+<!ENTITY home.heading                                   "Namai">
+<!ENTITY other.heading                                  "Kita">
+<!ENTITY phone.heading                                  "Telefonai">
+<!ENTITY work.heading                                   "Darbovietė">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Aprašymas">
+<!ENTITY addresses.heading                              "Adresai">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Rodyti žemėlapį">
+<!ENTITY mapIt.tooltip                                  "Rodyti šį adresą saityno žemėlapyje">
+<!-- Status Bar -->  
+
+<!ENTITY statusText.label                               "">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+
+<!ENTITY  hideSwapFnLnUI                                "true">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Beveiliging">
+<!ENTITY securityTab.label "Beveiliging">
+<!ENTITY securityHeading.label "Om ondertekende of versleutelde berichten te versturen, dient u zowel een digitaal ondertekeningscertificaat als een versleutelingscertificaat te specificeren.">
+<!ENTITY encryptionGroupTitle.label "Versleuteling">
+<!ENTITY encryptionChoiceLabel.label "Standaard versleutelingsinstelling bij verzenden van berichten:">
+<!ENTITY neverEncrypt.label "Nooit (geen versleuteling gebruiken)">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "Vereist (kan bericht niet verzenden, tenzij alle ontvangers een certificaat hebben)">
+<!ENTITY alwaysEncryptMessage.accesskey "V">
+<!ENTITY encryptionCert.message "Dit certificaat gebruiken voor het versleutelen en ontcijferen van naar u verzonden berichten:">
+<!ENTITY digitalSign.certificate.button "Selecteren…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Wissen">
+<!ENTITY digitalSign.certificate_clear.accesskey "W">
+<!ENTITY encryption.certificate.button "Selecteren…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Wissen">
+<!ENTITY encryption.certificate_clear.accesskey "i">
+<!ENTITY signingGroupTitle.label "Digitaal ondertekenen">
+<!ENTITY signMessage.label "Berichten (standaard) digitaal ondertekenen">
+<!ENTITY signMessage.accesskey "a">
+<!ENTITY signingCert.message "Dit certificaat gebruiken om berichten die u verzendt digitaal te ondertekenen:">
+
+<!ENTITY certificates.label "Certificaten">
+<!ENTITY manageCerts2.label "Certificaten beheren…">
+<!ENTITY manageCerts2.accesskey "C">
+<!ENTITY manageDevices.label "Beveiligingsapparaten beheren…">
+<!ENTITY manageDevices.accesskey "B">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Certificaat selecteren">
+<!ENTITY certPicker.info  "Certificaat:">
+<!ENTITY certPicker.detailsLabel "Details van geselecteerde certificaat:">

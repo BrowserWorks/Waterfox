@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "帳號管理精靈">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "您必須要設定帳號才能接收訊息。">
+<!ENTITY accountTypeTitle.label "設定新帳號">
+<!ENTITY accountTypeDesc2.label "這個精靈將會蒐集設定帳號所必須的資訊。若您不知道這些資訊該怎麼填，請洽詢您的系統管理員或網路業者。">
+<!ENTITY accountTypeDirections.label "選擇您想要設定的帳號類型:">
+<!ENTITY accountTypeMail.label "電子郵件帳號">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "新聞群組帳號">
+<!ENTITY accountTypeNews.accesskey "w">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "身份識別">
+<!ENTITY identityDesc.label "每個帳號都有自已的身份識別資料以與別人區分，確保您所寄發的郵件不會是他人假冒的。">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "請輸入您寄信時在「寄件者」欄要用的名字">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "（例:「王小明」）">
+<!ENTITY fullnameLabel.label "您的大名:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "電子郵件地址:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "收件伺服器資訊">
+<!ENTITY incomingServerTypeDesc.label "請選擇您用來收信的伺服器類型。">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "不刪除伺服器上的郵件">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "預設:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "請輸入您收件伺服器的名稱。（例:「mail.example.net」）。">
+<!ENTITY incomingServer.label "收件伺服器:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "請輸入您的電子郵件服務供應商提供給您的收件使用者名稱（例如「ming123」）。">
+<!ENTITY incomingUsername.label "使用者名稱:">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "請輸入您的新聞群組伺服器 (NNTP) 的名稱。（例:「news.example.net」）。">
+<!ENTITY newsServerLabel.label "新聞群組伺服器:">
+<!ENTITY newsServerLabel.accesskey "s">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "寄件伺服器資訊">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "請輸入您寄件伺服器（SMTP）的名稱。（例:「smtp.example.net」）。">
+<!ENTITY outgoingServer.label "寄件伺服器:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "請輸入您的電子郵件服務供應商提供給您的寄件使用者名稱（通常與收件使用者名稱相同）。">
+<!ENTITY outgoingUsername.label "寄件使用者名稱:">
+<!ENTITY outgoingUsername.accesskey "u">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "您可以在帳號設定當中修改寄件伺服器的設定。">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "將會使用您已有的寄件伺服器 (SMTP):「">
+<!ENTITY haveSmtp1.suffix3 "」。">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "將會使用您已有的寄件 (SMTP) 使用者名稱「">
+<!ENTITY haveSmtp2.suffix3 "」。">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "您的寄件伺服器「">
+<!ENTITY haveSmtp3.suffix3 "」與您的收件伺服器相同，將會使用您的收件帳號來連線。">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "帳號名稱">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "請輸入這個帳號的名稱（如「學校帳號」、「免費帳號」等等）。">
+<!ENTITY accnameLabel.label "帳號名稱:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "恭喜！">
+<!ENTITY completionText.label "請確認底下關於此帳號的所有資訊是否正確無誤。">
+<!ENTITY serverTypePrefix.label "收件伺服器類型:">
+<!ENTITY serverNamePrefix.label "收件伺服器名稱:">
+<!ENTITY smtpServerNamePrefix.label "寄件伺服器名稱 (SMTP):">
+<!ENTITY newsServerNamePrefix.label "新聞群組伺服器名稱 (NNTP):">
+<!ENTITY downloadOnLogin.label "立刻下載郵件">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "若取消勾選此項則會把目前帳號的郵件儲存在各自的目錄中。這會使此帳號顯示在最頂層，否則它就是本機郵件匣中全域收件匣的一部份。">
+<!ENTITY deferStorage.label "使用全域收件匣（將郵件存在本機郵件匣中）">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "按下「完成」即可儲存您的設定並離開帳號設定精靈。">
+<!ENTITY clickFinish.labelMac "點選不儲存這些設定並關閉帳號精靈。">

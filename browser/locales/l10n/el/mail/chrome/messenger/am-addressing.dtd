@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Σύνταξη &amp; διευθυνσιοδότηση">
+<!ENTITY addressingGroupTitle.label "Διευθυνσιοδότηση">
+<!ENTITY addressingText.label      "Κατά την αναζήτηση διευθύνσεων:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Χρήση γενικών προτιμήσεων διακομιστή LDAP για αυτόν τον λογαριασμό">
+<!ENTITY useGlobal.accesskey       "χ">
+<!ENTITY editDirectories.label     "Επεξεργασία καταλόγων…">
+<!ENTITY editDirectories.accesskey "ξ">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Χρήση διαφορετικού διακομιστή LDAP:">
+<!ENTITY directories.accesskey     "ρ">
+<!ENTITY directoriesNone.label     "Κανένα">
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Σύνθεση">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Σύνθεση μηνυμάτων σε μορφή HTML">
+<!ENTITY useHtml.accesskey                    "Σ">
+<!ENTITY autoQuote.label                      "Αυτόματη παράθεση του αρχικού μηνύματος κατά την απάντηση">
+<!ENTITY autoQuote.accesskey                  "π">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Κατά την παράθεση,">
+<!ENTITY quoting.accesskey                    "π">
+<!ENTITY aboveQuote.label                     "έναρξη απάντησης πάνω από την παράθεση">
+<!ENTITY belowQuote.label                     "έναρξη απάντησης κάτω από την παράθεση">
+<!ENTITY selectAndQuote.label                 "επιλογή παράθεσης">
+<!ENTITY place.label                          "και τοποθέτηση υπογραφής">
+<!ENTITY place.accesskey                      "τ">
+<!ENTITY belowText.label                      "κάτω από την παράθεση (προτείνεται)">
+<!ENTITY aboveText.label                      "κάτω από την απάντηση (πάνω από την παράθεση)">
+<!ENTITY includeSigOnReply.label              "Χρήση υπογραφής στις απαντήσεις">
+<!ENTITY includeSigOnReply.accesskey          "σ">
+<!ENTITY includeSigOnForward.label            "Χρήση υπογραφής στις προωθήσεις">
+<!ENTITY includeSigOnForward.accesskey        "θ">
+
+<!ENTITY globalComposingPrefs.label           "Γενικές προτιμήσεις σύνθεσης…">
+<!ENTITY globalComposingPrefs.accesskey       "κ">
+
+<!ENTITY globalAddressingPrefs.label          "Γενικές προτιμήσεις διευθυνσιοδότησης…">
+<!ENTITY globalAddressingPrefs.accesskey      "δ">

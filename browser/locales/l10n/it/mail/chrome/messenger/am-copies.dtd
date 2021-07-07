@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Cartelle e copie">
+<!ENTITY sendingPrefix.label "Dopo aver effettuato l’invio: ">
+<!ENTITY fccMailFolder.label "copia il messaggio in:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "Salva le risposte nella cartella del messaggio a cui si è risposto">
+<!ENTITY fccReplyFollowsParent.accesskey "u">
+<!ENTITY ccAddress.label "Cc a questi indirizzi di posta:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separare gli indirizzi con virgole">
+<!ENTITY bccAddress.label "Copia nascosta a questi indirizzi di posta:">
+<!ENTITY bccAddress.accesskey "n">
+<!ENTITY bccAddressList.placeholder "Separare gli indirizzi con virgole">
+<!ENTITY saveMessageDlg.label "Chiedi conferma quando si salvano i messaggi">
+<!ENTITY saveMessageDlg.accesskey "h">
+<!ENTITY sentFolderOn.label "cartella &quot;Posta inviata&quot; su:">
+<!ENTITY sentFolderOn.accesskey "o">
+<!ENTITY sentInOtherFolder.label "altra:">
+<!ENTITY sentInOtherFolder.accesskey "t">
+<!ENTITY archivesTitle.label "Archivi messaggi">
+<!ENTITY keepArchives.label "Conserva gli archivi dei messaggi in:">
+<!ENTITY keepArchives.accesskey "C">
+<!ENTITY archiveHierarchyButton.label "Opzioni di archiviazione…">
+<!ENTITY archiveHierarchyButton.accesskey "O">
+<!ENTITY archivesFolderOn.label "Cartella &quot;Archivi&quot; su:">
+<!ENTITY archivesFolderOn.accesskey "v">
+<!ENTITY archiveInOtherFolder.label "altra:">
+<!ENTITY archiveInOtherFolder.accesskey "a">
+<!ENTITY specialFolders.label "Bozze e modelli">
+<!ENTITY keepDrafts2.label "Mantenere le bozze in:">
+<!ENTITY draftsFolderOn.label "cartella &quot;Bozze&quot; su:">
+<!ENTITY draftsFolderOn.accesskey "B">
+<!ENTITY draftInOtherFolder.label "altra:">
+<!ENTITY draftInOtherFolder.accesskey "l">
+<!ENTITY keepTemplates.label "Tenere i modelli di messaggio in:">
+<!ENTITY templatesFolderOn.label "cartella &quot;Modelli&quot; su:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "altra:">
+<!ENTITY templateInOtherFolder.accesskey "r">

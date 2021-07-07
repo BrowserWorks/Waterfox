@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Uninstall a Provider">
+<!ENTITY providerUninstall.accept.label                    "Unsubscribe Selected">
+<!ENTITY providerUninstall.accept.accesskey                "U">
+<!ENTITY providerUninstall.cancel.label                    "Keep Add-on">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "You have requested to uninstall or disable:">
+<!ENTITY providerUninstall.postName.label                  "This will cause the calendars below to be disabled.">
+<!ENTITY providerUninstall.reinstallNote.label             "Unless you are planning to reinstall this provider, you may choose to unsubscribe from this provider's calendars.">

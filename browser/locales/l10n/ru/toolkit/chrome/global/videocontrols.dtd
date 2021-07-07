@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Воспроизвести">
+<!ENTITY playButton.pauseLabel "Приостановить">
+<!ENTITY muteButton.muteLabel "Убрать звук">
+<!ENTITY muteButton.unmuteLabel "Восстановить звук">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Полный экран">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Выйти из полноэкранного режима">
+<!ENTITY castingButton.castingLabel "Транслировать на экран">
+<!ENTITY closedCaption.off "Выкл.">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Регулятор громкости">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Картинка в картинке">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Смотреть в режиме «Картинка в картинке»">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Воспроизводите видео на переднем плане, пока вы занимаетесь другими делами в &brandShortName;">
+
+<!ENTITY error.aborted "Загрузка видео остановлена.">
+<!ENTITY error.network "Воспроизведение видео прервано из-за ошибки сети.">
+<!ENTITY error.decode "Видео не может быть воспроизведено, так как файл повреждён.">
+<!ENTITY error.srcNotSupported "Формат видео или MIME-тип не поддерживается.">
+<!ENTITY error.noSource2 "Видео в поддерживаемом формате и MIME-типе не найдено.">
+<!ENTITY error.generic "Воспроизведение видео прервано из-за неизвестной ошибки.">
+
+<!ENTITY status.pictureInPicture "Это видео воспроизводится в режиме «Картинка в картинке».">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

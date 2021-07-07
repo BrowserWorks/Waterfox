@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label                   "Asmenvardis">
+<!ENTITY GeneratedName.accesskey               "v">
+<!ENTITY PrimaryEmail.label                    "El. pašto adresas">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organizacija">
+<!ENTITY Company.accesskey                     "O">
+<!ENTITY _PhoneticName.label                   "Fonetinis vardas">
+<!ENTITY _PhoneticName.accesskey               "F">
+<!ENTITY NickName.label                        "Slapyvardis">
+<!ENTITY NickName.accesskey                    "S">
+<!ENTITY SecondEmail.label                     "Papildomas el. pašto adresas">
+<!ENTITY SecondEmail.accesskey                 "š">
+<!ENTITY Department.label                      "Padalinys">
+<!ENTITY Department.accesskey                  "l">
+<!ENTITY JobTitle.label                        "Pareigos">
+<!ENTITY JobTitle.accesskey                    "P">
+<!ENTITY CellularNumber.label                  "Mobilusis telefonas">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Ieškas">
+<!ENTITY PagerNumber.accesskey                 "I">
+<!ENTITY FaxNumber.label                       "Fakso numeris">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Namų telefonas">
+<!ENTITY HomePhone.accesskey                   "N">
+<!ENTITY WorkPhone.label                       "Darbo telefonas">
+<!ENTITY WorkPhone.accesskey                   "D">
+<!ENTITY ScreenName.label                      "AOL abonento vardas">
+<!ENTITY ScreenName.accesskey                  "A">
+<!ENTITY sortAscending.label                   "Pagal abėcėlę">
+<!ENTITY sortAscending.accesskey               "b">
+<!ENTITY sortDescending.label                  "Atvirkščiai">
+<!ENTITY sortDescending.accesskey              "k">
+<!-- context menu -->
+
+<!ENTITY composeEmail.label                    "Rašyti laišką">
+<!ENTITY composeEmail.accesskey                "R">
+<!ENTITY copyAddress.label                     "Kopijuoti el. pašto adresą">
+<!ENTITY copyAddress.accesskey                 "a">
+<!ENTITY deleteAddrBookCard.label              "Pašalinti">
+<!ENTITY deleteAddrBookCard.accesskey          "P">
+<!ENTITY newAddrBookCard.label                 "Nauja kortelė…">
+<!ENTITY newAddrBookCard.accesskey             "k">
+<!ENTITY newAddrBookMailingList.label          "Naujas adresatų sąrašas…">
+<!ENTITY newAddrBookMailingList.accesskey      "r">
+<!ENTITY addrBookCardProperties.label          "Savybės">
+<!ENTITY addrBookCardProperties.accesskey      "S">

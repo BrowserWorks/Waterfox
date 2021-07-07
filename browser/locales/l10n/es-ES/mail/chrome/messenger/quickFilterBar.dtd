@@ -1,0 +1,77 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY quickFilterBar.qfbShowFilterBar.label "Filtro rápido">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.menu.label "Barra de filtrado rápido">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.menu.accesskey "f">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.appmenu.label "Barra de filtrado rápido">
+
+<!ENTITY quickFilterBar.toggleBarVisibility.button.tooltip "Mostrar/ocultar la barra de filtrado rápido">
+
+<!ENTITY quickFilterBar.sticky.tooltip "Mantener filtros aplicados al cambiar de carpetas">
+
+<!ENTITY quickFilterBar.unread.label "No leídos">
+
+<!ENTITY quickFilterBar.unread.tooltip "Mostrar sólo los mensajes no leídos">
+
+<!ENTITY quickFilterBar.starred.label "Con estrella">
+
+<!ENTITY quickFilterBar.starred.tooltip "Mostrar sólo los mensajes con estrella">
+
+<!ENTITY quickFilterBar.inaddrbook.label "Contacto">
+
+<!ENTITY quickFilterBar.inaddrbook.tooltip "Mostrar sólo los mensajes de personas en su libreta de direcciones">
+
+<!ENTITY quickFilterBar.tags.label "Etiquetas">
+
+<!ENTITY quickFilterBar.tags.tooltip "Mostrar sólo los mensajes con etiquetas en ellos">
+
+<!ENTITY quickFilterBar.attachment.label "Adjunto">
+
+<!ENTITY quickFilterBar.attachment.tooltip "Mostrar sólo los mensajes con adjuntos">
+
+<!ENTITY quickFilterBar.resultsLabel.some.formatString "#1 mensaje;#1 mensajes">
+
+<!ENTITY quickFilterBar.resultsLabel.none "No hay resultados">
+
+<!ENTITY quickFilterBar.resultsLabel.minWidth "100">
+
+<!ENTITY quickFilterBar.textbox.emptyText.base1 "Filtrar estos mensajes #1">
+
+<!ENTITY quickFilterBar.show.key2 "k">
+
+<!ENTITY quickFilterBar.textbox.emptyText.keyLabel2.nonmac "&lt;Ctrl+Mayús+K&gt;">
+
+<!ENTITY quickFilterBar.textbox.emptyText.keyLabel2.mac "&lt;⇧⌘K&gt;">
+
+<!ENTITY quickFilterBar.booleanMode.tooltip "Modo de filtrado de etiquetas">
+
+<!ENTITY quickFilterBar.booleanModeAny.label "Cualquiera de ellas">
+
+<!ENTITY quickFilterBar.booleanModeAny.tooltip "Al menos una de las etiquetas seleccionadas debe coincidir">
+
+<!ENTITY quickFilterBar.booleanModeAll.label "Todas ellas">
+
+<!ENTITY quickFilterBar.booleanModeAll.tooltip "Todas las etiquetas seleccionadas deben coincidir">
+
+<!ENTITY quickFilterBar.textbox.idealWidth "320">
+
+<!ENTITY quickFilterBar.textbox.minWidth "280">
+
+<!ENTITY quickFilterBar.textFilter.explanation.label "Filtrar mensajes por:">
+
+<!ENTITY quickFilterBar.textFilter.sender.label "Remitente">
+
+<!ENTITY quickFilterBar.textFilter.recipients.label "Destinatarios">
+
+<!ENTITY quickFilterBar.textFilter.subject.label "Asunto">
+
+<!ENTITY quickFilterBar.textFilter.body.label "Cuerpo">
+
+<!ENTITY quickFilterBar.glodaUpsell.continueSearch "Continuar esta búsqueda por todas las carpetas">
+
+<!ENTITY quickFilterBar.glodaUpsell.pressEnterAndCurrent "Pulse 'Enter' de nuevo para continuar su búsqueda de: #1">

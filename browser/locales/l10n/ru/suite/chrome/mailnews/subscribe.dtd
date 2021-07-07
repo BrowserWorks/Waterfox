@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Подписка">
+<!ENTITY subscribeButton.label        "Подписаться">
+<!ENTITY subscribeButton.accesskey    "П">
+<!ENTITY unsubscribeButton.label      "Отписаться">
+<!ENTITY unsubscribeButton.accesskey  "т">
+<!ENTITY newGroupsTab.label           "Новые группы">
+<!ENTITY newGroupsTab.accesskey       "в">
+<!ENTITY refreshButton.label          "Обновить">
+<!ENTITY refreshButton.accesskey      "О">
+<!ENTITY stopButton.label             "Прервать">
+<!ENTITY stopButton.accesskey         "р">
+<!ENTITY server.label                 "Учётная запись:">
+<!ENTITY server.accesskey             "У">
+<!ENTITY subscribedHeader.label       "Подписка">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Показать элементы, содержащие:">
+<!ENTITY namefield.accesskey          "э">

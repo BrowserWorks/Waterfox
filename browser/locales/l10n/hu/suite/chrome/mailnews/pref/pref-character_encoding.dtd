@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Kódolás">
+<!ENTITY messageDisplay.caption          "Üzenet megjelenítés">
+<!ENTITY viewFallbackCharset2.label      "Tartalék kódolás:">
+<!ENTITY viewFallbackCharset2.accesskey  "d">
+<!ENTITY viewFallbackCharset.desc        "(Ez a karakterkódolás kerül felhasználásra az örökölt tartalmakhoz, amelyek nem adják meg a kódolásukat.)">
+
+<!ENTITY composingMessages.caption       "Üzenet létrehozása">
+<!ENTITY useMIME.label                   "8 bites karaktereket tartalmazó levelek esetén idézőjeles nyomtatható MIME-kódolás használata. A beállítás kikapcsolásakor a levelek eredeti formátumukban lesznek elküldve.">
+<!ENTITY useMIME.accesskey               "f">
+<!ENTITY sendDefaultCharset2.label       "Az alapértelmezett kódolás:">
+<!ENTITY sendDefaultCharset2.accesskey   "t">
+<!ENTITY replyInDefaultCharset3.label    "Használja az alapértelmezett karakterkódolást a válaszokban, ha az lehetséges. (Ha eltávolítja a jelölést, csak az új üzenetek használják az alapértelmezett beállításokat.)">
+<!ENTITY replyInDefaultCharset3.accesskey "H">

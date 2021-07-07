@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Tampilkan:">
+<!ENTITY viewPicker.accesskey "T">
+<!ENTITY viewAll.label "Semua">
+<!ENTITY viewAll.accesskey "a">
+<!ENTITY viewUnread.label "Belum Dibaca">
+<!ENTITY viewUnread.accesskey "B">
+<!ENTITY viewNotDeleted.label "Tidak Dihapus">
+<!ENTITY viewNotDeleted.accesskey "d">
+<!ENTITY viewTags.label "Tag">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "Tampilan Kustom">
+<!ENTITY viewCustomViews.accesskey "K">
+<!ENTITY viewVirtualFolder.label "Simpan Tampilan sebagai Folder…">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "Sesuaikan…">
+<!ENTITY viewCustomizeView.accesskey "S">

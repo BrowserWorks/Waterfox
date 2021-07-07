@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Kam: ">
+<!ENTITY fromField.label "Kas: ">
+<!ENTITY senderField.label "Siuntėjas: ">
+<!ENTITY organizationField.label "Organizacija: ">
+<!ENTITY replyToField.label "Atgalinis adresas: ">
+
+<!ENTITY subjectField.label "Tema: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Nematomoji kopija: ">
+<!ENTITY newsgroupsField.label "Naujienų grupė: ">
+<!ENTITY followupToField.label "Kita grupė: ">
+
+<!ENTITY tagsHdr.label "Gairės: ">
+<!ENTITY dateField.label "Data: ">
+<!ENTITY userAgentField.label "Pašto programa: ">
+<!ENTITY referencesField.label "Nuorodos: ">
+<!ENTITY messageIdField.label "Laiško ID: ">
+<!ENTITY inReplyToField.label "Atsakymas į: ">
+<!ENTITY originalWebsite.label "Svetainė: ">
+
+<!ENTITY editMessage.label                 "Taisyti juodraštį…">
+<!ENTITY editMessage.accesskey             "j">
+
+<!ENTITY attachmentsTree.label             "Priedai:">
+<!ENTITY attachmentsTree.accesskey         "P">
+<!ENTITY openAttachmentCmd.label           "Atverti">
+<!ENTITY openAttachmentCmd.accesskey       "A">
+<!ENTITY viewAttachmentCmd.label           "Pirminis tekstas">
+<!ENTITY viewAttachmentCmd.accesskey       "P">
+<!ENTITY saveAsAttachmentCmd.label         "Įrašyti kaip…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "r">
+<!ENTITY detachAttachmentCmd.label         "Išimti…">
+<!ENTITY detachAttachmentCmd.accesskey     "I">
+<!ENTITY deleteAttachmentCmd.label         "Pašalinti">
+<!ENTITY deleteAttachmentCmd.accesskey     "š">
+<!ENTITY saveAllAttachmentsCmd.label       "Įrašyti visus…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "v">
+<!ENTITY detachAllAttachmentsCmd.label     "Išimti visus…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "m">
+<!ENTITY deleteAllAttachmentsCmd.label     "Pašalinti visus…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "n">

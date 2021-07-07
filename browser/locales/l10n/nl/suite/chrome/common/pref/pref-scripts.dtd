@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Scripts &amp; plug-ins">
+
+<!ENTITY navigator.label                 "Browser">
+<!ENTITY navigator.accesskey             "B">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "JavaScript inschakelen voor">
+<!ENTITY allowScripts.label              "Scripts toestaan om:">
+<!ENTITY allowScripts.accesskey          "S">
+<!ENTITY allowWindowMoveResize.label     "Bestaande vensters te verplaatsen of te vergroten/verkleinen">
+<!ENTITY allowWindowFlip.label           "Vensters naar voorgrond/achtergrond te verplaatsen">
+<!ENTITY allowWindowStatusChange.label   "Statusbalktekst te wijzigen">
+<!ENTITY allowContextmenuDisable.label   "Contextmenu’s uit te schakelen of te vervangen">
+<!ENTITY allowHideStatusBar.label        "De statusbalk te verbergen">
+
+<!ENTITY debugging.label                  "JavaScript-debugging">
+<!ENTITY debugEnableDump.label            "JavaScript-dump()-uitvoer inschakelen">
+<!ENTITY debugEnableDump.accesskey        "J">
+<!ENTITY debugStrictJavascript.label      "Strenge JavaScript-waarschuwingen tonen">
+<!ENTITY debugStrictJavascript.accesskey  "S">
+<!ENTITY debugConsoleJavascript.label     "JavaScript-fouten en -waarschuwingen vanuit chrome tonen">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "Plug-ins inschakelen voor">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Wanneer een pagina een plug-in vereist">
+<!ENTITY activateAllPlugins.label        "Alle plug-ins standaard activeren">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "Waarschuw me als er extra plug-ins geïnstalleerd moeten worden">
+<!ENTITY warnPluginsRequired.accesskey   "W">

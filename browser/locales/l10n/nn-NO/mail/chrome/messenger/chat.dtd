@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Tilkopla kontaktar">
+<!ENTITY offlineContactsHeader.label   "Fråkopla kontaktar">
+<!ENTITY conversationsHeader.label     "Samtalar">
+<!ENTITY searchResultConversation.label "Søkjeresultat">
+<!ENTITY chat.noConv.title             "Samtalar vil visast her.">
+<!ENTITY chat.noConv.description       "Bruk kontaktlista i panelet til venstre for å starta ein samtale.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; har ingen tidlegare samtalar lagra for denne kontakten. ">
+<!ENTITY chat.noAccount.title             "Du har ikkje sett opp ein nettprat-konto enno.">
+<!ENTITY chat.noAccount.description       "La &brandShortName; guida deg gjennom å setta opp ein nettprat-konto.">
+<!ENTITY chat.accountWizard.button       "Kom i gang">
+<!ENTITY chat.noConnectedAccount.title             "Nettpratkontoane dine er no tilkopla.">
+<!ENTITY chat.noConnectedAccount.description       "Du kan kopla dei til frå «Nettpratstatus»-dialogen:">
+<!ENTITY chat.showAccountManager.button       "Vis nettpratstatus">
+
+<!ENTITY chat.participants             "Deltakarar:">
+<!ENTITY chat.previousConversations    "Tidlegare samtalar:">
+<!ENTITY chat.ongoingConversation      "Aktive samtalar">
+
+<!ENTITY openConversationCmd.label     "Start ein samtale">
+<!ENTITY openConversationCmd.accesskey "t">
+<!ENTITY closeConversationCmd.label    "Lat att samtale">
+<!ENTITY closeConversationCmd.accesskey "L">
+<!ENTITY aliasCmd.label                "Endra namn">
+<!ENTITY aliasCmd.accesskey            "E">
+<!ENTITY deleteCmd.label               "Slett kontakt">
+<!ENTITY deleteCmd.accesskey           "S">
+
+<!ENTITY openConversationButton.tooltip  "Start ein samtale">
+<!ENTITY closeConversationButton.tooltip "Lat att samtale">
+
+<!ENTITY addBuddyButton.label          "Legg til ein kontakt">
+<!ENTITY joinChatButton.label          "Start nettprat">
+<!ENTITY chatAccountsButton.label      "Vis kontoar">
+
+<!ENTITY status.available          "Tilgjengeleg">
+<!ENTITY status.unavailable        "Utilgjengeleg">
+<!ENTITY status.offline            "Fråkopla">
+
+<!ENTITY openLinkCmd.label            "Opne lenke …">
+<!ENTITY openLinkCmd.accesskey        "O">

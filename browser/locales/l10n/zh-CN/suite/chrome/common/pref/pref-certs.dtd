@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "管理证书">
+<!ENTITY  managecerts.text         "使用证书管理器来管理您个人的认证信息，还有其他人的认证授权信息等。">
+<!ENTITY  managecerts.button       "管理证书…">
+<!ENTITY  managecerts.accesskey    "M">
+<!ENTITY  managedevices.caption    "管理安全设备">
+<!ENTITY  managedevices.text       "使用此按钮来管理您的安全设备，如smart卡等。">
+<!ENTITY  managedevices.button     "管理安全设备…">
+<!ENTITY  managedevices.accesskey  "S">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "证书">
+<!ENTITY  certs.label              "证书">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "使用在线证书状态协议 (OCSP) 来确认证书的有效性">
+<!ENTITY enableOCSP.accesskey                     "U">
+<!ENTITY validation.requireOCSP.description       "如果 OCSP 服务器连接失败，将证书视作无效">
+<!ENTITY validation.requireOCSP.accesskey         "W">

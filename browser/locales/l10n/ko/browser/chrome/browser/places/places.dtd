@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "라이브러리">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "관리">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "북마크 관리">
+
+<!ENTITY file.close.label               "닫기">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "보기">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "보기 형식 변경">
+<!ENTITY view.columns.label             "열 표시">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "정렬">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "정렬 안 함">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "내림차순 (A > Z)">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "오름차순 (Z > A)">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML에서 북마크 가져오기…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "북마크를 HTML로 내보내기…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "다른 브라우저에서 가져오기…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "백업하기…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "복원하기">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "파일 선택…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "이름">
+<!ENTITY col.tags.label          "태그">
+<!ENTITY col.url.label           "주소">
+<!ENTITY col.mostrecentvisit.label "최근 방문일">
+<!ENTITY col.visitcount.label    "방문 횟수">
+<!ENTITY col.dateadded.label     "저장일">
+<!ENTITY col.lastmodified.label  "마지막 수정일">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "가져오기 및 백업">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "북마크 가져오기 및 백업">
+
+<!ENTITY backButton.tooltip  "뒤로 가기">
+
+<!ENTITY forwardButton.tooltip  "앞으로 가기">
+
+<!ENTITY detailsPane.selectAnItemText.description "속성을 보고 편집할 항목을 선택하세요">

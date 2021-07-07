@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE rdf:RDF SYSTEM "chrome://branding/locale/brand.dtd" >
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:nc="http://home.netscape.com/NC-rdf#">
+
+
+<rdf:Description about="suite-toc.rdf#nav-doc-ses">
+  <nc:subheadings>
+    <rdf:Seq><rdf:li>
+      <rdf:Description ID="nav-doc-default"
+        nc:name="Hacer de &brandShortName; su navegador predeterminado"
+        nc:link="nav_help.xhtml#making_mozilla_your_default_browser"/>
+    </rdf:li></rdf:Seq>
+  </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-index1.rdf#browser">
+  <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="browser:default"
+         nc:name="Navegador predeterminado"
+         nc:link="nav_help.xhtml#making_mozilla_your_default_browser"/>
+       </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#d">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="default_browser_preferences"
+         nc:name="Preferencias de navegador predeterminado"
+	 nc:link="cs_nav_prefs_navigator.xhtml#navigator"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-index1.rdf#preferences">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="preferences:default_browser"
+         nc:name="Preferencias de navegador predeterminado"
+	 nc:link="cs_nav_prefs_navigator.xhtml#navigator"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+</rdf:RDF>

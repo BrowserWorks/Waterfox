@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "Ställ in &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "S">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; ger dig tillgång till din historik, dina bokmärken, lösenord och öppna flikar på alla dina enheter.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label; Konto">
+<!ENTITY accountName.label            "Kontonamn:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Uppdatera">
+<!ENTITY updatePass.accesskey         "U">
+<!ENTITY resetPass.label              "Återställ">
+<!ENTITY resetPass.accesskey          "s">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Hantera konto">
+<!ENTITY manageAccount.accesskey      "k">
+<!ENTITY viewQuota.label              "Visa kvot">
+<!ENTITY viewQuota.accesskey          "V">
+<!ENTITY changePassword.label         "Byt lösenord">
+<!ENTITY changePassword.accesskey     "B">
+<!ENTITY myRecoveryKey.label          "Min återställningsnyckel">
+<!ENTITY myRecoveryKey.accesskey      "M">
+<!ENTITY resetSync.label              "Återställ Synk">
+<!ENTITY resetSync.accesskey          "e">
+<!ENTITY unlinkDevice.label           "Koppla från denna enhet">
+<!ENTITY unlinkDevice.accesskey       "a">
+<!ENTITY addDevice.label              "Lägg till en enhet">
+<!ENTITY addDevice.accesskey          "L">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Datorns namn:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy2.label              "Synka mina:">
+<!ENTITY engine.addons.label        "Tillägg">
+<!ENTITY engine.addons.accesskey    "T">
+<!ENTITY engine.bookmarks.label     "Bokmärken">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "Flikar">
+<!ENTITY engine.tabs.accesskey      "F">
+<!ENTITY engine.history.label       "Historiken">
+<!ENTITY engine.history.accesskey   "o">
+<!ENTITY engine.passwords.label     "Lösenord">
+<!ENTITY engine.passwords.accesskey "L">
+<!ENTITY engine.prefs.label         "Inställningar">
+<!ENTITY engine.prefs.accesskey     "n">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Tjänstevillkor">
+<!ENTITY prefs.ppLink.label         "Sekretesspolicy">

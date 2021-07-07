@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "离线网页应用程序">
+<!ENTITY pref.offlineCache.caption          "离线 Web 内容和用户数据">
+
+<!ENTITY clearOfflineAppCache.label         "清除">
+<!ENTITY clearOfflineAppCache.accesskey     "C">
+
+<!ENTITY offlineAlwaysAllow.label           "允许所有网站存储数据供离线使用">
+<!ENTITY offlineAlwaysAllow.accesskey       "A">
+<!ENTITY offlineExplicit.label              "仅允许具有明确认可的网站">
+<!ENTITY offlineExplicit.accesskey          "O">
+<!ENTITY offlineNotifyAsk.label             "网站想要存储数据供离线使用时通知我">
+<!ENTITY offlineNotifyAsk.accesskey         "N">
+<!ENTITY offlineNotifyPermissions.label     "管理权限">
+<!ENTITY offlineNotifyPermissions.accesskey "P">
+
+<!ENTITY offlineAppsUsage.label             "下列网站正在使用离线存储：">
+<!ENTITY offlineAppsListRemove.label        "清除数据… (D)">
+<!ENTITY offlineAppsListRemove.accesskey    "D">

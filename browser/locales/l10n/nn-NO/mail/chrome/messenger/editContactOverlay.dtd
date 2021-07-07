@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Slett">
+<!ENTITY editContactPanelDeleteContact.accesskey "S">
+
+<!ENTITY editContactName.label "Namn:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "E-post:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Addressebok:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "OK">
+<!ENTITY editContactPanelDone.accesskey "O">
+
+<!ENTITY contactMoveDisabledWarning.description "Du kan ikkje endre adresseboka fordi kontakten er i ei e-postliste.">

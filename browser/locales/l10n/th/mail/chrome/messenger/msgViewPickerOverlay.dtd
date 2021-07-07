@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "มุมมอง:">
+<!ENTITY viewPicker.accesskey "ม">
+<!ENTITY viewAll.label "ทั้งหมด">
+<!ENTITY viewAll.accesskey "ท">
+<!ENTITY viewUnread.label "ยังไม่ได้อ่าน">
+<!ENTITY viewUnread.accesskey "ย">
+<!ENTITY viewNotDeleted.label "ยังไม่ได้ลบ">
+<!ENTITY viewNotDeleted.accesskey "ล">
+<!ENTITY viewTags.label "ป้ายกำกับ">
+<!ENTITY viewTags.accesskey "ป">
+<!ENTITY viewCustomViews.label "มุมมองที่กำหนดเอง">
+<!ENTITY viewCustomViews.accesskey "อ">
+<!ENTITY viewVirtualFolder.label "บันทึกมุมมองเป็นโฟลเดอร์…">
+<!ENTITY viewVirtualFolder.accesskey "บ">
+<!ENTITY viewCustomizeView.label "ปรับแต่ง…">
+<!ENTITY viewCustomizeView.accesskey "ร">

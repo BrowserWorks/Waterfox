@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navigation au clavier">
+<!ENTITY tabNavigationBehavior.label "Navigation par tabulation">
+<!ENTITY tabNavigationLinks.label "Liens">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Boutons, boutons radio, cases à cocher et listes">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "Remarque : les champs de saisie et les listes de sélection font toujours partie de la tabulation.">
+<!ENTITY tabNavigationDesc.label "Quand les touches Tabulation ou Maj+Tabulation sont activées, naviguer entre les :">
+<!ENTITY accessibilityBrowseWithCaret.label "Navigation au curseur">
+<!ENTITY browseWithCaretDesc.label "Permet de naviguer et sélectionner des éléments de pages avec les touches directionnelles en déplaçant un curseur visible.">
+<!ENTITY browseWithCaretUse.label "Utiliser la navigation au curseur">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "Utilisez le raccourci F7 pour activer ou désactiver la navigation au curseur">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Avertir avant d’activer la navigation au curseur">
+<!ENTITY browseWithCaretWarn.accesskey "v">
+
+<!ENTITY modifiers.label "Modificateurs">
+<!ENTITY acceleratorKey.label "Touche accélératrice :">
+<!ENTITY acceleratorKey.accesskey "a">
+<!ENTITY menuAccessKey.label "Touche d’accès au menu :">
+<!ENTITY menuAccessKey.accesskey "m">
+<!ENTITY modifiersDesc.label "Remarque : une valeur de zéro désactive une touche de modification.">

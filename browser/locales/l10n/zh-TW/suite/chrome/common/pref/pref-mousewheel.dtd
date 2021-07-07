@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "滾輪滑鼠">
+<!ENTITY mouseWheelPanel.label           "選擇按下下列修飾鍵並滾動滑鼠滾輪時的行為: ">
+<!ENTITY usingJustTheWheel.label         "只滾動滾輪時">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "垂直捲動">
+<!ENTITY mouseWheelHorizGroup.label      "橫向捲動">
+<!ENTITY sameAsVertical.label            "與垂直捲動相同">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "沒有反應">
+<!ENTITY doNothing.accesskey             "D">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "捲動文件">
+<!ENTITY scrollDocument.accesskey        "S">
+<!ENTITY scrollDocumentHoriz.accesskey   "c">
+<!ENTITY history.label                   "檢視瀏覽記錄的前一頁／下一頁">
+<!ENTITY history.accesskey               "M">
+<!ENTITY historyHoriz.accesskey          "b">
+<!ENTITY zoom.label                      "放大或縮小頁面">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "o">
+<!ENTITY wheelSpeed.label                "滑鼠滾輪速度:">
+<!ENTITY wheelSpeed.accesskey            "w">
+<!ENTITY wheelSpeedHoriz.accesskey       "u">
+<!ENTITY reverseDirection.label          "方向反轉">
+<!ENTITY reverseDirection.accesskey      "R">
+<!ENTITY reverseDirectionHoriz.accesskey "e">

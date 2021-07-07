@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Fogalomtár</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Ez a fogalomtár csak a tájékoztatás célját szolgálja, nem tekinthető az itt felsorolt fogalmak hivatalos leírásának, illetve az adatvédelemi és biztonsági technológiák szabatos ismertetésének.</div>
+
+<h1 id="glossary">Fogalomtár</h1>
+
+<dl>
+
+<br /><dt id="security_device">Adatvédelmi eszköz</dt><dd>Titkosítási szolgáltatásokat (Például: titkosítás és visszafejtés) biztosító, tanúsítványok és kulcsok tárolására képes hardver- vagy szoftvereszköz. Ilyen adatvédelmi hardvereszköz például az <a href="#smart_card">intelligens kártya</a>. A <a href="#Certificate_Manager">tanúsítványkezelő</a> saját beépített adatvédelmi eszközzel rendelkezik, amelyet <a href="#software_security_device">szoftveres adatvédelmi eszköznek</a> hívnak. Ez a böngésző futtatása közben mindig elérhető. Minden adatvédelmi eszközt egy saját <a href="#master_password">mesterjelszó</a> véd.</dd>
+<br />
+<br /><dt id="security_token">Adatvédelmi token</dt><dd>Lásd: <a href="#security_device">adatvédelmi eszköz</a>.</dd>
+
+<br /><dt id="signing_key">Aláíró kulcs</dt><dd>Kifejezetten csak aláíráshoz használatos személyes kulcs. Az aláíró kulcs és a hozzá tartozó nyilvános kulcs, egy <a href="#encryption_key">titkosítókulccsal</a> és az ahhoz tartozó titkos kulccsal együtt <a href="#dual_key_pairs">szimmetrikus kulcspárokat</a> alkot.</dd>
+
+<br /><dt id="signing_certificate">Aláíró tanúsítvány</dt><dd>Olyan tanúsítvány, amelynek <a href="#private_key">személyes kulcsa</a> az átvitt adatok aláírására szolgál, és ezzel lehetővé teszi a fogadó számára, hogy ellenőrizhesse a küldő azonosságát. A hitelesítésszolgáltatók (CA-k) az elektronikus levelek titkosítására használt <a href="#encryption_certificate">titkosító tanúsítványok</a> kiállításával egy időben gyakran kibocsátanak egy aláíró tanúsítványt is, amely az üzenetek aláírására szolgál. Lásd még: <a href="#dual_key_pairs">szimmetrikus kulcspárok</a>, <a href="#digital_signature">digitális aláírás</a>.</dd>
+
+<br /><dt id="Status_Bar">Állapotsor</dt><dd>Az állapotsor minden Mozilla-ablak alján megjelenik. Az állapotsoron bal oldalt a <a href="#Component_Bar">Mozilla-komponensek</a> indító ikonsor, a jobb oldalon pedig az állapotikonok helyezkednek el.</dd>
+
+<br /><dt id="subordinate_CA">Alsóbb szintű hitelesítésszolgáltató</dt><dd>Egy másik alsóbb szintű hitelesítésszolgáltató vagy a legfelső szintű hitelesítésszolgáltató által aláírt tanúsítvánnyal rendelkező <a href="#certificate_authority"> hitelesítésszolgáltató</a>. Lásd még: <a href="#certificate_chain">tanúsítványlánc</a>, <a href="#root_CA">legfelső szintű hitelesítésszolgáltató</a>.</dd>
+
+<br /><dt id="dual_key_pairs">Asszimmetrikus kulcspárok</dt><dd>Két különböző tanúsítványhoz két nyilvános&ndash;személyes kulcspár (összesen négy kulcs) tartozik. Az egyik pár személyes kulcsa az aláírási műveletek során kerül felhasználásra, a másik párhoz tartozó nyilvános és személyes kulcs pedig a titkosító és visszafejtő műveletekben kap szerepet. Minden egyes pár egy egyedi <a href="#certificate">tanúsítványhoz</a> tartozik. Lásd még: <a href="#public-key_cryptography">nyilvános kulcsú titkosítás</a>.</dd>
+
+<br /><dt id="trust">Bizalom</dt><dd>Egy másik személybe vagy egyéb entitásba vetett bizalom. A <a href="#public-key_infrastructure">nyilvános kulcsú infrastruktúrán (PKI)</a> belül a bizalom rendszerint egy tanúsítvány felhasználója és a tanúsítványt kiállító <a href="#certificate_authority">hitelesítésszolgáltató</a> viszonyára utal. Ha a tanúsítványkezelőben megadunk egy  hitelesítésszolgáltatót, melyben megbízunk, a tanúsítványkezelő megbízik az adott hitelesítésszolgáltató által kibocsátott tanúsítványok valódiságában, hacsak másképp nem állítjuk be a tanúsítványkezelőt egy-egy adott tanúsítvánnyal kapcsolatban. A tanúsítványkezelő hitelesítésszolgáltatók lapján adhatjuk meg, hogy mely tanúsítványtípusokban bízik meg, ha azokat egy adott hitelesítésszolgáltató bocsátja ki.</dd>
+
+<br /><dt id="security_module">Biztonsági modul</dt><dd>Lásd: <a href="#PKCS_11_module">PKCS #11 modul</a>.</dd>
+
+<br /><dt id="security_certificate">Biztonsági tanúsítvány</dt><dd>Lásd: <a href="#certificate">tanúsítvány</a>.</dd>
+
+<br /><dt id="navigation_toolbar">Böngésző eszköztár</dt><dd>A böngészőablak tetején elhelyezkedő eszköztár, amely a Vissza és Előre gombokat tartalmazza.</dd>
+
+<br /><dt id="plug-in">Bővítmény</dt><dd>A <a href="#helper_application">segédalkalmazások</a> egy fajtája, amely új képességekkel ruházza fel a böngészőt, például a hanglejátszás, vagy a videolejátszás képességével. Más segédalkalmazásokkal ellentétben a bővítmények a böngésző főkönyvtárában található Plugins könyvtárba telepítik magukat, és általában képesek beágyazódni a böngészőbe. Például egy hanglejátszó lehetővé teszi egy weboldalon található vagy egy elektronikus levélben lévő zene lejátszását. A Macromedia Flash Player és a Java szintén bővítmények.</dd>
+
+<br /><dt id="CA">CA</dt><dd>Lásd: <a href="#certificate_authority">hitelesítésszolgáltató</a>.</dd>
+
+<br /><dt id="spoofing">Címhamisítás</dt><dd>Akkor beszélünk címhamisításról, amikor valaki másnak szeretné kiadni magát. Címhamisításnak minősül például, ha valaki azt az információt közli, hogy az e-mail címe <tt>jdoe@mozilla.com</tt>, vagy ha egy számítógép a <tt>www.mozilla.com</tt> webhelyként szeretné azonosíttatni magát, holott nem az. A címhamisítás a <a href="#misrepresentation">megtévesztés</a> egyik formája.</dd>
+
+<br /><dt id="location_bar">Címmező</dt><dd>A böngészőablak tetején megtalálható mező (és a hozzá tartozó gombok), amelybe beírhatunk egy <a href="#Uniform_Resource_Locator">URL</a>-t vagy egy keresés kulcsszavait.</dd>
+
+<br /><dt id="slot">Csatoló</dt><dd>Egy olyan, valamely <a href="#PKCS_11_module">PKCS #11 modul</a> által vezérelt hardverrész vagy ennek szoftveres megfelelője, amely egy <a href="#security_device">adatvédelmi eszközt</a> tartalmazhat. </dd>
+
+<br /><dt id="digital_signature">Digitális aláírás</dt><dd>Az aláírandó adatokból és az aláíró személyes kulcsából képzett kód. Ez a kód teljesen egyedi, jellemző az aláírt adatra. Ha csak egy vesszővel is kiegészítünk egy üzenetet, annak digitális aláírása már más lesz, mint az eredeti üzeneté. Ha az e célra szolgáló alkalmazások sikeresen érvényesítik digitális aláírásunkat, az nem csak arra garancia, hogy jóváhagytuk az adott tranzakciót vagy üzenetet, de azt is bizonyítja, hogy az adatok nem változtak meg a legutolsó aláírás óta. Habár a digitális aláírásnak semmi köze nincs a hagyományos kézi aláíráshoz, jogi értelemben sokszor hasonlónak tekintendő. Lásd még <a href="#nonrepudiation">letagadhatatlanság</a>, <a href="#tamper_detection">hamisítás észlelése</a>.</dd>
+
+<br /><dt id="digital_ID">Digitális azonosító</dt><dd>Lásd: <a href="#certificate">tanúsítvány</a>.</dd>
+
+<br /><dt id="FIPS_PUBS_140-1">FIPS PUBS 140-1</dt><dd>A Federal Information Processing Standards Publications (FIPS PUBS, magyarul kb. Szövetségi Információfeldolgozási Szabványközlöny) 140-1 az Egyesült Államok kormányzati szabványa titkosítómodulok megvalósítására, ahol titkosítómodul alatt olyan hardverek és szoftverek értendők, amelyek adatokat képesek titkosítani vagy visszafejteni, illetve egyéb, titkosítással kapcsolatos műveleteket hajtanak végre (Például: digitális aláírások létrehozása és ellenőrzése). Az Egyesült Államok kormányzati szerveinek szállított termékek jó részének meg kell felelniük egy vagy több FIPS szabványnak.</dd>
+
+<br /><dt id="master_key">Főkulcs</dt><dd>A tanúsítványkezelő által adatok titkosítására használt szimmetrikus kulcs. A jelszókezelő például a tanúsítványkezelőt és a főkulcsunkat használja az e-mailekhez és webhelyekhez tartozó jelszavaknak és egyéb tárolt, érzékeny adatoknak a titkosítására. Lásd még: <a href="#symmetric_encryption">szimmetrikus titkosítás</a>.</dd>
+
+<br /><dt id="File_Transfer_Protocol">FTP</dt><dd>Szabványos protokoll fájlok átvitelére egyik számítógépről a másikra a hálózaton keresztül. A böngésző képes fájlokat letölteni az FTP használatával.</dd>
+
+<br /><dt id="cache">Gyorsítótár</dt><dd>Weboldalak másolatainak gyűjteménye, amely a számítógépünk merevlemezén vagy memóriájában helyezkedik el. A böngészőprogram a világháló böngészése közben automatikusan gyűjti ezeket a másolatokat. Amikor rákattintunk egy hivatkozásra vagy beírunk egy <a href="#Uniform_Resource_Locator">URL</a>-t a böngésző címsorába, és ez az oldal már megvan a gyorsítótárban, akkor a böngésző összehasonlítja a helyi másolatot az eredetivel. Ha nincs különbség a kettő között, akkor a böngésző inkább a gyorsítótárban lévő másolatot használja, és nem tölti le újra az eredetit. Ezzel időt és sávszélességet takarít meg.</dd>
+
+<br /><dt id="implicit_consent">Hallgatólagos beleegyezés</dt><dd>Más néven közvetett beleegyezés. Olyan adatvédelmi beállítás, amely megengedi a webhelyeknek, hogy adatokat gyűjtsenek rólunk (például <a href="#cookie">sütik</a> vagy on-line űrlapok segítségével), hacsak kifejezetten nem tiltjuk meg ezt azon az oldalon, amelyet a webhely bocsát e célból a rendelkezésünkre. A beleegyezésünket általában nem kérik akkor, amikor az adatokat ténylegesen begyűjtik.</dd>
+
+<br /><dt id="tamper_detection">Hamisítás észlelése</dt><dd>Olyan mechanizmus, mely képes arról meggyőződni, hogy az elektronikus formában fogadott adatok nincsenek-e meghamisítva, azaz a fogadott adatok teljes egészében megegyeznek-e ugyanazon adatok eredeti változatával.</dd>
+
+<br /><dt id="third-party_cookie">Harmadik fél sütije</dt><dd>Lásd: <a href="#foreign_cookie">idegen süti</a>.</dd>
+
+<br /><dt id="authentication">Hitelesítés</dt><dd>Jelszó, tanúsítvány, személyes azonosítókód (PIN-kód) vagy egyéb olyan adat használata, amely egy számítógépes hálózatban a személyazonosság ellenőrzésére szolgál. Lásd még: <a href="#password-based_authentication">jelszó alapú hitelesítés</a>, <a href="#certificate-based_authentication">tanúsítvány alapú hitelesítés</a>, <a href="#client_authentication">ügyfél hitelesítése</a>, <a href="#server_authentication">kiszolgáló hitelesítése</a>.</dd>
+
+<br /><dt id="certificate_authority">Hitelesítésszolgáltató (CA)</dt><dd> Olyan szervezet, illetve szolgáltatás, amely a tanúsítványok kiállításához szükséges személyi, illetve szervezeti adatok valódiságát ellenőrzi. A hitelesítésszolgáltatók feladata a tanúsítványok meghosszabbítása és visszavonása is. A visszavont tanúsítványokról rendszeres időközönként jelentést készítenek. A hitelesítésszolgáltatók általában független cégek, esetleg tanúsítványkibocsátó kiszolgálóalkalmazásokat használó magánszemélyek vagy szervezetek. Ilyen alkalmazás például a Mozilla Certificate Management System (Mozilla Tanúsítványkezelő rendszer). Lásd még: <a href="#certificate">tanúsítvány</a>, <a href="#certificate_revocation_list">visszavont tanúsítványok listája (CRL)</a>.</dd>
+
+<br /><dt id="CA_certificate">Hitelesítésszolgáltató tanúsítványa</dt><dd> A hitelesítésszolgáltatót azonosító tanúsítvány. Lásd még: <a href="#certificate_authority">hitelesítésszolgáltató (CA)</a>, <a href="#subordinate_CA">alsóbb szintű hitelesítésszolgáltató</a>, <a href="#root_CA">legfelső szintű hitelesítésszolgáltató</a>.</dd>
+
+<br /><dt id="Hypertext_Markup_Language">HTML</dt><dd>A weboldalak dokumentumformátuma. A HTML szabvány olyan elemeket, illetve kódokat definiál, amelyekkel leírható a szöveg elrendezése, betűtípusa, a képek és minden olyan összetevő, amely felépíti a weboldalt. </dd>
+
+<br /><dt id="foreign_cookie">Idegen süti</dt><dd>Olyan süti, amelyet nem az éppen meglátogatott webhely helyez el a számítógépünkön. Néha előfordul, hogy a webhely olyan tartalmat jelenít meg, ami egy másik webhelyen helyezkedik el. Ez a tartalom bármi lehet: kép, szöveg, hirdetés stb. A másik webhely, amelyikről ez az összetevő származik, szintén elhelyezhet egy sütit a böngészőnkben, bár nem közvetlenül azt látogattuk meg. Más néven harmadik féltől származó süti.</dd>
+
+<br /><dt id="IMAP">IMAP</dt><dd>Szabványos levélkiszolgáló protokoll, amely lehetővé teszi, hogy leveleinket és azok változtatásait a kiszolgálón tároljuk, és ne a számítógépünk merevlemezén. Ha az IMAP-ot használjuk a POP helyett, azzal lemezhelyet takarítunk meg, és az egész postafiókot, beleértve az elküldött üzeneteket, piszkozatokat és saját mappákat, elérhetjük bárhonnan. Modemes kapcsolaton keresztül az IMAP-kiszolgáló elérése többnyire gyorsabb, mint a POP-kiszolgálóé, mert először csak az üzenetek fejlécei töltődnek le. Nem minden internetszolgáltató támogatja az IMAP-ot. </dd>
+
+<br /><dt id="smart_card">Intelligens kártya</dt><dd>Körülbelül hitelkártya méretű, mikroprocesszort tartalmazó eszköz, amely képes titkosítással kapcsolatos adatok (Például: kulcsok és tanúsítványok) tárolására és titkosítási műveletek végrehajtására. Az intelligens kártyák a <a href="#PKCS_11">PKCS #11</a> szabványt használják. Az intelligens kártya egyfajta <a href="#security_device">adatvédelmi eszköz</a>.</dd>
+
+<br /><dt id="Internet">Internet</dt><dd>Több millió számítógép világméretű hálózata, amelyek egymással szabványos protokollokon &ndash; Például: <a href="#Transmission_Control_Protocol_Internet_Protocol">TPC/IP</a> &ndash; keresztül kommunikálnak. Az internetet eredetileg az Egyesült Államok hadügyminisztériuma számára fejlesztették ki 1969-ben, de növekedés folyamán egyre több oktatási és kutatóintézet kapcsolódott hozzá, végül a 1990-es évek végén megjelentek az üzleti és magánfelhasználók is. Napjainkban az internet felhasználási területei közé tartozik az elektronikus levelezés, a <a href="#World_Wide_Web">világháló</a> böngészése, a csevegés, a hírcsoportok használata és még sok más.</dd>
+
+<br /><dt id="Internet_protocol_address">IP-cím</dt><dd>A számítógép címe egy <a href="#Transmission_Control_Protocol_Internet_Protocol">TCP/IP</a>-hálózatban. Minden, internetre csatlakozó számítógép rendelkezik IP-címmel. Az <a href="#client">ügyfeleknek</a> vagy állandó IP-címük van, vagy minden alkalommal dinamikusan kapnak egyet, amikor csatlakoznak a hálózathoz. Az IP-cím négy egymást követő számból áll, Például: 204.171.64.2. </dd>
+
+<br /><dt id="Java">Java</dt><dd>A Sun Microsystems által kifejlesztett programnyelv. A lefordított Java-program minden számítógéptípuson futtatható, amelyre létezik Java virtuális gép, így a programozóknak nem kell minden egyes számítógéptípusra külön-külön elkészíteni az alkalmazást. A böngésző képes a Java-programok (más néven appletek vagy kisalkalmazások) letöltésére és futtatására.</dd>
+
+<br /><dt id="JavaScript">JavaScript</dt><dd>Weboldalak készítéséhez használatos értelmezett nyelv. A programozók arra használják a JavaScriptet, hogy interaktívabbá tegyék a weboldalakat, például űrlapokat vagy gombokat jelenítenek meg a segítségével. A JavaScript használható a Javával, de technikai értelemben a két nyelv különböző. A JavaScript működéséhez nem szükséges a Java.</dd>
+
+<br /><dt id="password-based_authentication">Jelszó alapú hitelesítés</dt><dd>Azonosítás név és jelszó segítségével. Lásd még: <a href="#authentication">hitelesítés</a>.</dd>
+
+<br /><dt id="Password_Manager">Jelszókezelő</dt><dd>A böngésző része, amelynek segítségével néhány (vagy akár az összes) felhasználónevünket és jelszavunkat a számítógép merevlemezén tárolhatjuk. Ha meglátogatunk egy olyan webhelyet, amely jelszót kér, a kért adatokat a Jelszókezelő automatikusan kitölti.</dd>
+
+<br /><dt id="search_engine">Keresőszolgáltatás</dt><dd>Olyan webes program, amely lehetővé teszi meghatározott információk keresését a világhálón. A keresőszolgáltatás indexelheti a webdokumentumok teljes szövegét, kigyűjtheti a kulcsszavakat, vagy alkalmazhat olyan munkatársakat, akik kézzel rendezik a weboldalakat témakörök szerint. A felhasználó általában egy szót vagy kifejezést ad meg a keresési mezőben, és a keresőszolgáltatás megjeleníti a tárgyhoz tartozó weboldalakra mutató hivatkozások listáját.</dd>
+
+<br /><dt id="home_page">Kezdőlap</dt><dd>Az az oldal, amelyet a böngésző az elindításkor automatikusan megjelenít, illetve amelyikre a Kezdőlap gomb megnyomása után jutunk. A kifejezést egy webhely főoldalára is használják, ahonnan elindulva a webhely bejárható.</dd>
+
+<br /><dt id="server_authentication">Kiszolgáló hitelesítése</dt><dd>Az a folyamat, amelyben egy <a href="#client">ügyfél</a> egy <a href="#server_SSL_certificate">Kiszolgálóoldali SSL-tanúsítvány</a> alapján azonosít egy <a href="#server">kiszolgálót</a>. Lásd még: <a href="#client_authentication">Ügyfél hitelesítése</a>, <a href="#Secure_Sockets_Layer">SSL</a>.</dd>
+
+<br /><dt id="server">Kiszolgáló</dt><dd><a href="#client">Ügyfeleitől</a> kérelmeket fogadó és azoknak adatokat küldő szoftver (Például: egy ügyfeleket weboldalakkal kiszolgáló alkalmazás), amely általában külön számítógépen fut. Általában a kiszolgálóalkalmazásokat futtató számítógépeket is kiszolgálóknak nevezik.</dd>
+
+<br /><dt id="server_SSL_certificate">Kiszolgálóoldali SSL-tanúsítvány</dt><dd>Olyan tanúsítvány, amelyet egy <a href="#server">kiszolgáló</a> &ndash; azonosságát hitelesítendő &ndash; bemutat egy <a href="#client">ügyfélnek</a>, az <a href="#Secure_Sockets_Layer">SSL</a> protokoll előírásai szerint.</dd>
+
+<br /><dt id="cipher">Kódoló</dt><dd>Lásd: <a href="#cryptographic_algorithm">titkosító algoritmus</a>.</dd>
+
+<br /><dt id="bookmark">Könyvjelző</dt><dd>Egy weboldal eltárolt címe (<a href="#Uniform_Resource_Locator">URL</a>), amelyre könnyen ellátogathatunk a Személyes eszköztár könyvjelzőikonjára kattintva, vagy a Könyvjelzők menü megfelelő menüpontját kiválasztva.</dd>
+
+<br /><dt id="cryptography">Kriptográfia</dt><dd>Adatok titkosításának (kódolás) és a titkosított adatok értelmezésének (visszafejtés) elmélete és gyakorlata. Kriptográfiai technikákkal oldják meg például a böngésző és valamely kereskedelmi webhely közötti kommunikáció során az adatok titkosítását és visszafejtését. Lásd még: <a href="#public-key_cryptography">nyilvános kulcsú titkosítás</a>.</dd>
+
+<br /><dt id="key">Kulcs</dt><dd>A <a href="#cryptographic_algorithm">titkosító algoritmusokban</a> adatok titkosítására és visszafejtésére szolgáló sokjegyű szám. Egy személy nyilvános kulcsa például lehetővé teszi, hogy mások titkosított üzenetet küldhessenek neki. A titkosított üzenetek csak a titkosításra használt kulcshoz tartozó személyes kulccsal fejthetők vissza. Lásd még: <a href="#public-key_cryptography">nyilvános kulcsú titkosítás</a>.</dd>
+
+<br /><dt id="LDAP_glossary">LDAP protokoll</dt><dd>Címtárszolgáltatásokhoz különböző platformon keresztüli hozzáférést szabályozó protokoll (eljárásgyűjtemény). A Címjegyzék alkalmazásban beállítható az LDAP-címtárak elérése. A Levelező és hírolvasó komponensben is beállítható, hogy az e-mail címek automatikus kiegészítéséhez a program LDAP-címtárat használjon.</dd>
+
+<br /><dt id="root_CA">Legfelső szintű hitelesítésszolgáltató</dt><dd>Egy <a href="#certificate_chain">tanúsítványlánc</a> legfelső szintjén álló, saját maga által aláírt tanúsítvánnyal rendelkező <a href="#certificate_authority">hitelesítésszolgáltató</a>. Lásd még: <a href="#subordinate_CA">Alsóbb szintű hitelesítésszolgáltató</a>.</dd>
+
+<br /><dt id="eavesdropping">Lehallgatás</dt><dd>Hálózaton keresztül küldött adatokhoz történő illetéktelen hozzáférés.</dd>
+
+<br /><dt id="nonrepudiation">Letagadhatatlanság</dt><dd>Annak a lehetetlensége, hogy egy üzenet küldője letagadhassa, hogy ő küldte a szóban forgó üzenetet. A hagyományos kézírás is egyfajta letagadhatatlanságot biztosít. Ennek digitális megfelelőjével, a <a href="#digital_signature">digitális aláírással</a> hasonló letagadhatatlanság érhető el.</dd>
+
+<br /><dt id="distinguished_name">Megkülönböztető név (DN)</dt><dd>A tanúsítvány tulajdonosát egyértelműen azonosító, kötött formátumú név.</dd>
+
+<br /><dt id="misrepresentation">Megtévesztés</dt><dd>Egy személy vagy szervezet nevében való fellépés jogosulatlan által. Megtévesztést követnek el például egy olyan webhely üzemeltetői, akik azt állítják a webhelyről, hogy az egy bútorbolt, holott valójában csak egy hitelkártyás fizetéseket fogadó weboldal, amelynek az üzemeltetői sohasem küldenek semmilyen árut. Lásd még: <a href="#spoofing">címhamisítás</a>.</dd>
+
+<br /><dt id="master_password">Mesterjelszó</dt><dd>A Tanúsítványkezelő által a főkulcs és/vagy valamely <a href="#security_device">adatvédelmi eszközön</a> tárolt titkos kulcsok védelmére használt jelszó. A Tanúsítványkezelőnek hozzá kell férnie a személyes kulcsainkhoz, például amikor egy elektronikus levelet írunk alá, vagy valamelyik tanúsítványunkkal kívánjuk azonosítani magunkat egy webhelyen. A Tanúsítványkezelőnek hozzáféréssel kell rendelkeznie továbbá a főkulcshoz is, amikor más alkalmazások nevében titkosít, vagy fejt vissza adatokat. Például amikor a Jelszókezelőnek el kell tárolnia a postafiókunkhoz tartozó jelszót, vagy hozzá kell ahhoz férnie. A mesterjelszót a Tanúsítványkezelő főablakának Saját tanúsítványok lapján adhatjuk vagy változtathatjuk meg. Minden egyes adatvédelmi eszközhöz külön mesterjelszó tartozik. Lásd még: <a href="#private_key">személyes kulcs</a>, <a href="#master_key">főkulcs</a>.</dd>
+
+<br /><dt id="Component_Bar">Mozilla-komponensek</dt><dd>Ez az indítóikonsor minden Mozilla-ablak bal alsó részén megtalálható. Az indítóikonsor segítségével indíthatjuk el a különböző Mozilla-komponenseket úgy, hogy a Böngésző, HTML-szerkesztő, Levelező és hírolvasó, stb. ikonjaira kattintunk. </dd>
+
+<br /><dt id="public_key">Nyilvános kulcs</dt><dd>A nyilvános kulcsú titkosításban használt <a href="#key">kulcsokból</a> alkotott kulcspár egyik tagja. A nyilvános kulcs szabadon terjeszthető, és a megfelelő <a href="#certificate">tanúsítvány</a> részeként kerül közzétételre. Rendszerint olyan adatok titkosítására használatos, melyeknek címzettje a nyilvános kulcs tulajdonosa, aki a nyilvános kulcshoz tartozó személyes kulcs alapján tudja visszafejteni az adatokat.</dd>
+
+<br /><dt id="public-key_infrastructure">Nyilvános kulcsú infrastruktúra (Public-Key Infrastructure &ndash; PKI)</dt><dd>Mindazon szabványok és szolgáltatások együttese, amelyek lehetővé teszik a nyilvános kulcsú titkosítás és a tanúsítványok használatát hálózati környezetben.</dd>
+
+<br /><dt id="public-key_cryptography">Nyilvános kulcsú titkosítás</dt><dd>Jól megalapozott módszerek és szabványok együttese, amelyek lehetővé teszik egy entitás (személy, szervezetet, esetleg valamilyen hardvereszköz, Például: egy router) számára, hogy azonosságát elektronikus úton ellenőriztethesse, valamint hogy aláírhasson és titkosíthasson elektronikus adatokat. A nyilvános kulcsú titkosítás két kulcsot, egy <a href="#public_key">nyilvános kulcsot</a> és egy <a href="#private_key">személyes kulcsot</a> foglal magába. A nyilvános kulcsok egy olyan <a href="#certificate">tanúsítvány</a> részeként kerülnek közzétételre, amely a kulcsot egy adott identitással (azonossággal) társítja. Az ehhez tartozó személyes kulcsot csak a kulcs tulajdonosa ismer(het)i, és az adott nyilvános kulccsal titkosított adatok csak és kizárólag a hozzá tartozó személyes kulccsal fejthetők vissza. </dd>
+
+<br /><dt id="object_signing">Objektum aláírása</dt><dd>Olyan technológia, amellyel a szoftvergyártók aláírhatják Java-programjaikat, a JavaScript-parancsfájljaikat, vagy bármilyen más fájlt, illetve amellyel a felhasználók azonosíthatják az aláírókat, és ellenőrizhetik, valamint szabályozhatják az aláírt kódnak a helyi rendszer erőforrásaihoz való hozzáférését.</dd>
+
+<br /><dt id="object-signing_certificate">Objektum-aláíró tanúsítvány</dt><dd>Olyan tanúsítvány, amelynek személyes kulcsa objektumok (Pldául: programkódot tartalmazó fájlok) aláírására szolgál. Lásd még: <a href="#object_signing">objektum aláírása</a>.</dd>
+
+<br /><dt id="Online_Certificate_Status_Protocol">OCSP (Online Certificate Status Protocol)</dt><dd>A tanúsítványkezelő által a tanúsítványok érvényességének on-line ellenőrzésére használt szabálygyűjtemény. Ez az ellenőrzés a tanúsítvány minden egyes használata során végrehajtódik, és magában foglalja a tanúsítvány összevetését a megadott webhelyen az érvényes tanúsítványokat tartalmazó listával. Az OCS protokoll működéséhez a számítógépnek on-line állapotban kell lennie.</dd>
+
+<br /><dt id="platform_for_privacy_preferences">P3P (Platform for Privacy Preferences)</dt><dd>A World Wide Web Consortium (W3C) által publikált szabvány, amely segít a felhasználóknak abban, hogy jobban szabályozhassák személyes adataik felhasználását az általuk meglátogatott webhelyeken. A szabvány általános leírása: <a href="http://www.w3.org/P3P/" target="_blank">P3P Public Overview</a>.</dd>
+
+<br /><dt id="PKCS_11">PKCS #11</dt><dd>Az adatvédelmi eszközökre (Például: intelligens kártya) vonatkozó nyilvános kulcsú titkosítás szabványa. Lásd még: <a href="#security_device">adatvédelmi eszköz</a>, <a href="#smart_card">intelligens kártya</a>.</dd>
+
+<br /><dt id="PKCS_11_module">PKCS #11 modul</dt><dd>A számítógépen futó, a kriptográfiai szolgáltatásokat (Például: titkosítás és visszafejtés) a PKCS #11 szabvány szerint kezelő program neve. Egyéb elnevezései: <i>titkosítási modul</i>, <i>kriptográfiai szolgáltató</i>, illetve <i>biztonsági modul</i>. A PKCS #11 modulok a hardver- vagy szoftvereszközöket vezérlik. Egy PKCS #11 modul mindig egy vagy több csatolót vezérel, amelyek megvalósíthatók valamilyen fizikai leolvasóeszköz (Például: az intelligens kártyák leolvasására), illetve szoftver formájában is. A PKCS #11 modul minden csatolója tartalmazhat továbbá egy <a href="#security_device">adatvédelmi eszközt</a> (ún. <i>tokent</i>), ami az a hardver- vagy szoftvereszköz, amely a titkosítási szolgáltatásokat szolgáltatja, és tárolja a tanúsítványokat és a kulcsokat. A <a href="#certificate_manager">tanúsítványkezelö</a> két beépített PKCS #11 modullal rendelkezik. További modulokat is telepíthetünk a számítógépünkre, például intelligens kártyákat leolvasó eszközök vagy más hardvereszközök vezérlésére.</dd>
+
+<br /><dt id="POP">POP protokoll</dt><dd>Szabványos levélkiszolgáló protokoll, amellyel az új leveleket a helyi számítógépre lehet letölteni, bár van lehetőség arra is, hogy egy másolat a kiszolgálón is megmaradjon. Ha a POP-ot használjuk, az összes levelünket &ndash; beleértve az elküldött leveleket, piszkozatokat és a saját mappákat &ndash; egyetlen számítógépen kell tárolnunk. Ezzel ellentétben az <a href="#IMAP">IMAP</a> lehetővé teszi, hogy minden üzenetet és azok minden változtatását a kiszolgálón tároljuk, ilyen módon bármelyik számítógépről hozzáférhetünk ezekhez. A legtöbb internetszolgáltató napjainkban támogatja a POP-ot.</dd>
+
+<br /><dt id="proxy">Proxy</dt><dd>Egy közbeépülő program, amely egyszerre viselkedik <a href="#server">kiszolgálóként</a> és <a href="#client">ügyfélként</a> abból a célból, hogy más ügyfelek nevében kéréseket továbbítson.</dd>
+
+<br /><dt id="helper_application">Segédalkalmazás</dt><dd>Olyan alkalmazás, amellyel megnyitható vagy megnézhető egy böngészővel letöltött fájl. A <a href="#plug-in">bővítmények</a> a segédalkalmazások különleges fajtái, amelyek a böngésző főkönyvtárában található Plugins könyvtárba telepítik magukat, és általában képesek beágyazódni a böngészőbe. A Microsoft Word, az Adobe Photoshop és más külső alkalmazások segédalkalmazások, de nem bővítmények, mert nem a böngésző könyvtárába települnek, viszont megnyithatóak a letöltési párbeszédpanelről.</dd>
+
+<br /><dt id="Secure_Sockets_Layer">SSL</dt><dd>Egy <a href="#client">ügyfél</a> és egy <a href="#server">kiszolgáló</a> hitelesített és titkosított kapcsolatának létrejöttéhez szükséges, egymás kölcsönös hitelesítését lehetővé tévő protokoll. Az SSL protokoll a <a href="#tcp_ip">TCP/IP</a> protokoll felett, de a <a href="#http">HTTP</a>, <a href="#ldap">LDAP</a>, <a href="#imap">IMAP</a>, NNTP és egyéb magas szintű hálózati protokollok alatt helyezkedik el. Az internetprotokollokat tervező Internet Engineering Task Force (IETF) nevű szervezet által életre hívott új szabvány, a Transport Layer Security (TLS) az SSL protokollon alapul. Lásd még: <a href="#authentication">hitelesítés</a>, <a href="#encryption">titkosítás</a>.</dd>
+
+<br /><dt id="cookie">Süti</dt><dd>A sütik olyan kis adatcsomagok, amelyet bizonyos webhelyek tárolnak a számítógépünkön. Amikor egy ilyen webhelyet látogatunk meg, a webhely megkéri a böngészőt, hogy egy vagy több sütit elhelyezhessen a merevlemezen. Ha később visszatérünk ugyanarra a webhelyre, a böngésző elküldi a hozzá tartozó sütit. A sütik segítségével a webhelyek adatokat tárolnak rólunk, például a bevásárlókosarunk tartalmát. A sütik kezelését beállíthatjuk, a használatukat és az általuk tárolt információ mennyiségét szabályozhatjuk. Lásd még: <a href="#foreign_cookie">idegen süti</a>.</dd>
+
+<br /><dt id="Cookie_Manager">Sütikezelő</dt><dd>A böngésző része, amellyel a <a href="#cookie">sütik</a> beállítását lehet elvégezni.</dd>
+
+<br /><dt id="personal_toolbar">Személyes eszköztár</dt><dd>Testreszabható eszköztár, amely közvetlenül a címmező alatt jelenik meg a böngészőben. Ezen az eszköztáron található meg a kezdőlap és a könyvjelzők gomb is, és lehetőség van gombok hozzáadására, valamint eltávolítására is. Hozzáadhatjuk a kedvenc könyvjelzőinket hordozó gombokat, vagy könyvjelzőket tartalmazó mappákat is.</dd>
+
+<br /><dt id="private_key">Személyes kulcs</dt><dd>A nyilvános kulcsú titkosításban használt <a href="#key">kulcsokból</a> alkotott kulcspár egyik tagja. A személyes kulcsot mindig tartsuk biztonságban, mivel ezzel tudjuk visszafejteni a hozzá tartozó nyilvános kulccsal titkosított adatokat.</dd>
+
+<br /><dt id="symmetric_encryption">Szimmetrikus titkosítás</dt><dd>Olyan titkosítási eljárás, mely ugyanazt a titkosító kulcsot használja egy adott üzenet kódolására és visszafejtésére is.</dd>
+
+<br /><dt id="software_security_device">Szoftveres adatvédelmi eszköz</dt><dd>A tanúsítványkezelő alapértelmezett <a href="#security_device">adatvédelmi eszköze</a>, amely a tanúsítványaihoz tartozó titkos kulcsokat tárolja. A szoftveres adatvédelmi eszköz a titkos kulcsok mellett a jelszókezelő által az elektronikus levelek jelszavainak titkosítására szolgáló főkulcsot, webhelyek jelszavait és egyéb érzékeny információkat is tárolja. Lásd még: <a href="#private_key">személyes kulcs</a>, <a href="#master_password">főkulcs</a> és <a href="#Password_Manager">jelszókezelő</a></dd>
+
+<br /><dt id="certificate-based_authentication">Tanúsítvány alapú hitelesítés</dt><dd>A tulajdonos azonosságának ellenőrzése tanúsítványok alapján, nyilvános kulcsú titkosítás segítségével. Lásd még: <a href="#password-based_authentication">jelszó alapú hitelesítés</a>.</dd>
+
+<br /><dt id="certificate_backup_password">Tanúsítvány biztonsági másolatának jelszava</dt><dd>Az a tanúsítványt védő jelszó, amelyet a tanúsítvány biztonsági másolatának készítése során a tanúsítványkezelő számára adtunk meg. A tanúsítvány későbbi visszaállítása csak e jelszó birtokában lehetséges.</dd>
+
+<br /><dt id="certificate_verification">Tanúsítvány ellenőrzése</dt><dd>Egy tanúsítvány ellenőrzése során a <a href="#Certificate_Manager">tanúsítványkezelő</a> arról próbál meggyőződni, hogy a tanúsítványhoz tartozó digitális aláírás egy olyan hitelesítésszolgáltatótól származik-e, amelynek saját tanúsítványa megtalálható a tanúsítványkezelőben található tanúsítványok között, és a hitelesítésszolgáltató az adott típusú tanúsítványok kibocsátására nézve megbízhatónak lett-e minősítve. Arról is meggyőződik a tanúsítványkezelő, hogy maga az ellenőrizendő tanúsítvány nincs-e megbízhatatlanként megjelölve. Végül, ha az <a href="#Online_Certificate_Status_Protocol">Online Certificate Status protokoll (OCSP)</a> bekapcsolt állapotban van, a tanúsítványkezelő egy on-line ellenőrzést is végrehajt. Ez az ellenőrzés úgy történik, hogy a tanúsítványkezelő a tanúsítványban meghatározott vagy a böngésző érvényesítési beállításaiban megadott URL-en található listában megkeresi a tanúsítványt. Ha a fenti ellenőrzési folyamatok bármelyike sikertelen eredménnyel zárul, a tanúsítványkezelő ellenőrizetlenként jelöli meg a tanúsítványt, és azonosíthatatlannak tekinti annak tulajdonosát.</dd>
+
+<br /><dt id="certificate_renewal">Tanúsítvány megújítása</dt><dd>Egy lejárat előtt lévő <a href="#certificate">tanúsítvány</a> megújításának folyamata.</dd>
+
+<br /><dt id="certificate_fingerprint">Tanúsítvány ujjlenyomata</dt><dd>A tanúsítványhoz társított egyedi szám. Ez a szám ugyan nem része a tanúsítványnak, képzése a tanúsítvány tartalmát felhasználó matematikai algoritmus segítségével történik. Ha a tanúsítvány tartalma akár csak egyetlen karakterben is módosul, a függvény eltérő számot ad vissza. Ezért a tanúsítvány ujjlenyomatával ellenőrizhető, hogy a tanúsítványt nem hamisították-e meg.</dd>
+
+<br /><dt id="certificate">Tanúsítvány</dt><dd>A személyazonosító igazolvány digitális megfelelője. A tanúsítvány egy személy, cég vagy egyéb szervezet nevét tartalmazza, és igazolja, hogy a tanúsítványban szereplő nyilvános kulcs valóban az adott személyhez, céghez vagy szervezethez tartozik. Ha digitális aláírással látnak el egy üzenetet (vagy bármilyen más adatot), a szóban forgó üzenet digitális aláírása a tanúsítványában szereplő nyilvános kulcshoz tartozó titkos kulcs segítségével készül el. A tanúsítványokat <a href="#certificate_authority">hitelesítésszolgáltató szervezetek (CA-k)</a> bocsátják ki, és digitális aláírásukkal hitelesítik. Egy tanúsítvány érvényessége az azt kibocsátó hitelesítésszolgáltató <a href="#digital_signature">digitális aláírásának</a> ellenőrzésével ellenőrizhető. Egyéb elnevezései: digitális azonosító, digitális útlevél, nyilvános kulcsú tanúsítvány, X.509 tanúsítvány, illetve biztonsági tanúsítvány. Lásd még: <a href="#public-key_cryptography">nyilvános kulcsú titkosítás</a>.</dd>
+
+<br /><dt id="Certificate_Manager">Tanúsítványkezelő</dt><dd>A böngésző azon része, melyen keresztül a tanúsítványokat megtekinthetjük, illetve különböző műveleteket végezhetünk velük. A tanúsítványkezelő főablakának megnyitásához válasszuk a Szerkesztés menü (Mac OS X alatt a Mozilla menü) Beállítások pontját, ott az Adatvédelem és biztonság kategóriában válasszuk a Tanúsítványok pontot, majd kattintsunk a Tanúsítványok kezelése gombra.</dd>
+
+<br /><dt id="certificate_chain">Tanúsítványlánc</dt><dd>Tanúsítványok olyan hierarchikus rendszere, amelyben minden tanúsítványt egy felsőbb szintű hitelesítésszolgáltató írt alá. A hitelesítésszolgáltató tanúsítványa azonosítja a <a href="#certificate_authority"> hitelesítésszolgáltatót</a>, és az általa kibocsátott tanúsítványok aláírására szolgál. A hitelesítésszolgáltató tanúsítványát aláírhatja egy felsőbb szintű hitelesítésszolgáltató, így egy egészen a <a href="#root_CA">legfelső szintű hitelesítésszolgáltatóig</a> nyúló lánc alakulhat ki.</dd>
+
+<br /><dt id="Transmission_Control_Protocol_Internet_Protocol">TCP/IP</dt><dd>Hálózati protokoll, amely a legkülönfélébb operációs rendszert futtató számítógépek összekötésére használatos. A TCP/IP alapvető internetes protokoll, amely az egész világon elterjedt.</dd>
+
+<br /><dt id="encryption">Titkosítás</dt><dd>Adatok összekeverésének és átalakításának folyamata, amely az adatokat értelmezhetetlenné teszi. A számítógépek közötti titkosított kapcsolatok például igen nehézzé teszik, hogy illetéktelenek megfejtsék, illetve <a href="#decryption">visszafejtsék</a> a kapcsolaton átáramló adatokat, illetve azok jelentését. A titkosított adatokat csak azok tudják visszafejteni, akik rendelkeznek az ehhez szükséges kulccsal. Lásd még: <a href="#public-key_cryptography">nyilvános kulcsú titkosítás</a>.</dd>
+
+<br /><dt id="cryptographic_algorithm">Titkosító algoritmus</dt><dd>Titkosítással kapcsolatos műveletek végrehajtására vonatkozó szabályok vagy utasítások sorozata. Ilyen művelet például a <a href="#encryption">titkosítás</a> és a <a href="#decryption">visszafejtés</a>. A titkosítási algoritmust gyakran <i>kódolónak (cipher)</i> nevezik.</dd>
+
+<br /><dt id="encryption_key">Titkosító kulcs</dt><dd>Személyes kulcs, amely csak titkosításhoz használatos (visszafejtéshez nem). A titkosító kulcs és a hozzá tartozó személyes kulcs, egy <a href="#signing_key">aláíró kulccsal</a> és a hozzá tartozó nyilvános kulccsal együtt <a href="#dual_key_pairs">asszimmetrikus kulcspárokat</a> alkot.</dd>
+
+<br /><dt id="encryption_certificate">Titkosító tanúsítvány</dt><dd>Olyan tanúsítvány, amelynek a nyilvános kulcsához tartozó személyes kulcsa csak titkosításra használatos (visszafejtésre nem). Az aláírási műveletek nem használják fel a titkosító tanúsítványokat. Lásd még: <a href="#dual_key_pairs">asszimmetrikus kulcspárok</a>, <a href="#signing_certificate">aláíró tanúsítvány</a>.</dd>
+
+<br /><dt id="TLS">TLS</dt><dd>Lásd: <a href="#Secure_Sockets_Layer">Secure Sockets Layer (SSL)</a>.</dd>
+
+<br /><dt id="token">Token</dt><dd>Lásd: <a href="#security_device">adatvédelmi eszköz</a>.</dd>
+
+<br /><dt id="subject_name">Tulajdonos neve</dt><dd>Egy <a href="#certificate">tanúsítvány</a> <a href="#subject">tulajdonosát</a> egyértelműen azonosító <a href="#distinguished_name">megkülönböztető név (DN)</a>.</dd>
+
+<br /><dt id="subject">Tulajdonos</dt><dd>Egy <a href="#certificate">tanúsítvánnyal</a> azonosított entitás (személy, szervezet vagy útválasztó). Pontosabban szólva, a tanúsítványok tulajdonos mezője a <a href="#subject_name">tulajdonos nevét</a> és egyéb jellemzőit tartalmazza.</dd>
+
+<br /><dt id="fingerprint">Ujjlenyomat</dt><dd>Lásd: <a href="#certificate_fingerprint">tanúsítvány ujjlenyomata</a>.</dd>
+
+<br /><dt id="Uniform_Resource_Locator">URL</dt><dd>Szabványosított cím, amely a böngésző számára egyértelművé teszi, hogy hol kell a fájlt vagy erőforrást keresni a világhálón. Például: <tt>http://www.mozilla.org.</tt> A weboldalakat elérhetjük úgy is, hogy az URL-jüket a böngésző címmezőjébe beírjuk. Az URL-eket a weboldalakon található hivatkozásokban is felhasználják. A hivatkozásokra kattintva más weboldalakra juthatunk el. Az URL más néven internetcím vagy webcím.</dd>
+
+<br /><dt id="client_authentication">Ügyfél hitelesítése</dt><dd>Az a folyamat, melyben egy <a href="#server">kiszolgáló</a> azonosít egy <a href="#client">ügyfelet</a>, például név és jelszó, vagy <a href="#client_SSL_certificate">ügyféloldali SSL-tanúsítvány</a> és digitálisan aláírt adatok alapján. Lásd még: <a href="#Secure_Sockets_Layer">Secure Sockets Layer (SSL)</a>, <a href="#server_authentication">kiszolgáló hitelesítése</a>.</dd>
+
+<br /><dt id="client">Ügyfél</dt><dd>Olyan szoftver (például böngészőprogram), amely kéréseket küld, és adatokat fogad az általában külön számítógépen futó <a href="#server">kiszolgálótól</a>. A többnyire ügyfélalkalmazásokat futtató számítógépeket is ügyfeleknek nevezik.</dd>
+
+<br /><dt id="client_SSL_certificate">Ügyféloldali SSL-tanúsítvány</dt><dd>Olyan tanúsítvány, amelyet egy <a href="#client">ügyfél</a> (Például: böngésző) az <a href="#Secure_Sockets_Layer">SSL</a> protokollon keresztül mutat be egy <a href="#server">kiszolgálónak</a> az ügyfél (vagy az azt használó személy) azonosságát hitelesítendő. Lásd még: <a href="#client_authentication">ügyfél hitelesítése</a>.</dd>
+
+<br /><dt id="Form_Manager">Űrlapkezelő</dt><dd>A böngésző része, amelynek segítségével menthetjük az on-line űrlapokba írt személyes adatainkat, például a nevünket, címünket, telefonszámunkat stb. Amikor a webhely egy űrlap kitöltésére kér bennünket, az űrlapkezelő automatikusan kitölti azt helyettünk.</dd>
+
+<br /><dt id="World_Wide_Web">Világháló</dt><dd>Angol elnevezéssel World Wide Web vagy egyszerűen csak web. Az internet része, amely a <a href="#server">webkiszolgálókon</a> tárolt weboldalakból épül fel. A weboldalak megjelenítését az <a href="#client">ügyfélprogramok</a> (Például: Mozilla) végzik el.</dd>
+
+<br /><dt id="decryption">Visszafejtés</dt><dd>Az eredeti adatok visszanyerésének folyamata korábban titkosított adatokból. Lásd még: <a href="#encryption">titkosítás</a>.</dd>
+
+<br /><dt id="certificate_revocation_list">Visszavont tanúsítványok listája (CRL, Certificate Revocation List)</dt><dd>Egy <a href="#certificate_authority">hitelesítésszolgáltató</a> által készített és aláírt lista a visszavont tanúsítványokról. A legfrissebb listát letölthetjük a böngészőnkre, illetve egy kiszolgálóra. A lista ellenőrzésével megbizonyosodhatunk arról, hogy tanúsítványaink még mindig érvényesek-e, mielőtt engedélyeznénk azok hitelesítési folyamatokban történő használatát.</dd>
+
+<br /><dt id="web_site">Webhely</dt><dd>Egymáshoz tartozó weboldalak csoportja, amelyeket hiperhivatkozások kötnek össze, és az üzemeltetőjük egyetlen cég, szervezet vagy magánszemély. A webhely tartalmazhat szöveget, grafikát, zenei és videofájlokat és hivatkozásokat más webhelyekre.</dd>
+
+<br /><dt id="web_page">Weboldal</dt><dd>A világháló darabja, olyan dokumentum, amelyet egyedi cím vagy URL határoz meg. Tartalmazhat szöveget, hiperhivatkozásokat és grafikát.</dd>
+
+<br /><dt id="XML">XML</dt><dd>Adatok leírására szolgáló nyílt szabvány. A HTML-lel ellentétben az XML lehetővé teszi egyéni elemek (tagek) definiálását. További tudnivalókért olvassuk el a W3C on-line dokumentumát az <a href="http://www.w3.org/XML/" target="_blank">XML</a>-ről.</dd>
+
+<br /><dt id="XSLT">XSLT (Extensible Stylesheet Language Transformation)</dt><dd>Olyan nyelv, amely segítségével egy XML formátumú dokumentumot egy másik XML dokumentummá vagy más formátumú dokumentummá alakíthatunk.</dd>
+
+[&nbsp;<a href="#glossary">Vissza a Fogalomtár elejére</a>&nbsp;]
+
+
+
+</dl>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Új oldal beállításai">
+
+<!ENTITY  authorName.label          "Szerző:">
+<!ENTITY  authorName.accesskey      "S">
+<!ENTITY  pageColorHeader           "Weboldal alapértelmezett kinézete">
+
+<!ENTITY defaultColors.label        "A látogató böngészőjének alapértelmezett színei">
+<!ENTITY defaultColors.accesskey    "l">
+<!ENTITY customColors.label         "Egyéni színek használata:">
+<!ENTITY customColors.accesskey     "E">
+
+<!ENTITY normalText.label           "Normál szöveg">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Hivatkozás szövege">
+<!ENTITY linkText.accesskey         "i">
+<!ENTITY activeLinkText.label       "Aktív hivatkozás szövege">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "Látogatott hivatkozás szövege">
+<!ENTITY visitedLinkText.accesskey  "L">
+<!ENTITY background.label           "Háttér:">
+<!ENTITY background.accesskey       "H">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Háttérkép:">
+<!ENTITY backgroundImage.accesskey  "H">
+<!ENTITY chooseFile.label           "Tallózás…">
+<!ENTITY chooseFile.accesskey       "T">
+

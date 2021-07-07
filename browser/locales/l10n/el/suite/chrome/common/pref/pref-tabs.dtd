@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Περιήγηση με καρτέλες">
+
+<!ENTITY tabDisplay.label "Προβολή καρτελών">
+<!ENTITY autoHide.label "Απόκρυψη γραμμής καρτελών όταν είναι ανοιχτή μόνο μία καρτέλα">
+<!ENTITY autoHide.accesskey2 "ψ">
+<!ENTITY background.label "Εναλλαγή σε νέες καρτέλες που ανοίγουν από συνδέσμους">
+<!ENTITY background.accesskey "Ε">
+<!ENTITY warnOnClose.label "Προειδοποίηση κατά το κλείσιμο παραθύρου με πολλαπλές καρτέλες">
+<!ENTITY warnOnClose.accesskey "Π">
+<!ENTITY relatedAfterCurrent.label "Άνοιγμα σχετικών καρτελών μετά την τρέχουσα">
+<!ENTITY relatedAfterCurrent.accesskey "Ά">
+
+<!ENTITY openTabs.label "Άνοιγμα καρτελών αντί παραθύρων για">
+<!ENTITY middleClick.label "Μεσαίο κλικ, Ctrl+κλικ ή Ctrl+Enter σε συνδέσμους σε μια ιστοσελίδα">
+<!ENTITY middleClick.accesskey "Μ">
+<!ENTITY middleClickMac.label "Μεσαίο κλικ, &#8984;+κλικ ή &#8984;+Enter σε συνδέσμους σε μια ιστοσελίδα">
+<!ENTITY middleClickMac.accesskey "Μ">
+<!ENTITY urlbar.label "Ctrl+Enter στη γραμμή διευθύνσεων">
+<!ENTITY urlbar.accesskey "τ">
+<!ENTITY urlbarMac.label "&#8984;+Return στη γραμμή διευθύνσεων">
+<!ENTITY urlbarMac.accesskey "δ">
+
+<!ENTITY openManagers.label "Άνοιγμα σε νέα καρτέλα αντί σε ξεχωριστό παράθυρο">
+<!ENTITY openDataManager.label "Διαχείριση δεδομένων">
+<!ENTITY openDataManager.accesskey "Δ">
+<!ENTITY openAddOnsManager.label "Διαχείριση προσθέτων">
+<!ENTITY openAddOnsManager.accesskey "θ">

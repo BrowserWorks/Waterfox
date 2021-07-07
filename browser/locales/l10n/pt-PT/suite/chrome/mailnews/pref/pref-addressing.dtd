@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Endereçamento">
+<!ENTITY emailCollectiontitle.label            "Coleção de endereços de email">
+<!ENTITY emailCollectionPicker.label           "Adicionar endereços de email ao meu:">
+<!ENTITY emailCollectionPicker.accesskey       "d">
+<!ENTITY emailCollectiontext.label             "Os endereços de email de mensagens enviadas podem ser adicionados automaticamente ao livro de endereços local.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Conclusão automática de endereços">
+<!ENTITY highlightNonMatches.label             "Realçar endereços que não se auto-completam">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "Livro de endereços local">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "Ao endereçar mensagens, procurar por equivalências na:">
+<!ENTITY directories.label                     "Diretório do servidor:">
+<!ENTITY directories.accesskey                 "D">
+<!ENTITY directoriesNone.label                 "Nenhuma">
+<!ENTITY editDirectories.label                 "Editar diretórios…">
+<!ENTITY editDirectories.accesskey             "E">

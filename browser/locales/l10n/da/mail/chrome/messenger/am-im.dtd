@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Kontoindstillinger">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Generelt">
+<!ENTITY account.advanced              "Avancerede indstillinger">
+<!ENTITY account.name                  "Brugernavn:">
+<!ENTITY account.password              "Adgangskode:">
+<!ENTITY account.alias                 "Alias:">
+<!ENTITY account.newMailNotification   "Giv besked ved nye mails">
+<!ENTITY account.autojoin              "Tilslut automatisk til disse kanaler:">
+<!ENTITY account.proxySettings.caption "Proxy-indstillinger:">
+<!ENTITY account.proxySettings.change.label     "Skift…">
+<!ENTITY account.proxySettings.change.accessKey "S">

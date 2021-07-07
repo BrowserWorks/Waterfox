@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label		"スタートページに戻る">
+<!ENTITY safeb.palm.decline.label		"この警告を無視する">
+<!ENTITY safeb.palm.reportPage.label		"このページがブロックされた理由">
+
+<!ENTITY safeb.blocked.malwarePage.title	"攻撃サイトとして報告されています！">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc	"<span id='malware_sitename'/> のウェブページは攻撃サイトとして報告されており、セキュリティ設定に従いブロックされています。">
+<!ENTITY safeb.blocked.malwarePage.longDesc	"<p>攻撃サイトはあなたの個人情報を盗んだり、コンピューターを乗っ取って他のコンピューターへの攻撃に利用したり、あなたのシステムを破壊するためのプログラムをインストールしようとします。</p><p>一部の攻撃サイトは意図的に有害なソフトウェアを配布していますが、多くの場合は運営者が知らずにまたは許可なく有害なソフトウェアの配布に不正利用されています。</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title	"望ましくないソフトウェアページとして報告されています！">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc	"<span id='unwanted_sitename'/> のウェブページは、望ましくないソフトウェアを含むページとして報告されており、セキュリティ設定に従いブロックされています。">
+<!ENTITY safeb.blocked.unwantedPage.longDesc	"<p>望ましくないソフトウェアサイトは、システムに深刻な影響を与える偽装されたソフトウェアを、想定外の方法でインストールしようとします。</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2	"詐欺サイトとして報告されています！">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2	"<span id='phishing_sitename'/> のウェブページは詐欺サイトとして報告されており、セキュリティ設定に従いブロックされています。">
+<!ENTITY safeb.blocked.phishingPage.longDesc2	"<p>詐欺サイトには、望ましくないソフトウェアをインストールさせようとしたり、パスワードや電話番号、クレジットカード番号などの個人情報を盗み取ろうとする危険な仕掛けがあります。</p><p>このページで個人情報を入力してしまうと、なりすましや詐欺などの被害に遭う恐れがあります。</p>">
+
+<!ENTITY safeb.blocked.harmfulPage.title	"マルウェアを含むサイトの可能性があります">
+<!-- Localization note (safeb.blocked.harmfulPage.shortDesc) - Please don't translate the contents of the <span id="harmful_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.harmfulPage.shortDesc	"<span id='harmful_sitename'/> のウェブページは、あなたの情報 (例えば、写真、パスワード、メッセージやクレジットカード番号) を盗んだり消去したりする危険なアプリをインストールしようとする可能性があるため、&brandShortName; によってブロックされました。">
+<!ENTITY safeb.blocked.harmfulPage.longDesc	"">
+
+<!ENTITY reportDeceptiveSite.label		"詐欺サイトを報告...">
+<!ENTITY reportDeceptiveSite.accesskey		"d">
+<!ENTITY notADeceptiveSite.label		"詐欺サイトの誤報告を指摘...">
+<!ENTITY notADeceptiveSite.accesskey		"d">

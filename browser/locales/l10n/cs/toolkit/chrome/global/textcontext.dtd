@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Přidat do slovníku">
+<!ENTITY spellAddToDictionary.accesskey "P">
+<!ENTITY spellUndoAddToDictionary.label "Vrátit přidání do slovníku">
+<!ENTITY spellUndoAddToDictionary.accesskey "p">
+<!ENTITY spellCheckToggle.label "Kontrolovat pravopis">
+<!ENTITY spellCheckToggle.accesskey "o">
+<!ENTITY spellNoSuggestions.label "(Žádné návrhy nenalezeny)">
+<!ENTITY spellDictionaries.label "Jazyky">
+<!ENTITY spellDictionaries.accesskey "J">
+
+<!ENTITY searchTextBox.clear.label "Vymazat">
+
+<!ENTITY fillLoginMenu.label          "Vyplnit přihlašovací údaje">
+<!ENTITY fillLoginMenu.accesskey      "V">
+<!ENTITY fillPasswordMenu.label       "Vyplnit heslo">
+<!ENTITY fillPasswordMenu.accesskey   "V">
+<!ENTITY fillUsernameMenu.label       "Vyplnit uživatelské jméno">
+<!ENTITY fillUsernameMenu.accesskey   "V">
+<!ENTITY noLoginSuggestions.label     "(Pro tento server nenalezeny žádné přihlašovací údaje)">
+<!ENTITY viewSavedLogins.label        "Zobrazit uložené přihlašovací údaje">

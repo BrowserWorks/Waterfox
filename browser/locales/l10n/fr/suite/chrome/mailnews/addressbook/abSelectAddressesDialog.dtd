@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Sélection d’adresses">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Pour ->">
+<!ENTITY toButton.accesskey                  "P">
+<!ENTITY ccButton.label                      "Cc ->">
+<!ENTITY ccButton.accesskey                  "C">
+<!ENTITY bccButton.label                     "Cci ->">
+<!ENTITY bccButton.accesskey                 "i">
+<!ENTITY newButton.label                     "Nouveau…">
+<!ENTITY newButton.accesskey                 "N">
+<!ENTITY editButton.label                    "Modifier…">
+<!ENTITY editButton.accesskey                "M">
+<!ENTITY removeButton.label                  "Supprimer">
+<!ENTITY removeButton.accesskey              "S">
+<!ENTITY lookIn.label                        "Regarder dans :">
+<!ENTITY lookIn.accesskey                    "R">
+<!ENTITY for.label                           "pour :">
+<!ENTITY for.accesskey                       "o">
+<!ENTITY for.placeholder                     "Nom ou adresse électronique">
+<!ENTITY addressMessageTo.label              "Adresser le message à :">
+
+<!-- Tooltips items -->
+<!ENTITY addressPickerNewButton.tooltip      "Créer une nouvelle fiche de carnet">
+<!ENTITY addressPickerEditButton.tooltip     "Modifier la fiche sélectionnée">

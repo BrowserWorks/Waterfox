@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY month.1.name "Ιανουάριος" >
+<!ENTITY month.2.name "Φεβρουάριος" >
+<!ENTITY month.3.name "Μάρτιος" >
+<!ENTITY month.4.name "Απρίλιος" >
+<!ENTITY month.5.name "Μάιος" >
+<!ENTITY month.6.name "Ιούνιος" >
+<!ENTITY month.7.name "Ιούλιος" >
+<!ENTITY month.8.name "Αύγουστος" >
+<!ENTITY month.9.name "Σεπτέμβριος" >
+<!ENTITY month.10.name "Οκτώβριος" >
+<!ENTITY month.11.name "Νοέμβριος" >
+<!ENTITY month.12.name "Δεκέμβριος" >
+
+<!ENTITY onemonthbackward.tooltip "Ένα μήνα πίσω" >
+<!ENTITY onemonthforward.tooltip "Ένα μήνα μπροστά" >
+<!ENTITY oneyearbackward.tooltip "Ένα έτος πριν" >
+<!ENTITY oneyearforward.tooltip "Ένα έτος μετά" >
+<!ENTITY showToday.tooltip "Μετάβαση στη σημερινή ημέρα">
+<!ENTITY onedayforward.tooltip "Μία ημέρα μπροστά">
+<!ENTITY onedaybackward.tooltip "Μία ημέρα πίσω">
+<!ENTITY showselectedday.tooltip "Εμφάνιση εκδηλώσεων για την επιλεγμένη ημέρα">

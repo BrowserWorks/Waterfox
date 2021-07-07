@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Rechercher des messages dans :">
+<!ENTITY searchHeading.accesskey     "g">
+<!ENTITY searchSubfolders.label      "Rechercher dans les sous-dossiers">
+<!ENTITY searchSubfolders.accesskey  "s">
+<!ENTITY searchOnHeading.label       "Effectuer les opérations de recherche sur :">
+<!ENTITY searchOnHeading.accesskey   "r">
+<!ENTITY searchOnRemote.label        "Le serveur distant">
+<!ENTITY searchOnLocal.label         "Le système local">
+<!ENTITY resetButton.label           "Effacer">
+<!ENTITY resetButton.accesskey       "f">
+<!ENTITY openButton.label            "Ouvrir">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "Supprimer">
+<!ENTITY deleteButton.accesskey      "E">
+<!ENTITY searchDialogTitle.label     "Recherche avancée dans le courrier">
+<!ENTITY results.label               "Résultats">
+<!ENTITY moveHereMenu.label          "Classer ici">
+<!ENTITY moveHereMenu.accesskey      "C">
+<!ENTITY moveButton.label            "Classer">
+<!ENTITY moveButton.accesskey        "l">
+<!ENTITY goToFolderButton.label      "Aller au dossier du message">
+<!ENTITY goToFolderButton.accesskey  "l">
+<!ENTITY saveAsVFButton.label        "Enregistrer comme dossier virtuel">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Rechercher dans :">
+<!ENTITY abSearchHeading.accesskey   "d">
+<!ENTITY propertiesButton.label      "Propriétés">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Écrire">
+<!ENTITY composeButton.accesskey     "r">
+<!ENTITY abSearchDialogTitle.label   "Recherche avancée dans le carnet d’adresses">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Welkom bij &brandShortName; Mail &amp; nieuwsgroepen">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Welkom bij <a id="vendorURL" href="">&brandShortName;</a> Mail &amp; nieuwsgroepen!'>
+<!ENTITY description.label
+"&brandShortName; Mail &amp; nieuwsgroepen is een krachtige open-source e-mail- en nieuwsclient
+die geavanceerde detectie van ongewenste berichten en andere handige functies ondersteunt.">
+<!ENTITY features.title "Functies">
+<!ENTITY feat_multiacc.label "Ondersteuning voor meerdere accounts">
+<!ENTITY feat_junk.label "Detectie van ongewenste berichten">
+<!ENTITY feat_feeds.label "Feedlezer">
+<!ENTITY feat_filters.label "Berichtenfilters">
+<!ENTITY feat_htmlmsg.label "Ondersteuning van berichten in HTML">
+<!ENTITY feat_abook.label "Adresboek">
+<!ENTITY feat_tags.label "Aanpasbare labels en berichtenweergaven">
+<!ENTITY feat_integration.label
+"Goede integratie met de suite van &brandShortName;">
+<!ENTITY dict.title "Woordenboeken">
+<!ENTITY dict_intro.label "Woordenboeken worden gebruikt om de spelling van uw berichten te controleren.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label2
+'Diverse extra talen kunnen worden geïnstalleerd vanaf de sectie
+<a id="dictURL" href="">woordenboeken</a> op
+<a href="https://addons.thunderbird.net/seamonkey/">SeaMonkey en Thunderbird Add-ons</a>.'>
+<!ENTITY info.title "Meer informatie">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">We</a> ontvangen graag bugrapporten en aanvragen voor
+nieuwe functies, maar lees eerst de <a id="releaseNotesURL" href="">uitgaveopmerkingen</a>
+en doorzoek <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> voordat u een bug meldt.'>

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Folder Baru">
+<!ENTITY name.label                 "Nama:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Buat sebagai subfolder pada:">
+<!ENTITY description.accesskey      "s">
+<!ENTITY folderRestriction1.label   "Server ini membatasi pada 2 folder khusus tertentu.">
+<!ENTITY folderRestriction2.label   "Buat nama folder baru Anda yang mengandung:">
+<!ENTITY foldersOnly.label          "Hanya Folder">
+<!ENTITY messagesOnly.label         "Pesan Saja">
+<!ENTITY accept.label               "Buat Folder">
+<!ENTITY accept.accesskey           "r">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Segurança da mensagem">
+<!ENTITY subject.plaintextWarning "Atenção: a linha de assunto não é criptografada.">
+<!ENTITY status.heading "O conteúdo da mensagem será enviado como mostrado a seguir:">
+<!ENTITY status.signed "Assinada digitalmente:">
+<!ENTITY status.encrypted "Criptografada:">
+<!ENTITY status.certificates "Certificados:">
+<!ENTITY view.label "Exibir">
+<!ENTITY view.accesskey "x">
+<!ENTITY tree.recipient "Destinatário">
+<!ENTITY tree.status "Status">
+<!ENTITY tree.issuedDate "Expedido">
+<!ENTITY tree.expiresDate "Validade">

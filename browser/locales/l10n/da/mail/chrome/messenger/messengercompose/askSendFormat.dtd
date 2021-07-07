@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Mailformat">
+
+<!ENTITY recipient.label "Nogle modtagere er i adressebogen sat til kun at modtage rene tekst-meddelelser uden formatering.">
+
+<!ENTITY question.label "Skal meddelelsen konverteres til ren tekst eller sendes som HTML med formatering?">
+
+<!ENTITY plainTextAndHtml.label "Send både som ren tekst og HTML">
+<!ENTITY plainTextAndHtml.accesskey "b">
+<!ENTITY plainTextOnly.label "Send kun som ren tekst">
+<!ENTITY plainTextOnly.accesskey "t">
+<!ENTITY htmlOnly.label "Send kun som HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Send">
+<!ENTITY send.accesskey "S">

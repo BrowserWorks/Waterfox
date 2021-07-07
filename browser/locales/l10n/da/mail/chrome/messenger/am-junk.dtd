@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Spam-indstillinger">
+<!ENTITY trainingDescription.label "Hvis funktionen aktiveres, skal &brandShortName; først lære at identificere spam ved, at du benytter spam-knapperne til at markere, hvilke meddelelser som er spam og ikke-spam. Herefter vil &brandShortName; være i stand til automatisk at markere spam.">
+<!ENTITY level.label "Aktiver evalueringsfilter mod spam for denne konto">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Flyt nye spam-meddelelser til:">
+<!ENTITY move.accesskey "F">
+<!ENTITY junkFolderOn.label "Mappen Spam på:">
+<!ENTITY junkFolderOn.accesskey "S">
+<!ENTITY otherFolder.label "Anden:">
+<!ENTITY otherFolder.accesskey "n">
+<!ENTITY purge1.label "Slet automatisk spam ældre end">
+<!ENTITY purge1.accesskey "l">
+<!ENTITY purge2.label "dage">
+
+<!ENTITY whitelistHeader.label "Marker ikke meddelelser som spam, hvis afsenderen står i: ">
+<!ENTITY whitelistHeader.accesskey "i">
+
+<!ENTITY ispHeadersWarning.label "Hvis funktionen aktiveres, vil &brandShortName; automatisk behandle meddelelser, der er markeret af denne tjeneste, som spam.">
+<!ENTITY ispHeaders.label "Stol på serverevalueringer:">
+<!ENTITY ispHeaders.accesskey "t">
+
+<!ENTITY junkClassification.label "Vælg">
+<!ENTITY junkActions.label "Destination og opbevaring">
+
+<!ENTITY globalJunkPrefs.label "Globale indstillinger for spam…">
+<!ENTITY globalJunkPrefs.accesskey "G">

@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Minimalizovat">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "Zvětšit okno">
+<!ENTITY navigatorCmd.label "Prohlížeč">
+<!ENTITY navigatorCmd.accesskey "P">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Editor">
+<!ENTITY editorCmd.accesskey "E">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Chybová konzole">
+<!ENTITY errorConsoleCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Prohlížeč">
+<!ENTITY taskComposer.tooltip "Editor">
+
+<!ENTITY webDevelopment.label "Vývoj webových stránek">
+<!ENTITY webDevelopment.accesskey "w">
+
+<!ENTITY windowMenu.label "Okno">
+<!ENTITY windowMenu.accesskey "k">
+
+<!ENTITY tasksMenu.label "Nástroje">
+<!ENTITY tasksMenu.accesskey "N">
+
+<!ENTITY datamanCmd.label "Správce dat">
+<!ENTITY datamanCmd.accesskey "a">
+
+<!ENTITY passwordManagerCmd.label "Správce hesel">
+<!ENTITY passwordManagerCmd.accesskey "h">
+
+<!ENTITY passwordDisplayCmd.label "Spravovat uložená hesla">
+<!ENTITY passwordDisplayCmd.accesskey "u">
+
+<!ENTITY passwordExpireCmd.label "Odhlásit">
+<!ENTITY passwordExpireCmd.accesskey "O">
+
+<!ENTITY downloadManagerCmd.label "Správce stahování">
+<!ENTITY downloadManagerCmd.accesskey "t">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Správce doplňků">
+<!ENTITY addOnsManagerCmd.accesskey "d">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Přepnout profil…">
+<!ENTITY switchProfileCmd.accesskey "p">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Nastavit Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Synchronizovat">
+<!ENTITY syncSyncNowItem.accesskey "S">

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "사본과 폴더">
+<!ENTITY sendingPrefix.label "메시지를 보낼 때 자동으로 수행:">
+<!ENTITY fccMailFolder.label "사본 위치:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "답을 보내는 메시지 폴더에 회신 저장하기">
+<!ENTITY fccReplyFollowsParent.accesskey "R">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "다음 메일 주소를 Cc에 추가:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "쉼표로 구분하여 여러 개 입력 가능">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "다음 메일 주소를 Bcc에 추가:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "쉼표로 구분하여 여러 개 입력 가능">
+<!ENTITY saveMessageDlg.label "메시지 저장할 때 대화 상자 보이기">
+<!ENTITY saveMessageDlg.accesskey "w">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;보낸 편지함&quot;으로:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "기타 폴더 지정::">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "메시지 보관">
+<!ENTITY keepArchives.label "저장함에 보관:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "아카이브 옵션…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "아래 계정을 &quot;저장&quot; 폴더로:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "기타 폴더 지정:">
+<!ENTITY archiveInOtherFolder.accesskey "h">
+<!ENTITY specialFolders.label "초안 및 템플릿">
+<!ENTITY keepDrafts2.label "초안 메시지 유지:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;임시 편지함&quot;으로:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "기타 폴더 지정:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "템플릿 유지:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;템플릿 편지함&quot; 으로:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "기타:">
+<!ENTITY templateInOtherFolder.accesskey "e">

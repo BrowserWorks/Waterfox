@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "选择用户配置文件">
+<!ENTITY            profileManager.title "&brandShortName; 配置文件管理器">
+
+<!ENTITY            manage.label     "管理配置文件…">
+<!ENTITY            manage.accesskey "M">
+<!ENTITY            select.label     "使用此配置文件">
+
+<!ENTITY            availableProfiles.label "可用配置文件">
+
+<!ENTITY            introStart.label         "请选择列表中的配置文件并且点击 &start.label; 以访问您的以保存的消息，设置和其他个人配置信息。">
+<!ENTITY            introSwitch.label        "选择列表中的配置文件并点击 &select.label; ，即可切换至另一配置文件，以使用其中储存的消息，设置及其他个人信息。">
+<!ENTITY            profileManagerText.label "&brandShortName; 将您配置文件中的设置、首选项、书签、已保存消息以及其他用户项等信息保存至您的用户配置文件中。">
+
+<!ENTITY            autoSelect.label         "默认使用此配置文件">
+<!ENTITY            autoSelect.accesskey     "s">
+
+<!ENTITY            start.label              "启动 &brandShortName;">
+<!ENTITY            exit.label               "退出">
+
+<!ENTITY            newButton.label          "创建配置文件…">
+<!ENTITY            newButton.accesskey      "C">
+<!ENTITY            renameButton.label       "重命名配置文件…">
+<!ENTITY            renameButton.accesskey   "R">
+<!ENTITY            deleteButton.label       "删除配置文件…">
+<!ENTITY            deleteButton.accesskey   "D">
+
+<!ENTITY            offlineState.label       "脱机工作">
+<!ENTITY            offlineState.accesskey   "o">

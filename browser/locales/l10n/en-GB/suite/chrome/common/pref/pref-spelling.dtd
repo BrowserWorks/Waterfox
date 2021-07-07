@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Spelling">
+<!ENTITY generalSpelling.label                "General">
+<!ENTITY checkSpellingWhenTyping.label        "When typing, check my spelling:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "W">
+<!ENTITY dontCheckSpelling.label              "Never">
+<!ENTITY multilineCheckSpelling.label         "In multiline boxes">
+<!ENTITY alwaysCheckSpelling.label            "All boxes">
+<!ENTITY spellForMailAndNews.label            "Mail &amp; Newsgroups">
+<!ENTITY checkSpellingBeforeSend.label        "Check spelling before sending">
+<!ENTITY checkSpellingBeforeSend.accesskey    "C">
+<!ENTITY spellCheckInline.label               "Check spelling as you type">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "Language:">
+<!ENTITY languagePopup.accessKey              "L">
+<!ENTITY moreDictionaries.label               "Download more dictionaries&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "No dictionaries available.">

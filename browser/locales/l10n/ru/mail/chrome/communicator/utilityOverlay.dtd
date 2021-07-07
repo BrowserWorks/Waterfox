@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Файл">
+<!ENTITY fileMenu.accesskey        "Ф">
+<!ENTITY newMenu.label            "Создать">
+<!ENTITY newMenu.accesskey          "з">
+
+<!ENTITY editMenu.label          "Правка">
+<!ENTITY editMenu.accesskey        "П">
+<!ENTITY undoCmd.label            "Отменить">
+<!ENTITY undoCmd.accesskey          "О">
+<!ENTITY redoCmd.label            "Повторить">
+<!ENTITY redoCmd.accesskey          "р">
+<!ENTITY deleteCmd.label          "Удалить">
+<!ENTITY deleteCmd.accesskey        "У">
+<!ENTITY preferencesCmd2.label "Настройки">
+<!ENTITY preferencesCmd2.accesskey "а">
+<!ENTITY preferencesCmdUnix.label       "Настройки">
+<!ENTITY preferencesCmdUnix.accesskey     "Н">
+
+<!ENTITY customizeCmd.label "Персонализация">
+<!ENTITY customizeCmd.accesskey "я">
+
+<!ENTITY viewMenu.label          "Вид">
+<!ENTITY viewMenu.accesskey        "В">
+<!ENTITY viewToolbarsMenu.label        "Показать/скрыть">
+<!ENTITY viewToolbarsMenu.accesskey      "П">
+<!ENTITY showTaskbarCmd.label          "Строка состояния">
+<!ENTITY showTaskbarCmd.accesskey        "С">
+
+<!ENTITY closeCmd.label      "Закрыть">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "З">
+
+<!ENTITY quitApplicationCmd.label  "Выход">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "ы">
+
+<!ENTITY quitApplicationCmdUnix.label  "Выход">
+<!ENTITY quitApplicationCmdUnix.accesskey  "ы">
+
+<!ENTITY quitApplicationCmdMac.label  "Завершить &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "в">

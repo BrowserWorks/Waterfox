@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Formát odesílání">
+<!ENTITY sendMaildesc.label           "Při odesílání zpráv ve formátu HTML a jeden nebo více příjemců není podle záznamů schopen přijímat formát HTML:">
+<!ENTITY askMe.label                  "Zobrazit dotaz, co dělat (je-li zpráva ve formátu HTML)">
+<!ENTITY askMe.accesskey              "Z">
+<!ENTITY convertPlain2.label          "Převést zprávu na prostý text (může se ztratit formátování)">
+<!ENTITY convertPlain2.accesskey      "e">
+<!ENTITY sendHTML2.label              "Odeslat zprávu pouze jako HTML (může způsobit problémy při zobrazování)">
+<!ENTITY sendHTML2.accesskey          "b">
+<!ENTITY sendBoth2.label              "Odeslat zprávu jako prostý text i HTML (větší velikost)">
+<!ENTITY sendBoth2.accesskey          "O">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Domény pro zasílání ve formátu HTML a v prostém textu">
+<!ENTITY domaindesc.label             "Můžete zadat e-mailové domény (například netscape.net), o kterých víte, že mohou přijímat zprávy ve formátu HTML. Stejně tak můžete zadat i domény, které mohou přijímat pouze prostý text. Když pošlete zprávu na adresu v jedné z domén uvedených níže, bude formát zprávy automaticky upraven.">
+<!ENTITY HTMLdomaintitle.label        "Domény pro HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "H">
+<!ENTITY PlainTexttitle.label         "Domény pro prostý text">
+<!ENTITY PlainTexttitle.accesskey     "D">
+<!ENTITY AddButton.label              "Přidat…">
+<!ENTITY AddHtmlDomain.accesskey      "P">
+<!ENTITY AddPlainText.accesskey       "a">
+<!ENTITY DeleteButton.label           "Smazat">
+<!ENTITY DeleteHtmlDomain.accesskey   "S">
+<!ENTITY DeletePlainText.accesskey    "m">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Přidat doménu pro HTML">
+<!ENTITY add.htmldomain               "Název domény pro HTML:">
+<!ENTITY add.plaintexttitle           "Přidat doménu pro prostý text">
+<!ENTITY add.plaintextdomain          "Název domény pro prostý text:">
+
+<!ENTITY domainnameError.title        "Chyba názvu domény">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Název domény @string@ je neplatný a bude ignorován. Platný název musí obsahovat alespoň jeden znak '.' a další znaky po obou stranách.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Automaticky odeslat zprávu jako prostý text, pokud neobsahuje žádné významné formátování (nezávisle na ostatních volbách)">
+<!ENTITY autoDowngrade.accesskey      "r">

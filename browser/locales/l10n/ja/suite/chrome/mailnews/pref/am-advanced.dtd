@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "メール送信 (SMTP) サーバーの設定">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label	"複数の差出人情報を管理している場合、使用する送信 (SMTP) サーバーをこのリストから選択できます。[既定のサーバーを使用する] を選択すると、このリストの既定のサーバーを使用します。">
+
+<!ENTITY smtpListAdd.label  "追加...">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "編集...">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "削除">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "既定値に設定">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "選択したサーバーの詳細:">
+<!ENTITY serverDescription.label "説明: ">
+<!ENTITY serverName.label "サーバー名: ">
+<!ENTITY serverPort.label "ポート: ">
+<!ENTITY userName.label   "ユーザ名: ">
+<!ENTITY connectionSecurity.label "接続の保護: ">
+<!ENTITY authMethod.label   "認証方式: ">

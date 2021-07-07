@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "訂閱">
+<!ENTITY subscribeButton.label        "訂閱">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "取消訂閱">
+<!ENTITY unsubscribeButton.accesskey  "U">
+<!ENTITY newGroupsTab.label           "新群組">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "更新">
+<!ENTITY refreshButton.accesskey      "R">
+<!ENTITY stopButton.label             "停止">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "帳號:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "訂閱">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "訊息"> -->
+<!ENTITY namefield.label              "顯示有下列內容的項目:">
+<!ENTITY namefield.accesskey          "o">
+

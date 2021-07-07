@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Snøgglager">
+<!ENTITY pref.cache.caption              "Sett snøgglagerinnstillingar">
+<!ENTITY cachePara                       "Snøgglageret inneheld kopiar av nettstadar du besøker ofte (dersom du trykkjer «Oppdater», vil du alltid få den nyaste utgåva av nettsida).">
+<!ENTITY cacheCheck.label                "La &brandShortName; styre storleiken av snøgglageret">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "Bruk opptil">
+<!ENTITY diskCacheUpTo.accesskey         "B">
+<!ENTITY spaceMbytes                     " MB med diskplass for snøgglager.">
+<!ENTITY diskCacheFolder.label           "Snøgglagermappeplassering:">
+<!ENTITY clearDiskCache.label            "Tøm snøgglageret">
+<!ENTITY clearDiskCache.accesskey        "T">
+<!ENTITY chooseDiskCacheFolder.label     "Vel mappe…">
+<!ENTITY chooseDiskCacheFolder.accesskey "V">
+<!ENTITY diskCacheFolderExplanation      "Filer i snøgglageret vil lagrast i ei undermappe med namnet «Cache». Start &brandShortName; på nytt for at endringane skal gjelde.">
+<!ENTITY docCache.label                  "Samanlikn sida i snøgglageret med sida på nettet:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Ein gong for kvar programøkt">
+<!ENTITY checkEveryTime.label            "Kvar gong eg viser sida">
+<!ENTITY checkNever.label                "Aldri">
+<!ENTITY checkAutomatically.label        "Når sida er utdatert">
+
+<!ENTITY prefetchTitle.label             "Førehandslasting av lenkjer">
+<!ENTITY enablePrefetch.label            "Førehandsnedlast nettsider når ingenting anna vert lasta">
+<!ENTITY enablePrefetch.accesskey        "d">

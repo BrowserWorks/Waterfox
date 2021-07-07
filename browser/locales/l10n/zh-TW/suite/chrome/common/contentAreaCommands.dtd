@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "此網站不可開啟彈出型視窗 (Popup)">
+<!ENTITY popupWindowRejectCmd.accesskey "o">
+<!ENTITY popupWindowAllowCmd.label      "此網站可開啟彈出型視窗 (Popup)">
+<!ENTITY popupWindowAllowCmd.accesskey  "o">
+<!ENTITY openLinkCmdInTab.label       "用新分頁開啟鏈結">
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+<!ENTITY openLinkCmd.label            "用新視窗開啟鏈結">
+<!ENTITY openLinkCmd.accesskey        "w">
+<!ENTITY openLinkCmdInPrivateWindow.label     "用隱私視窗開啟鏈結">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "d">
+<!ENTITY openLinkInWindowCmd.label    "開啟">
+<!ENTITY openLinkInWindowCmd.accesskey "p">
+<!ENTITY openFrameCmd.label           "用新視窗開啟頁框">
+<!ENTITY openFrameCmd.accesskey       "w">
+<!ENTITY openFrameCmdInTab.label      "用新分頁開啟頁框">
+<!ENTITY openFrameCmdInTab.accesskey  "T">
+<!ENTITY keywordfield.label           "設為用關鍵字搜尋…">
+<!ENTITY keywordfield.accesskey       "K">
+<!ENTITY showOnlyThisFrameCmd.label     "只顯示本頁框">
+<!ENTITY showOnlyThisFrameCmd.accesskey "S">
+<!ENTITY goBackCmd.label              "上一頁">
+<!ENTITY goBackCmd.accesskey          "B">
+<!ENTITY goForwardCmd.label           "下一頁">
+<!ENTITY goForwardCmd.accesskey       "F">
+<!ENTITY goUpCmd.label                "上一層">
+<!ENTITY goUpCmd.accesskey            "U">
+<!ENTITY reloadCmd.label              "重新載入">
+<!ENTITY reloadCmd.accesskey          "R">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "停止">
+<!ENTITY stopCmd.accesskey            "S">
+<!ENTITY reloadFrameCmd.label         "重新載入頁框">
+<!ENTITY reloadFrameCmd.accesskey     "R">
+<!ENTITY viewPartialSourceForSelectionCmd.label "檢視選取範圍原始碼">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "檢視 MathML 原始碼">
+<!ENTITY viewPartialSourceCmd.accesskey "u">
+<!ENTITY viewPageSourceCmd.label      "檢視原始碼">
+<!ENTITY viewPageSourceCmd.accesskey  "V">
+<!ENTITY viewFrameSourceCmd.label     "檢視頁框原始碼">
+<!ENTITY viewFrameSourceCmd.accesskey "V">
+<!ENTITY viewPageInfoCmd.label        "檢視頁面資訊">
+<!ENTITY viewPageInfoCmd.accesskey    "i">
+<!ENTITY viewFrameInfoCmd.label       "檢視頁框資訊">
+<!ENTITY viewFrameInfoCmd.accesskey   "i">
+<!ENTITY fitImageCmd.label            "圖片縮放至視窗大小">
+<!ENTITY fitImageCmd.accesskey        "F">
+<!ENTITY reloadImageCmd.label         "重新載入圖片">
+<!ENTITY reloadImageCmd.accesskey     "R">
+<!ENTITY viewImageCmd.label           "檢視圖片">
+<!ENTITY viewImageCmd.accesskey       "i">
+<!ENTITY viewImageInfoCmd.label       "檢視圖片資訊">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewVideoCmd.label           "播放視訊檔案">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "檢視背景圖片">
+<!ENTITY viewBGImageCmd.accesskey     "w">
+<!ENTITY setDesktopBackgroundCmd.label     "設定桌布…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "a">
+<!ENTITY bookmarkPageCmd.label        "將本頁加入書籤…">
+<!ENTITY bookmarkPageCmd.accesskey    "m">
+<!ENTITY bookmarkLinkCmd.label        "將此鏈結加入書籤…">
+<!ENTITY bookmarkLinkCmd.accesskey    "B">
+<!ENTITY bookmarkFrameCmd.label       "將本頁框加入書籤…">
+<!ENTITY bookmarkFrameCmd.accesskey   "m">
+<!ENTITY savePageAsCmd.label          "另存新檔…">
+<!ENTITY savePageCmd.label            "儲存本頁">
+<!ENTITY savePageCmd.accesskey        "e">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "頁框另存新檔…">
+<!ENTITY saveFrameCmd.label           "儲存頁框">
+<!ENTITY saveFrameCmd.accesskey       "a">
+<!ENTITY printFrameCmd.label          "列印此頁框…">
+<!ENTITY printFrameCmd.accesskey      "P">
+<!ENTITY saveLinkAsCmd.label          "鏈結目標另存新檔…">
+<!ENTITY saveLinkCmd.label            "儲存連結目標">
+<!ENTITY saveLinkCmd.accesskey        "S">
+<!ENTITY saveImageAsCmd.label         "圖片另存新檔…">
+<!ENTITY saveImageCmd.label           "儲存圖片">
+<!ENTITY saveImageCmd.accesskey       "v">
+<!ENTITY saveVideoCmd.label           "另存視訊檔案…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "另存音訊檔案…">
+<!ENTITY saveAudioCmd.accesskey       "v">
+<!ENTITY copyLinkCmd.label            "複製鏈結網址">
+<!ENTITY copyLinkCmd.accesskey        "L">
+<!ENTITY copyImageCmd.label           "複製圖片">
+<!ENTITY copyImageCmd.accesskey       "y">
+<!ENTITY copyVideoURLCmd.label        "複製視訊檔案網址">
+<!ENTITY copyVideoURLCmd.accesskey    "L">
+<!ENTITY copyAudioURLCmd.label        "複製音訊檔案網址">
+<!ENTITY copyAudioURLCmd.accesskey    "L">
+<!ENTITY metadataCmd.label            "屬性">
+<!ENTITY metadataCmd.accesskey        "P">
+<!ENTITY copyEmailCmd.label           "複製電子郵件地址">
+<!ENTITY copyEmailCmd.accesskey       "s">
+<!ENTITY thisFrameMenu.label          "本頁框">
+<!ENTITY thisFrameMenu.accesskey      "h">
+<!ENTITY mediaPlay.label              "播放">
+<!ENTITY mediaPlay.accesskey          "P">
+<!ENTITY mediaPause.label             "暫停">
+<!ENTITY mediaPause.accesskey         "P">
+<!ENTITY mediaMute.label              "靜音">
+<!ENTITY mediaMute.accesskey          "M">
+<!ENTITY mediaUnmute.label            "取消靜音">
+<!ENTITY mediaUnmute.accesskey        "m">
+<!ENTITY mediaPlaybackRate.label        "播放速度">
+<!ENTITY mediaPlaybackRate.accesskey    "b">
+<!ENTITY mediaPlaybackRate050.label     "慢動作 (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "S">
+<!ENTITY mediaPlaybackRate100.label     "一般速度">
+<!ENTITY mediaPlaybackRate100.accesskey "N">
+<!ENTITY mediaPlaybackRate125.label     "快速 (1¼×)">
+<!ENTITY mediaPlaybackRate125.accesskey "F">
+<!ENTITY mediaPlaybackRate150.label     "高速 (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "H">
+<!ENTITY mediaPlaybackRate200.label     "兩倍速">
+<!ENTITY mediaPlaybackRate200.accesskey "D">
+<!ENTITY mediaLoop.label              "循環播放">
+<!ENTITY mediaLoop.accesskey          "o">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "顯示媒體控制元件">
+<!ENTITY mediaShowControls.accesskey  "a">
+<!ENTITY mediaHideControls.label      "隱藏媒體控制元件">
+<!ENTITY mediaHideControls.accesskey  "a">
+<!ENTITY videoFullScreen.label        "全螢幕">
+<!ENTITY videoFullScreen.accesskey    "F">
+<!ENTITY videoSaveImage.label         "另存快照為…">
+<!ENTITY videoSaveImage.accesskey     "S">
+<!ENTITY videoShowStats.label         "顯示統計資訊">
+<!ENTITY videoShowStats.accesskey     "t">
+<!ENTITY videoHideStats.label         "隱藏統計資訊">
+<!ENTITY videoHideStats.accesskey     "t">
+<!ENTITY search.accesskey             "W">
+<!ENTITY bidiSwitchPageDirectionItem.label        "切換頁面方向">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "g">
+<!ENTITY bidiSwitchTextDirectionItem.label        "改變文字方向">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "x">
+<!ENTITY spellAddToDictionary.label     "新增到字典">
+<!ENTITY spellAddToDictionary.accesskey "n">
+<!ENTITY spellUndoAddToDictionary.label      "還原新增到字典">
+<!ENTITY spellUndoAddToDictionary.accesskey  "i">
+<!ENTITY spellIgnoreWord.label          "忽略單字">
+<!ENTITY spellIgnoreWord.accesskey      "W">
+<!ENTITY spellCheckEnable.label         "檢查拼字">
+<!ENTITY spellCheckEnable.accesskey     "S">
+<!ENTITY spellNoSuggestions.label       "(無拼字建議)">
+<!ENTITY spellDictionaries.label        "語言">
+<!ENTITY spellDictionaries.accesskey    "L">
+<!ENTITY spellAddDictionaries.label     "下載其它字典">
+<!ENTITY spellAddDictionaries.accesskey "D">
+
+<!ENTITY fillLoginMenu.label          "填入登入資訊">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "填入密碼">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "填入帳號">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "（無登入建議）">
+<!ENTITY viewSavedLogins.label        "檢視已存的登入資訊">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "檢測元素">
+<!ENTITY devtoolsInspect.accesskey      "n">

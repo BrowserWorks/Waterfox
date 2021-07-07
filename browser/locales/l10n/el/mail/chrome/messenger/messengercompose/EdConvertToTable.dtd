@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Μετατροπή σε πίνακα">
+<!ENTITY instructions1.label   "Το εργαλείο σύνταξης δημιουργεί νέα σειρά πίνακα για κάθε παράγραφο στην επιλογή.">
+<!ENTITY instructions2.label   "Επιλέξτε το χαρακτήρα που θα χωρίζει την επιλογή σε στήλες:">
+<!ENTITY commaRadio.label      "Κόμμα">
+<!ENTITY spaceRadio.label      "Διάστημα">
+<!ENTITY otherRadio.label      "Άλλος χαρακτήρας:">
+<!ENTITY deleteCharCheck.label "Διαγραφή διαχωριστικού χαρακτήρα">
+<!ENTITY collapseSpaces.label  "Παράβλεψη επιπλέον κενών">
+<!ENTITY collapseSpaces.tooltip "Μετατροπή συνεχόμενων κενών σε ένα διαχωριστικό">

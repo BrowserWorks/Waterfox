@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Lecture">
+<!ENTITY playButton.pauseLabel "Pause">
+<!ENTITY muteButton.muteLabel "Muet">
+<!ENTITY muteButton.unmuteLabel "Audible">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Plein écran">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Sortie du mode plein écran">
+<!ENTITY castingButton.castingLabel "Diffuser sur l’écran">
+<!ENTITY closedCaption.off "Désactivés">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Curseur de volume">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Incrustation vidéo">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Regarder en mode incrustation">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Gardez un œil sur des vidéos au premier plan tout en faisant autre chose dans &brandShortName;">
+
+<!ENTITY error.aborted "Chargement de la vidéo arrêté.">
+<!ENTITY error.network "La lecture de la vidéo a été interrompue à cause d’une erreur de réseau.">
+<!ENTITY error.decode "La vidéo ne peut être visionnée car le fichier est corrompu.">
+<!ENTITY error.srcNotSupported "Le format vidéo ou le type MIME n’est pas géré.">
+<!ENTITY error.noSource2 "Aucune vidéo dont le format ou le type MIME est géré n’a été trouvée.">
+<!ENTITY error.generic "La lecture de la vidéo a été interrompue à cause d’une erreur inconnue.">
+
+<!ENTITY status.pictureInPicture "Cette vidéo est en cours de lecture en mode incrustation.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

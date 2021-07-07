@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "快取">
+<!ENTITY pref.cache.caption              "快取選項">
+<!ENTITY cachePara                       "快取會把常看的網頁存入您的硬碟以加速瀏覽。（按下「重新載入」按鈕可以顯示網頁最新的內容。）">
+<!ENTITY cacheCheck.label                "讓 &brandShortName; 管理我的快取大小">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "最多使用">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB 的快取資料">
+<!ENTITY diskCacheFolder.label           "磁碟快取檔案夾:">
+<!ENTITY clearDiskCache.label            "清除快取">
+<!ENTITY clearDiskCache.accesskey        "C">
+<!ENTITY chooseDiskCacheFolder.label     "選擇資料夾…">
+<!ENTITY chooseDiskCacheFolder.accesskey "F">
+<!ENTITY diskCacheFolderExplanation      "快取空間的檔案會被存在 &quot;Cache&quot; 目錄。請重新執行 &brandShortName; 以使用新設定值。">
+<!ENTITY docCache.label                  "比較快取中的文件和網路上的文件:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "只在開啟瀏覽器時才檢查一次">
+<!ENTITY checkEveryTime.label            "每次都檢查">
+<!ENTITY checkNever.label                "從不">
+<!ENTITY checkAutomatically.label        "當此頁面過期時">
+
+<!ENTITY prefetchTitle.label             "鏈結預讀 (Prefetch)">
+<!ENTITY enablePrefetch.label            "在沒事時預先抓網頁，所以設計為要預抓(prefetch)的網頁可以快速載入。">
+<!ENTITY enablePrefetch.accesskey        "p">
+
+<!ENTITY debugCache.label                "除錯">
+<!ENTITY debugEnableMemCache.label       "開啟記憶體快取">
+<!ENTITY debugEnableMemCache.accesskey   "E">
+<!ENTITY debugEnableDiskCache.label      "開啟磁碟快取">
+<!ENTITY debugEnableDiskCache.accesskey  "D">
