@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Προσθήκη στο λεξικό">
+<!ENTITY spellAddToDictionary.accesskey "θ">
+<!ENTITY spellUndoAddToDictionary.label "Αναίρεση προσθήκης στο λεξικό">
+<!ENTITY spellUndoAddToDictionary.accesskey "ν">
+<!ENTITY spellCheckToggle.label "Ορθογραφικός έλεγχος">
+<!ENTITY spellCheckToggle.accesskey "θ">
+<!ENTITY spellNoSuggestions.label "(Καμία πρόταση ορθογραφίας)">
+<!ENTITY spellDictionaries.label "Γλώσσες">
+<!ENTITY spellDictionaries.accesskey "λ">
+
+<!ENTITY searchTextBox.clear.label "Απαλοιφή">

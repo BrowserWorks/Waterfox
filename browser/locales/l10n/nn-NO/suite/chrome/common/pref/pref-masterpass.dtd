@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Hovudpassord">
+
+<!ENTITY  changepassword.caption                 "Endre hovudpassord">
+<!ENTITY  changepassword.text                    "Hovudpassordet vernar sensitiv informasjon somt.d. nettsidepassord og sertifikat.">
+<!ENTITY  changepassword.button                  "Endre passord…">
+<!ENTITY  changepassword.accesskey               "E">
+
+<!ENTITY  resetpassword.caption                  "Tilbakestill hovudpassord">
+<!ENTITY  resetpassword.text                     "Dersom du tilbakestiller hovudpassordet vil alle lagra nettside- og e-postpassord, skjemadata, personlege sertifikat og private nyklar gå tapt.">
+<!ENTITY  resetpassword.button                   "Tilbakestill passord">
+<!ENTITY  resetpassword.accesskey                "T">

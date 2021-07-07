@@ -1,0 +1,165 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY navbarOverflow.label                "Alat lainnya…">
+
+<!-- Tab context menu -->
+
+<!ENTITY  listAllTabs.label      "Daftar tab">
+
+<!ENTITY tabCmd.label "Tab Baru">
+<!ENTITY openFileCmd.label "Buka Berkas…">
+<!ENTITY printCmd.label "Cetak…">
+
+<!ENTITY menubarCmd.label "Bilah Menu">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigasi">
+
+<!ENTITY fullScreenCmd.label "Layar Penuh">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Sembunyikan Sakelar Gambar-dalam-Gambar">
+<!ENTITY pictureInPictureHideToggle.accesskey "S">
+
+
+<!ENTITY fxa.menu.signin.label "Masuk ke &brandProductName;">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Kirim tab secara instan ke perangkat apa pun tempat Anda masuk.">
+
+<!ENTITY printButton.label            "Cetak">
+<!ENTITY printButton.tooltip          "Cetak laman ini">
+
+
+<!ENTITY searchItem.title             "Cari">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Beranda">
+<!ENTITY homeButton.defaultPage.tooltip "Beranda &brandShortName;">
+
+<!ENTITY historyButton.label            "Riwayat">
+
+<!ENTITY downloads.label              "Unduhan">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Unduhan">
+
+<!ENTITY webDeveloperMenu.label       "Pengembang Web">
+
+<!ENTITY newNavigatorCmd.label        "Jendela Baru">
+<!ENTITY newPrivateWindow.label     "Jendela Mode Pribadi Baru">
+
+<!ENTITY editMenu.label         "Edit">
+<!ENTITY preferencesCmd2.label       "Pengaturan…">
+<!ENTITY preferencesCmdUnix.label       "Pengaturan">
+<!ENTITY logins.label                           "Info Masuk dan Sandi">
+
+<!ENTITY overflowCustomizeToolbar.label       "Ubahsuai Bilah Alat…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "U">
+
+<!ENTITY historyMenu.label "Riwayat">
+
+<!ENTITY appMenuHelp.label "Bantuan">
+
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Tak ada tab terbuka">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Tampilkan lebih banyak dari perangkat ini">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Tampilkan Semua">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Tampilkan semua tab dari perangkat ini">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Aktifkan sinkronisasi tab untuk melihat daftar tab dari perangkat Anda lainnya.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Ingin melihat tab dari perangkat Anda yang lain di sini?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Buka Pengaturan Sinkronisasi">
+<!ENTITY appMenuRemoteTabs.welcome.label "Lihat daftar tab dari perangkat Anda lainnya.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Akun Anda perlu diverifikasi.">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Sambungkan Perangkat Lainnya">
+
+<!ENTITY customizeMenu.addToToolbar.label "Tambahkan ke Bilah Alat">
+<!ENTITY customizeMenu.addToToolbar.accesskey "T">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Tambahkan ke Menu Luapan">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Lepaskan dari Menu Luapan">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "L">
+<!ENTITY customizeMenu.addMoreItems.label "Tambahkan Item Lainnya…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "T">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Lebih banyak">
+
+<!ENTITY contentSearchSubmit.tooltip  "Kirim penelusuran">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Cari">
+<!ENTITY searchIcon.tooltip           "Cari">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Perbesaran">
+
+<!ENTITY sidebarCloseButton.tooltip     "Tutup bilah samping">
+
+<!ENTITY allowPopups.accesskey "i">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Ubah Pengaturan Pemblokir Pop-up…">
+<!ENTITY editPopupSettings.label "Ubah Pengaturan Pemblokir Pop-up…">
+<!ENTITY editPopupSettings.accesskey "o">
+<!ENTITY dontShowMessage.accesskey "J">
+
+<!ENTITY findOnCmd.label     "Cari di Laman Ini…">
+
+<!ENTITY spellAddDictionaries.label "Tambah Kamus…">
+<!ENTITY spellAddDictionaries.accesskey "T">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Tab peramban">
+
+
+<!ENTITY uiTour.infoPanel.close "Tutup">
+
+<!ENTITY panicButton.thankyou.msg1                "Riwayat terakhir Anda telah dibersihkan.">
+<!ENTITY panicButton.thankyou.msg2                "Hati-hati dalam Menjelajah!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Trims!">
+
+<!ENTITY sendToDevice.syncNotReady.label "Menyinkronkan Peranti…">
+
+<!ENTITY libraryButton.tooltip "Lihat riwayat, markah tersimpan, dan lainnya">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Fitur Aksesibilitas Aktif">

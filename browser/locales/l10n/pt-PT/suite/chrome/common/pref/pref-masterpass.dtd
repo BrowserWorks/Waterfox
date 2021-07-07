@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Palavras-passe mestras">
+
+<!ENTITY  changepassword.caption                 "Alterar palavra-passe mestra">
+<!ENTITY  changepassword.text                    "A sua palavra-passe mestra protege informação sensível tal como palavra-passe web e certificados.">
+<!ENTITY  changepassword.button                  "Alterar palavra-passe…">
+<!ENTITY  changepassword.accesskey               "l">
+
+<!ENTITY  resetpassword.caption                  "Repor palavra-passe mestra">
+<!ENTITY  resetpassword.text                     "Se remover a sua palavra-passe mestra, todos os seus dados guardados tais como palavras-passe da web ou correio eletrónico, dados de formulários, certificados pessoais e chaves privadas serão perdidos.">
+<!ENTITY  resetpassword.button                   "Repor palavra-passe">
+<!ENTITY  resetpassword.accesskey                "R">
