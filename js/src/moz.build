@@ -111,6 +111,7 @@ DIRS += [
     'jit',
     'perf',
     'proxy',
+    'threading',
 ]
 
 if CONFIG['JS_BUNDLED_EDITLINE']:
@@ -140,8 +141,6 @@ UNIFIED_SOURCES += [
     'jsscript.cpp',
     'jsstr.cpp',
     'jsweakmap.cpp',
-    'threading/Mutex.cpp',
-    'threading/ProtectedData.cpp',
     'vm/ArgumentsObject.cpp',
     'vm/ArrayBufferObject.cpp',
     'vm/AsyncFunction.cpp',
@@ -256,17 +255,6 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
         'vm/TraceLogging.cpp',
         'vm/TraceLoggingGraph.cpp',
         'vm/TraceLoggingTypes.cpp',
-    ]
-
-if CONFIG['OS_ARCH'] == 'WINNT':
-    UNIFIED_SOURCES += [
-        'threading/windows/CpuCount.cpp',
-        'threading/windows/Thread.cpp',
-    ]
-else:
-    UNIFIED_SOURCES += [
-        'threading/posix/CpuCount.cpp',
-        'threading/posix/Thread.cpp',
     ]
 
 if CONFIG['JS_HAS_CTYPES']:
