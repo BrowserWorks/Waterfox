@@ -6,13 +6,7 @@
 
 include('js-config.mozbuild')
 include('js-cxxflags.mozbuild')
-
-# Directory metadata
-component_engine = ('Core', 'JavaScript Engine')
-component_gc     = ('Core', 'JavaScript: GC')
-component_intl   = ('Core', 'JavaScript: Internationalization API')
-component_jit    = ('Core', 'JavaScript Engine: JIT')
-component_stl    = ('Core', 'JavaScript: Standard Library')
+include('js-testing.mozbuild')
 
 FILES_PER_UNIFIED_FILE = 6
 
@@ -21,42 +15,11 @@ DIRS += [
     'devtools',
 ]
 
-with Files('*'):
-    BUG_COMPONENT = component_engine
-
-with Files('wasm/**'):
-    BUG_COMPONENT = component_jit
-with Files('builtin/**'):
-    BUG_COMPONENT = component_stl
-with Files('ctypes/**'):
-    BUG_COMPONENT = ('Core', 'js-ctypes')
-with Files('gc/**'):
-    BUG_COMPONENT = component_gc
-with Files('jit/**'):
-    BUG_COMPONENT = component_jit
-
-# File-specific metadata
-for gcfile in ['jsgc*', 'devtools/rootAnalysis', 'devtools/gc-ubench', 'devtools/gctrace']:
-    with Files(gcfile):
-        BUG_COMPONENT = component_gc
-
-for stlfile in ['jsarray.*', 'jsbool*', 'jsdate.*', 'jsnum.*', 'json.*', 'jsstr.*']:
-    with Files(stlfile):
-        BUG_COMPONENT = component_stl
-
-with Files('builtin/Intl*'):
-    BUG_COMPONENT = component_intl
-with Files('builtin/make_intl_data.py'):
-    BUG_COMPONENT = component_intl
-
-
 if CONFIG['JS_BUNDLED_EDITLINE']:
     DIRS += ['editline']
 
 if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']
-
-TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']
 
 CONFIGURE_DEFINE_FILES += [
     'js-confdefs.h',
