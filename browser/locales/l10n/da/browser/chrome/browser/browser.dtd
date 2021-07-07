@@ -1,0 +1,165 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY navbarOverflow.label                "Flere værktøjer…">
+
+<!-- Tab context menu -->
+
+<!ENTITY  listAllTabs.label      "List alle faneblade">
+
+<!ENTITY tabCmd.label "Nyt faneblad">
+<!ENTITY openFileCmd.label "Åbn fil…">
+<!ENTITY printCmd.label "Udskriv…">
+
+<!ENTITY menubarCmd.label "Menulinje">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigation">
+
+<!ENTITY fullScreenCmd.label "Fuld skærm">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Skjul kontakt for billed-i-billed">
+<!ENTITY pictureInPictureHideToggle.accesskey "S">
+
+
+<!ENTITY fxa.menu.signin.label "Log ind på &brandProductName;">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Send hurtigt og nemt faneblade til andre enheder, du er logget ind på.">
+
+<!ENTITY printButton.label            "Udskriv">
+<!ENTITY printButton.tooltip          "Udskriv denne side">
+
+
+<!ENTITY searchItem.title             "Søgefelt">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Hjem">
+<!ENTITY homeButton.defaultPage.tooltip "Startside for &brandShortName;">
+
+<!ENTITY historyButton.label            "Historik">
+
+<!ENTITY downloads.label              "Filhentning">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Filhentning">
+
+<!ENTITY webDeveloperMenu.label       "Webudvikler">
+
+<!ENTITY newNavigatorCmd.label        "Nyt vindue">
+<!ENTITY newPrivateWindow.label     "Nyt privat vindue">
+
+<!ENTITY editMenu.label         "Rediger">
+<!ENTITY preferencesCmd2.label       "Indstillinger">
+<!ENTITY preferencesCmdUnix.label       "Indstillinger">
+<!ENTITY logins.label                           "Logins og adgangskoder">
+
+<!ENTITY overflowCustomizeToolbar.label       "Tilpas værktøjslinje…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "T">
+
+<!ENTITY historyMenu.label "Historik">
+
+<!ENTITY appMenuHelp.label "Hjælp">
+
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Ingen åbne faneblade">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Vis flere faneblade fra denne enhed">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Vis alle">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Vis alle faneblade fra denne enhed">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Aktivér synkronisering af faneblade for at få vist faneblade, som er åbne på dine andre enheder.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Vil du se dine faneblade fra andre enheder her?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Åbn indstillinger for Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "Se en liste med faneblade fra dine andre enheder.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Din konto skal bekræftes.">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Opret forbindelse til en ny enhed">
+
+<!ENTITY customizeMenu.addToToolbar.label "Føj til værktøjslinje">
+<!ENTITY customizeMenu.addToToolbar.accesskey "v">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Føj til &gt;&gt;-menuen">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "F">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Fjern fra &gt;&gt;-menuen">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "r">
+<!ENTITY customizeMenu.addMoreItems.label "Tilføj flere elementer…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "T">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Mere">
+
+<!ENTITY contentSearchSubmit.tooltip    "Søg">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Søg">
+<!ENTITY searchIcon.tooltip           "Søg">
+
+<!ENTITY openLinkCmdInTab.accesskey   "f">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Zoom">
+
+<!ENTITY sidebarCloseButton.tooltip     "Luk sidepanel">
+
+<!ENTITY allowPopups.accesskey "T">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Rediger indstillinger for blokering af pop op-vinduer…">
+<!ENTITY editPopupSettings.label "Rediger indstillinger for blokering af pop op-vinduer…">
+<!ENTITY editPopupSettings.accesskey "R">
+<!ENTITY dontShowMessage.accesskey "V">
+
+<!ENTITY findOnCmd.label     "Find på denne side…">
+
+<!ENTITY spellAddDictionaries.label "Tilføj ordbøger…">
+<!ENTITY spellAddDictionaries.accesskey "o">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Faneblade">
+
+
+<!ENTITY uiTour.infoPanel.close "Luk">
+
+<!ENTITY panicButton.thankyou.msg1                "Din seneste historik er ryddet.">
+<!ENTITY panicButton.thankyou.msg2                "Sikker surfing!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Tak!">
+
+<!ENTITY sendToDevice.syncNotReady.label "Synkroniserer enheder…">
+
+<!ENTITY libraryButton.tooltip "Se historik, gemte bogmærker og andet">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Tilgængelighedsfunktioner er aktiveret">

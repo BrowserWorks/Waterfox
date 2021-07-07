@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title     "Nätverksredigerare">
+<!ENTITY networksEditDialog.size      "width: 75ch; height: 28em;">
+
+<!ENTITY restoreButton.label          "Återställ standardvärden">
+<!ENTITY restoreButton.accesskey      "s">
+
+<!ENTITY networkListAdd.label         "Lägg till nätverk…">
+<!ENTITY networkListAdd.accesskey     "L">
+<!ENTITY networkListAdd.tooltip       "Lägg till ett nytt nätverk">
+<!ENTITY networkListEdit.label        "Redigera nätverk…">
+<!ENTITY networkListEdit.accesskey    "R">
+<!ENTITY networkListEdit.tooltip      "Redigera det valda nätverket">
+<!ENTITY networkListRemove.label      "Ta bort nätverk">
+<!ENTITY networkListRemove.accesskey  "T">
+<!ENTITY networkListRemove.tooltip    "Ta bort det valda nätverket">
+
+<!ENTITY serverListUp.label           "Flytta upp">
+<!ENTITY serverListUp.accesskey       "U">
+<!ENTITY serverListUp.tooltip         "Flytta den valda servern uppåt i listan">
+<!ENTITY serverListDown.label         "Flytta ner">
+<!ENTITY serverListDown.accesskey     "n">
+<!ENTITY serverListDown.tooltip       "Flytta den valda servern nedåt i listan">
+<!ENTITY serverListAdd.label          "Lägg till server…">
+<!ENTITY serverListAdd.accesskey      "L">
+<!ENTITY serverListAdd.tooltip        "Lägg till en ny server">
+<!ENTITY serverListEdit.label         "Redigera server…">
+<!ENTITY serverListEdit.accesskey     "R">
+<!ENTITY serverListEdit.tooltip       "Redigera vald server">
+<!ENTITY serverListRemove.label       "Ta bort server">
+<!ENTITY serverListRemove.accesskey   "T">
+<!ENTITY serverListRemove.tooltip     "Ta bort den valda servern">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label          "Detaljer för den valda servern:">
+<!ENTITY serverName.label             "Server:">
+<!ENTITY serverName.accesskey         "S">
+<!ENTITY serverPort.label             "Port:">
+<!ENTITY serverPort.accesskey         "P">
+<!ENTITY connectionSecurity.label     "Anslutningssäkerhet:">
+<!ENTITY connectionSecurity.accesskey "n">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title       "IRC-server">
+<!ENTITY settings.caption             "Inställningar">
+<!ENTITY security.caption             "Säkerhet">
+<!ENTITY serverPortDefault.label      "Standard:">

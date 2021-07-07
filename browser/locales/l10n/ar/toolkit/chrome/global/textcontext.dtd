@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "أضِف إلى القاموس">
+<!ENTITY spellAddToDictionary.accesskey "ف">
+<!ENTITY spellUndoAddToDictionary.label "تراجع عن الإضافة إلى القاموس">
+<!ENTITY spellUndoAddToDictionary.accesskey "ت">
+<!ENTITY spellCheckToggle.label "دقق الإملاء">
+<!ENTITY spellCheckToggle.accesskey "م">
+<!ENTITY spellNoSuggestions.label "(لا اقتراحات إملاء)">
+<!ENTITY spellDictionaries.label "اللغات">
+<!ENTITY spellDictionaries.accesskey "غ">
+
+<!ENTITY searchTextBox.clear.label "امسح">
+
