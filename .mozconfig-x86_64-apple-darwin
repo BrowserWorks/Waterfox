@@ -1,0 +1,31 @@
+# Targetting x64 builds
+
+X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
+
+ac_add_options --disable-crashreporter
+ac_add_options --disable-debug
+ac_add_options --disable-dmd
+ac_add_options --disable-geckodriver
+ac_add_options --disable-jprof
+ac_add_options --disable-profiling
+ac_add_options --disable-tests
+ac_add_options --disable-trace-logging
+ac_add_options --disable-verify-mar
+ac_add_options --disable-updater
+
+ac_add_options --enable-application=browser
+ac_add_options --enable-lto
+ac_add_options --enable-optimize="-O3 -march=core2 -mtune=haswell -w"
+ac_add_options --enable-rust-simd
+
+ac_add_options --target=x86_64-apple-darwin
+
+ac_add_options --with-branding=browser/branding/dokimi
+ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
+
+if test -f "$HOME/.mozbuild/sccache/sccache"; then
+	ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
+fi
+
+mk_add_options AUTOCLOBBER=1
+mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
