@@ -1,0 +1,154 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY navbarOverflow.label                "Outils supplémentaires…">
+
+<!-- Tab context menu -->
+
+<!ENTITY  listAllTabs.label      "Lister tous les onglets">
+
+<!ENTITY tabCmd.label "Nouvel onglet">
+<!ENTITY openFileCmd.label "Ouvrir un fichier…">
+<!ENTITY printCmd.label "Imprimer…">
+
+<!ENTITY menubarCmd.label "Barre de menus">
+<!ENTITY menubarCmd.accesskey "m">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigation">
+
+<!ENTITY fullScreenCmd.label "Plein écran">
+
+<!ENTITY pictureInPictureHideToggle.label "Masquer le bouton pour l’incrustation vidéo">
+<!ENTITY pictureInPictureHideToggle.accesskey "M">
+
+
+<!ENTITY fxa.menu.signin.label "Se connecter à &brandProductName;">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Envoyez instantanément un onglet sur n’importe quel appareil où vous êtes connecté·e.">
+
+<!ENTITY printButton.label            "Imprimer">
+<!ENTITY printButton.tooltip          "Imprimer cette page">
+
+<!ENTITY searchItem.title             "Rechercher">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Accueil">
+<!ENTITY homeButton.defaultPage.tooltip "Page d’accueil de &brandShortName;">
+
+<!ENTITY historyButton.label            "Historique">
+
+<!ENTITY downloads.label              "Téléchargements">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Téléchargements">
+
+<!ENTITY webDeveloperMenu.label       "Développement web">
+
+<!ENTITY newNavigatorCmd.label        "Nouvelle fenêtre">
+<!ENTITY newPrivateWindow.label     "Nouvelle fenêtre privée">
+
+<!ENTITY editMenu.label         "Édition">
+<!ENTITY preferencesCmd2.label       "Options">
+<!ENTITY preferencesCmdUnix.label       "Préférences">
+<!ENTITY logins.label                           "Identifiants et mots de passe">
+
+<!ENTITY overflowCustomizeToolbar.label       "Personnaliser la barre d’outils…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Historique">
+
+<!ENTITY appMenuHelp.label "Aide">
+
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Aucun onglet ouvert">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Afficher plus d’onglets de cet appareil">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Afficher tous les onglets">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Afficher tous les onglets de cet appareil">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Activez la synchronisation des onglets pour afficher la liste des onglets de vos autres appareils.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Vous souhaitez afficher ici les onglets de vos autres appareils ?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Ouvrir les préférences de synchronisation">
+<!ENTITY appMenuRemoteTabs.welcome.label "Afficher la liste des onglets de vos autres appareils.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Votre compte doit être vérifié.">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Connecter un autre appareil">
+
+<!ENTITY customizeMenu.addToToolbar.label "Ajouter à la barre d’outils">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Ajouter au menu de dépassement">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Retirer du menu de dépassement">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "Ajouter plus d’éléments…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Plus">
+
+<!ENTITY contentSearchSubmit.tooltip  "Lancer la recherche">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Rechercher">
+<!ENTITY searchIcon.tooltip           "Rechercher">
+
+<!ENTITY openLinkCmdInTab.accesskey   "u">
+
+<!ENTITY fullZoom.label                 "Zoom">
+
+<!ENTITY sidebarCloseButton.tooltip     "Fermer le panneau latéral">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Modifier les préférences de blocage de popups…">
+<!ENTITY editPopupSettings.label "Modifier les options de blocage de popups…">
+<!ENTITY editPopupSettings.accesskey "e">
+<!ENTITY dontShowMessage.accesskey "u">
+
+<!ENTITY findOnCmd.label     "Rechercher dans la page…">
+
+<!ENTITY spellAddDictionaries.label "Ajouter des dictionnaires…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Onglets du navigateur">
+
+
+<!ENTITY uiTour.infoPanel.close "Fermer">
+
+<!ENTITY panicButton.thankyou.msg1                "Votre historique récent a été correctement effacé.">
+<!ENTITY panicButton.thankyou.msg2                "Bonne navigation !">
+<!ENTITY panicButton.thankyou.buttonlabel         "Fermer">
+
+<!ENTITY sendToDevice.syncNotReady.label "Synchronisation des appareils…">
+
+<!ENTITY libraryButton.tooltip "Consulter l’historique, les marque-pages enregistrés et plus encore">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Fonctionnalités d’accessibilité activées">

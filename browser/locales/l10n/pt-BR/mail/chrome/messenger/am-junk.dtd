@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Configurações de correio indesejado">
+<!ENTITY trainingDescription.label "Se for ativado, primeiro você deve treinar o &brandShortName; para identificar mensagens indesejadas usando o botão na barra de ferramentas para marcar spam. Você precisa identificar mensagens legítimas e mensagens de spam. Depois disso, o &brandShortName; conseguirá marcar spam automaticamente.">
+<!ENTITY level.label "Ativar controles adaptativos de lixo eletrônico nesta conta">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Mover novas mensagens de spam para:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "Pasta &quot;Spam&quot; em:">
+<!ENTITY junkFolderOn.accesskey "P">
+<!ENTITY otherFolder.label "Outra:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Excluir automaticamente spam com mais de">
+<!ENTITY purge1.accesskey "E">
+<!ENTITY purge2.label "dias">
+
+<!ENTITY whitelistHeader.label "Não marcar automaticamente mensagens como spam se o remetente estiver em: ">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "Se ativado, o &brandShortName; considera como spam automaticamente mensagens marcadas por este classificador externo.">
+<!ENTITY ispHeaders.label "Confiar em cabeçalhos de spam definidos por: ">
+<!ENTITY ispHeaders.accesskey "o">
+
+<!ENTITY junkClassification.label "Seleção">
+<!ENTITY junkActions.label "Destino e retenção">
+
+<!ENTITY globalJunkPrefs.label "Preferências globais de Spam…">
+<!ENTITY globalJunkPrefs.accesskey "S">

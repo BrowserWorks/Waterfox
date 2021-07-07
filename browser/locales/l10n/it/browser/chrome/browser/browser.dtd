@@ -1,0 +1,119 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY navbarOverflow.label "Altri strumenti…">
+
+<!-- Tab context menu -->
+
+<!ENTITY listAllTabs.label "Elenco di tutte le schede">
+
+<!ENTITY tabCmd.label "Nuova scheda">
+<!ENTITY openFileCmd.label "Apri file…">
+<!ENTITY printCmd.label "Stampa…">
+
+<!ENTITY menubarCmd.label "Barra dei menu">
+<!ENTITY menubarCmd.accesskey "m">
+<!ENTITY navbar.accessibleLabel "Navigazione">
+
+<!ENTITY fullScreenCmd.label "Schermo intero">
+
+<!ENTITY pictureInPictureHideToggle.label "Nascondi selettore Picture-in-Picture">
+<!ENTITY pictureInPictureHideToggle.accesskey "N">
+
+
+<!ENTITY fxa.menu.signin.label "Accedi a &brandProductName;">
+
+<!ENTITY fxa.service.sendTab.description "Invia immediatamente una scheda a qualsiasi dispositivo connesso al tuo account.">
+
+<!ENTITY printButton.label "Stampa">
+<!ENTITY printButton.tooltip "Stampa questa pagina">
+
+<!ENTITY searchItem.title "Cerca">
+
+<!ENTITY homeButton.label "Pagina iniziale">
+<!ENTITY homeButton.defaultPage.tooltip "Pagina iniziale di &brandShortName;">
+
+<!ENTITY historyButton.label "Cronologia">
+
+<!ENTITY downloads.label "Download">
+<!ENTITY libraryDownloads.label "Download">
+
+<!ENTITY webDeveloperMenu.label "Sviluppo web">
+
+<!ENTITY newNavigatorCmd.label "Nuova finestra">
+<!ENTITY newPrivateWindow.label "Nuova finestra anonima">
+
+<!ENTITY editMenu.label "Modifica">
+<!ENTITY preferencesCmd2.label "Opzioni">
+<!ENTITY preferencesCmdUnix.label "Preferenze">
+<!ENTITY logins.label "Credenziali e password">
+
+<!ENTITY overflowCustomizeToolbar.label "Personalizza barra degli strumenti…">
+<!ENTITY overflowCustomizeToolbar.accesskey "z">
+
+<!ENTITY historyMenu.label "Cronologia">
+
+<!ENTITY appMenuHelp.label "Aiuto">
+
+<!ENTITY appMenuRemoteTabs.notabs.label "Nessuna scheda aperta">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Visualizza altre schede da questo dispositivo">
+<!ENTITY appMenuRemoteTabs.showAll.label "Visualizza tutte">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Visualizza tutte le schede da questo dispositivo">
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Attiva la sincronizzazione delle schede per visualizzare le schede disponibili negli altri dispositivi.">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Come fare per visualizzare in questa sezione le schede da altri dispositivi?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Apri preferenze Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "Visualizza un elenco delle schede aperte in altri dispositivi.">
+<!ENTITY appMenuRemoteTabs.unverified.label "L’account non è ancora stato verificato.">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Connetti un altro dispositivo">
+
+<!ENTITY customizeMenu.addToToolbar.label "Aggiungi alla barra degli strumenti">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!ENTITY customizeMenu.addToOverflowMenu.label "Aggiungi al menu extra">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "x">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Rimuovi dal menu extra">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "x">
+<!ENTITY customizeMenu.addMoreItems.label "Aggiungi altri elementi…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!ENTITY moreMenu.label "Altro">
+
+<!ENTITY contentSearchSubmit.tooltip "Avvia ricerca">
+
+<!ENTITY searchInput.placeholder "Cerca">
+<!ENTITY searchIcon.tooltip "Cerca">
+
+<!ENTITY openLinkCmdInTab.accesskey "s">
+
+<!ENTITY fullZoom.label "Zoom">
+
+<!ENTITY sidebarCloseButton.tooltip "Chiudi la barra laterale">
+
+<!ENTITY allowPopups.accesskey "P">
+<!ENTITY editPopupSettingsUnix.label "Modifica le preferenze per le finestre pop-up…">
+<!ENTITY editPopupSettings.label "Modifica le opzioni di blocco finestre pop-up…">
+<!ENTITY editPopupSettings.accesskey "M">
+<!ENTITY dontShowMessage.accesskey "N">
+
+<!ENTITY findOnCmd.label "Trova in questa pagina…">
+
+<!ENTITY spellAddDictionaries.label "Aggiungi dizionari…">
+<!ENTITY spellAddDictionaries.accesskey "z">
+
+<!ENTITY tabsToolbar.label "Schede del browser">
+
+
+<!ENTITY uiTour.infoPanel.close "Chiudi">
+
+<!ENTITY panicButton.thankyou.msg1 "La cronologia recente è stata eliminata.">
+<!ENTITY panicButton.thankyou.msg2 "Buona navigazione.">
+<!ENTITY panicButton.thankyou.buttonlabel "Grazie">
+
+<!ENTITY sendToDevice.syncNotReady.label "Sincronizzazione dispositivi…">
+
+<!ENTITY libraryButton.tooltip "Visualizza cronologia, password salvate e altro ancora">
+
+<!ENTITY accessibilityIndicator.tooltip "Caratteristiche per l’accessibilità attive">

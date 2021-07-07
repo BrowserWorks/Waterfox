@@ -1,0 +1,122 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Adressbuch">
+<!ENTITY blankResultsPaneMessage.label                  "Dieses Adressbuch zeigt Kontakte erst nach einer Suche an.">
+<!ENTITY localResultsOnlyMessage.label                  "Kontakte externer Adressbücher werden erst nach einer Suche angezeigt.">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Kontakt…">
+<!ENTITY newContact.accesskey                           "K">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Mailing-Liste…">
+<!ENTITY newListCmd.accesskey                           "M">
+<!ENTITY newAddressBookCmd.label                        "Adressbuch…">
+<!ENTITY newAddressBookCmd.accesskey                    "A">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-Verzeichnis…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "P">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Kontakt drucken…">
+<!ENTITY printContactViewCmd.accesskey                  "d">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Druckvorschau: Kontakt">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printAddressBook.label                         "Drucke Adressbuch…">
+<!ENTITY printAddressBook.accesskey                     "D">
+<!ENTITY printPreviewAddressBook.label                  "Druckvorschau: Adressbuch">
+<!ENTITY printPreviewAddressBook.accesskey              "u">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Adressbuch löschen">
+<!ENTITY deleteContactCmd.label                         "Kontakt löschen">
+<!ENTITY deleteContactsCmd.label                        "Ausgewählte Kontakte löschen">
+<!ENTITY deleteListCmd.label                            "Liste löschen">
+<!ENTITY deleteListsCmd.label                           "Ausgewählte Listen löschen">
+<!ENTITY deleteItemsCmd.label                           "Ausgewählte Einträge löschen">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Vor-/Nachnamen vertauschen">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "V">
+<!ENTITY propertiesCmd.label                            "Eigenschaften…">
+<!ENTITY propertiesCmd.accesskey                        "E">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Adressbuch-Symbolleiste">
+<!ENTITY showAbToolbarCmd.accesskey                     "A">
+<!ENTITY layoutMenu.label                               "Layout">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "Verzeichnisbereich">
+<!ENTITY showDirectoryPane.accesskey                    "V">
+<!ENTITY showContactPane2.label                         "Kontaktbereich">
+<!ENTITY showContactPane2.accesskey                     "K">
+<!ENTITY menu_ShowNameAs.label                          "Namen anzeigen:">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!ENTITY firstLastCmd.label                             "Vorname Nachname">
+<!ENTITY firstLastCmd.accesskey                         "V">
+<!ENTITY lastFirstCmd.label                             "Nachname, Vorname">
+<!ENTITY lastFirstCmd.accesskey                         "N">
+<!ENTITY displayNameCmd.label                           "Anzeigename">
+<!ENTITY displayNameCmd.accesskey                       "A">
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importieren…">
+<!ENTITY importCmd.accesskey                            "o">
+<!ENTITY exportCmd.label                                "Exportieren…">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Neuer Kontakt">
+<!ENTITY newContactButton.accesskey                     "K">
+<!ENTITY newlistButton.label                            "Neue Liste">
+<!ENTITY newlistButton.accesskey                        "N">
+<!ENTITY editItemButton.label                           "Eigenschaften">
+<!ENTITY editItemButton.accesskey                       "E">
+<!ENTITY newmsgButton.label                             "Verfassen">
+<!ENTITY newmsgButton.accesskey                         "V">
+<!ENTITY deleteItemButton.label                         "Löschen">
+<!ENTITY deleteItemButton.accesskey                     "L">
+<!ENTITY newimButton.label                              "Instant-Nachricht">
+<!ENTITY newimButton.accesskey                          "N">
+<!ENTITY printButton.label                              "Drucken…">
+<!ENTITY printButton.accesskey                          "D">
+<!ENTITY searchNameAndEmail.placeholder                 "Name und E-Mail durchsuchen">
+<!ENTITY searchBox.title                                "Suchen">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Adressbuch-Symbolleiste">
+<!ENTITY newContactButton.tooltip                       "Neuen Adressbuch-Kontakt erstellen">
+<!ENTITY newlistButton.tooltip                          "Neue Liste erstellen">
+<!ENTITY editItemButton.tooltip                         "Den ausgewählten Eintrag bearbeiten">
+<!ENTITY newmsgButton.tooltip                           "Neue Mail-Nachricht verfassen">
+<!ENTITY newIM.tooltip                                  "Neue Sofortnachricht (instant message) oder neuen Chat verfassen">
+<!ENTITY printButton.tooltip                            "Ausgewählten Eintrag drucken">
+<!ENTITY deleteItemButton.tooltip                       "Ausgewählten Eintrag löschen">
+<!ENTITY advancedButton.tooltip                         "Erweiterte Adressensuche">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Adressbücher">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Startseite">
+<!ENTITY other.heading                                  "Andere">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Dienstlich">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Beschreibung">
+<!ENTITY addresses.heading                              "Adressen">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Karte holen">
+<!ENTITY mapIt.tooltip                                  "Karte für diese Adresse aus dem Web anzeigen">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

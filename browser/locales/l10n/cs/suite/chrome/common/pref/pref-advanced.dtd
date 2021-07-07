@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Rozšířené">
+
+<!ENTITY prefCheckDefault.caption         "Nastavení systému">
+<!ENTITY prefCheckDefaultClient.label     "Při startu kontrolovat nastavení výchozí aplikace">
+<!ENTITY prefCheckDefaultClient.accesskey "t">
+
+<!ENTITY defaultClientFor.description     "Použít aplikaci &brandShortName; jako výchozí program pro:">
+<!ENTITY setDefaultBrowser.label          "Prohlížeč">
+<!ENTITY setDefaultBrowser.accesskey      "P">
+<!ENTITY setDefaultMail.label             "Pošta">
+<!ENTITY setDefaultMail.accesskey         "o">
+<!ENTITY setDefaultNews.label             "Diskusní skupiny">
+<!ENTITY setDefaultNews.accesskey         "n">
+<!ENTITY setDefaultFeed.label             "Kanály">
+<!ENTITY setDefaultFeed.accesskey         "K">
+<!ENTITY useInternalSettings.description  "Použít &brandShortName; Mail &amp; Novinky při otevření odkazu pro:">
+<!ENTITY useInternalMail.label            "E-mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Novinky (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "v">
+
+<!ENTITY printing.label                   "Tisk">
+<!ENTITY useNativePrintDialog.label       "Použít nativní dialog tisku (pokud je podporován)">
+<!ENTITY useNativePrintDialog.accesskey   "u">
+<!ENTITY useGlobalPrintSettings.label     "Použít globální nastavení tisku">
+<!ENTITY useGlobalPrintSettings.accesskey "g">
+
+<!ENTITY crashReports.caption             "Hlášení pádů">
+<!ENTITY submitCrashes.label              "Odesílat hlášení o pádech">
+<!ENTITY submitCrashes.accesskey          "O">
+
+<!ENTITY devTools.caption                 "Nástroje pro vývojáře">
+<!ENTITY allowDebugger.label              "Povolit připojení debuggeru k &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "P">
+<!ENTITY allowRemoteConnections.label     "Povolit připojení z jiných počítačů">
+<!ENTITY allowRemoteConnections.accesskey "l">
+<!ENTITY connectionPrompt.label           "Zeptat se pro příchozí připojení">
+<!ENTITY connectionPrompt.accesskey       "Z">
+<!ENTITY remoteDebuggerPort.label         "Port pro připojení:">
+<!ENTITY remoteDebuggerPort.accesskey     "r">
