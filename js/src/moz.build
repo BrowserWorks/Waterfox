@@ -110,6 +110,7 @@ DIRS += [
     'irregexp',
     'jit',
     'perf',
+    'proxy',
 ]
 
 if CONFIG['JS_BUNDLED_EDITLINE']:
@@ -139,14 +140,6 @@ UNIFIED_SOURCES += [
     'jsscript.cpp',
     'jsstr.cpp',
     'jsweakmap.cpp',
-    'proxy/BaseProxyHandler.cpp',
-    'proxy/CrossCompartmentWrapper.cpp',
-    'proxy/DeadObjectProxy.cpp',
-    'proxy/OpaqueCrossCompartmentWrapper.cpp',
-    'proxy/Proxy.cpp',
-    'proxy/ScriptedProxyHandler.cpp',
-    'proxy/SecurityWrapper.cpp',
-    'proxy/Wrapper.cpp',
     'threading/Mutex.cpp',
     'threading/ProtectedData.cpp',
     'vm/ArgumentsObject.cpp',
