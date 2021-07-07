@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Oldal adatainak megtekintése</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="viewing_page_info">Oldal adatainak megtekintése</h1>
+
+<p>Az Oldal adatai párbeszédpanel több lapból áll, amelyek különböző típusú adatokat jelenítenek meg az éppen megtekintett oldalról. Ez a fejezet az egyes panellapokon rendelkezésre álló adatok rövid áttekintését adja.</p>
+
+<p>A böngészőben jelenleg megjelenített oldal adatainak megtekintéséhez válasszuk a Nézet menü Oldal adatai parancsát. A megjelenő párbeszédpanelen váltsunk át a látni kívánt adatoknak megfelelő panellapra.</p>
+
+<p>Az Általános, az Űrlapok, a Hivatkozások és a Média panellapon megjelenő adatok többsége az oldal HTML forrásából származik. Ezekre az adatokra elsősorban a fejlesztőknek és más szakembereknek van szükségük.</p>
+
+<p>Az Oldal adatai párbeszédpanelen megjelenített HTML kódról és a kódelemekről lásd: <a href="http://www.w3.org/TR/REC-html40/">HTML 4.01 Specification</a>.</p>
+
+<p>A Biztonság panellap az oldalt befogadó webhely hitelességéről és az oldal biztonságáról, a <a href="glossary.xhtml#p3p">Biztonságos Beállítások Platform - Platform for Privacy Preferences (P3P)</a> szabályzatról tartalmaz adatokat.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#general_tab">Általános panellap</a></li>
+    <li><a href="#forms_tab">Űrlapok panellap</a></li>
+    <li><a href="#links_tab">Hivatkozások panellap</a></li>
+    <li><a href="#media_tab">Média panellap</a></li>
+    <li><a href="#privacy_tab">Adatvédelem panellap</a></li>
+    <li><a href="#security_tab">Biztonság panellap</a></li>
+  </ul>
+</div>
+
+<h2 id="general_tab">Általános panellap</h2>
+
+<p>Amikor a Nézet menü Oldal adatai parancsát választjuk, az Általános panellap jelenik meg, amely a böngészőben megtekintett oldal alapvető adatait tartalmazza.</p>
+
+<p>A felső részen az oldal neve (ha van ilyen) és a következő adatok láthatók:</p>
+
+<ul>
+  <li><strong>URL</strong>: az oldal <a href="glossary.xhtml#url">Uniform Resource Locator</a> címe, azaz az a szabványos cím, amely a böngészőablak tetején a címmezőben jelenik meg.</li>
+  <li><strong>Megjelenítési mód</strong>: azt jelzi, hogy a böngésző <strong>kompatibilitási módot</strong> vagy <strong>szigorú szabványkompatibilitási módot</strong> használ-e az oldal elrendezéséhez. A kompatibilitási mód olyan szabványostól eltérő viselkedést is figyelembe vesz, amelyet a szabványokhoz nem teljesen illeszkedő régebbi típusú böngészőkhöz tervezett weboldalak használhatnak. A szigorú szabványkompatibilitási mód következetesen ragaszkodik a szabványok előírásaihoz. A böngésző a megjelenítési módot automatikusan választja meg a weboldalon lévő adatok alapján.</li>
+  <li><strong>Gyorsítótárforrás</strong>: Inazt jelzi, hogy az oldal forráskódját gyorsítótárba helyezték-e.</li>
+  <li><strong>Kódolás</strong>: a HTML dokumentumnál használt karakterkészlet-kódolás.</li>
+  <li><strong>Méret</strong>: a fájl mérete, ha ez rendelkezésre áll.</li>
+  <li><strong>Módosítva</strong>: az oldal utolsó módosításának dátuma, ha ez rendelkezésre áll.</li>
+  <li><strong>Lejárat</strong>: az oldalon megjelenített adatok lejárati dátuma.</li>
+</ul>
+
+<p>Az alsó részen az oldallal megadott metakódelemek jelennek meg. Ezek az oldallal megjelenített tartalom típusáról szolgáltatnak adatokat, ilyenek az oldal általános leírása, a keresésre szolgáló kulcsszavak, a copyright információ stb.</p>
+
+<h2 id="forms_tab">Űrlapok panellap</h2>
+
+<p>Ha a Nézet menü Oldal adatai parancsát választjuk, majd áttérünk az Űrlapok panellapra, a böngészőben jelenleg megtekintett oldalon megjelenített űrlapokról szóló adatokat kapjuk.</p>
+
+<p>A felső részen az egyes űrlapok általános adatai szerepelnek a HTML forráskódban megadott módon:</p>
+
+<ul>
+  <li><strong>Név</strong>: az űrlap neve, ha van ilyen.</li>
+  <li><strong>Módszer</strong>: az űrlappal gyűjtött adatok webkiszolgálóba való visszaküldésének HTML módszere. <tt>GET</tt> a beírt adatokat annak a webhelynek a címéhez mellékeli, amelyre az űrlapot küldi. <tt>POST</tt> a webhelyre küldi az értékeket paraméterként, amelyek a webhelyen lévő programmal olvashatók.</li>
+  <li><strong>Űrlapművelet</strong>: az űrlap elküldésekor hívandó program URL-címe.</li>
+</ul>
+
+<p>Ha az Űrlapok panellap felső részén felsorolt űrlapok közül kijelölünk egyet, a panellap alsó részén az adott űrlap egyes elemeinek adatai jelennek meg a HTML forráskódban megadott módon:</p>
+
+<ul>
+  <li><strong>Címke</strong>: az elem címkéje (ha ezt megadták a HTML kódban).</li>
+  <li><strong>Mező neve</strong>: az elem neve.</li>
+  <li><strong>Típus</strong>: az elem típusa, például: <tt>TEXT</tt> (szöveg elküldéséhez), <tt>RADIO</tt> (választókapcsoló), vagy <tt>HIDDEN</tt> (adatok tárolásához, amelyeket elküldünk, de nem jelennek meg a képernyőn).</li>
+  <li><strong>Jelenlegi érték</strong>: az elem aktuális értéke. Például egy szöveges elem jelenlegi értéke az a szöveg, amelyet aktuálisan tartalmaz.</li>
+</ul>
+
+<h2 id="links_tab">Hivatkozások panellap</h2>
+
+<p>Ha a Nézet menü Oldal adatai parancsát választjuk, majd áttérünk a Hivatkozások panellapra, az oldal összes hivatkozásának listája jelenik meg. Az egyes hivatkozásoknál a következő adatok láthatók:</p>
+
+<ul>
+  <li><strong>Név</strong>: a böngészőben hivatkozásként megjelenő szöveg.</li>
+  <li><strong>Cím</strong>: annak az oldalnak az <a href="glossary.xhtml#url">URL</a> címe, amelyre a hivatkozás mutat.</li>
+  <li><strong>Típus</strong>: a hivatkozás típusa, például Horgony (hivatkozás egy HTML dokumentum adott helyére) vagy Űrlap elküldése.</li>
+</ul>
+
+<h2 id="media_tab">Média panellap</h2>
+
+<p>Ha a Nézet menü Oldal adatai parancsát választjuk, majd áttérünk a Média panellapra, az oldal összes képének és egyéb médiaelemének listája jelenik meg.</p>
+
+<p>A felső részen az egyes elemek alapvető adatai láthatók, így a címe (<a href="glossary.xhtml#url">URL</a>) és a típus.</p>
+
+<p>Ha a Média panellap felső részén felsorolt elemek közül kijelölünk egyet, a panellap alsó részén az adott elem további rendelkezésre álló adatai jelennek meg, így a leírás és a méret.</p>
+
+<p>A párbeszédpanel alsó részén a kijelölt elem is megjelenik. A kép mérete növelhető, ha az egérrel lejjebb húzzuk a párbeszédpanel jobb alsó sarkát.</p>
+
+<p>Médiaelem mentése külön fájlként:</p>
+
+<ul>
+  <li><strong>Mentés másként</strong>: jelöljük ki a kívánt elemet, kattintsunk a Mentés másként gombra, és adjuk meg a tárolási helyet.</li>
+</ul>
+
+<h2 id="privacy_tab">Adatvédelem</h2>
+
+<p>Ha a Nézet menü Oldal adatai parancsát választjuk, majd áttérünk a Biztonság panellapra, az oldal hitelesítésével és titkosításával kapcsolatos adatok jelennek meg.</p>
+
+<ul>
+  <li><strong>Oldalösszetevők</strong>: Az oldal URL címe alatt számos kategória van. Az adott kategóriába tartozó elemek megjelenítéséhez kattintsunk azok nevein:
+    <ul>
+      <li><strong>Hivatkozások</strong>: Összes hivatkozás, link megjelenítése.</li>
+      <li><strong>Java-kisalkalmazások</strong>: Java programok listája (ha van).</li>
+      <li><strong>Hivatkozástérképek</strong>: Összes hivatkozástérkép listáját jeleníti meg.</li>
+      <li><strong>Űrlapküldések</strong>: Az alkalmazott parancsfájlok, amelyek az összegyűjtött adatok elküldésére használatos.</li>
+      <li><strong>Keretek</strong>: Az oldalon megjelenített keretek listája.</li>
+      <li><strong>Képek</strong>: Az oldalon megjelenített képek listája.</li>
+      <li><strong>Külső betöltött dokumentumok</strong>: Az oldal megjelenítéséhez használt külső dokumentumok listája (úgy mint, css fájlok vagy képek).</li>
+      <li><strong>Általános objektumok</strong>: Általános objektumok listája.</li>
+      <li><strong>Parancsfájlok</strong>: Az alkalmazott összes parancsfájl listája.</li>
+    </ul>
+  </li>
+  <li><strong>Házirend</strong>: Megjeleníti az éppen megjelenített weboldalhoz tartozó adatvédelmi házirend-fájlt.</li>
+  <li><strong>Összefoglaló</strong>: Kattintsunk erre agombra, ha meg szeretnénk tekinteni az éppen megjelenített weboldal adatvédelmi összefoglalóját.</li>
+  <li><strong>Beállítások</strong>: Ez a lehetőség megpróbál megnyitni egy biztonsági weboldalt a távoli szerverről, amelyen elvégezhetőek a távoli szerveren tárolt személyes adatok tárolási módjára vonatkozó beállítások.</li>
+</ul>
+
+<p><strong>Megjegyzés</strong>: Weboldalon közzétett személyes adatvédelmi házirendek alkalmazása nem túl elterjedt a weboldalak körében, így az esetek többségében - a weboldalak böngészése közben - nem látható párbeszédpanele eme lapja.</p>
+
+<h2 id="security_tab">Biztonság panellap</h2>
+
+<p>Ha a Nézet menü Oldal adatai parancsát választjuk, majd áttérünk a Biztonság panellapra, az oldal <a href="glossary.xhtml#authentication">hitelesítésével</a> és <a href="glossary.xhtml#encryption">titkosításával</a> kapcsolatos adatok jelennek meg. A felső részből megtudhatjuk, hogy a webhely hitelessége ellenőrizve lett-e, míg az alsó rész azt jelzi, hogy az oldal titkosítva volt-e a letöltéskor.</p>
+
+<p>>A Biztonság panellap közvetlenül is megnyitható a böngészőablak jobb alsó sarkában lévő lakat ikonra kattintással.</p>
+
+<p>A panellap felső részén a következő feliratok jelenhetnek meg:</p>
+
+<ul>
+  <li><strong>A webhely hitelessége ellenőrizetlen</strong>: a megtekintett webhely nem küldött önmagát hitelesítő tanúsítványt, Emiatt a Tanúsítványkezelő nem tudja ellenőrizni az azonosságát. Elképzelhető, bár nem valószínű, hogy a webhely nem az, aminek vallja magát.</li>
+  <li><strong>A webhely hitelessége ellenőrizve</strong>: azt a tanúsítványt, amelyet a Tanúsítványkezelő a webhely azonosságának ellenőrzésére használt, egy olyan hitelesítésszolgáltató állította ki, amelyben megbízunk. Gyakorlatilag biztosak lehetünk benne, hogy a webhely az, aminek vallja magát.</li>
+</ul>
+
+<p>A panellap alsó részén a következő feliratok jelenhetnek meg:</p>
+
+<ul>
+  <li><strong>A kapcsolat nincs titkosítva</strong>: lehetséges, hogy mások is láthatják a számítógépről a webhelyre, illetve a webhelyről a számítógépre küldött adatokat, bár ennek tényleges valószínűsége elég csekély.</li>
+  <li><strong>A kapcsolat titkosítva van: </strong>általában a titkosított kapcsolat erőssége a titkosításhoz használt kulcsok bitben mért hosszúságától függ. Minél hosszabb a kulcs, annál erősebb a titkosítás &mdash; azaz annál nehezebb az illetéktelen személyek számára a titkosított információ visszafejtése. 
+
+    <p>Az Oldal adatai párbeszédpanelen a Biztonság panellapon következő három leírás egyikével találkozhatunk:</p>
+
+    <ul>
+      <li><strong>Magas szintű titkosítás:</strong> az elérhető legerősebb titkosítás, legalább 128 bites kulcsokat használ.</li>
+      <li><strong>Közepes szintű titkosítás:</strong> valamivel erősebb, mint az alacsony szintű titkosítás, 56 vagy 64 bites kulcsokat használ.</li>
+      <li><strong>Alacsony szintű titkosítás:</strong> a létező leggyengébb titkosítás, 40 bites kulcsokat használ.</li>
+    </ul>
+
+    <p>A legtöbb webhelyen használható a magas szintű titkosítás. Régebbi, csak a gyengébb titkosítási megoldást lehetővé tevő webhelyek megtekintésekor lehetséges, hogy mások is láthatják a számítógépről a webhelyre, illetve a webhelyről a számítógépre küldött adatokat, bár ennek tényleges valószínűsége elég csekély.</p>
+  </li>
+</ul>
+
+<p>A titkosítás vagy a magas szintű titkosítás hiánya csak akkor jelenthet problémát, ha bizalmas adatokat, például a hitelkártya számát küldjük el.</p>
+
+<p>A weboldalak titkosítási állapota egyszerűen ellenőrizhető, ha megnézzük a böngészőablak jobb alsó sarkában lévő lakat ikont. További tudnivalók: <a href="using_certs_help.xhtml#checking_security_for_a_web_page">Weboldal biztonságának ellenőrzése</a>.</p>
+</body>
+</html>

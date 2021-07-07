@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Impostazioni SSL</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="ssl_settings">Impostazioni SSL</h1>
+
+<p>Questa sezione descrive come impostare le preferenze SSL.</p>
+
+<div class="contentsBox">In questa sezione:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_ssl">Preferenze 
+      Privacy e sicurezza - SSL</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_ssl">Preferenze Privacy e 
+  sicurezza - SSL</h2>
+
+<p>Questa sezione descrive come usare il pannello delle preferenze SSL. Se non 
+  &egrave; gi&agrave; visualizzato, eseguire questa procedura:</p>
+
+<ol>
+  <li>Aprire il menu <span class="mac">&brandShortName;</span>
+    <span class="noMac">Modifica</span> e scegliere Preferenze.</li>
+  <li>Nella categoria Privacy e sicurezza, fare clic su SSL. 
+    (Se non sono visibili sottocategorie, fare doppio clic su Privacy e 
+    sicurezza per espandere la lista.)</li>
+</ol>
+
+<h3 id="ssl_protocol_versions">Versioni del protocollo SSL</h3>
+
+<p>Il protocollo Secure Sockets Layer (SSL) definisce le regole che governano 
+  l'autenticazione reciproca tra un sito web ed il browser e la cifratura delle 
+  informazioni che vengono trasferite tra di essi. Il protocollo Transport Layer 
+  Security (TLS) &egrave; uno standard IETF basato su SSL. TLS 1.0 pu&ograve; 
+  essere considerato come SSL 3.1.</p>
+
+<p>Si dovrebbero lasciare spuntate queste tre caselle per essere sicuri che sia i server
+  web pi&ugrave; datati sia quelli pi&ugrave; recenti possano lavorare con il browser:</p>
+
+<ul>
+  <li><strong>Attiva SSL versione 3</strong>: Permette ai server web pi&ugrave; 
+    recenti di lavorare con il browser.</li>
+  <li><strong>Attiva TLS</strong>: Permette ai server web che gestiscono TLS di 
+    trarne profitto.</li>
+</ul>
+
+<p><strong>Nota importante riguardo TLS</strong>: Alcuni server che non gestiscono 
+  SSL correttamente non possono negoziare una sessione SSL con l'applicazione cliente 
+  (come il browser) che gestisce TLS. Tali server sono noti come 
+  <q>intolleranti a TLS</q>.</p>
+
+<p>Quando l'opzione Attiva TLS &egrave; selezionata nel pannello di preferenze SSL, 
+  il browser tenta di usare il protocollo TLS nello stabilire connessioni sicure con 
+  un server. Se tale connessione fallisce poich&eacute; il server &egrave; intollerante 
+  a TLS, il browser tenter&agrave; di usare SSL 3.0.</p>
+
+<h3 id="ssl_warnings">Avvisi SSL</h3>
+
+<p>&Egrave; semplice capire quando il sito web visualizzato usa una connessione cifrata. 
+  Se la connessione &egrave; cifrata, il lucchetto dell'icona nell'angolo in basso a destra 
+  della finestra del browser &egrave; chiuso. Se la connessione non &egrave; cifrata, il 
+  lucchetto dell'icona &egrave; aperto.</p> 
+
+<p>Se si desiderano altri avvisi, si possono spuntare una o pi&ugrave; delle 
+  caselle di avviso nel pannello di preferenze SSL. Certe persone trovano questi 
+  avvisi fastidiosi.</p>
+
+<p>Per attivare uno di questi avvisi del browser, spuntare la casella corrispondente:</p>
+
+<ul>
+  <li><strong>Caricare una pagina che gestisce la cifratura</strong>: Selezionare 
+    questo avviso per accorgersi quando si sta caricando una pagina che gestisce la 
+    cifratura.</li>
+  <li><strong>Caricare una pagina che usa una cifratura poco efficace</strong>: 
+    Selezionare questo avviso per accorgersi che si sta caricando una pagina che usa 
+    una cifratura poco efficace. (la cifratura poco efficace &egrave; la cifratura 
+    pi&ugrave; debole disponibile, ed usa chiavi di 40 bit.)</li>
+  <li><strong>Uscire da una pagina sicura</strong>: Selezionare questo avviso 
+    per accorgersi che si sta lasciando una pagina sicura per una che non lo 
+    &egrave;.</li>
+  <li><strong>Inviare dati di un modulo da una pagina non sicura ad un'altra 
+    pagina non sicura</strong>: Selezionare questo avviso per accorgersi che si 
+    stanno inviando dati attraverso una connessione non cifrata. Se si inviano 
+    informazioni non cifrate su Internet, esse possono essere facilmente 
+    intercettate da altre persone.</li>
+  <li><strong>Visualizzare una pagina con parti sicure miste a parti non sicure</strong>: 
+    Selezionare questo avviso per accorgersi che si sta visualizzando una pagina che 
+    contiene qualche informazione che non &egrave; stata cifrata.</li>
+</ul>
+
+<p>Per delle brevi definizioni, fare clic su 
+  <a href="glossary.xhtml#authentication">autenticazione</a>, 
+  <a href="glossary.xhtml#encryption">cifratura</a>, o 
+  <a href="glossary.xhtml#certificate">certificato</a>.</p>
+
+<p>Per ulteriori informazioni riguardo i sistemi di cifratura e la crittografia, vedere i seguenti 
+  documenti in rete (in inglese):</p>
+
+<ul>
+  <li>
+    <a href="http://developer.mozilla.org/en/docs/Introduction_to_Public-Key_Cryptography">Introduction
+    to Public-Key Cryptography</a> (in inglese)</li>
+  <li>
+    <a href="http://developer.mozilla.org/en/docs/Introduction_to_SSL">Introduction
+    to SSL</a> (in inglese)</li>
+  <li>
+    <a href="http://www.mozilla.org/projects/security/pki/nss/nss-3.11/nss-3.11-algorithms.html">Encryption
+    Technologies Available in NSS 3.11</a> (in inglese).</li>
+</ul>
+
+</body>
+</html>

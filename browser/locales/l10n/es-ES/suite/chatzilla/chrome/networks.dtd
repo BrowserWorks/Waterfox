@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY networksEditDialog.title "Editor de redes">
+<!ENTITY networksEditDialog.size "width: 106ch; height: 36em;">
+
+<!ENTITY restoreButton.label "Restaurar valores predeterminados">
+<!ENTITY restoreButton.accesskey "R">
+
+<!ENTITY networkListAdd.label "Añadir red…">
+<!ENTITY networkListAdd.accesskey "A">
+<!ENTITY networkListAdd.tooltip "Añadir una nueva red">
+<!ENTITY networkListEdit.label "Editar red…">
+<!ENTITY networkListEdit.accesskey "E">
+<!ENTITY networkListEdit.tooltip "Editar la red seleccionada">
+<!ENTITY networkListRemove.label "Eliminar red">
+<!ENTITY networkListRemove.accesskey "d">
+<!ENTITY networkListRemove.tooltip "Eliminar la red seleccionada">
+
+<!ENTITY serverListUp.label "Arriba">
+<!ENTITY serverListUp.accesskey "b">
+<!ENTITY serverListUp.tooltip "Mover el servidor seleccionado hacia arriba en la lista">
+<!ENTITY serverListDown.label "Abajo">
+<!ENTITY serverListDown.accesskey "o">
+<!ENTITY serverListDown.tooltip "Mover el servidor seleccionado hacia abajo en la lista">
+<!ENTITY serverListAdd.label "Añadir servidor…">
+<!ENTITY serverListAdd.accesskey "v">
+<!ENTITY serverListAdd.tooltip "Añadir un nuevo servidor">
+<!ENTITY serverListEdit.label "Editar servidor…">
+<!ENTITY serverListEdit.accesskey "i">
+<!ENTITY serverListEdit.tooltip "Editar el servidor seleccionado">
+<!ENTITY serverListRemove.label "Eliminar servidor">
+<!ENTITY serverListRemove.accesskey "m">
+<!ENTITY serverListRemove.tooltip "Eliminar el servidor seleccionado">
+
+<!ENTITY serverDetails.label "Detalles del servidor seleccionado:">
+<!ENTITY serverName.label "Servidor:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverPort.label "Puerto:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY connectionSecurity.label "Seguridad de la conexión:">
+<!ENTITY connectionSecurity.accesskey "c">
+
+<!ENTITY serverEditDialog.title "Servidor IRC">
+<!ENTITY settings.caption "Configuración">
+<!ENTITY security.caption "Seguridad">
+<!ENTITY serverPortDefault.label "Predet.:">

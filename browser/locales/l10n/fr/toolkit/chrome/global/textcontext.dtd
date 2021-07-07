@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Ajouter au dictionnaire">
+<!ENTITY spellAddToDictionary.accesskey "j">
+<!ENTITY spellUndoAddToDictionary.label "Annuler l’ajout au dictionnaire">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Vérifier l’orthographe">
+<!ENTITY spellCheckToggle.accesskey "V">
+<!ENTITY spellNoSuggestions.label "(pas de mot suggéré)">
+<!ENTITY spellDictionaries.label "Langues">
+<!ENTITY spellDictionaries.accesskey "g">
+
+<!ENTITY searchTextBox.clear.label "Effacer">
+

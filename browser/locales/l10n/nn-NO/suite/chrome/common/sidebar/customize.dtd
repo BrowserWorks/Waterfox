@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!ENTITY sidebar.customize.customize.label      "Tilpass fane…">
+<!ENTITY sidebar.customize.customize.accesskey  "T">
+<!ENTITY sidebar.customize.remove.label         "Fjern">
+<!ENTITY sidebar.customize.remove.accesskey     "R">
+<!ENTITY sidebar.customize.additional.label     "Tilgjengelege faner:">
+<!ENTITY sidebar.customize.additional.accesskey "T">
+<!ENTITY sidebar.customize.add.label            "Legg til">
+<!ENTITY sidebar.customize.add.accesskey        "L">
+<!ENTITY sidebar.customize.preview.label        "Førehandsvis sida…">
+<!ENTITY sidebar.customize.preview.accesskey    "ø">
+<!ENTITY sidebar.customize.up.label             "Opp">
+<!ENTITY sidebar.customize.up.accesskey         "O">
+<!ENTITY sidebar.customize.down.label           "Ned">
+<!ENTITY sidebar.customize.down.accesskey       "N">
+<!ENTITY sidebar.more.label                     "Finn fleire faner…">
+<!ENTITY sidebar.more.accesskey                 "F">

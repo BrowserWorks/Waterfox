@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle                    "安装插件…">
+
+<!ENTITY name.label                     "名称：">
+<!ENTITY name.accesskey                 "N">
+
+<!ENTITY name.autopick.label            "帮我自动选个名称">
+<!ENTITY name.autopick.accesskey        "A">
+
+<!ENTITY source.label                   "来源：">
+<!ENTITY source.accesskey               "c">
+
+<!ENTITY browse.label                   "浏览…">
+<!ENTITY browse.accesskey               "B">

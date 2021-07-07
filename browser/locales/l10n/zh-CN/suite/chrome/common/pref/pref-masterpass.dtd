@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "主密码">
+
+<!ENTITY  changepassword.caption                 "修改主密码">
+<!ENTITY  changepassword.text                    "您的主密码用来保护敏感信息，如web密码和证书。">
+<!ENTITY  changepassword.button                  "修改密码…">
+<!ENTITY  changepassword.accesskey               "C">
+
+<!ENTITY  resetpassword.caption                  "重置主密码">
+<!ENTITY  resetpassword.text                     "如果重置主密码，您存储的所有Web和e-mail密码、表单数据、个人证书，以及私钥都将丢失。">
+<!ENTITY  resetpassword.button                   "重置密码">
+<!ENTITY  resetpassword.accesskey                "R">
+<!ENTITY  resetpassword2.button                  "重置密码">
+<!ENTITY  resetpassword2.accesskey               "P">

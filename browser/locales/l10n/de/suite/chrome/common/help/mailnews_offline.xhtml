@@ -1,0 +1,591 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Offline arbeiten</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+     type="text/css"/>
+</head>
+
+<body>
+<h1 id="working_offline">Offline arbeiten</h1>
+
+<p>&brandShortName; Mail &amp; Newsgroups enthält erweiterte Funktionen, welche Ihnen
+  helfen Ihre Nachrichten zu verwalten, auch wenn Sie nicht mit dem Internet verbunden sind.
+  Sie k&#246;nnen zum Beispiel Ihre Email und Newsgroup-Nachrichten herunterladen und sp&#228;ter lesen,
+  wenn Sie nicht mehr mit dem Internet verbunden sind. Weiters k&#246;nnen Sie Emails und 
+  Newsgroup-Nachrichten verfassen und erst dann verschicken, wenn Sie wieder online sind.
+  All diese Funktionen werden in diesem Dokument genauer beschrieben.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+  <ul>
+    <li><a href="#setting_up_mozilla_mail_and_newsgroups_to_work_offline">&brandShortName; Mail &amp; 
+    Newsgroups zum Offline arbeiten einrichten</a></li>
+    <li><a href="#downloading_all_messages_for_offline_use">Herunterladen Ihrer Nachrichten 
+    f&#252;r die Offline-Arbeit</a></li>
+    <li><a href="#downloading_an_individual_folder_for_offline_use">Herunterladen eines Ordners 
+    f&#252;r die Offline-Arbeit</a></li>
+    <li><a href="#downloading_selected_or_flagged_messages_for_offline_use">Herunterladen ausgew&#228;hlter
+    oder markierter Nachrichten f&#252;r die Offline-Arbeit</a></li>
+    <li><a href="#downloading_directory_entries_for_offline_use">Herunterladen von 
+    Verzeichniseintr&#228;gen zur Offline-Arbeit</a></li>
+    <li><a href="#setting_up_your_accounts_for_working_offline">Einrichtung Ihres Accounts 
+    f&#252;r die Offline-Arbeit</a></li>
+    <li><a href="#selecting_items_for_offline_viewing">Verschiedene Elemente zum Offline 
+    arbeiten ausw&#228;hlen</a></li>
+    <li><a href="#downloading_and_synchronizing_your_messages">Nachrichten herunterladen 
+    und synchronisieren</a></li>
+    <li><a href="#working_offline_and_reconnecting_later">Wiederherstellung der Verbindung 
+    nach der Offline-Arbeit</a></li>
+  </ul>
+</div>
+
+<h2 id="setting_up_mozilla_mail_and_newsgroups_to_work_offline">
+&brandShortName; Mail &amp; Newsgroups zum Offline arbeiten einrichten</h2>
+
+<p>Die Offline-Funktionen von &brandShortName; Mail &amp; Newsgroups
+erm&#246;glichen Ihnen, Ihre Nachrichten herunterzuladen und Sie offline (bei
+getrennter Internet-Verbindung) zu lesen. Wenn Sie eine DF&#220;-Verbindung
+(Modem) benutzen, um auf Ihre E-Mails zuzugreifen, und die Verbindungszeit
+reduzieren m&#246;chten oder wenn Sie vor&#252;bergehend vom Netzwerk Ihrer
+Firma getrennt sind, weil Sie reisen oder den Standort wechseln, k&#246;nnen
+Sie Ihre Nachrichten herunterladen, um sie offline zu lesen. Die
+Offline-Funktion von &brandShortName; Mail &amp; Newsgroups kann eingehende
+Nachrichten automatisch herunterladen und sp&#228;ter alle Ihre ausgehenden
+Nachrichten senden, wenn Sie wieder online gehen.</p>
+
+<p>Vergessen Sie nicht das bei POP-Accounts E-Mails standardm&#228;&#223;ig
+automatisch heruntergeladen werden, so das viele der hier erw&#228;hnten
+Offline-Funktionen daf&#252;r nicht relevant sind.</p>
+
+<p>Wenn Sie gelegentlich offline arbeiten m&#246;chten, k&#246;nnen Sie mit
+&brandShortName; Mail &amp; Newsgroups:</p>
+
+<ul>
+  <li>Ihre Inbox f&#252;r die Offline-Arbeit herunterladen.</li>
+  <li>Einen Ordner f&#252;r die Offline-Arbeit herunterladen.</li>
+  <li>Nur ausgew&#228;hlte oder markierte Nachrichten f&#252;r die
+      Offline-Arbeit herunterladen.</li>
+  <li>Herunterladen von Verzeichniseintr&#228;gen in Ihr Adressbuch zum
+      Offline-Gebrauch.</li>
+</ul>
+
+<p>Wenn Sie h&#228;ufig offline arbeiten, k&#246;nnen Sie mit &brandShortName;
+Mail &amp; Newsgroups:</p>
+
+<ul>
+  <li>Einen oder mehrere Accounts f&#252;r die Offline-Arbeit einrichten.</li>
+  <li>F&#252;r jeden Account Einstellungen f&#252;r die Offline-Arbeit und die
+      Speicherplatznutzung vornehmen.</li>
+  <li>Objekte ausw&#228;hlen (Accounts, Ordner und Diskussionsforen), mit denen
+      Sie offline arbeiten m&#246;chten.</li>
+</ul>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="downloading_all_messages_for_offline_use">Herunterladen Ihrer Nachrichten
+f&#252;r die Offline-Arbeit</h2>
+
+<p>&brandShortName; Mail &amp; Newsgroups kann das Offline-Verfahren f&#252;r
+Ihre Nachrichten automatisieren. Sie k&#246;nnen &brandShortName; Mail
+&amp; Newsgroups anweisen, Ihre Nachrichten automatisch f&#252;r die
+Offline-Arbeit herunterzuladen. Wenn Sie sp&#228;ter wieder online gehen,
+synchronisiert &brandShortName; Mail &amp; Newsgroups automatisch Ihre
+Nachrichten mit dem Server.</p>
+
+<p>Vergessen Sie nicht das der Posteingang eines POP-Accounts automatisch
+heruntergeladen wird, womit dieser Abschnitt nicht auf POP-Accounts
+zutrifft.</p>
+
+<p>So laden Sie Ihre Nachrichten automatisch f&#252;r die Offline-Nutzung herunter
+(ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>W&#228;hlen Sie aus dem Men&#252; <span class="noMac">Bearbeiten</span>
+  <span class="mac">&brandShortName;</span>
+      die Option Mail &amp; Newsgroup-Account-Einstellungen. Das Dialogfeld 
+      Mail &amp; Newsgroup-Account-Einstellungen wird angezeigt.</li>
+  <li>W&#228;hlen Sie auf der linken Seite des Dialogfelds den Account, den Sie
+      offline nutzen m&#246;chten, und klicken Sie auf <q>Synchronisation &amp;
+      Speicherplatz</q>. (Diese Kategorie gibt es nicht f&#252;r
+      POP-Accounts.)</li>
+  <li>Aktivieren Sie das Kontrollk&#228;stchen <q>Nachrichten f&#252;r diesen Account 
+     auf diesem Rechner behalten</q>.</li>
+  <li>Klicken Sie auf OK.</li>
+  <li>Klicken Sie auf die Online/Offline-Anzeige <img src="images/online.png" alt=""/>
+    in der rechten unteren Ecke des Mail-Fensterst (links neben dem Cookie-Symbol),
+    um offline zu gehen. Sie werden gefragt, ob Sie Ihre Nachrichten f&#252;r die Offline-Nutzung 
+    heruntergeladen werden sollen. Klicken Sie auf <q>Herunterladen</q> um den Vorgang  zu starten.</li>
+</ol>
+
+<p><strong>Hinweis</strong>: Diese Einstellung betrifft auch neu erstellte Ordner. Die
+  Account-basierende Einstellung kann zwar f&#252;&#252;r 
+  <a href="#downloading_an_individual_folder_for_offline_use">einzelne Ordner</a> &#252;berschrieben werden,
+   diese ordnerbasierenden Einstellungen werden jedoch <em>gel&#246;scht</em> wenn Sie die 
+   Option <q>Nachrichten behalten</q> aktivieren.</p>
+
+<p>&brandShortName; Mail &amp; Newsgroups l&#228;dt automatisch alle
+Nachrichten in Ihrer Inbox herunter, sodass Sie diese offline lesen und
+beantworten k&#246;nnen. Nach dem Trennen der Verbindung bleibt
+&brandShortName; Mail &amp; Newsgroups ge&#246;ffnet, sodass Sie die Arbeit mit
+Ihren Nachrichten fortsetzen k&#246;nnen.</p>
+
+<p>So stellen Sie die Internet-Verbindung wieder her, um online zu
+arbeiten:</p>
+
+<ul>
+  <li>Klicken Sie auf die Online/Offline Anzeige
+      <img src="images/online.png" alt="" /> im rechten unteren
+	  Eck des Mail-Fensters (links neben dem Cookie-Symbol), um online zu
+	  gehen.</li>
+</ul>
+
+<p>Wenn Sie wieder online gehen, synchronisiert &brandShortName; Mail &amp;
+Newsgroups automatisch Ihre Inbox-Nachrichten mit dem Server in dem es alle
+&#196;nderungen &#252;bertr&#228;gt, die Sie offline vorgenommen haben.</p>
+
+<p><strong>Tipp</strong>: &brandShortName; Mail &amp; Newsgroups speichert
+  Nachrichten, die Sie w&#228;hrend der Offline-Arbeit senden, im Ordner
+  <q>Ungesendete Nachrichten</q> unter <q>Lokale Ordner</q>. Wenn Sie
+  wollen das &brandShortName; beim Online gehen diese Nachrichten automatisch
+  absendet, dann &#228;ndern Sie dies &#252;ber die Einstellungen im Men&#252;
+  <q><span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span></q>, 
+  unter <a href="mailnews_preferences.xhtml#network_and_storage_preferences">
+  Offlineeinstellungen</a>.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="downloading_an_individual_folder_for_offline_use">
+Herunterladen eines Ordners f&#252;r die Offline-Arbeit</h2>
+
+<p>Achtung POP-Accounts erlauben nicht das verwalten von Ordnern auf einem
+POP-Server, weswegen dieser Abschnitt somit nicht auf POP-Accounts zutrifft.</p>
+
+<p>So laden Sie einen bestimmten Ordner f&#252;r die Offline-Nutzung herunter
+(ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>W&#228;hlen Sie auf der linken Seite des Mail-Fensters den Ordner, den
+      Sie f&#252;r die Offline-Arbeit herunterladen m&#246;chten.</li>
+
+  <li>&#214;ffnen Sie das Men&#252; <q><span class="noMac">Bearbeiten</span>
+  <span class="mac">&brandShortName;</span></q>
+  und w&#228;hlen Sie <q>Eigenschaften</q>.</li>
+
+  <li>Klicken Sie auf die Registerkarte <q>Synchronisation</q>.</li>
+
+  <li>Aktivieren Sie das Kontrollk&#228;stchen <q>Diesen Ordner f&#252;r
+      Offline-Gebrauch ausw&#228;hlen</q>.</li>
+
+  <li>Klicken Sie auf <q>Jetzt herunterladen</q>, um sofort mit dem
+      Herunterladen der Nachrichten zu beginnen. Alternativ k&#246;nnen Sie
+	  zun&#228;chst Ihre Arbeit fortsetzen und mit dem n&#228;chsten Schritt
+	  fortfahren, wenn Sie bereit sind, offline zu gehen</li>
+
+  <li>Klicken Sie auf die Online/Offline Anzeige
+      <img src="images/online.png" alt="" /> im rechten
+	  unteren Eck des Mail-Fensters (links neben dem Cookie-Symbol), um offline
+	  zu gehen.</li>
+
+  <li>Klicken Sie im Dialogfeld <q>Offline arbeiten</q> auf
+      <q>Herunterladen</q>.</li>
+</ol>
+
+<p>&brandShortName; Mail &amp; Newsgroups l&#228;dt automatisch alle
+Nachrichten in dem ausgew&#228;hlten Ordner herunter, sodass Sie diese offline
+lesen und beantworten k&#246;nnen. Nach dem Trennen der Verbindung bleibt
+&brandShortName; Mail &amp; Newsgroups  ge&#246;ffnet, sodass Sie die Arbeit
+mit Ihren Nachrichten fortsetzen k&#246;nnen.</p>
+
+<p><strong>Anmerkung</strong>: Kopfzeilen von Nachrichten, die f&#252;r die
+Offline-Arbeit heruntergeladen wurden, sind mit einem dunkelgrauen Umschlag-
+oder Forensymbol versehen.</p>
+
+<p>So stellen Sie die Internet-Verbindung wieder her, um online zu
+arbeiten:</p>
+
+<ul>
+  <li>Klicken Sie auf die Online/Offline Anzeige
+      <img src="images/online.png" alt="" /> im rechten unteren
+	  Eck des Mail-Fensters (links neben dem Cookie-Symbol), um online zu
+	  gehen.</li>
+</ul>
+
+<p>&brandShortName; Mail &amp; Newsgroups synchronisiert die Offline-Ordner
+automatisch mit dem Server in dem es die offline vorgenommenen &#196;nderungen
+an den Server &#252;bertr&#228;gt.</p>
+
+<p><strong>Tipp</strong>: &brandShortName; Mail &amp; Newsgroups speichert
+  Nachrichten, die Sie w&#228;hrend der Offline-Arbeit senden, im Ordner
+  <q>Ungesendete Nachrichten</q> unter <q>Lokale Ordner</q>. Wenn Sie
+  wollen das &brandShortName; beim Online gehen diese Nachrichten automatisch
+  absendet, dann &#228;ndern Sie dies &#252;ber die Einstellungen im Men&#252;
+  <q><span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span></q>, 
+  unter <a href="mailnews_preferences.xhtml#network_and_storage_preferences">
+  Offlineeinstellungen</a>.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="downloading_selected_or_flagged_messages_for_offline_use">Herunterladen
+ausgew&#228;hlter oder markierter Nachrichten f&#252;r die Offline-Arbeit</h2>
+
+<p>Die E-Mails eines POP-Accounts werden standardm&#228;&#223;ig automatisch
+heruntergeladen. Sollten Sie die Option <q>Nur Kopfzeilen holen</q> in den
+Einstellungen des POP-Accounts ausgew&#228;hlt haben, dann werden nur die
+Kopfzeilen herunter geladen und Sie ben&#246;tigen die Information dieses
+Abschnitts um die kompletten Nachrichten herunter zu laden.</p>
+
+<p>So laden Sie ausgew&#228;hlte Nachrichten f&#252;r die Offline-Nutzung
+herunter (ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>W&#228;hlen Sie einen Ordner aus, um dessen Nachrichten anzuzeigen.</li>
+  <li>W&#228;hlen Sie die Nachrichten, die Sie herunterladen m&#246;chten,
+      folgenderma&#223;en aus:
+
+      <ul>
+        <li>Um eine Gruppe aufeinanderfolgender Nachrichten auszuw&#228;hlen,
+		    klicken Sie auf die erste Nachricht, halten Sie die Umschalttaste
+			fest und klicken Sie auf die letzte Nachricht der Gruppe.</li>
+
+        <li>Um mehrere nicht aufeinanderfolgende Nachrichten auszuw&#228;hlen,
+		    halten Sie die STRG-Taste (disk_space_settings_blogWindows und Linux) oder die
+			Command-Taste (Mac) fest, w&#228;hrend Sie auf die gew&#252;nschten
+			Nachrichten klicken.</li>
+      </ul></li>
+
+  <li>&#214;ffnen Sie das Men&#252; <q>Datei</q> und w&#228;hlen Sie
+      <q>Offline</q> und anschlie&#223;end <q>Gew&#228;hlte
+	  Nachrichten abrufen</q>. &brandShortName; Mail &amp; Newsgroups
+	  l&#228;dt dann die ausgew&#228;hlten Nachrichten herunter.</li>
+</ol>
+
+<p>So laden Sie markierte Nachrichten f&#252;r die Offline-Nutzung herunter
+(ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>W&#228;hlen Sie einen Ordner aus, um dessen Nachrichten anzuzeigen.</li>
+
+  <li>Klicken Sie auf die Markierungsspalte jeder Nachricht, die Sie
+      herunterladen m&#246;chten. Wo Sie geklickt haben, wird ein Flaggensymbol
+	  zur Markierung der Nachricht angezeigt. Sollte die Markierungsspalte
+	  nicht angezeigt werden klicken Sie auf den Icon
+	  <img src="images/columns.png" alt="" /> und w&#228;hlen Sie
+	  <q>Kennzeichnung</q> aus der Liste.</li>
+
+  <li>&#214;ffnen Sie das Men&#252; <q>Datei</q> und w&#228;hlen Sie
+      <q>Offline</q> und anschlie&#223;end <q>Gekennzeichnete
+	  Nachrichten abrufen</q>. &brandShortName; Mail &amp; Newsgroups
+	  l&#228;dt dann die markierten Nachrichten herunter.</li>
+</ol>
+
+<p>Sobald alles heruntergeladen wurde, klicken Sie auf die Online/Offline
+Anzeige <img src="images/online.png" alt="" /> im rechten
+unteren Eck des Mail-Fensters (links neben dem Cookie-Symbol), um offline
+zu gehen. Danach bleibt &brandShortName; Mail &amp; Newsgroups weiter offen,
+um weiterarbeiten zu k&#246;nnen.</p>
+
+<p><q>Gew&#228;hlte Nachrichten abrufen</q> und <q>Gekennzeichnete
+Nachrichten abrufen</q> befinden sich zum schnelleren Zugriff im
+Kontextmen&#252; des Pop-Up Threads.</p>
+
+<p><strong>Anmerkung</strong>: Kopfzeilen von Nachrichten, die f&#252;r die
+Offline-Arbeit heruntergeladen wurden, sind mit einem dunkelgrauen Umschlag-
+oder Forensymbol versehen.</p>
+
+<p>So stellen Sie die Internet-Verbindung wieder her, um online zu
+arbeiten:</p>
+
+<ul>
+  <li>Klicken Sie auf die Online/Offline Anzeige
+      <img src="images/online.png" alt="" /> im rechten unteren
+	  Eck des Mail-Fensters (links neben dem Cookie-Symbol), um online zu
+	  gehen.</li>
+</ul>
+
+<p><strong>Tipp</strong>: &brandShortName; Mail &amp; Newsgroups speichert
+  Nachrichten, die Sie w&#228;hrend der Offline-Arbeit senden, im Ordner
+  <q>Ungesendete Nachrichten</q> unter <q>Lokale Ordner</q>. Wenn Sie
+  wollen das &brandShortName; beim Online gehen diese Nachrichten automatisch
+  absendet, dann &#228;ndern Sie dies &#252;ber die Einstellungen im Men&#252;
+  <q><span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span></q>, 
+  unter <a href="mailnews_preferences.xhtml#network_and_storage_preferences">
+  Offlineeinstellungen</a>.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="downloading_directory_entries_for_offline_use">Herunterladen von
+Verzeichniseintr&#228;gen zur Offline-Arbeit</h2>
+
+<p>Sie k&#246;nnen Eintr&#228;ge eines Verzeichnisserver auf Ihren Computer
+herunterladen (replizieren), so das sie auch Offline verf&#252;gbar sind. Sobald
+die Verzeichniseintr&#228;ge herunter geladen sind, k&#246;nnen Sie die selbe
+Prozedur verwenden, um die lokale Kopie der Eintr&#228;ge mit den letzten
+Eintr&#228;gen des Verzeichnisservers abzugleichen.</p>
+
+<p>Um ein LDAP-Verzeichnis Adressbuch f&#252;r den Offline Gebrauch herunter
+zu laden oder zu aktualisieren, gehen Sie wie folgt vor:</p>
+
+<ol>
+  <li>Stellen Sie sicher das Sie online sind.</li>
+  <li>&#214;ffnen Sie das Men&#252; Fenster und klicken Sie auf Adressbuch.</li>
+  <li>Im Adressbuch-Fenster w&#228;hlen Sie das Verzeichnis das Sie
+      herunterladen (replizieren) wollen.</li>
+  <li>Klicken Sie auf Eigenschaften in der Symbolleiste des Adressbuches. Die
+      Verzeichnisserver-Eigenschaften erscheinen.</li>
+  <li>Klicken Sie auf das Offline-Tab.</li>
+  <li>Klicken Sie auf <q>Jetzt herunterladen</q>, um die Eintr&#228;ge auf
+      Ihren Computer zu kopieren.</li>
+  <li>Falls Sie danach gefragt werden, geben Sie Ihren Netzwerkbenutzernamen
+      und Ihr Passwort ein.
+      
+  <p>Abh&#228;ngig von der Anzahl der
+      Verzeichniseintr&#228;ge, kann das Herunterladen einige Zeit in
+	  Anspruch nehmen.</p></li>
+</ol>
+
+<p>Nachdem der Kopiervorgang abgeschlossen ist, k&#246;nnen Sie Offline
+weiterarbeiten. Das Durchsuchen des Adressbuchs oder die
+Adressvervollst&#228;ndigung zum Verfassen von Nachrichten stellt damit
+auch Offline kein Problem mehr da. Nachdem Sie mit der lokalen Kopie des
+Verzeichnisses gearbeitet haben, werden Sie es wahrscheinlich wieder mit dem
+Server aktualisieren wollen. Dazu benutzen Sie bitte den oben beschriebenen
+Vorgang.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="setting_up_your_accounts_for_working_offline">Einrichtung Ihres Accounts
+f&#252;r die Offline-Arbeit</h2>
+
+<p>Um einen oder mehrere Accounts f&#252;r die Offline-Arbeit einzurichten,
+verwenden Sie die Einstellungen f&#252;r Offline-Arbeit und Speicherplatz im
+Dialogfeld <q>Mail&amp;Newsgroups-Accounts-Einstellungen</q>. Die einmal
+vorgenommenen Einstellungen brauchen Sie nicht mehr zu &#228;ndern, wenn Sie
+offline arbeiten. Welche Einstellungen verf&#252;gbar sind, h&#228;ngt von der
+Art des Accounts (IMAP-, POP- oder Foren-Account) ab.</p>
+
+<p>Im Folgenden finden Sie eine Zusammenfassung der f&#252;r die Einrichtung
+eines Accounts f&#252;r die Offline-Arbeit erforderlichen Schritte:</p>
+
+<ol>
+  <li>Verwenden Sie f&#252;r jeden Account, den Sie f&#252;r die Offline-Arbeit
+    einrichten m&#246;chten, das Dialogfeld <q>Mail &amp; Newsgroups 
+    Account-Einstellungen</q> Dialogfeld um die Synchronisation &amp; Speicherplatz 
+    Einstellungen f&#252;r diesen Account vorzunehmen. Sie m&#252;ssen die Objekte 
+    (Ordner und Newsgroups) ausw&#228;hlen, welche Sie zur Offline-Nutzung 
+    herunterladen wollen. Weitere Informationen finden Sie unter
+    <a href="#selecting_items_for_offline_viewing">Verschiedene Elemente zum 
+    Offline arbeiten ausw&#228;hlen</a>.
+
+      <p>Wenn Sie diese Einstellungen einmal vorgenommen haben, brauchen Sie
+	  diese nicht mehr zu &#228;ndern. Weitere Informationen zu den
+	  Einstellungen f&#252;r Offline-Arbeit und Speicherplatznutzung finden Sie
+	  unter den Accountarten
+	  <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_imap">IMAP</a>,
+	  <a href="mailnews_account_settings.xhtml#disk_space_settings_pop">POP</a>,
+          <a href="mailnews_account_settings.xhtml#disk_space_settings_blogs">Blogs</a> und
+	  <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_nntp">Newsgroup</a>.</p>
+
+    <p><strong>Hinweis</strong>: Um die Synchronisation &amp;
+      Speicherplatz Einstellungen des aktuellen Accounts zu bearbeiten, &#246;ffnen Sie das Datei-Men&#252; und w&#228;hlen dort 
+      Offline, Offline-Einstellungen.</p>
+
+  <li>&#214;ffnen Sie das Men&#252; <q>Datei</q> und w&#228;hlen Sie
+      <q>Offline</q> und anschlie&#223;end <q>Jetzt
+	  herunterladen/synchronisieren</q> aus dem Untermen&#252;.</li>
+
+  <li>W&#228;hlen Sie den Nachrichtentyp (Mail, Diskussionsforen oder beide),
+      den Sie herunterladen m&#246;chten.</li>
+
+      <p><strong>Wichtig</strong>: Sie m&#252;ssen mindesten eine Kategorie
+	     (Mail-Nachrichten oder Foren-Nachrichten) ausw&#228;hlen, damit der
+		 Download-Vorgang funktioniert.</p></li>
+
+  <li>Klicken Sie im Dialogfeld <q>Jetzt
+      herunterladen/synchronisieren</q>.</li>
+
+  <li>Klicken Sie auf <q>OK</q>, um die ausgew&#228;hlten Objekte
+      herunterzuladen. Weitere Informationen finden Sie unter
+	  <a href="#downloading_and_synchronizing_your_messages">Nachrichten 
+          herunterladen und synchronisieren</a>.</li>
+</ol>
+
+<p>In nachfolgenden Offline-Sitzungen k&#246;nnen Sie Schritt 1
+&#252;berspringen.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="selecting_items_for_offline_viewing">Verschiedene Elemente zum Offline
+arbeiten ausw&#228;hlen</h2>
+
+<p>Um Mail- und Foren-Nachrichten offline lesen zu k&#246;nnen, m&#252;ssen Sie
+diese zun&#228;chst zum Herunterladen ausw&#228;hlen. Sie k&#246;nnen einen Account
+auch komplett f&#252;r die Offline-Nutzung einrichten. Au&#223;erdem
+k&#246;nnen Sie die Ordner und Diskussionsforen ausw&#228;hlen, die Sie offline
+nutzen m&#246;chten.</p>
+
+<p><strong>Anmerkung</strong>: Vergessen Sie nicht das eine gr&#246;&#223;ere Anzahl
+von ausgew&#228;hlten Elementen auch eine l&#228;ngere Downloadzeit und mehr
+Speicherplatz ben&#246;tigt.</p>
+
+<p>Wenn Sie das Fenster <q>Jetzt herunterladen/synchronisieren</q> noch
+nicht ge&#246;ffnet haben, gehen Sie folgenderma&#223;en vor:</p>
+
+<ol>
+  <li>W&#228;hlen Sie aus dem Men&#252; <span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span>
+  die Option Mail &amp; Newsgroup-Account-Einstellungen. Das Dialogfeld 
+	  Mail &amp; Newsgroup-Account-Einstellungen wird angezeigt.</li>
+  <li>W&#228;hlen Sie die Synchronisation &amp; Speicherplatz Kategorie f&#252;r 
+    den Account, welchen Sie &#228;ndern wollen.</li>
+  <li>Klicken Sie auf <q>Erweitert</q> um Ihre IMAP-Ordner zu sehen, oder 
+    <q>Newsgruppen zum Offline-Lesen w&#228;hlen</q> 
+    um Ihre abonierten Newsgroups zu w&#228;hlen.
+    <p><strong>Anmerkung</strong>: Sie sehen nur die Newsgruppen und Ordner
+	  die sie bereits <a href="mailnews_newsgroups.xhtml#subscribing_to_newsgroups">abonniert</a>
+	  abonniert haben. POP-Accounts und lokale Mail-Ordner erscheinen nicht
+	  auf dieser Liste.</p></li>
+
+  <li>W&#228;hlen Sie die Elemente (Ordner, Newsgruppen), die Sie zum Offline
+      verf&#252;gbar haben wollen.</li>
+
+  <li>Klicken Sie auf OK.</li>
+</ol>
+
+<p>Einmal konfiguriert, brauchen Sie diese Einstellungen nicht f&#252;r jedes
+mal offline gehen &#228;ndern. Sollten Sie trotzdem etwas &#228;ndern wollen,
+dann k&#246;nnen Sie dies einfach vor dem offline gehen machen, in dem Sie
+dazu denselben Button wie beim 
+<a href="#downloading_and_synchronizing_your_messages">Herunterladen und Synchronisieren</a>
+ist.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="downloading_and_synchronizing_your_messages">Nachrichten herunterladen
+und synchronisieren</h2>
+
+<p>Wenn Sie bereits Mail-Ordner und Diskussionsforen f&#252;r die
+Offline-Nutzung ausgew&#228;hlt haben, k&#246;nnen Sie diese jetzt
+herunterladen und synchronisieren. Wenn Sie noch keine Objekt zum Herunterladen
+ausgew&#228;hlt haben, k&#246;nnen Sie dies tun, bevor Sie offline gehen.</p>
+
+<p>Wenn Sie das Fenster <q>Jetzt herunterladen/synchronisieren</q> noch
+nicht ge&#246;ffnet haben, gehen Sie folgenderma&#223;en vor:</p>
+
+<p>So laden Sie Nachrichten herunter und synchronisieren sie (ausgehend vom
+Mail-Fenster):</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Datei</q> und w&#228;hlen Sie
+      <q>Offline</q> und anschlie&#223;end <q>Jetzt
+	  herunterladen/synchronisieren</q>.</li>
+
+  <li>W&#228;hlen Sie die Kategorien (Mail- oder Foren-Nachrichten), die Sie
+      herunterladen m&#246;chten.
+
+      <p><strong>Wichtig</strong>: Sie m&#252;ssen mindesten eine Kategorie
+	  (Mail-Nachrichten oder Foren-Nachrichten) ausw&#228;hlen, damit der
+	  Download-Vorgang funktioniert. Wenn die Kontrollk&#228;stchen nicht
+	  verf&#252;gbar sind, haben Sie noch keine Objekte zum Herunterladen
+	  ausgew&#228;hlt. Verwenden Sie die Schaltfl&#228;che
+	  <q>Ausw&#228;hlen</q>, um Objekte zum Herunterladen
+	  auszuw&#228;hlen.</p></li>
+
+  <li>Um Nachrichten im Ordner <q>Ungesendete Nachrichten</q> zu senden,
+      bevor Sie offline gehen, klicken Sie auf <q>Ungesendete Nachrichten
+	  senden</q>.</li>
+
+  <li>Um unmittelbar nach Abschluss des Download-Vorgangs offline zu gehen,
+      aktivieren Sie das Kontrollk&#228;stchen <q>Nach Download und/oder
+	  Synchronisation offline arbeiten</q>.</li>
+
+  <li>Um die Objekte zum Herunterladen festzulegen oder zu &#228;ndern, klicken
+      Sie auf <q>Ausw&#228;hlen</q>. Weitere Informationen finden Sie unter
+	  <a href="#selecting_items_for_offline_viewing">Verschiedene Elemente 
+          zum Offline arbeiten ausw&#228;hlen</a>.
+	  Sie k&#246;nnen diesen Schritt &#252;berspringen, wenn Sie bereits
+	  Objekte zum Herunterladen ausgew&#228;hlt haben.</li>
+
+  <li>Klicken Sie auf <q>OK</q>. &brandShortName; Mail &amp; Newsgroups
+      l&#228;dt dann die ausgew&#228;hlten Objekte herunter.</li>
+</ol>
+
+<p>Wenn Sie ausgew&#228;hlt haben, dass Sie nach dem Download offline arbeiten
+m&#246;chten, schaltet &brandShortName; Mail &amp; Newsgroups sofort in den
+Offline-Modus um. Ansonsten m&#252;ssen Sie auf die Online/Offline Anzeige
+<img src="images/online.png" alt="" /> im rechten unteren Eck
+des Mail-Fensters (links neben dem Cookie-Symbol) klicken, um offline zu
+gehen.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="working_offline_and_reconnecting_later">Wiederherstellung der
+Verbindung nach der Offline-Arbeit</h2>
+
+<p>So arbeiten Sie offline und stellen die Verbindung sp&#228;ter wieder her
+(ausgehend vom Mail-Fenster):</p>
+
+<p>Wenn Sie bereit sind offline zu gehen:</p>
+
+<ol>
+  <li>Klicken Sie auf die Online/Offline Anzeige
+      <img src="images/online.png" alt="" /> im rechten
+	  unteren Eck des Mail-Fensters (links neben dem Cookie-Symbol), um offline
+	  zu gehen.</li>
+
+  <li>Klicken Sie auf <q>Herunterladen</q>, wenn Sie Nachrichten
+      herunterladen m&#246;chten, bevor Sie offline gehen. Wenn Sie offline
+	  arbeiten m&#246;chten, ohne Nachrichten herunterzuladen, klicken Sie auf
+	  <q>Nicht herunterladen</q>.</li>
+</ol>
+
+<p><strong>Anmerkung</strong>: Kopfzeilen von Nachrichten, die f&#252;r die
+Offline-Arbeit heruntergeladen wurden, sind mit einem dunkelgrauen Umschlag-
+oder Forensymbol versehen.</p>
+
+<p><strong>Tipp</strong>: Um das Download-Verhalten von &brandShortName; Mail
+&amp; Newsgroups beim Umschalten in den Offline-Modus einzustellen,
+&#246;ffnen Sie das Men&#252; <q><span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span></q>,
+w&#228;hlen Sie <q>Einstellungen</q> und anschlie&#223;end die Kategorie
+<q>Synchronisation &amp; Speicherplatz</q>. Sie k&#246;nnen festlegen, dass
+&brandShortName; Mail &amp; Newsgroups nachfragen soll, ob Sie beim Umschalten
+in den Offline-Modus Nachrichten herunterladen m&#246;chten, dass Nachrichten
+automatisch oder gar nicht heruntergeladen werden sollen.</p>
+
+<p>So stellen Sie die Verbindung wieder her und synchronisieren Ihre
+Nachrichten:</p>
+
+<ol>
+  <li>Klicken Sie auf die Online/Offline Anzeige
+      <img src="images/online.png" alt="" /> im rechten unteren
+	  Eck des Mail-Fensters (links neben dem Cookie-Symbol), um online zu
+	  gehen.</li>
+
+  <li>&#214;ffnen Sie das Men&#252; <q>Datei</q> und w&#228;hlen Sie
+      <q>Offline</q> und anschlie&#223;end <q>Jetzt
+	  herunterladen/synchronisieren</q>.</li>
+</ol>
+
+<p>&brandShortName; Mail &amp; Newsgroups synchronisiert Ihre Nachrichten
+automatisch mit dem Server in dem es die offline vorgenommenen &#196;nderungen
+an den Server &#252;bertr&#228;gt.</p>
+
+<p><strong>Tipp</strong>: Um das Download-Verhalten von &brandShortName; Mail
+&amp; Newsgroups beim Umschalten in den Online-Modus einzustellen, &#246;ffnen
+Sie das Men&#252; <q><span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span></q>, 
+w&#228;hlen Sie <q>Einstellungen</q> und anschlie&#223;end die
+Kategorie <q>Synchronisation &amp; Speicherplatz</q>. Sie k&#246;nnen
+estlegen, dass &brandShortName; Mail &amp; Newsgroups nachfragen soll, ob Sie
+ungesendete Nachrichten senden m&#246;chten, oder dass ungesendete Nachrichten
+automatisch oder gar nicht gesendet werden.</p>
+
+<p>[<a href="#working_offline">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+</body>
+</html>

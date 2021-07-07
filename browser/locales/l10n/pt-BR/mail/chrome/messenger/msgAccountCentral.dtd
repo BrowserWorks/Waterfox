@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Mensagens">
+<!ENTITY readMsgsLink.label           "Ler mensagens">
+<!ENTITY composeMsgLink.label         "Escrever nova mensagem">
+
+<!ENTITY newsSectionHdr.label         "Grupos de notícias">
+<!ENTITY subscribeNewsLink.label      "Gerenciar inscrições em grupos de notícias">
+
+<!ENTITY feedsSectionHdr.label        "RSS">
+<!ENTITY subscribeFeeds.label         "Gerenciar inscrições">
+
+<!ENTITY chat.label                   "Conversa">
+
+<!ENTITY accountsSectionHdr.label     "Contas">
+<!ENTITY subscribeImapFolders.label   "Gerenciar inscrições de pastas">
+<!ENTITY settingsLink.label           "Ver configurações desta conta">
+<!ENTITY setupNewAcct.label           "Configurar uma conta:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Recursos avançados">
+<!ENTITY searchMsgsLink.label         "Pesquisar">
+<!ENTITY filtersLink.label            "Criar filtros para mensagens">
+<!ENTITY junkSettings.label           "Configurações de spam">
+<!ENTITY offlineLink.label            "Configurações do modo desconectado">

@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title     "Hálózatszerkesztő">
+<!ENTITY networksEditDialog.size      "width: 75ch; height: 28em;">
+
+<!ENTITY restoreButton.label          "Alapértelmezések visszaállítása">
+<!ENTITY restoreButton.accesskey      "v">
+
+<!ENTITY networkListAdd.label         "Hálózat hozzáadása…">
+<!ENTITY networkListAdd.accesskey     "a">
+<!ENTITY networkListAdd.tooltip       "Új hálózat hozzáadása">
+<!ENTITY networkListEdit.label        "Hálózat szerkesztése">
+<!ENTITY networkListEdit.accesskey    "e">
+<!ENTITY networkListEdit.tooltip      "A kiválasztott hálózat szerkesztése">
+<!ENTITY networkListRemove.label      "Hálózat eltávolítása">
+<!ENTITY networkListRemove.accesskey  "t">
+<!ENTITY networkListRemove.tooltip    "A kiválasztott hálózat eltávolítása">
+
+<!ENTITY serverListUp.label           "Mozgatás felfelé">
+<!ENTITY serverListUp.accesskey       "f">
+<!ENTITY serverListUp.tooltip         "A kiválasztott kiszolgáló felfelé mozgatása a listában">
+<!ENTITY serverListDown.label         "Mozgatás lefelé">
+<!ENTITY serverListDown.accesskey     "l">
+<!ENTITY serverListDown.tooltip       "A kiválasztott kiszolgáló lefelé mozgatása a listában">
+<!ENTITY serverListAdd.label          "Kiszolgáló hozzáadása…">
+<!ENTITY serverListAdd.accesskey      "K">
+<!ENTITY serverListAdd.tooltip        "Új kiszolgáló hozzáadása">
+<!ENTITY serverListEdit.label         "Kiszolgáló szerkesztése…">
+<!ENTITY serverListEdit.accesskey     "r">
+<!ENTITY serverListEdit.tooltip       "A kiválasztott kiszolgáló szerkesztése">
+<!ENTITY serverListRemove.label       "Kiszolgáló eltávolítása">
+<!ENTITY serverListRemove.accesskey   "s">
+<!ENTITY serverListRemove.tooltip     "A kiválasztott kiszolgáló eltávolítása">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label          "A kiválasztott kiszolgáló részletei:">
+<!ENTITY serverName.label             "Kiszolgáló:">
+<!ENTITY serverName.accesskey         "K">
+<!ENTITY serverPort.label             "Port:">
+<!ENTITY serverPort.accesskey         "P">
+<!ENTITY connectionSecurity.label     "Kapcsolat biztonsága:">
+<!ENTITY connectionSecurity.accesskey "b">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title       "IRC-kiszolgáló">
+<!ENTITY settings.caption             "Beállítások">
+<!ENTITY security.caption             "Biztonság">
+<!ENTITY serverPortDefault.label      "Alapértelmezett:">

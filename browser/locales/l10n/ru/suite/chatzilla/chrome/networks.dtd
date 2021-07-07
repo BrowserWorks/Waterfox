@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title     "Редактор сетей">
+<!ENTITY networksEditDialog.size      "width: 75ch; height: 28em;">
+
+<!ENTITY restoreButton.label          "Восстановить по умолчанию">
+<!ENTITY restoreButton.accesskey      "м">
+
+<!ENTITY networkListAdd.label         "Добавить сеть…">
+<!ENTITY networkListAdd.accesskey     "б">
+<!ENTITY networkListAdd.tooltip       "Добавить новую сеть">
+<!ENTITY networkListEdit.label        "Изменить сеть…">
+<!ENTITY networkListEdit.accesskey    "м">
+<!ENTITY networkListEdit.tooltip      "Изменить выбранную сеть">
+<!ENTITY networkListRemove.label      "Удалить сеть">
+<!ENTITY networkListRemove.accesskey  "а">
+<!ENTITY networkListRemove.tooltip    "Удалить выбранную сеть">
+
+<!ENTITY serverListUp.label           "Вверх">
+<!ENTITY serverListUp.accesskey       "х">
+<!ENTITY serverListUp.tooltip         "Переместить выбранный сервер вверх по списку">
+<!ENTITY serverListDown.label         "Вниз">
+<!ENTITY serverListDown.accesskey     "з">
+<!ENTITY serverListDown.tooltip       "Переместить выбранный сервер вниз по списку">
+<!ENTITY serverListAdd.label          "Добавить сервер…">
+<!ENTITY serverListAdd.accesskey      "б">
+<!ENTITY serverListAdd.tooltip        "Добавить новый сервер">
+<!ENTITY serverListEdit.label         "Изменить сервер…">
+<!ENTITY serverListEdit.accesskey     "м">
+<!ENTITY serverListEdit.tooltip       "Изменить выбранный сервер">
+<!ENTITY serverListRemove.label       "Удалить сервер">
+<!ENTITY serverListRemove.accesskey   "а">
+<!ENTITY serverListRemove.tooltip     "Удалить выбранный сервер">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label          "Параметры выбранного сервера:">
+<!ENTITY serverName.label             "Сервер:">
+<!ENTITY serverName.accesskey         "в">
+<!ENTITY serverPort.label             "Порт:">
+<!ENTITY serverPort.accesskey         "о">
+<!ENTITY connectionSecurity.label     "Защита соединения:">
+<!ENTITY connectionSecurity.accesskey "а">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title       "IRC-сервер">
+<!ENTITY settings.caption             "Параметры">
+<!ENTITY security.caption             "Защита">
+<!ENTITY serverPortDefault.label      "По умолчанию:">

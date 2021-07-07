@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title     "Networks Editor">
+<!ENTITY networksEditDialog.size      "width: 75ch; height: 28em;">
+
+<!ENTITY restoreButton.label          "Restore Defaults">
+<!ENTITY restoreButton.accesskey      "f">
+
+<!ENTITY networkListAdd.label         "Add Network…">
+<!ENTITY networkListAdd.accesskey     "A">
+<!ENTITY networkListAdd.tooltip       "Add a new network">
+<!ENTITY networkListEdit.label        "Edit Network…">
+<!ENTITY networkListEdit.accesskey    "E">
+<!ENTITY networkListEdit.tooltip      "Edit the selected network">
+<!ENTITY networkListRemove.label      "Remove Network">
+<!ENTITY networkListRemove.accesskey  "R">
+<!ENTITY networkListRemove.tooltip    "Remove the selected network">
+
+<!ENTITY serverListUp.label           "Move Up">
+<!ENTITY serverListUp.accesskey       "U">
+<!ENTITY serverListUp.tooltip         "Move the selected server up the list">
+<!ENTITY serverListDown.label         "Move Down">
+<!ENTITY serverListDown.accesskey     "D">
+<!ENTITY serverListDown.tooltip       "Move the selected server down the list">
+<!ENTITY serverListAdd.label          "Add Server…">
+<!ENTITY serverListAdd.accesskey      "S">
+<!ENTITY serverListAdd.tooltip        "Add a new server">
+<!ENTITY serverListEdit.label         "Edit Server…">
+<!ENTITY serverListEdit.accesskey     "i">
+<!ENTITY serverListEdit.tooltip       "Edit the selected server">
+<!ENTITY serverListRemove.label       "Remove Server">
+<!ENTITY serverListRemove.accesskey   "m">
+<!ENTITY serverListRemove.tooltip     "Remove the selected server">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label          "Details of the selected server:">
+<!ENTITY serverName.label             "Server:">
+<!ENTITY serverName.accesskey         "S">
+<!ENTITY serverPort.label             "Port:">
+<!ENTITY serverPort.accesskey         "P">
+<!ENTITY connectionSecurity.label     "Connection Security:">
+<!ENTITY connectionSecurity.accesskey "n">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title       "IRC Server">
+<!ENTITY settings.caption             "Settings">
+<!ENTITY security.caption             "Security">
+<!ENTITY serverPortDefault.label      "Default:">
