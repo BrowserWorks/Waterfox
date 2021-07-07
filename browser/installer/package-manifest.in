@@ -248,6 +248,10 @@
 @RESPATH@/browser/chrome/browser.manifest
 @RESPATH@/browser/chrome/pdfjs.manifest
 @RESPATH@/browser/chrome/pdfjs/*
+@RESPATH@/browser/chrome/addon-stores.manifest
+@RESPATH@/browser/chrome/addon-stores/*
+@RESPATH@/browser/chrome/extensibles.manifest
+@RESPATH@/browser/chrome/extensibles/*
 @RESPATH@/chrome/toolkit@JAREXT@
 @RESPATH@/chrome/toolkit.manifest
 @RESPATH@/chrome/recording.manifest
