@@ -1,0 +1,13 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ *   Ce fichier contient tous les paramètres d’apparence localisables tels que 
+ *   la police, l’affichage et la géométrie
+ */
+window { 
+  font: 3mm tahoma,arial,helvetica,sans-serif;
+}
+
+q:lang(fr) { quotes: "\ab\a0" "\a0\bb" "\201c" "\201d"; }

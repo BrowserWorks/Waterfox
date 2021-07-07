@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Diese Seite verlassen">
+<!ENTITY safeb.palm.decline.label "Diese Warnung ignorieren">
+<!ENTITY safeb.palm.reportPage.label "Warum wurde diese Seite blockiert?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Warnung bereitgestellt von <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Als attackierend gemeldete Webseite!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Die Webseite auf <span id='malware_sitename'/> wurde als attackierende Seite gemeldet und auf Grund Ihrer Sicherheitseinstellungen blockiert.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Attackierende Webseiten versuchen, Programme zu installieren, die private Informationen stehlen, Ihren Computer verwenden, um andere zu attackieren, oder Ihr System beschädigen.</p><p>Manche Webseiten vertreiben bewusst Viren und ähnlich schädliche Software, aber viele Webseiten sind auch ohne das Wissen oder die Erlaubnis des Betreibers kompromittiert.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Betrügerische Website!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Die Webseite auf <span id='phishing_sitename'/> wurde als betrügerische Website gemeldet und auf Grund Ihrer Sicherheitseinstellungen blockiert.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Betrügerisches Website versuchen Sie dazu zu bringen, etwas Gefährliches zu machen, z.B. Software zu installieren oder private Informationen wie Passwörter, Telefonnummern oder Kreditkartendaten Preis zugeben.</p><p>Falls Sie auf dieser Seite irgendwelche Daten eingeben, müssen Sie mit Identitätsdiebstahl oder sonstigem Betrug rechnen.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Als Seite mit unerwünschter Software gemeldet!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Die Website auf <span id='unwanted_sitename'/> wurde als Seite gemeldet, welche unerwünschte Software enthält, und wurde auf Grund Ihrer Sicherheitseinstellungen blockiert.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Seiten mit unerwünschter Software versuchen, Software zu installieren, die betrügerisch sein und Ihr System in unerwarteter Weise beeinflussen kann.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Website mit eventuell Schadsoftware blockiert">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; hat diese Seite blockiert, da sie versuchen könnte, schädliche Apps zu installieren, welche Ihre Informationen stehlen oder löschen (zum Beispiel Fotos, Passwörter, Nachrichten und Kreditkarteninformationen).">

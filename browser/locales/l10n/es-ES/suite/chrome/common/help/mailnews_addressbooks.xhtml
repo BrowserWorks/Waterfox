@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+    <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Usar libretas de direcciones</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+        type="text/css"/>
+</head>
+
+<body>
+<h1 id="using_address_books">Usar libretas de direcciones</h1>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#about_address_books">Acerca de las libretas de
+      direcciones</a></li>
+    <li><a href="#adding_entries_to_your_address_books">Añadir entradas a la
+      libreta de direcciones</a></li>
+    <li><a href="#creating_a_new_address_book">Crear una libreta de direcciones
+      nueva</a></li>
+    <li><a href="#creating_a_new_address_book_card">Crear una nueva tarjeta en
+      una libreta de direcciones</a></li>
+    <li><a href="#creating_a_mailing_list">Crear una lista de
+      distribución</a></li>
+    <li><a href="#editing_a_mailing_list">Editar una lista de
+      distribución</a></li>
+    <li><a href="#searching_address_books_and_directories">Buscar en las
+      libretas de direcciones y directorios</a></li>
+    <li><a href="#importing_address_books">Importar libretas de
+      direcciones</a></li>
+    <li><a href="#exporting_address_books">Exportar libretas de
+      direcciones</a></li>
+    <li><a href="#adding_and_removing_ldap_directories">Añadir y borrar
+      directorios LDAP</a></li>
+  </ul>
+</div>
+
+<h2 id="about_address_books">Acerca de las libretas de direcciones</h2>
+
+<p>Las libretas de direcciones almacenan direcciones de correo
+  electrónico e información de contacto para las personas a las
+  que manda correo habitualmente, como colegas, amigos y familia.
+  &brandShortName; le proporciona dos libretas de direcciones: la libreta de
+  direcciones personal y las direcciones recopiladas, aparte de poder crear
+  más libretas de direcciones. También puede importar libretas
+  de direcciones de otros programas de correo y de versiones anteriores de
+  &brandShortName;. El contenido de estas libretas de direcciones se almacena
+  localmente en el disco duro.</p>
+
+<p>Su libreta de direcciones también puede tener una lista de
+direccionesde correo electrónico de un directorio LDAP, que reside en
+un servidor de directorio LDAP. El servidor de directorio almacena las
+direcciones de correo electrónico de las personas que no están
+incluidas en las libretas de direcciones locales. El Protocolo Ligero de
+Acceso a Directorios (LDAP) es un método estándar de la
+industria para acceder a servicios de directorio de Internet o intranets como
+libretas de direcciones corporativas.</p>
+
+<h4>Libreta de direcciones personal</h4>
+
+<p>Use la libreta de direcciones personal para añadir los nombres
+específicos que elija. Puede crear listas de distribución y editar
+los datos de direcciones personales.</p>
+
+<h4>Direcciones recopiladas</h4>
+
+<p>Por defecto, la libreta de direcciones recopiladas almacena
+  automáticamente las direcciones de correo electrónico incluidas
+  en los mensajes salientes. Las direcciones de los mensajes salientes se
+  guardan en el momento en que se envían.</p>
+
+<h4>Directorio LDAP (si hay uno disponible)</h4>
+
+<p>Un directorio LDAP (también conocido como servicio de búsqueda de nombres)
+  almacena direcciones de correo electrónico de los destinatarios que no están
+  en las libretas de direcciones locales. Los directorios LDAP ofrecen acceso a
+  grandes bases de datos centralizadas de direcciones de correo electrónico, lo
+  que es especialmente útil al usar <a
+  href="mailnews_preferences.xhtml#address_autocompletion">completado automático
+  de direcciones</a>.</p>
+
+<p>La recopilación automática de direcciones está
+habilitada por defecto. Para cambiar la configuración de la
+recopilación automática de direcciones, comenzando desde la
+ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+  <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, pulse en
+  Redacción de mensajes (si no hay subcategorías visibles, haga
+  doble clic en Correo y noticias para expandir la lista).</li>
+  <li>En Recopilación de direcciones de correo electrónico, seleccione
+    <q>Añadir direcciones de correo electrónico a mi:</q> y elija la libreta
+    que quiera:
+    <ul>
+      <li>Libreta de direcciones personal.</li>
+      <li>Direcciones recopiladas.</li>
+    </ul>
+  </li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<h4>Abrir la ventana de la libreta de direcciones</h4>
+
+<p>Para abrir la ventana de la libreta de direcciones:</p>
+
+<ul>
+<li>Abra el menú Ventana y elija Libreta de direcciones,
+o pulse el icono de la libreta de direcciones en la barra de
+estado.
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/taskbar-ab.png" alt="" /></td>
+  </tr>
+  <tr>
+    <td width="80"></td>
+    <td><strong>Icono de la libreta de direcciones</strong></td>
+  </tr>
+</table>
+</li>
+</ul>
+
+<h4>Cambiar la vista de la libreta de direcciones</h4>
+
+<p>Para personalizar la vista de la libreta de direcciones y las
+tarjetas:</p>
+
+<ol>
+  <li>Abra el menú Ventana y elija Libreta de direcciones. Verá
+  la ventana de la libreta de direcciones.</li>
+  <li>En esa ventana, abra el menú Ver y elija una de las siguientes
+  opciones de vista:
+    <ul>
+      <li>Elija Mostrar/ocultar y entonces seleccione el elemento que desee
+      desmarcar (ocultar) o marcar (mostrar).</li>
+      <li>Elija Mostrar nombre como, y luego seleccione la forma de ver los
+      nombres de las tarjetas (nombre/apellido, apellido/nombre o Nombre
+      mostrado).</li>
+      <li>Elija Ordenar por, y luego seleccione una opción de
+      ordenación.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="adding_entries_to_your_address_books">Añadir entradas a las
+libretas de direcciones</h2>
+
+<p>Se puede usar cualquiera de las formas siguientes para añadir
+entras a las libretas de direcciones:</p>
+
+<ul>
+  <li>Pulse en un nombre en el campo De o en uno de los destinatarios (por
+    ejemplo, Para o Cc) en un mensaje que haya recibido, y luego elija
+    <q>Añadir a la libreta de direcciones</q> en el menú
+    emergente.</li>
+  <li>En la ventana de la libreta de direcciones, pulse el botón Nueva
+    tarjeta para crear una tarjeta nueva para la libreta de direcciones.</li>
+  <li>Envíe un mensaje, y si está habilitada la recogida
+    automática de direcciones, se añadirá
+    automáticamente la dirección del destinatario a su libreta
+    de direcciones.</li>
+  <li>En la ventana Libreta de direcciones, copie entradas a otra libreta de
+    direcciones seleccionando entradas y arrastrándolas sobre el nombre
+    de la libreta de direcciones en la que quiera copiarlas.</li>
+</ul>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="creating_a_new_address_book">Crear una libreta de direcciones
+nueva</h2>
+
+<p>&brandShortName; proporciona una libreta de direcciones personal por
+defecto, pero se pueden crear libretas de direcciones adicionales.</p>
+
+<p>Para crear una nueva libreta de direcciones:</p>
+
+<ol>
+  <li>Pulse el icono de la libreta de direcciones en la esquina inferior
+  izquierda de cualquier ventana de &brandShortName;, o abra el menú
+  ventana y elija Libreta de direcciones. Verá la ventana de la libreta
+  de direcciones.
+
+  <table>
+    <tr><td colspan="2"><img src="images/taskbar-ab.png" alt="" /></td>
+    </tr>
+    <tr>
+      <td width="80"></td>
+      <td><strong>Icono de la libreta de direcciones</strong></td>
+    </tr>
+  </table></li>
+  <li>En la ventana de la libreta de direcciones, abra el menú Archivo,
+  elija Nuevo, y luego escoja Libreta de direcciones. Verá el cuadro
+  de diálogo de Nueva libreta de direcciones.</li>
+  <li>Escriba el nombre de la nueva libreta de direcciones y pulse
+  Aceptar.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="creating_a_new_address_book_card">Crear una nueva tarjeta en una
+  libreta de direcciones</h2>
+
+<p>Las tarjetas de las libretas de direcciones se pueden usar para almacenar
+  nombres, direcciones postales, direcciones de correo electrónico,
+  números de teléfono y más información, como si la persona prefiere recibir
+  mensajes en texto sin formato o en formato HTML.</p>
+
+<p>Para crear una tarjeta de una libreta de direcciones para una sola
+  persona:</p>
+
+<ol>
+  <li>Pulse en el icono de la libreta de direcciones en la barra de estado
+    o abra en menú Ventana y elija Libreta de direcciones.</li>
+  <li>Pulse el botón Nueva tarjeta. Si tiene varias libretas de
+    direcciones, seleccione a cuál quiere añadir la tarjeta.</li>
+  <li>En el cuadro diálgo de añadir tarjeta hay tres
+    pestañas:
+    <ul>
+      <li><strong>Contacto</strong>: introduzca la siguiente
+        información:
+        <ul>
+          <li>Nombre y apellidos de la persona, tal como quiere que aparezca
+            en la libreta de direcciones.</li>
+          <li>Nombre para visualizar (el nombre que aparece en el campo
+            <q>Para</q> de la ventana de redacción).</li>
+          <li>Apodo (una abreviatura o alias del nombre real).</li>
+          <li>Dirección de correo electrónico (direcciones
+            principal y adicional).</li>
+          <li>Prefiere recibir mensajes con formato: si sabe si este
+            destinatario puede leer mensaje en formato HTML (como los mensajes
+            que incluyen enlaces, imágenes o tablas), elija HTML. Si este
+            destinatario sólo puede leer mensajes enviados como texto sin
+            formato, entonces elija Texto sin formato. Si no lo sabe o no
+            está seguro, elija Desconocido. Si elige Desconocido,
+            &brandShortName; determina el formato basándose en la
+            configuración indicada en el cuadro de diálogo de
+            Formato de envío en el menú Editar, Preferencias y
+            Correo y grupos de noticias. Si &brandShortName; no puede
+            determinar el formato correcto, le pedirá que escoja un
+            formato para enviar el mensaje.</li>
+          <li>Permitir imágenes remotas en el correo HTML: si quiere
+            permitir que el contenido remoto que este remitente le envíe
+            se muestre en su ventana de mensajes.</li>
+          <li>Nombre en pantalla (el nombre de contacto de AIM).</li>
+          <li>Teléfonos (introduzca los números de
+            teléfono de esta persona).</li>
+        </ul>
+      </li>
+      <li><strong>Dirección</strong>: Escriba información
+      adicional como la calle, número de teléfono, o una URL.
+      <p><strong>Truco</strong>: si introduce información de la
+      dirección, &brandShortName; muestra un botón Obtener Mapa
+      junto a la dirección al ver la tarjeta en la ventana de la
+      libreta de direcciones. Si se pulsa en el botón Obtener mapa se
+      muestra una página web que contiene una mapa de la
+      dirección.</p></li>
+      <li><strong>Otros</strong>: guarde cualquier información
+      adicional que desee.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Truco</strong>: para añadir rápidamente entradas en
+la libreta de direcciones, pulse cualquier dirección de correo
+electrónico en los mensajes que reciba y seleccione Añadir a la
+libreta de direcciones del menú desplegable. Aparece el cuadro de
+diálogo de nueva tarjeta, donde puede completar la
+información.</p>
+
+<h3 id="viewing_or_editing_card_properties">Ver o editar las propiedades de
+las tarjetas</h3>
+
+<p>Para ver o editar las propiedades de una tarjeta:</p>
+<ol>
+  <li>Seleccione la tarjeta de la lista de entradas en la ventana de la
+  libreta de direcciones.</li>
+  <li>Pulse Propiedades.</li>
+</ol>
+
+<p>[<a href="using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="creating_a_mailing_list">Crear una lista de distribución</h2>
+
+<p>Si manda regularmente correo a un grupo de personas, puede obtener
+rápidamente la dirección de los destinatarios del mensaje usando
+lo que se llama una lista de correo o lista de distribución que
+contenga los nombres que desee.</p>
+
+<p>Para crear una lista de distribución y añadirla a la libreta
+de direcciones:</p>
+
+<ol>
+  <li>En la ventana de la libreta de direcciones, pulse en el botón
+  Nueva lista.</li>
+  <li>Introduzca la siguiente información en el cuadro de
+  diálogo de lista de distribución:
+    <ul>
+      <li>Pulse en la lista desplegable <q>Añadir a</q> para elegir una
+      libreta de direcciones para guardar la lista.</li>
+      <li>Nombre de la lista: cuando introduzca el nombre de la lista en el
+      campo <q>Para</q> de un mensaje, todos los miembros de la lista
+      recibirán el mensaje.</li>
+      <li>Apodo de la lista: alias (o nombre corto) para el nombre de la
+      lista.</li>
+      <li>Descripción: aparece después del nombre de la lista en
+      la línea de la dirección en la ventana de redacción
+      de mensajes.</li>
+    </ul>
+  </li>
+  <li>Escriba direcciones de correo para añadirlas a la lista.</li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p>En el lado izquierdo de la ventana de la libreta de direcciones, la lista
+de correo aparece bajo la libreta de direcciones a la que ha sido
+añadida.</p>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="editing_a_mailing_list">Editar una lista de distribución</h2>
+
+<p>Las listas de distribución se guardan en la libreta de direcciones
+en la que fueron creadas.</p>
+
+<p>Para quitar a un miembro de la lista, comenzando desde la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Ventana y elija Libreta de direcciones.</li>
+  <li>Expanda la libreta de direcciones donde creó la lista de
+  distribución pulsando en el triángulo pequeño que
+  está junto al título de la libreta.</li>
+  <li>Resalte la lista de distribución pulsando en su nombre. La lista
+  de miembros aparece a la derecha del nombre de la lista de
+  distribución.</li>
+  <li>Pulse la entrada que desee borrar.</li>
+  <li>Pulse en el botón Borrar.</li>
+</ol>
+
+<p>Para añadir miembros a una lista de distribución:</p>
+
+<ol>
+  <li>Abra el menú Ventana y elija Libreta de direcciones.</li>
+  <li>Expanda la libreta que tenga la lista de distribución pulsando
+  en el triángulo pequeño que está al lado del
+  título de la libreta.</li>
+  <li>Resalte la lista de distribución pulsando en su nombre.</li>
+  <li>Haga clic en Editar.</li>
+  <li>Añada o elimine entradas según lo necesite.</li>
+  <li>Pulse Aceptar cuando haya finalizado.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="searching_address_books_and_directories">Buscar en las libretas de
+direcciones y directorios</h2>
+
+<p>&brandShortName; le permite buscar rápidamente en una libreta de
+direcciones o directorio por nombre o dirección, o usar una
+combinación de criterios para realizar una búsqueda más
+específica en la libreta o directorio.</p>
+
+<p>Para buscar rápidamente una libreta por nombre o dirección,
+comenzando desde la ventana de la libreta de direcciones:</p>
+
+<ol>
+  <li>En la ventana de la libreta de direcciones, en la lista de libretas,
+  seleccione la libreta o directorio en el que quiera realizar la
+  búsqueda.</li>
+  <li>A la derecha de <q>El nombre o dirección contiene</q>, escriba el
+  texto del nombre o dirección que quiera encontrar. Puede escribir
+  sólo una parte del nombre o dirección, o puede escribir la
+  palabra o nombre exacto que quiera encontrar.
+  
+  <p>En el momento en que deje de escribir, &brandShortName; muestra
+  sólo aquellas entradas donde el nombre o dirección contienen
+  el texto que introdujo.</p>
+  </li>
+  <li>Pulse Vaciar para borrar el texto de la búsqueda y mostrar todas
+  las entradas.</li>
+</ol>
+
+<h3 id="searching_for_specific_entries">Buscar entradas
+específicas</h3>
+
+<p>Puede realizar búsquedas en libretas o directorios para encontrar
+entradas específicas. Si no tiene delante el cuadro de diálogo
+Búsqueda avanzada de direcciones, vaya a la ventana de la libreta de
+direcciones:</p>
+
+<ol>
+  <li>Abra el menú Herramientas y elija Buscar direcciones. Verá
+  el cuadro de diálogo Búsqueda avanzada de direcciones.</li>
+  <li>Junto a <q>Buscar en</q>, elija la libreta de direcciones o directorio
+  en el que quiera realizar la búsqueda.</li>
+  <li>Seleccione las opciones de búsqueda para encontrar las entradas
+  que coincidan con todos o al menos una de las condiciones o criterios
+  de búsqueda elegidos.</li>
+  <li>Pulse en el botón Más para añadir criterios y en
+  Menos para quitarlos.</li>
+  <li>Pulse el botón Buscar para empezar, o pulse Vaciar para borrar
+  las entradas. Los resultados de la búsqueda aparecen en la parte
+  inferior del cuadro de diálogo.</li>
+  <li>Para ordenar las entradas de otra manera, pulse en la columna por
+  la que quiera ordenar.</li>
+  <li>Para ver la ficha de una entrada, seleccione la entrada y pulse
+  Propiedades.</li>
+  <li>Para redactar un mensaje para las direcciones seleccionadas, resalte
+  una o más entradas y pulse el botón Redactar.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="importing_address_books">Importar libretas de direcciones</h2>
+
+<p>Si tiene una libreta de direcciones de &brandShortName; de otro perfil de
+  usuario u ordenador, o si tiene una libreta de direcciones de otro programa
+  de correo, puede importar las entradas en la ventana de la libreta de
+  direcciones como una nueva libreta de direcciones. Tenga en cuenta que
+  cuando actualiza un perfil de usuario de una versión anterior de
+  &brandShortName;, sus libretas de direcciones se incluyen automáticamente,
+  por lo que no es necesario importarlas.</p>
+
+<p>Puede importar archivos de libretas de direcciones de Netscape 6, Netscape
+  7, Outlook o archivos de texto (formatos LDIF, delimitado por tabuladores
+  (.tab), separados por comas (.csv) o texto (.txt)). Cuando se importa una
+  libreta de direcciones, &brandShortName; crea una libreta de direcciones
+  nueva con las entradas importadas.</p>
+
+<p>También se puede
+  <a href="mailnews_getting_started.xhtml#importing_mail_from_other_programs">importar
+  mensajes de correo y configuraciones</a> de Netscape Communicator y
+  Outlook.</p>
+
+<p>Para importar una libreta de direcciones, comenzando desde la ventana de
+  Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Archivo, y elija Importar. Verá el asistente
+  de importación de correo.</li>
+  <li>Siga las instrucciones para importar libretas de direcciones.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="exporting_address_books">Exportar libretas de direcciones</h2>
+
+<p>Se puede exportar una libreta de direcciones de &brandShortName; si
+después quiere importarla en otro perfil de usuario, moverlo a otro
+ordenador, o usarlo con otro programa que pueda importar libretas de
+direcciones. Se pueden exportar libretas de direcciones a uno de estos
+formatos: o &brandShortName; (.ldif), delimitado por tabuladores (.tab),
+separados por comas (.csv), o texto (.txt).</p>
+
+<p>Para exportar una libreta de direcciones, comenzando desde la ventana de
+la libreta de direcciones:</p>
+
+<ol>
+  <li>Seleccione la libreta de direcciones que quiera exportar.</li>
+  <li>Abra el menú Archivo, y elija Exportar.</li>
+  <li>En el cuadro de diálogo de Exportar libreta de direcciones,
+  examine los directorios para elegir dónde quiere guardar el archivo
+  de la libreta de direcciones.</li>
+  <li>Elija el formato de fichero para exportar la libreta de direcciones
+  (.ldif, separado por comas o delimitado por tabuladores).</li>
+  <li>Introduzca un nombre para el archivo de la libreta de direcciones.
+  Asegúrese de ponerle la extensión adecuada (.ldif, .csv,
+  .tab, o .txt).</li>
+  <li>Pulse Guardar.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="adding_and_removing_ldap_directories">Añadir y borrar
+directorios LDAP</h2>
+
+<p>Añadir un directorio LDAP a su libreta de direcciones le permite
+buscar en el directorio direcciones de correo y otra información de
+contacto. Puede usar también el directorio para autocompletar
+direcciones cuando escribe los destinatarios de un mensaje de correo.</p>
+
+<p>En general, se añaden o quitan servidores de directorio usando
+una instrucciones indicadas por el administrador del sistema. Consulte
+con el administrador del sistema para que le facilite la información
+necesaria para añadir un nuevo directorio a su libreta de
+direcciones.</p>
+
+<p>Para añadir un nuevo directorio, comenzando desde la ventana de la
+libreta de direcciones:</p>
+
+<ol>
+  <li>Abra el menú Archivo y escoja Nuevo, y a continuación
+  Directorio LDAP. Verá el cuadro de diálogo de Servidores de
+  directorio LDAP.</li>
+  <li>Escriba la siguiente información en la pestaña General:
+    <ul>
+      <li><strong>Nombre</strong>: introduzca el nombre del servicio de
+      directorio (por ejemplo, InfoSpace).</li>
+      <li><strong>Hostname</strong>: introduzca el nombre del servidor, como
+      por ejemplo ldap.infospace.com.</li>
+      <li><strong>DN base</strong>: esta opción se usa para configurar
+      el DN base. Introduzca códigos para restringir la búsqueda
+      a una organización o país específicos. Por ejemplo,
+      c=JP restringe la búsqueda sólo a Japón. El DN base
+      también especifica la organización a buscar dentro del
+      directorio (por ejempo, o=&brandShortName; Communications Corporation,
+      c=US).</li>
+      <li><strong>Número de puerto</strong>: Introduzca el puerto del
+      servidor LDAP. El predeterminado es el 389.</li>
+      <li><strong>DN para inicio de sesión</strong>: el nombre
+      distinguido usado para identificarse (iniciar sesión) en el
+      servidor LDAP. Si se deja en blanco, se intentará una
+      conexión anónima al servidor LDAP.</li>
+      <li><strong>Usar conexión segura (SSL)</strong>: marque este
+      valor si su servidor LDAP permite conexiones seguras (cifradas). Si no
+      está seguro, contacte con el administrador del sistema.</li>
+    </ul>
+  </li>
+  <li>Pulse en la pestaña de Avanzadas para configurar las opciones
+  del servidor de directorio LDAP.</li>
+  <li>Escriba la siguiente información:
+    <ul>
+      <li><strong>No devolver más de _ resultados</strong>: esta
+      opción permite limitar el número de coincidencias al
+      autocompletar devueltas por el servidor de directorio. Introduzca el
+      número máximo de direcciones de correo coincidentes que se
+      mostrarán al autocompletar.</li>
+      <li><strong>&Aacute;mbito</strong>: define los límites de la
+      búsqueda. Elija una de las siguientes opciones:
+        <ul>
+          <li><strong>Un nivel</strong>: se recuperan las entradas
+          coincidentes buscando en el DN base y un nivel por debajo de
+          éste.</li>
+          <li><strong>Sub-árbol</strong>: se recuperan las entradas
+          que coincidan buscando en el DN base y en todos los niveles
+          inferiores. Esta búsqueda es la menos restrictiva.</li>
+        </ul>
+      </li>
+      <li><strong>Filtro de búsqueda</strong>: introduzca el filtro de
+      búsqueda para aplicar a los resultados de la búsqueda
+      que se encuentren en el ámbito especificado.</li>
+    </ul>
+  </li>
+  <li>Pulse Aceptar para cerrar el cuadro de diálogo de propiedades
+  del servidor de directorio.</li>
+</ol>
+
+<p>El directorio que ha añadido aparecerá en la lista de
+libretas de direcciones de la ventana correspondiente.</p>
+
+<p>Para borrar un directorio:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+  <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, seleccione
+  Libreta de direcciones (si no hay subcategorías visibles, haga doble
+  clic en Correo y noticias para expandir la lista).</li>
+  <li>Debajo de Autocompletado de direcciones, en la parte derecha del cuadro
+  de diálogo, pulse Editar directorios.</li>
+  <li>En el cuadro de diálogo de servidores de directorio LDAP,
+  seleccione el directorio que quiera borrar y luego pulse el botón
+  Borrar.</li>
+  <li>Pulse Aceptar, y luego otra vez Aceptar para cerrar el cuadro de
+  diálogo de Preferencias.</li>
+</ol>
+
+<p>Para más información sobre cómo descargar o sincronizar un directorio para
+  su uso sin conexión de manera que pueda buscar en él o usarlo para
+  autocompletar direcciones mientras trabaja desconectado, vea
+  <a href="mailnews_offline.xhtml#downloading_directory_entries_for_offline_use">Descargar
+  entradas de directorio para su uso sin conexión</a>.</p>
+
+<h3 id="directory_server_settings">Configuración del servidor de
+directorio</h3>
+
+<p>Si no tiene abierto el cuadro de diálogo de configuración del
+servidor de directorio, comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Ventana y elija Libreta de direcciones.</li>
+  <li>En la lista de libretas de direcciones, seleccione un directorio.</li>
+  <li>Pulse en el botón de Propiedades.</li>
+</ol>
+
+<p><strong>Pestaña General</strong></p>
+
+<ul>
+  <li><strong>Nombre</strong>: el nombre del servicio de directorio (por
+  ejemplo, InfoSpace).</li>
+  <li><strong>Hostname</strong>: el nombre del servidor, como por ejemplo
+  ldap.infospace.com.</li>
+  <li><strong>DN base</strong>: los códigos introducidos aquí
+  restringen la búsqueda a un país u organización
+  concreta. Por ejemplo, c=JP restringe la búsqueda sólo a
+  Japón. El DN base también especifica la organización
+  a buscar dentro del directorio (por ejemplo, o=&brandShortName;
+  Communications Corporation, c=US).</li>
+  <li><strong>Número de puerto</strong>: introduzca el puerto del
+  servidor LDAP. El predeterminado es el 389.</li>
+  <li><strong>DN para inicio de sesión</strong>: el nombre distinguido
+  usado para identificarse (iniciar sesión) en el servidor LDAP. Si se
+  deja en blanco, se intentará una conexión anónima al
+  servidor LDAP.</li>
+  <li><strong>Usar conexión segura (SSL)</strong>: marque este valor
+  si su servidor LDAP permite conexiones seguras (cifradas). Si no está
+  seguro, contacte con el administrador del sistema.</li>
+</ul>
+
+<p><strong>Pestaña de Avanzadas</strong></p>
+
+<ul>
+  <li><strong>No devolver más de _ resultados</strong>: esta
+  opción permite limitar el número de coincidencias al
+  autocompletar devueltas por el servidor de directorio. Introduzca el
+  número máximo de direcciones de correo coincidentes que se
+  mostrarán al autocompletar.</li>
+  <li><strong>&Aacute;mbito</strong>: define los límites de la
+  búsqueda.
+    <ul>
+      <li><strong>Un nivel</strong>: se recuperan las entradas coincidentes
+      buscando en el DN base y un nivel por debajo de éste.</li>
+      <li><strong>Sub-árbol</strong>: se recuperan las entradas que
+      coincidan buscando en el DN base y en todos los niveles inferiores. Esta
+      búsqueda es la menos restrictiva.</li>
+    </ul>
+  </li>
+  <li><strong>Filtro de búsqueda</strong>: introduzca el filtro de
+  búsqueda para aplicar a los resultados de la búsqueda que se
+  encuentren en el ámbito especificado.</li>
+</ul>
+
+<p>[<a href="#using_address_books">Volver al principio de la
+sección</a>]</p>
+</body>
+</html>

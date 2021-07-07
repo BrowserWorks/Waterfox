@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Cópias e pastas">
+<!ENTITY sendingPrefix.label "Ao enviar mensagens, automaticamente: ">
+<!ENTITY fccMailFolder.label "Fazer uma cópia na pasta:">
+<!ENTITY fccMailFolder.accesskey "F">
+<!ENTITY fccReplyFollowsParent.label "Colocar respostas na pasta da mensagem sendo respondida">
+<!ENTITY fccReplyFollowsParent.accesskey "C">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc para esses endereços:">
+<!ENTITY ccAddress.accesskey "d">
+<!ENTITY ccAddressList.placeholder "Separe endereços com vírgulas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Cco para esses endereços:">
+<!ENTITY bccAddress.accesskey "C">
+<!ENTITY bccAddressList.placeholder "Separe endereços com vírgulas">
+<!ENTITY saveMessageDlg.label "Mostrar caixa de diálogo de confirmação quando salvar mensagens">
+<!ENTITY saveMessageDlg.accesskey "N">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Pasta &quot;Enviados&quot; em:">
+<!ENTITY sentFolderOn.accesskey "E">
+<!ENTITY sentInOtherFolder.label "Outra:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Arquivamento de mensagens">
+<!ENTITY keepArchives.label "Manter arquivamento de mensagens em:">
+<!ENTITY keepArchives.accesskey "M">
+<!ENTITY archiveHierarchyButton.label "Opções de arquivamento…">
+<!ENTITY archiveHierarchyButton.accesskey "O">
+<!ENTITY archivesFolderOn.label "Pasta &quot;Arquivamento&quot; em:">
+<!ENTITY archivesFolderOn.accesskey "A">
+<!ENTITY archiveInOtherFolder.label "Outra:">
+<!ENTITY archiveInOtherFolder.accesskey "t">
+<!ENTITY specialFolders.label "Rascunhos e modelos">
+<!ENTITY keepDrafts2.label "Manter rascunhos na pasta:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Pasta &quot;Rascunhos&quot; em:">
+<!ENTITY draftsFolderOn.accesskey "R">
+<!ENTITY draftInOtherFolder.label "Outra:">
+<!ENTITY draftInOtherFolder.accesskey "u">
+<!ENTITY keepTemplates.label "Manter modelos de mensagem em:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Pasta &quot;Modelos&quot; em:">
+<!ENTITY templatesFolderOn.accesskey "M">
+<!ENTITY templateInOtherFolder.label "Outra:">
+<!ENTITY templateInOtherFolder.accesskey "r">

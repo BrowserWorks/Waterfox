@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>&brandShortName; Súgó – Felugró ablakok blokkolása</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Ez a dokumentum csak a tájékoztatás célját szolgálja. Segíthet abban, hogy személyes adataink biztonságát megvédjük az interneten. Azonban ez a dokumentum nem érinti az összes adatvédelmi és biztonsági kérdést, és nem tekinthető hivatalos ajánlatnak a megfelelő adatvédelmi és biztonsági rendszabályokat illetően.</div>
+  
+<h1 id="controlling_popups">A felugró ablakok kezelése</h1>
+
+<p><strong>Mik azok a felugró ablakok?</strong></p>
+
+<p>A felugró ablakok olyan ablakok, amelyek automatikusan és az engedélyünk nélkül megjelennek. Méretük változó, de általában kisebbek a teljes képernyőnél. Néhány felugró ablak az aktuális Böngésző-ablakra nyílik rá, mintegy felugorva, míg néhány a Böngésző alatt jelenik meg (aláugró).</p>
+
+<p>A &brandShortName; lehetővé teszi számunkra, hogy felügyeljük a felugró és aláugró ablakok megjelenését a
+  <a href="#privacy_and_security_preferences_popup_windows">Felugró ablakok panelen</a>. Mivel a Felugró ablakok tiltása alapéretelmezés szerint ki van kapcsolva, nekünk kell engedélyeznünk, ha a Böngészőben nem kívánjuk a felugró ablakok megjelenését.</p>
+
+<p>A felugró ablakok tiltása esetén a &brandShortName; beállítható, hogy adjon hangjelzést, valamint hogy jelenítsen meg egy ikont
+  <img src="chrome://navigator/skin/icons/popup-blocked.png" alt="Felugró ablakok kezelése"/> az állapotsorban. Ezt az ikont használhatjuk arra, hogy egy éppen látogatott weboldalt felvegyük a kivételek közé, így ezen oldalon ismét lehetővé tesszük a felbukkanó ablakok megjelenítését.</p>
+
+<p><strong>A felugrók tiltása néhány weboldal megjelenítését megzavarhatja</strong>: néhány weboldal, ideértve az on-line banki tranzakciókat lehetővé tevő oldalakat, felugró ablakokat használ néhány fontos funkcióhoz. 
+  Az összes felugró ablak tiltása működésképtelenné teszi ezen funkciókat. Ahhoz, hogy néhány kijelölt weboldalon működjenek a felugrók, míg az összes többi helyen tiltva legyenek, adjuk hozzá a kijelölt oldalakat az engedélyezett oldalak listájához. További tudnivalókért lásd a
+  <a href="#privacy_and_security_preferences_popup_windows">Adatvédelem és
+biztonság - Felugró ablakok</a>.</p>
+
+<p><strong>A felugró ablakok tiltása nem mindig működik</strong>: habár a
+  &brandShortName; képes a legtöbb felugró ablak tiltására, néhány weboldal, még ha blokkolt is, más módszereket használva megjeleníthet felugró ablakokat.</p>
+
+<p><strong>Felugró ablakok engedélyezése bizonyos weboldalakon</strong>: miután engedélyeztük a felbukkanó ablakok tiltását, bizonyos oldalakon még mindig engedélyezhetjük a megjelenítésüket.
+  A weboldal böngészése közben a Feladatok menüben válasszuk a Felugró ablakok menüpontot, majd válasszuk a Felugró ablakok engedélyezése erről a kiszolgálóról pontot.</p>
+
+<p>A következő fejezet leírja, hogyan kezeljük a felugró ablakokat a beállítások illetve a felugró ablakra figyelmeztető ikon segítségével.</p>
+
+<h2 id="privacy_and_security_preferences_popup_windows">Adatvédelmi és biztonsági beállítások – Felugró ablakok</h2>
+
+<p>Ez a témakör a Felugró ablakok panellapot ismerteti. A párbeszédpanel a következő lépésekkel hívható elő:</p>
+
+<ol>
+  <li>Válasszuk a
+    <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategória alatt kattintsunk a Felugró ablakok elemre. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.)</li>
+</ol>
+
+<ul>
+  <li><strong>Felugró ablakok tiltása</strong>: Válasszuk ki ezt, ha szeretnénk megakadályozni a felugró ablakok megjelenését a Böngészőben.</li>
+  <li><strong>Kivételek</strong>: Válasszuk ki ezt, ha módosítani szeretnénk azon oldalak listáját, amelyeknél engedélyezni kívánjuk a felugró ablakokat.
+    <ul>
+      <li><strong>Engedélyezett webhelyek</strong>: Az engedélyezett oldalak listája megjelenik, amikor a Kivételek gombra kattintunk <q>Engedélyezett webhelyek</q>. Itt adhatunk hozzá vagy törölhetünk weboldalakat a listából, amelynél szeretnénk, hogy felugró ablakok jelenhessenek meg.</li>
+      <li><strong>Hozzáadás</strong>: Kattintsunk erre, miután begépeltük a weboldal címét, amit hozzá szeretnénk adni a listához.</li>
+      <li><strong>Eltávolítás</strong>: Kattintsunk erre a kiválasztott weboldalt eltávolításához.</li>
+      <li><strong>Mindet törli</strong>: Kattintsunk erre, hogy eltávolítsuk az összes weboldalt a jelenlegi listából.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>A felugró ablak megjelenésének megakadályozásakor</h3>
+
+<ul>
+  <li><strong>Hangjelzés</strong>: Ha azt szeretnénk, hogy egy hang lejátszódjon minden egyes alkalommal, amikor a böngésző blokkol egy felugró ablakot, kattintsunk erre, és adjuk meg a hangfájl elérési útját.
+    <ul>
+      <li><strong>Kiválasztás</strong>: Kattintsunk erre, hogy megkereshessük a hangfájlt, az elérési út begépelése helyett.</li>
+      <li><strong>Előnézet</strong>: Kattintsunk erre, hogy meghallgassuk a kiválasztott hangot.</li>
+    </ul>
+  </li>
+  <li><strong>Ikon megjelenítése a Böngésző állapotsorában</strong>: Válasszuk ki ezt, hogy az
+    <img src="chrome://navigator/skin/icons/popup-blocked.png" alt="Felugró ablakok kezelése"/> ikon megjelenjen a Böngésző állapotsorában, egy felugró ablak blokkolásakor.
+
+    <p><strong>Megjegyzés</strong>: Miután a
+      <img src="chrome://navigator/skin/icons/popup-blocked.png" alt="Felugró ablakok kezelése"/> ikon megjelenik, egy új weboldal meglátogatásáig lesz látható.</p>
+  </li>
+</ul>
+
+<p><strong>A felugró ablak ikon használata engedélyezett oldalak hozzáadásához</strong>: A felugró ablak ikont gyorsan használhatjuk arra, hogy hozzáadhassunk egy weboldat az engedélyezett webhelyek listájához. Kattintsunk a
+  <img src="chrome://navigator/skin/icons/popup-blocked.png" alt="Felugró ablakok kezelése"/> ikonra, hogy megnyissuk az engedélyezett webhelyek listáját. Az aktuális webhely címe automatikusan beillesztődik. Kattintsunk a Hozzáadásra és utána az OK-ra, hogy engedélyezzük a hozzáadást.</p>
+
+<p><strong>Megjegyzés</strong>: A felugró ablakok blokkolása nem mindig használható, és zavarhat néhány weboldalt. További tudnivalókért a felugró ablakok blokkolásáról olvassa el a
+  <a href="#controlling_popups">A felugró ablakok kezelése</a> fejezetet.</p>
+
+</body>
+</html>

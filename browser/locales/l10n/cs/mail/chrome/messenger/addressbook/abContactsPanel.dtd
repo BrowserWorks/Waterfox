@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Vlastnosti">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Vlastnosti kontaktů">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Vlastnosti kontaktu">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Vlastnosti skupiny">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Zobrazit kontextovou nabídku složky kontaktů">
+<!ENTITY addressbookPicker.label            "Kontakty:">
+<!ENTITY addressbookPicker.accesskey        "K">
+<!ENTITY searchContacts.label               "Hledat v kontaktech:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Jméno nebo e-mail">
+
+<!ENTITY addtoToFieldMenu.label             "Přidat do Komu">
+<!ENTITY addtoToFieldMenu.accesskey         "K">
+<!ENTITY addtoCcFieldMenu.label             "Přidat do Kopie">
+<!ENTITY addtoCcFieldMenu.accesskey         "p">
+<!ENTITY addtoBccFieldMenu.label            "Přidat do Skrytá kopie">
+<!ENTITY addtoBccFieldMenu.accesskey        "S">
+<!ENTITY deleteAddrBookCard.label           "Smazat">
+<!ENTITY deleteAddrBookCard.accesskey       "m">
+<!ENTITY propertiesContext.label            "Vlastnosti">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Vlastnosti">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Upravit kontakt">
+<!ENTITY editContactContext.accesskey       "U">
+<!ENTITY editMailingListContext.label       "Upravit seznam">
+<!ENTITY editMailingListContext.accesskey   "U">
+
+<!ENTITY newContactAbContext.label          "Nový kontakt">
+<!ENTITY newContactAbContext.accesskey      "K">
+<!ENTITY newListAbContext.label             "Nová skupina">
+<!ENTITY newListAbContext.accesskey         "S">
+
+<!ENTITY toButton.label                     "Komu">
+<!ENTITY toButton.accesskey                 "K">
+<!ENTITY ccButton.label                     "Kopie">
+<!ENTITY ccButton.accesskey                 "p">
+<!ENTITY bccButton.label                    "Skrytá kopie">
+<!ENTITY bccButton.accesskey                "y">

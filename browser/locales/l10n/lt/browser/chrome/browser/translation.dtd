@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+
+<!ENTITY translation.thisPageIsIn.label         "Šio tinklalapio kalba yra">
+<!ENTITY translation.translateThisPage.label    "Išversti šį tinklalapį?">
+<!ENTITY translation.translate.button           "Išversti">
+<!ENTITY translation.notNow.button              "Ne dabar">
+
+<!ENTITY translation.translatingContent.label   "Verčiamas tinklalapio turinys…">
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+
+<!ENTITY translation.translatedFrom.label       "Šis tinklalapis yra išverstas iš">
+<!ENTITY translation.translatedTo.label         "kalbos į">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "Rodyti originalą">
+<!ENTITY translation.showTranslation.button     "Rodyti vertimą">
+
+<!ENTITY translation.errorTranslating.label     "Verčiant šį tinklalapį įvyko klaida.">
+<!ENTITY translation.tryAgain.button            "Bandyti dar kartą">
+
+<!ENTITY translation.serviceUnavailable.label   "Šiuo metu vertimas negalimas. Bandykite vėliau.">
+
+<!ENTITY translation.options.menu               "Nuostatos">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "Niekada neversti šios svetainės turinio">
+<!ENTITY translation.options.neverForSite.accesskey "s">
+<!ENTITY translation.options.preferences.label  "Vertimo nuostatos">
+<!ENTITY translation.options.preferences.accesskey "V">
+<!-- LOCALIZATION NOTE (translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  These 2 strings are displayed before and after a 'Microsoft Translator'
+  -  logo.
+  -->
+
+<!-- LOCALIZATION NOTE (translation.options.attribution.poweredByYandex,
+                        translation.options.attribution.beforeLogo,
+  -                     translation.options.attribution.afterLogo):
+  -  translation.options.attribution.poweredByYandex is displayed instead of
+  -  the other two strings when yandex translation engine is preferred by the
+  -  user.
+  -->
+

@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Skriva meddelanden">
+<!ENTITY generalComposing.label               "Allmänt">
+<!ENTITY forwardMsg.label                     "Vidarebefordra meddelanden:">
+<!ENTITY inline.label                         "Infogat">
+<!ENTITY inline.accesskey                     "I">
+<!ENTITY asAttachment.label                   "Som bilaga">
+<!ENTITY asAttachment.accesskey               "g">
+
+<!ENTITY replyQuoteInline.label               "Citera infogade bilagor i svar">
+<!ENTITY replyQuoteInline.accesskey           "C">
+<!ENTITY warnOnSendAccelKey.label             "Varna innan meddelanden skickas med kortkommando">
+<!ENTITY warnOnSendAccelKey.accesskey         "V">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Spara meddelandet automatiskt var">
+<!ENTITY autoSave.accesskey                   "u">
+<!ENTITY autoSaveEnd.label                    "minut">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Radbryt oformaterade textmeddelanden vid">
+<!ENTITY wrapOutMsg.accesskey                 "l">
+<!ENTITY char.label                           "tecken">
+
+<!ENTITY defaultMessagesHeader.label          "Förinställningar för HTML-meddelanden">
+<!ENTITY font.label                           "Teckensnitt:">
+<!ENTITY font.accesskey                       "T">
+<!ENTITY size.label                           "Storlek:">
+<!ENTITY size.accesskey                       "S">
+<!ENTITY fontColor.label                      "Text:">
+<!ENTITY fontColor.accesskey                  "x">
+<!ENTITY bgColor.label                        "Bakgrund:">
+<!ENTITY bgColor.accesskey                    "B">
+<!ENTITY defaultCompose.label                 "Förvalt skrivsätt:">
+<!ENTITY defaultBodyText.label                "Brödtext (Returtangenten skapar en ny rad)">
+<!ENTITY defaultBodyText.accesskey            "r">
+<!ENTITY defaultParagraph.label               "Stycke (Returtangenten skapar ett nytt stycke)">
+<!ENTITY defaultParagraph.accesskey           "y">
+
+<!ENTITY selectHeaderType.label               "Välj rubrik till ursprungsmeddelanden:">
+<!ENTITY selectHeaderType.accesskey           "r">
+<!ENTITY noReplyOption.label                  "Ingen rubrik">
+<!-- LOCALIZATION NOTE (authorWroteOption.label): this is tied to the 
+  mailnews.reply_header_authorwrote preference. [Author] needs to be 
+  translated. -->
+<!ENTITY authorWroteOption.label              "[Avsändare] skrev:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the 
+  combination of the mailnews.reply_header_ondate(On [date]), 
+  mailnews.reply_header_separator (a comma in this case) and 
+  mailnews.reply_header_authorwrote([Author] wrote) preferences. [date] and 
+  [Author] need to be translated, and the correct  separator put in. -->
+<!ENTITY onDateAuthorWroteOption.label        "[Datum] skrev [avsändare]:">
+<!-- LOCALIZATION NOTE (authorWroteOnDateOption.label): this is tied to the 
+  combination of the mailnews.reply_header_authorwrote([Author] wrote), 
+  mailnews.reply_header_separator (a comma in this case), and 
+  mailnews.reply_header_ondate preferences(On [date]). [Author] and [date] 
+  need to be translated, and the correct separator put in. -->
+<!ENTITY authorWroteOnDateOption.label        "[Avsändare] skrev, den [datum]:">

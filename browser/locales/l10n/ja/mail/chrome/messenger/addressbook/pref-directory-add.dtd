@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label		"名前:">
+<!ENTITY directoryName.accesskey	"n">
+<!ENTITY directoryHostname.label	"ホスト名:">
+<!ENTITY directoryHostname.accesskey	"o">
+<!ENTITY directoryBaseDN.label		"ベース識別名:">
+<!ENTITY directoryBaseDN.accesskey	"b">
+<!ENTITY findButton.label		"検索">
+<!ENTITY findButton.accesskey		"f">
+<!ENTITY directorySecure.label		"保護された接続 (SSL) を使う">
+<!ENTITY directorySecure.accesskey	"U">
+<!ENTITY directoryLogin.label		"バインド識別名:">
+<!ENTITY directoryLogin.accesskey	"i">
+<!ENTITY General.tab			"一般">
+<!ENTITY Offline.tab			"オフライン">
+<!ENTITY Advanced.tab			"詳細">
+<!ENTITY portNumber.label		"ポート番号:">
+<!ENTITY portNumber.accesskey		"p">
+<!ENTITY searchFilter.label		"検索フィルター:">
+<!ENTITY searchFilter.accesskey		"f">
+<!ENTITY scope.label			"スコープ:">
+<!ENTITY scope.accesskey		"c">
+<!ENTITY scopeOneLevel.label		"1 レベル">
+<!ENTITY scopeOneLevel.accesskey	"L">
+<!ENTITY scopeSubtree.label		"サブツリー">
+<!ENTITY scopeSubtree.accesskey		"S">
+<!ENTITY return.label			"検索結果を">
+<!ENTITY return.accesskey		"r">
+<!ENTITY results.label			"件以上は表示しない">
+<!ENTITY offlineText.label		"オフラインでも利用できるようにディレクトリーのコピーをローカルにダウンロードしておくことができます。">
+<!ENTITY saslMechanism.label		"認証方法:">
+<!ENTITY saslMechanism.accesskey	"m">
+<!ENTITY saslOff.label			"簡易">
+<!ENTITY saslOff.accesskey		"l">
+<!ENTITY saslGSSAPI.label		"Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey		"K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth		"36em">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "계정과 데이터 삭제">
+<!ENTITY removeButton.label           "제거">
+<!ENTITY removeButton.accesskey       "R">
+<!ENTITY removeAccount.label          "계정 정보 삭제">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "&brandShortName;에서만 이 계정을 삭제합니다. 서버의 실제 계정에는 영향을 끼치지 않습니다.">
+<!ENTITY removeData.label             "메시지 데이터 삭제">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "대화 데이터 삭제">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "로컬 디스크에서 이 계정과 연결된 모든 메시지, 폴더 및 필터를 제거 합니다. 서버에 저장되어 있는 메시지에는 영향을 주지 않습니다. 로컬 데이터를 백업하고 그 데이터를 나중에 &brandShortName; 에서 사용하시려면 선택하지 마세요.">
+<!ENTITY removeDataServerAccount.desc "로컬 디스크에서 이 계정과 연결된 모든 메시지, 폴더 및 필터를 제거 합니다. 메시지와 폴더는 서버에 그대로 남아 있습니다.">
+<!ENTITY removeDataChatAccount.desc   "로컬 디스크에 저장된 이 계정의 대화 로그를 모두 삭제합니다.">
+<!ENTITY showData.label               "데이터 위치 표시">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "선택한 데이터 제거 중…">
+<!ENTITY progressSuccess              "제거 성공.">
+<!ENTITY progressFailure              "제거 실패.">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Odebrat účet a data">
+<!ENTITY removeButton.label           "Odebrat">
+<!ENTITY removeButton.accesskey       "O">
+<!ENTITY removeAccount.label          "Odebrat informace o účtu">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Odebírá pouze záznam o tomto účtu v aplikaci &brandShortName;. Neovlivňuje samotný účet na serveru.">
+<!ENTITY removeData.label             "Odebrat data zpráv">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Odebrat data konverzace">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Odebírá všechny zprávy, složky a filtry spojené s tímto účtem, z vašeho lokálního disku. Toto neovlivňuje některé zprávy, které mohou stále zůstat zachované na serveru. Nevybírejte toto, pokud plánujete archivovat místní data, nebo je znovu použít v aplikaci &brandShortName; později.">
+<!ENTITY removeDataServerAccount.desc "Odebírá všechny zprávy, složky a filtry spojené s tímto účtem, z místního disku. Vaše zprávy a složky budou jsou stále zachovány na serveru.">
+<!ENTITY removeDataChatAccount.desc   "Odebere všechny záznamy konverzací uložené pro tento účet na místním pevném disku.">
+<!ENTITY showData.label               "Zobrazit umístění dat">
+<!ENTITY showData.accesskey           "s">
+<!ENTITY progressPending              "Odebrat vybraná data…">
+<!ENTITY progressSuccess              "Odebrání bylo úspěšné.">
+<!ENTITY progressFailure              "Odebrání selhalo.">

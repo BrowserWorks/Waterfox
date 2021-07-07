@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Gỡ bỏ Nhà cung cấp">
+<!ENTITY providerUninstall.accept.label                    "Dừng theo dõi Phần đã chọn">
+<!ENTITY providerUninstall.accept.accesskey                "D">
+<!ENTITY providerUninstall.cancel.label                    "Giữ tiện ích">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "Bạn đã yêu cầu gỡ bỏ hoặc vô hiệu hóa:">
+<!ENTITY providerUninstall.postName.label                  "Việc này sẽ làm vô hiệu hóa các bộ lịch bên dưới.">
+<!ENTITY providerUninstall.reinstallNote.label             "Trừ khi bạn đang định cài lại nhà cung cấp này, bạn có thể chọn dừng theo dõi các bộ lịch từ họ.">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Właściwości pola tekstowego">
+<!ENTITY Settings.label "Ustawienia">
+<!ENTITY TextAreaName.label "Nazwa pola:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Wiersze:">
+<!ENTITY TextAreaRows.accessKey "W">
+<!ENTITY TextAreaCols.label "Kolumny:">
+<!ENTITY TextAreaCols.accessKey "K">
+<!ENTITY TextAreaReadOnly.label      "Tylko do odczytu">
+<!ENTITY TextAreaReadOnly.accessKey  "o">
+<!ENTITY TextAreaDisabled.label      "Wyłączony">
+<!ENTITY TextAreaDisabled.accessKey  "y">
+<!ENTITY TextAreaTabIndex.label      "Indeks kolejności dostępu:">
+<!ENTITY TextAreaTabIndex.accessKey  "I">
+<!ENTITY TextAreaAccessKey.label     "Klawisz dostępu:">
+<!ENTITY TextAreaAccessKey.accessKey "d">
+<!ENTITY InitialText.label           "Początkowy tekst:">
+<!ENTITY InitialText.accessKey       "P">
+<!ENTITY TextAreaWrap.label          "Tryb opływania:">
+<!ENTITY TextAreaWrap.accessKey      "T">
+<!ENTITY WrapDefault.value "Domyślny">
+<!ENTITY WrapOff.value "Wyłącz opływanie">
+<!ENTITY WrapHard.value "Stały">
+<!ENTITY WrapSoft.value "Zmienny">
+<!ENTITY WrapPhysical.value "Fizyczny">
+<!ENTITY WrapVirtual.value "Wirtualny">

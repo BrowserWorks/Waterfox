@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "导入">
+<!ENTITY importAll.label          "全部导入">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "邮件">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "订阅收取点">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "通讯录">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "设置">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "过滤依据：">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; 导入向导">
+<!ENTITY importShortDesc.label    "从其他程序中导入邮件、通讯录、设置、过滤器">
+
+<!ENTITY importDescription1.label "此向导将从其他邮件程序以及常见通讯录格式文件中导入邮件消息、通讯录、首选项以及过滤器至 &brandShortName;。">
+<!ENTITY importDescription2.label "一旦导入，您就可以从 &brandShortName; 存取他们。">
+
+<!ENTITY selectDescription.label  "请选择导入的文件类型：">
+<!ENTITY selectDescriptionB.label "请选择一个已存在的账号或者创建新的账号：">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "名称：">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "没有找到可导入的应用程序或文件。">
+
+<!ENTITY back.label               "&lt; 上一步">
+<!ENTITY forward.label            "下一步 &gt;">
+<!ENTITY finish.label             "完成">
+<!ENTITY cancel.label             "取消">
+
+<!ENTITY select.label             "选择导入信息的类型：">
+
+<!ENTITY title.label              "职位">
+<!ENTITY processing.label         "正在导入…">

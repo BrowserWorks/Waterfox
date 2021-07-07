@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle "about:rights">
+<!ENTITY rights.intro-header "O prawach użytkownika">
+<!ENTITY rights.intro "&brandFullName; to wolne oprogramowanie o otwartym kodzie źródłowym stworzone przez społeczność tysięcy ludzi z całego świata. Jest kilka zagadnień związanych z tym programem, o których należy wiedzieć:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "Program &brandShortName; został udostępniony użytkownikowi na warunkach licencji ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Oznacza to, że możesz go używać, kopiować i rozpowszechniać. Możesz także modyfikować kod źródłowy programu &brandShortName;, by dostosować go do swoich potrzeb. Licencja MPL (Mozilla Public License) daje także prawo do rozpowszechniania zmodyfikowanych wersji.">
+
+<!ENTITY rights.intro-point2a "Nie otrzymujesz żadnych licencji ani praw do znaków towarowych Mozilla i SeaMonkey, w tym w szczególności do nazwy i logotypu SeaMonkey. Więcej informacji na ten temat znajdziesz ">
+<!ENTITY rights.intro-point2b "tutaj">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "Niektóre funkcje programu &brandShortName;, takie jak zgłaszanie awarii, umożliwiają przesyłanie opinii do dostawcy oprogramowania (&vendorShortName;). Przesyłając takie opinie, wyrażasz zgodę na używanie przez dostawcę oprogramowania (&vendorShortName;) oraz Mozillę przesłanych opinii do celów ulepszenia jego produktów, publikowania tych opinii na stronach internetowych i do ich rozpowszechniania.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "Informacje dotyczące zasad ochrony prywatności związanych z produktami dostawcy oprogramowania (&vendorShortName;) można znaleźć ">
+<!ENTITY rights.intro-point3b "tutaj">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Niektóre funkcje programu &brandShortName;, jak np. usługi dodatków czy usługa Bezpiecznego przeglądania, umożliwiają korzystanie z internetowych usług informacyjnych, jednakże nie możemy zagwarantować ich stuprocentowej dokładności ani bezbłędności. Szczegółowe informacje, w tym opis wyłączenia tych usług, można znaleźć w ">
+<!ENTITY rights.intro-point4b "warunkach korzystania z tych usług">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "Usługi informacyjne WWW programu &brandFullName;">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a "W tej wersji program &brandFullName; wykorzystuje niektóre usługi informacyjne WWW, zwane dalej „usługami” i udostępnia je na zasadach przedstawionych poniżej. Niektóre z tych usług, jak Polecane dodatki oraz usługa aktualizacji dodatków, Bezpieczne przeglądanie bądź Udostępnianie witrynom położenia użytkownika są domyślnie aktywne. Jeśli nie chcesz korzystać z tych usług lub nie akceptujesz poniższych zasad, możesz wyłączyć daną funkcję lub usługę. Instrukcje, jak wyłączyć konkretną funkcję lub usługę znajdują się ">
+<!ENTITY rights3.webservices-b "tutaj">
+<!ENTITY rights3.webservices-c ". Inne funkcje i usługi można włączyć bądź wyłączyć w preferencjach programu.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "Usługi dodatków: ">
+<!ENTITY rights.addons-b "Domyślnie &brandShortName; będzie proponować dodatki na stronie &view.discover.label; oraz regularnie poszukiwać aktualizacje. Wyłączenie tych funkcji, w celu uniemożliwienia wysyłania informacji o zainstalowanych dodatkach, jest możliwe za pomocą następujących kroków:">
+<!ENTITY rights.addons-term1 "Otworzyć preferencje aplikacji">
+<!ENTITY rights.addons-term2 "Wybrać panel &smart.label; w kategorii &advance.label;">
+<!ENTITY rights.addons-term3 "Odznaczyć opcje &quot;&autoAddOnsUpdates.label;&quot; oraz &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "Usługi dodatków zostały w ten sposób wyłączone">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Bezpieczne przeglądanie: ">
+<!ENTITY rights.safebrowsing-b "Wyłączenie Bezpiecznego przeglądania nie jest zalecane, gdyż może to skutkować odwiedzaniem niebezpiecznych stron. W celu kompletnego wyłączenia Bezpiecznego przeglądania należy wykonać następujące kroki:">
+<!ENTITY rights.safebrowsing-term1 "Otworzyć preferencje aplikacji">
+<!ENTITY rights.safebrowsing-term2 "Wybrać główny panel &security.label;">
+<!ENTITY rights.safebrowsing-term3 "Odznaczyć opcje &quot;&blockAttackSites.label;&quot; oraz &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Bezpieczne przeglądanie zostało w ten sposób wyłączone">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Udostępnianie witrynom położenia użytkownika: ">
+<!ENTITY rights.locationawarebrowsing-b "Ta funkcja przesyła dane tylko za zgodą użytkownika. Bez wyrażenia zgody żadne informacje geolokalizacyjne nie są przesyłane. Aby całkowicie wyłączyć tę funkcję:">
+<!ENTITY rights.locationawarebrowsing-term1 "Otwórz preferencje programu">
+<!ENTITY rights.locationawarebrowsing-term2 "Przejdź do panelu &security.label;">
+<!ENTITY rights.locationawarebrowsing-term3 "Zaznacz opcję „&geoDisabled.label;”">
+<!ENTITY rights.locationawarebrowsing-term4 "Udostępnianie położenia geograficznego zostanie wyłączone">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "Dostawca oprogramowania (&vendorShortName;) oraz Mozilla jak i ich współpracownicy, licencjodawcy i partnerzy pracują, by dostarczyć najwłaściwszych i najbardziej aktualnych usług. Jednakże nie możemy zagwarantować, że udostępnione przez te usługi informacje będą bezbłędne i kompletne. Na przykład, niektóre niebezpieczne witryny mogą nie zostać zidentyfikowane przez usługę „Bezpieczne przeglądanie”, a niektóre bezpieczne strony mogą być przez nią błędnie oznaczone jako niebezpieczne. Ponadto położenia geolokalizacyjne wyznaczone przez naszych dostawców usług są tylko szacunkowe – ani my, ani nasi dostawcy usług nie jesteśmy w stanie zagwarantować dokładności dostarczonych danych lokalizacyjnych.">
+<!ENTITY rights.webservices-term1 "Dostawca oprogramowania (&vendorShortName;) może przerwać lub zmienić funkcjonowanie Usług według własnego uznania.">
+<!ENTITY rights.webservices-term2 "Możesz korzystać z tych usług za pomocą wersji programu &brandShortName;, w której zostały one zaimplementowane i masz wszelkie niezbędne do tego prawa. Dostawca oprogramowania (&vendorShortName;) i licencjodawcy zastrzegają sobie wszelkie inne prawa związane z usługami. Zasady te nie mają na celu ograniczenia żadnych praw gwarantowanych w ramach licencji dla oprogramowania o otwartym kodzie źródłowym mających zastosowanie do programu &brandShortName;, jak i analogicznych wersji jego kodu źródłowego.">
+<!ENTITY rights.webservices-term3 "Usługi dostarczane są w stanie, „w jakim są”. Dostawca oprogramowania (&vendorShortName;), współpracownicy, licencjodawcy i dystrybutorzy nie udzielają żadnych gwarancji, zarówno wyraźnych, jak i domniemanych, że usługi te spełniają twoje oczekiwania. Ponosisz zatem całkowite ryzyko w kwestii wyboru usług odpowiednich dla twoich celów, jak też w kwestii ich jakości i wydajności. Niektóre systemy prawne nie zezwalają na takie wyłączenie lub ograniczenie domniemanych gwarancji, tak więc to zaprzeczenie może cię nie dotyczyć.">
+<!ENTITY rights.webservices-term4 "Z wyjątkiem wymogów prawnych, dostawca oprogramowania (&vendorShortName;), współpracownicy, licencjodawcy ani dystrybutorzy nie ponoszą odpowiedzialności za żadne szkody - pośrednie, wyjątkowe, przypadkowe, będące skutkiem czegoś, karne, moralne, czy wyjątkowe szkody wynikłe z lub w jakikolwiek sposób powiązane z korzystaniem z programu &brandShortName; i usług. Zgodnie z tymi zasadami łączna odpowiedzialność nie może przekroczyć wartości 500 (pięciuset) dolarów amerykańskich. Niektóre systemy prawne nie zezwalają na takie wyłączenie lub ograniczenie niektórych szkód, tak więc to wyłączenie lub ograniczenie może cię nie dotyczyć.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; może co jakiś czas aktualizować niniejsze warunki. Warunki te nie mogą być zmieniane ani anulowane, o ile &vendorShortName; nie wyrazi pisemnej zgody.">
+<!ENTITY rights.webservices-term6 "Niniejsze warunki powinny być rozpatrywane zgodnie z prawem stanu Kalifornia (Stany Zjednoczone Ameryki), z wyłączeniem konfliktu postanowień prawnych. Jeśli jakakolwiek część niniejszych warunków zostanie uznana za nieprawidłową lub niewykonalną, pozostałe części pozostaną w mocy. W przypadku różnic między przetłumaczoną wersją niniejszych warunków a oryginalną angielską wersją językową, obowiązujące są postanowienia angielskiej wersji językowej.">
+

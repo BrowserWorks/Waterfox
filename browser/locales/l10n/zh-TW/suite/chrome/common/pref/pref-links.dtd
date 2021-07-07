@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "鏈結行為">
+<!ENTITY newWindow.label "新頁面開啟方式">
+<!ENTITY newWindowDescription.label "開啟鏈結時，代表開啟新視窗於:">
+<!ENTITY newWindowRestriction.label "當指令碼要開啟新視窗時：">
+<!ENTITY external.label "其他程式">
+<!ENTITY externalDescription.label "將從其他應用程式傳來的鏈結開啟於:">
+
+<!ENTITY openCurrent.label "在現有的視窗分頁內">
+<!ENTITY newWindowGroupCurrent.accesskey "c">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "在新的分頁內">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "開新視窗">
+<!ENTITY newWindowGroupWindow.accesskey "w">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "總是把視窗轉換成分頁標籤">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "不要把自訂視窗轉換為分頁標籤">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "總是開啟新視窗">
+<!ENTITY dontDivert.accesskey "n">
+

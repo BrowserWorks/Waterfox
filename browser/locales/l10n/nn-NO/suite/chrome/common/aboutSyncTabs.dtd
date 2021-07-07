@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label               "Faner frå andre datamaskiner">
+
+<!ENTITY tabs.searchText.label                   "Skriv her for å finne faner…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label                   "Opne denne fana">
+<!ENTITY tabs.context.openTab.accesskey               "O">
+<!ENTITY tabs.context.openMultipleTabs.label          "Opne valde faner">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "n">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "Bokmerk denne fana…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "B">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "Bokmerk valde faner…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "v">
+<!ENTITY tabs.context.refreshList.label               "Oppdater liste">
+<!ENTITY tabs.context.refreshList.accesskey           "O">

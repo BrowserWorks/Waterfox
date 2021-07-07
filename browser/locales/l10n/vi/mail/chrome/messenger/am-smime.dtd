@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eLearnMore.label "Xem thêm">
+
+
+
+<!ENTITY digitalSign.certificate.button "Chọn…">
+<!ENTITY digitalSign.certificate.accesskey "C">
+<!ENTITY digitalSign.certificate_clear.button "Xóa trắng">
+<!ENTITY digitalSign.certificate_clear.accesskey "g">
+<!ENTITY encryption.certificate.button "Chọn…">
+<!ENTITY encryption.certificate.accesskey "n">
+<!ENTITY encryption.certificate_clear.button "Xóa trắng">
+<!ENTITY encryption.certificate_clear.accesskey "a">
+<!ENTITY signingGroupTitle.label "Chữ kí Điện tử">
+<!ENTITY signMessage.accesskey "h">
+
+
+
+
+
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Chọn chứng chỉ">
+<!ENTITY certPicker.info  "Chứng chỉ:">
+<!ENTITY certPicker.detailsLabel "Chi tiết của chứng chỉ được chọn:">
+

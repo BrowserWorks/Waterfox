@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "การตั้งค่าหน้าใหม่">
+
+<!ENTITY  authorName.label          "ผู้สร้าง:">
+<!ENTITY  authorName.accesskey      "ผ">
+<!ENTITY  pageColorHeader           "ลักษณะที่ปรากฏของหน้าเริ่มต้น">
+
+<!ENTITY defaultColors.label        "สีเริ่มต้นของตัวอ่าน (ไม่ตั้งค่าสีในหน้า)">
+<!ENTITY defaultColors.accesskey    "ร">
+<!ENTITY customColors.label         "ใช้สีที่กำหนดเอง:">
+<!ENTITY customColors.accesskey     "ช">
+
+<!ENTITY normalText.label           "ข้อความปกติ">
+<!ENTITY normalText.accesskey       "ข">
+<!ENTITY linkText.label             "ข้อความลิงก์">
+<!ENTITY linkText.accesskey         "อ">
+<!ENTITY activeLinkText.label       "ข้อความลิงก์ที่ใช้งานอยู่">
+<!ENTITY activeLinkText.accesskey   "ค">
+<!ENTITY visitedLinkText.label      "ข้อความลิงก์ที่เยี่ยมชมแล้ว">
+<!ENTITY visitedLinkText.accesskey  "ว">
+<!ENTITY background.label           "พื้นหลัง:">
+<!ENTITY background.accesskey       "พ">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "ภาพพื้นหลัง:">
+<!ENTITY backgroundImage.accesskey  "ภ">
+<!ENTITY chooseFile.label           "เลือกไฟล์…">
+<!ENTITY chooseFile.accesskey       "ล">

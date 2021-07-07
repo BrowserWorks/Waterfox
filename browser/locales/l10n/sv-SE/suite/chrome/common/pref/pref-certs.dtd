@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Hantera certifikat">
+<!ENTITY  managecerts.text         "Använd Certifikathanteraren för att hantera dina personliga certifikat samt andras certifikat och certifikatutfärdare.">
+<!ENTITY  managecerts.button       "Hantera certifikat…">
+<!ENTITY  managecerts.accesskey    "c">
+<!ENTITY  managedevices.caption    "Hantera säkerhetsenheter">
+<!ENTITY  managedevices.text       "Klicka på denna knapp för att hantera säkerhetsenheter (som t.ex. smartkort).">
+<!ENTITY  managedevices.button     "Hantera säkerhetsenheter…">
+<!ENTITY  managedevices.accesskey  "s">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Certifikat">
+<!ENTITY  certs.label              "Certifikat">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Använd Online Certificate Status Protocol (OCSP) för att bekräfta att certifikat är giltiga">
+<!ENTITY enableOCSP.accesskey                     "O">
+<!ENTITY validation.requireOCSP.description       "När anslutningen till en OCSP-server misslyckas, betrakta certifikatet som ogiltigt">
+<!ENTITY validation.requireOCSP.accesskey         "N">

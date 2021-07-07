@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Cho phép cập nhật cho tất cả nguồn cấp dữ liệu">
+<!ENTITY biffAll.accesskey             "E">
+
+<!ENTITY newFeedSettings.label         "Cài đặt mặc định cho nguồn cấp dữ liệu mới">
+
+<!ENTITY manageSubscriptions.label     "Quản lý mục đăng kí…">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!ENTITY feedWindowTitle.label         "Trình thiết lập nguồn cấp dữ liệu">
+<!ENTITY feeds.accountName             "Blog &amp; nguồn cấp tin tức">

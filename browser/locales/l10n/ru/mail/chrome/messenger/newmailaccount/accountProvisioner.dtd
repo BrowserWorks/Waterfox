@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Добро пожаловать в &brandShortName;">
+<!ENTITY header2.label "Вы хотели бы получить новый адрес электронной почты?">
+<!ENTITY other.languages "Мы показываем лишь тех провайдеров, которые предлагают адреса в вашем регионе. Щёлкните здесь, чтобы показать всех провайдеров.">
+<!ENTITY error.line1 "Извините, но мы не смогли найти ни один из предложенных адресов электронной почты.">
+<!ENTITY error.line2 "Чтобы найти больше адресов, вы можете попробовать произвести поиск по прозвищам или любым другим терминам.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Также вы можете попробовать один из ">
+<!ENTITY error.suggest.middle "бесплатных альтернативных почтовых сервисов">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Привет, ">
+<!ENTITY success.title.after ". Для вас доступны следующие адреса электронной почты:">
+<!ENTITY success.tip "(Чтобы найти больше адресов, вы можете произвести поиск по прозвищам или любым другим терминам)">
+<!ENTITY partnership.description "В сотрудничестве с несколькими провайдерами, &brandShortName; может помочь вам получить новый адрес электронной почты. Для этого просто введите в расположенные выше поля свою фамилию и имя, или другие понравившиеся вам слова.">
+<!ENTITY existing.header "Уже имеете адрес, который хотите использовать?">
+<!ENTITY tinyheader.title "Уже есть адрес?">
+<!ENTITY tinyheader.existing "Пропустить это и использовать мою существующую почту">
+<!ENTITY content.close "Я думаю, что я настрою мою учётную запись позже.">
+<!ENTITY successful.title "Поздравляем!">
+<!ENTITY successful.successMessage "Вы успешно настроили свою учётную запись.">
+<!ENTITY successful.write "Напишите письмо">
+<!ENTITY successful.write.desc "Сообщите о новом почтовом адресе вашим друзьям и семье.<br/> Вы ведь поэтому завели новый почтовый адрес, не так ли?">
+<!ENTITY successful.customize "Настройте &brandShortName; с помощью множества классных дополнений">
+<!ENTITY successful.customize.desc "Есть тысячи дополнений, которые помогут вам настроить &brandShortName; по своему вкусу.">
+<!ENTITY successful.attach "Добавьте для своей почты личную подпись">
+<!ENTITY successful.attach.desc "Вы можете автоматически прикреплять цитату или какую-либо информацию о себе в конец каждого отправляемого вами сообщения.">
+<!ENTITY successful.close "Закрыть это окно.">
+<!ENTITY input.namePlaceholder "Ваше имя или прозвище">
+<!ENTITY input.search "Поиск">
+<!ENTITY search_engine.title "Настройка вашей поисковой машины">
+<!ENTITY search_engine.message "Ваш провайдер электронной почты может также предложить вам возможность поиска в Интернете.">
+<!ENTITY search_engine.button "Готово">

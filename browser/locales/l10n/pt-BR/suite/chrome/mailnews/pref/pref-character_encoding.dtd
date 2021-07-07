@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Codificação de texto">
+<!ENTITY messageDisplay.caption          "Aparência">
+<!ENTITY viewFallbackCharset2.label      "Codificação de texto reserva:">
+<!ENTITY viewFallbackCharset2.accesskey  "e">
+<!ENTITY viewFallbackCharset.desc        "(Usada para conteúdo antigo que não declare sua codificação.)">
+
+<!ENTITY composingMessages.caption       "Edição">
+<!ENTITY useMIME.label                   "Usar a codificação MIME 'quoted printable' em mensagens contendo acentuação ou símbolos (deixe desmarcado para enviar os caracteres sem nenhuma codificação.">
+<!ENTITY useMIME.accesskey               "f">
+<!ENTITY sendDefaultCharset2.label       "Codificação de texto padrão:">
+<!ENTITY sendDefaultCharset2.accesskey   "T">
+<!ENTITY replyInDefaultCharset3.label    "Quando for possível, usar esta codificação de texto como padrão em respostas. (Quando não marcado, apenas novas mensagens irão utilizar este valor como padrão.)">
+<!ENTITY replyInDefaultCharset3.accesskey "p">

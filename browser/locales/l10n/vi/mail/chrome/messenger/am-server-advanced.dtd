@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Cài đặt tài khoản nâng cao">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Thư mục máy chủ IMAP:">
+<!ENTITY serverDirectory.accesskey "m">
+<!ENTITY usingSubscription.label "Chỉ hiện các thư mục đang theo dõi">
+<!ENTITY usingSubscription.accesskey "C">
+<!ENTITY dualUseFolders.label "Máy chủ hỗ trợ các thư mục có chứa thư mục con và thư">
+<!ENTITY dualUseFolders.accesskey "r">
+<!ENTITY maximumConnectionsNumber.label "Số lượng kết nối tối đa từ máy chủ tới bộ đệm">
+<!ENTITY maximumConnectionsNumber.accesskey "S">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Những tùy chỉnh này chỉ định không gian tên trên máy chủ IMAP của bạn">
+<!ENTITY personalNamespace.label "Không gian tên Cá nhân:">
+<!ENTITY personalNamespace.accesskey "K">
+<!ENTITY publicNamespace.label "Công khai (đã chia sẻ):">
+<!ENTITY publicNamespace.accesskey "s">
+<!ENTITY otherUsersNamespace.label "Người dùng Khác:">
+<!ENTITY otherUsersNamespace.accesskey "N">
+<!ENTITY overrideNamespaces.label "Cho phép máy chủ ghi đè những không gian tên này">
+<!ENTITY overrideNamespaces.accesskey "o">
+<!ENTITY pop3DeferringDesc.label "Khi tải xuống thư từ máy chủ của tài khoản này, hãy sử dụng thư mục sau để lưu trữ thư mới:">
+<!ENTITY accountInbox.label "Hộp thư đến cho tài khoản này">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Hộp thư cho tài khoản khác">
+<!ENTITY deferToServer.accesskey "p">
+<!ENTITY deferGetNewMail.label "Bao gồm máy chủ này khi nhận thư mới">
+<!ENTITY deferGetNewMail.accesskey "I">

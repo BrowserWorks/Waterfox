@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Поведение ссылок">
+<!ENTITY newWindow.label "Поведение при открытии ссылок">
+<!ENTITY newWindowDescription.label "Открывать ссылки, которые хотят открыть новое окно, в:">
+<!ENTITY newWindowRestriction.label "Когда сценарии хотят открыть новое окно:">
+<!ENTITY external.label "Ссылки из других приложений">
+<!ENTITY externalDescription.label "Открывать ссылки из других приложений в:">
+
+<!ENTITY openCurrent.label "Текущей вкладке/окне">
+<!ENTITY newWindowGroupCurrent.accesskey "е">
+<!ENTITY externalGroupCurrent.accesskey "у">
+
+<!ENTITY openTab.label "Новой вкладке текущего окна">
+<!ENTITY newWindowGroupTab.accesskey "в">
+<!ENTITY externalGroupTab.accesskey "о">
+
+<!ENTITY openWindow.label "Новом окне">
+<!ENTITY newWindowGroupWindow.accesskey "к">
+<!ENTITY externalGroupWindow.accesskey "м">
+
+<!ENTITY divertAll.label "Всегда перенаправлять окна во вкладки">
+<!ENTITY divertAll.accesskey "с">
+<!ENTITY divertNoFeatures.label "Не перенаправлять окна c параметрами во вкладки">
+<!ENTITY divertNoFeatures.accesskey "п">
+<!ENTITY dontDivert.label "Всегда открывать новые окна">
+<!ENTITY dontDivert.accesskey "д">

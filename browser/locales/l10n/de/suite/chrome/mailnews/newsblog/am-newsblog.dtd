@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "Beim Starten auf neue Artikel prüfen">
+<!ENTITY loginAtStartup.accesskey "B">
+<!ENTITY biffAll.label "Aktualisierung für alle Feeds aktivieren">
+<!ENTITY biffAll.accesskey "A">
+
+<!ENTITY newFeedSettings.label "Standardeinstellungen für neue Feeds">
+
+<!ENTITY manageSubscriptions.label "Abonnements verwalten…">
+<!ENTITY manageSubscriptions.accesskey "o">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "Blogs &amp; News-Feeds">
+<!ENTITY feeds.wizardShortName "Feeds">
+<!ENTITY feeds.wizardLongName "Blogs &amp; News-Feeds">
+<!ENTITY feeds.wizardLongName.accesskey "F">

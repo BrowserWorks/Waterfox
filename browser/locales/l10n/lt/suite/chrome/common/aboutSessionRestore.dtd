@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Seanso atkūrimas">
+<!ENTITY restorepage.pagetitle      "Ar norėtumėte atkurti ankstesnį naršymo seansą?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Paskutinis jūsų darbo su „&brandShortName;“ seansas netikėtai nutrūko. Nuoširdžiai apgailestaujame dėl nepatogumų. Galite atstatyti ankstesnio seanso langus ir korteles, arba, jei jie nebereikalingi, pradėti naują seansą.">
+<!ENTITY restorepage.remedies       "Jei „&brandShortName;“ darbas nutrūksta keliskart paeiliui:">
+<!ENTITY restorepage.dueToChrome    "pabandykite išjungti pastaruoju metu įdiegtus priedus, arba">
+<!ENTITY restorepage.dueToContent   "pabandykite atkurti seansą, neatverdami tinklalapių, kurie, jūsų nuomone, galėtų būti šių trikčių priežastimi:">
+
+<!ENTITY restorepage.restoreButton  "Atkurti ankstesnį seansą">
+<!ENTITY restorepage.restore.access "A">
+<!ENTITY restorepage.cancelButton   "Pradėti naują seansą">
+<!ENTITY restorepage.cancel.access  "P">
+
+<!ENTITY restorepage.restoreHeader  "Atkurti">
+<!ENTITY restorepage.listHeader     "Langai ir kortelės">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Langas nr. &#037;S">

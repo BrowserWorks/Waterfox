@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle			"アカウントとデータの削除">
+<!ENTITY removeButton.label		"削除">
+<!ENTITY removeButton.accesskey		"R">
+<!ENTITY removeAccount.label		"アカウント情報を削除">
+<!ENTITY removeAccount.accesskey	"a">
+<!ENTITY removeAccount.desc		"このアカウントについて &brandShortName; のデータだけを削除します。サーバー上のアカウントには影響しません。">
+<!ENTITY removeData.label		"メッセージデータを削除">
+<!ENTITY removeData.accesskey		"d">
+<!ENTITY removeDataChat.label		"会話データを削除">
+<!ENTITY removeDataChat.accesskey	"d">
+<!ENTITY removeDataLocalAccount.desc	"このアカウントに関連付けられたすべてのメッセージとフォルダー、フィルターをローカルディスクから削除します。この操作はサーバー上に保存された一部のメッセージには影響しません。ローカルデータを保管または後で &brandShortName; で再利用する予定のある場合は選択しないでください。">
+<!ENTITY removeDataServerAccount.desc	"このアカウントに関連付けられたすべてのメッセージとフォルダー、フィルターをローカルディスクから削除します。サーバー上に保存されたメッセージとフォルダーは保持されます。">
+<!ENTITY removeDataChatAccount.desc	"このアカウントのローカルディスクに保存されたすべての会話ログを削除します。">
+<!ENTITY showData.label			"データの場所を表示">
+<!ENTITY showData.accesskey		"S">
+<!ENTITY progressPending		"選択したデータを削除しています...">
+<!ENTITY progressSuccess		"削除が完了しました。">
+<!ENTITY progressFailure		"削除に失敗しました。">

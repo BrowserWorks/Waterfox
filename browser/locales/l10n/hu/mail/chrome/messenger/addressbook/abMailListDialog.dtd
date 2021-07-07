@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "Új levelezőlista">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "Hozzáadás: ">
+<!ENTITY addToAddressBook.accesskey     "H">
+<!ENTITY ListName.label                 "Lista neve: ">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Lista beceneve: ">
+<!ENTITY ListNickName.accesskey         "b">
+<!ENTITY ListDescription.label          "Leírás: ">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Írjon be e-mail címeket, amelyeket hozzá kíván adni a levelezőlistához:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Mozgatás felfelé">
+<!ENTITY DownButton.label               "Mozgatás lefelé">
+

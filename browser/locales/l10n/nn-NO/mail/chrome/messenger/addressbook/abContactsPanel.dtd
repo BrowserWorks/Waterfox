@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Eigenskapar">
+<!ENTITY propertiesMenu.accesskey           "e">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Eigenskapar for adressebok">
+<!ENTITY abPropertiesMenu.accesskey         "e">
+<!ENTITY contactPropertiesMenu.label        "Eigenskapar for kontaktar">
+<!ENTITY contactPropertiesMenu.accesskey    "e">
+<!ENTITY mailingListPropertiesMenu.label    "Eigenskaper för e-postliste">
+<!ENTITY mailingListPropertiesMenu.accesskey "e">
+
+<!ENTITY abContextMenuButton.tooltip        "Vis kontekstmenyen for adresseboka">
+<!ENTITY addressbookPicker.label            "Adressebok:">
+<!ENTITY addressbookPicker.accesskey        "b">
+<!ENTITY searchContacts.label               "Søk etter kontaktar:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Namn eller e-post">
+
+<!ENTITY addtoToFieldMenu.label             "Legg til i Til-feltet">
+<!ENTITY addtoToFieldMenu.accesskey         "L">
+<!ENTITY addtoCcFieldMenu.label             "Legg til i Kopi-feltet">
+<!ENTITY addtoCcFieldMenu.accesskey         "K">
+<!ENTITY addtoBccFieldMenu.label            "Legg til i Blindkopi-feltet">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Slett">
+<!ENTITY deleteAddrBookCard.accesskey       "S">
+<!ENTITY propertiesContext.label            "Eigenskapar">
+<!ENTITY propertiesContext.accesskey        "e">
+<!ENTITY abPropertiesContext.label          "Eigenskapar">
+<!ENTITY abPropertiesContext.accesskey      "e">
+<!ENTITY editContactContext.label           "Rediger kontakt">
+<!ENTITY editContactContext.accesskey       "R">
+<!ENTITY editMailingListContext.label       "Rediger liste">
+<!ENTITY editMailingListContext.accesskey   "R">
+
+<!ENTITY newContactAbContext.label          "Ny kontakt">
+<!ENTITY newContactAbContext.accesskey      "k">
+<!ENTITY newListAbContext.label             "Ny liste">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Legg til i Til:">
+<!ENTITY toButton.accesskey                 "T">
+<!ENTITY ccButton.label                     "Legg til som Kopi:">
+<!ENTITY ccButton.accesskey                 "K">
+<!ENTITY bccButton.label                    "Legg til som blindkopi:">
+<!ENTITY bccButton.accesskey                "b">

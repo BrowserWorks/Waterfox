@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Добро пожаловать в клиент почты и групп новостей &brandShortName;">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Добро пожаловать в клиент почты и групп новостей <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label
+"Почта и группы новостей &brandShortName; — мощный клиент почты и новостей с открытым исходным кодом, поддержкой эффективной фильтрации спама и множеством других полезных возможностей.">
+<!ENTITY features.title "Возможности">
+<!ENTITY feat_multiacc.label "Поддержка нескольких учётных записей">
+<!ENTITY feat_junk.label "Определение и эффективная фильтрация спама">
+<!ENTITY feat_feeds.label "Чтение лент новостей">
+<!ENTITY feat_filters.label "Фильтры сообщений">
+<!ENTITY feat_htmlmsg.label "Составление сообщений в формате HTML">
+<!ENTITY feat_abook.label "Адресная книга">
+<!ENTITY feat_tags.label "Настраиваемые метки и виды сообщений">
+<!ENTITY feat_integration.label
+"Тесная интеграция с &brandShortName; application suite">
+<!ENTITY dict.title "Словари проверки орфографии">
+<!ENTITY dict_intro.label "Словари используются для проверки орфографии в ваших почтовых сообщениях.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Множество словарей для разных языков могут быть установлены из раздела <a id="dictURL" href="">словарей</a> на веб-сайте <a href="https://addons.mozilla.org/seamonkey/">дополнений Mozilla</a>.'>
+<!ENTITY dict_info.label2
+'Множество словарей для разных языков могут быть установлены из
+раздела <a id="dictURL" href="">словарей</a> на сайте
+<a href="https://addons.thunderbird.net/seamonkey/">дополнений для SeaMonkey и Thunderbird</a>.'>
+<!ENTITY info.title "Более подробная информация">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Мы</a> с радостью примем ваши пожелания и замечания, но сначала прочитайте, пожалуйста, <a id="releaseNotesURL" href="">примечания к выпуску</a> и попробуйте поискать свою ошибку в <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Wątek">
+<!ENTITY fromColumn.label "Nadawca">
+<!ENTITY recipientColumn.label "Adresat">
+<!ENTITY attachmentColumn.label "Załączniki">
+<!ENTITY subjectColumn.label "Temat">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "Priorytet">
+<!ENTITY tagsColumn.label "Etykiety">
+<!ENTITY accountColumn.label "Konto">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Rozmiar">
+<!ENTITY junkStatusColumn.label "Status niechcianej poczty">
+<!ENTITY unreadColumn.label "Nieprzeczytane w wątku">
+<!ENTITY totalColumn.label "Razem w wątku">
+<!ENTITY readColumn.label "Przeczytano">
+<!ENTITY receivedColumn.label "Data otrzymania">
+<!ENTITY flagColumn.label "Oznaczone">
+<!ENTITY locationColumn.label "Lokalizacja">
+<!ENTITY idColumn.label "Kolejność otrzymania">
+
+<!ENTITY columnChooser2.tooltip "Wybierz kolumny do wyświetlania">
+<!ENTITY threadColumn2.tooltip "Wyświetla wątki">
+<!ENTITY fromColumn2.tooltip "Sortuj według nadawcy">
+<!ENTITY recipientColumn2.tooltip "Sortuj według adresata">
+<!ENTITY attachmentColumn2.tooltip "Sortuj według załączników">
+<!ENTITY subjectColumn2.tooltip "Sortuj według tematu">
+<!ENTITY dateColumn2.tooltip "Sortuj według daty">
+<!ENTITY priorityColumn2.tooltip "Sortuj według priorytetu">
+<!ENTITY tagsColumn2.tooltip "Sortuj według etykiet">
+<!ENTITY accountColumn2.tooltip "Sortuj po nazwie konta">
+<!ENTITY statusColumn2.tooltip "Sortuj według statusu">
+<!ENTITY sizeColumn2.tooltip "Sortuj według rozmiaru">
+<!ENTITY junkStatusColumn2.tooltip "Sortuj według statusu niechcianej poczty">
+<!ENTITY unreadColumn2.tooltip "Liczba wszystkich nieprzeczytanych wiadomości w wątku">
+<!ENTITY totalColumn2.tooltip "Liczba wszystkich wiadomości w wątku">
+<!ENTITY readColumn2.tooltip "Sortuj według liczby przeczytanych wiadomości">
+<!ENTITY receivedColumn2.tooltip "Sortuj według daty otrzymania">
+<!ENTITY flagColumn2.tooltip "Sortuj według oznaczenia">
+<!ENTITY locationColumn2.tooltip "Sortuj według adresu">
+<!ENTITY idColumn2.tooltip "Sortuj według kolejności otrzymania">

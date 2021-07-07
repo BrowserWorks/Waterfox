@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "ソフトウェアのインストール">
+<!ENTITY addOnsTitle.label                    "アドオン">
+<!ENTITY addOnsAllow.label                    "ウェブサイトからアドオンのインストールと更新を許可する">
+<!ENTITY addOnsAllow.accesskey                "b">
+<!ENTITY allowedSitesLink.label               "許可されたウェブサイト">
+<!ENTITY autoAddOnsUpdates.label              "更新を自動で確認する">
+<!ENTITY autoAddOnsUpdates.accesskey          "o">
+<!ENTITY daily.label                          "毎日">
+<!ENTITY addOnsDaily.accesskey                "d">
+<!ENTITY weekly.label                         "毎週">
+<!ENTITY addOnsWeekly.accesskey               "k">
+<!ENTITY addOnsModeAutomatic.label            "自動で更新をダウンロードしてインストールする">
+<!ENTITY addOnsModeAutomatic.accesskey        "m">
+<!ENTITY enablePersonalized.label             "推奨するアドオン"><!--en-US "Personalize add-on recommendations" (^^;-->
+<!ENTITY enablePersonalized.accesskey         "P">
+<!ENTITY addonManagerLink.label               "アドオンの管理">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "更新を自動で確認する">
+<!ENTITY autoAppUpdates.accesskey             "t">
+<!ENTITY appDaily.accesskey                   "a">
+<!ENTITY appWeekly.accesskey                  "e">
+<!ENTITY appModeAutomatic.label               "自動で更新をダウンロードしてインストールする">
+<!ENTITY appModeAutomatic.accesskey           "u">
+<!ENTITY updateHistoryButton.label            "更新履歴を表示...">
+<!ENTITY updateHistoryButton.accesskey        "S">

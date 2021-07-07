@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!ENTITY replaceDialog.title "查找并替换">
+<!ENTITY findField.label "查找文本:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "替换为:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "区分大/小写">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "循环">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY backwardsCheckbox.label "反向搜索">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "查找下一个">
+<!ENTITY findNextButton.accesskey "F">
+<!ENTITY replaceButton.label "替换">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "替换并查找">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "全部替换">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "关闭">
+<!ENTITY closeButton.accesskey "C">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY nameColumn.label   "名前">
+<!ENTITY unreadColumn.label "未読">
+<!ENTITY totalColumn.label "合計">
+<!ENTITY folderSizeColumn.label "サイズ">
+<!ENTITY folderLocationToolbarItem.title "フォルダーの場所">
+<!ENTITY mailViewsToolbarItem.title "メールビュー">
+<!ENTITY searchToolbarItem.title "検索">
+<!ENTITY searchSubjectOrAddress.placeholder "件名またはメールアドレスを検索">

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Mail &amp; Newsgroups">
+<!ENTITY generalSettings.caption          "Allgemeine Einstellungen">
+<!ENTITY confirmMove.label                "Bestätigung beim Verschieben von Ordnern in den Papierkorb">
+<!ENTITY confirmMove.accesskey            "B">
+<!ENTITY preserveThreading.label          "Threads beim Sortieren erhalten">
+<!ENTITY preserveThreading.accesskey      "T">
+<!ENTITY mailBiffOnNewWindow.label        "Erst nach Öffnen von Mail &amp; Newsgroups auf neue Nachrichten prüfen">
+<!ENTITY mailBiffOnNewWindow.accesskey    "E">
+
+<!ENTITY defaultMailSettings.description  "&brandShortName; als Standardanwendung verwenden für:">
+<!ENTITY setDefaultMail.label             "Mail">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "News">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Feeds">
+<!ENTITY setDefaultFeed.accesskey         "F">
+
+<!ENTITY useInternalSettings.description  "&brandShortName; Mail &amp; News für das Öffnen von Browser-Link verwenden für:">
+<!ENTITY useInternalMail.label            "Mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "i">
+<!ENTITY useInternalNews.label            "News (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "w">
+
+<!ENTITY messengerStartPage.caption       "Mail-Startseite">
+<!ENTITY enableStartPage.label            "Beim Aufrufen von Mail die Startseite im Nachrichtenbereich anzeigen">
+<!ENTITY enableStartPage.accesskey        "u">
+<!ENTITY location.label                   "Adresse:">
+<!ENTITY location.accesskey               "A">
+<!ENTITY useDefault.label                 "Auf Standard zurücksetzen">
+<!ENTITY useDefault.accesskey             "S">
+<!ENTITY rememberLastMsg.label            "Die letzte gewählte Nachricht merken">
+<!ENTITY rememberLastMsg.accesskey        "D">

@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:nc="http://home.netscape.com/NC-rdf#">
+
+<!--  HELP Glossary SECTION -->
+  <rdf:Description about="urn:root">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li> <rdf:Description nc:name="adres IP" nc:link="glossary.xhtml#ip_address"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="algorytm kryptograficzny" nc:link="glossary.xhtml#cryptographic_algorithm"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="aplikacja internetowa" nc:link="glossary.xhtml#web_application"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="aplikacja pomocnicza" nc:link="glossary.xhtml#helper_application"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="autoryzacja" nc:link="glossary.xhtml#authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="autoryzacja klienta" nc:link="glossary.xhtml#client_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="autoryzacja oparta na certyfikatach" nc:link="glossary.xhtml#certificate-based_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="autoryzacja oparta na hasłach" nc:link="glossary.xhtml#password-based_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="autoryzacja serwera" nc:link="glossary.xhtml#server_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="bezpieczne połączenie" nc:link="glossary.xhtml#secure_connection"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="Bezpieczne przeglądanie" nc:link="glossary.xhtml#safe_browsing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="bezpieczne uwierzytelnienie" nc:link="glossary.xhtml#secure_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="CA" nc:link="glossary.xhtml#ca"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat" nc:link="glossary.xhtml#certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat organu certyfikacji (CA)" nc:link="glossary.xhtml#ca_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat podpisujący" nc:link="glossary.xhtml#signing_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat podpisujący obiekt" nc:link="glossary.xhtml#object-signing_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat SSL klienta" nc:link="glossary.xhtml#client_ssl_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat SSL serwera" nc:link="glossary.xhtml#server_ssl_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat szyfrowania" nc:link="glossary.xhtml#encryption_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="certyfikat zabezpieczeń" nc:link="glossary.xhtml#security_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ciasteczko" nc:link="glossary.xhtml#cookie"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ciasteczko z&nbsp;innego serwera" nc:link="glossary.xhtml#third-party_cookie"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="CRL" nc:link="glossary.xhtml#crl"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="cyfrowy dowód tożsamości" nc:link="glossary.xhtml#digital_id"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="dodatek" nc:link="glossary.xhtml#add-on"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="domniemana zgoda" nc:link="glossary.xhtml#implicit_consent"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="Do Not Track" nc:link="glossary.xhtml#do_not_track"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="etykietka" nc:link="glossary.xhtml#tooltip"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="fałszywa tożsamość" nc:link="glossary.xhtml#misrepresentation"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="FIPS PUBS 140-1" nc:link="glossary.xhtml#fips_pubs_140-1"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="FTP" nc:link="glossary.xhtml#ftp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="główne hasło" nc:link="glossary.xhtml#master_password"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="główny organ certyfikacji" nc:link="glossary.xhtml#root_ca"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="hasło kopii zapasowej certyfikatu" nc:link="glossary.xhtml#certificate_backup_password"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="HTML" nc:link="glossary.xhtml#html"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="HTTP" nc:link="glossary.xhtml#http"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="HTTPS" nc:link="glossary.xhtml#https"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="IMAP" nc:link="glossary.xhtml#imap"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Internet" nc:link="glossary.xhtml#internet"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="IRC" nc:link="glossary.xhtml#irc"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ISP" nc:link="glossary.xhtml#isp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Java" nc:link="glossary.xhtml#java"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="JavaScript" nc:link="glossary.xhtml#javascript"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="karta inteligentna" nc:link="glossary.xhtml#smart_card"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="klient" nc:link="glossary.xhtml#client"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="klucz" nc:link="glossary.xhtml#key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="klucz główny" nc:link="glossary.xhtml#master_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="klucz podpisujący" nc:link="glossary.xhtml#signing_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="klucz prywatny" nc:link="glossary.xhtml#private_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="klucz publiczny" nc:link="glossary.xhtml#public_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="klucz szyfrujący" nc:link="glossary.xhtml#encryption_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kryptografia" nc:link="glossary.xhtml#cryptography"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kryptografia z&nbsp;użyciem kluczy publicznych" nc:link="glossary.xhtml#public-key_cryptography"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="LDAP" nc:link="glossary.xhtml#ldap"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="łańcuch certyfikatów" nc:link="glossary.xhtml#certificate_chain"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Menedżer certyfikatów" nc:link="glossary.xhtml#certificate_manager"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Menedżer ciasteczek" nc:link="glossary.xhtml#cookie_manager"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Menedżer haseł" nc:link="glossary.xhtml#password_manager"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="motyw" nc:link="glossary.xhtml#theme"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="moduł PKCS #11" nc:link="glossary.xhtml#pkcs_11_module"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="moduł zabezpieczający" nc:link="glossary.xhtml#security_module"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="nazwa przedmiotu certyfikatu" nc:link="glossary.xhtml#subject_name"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="nazwa unikalna (DN)" nc:link="glossary.xhtml#distinguished_name"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="nieodrzucanie" nc:link="glossary.xhtml#nonrepudiation"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="obce ciasteczko" nc:link="glossary.xhtml#foreign_cookie"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="OCSP" nc:link="glossary.xhtml#ocsp"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="odcisk (certyfikat)" nc:link="glossary.xhtml#fingerprint"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="odcisk (przeglądarka)" nc:link="glossary.xhtml#fingerprinting"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="odcisk certyfikatu" nc:link="glossary.xhtml#certificate_fingerprint"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="odnawianie certyfikatu" nc:link="glossary.xhtml#certificate_renewal"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="odszyfrowywanie" nc:link="glossary.xhtml#decryption"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="organ certyfikacji (CA)" nc:link="glossary.xhtml#certificate_authority"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="osobisty pasek narzędzi" nc:link="glossary.xhtml#personal_toolbar"/> </rdf:li>
+				<rdf:li> <rdf:Description nc:name="oszustwo internetowe (phishing)" nc:link="glossary.xhtml#phishing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="paczka językowa" nc:link="glossary.xhtml#language_pack"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="pamięć podręczna" nc:link="glossary.xhtml#cache"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="pasek adresu" nc:link="glossary.xhtml#location_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="pasek komponentów" nc:link="glossary.xhtml#component_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="pasek nawigacyjny" nc:link="glossary.xhtml#navigation_toolbar"/> </rdf:li>
+				<rdf:li> <rdf:Description nc:name="pasek powiadomień" nc:link="glossary.xhtml#notification_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="pasek stanu" nc:link="glossary.xhtml#status_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="PKCS #11" nc:link="glossary.xhtml#pkcs_11"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="PKI" nc:link="glossary.xhtml#pki"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="podpis cyfrowy" nc:link="glossary.xhtml#digital_signature"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="podpisywanie obiektu" nc:link="glossary.xhtml#object_signing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="podsłuchiwanie" nc:link="glossary.xhtml#eavesdropping"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="podszywanie się" nc:link="glossary.xhtml#spoofing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="podwójne pary kluczy" nc:link="glossary.xhtml#dual_key_pairs"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="POP" nc:link="glossary.xhtml#pop"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="pośredniczący organ certyfikacji" nc:link="glossary.xhtml#subordinate_ca"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="programowe urządzenie zabezpieczające" nc:link="glossary.xhtml#software_security_device"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="proxy" nc:link="glossary.xhtml#proxy"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="przedmiot" nc:link="glossary.xhtml#subject"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="przeglądanie z użyciem kursora" nc:link="glossary.xhtml#caret_browsing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ramka" nc:link="glossary.xhtml#frame"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="robaki" nc:link="glossary.xhtml#malware"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="rozszerzenie" nc:link="glossary.xhtml#extension"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="serwer" nc:link="glossary.xhtml#server"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="SMTP" nc:link="glossary.xhtml#smtp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="SOCKS" nc:link="glossary.xhtml#socks"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="SSL" nc:link="glossary.xhtml#ssl"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="STARTTLS" nc:link="glossary.xhtml#starttls"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="strona domowa" nc:link="glossary.xhtml#home_page"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="strona WWW" nc:link="glossary.xhtml#web_page"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="szyfr" nc:link="glossary.xhtml#cipher"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="szyfrowanie" nc:link="glossary.xhtml#encryption"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="szyfrowanie symetryczne" nc:link="glossary.xhtml#symmetric_encryption"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="śledzenie użytkownika" nc:link="glossary.xhtml#user_tracking"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="TCP" nc:link="glossary.xhtml#tcp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="TCP/IP" nc:link="glossary.xhtml#tcp_ip"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="TLS" nc:link="glossary.xhtml#tls"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="token" nc:link="glossary.xhtml#token"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="token zabezpieczający" nc:link="glossary.xhtml#security_token"/> </rdf:li>
+	<rdf:li> <rdf:Description nc:name="Tryb prywatny" nc:link="glossary.xhtml#private_browsing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="URL" nc:link="glossary.xhtml#url"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="urządzenie zabezpieczające" nc:link="glossary.xhtml#security_device"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="weryfikacja certyfikatu" nc:link="glossary.xhtml#certificate_verification"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="witryna internetowa" nc:link="glossary.xhtml#website"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="World Wide Web (WWW)" nc:link="glossary.xhtml#world_wide_web"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="WPAD" nc:link="glossary.xhtml#wpad"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="wtyczka" nc:link="glossary.xhtml#plug-in"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="wykrywanie fałszerstwa" nc:link="glossary.xhtml#tamper_detection"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="wyszukiwarka" nc:link="glossary.xhtml#search_engine"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="XML" nc:link="glossary.xhtml#xml"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="XSLT" nc:link="glossary.xhtml#xslt"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="XUL" nc:link="glossary.xhtml#xul"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="zakładka" nc:link="glossary.xhtml#bookmark"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="zaufanie" nc:link="glossary.xhtml#trust"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="złącze (slot)" nc:link="glossary.xhtml#slot"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+
+</rdf:RDF>

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Kryptera inte">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "n">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Kräv kryptering">
+<!ENTITY menu_securityEncryptRequire.accesskey "K">
+
+<!ENTITY menu_securitySign.label "Signera digitalt">
+<!ENTITY menu_securitySign.accesskey "S">
+
+<!ENTITY menu_securityAttachMyKey.label "Bifoga min offentliga nyckel">
+<!ENTITY menu_securityAttachMyKey.accesskey "B">
+
+<!ENTITY menu_securityTech.label "Krypteringsteknologi">
+<!ENTITY menu_securityTech.accesskey "t">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Visa säkerhetsinfo">
+<!ENTITY menu_securityStatus.accesskey "V">
+
+<!ENTITY securityButton.label "Säkerhet">
+<!ENTITY securityButton.tooltip "Visa eller ändra säkerhetsinställningar">
+
+<!ENTITY menu_viewSecurityStatus.label "Information om meddelandesäkerhet">
+<!ENTITY menu_viewSecurityStatus.accesskey "e">

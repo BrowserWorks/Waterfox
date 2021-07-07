@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Adresboek importeren">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Geïmporteerde gegevens van record:">
+<!ENTITY fieldMapImport.next.label "Volgende">
+<!ENTITY fieldMapImport.next.accesskey "V">
+<!ENTITY fieldMapImport.previous.label "Vorige">
+<!ENTITY fieldMapImport.previous.accesskey "o">
+<!ENTITY fieldMapImport.text "Gebruik Omhoog verplaatsen en Omlaag verplaatsen om de adresboekvelden aan de linkerkant te laten overeenkomen met de juiste te importeren gegevens aan de rechterkant. Vink onderdelen die u niet wilt importeren uit.">
+<!ENTITY fieldMapImport.up.label "Omhoog verplaatsen">
+<!ENTITY fieldMapImport.up.accesskey "h">
+<!ENTITY fieldMapImport.down.label "Omlaag verplaatsen">
+<!ENTITY fieldMapImport.down.accesskey "l">
+<!ENTITY fieldMapImport.fieldListTitle "Adresboekvelden">
+<!ENTITY fieldMapImport.dataTitle "Record-gegevens om te importeren">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Eerste record bevat veldnamen">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "E">

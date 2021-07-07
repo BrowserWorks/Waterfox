@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Do: ">
+<!ENTITY fromField.label "Od: ">
+<!ENTITY senderField.label "Nadawca: ">
+<!ENTITY organizationField.label "Organizacja: ">
+<!ENTITY replyToField.label "Odpowiedź do: ">
+
+<!ENTITY subjectField.label "Temat: ">
+<!ENTITY ccField.label "Kopia: ">
+<!ENTITY bccField.label "Ukryta kopia: ">
+<!ENTITY newsgroupsField.label "Grupy dyskusyjne: ">
+<!ENTITY followupToField.label "Kontynuacja na: ">
+
+<!ENTITY tagsHdr.label "Etykiety: ">
+<!ENTITY dateField.label "Data: ">
+<!ENTITY userAgentField.label "Program pocztowy: ">
+<!ENTITY referencesField.label "Odniesienia: ">
+<!ENTITY messageIdField.label "ID wiadomości: ">
+<!ENTITY inReplyToField.label "W odpowiedzi na: ">
+<!ENTITY originalWebsite.label "Witryna: ">
+
+<!ENTITY editMessage.label "Edytuj szkic…">
+<!ENTITY editMessage.accesskey "D">
+
+<!ENTITY attachmentsTree.label "Załączniki:">
+<!ENTITY attachmentsTree.accesskey "a">
+<!ENTITY openAttachmentCmd.label "Otwórz">
+<!ENTITY openAttachmentCmd.accesskey "O">
+<!ENTITY viewAttachmentCmd.label "Pokaż źródło załącznika">
+<!ENTITY viewAttachmentCmd.accesskey "P">
+<!ENTITY saveAsAttachmentCmd.label "Zapisz jako…">
+<!ENTITY saveAsAttachmentCmd.accesskey "a">
+<!ENTITY detachAttachmentCmd.label "Odłącz…">
+<!ENTITY detachAttachmentCmd.accesskey "c">
+<!ENTITY deleteAttachmentCmd.label "Usuń">
+<!ENTITY deleteAttachmentCmd.accesskey "U">
+<!ENTITY saveAllAttachmentsCmd.label "Zapisz wszystkie…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "w">
+<!ENTITY detachAllAttachmentsCmd.label "Odłącz wszystkie…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "d">
+<!ENTITY deleteAllAttachmentsCmd.label "Usuń wszystkie…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "E">

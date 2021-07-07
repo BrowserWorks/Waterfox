@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "Lista di distribuzione">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Aggiungi a:">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Nome lista:">
+<!ENTITY ListName.accesskey             "N">
+<!ENTITY ListNickName.label             "Soprannome lista:">
+<!ENTITY ListNickName.accesskey         "S">
+<!ENTITY ListDescription.label          "Descrizione:">
+<!ENTITY ListDescription.accesskey      "D">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Inserire gli indirizzi email da aggiungere alla lista di distribuzione:">
+<!ENTITY AddressTitle.accesskey         "e">

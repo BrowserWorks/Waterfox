@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Publikovat stránku">
+<!ENTITY windowTitleSettings.label "Nastavení pro publikování">
+
+<!ENTITY publishTab.label "Zveřejnit">
+<!ENTITY settingsTab.label "Nastavení">
+
+<!ENTITY publishButton.label "Publikovat">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label "Název webu:">
+<!ENTITY siteList.accesskey "z">
+<!ENTITY siteList.tooltip "Vybere web, které chcete publikovat">
+<!ENTITY newSiteButton.label "Nový web">
+<!ENTITY newSiteButton.accesskey "N">
+<!ENTITY docDirList.label "Podadresář webu pro tuto stránku:">
+<!ENTITY docDirList.accesskey "a">
+<!ENTITY docDirList.tooltip "Vyberte nebo vepište název adresáře na vzdáleném počítači">
+<!ENTITY publishImgCheckbox.label "Zahrnout obrázky a další soubory">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip "Zahrne i obrázky a další soubory odkazované z této stránky">
+<!ENTITY sameLocationRadio.label "Použít stejné umístění jako stránka">
+<!ENTITY sameLocationRadio.accesskey "u">
+<!ENTITY sameLocationRadio.tooltip "Použije stejné umístění souborů jako stránka">
+<!ENTITY useSubdirRadio.label "Použít tento podadresář:">
+<!ENTITY useSubdirRadio.accesskey "t">
+<!ENTITY useSubdirRadio.tooltip "Publikuje soubory do zvoleného vzdáleného podadresáře">
+<!ENTITY otherDirList.tooltip "Zvolte vzdálené podadresáře pro publikování souborů">
+<!ENTITY pageTitle.label "Nadpis stránky:">
+<!ENTITY pageTitle.accesskey "p">
+<!ENTITY pageTitle.tooltip "Vkládá nadpis stránky pro identifikaci okna v záložkách">
+<!ENTITY pageTitleExample.label "např.: „Moje první stránka“">
+<!ENTITY filename.label "Název souboru:">
+<!ENTITY filename.accesskey "s">
+<!ENTITY filename.tooltip "Zadává název souboru pro webovou stránku včetně „.html“ přípony">
+<!ENTITY filenameExample.label "např.: „mojestranka.html“">
+<!ENTITY setDefaultButton.label "Nastavit jako výchozí">
+<!ENTITY setDefaultButton.accesskey "v">
+<!ENTITY removeButton.label "Odebrat server">
+<!ENTITY removeButton.accesskey "d">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label "Weby pro zveřejnění">
+<!ENTITY serverInfo.label "Informace o serveru">
+<!ENTITY loginInfo.label "Přihlašovací informace">
+<!ENTITY siteName.label "Název webu:">
+<!ENTITY siteName.accesskey "w">
+<!ENTITY siteName.tooltip "Zkratka, která identifikuje publikovaný web (např. „MůjWeb“)">
+<!ENTITY siteUrl.label "Adresa pro zveřejnění (např: „ftp://ftp.isp.cz/uzivatel“):">
+<!ENTITY siteUrl.accesskey "A">
+<!ENTITY siteUrl.tooltip "FTP nebo HTTP adresa poskytnutá ISP nebo hostingovou službou">
+<!ENTITY browseUrl.label "HTTP adresa domovské stránky (např. „http://www.isp.cz/uzivatel“):">
+<!ENTITY browseUrl.accesskey "H">
+<!ENTITY browseUrl.tooltip "HTTP adresa domovské stránky (neobsahuje název souboru)">
+<!ENTITY username.label "Uživatelské jméno:">
+<!ENTITY username.accesskey "J">
+<!ENTITY username.tooltip "Uživatelské jméno používané pro přihlášení k ISP nebo k hostingovým službám">
+<!ENTITY password.label "Heslo:">
+<!ENTITY password.accesskey "H">
+<!ENTITY password.tooltip "Heslo přiřazené k uživateli">
+<!ENTITY savePassword.label "Uložit heslo">
+<!ENTITY savePassword.accesskey "U">
+<!ENTITY savePassword.tooltip "Pokud chcete uložit své heslo bezpečně pomocí Správce hesel">

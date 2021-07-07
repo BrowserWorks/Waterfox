@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY mailListWindowAdd.title "Nueva lista de correo">
+
+<!ENTITY addToAddressBook.label "Añadir a: ">
+<!ENTITY addToAddressBook.accesskey "A">
+<!ENTITY ListName.label "Nombre de lista: ">
+<!ENTITY ListName.accesskey "L">
+<!ENTITY ListNickName.label "Apodo de lista: ">
+<!ENTITY ListNickName.accesskey "p">
+<!ENTITY ListDescription.label "Descripción: ">
+<!ENTITY ListDescription.accesskey "D">
+<!ENTITY AddressTitle.label "Escriba direcciones de correo para añadirlas a la lista:">
+<!ENTITY AddressTitle.accesskey "E">
+<!ENTITY UpButton.label "Mover arriba">
+<!ENTITY DownButton.label "Mover abajo">

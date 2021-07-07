@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Import-Assistent">
+
+<!ENTITY importAllFrom.label             "Alle Einträge importieren von:">
+<!ENTITY importBookmarksFrom.label       "Lesezeichen importieren von:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Datei">
+<!ENTITY importFromFile.accesskey        "D">
+<!ENTITY importFromNothing.label         "Nichts importieren">
+<!ENTITY importFromNothing.accesskey     "N">
+
+<!ENTITY importSource.title              "Einstellungen und Daten importieren">
+<!ENTITY importItems.title               "Zu importierende Einträge">
+<!ENTITY importItems.label               "Wählen Sie, welche Einträge importiert werden sollen:">
+
+<!ENTITY selectProfile.title             "Profil wählen">
+<!ENTITY selectProfile.label             "Von den folgenden Profilen kann importiert werden:">
+
+<!ENTITY migrating.title                 "Importieren…">
+<!ENTITY migrating.label                 "Die folgenden Einträge werden derzeit importiert…">
+
+<!ENTITY done.title                      "Import abgeschlossen">
+<!ENTITY done.label                      "Die folgenden Einträge wurden erfolgreich importiert:">

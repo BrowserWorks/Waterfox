@@ -1,0 +1,122 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Catálogo de Endereços">
+<!ENTITY blankResultsPaneMessage.label                  "Este catálogo de endereços mostra contatos somente após uma pesquisa">
+<!ENTITY localResultsOnlyMessage.label                  "Contatos de catálogos de endereços remotos só são mostrados quando você faz uma pesquisa">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Contato…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Lista de emails…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Catálogo...">
+<!ENTITY newAddressBookCmd.accesskey                    "a">
+<!ENTITY newLDAPDirectoryCmd.label                      "Diretório LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "Msg instantânea">
+<!ENTITY printContactViewCmd.label                      "Imprimir contato…">
+<!ENTITY printContactViewCmd.accesskey                  "p">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Visualizar impressão do contato">
+<!ENTITY printPreviewContactViewCmd.accesskey           "z">
+<!ENTITY printAddressBook.label                         "Imprimir catálogo...">
+<!ENTITY printAddressBook.accesskey                     "m">
+<!ENTITY printPreviewAddressBook.label                  "Visualizar impressão do catálogo">
+<!ENTITY printPreviewAddressBook.accesskey              "V">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Excluir catálogo">
+<!ENTITY deleteContactCmd.label                         "Excluir contato">
+<!ENTITY deleteContactsCmd.label                        "Excluir contatos selecionados">
+<!ENTITY deleteListCmd.label                            "Excluir lista">
+<!ENTITY deleteListsCmd.label                           "Excluir listas selecionadas">
+<!ENTITY deleteItemsCmd.label                           "Excluir itens selecionados">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Trocar primeiro e último nome">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "t">
+<!ENTITY propertiesCmd.label                            "Propriedades…">
+<!ENTITY propertiesCmd.accesskey                        "i">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Padrão">
+<!ENTITY showAbToolbarCmd.accesskey                     "a">
+<!ENTITY layoutMenu.label                               "Layout">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "Painel de diretório">
+<!ENTITY showDirectoryPane.accesskey                    "d">
+<!ENTITY showContactPane2.label                         "Painel de contato">
+<!ENTITY showContactPane2.accesskey                     "c">
+<!ENTITY menu_ShowNameAs.label                          "Exibir nome como">
+<!ENTITY menu_ShowNameAs.accesskey                      "n">
+<!ENTITY firstLastCmd.label                             "Primeiro, Último">
+<!ENTITY firstLastCmd.accesskey                         "P">
+<!ENTITY lastFirstCmd.label                             "Último, Primeiro">
+<!ENTITY lastFirstCmd.accesskey                         "r">
+<!ENTITY displayNameCmd.label                           "Apresentar como">
+<!ENTITY displayNameCmd.accesskey                       "m">
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importar...">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Exportar...">
+<!ENTITY exportCmd.accesskey                            "x">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Novo contato">
+<!ENTITY newContactButton.accesskey                     "c">
+<!ENTITY newlistButton.label                            "Nova lista">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY editItemButton.label                           "Propriedades">
+<!ENTITY editItemButton.accesskey                       "P">
+<!ENTITY newmsgButton.label                             "Escrever">
+<!ENTITY newmsgButton.accesskey                         "E">
+<!ENTITY deleteItemButton.label                         "Excluir">
+<!ENTITY deleteItemButton.accesskey                     "x">
+<!ENTITY newimButton.label                              "Mensagem instantânea">
+<!ENTITY newimButton.accesskey                          "s">
+<!ENTITY printButton.label                              "Imprimir">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY searchNameAndEmail.placeholder                 "Pesquisa por nome e email">
+<!ENTITY searchBox.title                                "Pesquisar">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Barra de ferramentas (clique para exibir)">
+<!ENTITY newContactButton.tooltip                       "Criar um novo contato do catálogo de endereços">
+<!ENTITY newlistButton.tooltip                          "Criar uma nova lista">
+<!ENTITY editItemButton.tooltip                         "Editar o item selecionado">
+<!ENTITY newmsgButton.tooltip                           "Nova mensagem">
+<!ENTITY newIM.tooltip                                  "Enviar uma mensagem instantânea ou chat">
+<!ENTITY printButton.tooltip                            "Imprimir item selecionado">
+<!ENTITY deleteItemButton.tooltip                       "Excluir item selecionado">
+<!ENTITY advancedButton.tooltip                         "Mais opções de pesquisa">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Catálogo de endereços">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Contato">
+<!ENTITY home.heading                                   "Página Inicial">
+<!ENTITY other.heading                                  "Outros">
+<!ENTITY chat.heading                                   "Conversa">
+<!ENTITY phone.heading                                  "Telefones">
+<!ENTITY work.heading                                   "Trabalho">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Descrição">
+<!ENTITY addresses.heading                              "Endereços">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Obter Mapa">
+<!ENTITY mapIt.tooltip                                  "Mostrar um mapa desse endereço a partir da Web">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

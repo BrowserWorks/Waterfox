@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Assistente de contas de conversa">
+
+<!ENTITY accountProtocolTitle.label   "Rede de conversas">
+<!ENTITY accountProtocolInfo.label    "Escolha a rede da sua conta de conversa.">
+<!ENTITY accountProtocolField.label   "Rede:">
+<!ENTITY accountProtocolGetMore.label "Obter mais…">
+
+<!ENTITY accountUsernameTitle.label   "Nome de usuário">
+<!ENTITY accountUsernameDuplicate.label "Esta conta já está configurada!">
+
+<!ENTITY accountPasswordTitle.label   "Senha">
+<!ENTITY accountPasswordInfo.label    "Insira sua senha no campo abaixo.">
+<!ENTITY accountPasswordField.label   "Senha:">
+<!ENTITY accountPasswordManager.label "A senha inserida aqui será armazenada no gerenciador de senhas. Deixe esta caixa vazia se você quiser que sua senha seja solicitada toda vez que esta conta for conectada.">
+
+<!ENTITY accountAdvancedTitle.label   "Opções avançadas">
+<!ENTITY accountAdvancedInfo.label    "Sinta-se livre para pular este passo se você quiser.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Notificar sobre novas mensagens">
+<!ENTITY accountAliasGroupbox.caption "Pseudônimo local">
+<!ENTITY accountAliasField.label      "Pseudônimo:">
+<!ENTITY accountAliasInfo.label       "Isto só será exibido durante as suas conversas, os contatos remotos não o verão.">
+<!ENTITY accountProxySettings.caption "Configurações de proxy">
+<!ENTITY accountProxySettings.change.label     "Alterar…">
+<!ENTITY accountProxySettings.change.accessKey "A">
+
+<!ENTITY accountSummaryTitle.label   "Resumo">
+<!ENTITY accountSummaryInfo.label    "Um resumo das informações fornecidas é exibido abaixo. Verifique antes de criar sua conta.">
+<!ENTITY accountSummary.connectNow.label "Conecte esta conta agora.">

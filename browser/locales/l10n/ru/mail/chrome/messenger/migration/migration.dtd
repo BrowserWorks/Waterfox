@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title "Мастер импорта">
+
+<!ENTITY importFromWin.label "Импортировать настройки, параметры учётной записи, адресную книгу, фильтры и другие данные из:">
+<!ENTITY importFromNonWin.label "Импортировать настройки, параметры учётной записи, адресную книгу, фильтры и другие данные из:">
+<!ENTITY importSourceNotFound.label "Не найдено приложения, из которого можно импортировать данные.">
+
+<!ENTITY importFromNothing.label "Не импортировать ничего">
+<!ENTITY importFromNothing.accesskey "н">
+<!ENTITY importFromSeamonkey3.label "SeaMonkey 2 или позже">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label "Outlook">
+<!ENTITY importFromOutlook.accesskey "O">
+
+<!ENTITY importSource.title "Импорт настроек и почты">
+<!ENTITY importItems.title "Объекты для импорта">
+<!ENTITY importItems.label "Выберите объекты для импорта:">
+
+<!ENTITY migrating.title "Идёт импорт…">
+<!ENTITY migrating.label "В данный момент происходит импорт следующих объектов…">
+
+<!ENTITY selectProfile.title "Выбор профиля">
+<!ENTITY selectProfile.label "Импорт может быть произведён из следующих профилей:">
+
+<!ENTITY done.title "Импорт завершён">
+<!ENTITY done.label "Следующие объекты были успешно импортированы:">

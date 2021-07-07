@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Um Speicherplatz zu sparen, nicht herunterladen:">
+<!ENTITY doNotDownloadNntp.label "Um Speicherplatz zu sparen, nicht zum Offline-Lesen herunterladen:">
+<!ENTITY doNotDownloadImap.label "Um Speicherplatz zu sparen, kann das Herunterladen der Nachrichten vom IMAP-Server und das Bereithalten lokaler Kopien zum Offline-Lesen nach Alter und Größe begrenzt werden.">
+<!ENTITY allFoldersOffline2.label "Nachrichten für alle Ordner dieses Kontos auf diesem Computer bereithalten">
+<!ENTITY allFoldersOffline2.accesskey "b">
+<!ENTITY allFoldersOfflineNote.label "Hinweis: Eine Änderung dieser Einstellung betrifft alle Ordner dieses Kontos. Verwendet Sie die Schaltfläche Erweitert…, um einzelne Ordner zu konfigurieren.">
+<!ENTITY offlineNotDownload.label "Nachrichten, die größer sind als">
+<!ENTITY offlineNotDownload.accesskey "N">
+<!ENTITY autosyncNotDownload.label "Nachrichten nicht herunterladen, die größer sind als">
+<!ENTITY autosyncNotDownload.accesskey "N">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "Tage">
+<!ENTITY message.label "Nachrichten">
+<!ENTITY nntpNotDownloadRead.label "Gelesene Nachrichten">
+<!ENTITY nntpNotDownloadRead.accesskey "G">
+<!ENTITY nntpDownloadMsg.label "Nachrichten, die älter sind als">
+<!ENTITY nntpDownloadMsg.accesskey "a">
+<!ENTITY retentionCleanup.label "Alte Nachrichten endgültig löschen, um Speicherplatz freizugeben:">
+<!ENTITY retentionCleanupImap.label "Alte Nachrichten endgültig löschen, um Speicherplatz freizugeben - sowohl lokale Kopien als auch auf dem IMAP-Server:">
+<!ENTITY retentionCleanupPop.label "Alte Nachrichten endgültig löschen, um Speicherplatz freizugeben - einschließlich der Originale auf dem POP-Server:">
+<!ENTITY retentionKeepMsg.label "Nachrichten, die älter sind als">
+<!ENTITY retentionKeepMsg.accesskey "c">
+<!ENTITY retentionKeepAll.label "Keine Nachrichten">
+<!ENTITY retentionKeepAll.accesskey "r">
+<!ENTITY retentionKeepRecent.label "Alle außer den neuesten">
+<!ENTITY retentionKeepRecent.accesskey "u">
+<!ENTITY retentionApplyToFlagged.label "Gekennzeichnete Nachrichten immer behalten">
+<!ENTITY retentionApplyToFlagged.accesskey "z">
+<!ENTITY nntpRemoveMsgBody.label "Lösche Nachrichteninhalte, die älter sind als">
+<!ENTITY nntpRemoveMsgBody.accesskey "L">
+<!ENTITY offlineSelectNntp.label "Newsgruppen zum Offline-Lesen wählen…">
+<!ENTITY offlineSelectNntp.accesskey "w">
+<!ENTITY offlineImapAdvancedOffline.label "Erweitert…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "w">
+<!ENTITY syncGroupTitle.label "Nachrichten-Synchronisation">
+<!ENTITY diskspaceGroupTitle.label "Speicherplatz">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+  -->
+<!ENTITY allAutosync.label               "Nachrichten unabhängig vom Alter herunterladen">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Nur Nachrichten der letzten">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Tage">
+<!ENTITY weekAgeInterval.label           "Wochen">
+<!ENTITY monthAgeInterval.label          "Monate">
+<!ENTITY yearAgeInterval.label           "Jahre">
+<!ENTITY ageAutosyncAfter.label          "herunterladen">

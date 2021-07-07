@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Färger och bakgrund för sida">
+<!ENTITY pageColors.label "Färger för sida">
+<!ENTITY defaultColorsRadio.label "Besökarens förvalda färger (Ange inga färger på sidan)">
+<!ENTITY defaultColorsRadio.accessKey "ä">
+<!ENTITY defaultColorsRadio.tooltip "Använd endast mottagarens egna färginställningar">
+<!ENTITY customColorsRadio.label "Använd egna färger:">
+<!ENTITY customColorsRadio.accessKey "e">
+<!ENTITY customColorsRadio.tooltip "Dessa färginställningar används istället för inställningarna i mottagarens läsare">
+
+<!ENTITY normalText.label "Normal text">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Länktext">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Aktiv (markerad) länk">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "Besökt länk">
+<!ENTITY visitedLinkText.accessKey "ö">
+<!ENTITY background.label "Bakgrund:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Bakgrundsbild:">
+<!ENTITY backgroundImage.accessKey "g">
+<!ENTITY backgroundImage.tooltip "Använd en bildfil som bakgrund för sidan">
+<!ENTITY backgroundImage.shortenedDataURI "Avkortad data-URI (kopia kommer att placera hela URI:n i Urklipp)">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Bureaubladachtergrond instellen">
+
+<!ENTITY position.label             "Positie:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Naast elkaar">
+<!ENTITY position.stretch.label     "Uitrekken">
+<!ENTITY position.center.label      "Centreren">
+<!ENTITY position.fill.label        "Uitvullen">
+<!ENTITY position.fit.label         "Passend maken">
+<!ENTITY picker.label               "Kleur:">
+<!ENTITY picker.accesskey           "K">
+<!ENTITY preview.caption            "Voorbeeld">
+<!ENTITY apply.label                "Toepassen">
+<!ENTITY apply.accesskey            "T">
+<!ENTITY close.label                "Sluiten">

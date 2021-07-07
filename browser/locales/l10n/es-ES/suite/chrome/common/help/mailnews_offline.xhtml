@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+    <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Trabajar sin conexión</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+        type="text/css"/>
+</head>
+
+<body>
+<h1 id="working_offline">Trabajar sin conexión</h1>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#setting_up_mozilla_mail_and_newsgroups_to_work_offline">Configurar
+      &brandShortName; para trabajar sin conexión</a></li>
+    <li><a href="#downloading_all_messages_for_offline_use">Descargar
+      todos los mensajes para su uso sin conexión</a></li>
+    <li><a href="#downloading_an_individual_folder_for_offline_use">Descargar
+      una carpeta individual para trabajar sin conexión</a></li>
+    <li><a href="#downloading_selected_or_flagged_messages_for_offline_use">Descargar
+      los mensajes seleccionados o marcados para usar sin conexión</a></li>
+    <li><a href="#downloading_directory_entries_for_offline_use">Descargar
+      entradas de directorio para usar sin conexión</a></li>
+    <li><a href="#setting_up_your_accounts_for_working_offline">Configurar las
+      cuentas para trabajar sin conexión</a></li>
+    <li><a href="#selecting_items_for_offline_viewing">Seleccionar elementos
+      para verlos sin conexión</a></li>
+    <li><a href="#downloading_and_synchronizing_your_messages">Descargar y
+      sincronizar los mensajes</a></li>
+    <li><a href="#working_offline_and_reconnecting_later">Trabajar sin
+      conexión y volver a conectar después</a></li>
+  </ul>
+</div>
+
+<h2 id="setting_up_mozilla_mail_and_newsgroups_to_work_offline">Configurar
+  &brandShortName; para trabajar sin conexión</h2>
+
+<p>La característica de &brandShortName; para trabajar sin conexión le permite
+  descargar el correo y leerlo sin estar conectado a Internet. Si usa una
+  conexión telefónica (módem) para acceder a su correo y quiere reducir el
+  tiempo que está conectado, o si necesita desconectar temporalmente de la red
+  de su empresa mientras viaja o cambiar de método de conexión, puede descargar
+  su correo para poder leerlo sin conexión. La característica sin conexión
+  puede descargar automáticamente los mensajes entrantes y enviar después los
+  mensajes pendientes de enviar cuando se vuelva a conectar.</p>
+
+<p>Observe que, para las cuentas POP, su correo ya se descarga de manera
+  predeterminada, por lo que la mayoría de las características de trabajo sin
+  conexión no son relevantes para las cuentas POP.</p>
+
+<p>Si quiere trabajar sin conexión, &brandShortName; le facilita:</p>
+
+<ul>
+  <li>Descargar su bandeja de entrada para usar sin conexión.</li>
+  <li>Descargar una carpeta individual para usarla sin conexión.</li>
+  <li>Descargar sólo los mensajes seleccionados o marcados para usar
+    sin conexión.</li>
+  <li>Descargar entradas de directorio en su libreta de direcciones para
+    usarlas sin conexión.</li>
+</ul>
+
+<p>Si trabaja sin conexión a menudo, &brandShortName; también le permite:</p>
+
+<ul>
+  <li>Configurar una o más de sus cuentas para usar sin conexión.</li>
+  <li>Configurar las preferencias para trabajar sin conexión y espacio
+    en disco para cada cuenta.</li>
+  <li>Seleccionar las carpetas y grupos de noticias que quiere ver sin
+    conexión.</li>
+</ul>
+
+<p>[<a href="#working_offline">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="downloading_all_messages_for_offline_use">Descargar todos los mensajes
+  para su uso sin conexión</h2>
+
+<p>Puede decirle a &brandShortName; que descargue automáticamente sus
+  mensajes para usarlos sin conexión. Después, cuando vuelva a estar conectado,
+  &brandShortName; sincroniza automáticamente sus mensajes con el servidor.</p>
+
+<p>Observe que la bandeja de entrada las cuentas POP se descarga de modo
+  predeterminado, por lo que esta sección no es aplicable a las cuentas POP.</p>
+
+<p>Para descargar automáticamente sus mensajes para usarlos sin conexión,
+  comience desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias. Verá aparecer un cuadro de diálogo.</li>
+  <li>En la parte izquierda del cuadro de diálogo, elija la cuenta que quiere
+    usar sin conexión, y seleccione Sincronización y almacenamiento (esta
+    categoría no está disponible en cuentas POP).</li>
+  <li>Marque la casilla <q>Conservar mensajes de esta cuenta en este
+    equipo</q>.</li>
+  <li>Pulse Aceptar.</li>
+  <li>Pulse el indicador Con/Sin conexión <img src="images/online.png" alt=""/>
+    en la esquina inferior derecha de la ventana de Correo (a la izquierda del
+    icono de la cookie) para pasar a modo sin conexión. Se le preguntará si
+    quiere descargar mensajes para que estén disponibles en el modo sin
+    conexión. Pulse en <q>Descargar</q> para proceder.</li>
+</ol>
+
+<p><strong>Nota</strong>: esta configuración también se aplica a cualquier
+  nueva carpeta creada. Si bien la configuración por cuenta se puede modificar
+  para una <a href="#downloading_an_individual_folder_for_offline_use">carpeta
+  individual</a>, estas opciones por carpeta <em>se eliminan</em> cuando se
+  marca/desmarca la casilla <q>Conservar mensajes</q>.</p>
+
+<p>&brandShortName; descarga automáticamente todos los mensajes en la
+bandeja de entrada para que pueda leer y responderlos mientras trabaja sin
+conexión. Después de desconectar, &brandShortName; permanece
+abierto para que pueda continuar trabajando con sus mensajes.</p>
+
+<p>Para volver a conectarse a Internet y trabajar con conexión:</p>
+
+<ul>
+  <li>Pulse el indicador Conectado/desconectado <img src="images/offline.png"
+  alt="" /> en la esquina inferior derecha de la ventana de Correo y noticias
+  (a la izquierda del icono de cookies) para ir al modo sin
+  conexión.</li>
+</ul>
+
+<p>Cuando vuelva a tener conexión, &brandShortName; sincroniza
+automáticamente los mensajes de su bandeja de entrada con el servidor,
+replicando cualquier cambio que hiciera trabajando sin conexión.</p>
+
+<p><strong>Truco</strong>: &brandShortName; guarda cualquier mensaje que
+envíe mientras trabaja sin conexión en la carpeta Mensajes no
+enviados enCarpetas Locales. Para que &brandShortName; envíe
+automáticamente sus mensajes pendientes al volver a tener
+conexión, vaya al menú <span
+class="mac">&brandShortName;</span><span class="noMac">Editar</span>, elija
+Preferencias, y en la categoría del mismo nombre, cambie las <a
+href="mailnews_preferences.xhtml#network_and_storage_preferences">preferencias sin
+conexión</a> que desee para todas sus cuentas.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="downloading_an_individual_folder_for_offline_use">
+Descargar una carpeta individual para usar sin conexión</h2>
+
+<p>Tenga en cuenta que las cuentas POP no le permiten administrar carpetas en
+el servidor POP, por lo que esta sección no se aplica a las cuentas POP.</p>
+
+<p>Para descargar una carpeta concreta y usarla sin conexión,
+comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>En la parte izquierda de la ventana de Correo y noticias, seleccione la
+    carpeta que quiere descargar para usar sin conexión.</li>
+  <li>Abra el menú Editar y elija Propiedades de la carpeta.</li>
+  <li>Pulse la pestaña Sincronización.</li>
+  <li>Marque <q>Seleccionar esta carpeta para usar sin conexión</q>.</li>
+  <li>Elija Descargar ahora si quiere comenzar inmediatamente a descargar los
+    mensajes de la carpeta. También puede continuar trabjando, y cuando
+    esté preparado para la desconexión, vaya al siguiente punto.</li>
+  <li>Pulse el indicador Conectado/desconectado <img src="images/online.png"
+    alt="" /> en la esquina inferior derecha de la ventana de Correo y noticias
+    para ir al modo sin conexión.</li>
+  <li>En el cuadro de diálogo de trabajar sin conexión, elija Descargar.</li>
+</ol>
+
+<p>&brandShortName; automáticamente descarga todos los mensajes de la
+carpeta seleccionada para que puede leer y responderlos mientras
+trabaja sin conexión. Después de desconectar, &brandShortName;
+permanece abierto para que pueda continuar trabajando con sus
+mensajes.</p>
+
+<p><strong>Nota</strong>: las cabeceras de los mensajes que se han descargado
+para leer sin conexión muestran un icono de sobre o grupo de noticias
+con un gris más oscuro que el resto.</p>
+
+<p>Para volver a conectarse a Internet para trabajar con conexión:</p>
+
+<ul>
+  <li>Pulse el indicador Conectado/desconectado <img src="images/offline.png"
+  alt="" /> en la esquina inferior derecha de la ventana de Correo y noticias
+  (a la izquierda del icono de cookies) para volver al modo con
+  conexión.</li>
+</ul>
+
+<p>&brandShortName; sincroniza automáticamente las carpetas sin
+conexión con el servidor, replicando cualquier cambio que hiciera al
+trabajar sin conexión.</p>
+
+<p><strong>Truco</strong>: &brandShortName; guarda cualquier mensaje que envíe
+  mientras trabaja sin conexión en la carpeta Mensajes no enviados de Carpetas
+  locales. Cuando se vuelva a conectar, elija Procesar mensajes no enviados en
+  el menú Archivo para enviar inmediatamente todos los mensajes guardados. Para
+  que &brandShortName; haga esto automáticamente al volver a tener conexión,
+  vaya al menú <span class="mac">&brandShortName;</span><span
+  class="noMac">Editar</span>, elija Preferencias, y en la categoría del mismo
+  nombre, elija las <a
+  href="mailnews_preferences.xhtml#network_and_storage_preferences">preferencias
+  Sin conexión</a> que desee.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="downloading_selected_or_flagged_messages_for_offline_use">
+Descargar los mensajes seleccionados o marcados para usar sin
+conexión</h2>
+
+<p>No olvide que, para las cuentas POP, los mensajes se descargan de manera
+predeterminada. Sin embargo, si ha habilitado la opción <q>Recibir
+sólo cabeceras</q> en la configuración de la cuenta POP,
+entonces se descargarán sólo las cabeceras, y necesitará
+usar los comandos de esta sección para descargar los mensajes
+completos.</p>
+
+<p>Para descargar los mensajes seleccionados para usar sin conexión,
+comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione una carpeta de correo o grupos de noticias para ver sus
+  mensajes.</li>
+  <li>Seleccione los mensajes que quiera descargar de la siguiente forma:
+    <ul>
+      <li>Para seleccionar un grupo de mensajes consecutivos, pulse una vez
+      en el primer mensaje, y luego pulse la tecla Mayúsculas y sin
+      soltarla pulse en el último mensaje para seleccionar todo el
+      grupo.</li>
+      <li>Para seleccionar mensajes en cualquier lugar de la lista, mantenga
+      pulsada la tecla <kbd class="mac">Cmd</kbd><kbd clas="noMac">Ctrl</kbd>
+      y pulse en cada mensaje.</li>
+    </ul>
+  </li>
+  <li>Abra el menú Archivo, elija Sin conexión, y luego elija
+  Recibir los mensajes marcados en el submenú. &brandShortName;
+  descarga los mensajes seleccionados.</li>
+</ol>
+
+<p>Para descargar los mensajes marcados para usar sin conexión,
+comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione una carpeta de correo o grupos de noticias para mostrar los
+  mensajes.</li>
+  <li>Pulse en la columna de marcado de cada mensaje que quiera descargar.
+  Aparecerá una bandera para indicar que el mensaje ha sido marcado.
+  Si la columna de marcado no está visible, pulse el icono de
+  Mostrar/Ocultar columnas <img src="images/columns.png" alt="" /> y
+  seleccione Marcar en la lista.</li>
+  <li>Abra el menú Archivo, elija Sin conexión, y luego elija
+  Recibir los mensajes marcados. &brandShortName; descargará los
+  mensajes marcados.</li>
+</ol>
+
+<p>Una vez que la descarga se ha completado, pulse el indicador
+Conectado/desconectado en la esquina inferior derecha de la ventana de Correo
+y noticias (a la izquierda del icono de cookies) para ir al modo sin
+conexión. Después de desconectar, &brandShortName; permanece
+abierto para que pueda continuar trabajando con sus mensajes.</p>
+
+<p>Observe que las opciones de menú <q>Recibir mensajes
+seleccionados</q> y <q>Recibir mensajes marcados</q> también
+están disponibles en el menú contextual emergente de
+conversaciones, para un acceso más rápido.</p>
+
+<p><strong>Nota</strong>: las cabeceras de los mensajes que se han descargado
+para leer sin conexión muestran un icono de sobre o grupo de noticias
+con un gris más oscuro que el resto.</p>
+
+<p>Para volver a conectarse a Internet para poder trabajar con
+conexión:</p>
+
+<ul>
+  <li>Pulse el indicador Conectado/desconectado <img src="images/offline.png"
+  alt="" /> en la esquina inferior derecha de la ventana de Correo y noticias
+  (a la izquierda del icono de cookies) para volver al modo con
+  conexión.</li>
+</ul>
+
+<p><strong>Truco</strong>: &brandShortName; guarda cualquier mensaje que manda
+  mientras trabaja sin conexión en la carpeta Mensajes no enviados de Carpetas
+  locales. Cuando se vuelva a conectar, elija Enviar mensajes pendientes en el
+  menú Archivo para enviar inmediatamente todos los mensajes guardados. Para que
+  &brandShortName; haga esto automáticamente al volver a tener conexión, vaya al
+  menú <span class="mac">&brandShortName;</span><span
+  class="noMac">Editar</span>, elija Preferencias, y en la categoría del mismo
+  nombre, elija las <a
+  href="mailnews_preferences.xhtml#network_and_storage_preferences">preferencias
+  Sin conexión</a> que desee.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="downloading_directory_entries_for_offline_use">Descargar entradas
+de directorio para su uso sin conexión</h2>
+
+<p>Puede descargar (replicar) las entradas de un servidor de directorio para
+que estén disponibles cuando trabaja sin conexión.
+Una vez ha descargado las entradas de directorio, puede usar el
+mismo procedimiento para actualizar su copia local de las entradas
+con las últimas entradas del servidor de directorio.</p>
+
+<p>Para descargar o actualizar una libreta de direcciones vinculada
+a un directorio LDAP para su uso sin conexión:</p>
+
+<ol>
+  <li>Asegúrese de que está en modo con conexión.</li>
+  <li>Abra el menú Ventana y escoja Libreta de direcciones.</li>
+  <li>En la ventana Libreta de direcciones, seleccione el directorio
+  que quiere descargar (replicar).</li>
+  <li>Pulse Propiedades en la barra de herramientas de la libreta de
+  direcciones. Aparecerá el cuadro de diálogo de propiedades
+  del servidor de directorio.</li>
+  <li>Pulse la pestaña Sin conexión.</li>
+  <li>Pulse Descargar ahora para comenzar a copiar las entradas a
+  su ordenador.</li>
+  <li>Si se le solicita, introduzca su nombre de usuario y contraseña
+  de red, y pulse Aceptar para comenzar la descarga.
+  <p>Dependiendo del número de entradas de directorio, el proceso de
+  descarga puede llevar un tiempo, así que sea paciente.</p>
+  </li>
+</ol>
+
+<p>Una vez concluya la descarga, podrá trabajar sin conexión y
+hacer búsquedas en el directorio o usarlo para autocompletar
+direcciones cuando escriba mensajes. Al cabo de algún tiempo de usar
+su copia local del directorio, puede querer actualizarla para obtener las
+últimas entradas del servidor de directorio. Para actualizar su copia
+local, utilice el procedimiento descrito anteriormente.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="setting_up_your_accounts_for_working_offline">Configurar las cuentas
+para trabajar sin conexión</h2>
+
+<p>Para configurar una o más cuentas para trabajar sin conexión,
+use las preferencias Sin conexión y espacio en disco en el cuadro de
+diálogo de Configuración de cuentas de correo y noticias. Cuando
+haya terminado, no hace falta que cambie estas opciones cada vez que quiera
+trabajar sin conexión. Las preferencias de sin conexión y
+espacio en disco que se pueden configurar dependen del tipo de cuenta (IMAP,
+POP o grupo de noticias).</p>
+
+<p>Aquí tiene un resumen de los pasos a seguir para configurar las
+cuentas para usar sin conexión:</p>
+
+<ol>
+  <li>Para cada cuenta con la que quiera trabajar sin conexión, use el cuadro
+    de diálogo de Configuración de cuentas de correo y noticias para
+    configurar las opciones de sincronización y almacenamiento para esa cuenta.
+    Debe seleccionar los elementos (carpetas y grupos) que quiere descargar
+    para usar sin conexión. Vea <a
+    href="#selecting_items_for_offline_viewing">Seleccionar elementos para ver
+    sin conexión</a> para más información.
+
+    <p>Cuando haya terminado, no hace falta que cambie estas opciones. Vea las
+      secciones siguientes para más información para configurar las opciones
+      sin conexión y espacio en disco para cuentas
+      <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_imap">IMAP</a>,
+      <a href="mailnews_account_settings.xhtml#disk_space_settings_pop">POP</a>,
+      <a href="mailnews_account_settings.xhtml#disk_space_settings_blogs">Blogs</a> y
+      <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_nntp">grupos
+      de noticias</a>.</p>
+
+    <p><strong>Truco</strong>: para configurar las preferencias de
+      sincronización y almacenamiento para la cuenta actual, abra el menú
+      Archivo, elija Sin conexión, y luego Opciones sin conexión.</p>
+  </li>
+  <li>Abra el menú Archivo, elija Sin conexión, y luego escoja
+    Descargar/Sincronizar ahora en el submenú.</li>
+  <li>Seleccione el tipo de mensajes (correo, grupos o ambos) que quiera
+    descargar.
+
+  <p><strong>Importante</strong>: debe seleccionar al menos una
+  categoría (mensajes de correo o mensajes de grupos de noticias) para
+  que funcione la descarga.</p>
+  </li>
+  <li>Selecione <q>Trabajar sin conexión al acabar la descarga y/o
+  sincronización</q>.</li>
+  <li>Pulse Aceptar para descargar los elementos seleccionados. Vea <a
+  href="#downloading_and_synchronizing_your_messages">descargar y sincronizar
+  sus mensajes</a> para más información.</li>
+</ol>
+
+<p>En lo sucesivo, cuando quiera trabajar sin conexión puede omitir el
+paso 1.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="selecting_items_for_offline_viewing">Seleccionar elementos para ver
+sin conexión</h2>
+
+<p>Antes de que pueda leer correo y grupos de noticias sin conexión,
+primero tiene que seleccionarlos para descargarlos. Puede configurar una
+cuenta completa para usar sin conexión. También puede elegir
+qué carpetas y grupos quiere usar sin conexión.</p>
+
+<p><strong>Nota</strong>: tenga presente que cuantos más elementos
+seleccione, más tiempo necesitará para la descarga y
+también más espacio en disco.</p>
+
+<p>Para seleccionar cuentas, carpetas y grupos para ver sin conexión,
+comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar, elija Configuración de cuentas de correo y
+    noticias. Verá aparecer el cuadro de diálogo para configurar las
+    cuentas.</li>
+  <li>Elija la categoría Sincronización y almacenamiento para la cuenta que
+    quiere cambiar.</li>
+  <li>Pulse <q>Avanzado</q> para ver sus carpetas IMAP, o <q>Seleccionar
+    grupos de noticias para su uso sin condexión</q> para los grupos de
+    noticias a los que esté suscrito.
+
+    <p><strong>Nota</strong>: sólo verá los grupos y las carpetas a las que
+      esté <a
+      href="mailnews_newsgroups.xhtml#subscribing_to_newsgroups">suscrito</a>.
+      Las cuentas POP y las carpetas locales no aparecen en la lista.</p>
+  </li>
+  <li>Seleccione los elementos (carpetas, grupos) que quiera tener disponibles
+    para usar sin conexión.</li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p>Cuando haya terminado, no hace falta que cambie estas opciones cada vez
+que quiera trabajar sin conexión. Sin embargo, si quiere cambiarlas,
+puede hacerlo fácilmente antes de cambiar al modo sin conexión,
+ya que el mismo botón de Seleccionar está disponible cuando se
+elige la opción <a
+href="#downloading_and_synchronizing_your_messages">Descargar y
+sincronizar</a>.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="downloading_and_synchronizing_your_messages">Descargar y sincronizar
+los mensajes</h2>
+
+<p>Si ya ha seleccionado las carpetas de correo y grupos para usar sin
+conexión, entonces está listo para descargar y sincronizarlos.
+Si todavía no ha seleccionado los elementos a descargar, puede hacerlo
+antes de pasar al modo sin conexión.</p>
+
+<p>Si no está viendo ya el cuadro de diálogo
+Descargar/Sincronizar ahora, siga estos pasos:</p>
+
+<p>Para descargar y sincronizar sus mensajes, comenzando desde la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Archivo, elija Sin conexión, y luego escoja
+  Descargar/Sincronizar ahora.</li>
+  <li>Seleccione las categorías (mensajes de correo o de grupos) que
+  quiere descargar.
+  <p><strong>Importante</strong>: debe seleccionar al menos una
+  categoría (mensajes de correo o de grupos de noticias) para que
+  funcione la descarga. Si las casillas están desactivadas, significa
+  que no ha seleccionado aún elementos para descargar. Use el
+  botón Seleccionar para seleccionar los elementos a descargar.</p>
+  </li>
+  <li>Para enviar los mensajes que estén en la carpeta de Mensajes no
+  enviados antes de pasar al modo sin conexión, marque la casilla
+  <q>Enviar mensajes pendientes</q>.</li>
+  <li>Para pasar a modo sin conexión inmediatamente después
+  de que &brandShortName; acabe la descarga, seleccione <q>Trabajar sin
+  conexión al acabar la descarga y/o sincronización</q>.</li>
+  <li>Para elegir o cambiar los elementos a descargar, pulse en Seleccionar.
+  Vea <a href="#selecting_items_for_offline_viewing"> seleccionar elementos
+  para ver sin conexión</a> para más información. Puede
+  omitir este apartado si ya ha seleccionado los elementos para
+  descargar.</li>
+  <li>Pulse Aceptar. &brandShortName; comenzará la descarga de los
+  elementos seleccionados.</li>
+</ol>
+
+<p>Si elige trabajar sin conexión al acabar la descarga, entonces
+&brandShortName; pasa a modo sin conexión inmediatamente. Si no, cuando
+esté listo para trabajar sin conexión, pulse el indicador
+Conectado/desconectado <img src="images/online.png" alt="" /> en la esquina
+inferior derecha de la ventana de Correo y noticias para ir al modo sin
+conexión.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="working_offline_and_reconnecting_later">Trabajar sin conexión y
+volver a conectar después</h2>
+
+<p>Para trabajar sin conexión y volver a conectar después,
+comience desde la ventana de Correo y noticias.</p>
+
+<p>Cuando esté listo para trabajar sin conexión:</p>
+
+<ol>
+  <li>Pulse el indicador Conectado/desconectado <img src="images/online.png"
+  alt="" /> en la esquina inferior derecha de la ventana de Correo y
+  noticias. &brandShortName; le preguntará si quiere descargar
+  los mensajes antes de pasar al modo sin conexión.</li>
+  <li>Pulse Descargar para realizar la descarga de mensajes antes de trabajar
+  sin conexión. Si quiere trabajar sin conexión sin descargar
+  los mensajes, pulse No descargar.</li>
+</ol>
+
+<p><strong>Nota</strong>: las cabeceras de los mensajes que se han descargado
+para leer sin conexión muestran un icono de sobre o grupo de noticias
+con un gris más oscuro que el resto.</p>
+
+<p><strong>Truco</strong>: para configurar el comportamiento de &brandShortName;
+  al descargar antes de la desconexión, abra el menú
+  <span class="mac">&brandShortName;</span><span class="noMac">Editar</span>,
+  elija Preferencias, y luego, dentro de la categoría Correo y noticias, elija
+  Red y almacenamiento (si no hay categorías visibles, haga doble clic en
+  Correo y noticias para expandir la lista). Se puede hacer que
+  &brandShortName; pregunte si quiere descargar los mensajes cada vez que pase
+  a modo sin conexión, que los descargue automáticamente, o que no descargue
+  ningún mensaje.</p>
+
+<p>Para volver a conectar y sincronizar los mensajes:</p>
+
+<ol>
+  <li>Pulse el indicador Conectado/desconectado <img src="images/offline.png"
+    alt="" /> en la esquina inferior derecha de cualquier ventana de
+    &brandShortName;.</li>
+  <li>Abra el menú Archivo, elija Sin conexión, y luego escoja
+    Descargar/Sincronizar ahora.</li>
+</ol>
+
+<p>&brandShortName; sincroniza sus mensajes con el servidor replicando
+  cualquier cambio realizado mientras se estaba trabajando sin conexión.</p>
+
+<p><strong>Truco</strong>: para configurar lo que debe hacer &brandShortName;
+  al pasar a modo con conexión, abra el menú <span
+  class="mac">&brandShortName;</span><span class="noMac">Editar</span>, elija
+  Preferencias, y luego elija la categoría Sincronización y almacenamiento.
+  Se puede hacer que &brandShortName; pregunte cada vez, para
+  enviar o no automáticamente los mensajes pendientes de enviar.</p>
+
+<p>[<a href="#working_offline">Volver al principio de la
+sección</a>]</p>
+</body>
+</html>

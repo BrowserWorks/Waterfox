@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Ιδιότητες λογαριασμού">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Γενικά">
+<!ENTITY account.advanced              "Σύνθετες επιλογές">
+<!ENTITY account.name                  "Όνομα χρήστη:">
+<!ENTITY account.password              "Κωδικός πρόσβασης:">
+<!ENTITY account.alias                 "Ψευδώνυμο:">
+<!ENTITY account.newMailNotification   "Ειδοποίηση για νέα email">
+<!ENTITY account.autojoin              "Κανάλια με αυτόματη σύνδεση:">
+<!ENTITY account.proxySettings.caption "Ρυθμίσεις διακομιστή μεσολάβησης:">
+<!ENTITY account.proxySettings.change.label     "Αλλαγή…">
+<!ENTITY account.proxySettings.change.accessKey "Α">

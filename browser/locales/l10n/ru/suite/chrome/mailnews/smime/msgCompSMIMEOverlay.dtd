@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityEncryptRequire.label "Шифровать это сообщение">
+<!ENTITY menu_securityEncryptRequire.accesskey "ф">
+
+<!ENTITY menu_securitySign.label "Подписать это сообщение">
+<!ENTITY menu_securitySign.accesskey "п">
+
+<!ENTITY menu_securityStatus.label "Просмотреть информацию о защите">
+<!ENTITY menu_securityStatus.accesskey "м">
+
+<!ENTITY securityButton.label "Защита">
+<!ENTITY securityButton.tooltip "Просмотр или изменение параметров защиты">
+
+<!ENTITY menu_viewSecurityStatus.label "Информация о защите сообщения">
+<!ENTITY menu_viewSecurityStatus.accesskey "н">

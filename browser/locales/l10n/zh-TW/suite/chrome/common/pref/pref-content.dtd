@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "內容">
+<!ENTITY pref.content.description               "這些設定將會影響網頁及內容在 &brandShortName; 顯示的方式。">
+
+<!ENTITY siteIcons.label                        "網頁圖示">
+<!ENTITY useSiteIcons.label                     "顯示網站圖示">
+<!ENTITY useSiteIcons.accesskey                 "S">
+<!ENTITY useFavIcons2.label                     "當頁面沒有指定圖示時，嘗試使用伺服器的 favicon">
+<!ENTITY useFavIcons2.accesskey                 "i">
+
+<!ENTITY scrolling.label                        "捲動">
+<!ENTITY useAutoScroll.label                    "使用自動捲動">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "使用平滑捲動">
+<!ENTITY useSmoothScroll.accesskey              "U">
+
+<!ENTITY zoomPrefs.label                        "縮放選項">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "範圍從">
+<!ENTITY minZoom.accesskey                      "f">
+<!ENTITY maxZoom.label                          "到">
+<!ENTITY maxZoom.accesskey                      "o">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY defaultZoom.label                      "預設縮放比例">
+<!ENTITY defaultZoom.accesskey                  "D">
+
+<!ENTITY siteSpecific.label                     "針對每個不同的網站記憶縮放等級">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY textZoomOnly.label                     "只縮放文字，而不是整個頁面">
+<!ENTITY textZoomOnly.accesskey                 "Z">
+<!ENTITY enableAutomaticImageResizing.label     "自動縮放圖片以符合瀏覽器視窗大小">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+
+<!ENTITY allowHWAccel.label                     "可用時開啟硬體加速">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY blockAutoRefresh.label                 "當網站試圖重新導向或重新載入頁面時警告">
+<!ENTITY blockAutoRefresh.accesskey             "W">
+
+<!ENTITY showZoomStatusPanel.label              "在狀態列顯示縮放元件">

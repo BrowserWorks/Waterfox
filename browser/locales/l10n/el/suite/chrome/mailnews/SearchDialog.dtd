@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Αναζήτηση μηνυμάτων σε:">
+<!ENTITY searchHeading.accesskey     "ζ">
+<!ENTITY searchSubfolders.label      "Αναζήτηση υποφακέλων">
+<!ENTITY searchSubfolders.accesskey  "ν">
+<!ENTITY searchOnHeading.label       "Εκτέλεση λειτουργιών αναζήτησης σε:">
+<!ENTITY searchOnHeading.accesskey   "Ε">
+<!ENTITY searchOnRemote.label        "Απομακρυσμένο διακομιστή">
+<!ENTITY searchOnLocal.label         "Τοπικό σύστημα">
+<!ENTITY resetButton.label           "Απαλοιφή">
+<!ENTITY resetButton.accesskey       "Α">
+<!ENTITY openButton.label            "Άνοιγμα">
+<!ENTITY openButton.accesskey        "Ά">
+<!ENTITY deleteButton.label          "Διαγραφή">
+<!ENTITY deleteButton.accesskey      "Δ">
+<!ENTITY searchDialogTitle.label     "Αναζήτηση μηνυμάτων">
+<!ENTITY results.label               "Αποτελέσματα">
+<!ENTITY moveHereMenu.label          "Μετακίνηση εδώ">
+<!ENTITY moveHereMenu.accesskey      "ε">
+<!ENTITY moveButton.label            "Μετακίνηση σε">
+<!ENTITY moveButton.accesskey        "σ">
+<!ENTITY goToFolderButton.label      "Άνοιγμα φακέλου μηνυμάτων">
+<!ENTITY goToFolderButton.accesskey  "ν">
+<!ENTITY saveAsVFButton.label        "Αποθήκευση ως φάκελο αναζήτησης">
+<!ENTITY saveAsVFButton.accesskey    "θ">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Αναζήτηση σε:">
+<!ENTITY abSearchHeading.accesskey   "α">
+<!ENTITY propertiesButton.label      "Ιδιότητες">
+<!ENTITY propertiesButton.accesskey  "Ι">
+<!ENTITY composeButton.label         "Σύνθεση">
+<!ENTITY composeButton.accesskey     "η">
+<!ENTITY abSearchDialogTitle.label   "Σύνθετη αναζήτηση ευρετηρίου">

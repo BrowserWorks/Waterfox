@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "指令碼與外掛程式">
+
+<!ENTITY navigator.label                 "網頁瀏覽器">
+<!ENTITY navigator.accesskey             "B">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "下列情形可使用 JavaScript:">
+<!ENTITY allowScripts.label              "允許網頁指令碼執行下列操作:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "移動或改變視窗大小">
+<!ENTITY allowWindowFlip.label           "顯示視窗於最上層或移至下層">
+<!ENTITY allowWindowStatusChange.label   "改變狀態列文字">
+<!ENTITY allowContextmenuDisable.label   "停用或取代右鍵選單">
+<!ENTITY allowHideStatusBar.label        "隱藏狀態列">
+
+<!ENTITY debugging.label                  "JavaScript 除錯">
+<!ENTITY debugEnableDump.label            "開啟 JavaScript dump() 輸出">
+<!ENTITY debugEnableDump.accesskey        "E">
+<!ENTITY debugStrictJavascript.label      "顯示嚴格的 JavaScript 警告">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "顯示 chrome 的 JavaScript 錯誤與警告">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "啟用下列網站的外掛程式">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "當網頁上的內容需要外掛程式時">
+<!ENTITY activateAllPlugins.label        "預設啟用所有外掛程式">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "在需要安裝其他外掛程式時通知我">
+<!ENTITY warnPluginsRequired.accesskey   "W">

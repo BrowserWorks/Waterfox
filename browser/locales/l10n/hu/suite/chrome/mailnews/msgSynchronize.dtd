@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!ENTITY MsgSynchronize.label "Az üzenetek letöltése és szinkronizálása">
+<!ENTITY MsgSelect.label "Elemek kiválasztása kapcsolat nélküli munkához">
+<!ENTITY MsgSyncDesc.label "Ha már kiválasztotta a levelezőmappákat vagy a hírcsoportokat a kapcsolat nélküli munkához, akkor ezeket most letöltheti és/vagy szinkronizálhatja. Egyébként nyomja meg a „Kijelölés” gombot a levelezőmappák és hírcsoportok kijelöléséhez.">
+<!ENTITY MsgSyncDirections.label "Töltse le és/vagy szinkronizálja a következőket:">
+<!ENTITY syncTypeMail.label "Levelek">
+<!ENTITY syncTypeMail.accesskey "L">
+<!ENTITY syncTypeNews.label "Hírcsoportüzenetek">
+<!ENTITY syncTypeNews.accesskey "H">
+<!ENTITY sendMessage.label "Postázandó üzenetek elküldése">
+<!ENTITY sendMessage.accesskey "P">
+<!ENTITY workOffline.label "Kapcsolat nélküli üzemmód a letöltés/szinkronizálás befejezése után">
+<!ENTITY workOffline.accesskey "K">
+<!ENTITY selectButton.label "Kiválasztás…">
+<!ENTITY selectButton.accesskey "v">
+<!ENTITY MsgSelectDesc.label "Válassza ki, hogy mely levél mappákat és hírcsoportokat szeretné használni a kapcsolat nélküli munkához. Több elem kiválasztása megnöveli a letöltési időt.">
+<!ENTITY MsgSelectInd.label "Letöltés">
+<!ENTITY MsgSelectItems.label "Kapcsolat nélküli elem neve">

@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title             "Tóm tắt Thư">
+<!ENTITY selectedmessages.label   "Các thư Đã chọn">
+<!ENTITY archiveButton.label      "Lưu trữ">
+<!ENTITY deleteButton.label       "Xóa">

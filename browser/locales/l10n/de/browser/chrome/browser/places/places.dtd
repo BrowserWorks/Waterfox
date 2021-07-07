@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliothek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Verwalten">
+<!ENTITY organize.accesskey    "V">
+<!ENTITY organize.tooltip      "Lesezeichen verwalten">
+
+<!ENTITY file.close.label               "Schließen">
+<!ENTITY file.close.accesskey           "c">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Ansichten">
+<!ENTITY views.accesskey                 "A">
+<!ENTITY views.tooltip                  "Ansicht ändern">
+<!ENTITY view.columns.label             "Spalten anzeigen">
+<!ENTITY view.columns.accesskey         "p">
+<!ENTITY view.sort.label                "Sortieren">
+<!ENTITY view.sort.accesskey            "s">
+<!ENTITY view.unsorted.label            "Unsortiert">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "Aufsteigend">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Absteigend">
+<!ENTITY view.sortDescending.accesskey  "b">
+
+<!ENTITY importBookmarksFromHTML.label     "Lesezeichen von HTML importieren…">
+<!ENTITY importBookmarksFromHTML.accesskey "L">
+<!ENTITY exportBookmarksToHTML.label       "Lesezeichen nach HTML exportieren…">
+<!ENTITY exportBookmarksToHTML.accesskey   "n">
+<!ENTITY importOtherBrowser.label          "Daten aus einem anderen Browser importieren…">
+<!ENTITY importOtherBrowser.accesskey      "D">
+
+<!ENTITY cmd.backup.label               "Sichern…">
+<!ENTITY cmd.backup.accesskey           "S">
+<!ENTITY cmd.restore2.label              "Wiederherstellen">
+<!ENTITY cmd.restore2.accesskey          "W">
+<!ENTITY cmd.restoreFromFile.label      "Datei wählen…">
+<!ENTITY cmd.restoreFromFile.accesskey  "D">
+
+<!ENTITY col.name.label          "Name">
+<!ENTITY col.tags.label          "Schlagwörter">
+<!ENTITY col.url.label           "Adresse">
+<!ENTITY col.mostrecentvisit.label "Zuletzt besucht">
+<!ENTITY col.visitcount.label    "Meistbesucht">
+<!ENTITY col.dateadded.label     "Hinzugefügt">
+<!ENTITY col.lastmodified.label  "Zuletzt verändert">
+
+<!ENTITY cmd.find.key                              "f">
+
+<!ENTITY maintenance.label      "Importieren und Sichern">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Lesezeichen importieren und sichern">
+
+<!ENTITY backButton.tooltip  "Eine Seite zurück">
+
+<!ENTITY forwardButton.tooltip  "Eine Seite vor">
+
+<!ENTITY detailsPane.selectAnItemText.description "Wählen Sie einen Eintrag, um seine Eigenschaften zu sehen und zu bearbeiten">
+

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "点按此处激活插件。">
+<!ENTITY clickToActivatePlugin                               "激活插件。">
+<!ENTITY checkForUpdates                                     "检查更新…">
+<!ENTITY blockedPlugin.label                                 "已拦截此插件以保护您的计算机。">
+<!ENTITY hidePluginBtn.label                                 "隐藏插件">
+<!ENTITY managePlugins                                       "管理插件…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "重新载入页面">
+<!ENTITY reloadPlugin.post                                   "以再试一次。">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "发送崩溃报告">
+<!ENTITY report.submitting                                   "正在发送报告…">
+<!ENTITY report.submitted                                    "崩溃报告已发送。">
+<!ENTITY report.disabled                                     "崩溃报告已被禁用。">
+<!ENTITY report.failed                                       "发送失败。">
+<!ENTITY report.unavailable                                  "没有可用的报告。">
+<!ENTITY report.comment                                      "附上说明（说明公开可见）">
+<!ENTITY report.pageURL                                      "一并提交页面网址">
+
+<!ENTITY plugin.file                                         "文件">
+<!ENTITY plugin.mimeTypes                                    "MIME 类型">
+<!ENTITY plugin.flashProtectedMode.label                     "启用 Adobe Flash 保护模式">
+<!ENTITY plugin.enableBlocklists.label                       "拦截危险与侵扰性的 Flash 内容">

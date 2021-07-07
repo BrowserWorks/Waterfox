@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "表单属性">
+
+<!ENTITY Settings.label "设置">
+
+<!ENTITY FormName.label "表单名称:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "动作 URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "方法:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "编码:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "目标帧:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "移除表单">
+<!ENTITY RemoveForm.accesskey "R">

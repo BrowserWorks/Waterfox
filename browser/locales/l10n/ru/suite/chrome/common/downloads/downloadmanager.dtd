@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Управление загрузками">
+
+<!ENTITY menuBar.tooltip                 "Панель меню">
+<!ENTITY searchBar.tooltip               "Панель поиска">
+
+<!ENTITY search.placeholder              "Поиск загрузок">
+<!ENTITY search.label                    "Поиск загрузок">
+<!ENTITY search.accesskey                "с">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Очистить список">
+<!ENTITY cmd.clearList.tooltip           "Удаляет из списка завершённые, отменённые и неудавшиеся загрузки">
+<!ENTITY cmd.clearList.accesskey         "и">
+
+<!ENTITY col.name.label                  "Имя">
+<!ENTITY col.name.accesskey              "м">
+<!ENTITY col.name.tooltip                "Имя файла">
+<!ENTITY col.status.label                "Состояние">
+<!ENTITY col.status.accesskey            "т">
+<!ENTITY col.status.tooltip              "Состояние">
+<!ENTITY col.actionPlay.label            "Приостановить/Возобновить/Повторить">
+<!ENTITY col.actionPlay.accesskey        "с">
+<!ENTITY col.actionPlay.tooltip          "Приостановить/Возобновить/Повторить">
+<!ENTITY col.actionStop.label            "Отменить/Удалить">
+<!ENTITY col.actionStop.accesskey        "и">
+<!ENTITY col.actionStop.tooltip          "Отменить/Удалить">
+<!ENTITY col.progress.label              "Ход">
+<!ENTITY col.progress.accesskey          "о">
+<!ENTITY col.progress.tooltip            "Ход">
+<!ENTITY col.timeremaining.label         "Оставшееся время">
+<!ENTITY col.timeremaining.accesskey     "а">
+<!ENTITY col.timeremaining.tooltip       "Оставшееся время">
+<!ENTITY col.transferred.label           "Передано">
+<!ENTITY col.transferred.accesskey       "е">
+<!ENTITY col.transferred.tooltip         "Передано">
+<!ENTITY col.transferrate.label          "Скорость">
+<!ENTITY col.transferrate.accesskey      "к">
+<!ENTITY col.transferrate.tooltip        "Скорость">
+<!ENTITY col.timeelapsed.label           "Затраченное время">
+<!ENTITY col.timeelapsed.accesskey       "ч">
+<!ENTITY col.timeelapsed.tooltip         "Затраченное время">
+<!ENTITY col.starttime.label             "Время начала">
+<!ENTITY col.starttime.accesskey         "ч">
+<!ENTITY col.starttime.tooltip           "Время начала">
+<!ENTITY col.endtime.label               "Время окончания">
+<!ENTITY col.endtime.accesskey           "к">
+<!ENTITY col.endtime.tooltip             "Время окончания">
+<!ENTITY col.progresstext.label          "&#037;">
+<!ENTITY col.progresstext.accesskey      "&#037;">
+<!ENTITY col.progresstext.tooltip        "Ход (&#037;)">
+<!ENTITY col.source.label                "Источник">
+<!ENTITY col.source.accesskey            "с">
+<!ENTITY col.source.tooltip              "Источник">
+
+<!ENTITY view.columns.label              "Показать колонки">
+<!ENTITY view.columns.accesskey          "к">
+<!ENTITY view.sortBy.label               "Сортировать по">
+<!ENTITY view.sortBy.accesskey           "р">
+
+<!ENTITY view.unsorted.label             "Без сортировки">
+<!ENTITY view.unsorted.accesskey         "е">
+<!ENTITY view.sortAscending.label        "Сортировка по алфавиту">
+<!ENTITY view.sortAscending.accesskey    "т">
+<!ENTITY view.sortDescending.label       "В обратном порядке">
+<!ENTITY view.sortDescending.accesskey   "о">
+
+<!ENTITY cmd.pause.label                 "Приостановить">
+<!ENTITY cmd.pause.accesskey             "о">
+<!ENTITY cmd.resume.label                "Возобновить">
+<!ENTITY cmd.resume.accesskey            "з">
+<!ENTITY cmd.retry.label                 "Повторить попытку">
+<!ENTITY cmd.retry.accesskey             "в">
+<!ENTITY cmd.cancel.label                "Отменить">
+<!ENTITY cmd.cancel.accesskey            "т">
+<!ENTITY cmd.remove.label                "Удалить из списка">
+<!ENTITY cmd.remove.accesskey            "д">
+<!ENTITY cmd.open.label                  "Открыть">
+<!ENTITY cmd.open.accesskey              "к">
+<!ENTITY cmd.show.label                  "Открыть папку с файлом">
+<!ENTITY cmd.show.accesskey              "п">
+<!ENTITY cmd.goToDownloadPage.label      "Перейти на страницу загрузки">
+<!ENTITY cmd.goToDownloadPage.accesskey  "е">
+<!ENTITY cmd.copyDownloadLink.label      "Копировать ссылку на загрузку">
+<!ENTITY cmd.copyDownloadLink.accesskey  "п">
+<!ENTITY cmd.properties.label            "Свойства…">
+<!ENTITY cmd.properties.accesskey        "в">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Разрешить загрузку">
+<!ENTITY cmd.unblock2.accesskey           "ш">
+

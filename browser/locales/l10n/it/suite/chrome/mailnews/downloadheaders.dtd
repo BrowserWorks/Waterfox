@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--null-->
+<!ENTITY all.label "Scarica tutte le intestazioni">
+<!ENTITY all.accesskey "S">
+<!ENTITY download.label "Scarica">
+<!ENTITY download.accesskey "c">
+<!ENTITY headers.label "intestazioni">
+<!ENTITY headers.accesskey "i">
+<!ENTITY mark.label "Marca le restanti intestazioni come lette">
+<!ENTITY mark.accesskey "M">

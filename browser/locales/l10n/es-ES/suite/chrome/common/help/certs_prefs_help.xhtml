@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]
+>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Privacidad y preferencias de seguridad - Certificados</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+</head>
+
+<body>
+<h1 id="certificate_settings">Configuración de certificados</h1>
+
+<p>Esta sección describe cómo configurar las preferencias de los certificados y
+  cómo utilizar el administrador de certificados, el administrador de
+  dispositivos y otros cuadros de diálogo relativos a los certificados.</p>
+
+<p>Para descripciones paso a paso de varias tareas relativas a los
+  certificados, vea <a href="using_certs_help.xhtml">Utilizar
+  certificados</a>.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_certificates">Preferencias
+      de certificados</a></li>
+    <li><a href="certs_help.xhtml">Administrador de certificados</a></li>
+    <li><a href="certs_help.xhtml#Security_Devices">Administrador de
+      dispositivos</a></li>
+    <li><a href="cert_dialog_help.xhtml">Información y decisiones sobre
+      certificados</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_certificates">Preferencias de
+  privacidad y seguridad - certificados</h2>
+
+<p>Esta sección explica el uso del panel de preferencias de certificados.
+  Para ver las preferencias de certificados, siga estos pasos:</p>
+
+<ol>
+   <li>Abra el menú <span class="mac">&brandShortName;</span>
+       <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>En la categoría Preferencias de privacidad y seguridad, haga clic
+      en Certificados (si no hay subcategorías visibles, haga doble clic
+      en para expandir la lista).</li>
+</ol>
+  
+<h3 id="client_certificate_selection">Selección de certificado de cliente</h3>
+
+<p>Algunos sitios web exigen que se identifique mediante un certificado. La
+  opción que seleccione aquí determinará cómo identificará el navegador qué
+  certificado presentar entre los que pueda tener almacenados:</p>
+
+<ul>
+  <li><strong>Seleccionar automáticamente:</strong> elija esta opción si
+    desea que el navegador seleccione un certificado sin preguntarle.</li>
+  <li><strong>Preguntar cada vez:</strong> elija esta opción si desea que el
+    navegador le pregunte qué certificado utilizar cada vez que un sitio web
+    solicite uno.</li>
+</ul>
+  
+<h3 id="manage_certificates">Administrar certificados</h3>
+
+<p>Los certificados son los equivalentes digitales de las tarjetas de
+  identificación (ID cards); ayudan a otras personas a identificarle, así como
+  a que usted identifique otras personas, páginas web y organizaciones.</p>
+
+<p>Para examinar o configurar los certificados que tenga en un archivo, haga
+  clic en "Administrar certificados". Vea
+  <a href="using_certs_help.xhtml#managing_certificates">Administrar
+  certificados</a> para más información sobre este diálogo.</p>
+
+<h3 id="manage_security_devices">Administrar dispositivos de seguridad</h3>
+  
+<p>Un dispositivo de seguridad es un dispositivo, hardware o software, que
+  almacena sus certificados y claves. Un ejemplo de dispositivo de seguridad
+  puede ser una tarjeta inteligente. Su navegador tiene integrado su propio
+  dispositivo de seguridad (software) y usted puede utilizar simultáneamente
+  dispositivos de seguridad adicionales, como tarjetas inteligentes.</p>
+
+<p>Para examinar o configurar sus dispositivos de seguridad, haga clic en
+  "Administrar dispositivos de seguridad". Vea
+  <a href="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices">Administrar
+  tarjetas inteligentes y otros dispositivos de seguridad</a> para más
+  información sobre este diálogo.</p>
+
+<h3 id="ocsp">OCSP</h3>
+
+<p>Una lista de revocación de certificados (CRL) es una lista de certificados
+  revocados que está generada y firmada por una
+  <a href="glossary.xhtml#certificate_authority">autoridad certificadora
+  (CA)</a>. El protocolo de estado de certificados en línea (OCSP por sus siglas
+  en inglés) hace posible que el administrador de certificados realice una
+  comprobación en línea de la validez de un certificado cada vez que el
+  certificado es visto o usado. Este proceso supone comprobar el certificado en
+  una CRL mantenida en un servidor especificado por la CA de ese certificado. Su
+  equipo debe estar conectado para que OCSP funcione.</p>
+
+<p>Las siguientes opciones de la sección OCSP del panel de preferencias del
+  certificado determina cómo usa OCSP el administrador de certificados:</p>
+
+<ul>
+  <li><strong>Usar protocolo de estado de certificados en línea (OCSP) para
+    confirmar la validez actual de certificados</strong>: seleccione esta opción
+    si quiere que el administrador de certificados realice una comprobación en
+    línea cada vez que verifique un certificado. El administrador de
+    certificados se asegura de que el certificado está listado y es válido en
+    la URL y comprueba el periodo de validez y los valores de confianza.
+ 
+    <p><strong>Nota</strong>: si esta opción no está seleccionada, el
+      administrador de certificados sólo confirmará el periodo de validez del
+      certificado y que está correctamente firmado por una CA cuyo propio
+      certificado de CA esté listado en la pestaña de certificados de CA (en
+      la ventana principal del administrador de certificados) y marcado como
+      confiable para emitir ese tipo de certificados.</p>
+  </li>
+  <li><strong>Cuando falla la conexión a un servidor OCSP, tratar el certificado
+    como no válido</strong>: marque esta opción si quiere que la validación
+    falle si no se puede establecer una conexión al servidor OCSP, por tanto
+    obligando a que un certificado siempre sea validado positivamente en cada
+    uso.</li>
+</ul>
+
+<p>Para información más detallada sobre la validación de certificados, vea
+  <a href="using_certs_help.xhtml#controlling_validation">Cómo funciona la
+  validación de certificados</a>.</p>
+</body>
+</html>

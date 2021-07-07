@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Εισαγωγή">
+<!ENTITY importAll.label          "Εισαγωγή όλων">
+<!ENTITY importAll.accesskey      "ι">
+<!ENTITY importMail.label         "Αλληλογραφία">
+<!ENTITY importMail.accesskey     "λ">
+<!ENTITY importFeeds.label        "Συνδρομές ροών">
+<!ENTITY importFeeds.accesskey    "ρ">
+<!ENTITY importAddressbook.label  "Ευρετήρια">
+<!ENTITY importAddressbook.accesskey "Ε">
+<!ENTITY importSettings.label     "Ρυθμίσεις">
+<!ENTITY importSettings.accesskey "θ">
+<!ENTITY importFilters.label      "Φίλτρα">
+<!ENTITY importFilters.accesskey  "Φ">
+
+<!ENTITY  window.width            "48em">
+<!ENTITY  window.macWidth         "50em">
+
+<!ENTITY importTitle.label        "Βοηθός εισαγωγής του &brandShortName;">
+<!ENTITY importShortDesc.label    "Εισαγωγή αλληλογραφίας, ευρετήριου διευθύνσεων και φίλτρων από άλλα προγράμματα">
+
+<!ENTITY importDescription1.label "Αυτός ο βοηθός θα εισαγάγει τα μηνύματα email, τις καταχωρήσεις ευρετηρίων, τις συνδρομές ροών, τις προτιμήσεις και/ή τα φίλτρα από άλλα προγράμματα email και κοινές μορφές ευρετηρίων στο &brandShortName;.">
+<!ENTITY importDescription2.label "Όταν ολοκληρωθεί η εισαγωγή, θα είναι δυνατή η πρόσβαση μέσω του &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Επιλέξτε το πρόγραμμα από το οποίο επιθυμείτε να γίνει η εισαγωγή:">
+<!ENTITY selectDescriptionB.label "Επιλέξτε ένα υπάρχοντα λογαριασμό ή δημιουργήστε ένα νέο:">
+<!ENTITY selectDescription.accesskey "ξ">
+<!ENTITY acctName.label           "Όνομα:">
+<!ENTITY acctName.accesskey       "ν">
+<!ENTITY noModulesFound.label     "Δεν βρέθηκε καμία εφαρμογή ή αρχείο για εισαγωγή δεδομένων.">
+
+<!ENTITY back.label               "&lt; Πίσω">
+<!ENTITY forward.label            "Επόμενο &gt;">
+<!ENTITY finish.label             "Τέλος">
+<!ENTITY cancel.label             "Ακύρωση">
+
+<!ENTITY select.label             "Ή επιλέξτε τους τύπους δεδομένων για εισαγωγή:">
+
+<!ENTITY title.label              "Τίτλος">
+<!ENTITY processing.label         "Εισαγωγή…">

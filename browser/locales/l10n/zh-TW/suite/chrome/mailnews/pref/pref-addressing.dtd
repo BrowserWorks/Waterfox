@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "通訊錄">
+<!ENTITY emailCollectiontitle.label            "電子郵件地址收藏集">
+<!ENTITY emailCollectionPicker.label           "新增電子郵件地址到我的:">
+<!ENTITY emailCollectionPicker.accesskey       "m">
+<!ENTITY emailCollectiontext.label             "可自動將寄送郵件裡的電子郵件地址新增到本機通訊錄。">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "快速選擇收件者">
+<!ENTITY highlightNonMatches.label             "強調顯示無法自動完成的地址">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "使用自動完成收件者 Email 功能">
+<!ENTITY addressingEnable.accesskey            "l">
+<!ENTITY autocompleteText.label                "使用下列功能以加速尋找符合的收件者:">
+<!ENTITY directories.label                     "目錄伺服器:">
+<!ENTITY directories.accesskey                 "D">
+<!ENTITY directoriesNone.label                 "無">
+<!ENTITY editDirectories.label                 "編輯目錄…">
+<!ENTITY editDirectories.accesskey             "E">
+

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Βρίσκεστε σε παράθυρο ιδιωτικής περιήγησης">
+<!ENTITY privatebrowsingpage.title.normal        "Θέλετε να εκκινήσετε την ιδιωτική περιήγηση;">
+
+<!ENTITY privatebrowsingpage.status.private      "Το &brandShortName; δεν θα αποθηκεύει ιστορικό για τα ιδιωτικά παράθυρα.">
+<!ENTITY privatebrowsingpage.status.normal       "Αυτή τη στιγμή, δεν βρίσκεστε σε ιδιωτικό παράθυρο.">
+
+<!ENTITY privatebrowsingpage.common.description  "Στα παράθυρα ιδιωτικής περιήγησης, το &brandShortName; δεν καταγράφει το ιστορικό περιήγησης, αναζήτησης, λήψεων, φορμών ιστού, τα cookies ή τα προσωρινά αρχεία διαδικτύου. Ωστόσο, διατηρούνται οι σελιδοδείκτες και τα ληφθέντα αρχεία.">
+<!ENTITY privatebrowsingpage.track.warn          "Αν και ο υπολογιστής δεν θα καταγράφει το ιστορικό περιήγησής σας, ο εργοδότης ή ο πάροχος υπηρεσιών διαδικτύου σας ενδέχεται να μπορούν να καταγράψουν τις σελίδες που επισκέπτεστε.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Μάθετε περισσότερα">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "Μ">
+
+<!ENTITY privatebrowsingpage.close.info          "Μόλις τελειώσετε, κλείστε το παράθυρο για διακοπή ιδιωτικής περιήγησης.">
+<!ENTITY privatebrowsingpage.close.label         "Κλείσιμο παραθύρου τώρα">
+<!ENTITY privatebrowsingpage.close.accesskey     "Κ">
+
+<!ENTITY privatebrowsingpage.start.info          "Για έναρξη της ιδιωτικής περιήγησης, κάντε κλικ στο παρακάτω κουμπί ή επιλέξτε Αρχείο ▶ Νέο ▶ Ιδιωτικό παράθυρο, από το μενού.">
+<!ENTITY privatebrowsingpage.private.label       "Άνοιγμα νέου ιδιωτικού παραθύρου">
+<!ENTITY privatebrowsingpage.private.accesskey   "Ά">

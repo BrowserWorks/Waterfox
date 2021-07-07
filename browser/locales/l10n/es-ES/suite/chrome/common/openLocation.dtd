@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY enter.label "Introduzca la dirección web (URL), o especifique el archivo local que quiere abrir:">
+<!ENTITY enter.accesskey "E">
+<!ENTITY chooseFile.label "Elegir archivo…">
+<!ENTITY chooseFile.accesskey "C">
+<!ENTITY newPrivate.label "Nueva ventana privada">
+<!ENTITY newWindow.label "Ventana del navegador nueva">
+<!ENTITY newTab.label "Pestaña del navegador nueva">
+<!ENTITY currentTab.label "Pestaña actual del navegador">
+<!ENTITY editNewWindow.label "Ventana de Composer nueva">
+<!ENTITY open.label "Abrir">
+<!ENTITY caption.label "Abrir dirección web">
+<!ENTITY openWhere.label "Abrir en:">
+<!ENTITY openWhere.accesskey "A">

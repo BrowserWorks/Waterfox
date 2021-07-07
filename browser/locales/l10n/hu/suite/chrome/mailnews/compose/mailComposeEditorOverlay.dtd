@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label         "A kép csatolása az üzenethez">
+<!ENTITY attachImageSource.accesskey     "k">
+
+<!ENTITY attachLinkSource.label          "A hivatkozás csatolása az üzenethez">
+<!ENTITY attachLinkSource.accesskey      "h">

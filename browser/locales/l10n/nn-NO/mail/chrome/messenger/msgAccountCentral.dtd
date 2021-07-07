@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-post">
+<!ENTITY readMsgsLink.label           "Les meldingar">
+<!ENTITY composeMsgLink.label         "Skriv ny melding">
+
+<!ENTITY newsSectionHdr.label         "Nyheitsgrupper">
+<!ENTITY subscribeNewsLink.label      "Behandle medlemskap i nyheitsgrupper">
+
+<!ENTITY feedsSectionHdr.label        "RSS-kjelder">
+<!ENTITY subscribeFeeds.label         "Handter abonnement">
+
+<!ENTITY chat.label                   "Chat">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Kontoar">
+<!ENTITY subscribeImapFolders.label   "Behandle medlemskap i mapper">
+<!ENTITY settingsLink.label           "Vis innstillingar for denne kontoen">
+<!ENTITY setupNewAcct.label           "Konfigurer ein konto:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Avanserte funksjonar">
+<!ENTITY searchMsgsLink.label         "Søk i meldingar">
+<!ENTITY filtersLink.label            "Lag meldingsfilter">
+<!ENTITY junkSettings.label           "Innstillingar for uønskt e-post">
+<!ENTITY offlineLink.label            "Innstillingar for fråkopla tilstand">

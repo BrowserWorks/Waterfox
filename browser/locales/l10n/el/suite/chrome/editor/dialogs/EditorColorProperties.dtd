@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Χρώματα και φόντο σελίδας">
+<!ENTITY pageColors.label "Χρώματα σελίδας">
+<!ENTITY defaultColorsRadio.label "Προεπιλεγμένα χρώματα">
+<!ENTITY defaultColorsRadio.accessKey "γ">
+<!ENTITY defaultColorsRadio.tooltip "Χρήση των ρυθμίσεων χρώματος από το περιηγητή του αναγνώστη μόνο">
+<!ENTITY customColorsRadio.label "Χρήση προσαρμοσμένων χρωμάτων:">
+<!ENTITY customColorsRadio.accessKey "π">
+<!ENTITY customColorsRadio.tooltip "Αυτές οι ρυθμίσεις χρωμάτων υποκαθιστούν τις ρυθμίσεις του περιηγητή">
+
+<!ENTITY normalText.label "Κανονικό κείμενο">
+<!ENTITY normalText.accessKey "ν">
+<!ENTITY linkText.label "Κείμενο διασύνδεσης">
+<!ENTITY linkText.accessKey "δ">
+<!ENTITY activeLinkText.label "Χρώμα ενεργής διασύνδεσης">
+<!ENTITY activeLinkText.accessKey "ε">
+<!ENTITY visitedLinkText.label "Χρώμα αναγνωσμένης διασύνδεσης">
+<!ENTITY visitedLinkText.accessKey "σ">
+<!ENTITY background.label "Φόντο:">
+<!ENTITY background.accessKey "Φ">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Εικόνα φόντου:">
+<!ENTITY backgroundImage.accessKey "κ">
+<!ENTITY backgroundImage.tooltip "Χρήση αρχείου εικόνας ως φόντο για τη σελίδα">
+<!ENTITY backgroundImage.shortenedDataURI "Σύντομα δεδομένα URI (η αντιγραφή θα τοποθετήσει το πλήρες URI στο πρόχειρο)">

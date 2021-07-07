@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- address labels -->
+<!--LOCALIZATION NOTE addressingWidgetOverlay.dtd The basic mail/news composition headers as they are seen in UI -->
+<!ENTITY toAddr.label   "Προς:">
+<!ENTITY ccAddr.label   "Κοιν:">
+<!ENTITY bccAddr.label  "Κρυφή κοιν:">
+<!ENTITY replyAddr.label   "Απάντηση σε:">
+<!ENTITY newsgroupsAddr.label   "Ομάδα συζήτησης:">
+<!ENTITY followupAddr.label   "Συνέχεια σε:">

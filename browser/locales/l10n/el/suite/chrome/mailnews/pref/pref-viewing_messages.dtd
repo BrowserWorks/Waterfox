@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Προβολή μηνύματος">
+<!ENTITY style.label                      "Στυλ:">
+<!ENTITY style.accesskey                  "Σ">
+<!ENTITY regular.label                    "Κανονικά">
+<!ENTITY bold.label                       "Έντονα">
+<!ENTITY italic.label                     "Πλάγια">
+<!ENTITY boldItalic.label                 "Έντονα πλάγια">
+<!ENTITY size.label                       "Μέγεθος:">
+<!ENTITY size.accesskey                   "θ">
+<!ENTITY bigger.label                     "Μεγαλύτερο">
+<!ENTITY smaller.label                    "Μικρότερο">
+<!ENTITY color.label                      "Χρώμα:">
+<!ENTITY color.accesskey                  "Χ">
+<!ENTITY displayPlainText.caption         "Μηνύματα απλού κειμένου">
+<!ENTITY fontPlainText.label              "Γραμματοσειρά:">
+<!ENTITY fontPlainText.accesskey          "Γ">
+<!ENTITY displayQuoted.label              "Ρυθμίσεις μηνυμάτων σε παράθεση:">
+<!ENTITY wrapInMsg.label                  "Αναδίπλωση κειμένου για προσαρμογή στο πλάτος του παραθύρου">
+<!ENTITY wrapInMsg.accesskey              "Α">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Εμφάνιση emoticons ως γραφικών στοιχείων">
+<!ENTITY convertEmoticons.accesskey       "Ε">
+<!ENTITY generalMessageDisplay.caption    "Γενικά">
+<!ENTITY autoMarkAsRead.label             "Αυτόματη επισήμανση μηνυμάτων ως αναγνωσμένων">
+<!ENTITY autoMarkAsRead.accesskey         "Α">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Μόνο μετά από προβολή για">
+<!ENTITY markAsReadAfter.accesskey        "β">
+<!ENTITY secondsLabel.label               "δευτερόλεπτα">
+
+<!ENTITY openingMessages.label            "Κατά το άνοιγμα μηνυμάτων, προβολή σε:">
+<!ENTITY newWindowRadio.label             "Νέο παράθυρο μηνύματος">
+<!ENTITY newWindowRadio.accesskey         "ν">
+<!ENTITY existingWindowRadio.label        "Υπάρχον παράθυρο μηνύματος">
+<!ENTITY existingWindowRadio.accesskey    "χ">
+<!ENTITY disableContent.label             "Φραγή εικόνων και άλλου περιεχομένου από απομακρυσμένες πηγές">
+<!ENTITY disableContent.accesskey         "Φ">
+<!ENTITY showCondensedAddresses.label     "Προβολή μόνο του εμφανιζόμενου ονόματος για άτομα του ευρετηρίου μου">
+<!ENTITY showCondensedAddresses.accesskey "ο">
+<!ENTITY closeMsgWindowOnDelete.label     "Κλείσιμο παραθύρου μηνυμάτων κατά τη διαγραφή του μηνύματος">
+<!ENTITY closeMsgWindowOnDelete.accesskey "λ">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "链接行为">
+<!ENTITY newWindow.label "链接打开方式">
+<!ENTITY newWindowDescription.label "在一个新窗口中打开链接">
+<!ENTITY newWindowRestriction.label "当脚本想打开新窗口时：">
+<!ENTITY external.label "外部程序链接">
+<!ENTITY externalDescription.label "打开其他应用程序传入的链接">
+
+<!ENTITY openCurrent.label "当前标签页/窗口">
+<!ENTITY newWindowGroupCurrent.accesskey "c">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "在当前窗口的新标签页">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "新窗口">
+<!ENTITY newWindowGroupWindow.accesskey "w">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "一律把窗口转换成标签页">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "不要转移自定义窗口到标签页">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "一律打开新窗口">
+<!ENTITY dontDivert.accesskey "n">

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Sklaidos kanalų prenumerata">
+<!ENTITY learnMore.label             "Sužinokite daugiau apie sklaidos kanalus">
+
+<!ENTITY feedTitle.label             "Pavadinimas:">
+<!ENTITY feedTitle.accesskey         "v">
+
+<!ENTITY feedLocation.label          "Sklaidos kanalo URL adresas:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Įveskite teisingą sklaidos kanalo adresą">
+<!ENTITY locationValidate.label      "Patikrinti">
+<!ENTITY validateText.label          "Patikrinti atitikimą formatams ir gauti tinkamą URL.">
+
+<!ENTITY feedFolder.label            "Kanalo straipsnius laikyti aplanke:">
+<!ENTITY feedFolder.accesskey        "K">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Naujų straipsnių tikrinti kas ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "min.">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "d.">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Leidėjas rekomenduoja:">
+
+<!ENTITY quickMode.label             "Vietoje viso straipsnio rodyti tik jo santrauką">
+<!ENTITY quickMode.accesskey         "s">
+
+<!ENTITY autotagEnable.label         "Automatiškai kurti žymas iš sklaidos kanalo &lt;kategorijos&gt; pavadinimų">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Gairėms suteikti prefiksą:">
+<!ENTITY autotagUsePrefix.accesskey  "s">
+<!ENTITY autoTagPrefix.placeholder   "Įveskite gairių prefiksą">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Pridėti">
+<!ENTITY button.addFeed.accesskey    "P">
+<!ENTITY button.verifyFeed.label     "Patikrinti">
+<!ENTITY button.verifyFeed.accesskey "t">
+<!ENTITY button.updateFeed.label     "Tvarkyti">
+<!ENTITY button.updateFeed.accesskey "v">
+<!ENTITY button.removeFeed.label     "Pašalinti">
+<!ENTITY button.removeFeed.accesskey "š">
+<!ENTITY button.importOPML.label     "Importuoti">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksportuoti">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Eksportuoti kanalus su aplankų struktūra. Naudokite Vald + spustelėjimą arba Vald + Įvesti, jeigu norite kanalus eksportuoti kaip sąrašą">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Užverti">

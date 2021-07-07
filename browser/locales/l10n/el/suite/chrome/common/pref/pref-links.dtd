@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Συμπεριφορά συνδέσμου">
+<!ENTITY newWindow.label "Συμπεριφορά ανοίγματος συνδέσμου">
+<!ENTITY newWindowDescription.label "Άνοιγμα συνδέσμων που σκοπεύουν να ανοίξουν νέο παράθυρο σε:">
+<!ENTITY newWindowRestriction.label "Όταν τα σενάρια θέλουν να ανοίξουν νέο παράθυρο:">
+<!ENTITY external.label "Σύνδεσμοι από άλλες εφαρμογές">
+<!ENTITY externalDescription.label "Άνοιγμα συνδέσμων από άλλες εφαρμογές:">
+
+<!ENTITY openCurrent.label "Στην τρέχουσα καρτέλα/παράθυρο">
+<!ENTITY newWindowGroupCurrent.accesskey "τ">
+<!ENTITY externalGroupCurrent.accesskey "θ">
+
+<!ENTITY openTab.label "Σε νέα καρτέλα στο τρέχον παράθυρο">
+<!ENTITY newWindowGroupTab.accesskey "κ">
+<!ENTITY externalGroupTab.accesskey "ρ">
+
+<!ENTITY openWindow.label "Σε νέο παράθυρο">
+<!ENTITY newWindowGroupWindow.accesskey "π">
+<!ENTITY externalGroupWindow.accesskey "ο">
+
+<!ENTITY divertAll.label "Πάντα εκτροπή παραθύρων σε καρτέλες">
+<!ENTITY divertAll.accesskey "ε">
+<!ENTITY divertNoFeatures.label "Να μην γίνεται εκτροπή παραθύρων σε καρτέλες">
+<!ENTITY divertNoFeatures.accesskey "μ">
+<!ENTITY dontDivert.label "Πάντα άνοιγμα νέων παραθύρων">
+<!ENTITY dontDivert.accesskey "ν">

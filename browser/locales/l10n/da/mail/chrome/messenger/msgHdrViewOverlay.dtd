@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Til">
+<!ENTITY fromField4.label "Fra">
+<!ENTITY senderField4.label "Afsender">
+<!ENTITY author.label "Skrevet af">
+<!ENTITY organizationField4.label "Organisation">
+<!ENTITY replyToField4.label "Svar til">
+
+<!ENTITY subjectField4.label "Emne">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Nyhedsgrupper">
+<!ENTITY followupToField4.label "Opfølgning til">
+<!ENTITY tagsHdr4.label "Mærkater">
+<!ENTITY dateField4.label "Dato">
+<!ENTITY userAgentField4.label "Mailprogram">
+<!ENTITY referencesField4.label "Referencer">
+<!ENTITY messageIdField4.label "Meddelelses-ID">
+<!ENTITY inReplyToField4.label "Svar på">
+<!ENTITY originalWebsite4.label "Websted">
+
+<!ENTITY hdrArchiveButton1.label "Arkiver">
+<!ENTITY hdrArchiveButton1.tooltip "Arkiver denne meddelelse">
+<!ENTITY hdrSmartReplyButton1.label "Smart svar">
+<!ENTITY hdrReplyButton1.label "Svar">
+<!ENTITY hdrReplyButton2.tooltip "Svar til afsenderen af denne meddelelse">
+<!ENTITY hdrReplyAllButton1.label "Svar til alle">
+<!ENTITY hdrReplyAllButton1.tooltip "Svar afsender og alle modtagere">
+<!ENTITY hdrReplyListButton1.label "Svar til liste">
+<!ENTITY hdrReplyListButton1.tooltip "Svar til diskussionsliste">
+<!ENTITY hdrFollowupButton1.label "Opfølgning">
+<!ENTITY hdrFollowupButton1.tooltip "Send opfølgning til denne nyhedsgruppe">
+<!ENTITY hdrForwardButton1.label "Videresend">
+<!ENTITY hdrForwardButton1.tooltip "Videresend denne meddelelse">
+<!ENTITY hdrJunkButton1.label "Spam">
+<!ENTITY hdrJunkButton1.tooltip "Marker denne meddelelse som spam">
+<!ENTITY hdrTrashButton1.label "Slet">
+<!ENTITY hdrTrashButton1.tooltip "Slet denne meddelelse">
+
+<!ENTITY hdrViewToolbarShowFull.label "Vis ikoner og tekst">
+<!ENTITY hdrViewToolbarShowFull.accesskey "V">
+<!ENTITY hdrViewToolbarShowIcons.label "Vis kun ikoner">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "k">
+<!ENTITY hdrViewToolbarShowText.label "Vis kun tekst">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Vis altid svar til afsender">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "a">
+
+<!ENTITY otherActionsButton2.label "Flere">
+<!ENTITY otherActionsButton.tooltip "Flere funktioner">
+<!ENTITY otherActionsOpenConversation1.label "Vis korrespondance i tråd">
+<!ENTITY otherActionsOpenConversation1.accesskey "t">
+<!ENTITY otherActionsOpenInNewWindow1.label "Åbn i nyt vindue">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "v">
+<!ENTITY otherActionsOpenInNewTab1.label "Åbn i nyt faneblad">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "f">
+<!ENTITY markAsReadMenuItem1.label "Marker som læst">
+<!ENTITY markAsReadMenuItem1.accesskey "l">
+<!ENTITY markAsUnreadMenuItem1.label "Marker som ulæst">
+<!ENTITY markAsUnreadMenuItem1.accesskey "M">
+<!ENTITY saveAsMenuItem1.label "Gem som…">
+<!ENTITY saveAsMenuItem1.accesskey "G">
+<!ENTITY viewSourceMenuItem1.label "Vis kildekode">
+<!ENTITY viewSourceMenuItem1.accesskey "k">
+<!ENTITY otherActionsPrint1.label "Udskriv…">
+<!ENTITY otherActionsPrint1.accesskey "U">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Vis ruden for vedhæftninger">
+<!ENTITY startExpandedCmd.accesskey    "V">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Åbn">
+<!ENTITY openAttachmentCmd.accesskey    "Å">
+<!ENTITY saveAsAttachmentCmd.label    "Gem som…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "G">
+<!ENTITY detachAttachmentCmd.label    "Afhæft…">
+<!ENTITY detachAttachmentCmd.accesskey    "A">
+<!ENTITY deleteAttachmentCmd.label    "Slet">
+<!ENTITY deleteAttachmentCmd.accesskey    "S">
+<!ENTITY openAllAttachmentsCmd.label    "Åbn alle…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "l">
+<!ENTITY saveAllAttachmentsCmd.label    "Gem alle…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "G">
+<!ENTITY detachAllAttachmentsCmd.label    "Afhæft alle…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "A">
+<!ENTITY deleteAllAttachmentsCmd.label    "Slet alle…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "t">
+
+<!ENTITY openAttachment.tooltip "Åbn den vedhæftede fil">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Åbn hentningsmappe">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "H">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Vis i Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Gem">
+<!ENTITY saveAttachmentButton1.tooltip     "Gem den vedhæftede fil">
+<!ENTITY saveAllAttachmentsButton1.label   "Gem alle">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Gem alle vedhæftede filer">
+
+<!ENTITY copyLinkCmd.label        "Kopier linkadresse">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+<!ENTITY CopyMessageId.label "Kopier meddelelse-ID">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Åbn meddelelse med ID">
+<!ENTITY OpenMessageForMsgId.accesskey "Å">
+<!ENTITY OpenBrowserWithMsgId.label "Åbn browser med meddelelse-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "b">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Filtry zpráv">
+<!ENTITY nameColumn.label "Název filtru">
+<!ENTITY activeColumn.label "Povoleno">
+<!ENTITY newButton.label "Nový…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Upravit…">
+<!ENTITY editButton.accesskey "P">
+<!ENTITY deleteButton.label "Smazat">
+<!ENTITY deleteButton.accesskey "m">
+<!ENTITY reorderUpButton.label "Posunout výše">
+<!ENTITY reorderUpButton.accesskey "V">
+<!ENTITY reorderDownButton.label "Posunout níže">
+<!ENTITY reorderDownButton.accesskey "T">
+<!ENTITY filterHeader.label "Aktivní filtry jsou automaticky prováděny v níže uvedeném pořadí.">
+<!ENTITY filtersForPrefix.label "Filtr pro:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Protokol filtrů">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Spustit teď">
+<!ENTITY runFilters.accesskey "S">
+<!ENTITY stopFilters.label "Zastavit">
+<!ENTITY stopFilters.accesskey "Z">
+<!ENTITY folderPickerPrefix.label "Ručně spustit vybraný filtr na složce:">
+<!ENTITY folderPickerPrefix.accesskey "r">
+<!ENTITY choosethis.label "Vybrat tuto složku">
+<!ENTITY choosethisnewsserver.label "vyberte diskusní server">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Edição">
+<!ENTITY generalComposing.label               "Geral">
+<!ENTITY forwardMsg.label                     "Encaminhar mensagens:">
+<!ENTITY inline.label                         "Com o texto da mensagem">
+<!ENTITY inline.accesskey                     "t">
+<!ENTITY asAttachment.label                   "Como anexo">
+<!ENTITY asAttachment.accesskey               "x">
+
+<!ENTITY replyQuoteInline.label               "Ao responder, incluir os anexos exibidos na mensagem">
+<!ENTITY replyQuoteInline.accesskey           "A">
+<!ENTITY warnOnSendAccelKey.label             "Confirmar quando usar um atalho do teclado para enviar mensagens">
+<!ENTITY warnOnSendAccelKey.accesskey         "t">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Salvar a mensagem automaticamente a cada">
+<!ENTITY autoSave.accesskey                   "m">
+<!ENTITY autoSaveEnd.label                    "minutos">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Em mensagens sem formatação, quebrar a linha após">
+<!ENTITY wrapOutMsg.accesskey                 "s">
+<!ENTITY char.label                           "caracteres">
+
+<!ENTITY defaultMessagesHeader.label          "Padrões para mensagens HTML">
+<!ENTITY font.label                           "Fonte:">
+<!ENTITY font.accesskey                       "F">
+<!ENTITY size.label                           "Tam.:">
+<!ENTITY size.accesskey                       "T">
+<!ENTITY fontColor.label                      "Texto:">
+<!ENTITY fontColor.accesskey                  "e">
+<!ENTITY bgColor.label                        "Plano de fundo:">
+<!ENTITY bgColor.accesskey                    "P">
+<!ENTITY defaultCompose.label                 "Formato de composição padrão:">
+<!ENTITY defaultBodyText.label                "Corpo do texto (a tecla Enter cria uma nova linha)">
+<!ENTITY defaultBodyText.accesskey            "o">
+<!ENTITY defaultParagraph.label               "Parágrafo (a tecla Enter cria um novo parágrafo)">
+<!ENTITY defaultParagraph.accesskey           "P">
+
+<!ENTITY selectHeaderType.label               "Selecione o tipo de cabeçalho:">
+<!ENTITY selectHeaderType.accesskey           "e">
+<!ENTITY noReplyOption.label                  "Sem cabeçalho de resposta">
+<!-- LOCALIZATION NOTE (authorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwrotesingle preference. [Author] needs to be
+  translated. -->
+<!ENTITY authorWroteOption.label              "[Autor] escreveu:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_ondateauthorwrote preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY onDateAuthorWroteOption.label        "Em [data], [Autor] escreveu:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwroteondate preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY authorWroteOnDateOption.label        "[Autor] escreveu em [data]:">

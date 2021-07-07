@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Levelező és hírolvasó">
+<!ENTITY generalSettings.caption          "Általános beállítások">
+<!ENTITY confirmMove.label                "Jóváhagyás kérése mappáknak a Törölt elemek mappába való áthelyezésekor">
+<!ENTITY confirmMove.accesskey            "J">
+<!ENTITY preserveThreading.label          "Témacsoportok megőrzése az üzenetek rendezésekor">
+<!ENTITY preserveThreading.accesskey      "T">
+<!ENTITY loadInBackground.label           "Átváltás az új lapokra megnyitáskor">
+<!ENTITY loadInBackground.accesskey       "v">
+<!ENTITY mailBiffOnNewWindow.label        "Új üzenetek letöltése csak a Levelező és hírolvasó megnyitása után">
+<!ENTITY mailBiffOnNewWindow.accesskey    "o">
+
+<!ENTITY defaultMailSettings.description  "A &brandShortName; az alapértelmezett alkalmazás a következőkhöz:">
+<!ENTITY setDefaultMail.label             "Levelezés">
+<!ENTITY setDefaultMail.accesskey         "L">
+<!ENTITY setDefaultNews.label             "Hírcsoportok">
+<!ENTITY setDefaultNews.accesskey         "H">
+<!ENTITY setDefaultFeed.label             "Hírforrások">
+<!ENTITY setDefaultFeed.accesskey         "o">
+
+<!ENTITY useInternalSettings.description  "&brandShortName; Levelező és hírolvasó használata a linkek böngészőben történő megnyitásakor:">
+<!ENTITY useInternalMail.label            "Levél (mailto:)">
+<!ENTITY useInternalMail.accesskey        "m">
+<!ENTITY useInternalNews.label            "Hírcsoportok (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "n">
+
+<!ENTITY messengerStartPage.caption       "Levelező kezdőoldala">
+<!ENTITY enableStartPage.label            "A Levelező indításakor a Levelező kezdőoldala töltődik be az üzenetek helyére">
+<!ENTITY enableStartPage.accesskey        "k">
+<!ENTITY location.label                   "Hely:">
+<!ENTITY location.accesskey               "e">
+<!ENTITY useDefault.label                 "Alaphelyzet">
+<!ENTITY useDefault.accesskey             "A">
+<!ENTITY rememberLastMsg.label            "Az utolsó kijelölés megjegyzése">
+<!ENTITY rememberLastMsg.accesskey        "u">

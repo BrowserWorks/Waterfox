@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Thuộc tính trường biểu mẫu">
+<!ENTITY windowTitleImage.label "Thuộc tính hình ảnh biểu mẫu">
+
+<!ENTITY InputType.label "Kiểu trường">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Văn bản">
+<!ENTITY password.value "Mật khẩu">
+<!ENTITY checkbox.value "Hộp chọn">
+<!ENTITY radio.value "Nút radio">
+<!ENTITY submit.value "Nút gửi">
+<!ENTITY reset.value "Nút đặt lại">
+<!ENTITY file.value "Tập tin">
+<!ENTITY hidden.value "Ẩn">
+<!ENTITY image.value "Hình">
+<!ENTITY button.value "Nút">
+
+<!ENTITY InputSettings.label "Cài đặt trường">
+<!ENTITY InputName.label "Tên Trường:">
+<!ENTITY InputName.accesskey "T">
+<!ENTITY GroupName.label "Tên Nhóm:">
+<!ENTITY GroupName.accesskey "T">
+<!ENTITY InputValue.label "Giá trị Trường:">
+<!ENTITY InputValue.accesskey "G">
+<!ENTITY InitialValue.label "Giá trị Ban đầu:">
+<!ENTITY InitialValue.accesskey "G">
+<!ENTITY InputChecked.label "Được đánh dấu Đầu tiên">
+<!ENTITY InputChecked.accesskey "u">
+<!ENTITY InputSelected.label "Được chọn Đầu tiên">
+<!ENTITY InputSelected.accesskey "n">
+<!ENTITY InputReadOnly.label "Chỉ Đọc">
+<!ENTITY InputReadOnly.accesskey "C">
+<!ENTITY InputDisabled.label "Bị vô hiệu">
+<!ENTITY InputDisabled.accesskey "B">
+<!ENTITY tabIndex.label "Chỉ mục Thẻ:">
+<!ENTITY tabIndex.accesskey "m">
+<!ENTITY TextSize.label "Kích thước Trường:">
+<!ENTITY TextSize.accesskey "h">
+<!ENTITY TextLength.label "Độ dài Tối đa:">
+<!ENTITY TextLength.accesskey "d">
+<!ENTITY AccessKey.label "Phím truy cập:">
+<!ENTITY AccessKey.accesskey "P">
+<!ENTITY Accept.label "Kiểu chấp thuận:">
+<!ENTITY Accept.accesskey "i">
+
+<!ENTITY ImageProperties.label "Thuộc tính Hình ảnh…">
+<!ENTITY ImageProperties.accesskey "u">

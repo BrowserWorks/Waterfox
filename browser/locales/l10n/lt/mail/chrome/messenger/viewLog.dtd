@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filtravimo žurnalas">
+<!ENTITY viewLogInfo.text "Į filtravimo žurnalą įrašoma informacija apie visus nufiltruotus laiškus. Pažymėkite žemiau esantį langelį, jei norite įjungti žurnalą.">
+<!ENTITY clearLog.label "Išvalyti žurnalą">
+<!ENTITY clearLog.accesskey "v">
+<!ENTITY enableLog.label "Įjungti filtravimo žurnalą">
+<!ENTITY enableLog.accesskey "ž">
+<!ENTITY closeLog.label "Užverti">
+<!ENTITY closeLog.accesskey "U">

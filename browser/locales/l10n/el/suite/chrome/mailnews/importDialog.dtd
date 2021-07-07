@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Εισαγωγή">
+<!ENTITY importAll.label          "Εισαγωγή όλων">
+<!ENTITY importAll.accesskey      "ό">
+<!ENTITY importMail.label         "Αλληλογραφία">
+<!ENTITY importMail.accesskey     "Α">
+<!ENTITY importFeeds.label        "Συνδρομές ροών">
+<!ENTITY importFeeds.accesskey    "ρ">
+<!ENTITY importAddressbook.label  "Ευρετήρια">
+<!ENTITY importAddressbook.accesskey "Ε">
+<!ENTITY importSettings.label     "Ρυθμίσεις">
+<!ENTITY importSettings.accesskey "Ρ">
+<!ENTITY importFilters.label      "Φίλτρα">
+<!ENTITY importFilters.accesskey  "Φ">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Βοηθός εισαγωγής του &brandShortName;">
+<!ENTITY importShortDesc.label    "Εισαγωγή αλληλογραφίας, ευρετηρίων διευθύνσεων και φίλτρων από άλλα προγράμματα">
+
+<!ENTITY importDescription1.label "Αυτός ο βοηθός θα εισαγάγει τα email, τις καταχωρήσεις ευρετηρίων, τις συνδρομές ροών, τις προτιμήσεις και/ή τα φίλτρα σας από άλλα προγράμματα email και συνήθεις μορφές ευρετηρίων στο &brandShortName;.">
+<!ENTITY importDescription2.label "Μόλις ολοκληρωθεί η εισαγωγή, θα μπορείτε να έχετε πρόσβαση σε αυτά από το &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Παρακαλώ επιλέξτε τον τύπο του αρχείου που θέλετε να εισαγάγετε:">
+<!ENTITY selectDescriptionB.label "Παρακαλώ επιλέξτε έναν υπάρχοντα λογαριασμό ή δημιουργήστε έναν νέο:">
+<!ENTITY selectDescription.accesskey "Π">
+<!ENTITY acctName.label           "Όνομα:">
+<!ENTITY acctName.accesskey       "Ό">
+<!ENTITY noModulesFound.label     "Δεν βρέθηκε καμία εφαρμογή ή αρχείο για εισαγωγή δεδομένων.">
+
+<!ENTITY back.label               "&lt; Πίσω">
+<!ENTITY forward.label            "Επόμενο &gt;">
+<!ENTITY finish.label             "Τέλος">
+<!ENTITY cancel.label             "Ακύρωση">
+
+<!ENTITY select.label             "ή επιλέξτε τον τύπο υλικού για εισαγωγή:">
+
+<!ENTITY title.label              "Τίτλος">
+<!ENTITY processing.label         "Εισαγωγή…">

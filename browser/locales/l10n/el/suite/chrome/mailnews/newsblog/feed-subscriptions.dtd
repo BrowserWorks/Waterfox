@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Συνδρομές ροών">
+<!ENTITY learnMore.label             "Μάθετε περισσότερα για τις ροές">
+
+<!ENTITY feedTitle.label             "Τίτλος:">
+<!ENTITY feedTitle.accesskey         "Τ">
+
+<!ENTITY feedLocation.label          "URL ροής:">
+<!ENTITY feedLocation.accesskey      "ρ">
+<!ENTITY feedLocation2.placeholder   "Εισάγετε ένα έγκυρο URL ροής">
+<!ENTITY locationValidate.label      "Επικύρωση">
+<!ENTITY validateText.label          "Έλεγχος επαλήθευσης και ανάκτηση έγκυρου URL.">
+
+<!ENTITY feedFolder.label            "Αποθήκευση άρθρων σε:">
+<!ENTITY feedFolder.accesskey        "Α">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Έλεγχος για νέα άρθρα κάθε ">
+<!ENTITY biffStart.accesskey         "κ">
+<!ENTITY biffMinutes.label           "λεπτά">
+<!ENTITY biffMinutes.accesskey       "λ">
+<!ENTITY biffDays.label              "ημέρες">
+<!ENTITY biffDays.accesskey          "μ">
+<!ENTITY recommendedUnits.label      "Ο εκδότης προτείνει:">
+
+<!ENTITY quickMode.label             "Εμφάνιση σύνοψης άρθρου αντί για φόρτωση της ιστοσελίδας">
+<!ENTITY quickMode.accesskey         "μ">
+
+<!ENTITY autotagEnable.label         "Αυτόματη δημιουργία ετικετών από τα ονόματα &lt;κατηγοριών&gt; ροής">
+<!ENTITY autotagEnable.accesskey     "τ">
+<!ENTITY autotagUsePrefix.label      "Πρόθεμα ετικετών:">
+<!ENTITY autotagUsePrefix.accesskey  "Π">
+<!ENTITY autoTagPrefix.placeholder   "Εισάγετε πρόθεμα ετικέτας">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Προσθήκη">
+<!ENTITY button.addFeed.accesskey    "Π">
+<!ENTITY button.verifyFeed.label     "Επαλήθευση">
+<!ENTITY button.verifyFeed.accesskey "Ε">
+<!ENTITY button.updateFeed.label     "Ενημέρωση">
+<!ENTITY button.updateFeed.accesskey "Ε">
+<!ENTITY button.removeFeed.label     "Αφαίρεση">
+<!ENTITY button.removeFeed.accesskey "Α">
+<!ENTITY button.importOPML.label     "Εισαγωγή">
+<!ENTITY button.importOPML.accesskey "Ε">
+<!ENTITY button.exportOPML.label     "Εξαγωγή">
+<!ENTITY button.exportOPML.accesskey "ξ">
+<!ENTITY button.exportOPML.tooltip   "Εξαγωγή ροών με δομή φακέλου· κάντε Ctrl+κλικ ή πατήστε Ctrl+Enter για εξαγωγή ροών σε λίστα">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Κλείσιμο">

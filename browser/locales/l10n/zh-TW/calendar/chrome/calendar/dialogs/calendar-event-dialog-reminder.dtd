@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "設定提醒">
+<!ENTITY reminder.add.label                                "新增">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "移除">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "提醒內容">
+<!ENTITY reminder.action.label                             "選擇提醒動作">
+
+<!ENTITY reminder.action.alert.label                       "顯示通知">
+<!ENTITY reminder.action.email.label                       "寄送電子郵件">
+
+<!ENTITY alarm.units.minutes                               "分" >
+<!ENTITY alarm.units.hours                                 "時" >
+<!ENTITY alarm.units.days                                  "天" >

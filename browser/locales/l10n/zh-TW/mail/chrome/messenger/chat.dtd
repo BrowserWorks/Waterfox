@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "線上聯絡人">
+<!ENTITY offlineContactsHeader.label   "離線聯絡人">
+<!ENTITY conversationsHeader.label     "對話">
+<!ENTITY searchResultConversation.label "搜尋結果">
+<!ENTITY chat.noConv.title             "對話將會顯示於此處。">
+<!ENTITY chat.noConv.description       "請使用左邊窗格的聯絡人清單開啟對話。">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; 目前尚未儲存先前與此聯絡人的對話。">
+<!ENTITY chat.noAccount.title             "您尚未建立聊天帳號。">
+<!ENTITY chat.noAccount.description       "讓 &brandShortName; 帶著您設定聊天帳號。">
+<!ENTITY chat.accountWizard.button       "開始設定">
+<!ENTITY chat.noConnectedAccount.title             "您尚未連線到聊天帳號。">
+<!ENTITY chat.noConnectedAccount.description       "您可以在「聊天帳號」視窗連線到這些帳號:">
+<!ENTITY chat.showAccountManager.button       "顯示聊天狀態">
+
+<!ENTITY chat.participants             "參與者:">
+<!ENTITY chat.previousConversations    "先前的討論串:">
+<!ENTITY chat.ongoingConversation      "正在進行的對話">
+
+<!ENTITY openConversationCmd.label     "開始討論串">
+<!ENTITY openConversationCmd.accesskey "C">
+<!ENTITY closeConversationCmd.label    "關閉對話">
+<!ENTITY closeConversationCmd.accesskey "C">
+<!ENTITY aliasCmd.label                "重新命名">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "移除聯絡人">
+<!ENTITY deleteCmd.accesskey           "v">
+
+<!ENTITY openConversationButton.tooltip  "開始討論串">
+<!ENTITY closeConversationButton.tooltip "關閉對話">
+
+<!ENTITY addBuddyButton.label          "新增聯絡人">
+<!ENTITY joinChatButton.label          "加入聊天">
+<!ENTITY chatAccountsButton.label      "顯示帳號">
+
+<!ENTITY status.available          "有空">
+<!ENTITY status.unavailable        "沒空">
+<!ENTITY status.offline            "離線">
+
+<!ENTITY openLinkCmd.label            "開啟鏈結…">
+<!ENTITY openLinkCmd.accesskey        "O">

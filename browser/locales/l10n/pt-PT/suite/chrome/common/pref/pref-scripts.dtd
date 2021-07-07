@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Scripts e plugins">
+
+<!ENTITY navigator.label                 "Navegador">
+<!ENTITY navigator.accesskey             "N">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Ativar JavaScript para">
+<!ENTITY allowScripts.label              "Permitir scripts para:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "Mover ou redimensionar janelas existentes">
+<!ENTITY allowWindowFlip.label           "Mostrar ou ocultar janelas">
+<!ENTITY allowWindowStatusChange.label   "Mudar texto da barra de estado">
+<!ENTITY allowContextmenuDisable.label   "Desativar ou substituir menus de contexto">
+<!ENTITY allowHideStatusBar.label        "Ocultar barra de estado">
+
+<!ENTITY debugging.label                  "Depurador JavaScript">
+<!ENTITY debugEnableDump.label            "Ativar a saída dump() JavaScript">
+<!ENTITY debugEnableDump.accesskey        "v">
+<!ENTITY debugStrictJavascript.label      "Mostrar avisos estritos de JavaScript">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "Mostrar erros e avisos de JavaScript do Chrome">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "Ativar plugins para">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Quando uma página necessitar de plugins">
+<!ENTITY activateAllPlugins.label        "Ativar todos os plugins por defeito">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "Avisar-me quando forem necessários plugins adicionais">
+<!ENTITY warnPluginsRequired.accesskey   "v">

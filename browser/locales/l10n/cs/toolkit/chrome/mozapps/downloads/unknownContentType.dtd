@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Stažení souboru:">
+<!ENTITY  from.label                  "zdroj:">
+<!ENTITY  actionQuestion.label        "Co má &brandShortName; s tímto souborem udělat?">
+
+<!ENTITY  openWith.label              "Otevřít pomocí">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Jiná…">
+
+<!ENTITY  saveFile.label              "Uložit soubor">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "Provádět od teď s podobnými soubory automaticky.">
+<!ENTITY  rememberChoice.accesskey    "P">
+
+<!ENTITY  whichIs.label              "typ:">
+
+<!ENTITY  chooseHandlerMac.label      "Vybrat…">
+<!ENTITY  chooseHandlerMac.accesskey  "V">
+<!ENTITY  chooseHandler.label         "Procházet…">
+<!ENTITY  chooseHandler.accesskey     "P">
+
+<!ENTITY  unknownPromptText.label     "Chcete tento soubor uložit?">

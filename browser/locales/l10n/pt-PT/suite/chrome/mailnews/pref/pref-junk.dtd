@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Lixo e correio suspeito">
+<!ENTITY junkSettings.caption "Definições globais de lixo eletrónico">
+<!ENTITY junkMail.intro "Aceda às definições da conta para configurar definições especiais de lixo eletrónico.">
+<!-- Junk Mail Controls -->
+
+<!ENTITY manualMark.label               "Ao marcar mensagens como lixo:">
+<!ENTITY manualMark.accesskey           "A">
+<!ENTITY manualMarkModeMove.label       "Mover para a pasta &quot;Lixo eletrónico&quot;">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "Apagar">
+<!ENTITY manualMarkModeDelete.accesskey "A">
+
+<!ENTITY markAsRead.intro               "Marcar mensagem como lida:">
+<!ENTITY autoMarkAsRead.label           "Quando o &brandShortName; determina que elas são lixo">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "Ao marcar manualmente como lixo eletrónico">
+<!ENTITY manualMarkAsRead.accesskey     "m">
+
+<!ENTITY enableJunkLogging.label        "Ativar registo do lixo eletrónico">
+<!ENTITY enableJunkLogging.accesskey    "e">
+<!ENTITY openJunkLog.label              "Mostrar registo">
+<!ENTITY openJunkLog.accesskey          "s">
+<!ENTITY resetTrainingData.label        "Repor dados de treino">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "Correio suspeito">
+<!-- Phishing Detector -->
+
+<!ENTITY pref.phishing.caption            "Mensagem de engodo">
+<!ENTITY enablePhishingDetector.label     "Avisar-me se a mensagem de correio que estou a ler pode ser uma fraude">
+<!ENTITY enablePhishingDetector.accesskey "e">
+<!-- Anti Virus -->
+
+<!ENTITY pref.antivirus.caption           "Antivírus">
+<!ENTITY antiVirus.label                  "Permitir que os antivírus verifiquem as mensagens a receber mais facilmente">
+<!ENTITY antiVirus.accesskey              "P">

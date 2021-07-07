@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "&brandShortName; - Abgesicherter Modus">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; befindet sich momentan im Abgesicherten Modus. Alle Benutzereinstellungen, Themes und Erweiterungen wurden vorübergehend deaktiviert.">
+<!ENTITY safeModeDescription2.label   "Sie können alle oder einige dieser Änderungen auch dauerhaft beibehalten:">
+
+<!ENTITY disableAddons.label          "Alle Add-ons deaktivieren">
+<!ENTITY disableAddons.accesskey      "A">
+
+<!ENTITY resetToolbars.label          "Symbolleisten und Fenstergrößen zurücksetzen">
+<!ENTITY resetToolbars.accesskey      "S">
+
+<!ENTITY deleteBookmarks.label        "Alle Lesezeichen – abgesehen von Backups – löschen">
+<!ENTITY deleteBookmarks.accesskey    "L">
+
+<!ENTITY resetUserPrefs.label         "Alle Benutzereinstellungen zurücksetzen">
+<!ENTITY resetUserPrefs.accesskey     "B">
+
+<!ENTITY restoreSearch.label          "Standard-Suchmaschinen wiederherstellen">
+<!ENTITY restoreSearch.accesskey      "u">
+
+<!ENTITY changeAndRestartButton.label "Änderungen ausführen und neu starten">
+<!ENTITY continueButton.label         "Im Abgesicherten Modus weiterarbeiten">

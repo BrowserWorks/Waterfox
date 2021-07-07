@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Ustawienia niechcianej poczty">
+<!ENTITY trainingDescription.label "Po włączeniu filtru należy nauczyć program &brandShortName; rozpoznawania pożądanych i niepożądanych wiadomości za pomocą przycisku „Niechciana” na pasku narzędzi. Należy odpowiednio oznaczać wiadomości pożądane i niepożądane, dopóki skuteczność automatycznego filtrowania niechcianej poczty nie będzie satysfakcjonująca.">
+<!ENTITY level.label "Włącz filtr niechcianej poczty dla bieżącego konta">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Przenoś otrzymane wiadomości, które zostały oznaczone jako niechciane, do:">
+<!ENTITY move.accesskey "P">
+<!ENTITY junkFolderOn.label "folderu „Niechciane” konta:">
+<!ENTITY junkFolderOn.accesskey "N">
+<!ENTITY otherFolder.label "innego folderu:">
+<!ENTITY otherFolder.accesskey "e">
+<!ENTITY purge1.label "Niechciane wiadomości usuwaj automatycznie po upływie">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "dni">
+
+<!ENTITY whitelistHeader.label "Nie oznaczaj wiadomości automatycznie jako niechcianej, jeżeli adres nadawcy znajduje się w: ">
+<!ENTITY whitelistHeader.accesskey "z">
+
+<!ENTITY ispHeadersWarning.label "Gdy zaznaczone, program &brandShortName; będzie automatycznie uznawał wiadomości za niechciane na podstawie danych od zewnętrznego dostawcy.">
+<!ENTITY ispHeaders.label "Ufaj nagłówkom niechcianej poczty dołączonym przez: ">
+<!ENTITY ispHeaders.accesskey "t">
+
+<!ENTITY junkClassification.label "Filtrowanie i klasyfikacja">
+<!ENTITY junkActions.label "Przenoszenie i przechowywanie">
+
+<!ENTITY globalJunkPrefs.label "Preferencje niechcianej poczty…">
+<!ENTITY globalJunkPrefs.accesskey "r">

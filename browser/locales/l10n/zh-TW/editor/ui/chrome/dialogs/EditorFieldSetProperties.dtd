@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "欄位集合屬性">
+
+<!ENTITY Legend.label "說明(Legend)">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "編輯說明(Legend):">
+<!ENTITY EditLegendText.accesskey "t">
+<!ENTITY LegendAlign.label "對齊方式:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "預設">
+<!ENTITY AlignLeft.label "靠左">
+<!ENTITY AlignCenter.label "置中">
+<!ENTITY AlignRight.label "靠右">
+
+<!ENTITY RemoveFieldSet.label "移除欄位集合">
+<!ENTITY RemoveFieldSet.accesskey "R">
+

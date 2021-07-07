@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label			"プロパティ">
+<!ENTITY propertiesMenu.accesskey		"i">
+<!ENTITY propertiesCmd.key			"i">
+<!ENTITY abPropertiesMenu.label			"アドレス帳のプロパティ">
+<!ENTITY abPropertiesMenu.accesskey		"i">
+<!ENTITY contactPropertiesMenu.label		"連絡先のプロパティ">
+<!ENTITY contactPropertiesMenu.accesskey	"i">
+<!ENTITY mailingListPropertiesMenu.label	"アドレスリストのプロパティ">
+<!ENTITY mailingListPropertiesMenu.accesskey	"i">
+
+<!ENTITY abContextMenuButton.tooltip	"アドレス帳のコンテキストメニューを表示します">
+<!ENTITY addressbookPicker.label	"アドレス帳:">
+<!ENTITY addressbookPicker.accesskey	"k">
+<!ENTITY searchContacts.label		"連絡先を検索:">
+<!ENTITY searchContacts.accesskey	"n">
+<!ENTITY SearchNameOrEmail.label	"名前またはメールアドレス">
+
+<!ENTITY addtoToFieldMenu.label		"宛先フィールドに追加">
+<!ENTITY addtoToFieldMenu.accesskey	"A">
+<!ENTITY addtoCcFieldMenu.label		"Cc フィールドに追加">
+<!ENTITY addtoCcFieldMenu.accesskey	"C">
+<!ENTITY addtoBccFieldMenu.label	"Bcc フィールドに追加">
+<!ENTITY addtoBccFieldMenu.accesskey	"B">
+<!ENTITY deleteAddrBookCard.label	"削除">
+<!ENTITY deleteAddrBookCard.accesskey	"D">
+<!ENTITY propertiesContext.label	"プロパティ">
+<!ENTITY propertiesContext.accesskey	"i">
+<!ENTITY abPropertiesContext.label	"プロパティ">
+<!ENTITY abPropertiesContext.accesskey	"i">
+<!ENTITY editContactContext.label	"連絡先を編集">
+<!ENTITY editContactContext.accesskey	"E">
+<!ENTITY editMailingListContext.label	"リストを編集">
+<!ENTITY editMailingListContext.accesskey	"E">
+
+<!ENTITY newContactAbContext.label	"新しい連絡先">
+<!ENTITY newContactAbContext.accesskey	"C">
+<!ENTITY newListAbContext.label		"新しいアドレスリスト">
+<!ENTITY newListAbContext.accesskey	"L">
+
+<!ENTITY toButton.label			"宛先に追加:">
+<!ENTITY toButton.accesskey		"A">
+<!ENTITY ccButton.label			"Cc に追加:">
+<!ENTITY ccButton.accesskey		"C">
+<!ENTITY bccButton.label		"Bcc に追加:">
+<!ENTITY bccButton.accesskey		"B">

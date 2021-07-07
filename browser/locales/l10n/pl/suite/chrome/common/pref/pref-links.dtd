@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Zachowanie odnośników">
+<!ENTITY newWindow.label "Zachowanie podczas otwierania odnośników">
+<!ENTITY newWindowDescription.label "Otwieraj odnośniki otwierające nowe okna w:">
+<!ENTITY newWindowRestriction.label "Gdy skrypty próbują otwierać nowe okna:">
+<!ENTITY external.label "Odnośniki otwierane z innych aplikacji">
+<!ENTITY externalDescription.label "Otwieraj odnośniki przekazane z innych aplikacji w:">
+
+<!ENTITY openCurrent.label "ostatnio aktywnej karcie lub oknie">
+<!ENTITY newWindowGroupCurrent.accesskey "t">
+<!ENTITY externalGroupCurrent.accesskey "a">
+
+<!ENTITY openTab.label "nowej karcie w ostatnim aktywnym oknie">
+<!ENTITY newWindowGroupTab.accesskey "r">
+<!ENTITY externalGroupTab.accesskey "k">
+
+<!ENTITY openWindow.label "nowym oknie">
+<!ENTITY newWindowGroupWindow.accesskey "m">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "zawsze przekierowuj okna do kart">
+<!ENTITY divertAll.accesskey "z">
+<!ENTITY divertNoFeatures.label "nie przekierowuj specjalnych okien do kart">
+<!ENTITY divertNoFeatures.accesskey "n">
+<!ENTITY dontDivert.label "zawsze otwieraj nowe okna">
+<!ENTITY dontDivert.accesskey "w">

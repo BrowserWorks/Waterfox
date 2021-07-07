@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importera">
+<!ENTITY importAll.label          "Importera allting">
+<!ENTITY importAll.accesskey      "a">
+<!ENTITY importMail.label         "E-post">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "RSS-prenumeration">
+<!ENTITY importFeeds.accesskey    "p">
+<!ENTITY importAddressbook.label  "Adressböcker">
+<!ENTITY importAddressbook.accesskey "d">
+<!ENTITY importSettings.label     "Inställningar">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Filter">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName;s guide för att importera e-post">
+<!ENTITY importShortDesc.label    "Importerar e-post, adressböcker, inställningar och filter från andra program">
+
+<!ENTITY importDescription1.label "Denna guide hjälper dig att importera e-post, innehållet i adressböcker, RSS-prenumerationer, inställningar och/eller filter från andra e-postprogram och vanliga adressboksformat till &brandShortName;.">
+<!ENTITY importDescription2.label "När du har importerat uppgifterna kommer du alltså att kunna använda dem i &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Välj vilken typ av fil du vill importera:">
+<!ENTITY selectDescriptionB.label "Välj ett befintligt konto eller skapa ett nytt konto:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label           "Namn:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Inget program eller fil för att importera data från hittades.">
+
+<!ENTITY back.label               "&lt; Backa">
+<!ENTITY forward.label            "Nästa &gt;">
+<!ENTITY finish.label             "Slutför">
+<!ENTITY cancel.label             "Avbryt">
+
+<!ENTITY select.label             "eller välj vad du vill importera:">
+
+<!ENTITY title.label              "Titel">
+<!ENTITY processing.label         "Importerar…">

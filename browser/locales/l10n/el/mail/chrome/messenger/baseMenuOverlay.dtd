@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Βοήθεια">
+<!ENTITY helpMenu.accesskey "Β">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Βοήθεια">
+<!ENTITY helpMenuWin.accesskey "Β">
+<!ENTITY aboutProduct2.label "Σχετικά με το &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "Σ">
+<!ENTITY helpTroubleshootingInfo.label     "Πληροφορίες επίλυσης προβλημάτων">
+<!ENTITY helpTroubleshootingInfo.accesskey "μ">
+<!ENTITY helpSafeMode.label     "Επανεκκίνηση με ανενεργά πρόσθετα…">
+<!ENTITY helpSafeMode.accesskey "π">
+<!ENTITY helpSafeMode.stop.label     "Επανεκκίνηση με ανενεργά πρόσθετα">
+<!ENTITY helpSafeMode.stop.accesskey "Ε">
+<!ENTITY productHelp.label "Βοήθεια &brandShortName;">
+<!ENTITY productHelp.accesskey "Β">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Συντομεύσεις πληκτρολογίου">
+<!ENTITY helpKeyboardShortcuts.accesskey "Σ">
+
+<!ENTITY helpFeedbackPage.label "Υποβολή σχολίων…">
+<!ENTITY helpFeedbackPage.accesskey "Υ">
+
+<!ENTITY helpShowTour2.label "Περιήγηση στο &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "ρ">
+
+<!ENTITY helpGetInvolvedPage.label "Συμμετοχή">
+<!ENTITY helpGetInvolvedPage.accesskey "Σ">
+
+<!ENTITY helpDonationsPage.label "Δωρεά">
+<!ENTITY helpDonationsPage.accesskey "Δ">

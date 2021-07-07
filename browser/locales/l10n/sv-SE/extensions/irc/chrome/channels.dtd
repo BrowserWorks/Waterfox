@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Gå med i kanal">
+
+<!ENTITY network.label     "Nätverk:">
+<!ENTITY network.accesskey "v">
+
+<!ENTITY channel.label     "Kanal:">
+<!ENTITY channel.accesskey "K">
+
+<!ENTITY topics.label     "Sök både i ämne och kanalnamn">
+<!ENTITY topics.accesskey "ö">
+
+<!ENTITY join.label     "Gå med">
+<!ENTITY join.accesskey "G">
+
+<!ENTITY minusers.label     "Min. användare:">
+<!ENTITY minusers.accesskey "n">
+
+<!ENTITY maxusers.label     "Max. användare:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "Uppdatera nu">
+<!ENTITY refresh.accesskey "U">
+
+<!ENTITY network.hint.label "Ange ett nätverk eller ett servernamn (ev inklusive port) och en kanal att gå med i.">
+
+<!ENTITY col.network "Nätverk">
+<!ENTITY col.name  "Namn">
+<!ENTITY col.users "Användare">
+<!ENTITY col.topic "Ämne">

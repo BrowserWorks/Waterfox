@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Исходный код: ">
+
+<!ENTITY editMenu.label "Правка">
+<!ENTITY editMenu.accesskey "в">
+<!ENTITY fileMenu.label "Файл">
+<!ENTITY fileMenu.accesskey "а">
+<!ENTITY savePageCmd.label "Сохранить страницу как…">
+<!ENTITY savePageCmd.accesskey "х">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Параметры страницы…">
+<!ENTITY pageSetupCmd.accesskey "м">
+<!ENTITY printPreviewCmd.label "Предварительный просмотр">
+<!ENTITY printPreviewCmd.accesskey "е">
+<!ENTITY printCmd.label "Печать…">
+<!ENTITY printCmd.accesskey "ч">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Закрыть">
+<!ENTITY closeCmd.accesskey "к">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Перейти к строке…">
+<!ENTITY goToLineCmd.accesskey "й">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Вид">
+<!ENTITY viewMenu.accesskey       "д">
+<!ENTITY reloadCmd.label "Обновить">
+<!ENTITY reloadCmd.accesskey "б">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Переносить длинные строки">
+<!ENTITY menu_wrapLongLines.accesskey "н">
+<!ENTITY menu_highlightSyntax.label "Подсветка синтаксиса">
+<!ENTITY menu_highlightSyntax.accesskey "о">
+<!ENTITY menu_textSize.label "Размер шрифта">
+<!ENTITY menu_textSize.accesskey "ш">
+<!ENTITY menu_textEnlarge.label "Увеличить">
+<!ENTITY menu_textEnlarge.accesskey "е">
+<!ENTITY menu_textReduce.label "Уменьшить">
+<!ENTITY menu_textReduce.accesskey "м">
+<!ENTITY menu_textReset.label "Обычный">
+<!ENTITY menu_textReset.accesskey "ы">
+
+<!ENTITY findOnCmd.label     "Найти на этой странице…">
+<!ENTITY findOnCmd.accesskey "а">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Найти далее">
+<!ENTITY findAgainCmd.accesskey "е">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Назад">
+<!ENTITY backCmd.accesskey "з">
+<!ENTITY forwardCmd.label "Вперёд">
+<!ENTITY forwardCmd.accesskey "п">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Копировать ссылку">
+<!ENTITY copyLinkCmd.accesskey "и">
+<!ENTITY copyEmailCmd.label "Копировать адрес электронной почты">
+<!ENTITY copyEmailCmd.accesskey "в">

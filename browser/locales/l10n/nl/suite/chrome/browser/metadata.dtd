@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Geen eigenschappen ingesteld.">
+
+<!ENTITY caption.label         "Elementeigenschappen">
+<!ENTITY image-sec.label       "Afbeeldingseigenschappen">
+<!ENTITY image-url.label       "Locatie:">
+<!ENTITY image-desc.label      "Beschrijving:">
+<!ENTITY image-alt.label       "Alternatieve tekst:">
+<!ENTITY image-width.label     "Breedte:">
+<!ENTITY image-height.label    "Hoogte:">
+<!ENTITY image-filesize.label  "Bestandsgrootte:">
+<!ENTITY image-filesize.value  "Onbekend">
+<!ENTITY insdel-sec.label      "Eigenschappen invoegen/verwijderen">
+<!ENTITY insdel-cite.label     "Info:">
+<!ENTITY insdel-date.label     "Datum:">
+<!ENTITY link-sec.label        "Koppelingseigenschappen">
+<!ENTITY link-url.label        "Adres:">
+<!ENTITY link-target.label     "Zal openen in:">
+<!ENTITY link-type.label       "Doeltype:">
+<!ENTITY link-lang.label       "Doeltaal:">
+<!ENTITY link-rel.label        "Relatie:">
+<!ENTITY link-rev.label        "Omgekeerde relatie:">
+<!ENTITY misc-sec.label        "Overige eigenschappen">
+<!ENTITY misc-lang.label       "Teksttaal:">
+<!ENTITY misc-title.label      "Titel:">
+<!ENTITY misc-tblsummary.label "Tabelsamenvatting:">
+<!ENTITY quote-sec.label       "Citaateigenschappen">
+<!ENTITY quote-cite.label      "Info:">

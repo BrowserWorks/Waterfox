@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Indstillinger for arkivering">
+<!ENTITY archiveGranularityPrefix.label "Når meddelelser arkiveres, skal de anbrings i:">
+<!ENTITY archiveFlat.label "En enkelt mappe">
+<!ENTITY archiveFlat.accesskey "E">
+<!ENTITY archiveYearly.label "Mapper inddelt i år">
+<!ENTITY archiveYearly.accesskey "a">
+<!ENTITY archiveMonthly.label "Mapper inddelt i måneder">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "Bevar arkiverede meddelelsers eksisterende mappestruktur">
+<!ENTITY keepFolderStructure.accesskey "B">
+<!ENTITY archiveExample.label "Eksempel">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arkiv">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Indbakke">

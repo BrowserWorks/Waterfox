@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE the following declarations were copied from
+     mozilla/toolkit/locales/en-US/chrome/global/about.dtd which was removed
+     by bug 1408044. -->
+
+<!ENTITY about.version                "versie">
+
+<!-- LOCALIZATION NOTE (about.credits.beforeLink): note that there is no space
+     between this phrase and the linked about.credits.linkTitle phrase, so if
+     your locale needs a space between words, add it at the end of this
+     entity. -->
+<!ENTITY about.credits.beforeLink     "Bekijk een lijst van ">
+<!ENTITY about.credits.linkTitle      "medewerkers">
+<!-- LOCALIZATION NOTE (about.credits.afterLink): note that there is no space
+     between the linked about.credits.linkTitle phrase and this phrase, so if
+     your locale needs a space between words, add it at the start of this
+     entity. -->
+<!ENTITY about.credits.afterLink      " van het Mozilla-project.">
+
+<!-- LOCALIZATION NOTE (about.license.beforeTheLink): note that there is no
+     space between this phrase and the linked about.license.linkTitle phrase,
+     so if your locale needs a space between words, add it at the end of this
+     entity. -->
+<!ENTITY about.license.beforeTheLink  "Lees de ">
+<!ENTITY about.license.linkTitle      "licentie-informatie">
+<!-- LOCALIZATION NOTE (about.license.afterTheLink): note that there is no
+     space between the linked about.license.linkTitle phrase and this phrase,
+     so if your locale needs a space between words, add it at the start of
+     this entity. -->
+<!ENTITY about.license.afterTheLink   " voor dit product.">
+
+<!-- LOCALIZATION NOTE (about.relnotes.beforeTheLink): note that there is no
+     space between this phrase and the linked about.relnotes.linkTitle phrase,
+     so if your locale needs a space between words, add it at the end of this
+     entity. -->
+<!ENTITY about.relnotes.beforeTheLink "Lees de ">
+<!ENTITY about.relnotes.linkTitle     "uitgaveopmerkingen">
+<!-- LOCALIZATION NOTE (about.relnotes.afterTheLink): note that there is no
+     space between the linked about.relnotes.linkTitle phrase and this phrase,
+     so if your locale needs a space between words, add it at the start of
+     this entity. -->
+<!ENTITY about.relnotes.afterTheLink  " voor deze versie.">
+
+<!-- LOCALIZATION NOTE (about.buildconfig.beforeTheLink): note that there is
+     no space between this phrase and the linked about.buildconfig.linkTitle
+     phrase, so if your locale needs a space between words, add it at the end
+     of this entity. -->
+<!ENTITY about.buildconfig.beforeTheLink "Bekijk de gebruikte ">
+<!ENTITY about.buildconfig.linkTitle     "buildconfiguratie">
+<!-- LOCALIZATION NOTE (about.buildconfig.afterTheLink): note that there is no
+     space between the linked about.buildconfig.linkTitle phrase and this
+     phrase, so if your locale needs a space between words, add it at the
+     start of this entity. -->
+<!ENTITY about.buildconfig.afterTheLink  " voor deze versie.">
+
+<!ENTITY about.buildIdentifier        "Buildnaam: ">
+
+<!-- LOCALIZATION NOTE end of declarations that were copied from
+     mozilla/toolkit/locales/en-US/chrome/global/about.dtd -->
+
+<!-- LOCALIZATION NOTE (channel.description.start,channel.description.end):
+     channel.description.start and channel.description.end create one sentence,
+     with the current channel label inserted in between.
+     example: You are currently on the _Stable_ update channel. -->
+<!ENTITY channel.description.start  "U gebruikt momenteel het ">
+<!ENTITY channel.description.end    "-updatekanaal.">
+<!ENTITY about.userAgent            "Useragent: ">

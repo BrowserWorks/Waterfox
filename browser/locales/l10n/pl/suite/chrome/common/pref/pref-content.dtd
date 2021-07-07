@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.content.title "Zawartość">
+<!ENTITY pref.content.description "Te ustawienia mają wpływ na sposób wyświetlania witryn i wiadomości w programie &brandShortName;.">
+
+<!ENTITY siteIcons.label "Ikony witryn">
+<!ENTITY useSiteIcons.label "Pokaż ikony witryn">
+<!ENTITY useSiteIcons.accesskey "k">
+<!ENTITY useFavIcons2.label "Używaj ikon serwera dla witryn, które ich nie definiują">
+<!ENTITY useFavIcons2.accesskey "W">
+
+<!ENTITY scrolling.label "Przewijanie">
+<!ENTITY useAutoScroll.label "Używaj automatycznego przewijania">
+<!ENTITY useAutoScroll.accesskey "U">
+<!ENTITY useSmoothScroll.label "Używaj płynnego przewijania">
+<!ENTITY useSmoothScroll.accesskey "y">
+
+<!ENTITY zoomPrefs.label "Zmiana rozmiaru">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label "Zakres od">
+<!ENTITY minZoom.accesskey "r">
+<!ENTITY maxZoom.label "do">
+<!ENTITY maxZoom.accesskey "o">
+<!ENTITY percent.label "&#37;">
+
+<!ENTITY siteSpecific.label "Zapamiętaj rozmiary ustawione dla każdej strony">
+<!ENTITY siteSpecific.accesskey "Z">
+<!ENTITY textZoomOnly.label "Powiększaj tylko tekst zamiast całych stron">
+<!ENTITY textZoomOnly.accesskey "t">
+<!ENTITY enableAutomaticImageResizing.label "Dostosuj rozmiar dużych obrazów do okna przeglądarki">
+<!ENTITY enableAutomaticImageResizing.accesskey "d">
+
+<!ENTITY allowHWAccel.label "Korzystaj z przyspieszania sprzętowego, kiedy jest dostępne">
+<!ENTITY allowHWAccel.accesskey "a">
+<!ENTITY blockAutoRefresh.label "Ostrzegaj, jeśli witryny próbują przekierować lub odświeżyć stronę">
+<!ENTITY blockAutoRefresh.accesskey "O">

@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Eigenschappen">
+
+<!ENTITY generalInfo.label                       "Algemene informatie">
+<!ENTITY folderCharsetFallback2.label            "Terugvaltekstcodering:">
+<!ENTITY folderCharsetFallback2.accesskey        "e">
+<!ENTITY folderCharsetEnforce2.label             "Codering op alle berichten in de map toepassen (de in berichten opgegeven tekstcodering en autodetectie worden genegeerd)">
+<!ENTITY folderCharsetEnforce2.accesskey         "a">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Samenvattingsbestand opnieuw opbouwen">
+<!ENTITY folderRebuildSummaryFile2.label         "Map repareren">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "r">
+<!ENTITY folderRebuildSummaryFile.explanation    "Soms raakt het mapindexbestand (.msf) beschadigd en kunnen berichten lijken te ontbreken of verwijderde berichten zichtbaar blijven; repareren van de map kan deze problemen oplossen.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Berichten in deze map meenemen in globale zoekresultaten">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "o">
+
+<!ENTITY retention.label "Behoudbeleid">
+<!ENTITY retentionUseAccount.label  "Mijn accountinstellingen gebruiken">
+<!ENTITY retentionUseAccount.accesskey "M">
+<!ENTITY daysOld.label "dagen">
+<!ENTITY message.label "berichten">
+<!ENTITY retentionCleanup.label "Berichten bewaren:">
+<!ENTITY retentionCleanupImap.label "Lokale kopieën en de originele berichten op de server bewaren:">
+<!ENTITY retentionCleanupPop.label "Berichten bewaren, inclusief de kopieën op de server:">
+<!ENTITY retentionDeleteMsg.label "Berichten verwijderen die ouder zijn dan">
+<!ENTITY retentionDeleteMsg.accesskey "o">
+<!ENTITY retentionKeepAll.label "Alle berichten">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "De meest recente">
+<!ENTITY retentionKeepRecent.accesskey "r">
+<!ENTITY retentionApplyToFlagged.label "Gemarkeerde berichten altijd bewaren">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronisatie">
+<!ENTITY folderCheckForNewMessages2.label        "Bij het ophalen van nieuwe berichten voor deze account, altijd deze map controleren">
+<!ENTITY folderCheckForNewMessages2.accesskey    "c">
+
+<!ENTITY offlineFolder.check.label               "Deze map voor offlinegebruik selecteren">
+<!ENTITY offlineFolder.check.accesskey           "s">
+<!ENTITY offlineFolder.button.label              "Nu downloaden">
+<!ENTITY offlineFolder.button.accesskey          "d">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Deze nieuwsgroep voor offlinegebruik selecteren">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "f">
+<!ENTITY offlineNewsgroup.button.label           "Nu downloaden">
+<!ENTITY offlineNewsgroup.button.accesskey       "d">
+
+<!ENTITY folderProps.name.label                  "Naam:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Locatie:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Delen">
+<!ENTITY privileges.button.label                 "Bevoegdheden…">
+<!ENTITY privileges.button.accesskey             "B">
+<!ENTITY permissionsDesc.label                   "U hebt de volgende rechten:">
+<!ENTITY folderType.label                        "Maptype:">
+
+<!ENTITY folderQuotaTab.label                    "Quotum">
+<!ENTITY folderQuotaRoot.label                   "Quotumhoofdmap:">
+<!ENTITY folderQuotaUsage.label                  "Gebruik:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Aantal berichten:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "onbekend">
+<!ENTITY sizeOnDisk.label                        "Grootte op schijf:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "onbekend">

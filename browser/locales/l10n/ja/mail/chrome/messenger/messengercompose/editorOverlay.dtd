@@ -1,0 +1,304 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "整形せずに貼り付け">
+<!ENTITY pasteNoFormatting.accesskey "n">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "引用文として貼り付け">
+<!ENTITY pasteAsQuotationCmd.accesskey "Q">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "挿入">
+<!ENTITY insertMenu.accesskey "I">
+<!ENTITY insertLinkCmd2.label "リンク...">
+<!ENTITY insertLinkCmd2.accesskey "L">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "アンカー...">
+<!ENTITY insertAnchorCmd.accesskey "A">
+<!ENTITY insertImageCmd.label "画像...">
+<!ENTITY insertImageCmd.accesskey "I">
+<!ENTITY insertHLineCmd.label "水平線">
+<!ENTITY insertHLineCmd.accesskey "o">
+<!ENTITY insertTableCmd.label "表...">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML...">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "数式...">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "文字や記号...">
+<!ENTITY insertCharsCmd.accesskey "C">
+<!ENTITY insertBreakAllCmd.label "画像の下側に改行">
+<!ENTITY insertBreakAllCmd.accesskey "k">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "リンクを作成...">
+<!ENTITY createLinkCmd.accesskey "k">
+<!ENTITY editLinkCmd.label "リンクを新しい Composer で編集">
+<!ENTITY editLinkCmd.accesskey "i">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "フォントを選択">
+<!ENTITY fontfaceMenu.label "フォント">
+<!ENTITY fontfaceMenu.accesskey "F">
+<!ENTITY fontVarWidth.label "プロポーショナル">
+<!ENTITY fontVarWidth.accesskey "V">
+<!ENTITY fontFixedWidth.label "等幅 (Monospace)">
+<!ENTITY fontFixedWidth.accesskey "x">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "フォントサイズを選択してください">
+<!ENTITY decreaseFontSize.label "小さくする">
+<!ENTITY decreaseFontSize.accesskey "r">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "大きくする">
+<!ENTITY increaseFontSize.accesskey "g">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "サイズ">
+<!ENTITY fontSizeMenu.accesskey "z">
+<!ENTITY size-tinyCmd.label "極小">
+<!ENTITY size-tinyCmd.accesskey "T">
+<!ENTITY size-smallCmd.label "小">
+<!ENTITY size-smallCmd.accesskey "S">
+<!ENTITY size-mediumCmd.label "中">
+<!ENTITY size-mediumCmd.accesskey "M">
+<!ENTITY size-largeCmd.label "大">
+<!ENTITY size-largeCmd.accesskey "L">
+<!ENTITY size-extraLargeCmd.label "特大">
+<!ENTITY size-extraLargeCmd.accesskey "x">
+<!ENTITY size-hugeCmd.label "極大">
+<!ENTITY size-hugeCmd.accesskey "H">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "テキストのスタイル">
+<!ENTITY fontStyleMenu.accesskey "S">
+<!ENTITY styleBoldCmd.label "太字">
+<!ENTITY styleBoldCmd.accesskey "B">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "イタリック体">
+<!ENTITY styleItalicCmd.accesskey "I">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "下線">
+<!ENTITY styleUnderlineCmd.accesskey "U">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "取り消し線">
+<!ENTITY styleStrikeThruCmd.accesskey "k">
+<!ENTITY styleSuperscriptCmd.label "上付き">
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "下付き">
+<!ENTITY styleSubscriptCmd.accesskey "S">
+<!ENTITY styleNonbreakingCmd.label "改行なし">
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+<!ENTITY styleEm.label "強調">
+<!ENTITY styleEm.accesskey "E">
+<!ENTITY styleStrong.label "強い強調">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "引用">
+<!ENTITY styleCite.accesskey "C">
+<!ENTITY styleAbbr.label "略語">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "頭字語">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "コード">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "サンプル出力">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "変数">
+<!ENTITY styleVar.accesskey "V">
+
+<!ENTITY formatFontColor.label "文字列の色...">
+<!ENTITY formatFontColor.accesskey "C">
+<!ENTITY tableOrCellColor.label "表またはセルの背景色...">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "名前付きアンカーを削除">
+<!ENTITY formatRemoveNamedAnchors.accesskey "R">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "段落">
+<!ENTITY paragraphMenu.accesskey "P">
+<!ENTITY paragraphParagraphCmd.label "段落 &lt;p&gt;">
+<!ENTITY paragraphParagraphCmd.accesskey "P">
+<!ENTITY heading1Cmd.label "見出し1 &lt;h1&gt;">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "見出し2 &lt;h2&gt;">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "見出し3 &lt;h3&gt;">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "見出し4 &lt;h4&gt;">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "見出し5 &lt;h5&gt;">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "見出し6 &lt;h6&gt;">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "アドレス &lt;address&gt;">
+<!ENTITY paragraphAddressCmd.accesskey "A">
+<!ENTITY paragraphPreformatCmd.label "整形済み &lt;pre&gt;">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "リスト">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "なし">
+<!ENTITY noneCmd.accesskey "N">
+<!ENTITY listBulletCmd.label "行頭文字付きリスト"><!-- Bulleted -->
+<!ENTITY listBulletCmd.accesskey "B">
+<!ENTITY listNumberedCmd.label "番号付きリスト">
+<!ENTITY listNumberedCmd.accesskey "m">
+<!ENTITY listTermCmd.label "定義リスト - 用語">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "定義リスト - 説明">
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "リストのプロパティ...">
+<!ENTITY listPropsCmd.accesskey "L">
+
+<!ENTITY ParagraphSelect.tooltip "段落の形式を選択">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "本文のテキスト">
+<!ENTITY bodyTextCmd.accesskey "T">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "配置">
+<!ENTITY alignMenu.accesskey "A">
+<!ENTITY alignLeft.label "左">
+<!ENTITY alignLeft.accesskey "L">
+<!ENTITY alignLeft.tooltip "左寄せ">
+<!ENTITY alignCenter.label "中央">
+<!ENTITY alignCenter.accesskey "C">
+<!ENTITY alignCenter.tooltip "中央寄せ">
+<!ENTITY alignRight.label "右">
+<!ENTITY alignRight.accesskey "R">
+<!ENTITY alignRight.tooltip "右寄せ">
+<!ENTITY alignJustify.label "両端そろえ">
+<!ENTITY alignJustify.accesskey "J">
+<!ENTITY alignJustify.tooltip "両端そろえ">
+
+<!ENTITY increaseIndent.label "インデントを挿入">
+<!ENTITY increaseIndent.accesskey "I">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "インデントを削除">
+<!ENTITY decreaseIndent.accesskey "D">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "ページの配色と背景...">
+<!ENTITY colorsAndBackground.accesskey "u">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "表">
+<!ENTITY tableMenu.accesskey "b">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "選択">
+<!ENTITY tableSelectMenu.accesskey "S">
+
+<!ENTITY tableSelectMenu2.label "表の選択">
+<!ENTITY tableSelectMenu2.accesskey "S">
+<!ENTITY tableInsertMenu2.label "表の挿入">
+<!ENTITY tableInsertMenu2.accesskey "I">
+<!ENTITY tableDeleteMenu2.label "表の削除">
+<!ENTITY tableDeleteMenu2.accesskey "D">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "挿入">
+<!ENTITY tableInsertMenu.accesskey "I">
+<!ENTITY tableTable.label "表">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "行">
+<!ENTITY tableRows.label "行">
+<!ENTITY tableRow.accesskey "R">
+<!ENTITY tableRowAbove.label "上に行を追加">
+<!ENTITY tableRowAbove.accesskey "R">
+<!ENTITY tableRowBelow.label "下に行を追加">
+<!ENTITY tableRowBelow.accesskey "B">
+<!ENTITY tableColumn.label "列">
+<!ENTITY tableColumns.label "列">
+<!ENTITY tableColumn.accesskey "o">
+<!ENTITY tableColumnBefore.label "前に列を追加">
+<!ENTITY tableColumnBefore.accesskey "o">
+<!ENTITY tableColumnAfter.label "後に列を追加">
+<!ENTITY tableColumnAfter.accesskey "A">
+<!ENTITY tableCell.label "セル">
+<!ENTITY tableCells.label "セル">
+<!ENTITY tableCell.accesskey "C">
+<!ENTITY tableCellContents.label "セルの中身">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "すべてのセル">
+<!ENTITY tableAllCells.accesskey "A">
+<!ENTITY tableCellBefore.label "前にセルを追加">
+<!ENTITY tableCellBefore.accesskey "C">
+<!ENTITY tableCellAfter.label "後にセルを追加">
+<!ENTITY tableCellAfter.accesskey "f">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "削除">
+<!ENTITY tableDeleteMenu.accesskey "D">
+
+<!-- text for "Join Cells" is in editor.properties 
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableJoinCells.accesskey "j">
+<!ENTITY tableSplitCell.label "セルの分割">
+<!ENTITY tableSplitCell.accesskey "C">
+<!ENTITY convertToTable.label "選択部分から表を作成">
+<!ENTITY convertToTable.accesskey "r">
+<!ENTITY tableProperties.label "表のプロパティ...">
+<!ENTITY tableProperties.accesskey "o">
+
+<!-- Toolbar-only items -->
+<!ENTITY imageToolbarCmd.label "画像">
+<!ENTITY imageToolbarCmd.tooltip "新しい画像を挿入するか、選択した画像のプロパティを編集します">
+<!ENTITY hruleToolbarCmd.label "水平線">
+<!ENTITY hruleToolbarCmd.tooltip "新しい水平線を挿入するか、選択した線のプロパティを編集します">
+<!ENTITY tableToolbarCmd.label "表">
+<!ENTITY tableToolbarCmd.tooltip "新しい表を挿入するか、選択した表のプロパティを編集します">
+<!ENTITY linkToolbarCmd.label "リンク">
+<!ENTITY linkToolbarCmd.tooltip "新しいリンクを挿入するか、選択したリンクのプロパティを編集します">
+<!ENTITY anchorToolbarCmd.label "名前付きアンカー">
+<!ENTITY anchorToolbarCmd.tooltip "新しい名前付きアンカーを挿入するか、選択したアンカーのプロパティを編集します">
+<!ENTITY TextColorButton.tooltip "テキストの色を選択します">
+<!ENTITY BackgroundColorButton.tooltip "背景の色を選択します">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "フォントサイズを設定します">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "フォントサイズを縮小します">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "フォントサイズを拡大します">
+<!ENTITY boldToolbarCmd.tooltip "太字">
+<!ENTITY italicToolbarCmd.tooltip "イタリック体">
+<!ENTITY underlineToolbarCmd.tooltip "下線">
+<!ENTITY bulletListToolbarCmd.tooltip "行頭文字付きリストを適用または解除します">
+<!ENTITY numberListToolbarCmd.tooltip "番号付きリストを適用または解除します">
+<!ENTITY outdentToolbarCmd.tooltip "インデント解除 (左へ移動)">
+<!ENTITY indentToolbarCmd.tooltip "インデント (右へ移動)">
+<!ENTITY AlignPopupButton.tooltip "テキストの配置を選択します">
+<!ENTITY InsertPopupButton.tooltip "リンク、アンカー、画像、水平線、表を挿入します">
+<!ENTITY alignLeftButton.tooltip "テキストを左にそろえます">
+<!ENTITY alignCenterButton.tooltip "テキストを中央にそろえます">
+<!ENTITY alignRightButton.tooltip "テキストを右にそろえます">
+<!ENTITY alignJustifyButton.tooltip "2 行以上あるテキストの両端をそろえます">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "挿入">
+<!ENTITY insertTOC.accesskey      "i">
+<!ENTITY updateTOC.label          "更新">
+<!ENTITY updateTOC.accesskey      "u">
+<!ENTITY removeTOC.label          "削除">
+<!ENTITY removeTOC.accesskey      "r">
+<!ENTITY tocMenu.label            "目次...">
+<!ENTITY tocMenu.accesskey        "b">

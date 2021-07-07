@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title "Właściwości konta">
+<!ENTITY accountWindow.width "300">
+
+<!ENTITY account.general "Ogólne">
+<!ENTITY account.advanced "Zaawansowane">
+<!ENTITY account.name "Nazwa użytkownika:">
+<!ENTITY account.password "Hasło:">
+<!ENTITY account.alias "Alias:">
+<!ENTITY account.newMailNotification "Powiadamiaj o nowych wiadomościach e-mail">
+<!ENTITY account.autojoin "Kanały otwierane automatycznie:">
+<!ENTITY account.proxySettings.caption "Ustawienia serwerów proxy:">
+<!ENTITY account.proxySettings.change.label "Zmień…">
+<!ENTITY account.proxySettings.change.accessKey "Z">

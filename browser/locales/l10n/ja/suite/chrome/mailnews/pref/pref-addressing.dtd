@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "アドレス帳">
+<!ENTITY emailCollectiontitle.label            "メールアドレスの収集">
+<!ENTITY emailCollectionPicker.label           "次のアドレス帳に追加する:">
+<!ENTITY emailCollectionPicker.accesskey       "m">
+<!ENTITY emailCollectiontext.label             "送信されるメッセージのメールアドレスは自動的にローカルのアドレス帳に追加されます。">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "アドレスの自動補完">
+<!ENTITY highlightNonMatches.label             "自動補完できないアドレスは強調表示する">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "ローカルのアドレス帳">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "メールアドレスの入力時に、以下に登録されたものから探します:">
+<!ENTITY directories.label                     "LDAP サーバー:">
+<!ENTITY directories.accesskey                 "D">
+<!ENTITY directoriesNone.label                 "なし">
+<!ENTITY editDirectories.label                 "LDAP サーバーを編集...">
+<!ENTITY editDirectories.accesskey             "E">

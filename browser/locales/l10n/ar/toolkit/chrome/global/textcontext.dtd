@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "أضِف إلى القاموس">
+<!ENTITY spellAddToDictionary.accesskey "ف">
+<!ENTITY spellUndoAddToDictionary.label "تراجع عن الإضافة إلى القاموس">
+<!ENTITY spellUndoAddToDictionary.accesskey "ت">
+<!ENTITY spellCheckToggle.label "دقق الإملاء">
+<!ENTITY spellCheckToggle.accesskey "م">
+<!ENTITY spellNoSuggestions.label "(لا اقتراحات إملاء)">
+<!ENTITY spellDictionaries.label "اللغات">
+<!ENTITY spellDictionaries.accesskey "غ">
+
+<!ENTITY searchTextBox.clear.label "امسح">
+
+<!ENTITY fillLoginMenu.label          "املأ بالولوج">
+<!ENTITY fillLoginMenu.accesskey      "م">
+<!ENTITY fillPasswordMenu.label       "املأ بكلمة السر">
+<!ENTITY fillPasswordMenu.accesskey   "م">
+<!ENTITY fillUsernameMenu.label       "املأ باسم المستخدم">
+<!ENTITY fillUsernameMenu.accesskey   "م">
+<!ENTITY noLoginSuggestions.label     "(لا اقتراحات ولوج)">
+<!ENTITY viewSavedLogins.label        "اعرض جلسات الولوج المحفوظة">

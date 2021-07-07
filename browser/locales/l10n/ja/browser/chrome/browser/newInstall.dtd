@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "重要なお知らせ">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "&syncBrand.fxAccount.label; にログインすると、Firefox に保存済みの情報をこの &brandShortName; のインストール先と同期できます。">
+<!ENTITY continue-button "続行">
+
+<!ENTITY mainText "この &brandShortName; のインストール先のプロファイルは新規です。このコンピューターのブックマーク、パスワード、ユーザー設定が他の Firefox (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, Firefox Nightly 含む) のインストール先と共有されることはありません。">

@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Om schijfruimte te besparen, niet downloaden:">
+<!ENTITY doNotDownloadNntp.label "Om schijfruimte te besparen, niet downloaden voor offlinegebruik:">
+<!ENTITY doNotDownloadImap.label "Om schijfruimte te besparen, kan het downloaden van berichten van de server en het bewaren van lokale versies voor offlinegebruik worden beperkt op leeftijd of grootte.">
+<!ENTITY allFoldersOffline2.label "Berichten in alle mappen voor deze account op deze computer bewaren">
+<!ENTITY allFoldersOffline2.accesskey "c">
+<!ENTITY allFoldersOfflineNote.label "Noot: het wijzigen van deze instelling beïnvloedt alle mappen bij deze account. Gebruik de knop Geavanceerd… om afzonderlijke mappen in te stellen.">
+<!ENTITY offlineNotDownload.label "Berichten groter dan">
+<!ENTITY offlineNotDownload.accesskey "r">
+<!ENTITY autosyncNotDownload.label "Berichten niet downloaden die groter zijn dan">
+<!ENTITY autosyncNotDownload.accesskey "B">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "dagen">
+<!ENTITY message.label "">
+<!ENTITY nntpNotDownloadRead.label "Gelezen berichten">
+<!ENTITY nntpNotDownloadRead.accesskey "G">
+<!ENTITY nntpDownloadMsg.label "Berichten ouder dan">
+<!ENTITY nntpDownloadMsg.accesskey "o">
+<!ENTITY retentionCleanup.label "Om schijfruimte vrij te maken, kunnen oude berichten permanent worden verwijderd.">
+<!ENTITY retentionCleanupImap.label "Om schijfruimte vrij te maken, kunnen oude berichten permanent worden verwijderd, zowel de lokale als de originele versies op de server.">
+<!ENTITY retentionCleanupPop.label "Om schijfruimte vrij te maken, kunnen oude berichten permanent worden verwijderd, inclusief de originele op de server.">
+<!ENTITY retentionKeepMsg.label "Berichten verwijderen die ouder zijn dan">
+<!ENTITY retentionKeepMsg.accesskey "u">
+<!ENTITY retentionKeepAll.label "Geen berichten verwijderen">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Alle berichten verwijderen, behalve de meest recente">
+<!ENTITY retentionKeepRecent.accesskey "a">
+<!ENTITY retentionApplyToFlagged.label "Berichten met ster altijd bewaren">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+<!ENTITY nntpRemoveMsgBody.label "Berichtteksten verwijderen die ouder zijn dan">
+<!ENTITY nntpRemoveMsgBody.accesskey "k">
+<!ENTITY offlineSelectNntp.label "Nieuwsgroepen voor offlinegebruik selecteren…">
+<!ENTITY offlineSelectNntp.accesskey "s">
+<!ENTITY offlineImapAdvancedOffline.label "Geavanceerd…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "G">
+<!ENTITY syncGroupTitle.label "Berichten synchroniseren">
+<!ENTITY diskspaceGroupTitle.label "Schijfruimte">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Alle berichten lokaal synchroniseren, ongeacht de leeftijd">
+<!ENTITY allAutosync.accesskey           "s">
+<!ENTITY ageAutosyncBefore.label         "De meest recente">
+<!ENTITY ageAutosync.accesskey           "r">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "dagen">
+<!ENTITY weekAgeInterval.label           "weken">
+<!ENTITY monthAgeInterval.label          "maanden">
+<!ENTITY yearAgeInterval.label           "jaar">
+<!ENTITY ageAutosyncAfter.label          "synchroniseren">

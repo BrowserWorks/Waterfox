@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "主選單">
+<!ENTITY Toolbar.tooltip    "主工具列">
+
+
+<!ENTITY multiline-expand.tooltip   "切換為多行輸入欄位（Ctrl+Up）">
+<!ENTITY multiline-contract.tooltip "切換為單行輸入欄位（Ctrl+Down）">
+<!ENTITY multiline-send.tooltip     "送出這句話（Ctrl+Enter）">
+<!ENTITY server-nick.tooltip        "更改暱稱或設定離開狀態。若要將游標聚焦到輸入框，請按 Esc 鍵。">
+
+<!ENTITY Underline.label             "底線">
+<!ENTITY Bold.label                  "粗體">
+<!ENTITY Normal.label                "標準">
+<!ENTITY Color.label                 "色彩">
+<!ENTITY ForeBack.label              "xx=前景 yy=背景">

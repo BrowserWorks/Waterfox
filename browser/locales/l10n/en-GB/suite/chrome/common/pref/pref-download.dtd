@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Downloads">
+
+<!ENTITY downloadBehavior.label         "When starting a download">
+<!ENTITY doNothing.label                "Don't open anything">
+<!ENTITY doNothing.accesskey            "D">
+<!ENTITY openProgressDialog.label       "Open a progress dialogue">
+<!ENTITY openProgressDialog.accesskey   "O">
+<!ENTITY openDM.label                   "Open the download manager">
+<!ENTITY openDM.accesskey               "m">
+<!ENTITY flashWhenOpen.label            "Just flash the download manager if it is already open">
+<!ENTITY flashWhenOpen.accesskey        "f">
+
+<!ENTITY downloadLocation.label         "When saving a file">
+<!ENTITY saveTo.label                   "Save files to">
+<!ENTITY saveTo.accesskey               "v">
+<!ENTITY chooseDownloadFolder.label     "Choose Folder…">
+<!ENTITY chooseDownloadFolder.accesskey "C">
+<!ENTITY alwaysAsk.label                "Always ask me where to save files">
+<!ENTITY alwaysAsk.accesskey            "A">
+
+<!ENTITY downloadHistory.label          "Download history">
+<!ENTITY removeEntries.label            "Remove download entries">
+<!ENTITY removeEntries.accesskey        "R">
+<!ENTITY whenCompleted.label            "When they have completed">
+<!ENTITY whenQuittingApp.label          "When quitting &brandShortName;">
+<!ENTITY neverRemove.label              "Never">
+
+<!ENTITY finishedBehavior.label         "When a download completes">
+<!ENTITY playSound.label                "Play a sound">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY showAlert.label                "Show an alert">
+<!ENTITY showAlert.accesskey            "S">
+<!ENTITY browse.label                   "Browse…">
+<!ENTITY browse.accesskey               "B">
+<!ENTITY playButton.label               "Play">
+<!ENTITY playButton.accesskey           "l">

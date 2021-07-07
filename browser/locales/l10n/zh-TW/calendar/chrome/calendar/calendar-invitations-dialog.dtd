@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "邀請">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "正在更新邀請清單。">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "沒有找到未確認的邀請。">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "接受">
+<!ENTITY calendar.invitations.list.decline.button.label                 "拒絕">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "重複事件">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "全日事件">
+<!ENTITY calendar.invitations.list.location.text                        "位置: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "邀請人: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "參加者: ">
+<!ENTITY calendar.invitations.list.none.text                            "無">
+

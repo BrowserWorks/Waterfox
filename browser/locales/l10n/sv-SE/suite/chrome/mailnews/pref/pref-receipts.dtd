@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Mottagningskvitton">
+<!ENTITY prefReceipts.caption         "Mottagningskvitton">
+<!ENTITY requestReceipt.label         "Begär alltid mottagningskvitto när meddelanden skickas">
+<!ENTITY requestReceipt.accesskey     "B">
+<!ENTITY receiptArrive.label          "När ett kvitto anländer:">
+<!ENTITY leaveIt.label                "Lämna det i inkorgen">
+<!ENTITY leaveIt.accesskey            "i">
+<!ENTITY moveToSent.label             "Flytta det till mappen &quot;Skickat&quot;">
+<!ENTITY moveToSent.accesskey         "F">
+<!ENTITY requestMDN.label             "När jag får en begäran om mottagningskvitto:">
+<!ENTITY returnSome.label             "Tillåt mottagningskvitton för vissa meddelanden:">
+<!ENTITY returnSome.accesskey         "T">
+<!ENTITY never.label                  "Skicka aldrig mottagningskvitto">
+<!ENTITY never.accesskey              "S">
+<!ENTITY notInToCc.label              "Om jag själv inte står med i Till eller Kopia:">
+<!ENTITY notInToCc.accesskey          "O">
+<!ENTITY outsideDomain.label          "Om avsändaren inte är i min domän:">
+<!ENTITY outsideDomain.accesskey      "d">
+<!ENTITY otherCases.label             "I övriga fall:">
+<!ENTITY otherCases.accesskey         "ö">
+<!ENTITY askMe.label                  "Fråga">
+<!ENTITY alwaysSend.label             "Skicka alltid">
+<!ENTITY neverSend.label              "Skicka aldrig">

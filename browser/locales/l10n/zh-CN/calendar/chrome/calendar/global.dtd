@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "午夜" >
+<!ENTITY time.noon "中午" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "日" >
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "一" >
+<!ENTITY day.2.Ddd.accesskey "M">
+<!ENTITY day.3.Ddd "二" >
+<!ENTITY day.3.Ddd.accesskey "T">
+<!ENTITY day.4.Ddd "三" >
+<!ENTITY day.4.Ddd.accesskey "W">
+<!ENTITY day.5.Ddd "四" >
+<!ENTITY day.5.Ddd.accesskey "h">
+<!ENTITY day.6.Ddd "五" >
+<!ENTITY day.6.Ddd.accesskey "F">
+<!ENTITY day.7.Ddd "六" >
+<!ENTITY day.7.Ddd.accesskey "a">
+
+<!ENTITY day.1.name "星期日" >
+<!ENTITY day.2.name "星期一" >
+<!ENTITY day.3.name "星期二" >
+<!ENTITY day.4.name "星期三" >
+<!ENTITY day.5.name "星期四" >
+<!ENTITY day.6.name "星期五" >
+<!ENTITY day.7.name "星期六" >
+
+<!ENTITY month.1.name "一月" >
+<!ENTITY month.2.name "二月" >
+<!ENTITY month.3.name "三月" >
+<!ENTITY month.4.name "四月" >
+<!ENTITY month.5.name "五月" >
+<!ENTITY month.6.name "六月" >
+<!ENTITY month.7.name "七月" >
+<!ENTITY month.8.name "八月" >
+<!ENTITY month.9.name "九月" >
+<!ENTITY month.10.name "十月" >
+<!ENTITY month.11.name "十一月" >
+<!ENTITY month.12.name "十二月" >
+
+<!ENTITY onemonthbackward.tooltip "上一月" >
+<!ENTITY onemonthforward.tooltip "下一月" >
+<!ENTITY oneyearbackward.tooltip "前一年" >
+<!ENTITY oneyearforward.tooltip "后一年" >
+<!ENTITY showToday.tooltip "转至今日">
+<!ENTITY onedayforward.tooltip "下一日">
+<!ENTITY onedaybackward.tooltip "延后一天">
+<!ENTITY showselectedday.tooltip "显示所选日期的事件">

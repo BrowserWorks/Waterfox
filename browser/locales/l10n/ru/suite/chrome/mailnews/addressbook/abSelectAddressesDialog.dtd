@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Выбор адресов">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Кому->"> 
+<!ENTITY toButton.accesskey                  "К"> 
+<!ENTITY ccButton.label                      "Копия->"> 
+<!ENTITY ccButton.accesskey                  "о"> 
+<!ENTITY bccButton.label                     "Скрытая копия->">  
+<!ENTITY bccButton.accesskey                 "р">  
+<!ENTITY newButton.label                     "Создать…"> 
+<!ENTITY newButton.accesskey                 "С"> 
+<!ENTITY editButton.label                    "Изменить…"> 
+<!ENTITY editButton.accesskey                "И">
+<!ENTITY removeButton.label                  "Удалить"> 
+<!ENTITY removeButton.accesskey              "У"> 
+<!ENTITY lookIn.label                        "Искать в:"> 
+<!ENTITY lookIn.accesskey                    "в"> 
+<!ENTITY for.label                           "кого:"> 
+<!ENTITY for.accesskey                       "к"> 
+<!ENTITY for.placeholder                     "Имя или e-mail адрес">
+<!ENTITY addressMessageTo.label              "Адресовать сообщение:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Создание карточки адресной книги"> 
+<!ENTITY addressPickerEditButton.tooltip     "Изменение выбранной карточки"> 
+

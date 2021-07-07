@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Bygg oppatt programøkta">
+<!ENTITY restorepage.pagetitle      "Vil du byggje oppatt programøkta?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Den siste &brandShortName;-programøkta fekk eit uventa avbrot. Vi beklagar det. Du kan byggje oppatt faner og vindauge frå siste programøkt, eller du kan starte ei ny programøkt dersom du ikkje treng dei meir.">
+<!ENTITY restorepage.remedies       "Dersom &brandShortName; avsluttar mange gongar:">
+<!ENTITY restorepage.dueToChrome    "Prøv då å slå av utvidingar du nyleg har installert i Utvidingshandteraren.">
+<!ENTITY restorepage.dueToContent   "Prøv å starte programøkta utan nettsider som du trur kan ha forårsaka problemet:">
+
+<!ENTITY restorepage.restoreButton  "Bygg oppatt siste programøkt">
+<!ENTITY restorepage.restore.access "B">
+<!ENTITY restorepage.cancelButton   "Start ny programøkt">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "Bygg oppatt">
+<!ENTITY restorepage.listHeader     "Vindauge og faner">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Vindauge &#37;S">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Extrafönster">
+
+<!ENTITY pref.popups.caption            "Extrafönster">
+
+<!ENTITY popupBlock.label               "Blockera oönskade extrafönster">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Hantera tillåtna extrafönster">
+<!ENTITY viewPermissions.accesskey      "t">
+
+<!ENTITY whenBlock.description          "När ett extrafönster har blockerats:">
+<!ENTITY playSound.label                "Ge en ljudsignal:">
+<!ENTITY playSound.accesskey            "e">
+<!ENTITY systemSound.label              "Systemets pipsignal">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "Anpassad ljudfil">
+<!ENTITY customSound.accesskey          "A">
+
+<!ENTITY selectSound.label              "Välj…">
+<!ENTITY selectSound.accesskey          "ä">
+<!ENTITY playSoundButton.label          "Spela">
+<!ENTITY playSoundButton.accesskey      "l">
+
+<!ENTITY displayIcon.label              "Visa en ikon i statusfältet">
+<!ENTITY displayIcon.accesskey          "V">
+
+<!ENTITY displayNotification.label      "Visa meddelande i innehållsfönstrets överkant">
+<!ENTITY displayNotification.accesskey  "m">
+
+<!ENTITY popupNote.description          "Obs! Om du blockerar extrafönster kan en del viktiga funktioner på vissa webbplatser upphöra att fungera, till exempel bankers och shoppingplatsers inloggningsfönster. Klicka på Hjälp om du vill veta mer om hur du låter vissa webbplatser öppna fönster samtidigt som du blockerar andra. Blockerade webbplatser kan kringgå detta och använda andra metoder att öppna extrafönster.">
+

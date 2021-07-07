@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Downloadbeheerder">
+
+<!ENTITY menuBar.tooltip                 "Menubalk">
+<!ENTITY searchBar.tooltip               "Zoekbalk">
+
+<!ENTITY search.placeholder              "Downloads doorzoeken">
+<!ENTITY search.label                    "Downloads doorzoeken">
+<!ENTITY search.accesskey                "Z">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Lijst wissen">
+<!ENTITY cmd.clearList.tooltip           "Verwijdert voltooide, geannuleerde en mislukte downloads uit de lijst">
+<!ENTITY cmd.clearList.accesskey         "s">
+
+<!ENTITY col.name.label                  "Naam">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Bestandsnaam">
+<!ENTITY col.status.label                "Status">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "Status">
+<!ENTITY col.actionPlay.label            "Pauzeren/hervatten/opnieuw proberen">
+<!ENTITY col.actionPlay.accesskey        "P">
+<!ENTITY col.actionPlay.tooltip          "Pauzeren/hervatten/opnieuw proberen">
+<!ENTITY col.actionStop.label            "Annuleren/verwijderen">
+<!ENTITY col.actionStop.accesskey        "A">
+<!ENTITY col.actionStop.tooltip          "Annuleren/verwijderen">
+<!ENTITY col.progress.label              "Voortgang">
+<!ENTITY col.progress.accesskey          "V">
+<!ENTITY col.progress.tooltip            "Voortgang">
+<!ENTITY col.timeremaining.label         "Resterende tijd">
+<!ENTITY col.timeremaining.accesskey     "R">
+<!ENTITY col.timeremaining.tooltip       "Resterende tijd">
+<!ENTITY col.transferred.label           "Overgebracht">
+<!ENTITY col.transferred.accesskey       "c">
+<!ENTITY col.transferred.tooltip         "Overgebracht">
+<!ENTITY col.transferrate.label          "Snelheid">
+<!ENTITY col.transferrate.accesskey      "d">
+<!ENTITY col.transferrate.tooltip        "Snelheid">
+<!ENTITY col.timeelapsed.label           "Verstreken tijd">
+<!ENTITY col.timeelapsed.accesskey       "e">
+<!ENTITY col.timeelapsed.tooltip         "Verstreken tijd">
+<!ENTITY col.starttime.label             "Begintijd">
+<!ENTITY col.starttime.accesskey         "t">
+<!ENTITY col.starttime.tooltip           "Begintijd">
+<!ENTITY col.endtime.label               "Eindtijd">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "Eindtijd">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Voortgang (&#37;)">
+<!ENTITY col.source.label                "Bron">
+<!ENTITY col.source.accesskey            "B">
+<!ENTITY col.source.tooltip              "Bron">
+
+<!ENTITY view.columns.label              "Kolommen tonen">
+<!ENTITY view.columns.accesskey          "K">
+<!ENTITY view.sortBy.label               "Sorteren op">
+<!ENTITY view.sortBy.accesskey           "S">
+
+<!ENTITY view.unsorted.label             "Ongesorteerd">
+<!ENTITY view.unsorted.accesskey         "O">
+<!ENTITY view.sortAscending.label        "Sorteervolgorde A > Z">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Sorteervolgorde Z > A">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "Pauzeren">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "Hervatten">
+<!ENTITY cmd.resume.accesskey            "H">
+<!ENTITY cmd.retry.label                 "Opnieuw proberen">
+<!ENTITY cmd.retry.accesskey             "O">
+<!ENTITY cmd.cancel.label                "Annuleren">
+<!ENTITY cmd.cancel.accesskey            "n">
+<!ENTITY cmd.remove.label                "Verwijderen uit lijst">
+<!ENTITY cmd.remove.accesskey            "V">
+<!ENTITY cmd.open.label                  "Openen">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Bijbehorende map openen">
+<!ENTITY cmd.show.accesskey              "m">
+<!ENTITY cmd.goToDownloadPage.label      "Naar downloadpagina gaan">
+<!ENTITY cmd.goToDownloadPage.accesskey  "d">
+<!ENTITY cmd.copyDownloadLink.label      "Downloadkoppeling kopiëren">
+<!ENTITY cmd.copyDownloadLink.accesskey  "k">
+<!ENTITY cmd.properties.label            "Eigenschappen…">
+<!ENTITY cmd.properties.accesskey        "E">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Downloaden toestaan">
+<!ENTITY cmd.unblock2.accesskey           "o">

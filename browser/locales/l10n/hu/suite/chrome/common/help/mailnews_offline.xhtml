@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Kapcsolat nélküli munka</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+
+<h1 id="working_offline">Kapcsolat nélküli munka</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#setting_up_mozilla_mail_and_newsgroups_to_work_offline">A Levelező és hírolvasó beállítása kapcsolat nélküli munkára</a></li>
+    <li><a href="#downloading_your_inbox_for_offline_use">A Beérkezett üzenetek mappa letöltése kapcsolat nélküli munkához</a></li>
+    <li><a href="#downloading_an_individual_folder_for_offline_use">Adott mappa letöltése kapcsolat nélküli munkához</a></li>
+    <li><a href="#downloading_selected_or_flagged_messages_for_offline_use">Kijelölt vagy megjelölt üzenetek letöltése kapcsolat nélküli munkához</a></li>
+    <li><a href="#downloading_directory_entries_for_offline_use">Címtárbejegyzések letöltése kapcsolat nélküli használatra</a></li>
+    <li><a href="#setting_up_your_accounts_for_working_offline">Fiókok beállítása kapcsolat nélküli munkához</a></li>
+    <li><a href="#selecting_items_for_offline_viewing">Elemek kijelölése kapcsolat nélküli megtekintésre</a></li>
+    <li><a href="#downloading_and_synchronizing_your_messages">Üzenetek letöltése és szinkronizálása</a></li>
+    <li><a href="#working_offline_and_reconnecting_later">Kapcsolat nélküli munka, majd később csatlakozás</a></li>
+  </ul>
+</div>
+
+<h2 id="setting_up_mozilla_mail_and_newsgroups_to_work_offline">A &brandShortName; Levelező és hírolvasó beállítása kapcsolat nélküli munkára</h2>
+
+<p>A &brandShortName; Levelező és hírolvasó lehetővé teszi a kapcsolat nélküli munkát is: letölthetők a levelek, és ezek olvasása már internetkapcsolat nélkül végrehajtható. Ha modemes kapcsolaton keresztül érjük el a leveleket, és csökkenteni szeretnénk a kapcsolódás idejét, vagy átmenetileg le kell kapcsolódnunk a vállalati kiszolgálóról, a leveleket letölthetjük kapcsolat nélküli olvasásra. A kapcsolat nélküli munka szolgáltatással automatikusan letölthetők a beérkezett levelek, míg az elküldendő üzeneteket a program akkor postázza, amikor újból létrehozzuk a kapcsolatot.</p>
+
+<p>Megjegyezendő, hogy a POP postafiókokban tárolt levelek alapértelmezés szerint letöltésre kerülnek, így a legtöbb kapcsolat nélküli munkára vonatkozó kitétel a POP postafiókokra nem vonatkozik.</p>
+
+<p>Ha alkalomszerűen szeretnénk kapcsolat nélkül dolgozni, a &brandShortName; Levelező és hírolvasó a következők végrehajtását teszi lehetővé:</p>
+
+<ul>
+  <li>A Beérkezett üzenetek mappa letöltése kapcsolat nélküli munkához.</li>
+  <li>Adott mappa letöltése kapcsolat nélküli munkához.</li>
+  <li>Csak a kijelölt vagy a megjelölt üzenetek letöltése kapcsolat nélküli munkához.</li>
+  <li>Címtárbejegyzések letöltése a címjegyzékbe kapcsolat nélküli használatra</li>
+</ul>
+
+<p>Ha gyakran dolgozunk kapcsolat nélkül, a &brandShortName; Levelező és hírolvasó emellett a következőket is biztosítja:</p>
+
+<ul>
+  <li>Egy vagy több fiók beállítása kapcsolat nélküli munkára.</li>
+  <li>A kapcsolat nélküli működés és a lemezterület beállításainak megadás az egyes fiókoknál.</li>
+  <li>A kapcsolat nélkül megtekinteni kívánt mappák és hírcsoportok kijelölése</li>
+</ul>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="downloading_your_inbox_for_offline_use">A Beérkezett üzenetek mappa letöltése kapcsolat nélküli munkához</h2>
+
+<p>Beállítható, hogy a &brandShortName; Levelező és hírolvasó automatikusan letöltse a Beérkezett üzenetek mappa tartalmát kapcsolat nélküli munkához. Amikor később újból kapcsolódunk, a &brandShortName; Levelező és hírolvasó automatikusan szinkronizálja a Beérkezett üzenetek tartalmát a kiszolgálóval.</p>
+
+<p>Megjegyezendő, hogy a POP postafiókokban tárolt beérkező levelek alapértelmezés szerint letöltésre kerülnek, így ez a kitétel a POP postafiókokra nem vonatkozik.</p>
+
+<p>Kapcsolat nélküli munkához a Beérkezett üzenetek mappa automatikus letöltéséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>A párbeszédpanel bal oldalán jelöljük ki a kapcsolat nélküli munkához használni kívánt postafiókot, és kattintsunk a Hálózat nélkül és lemezterület elemre. (Ez a kategória POP postafiókoknál nem áll rendelkezésre.)</li>
+  <li>Jelöljük be <q>A Beérkezett üzenetek mappában található leveleket tegye elérhetővé akkor is, amikor kapcsolat nélküli módban vagyok</q> négyzetet.</li>
+  <li>Kattintsunk az OK gombra.</li>
+  <li>A mappák ablaktábláján, a kapcsolat nélkül használni kívánt postafiók neve alatt kattintsunk a Beérkezett üzenetek mappán kívül bármelyik mappára. Például kattintsunk az Elküldött elemek vagy a Piszkozatok mappára. Ezután kattintsunk a Beérkezett üzenetek mappára az üzenetek letöltéséhez.</li>
+  <li>Miután a letöltés befejeződött, kattintsunk az <img src="images/online.png" alt=""/> ikonra a Levelező ablak jobb alsó sarkában (a Süti ikon bal oldalán) a kapcsolat nélküli üzemmódhoz.</li>
+</ol>
+
+<p>A &brandShortName; Levelező és hírolvasó automatikusan letölti a Beérkezett üzenetek mappa tartalmát, így az üzenetek kapcsolat nélkül is elolvashatók és megválaszolhatók.
+  A lekapcsolódás után a &brandShortName; Levelező és hírolvasó megnyitva marad, így folytathatjuk a munkát.</p>
+
+<p>Csatlakozás az internetre online munkához:</p>
+
+<ul>
+  <li>Kattintsunk az <img src="images/offline.png"
+    alt=""/> ikonra a Levelező ablak jobb alsó sarkában (a Süti ikon bal oldalán) az on-line üzemmódhoz.</li>
+</ul>
+
+<p>Amikor visszatérünk az online üzemmódra, a &brandShortName; Levelező és hírolvasó automatikusan szinkronizálja a Beérkezett üzenetek mappa tartalmát a kiszolgálóval, azaz lekéri a kapcsolat nélküli munka ideje alatt történt változásokat.</p>
+
+<p><strong>Tipp</strong>: a &brandShortName; Levelező és hírolvasó a kapcsolat nélküli munka során elküldött üzeneteket a Helyi mappák alatti Postázandó üzenetek mappában tárolja. Ha azt szeretnénk, hogy a &brandShortName; Levelező &amp; és hírolvasó kapcsolódáskor automatikusan küldje el a postázandó leveleinket, akkor használjuk a Beállítások parancsot a <span class="mac">&brandShortName;</span>
+  <span class="noMac">Szerkesztés</span>menüben <a href="#offline_and_disk_space_preferences">a hálózat nélküli beállítások</a> megváltoztatásához az összes postafiókra.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="downloading_an_individual_folder_for_offline_use">Adott mappa letöltése kapcsolat nélküli munkához</h2>
+
+<p>Megjegyezendő, hogy a POP postafiókokban tárolt mappák kezelésére nincsen lehetőség, így ez a kitétel a POP postafiókokra nem vonatkozik.</p>
+
+<p>Kapcsolat nélküli munkához adott mappa letöltéséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>A Levelező ablak bal oldalán jelöljük ki a kapcsolat nélküli munkához letölteni kívánt mappát.</li>
+  <li>Válasszuk a Szerkesztés menü Mappatulajdonságok parancsát. A Tulajdonságok párbeszédpanel jelenik meg.</li>
+  <li>Térjünk át a Kapcsolat nélküli panellapra.</li>
+  <li>Jelöljük be az <q>Ezt a mappát válassza kapcsolat nélküli használathoz</q>négyzetet.</li>
+  <li>Ha a mappa üzeneteinek letöltését azonnal meg szeretnénk kezdeni, kattintsunk a Letöltés most gombra. Azt is megtehetjük, hogy folytatjuk a munkát, és amikor készen állunk a kapcsolat nélküli üzemmódra, végrehajtjuk a következő lépést.</li>
+  <li>Kattintsunk az img src="images/online.png" alt=""/> ikonra a Levelező ablak jobb alsó sarkában a kapcsolat nélküli üzemmódhoz.</li>
+  <li>A Kapcsolat nélküli munka párbeszédpanelen kattintsunk a Letöltés gombra.</li>
+</ol>
+
+<p>A &brandShortName; Levelező és hírolvasó automatikusan letölti a kijelölt mappa összes üzenetét, így azok kapcsolat nélkül is elolvashatók és megválaszolhatók. A lekapcsolódás után a &brandShortName; Levelező és hírolvasó megnyitva marad, így folytathatjuk a munkát.</p>
+
+<p><strong>Megjegyzés</strong>: a kapcsolat nélküli munkára letöltött üzenetek fejlécei sötétebb szürke boríték vagy hírcsoport ikont jelenítenek meg.</p>
+
+<p>Csatlakozás az internetre online munkához:</p>
+
+<ul>
+  <li>Kattintsunk az <img src="images/offline.png"
+    alt=""/> ikonra a Levelező ablak jobb alsó sarkában (a Süti ikon bal oldalán) az on-line üzemmódhoz.</li>
+</ul>
+
+<p>A &brandShortName; Levelező és hírolvasó automatikusan szinkronizálja a kapcsolat nélküli mappákat a kiszolgálóval, azaz lekéri a kapcsolat nélküli munka alatt történt változásokat.</p>
+
+<p><strong>Tipp</strong>: a &brandShortName; Levelező és hírolvasó a kapcsolat nélküli munka során elküldött üzeneteket a Helyi mappák alatti Postázandó üzenetek mappában tárolja. Amikor újból létrehozzuk a kapcsolatot, az összes ilyen üzenet elküldéséhez válasszuk a Fájl menü Postázandó üzenetek elküldése parancsát. Ha azt szeretnénk, hogy a &brandShortName; Levelező és hírolvasó kapcsolódáskor automatikusan küldje el a postázandó leveleinket, akkor használjuk a Beállítások parancsot a <span class="mac">&brandShortName;</span> <span class="noMac">Szerkesztés</span>
+  menüben <a href="#offline_and_disk_space_preferences">a hálózat nélküli beállítások</a> megváltoztatásához.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="downloading_selected_or_flagged_messages_for_offline_use">Kijelölt vagy megjelölt üzenetek letöltése kapcsolat nélküli munkához</h2>
+
+<p>Megjegyezendő, hogy a POP postafiókokban tárolt levelek alapértelmezés szerint letöltésre kerülnek. Amennyiben bekapcsolja a <q>Csak a fejlécek letöltése</q> lehetőséget a POP postafiók kiszolgáló beállításai ablakban, akkor csak a levelek fejléce kerül letöltésre és a levelek teljes letöltéséhez a fejezetben leírt parancsot kell alkalmazni.</p>
+
+<p>Kapcsolat nélküli munkához a kijelölt üzenetek letöltéséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Üzeneteinek megjelenítéséhez jelöljünk ki egy levelező vagy hírcsoportmappát.</li>
+  <li>Jelöljük ki a letölteni kívánt üzeneteket:
+    <ul>
+      <li>Szomszédos üzenetek kijelöléséhez kattintsunk az első üzenetre, tartsuk lenyomva a Shift billentyűt, és kattintsunk a csoport utolsó üzenetére.</li>
+      <li>Több különálló üzenet kijelöléséhez tartsuk lenyomva a <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd> billentyűt, és kattintsunk sorban a kívánt üzenetekre.</li>
+    </ul>
+  </li>
+  <li>Válasszuk a Fájl menüből a Hálózat nélkül, majd a Kijelölt üzenetek letöltése parancsot. A &brandShortName; Levelező és hírolvasó letölti a kijelölt üzeneteket.</li>
+</ol>
+
+<p>Kapcsolat nélküli munkához a megjelölt üzenetek letöltéséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Üzeneteinek megjelenítéséhez jelöljünk ki egy levelező vagy hírcsoportmappát.</li>
+  <li>A letölteni kívánt üzeneteknél kattintsunk a Jelölés oszlopra. Az ilyen üzeneteknél a megfelelő szimbólum jelenik meg. Ha a Jelölés oszlop nem látható, megjelenítéséhez kattintsunk az oszlopok megjelenítésére, illetve elrejtésére szolgáló <img src="images/columns.png" alt=""/> gombra, és jelöljük ki a Jelölés oszlopot a listán.</li>
+  <li>Válasszuk a Fájl menüből a Hálózat nélkül, majd a Megjelölt üzenetek letöltése parancsot.
+    A &brandShortName; Levelező és hírolvasó letölti a megjelölt üzeneteket.</li>
+</ol>
+
+<p>Miután a letöltés befejeződött, kattintsunk az <img src="images/online.gif" hspace="0" vspace="0" /> ikonra a Levelező ablak jobb alsó sarkában (a Süti ikon bal oldalán) a kapcsolat nélküli üzemmódhoz. A lekapcsolódás után a &brandShortName; Levelező és hírolvasó megnyitva marad, így folytathatjuk a munkát.</p>
+
+<p>Érdemes megjegyezni, hogy a <q>Kijelölt üzenetek letöltése</q> és a <q>Zászlócskával megjelölt üzenetek letöltése</q> menüelemek továbbra is elérhetőek maradnak a helyi menüből a gyorsabb elérés érdekében</p>
+
+<p><strong>Megjegyzés</strong>: a kapcsolat nélküli munkára letöltött üzenetek fejlécei sötétebb szürke boríték vagy hírcsoport ikont jelenítenek meg.</p>
+
+<p>Csatlakozás az internetre online munkához:</p>
+
+<ul>
+  <li>Kattintsunk az<img src="images/offline.png"
+    alt=""/> ikonra a Levelező ablak jobb alsó sarkában az on-line üzemmódhoz.</li>
+</ul>
+
+<p><strong>Tipp</strong>: a &brandShortName; Levelező és hírolvasó a kapcsolat nélküli munka során elküldött üzeneteket a Helyi mappák alatti Postázandó üzenetek mappában tárolja. Amikor újból létrehozzuk a kapcsolatot, az összes ilyen üzenet elküldéséhez válasszuk a Fájl menü Postázandó üzenetek elküldése parancsát. Ha azt szeretnénk, hogy a &brandShortName; Levelező &amp; és hírolvasó kapcsolódáskor automatikusan küldje el a postázandó leveleinket, akkor használjuk a Beállítások parancsot a <span class="mac">&brandShortName;</span> <span class="noMac">Szerkesztés</span>menüben<a href="#offline_and_disk_space_preferences">a hálózat nélküli beállítások</a> megváltoztatásához.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="downloading_directory_entries_for_offline_use">Címtárbejegyzések letöltése kapcsolat nélküli használatra</h2>
+
+<p>Egy címtár bejegyzéseit letölthetjük (lemásolhatjuk) a saját számítógépünkre, így azok akkor is elérhetőek maradnak, amikor kapcsolat nélküli üzemmódban dolgozunk. Ha már letöltöttük a címtárbejegyzéseket, ugyanezzel az eljárással frissíthetjük a helyi másolatot a címtárban található legújabb bejegyzésekkel.</p>
+
+<p>LDAP-címtár kapcsolat nélküli munkához történő letöltéséhez vagy frissítéséhez:</p>
+
+<ol>
+  <li>Legyünk on-line üzemmódban.</li>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát.</li>
+  <li>A Címjegyzék ablakban jelöljük ki a letölteni (lemásolni) kívánt címtárat.</li>
+  <li>A Címjegyzék eszköztáron kattintsunk a Tulajdonságok gombra. A Címtárkiszolgáló tulajdonságai párbeszédpanel jelenik meg.</li>
+  <li>Térjünk át a Kapcsolat nélküli panellapra.</li>
+  <li>Kattintsunk a Letöltés gombra a bejegyzések másolásának megkezdéséhez.</li>
+  <li>Ha szükséges, adjuk meg a hálózati felhasználói nevünket és jelszavunkat, majd a letöltés megkezdéséhez kattintsunk az OK gombra.
+
+    <p>A címtárbejegyzések számától függően a letöltési folyamat sok ideig is eltarthat, legyünk türelmesek.</p>
+  </li>
+</ol>
+
+<p>A letöltés befejeződése után kapcsolat nélküli módba léphetünk, és kereshetünk a címtárban, valamint használhatjuk címkiegészítésre új üzenetek írásánál. Bizonyos idő eltelte után esetleg frissíteni szeretnénk a helyi másolatot a címtár legújabb bejegyzéseivel. A helyi másolat frissítéséhez kövessük a fent leírt lépéseket.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="setting_up_your_accounts_for_working_offline">Fiókok beállítása kapcsolat nélküli munkához</h2>
+
+<p>Egy vagy több postafióknál a kapcsolat nélküli munka megadásához a Postafiók beállításai párbeszédpanel Hálózat nélkül és lemezterület kategóriáját használjuk. Ha ezt megfelelően beállítjuk, nem kell ismételten ezzel foglalkozni, amikor kapcsolat nélküli munkára szeretnénk áttérni. A kapcsolat nélküli munka és lemezterület beállításai a postafiók típusától (IMAP, POP vagy hírcsoport) függően változnak.</p>
+
+<p>A fiókok a következő lépésekkel állíthatók be kapcsolat nélküli munkához:</p>
+
+<ol>
+  <li>Minden kapcsolat nélküli munkára használni kívánt postafióknál a Postafiók beállításai párbeszédpanel Hálózat nélkül és lemezterület kategóriájában adjuk meg a megfelelő beállításokat. Ki kell jelölnünk azokat az elemeket (mappák, hírcsoportok), amelyeket kapcsolat nélküli munkára le szeretnénk tölteni. További tudnivalók: <a href="#selecting_items_for_offline_viewing">Elemek kijelölése kapcsolat nélküli megtekintésre</a>.
+
+    <p>Megfelelő megadásuk után nem kell módosítani ezeket a beállításokat. Az <a href="#offline_and_disk_space_settings_imap">IMAP</a>, a <a href="#disk_space_settings">POP</a> és a <a href="#offline_and_disk_space_settings_nntp">hírcsoport</a> postafiókoknál a kapcsolat nélküli munka és a lemezterület beállításait a megfelelő szakaszok ismertetik.</p>
+
+    <p><strong>Tipp</strong>: az aktuális postafióknál a kapcsolat nélküli munka és a lemezterület beállításához válasszuk a Fájl menüből a Hálózat nélkül, majd a Hálózat nélküli üzemmód parancsot.</p>
+  </li>
+  <li>Válasszuk a Fájl menüből a Hálózat nélkül, majd a Letöltés/szinkronizálás azonnal parancsot.</li>
+  <li>Jelöljük ki a letölteni kívánt üzenetek típusát (levél, hírcsoport vagy mindkettő).
+
+    <p><strong>Fontos</strong>: a letöltés működéséhez legalább egy kategóriát (levelek vagy hírcsoportüzenetek) meg kell adni.</p>
+  </li>
+  <li>Jelöljük be a  <q>Kapcsolat nélküli üzemmód a letöltés/szinkronizálás befejezése után</q> négyzetet.</li>
+  <li>Kattintsunk az OK gombra a kijelölt elemek letöltéséhez és a kapcsolat nélküli munkához. További tudnivalók: <a href="#downloading_and_synchronizing_your_messages">Üzenetek letöltése és szinkronizálása</a>.</li>
+</ol>
+
+<p>Az ezután következő kapcsolat nélküli munkameneteknél kihagyhatjuk az 1. lépést.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="selecting_items_for_offline_viewing">Elemek kijelölése kapcsolat nélküli megtekintésre</h2>
+
+<p>Mielőtt kapcsolat nélküli üzemmódban elolvashatnánk a leveleket és a hírcsoportüzeneteket, ki kell jelölnünk ezeket letöltésre. Kijelölhetünk teljes postafiókot a kapcsolat nélküli munkához, de megadhatjuk azokat a mappákat vagy hírcsoportokat is, amelyeket így szeretnénk használni.</p>
+
+<p><strong>Megjegyzés</strong>: ügyeljünk arra, hogy minél több elemet jelölünk ki, annál hosszabb lesz a letöltési idő, és annál több lemezterületre lesz szükség.</p>
+
+<p>Kapcsolat nélküli munkához a postafiókok, mappák és hírcsoportok kijelöléséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Váltsunk át a kívánt postafiók Hálózat nélkül és lemezterület kategóriájára.</li>
+  <li>Kattintsunk a Kiválasztás gombra. Az IMAP-postafiókok, a levelezési mappák és az előfizetett hírcsoportok jelennek meg.
+
+    <p><strong>Megjegyzés</strong>: csak azok a hírcsoportok és mappák láthatók itt, amelyekre korábban <a href="#subscribing_to_newsgroups">feliratkoztunk</a>. a POP postafiókok és a helyi levelezési mappák nem jelennek meg a listán.</p>
+  </li>
+  <li>Jelöljük ki a kapcsolat nélküli munkához a kívánt elemeket (mappák, hírcsoportok).</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>A megfelelő beállítások megadása után nem kell ismételten ezzel foglalkozni, amikor kapcsolat nélküli munkára szeretnénk áttérni. Ha viszont módosítani szeretnénk ezeket, ez egyszerűen végrehajtható a kapcsolat nélküli üzemmód választása előtt, hiszen a Kiválasztás gomb a <a href="#downloading_and_synchronizing_your_messages">Letöltés/szinkronizálás azonnal</a> parancs választása után is rendelkezésre áll.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="downloading_and_synchronizing_your_messages">Üzenetek letöltése és szinkronizálása</h2>
+
+<p>A hálózat nélküli munkára a kívánt mappák és hírcsoportok kijelölése után következhet a letöltés és a szinkronizálás. Ha nem jelöltük ki a letöltendő elemeket, ez még megtehető a kapcsolat nélküli üzemmód választása előtt.</p>
+
+<p>A Letöltés/szinkronizálás azonnal párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<p>Az üzenetek letöltéséhez és szinkronizálásához induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Fájl menüből a Hálózat nélkül, majd a Letöltés/szinkronizálás azonnal parancsot.</li>
+  <li>Jelöljük ki a letölteni kívánt kategóriákat (levél vagy hírcsoport).
+
+    <p><strong>Fontos</strong>: a letöltés működéséhez legalább egy kategóriát (Levelek vagy Hírcsoportüzenetek) meg kell adni. Ha a négyzetek nem jelölhetők be, akkor nem választottunk letöltendő elemeket. A Kiválasztás gombra kattintva tegyük ezt most meg.</p>
+  </li>
+  <li>Ha a kapcsolat nélküli üzemmód előtt a Postázandó üzenetek mappa tartalmát el szeretnénk küldeni, jelöljük be a <q>Postázandó üzenetek elküldése</q> négyzetet.</li>
+  <li>Ha a letöltés befejeződése után azonnal kapcsolat nélküli üzemmódba szeretnénk lépni, jelöljük be a <q>Kapcsolat nélküli üzemmód a letöltés/szinkronizálás befejezése után</q> négyzetet.</li>
+  <li>A letöltendő elemek beállításához vagy módosításához kattintsunk a Kiválasztás gombra. További tudnivalók: <a href="#selecting_items_for_offline_viewing">Elemek kijelölése kapcsolat nélküli megtekintésre</a>. Ha korábban megadtuk ezeket az elemeket, a lépést kihagyhatjuk.</li>
+  <li>Kattintsunk az OK gombra. A &brandShortName; Levelező és hírolvasó megkezdi a kijelölt elemek letöltését.</li>
+</ol>
+
+<p>Ha a műveletek befejezése után azonnali kapcsolat nélküli üzemmódot állítottunk be, a &brandShortName; Levelező és hírolvasó áttér erre az üzemmódra.
+  Egyébként amikor készen állunk a kapcsolat nélküli munkára, kattintsunk az <img src="images/online.png" alt=""/> ikonra a Levelező ablak jobb alsó sarkában.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="working_offline_and_reconnecting_later">Kapcsolat nélküli munka, majd később csatlakozás</h2>
+
+<p>A műveletek végrehajtásához induljunk ki a Levelező ablakból.</p>
+
+<p>Ha készen állunk a kapcsolat nélküli munkára:</p>
+
+<ol>
+  <li>Kattintsunk az <img src="images/online.png" alt=""/> ikonra a Levelező ablak jobb alsó sarkában. A Mozilla Levelező és hírolvasó megkérdezi, hogy előtte le kívánjuk-e tölteni az üzeneteket.</li>
+  <li>Az üzenetek letöltéséhez kattintsunk a Letöltés gombra, ha e nélkül kívánunk áttérni a kapcsolat nélküli üzemmódra, kattintsunk a Letöltés nélkül gombra.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: a kapcsolat nélküli munkára letöltött üzenetek fejlécei sötétebb szürke boríték vagy hírcsoport ikont jelenítenek meg.</p>
+
+<p><strong>Tipp</strong>: A &brandShortName; Levelező &amp; és hírolvasó kapcsolat nélküli üzemmódba lépéskori teendőinek beállításához nyissuk meg a <span class="mac">&brandShortName;</span> <span class="noMac">Szerkesztés</span> menü Beállítások parancsát és válasszuk a Hálózat nélkül &amp; és lemezterület kategóriát. Megadhatjuk, hogy a kapcsolat nélküli munka választásakor a &brandShortName; Levelező és hírolvasó rákérdezzen az üzenetek letöltésére, automatikusan töltse le az üzeneteket, vagy ne töltsön le üzeneteket.</p>
+
+<p>Újracsatlakozás és az üzenetek szinkronizálása:</p>
+
+<ol>
+  <li>Kattintsunk az <img src="images/offline.png" alt=""/> ikonra bármelyik &brandShortName;-ablak jobb alsó sarkában.</li>
+  <li>Válasszuk a Fájl menüből a Hálózat nélkül, majd a Letöltés/szinkronizálás azonnal parancsot.</li>
+</ol>
+
+<p>A &brandShortName; Levelező és hírolvasó szinkronizálja a kapcsolat nélküli mappákat a kiszolgálóval, azaz lekéri a kapcsolat nélküli munka alatt történt változásokat.</p>
+
+<p><strong>Tipp</strong>: A &brandShortName; Levelező &amp; és hírolvasó kapcsolódáskori teendőinek beállításához nyissuk meg a <span class="mac">&brandShortName;</span> <span class="noMac">Szerkesztés</span> menüBeállítások parancsát és válasszuk a Hálózat nélkül és lemezterület kategóriát. Megadhatjuk, hogy a &brandShortName; Levelező és hírolvasó rákérdezzen a postázandó üzenetek elküldésére, automatikusan elküldje, vagy ne küldje el ezeket.</p>
+
+<p>[ <a href="#working_offline">Vissza a fejezet elejére</a> ]</p>
+</body>
+</html>

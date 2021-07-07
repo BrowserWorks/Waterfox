@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "订阅">
+<!ENTITY subscribeButton.label        "订阅">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "取消订阅">
+<!ENTITY unsubscribeButton.accesskey  "U">
+<!ENTITY newGroupsTab.label           "新建组">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "刷新">
+<!ENTITY refreshButton.accesskey      "R">
+<!ENTITY stopButton.label             "停止">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "账户：">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "订阅">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "显示包含此信息的项：">
+<!ENTITY namefield.accesskey          "o">

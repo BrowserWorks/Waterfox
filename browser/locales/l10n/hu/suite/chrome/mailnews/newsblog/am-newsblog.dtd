@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "Új cikkek keresése indításkor">
+<!ENTITY loginAtStartup.accesskey "e">
+<!ENTITY biffAll.label "Frissítések engedélyezése minden csatornánál">
+<!ENTITY biffAll.accesskey "E">
+
+<!ENTITY newFeedSettings.label "Alapbeállítás az új csatornákhoz">
+
+<!ENTITY manageSubscriptions.label "Feliratkozások kezelése…">
+<!ENTITY manageSubscriptions.accesskey "F">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "Hírek és blogok RSS-ben">
+<!ENTITY feeds.wizardShortName "Hírforrások">
+<!ENTITY feeds.wizardLongName "Hírek és blogok RSS-ben">
+<!ENTITY feeds.wizardLongName.accesskey "R">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "Nastavit &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "N">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; umožňuje synchronizaci historie, záložek, hesel a otevřených panelů ve všech zařízeních.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "Účet &syncBrand.fullName.label;">
+<!ENTITY accountName.label            "Název účtu:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Aktualizovat">
+<!ENTITY updatePass.accesskey         "A">
+<!ENTITY resetPass.label              "Obnovit">
+<!ENTITY resetPass.accesskey          "O">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Spravovat účet">
+<!ENTITY manageAccount.accesskey      "S">
+<!ENTITY viewQuota.label              "Zobrazit kvótu">
+<!ENTITY viewQuota.accesskey          "Z">
+<!ENTITY changePassword.label         "Změnit heslo">
+<!ENTITY changePassword.accesskey     "h">
+<!ENTITY myRecoveryKey.label          "Obnovovací klíč">
+<!ENTITY myRecoveryKey.accesskey      "b">
+<!ENTITY resetSync.label              "Změnit typ synchronizace">
+<!ENTITY resetSync.accesskey          "m">
+<!ENTITY unlinkDevice.label           "Odpojit toto zařízení">
+<!ENTITY unlinkDevice.accesskey       "O">
+<!ENTITY addDevice.label              "Přidat zařízení">
+<!ENTITY addDevice.accesskey          "P">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Název počítače:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy2.label              "Synchronizovat">
+<!ENTITY engine.addons.label        "Doplňky">
+<!ENTITY engine.addons.accesskey    "D">
+<!ENTITY engine.bookmarks.label     "Záložky">
+<!ENTITY engine.bookmarks.accesskey "Z">
+<!ENTITY engine.tabs.label          "Panely">
+<!ENTITY engine.tabs.accesskey      "P">
+<!ENTITY engine.history.label       "Historie">
+<!ENTITY engine.history.accesskey   "H">
+<!ENTITY engine.passwords.label     "Hesla">
+<!ENTITY engine.passwords.accesskey "s">
+<!ENTITY engine.prefs.label         "Předvolby">
+<!ENTITY engine.prefs.accesskey     "e">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Podmínky poskytování služby">
+<!ENTITY prefs.ppLink.label         "Zásady ochrany osobních údajů">

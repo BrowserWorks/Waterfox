@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "收件者: ">
+<!ENTITY fromField.label "寄件者: ">
+<!ENTITY senderField.label "寄件者: ">
+<!ENTITY organizationField.label "組織: ">
+<!ENTITY replyToField.label "回函地址:">
+
+<!ENTITY subjectField.label "主旨: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Bcc: ">
+<!ENTITY newsgroupsField.label "新聞群組: ">
+<!ENTITY followupToField.label "接續回覆至 (Followup-to): ">
+
+<!ENTITY tagsHdr.label "標籤: ">
+<!ENTITY dateField.label "日期: ">
+<!ENTITY userAgentField.label "使用者代理程式:">
+<!ENTITY referencesField.label "參考資料: ">
+<!ENTITY messageIdField.label "郵件 ID: ">
+<!ENTITY inReplyToField.label "回覆給: ">
+<!ENTITY originalWebsite.label "網站: ">
+
+<!ENTITY editMessage.label                 "編輯草稿…">
+<!ENTITY editMessage.accesskey             "d">
+
+<!ENTITY attachmentsTree.label             "附件:">
+<!ENTITY attachmentsTree.accesskey         "c">
+<!ENTITY openAttachmentCmd.label           "開啟">
+<!ENTITY openAttachmentCmd.accesskey       "O">
+<!ENTITY viewAttachmentCmd.label           "檢視原始碼">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "另存新檔…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "a">
+<!ENTITY detachAttachmentCmd.label         "取出…">
+<!ENTITY detachAttachmentCmd.accesskey     "h">
+<!ENTITY deleteAttachmentCmd.label         "刪除">
+<!ENTITY deleteAttachmentCmd.accesskey     "t">
+<!ENTITY saveAllAttachmentsCmd.label       "全部儲存…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "S">
+<!ENTITY detachAllAttachmentsCmd.label     "全部取出…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "D">
+<!ENTITY deleteAllAttachmentsCmd.label     "全部刪除…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "e">
+

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (printCmd.key, closeCmd.key):
+     As defined in msgPrintEngine.xhtml, Ctrl plus the command keys defined here
+     will be the keyboard shortcuts effective in print preview, e.g. Ctrl+P
+     -->
+
+<!ENTITY printCmd.key	"P">
+<!ENTITY closeCmd.key	"W">

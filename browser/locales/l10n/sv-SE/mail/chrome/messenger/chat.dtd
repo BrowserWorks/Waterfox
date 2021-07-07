@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Kontakter online">
+<!ENTITY offlineContactsHeader.label   "Kontakter offline">
+<!ENTITY conversationsHeader.label     "Konversationer">
+<!ENTITY searchResultConversation.label "Sökresultat">
+<!ENTITY chat.noConv.title             "Konversationer kommer att visas här.">
+<!ENTITY chat.noConv.description       "Använd kontaktlistan i den vänstra panelen för att starta en konversation.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; har för närvarande inte några tidigare konversationer sparade för denna kontakt.">
+<!ENTITY chat.noAccount.title             "Du har inte skapat ett chattkonto.">
+<!ENTITY chat.noAccount.description       "Låt &brandShortName; guida dig genom processen att skapa ett chattkonto.">
+<!ENTITY chat.accountWizard.button       "Kom igång">
+<!ENTITY chat.noConnectedAccount.title             "Dina chattkonton är inte anslutna.">
+<!ENTITY chat.noConnectedAccount.description       "Du kan ansluta dem från 'chattstatus' dialogen:">
+<!ENTITY chat.showAccountManager.button       "Visa chattstatus">
+
+<!ENTITY chat.participants             "Deltagare:">
+<!ENTITY chat.previousConversations    "Tidigare konversationer:">
+<!ENTITY chat.ongoingConversation      "Pågående konversationer">
+
+<!ENTITY openConversationCmd.label     "Starta en konversation">
+<!ENTITY openConversationCmd.accesskey "S">
+<!ENTITY closeConversationCmd.label    "Avsluta konversation">
+<!ENTITY closeConversationCmd.accesskey "A">
+<!ENTITY aliasCmd.label                "Byt namn">
+<!ENTITY aliasCmd.accesskey            "B">
+<!ENTITY deleteCmd.label               "Ta bort kontakt">
+<!ENTITY deleteCmd.accesskey           "T">
+
+<!ENTITY openConversationButton.tooltip  "Starta en konversation">
+<!ENTITY closeConversationButton.tooltip "Avsluta konversation">
+
+<!ENTITY addBuddyButton.label          "Lägg till kontakt">
+<!ENTITY joinChatButton.label          "Anslut chatt">
+<!ENTITY chatAccountsButton.label      "Visa konton">
+
+<!ENTITY status.available          "Tillgänglig">
+<!ENTITY status.unavailable        "Upptagen">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Öppna länk…">
+<!ENTITY openLinkCmd.accesskey        "Ö">

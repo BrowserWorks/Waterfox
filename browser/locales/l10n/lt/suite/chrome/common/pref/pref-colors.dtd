@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-colors.xul -->
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+
+
+<!ENTITY pref.colors.title                 "Spalvos">
+<!ENTITY color                             "Teksto ir fono spalvos">
+
+
+
+
+<!ENTITY useSystemColors.label             "Spalvas imti iš operacinės sistemos">
+<!ENTITY useSystemColors.accesskey         "o">
+
+<!ENTITY underlineLinks.label              "Saitus pabraukti">
+<!ENTITY underlineLinks.accesskey          "b">
+<!ENTITY links                             "Saito spalvos">
+<!ENTITY linkColor.label                   "Neaplankyti saitai:">
+<!ENTITY linkColor.accesskey               "N">
+<!ENTITY activeLinkColor.label             "Aktyvūs saitai:">
+<!ENTITY activeLinkColor.accesskey         "k">
+<!ENTITY visitedLinkColor.label            "Aplankyti saitai:">
+<!ENTITY visitedLinkColor.accesskey        "A">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Kai tinklalapyje nurodytos spalvos, tai jį rodyti">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "jame nurodytomis spalvomis">
+<!ENTITY alwaysUseDocumentColors.accesskey "r">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "aukščiau pasirinktomis">
+<!ENTITY useMyColors.accesskey             "u">
+
+

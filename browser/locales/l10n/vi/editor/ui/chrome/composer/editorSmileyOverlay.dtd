@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Mặt cười">
+<!ENTITY insertSmiley.accesskey "M">
+
+<!ENTITY smiley1Cmd.label "Cuời">
+<!ENTITY smiley1Cmd.accesskey "C">
+<!ENTITY smiley1Cmd.tooltip "Chèn mặt cười">
+<!ENTITY smiley2Cmd.label "Cau có">
+<!ENTITY smiley2Cmd.accesskey "a">
+<!ENTITY smiley2Cmd.tooltip "Chèn một khuôn mặt cau có">
+<!ENTITY smiley3Cmd.label "Nháy mắt">
+<!ENTITY smiley3Cmd.accesskey "N">
+<!ENTITY smiley3Cmd.tooltip "Chèn một khuôn mặt nháy mắt">
+<!ENTITY smiley4Cmd.label "Thè lưỡi">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "Chèn một khuôn mặt thè lưỡi">
+<!ENTITY smiley5Cmd.label "Cười lớn">
+<!ENTITY smiley5Cmd.accesskey "l">
+<!ENTITY smiley5Cmd.tooltip "Chèn một khuôn mặt cười lớn">
+<!ENTITY smiley6Cmd.label "Ngượng ngùng">
+<!ENTITY smiley6Cmd.accesskey "N">
+<!ENTITY smiley6Cmd.tooltip "Chèn một khuôn mặt ngượng ngùng">
+<!ENTITY smiley7Cmd.label "Phân vân">
+<!ENTITY smiley7Cmd.accesskey "P">
+<!ENTITY smiley7Cmd.tooltip "Chèn một khuôn mặt phân vân">
+<!ENTITY smiley8Cmd.label "Ngạc nhiên">
+<!ENTITY smiley8Cmd.accesskey "g">
+<!ENTITY smiley8Cmd.tooltip "Đưa vào mặt ngạc nhiên">
+<!ENTITY smiley9Cmd.label "Chụt chụt">
+<!ENTITY smiley9Cmd.accesskey "C">
+<!ENTITY smiley9Cmd.tooltip "Chèn một khuôn mặt hôn chụt chụt">
+<!ENTITY smiley10Cmd.label "La hét">
+<!ENTITY smiley10Cmd.accesskey "L">
+<!ENTITY smiley10Cmd.tooltip "Chèn một khuôn mặt la hét">
+<!ENTITY smiley11Cmd.label "Ngầu">
+<!ENTITY smiley11Cmd.accesskey "u">
+<!ENTITY smiley11Cmd.tooltip "Chèn một khuôn mặt ngầu">
+<!ENTITY smiley12Cmd.label "Miệng đầy tiền">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "Chèn một khuôn mặt miệng đầy tiền">
+<!ENTITY smiley13Cmd.label "Bị chặn họng">
+<!ENTITY smiley13Cmd.accesskey "B">
+<!ENTITY smiley13Cmd.tooltip "Chèn một khuôn mặt bị chặn họng">
+<!ENTITY smiley14Cmd.label "Ngây thơ">
+<!ENTITY smiley14Cmd.accesskey "N">
+<!ENTITY smiley14Cmd.tooltip "Chèn một khuôn mặt ngây thơ">
+<!ENTITY smiley15Cmd.label "Khóc">
+<!ENTITY smiley15Cmd.accesskey "K">
+<!ENTITY smiley15Cmd.tooltip "Chèn một khuôn mặt khóc">
+<!ENTITY smiley16Cmd.label "Ngậm tăm">
+<!ENTITY smiley16Cmd.accesskey "N">
+<!ENTITY smiley16Cmd.tooltip "Chèn một khuôn mặt ngậm tăm">
+<!ENTITY SmileButton.label "Chèn biểu tượng">
+<!ENTITY SmileButton.tooltip "Chèn mặt cười">

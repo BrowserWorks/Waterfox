@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "屬性">
+
+<!ENTITY generalInfo.label                       "一般資訊">
+<!ENTITY folderCharsetFallback2.label            "備用字元編碼:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "對信件匣中的所有訊息套用以下編碼（將忽略每封訊息自己的編碼設定與自動偵測功能）">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "重建摘要檔案索引">
+<!ENTITY folderRebuildSummaryFile2.label         "修復資料夾">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "有時資料夾索引（.msf）檔可能會毀損，有些郵件可能會突然消失；已經被刪除的郵件也可能持續存在。重建資料夾可能可以修正這些問題。">
+<!ENTITY folderIncludeInGlobalSearch.label       "將這個資料夾內的訊息包含於全域搜尋結果">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "保存方式">
+<!ENTITY retentionUseAccount.label "使用我的帳號設定">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "天前">
+<!ENTITY message.label "封">
+<!ENTITY retentionCleanup.label "保留訊息:">
+<!ENTITY retentionCleanupImap.label "保留本地副本與遠端伺服器上的原始訊息:">
+<!ENTITY retentionCleanupPop.label "保留訊息，包含遠端伺服器上的原件:">
+<!ENTITY retentionDeleteMsg.label "刪除存放超過">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "所有訊息">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "最新的">
+<!ENTITY retentionKeepRecent.accesskey "n">
+<!ENTITY retentionApplyToFlagged.label "永遠保留被標示的訊息">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "同步">
+<!ENTITY folderCheckForNewMessages2.label        "要檢查這個帳號的新訊息時，永遠檢查這個資料夾">
+<!ENTITY folderCheckForNewMessages2.accesskey    "c">
+
+<!ENTITY offlineFolder.check.label               "離線閱讀此郵件匣">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "立刻下載">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "離線閱讀此新聞群組">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "立刻下載">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "名稱:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "位置:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "分享">
+<!ENTITY privileges.button.label                 "權限…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "您有下列權限:">
+<!ENTITY folderType.label                        "信件匣類型:">
+
+<!ENTITY folderQuotaTab.label                    "配額">
+<!ENTITY folderQuotaRoot.label                   "配額根目錄:">
+<!ENTITY folderQuotaUsage.label                  "用量:">
+<!ENTITY folderQuotaStatus.label                 "狀態:">
+
+<!ENTITY numberOfMessages.label                  "訊息數量:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "未知">
+<!ENTITY sizeOnDisk.label                        "在磁碟上的大小:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "未知">
+

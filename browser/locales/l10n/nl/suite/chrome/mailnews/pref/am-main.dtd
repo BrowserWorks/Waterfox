@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Accountinstellingen">
+<!ENTITY accountName.label "Accountnaam:">
+<!ENTITY accountName.accesskey "A">
+<!ENTITY identityTitle.label "Standaardidentiteit">
+<!ENTITY identityDesc.label "Elke account heeft een identiteit. Dit zijn de gegevens die anderen zien bij het lezen van uw berichten.">
+<!ENTITY name.label "Uw naam:">
+<!ENTITY name.accesskey "U">
+<!ENTITY email.label "E-mailadres:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Vanuit deze identiteit reageren als de afleverheaders overeenkomen met:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Antwoordadres:">
+<!ENTITY replyTo.accesskey "n">
+<!ENTITY replyTo.placeholder "Ontvangers zullen antwoorden naar dit andere adres">
+<!ENTITY organization.label "Organisatie:">
+<!ENTITY organization.accesskey "r">
+<!ENTITY signatureText.label "Tekst van de ondertekening:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "HTML gebruiken">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Ondertekening uit een bestand gebruiken:">
+<!ENTITY signatureFile.accesskey "b">
+<!ENTITY choose.label "Kiezen…">
+<!ENTITY choose.accesskey "K">
+<!ENTITY editVCard.label "Kaart bewerken…">
+<!ENTITY editVCard.accesskey "w">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Mijn vCard aan berichten koppelen">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Identiteiten beheren…">
+<!ENTITY manageIdentities.accesskey "I">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Uitgaande server (SMTP):">
+<!ENTITY smtpName.accesskey "S">
+<!ENTITY smtpDefaultServer.label "Standaardserver gebruiken">
+
+<!ENTITY smtpServerEdit.label "SMTP-server bewerken…">
+<!ENTITY smtpServerEdit.accesskey "P">

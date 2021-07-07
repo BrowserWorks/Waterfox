@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "여기를 누르면 플러그인을 활성화합니다.">
+<!ENTITY clickToActivatePlugin                               "플러그인을 실행합니다.">
+<!ENTITY checkForUpdates                                     "업데이트 검사 중…">
+<!ENTITY blockedPlugin.label                                 "이 플러그인은 사용자 보호를 위해 차단되었습니다.">
+<!ENTITY hidePluginBtn.label                                 "플러그인 숨기기">
+<!ENTITY managePlugins                                       "플러그인 관리…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "다시 시도하기 위해 ">
+<!ENTITY reloadPlugin.middle                                 "페이지를 새로 고침">
+<!ENTITY reloadPlugin.post                                   "">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "충돌 보고서 보내기">
+<!ENTITY report.submitting                                   "보고서 전송 중…">
+<!ENTITY report.submitted                                    "충돌 보고서를 제출합니다.">
+<!ENTITY report.disabled                                     "충돌 보고서가 비활성화되었습니다.">
+<!ENTITY report.failed                                       "제출에 실패했습니다.">
+<!ENTITY report.unavailable                                  "제출할 리포트가 없습니다.">
+<!ENTITY report.comment                                      "답글 달기(외부에 공개됨)">
+<!ENTITY report.pageURL                                      "웹 페이지 주소 포함">
+
+<!ENTITY plugin.file                                         "파일">
+<!ENTITY plugin.mimeTypes                                    "MIME 형식">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash 보호 모드 활성화">
+<!ENTITY plugin.enableBlocklists.label                       "위험하고 방해되는 Flash 내용 차단">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Mensagem com formatação">
+
+<!ENTITY recipient.label "Alguns dos destinatários não estão listados como sendo capazes de receber email em HTML.">
+
+<!ENTITY question.label "Quer converter a mensagem para texto sem formatação, ou enviar em HTML mesmo?">
+
+<!ENTITY plainTextAndHtml.label "Enviar em texto sem formatação e em HTML">
+<!ENTITY plainTextAndHtml.accesskey "n">
+<!ENTITY plainTextOnly.label "Enviar só como texto sem formatação">
+<!ENTITY plainTextOnly.accesskey "E">
+<!ENTITY htmlOnly.label "Enviar só em HTML">
+<!ENTITY htmlOnly.accesskey "E">
+
+<!ENTITY send.label "Enviar">
+<!ENTITY send.accesskey "E">

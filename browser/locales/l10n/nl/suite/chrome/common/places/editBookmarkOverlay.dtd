@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Naam:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Locatie:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Feedlocatie:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Websitelocatie:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "e">
+<!ENTITY editBookmarkOverlay.folder.label                    "Map:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Alle bladwijzermappen tonen">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Verbergen">
+<!ENTITY editBookmarkOverlay.tags.label                      "Labels:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "a">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Scheid labels met komma’s">
+<!ENTITY editBookmarkOverlay.description.label               "Beschrijving:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "c">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Sleutelwoord:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "S">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Alle labels tonen">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Deze bladwijzer in de zijbalk laden">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "D">
+<!ENTITY editBookmarkOverlay.choose.label                    "Kiezen…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Nieuwe map">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "e">

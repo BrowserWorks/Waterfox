@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Avinstallera en leverantör">
+<!ENTITY providerUninstall.accept.label                    "Avsluta markerade prenumerationer">
+<!ENTITY providerUninstall.accept.accesskey                "A">
+<!ENTITY providerUninstall.cancel.label                    "Behåll tillägg">
+<!ENTITY providerUninstall.cancel.accesskey                "B">
+<!ENTITY providerUninstall.preName.label                   "Du har begärt att avinstallera eller inaktivera:">
+<!ENTITY providerUninstall.postName.label                  "Detta gör att kalendrarna nedan inaktiveras.">
+<!ENTITY providerUninstall.reinstallNote.label             "Såvida ni inte planerar att installera om denna leverantör, kan du välja att avregistrera dig från denna leverantörs kalendrar.">

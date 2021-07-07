@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY search.button.label      "検索">
+<!ENTITY search.placeholder       "検索語句を入力">
+
+<!-- Will be used by bug 595246 -->
+<!ENTITY search.engineManager.label "検索エンジンの管理...">

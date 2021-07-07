@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "Отладка">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "Отрисовка">
+<!ENTITY debugXULBox.label                "Отладка XUL-боксов">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "Отключить кэш XUL">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "События">
+<!ENTITY debugPaintFlashing.label "Мигание прорисовки (переключение через Caps-Lock)">
+<!ENTITY debugPaintFlashing.accesskey "ю">
+<!ENTITY debugPaintFlashingChrome.label "Мигание прорисовки Chrome">
+<!ENTITY debugPaintFlashingChrome.accesskey "г">
+<!ENTITY debugPaintDumping.label "Дамп прорисовки">
+<!ENTITY debugPaintDumping.accesskey "к">
+<!ENTITY debugInvalidateDumping.label "Дамп инвалидации">
+<!ENTITY debugInvalidateDumping.accesskey "н">
+<!ENTITY debugEventDumping.label "Дамп событий">
+<!ENTITY debugEventDumping.accesskey "ы">
+<!ENTITY debugMotionEventDumping.label "Дамп событий движения">
+<!ENTITY debugMotionEventDumping.accesskey "ж">
+<!ENTITY debugCrossingEventDumping.label "Дамп событий пересечения">
+<!ENTITY debugCrossingEventDumping.accesskey "ч">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "События переформатирования">
+<!ENTITY debugReflowShowFrameCounts.label        "Отображать счётчики кадров">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "а">
+<!ENTITY debugReflowDumpFrameCounts.label        "Дамп счётчиков кадров">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "в">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "Дамп счётчиков кадра по кадру">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "м">

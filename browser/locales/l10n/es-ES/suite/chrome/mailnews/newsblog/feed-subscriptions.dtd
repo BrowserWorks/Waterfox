@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY feedSubscriptions.label "Suscripciones a canales">
+<!ENTITY learnMore.label "Más información sobre Canales">
+<!ENTITY feedTitle.label "Título:">
+<!ENTITY feedTitle.accesskey "T">
+<!ENTITY feedLocation.label "URL del canal:">
+<!ENTITY feedLocation.accesskey "L">
+<!ENTITY feedLocation2.placeholder "Introduzca una URL de canal válida">
+<!ENTITY locationValidate.label "Validar">
+<!ENTITY validateText.label "Comprobar validación y recuperar una URL válida.">
+<!ENTITY feedFolder.label "Guardar artículos en:">
+<!ENTITY feedFolder.accesskey "G">
+<!ENTITY biffStart.label "Buscar mensajes nuevos cada ">
+<!ENTITY biffStart.accesskey "B">
+<!ENTITY biffMinutes.label "minutos">
+<!ENTITY biffMinutes.accesskey "n">
+<!ENTITY biffDays.label "días">
+<!ENTITY biffDays.accesskey "d">
+<!ENTITY recommendedUnits.label "El editor recomienda:">
+<!ENTITY quickMode.label "Mostrar el resumen del artículo en vez de la página web">
+<!ENTITY quickMode.accesskey "M">
+<!ENTITY autotagEnable.label "Crear automáticamente etiquetas a partir de los contenidos &lt;category&gt; de los canales">
+<!ENTITY autotagEnable.accesskey "C">
+<!ENTITY autotagUsePrefix.label "Poner a las etiquetas el prefijo:">
+<!ENTITY autotagUsePrefix.accesskey "P">
+<!ENTITY autoTagPrefix.placeholder "Introduzca un prefijo de etiqueta">
+<!ENTITY button.addFeed.label "Añadir">
+<!ENTITY button.addFeed.accesskey "A">
+<!ENTITY button.verifyFeed.label "Verificar">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label "Actualizar">
+<!ENTITY button.updateFeed.accesskey "c">
+<!ENTITY button.removeFeed.label "Eliminar">
+<!ENTITY button.removeFeed.accesskey "E">
+<!ENTITY button.importOPML.label "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label "Exportar">
+<!ENTITY button.exportOPML.accesskey "X">
+<!ENTITY button.exportOPML.tooltip "Exportar canales con la estructura de canales; ctrl clic o ctrl enter para exportar los canales como una lista">
+<!ENTITY cmd.close.commandKey "w">
+<!ENTITY button.close.label "Cerrar">

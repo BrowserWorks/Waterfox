@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Filtres de messages">
+<!ENTITY nameColumn.label "Nom">
+<!ENTITY activeColumn.label "Actif">
+<!ENTITY newButton.label "Nouveau…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Modifier…">
+<!ENTITY editButton.accesskey "d">
+<!ENTITY deleteButton.label "Supprimer">
+<!ENTITY deleteButton.accesskey "S">
+<!ENTITY reorderUpButton.label "Monter">
+<!ENTITY reorderUpButton.accesskey "M">
+<!ENTITY reorderDownButton.label "Descendre">
+<!ENTITY reorderDownButton.accesskey "c">
+<!ENTITY filterHeader.label "Les filtres actifs seront appliqués dans l’ordre suivant :">
+<!ENTITY filtersForPrefix.label "Filtres pour :">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Journal de filtrage">
+<!ENTITY viewLogButton.accesskey "J">
+<!ENTITY runFilters.label "Exécuter">
+<!ENTITY runFilters.accesskey "x">
+<!ENTITY stopFilters.label "Arrêter">
+<!ENTITY stopFilters.accesskey "r">
+<!ENTITY folderPickerPrefix.label "Exécuter le(s) filtre(s) sélectionné(s) sur :">
+<!ENTITY folderPickerPrefix.accesskey "l">
+<!ENTITY choosethis.label "choisir ce dossier">
+<!ENTITY choosethisnewsserver.label "choisir ce serveur de groupes">

@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Ελαχιστοποίηση">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "Ζουμ">
+<!ENTITY navigatorCmd.label "Πρόγραμμα περιήγησης">
+<!ENTITY navigatorCmd.accesskey "Π">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Σύνθεση">
+<!ENTITY editorCmd.accesskey "Σ">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Κονσόλα σφαλμάτων">
+<!ENTITY errorConsoleCmd.accesskey "Κ">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Πρόγραμμα περιήγησης">
+<!ENTITY taskComposer.tooltip "Σύνθεση">
+
+<!ENTITY webDevelopment.label "Προγραμματισμός ιστού">
+<!ENTITY webDevelopment.accesskey "ι">
+
+<!ENTITY windowMenu.label "Παράθυρο">
+<!ENTITY windowMenu.accesskey "Π">
+
+<!ENTITY tasksMenu.label "Εργαλεία">
+<!ENTITY tasksMenu.accesskey "γ">
+
+<!ENTITY datamanCmd.label "Διαχείριση δεδομένων">
+<!ENTITY datamanCmd.accesskey "Δ">
+
+<!ENTITY passwordManagerCmd.label "Διαχείριση κωδικών πρόσβασης">
+<!ENTITY passwordManagerCmd.accesskey "κ">
+
+<!ENTITY passwordDisplayCmd.label "Διαχείριση αποθηκευμένων κωδικών πρόσβασης">
+<!ENTITY passwordDisplayCmd.accesskey "θ">
+
+<!ENTITY passwordExpireCmd.label "Αποσύνδεση">
+<!ENTITY passwordExpireCmd.accesskey "σ">
+
+<!ENTITY downloadManagerCmd.label "Διαχείριση λήψεων">
+<!ENTITY downloadManagerCmd.accesskey "ψ">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Διαχείριση προσθέτων">
+<!ENTITY addOnsManagerCmd.accesskey "π">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Εναλλαγή προφίλ…">
+<!ENTITY switchProfileCmd.accesskey "λ">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Ρύθμιση Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Συγχρονισμός τώρα">
+<!ENTITY syncSyncNowItem.accesskey "Σ">

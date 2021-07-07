@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importálás varázsló">
+
+<!ENTITY importFrom.label               "Beállítások, könyvjelzők, előzmények, jelszavak és egyéb adatok importálása a következő termékből:">
+<!ENTITY importFromUnix.label           "Beállítások, könyvjelzők, előzmények, jelszavak és egyéb adatok importálása a következő termékből:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge béta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Ne importáljon semmit">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome béta">
+<!ENTITY importFromChromeBeta.accesskey "b">
+<!ENTITY importFromChromeDev.label      "Chrome fejlesztői">
+<!ENTITY importFromChromeDev.accesskey  "f">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 biztonságos böngésző">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Nem található olyan program, amely könyvjelzőket, előzményeket vagy jelszóadatokat tartalmaz.">
+
+<!ENTITY importSource.title             "Beállítások és adatok importálása">
+<!ENTITY importItems.title              "Importálandó elemek">
+<!ENTITY importItems.label              "Válassza ki az importálni kívánt elemeket:">
+
+<!ENTITY migrating.title                "Importálás…">
+<!ENTITY migrating.label                "A következő elemek importálása folyik…">
+
+<!ENTITY selectProfile.title            "Profil kiválasztása">
+<!ENTITY selectProfile.label            "A következő profilokból lehet importálni:">
+
+<!ENTITY done.title                     "Importálás befejeződött">
+<!ENTITY done.label                     "A következő elemek sikeresen importálva lettek:">
+
+<!ENTITY closeSourceBrowser.label       "Ne feledje el bezárni a kiválasztott böngészőt a folytatás előtt.">

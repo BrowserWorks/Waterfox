@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "اخترت فتح:">
+<!ENTITY  from.label                  "مِن:">
+<!ENTITY  actionQuestion.label        "ماذا على &brandShortName; أن يفعل بهذا الملفّ؟">
+
+<!ENTITY  openWith.label              "افتح ب‍استخدام">
+<!ENTITY  openWith.accesskey          "ف">
+<!ENTITY  other.label                 "أخرى…">
+
+<!ENTITY  saveFile.label              "احفظ الملف">
+<!ENTITY  saveFile.accesskey          "ح">
+
+<!ENTITY  rememberChoice.label        "افعل هذا آليا مع الملفات من هذا النوع من الآن فصاعدا.">
+<!ENTITY  rememberChoice.accesskey    "ف">
+
+<!ENTITY  whichIs.label              "ونوعه:">
+
+<!ENTITY  chooseHandlerMac.label      "اختر…">
+<!ENTITY  chooseHandlerMac.accesskey  "خ">
+<!ENTITY  chooseHandler.label         "تصفّح…">
+<!ENTITY  chooseHandler.accesskey     "ص">
+
+<!ENTITY  unknownPromptText.label     "أترغب في حفظ هذا الملف؟">

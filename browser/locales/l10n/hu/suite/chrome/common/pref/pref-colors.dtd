@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-colors.xul -->
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+
+
+<!ENTITY pref.colors.title                 "színek használata minden alkalommal">
+<!ENTITY color                             "Szöveg és háttér">
+<!ENTITY textColor.label                   "Szöveg:">
+<!ENTITY textColor.accesskey               "S">
+<!ENTITY backgroundColor.label             "Háttér:">
+<!ENTITY backgroundColor.accesskey         "H">
+<!ENTITY useSystemColors.label             "Rendszerszínek használata">
+<!ENTITY useSystemColors.accesskey         "R">
+
+<!ENTITY underlineLinks.label              "Hivatkozások aláhúzása">
+<!ENTITY underlineLinks.accesskey          "H">
+<!ENTITY links                             "Hivatkozás színei">
+<!ENTITY linkColor.label                   "Nem látogatott hivatkozások:">
+<!ENTITY linkColor.accesskey               "l">
+<!ENTITY activeLinkColor.label             "Aktív hivatkozások:">
+<!ENTITY activeLinkColor.accesskey         "k">
+<!ENTITY visitedLinkColor.label            "Látogatott hivatkozások:">
+<!ENTITY visitedLinkColor.accesskey        "t">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Amikor a weboldal meghatározza a hátteret és a színeket">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Mindig a weboldal színeit és háttereit használja">
+<!ENTITY alwaysUseDocumentColors.accesskey "M">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "A megadott színek használata, figyelmen kívül hagyva a weboldal által megadottakat">
+<!ENTITY useMyColors.accesskey             "e">
+<!ENTITY automaticColors.label             "Csak a nagy kontrasztú téma használatakor hagyja figyelmen kívül a weboldal színeit">
+<!ENTITY automaticColors.accesskey         "C">

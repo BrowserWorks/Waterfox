@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Aplicações web offline">
+<!ENTITY pref.offlineCache.caption          "Conteúdo web offline e dados do usuário">
+
+<!ENTITY clearOfflineAppCache.label         "Limpar">
+<!ENTITY clearOfflineAppCache.accesskey     "L">
+
+<!ENTITY offlineAlwaysAllow.label           "Permitir que todos os sites armazenem dados para uso em modo desconectado">
+<!ENTITY offlineAlwaysAllow.accesskey       "P">
+<!ENTITY offlineExplicit.label              "Permitir apenas sites com permissões explícitas">
+<!ENTITY offlineExplicit.accesskey          "P">
+<!ENTITY offlineNotifyAsk.label             "Notificar quando sites desejam armazenar dados para utilização em modo desconectado">
+<!ENTITY offlineNotifyAsk.accesskey         "N">
+<!ENTITY offlineNotifyPermissions.label     "Gerenciar permissões">
+<!ENTITY offlineNotifyPermissions.accesskey "P">
+
+<!ENTITY offlineAppsUsage.label             "Estes sites estão usando armazenamento de dados para uso em modo desconectado:">
+<!ENTITY offlineAppsListRemove.label        "Limpar dados…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label		"画像のプロパティ">
+
+<!ENTITY pixelsPopup.value		"px"><!-- (^^; pixels -->
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label	"画像の場所:">
+<!ENTITY locationEditField.accessKey	"L">
+<!ENTITY locationEditField.tooltip	"画像のファイル名や場所を入力してください">
+<!ENTITY locationEditField.shortenedDataURI	"短縮表示のデータ URI (クリップボードには完全 URI がコピーされます)">
+<!ENTITY title.label			"ツールチップ:">
+<!ENTITY title.accessKey		"T">
+<!ENTITY title.tooltip			"ツールチップとして表示される HTML の title 属性">
+<!ENTITY altText.label			"代替テキスト:">
+<!ENTITY altText.accessKey		"A">
+<!ENTITY altTextEditField.tooltip	"画像を読み込めないときに表示されるテキストを入力してください">
+<!ENTITY noAltText.label		"代替テキストを使用しない">
+<!ENTITY noAltText.accessKey		"D">
+
+<!ENTITY previewBox.label		"画像プレビュー">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label		"元の寸法:">
+<!ENTITY actualSizeRadio.label		"元の寸法">
+<!ENTITY actualSizeRadio.accessKey	"A">
+<!ENTITY actualSizeRadio.tooltip	"画像を元の寸法に戻します">
+<!ENTITY customSizeRadio.label		"指定寸法">
+<!ENTITY customSizeRadio.accessKey	"S">
+<!ENTITY customSizeRadio.tooltip	"ページに表示されるときの画像寸法を変更します">
+<!ENTITY heightEditField.label		"高さ:">
+<!ENTITY heightEditField.accessKey	"G">
+<!ENTITY widthEditField.label		"幅:">
+<!ENTITY widthEditField.accessKey	"W">
+<!ENTITY constrainCheckbox.label	"縦横比固定"><!-- (^^; Constrain -->
+<!ENTITY constrainCheckbox.accessKey	"C">
+<!ENTITY constrainCheckbox.tooltip	"画像の縦横比を固定します">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label		"イメージマップ">
+<!ENTITY removeImageMapButton.label	"削除">
+<!ENTITY removeImageMapButton.accessKey	"R">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label		"画像周りの文字列配置">
+<!ENTITY bottomPopup.value		"下端をそろえる">
+<!ENTITY topPopup.value			"上端をそろえる">
+<!ENTITY centerPopup.value		"中心をそろえる">
+<!ENTITY wrapRightPopup.value		"右端で折り返す">
+<!ENTITY wrapLeftPopup.value		"左端で折り返す">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label		"余白">
+<!ENTITY leftRightEditField.label	"左右:">
+<!ENTITY leftRightEditField.accessKey	"L">
+<!ENTITY topBottomEditField.label	"上下:">
+<!ENTITY topBottomEditField.accessKey	"T">
+<!ENTITY borderEditField.label		"枠線:">
+<!ENTITY borderEditField.accessKey	"B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label	"リンク付き画像の周りに枠線を表示する">
+<!ENTITY showImageLinkBorder.accessKey	"B">
+<!ENTITY LinkAdvancedEditButton.label	"リンクの詳細...">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip	"HTML 属性、スタイル属性、JavaScript を追加または編集します">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label		"フォーム">
+<!ENTITY imageLocationTab.label		"場所(URL)">
+<!ENTITY imageDimensionsTab.label	"寸法">
+<!ENTITY imageAppearanceTab.label	"表示">
+<!ENTITY imageLinkTab.label		"リンク">

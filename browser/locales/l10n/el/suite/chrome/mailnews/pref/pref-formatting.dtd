@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Μορφή αποστολής">
+<!ENTITY sendMaildesc.label           "Όταν γίνεται αποστολή μορφοποιημένων (HTML) μηνυμάτων και ορισμένοι παραλήπτες δεν μπορούν να λάβουν HTML:">
+<!ENTITY askMe.label                  "Ερώτηση για ενέργεια (θα σας ζητηθεί να επιλέξετε μορφή)">
+<!ENTITY askMe.accesskey              "ρ">
+<!ENTITY convertPlain2.label          "Μετατροπή μηνύματος σε απλό κείμενο (η μορφοποίηση ενδέχεται να χαθεί)">
+<!ENTITY convertPlain2.accesskey      "Μ">
+<!ENTITY sendHTML2.label              "Αποστολή μηνύματος μόνο ως HTML (πιθανά προβλήματα εμφάνισης)">
+<!ENTITY sendHTML2.accesskey          "Α">
+<!ENTITY sendBoth2.label              "Αποστολή μηνύματος σε HTML και απλό κείμενο (μεγαλύτερο μέγεθος)">
+<!ENTITY sendBoth2.accesskey          "λ">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Τομείς HTML και απλού κειμένου">
+<!ENTITY domaindesc.label             "Κατά την αποστολή μηνύματος σε διεύθυνση με ένα από τα παρακάτω ονόματα τομέων, θα γίνεται αυτόματα αποστολή στην προτιμώμενη μορφή (μορφοποιημένο ή απλό κείμενο).">
+<!ENTITY HTMLdomaintitle.label        "Τομείς HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Τομείς απλού κειμένου">
+<!ENTITY PlainTexttitle.accesskey     "α">
+<!ENTITY AddButton.label              "Προσθήκη…">
+<!ENTITY AddHtmlDomain.accesskey      "Π">
+<!ENTITY AddPlainText.accesskey       "θ">
+<!ENTITY DeleteButton.label           "Διαγραφή">
+<!ENTITY DeleteHtmlDomain.accesskey   "γ">
+<!ENTITY DeletePlainText.accesskey    "ρ">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Προσθήκη ονόματος τομέα HTML">
+<!ENTITY add.htmldomain               "Όνομα τομέα HTML:">
+<!ENTITY add.plaintexttitle           "Προσθήκη ονόματος τομέα απλού κειμένου">
+<!ENTITY add.plaintextdomain          "Όνομα τομέα απλού κειμένου:">
+
+<!ENTITY domainnameError.title        "Σφάλμα ονόματος τομέα">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Το όνομα τομέα @string@ δεν είναι έγκυρο και θα αγνοηθεί. Τα έγκυρα ονόματα τομέων πρέπει να περιέχουν τουλάχιστον ένα '.' και χαρακτήρες εκατέρωθεν.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Αυτόματη αποστολή μηνύματος ως απλού κειμένου αν δεν υπάρχει σημαντική μορφοποίηση (παρακάμπτει άλλες επιλογές)">
+<!ENTITY autoDowngrade.accesskey      "έ">

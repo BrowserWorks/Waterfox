@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Browser">
+
+<!ENTITY navRadio.label                 "Tonen tijdens">
+<!ENTITY navRadio.accesskey             "T">
+<!ENTITY navStartPageMenu.label         "Browser opstarten">
+<!ENTITY newWinPageMenu.label           "Nieuw venster">
+<!ENTITY newTabPageMenu.label           "Nieuw tabblad">
+
+<!ENTITY blankPageRadio.label           "Blanco pagina">
+<!ENTITY blankPageRadio.accesskey       "B">
+<!ENTITY homePageRadio.label            "Startpagina">
+<!ENTITY homePageRadio.accesskey        "S">
+<!ENTITY lastPageRadio.label            "Laatst bezochte pagina">
+<!ENTITY lastPageRadio.accesskey        "L">
+<!ENTITY restoreSessionRadio.label      "Vorige sessie herstellen">
+<!ENTITY restoreSessionRadio.accesskey  "V">
+
+<!ENTITY restoreSessionIntro.label      "Bij het herstellen van sessies en vensters">
+<!ENTITY restoreImmediately.label       "Alle tabbladen meteen herstellen">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Herstel">
+<!ENTITY restoreTabs.accesskey          "r">
+<!ENTITY restoreTabsAtATime.label       "tabblad(en) tegelijk">
+<!ENTITY restoreDeferred.label          "Alleen tabbladen herstellen wanneer ik ze nodig heb">
+<!ENTITY restoreDeferred.accesskey      "A">
+
+<!ENTITY homePageIntro.label            "Op de knop Startpagina klikken brengt u naar deze pagina of groep pagina’s.">
+<!ENTITY useCurrent.label               "Huidige pagina gebruiken">
+<!ENTITY useCurrent.accesskey           "u">
+<!ENTITY useCurrentGroup.label          "Huidige groep gebruiken">
+<!ENTITY useCurrentGroup.accesskey      "o">
+<!ENTITY browseFile.label               "Bestand kiezen…">
+<!ENTITY browseFile.accesskey           "k">
+<!ENTITY useDefault.label               "Standaardinstelling herstellen">
+<!ENTITY useDefault.accesskey           "n">
+
+<!ENTITY defaultBrowserGroup.label      "Standaardbrowser">
+<!ENTITY defaultBrowserButton.label     "Standaardbrowser instellen">
+<!ENTITY defaultBrowserButton.accesskey "d">
+<!ENTITY alreadyDefaultText             "&brandShortName; is al ingesteld als uw standaardbrowser.">
+<!ENTITY defaultPendingText             "&brandShortName; zal als uw standaardbrowser worden ingesteld zodra u op OK klikt.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; is ingesteld als uw standaardbrowser.">
+<!ENTITY makeDefaultText                "Stel &brandShortName; in als uw standaardbrowser.">

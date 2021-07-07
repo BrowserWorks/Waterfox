@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Serveur SMTP">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Lorsque vous gérez vos identités, vous pouvez utiliser un serveur de cette liste en le sélectionnant comme Serveur sortant (SMTP), ou utiliser le serveur par défaut de cette liste en sélectionnant « Utiliser le serveur par défaut ».">
+
+<!ENTITY smtpListAdd.label  "Ajouter…">
+<!ENTITY smtpListAdd.accesskey  "A">
+<!ENTITY smtpListEdit.label "Modifier…">
+<!ENTITY smtpListEdit.accesskey "M">
+<!ENTITY smtpListDelete.label "Supprimer">
+<!ENTITY smtpListDelete.accesskey "S">
+<!ENTITY smtpListSetDefault.label "Utiliser par défaut">
+<!ENTITY smtpListSetDefault.accesskey "d">
+
+<!ENTITY serverDetails.label "Détails du serveur sélectionné :">
+<!ENTITY serverDescription.label "Description : ">
+<!ENTITY serverName.label "Nom du serveur : ">
+<!ENTITY serverPort.label "Port : ">
+<!ENTITY userName.label   "Nom d’utilisateur : ">
+<!ENTITY connectionSecurity.label "Sécurité de la connexion : ">
+<!ENTITY authMethod.label   "Méthode d’authentification : ">

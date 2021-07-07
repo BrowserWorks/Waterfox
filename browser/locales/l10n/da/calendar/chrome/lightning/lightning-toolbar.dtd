@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Kalenderlinje">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Opgavelinje">
+<!ENTITY lightning.toolbar.task.name.accesskey "O">
+
+<!ENTITY lightning.toolbar.sync.label "Synkroniser">
+<!ENTITY lightning.toolbar.sync.tooltip "Genindlæs kalendere og synkroniser ændringer">
+<!ENTITY lightning.toolbar.delete.label "Slet">
+<!ENTITY lightning.toolbar.delete.tooltip "Slet de valgte begivenheder eller opgaver">
+<!ENTITY lightning.toolbar.edit.label "Rediger">
+<!ENTITY lightning.toolbar.edit.tooltip "Rediger den valgte begivenhed eller opgaver">
+<!ENTITY lightning.toolbar.gototoday.label "Gå til i dag">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Gå til i dag">
+<!ENTITY lightning.toolbar.print.label "Udskriv">
+<!ENTITY lightning.toolbar.print.tooltip "Udskriv begivenheder eller opgaver">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Kalender">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Skift til fanebladet Kalender">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Opgaver">
+<!ENTITY lightning.toolbar.task.tooltip       "Skift til fanebladet Opgaver">
+<!ENTITY lightning.toolbar.task.accesskey     "O">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Begivenhed">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Opret en ny begivenhed">
+<!ENTITY lightning.toolbar.newtask.label      "Opgave">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Opret en ny opgave">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Dag">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Uge">
+<!ENTITY lightning.toolbar.week.accesskey            "g">
+<!ENTITY lightning.toolbar.multiweek.label           "Multiuge">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "l">
+<!ENTITY lightning.toolbar.month.label               "Måned">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Programmenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Vis &brandShortName;-menuen">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Kalenderrude">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "K">
+<!ENTITY lightning.toolbar.calendarpane.label        "Vis kalenderrude">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "K">

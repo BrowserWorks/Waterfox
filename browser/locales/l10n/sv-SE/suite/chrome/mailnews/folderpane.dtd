@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY nameColumn.label   "Namn"> 
+<!ENTITY unreadColumn.label "Olästa"> 
+<!ENTITY totalColumn.label "Totalt">
+<!ENTITY folderSizeColumn.label "Storlek"> 
+<!ENTITY folderLocationToolbarItem.title "Mappens plats">
+<!ENTITY mailViewsToolbarItem.title "E-postvy">
+<!ENTITY searchToolbarItem.title "Sök">
+<!ENTITY searchSubjectOrAddress.placeholder "Sök ämne eller adress">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Imposta promemoria">
+<!ENTITY reminder.add.label                                "Aggiungi">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Rimuovi">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "Dettagli promemoria">
+<!ENTITY reminder.action.label                             "Scegliere un'azione per il promemoria">
+
+<!ENTITY reminder.action.alert.label                       "Mostra un avviso">
+<!ENTITY reminder.action.email.label                       "Invia una email">
+
+<!ENTITY alarm.units.minutes                               "minuti" >
+<!ENTITY alarm.units.hours                                 "ore" >
+<!ENTITY alarm.units.days                                  "giorni" >

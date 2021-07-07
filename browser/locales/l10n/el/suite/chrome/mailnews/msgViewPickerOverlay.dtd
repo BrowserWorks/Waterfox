@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Προβολή:">
+<!ENTITY viewPicker.accesskey "ρ">
+<!ENTITY viewAll.label "Όλων">
+<!ENTITY viewAll.accesskey "Ό">
+<!ENTITY viewUnread.label "Μη αναγνωσμένων">
+<!ENTITY viewUnread.accesskey "Μ">
+<!ENTITY viewNotDeleted.label "Μη διαγραμμένων">
+<!ENTITY viewNotDeleted.accesskey "δ">
+<!ENTITY viewTags.label "Ετικετών">
+<!ENTITY viewTags.accesskey "Ε">
+<!ENTITY viewCustomViews.label "Προσαρμοσμένες προβολές">
+<!ENTITY viewCustomViews.accesskey "β">
+<!ENTITY viewVirtualFolder.label "Αποθήκευση προβολής ως φάκελο…">
+<!ENTITY viewVirtualFolder.accesskey "Α">
+<!ENTITY viewCustomizeView.label "Προσαρμογή…">
+<!ENTITY viewCustomizeView.accesskey "Π">

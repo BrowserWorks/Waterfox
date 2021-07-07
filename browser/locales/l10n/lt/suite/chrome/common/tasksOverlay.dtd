@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from tasksOverlay.xul -->
+
+<!ENTITY navigatorCmd.label "Naršyklė">
+<!ENTITY navigatorCmd.accesskey "N">
+<!ENTITY navigatorCmd.commandkey "1">
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "R">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Klaidų pultas">
+<!ENTITY errorConsoleCmd.accesskey "K">
+
+
+<!ENTITY taskNavigator.tooltip "Naršyklė">
+<!ENTITY taskComposer.tooltip "Rašyklė">
+
+<!ENTITY webDevelopment.label "Tinklalapių kūrimas">
+<!ENTITY webDevelopment.accesskey "T">
+
+<!ENTITY windowMenu.label "Langas">
+<!ENTITY windowMenu.accesskey "L">
+
+<!ENTITY tasksMenu.label "Priemonės">
+<!ENTITY tasksMenu.accesskey "P">
+
+<!ENTITY datamanCmd.label "Duomenų tvarkytuvė">
+<!ENTITY datamanCmd.accesskey "D">
+
+<!ENTITY passwordManagerCmd.label "Slaptažodžių tvarkytuvė">
+<!ENTITY passwordManagerCmd.accesskey "S">
+
+<!ENTITY passwordDisplayCmd.label "Tvarkyti įrašytus slaptažodžius">
+<!ENTITY passwordDisplayCmd.accesskey "T">
+
+<!ENTITY passwordExpireCmd.label "Išsiregistruoti">
+<!ENTITY passwordExpireCmd.accesskey "r">
+
+<!ENTITY downloadManagerCmd.label "Atsiuntimų tvarkytuvė">
+<!ENTITY downloadManagerCmd.accesskey "t">
+
+
+<!ENTITY addOnsManagerCmd.label "Priedų tvarkytuvė">
+<!ENTITY addOnsManagerCmd.accesskey "P">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Pakeisti profilį…">
+<!ENTITY switchProfileCmd.accesskey "e">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Konfigūruoti sinchronizavimą…">
+<!ENTITY syncSetup.accesskey "s">
+<!ENTITY syncSyncNowItem.label "Sinchronizuoti dabar">
+<!ENTITY syncSyncNowItem.accesskey "S">

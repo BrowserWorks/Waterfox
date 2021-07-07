@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY all.label          "Λήψη όλων των κεφαλίδων">
+<!ENTITY all.accesskey      "Λ">
+<!--LOCALIZATION NOTE (download.label):
+    consider the download.label and headers.label as a single sentence
+    with the number of headers to be downloaded inserted between them:
+    EXAMPLE: "Download" <some number> "headers"
+    Either label could be set to null ("") if required grammatically.
+-->
+
+<!ENTITY download.label     "Λήψη">
+<!ENTITY download.accesskey "ψ">
+<!--LOCALIZATION NOTE (headers.label): see note for download.label -->
+<!ENTITY headers.label      "κεφαλίδων">
+<!ENTITY headers.accesskey  "κ">
+<!ENTITY mark.label         "Επισήμανση υπόλοιπων κεφαλίδων ως αναγνωσμένων">
+<!ENTITY mark.accesskey     "Ε">

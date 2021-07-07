@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+<!ENTITY viewPicker.label "보기">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "메시지 모두 보기">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "읽지 않음">
+<!ENTITY viewUnread.accesskey "U">
+<!ENTITY viewNotDeleted.label "삭제 표시 제거">
+<!ENTITY viewNotDeleted.accesskey "D">
+<!ENTITY viewTags.label "태그">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "사용자 정의">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "폴더로 보기 저장…">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "사용자 정의…">
+<!ENTITY viewCustomizeView.accesskey "C">

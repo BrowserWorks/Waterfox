@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Til: ">
+<!ENTITY fromField.label "Frå: ">
+<!ENTITY senderField.label "Sendar: ">
+<!ENTITY organizationField.label "Organisasjon: ">
+<!ENTITY replyToField.label "Svar til: ">
+
+<!ENTITY subjectField.label "Emne: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Kopi: ">
+<!ENTITY bccField.label "Blindkopi: ">
+<!ENTITY newsgroupsField.label "Nyheitsgruppe: ">
+<!ENTITY followupToField.label "Oppfølgjing til: ">
+
+<!ENTITY tagsHdr.label "Etikettar: ">
+<!ENTITY dateField.label "Dato: ">
+<!ENTITY userAgentField.label "Brukaragent: ">
+<!ENTITY referencesField.label "Referansar: ">
+<!ENTITY messageIdField.label "Meldings-ID: ">
+<!ENTITY inReplyToField.label "Som-Svar-Til: ">
+<!ENTITY originalWebsite.label "Nettstad: ">
+
+<!ENTITY editMessage.label                 "Rediger utkast…">
+<!ENTITY editMessage.accesskey             "R">
+
+<!ENTITY attachmentsTree.label             "Vedlegg:">
+<!ENTITY attachmentsTree.accesskey         "V">
+<!ENTITY openAttachmentCmd.label           "Opne">
+<!ENTITY openAttachmentCmd.accesskey       "O">
+<!ENTITY viewAttachmentCmd.label           "Vis kjeldekode">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "Lagre som…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "L">
+<!ENTITY deleteAttachmentCmd.label         "Slett">
+<!ENTITY deleteAttachmentCmd.accesskey     "t">
+<!ENTITY saveAllAttachmentsCmd.label       "Lagre alle…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "a">
+<!ENTITY deleteAllAttachmentsCmd.label     "Slett alle…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "e">

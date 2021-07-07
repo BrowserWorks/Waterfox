@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip "Hlavní nabídka">
+<!ENTITY Toolbar.tooltip "Hlavní lišta">
+
+
+<!ENTITY multiline-expand.tooltip "Změní pole na víceřádkové (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "Změní pole na jednořádkové (Ctrl+Down)">
+<!ENTITY multiline-send.tooltip "Pošle tento text (Ctrl+Enter)">
+<!ENTITY server-nick.tooltip "Změní přezdívku nebo nastaví stav. Pro zaměření vstupního pole stiskněte klávesu Esc.">
+
+<!ENTITY Underline.label "Podtržené">
+<!ENTITY Bold.label "Tučné">
+<!ENTITY Reverse.label "Inverzní barvy">
+<!ENTITY Normal.label "Normální">
+<!ENTITY Color.label "Barva">
+<!ENTITY ForeBack.label "xx=Popř yy=Poz">

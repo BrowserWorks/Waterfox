@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox アカウント">
+<!ENTITY aboutAccounts.connected.description "あなたのアカウント: ">
+<!ENTITY aboutAccounts.syncPreferences.label "同期の設定を確認するにはタップしてください">
+
+<!ENTITY aboutAccounts.noConnection.title "インターネットに接続されていません">
+<!ENTITY aboutAccounts.retry.label "再試行">
+
+<!ENTITY aboutAccounts.restrictedError.title "制限されています">
+<!ENTITY aboutAccounts.restrictedError.description "このプロファイルからは Firefox アカウントを管理できません。">

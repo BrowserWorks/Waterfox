@@ -1,0 +1,283 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "เปิดเมนู">
+
+<!ENTITY navbarOverflow.label                "เครื่องมือเพิ่มเติม…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "ปักหมุดแท็บ">
+<!ENTITY  unpinTab.label                     "ถอนหมุดแท็บ">
+
+<!ENTITY  listAllTabs.label      "แสดงรายการแท็บทั้งหมด">
+
+<!ENTITY tabCmd.label "แท็บใหม่">
+<!ENTITY openFileCmd.label "เปิดไฟล์…">
+<!ENTITY printCmd.label "พิมพ์…">
+
+<!ENTITY taskManagerCmd.label "ตัวจัดการงาน">
+
+<!ENTITY menubarCmd.label "แถบเมนู">
+<!ENTITY menubarCmd.accesskey "ถ">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "การนำทาง">
+<!ENTITY personalbarCmd.label "แถบเครื่องมือที่คั่นหน้า">
+<!ENTITY personalbarCmd.accesskey "บ">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "ที่คั่นหน้า">
+<!ENTITY bookmarksToolbarItem.label "รายการแถบเครื่องมือที่คั่นหน้า">
+
+<!ENTITY fullScreenCmd.label "เต็มหน้าจอ">
+
+<!ENTITY pictureInPictureHideToggle.label "ซ่อนสลับภาพที่เล่นควบคู่">
+<!ENTITY pictureInPictureHideToggle.accesskey "อ">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "การตั้งค่า &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "เชื่อมต่ออุปกรณ์อื่น…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+<!ENTITY fxa.menu.signin.label "ลงชื่อเข้า &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "เปิด &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "บริการของ &brandProductName;">
+<!ENTITY fxa.menu.account.label "บัญชี">
+<!ENTITY fxa.menu.settings.label "การตั้งค่า">
+<!ENTITY fxa.menu.accountSettings.label "การตั้งค่าบัญชี">
+<!ENTITY fxa.menu.manageAccount2.label "จัดการบัญชี">
+<!ENTITY fxa.menu.signOut.label "ลงชื่อออก…">
+<!ENTITY fxa.menu.setupSync.label "ตั้งค่า &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "ส่งแท็บทันทีไปยังอุปกรณ์ใด ๆ ที่คุณลงชื่อเข้าใช้">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "เต็มหน้าจออยู่">
+<!ENTITY fullscreenWarning.generic.label "เอกสารนี้เต็มหน้าจออยู่">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "ออกจากภาพเต็มหน้าจอ (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "ออกจากภาพเต็มหน้าจอ (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ได้ควบคุมตัวชี้ของคุณ กด Esc เพื่อดึงการควบคุมคืน">
+<!ENTITY pointerlockWarning.generic.label "เอกสารชิ้นนี้ได้ควบคุมตัวชี้ของคุณ กด Esc เพื่อดึงการควบคุมคืน">
+
+<!ENTITY showAllBookmarks2.label "แสดงที่คั่นหน้าทั้งหมด">
+<!ENTITY recentBookmarks.label "ที่คั่นหน้าที่เพิ่มล่าสุด">
+<!ENTITY bookmarksToolbarChevron.tooltip "แสดงที่คั่นหน้าเพิ่มเติม">
+
+<!ENTITY printButton.label            "พิมพ์">
+<!ENTITY printButton.tooltip          "พิมพ์หน้านี้">
+
+<!ENTITY searchItem.title             "ค้นหา">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "หน้าแรก">
+<!ENTITY homeButton.defaultPage.tooltip "หน้าแรกของ &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "ที่คั่นหน้า">
+
+<!ENTITY bookmarksSubview.label             "ที่คั่นหน้า">
+<!ENTITY bookmarksMenuButton2.label         "เมนูที่คั่นหน้า">
+<!ENTITY bookmarksMenuButton.other.label    "ที่คั่นหน้าอื่น ๆ">
+<!ENTITY bookmarksMenuButton.mobile.label   "ที่คั่นหน้าในมือถือ">
+<!ENTITY viewBookmarksSidebar2.label        "ดูแถบข้างที่คั่นหน้า">
+<!ENTITY hideBookmarksSidebar.label         "ซ่อนแถบข้างที่คั่นหน้า">
+<!ENTITY viewBookmarksToolbar.label         "ดูแถบเครื่องมือที่คั่นหน้า">
+<!ENTITY hideBookmarksToolbar.label         "ซ่อนแถบเครื่องมือที่คั่นหน้า">
+<!ENTITY searchBookmarks.label              "ค้นหาที่คั่นหน้า">
+<!ENTITY bookmarkingTools.label             "เครื่องมือที่คั่นหน้า">
+<!ENTITY addBookmarksMenu.label             "เพิ่มเมนูที่คั่นหน้าไปยังแถบเครื่องมือ">
+<!ENTITY removeBookmarksMenu.label          "เอาเมนูที่คั่นหน้าออกจากแถบเครื่องมือ">
+
+<!ENTITY historyButton.label            "ประวัติ">
+
+<!ENTITY downloads.label              "การดาวน์โหลด">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "การดาวน์โหลด">
+<!ENTITY addons.label                 "ส่วนเสริม">
+
+<!ENTITY webDeveloperMenu.label       "นักพัฒนาเว็บ">
+
+<!ENTITY newNavigatorCmd.label        "หน้าต่างใหม่">
+<!ENTITY newPrivateWindow.label     "หน้าต่างส่วนตัวใหม่">
+
+<!ENTITY editMenu.label         "แก้ไข">
+<!ENTITY preferencesCmd2.label       "ตัวเลือก">
+<!ENTITY preferencesCmdUnix.label       "ค่ากำหนด">
+<!ENTITY logins.label                           "การเข้าสู่ระบบและรหัสผ่าน">
+
+<!ENTITY overflowCustomizeToolbar.label       "ปรับแต่งแถบเครื่องมือ…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "ป">
+
+<!ENTITY historyMenu.label "ประวัติ">
+<!ENTITY historyUndoMenu.label "แท็บที่ปิดล่าสุด">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "หน้าต่างที่ปิดล่าสุด">
+
+<!ENTITY appMenuHistory.showAll.label "แสดงประวัติทั้งหมด">
+
+<!ENTITY appMenuHistory.clearRecent.label "ล้างประวัติล่าสุด…">
+<!ENTITY appMenuHistory.restoreSession.label "เรียกคืนวาระก่อนหน้า">
+<!ENTITY appMenuHistory.viewSidebar.label "ดูแถบข้างประวัติ">
+<!ENTITY appMenuHistory.hideSidebar.label "ซ่อนแถบข้างประวัติ">
+<!ENTITY appMenuHistory.recentHistory.label "ประวัติล่าสุด">
+<!ENTITY appMenuHelp.label "ช่วยเหลือ">
+
+<!ENTITY appMenuRemoteTabs.label "แท็บที่ซิงค์">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "ไม่มีแท็บที่เปิดอยู่">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "แสดงเพิ่มเติม">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "แสดงแท็บเพิ่มเติมจากอุปกรณ์นี้">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "แสดงทั้งหมด">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "แสดงแท็บทั้งหมดจากอุปกรณ์นี้">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "เปิดการซิงค์แท็บเพื่อดูรายการแท็บจากอุปกรณ์อื่น ๆ ของคุณ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "ต้องการเห็นแท็บของคุณจากอุปกรณ์อื่น ๆ ที่นี่?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "เปิดค่ากำหนด Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "ดูรายการแท็บจากอุปกรณ์อื่น ๆ ของคุณ">
+<!ENTITY appMenuRemoteTabs.unverified.label "บัญชีของคุณจำเป็นต้องได้รับการยืนยัน">
+<!ENTITY appMenuRemoteTabs.signintosync.label "ลงชื่อเข้า &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "เปิด &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "จัดการอุปกรณ์…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "ดูแถบข้างแท็บที่ซิงค์">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "ซ่อนแถบข้างแท็บที่ซิงค์">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "เชื่อมต่ออุปกรณ์อื่น">
+
+<!ENTITY appMenuRecentHighlights.label "รายการเด่นล่าสุด">
+
+<!ENTITY customizeMenu.addToToolbar.label "เพิ่มลงในแถบเครื่องมือ">
+<!ENTITY customizeMenu.addToToolbar.accesskey "พ">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "เพิ่มลงในเมนูล้น">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "พ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "ถอนหมุดจากเมนูล้น">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "ถ">
+<!ENTITY customizeMenu.removeFromToolbar.label "เอาออกจากแถบเครื่องมือ">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "อ">
+<!ENTITY customizeMenu.addMoreItems.label "เพิ่มรายการเพิ่มเติม…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "พ">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "เพิ่มเติม">
+
+<!ENTITY contentSearchSubmit.tooltip  "ค้นหา">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "ค้นหา">
+<!ENTITY searchIcon.tooltip           "ค้นหา">
+
+<!ENTITY openLinkCmdInTab.accesskey   "ท">
+
+<!ENTITY pageAction.copyLink.label    "คัดลอกลิงก์">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "บันทึกหน้าไปยัง Pocket">
+<!ENTITY pocketMenuitem.label         "ดูรายการ Pocket">
+
+<!ENTITY emailPageCmd.label           "ส่งอีเมลลิงก์…">
+
+<!ENTITY fullZoom.label                 "ซูม">
+
+<!ENTITY sidebarCloseButton.tooltip     "ปิดแถบข้าง">
+
+<!ENTITY quitApplicationCmdWin2.label       "ออก">
+<!ENTITY quitApplicationCmdWin2.accesskey   "อ">
+<!ENTITY quitApplicationCmdWin2.tooltip     "ออกจาก &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "ออก">
+<!ENTITY quitApplicationCmd.accesskey   "อ">
+<!ENTITY quitApplicationCmdMac2.label   "ออกจาก &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "ป">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "แก้ไขค่ากำหนดตัวปิดกั้นป๊อปอัป…">
+<!ENTITY editPopupSettings.label "แก้ไขตัวเลือกตัวปิดกั้นป๊อปอัป…">
+<!ENTITY editPopupSettings.accesskey "ก">
+<!ENTITY dontShowMessage.accesskey "ข">
+
+<!ENTITY findOnCmd.label     "ค้นหาในหน้านี้…">
+
+<!ENTITY spellAddDictionaries.label "เพิ่มพจนานุกรม…">
+<!ENTITY spellAddDictionaries.accesskey "พ">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "แท็บเบราว์เซอร์">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "ซ่อนอัตโนมัติ">
+
+
+<!ENTITY uiTour.infoPanel.close "ปิด">
+
+<!ENTITY panicButton.thankyou.msg1                "ล้างประวัติล่าสุดของคุณแล้ว">
+<!ENTITY panicButton.thankyou.msg2                "การท่องเว็บปลอดภัย!">
+<!ENTITY panicButton.thankyou.buttonlabel         "ขอบคุณ!">
+
+<!ENTITY updateAvailable.panelUI.label "ดาวน์โหลดการอัปเดต &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "ดาวน์โหลดสำเนาใหม่ของ &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "คุณไม่สามารถดำเนินการอัปเดตเพิ่มเติมได้">
+<!ENTITY updateRestart.panelUI.label2 "เริ่มการทำงานใหม่เพื่ออัปเดต &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "กำลังซิงค์อุปกรณ์…">
+
+<!ENTITY pageAction.shareUrl.label "แบ่งปัน">
+<!ENTITY pageAction.shareMore.label "เพิ่มเติม…">
+
+<!ENTITY libraryButton.tooltip "ดูประวัติ, ที่คั่นหน้าที่บันทึกไว้ และอื่น ๆ">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "คุณลักษณะการช่วยการเข้าถึงถูกเปิดใช้งานอยู่">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Avancerat">
+
+<!ENTITY systemPref.caption               "Systeminställningar">
+<!ENTITY systemPrefCheck.label            "Använd inställningar från systemet">
+<!ENTITY systemPrefCheck.accesskey        "ä">
+<!ENTITY systemPref.desc                  "Med detta valalternativ tar &brandShortName; över inställningar från systemet. Dessa systeminställningar kommer att åsidosätta &brandShortName;s inställningar.">
+
+<!ENTITY prefCheckDefault.caption         "Systemintegrering">
+<!ENTITY prefCheckDefaultClient.label     "Kontrollera inställningar för förvalda program vid uppstart">
+<!ENTITY prefCheckDefaultClient.accesskey "K">
+
+<!ENTITY printing.label                   "Utskrift">
+<!ENTITY useNativePrintDialog.label       "Använd systemets utskriftsdialog (där det stöds)">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "Använd globala utskriftsinställningar">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "Rapportera krascher">
+<!ENTITY submitCrashes.label              "Skicka kraschrapporter">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "Utvecklarverktyg">
+<!ENTITY allowDebugger.label              "Tillåt en felsökare att koppla sig till &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "a">
+<!ENTITY allowRemoteConnections.label     "Tillåt anslutningar från andra datorer">
+<!ENTITY allowRemoteConnections.accesskey "d">
+<!ENTITY connectionPrompt.label           "Fråga vid inkommande anslutningar">
+<!ENTITY connectionPrompt.accesskey       "F">
+<!ENTITY remoteDebuggerPort.label         "Portnummer för anslutningar:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

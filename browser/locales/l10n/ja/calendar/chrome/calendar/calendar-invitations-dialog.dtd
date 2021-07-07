@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text			"参加依頼">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text	"参加依頼リストを更新しています。">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text	"確認していない参加依頼は見つかりませんでした。">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label			"承諾">
+<!ENTITY calendar.invitations.list.decline.button.label			"辞退">

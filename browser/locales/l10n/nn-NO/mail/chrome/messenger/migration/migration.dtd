@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importvegvisar">
+
+<!ENTITY importFromWin.label            "Importer innstillingar, kontoinnstillingar, adressebøker, filter og andre data frå:">
+<!ENTITY importFromNonWin.label         "Importer innstillingar, kontoinnstillingar, adressebøker og andre data frå:">
+<!ENTITY importSourceNotFound.label     "Fann ingen program å importera data frå.">
+
+<!ENTITY importFromNothing.label        "Ikkje importer noko">
+<!ENTITY importFromNothing.accesskey    "I">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 eller nyare">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importer innstillingar og e-postmapper frå">
+<!ENTITY importItems.title              "Kva som skal importerast">
+<!ENTITY importItems.label              "Vel det du vil importere:">
+
+<!ENTITY migrating.title                "Importerer …">
+<!ENTITY migrating.label                "Følgande element vert no importerte…">
+
+<!ENTITY selectProfile.title            "Vel profil">
+<!ENTITY selectProfile.label            "Du kan importere frå følgande profilar:">
+
+<!ENTITY done.title                     "Importering fullført">
+<!ENTITY done.label                     "Følgande element er importerte:">

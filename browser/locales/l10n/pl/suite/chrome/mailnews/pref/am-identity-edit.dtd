@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (identityDialog.style): This value should be roughly
+     equal to the value of accountManager.size entity minus the value
+     of accountTree.width entity. -->
+<!ENTITY identityDialog.style "min-width: 77ch;">
+<!ENTITY identityListDesc.label "Konfiguruj ustawienia dla tej tożsamości:">
+
+<!ENTITY settingsTab.label "Ustawienia">
+<!ENTITY copiesFoldersTab.label "Kopie i foldery">
+<!ENTITY addressingTab.label "Tworzenie i adresowanie wiadomości">
+
+<!ENTITY publicData.label "Dane publiczne">
+<!ENTITY privateData.label "Dane prywatne">
+<!ENTITY identityAlias.label "Etykieta tożsamości:">
+<!ENTITY identityAlias.accesskey "E">

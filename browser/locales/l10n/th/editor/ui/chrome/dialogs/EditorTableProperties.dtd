@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "คุณสมบัติตาราง">
+<!ENTITY applyButton.label                "นำไปใช้">
+<!ENTITY applyButton.accesskey            "ช">
+<!ENTITY closeButton.label                "ปิด">
+<!ENTITY tableTab.label                   "ตาราง">
+<!ENTITY cellTab.label                    "เซลล์">
+<!ENTITY tableRows.label                  "แถว:">
+<!ENTITY tableRows.accessKey              "ถ">
+<!ENTITY tableColumns.label               "คอลัมน์:">
+<!ENTITY tableColumns.accessKey           "ค">
+<!ENTITY tableHeight.label                "ความสูง:">
+<!ENTITY tableHeight.accessKey            "ส">
+<!ENTITY tableWidth.label                 "ความกว้าง:">
+<!ENTITY tableWidth.accessKey             "ก">
+<!ENTITY tableBorderSpacing.label         "เส้นขอบและระยะห่าง">
+<!ENTITY tableBorderWidth.label           "เส้นขอบ:">
+<!ENTITY tableBorderWidth.accessKey       "ข">
+<!ENTITY tableSpacing.label               "ระยะห่าง:">
+<!ENTITY tableSpacing.accessKey           "ห">
+<!ENTITY tablePadding.label               "ช่องว่างภายใน:">
+<!ENTITY tablePadding.accessKey           "ว">
+<!ENTITY tablePxBetwCells.label           "พิกเซลระหว่างเซลล์">
+<!ENTITY tablePxBetwBrdrCellContent.label "พิกเซลระหว่างเส้นขอบและเนื้อหาภายในเซลล์">
+<!ENTITY tableAlignment.label             "การจัดแนวตาราง:">
+<!ENTITY tableAlignment.accessKey         "จ">
+<!ENTITY tableCaption.label               "คำบรรยาย:">
+<!ENTITY tableCaption.accessKey           "บ">
+<!ENTITY tableCaptionAbove.label          "ด้านบนของตาราง">
+<!ENTITY tableCaptionBelow.label          "ด้านล่างของตาราง">
+<!ENTITY tableCaptionLeft.label           "ด้านซ้ายของตาราง">
+<!ENTITY tableCaptionRight.label          "ด้านขวาของตาราง">
+<!ENTITY tableCaptionNone.label           "ไม่มี">
+<!ENTITY tableInheritColor.label           "(ให้สีของหน้าแสดงผ่าน)">
+
+<!ENTITY cellSelection.label              "ส่วนที่เลือก">
+<!ENTITY cellSelectCell.label             "เซลล์">
+<!ENTITY cellSelectRow.label              "แถว">
+<!ENTITY cellSelectColumn.label           "คอลัมน์">
+<!ENTITY cellSelectNext.label             "ถัดไป">
+<!ENTITY cellSelectNext.accessKey         "ถ">
+<!ENTITY cellSelectPrevious.label         "ก่อนหน้า">
+<!ENTITY cellSelectPrevious.accessKey     "ก">
+<!ENTITY applyBeforeChange.label          "การเปลี่ยนแปลงปัจจุบันจะถูกนำไปใช้ก่อนที่จะเปลี่ยนแปลงส่วนที่เลือก">
+<!ENTITY cellContentAlignment.label       "การจัดชิดแนวเนื้อหา">
+<!ENTITY cellHorizontal.label             "แนวนอน:">
+<!ENTITY cellHorizontal.accessKey         "น">
+<!ENTITY cellVertical.label               "แนวตั้ง:">
+<!ENTITY cellVertical.accessKey           "ต">
+<!ENTITY cellStyle.label                  "ลักษณะเซลล์:">
+<!ENTITY cellStyle.accessKey              "ล">
+<!ENTITY cellNormal.label                 "ปกติ">
+<!ENTITY cellHeader.label                 "ส่วนหัว">
+<!ENTITY cellTextWrap.label               "การตัดข้อความ:">
+<!ENTITY cellTextWrap.accessKey           "ต">
+<!ENTITY cellWrap.label                   "ตัด">
+<!ENTITY cellNoWrap.label                 "ไม่ต้องตัด">
+<!ENTITY cellAlignTop.label               "ด้านบน">
+<!ENTITY cellAlignMiddle.label            "ตรงกลาง">
+<!ENTITY cellAlignBottom.label            "ด้านล่าง">
+<!ENTITY cellAlignJustify.label           "จัดเต็มแนว">
+<!ENTITY cellInheritColor.label           "(ให้สีของตารางแสดงผ่าน)">
+<!ENTITY cellUseCheckboxHelp.label        "ใช้กล่องกาเครื่องหมายเพื่อกำหนดคุณสมบัติที่จะใช้กับเซลล์ที่เลือกทั้งหมด">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "ขนาด">
+<!ENTITY pixels.label                     "พิกเซล">
+<!ENTITY backgroundColor.label            "สีพื้นหลัง:">
+<!ENTITY backgroundColor.accessKey        "พ">
+<!ENTITY AlignLeft.label                  "ซ้าย">
+<!ENTITY AlignCenter.label                "กึ่งกลาง">
+<!ENTITY AlignRight.label                 "ขวา">

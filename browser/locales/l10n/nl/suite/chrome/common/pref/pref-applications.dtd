@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Hulptoepassingen">
+
+<!ENTITY typeColumn.label        "Inhoudstype">
+<!ENTITY typeColumn.accesskey    "I">
+
+<!ENTITY actionColumn2.label     "Actie">
+<!ENTITY actionColumn2.accesskey "A">
+
+<!ENTITY search.placeholder      "Typen en acties zoeken">
+
+<!ENTITY useAppChooser.label     "Ingebouwde applicatiekiezer gebruiken indien beschikbaar">
+<!ENTITY useAppChooser.accesskey "u">

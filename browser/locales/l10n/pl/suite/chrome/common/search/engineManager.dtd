@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY engineManager.title "Menedżer listy wyszukiwarek">
+<!ENTITY engineManager.style "min-width: 36em;">
+<!ENTITY engineManager.intro "Zainstalowane są następujące wyszukiwarki:">
+
+<!ENTITY columnLabel.name "Nazwa">
+<!ENTITY columnLabel.keyword "Słowo kluczowe">
+
+<!-- Buttons -->
+<!ENTITY up.label "W górę">
+<!ENTITY up.accesskey "g">
+<!ENTITY dn.label "W dół">
+<!ENTITY dn.accesskey "d">
+<!ENTITY remove.label "Usuń">
+<!ENTITY remove.accesskey "U">
+<!ENTITY edit.label "Zmień słowo kluczowe…">
+<!ENTITY edit.accesskey "Z">
+
+<!ENTITY addEngine.label "Pobierz więcej wyszukiwarek…">
+<!ENTITY addEngine.accesskey "P">
+
+<!ENTITY enableSuggest.label "Wyświetlaj podpowiedzi wyszukiwania">
+<!ENTITY enableSuggest.accesskey "W">
+
+<!ENTITY restoreDefaults.label "Przywróć domyślne">
+<!ENTITY restoreDefaults.accesskey "r">

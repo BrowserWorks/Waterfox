@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "通知">
+<!ENTITY notifications.caption            "通知">
+<!ENTITY newMessagesArrive.label          "當有新郵件時:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "顯示通知">
+<!ENTITY showAlertFor.accesskey           "S">
+<!ENTITY showAlertTimeEnd.label           "秒">
+
+<!ENTITY showAlertPreviewText.label       "顯示訊息文字預覽">
+<!ENTITY showAlertPreviewText.accesskey   "v">
+<!ENTITY showAlertSubject.label           "顯示主旨">
+<!ENTITY showAlertSubject.accesskey       "u">
+<!ENTITY showAlertSender.label            "顯示寄件者">
+<!ENTITY showAlertSender.accesskey        "n">
+<!ENTITY useSystemAlert.label             "使用作業系統的桌面通知功能">
+<!ENTITY useSystemAlert.accesskey         "d">
+<!ENTITY useBuiltInAlert.label            "使用 &brandShortName; 自己的通知視窗">
+<!ENTITY useBuiltInAlert.accesskey        "w">
+
+<!ENTITY showTrayIcon.label               "顯示工具列圖示">
+<!ENTITY showTrayIcon.accesskey           "t">
+<!ENTITY showBalloon.label                "顯示氣球通知">
+<!ENTITY showBalloon.accesskey            "o">
+<!ENTITY bounceSystemDockIcon.label       "動態 Dock 圖示">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "播放音效">
+<!ENTITY playSound.accesskey              "P">
+<!ENTITY playButton.label                 "播放">
+<!ENTITY playButton.accesskey             "l">
+<!ENTITY systemsound.label                "系統新郵件音效">
+<!ENTITY systemsound.accesskey            "m">
+<!ENTITY customsound.label                "自訂聲音檔案">
+<!ENTITY customsound.accesskey            "C">
+<!ENTITY browse.label                     "瀏覽…">
+<!ENTITY browse.accesskey                 "B">
+<!ENTITY browse.title                     "選擇檔案">
+

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Pakeitimų pasirinkimas">
+<!ENTITY conflictWarning.label "Šį tinklalapį jau modifikavo kita programa, tačiau į jį dar neįrašyti rašyklės padaryti pakeitimai.">
+<!ENTITY conflictResolve.label "Pasirinkite, kurią versiją įrašyti:">
+<!ENTITY keepCurrentPageButton.label "Įrašyti į tinklalapį rašyklės padarytus pakeitimus">
+<!ENTITY useOtherPageButton.label "Pakeisti šį tinklalapį, įrašant kita programa padarytus pakeitimus">

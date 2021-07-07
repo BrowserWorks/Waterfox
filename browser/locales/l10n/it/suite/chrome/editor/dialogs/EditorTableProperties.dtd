@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title "Proprietà tabella">
+<!ENTITY applyButton.label "Applica">
+<!ENTITY applyButton.accesskey "A">
+<!ENTITY closeButton.label "Chiudi">
+<!ENTITY tableTab.label "Tabella">
+<!ENTITY cellTab.label "Celle">
+<!ENTITY tableRows.label "Righe:">
+<!ENTITY tableRows.accessKey "R">
+<!ENTITY tableColumns.label "Colonne:">
+<!ENTITY tableColumns.accessKey "C">
+<!ENTITY tableHeight.label "Altezza:">
+<!ENTITY tableHeight.accessKey "z">
+<!ENTITY tableWidth.label "Larghezza:">
+<!ENTITY tableWidth.accessKey "L">
+<!ENTITY tableBorderSpacing.label "Bordi e spaziatura">
+<!ENTITY tableBorderWidth.label "Larghezza bordo:">
+<!ENTITY tableBorderWidth.accessKey "b">
+<!ENTITY tableSpacing.label "Spaziatura:">
+<!ENTITY tableSpacing.accessKey "S">
+<!ENTITY tablePadding.label "Margini:">
+<!ENTITY tablePadding.accessKey "M">
+<!ENTITY tablePxBetwCells.label "pixel tra le celle">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixel tra i bordi e i contenuti della cella">
+<!ENTITY tableAlignment.label "Allineamento tabella:">
+<!ENTITY tableAlignment.accessKey "n">
+<!ENTITY tableCaption.label "Legenda:">
+<!ENTITY tableCaption.accessKey "L">
+<!ENTITY tableCaptionAbove.label "Sopra la tabella">
+<!ENTITY tableCaptionBelow.label "Sotto la tabella">
+<!ENTITY tableCaptionLeft.label "Prima della tabella">
+<!ENTITY tableCaptionRight.label "Dopo della tabella">
+<!ENTITY tableCaptionNone.label "Nessuna">
+<!ENTITY tableInheritColor.label "(Colore della pagina visibile in trasparenza)">
+<!ENTITY cellSelection.label "Selezione">
+<!ENTITY cellSelectCell.label "Cella">
+<!ENTITY cellSelectRow.label "Riga">
+<!ENTITY cellSelectColumn.label "Colonna">
+<!ENTITY cellSelectNext.label "Successiva">
+<!ENTITY cellSelectNext.accessKey "S">
+<!ENTITY cellSelectPrevious.label "Precedente">
+<!ENTITY cellSelectPrevious.accessKey "P">
+<!ENTITY applyBeforeChange.label "Le modifiche saranno applicate prima di modificare la selezione.">
+<!ENTITY cellContentAlignment.label "Allineamento contenuto">
+<!ENTITY cellHorizontal.label "Orizzontale:">
+<!ENTITY cellHorizontal.accessKey "O">
+<!ENTITY cellVertical.label "Verticale:">
+<!ENTITY cellVertical.accessKey "e">
+<!ENTITY cellStyle.label "Stile cella:">
+<!ENTITY cellStyle.accessKey "t">
+<!ENTITY cellNormal.label "Normale">
+<!ENTITY cellHeader.label "Intestazione">
+<!ENTITY cellTextWrap.label "A capo testo:">
+<!ENTITY cellTextWrap.accessKey "c">
+<!ENTITY cellWrap.label "Manda a capo">
+<!ENTITY cellNoWrap.label "Mantieni in una riga">
+<!ENTITY cellAlignTop.label "In alto">
+<!ENTITY cellAlignMiddle.label "Al centro">
+<!ENTITY cellAlignBottom.label "In basso">
+<!ENTITY cellAlignJustify.label "Giustifica">
+<!ENTITY cellInheritColor.label "(Colore della tabella visibile in trasparenza)">
+<!ENTITY cellUseCheckboxHelp.label "Utilizza le caselle di spunta per determinare quali proprietà saranno applicate alle celle selezionate.">
+<!ENTITY size.label "Dimensioni">
+<!ENTITY pixels.label "pixel">
+<!ENTITY backgroundColor.label "Colore di sfondo:">
+<!ENTITY backgroundColor.accessKey "r">
+<!ENTITY AlignLeft.label "Sinistra">
+<!ENTITY AlignCenter.label "Centro">
+<!ENTITY AlignRight.label "Destra">

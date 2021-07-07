@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Spelling controleren">
+
+<!ENTITY misspelledWord.label "Verkeerd gespeld woord:">
+<!ENTITY wordEditField.label "Vervangen door:">
+<!ENTITY wordEditField.accessKey "d">
+<!ENTITY checkwordButton.label "Woord controleren">
+<!ENTITY checkwordButton.accessKey "c">
+<!ENTITY suggestions.label "Suggesties:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "Negeren">
+<!ENTITY ignoreButton.accessKey "N">
+<!ENTITY ignoreAllButton.label "Alle negeren">
+<!ENTITY ignoreAllButton.accessKey "e">
+<!ENTITY replaceButton.label "Vervangen">
+<!ENTITY replaceButton.accessKey "V">
+<!ENTITY replaceAllButton.label "Alle vervangen">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "Stoppen">
+<!ENTITY stopButton.accessKey "p">
+<!ENTITY userDictionary.label "Persoonlijk woordenboek:">
+<!ENTITY moreDictionaries.label "Meer woordenboeken downloaden…">
+<!ENTITY addToUserDictionaryButton.label "Woord toevoegen">
+<!ENTITY addToUserDictionaryButton.accessKey "o">
+<!ENTITY editUserDictionaryButton.label "Bewerken…">
+<!ENTITY editUserDictionaryButton.accessKey "B">
+<!ENTITY recheckButton2.label "Tekst opnieuw controleren">
+<!ENTITY recheckButton2.accessKey "r">
+<!ENTITY closeButton.label "Sluiten">
+<!ENTITY closeButton.accessKey "S">
+<!ENTITY sendButton.label "Verzenden">
+<!ENTITY sendButton.accessKey "z">
+<!ENTITY languagePopup.label "Taal:">
+<!ENTITY languagePopup.accessKey "T">

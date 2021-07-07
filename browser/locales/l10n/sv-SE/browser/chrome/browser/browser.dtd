@@ -1,0 +1,282 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Öppna menyn">
+<!ENTITY navbarOverflow.label                "Fler verktyg…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Fäst flik">
+<!ENTITY  unpinTab.label                     "Lösgör flik">
+
+<!ENTITY  listAllTabs.label      "Visa upp alla flikar">
+
+<!ENTITY tabCmd.label "Ny flik">
+<!ENTITY openFileCmd.label "Öppna fil…">
+<!ENTITY printCmd.label "Skriv ut…">
+
+<!ENTITY taskManagerCmd.label "Aktivitetshanterare">
+
+<!ENTITY menubarCmd.label "Menyfältet">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigering">
+<!ENTITY personalbarCmd.label "Bokmärkesfältet">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Bokmärken">
+<!ENTITY bookmarksToolbarItem.label "Bokmärkesfältsposter">
+
+<!ENTITY fullScreenCmd.label "Helskärm">
+
+<!ENTITY pictureInPictureHideToggle.label "Dölj bild-i-bild växling">
+<!ENTITY pictureInPictureHideToggle.accesskey "D">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; inställningar">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Ansluta en annan enhet…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+<!ENTITY fxa.menu.signin.label "Logga in på &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Slå på &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; Tjänster">
+<!ENTITY fxa.menu.account.label "Konto">
+<!ENTITY fxa.menu.settings.label "Inställningar">
+<!ENTITY fxa.menu.accountSettings.label "Kontoinställningar">
+<!ENTITY fxa.menu.manageAccount2.label "Hantera konto">
+<!ENTITY fxa.menu.signOut.label "Logga ut…">
+<!ENTITY fxa.menu.setupSync.label "Konfigurera &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Skicka en flik direkt till alla enheter du är inloggad på.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "är nu i helskärm">
+<!ENTITY fullscreenWarning.generic.label "Detta dokument är nu i helskärm">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Avsluta helskärm (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Avsluta helskärm (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "har kontroll över pekaren. Tryck på Esc för att ta tillbaka kontrollen.">
+<!ENTITY pointerlockWarning.generic.label "Detta dokument har kontroll över pekaren. Tryck på Esc för att ta tillbaka kontrollen.">
+
+<!ENTITY showAllBookmarks2.label "Visa alla bokmärken">
+<!ENTITY recentBookmarks.label "Nyligen bokmärkt">
+<!ENTITY bookmarksToolbarChevron.tooltip "Visa fler bokmärken">
+
+<!ENTITY printButton.label            "Skriv ut">
+<!ENTITY printButton.tooltip          "Skriv ut denna sida">
+
+<!ENTITY searchItem.title             "Sök">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Startsida">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Hemsida">
+
+<!ENTITY bookmarksButton.label          "Bokmärken">
+
+<!ENTITY bookmarksSubview.label             "Bokmärken">
+<!ENTITY bookmarksMenuButton2.label         "Bokmärkesmeny">
+<!ENTITY bookmarksMenuButton.other.label    "Andra bokmärken">
+<!ENTITY bookmarksMenuButton.mobile.label   "Mobila bokmärken">
+<!ENTITY viewBookmarksSidebar2.label        "Visa sidofältet Bokmärken">
+<!ENTITY hideBookmarksSidebar.label         "Dölj sidofältet Bokmärken">
+<!ENTITY viewBookmarksToolbar.label         "Visa bokmärkesfältet">
+<!ENTITY hideBookmarksToolbar.label         "Dölj bokmärkesfältet">
+<!ENTITY searchBookmarks.label              "Sök bokmärken">
+<!ENTITY bookmarkingTools.label             "Verktyg för bokmärken">
+<!ENTITY addBookmarksMenu.label             "Lägg till bokmärkesmeny till verktygsfältet">
+<!ENTITY removeBookmarksMenu.label          "Ta bort bokmärkesmeny från verktygsfältet">
+
+<!ENTITY historyButton.label            "Historik">
+
+<!ENTITY downloads.label              "Filhämtaren">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Filhämtaren">
+<!ENTITY addons.label                 "Tillägg">
+
+<!ENTITY webDeveloperMenu.label       "Webbutvecklare">
+
+<!ENTITY newNavigatorCmd.label        "Nytt fönster">
+<!ENTITY newPrivateWindow.label     "Nytt privat fönster">
+
+<!ENTITY editMenu.label         "Redigera">
+<!ENTITY preferencesCmd2.label       "Inställningar">
+<!ENTITY preferencesCmdUnix.label       "Inställningar">
+<!ENTITY logins.label                           "Inloggningar och lösenord">
+
+<!ENTITY overflowCustomizeToolbar.label       "Anpassa verktygsfält…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "n">
+
+<!ENTITY historyMenu.label "Historik">
+<!ENTITY historyUndoMenu.label "Nyligen stängda flikar">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Nyligen stängda fönster">
+
+<!ENTITY appMenuHistory.showAll.label "Visa all historik">
+<!ENTITY appMenuHistory.clearRecent.label "Rensa ut tidigare historik…">
+<!ENTITY appMenuHistory.restoreSession.label "Återställ föregående session">
+<!ENTITY appMenuHistory.viewSidebar.label "Visa sidofältet Historik">
+<!ENTITY appMenuHistory.hideSidebar.label "Dölj sidofältet Historik">
+<!ENTITY appMenuHistory.recentHistory.label "Senaste historik">
+<!ENTITY appMenuHelp.label "Hjälp">
+
+<!ENTITY appMenuRemoteTabs.label "Synkade flikar">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Inga öppna flikar">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Visa mer">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Visa flikar från denna enhet">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Visa alla">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Visa alla flikar från denna enhet">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Slå på fliksynkronisering för att visa en lista med flikar från dina andra enheter.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Vill du se dina flikar från andra enheter här?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Öppna synkroniseringsinställningar">
+<!ENTITY appMenuRemoteTabs.welcome.label "Se en lista med flikar från dina andra enheter.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Ditt konto behöver verifieras.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Logga in till &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Slå på &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Hantera enheter…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Visa sidofältet Synkade flikar">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Dölj sidofältet Synkade flikar">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Anslut en annan enhet">
+
+<!ENTITY appMenuRecentHighlights.label "Senaste höjdpunkterna">
+
+<!ENTITY customizeMenu.addToToolbar.label "Lägg till i verktygsfält">
+<!ENTITY customizeMenu.addToToolbar.accesskey "L">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Lägg till i spillmeny">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "L">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Ta bort från spillmeny">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "T">
+<!ENTITY customizeMenu.removeFromToolbar.label "Ta bort från verktygsfält">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "T">
+<!ENTITY customizeMenu.addMoreItems.label "Lägg till fler…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "L">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Mer">
+
+<!ENTITY contentSearchSubmit.tooltip  "Skicka sökning">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Sök">
+<!ENTITY searchIcon.tooltip           "Sök">
+
+<!ENTITY openLinkCmdInTab.accesskey   "f">
+
+<!ENTITY pageAction.copyLink.label    "Kopiera länk">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Spara sida till Pocket">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY pocketMenuitem.label         "Visa Pocket-lista">
+
+<!ENTITY emailPageCmd.label           "E-posta länk…">
+
+<!ENTITY fullZoom.label                 "Zoom">
+
+<!ENTITY sidebarCloseButton.tooltip     "Stäng sidofält">
+
+<!ENTITY quitApplicationCmdWin2.label       "Avsluta">
+<!ENTITY quitApplicationCmdWin2.accesskey   "A">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Avsluta &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Avsluta">
+<!ENTITY quitApplicationCmd.accesskey   "A">
+<!ENTITY quitApplicationCmdMac2.label   "Avsluta &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Redigera popup-inställningar…">
+<!ENTITY editPopupSettings.label "Redigera popup-inställningar…">
+<!ENTITY editPopupSettings.accesskey "R">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Sök på den här sidan…">
+
+<!ENTITY spellAddDictionaries.label "Lägg till ordlista…">
+<!ENTITY spellAddDictionaries.accesskey "L">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Webbläsarflikar">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Dölj automatiskt">
+
+
+<!ENTITY uiTour.infoPanel.close "Stäng">
+
+<!ENTITY panicButton.thankyou.msg1                "Din senaste historik har rensats.">
+<!ENTITY panicButton.thankyou.msg2                "Säker webbläsning!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Tack!">
+
+<!ENTITY updateAvailable.panelUI.label "Ladda ner &brandShorterName; uppdatering">
+<!ENTITY updateManual.panelUI.label "Ladda ner en ny kopia av &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Du kan inte utföra ytterligare uppdateringar">
+<!ENTITY updateRestart.panelUI.label2 "Starta om för att uppdatera &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Synkar enheter…">
+
+<!ENTITY pageAction.shareUrl.label "Dela">
+<!ENTITY pageAction.shareMore.label "Mer…">
+
+<!ENTITY libraryButton.tooltip "Visa historik, sparade bokmärken och mer">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Tillgänglighetsfunktioner aktiverade">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Musehjul">
+<!ENTITY usingJustTheWheel.label         "Ingen modifikatortast">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Tilval">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "Vertikal rulling">
+<!ENTITY mouseWheelHorizGroup.label      "Horisontal rulling">
+<!ENTITY sameAsVertical.label            "Same som vertikal rulling">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "Ikkje gjer noko">
+<!ENTITY doNothing.accesskey             "o">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "Rull i dokumentet">
+<!ENTITY scrollDocument.accesskey        "R">
+<!ENTITY scrollDocumentHoriz.accesskey   "c">
+<!ENTITY history.label                   "Flytt tilbake og fram i nettlesarhistorikken">
+<!ENTITY history.accesskey               "F">
+<!ENTITY historyHoriz.accesskey          "b">
+<!ENTITY zoom.label                      "Zoom sida inn eller ut">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "o">
+<!ENTITY wheelSpeed.label                "Musehjulfart:">
+<!ENTITY wheelSpeed.accesskey            "h">
+<!ENTITY wheelSpeedHoriz.accesskey       "s">
+<!ENTITY reverseDirection.label          "Motsett retning">
+<!ENTITY reverseDirection.accesskey      "r">
+<!ENTITY reverseDirectionHoriz.accesskey "e">

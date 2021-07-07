@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Kalendorius">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Įvykis…">
+<!ENTITY lightning.menupopup.new.event.accesskey "v">
+<!ENTITY lightning.menupopup.new.task.label     "Darbas…">
+<!ENTITY lightning.menupopup.new.task.accesskey "D">
+<!ENTITY lightning.menupopup.new.calendar.label "Kalendorius…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "K">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Atverti">
+<!ENTITY lightning.menupopup.open.accesskey           "A">
+<!ENTITY lightning.menupopup.open.message.label       "Įrašytą laišką…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "l">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Kalendoriaus failą…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "K">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Kalendorius">
+<!ENTITY lightning.menu.view.calendar.accesskey        "K">
+<!ENTITY lightning.menu.view.tasks.label               "Darbai">
+<!ENTITY lightning.menu.view.tasks.accesskey           "D">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Įvykiai ir darbai">
+<!ENTITY lightning.menu.eventtask.accesskey            "v">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "El. paštas:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Pirmenybė teikiama planavimui el. paštu">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Kol kas šią nuostatą galite įjungti tik kalendoriaus ypatybių dialogo lange, jei kalendoriaus serveris rūpinasi planavimu.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Ši parinktis galima tik tuo atveju, jei planavimas tvarkomas kalendoriaus serverio. Įjungę galėsite grįžti prie planavimo el. paštu , o ne paliekant jį serveryje.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Priimti">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Priimti kvietimą į įvykį">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Priimti visus">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Priimti kvietimą į visus įvykio pasikartojimus">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Pridėti">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Pridėti įvykį į kalendorių">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Atmesti">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Nepriimti kvietimo į įvykį">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Atmesti visus">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Nepriimti kvietimo į visus įvykio pasikartojimus">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Atmesti">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Atmesti alternatyvų pasiūlymą">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Pašalinti">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Pašalinti iš kalendoriaus">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Išsamiau…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Rodyti išsamesnę įvykio informaciją">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Šių pranešimų daugiau nerodyti">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Kalendorius">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Atverti kalendoriaus kortelę">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Daugiau">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Rodyti daugiau parinkčių">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Pakartotinai patvirtinti">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Nusiųsti pakartotinį patvirtinimą įvykio organizatoriui">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Perplanuoti">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Perplanuoti įvykį">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Įrašyti kopiją">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Įrašyti įvykio kopiją nepriklausomai nuo atsakymo jo organizatoriui. Įvykio dalyvių sąrašas bus išvalytas.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Priimti preliminariai">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Preliminariai priimti kvietimą į įvykį">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Visus priimti preliminariai">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Preliminariai priimti kvietimą į visus įvykio pasikartojimus">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Atnaujinti">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Atnaujinti įvykį kalendoriuje">
+<!ENTITY lightning.imipbar.description                                      "Su šiuo laišku atsiųstas kvietimas dalyvauti įvykyje.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Siųsti atsakymą">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Siųsti atsakymą organizatoriui">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Siųskite organizatoriui atsakymą visai įvykių sekai">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Atsakymo nesiųsti">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Pakeiskite savo dalyvavimo būseną, neišsiuntę atsakymo organizatoriui">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Pakeiskite savo dalyvavimo keliose įvykiuose būseną, neišsiuntę atsakymo organizatoriui">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Kurti naują kalendorių">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Rodyti mėnesio miniatiūrą">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Rodyti dienos santrauką">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Nieko nerodyti">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Rodyti šiandienos polangį">
+<!ENTITY todaypane.showTodayPane.accesskey "R">
+<!ENTITY todaypane.statusButton.label "Šiandienos polangis">

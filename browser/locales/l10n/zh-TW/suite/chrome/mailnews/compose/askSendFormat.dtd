@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML 郵件問題">
+
+<!ENTITY recipient.label "有些收件者無法接收 HTML 格式郵件。">
+
+<!ENTITY question.label "您要將訊息轉換成純文字或仍以 HTML 格式傳送？">
+
+<!ENTITY plainTextAndHtml.label "同時寄出純文字與 HTML 格式">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "只寄出純文字郵件">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "只寄出 HTML 格式郵件">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "傳送">
+<!ENTITY send.accesskey "S">
+

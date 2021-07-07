@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Abonnieren">
+<!ENTITY subscribeButton.label        "Abonnieren">
+<!ENTITY subscribeButton.accesskey    "A">
+<!ENTITY unsubscribeButton.label      "Abbestellen">
+<!ENTITY unsubscribeButton.accesskey  "s">
+<!ENTITY newGroupsTab.label           "Neue Gruppen">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Aktualisieren">
+<!ENTITY refreshButton.accesskey      "k">
+<!ENTITY stopButton.label             "Stopp">
+<!ENTITY stopButton.accesskey         "S">
+<!ENTITY server.label                 "Account:">
+<!ENTITY server.accesskey             "c">
+<!ENTITY subscribedHeader.label       "Abonnieren">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Einträge anzeigen, die Folgendes enthalten:">
+<!ENTITY namefield.accesskey          "E">

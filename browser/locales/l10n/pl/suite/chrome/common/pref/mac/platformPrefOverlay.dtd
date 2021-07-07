@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : this is part of an inline-style attribute on the
+     preference dialog's <window> node, which specifies the width and height
+     in em units of the dialog. Localizers ONLY can increase these widths 
+     if they are having difficulty getting panel content to fit. 1em = the 
+     width of the letter 'm' in the selected font.
+     XUL/FE DEVELOPERS: DO NOT MODIFY THIS VALUE. It represents the correct
+     size of this window for en-US. -->
+<!ENTITY prefWindow.size "width: 74em; height: 43em;">
+
+<!-- pref-tabs.xul -->
+<!ENTITY urlbar.label "&#8984;+Return w pasku adresu">
+<!ENTITY urlbar.accesskey "R">
+<!ENTITY middleClick.label "Odnośnik zostanie otworzony za pomocą: środkowego przycisku myszy, lewego przycisku myszy z wciśniętym przyciskiem &#8984; na klawiaturze lub naciśnięcia przycisków &#8984;+Enter">
+<!ENTITY middleClick.accesskey "M">

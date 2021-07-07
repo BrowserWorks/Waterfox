@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Sidenavigasjonslinje">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "Nettstadsnavigasjonslinje">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Vis alltid">
+<!ENTITY linkToolbarAlways.accesskey "V">
+<!ENTITY linkToolbarAsNeeded.label "Vis berre etter behov">
+<!ENTITY linkToolbarAsNeeded.accesskey "o">
+<!ENTITY linkToolbarNever.label "Gøym alltid">
+<!ENTITY linkToolbarNever.accesskey "G">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Topp">
+<!ENTITY upButton.label "Opp">
+<!ENTITY firstButton.label "Første">
+<!ENTITY prevButton.label "Førre">
+<!ENTITY nextButton.label "Neste">
+<!ENTITY lastButton.label "Siste">
+
+<!ENTITY documentButton.label "Dokument">
+
+<!ENTITY tocButton.label "Innhaldsliste">
+<!ENTITY chapterButton.label "Kapittel">
+<!ENTITY sectionButton.label "Seksjonar">
+<!ENTITY subSectionButton.label "Underseksjonar">
+<!ENTITY appendixButton.label "Appendiks">
+<!ENTITY glossaryButton.label "Ordliste">
+<!ENTITY indexButton.label "Indeks">
+
+<!ENTITY moreButton.label "Meir">
+
+<!ENTITY helpButton.label "Hjelp">
+<!ENTITY searchButton.label "Søk">
+
+<!ENTITY authorButton.label "Forfattar(ar)">
+<!ENTITY copyrightButton.label "Kopirett">
+
+<!ENTITY bookmarkButton.label "Bokmerke">
+
+<!ENTITY alternateButton.label "Andre versjonar">
+
+<!ENTITY feedButton.label "Abonner">

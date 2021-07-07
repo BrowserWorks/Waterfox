@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Inhoud">
+<!ENTITY pref.content.description               "Deze instellingen bepalen hoe de inhoud van websites en berichten in &brandShortName; verschijnt.">
+
+<!ENTITY siteIcons.label                        "Websitepictogrammen">
+<!ENTITY useSiteIcons.label                     "Websitepictogrammen tonen">
+<!ENTITY useSiteIcons.accesskey                 "W">
+<!ENTITY useFavIcons2.label                     "De favicon van de server proberen te gebruiken als de pagina er geen definieert">
+<!ENTITY useFavIcons2.accesskey                 "P">
+
+<!ENTITY scrolling.label                        "Scrollen">
+<!ENTITY useAutoScroll.label                    "Automatisch scrollen gebruiken">
+<!ENTITY useAutoScroll.accesskey                "m">
+<!ENTITY useSmoothScroll.label                  "Vloeiend scrollen gebruiken">
+<!ENTITY useSmoothScroll.accesskey              "e">
+
+<!ENTITY zoomPrefs.label                        "Zoomopties">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Bereik van">
+<!ENTITY minZoom.accesskey                      "v">
+<!ENTITY maxZoom.label                          "tot en met">
+<!ENTITY maxZoom.accesskey                      "t">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY defaultZoom.label                      "Standaard zoom">
+<!ENTITY defaultZoom.accesskey                  "z">
+
+<!ENTITY siteSpecific.label                     "Zoomniveau op paginabasis onthouden">
+<!ENTITY siteSpecific.accesskey                 "o">
+<!ENTITY textZoomOnly.label                     "Alleen tekst zoomen in plaats van hele pagina’s">
+<!ENTITY textZoomOnly.accesskey                 "z">
+<!ENTITY enableAutomaticImageResizing.label     "Formaat van grote afbeeldingen aanpassen aan browservenster">
+<!ENTITY enableAutomaticImageResizing.accesskey "F">
+
+<!ENTITY allowHWAccel.label                     "Hardwareversnelling gebruiken wanneer beschikbaar">
+<!ENTITY allowHWAccel.accesskey                 "v">
+<!ENTITY blockAutoRefresh.label                 "Mij waarschuwen wanneer websites proberen de pagina door te sturen of te herladen">
+<!ENTITY blockAutoRefresh.accesskey             "r">
+
+<!ENTITY showZoomStatusPanel.label              "Zoombediening in de statusbalk tonen">

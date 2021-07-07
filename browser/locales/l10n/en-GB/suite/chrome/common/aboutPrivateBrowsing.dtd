@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "You are in a Private Browsing window">
+<!ENTITY privatebrowsingpage.title.normal        "Would you like to start Private Browsing?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; won't remember any history for this window.">
+<!ENTITY privatebrowsingpage.status.normal       "You are not currently in a private window.">
+
+<!ENTITY privatebrowsingpage.common.description  "In a Private Browsing window, &brandShortName; won't keep any browser history, search history, download history, web form history, cookies, or temporary internet files.  However, created bookmarks and downloaded files will be kept.">
+<!ENTITY privatebrowsingpage.track.warn          "While this computer won't have a record of your browsing history, your employer or Internet service provider might still be able to track the pages you visit.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Learn more">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.info          "Once done, close the window to stop Private Browsing.">
+<!ENTITY privatebrowsingpage.close.label         "Close this window now">
+<!ENTITY privatebrowsingpage.close.accesskey     "C">
+
+<!ENTITY privatebrowsingpage.start.info          "To start Private Browsing, click the button below or select File ▶ New ▶ Private Window from the menu.">
+<!ENTITY privatebrowsingpage.private.label       "Open a new private window">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Đăng kí">
+<!ENTITY subscribeButton.label        "Theo dõi">
+<!ENTITY subscribeButton.accesskey    "e">
+<!ENTITY unsubscribeButton.label      "Dừng theo dõi">
+<!ENTITY unsubscribeButton.accesskey  "D">
+<!ENTITY newGroupsTab.label           "Nhóm Mới">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Làm tươi">
+<!ENTITY refreshButton.accesskey      "L">
+<!ENTITY stopButton.label             "Dừng">
+<!ENTITY stopButton.accesskey         "D">
+<!ENTITY server.label                 "Tài khoản:">
+<!ENTITY server.accesskey             "T">
+<!ENTITY subscribedHeader.label       "Theo dõi">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Hiện các mục có chứa:">
+<!ENTITY namefield.accesskey          "H">

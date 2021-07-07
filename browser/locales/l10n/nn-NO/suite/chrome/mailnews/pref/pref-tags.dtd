@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Etikettar">
+<!ENTITY pref.tags.caption          "Tilpass etikettar">
+<!ENTITY pref.tags.description      "Etikettar kan brukast for å kategorisere og prioritere meldingane dine. Modifiser utsjånad og viktigheita til etikettane ved å bruke innstillingane nedanfor. Etikettar nær toppen er viktigare enn dei lenger nede.">
+<!ENTITY tagColumn.label            "Etikett">
+<!ENTITY colorColumn.label          "Farge">
+<!ENTITY defaultTagName.label       "Namnlaus etikett">
+<!ENTITY addTagButton.label         "Legg til">
+<!ENTITY addTagButton.accesskey     "L">
+<!ENTITY deleteTagButton.label      "Slett">
+<!ENTITY deleteTagButton.accesskey  "S">
+<!ENTITY raiseTagButton.label       "Meir viktig">
+<!ENTITY raiseTagButton.accesskey   "M">
+<!ENTITY lowerTagButton.label       "Mindre viktig">
+<!ENTITY lowerTagButton.accesskey   "n">
+<!ENTITY restoreButton.label        "Tilbakestill til standardar">
+<!ENTITY restoreButton.accesskey    "T">

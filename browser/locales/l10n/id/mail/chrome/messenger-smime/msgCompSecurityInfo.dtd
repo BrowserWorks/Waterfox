@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Keamanan Pesan">
+<!ENTITY subject.plaintextWarning "Catatan: Isian subjek pesan email tidak pernah dienkripsi.">
+<!ENTITY status.heading "Isi pesan yang akan dikirimkan adalah sebagai berikut:">
+<!ENTITY status.signed "Ditandatangani secara dijital:">
+<!ENTITY status.encrypted "Dienkripsi:">
+<!ENTITY status.certificates "Sertifikat:">
+<!ENTITY view.label "Tampilan">
+<!ENTITY view.accesskey "T">
+<!ENTITY tree.recipient "Penerima">
+<!ENTITY tree.status "Status">
+<!ENTITY tree.issuedDate "Diterbitkan">
+<!ENTITY tree.expiresDate "Kedaluwarsa">

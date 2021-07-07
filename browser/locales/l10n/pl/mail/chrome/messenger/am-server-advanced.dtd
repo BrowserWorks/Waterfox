@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Zaawansowane ustawienia konta">
+<!ENTITY serverDirectory.label "Katalog serwera IMAP">
+<!ENTITY serverDirectory.accesskey "K">
+<!ENTITY usingSubscription.label "Pokaż tylko subskrybowane foldery">
+<!ENTITY usingSubscription.accesskey "P">
+<!ENTITY dualUseFolders.label "Serwer obsługuje foldery zawierające podfoldery i wiadomości">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Maksymalna liczba połączeń z serwerem">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!ENTITY namespaceDesc.label "Poniższe ustawienia określają dostępne przestrzenie nazw na bieżącym serwerze IMAP">
+<!ENTITY personalNamespace.label "Osobista przestrzeń nazw:">
+<!ENTITY personalNamespace.accesskey "a">
+<!ENTITY publicNamespace.label "Publiczna (współdzielona) przestrzeń nazw:">
+<!ENTITY publicNamespace.accesskey "w">
+<!ENTITY otherUsersNamespace.label "Przestrzeń nazw innych użytkowników:">
+<!ENTITY otherUsersNamespace.accesskey "n">
+<!ENTITY overrideNamespaces.label "Zezwalaj, aby serwer zmieniał powyższe ustawienia przestrzeni nazw">
+<!ENTITY overrideNamespaces.accesskey "Z">
+<!ENTITY pop3DeferringDesc.label "Poczta pobierana z serwera tego konta powinna być zapisywana w następującym folderze:">
+<!ENTITY accountInbox.label "Odebrane – dla tego konta">
+<!ENTITY accountInbox.accesskey "O">
+<!ENTITY deferToServer.label "Odebrane – dla konta:">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Uwzględnij ten serwer podczas pobierania nowych wiadomości">
+<!ENTITY deferGetNewMail.accesskey "t">

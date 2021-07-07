@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Notificaties">
+<!ENTITY notifications.caption            "Notificaties">
+<!ENTITY newMessagesArrive.label          "Als nieuwe berichten binnenkomen:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Waarschuwing bij nieuwe e-mail">
+<!ENTITY showAlertFor.accesskey           "W">
+<!ENTITY showAlertTimeEnd.label           "seconden tonen">
+
+<!ENTITY showAlertPreviewText.label       "Berichtvoorbeeld tonen">
+<!ENTITY showAlertPreviewText.accesskey   "e">
+<!ENTITY showAlertSubject.label           "Onderwerp tonen">
+<!ENTITY showAlertSubject.accesskey       "O">
+<!ENTITY showAlertSender.label            "Afzender tonen">
+<!ENTITY showAlertSender.accesskey        "A">
+<!ENTITY useSystemAlert.label             "Desktopnotificaties van het besturingssysteem gebruiken">
+<!ENTITY useSystemAlert.accesskey         "D">
+<!ENTITY useBuiltInAlert.label            "&brandShortName;&apos;s eigen meldingsvensters gebruiken">
+<!ENTITY useBuiltInAlert.accesskey        "m">
+
+<!ENTITY showTrayIcon.label               "Een systeemvakpictogram tonen">
+<!ENTITY showTrayIcon.accesskey           "t">
+<!ENTITY showBalloon.label                "Een ballonwaarschuwing tonen">
+<!ENTITY showBalloon.accesskey            "n">
+<!ENTITY bounceSystemDockIcon.label       "Het programmasymbool laten bewegen">
+<!ENTITY bounceSystemDockIcon.accesskey   "a">
+
+<!ENTITY playSound.label                  "Een geluid afspelen">
+<!ENTITY playSound.accesskey              "u">
+<!ENTITY playButton.label                 "Afspelen">
+<!ENTITY playButton.accesskey             "f">
+<!ENTITY systemsound.label                "Systeemgeluid voor nieuwe e-mail">
+<!ENTITY systemsound.accesskey            "S">
+<!ENTITY customsound.label                "Het volgende geluidsbestand gebruiken">
+<!ENTITY customsound.accesskey            "v">
+<!ENTITY browse.label                     "Bladeren…">
+<!ENTITY browse.accesskey                 "B">
+<!ENTITY browse.title                     "Bestand kiezen">

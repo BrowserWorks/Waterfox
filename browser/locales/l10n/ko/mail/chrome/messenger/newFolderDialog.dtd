@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "새 폴더">
+<!ENTITY name.label                 "이름:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "하위 폴더 만들기:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "이 서버는 두 개의 특별한 방식으로 폴더를 제한합니다.">
+<!ENTITY folderRestriction2.label   "새 폴더 허용:">
+<!ENTITY foldersOnly.label          "폴더만">
+<!ENTITY messagesOnly.label         "메시지만">
+<!ENTITY accept.label               "폴더 생성">
+<!ENTITY accept.accesskey           "r">

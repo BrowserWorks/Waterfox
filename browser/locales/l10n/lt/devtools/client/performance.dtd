@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+
+
+<!ENTITY performanceUI.bufferStatusTooltip "Profiliuoklė saugo ėminius cikliniame buferyje, tad kai pasiekiamas buferio limitas tam įrašinėjimui, naujesni ėminiai pradeda pakeisti esančius įrašinėjimo pradžioje.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Įjunkite daugiaprocesę „Firefox“ nuostatose, norėdami realiu laiku atvaizduoti įrašomus duomenis.">
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+
+<!ENTITY performanceUI.bufferStatusFull "Buferis pilnas. Senesni ėminiai dabar pakeičiami.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+
+<!ENTITY performanceUI.unavailableNoticePB "Profilio įrašinėjimas šiuo metu negalimas. Uždarykite visus privačiojo naršymo langus ir bandykite dar kartą.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+
+<!ENTITY performanceUI.loadingNotice "Įkeliama…">
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+
+<!ENTITY performanceUI.toolbar.waterfall "Krioklys">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Rodomos nuosekliai išdėstytos skirtingos įrašinėjimo metu naršyklės atliekamos operacijos.">
+<!ENTITY performanceUI.toolbar.js-calltree "Kreipinių medis">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Paryškinamos daugiausiai naršyklės darbo laiko įrašinėjimo metu pareikalavusios „JavaScript“ funkcijos.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Išskyrimai">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Rodoma kam įrašinėjimo metu buvo išskirta atminties.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS liepsnų diagrama">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Rodomas „JavaScript“ kreipinių dėklas vykstant įrašinėjimui.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Išskyrimų liepsnų diagrama">
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+
+<!ENTITY performanceUI.table.totalDuration            "Visas laikas">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Laiko kiekis, praleistas šioje funkcijoje ir iš jos kviestose funkcijose.">
+<!ENTITY performanceUI.table.selfDuration             "Vidinis laikas">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Laiko kiekis, praleistas tik šioje funkcijoje.">
+<!ENTITY performanceUI.table.totalPercentage          "Bendri kaštai">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Laiko kiekis procentais, praleistas šioje funkcijoje ir iš jos kviestose funkcijose.">
+<!ENTITY performanceUI.table.selfPercentage           "Vidiniai kaštai">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Laiko kiekis procentais, praleistas šioje funkcijoje.">
+<!ENTITY performanceUI.table.samples                  "Ėminiai">
+<!ENTITY performanceUI.table.samples.tooltip          "Skaičius kartų, kiek ši funkcija buvo dėkle profiliuoklei imant ėminį.">
+<!ENTITY performanceUI.table.function                 "Funkcija">
+<!ENTITY performanceUI.table.function.tooltip         "Pavadinimas ir šaltinio vieta ėminio funkcijoje.">
+<!ENTITY performanceUI.table.totalAlloc               "Viso atrinktų išskyrimų">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Bendras atrinktų objekto išskyrimų skaičius šioje vietoje ir kreipiniuose.">
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+
+<!ENTITY performanceUI.options.filter.tooltiptext "Pasirinkite, kokius duomenis rodyti laiko grafike">
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!ENTITY performanceUI.options.gear.tooltiptext "Keisti našumo nuostatas.">
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!ENTITY performanceUI.invertTree             "Invertuoti kreipimųsi medį">
+<!ENTITY performanceUI.invertTree.tooltiptext "Invertavus kreipimųsi medį yra rodomi profiliuotų kreipimųsi keliai, pradedant jauniausiais kadrais ir plečiantis iki senesnių.">
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!ENTITY performanceUI.invertFlameGraph             "Invertuoti liepsnų diagramą">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Invertavus liepsnų diagramą yra rodomi profiliuotų kreipimųsi keliai, pradedant jauniausiais kadrais ir plečiantis iki senesnių.">
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!ENTITY performanceUI.showPlatformData             "Rodyti „Gecko“ platformos duomenis">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Platformos duomenų rodymas leidžia „JavaScript“ profiliuoklės ataskaitose atvaizduoti „Gecko“ platformos simbolius.">
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!ENTITY performanceUI.showJITOptimizations             "Rodyti JIT optimizacijas">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Rodyti JIT optimizacijų duomenis pateiktus kiekviename „JavaScript“ kadre.">
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!ENTITY performanceUI.flattenTreeRecursion             "Suploti medžio rekursiją">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Suploti rekursiją tiriant funkcijas">
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableMemory             "Įrašyti atmintį">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Įrašinėti atminties sąnaudas profiliuojant.">
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableAllocations             "Įrašinėti išskyrimus">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Įrašinėti objektų išskyrimus profiliuojant.">
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+
+<!ENTITY performanceUI.enableFramerate             "Įrašinėti kadrų dažnį">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Įrašinėti kadrų dažnį profiliuojant.">
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+
+<!ENTITY performanceUI.console.recordingNoticeStart "Dabar įrašinėjama naudojant">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+
+<!ENTITY performanceUI.console.stopCommandStart "Sustabdykite įrašymą įvesdami">
+<!ENTITY performanceUI.console.stopCommandEnd   "į pultą.">

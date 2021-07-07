@@ -1,0 +1,134 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Nepavyko įkelti tinklalapio">
+<!ENTITY retry.label "Bandyti dar kartą">
+<!ENTITY returnToPreviousPage.label "Eiti atgal">
+<!ENTITY returnToPreviousPage1.label "Grįžti (rekomenduojama)">
+<!ENTITY advanced2.label "Papildomai…">
+<!ENTITY viewCertificate.label "Rodyti liudijimą">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Serveris nerastas">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Jeigu šis adresas teisingas, yra dar trys dalykai, kuriuos galite pabandyti:</strong>
+<ul>
+  <li>Bandykite dar kartą vėliau.</li>
+  <li>Patikrinkite savo ryšį su tinklu.</li>
+  <li>Jei esate prisijungę, tačiau naudojate užkardą, patikrinkite, ar „&brandShortName;“ turi leidimą pasiekti saityną.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Patikrinkite, ar failo varde nėra rinkimo klaidų, pvz., didžiosios raidės pakeistos mažosiomis.</li> <li>Patikrinkite, ar failas nebuvo perkeltas, pervardytas ar pašalintas.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Jis galėjo būti pašalintas, perkeltas arba priėjimą riboja failo leidimai.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>„&brandShortName;“ nepavyko įkelti šio tinklalapio dėl nežinomos priežasties.</p>">
+
+<!ENTITY captivePortal.title "Prisijungti prie tinklo">
+<!ENTITY captivePortal.longDesc2 "<p>Turite prisijungti prie šio tinklo, kad galėtumėte naudotis internetu.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Atverti prisijungimo tinklalapį">
+
+<!ENTITY malformedURI.pageTitle "Neteisingas URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Prašomo dokumento „&brandShortName;“ podėlyje nėra.</p><ul><li>Saugumo sumetimais „&brandShortName;“ jautrių dokumentų automatiškai iš naujo neatsiunčia.</li><li>Jeigu norite dokumentą iš svetainės atsiųsti iš naujo, spustelėkite „Bandyti dar kartą“.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Spustelėkite „Bandyti dar kartą“, kad būtų prisijungta prie tinklo ir pabandyta įkelti tinklalapį iš naujo.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Prašome pranešti svetainės savininkams apie šią problemą.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Prašome pranešti svetainės savininkams apie šią problemą.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Gali būti, kad šiam adresui atverti reikia įdiegti papildomą programinę įrangą.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Patikrinkite, ar naršyklėje nurodytos teisingos įgaliotojo serverio nuostatos.</li> <li>Jei norite sužinoti, ar įgaliotasis serveris veikia korektiškai, kreipkitės į sistemos administratorių.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Patikrinkite, ar naršyklėje nurodytos teisingos įgaliotojo serverio nuostatos.</li> <li>Patikrinkite, ar yra ryšys tarp jūsų kompiuterio ir tinklo.</li> <li>Jei jūsų kompiuteris ar tinklas apsaugotas užkarda arba jungiamasi per įgaliotąjį serverį, tai įsitikinkite, kad naršyklei „&brandShortName;“ leidžiama pasiekti saityną.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ši klaida galėjo įvykti dėl to, kad naršyklė nepriima svetainės slapukų.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Įsitikinkite, kad į jūsų sistemą yra įdiegta asmeninio saugumo tvarkytuvė.</li> <li>Ši klaida galėjo įvykti dėl nestandartinės serverio konfigūracijos.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Tinklalapis, kurį bandote atverti, negali būti parodytas, nes nepavyko patikrinti gautų duomenų autentiškumo.</li> <li>Prašom pranešti apie šią problemą svetainės savininkams.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "„&brandShortName;“ aptiko galimą saugumo grėsmę ir neįkėlė <span class='hostname'/>. Jei apsilankysite šioje svetainėje, piktavaliai gali bandyti pavogti jūsų slaptažodžius, el. laiškus, bankininkystės duomenis.">
+<!ENTITY certerror.sts.introPara "„&brandShortName;“ aptiko galimą saugumo grėsmę ir neįkėlė <span class='hostname'/>, nes ši svetainė reikalauja saugaus ryšio.">
+
+<!ENTITY certerror.expiredCert.introPara "„&brandShortName;“ aptiko problemą ir neįkėlė <span class='hostname'/>. Ši svetainė gali būti netinkamai sukonfigūruota, arba jūsų kompiuterio laikrodis yra netinkamai nustatytas.">
+<!ENTITY certerror.expiredCert.secondPara2 "Tikėtina, kad svetainės liudijimas baigė galioti, todėl „&brandShortName;“ negali užmegzti saugaus ryšio. Jei apsilankysite šioje svetainėje, piktavaliai gali bandyti pavogti jūsų slaptažodžius, el. laiškus, bankininkystės duomenis.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Tikėtina, kad svetainės liudijimas baigė galioti, todėl „&brandShortName;“ negali užmegzti saugaus ryšio.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Ką dėl to galima padaryti?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>Problema greičiausiai yra su svetaine, ir jūs nieko negalite padaryti.</p>
+<p>Jei esate įmonės vidiniame tinkle, arba naudojatės antivirusine programa, galite paprašyti pagalbos iš aptarnavimo skyriaus. Galite pranešti apie problemą ir svetainės prižiūrėtojui.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Jūsų kompiuterio laikrodis rodo <span id='wrongSystemTime_systemDate2'/>. Įsitikinkite, kad jūsų kompiuterio data, laikas ir laiko juosta yra tinkamai nustatyti, ir įkelkite <span class='hostname'/> iš naujo.</p> <p>Jeigu jūsų kompiuterio laikas jau yra geras, ši svetainė gali būti netinkamai sukonfigūruota, tad patys nieko negalite padaryti. Galite apie šią problemą pranešti svetainės prižiūrėtojui.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Problema greičiausiai yra su svetaine, ir jūs nieko negalite padaryti. Galite pranešti apie problemą svetainės prižiūrėtojui.</p>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Ši svetainė laikinai nepasiekiama arba yra per daug apkrauta. Šiek tiek palaukite ir bandykite prisijungti iš naujo.</li> <li>Jei nepavyksta įkelti ir kitų tinklalapių, patikrinkite kompiuterio ryšį su tinklu.</li> <li>Jei jūsų kompiuteris ar tinklas apsaugotas užkarda arba jungiasi per įgaliotąjį serverį, tai įsitikinkite, kad „&brandShortName;“ leidžiama pasiekti saityną.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>„&brandShortName;“ neleido įkelti šio tinklalapio, nes jo saugumo politika neleidžia jo turinio įterpti nurodytuoju būdu.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>„&brandShortName;“ neleido įkelti šio tinklalapio šiame kontekste, nes jo „X-Frame-Options“ politika to neleidžia.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Tinklalapio, kurį bandote atverti, parodyti negalima, nes perduodant duomenis įvyko klaida.</p><ul><li>Siūlome susisiekti su svetainės savininkais ar valdytojais ir pranešti jiems apie šią problemą.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Priimti riziką ir tęsti">
+
+<!ENTITY errorReporting.automatic2 "Pranešdami apie tokias klaidas kaip ši, padėsite „Mozillai“ nustatyti ir užblokuoti kenksmingas svetaines">
+<!ENTITY errorReporting.learnMore "Sužinoti daugiau…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Siūlome susisiekti su svetainės savininkais ar valdytojais ir pranešti jiems apie šią problemą.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Papildoma informacija: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Dėmesio: galima saugumo rizika">
+<!ENTITY certerror.sts.pagetitle  "Neprisijungta: galima saugumo problema">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> turi saugumo nuostatą, kuri vadinasi „HTTP Strict Transport Security“ (HSTS), ir reiškia, kad „&brandShortName;“ gali jungtis tik saugiu ryšiu. Jūs negalite sukurti išimties, kad aplankytumėte šią svetainę.">
+<!ENTITY certerror.copyToClipboard.label "Kopijuoti tekstą į iškarpinę">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> naudoja saugumo technologiją, kuri yra pasenusi ir pažeidžiama. Piktavalis lengvai galėtų pamatyti informaciją, kuri jums atrodė saugi. Kol svetainės administratorius jos nesutvarkys, negalėsite į šią svetainę užeiti.</p><p>Klaidos kodas: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Uždraustas puslapis">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> greičiausiai yra saugi svetainė, tačiau nepavyko užmegzti saugaus ryšio. Šią problemą sukėlė „<span class='mitm-name'/>“, jūsų kompiuteryje arba tinkle esanti programinė įranga.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Jeigu jūsų antivirusinė programa turi funkciją, kuri tikrina užšifruotus susijungimus (dažnai vadinama „saityno skenavimu“ arba „https skenavimu“), galite ją išjungti. Jei tai nepadės, galite pašalinti antivirusinę programą ir įdiegti ją iš naujo.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Jeigu esate įmonės tinkle, galite susisiekti su savo IT skyriumi.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Jeigu neatpažįstate „<span class='mitm-name'/>“, tai gali būti apgaulė ir neturėtumėte bandyti atverti šios svetainės.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Jeigu neatpažįstate „<span class='mitm-name'/>“, tai gali būti apgaulė ir negalite nieko padaryti, kad atvertumėte šią svetainę.">
+
+<!ENTITY clockSkewError.longDesc "Jūsų kompiuteris sako, kad yra dabar yra <span id='wrongSystemTime_systemDate1'/>, kas neleidžia „&brandShortName;“ užmegzti saugaus ryšio. Norėdami aplankyti <span class='hostname'></span>, atnaujinkite savo kompiuterio laikrodį, kad rodytų teisingą esamą datą, laiką ir laiko juostą, ir įkelkite <span class='hostname'></span> iš naujo.">
+
+<!ENTITY prefReset.longDesc "Panašu, kad taip galėjo nutikti dėl jūsų tinklo saugumo nuostatų. Ar norite atstatyti numatytąsias reikšmes?">
+<!ENTITY prefReset.label "Atstatyti numatytąsias nuostatas">
+
+<!ENTITY enableTls10.longDesc "Gali būti, kad ši svetainė nepalaiko TLS 1.2 protokolo, kuris yra mažiausia „&brandShortName;“ palaikoma versija. Įjungus TLS 1.0 ir TLS 1.1, gali pavykti užmegzti ryšį.">
+<!ENTITY enableTls10.note "Vėlesnėje laidoje TLS 1.0 ir TLS 1.1 bus visam laikui išjungti.">
+<!ENTITY enableTls10.label "Įjungti TLS 1.0 ir 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Tinklalapis, kurį bandote atverti, negali būti įkeltas dėl tinklo protokole aptiktos klaidos.</p><ul><li>Susisiekite su svetainės prižiūrėtojais ir praneškite apie šią problemą.</li></ul>">

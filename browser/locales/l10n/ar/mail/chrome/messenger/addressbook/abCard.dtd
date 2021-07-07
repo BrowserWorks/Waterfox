@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "جهة اتصال">
+<!ENTITY Contact.accesskey               "ه">
+<!ENTITY Name.box                        "الاسم">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "الأوّل:">
+<!ENTITY NameField1.accesskey           "و">
+<!ENTITY NameField2.label               "الأخير:">
+<!ENTITY NameField2.accesskey           "خ">
+<!ENTITY PhoneticField1.label           "صوتي:">
+<!ENTITY PhoneticField2.label           "صوتي:">
+<!ENTITY DisplayName.label              "العرض:">
+<!ENTITY DisplayName.accesskey          "ع">
+<!ENTITY preferDisplayName.label        "فضِّل دائمًا اسم العرض على ترويسة الرسالة">
+<!ENTITY preferDisplayName.accesskey    "ض">
+<!ENTITY NickName.label                 "الكنية:">
+<!ENTITY NickName.accesskey             "ك">
+
+<!ENTITY PrimaryEmail.label             "البريد الإلكتروني:">
+<!ENTITY PrimaryEmail.accesskey         "د">
+<!ENTITY SecondEmail.label              "البريد الإضافي:">
+<!ENTITY SecondEmail.accesskey          "ف">
+<!ENTITY PreferMailFormat.label         "يفضل استقبال الرسائل المنسقة ك‍:">
+<!ENTITY PreferMailFormat.accesskey     "س">
+<!ENTITY PlainText.label                "نص صِرْف">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "مجهول">
+<!ENTITY chatName.label                 "اسم الدردشة:">
+
+<!ENTITY WorkPhone.label                "العمل:">
+<!ENTITY WorkPhone.accesskey            "ع">
+<!ENTITY HomePhone.label                "المنزل:">
+<!ENTITY HomePhone.accesskey            "ن">
+<!ENTITY FaxNumber.label                "الفاكس:">
+<!ENTITY FaxNumber.accesskey            "ف">
+<!ENTITY PagerNumber.label              "جهاز الاستدعاء:">
+<!ENTITY PagerNumber.accesskey          "س">
+<!ENTITY CellularNumber.label           "المحمول:">
+<!ENTITY CellularNumber.accesskey       "ح">
+
+<!ENTITY Home.tab                       "خاص">
+<!ENTITY Home.accesskey                 "خ">
+<!ENTITY HomeAddress.label              "العنوان:">
+<!ENTITY HomeAddress.accesskey          "ن">
+<!ENTITY HomeCity.label                 "المدينة:">
+<!ENTITY HomeCity.accesskey             "د">
+<!ENTITY HomeState.label                "الولاية/المحافظة:">
+<!ENTITY HomeState.accesskey            "ح">
+<!ENTITY HomeZipCode.label              "الرمز البريدي:">
+<!ENTITY HomeZipCode.accesskey          "ز">
+<!ENTITY HomeCountry.label              "الدولة:">
+<!ENTITY HomeCountry.accesskey          "ة">
+<!ENTITY HomeWebPage.label              "صفحة الوِب:">
+<!ENTITY HomeWebPage.accesskey          "ص">
+<!ENTITY Birthday.label                 "تاريخ الميلاد:">
+<!ENTITY Birthday.accesskey             "ت">
+<!ENTITY Month.placeholder              "الشهر">
+<!ENTITY Day.placeholder                "اليوم">
+<!ENTITY Year.placeholder               "السنة">
+<!ENTITY Age.label                      "العمر:">
+<!ENTITY Age.placeholder                "العمر">
+
+<!ENTITY Work.tab                       "العمل">
+<!ENTITY Work.accesskey                 "ع">
+<!ENTITY JobTitle.label                 "الوظيفة:">
+<!ENTITY JobTitle.accesskey             "ظ">
+<!ENTITY Department.label               "القسم:">
+<!ENTITY Department.accesskey           "ق">
+<!ENTITY Company.label                  "المنظّمة:">
+<!ENTITY Company.accesskey              "م">
+<!ENTITY WorkAddress.label              "العنوان:">
+<!ENTITY WorkAddress.accesskey          "ن">
+<!ENTITY WorkCity.label                 "المدينة:">
+<!ENTITY WorkCity.accesskey             "د">
+<!ENTITY WorkState.label                "الولاية/المحافظة:">
+<!ENTITY WorkState.accesskey            "ح">
+<!ENTITY WorkZipCode.label              "الرمز البريدي:">
+<!ENTITY WorkZipCode.accesskey          "د">
+<!ENTITY WorkCountry.label              "الدولة:">
+<!ENTITY WorkCountry.accesskey          "ة">
+<!ENTITY WorkWebPage.label              "صفحة الوِب:">
+<!ENTITY WorkWebPage.accesskey          "ص">
+
+<!ENTITY Other.tab                      "أخرى">
+<!ENTITY Other.accesskey                "خ">
+<!ENTITY Custom1.label                  "مخصص ١:">
+<!ENTITY Custom1.accesskey              "١">
+<!ENTITY Custom2.label                  "مخصص ٢:">
+<!ENTITY Custom2.accesskey              "٢">
+<!ENTITY Custom3.label                  "مخصص ٣:">
+<!ENTITY Custom3.accesskey              "٣">
+<!ENTITY Custom4.label                  "مخصص ٤:">
+<!ENTITY Custom4.accesskey              "٤">
+<!ENTITY Notes.label                    "ملاحظات:">
+<!ENTITY Notes.accesskey                "ح">
+
+<!ENTITY Chat.tab                       "الدردشة">
+<!ENTITY Chat.accesskey                 "ش">
+<!ENTITY Gtalk.label                    "محادثة جوجل:">
+<!ENTITY Gtalk.accesskey                "ج">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "ياهو!:">
+<!ENTITY Yahoo.accesskey                "ي">
+<!ENTITY Skype.label                    "سكايب:">
+<!ENTITY Skype.accesskey                "ك">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "معرّف جابِّر:">
+<!ENTITY XMPP.accesskey                 "ج">
+<!ENTITY IRC.label                      "كنية IRC:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "صورة">
+<!ENTITY Photo.accesskey                "ص">
+<!ENTITY GenericPhoto.label             "صورة عمومية">
+<!ENTITY GenericPhoto.accesskey         "ع">
+<!ENTITY DefaultPhoto.label             "المبدئية">
+<!ENTITY PhotoFile.label                "في هذا الحاسوب">
+<!ENTITY PhotoFile.accesskey            "ه">
+<!ENTITY BrowsePhoto.label              "تصفّح">
+<!ENTITY BrowsePhoto.accesskey          "ص">
+<!ENTITY PhotoURL.label                 "في الوب">
+<!ENTITY PhotoURL.accesskey             "و">
+<!ENTITY PhotoURL.placeholder           "ألصِق أو اكتب رابط الصورة">
+<!ENTITY UpdatePhoto.label              "حدّث">
+<!ENTITY UpdatePhoto.accesskey          "ح">
+<!ENTITY PhotoDropTarget.label          "اسحب صورة جديدة هنا">

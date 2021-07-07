@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "将消息标记为某日已读">
+<!ENTITY markByDateLower.label "从：">
+<!ENTITY markByDateLower.accesskey "f">
+<!ENTITY markByDateUpper.label "到：">
+<!ENTITY markByDateUpper.accesskey "T">

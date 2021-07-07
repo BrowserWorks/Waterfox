@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Berlangganan">
+<!ENTITY subscribeButton.label        "Berlangganan">
+<!ENTITY subscribeButton.accesskey    "l">
+<!ENTITY unsubscribeButton.label      "Berhenti Langganan">
+<!ENTITY unsubscribeButton.accesskey  "i">
+<!ENTITY newGroupsTab.label           "Grup Baru">
+<!ENTITY newGroupsTab.accesskey       "G">
+<!ENTITY refreshButton.label          "Muat Ulang">
+<!ENTITY refreshButton.accesskey      "u">
+<!ENTITY stopButton.label             "Berhenti">
+<!ENTITY stopButton.accesskey         "h">
+<!ENTITY server.label                 "Akun:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "Berlangganan">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Tampilkan item yang berisi:">
+<!ENTITY namefield.accesskey          "i">

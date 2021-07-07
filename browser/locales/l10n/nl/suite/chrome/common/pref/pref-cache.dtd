@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Buffer">
+<!ENTITY pref.cache.caption              "Bufferopties instellen">
+<!ENTITY cachePara                       "Kopieën van regelmatig bezochte webpagina’s worden opgeslagen in de buffer op uw harde schijf. (Op Vernieuwen klikken toont altijd de laatste versie van een pagina.)">
+<!ENTITY cacheCheck.label                "&brandShortName; de grootte van mijn buffer laten beheren">
+<!ENTITY cacheCheck.accesskey            "S">
+<!ENTITY diskCacheUpTo.label             "Tot">
+<!ENTITY diskCacheUpTo.accesskey         "o">
+<!ENTITY spaceMbytes                     "MB schijfruimte gebruiken voor de buffer">
+<!ENTITY diskCacheFolder.label           "Buffermaplocatie:">
+<!ENTITY clearDiskCache.label            "Buffer legen">
+<!ENTITY clearDiskCache.accesskey        "B">
+<!ENTITY chooseDiskCacheFolder.label     "Map kiezen…">
+<!ENTITY chooseDiskCacheFolder.accesskey "M">
+<!ENTITY diskCacheFolderExplanation      "Bufferbestanden worden opgeslagen in een submap met de naam ‘Cache’ in de map die u opgeeft. Herstart &brandShortName; om wijzigingen in te laten gaan.">
+<!ENTITY docCache.label                  "De pagina in de buffer vergelijken met de pagina op het netwerk:">
+<!ENTITY docCache.accesskey              "v">
+<!ENTITY checkOncePerSession.label       "Eenmaal per sessie">
+<!ENTITY checkEveryTime.label            "Elke keer dat ik de pagina bekijk">
+<!ENTITY checkNever.label                "Nooit">
+<!ENTITY checkAutomatically.label        "Wanneer de pagina is verouderd">
+
+<!ENTITY prefetchTitle.label             "Koppelingen vooraf ophalen">
+<!ENTITY enablePrefetch.label            "Webpagina’s vooraf ophalen wanneer er geen activiteit is, zodat koppelingen in webpagina’s die hiervoor zijn ontworpen sneller kunnen laden">
+<!ENTITY enablePrefetch.accesskey        "W">
+
+<!ENTITY debugCache.label                "Foutopsporing">
+<!ENTITY debugEnableMemCache.label       "Geheugenbuffer inschakelen">
+<!ENTITY debugEnableMemCache.accesskey   "i">
+<!ENTITY debugEnableDiskCache.label      "Schijfbuffer inschakelen">
+<!ENTITY debugEnableDiskCache.accesskey  "S">

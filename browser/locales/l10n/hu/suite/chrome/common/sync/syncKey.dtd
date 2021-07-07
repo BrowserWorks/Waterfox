@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "&syncBrand.fullName.label;-kulcs">
+<!ENTITY syncKey.page.description         "Ezzel a kulccsal oldható fel az Ön &syncBrand.fullName.label; fiókjának titkosítása.Mindig meg kell adnia a kulcsot, ha új számítógépen vagy új eszközön állítja be a &syncBrand.fullName.label;et.">
+<!ENTITY syncKey.keepItSecret.heading     "Tartsa titokban">
+<!ENTITY syncKey.keepItSecret.description "A &syncBrand.fullName.label;-fiókja titkosítva van, hogy az adatai biztonságban legyenek. A kulcs nélkül évekbe telik bárkinek a személyes adatainak dekódolása. Ez a kulcs csak Önnek van meg. Ez azt jelenti, hogy csak Ön férhet hozzá a saját &syncBrand.fullName.label;-adataihoz.">
+<!ENTITY syncKey.keepItSafe.heading       "Tartsa biztonságban">
+<!ENTITY syncKey.keepItSafe1.description  "Ne veszítse el ezt a kulcsot.">
+<!ENTITY syncKey.keepItSafe2.description  " Nekünk nincs belőle példányunk (különben nem lenne titkos!), emiatt ">
+<!ENTITY syncKey.keepItSafe3.description  "nem tudunk segíteni,">
+<!ENTITY syncKey.keepItSafe4.description  " ha elveszti. Ezt a kulcsot kell használnia minden alkalommal, amikor új számítógépet vagy új eszközt vesz fel a &syncBrand.fullName.label; szolgáltatásba.">
+<!ENTITY syncKey.findOutMore1.label       "További tudnivalók a &syncBrand.fullName.label; szolgáltatásról és az adatvédelemről: ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "A &syncBrand.fullName.label; szolgáltatási feltételei itt olvashatók: ">
+<!ENTITY syncKey.footer2.label            ". Az adatvédelmi irányelvek itt olvashatók: ">
+<!ENTITY syncKey.footer3.label            ".">

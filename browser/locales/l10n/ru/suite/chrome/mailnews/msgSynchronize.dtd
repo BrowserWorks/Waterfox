@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!ENTITY MsgSynchronize.label "Загрузить и синхронизировать сообщения">
+<!ENTITY MsgSelect.label "Элементы для автономной работы">
+<!ENTITY MsgSyncDesc.label "Если вы уже выбрали папки почты или групп новостей для автономной работы, вы можете загрузить и/или синхронизировать их. В противном случае нажмите кнопку «Выбрать», чтобы выбрать папки почты и групп новостей для автономной работы.">
+<!ENTITY MsgSyncDirections.label "Загрузить и/или синхронизировать следующее:">
+<!ENTITY syncTypeMail.label "Почтовые сообщения">
+<!ENTITY syncTypeMail.accesskey "П">
+<!ENTITY syncTypeNews.label "Сообщения групп новостей">
+<!ENTITY syncTypeNews.accesskey "С">
+<!ENTITY sendMessage.label "Отправить неотправленные сообщения">
+<!ENTITY sendMessage.accesskey "О">
+<!ENTITY workOffline.label "Перейти в автономный режим по завершении загрузки и/или синхронизации">
+<!ENTITY workOffline.accesskey "а">
+<!ENTITY selectButton.label "Выбрать…">
+<!ENTITY selectButton.accesskey "В">
+<!ENTITY MsgSelectDesc.label "Выберите папки почты и групп новостей, которые вы хотели бы загрузить для автономной работы.">
+<!ENTITY MsgSelectInd.label "Загрузить">
+<!ENTITY MsgSelectItems.label "Папки и группы новостей">

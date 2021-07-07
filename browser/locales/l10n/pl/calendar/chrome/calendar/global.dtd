@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Północ" >
+<!ENTITY time.noon "Południe" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Nie" >
+<!ENTITY day.1.Ddd.accesskey "N">
+<!ENTITY day.2.Ddd "Pon" >
+<!ENTITY day.2.Ddd.accesskey "P">
+<!ENTITY day.3.Ddd "Wto" >
+<!ENTITY day.3.Ddd.accesskey "W">
+<!ENTITY day.4.Ddd "Śro" >
+<!ENTITY day.4.Ddd.accesskey "r">
+<!ENTITY day.5.Ddd "Czw" >
+<!ENTITY day.5.Ddd.accesskey "C">
+<!ENTITY day.6.Ddd "Pią" >
+<!ENTITY day.6.Ddd.accesskey "i">
+<!ENTITY day.7.Ddd "Sob" >
+<!ENTITY day.7.Ddd.accesskey "S">
+
+<!ENTITY day.1.name "niedziela" >
+<!ENTITY day.2.name "poniedziałek" >
+<!ENTITY day.3.name "wtorek" >
+<!ENTITY day.4.name "środa" >
+<!ENTITY day.5.name "czwartek" >
+<!ENTITY day.6.name "piątek" >
+<!ENTITY day.7.name "sobota" >
+
+<!ENTITY month.1.name "styczeń" >
+<!ENTITY month.2.name "luty" >
+<!ENTITY month.3.name "marzec" >
+<!ENTITY month.4.name "kwiecień" >
+<!ENTITY month.5.name "maj" >
+<!ENTITY month.6.name "czerwiec" >
+<!ENTITY month.7.name "lipiec" >
+<!ENTITY month.8.name "sierpień" >
+<!ENTITY month.9.name "wrzesień" >
+<!ENTITY month.10.name "październik" >
+<!ENTITY month.11.name "listopad" >
+<!ENTITY month.12.name "grudzień" >
+
+<!ENTITY onemonthbackward.tooltip "Poprzedni miesiąc" >
+<!ENTITY onemonthforward.tooltip "Następny miesiąc" >
+<!ENTITY oneyearbackward.tooltip "Poprzedni rok" >
+<!ENTITY oneyearforward.tooltip "Następny rok" >
+<!ENTITY showToday.tooltip "Przejdź do dnia dzisiejszego">
+<!ENTITY onedayforward.tooltip "Następny dzień">
+<!ENTITY onedaybackward.tooltip "Poprzedni dzień">
+<!ENTITY showselectedday.tooltip "Pokaż wydarzenia dla wybranego dnia">

@@ -1,0 +1,191 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "페이지 로드 문제">
+<!ENTITY retry.label "다시 시도">
+<!ENTITY returnToPreviousPage.label "뒤로 가기">
+<!ENTITY returnToPreviousPage1.label "뒤로 가기 (권장)">
+<!ENTITY advanced2.label "고급…">
+<!ENTITY viewCertificate.label "인증서 보기">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "서버를 찾을 수 없음">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>주소가 정확하다면 다음 세 가지를 시도해 보세요:</strong>
+<ul>
+  <li>나중에 다시 시도해 보세요.</li>
+  <li>네트워크 연결을 확인해 보세요.</li>
+  <li>방화벽 뒤에 있는 경우 &brandShortName;가 웹에 접근하는 권한이 있는지 확인해 보세요.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul>
+  <li>파일 이름에 대문자 또는 기타 입력 오류가 있는지 확인해 보세요.</li>
+  <li>파일이 이동, 이름 변경 또는 삭제되었는지 확인해 보세요.</li>
+</ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>삭제, 이동 또는 권한이 없어서 접근할 수 없습니다.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName;가 어떠한 이유로 인하여 이 페이지를 읽을 수 없습니다.</p>
+">
+
+<!ENTITY captivePortal.title "네트워크에 로그인">
+<!ENTITY captivePortal.longDesc2 "
+<p>인터넷을 사용하기 위해서 반드시 이 네트워크에 로그인해야 합니다.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "네트워크 로그인 페이지 열기">
+
+<!ENTITY malformedURI.pageTitle "잘못된 URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>요청하신 문서는 &brandShortName; 캐시에서 사용할 수 없습니다.</p><ul><li>보안 예방책으로 &brandShortName;는 자동으로 민감한 문서를 다시 요청하지 않습니다.</li><li>웹 사이트에서 문서를 다시 요청하려면 다시 시도를 누르세요.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>온라인 모드로 전환하고 페이지를 다시 로드하려면 &quot;다시 시도&quot;를 누르세요.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>이 주소를 열기 위해서는 다른 소프트웨어를 설치할 필요가 있습니다.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>프록시 설정이 올바로 되어있는지 확인해 보세요.</li>
+  <li>프록시 서버가 확실히 작동 중인지 네트워크 관리자에게 문의하세요.</li>
+</ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul>
+  <li>프록시 설정이 올바로 되어있는지 확인해 보세요.</li>
+  <li>사용자 컴퓨터가 활성화된 네트워크 연결을 사용하는지 확인해 보세요.</li>
+  <li>사용자의 컴퓨터나 네트워크가 방화벽 또는 프록시로 보호되고 있다면,
+    &brandShortName;가 웹에 접근할 수 있도록 허용되어 있는지 확인해 보세요.</li>
+</ul>">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>이 문제는 드물게 해당 사이트에서 요구하는 쿠키를 차단하여 발생할 수
+    있습니다.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "<ul>
+  <li>시스템에 개인 보안 관리자가 설치 되어 있는지 확인해 보세요.</li>
+
+  <li>서버의 정상적이지 않은 설정 때문일 수도 있습니다.</li>
+</ul>">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>받은 데이터의 신뢰성을 확인할 수 없으므로 보시려는 페이지를 표시할 수 없습니다.</li>
+  <li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName;가 잠재적인 보안 위협을 감지하고 <span class='hostname'/>로 진행하지 않았습니다. 사이트를 방문하면 공격자가 비밀번호나 이메일, 신용카드와 같은 정보를 탈취할 수 있습니다.">
+<!ENTITY certerror.sts.introPara "이 웹 사이트는 보안 연결을 필요로 하므로 &brandShortName;가 잠재적인 보안 위협을 감지하고 <span class='hostname'/>로 진행하지 않았습니다.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName;가 문제를 감지하여 <span class='hostname'/>로 진행하지 않았습니다. 웹 사이트가 잘못 구성되었거나 사용자의 컴퓨터 시계가 잘못된 시간으로 설정되어 있습니다.">
+<!ENTITY certerror.expiredCert.secondPara2 "웹 사이트의 인증서가 만료되어서 &brandShortName;가 안전하게 연결할 수가 없습니다. 사이트를 방문하면 공격자가 비밀번호나 이메일, 신용카드와 같은 정보를 탈취할 수 있습니다.">
+<!ENTITY certerror.expiredCert.sts.secondPara "웹 사이트의 인증서가 만료되어서 &brandShortName;가 안전하게 연결할 수가 없습니다.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "사용자가 무엇을 할 수 있습니까?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>이러한 문제는 대부분 웹 사이트와 관련이 있고 사용자가 할 수 있는 일은 없습니다.</p>
+<p>회사 네트워크를 사용하고 있고 바이러스 백신 소프트웨어를 사용하고 있다면 지원부서에 지원을 요청할 수 있습니다. 웹 사이트의 관리자에게 문제에 대해 알려주실 수 있습니다.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>컴퓨터의 시계가 <span id='wrongSystemTime_systemDate2'/>로 설정되어 있습니다. 컴퓨터가 시스템 설정에서 올바른 날짜, 시간 및 시간대로 설정되어 있는지 확인하시고 <span class='hostname'/>를 다시 로드하세요.</p>
+<p>시계가 이미 올바른 시간으로 설정되어 있으면, 웹 사이트가 잘못 구성되었을 수 있으며 문제를 해결하기 위해 사용자가 할 수 있는 일은 없습니다. 웹 사이트의 관리자에게 문제에 대해 알려주실 수 있습니다.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>이러한 문제는 대부분 웹 사이트와 관련이 있고 사용자가 할 수 있는 일은 없습니다. 웹 사이트의 관리자에게 문제에 대해 알려주실 수 있습니다.</p>">
+
+<!ENTITY sharedLongDesc "<ul>
+  <li>서버가 일시적으로 사용할 수 없거나 사용자가 너무 많은 상태일 수 있습니다.
+    잠시 후에 다시 시도해 보세요.</li>
+  <li>어떤 페이지도 열 수 없다면,
+    컴퓨터의 네트워크 연결을 확인해 보세요.</li>
+  <li>사용자의 컴퓨터나 네트워크가 방화벽 또는 프록시로 보호되고 있다면,
+    &brandShortName;가 웹에 접근할 수 있도록 허용되어 있는지 확인해 보세요.</li>
+</ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>이 페이지는 콘텐츠 보안 정책에서 허락하지 않는 방법으로 로드되어 &brandShortName;가 차단했습니다.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>페이지에 허용하지 않는 X-Frame-Options 정책이 있으므로 &brandShortName;가 이 컨텍스트에서 이 페이지를 로드하지 못했습니다.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>데이터 전송에 오류가 감지되어 페이지를 표시할 수 없습니다.</p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "위험을 감수하고 계속 진행">
+
+<!ENTITY errorReporting.automatic2 "이러한 오류를 보고하여 Mozilla가 악성 사이트를 식별하고 차단하는 것을 돕습니다.">
+<!ENTITY errorReporting.learnMore "더 알아보기…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "고급 정보: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "경고: 보안 위험 가능성">
+<!ENTITY certerror.sts.pagetitle  "연결되지 않음: 잠재적인 보안 문제">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> 사이트는 HTTP Strict Transport Security (HSTS)라는 보안 정책을 가지고 있어서 &brandShortName;가 보안 연결만 할 수 있습니다. 이 사이트를 방문하기 위해 예외를 추가 할 수 없습니다.">
+<!ENTITY certerror.copyToClipboard.label "클립보드에 텍스트 복사">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>이 오래되어서 공격에 안전하지 않은 보안 기술을 사용하고 있습니다. 사용자가 안전하다고 여길 수 있는 정보를 공격자가 쉽게 탈취할 수 있습니다. 사용자가 사이트에 방문하기 위해서는 웹 사이트 관리자가 서버를 고쳐야 합니다.</p><p>오류 코드: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "차단된 페이지">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span>은 안전한 사이트로 보이지만 보안 연결을 설정할 수 없습니다. 이 문제는 소프트웨어나 네트워크 문제인 <span class='mitm-name'/>로 인해 발생합니다.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "사용하고 있는 바이러스 백신 소프트웨어가 암호화된 연결을 스캔하는 기능(“웹 스캔”이나 “https 스캔”)을 가지고 있다면 이 기능을 꺼볼 수 있습니다. 그래도 동작하지 않으면 바이러스 백신 소프트웨어를 삭제하고 재설치해 볼 수 있습니다.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "회사 망을 사용하고 있다면 IT 부서에 문의하세요.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "<span class='mitm-name'/>에 익숙하지 않다면 이것은 공격일 수 있으므로 사이트로 진행해서는 안됩니다.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "<span class='mitm-name'/>에 익숙하지 않다면 이것은 공격일 수 있고 사이트에 접근할 수 있는 방법이 없습니다.">
+
+<!ENTITY clockSkewError.longDesc "컴퓨터의 시계가 <span id='wrongSystemTime_systemDate1'/>으로 설정되어 있어서 &brandShortName;가 안전하게 연결을 할 수 없습니다. <span class='hostname'></span> 방문을 위해서는 컴퓨터의 시계를 올바른 날짜, 시간 및 시간대로 설정하시고 난 후, <span class='hostname'></span>를 다시 로드하세요.">
+
+<!ENTITY prefReset.longDesc "네트워크 보안 설정이 원인일 수 있습니다. 기본 설정으로 복원하시겠습니까?">
+<!ENTITY prefReset.label "기본 설정으로 복원">
+
+<!ENTITY enableTls10.longDesc "이 웹 사이트는 &brandShortName;에서 지원하는 최소 버전인 TLS 1.2 프로토콜을 지원하지 않을 수 있습니다. TLS 1.0 및 TLS 1.1을 활성화하면 이 연결이 성공할 수 있습니다.">
+<!ENTITY enableTls10.note "TLS 1.0 및 TLS 1.1은 향후 출시에서 영구적으로 비활성화됩니다.">
+<!ENTITY enableTls10.label "TLS 1.0 및 1.1 활성화">
+
+<!ENTITY networkProtocolError.longDesc "<p>네트워크 프로토콜에 오류가 감지되어 페이지를 표시할 수 없습니다.</p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul>">

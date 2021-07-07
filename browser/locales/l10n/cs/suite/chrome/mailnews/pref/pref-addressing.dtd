@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adresování">
+<!ENTITY emailCollectiontitle.label            "Sbírka kontaktů">
+<!ENTITY emailCollectionPicker.label           "Přidat e-mailovou adresu do:">
+<!ENTITY emailCollectionPicker.accesskey       "P">
+<!ENTITY emailCollectiontext.label             "E-mailové adresy z odchozích zpráv mohou být automaticky přidány do místní složky kontaktů.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Automatické doplňování adres">
+<!ENTITY highlightNonMatches.label             "Zvýraznit kontakty, které nemohou být doplněny">
+<!ENTITY highlightNonMatches.accesskey         "Z">
+<!ENTITY addressingEnable.label                "Místní kontakty">
+<!ENTITY addressingEnable.accesskey            "M">
+<!ENTITY autocompleteText.label                "Při psaní adresy hledat vhodné položky v:">
+<!ENTITY directories.label                     "Adresářový server:">
+<!ENTITY directories.accesskey                 "s">
+<!ENTITY directoriesNone.label                 "Žádný">
+<!ENTITY editDirectories.label                 "Upravit adresáře…">
+<!ENTITY editDirectories.accesskey             "U">

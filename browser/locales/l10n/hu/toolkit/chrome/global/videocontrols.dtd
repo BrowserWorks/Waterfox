@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Lejátszás">
+<!ENTITY playButton.pauseLabel "Szünet">
+<!ENTITY muteButton.muteLabel "Némítás">
+<!ENTITY muteButton.unmuteLabel "Hang be">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Teljes képernyős üzemmód">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Kilépés a teljes képernyős módból">
+<!ENTITY castingButton.castingLabel "Képernyőre vetítés">
+<!ENTITY closedCaption.off "Ki">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Hangerő csúszka">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Kép a képben">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Nézze kép a képben módban">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Játsszon le videókat az előtérben, miközben egyéb dolgokat csinál a &brandShortName;ban">
+
+<!ENTITY error.aborted "A videó betöltése leállt.">
+<!ENTITY error.network "A videólejátszás leállt hálózati hiba miatt.">
+<!ENTITY error.decode "A videót nem lehet lejátszani, mert a fájl sérült.">
+<!ENTITY error.srcNotSupported "A videó formátuma vagy MIME-típusa nem támogatott.">
+<!ENTITY error.noSource2 "Nincs támogatott formátumú vagy MIME-típusú videó.">
+<!ENTITY error.generic "A videólejátszás leállt ismeretlen hiba miatt.">
+
+<!ENTITY status.pictureInPicture "Ez a videó kép a képben módban van lejátszva.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

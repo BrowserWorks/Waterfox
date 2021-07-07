@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxy’s">
+<!ENTITY  pref.proxies.desc             "Een proxy is een netwerkservice die uw internetverbinding kan filteren en versnellen.">
+<!ENTITY  proxyTitle.label              "Proxy’s voor toegang tot het internet configureren">
+<!ENTITY  directTypeRadio.label         "Directe verbinding met het internet">
+<!ENTITY  directTypeRadio.accesskey     "D">
+<!ENTITY  systemTypeRadio.label         "Proxyinstellingen van systeem gebruiken">
+<!ENTITY  systemTypeRadio.accesskey     "s">
+<!ENTITY  manualTypeRadio.label         "Handmatige proxyconfiguratie:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  wpadTypeRadio.label           "Proxyconfiguratie automatisch detecteren">
+<!ENTITY  wpadTypeRadio.accesskey       "a">
+<!ENTITY  autoTypeRadio.label           "URL voor automatische proxyconfiguratie:">
+<!ENTITY  autoTypeRadio.accesskey       "U">
+<!ENTITY  reload.label                  "Opnieuw laden">
+<!ENTITY  reload.accesskey              "n">
+<!ENTITY  http.label                    "Proxy:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "Poort:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Geavanceerd…">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "Geen proxy voor:">
+<!ENTITY  noproxy.accesskey             "G">
+<!ENTITY  noproxyExplain.label          "Voorbeeld: .mozilla.org, .net.nz, 192.168.1.0/24">

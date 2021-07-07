@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "Έλεγχος σφαλμάτων">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "Απόδοση">
+<!ENTITY debugXULBox.label                "Έλεγχος σφαλμάτων πλαισίων XUL">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "Απενεργοποίηση κρυφής μνήμης XUL">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "Συμβάντα">
+<!ENTITY debugPaintFlashing.label "Αναβόσβημα χρώματος (Διακόπτης Caps-Lock)">
+<!ENTITY debugPaintFlashing.accesskey "Α">
+<!ENTITY debugPaintFlashingChrome.label "Αναβόσβημα χρώματος Chrome">
+<!ENTITY debugPaintFlashingChrome.accesskey "β">
+<!ENTITY debugPaintDumping.label "Κατεκτύπωση χρώματος">
+<!ENTITY debugPaintDumping.accesskey "ρ">
+<!ENTITY debugInvalidateDumping.label "Μη έγκυρη κατεκτύπωση">
+<!ENTITY debugInvalidateDumping.accesskey "π">
+<!ENTITY debugEventDumping.label "Κατεκτύπωση συμβάντων">
+<!ENTITY debugEventDumping.accesskey "σ">
+<!ENTITY debugMotionEventDumping.label "Κατεκτύπωση συμβάντων κίνησης">
+<!ENTITY debugMotionEventDumping.accesskey "κ">
+<!ENTITY debugCrossingEventDumping.label "Κατεκτύπωση διασταυρούμενων συμβάντων">
+<!ENTITY debugCrossingEventDumping.accesskey "δ">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "Συμβάντα αναρροής">
+<!ENTITY debugReflowShowFrameCounts.label        "Εμφάνιση αριθμού καρέ">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "Ε">
+<!ENTITY debugReflowDumpFrameCounts.label        "Κατεκτύπωση αριθμού καρέ">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "Κ">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "Κατεκτύπωση καρέ ανά αριθμό καρέ">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "τ">

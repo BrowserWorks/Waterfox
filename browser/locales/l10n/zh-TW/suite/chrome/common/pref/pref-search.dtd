@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "網際網路搜尋">
+<!ENTITY legendHeader                     "預設搜尋引擎">
+<!ENTITY defaultSearchEngine.label        "使用搜尋引擎:">
+<!ENTITY defaultSearchEngine.accesskey    "S">
+
+<!ENTITY engineManager.label              "管理搜尋引擎…">
+
+<!ENTITY searchResults.label              "搜尋結果">
+
+<!ENTITY openInTab.label                  "將側邊欄搜尋結果開啟於新分頁">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "使用右鍵搜尋功能時，將搜尋結果顯示在新分頁而非新視窗">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "當搜尋到資料時自動開啟側邊欄的「搜尋結果」面板">
+<!ENTITY openSidebarSearchPanel.accesskey "O">
+

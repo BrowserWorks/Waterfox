@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY prefWindow.size "width: 60em; height: 41em;">
+<!ENTITY urlbar.label "⌘+Invio nella barra degli indirizzi">
+<!ENTITY urlbar.accesskey "b">
+<!ENTITY middleClick.label "Clic col tasto centrale, ⌘+clic o ⌘+Invio sui link nella pagina web">
+<!ENTITY middleClick.accesskey "w">

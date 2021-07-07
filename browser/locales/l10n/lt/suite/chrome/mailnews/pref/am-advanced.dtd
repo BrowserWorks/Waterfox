@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpServer.label "Laiškų išsiuntimo serverio (SMTP) nuostatos">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Tvarkydami tapatumo duomenis, kaip išsiuntimo (SMTP) serverį galėsite pasirinkti vieną iš šiame sąraše esančių serverių, arba nurodyti, kad būtų naudojamas šiame sąraše parinktas numatytasis serveris.">
+
+<!ENTITY smtpListAdd.label  "Įtraukti…">
+<!ENTITY smtpListAdd.accesskey  "Į">
+<!ENTITY smtpListEdit.label "Taisyti…">
+<!ENTITY smtpListEdit.accesskey "T">
+<!ENTITY smtpListDelete.label "Pašalinti">
+<!ENTITY smtpListDelete.accesskey "P">
+<!ENTITY smtpListSetDefault.label "Skirti numatytuoju">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDescription.label "Aprašas:">
+<!ENTITY serverName.label "Serverio vardas: ">
+<!ENTITY serverPort.label "Prievadas: ">
+<!ENTITY userName.label   "Abonento vardas: ">
+<!ENTITY connectionSecurity.label "Saugusis ryšys: ">
+<!ENTITY authMethod.label   "Tapatumo tikrinimo metodas: ">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "Tilpass verktøylinje">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Du kan leggje til eller fjerne element ved å dra dei til eller frå verktøylinjer.">
+<!ENTITY show.label               "Vis:">
+<!ENTITY iconsAndText.label       "Ikon og tekst">
+<!ENTITY icons.label              "Ikon">
+<!ENTITY text.label               "Tekst">
+<!ENTITY useSmallIcons.label      "Bruk små ikon">
+<!ENTITY restoreDefaultSet.label  "Bygg oppatt standard">
+<!ENTITY addNewToolbar.label      "Legg til ny verktøylinje">
+<!ENTITY saveChanges.label        "Ferdig">
+<!ENTITY undoChanges.label        "Angre endringar">

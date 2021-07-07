@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Asmuo">
+<!ENTITY Contact.accesskey               "A">
+<!ENTITY Name.box                        "Vardas">
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+
+
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Vardas:">
+<!ENTITY NameField1.accesskey           "V">
+<!ENTITY NameField2.label               "Pavardė:">
+<!ENTITY NameField2.accesskey           "P">
+<!ENTITY PhoneticField1.label           "Fonetinis:">
+<!ENTITY PhoneticField2.label           "Fonetinė:">
+<!ENTITY DisplayName.label              "Rodomas vardas:">
+<!ENTITY DisplayName.accesskey          "m">
+<!ENTITY preferDisplayName.label        "Visada rodyti čia įvestą, o ne laiško antraštėse nurodytą vardą">
+<!ENTITY preferDisplayName.accesskey    "č">
+<!ENTITY NickName.label                 "Slapyvardis">
+<!ENTITY NickName.accesskey             "l">
+
+<!ENTITY PrimaryEmail.label             "El. pašto adresas:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Papildomas el. pašto adresas:">
+<!ENTITY SecondEmail.accesskey          "o">
+<!ENTITY PreferMailFormat.label         "Laiškus pageidauja gauti šiuo formatu:">
+<!ENTITY PreferMailFormat.accesskey     "g">
+<!ENTITY PlainText.label                "grynuoju tekstu">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "nėra pageidavimo">
+<!ENTITY ScreenName.label               "AOL abonento vardas:">
+<!ENTITY ScreenName.accesskey           "A">
+
+<!ENTITY WorkPhone.label                "Darbo:">
+<!ENTITY WorkPhone.accesskey            "r">
+<!ENTITY HomePhone.label                "Namų:">
+<!ENTITY HomePhone.accesskey            "N">
+<!ENTITY FaxNumber.label                "Faksas:">
+<!ENTITY FaxNumber.accesskey            "F">
+<!ENTITY PagerNumber.label              "Ieškas:">
+<!ENTITY PagerNumber.accesskey          "I">
+<!ENTITY CellularNumber.label           "Mobilusis:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Asmeniniai duomenys">
+<!ENTITY Home.accesskey                 "s">
+<!ENTITY HomeAddress.label              "Adresas:">
+<!ENTITY HomeAddress.accesskey          "r">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Miestas:">
+<!ENTITY HomeCity.accesskey             "M">
+<!ENTITY HomeState.label                "Valstija, sritis, gubernija:">
+<!ENTITY HomeState.accesskey            "g">
+<!ENTITY HomeZipCode.label              "Pašto indeksas:">
+<!ENTITY HomeZipCode.accesskey          "P">
+<!ENTITY HomeCountry.label              "Valstybė:">
+<!ENTITY HomeCountry.accesskey          "V">
+<!ENTITY HomeWebPage.label              "Tinklalapis:">
+<!ENTITY HomeWebPage.accesskey          "T">
+<!ENTITY Birthday.label                 "Gimimo diena:">
+<!ENTITY Birthday.accesskey             "o">
+<!ENTITY In.label                       "g.">
+<!ENTITY Year.placeholder               "metai">
+<!ENTITY Or.value                       "arba">
+<!ENTITY Age.placeholder                "amžius">
+<!ENTITY YearsOld.label                 "m.">
+
+<!ENTITY Work.tab                       "Darbovietė">
+<!ENTITY Work.accesskey                 "D">
+<!ENTITY JobTitle.label                 "Pareigos:">
+<!ENTITY JobTitle.accesskey             "e">
+<!ENTITY Department.label               "Padalinys:">
+<!ENTITY Department.accesskey           "l">
+<!ENTITY Company.label                  "Organizacija:">
+<!ENTITY Company.accesskey              "O">
+<!ENTITY WorkAddress.label              "Adresas:">
+<!ENTITY WorkAddress.accesskey          "r">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Miestas:">
+<!ENTITY WorkCity.accesskey             "M">
+<!ENTITY WorkState.label                "Valstija, sritis, gubernija:">
+<!ENTITY WorkState.accesskey            "g">
+<!ENTITY WorkZipCode.label              "Pašto indeksas:">
+<!ENTITY WorkZipCode.accesskey          "P">
+<!ENTITY WorkCountry.label              "Valstybė:">
+<!ENTITY WorkCountry.accesskey          "V">
+<!ENTITY WorkWebPage.label              "Tinklalapis:">
+<!ENTITY WorkWebPage.accesskey          "T">
+
+<!ENTITY Other.tab                      "Kita">
+<!ENTITY Other.accesskey                "K">
+<!ENTITY Custom1.label                  "Papildoma 1: ">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Papildoma 2: ">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Papildoma 3: ">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Papildoma 4: ">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Pastabos:">
+<!ENTITY Notes.accesskey                "P">
+
+<!ENTITY Photo.tab                      "Nuotrauka">
+<!ENTITY Photo.accesskey                "N">
+<!ENTITY PhotoDesc.label                "Pasirinkite:">
+<!ENTITY GenericPhoto.label             "Įtaisytasis atvaizdas">
+<!ENTITY GenericPhoto.accesskey         "v">
+<!ENTITY DefaultPhoto.label             "Numatytasis">
+<!ENTITY PhotoFile.label                "Failas šiame kompiuteryje">
+<!ENTITY PhotoFile.accesskey            "F">
+<!ENTITY BrowsePhoto.label              "Parinkti">
+<!ENTITY BrowsePhoto.accesskey          "P">
+<!ENTITY PhotoURL.label                 "Atvaizdas iš saityno">
+<!ENTITY PhotoURL.accesskey             "s">
+<!ENTITY PhotoURL.placeholder           "Įveskite atvaizdo adresą saityne">
+<!ENTITY UpdatePhoto.label              "Atnaujinti">
+<!ENTITY UpdatePhoto.accesskey          "a">

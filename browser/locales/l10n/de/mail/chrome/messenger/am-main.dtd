@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Konten-Einstellungen">
+<!ENTITY accountName.label "Konten-Bezeichnung:">
+<!ENTITY accountName.accesskey "B">
+<!ENTITY identityTitle.label "Standard-Identität">
+<!ENTITY identityDesc.label "Diese Informationen erhalten Empfänger Ihrer Nachrichten.">
+<!ENTITY name.label "Ihr Name:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "E-Mail-Adresse:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Mit dieser Identität antworten, falls eine Empfänger-Kopfzeile übereinstimmt mit:">
+<!ENTITY catchAll.accesskey "K">
+<!ENTITY replyTo.label "Antwortadresse:">
+<!ENTITY replyTo.accesskey "A">
+<!ENTITY replyTo.placeholder "Empfänger sollen an diese Adresse antworten">
+<!ENTITY organization.label "Organisation:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Signaturtext:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "HTML verwenden (z.B.: &lt;b&gt;fett&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Stattdessen eine Datei als Signatur anhängen (Text, HTML oder Grafik):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Bearbeiten…">
+<!ENTITY choose.label "Durchsuchen…">
+<!ENTITY choose.accesskey "D">
+<!ENTITY editVCard.label "Visitenkarte bearbeiten…">
+<!ENTITY editVCard.accesskey "s">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Visitenkarte an Nachrichten anhängen">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Weitere Identitäten…">
+<!ENTITY manageIdentities.accesskey "W">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Postausgangs-Server (SMTP):">
+<!ENTITY smtpName.accesskey "P">
+<!ENTITY smtpDefaultServer.label "Standard-Server verwenden">
+
+<!ENTITY smtpServerEdit.label "Postausgangs-Server (SMTP) bearbeiten…">
+<!ENTITY smtpServerEdit.accesskey "M">

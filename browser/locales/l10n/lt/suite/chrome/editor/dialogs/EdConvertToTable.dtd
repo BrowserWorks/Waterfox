@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Teksto pavertimas lentele">
+<!ENTITY instructions1.label   "Iš kiekvienos pažymėtos dokumento dalies pastraipos bus sukurta lentelės eilutė.">
+<!ENTITY instructions2.label   "Pasirinkite ženklą, kuris bus panaudotas pastraipoms skaidyti į stulpelius:">
+<!ENTITY commaRadio.label      "Kablelis">
+<!ENTITY spaceRadio.label      "Tarpas">
+<!ENTITY otherRadio.label      "Kitas ženklas:">
+<!ENTITY deleteCharCheck.label "Pašalinti skirtukus">
+<!ENTITY collapseSpaces.label  "Nepaisyti papildomų tarpų">
+<!ENTITY collapseSpaces.tooltip "Gretimus tarpus pakeisti vienu">

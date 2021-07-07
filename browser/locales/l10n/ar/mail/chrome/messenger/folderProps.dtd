@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "الخصائص">
+
+<!ENTITY generalInfo.label                       "معلومات عامة">
+<!ENTITY folderCharsetFallback2.label            "ترميز النص الاحتياطي:">
+<!ENTITY folderCharsetFallback2.accesskey        "ت">
+<!ENTITY folderCharsetEnforce2.label             "طبّق الترميز على كل الرسائل في المجلد (سيتجاهل إعدادات الترميز المستقلة لكل رسالة و كذلك الاكتشاف التلقائي)">
+<!ENTITY folderCharsetEnforce2.accesskey         "ط">
+<!ENTITY folderRebuildSummaryFileTip2.label      "أعد بناء فهرس ملف الملخص">
+<!ENTITY folderRebuildSummaryFile2.label         "أصلِح المجلد">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "ص">
+<!ENTITY folderRebuildSummaryFile.explanation    "في بعض الأحيان، ملف فهرس المجلد (.msf) يتضرّر مما يؤدي إلى اختفاء بعض الرسائل أو ظهور الرسائل المحذوفة بعد حذفها. إصلاح المجلد قد يحلّ هذه المشكلات.">
+<!ENTITY folderIncludeInGlobalSearch.label       "ضمّن رسائل هذا المجلد في نتائج البحث العمومي">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "ث">
+
+<!ENTITY retention.label "سياسة الإبقاء">
+<!ENTITY retentionUseAccount.label  "استخدم إعدادات حسابي">
+<!ENTITY retentionUseAccount.accesskey "ت">
+<!ENTITY daysOld.label "أيّام">
+<!ENTITY message.label "رسائل">
+<!ENTITY retentionCleanup.label "لاستعادة مساحة القرص يمكن حذف الرسائل القديمة نهائيًّا.">
+<!ENTITY retentionCleanupImap.label "لاستعادة مساحة القرص، يمكن حذف الرسائل القديمة نهائيًا من جهازك ومن الخادوم البعيد.">
+<!ENTITY retentionCleanupPop.label "لاستعادة مساحة القرص، يمكن حذف الرسائل القديمة نهائيًا، ويشمل ذلك نسخها الأصلية في الخادوم البعيد.">
+<!ENTITY retentionDeleteMsg.label "احذف الرسائل التي تزيد عن">
+<!ENTITY retentionDeleteMsg.accesskey "ر">
+<!ENTITY retentionKeepAll.label "لا تحذف أيًّا من الرسائل">
+<!ENTITY retentionKeepAll.accesskey "ل">
+<!ENTITY retentionKeepRecent.label "احذف الكل ما عدا الأحدث">
+<!ENTITY retentionKeepRecent.accesskey "ك">
+<!ENTITY retentionApplyToFlagged.label "احتفظ دائمًا بالرسائل ذات النجمة">
+<!ENTITY retentionApplyToFlagged.accesskey "ج">
+
+<!ENTITY folderSynchronizationTab.label          "مزامنة">
+<!ENTITY folderCheckForNewMessages2.label         "عند الحصول على رسائل جديدة، تحقق من هذا المجلد دائمًا">
+<!ENTITY folderCheckForNewMessages2.accesskey     "ق">
+
+<!ENTITY offlineFolder.check.label               "اختر هذا المجلد للاستخدام دون اتصال">
+<!ENTITY offlineFolder.check.accesskey           "خ">
+<!ENTITY offlineFolder.button.label              "نزِّل الآن">
+<!ENTITY offlineFolder.button.accesskey          "ن">
+
+<!ENTITY selectofflineNewsgroup.check.label      "اختر مجموعة الأخبار هذه للاستخدام دون اتصال">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "ج">
+<!ENTITY offlineNewsgroup.button.label           "نزِّل الآن">
+<!ENTITY offlineNewsgroup.button.accesskey       "ن">
+
+<!ENTITY folderProps.name.label                  "الاسم:">
+<!ENTITY folderProps.name.accesskey              "س">
+<!ENTITY folderProps.location.label              "الموقع:">
+<!ENTITY folderProps.location.accesskey          "ع">
+
+<!ENTITY folderSharingTab.label                  "المشاركة">
+<!ENTITY privileges.button.label                 "الصلاحيات…">
+<!ENTITY privileges.button.accesskey             "ص">
+<!ENTITY permissionsDesc.label                   "لديك الصلاحيات التالية:">
+<!ENTITY folderType.label                        "نوع المجلد:">
+
+<!ENTITY folderQuotaTab.label                    "الحصّة">
+<!ENTITY folderQuotaUsage.label                  "الاستخدام:">
+<!ENTITY folderQuotaStatus.label                 "الحالة:">
+
+<!ENTITY numberOfMessages.label                  "عدد الرسائل:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "غير معروف">
+<!ENTITY sizeOnDisk.label                        "الحجم على القرص:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "غير معروف">

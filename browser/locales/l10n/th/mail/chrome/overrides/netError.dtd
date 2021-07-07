@@ -1,0 +1,180 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "เกิดปัญหาในการโหลดหน้า">
+<!ENTITY retry.label "ลองอีกครั้ง">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "ไม่สามารถเชื่อมต่อ">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "ที่อยู่นี้ถูกจำกัด">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "ไม่พบเซิร์ฟเวอร์">
+<!ENTITY dnsNotFound.longDesc "
+<ul> 
+  <li>ตรวจสอบข้อผิดพลาดในการพิมพ์ที่อยู่ อย่างเช่น 
+    <strong>ww</strong>.example.com แทนที่จะเป็น 
+    <strong>www</strong>.example.com</li> 
+  <li>หากคุณไม่สามารถโหลดหน้าใด ๆ ได้ ตรวจสอบการเชื่อมต่อเครือข่ายของ
+    คอมพิวเตอร์ของคุณ</li> 
+  <li>หากคอมพิวเตอร์หรือเครือข่ายของคุณถูกปกป้องด้วยไฟร์วอลล์หรือพร็อกซี ตรวจสอบ
+    ให้แน่ใจว่า &brandShortName; ได้รับอนุญาตให้เข้าถึงเว็บ</li> 
+</ul>">
+
+<!ENTITY fileNotFound.title "ไม่พบไฟล์">
+<!ENTITY fileNotFound.longDesc "
+<ul> 
+  <li>ตรวจสอบชื่อไฟล์สำหรับตัวพิมพ์ใหญ่เล็กหรือข้อผิดพลาดการพิมพ์อื่น ๆ</li> 
+  <li>ตรวจสอบเพื่อดูหากไฟล์ถูกย้าย เปลี่ยนชื่อ หรือลบ</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "การเข้าถึงไฟล์ถูกปฏิเสธ">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>ไฟล์อาจถูกเอาออก ย้าย หรือสิทธิอนุญาตของไฟล์อาจป้องกันการเข้าถึง</li> </ul>">
+
+<!ENTITY generic.title "อุปส์">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; ไม่สามารถโหลดหน้านี้ได้ด้วยเหตุผลบางอย่าง</p>">
+
+<!ENTITY malformedURI.title "ที่อยู่ไม่ถูกต้อง">
+<!ENTITY malformedURI.longDesc "
+<ul> 
+  <li>ที่อยู่เว็บมักจะเขียนเป็น 
+    <strong>http://www.example.com/</strong></li> 
+  <li>ตรวจสอบให้แน่ใจว่าคุณใช้เครื่องหมายทับไปข้างหน้า 
+    (กล่าวคือ <strong>/</strong>)</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "การเชื่อมต่อถูกขัดจังหวะ">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "เอกสารหมดอายุ">
+<!ENTITY notCached.longDesc "<p>เอกสารที่ร้องขอไม่มีในแคช</p><ul><li>ตามมาตรการรักษาความปลอดภัย &brandShortName; จะไม่ร้องขอเอกสารที่ละเอียดอ่อนให้ใหม่โดยอัตโนมัติ</li><li>คลิก ลองอีกครั้ง เพื่อร้องขอเอกสารจากเว็บไซต์ใหม่</li></ul>">
+
+<!ENTITY netOffline.title "โหมดออฟไลน์">
+<!ENTITY netOffline.longDesc2 "
+<ul> 
+  <li>กด &quot;ลองอีกครั้ง&quot; เพื่อสลับเป็นโหมดออนไลน์และโหลดหน้าใหม่</li> 
+</ul>">
+
+<!ENTITY contentEncodingError.title "ข้อผิดพลาดการเข้ารหัสเนื้อหา">
+<!ENTITY contentEncodingError.longDesc "
+<ul> 
+  <li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "ชนิดไฟล์ที่ไม่ปลอดภัย">
+<!ENTITY unsafeContentType.longDesc "
+<ul> 
+  <li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li> 
+</ul>">
+
+<!ENTITY netReset.title "ตัดการเชื่อมต่อแล้ว">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "การเชื่อมต่อหมดเวลา">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "ไม่เข้าใจที่อยู่">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul> 
+  <li>คุณอาจจำเป็นต้องติดตั้งซอฟต์แวร์อื่นเพื่อเปิดที่อยู่นี้</li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "เซิร์ฟเวอร์พร็อกซีปฏิเสธการเชื่อมต่อ">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul> 
+  <li>ตรวจสอบให้แน่ใจว่าการตั้งค่าพร็อกซีถูกต้อง</li> 
+  <li>ติดต่อผู้ดูแลเครือข่ายของคุณเพื่อให้แน่ใจว่าเซิร์ฟเวอร์พร็อกซีกำลังทำงานอยู่</li>
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "ไม่สามารถค้นหาเซิร์ฟเวอร์พร็อกซี">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul> 
+  <li>ตรวจสอบให้แน่ใจว่าการตั้งค่าพร็อกซีถูกต้อง</li> 
+  <li>ตรวจสอบให้แน่ใจว่าคอมพิวเตอร์ของคุณมีการเชื่อมต่อเครือข่ายที่ทำงานได้</li> 
+  <li>หากคอมพิวเตอร์หรือเครือข่ายของคุณถูกปกป้องด้วยไฟร์วอลล์หรือพร็อกซี ตรวจสอบให้
+    แน่ใจว่า &brandShortName; ได้รับอนุญาตให้เข้าถึงเว็บ</li>
+</ul>">
+
+<!ENTITY redirectLoop.title "หน้าไม่ได้เปลี่ยนเส้นทางอย่างถูกต้อง">
+<!ENTITY redirectLoop.longDesc "
+<ul> 
+  <li>ปัญหานี้บางครั้งอาจมีสาเหตุมาจากการปิดใช้งานหรือปฏิเสธการยอมรับคุกกี้</li>
+</ul>">
+
+<!ENTITY unknownSocketType.title "การตอบสนองที่ไม่คาดคิดจากเซิร์ฟเวอร์">
+<!ENTITY unknownSocketType.longDesc "
+<ul> 
+  <li>ตรวจสอบให้แน่ใจว่าระบบของคุณมีตัวจัดการความปลอดภัยส่วนบุคคลติดตั้งอยู่</li> 
+  <li>สิ่งนี้อาจเกิดจากการกำหนดค่าที่ไม่มาตรฐานบนเซิร์ฟเวอร์</li>
+</ul>">
+
+<!ENTITY nssFailure2.title "การเชื่อมต่อปลอดภัยล้มเหลว">
+<!ENTITY nssFailure2.longDesc2 "
+<ul> 
+  <li>หน้าที่คุณกำลังพยายามจะดูไม่สามารถแสดงได้เนื่องจากไม่สามารถยืนยันความถูกต้องของข้อมูลที่ได้รับ</li> 
+  <li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li>
+</ul>">
+
+<!ENTITY nssBadCert.title "การเชื่อมต่อปลอดภัยล้มเหลว">
+<!ENTITY nssBadCert.longDesc2 "
+<ul> 
+  <li>สิ่งนี้อาจเป็นปัญหาจากการกำหนดค่าของเซิร์ฟเวอร์ หรืออาจมีใครบางคนกำลัง
+พยายามปลอมแปลงเซิร์ฟเวอร์</li> 
+  <li>หากคุณเคยเชื่อมต่อกับเซิร์ฟเวอร์นี้สำเร็จในอดีต ข้อผิดพลาดอาจเกิดขึ้นเพียงชั่วคราว
+และคุณสามารถลองอีกครั้งในภายหลัง</li>
+</ul>">
+
+<!ENTITY sharedLongDesc "
+<ul> 
+  <li>ไซต์อาจใช้งานไม่ได้ชั่วคราวหรือกำลังทำงานหนักเกินไป ลองอีกครั้งในอีกสักครู่</li>
+  <li>หากคุณไม่สามารถโหลดหน้าใด ๆ ได้ ตรวจสอบการเชื่อมต่อเครือข่ายของคอมพิวเตอร์
+    ของคุณ</li> 
+  <li>หากคอมพิวเตอร์หรือเครือข่ายของคุณถูกปกป้องด้วยไฟร์วอลล์หรือพร็อกซี ตรวจสอบ
+    ให้แน่ใจว่า &brandShortName; ได้รับอนุญาตให้เข้าถึงเว็บ</li>
+</ul>">
+
+<!ENTITY cspBlocked.title "ปิดกั้นแล้วโดยนโยบายความปลอดภัยของเนื้อหา">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ได้ป้องกันไม่ให้หน้านี้โหลดด้วยวิธีนี้เนื่องจากหน้ามีนโยบายความปลอดภัยของเนื้อหาที่ไม่อนุญาต</p>">
+
+<!ENTITY xfoBlocked.title "ถูกปิดกั้นโดยนโยบาย X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ได้ป้องกันหน้านี้จากการโหลดในบริบทนี้เนื่องจากหน้ามีนโยบาย X-Frame-Options ที่ไม่อนุญาต</p>">
+
+<!ENTITY corruptedContentErrorv2.title "ข้อผิดพลาดเนื้อหาเสียหาย">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ไม่สามารถแสดงหน้าที่คุณกำลังพยายามจะดูเนื่องจากตรวจพบข้อผิดพลาดในการส่งผ่านข้อมูล</p><ul><li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li></ul>">
+
+<!ENTITY securityOverride.linkText "หรือคุณสามารถเพิ่มข้อยกเว้น…">
+<!ENTITY securityOverride.getMeOutOfHereButton "นำฉันออกไปจากที่นี่!">
+<!ENTITY securityOverride.exceptionButtonLabel "เพิ่มข้อยกเว้น…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>คุณไม่ควรเพิ่มข้อยกเว้นหากคุณกำลังใช้งานการเชื่อมต่ออินเทอร์เน็ตที่คุณไม่เชื่อถือโดยสมบูรณ์ หรือหากคุณไม่เคยเห็นคำเตือนสำหรับเซิร์ฟเวอร์นี้</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "XUL ระยะไกล">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "การเชื่อมต่อของคุณไม่ปลอดภัย">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ใช้เทคโนโลยีความปลอดภัยที่ล้าสมัยและเสี่ยงต่อการถูกโจมตี ผู้โจมตีสามารถเปิดเผยข้อมูลที่คุณคิดว่าปลอดภัยได้อย่างง่ายดาย ผู้ดูแลเว็บไซต์จำเป็นต้องแก้ไขเซิร์ฟเวอร์ก่อนที่คุณจะสามารถเยี่ยมชมไซต์ได้</p><p>รหัสข้อผิดพลาด: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "หน้าที่ถูกปิดกั้น">
+
+<!ENTITY networkProtocolError.title "ข้อผิดพลาดโปรโตคอลเครือข่าย">
+<!ENTITY networkProtocolError.longDesc "<p>ไม่สามารถแสดงหน้าที่คุณกำลังพยายามจะดูเนื่องจากตรวจพบข้อผิดพลาดในโปรโตคอลเครือข่าย</p><ul><li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li></ul>">

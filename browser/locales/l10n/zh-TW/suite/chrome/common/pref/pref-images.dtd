@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "圖片">
+
+<!ENTITY imageBlocking.label            "圖片自動載入">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "指定 &brandShortName; 要不要自動載入網頁上的圖片。">
+
+<!ENTITY loadAllImagesRadio.label       "載入所有圖片">
+<!ENTITY loadAllImagesRadio.accesskey   "L">
+<!ENTITY loadOrgImagesRadio.label       "僅下載從來源伺服器當中的圖片">
+<!ENTITY loadOrgImagesRadio.accesskey   "n">
+<!ENTITY loadNoImagesRadio.label        "不自動載入任何圖片">
+<!ENTITY loadNoImagesRadio.accesskey    "D">
+<!ENTITY viewPermissions.label          "管理權限">
+<!ENTITY viewPermissions.accesskey      "P">
+<!ENTITY animLoopingTitle.label         "要動態圖片重複顯示的次數:">
+<!ENTITY animLoopAsSpecified.label      "由圖片檔指定">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "一次">
+<!ENTITY animLoopOnce.accesskey         "O">
+<!ENTITY animLoopNever.label            "從不">
+<!ENTITY animLoopNever.accesskey        "v">
+

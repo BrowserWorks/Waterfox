@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Add-ons">
+<!ENTITY aboutAddons.header2                    "Uw add-ons">
+
+<!ENTITY addonAction.enable                     "Inschakelen">
+<!ENTITY addonAction.disable                    "Uitschakelen">
+<!ENTITY addonAction.uninstall                  "De-installeren">
+<!ENTITY addonAction.undo                       "Ongedaan maken">
+<!ENTITY addonAction.update                     "Bijwerken">
+
+<!ENTITY addonUnsigned.message                  "Deze add-on kon niet door &brandShortName; worden geverifieerd.">
+<!ENTITY addonUnsigned.learnMore                "Meer info">

@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Výběr uživatelského profilu">
+<!ENTITY            profileManager.title "Správce profilů aplikace &brandShortName;">
+
+<!ENTITY            manage.label     "Správce profilů…">
+<!ENTITY            manage.accesskey "S">
+<!ENTITY            select.label     "Použít profil">
+
+<!ENTITY            availableProfiles.label "Dostupné profily">
+
+<!ENTITY            introStart.label         "Pro zahájení relace s profilem, který obsahuje vaše nastavení, uložené zprávy a další osobní informace, zvolte jeho název ze seznamu a klepněte na tlačítko &start.label;.">
+<!ENTITY            introSwitch.label        "Pro přepnutí relace na jiný profil, který obsahuje vaše nastavení, uložené zprávy a další osobní informace, zvolte jeho název ze seznamu a klepněte na tlačítko &select.label;.">
+<!ENTITY            profileManagerText.label "&brandShortName; ukládá informace o vašem nastavení, předvolbách, záložkách, uložených zpráv a ostatní osobní data do vašeho osobního profilu.">
+
+<!ENTITY            autoSelect.label         "Použít profil jako výchozí">
+<!ENTITY            autoSelect.accesskey     "P">
+
+<!ENTITY            start.label              "Spustit &brandShortName;">
+<!ENTITY            exit.label               "Ukončit">
+
+<!ENTITY            newButton.label          "Vytvořit profil…">
+<!ENTITY            newButton.accesskey      "V">
+<!ENTITY            renameButton.label       "Přejmenovat profil…">
+<!ENTITY            renameButton.accesskey   "P">
+<!ENTITY            deleteButton.label       "Smazat profil…">
+<!ENTITY            deleteButton.accesskey   "m">
+
+<!ENTITY            offlineState.label       "Pracovat offline">
+<!ENTITY            offlineState.accesskey   "l">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "ถอนการติดตั้งผู้ให้บริการ">
+<!ENTITY providerUninstall.accept.label                    "เลิกบอกรับที่เลือก">
+<!ENTITY providerUninstall.accept.accesskey                "ล">
+<!ENTITY providerUninstall.cancel.label                    "เก็บส่วนเสริม">
+<!ENTITY providerUninstall.cancel.accesskey                "ก">
+<!ENTITY providerUninstall.preName.label                   "คุณได้ขอถอนการติดตั้งหรือปิดใช้งาน:">
+<!ENTITY providerUninstall.postName.label                  "การดำเนินการนี้จะส่งผลให้ปฏิทินด้านล่างถูกปิดใช้งาน">
+<!ENTITY providerUninstall.reinstallNote.label             "แต่หากคุณกำลังวางแผนติดตั้งผู้ให้บริการนี้ใหม่ คุณสามารถเลือกเลิกบอกรับปฏิทินของผู้ให้บริการนี้ได้">

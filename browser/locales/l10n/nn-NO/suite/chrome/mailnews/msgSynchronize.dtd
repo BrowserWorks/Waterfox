@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!ENTITY MsgSynchronize.label "Last ned og synkroniser meldingar">
+<!ENTITY MsgSelect.label "Element for fråkopla bruk">
+<!ENTITY MsgSyncDesc.label "Dersom du allereie har valt e-postmapper eller nyheitsgrupper for fråkopla bruk, kan du laste ned og/eller synkronisere dei no. Elles kan du bruke «Vel»-knappen for å velje e-postmappene og nyheitsgruppene du vil bruke fråkopla.">
+<!ENTITY MsgSyncDirections.label "Last ned og/eller synkroniser følgjande:">
+<!ENTITY syncTypeMail.label "E-postmeldingar">
+<!ENTITY syncTypeMail.accesskey "m">
+<!ENTITY syncTypeNews.label "Nyheitsgruppemeldingar">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Send usende meldingar">
+<!ENTITY sendMessage.accesskey "u">
+<!ENTITY workOffline.label "Arbeid fråkopla når nedlasting/synkronisering er ferdig">
+<!ENTITY workOffline.accesskey "f">
+<!ENTITY selectButton.label "Vel…">
+<!ENTITY selectButton.accesskey "V">
+<!ENTITY MsgSelectDesc.label "Vel e-postmappene og nyheitsgruppene du ønskjer å bruke fråkopla.">
+<!ENTITY MsgSelectInd.label "Last ned">
+<!ENTITY MsgSelectItems.label "Mapper og nyheitsgrupper">

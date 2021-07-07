@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "テキストエンコーディング">
+<!ENTITY messageDisplay.caption          "メッセージの表示">
+<!ENTITY viewFallbackCharset2.label      "フォールバックテキストエンコーディング:">
+<!ENTITY viewFallbackCharset2.accesskey  "E">
+<!ENTITY viewFallbackCharset.desc        "(文字エンコーディングを宣言していないコンテンツに使用されます。)">
+
+<!ENTITY composingMessages.caption       "メッセージの編集">
+<!ENTITY useMIME.label                   "8 ビット文字を含むメッセージに 'Quoted-Pritable' MIME エンコードを使用する。この項目のチェックを外した場合、メッセージはそのまま送信されます。">
+<!ENTITY useMIME.accesskey               "F">
+<!ENTITY sendDefaultCharset2.label       "既定のテキストエンコーディング:">
+<!ENTITY sendDefaultCharset2.accesskey   "T">
+<!ENTITY replyInDefaultCharset3.label    "可能であれば、返信メッセージに既定のテキストエンコーディングを使用する (この項目のチェックを外した場合、新しいメッセージの作成時のみ既定のテキストエンコーディングを使用します)。">
+<!ENTITY replyInDefaultCharset3.accesskey "W">

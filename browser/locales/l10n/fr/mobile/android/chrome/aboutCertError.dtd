@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!-- These strings are used by Firefox's custom about:certerror page,
+a replacement for the standard security certificate errors produced
+by NSS/PSM via netError.xhtml. -->
+
+<!ENTITY certerror.pagetitle  "Connexion non certifiée">
+<!ENTITY certerror.longpagetitle "Cette connexion n’est pas certifiée">
+
+<!-- Localization note (certerror.introPara1) - The string "#1" will
+be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara1 "Vous avez demandé à &brandShortName; de se connecter de manière sécurisée à <b>#1</b>, mais nous ne pouvons pas confirmer que votre connexion est sécurisée.">
+
+<!ENTITY certerror.whatShouldIDo.heading "Que dois-je faire ?">
+<!ENTITY certerror.whatShouldIDo.content "Si vous vous connectez habituellement à ce site sans problème, cette erreur peut signifier que quelqu’un essaie d’usurper l’identité de ce site et vous ne devriez pas continuer.">
+<!ENTITY certerror.getMeOutOfHere.label "Sortir d’ici !">
+
+<!ENTITY certerror.expert.heading "Je comprends les risques">
+<!ENTITY certerror.expert.content "Si vous comprenez ce qui se passe, vous pouvez indiquer à &brandShortName; de commencer à faire confiance à l’identification de ce site. <b>Même si vous avez confiance en ce site, cette erreur pourrait signifier que quelqu’un est en train de pirater votre connexion.</b>">
+<!ENTITY certerror.expert.contentPara2 "N’ajoutez pas d’exception à moins que vous ne connaissiez une bonne raison pour laquelle ce site n’utilise pas d’identification certifiée.">
+<!ENTITY certerror.addTemporaryException.label "Visiter le site">
+<!ENTITY certerror.addPermanentException.label "Ajouter une exception permanente">
+
+<!ENTITY certerror.technical.heading "Détails techniques">

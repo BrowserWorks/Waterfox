@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Πρόγραμμα περιήγησης">
+
+<!ENTITY navRadio.label                 "Προβολή σε">
+<!ENTITY navRadio.accesskey             "σ">
+<!ENTITY navStartPageMenu.label         "Εκκίνηση προγράμματος περιήγησης">
+<!ENTITY newWinPageMenu.label           "Νέο παράθυρο">
+<!ENTITY newTabPageMenu.label           "Νέα καρτέλα">
+
+<!ENTITY blankPageRadio.label           "Κενή σελίδα">
+<!ENTITY blankPageRadio.accesskey       "Κ">
+<!ENTITY homePageRadio.label            "Αρχική σελίδα">
+<!ENTITY homePageRadio.accesskey        "σ">
+<!ENTITY lastPageRadio.label            "Τελευταία σελίδα">
+<!ENTITY lastPageRadio.accesskey        "Τ">
+<!ENTITY restoreSessionRadio.label      "Επαναφορά προηγούμενης συνεδρίας">
+<!ENTITY restoreSessionRadio.accesskey  "π">
+
+<!ENTITY restoreSessionIntro.label      "Κατά την επαναφορά συνεδριών και παραθύρων">
+<!ENTITY restoreImmediately.label       "Άμεση επαναφορά όλων των καρτελών">
+<!ENTITY restoreImmediately.accesskey   "ν">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Επαναφορά">
+<!ENTITY restoreTabs.accesskey          "φ">
+<!ENTITY restoreTabsAtATime.label       "καρτέλας(ών) κάθε φορά">
+<!ENTITY restoreDeferred.label          "Επαναφορά καρτελών μόνο όταν τις χρειάζομαι">
+<!ENTITY restoreDeferred.accesskey      "μ">
+
+<!ENTITY homePageIntro.label            'Μετάβαση σε αυτή την ομάδα σελίδων με κλικ στο κουμπί "Αρχική σελίδα":'>
+<!ENTITY useCurrent.label               "Χρήση τρέχουσας σελίδας">
+<!ENTITY useCurrent.accesskey           "Χ">
+<!ENTITY useCurrentGroup.label          "Χρήση τρέχουσας ομάδας">
+<!ENTITY useCurrentGroup.accesskey      "ο">
+<!ENTITY browseFile.label               "Επιλογή αρχείου…">
+<!ENTITY browseFile.accesskey           "γ">
+<!ENTITY useDefault.label               "Επαναφορά προεπιλογής">
+<!ENTITY useDefault.accesskey           "Ε">
+
+<!ENTITY defaultBrowserGroup.label      "Προεπιλεγμένο πρόγραμμα περιήγησης">
+<!ENTITY defaultBrowserButton.label     "Ορισμός προεπιλεγμένου προγράμματος περιήγησης">
+<!ENTITY defaultBrowserButton.accesskey "π">
+<!ENTITY alreadyDefaultText             "Το &brandShortName; είναι ήδη το προεπιλεγμένο πρόγραμμα περιήγησής σας.">
+<!ENTITY defaultPendingText             'Το &brandShortName; θα οριστεί ως το προεπιλεγμένο πρόγραμμα περιήγησής σας όταν κάνετε κλικ στο "OK".'>
+<!ENTITY wasMadeDefaultText             "Το &brandShortName; έχει οριστεί ως το προεπιλεγμένο πρόγραμμα περιήγησής σας.">
+<!ENTITY makeDefaultText                "Ορισμός του &brandShortName; ως προεπιλογής.">

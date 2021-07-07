@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.history.title "Historia">
+
+<!ENTITY pref.history.caption "Przeglądanie historii">
+<!ENTITY historyPages.label "Informacje o wszystkich odwiedzonych przez użytkownika stronach WWW zapisywane są w Historii, co umożliwia wyświetlanie ich w trybie offline.">
+<!ENTITY enableHistory.label "Pamiętaj odwiedzone strony">
+<!ENTITY enableHistory.accesskey "r">
+<!ENTITY clearHistory.label "Wyczyść historię">
+<!ENTITY clearHistory.accesskey "h">
+
+<!ENTITY locationBarHistory.caption "Historia paska adresu">
+<!ENTITY urlBarHistoryEnabled.caption "Włącz historię paska adresu">
+<!ENTITY urlBarHistoryEnabled.accesskey "d">
+<!ENTITY clearLocationBar.label "Wyczyść listę adresów WWW dostępną w pasku adresu.">
+<!ENTITY clearLocationBarButton.label "Wyczyść pasek adresu">
+<!ENTITY clearLocationBarButton.accesskey "a">
+<!ENTITY formfillHistory.caption "Historia formularzy i wyszukiwania">
+<!ENTITY enableFormfill.label "Włącz historię formularzy i wyszukiwania">
+<!ENTITY enableFormfill.accesskey "W">
+<!ENTITY formfillExpire.label "Pamiętaj historię formularzy i wyszukiwania przez maksymalnie">
+<!ENTITY formfillExpire.accesskey "m">
+<!ENTITY formfillDays.label "dni">

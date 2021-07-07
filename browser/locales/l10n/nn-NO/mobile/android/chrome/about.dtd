@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Om &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; er eksperimentell og kan vera ustabil.">
+<!ENTITY aboutPage.checkForUpdates.link         "Sjå etter oppdateringar »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Ser etter oppdateringar…">
+<!ENTITY aboutPage.checkForUpdates.none         "Ingen oppdateringar er tilgjengelege">
+<!ENTITY aboutPage.checkForUpdates.available2   "Last ned oppdatering">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Lastar ned oppdatering…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Installer oppdateringa">
+<!ENTITY aboutPage.faq.label                    "Vanlege spørsmål (FAQ)">
+<!ENTITY aboutPage.support.label                "Hjelp">
+<!ENTITY aboutPage.privacyPolicy.label          "Personvern">
+<!ENTITY aboutPage.rights.label                 "Kjenn rettane dine">
+<!ENTITY aboutPage.relNotes.label               "Versjonsnotat">
+<!ENTITY aboutPage.credits.label                "Bidragsytarar">
+<!ENTITY aboutPage.license.label                "Lisensinfo">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox og Firefox-logoane er varemeke som høyrer til Mozilla Foundation.">

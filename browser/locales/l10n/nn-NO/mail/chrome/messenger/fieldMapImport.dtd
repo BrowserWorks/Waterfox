@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importer adressebok">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Importerte data for element: ">
+<!ENTITY fieldMapImport.next.label "Neste">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Førre">
+<!ENTITY fieldMapImport.previous.accesskey "F">
+<!ENTITY fieldMapImport.text "Bruk Flytt opp og Flytt ned for å tilpasse adressebokfelta til venstre, og dei korrekte data for import til høgre. Fjern val for element du ikkje vil importere.">
+<!ENTITY fieldMapImport.up.label "Flytt opp">
+<!ENTITY fieldMapImport.up.accesskey "o">
+<!ENTITY fieldMapImport.down.label "Flytt ned">
+<!ENTITY fieldMapImport.down.accesskey "e">
+<!ENTITY fieldMapImport.fieldListTitle "Adressebokfelt">
+<!ENTITY fieldMapImport.dataTitle "Element å importere">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Fyrste oppføring inneheld feltnamn">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

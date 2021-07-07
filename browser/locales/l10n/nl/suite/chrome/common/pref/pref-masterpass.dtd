@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Hoofdwachtwoord">
+
+<!ENTITY  changepassword.caption                 "Hoofdwachtwoord wijzigen">
+<!ENTITY  changepassword.text                    "Uw hoofdwachtwoord beschermt gevoelige informatie, zoals webwachtwoorden en -certificaten.">
+<!ENTITY  changepassword.button                  "Wachtwoord wijzigen…">
+<!ENTITY  changepassword.accesskey               "W">
+
+<!ENTITY  resetpassword.caption                  "Hoofdwachtwoord herinitialiseren">
+<!ENTITY  resetpassword.text                     "Als u uw hoofdwachtwoord opnieuw instelt, zullen al uw opgeslagen web- en e-mailwachtwoorden, formuliergegevens, persoonlijke certificaten en privésleutels verloren gaan.">
+<!ENTITY  resetpassword.button                   "Wachtwoord herinitialiseren">
+<!ENTITY  resetpassword.accesskey                "r">

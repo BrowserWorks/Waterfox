@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "Protocole HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Options de connexion directe">
+<!ENTITY prefProxy.label                     "Options de connexion par proxy">
+<!ENTITY prefEnableHTTP10.label              "Utiliser HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "0">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "U">
+<!ENTITY prefEnableHTTP11.label              "Utiliser HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "1">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "H">
+<!ENTITY prefPara                            "Les connexions HTTP peuvent être ajustées en utilisant ces options pour améliorer la performance ou la compatibilité. Certains proxies, par exemple, nécessitent HTTP/1.0 (voir les notes de version pour les détails).">
+<!ENTITY prefUseragent.label                 "Chaîne d’agent utilisateur">
+<!ENTITY prefFirefoxCompat.label             "Mentionner la compatibilité avec Firefox">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Annoncer l’installation de Lightning">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "AVERTISSEMENT : désactiver ces paramètres peut empêcher certains services ou sites web de fonctionner correctement.">
+<!ENTITY prefFirefoxStrict.label             "S’identifier en tant que Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "i">
+<!ENTITY prefFirefoxNone.label               "S’identifier en tant que SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "S’identifier en tant que SeaMonkey et mentionner sa compatibilité avec Firefox">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "AVERTISSEMENT : la modification de ce paramètre peut empêcher certains services ou sites web de fonctionner correctement.">

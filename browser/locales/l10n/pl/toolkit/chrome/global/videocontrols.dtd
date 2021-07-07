@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Odtwórz">
+<!ENTITY playButton.pauseLabel "Wstrzymaj">
+<!ENTITY muteButton.muteLabel "Wycisz">
+<!ENTITY muteButton.unmuteLabel "Włącz dźwięk">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Tryb pełnoekranowy">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Opuść tryb pełnoekranowy">
+<!ENTITY castingButton.castingLabel "Wyślij na inne urządzenie">
+<!ENTITY closedCaption.off "Wyłączone">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Suwak regulacji głośności">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Obraz w obrazie">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Oglądaj w trybie „Obraz w obrazie”">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Oglądaj filmy nawet, kiedy robisz coś innego w programie &brandShortName;">
+
+<!ENTITY error.aborted "Wczytywanie wideo przerwane.">
+<!ENTITY error.network "Odtwarzanie wideo przerwane z powodu błędu sieci.">
+<!ENTITY error.decode "Nie można odtworzyć wideo, ponieważ plik jest uszkodzony.">
+<!ENTITY error.srcNotSupported "Nieobsługiwany format wideo lub typ MIME.">
+<!ENTITY error.noSource2 "Nie odnaleziono wideo w obsługiwanym formacie i typie MIME.">
+<!ENTITY error.generic "Odtwarzanie wideo przerwane z powodu nieznanego błędu.">
+
+<!ENTITY status.pictureInPicture "To wideo jest odtwarzane w trybie „Obraz w obrazie”.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.media.title "Medios">
+<!ENTITY mediaHTML5Preferences.label "Audio/vídeo">
+<!ENTITY allowMediaAutoplay.label "Activar reproducción automática de contenido multimedia HTML5">
+<!ENTITY allowMediaAutoplay.accesskey "A">
+<!ENTITY enableDrmMedia.label "Activar administración digital de derechos de">
+<!ENTITY enableEmeForSuite.label "Módulos de descifrado de contenido de terceros">
+<!ENTITY enableEmeForSuite.accesskey "M">
+<!ENTITY animLoopingTitle.label "Las imágenes animadas deberían repetirse">
+<!ENTITY animLoopAsSpecified.label "Tantas veces como especifique la imagen">
+<!ENTITY animLoopAsSpecified.accesskey "T">
+<!ENTITY animLoopOnce.label "Una sola vez">
+<!ENTITY animLoopOnce.accesskey "U">
+<!ENTITY animLoopNever.label "Nunca">
+<!ENTITY animLoopNever.accesskey "N">

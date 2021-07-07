@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Дополнительные настройки прокси">
+<!ENTITY  protocols.caption           "Прокси, специфичные для определённого протокола">
+<!ENTITY  protocols.description       "Обычно для всех перечисленных здесь протоколов может быть использован один прокси.">
+<!ENTITY  http.label                  "HTTP прокси:">
+<!ENTITY  http.accesskey              "к">
+<!ENTITY  ssl.label                   "SSL прокси:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "FTP прокси:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Использовать настройки HTTP-прокси для всех протоколов">
+<!ENTITY  reuseProxy.accesskey        "в">
+<!ENTITY  port.label                  "Порт:">
+<!ENTITY  HTTPPort.accesskey          "п">
+<!ENTITY  SSLPort.accesskey           "о">
+<!ENTITY  FTPPort.accesskey           "р">
+
+<!ENTITY  socks.caption               "Общий прокси">
+<!ENTITY  socks.description           "SOCKS-прокси — разновидность прокси-сервера, которая может работать с различными протоколами. Он используется иногда в корпоративных сетях.">
+<!ENTITY  socks.label                 "Узел SOCKS:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS 4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS 5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Использовать для разрешения доменных имен (рекомендуется для SOCKS 5)">
+<!ENTITY  socksRemoteDNS.accesskey    "д">
+<!ENTITY  SOCKSport.accesskey         "т">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Αντίγραφα &amp; φάκελοι">
+<!ENTITY sendingPrefix.label "Κατά την αποστολή μηνυμάτων, αυτόματη: ">
+<!ENTITY fccMailFolder.label "Τοποθέτηση αντιγράφου:">
+<!ENTITY fccMailFolder.accesskey "ν">
+<!ENTITY fccReplyFollowsParent.label "Τοποθέτηση απαντήσεων στον φάκελο του αρχικού μηνύματος">
+<!ENTITY fccReplyFollowsParent.accesskey "θ">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Κοινοποίηση στις διευθύνσεις email:">
+<!ENTITY ccAddress.accesskey "ι">
+<!ENTITY ccAddressList.placeholder "Διαχωρισμός διευθύνσεων με κόμματα">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Κρυφή κοινοποίηση στις διευθύνσεις email:">
+<!ENTITY bccAddress.accesskey "θ">
+<!ENTITY bccAddressList.placeholder "Διαχωρισμός διευθύνσεων με κόμματα">
+<!ENTITY saveMessageDlg.label "Εμφάνιση παραθύρου επιβεβαίωσης κατά την αποθήκευση μηνυμάτων">
+<!ENTITY saveMessageDlg.accesskey "β">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Στον φάκελο &quot;Απεσταλμένα&quot; του:">
+<!ENTITY sentFolderOn.accesskey "ε">
+<!ENTITY sentInOtherFolder.label "Σε άλλο:">
+<!ENTITY sentInOtherFolder.accesskey "λ">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Αρχεία μηνυμάτων">
+<!ENTITY keepArchives.label "Διατήρηση αρχείων μηνυμάτων:">
+<!ENTITY keepArchives.accesskey "Δ">
+<!ENTITY archiveHierarchyButton.label "Επιλογές αρχειοθέτησης…">
+<!ENTITY archiveHierarchyButton.accesskey "χ">
+<!ENTITY archivesFolderOn.label "Στον φάκελο &quot;Αρχειοθήκη&quot; του:">
+<!ENTITY archivesFolderOn.accesskey "χ">
+<!ENTITY archiveInOtherFolder.label "Σε άλλο:">
+<!ENTITY archiveInOtherFolder.accesskey "λ">
+<!ENTITY specialFolders.label "Προσχέδια και πρότυπα">
+<!ENTITY keepDrafts2.label "Διατήρηση προσχεδίων μηνυμάτων:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Στον φάκελο &quot;Προσχέδια&quot; του:">
+<!ENTITY draftsFolderOn.accesskey "σ">
+<!ENTITY draftInOtherFolder.label "Σε άλλο:">
+<!ENTITY draftInOtherFolder.accesskey "λ">
+<!ENTITY keepTemplates.label "Διατήρηση προτύπων μηνυμάτων:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Στον φάκελο &quot;Πρότυπα&quot; του:">
+<!ENTITY templatesFolderOn.accesskey "κ">
+<!ENTITY templateInOtherFolder.label "Σε άλλο:">
+<!ENTITY templateInOtherFolder.accesskey "ο">

@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "ダウンロードマネージャー">
+
+<!ENTITY menuBar.tooltip                 "メニューバー">
+<!ENTITY searchBar.tooltip               "検索バー">
+
+<!ENTITY search.placeholder              "ダウンロードファイルの検索">
+<!ENTITY search.label                    "ダウンロードファイルを検索">
+<!ENTITY search.accesskey                "S">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "履歴の消去">
+<!ENTITY cmd.clearList.tooltip           "リストから完了、キャンセル、失敗したダウンロードを削除します">
+<!ENTITY cmd.clearList.accesskey         "C">
+
+<!ENTITY col.name.label                  "名前">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "ファイル名">
+<!ENTITY col.status.label                "状態">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "ファイルの状態">
+<!ENTITY col.actionPlay.label            "中断/再開/再試行">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "ダウンロードの中断/再開/再試行">
+<!ENTITY col.actionStop.label            "キャンセル/削除">
+<!ENTITY col.actionStop.accesskey        "C">
+<!ENTITY col.actionStop.tooltip          "ダウンロードのキャンセル/リストから削除">
+<!ENTITY col.progress.label              "進行状況">
+<!ENTITY col.progress.accesskey          "P">
+<!ENTITY col.progress.tooltip            "ダウンロードの進行状況">
+<!ENTITY col.timeremaining.label         "残り時間">
+<!ENTITY col.timeremaining.accesskey     "L">
+<!ENTITY col.timeremaining.tooltip       "ダウンロードの残り時間">
+<!ENTITY col.transferred.label           "転送サイズ">
+<!ENTITY col.transferred.accesskey       "T">
+<!ENTITY col.transferred.tooltip         "ファイルの転送済みサイズ">
+<!ENTITY col.transferrate.label          "転送速度">
+<!ENTITY col.transferrate.accesskey      "d">
+<!ENTITY col.transferrate.tooltip        "ファイルの転送速度">
+<!ENTITY col.timeelapsed.label           "経過時間">
+<!ENTITY col.timeelapsed.accesskey       "E">
+<!ENTITY col.timeelapsed.tooltip         "ダウンロードの経過時間">
+<!ENTITY col.starttime.label             "開始時刻">
+<!ENTITY col.starttime.accesskey         "a">
+<!ENTITY col.starttime.tooltip           "ダウンロードの開始時刻">
+<!ENTITY col.endtime.label               "終了時刻">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "ダウンロードの予想終了時刻">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "進行状況 (&#37;)">
+<!ENTITY col.source.label                "URL">
+<!ENTITY col.source.accesskey            "o">
+<!ENTITY col.source.tooltip              "ダウンロード元の URL">
+
+<!ENTITY view.columns.label              "表示する列">
+<!ENTITY view.columns.accesskey          "C">
+<!ENTITY view.sortBy.label               "項目の表示順序">
+<!ENTITY view.sortBy.accesskey           "S">
+
+<!ENTITY view.unsorted.label             "並べ替えない">
+<!ENTITY view.unsorted.accesskey         "U">
+<!ENTITY view.sortAscending.label        "昇順 (A &#x2192; Z)"><!-- A → Z -->
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "降順 (Z &#x2192; A)"><!-- A → Z -->
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "中断">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "再開">
+<!ENTITY cmd.resume.accesskey            "R">
+<!ENTITY cmd.retry.label                 "再試行">
+<!ENTITY cmd.retry.accesskey             "t">
+<!ENTITY cmd.cancel.label                "キャンセル">
+<!ENTITY cmd.cancel.accesskey            "C">
+<!ENTITY cmd.remove.label                "リストから削除">
+<!ENTITY cmd.remove.accesskey            "e">
+<!ENTITY cmd.open.label                  "ファイルを開く">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "保存フォルダーを開く">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "ダウンロードしたページを開く">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "ダウンロードした URL をコピー">
+<!ENTITY cmd.copyDownloadLink.accesskey  "L">
+<!ENTITY cmd.properties.label            "プロパティを表示...">
+<!ENTITY cmd.properties.accesskey        "s">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "ダウンロードを許可">
+<!ENTITY cmd.unblock2.accesskey           "l">

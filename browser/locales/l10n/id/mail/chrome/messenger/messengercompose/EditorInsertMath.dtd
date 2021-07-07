@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Sisipkan Matematika">
+
+<!ENTITY sourceEditField.label "Masukkan sumber kode LaTeX:">
+
+<!ENTITY options.label "Pengaturan">
+<!ENTITY optionInline.label "Mode sebaris">
+<!ENTITY optionInline.accesskey "s">
+<!ENTITY optionDisplay.label "Mode tampilan">
+<!ENTITY optionDisplay.accesskey "M">
+<!ENTITY optionLTR.label "Arah kiri ke kanan">
+<!ENTITY optionLTR.accesskey "i">
+<!ENTITY optionRTL.label "Arah kanan ke kiri">
+<!ENTITY optionRTL.accesskey "a">
+
+<!ENTITY insertButton.label "Sisipkan">
+<!ENTITY insertButton.accesskey "i">

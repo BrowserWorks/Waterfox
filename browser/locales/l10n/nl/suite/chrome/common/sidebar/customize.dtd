@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "&sidebarName; aanpassen">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Tabbladen in &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "T">
+
+<!ENTITY sidebar.customize.title                "Zijbalk aanpassen">
+<!ENTITY sidebar.customize.current2.label       "Tabbladen in zijbalk:">
+<!ENTITY sidebar.customize.current2.accesskey   "T">
+<!ENTITY sidebar.customize.customize.label      "Tabblad aanpassen…">
+<!ENTITY sidebar.customize.customize.accesskey  "n">
+<!ENTITY sidebar.customize.remove.label         "Verwijderen">
+<!ENTITY sidebar.customize.remove.accesskey     "V">
+<!ENTITY sidebar.customize.additional.label     "Beschikbare tabbladen:">
+<!ENTITY sidebar.customize.additional.accesskey "B">
+<!ENTITY sidebar.customize.add.label            "Toevoegen">
+<!ENTITY sidebar.customize.add.accesskey        "e">
+<!ENTITY sidebar.customize.preview.label        "Voorbeeld…">
+<!ENTITY sidebar.customize.preview.accesskey    "r">
+<!ENTITY sidebar.customize.up.label             "Omhoog verplaatsen">
+<!ENTITY sidebar.customize.up.accesskey         "h">
+<!ENTITY sidebar.customize.down.label           "Omlaag verplaatsen">
+<!ENTITY sidebar.customize.down.accesskey       "l">
+<!ENTITY sidebar.more.label                     "Meer tabbladen zoeken…">
+<!ENTITY sidebar.more.accesskey                 "z">

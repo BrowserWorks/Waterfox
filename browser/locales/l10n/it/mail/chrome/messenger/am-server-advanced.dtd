@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Impostazioni avanzate per l’account">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Cartella del server IMAP:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Mostra solo le cartelle sottoscritte">
+<!ENTITY usingSubscription.accesskey "r">
+<!ENTITY dualUseFolders.label "Il server supporta cartelle contenenti altre cartelle e messaggi">
+<!ENTITY dualUseFolders.accesskey "s">
+<!ENTITY maximumConnectionsNumber.label "Numero massimo di collegamenti verso il server da tenere in cache">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Queste preferenze definiscono i domini sul server IMAP">
+<!ENTITY personalNamespace.label "Dominio personale:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Pubblico (condiviso):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Altri utenti:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Permetti al server di sovrascrivere questi domini">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "Quando si scarica la posta dal server di questo account, utilizzare la seguente cartella per memorizzare i nuovi messaggi:" >
+<!ENTITY accountInbox.label "Posta in arrivo per questo account">
+<!ENTITY accountInbox.accesskey "I">
+<!ENTITY deferToServer.label "Posta in arrivo di un altro account.">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Includi questo account durante la ricezione della posta">
+<!ENTITY deferGetNewMail.accesskey "I">

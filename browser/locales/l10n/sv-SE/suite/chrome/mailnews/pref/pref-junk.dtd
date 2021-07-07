@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Skräppost">
+<!ENTITY junkSettings.caption "Globala inställningar för skräppost">
+<!ENTITY junkMail.intro "Gå till Kontoinställningar för att konfigurera kontospecifika skräppostinställningar.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "När jag manuellt märker meddelanden som skräppost:">
+<!ENTITY manualMark.accesskey           "N">
+<!ENTITY manualMarkModeMove.label       "Flytta dem till till kontots mapp &quot;Skräppost&quot;">
+<!ENTITY manualMarkModeMove.accesskey   "F">
+<!ENTITY manualMarkModeDelete.label     "Ta bort dem">
+<!ENTITY manualMarkModeDelete.accesskey "T">
+
+<!ENTITY markAsRead.intro               "Märk meddelanden som lästa:">
+<!ENTITY autoMarkAsRead.label           "När &brandShortName; identifierar dem som skräp">
+<!ENTITY autoMarkAsRead.accesskey       "s">
+<!ENTITY manualMarkAsRead.label         "När jag manuellt märker dem som skräp">
+<!ENTITY manualMarkAsRead.accesskey     "m">
+
+<!ENTITY enableJunkLogging.label        "Aktivera skräppostfilterlogg">
+<!ENTITY enableJunkLogging.accesskey    "A">
+<!ENTITY openJunkLog.label              "Visa loggen">
+<!ENTITY openJunkLog.accesskey          "V">
+<!ENTITY resetTrainingData.label        "Återställ inlärningsdata">
+<!ENTITY resetTrainingData.accesskey    "Å">
+
+<!ENTITY pref.suspectMail.caption       "Misstänkt meddelande">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "E-postbedrägeri">
+<!ENTITY enablePhishingDetector.label     "Signalera om meddelandet jag läser misstänks vara bedrägligt">
+<!ENTITY enablePhishingDetector.accesskey "b">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Anti-Virus">
+<!ENTITY antiVirus.label                  "Tillåt anti-virus-program att enklare kontrollera inkommande meddelanden">
+<!ENTITY antiVirus.accesskey              "k">

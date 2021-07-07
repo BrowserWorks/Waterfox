@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY applyTheme.label            "Téma alkalmazása">
+<!ENTITY applyTheme.accesskey        "T">
+<!ENTITY getMoreThemesCmd.label      "További témák letöltése">
+<!ENTITY getMoreThemesCmd.accesskey  "t">
+<!ENTITY getBackgroundsCmd.label     "További hátterek letöltése">
+<!ENTITY getBackgroundsCmd.accesskey "h">

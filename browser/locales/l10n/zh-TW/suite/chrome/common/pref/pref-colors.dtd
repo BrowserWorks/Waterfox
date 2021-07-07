@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "色彩">
+<!ENTITY color                             "文字與背景">
+<!ENTITY textColor.label                   "文字:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "背景:">
+<!ENTITY backgroundColor.accesskey         "B">
+<!ENTITY useSystemColors.label             "使用系統色彩">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "鏈結加底線">
+<!ENTITY underlineLinks.accesskey          "U">
+<!ENTITY links                             "鏈結色彩">
+<!ENTITY linkColor.label                   "未拜訪鏈結:">
+<!ENTITY linkColor.accesskey               "L">
+<!ENTITY activeLinkColor.label             "使用中的鏈結:">
+<!ENTITY activeLinkColor.accesskey         "c">
+<!ENTITY visitedLinkColor.label            "已拜訪鏈結:">
+<!ENTITY visitedLinkColor.accesskey        "V">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "當網頁指定它本身的色彩和背景時:">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "完全依照文件指定的配色">
+<!ENTITY alwaysUseDocumentColors.accesskey "A">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "永遠使用我的色彩設定，忽略文件指定的色彩與圖片">
+<!ENTITY useMyColors.accesskey             "m">
+<!ENTITY automaticColors.label             "僅在使用高對比佈景主題時忽略頁面上的色彩">
+<!ENTITY automaticColors.accesskey         "O">
+

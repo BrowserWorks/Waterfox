@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Címzett: ">
+<!ENTITY fromField.label "Feladó: ">
+<!ENTITY senderField.label "Küldő:">
+<!ENTITY organizationField.label "Szervezet: ">
+<!ENTITY replyToField.label "Válaszcím: ">
+
+<!ENTITY subjectField.label "Tárgy: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Rejtett másolat: ">
+<!ENTITY newsgroupsField.label "Hírcsoportok: ">
+<!ENTITY followupToField.label "Hírcsop. vál.: ">
+
+<!ENTITY tagsHdr.label "Címkék:">
+<!ENTITY dateField.label "Dátum: ">
+<!ENTITY userAgentField.label "User-Agent: ">
+<!ENTITY referencesField.label "Hivatkozások:">
+<!ENTITY messageIdField.label "Üzenetazonosító">
+<!ENTITY inReplyToField.label "Válaszazonosító:">
+<!ENTITY originalWebsite.label "Webhely: ">
+
+<!ENTITY editMessage.label                 "Piszkozat szerkesztése…">
+<!ENTITY editMessage.accesskey             "P">
+
+<!ENTITY attachmentsTree.label             "Mellékletek:">
+<!ENTITY attachmentsTree.accesskey         "M">
+<!ENTITY openAttachmentCmd.label           "Megnyitás">
+<!ENTITY openAttachmentCmd.accesskey       "M">
+<!ENTITY viewAttachmentCmd.label           "Forrás megtekintése">
+<!ENTITY viewAttachmentCmd.accesskey       "F">
+<!ENTITY saveAsAttachmentCmd.label         "Mentés másként…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "e">
+<!ENTITY detachAttachmentCmd.label         "Leválasztás…">
+<!ENTITY detachAttachmentCmd.accesskey     "L">
+<!ENTITY deleteAttachmentCmd.label         "Törlés">
+<!ENTITY deleteAttachmentCmd.accesskey     "T">
+<!ENTITY saveAllAttachmentsCmd.label       "Összes mentése…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "e">
+<!ENTITY detachAllAttachmentsCmd.label     "Összes leválasztása…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "l">
+<!ENTITY deleteAllAttachmentsCmd.label     "Összes törlése…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "t">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Ρυθμίσεις λογαριασμού">
+<!ENTITY accountName.label "Όνομα λογαριασμού:">
+<!ENTITY accountName.accesskey "ν">
+<!ENTITY identityTitle.label "Ταυτότητα">
+<!ENTITY identityDesc.label "Κάθε λογαριασμός έχει μια ταυτότητα, η οποία αποτελείται από πληροφορίες που βλέπουν οι αναγνώστες των μηνυμάτων σας.">
+<!ENTITY name.label "Το όνομά σας:">
+<!ENTITY name.accesskey "μ">
+<!ENTITY email.label "Διεύθυνση email:">
+<!ENTITY email.accesskey "ε">
+<!ENTITY catchAll.label "Απάντηση από αυτή την ταυτότητα όταν ταιριάζουν οι κεφαλίδες παράδοσης:">
+<!ENTITY catchAll.accesskey "π">
+<!ENTITY replyTo.label "Διεύθυνση απάντησης:">
+<!ENTITY replyTo.accesskey "σ">
+<!ENTITY replyTo.placeholder "Οι παραλήπτες θα απαντούν σε αυτή τη διεύθυνση">
+<!ENTITY organization.label "Οργανισμός:">
+<!ENTITY organization.accesskey "Ο">
+<!ENTITY signatureText.label "Κείμενο υπογραφής:">
+<!ENTITY signatureText.accesskey "μ">
+<!ENTITY signatureHtml.label "Χρήση HTML (π.χ. &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "η">
+<!ENTITY signatureFile.label "Επισύναψη υπογραφής από αρχείο (κείμενο, HTML, ή εικόνα):">
+<!ENTITY signatureFile.accesskey "ψ">
+<!ENTITY edit.label "Επεξεργασία…">
+<!ENTITY choose.label "Επιλογή…">
+<!ENTITY choose.accesskey "λ">
+<!ENTITY editVCard.label "Επεξεργασία κάρτας…">
+<!ENTITY editVCard.accesskey "ξ">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Επισύναψη προσωπικής vCard σε μηνύματα">
+<!ENTITY attachVCard.accesskey "α">
+
+<!ENTITY manageIdentities.label "Διαχείριση ταυτοτήτων…">
+<!ENTITY manageIdentities.accesskey "Δ">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Διακομιστής εξερχομένων (SMTP):">
+<!ENTITY smtpName.accesskey "χ">
+<!ENTITY smtpDefaultServer.label "Χρήση προεπιλεγμένου διακομιστή">
+
+<!ENTITY smtpServerEdit.label "Επεξεργασία διακομιστή SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

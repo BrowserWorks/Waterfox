@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "삭제">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "이름:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "메일주소:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label			"주소록:">
+<!ENTITY editContactAddressBook.accesskey		"A">
+
+<!ENTITY editContactPanelDone.label "완료">
+<!ENTITY editContactPanelDone.accesskey "D">
+
+<!ENTITY contactMoveDisabledWarning.description "이 연락처 정보는 메일링리스트에 포함되어 있기 때문에 다른 주소록으로 이동하실 수 없습니다.">

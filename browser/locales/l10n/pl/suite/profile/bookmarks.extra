@@ -1,0 +1,38 @@
+#filter emptyLines
+
+# LOCALIZATION NOTE: You can additional bookmark entries here for inclusion
+# in your language's default profiles.
+# Please do not add many entries here, only things that many users in your
+# country will actually need.
+# For most localizations, it's enough to localize the descriptions and domain
+# names of the Google bookmarks below.
+
+    <DT><H3>Wyszukiwanie</H3>
+    <DL><p>
+        <DT><A HREF="http://www.google.pl/search?q=%s" SHORTCUTURL="g">Szybkie wyszukiwanie Google</A>
+<DD>Wpisz &quot;google &lt;szukane wyrażenie&gt;&quot; w pasku adresu, aby uruchomić wyszukiwanie google
+        <DT><A HREF="http://sjp.pwn.pl/slowo.php?co=%s" SHORTCUTURL="d">Szybkie wyszukiwanie sjp.pwn.pl</A>
+<DD>Wpisz &quot;dict &lt;słowo&gt;&quot; w pasku adresu, aby uruchomić szukanie słownikowe
+        <DT><A HREF="http://pl.wikipedia.org/wiki/Special:Search?search=%s" SHORTCUTURL="w">Szybkie wyszukiwanie w Wikipedii</A>
+<DD>Wpisz &quot;wp &lt;cokolwiek&gt;&quot; w pasku adresu, aby uruchomić wyszukiwanie w Wikipedii, wolnej encyklopedii.
+    </DL><p>
+    
+    <DT><H3>Mozilla po polsku</H3>
+    <DL><p>
+	    <DT><A HREF="http://www.seamonkey.pl">SeaMonkey.pl</A>
+<DD>Polska strona programu SeaMonkey.
+        <DT><A HREF="http://www.mozillapl.org">MozillaPL</A>
+<DD>Polskie centrum Mozilli.
+<DT><A HREF="http://www.mozillapl.org/forum">MozillaPL Forum</A>
+<DD>Polskie Forum Mozilli
+        <DT><A HREF="http://bugs.aviary.pl/">Bugzilla - raportowanie i śledzenie błędów w tłumaczeniu</A>
+<DD>Jeśli znalazłeś błąd w tłumaczeniu, to jest to najlepsze miejsce, aby nas o tym powiadomić.
+        <HR>
+        <DT><A HREF="http://www.squarefree.com/bookmarklets/">Skryptozakładki</A>
+<DD>Skryptozakładki to darmowe narzędzia, pomocne przy wykonywaniu w oknie przeglądarki czynności często się powtarzających lub niemożliwych do wykonania w inny sposób (strona w języku angielskim).
+        <HR>
+        <DT><A HREF="https://addons.mozilla.com/pl/seamonkey">Motywy i Rozszerzenia</A>
+<DD>Baza motywów i rozszerzeń dla SeaMonkey (strona w języku angielskim).
+    </DL><p>
+
+#unfilter emptyLines

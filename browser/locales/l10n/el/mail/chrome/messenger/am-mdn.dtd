@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Αποδεικτικά προβολής">
+<!ENTITY useGlobalPrefs.label         "Χρήση των γενικών προτιμήσεων αποδεικτικών προβολής για αυτόν τον λογαριασμό">
+<!ENTITY useGlobalPrefs.accesskey     "Χ">
+<!ENTITY globalReceipts.label         "Γενικές προτιμήσεις…">
+<!ENTITY globalReceipts.accesskey     "κ">
+<!ENTITY useCustomPrefs.label         "Προσαρμογή αποδεικτικών προβολής για αυτόν τον λογαριασμό">
+<!ENTITY useCustomPrefs.accesskey     "Π">
+<!ENTITY requestReceipt.label         "Κατά την αποστολή μηνυμάτων, να ζητείται πάντα αποδεικτικό προβολής">
+<!ENTITY requestReceipt.accesskey     "Κ">
+<!ENTITY receiptArrive.label          "Όταν φτάνει ένα αποδεικτικό:">
+<!ENTITY leaveIt.label                "Παραμονή στα εισερχόμενα">
+<!ENTITY leaveIt.accesskey            "σ">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Μετακίνηση στο φάκελο &quot;Απεσταλμένα&quot;">
+<!ENTITY moveToSent.accesskey         "Μ">
+<!ENTITY requestMDN.label             "Κατά τη λήψη αιτήματος για αποδεικτικό προβολής:">
+<!ENTITY returnSome.label             "Αποδοχή αποδεικτικών προβολής για ορισμένα μηνύματα">
+<!ENTITY returnSome.accesskey         "ε">
+<!ENTITY never.label                  "Να μην γίνεται ποτέ αποστολή αποδεικτικού προβολής">
+<!ENTITY never.accesskey              "Ν">
+<!ENTITY notInToCc.label              'Αν δεν είμαι στα πεδία "Προς" ή "Κοιν." του μηνύματος:'>
+<!ENTITY notInToCc.accesskey          "Α">
+<!ENTITY outsideDomain.label          "Αν ο αποστολέας είναι εκτός του τομέα μου:">
+<!ENTITY outsideDomain.accesskey      "τ">
+<!ENTITY otherCases.label             "Σε όλες τις άλλες περιπτώσεις:">
+<!ENTITY otherCases.accesskey         "λ">
+<!ENTITY askMe.label                  "Να γίνεται ερώτηση">
+<!ENTITY alwaysSend.label             "Να γίνεται αποστολή">
+<!ENTITY neverSend.label              "Να μην γίνεται αποστολή">

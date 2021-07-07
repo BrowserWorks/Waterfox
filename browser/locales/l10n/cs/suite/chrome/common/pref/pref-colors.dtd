@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+
+<!ENTITY pref.colors.title "Barvy">
+<!ENTITY color "Text a pozadí">
+<!ENTITY textColor.label "Text:">
+<!ENTITY textColor.accesskey "T">
+<!ENTITY backgroundColor.label "Pozadí:">
+<!ENTITY backgroundColor.accesskey "P">
+<!ENTITY useSystemColors.label "Použít systémové barvy">
+<!ENTITY useSystemColors.accesskey "s">
+
+<!ENTITY underlineLinks.label "Podtrhávat odkazy">
+<!ENTITY underlineLinks.accesskey "D">
+<!ENTITY links "Barvy odkazů">
+<!ENTITY linkColor.label "Nenavštívené odkazy:">
+<!ENTITY linkColor.accesskey "N">
+<!ENTITY activeLinkColor.label "Aktivní odkazy:">
+<!ENTITY activeLinkColor.accesskey "a">
+<!ENTITY visitedLinkColor.label "Navštívené odkazy:">
+<!ENTITY visitedLinkColor.accesskey "O">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors "Pokud stránka nabízí vlastní barvy a pozadí">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label "Vždy použít barvy a pozadí specifikované na stránce">
+<!ENTITY alwaysUseDocumentColors.accesskey "B">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label "Vždy použít mnou vybrané barvy, potlačit barvy nastavené na stránce.">
+<!ENTITY useMyColors.accesskey "m">
+<!ENTITY automaticColors.label             "Potlačit barvy nastavené na stránce pouze s kontrastními vzhledy">
+<!ENTITY automaticColors.accesskey         "P">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Guiden Chat-konto">
+
+<!ENTITY accountProtocolTitle.label   "Chat-netværk">
+<!ENTITY accountProtocolInfo.label    "Vælg netværk for din chat-konto.">
+<!ENTITY accountProtocolField.label   "Netværk:">
+<!ENTITY accountProtocolGetMore.label "Flere…">
+
+<!ENTITY accountUsernameTitle.label   "Brugernavn">
+<!ENTITY accountUsernameDuplicate.label "Denne konto er allerede oprettet!">
+
+<!ENTITY accountPasswordTitle.label   "Adgangskode">
+<!ENTITY accountPasswordInfo.label    "Indtast din adgangskode i feltet nedenfor.">
+<!ENTITY accountPasswordField.label   "Adgangskode:">
+<!ENTITY accountPasswordManager.label "Thunderbird vil huske den indtastede adgangskode. Hvis du i stedet vil spørges om adgangskode, hver gang du tilslutter chat-kontoen, skal du undlade at udfylde feltet.">
+
+<!ENTITY accountAdvancedTitle.label   "Avancerede indstillinger">
+<!ENTITY accountAdvancedInfo.label    "Om ønsket kan du springe næste trin over.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Giv besked ved ny mail">
+<!ENTITY accountAliasGroupbox.caption "Lokal alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Dette vil kun blive vist hos dig selv i dine samtaler, andre kan ikke se det.">
+<!ENTITY accountProxySettings.caption "Proxy-indstillinger">
+<!ENTITY accountProxySettings.change.label     "Skift…">
+<!ENTITY accountProxySettings.change.accessKey "S">
+
+<!ENTITY accountSummaryTitle.label   "Oversigt">
+<!ENTITY accountSummaryInfo.label    "Nedenfor kan du finde en oversigt over de indtastede oplysninger. Kontroller, om alt er korrekt, inden du opretter kontoen.">
+<!ENTITY accountSummary.connectNow.label "Tilslut til denne konto nu.">

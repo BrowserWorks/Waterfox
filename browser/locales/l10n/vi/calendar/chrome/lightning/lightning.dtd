@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Lịch">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Sự kiện…">
+<!ENTITY lightning.menupopup.new.event.accesskey "E">
+<!ENTITY lightning.menupopup.new.task.label     "Nhiệm vụ…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Lịch…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Mở">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "Thư đã lưu…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Tập tin lịch…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "C">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Lịch">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Nhiệm vụ">
+<!ENTITY lightning.menu.view.tasks.accesskey           "k">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Sự kiện và nhiệm vụ">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Email:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Ưu tiên lập lịch email phía khách hàng">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Hiện tại, bạn chỉ có thể kích hoạt tính năng này sau khi thiết lập lịch này trong hộp thoại thuộc tính của nó nếu máy chủ lịch đảm nhiệm việc lên lịch.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Tùy chọn này chỉ khả dụng nếu máy chủ lịch xử lý lập lịch. Kích hoạt sẽ cho phép quay trở lại lịch trình dựa trên email tiêu chuẩn thay vì để nó đến máy chủ.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Chấp nhận">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Chấp nhận lời mời sự kiện">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Chấp nhận tất cả">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Chấp nhận lời mời sự kiện cho tất cả các lần xuất hiện của sự kiện">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Thêm">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Thêm sự kiện vào lịch">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Từ chối">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Từ chối lời mời sự kiện">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Từ chối tất cả">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Từ chối lời mời sự kiện cho tất cả các lần xuất hiện của sự kiện">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Từ chối">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Từ chối đề xuất phản biện">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Xóa">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Xóa khỏi lịch">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Chi tiết…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Hiển thị chi tiết sự kiện">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Đừng hỏi lại tôi những thông báo này">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Lịch">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Chuyển đến thẻ lịch">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Thêm">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Nhấn vào đây để hiển thị nhiều tùy chọn hơn">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Xác nhận lại">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Gửi xác nhận lại cho người tổ chức">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Sắp xếp lại">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Sắp xếp lại sự kiện">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Lưu bản sao">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Lưu một bản sao của sự kiện vào lịch độc lập với việc trả lời cho người tổ chức. Danh sách những người tham dự sẽ bị xóa.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Dự kiến">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Dự kiến chấp nhận lời mời sự kiện">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Dự kiến tất cả">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Dự kiến chấp nhận lời mời sự kiện cho tất cả các lần xuất hiện của sự kiện">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Cập nhật">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Cập nhật sự kiện trong lịch">
+<!ENTITY lightning.imipbar.description                                      "Thư này chứa lời mời tham dự một sự kiện.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Gửi phản hồi ngay">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Gửi phản hồi cho người tổ chức">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Gửi phản hồi cho toàn bộ chuỗi sự kiện đến nhà tổ chức">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Không gửi phản hồi">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Thay đổi trạng thái tham gia của bạn mà không gửi phản hồi cho người tổ chức">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Thay đổi trạng thái tham gia của bạn cho chuỗi mà không gửi phản hồi cho người tổ chức">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Tạo một lịch mới">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Hiển thị tháng nhỏ">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Hiển thị ngày nhỏ">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Không hiển thị">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Hiển thị hôm nay">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "Ngày hôm nay">

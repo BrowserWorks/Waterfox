@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tab.cookiesonsystem.label	"保存済み Cookie">
+<!ENTITY tab.bannedservers.label	"サイトの Cookie の設定">
+<!ENTITY div.bannedservers.label	"Cookie を受け入れまたは拒否するサイトの管理。">
+<!ENTITY div.cookiesonsystem.label	"保存された Cookie の表示と削除。">
+<!ENTITY treehead.cookiename.label	"Cookie 名">
+<!ENTITY treehead.cookiedomain.label	"ウェブサイト">
+<!ENTITY treehead.cookieexpires.label	"有効期限">
+<!ENTITY treehead.infoselected.label	"選択した Cookie に関する情報">
+<!ENTITY button.removecookie.label	"Cookie を削除">
+<!ENTITY button.removecookie.accesskey	"R">
+<!ENTITY button.removeallcookies.label	"すべての Cookie を削除">
+<!ENTITY button.removeallcookies.accesskey	"e">
+
+<!ENTITY search.placeholder		"Cookie を検索">
+<!ENTITY focusSearch.key		"f">
+<!ENTITY selectAll.key			"a">
+
+<!ENTITY props.name.label		"名前:">
+<!ENTITY props.value.label		"情報:">
+<!ENTITY props.domain.label		"ホスト:">
+<!ENTITY props.path.label		"パス:">
+<!ENTITY props.secure.label		"接続方式:">
+<!ENTITY props.expires.label		"有効期限:">
+
+<!ENTITY treehead.sitename.label	"ウェブサイト">
+<!ENTITY     treehead.scheme.label	"スキーム">
+<!ENTITY treehead.status.label		"状況">
+<!ENTITY windowtitle.label		"Cookie マネージャー">
+
+<!ENTITY blockSite.label		"拒否">
+<!ENTITY blockSite.accesskey		"B">
+<!ENTITY allowSite.label		"許可">
+<!ENTITY allowSite.accesskey		"A">
+<!ENTITY allowSiteSession.label		"セッション">
+<!ENTITY allowSiteSession.accesskey	"S">
+<!ENTITY removepermission.label		"サイトを削除">
+<!ENTITY removepermission.accesskey	"R">
+<!ENTITY removeallpermissions.label	"すべてのサイトを削除">
+<!ENTITY removeallpermissions.accesskey	"e">
+
+<!ENTITY futureCookies.label		"削除した Cookie を送信してきたサイトからの Cookie は今後受け入れない">
+<!ENTITY futureCookies.accesskey	"D">

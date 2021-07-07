@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "網路與儲存空間">
+<!ENTITY pref.offline.caption             "離線">
+<!ENTITY textStartUp                      "啟動時:">
+<!ENTITY textStartUp.accesskey            "W">
+<!ENTITY menuitemRememberPrevState        "記住之前的連線狀態">
+<!ENTITY menuitemAskMe                    "啟動是詢問是否連線">
+<!ENTITY menuitemAlwaysOnline             "啟動時總是使用連線模式">
+<!ENTITY menuitemAlwaysOffline            "總是以離線模式啟動">
+<!ENTITY menuitemAutomatic                "自動偵測（可用的話）">
+<!ENTITY textGoingOnline                  "當切換到連線模式時寄出未寄郵件？">
+<!ENTITY radioAutoSend                    "是">
+<!ENTITY radioAutoSend.accesskey          "Y">
+<!ENTITY radioNotSend                     "否">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "詢問我">
+<!ENTITY radioAskUnsent.accesskey         "s">
+<!ENTITY textGoingOffline                 "當切換到離線模式時自動下載郵件以供離線閱讀？">
+<!ENTITY radioAutoDownload                "是">
+<!ENTITY radioAutoDownload.accesskey      "e">
+<!ENTITY radioNotDownload                 "否">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "詢問我">
+<!ENTITY radioAskDownload.accesskey       "k">
+<!ENTITY mailConnections.caption          "Mail 連線">
+<!ENTITY mailnewsTimeout.label            "連線超時:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "秒之後">
+<!ENTITY Diskspace                        "磁碟空間">
+<!ENTITY offlineCompactFolders.label      "在可以節省超過">
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "MB 時壓實重整所有郵件匣">
+

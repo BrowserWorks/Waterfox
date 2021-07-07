@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "加入聊天">
+<!ENTITY name.label                     "聊天室">
+<!ENTITY optional.label                 "（非必要）">
+<!ENTITY account.label                  "帳號">
+<!ENTITY autojoin.label                 "自動加入此聊天室">
+<!ENTITY autojoin.accesskey             "A">
+

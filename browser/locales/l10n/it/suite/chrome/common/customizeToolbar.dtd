@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "Personalizza barra degli strumenti">
+<!ENTITY dialog.dimensions        "width: 112ch; height: 36em;">
+<!ENTITY instructions.description "Aggiungere elementi trascinandoli sulle barre degli strumenti o rimuoverli trascinandoli fuori.">
+<!ENTITY show.label               "Mostra:">
+<!ENTITY iconsAndText.label       "Icone e testo">
+<!ENTITY icons.label              "Icone">
+<!ENTITY text.label               "Testo">
+<!ENTITY useSmallIcons.label      "Usa icone piccole">
+<!ENTITY restoreDefaultSet.label  "Ripristina predefiniti">
+<!ENTITY addNewToolbar.label      "Aggiungi una nuova barra degli strumenti">
+<!ENTITY saveChanges.label        "Fatto">
+<!ENTITY undoChanges.label        "Annulla cambiamenti">

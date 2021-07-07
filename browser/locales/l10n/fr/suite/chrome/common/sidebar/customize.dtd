@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Personnalisation de la barre latérale">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Les panneaux de la barre latérale :">
+<!ENTITY sidebar.customize.current.accesskey    "t">
+
+<!ENTITY sidebar.customize.title                "Personnaliser la barre latérale">
+<!ENTITY sidebar.customize.current2.label       "Onglets dans la barre latérale :">
+<!ENTITY sidebar.customize.current2.accesskey   "t">
+<!ENTITY sidebar.customize.customize.label      "Personnaliser les panneaux…">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Supprimer">
+<!ENTITY sidebar.customize.remove.accesskey     "e">
+<!ENTITY sidebar.customize.additional.label     "Panneaux disponibles :">
+<!ENTITY sidebar.customize.additional.accesskey "a">
+<!ENTITY sidebar.customize.add.label            "Ajouter">
+<!ENTITY sidebar.customize.add.accesskey        "j">
+<!ENTITY sidebar.customize.preview.label        "Aperçu…">
+<!ENTITY sidebar.customize.preview.accesskey    "u">
+<!ENTITY sidebar.customize.up.label             "Monter">
+<!ENTITY sidebar.customize.up.accesskey         "M">
+<!ENTITY sidebar.customize.down.label           "Descendre">
+<!ENTITY sidebar.customize.down.accesskey       "D">
+<!ENTITY sidebar.more.label                     "Obtenir d’autres panneaux…">
+<!ENTITY sidebar.more.accesskey                 "O">

@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Turimos el. pašto paskyros nustatymas">
+<!ENTITY emailWizard.caption             "Naudoti turimą el. pašto adresą">
+<!ENTITY name.label                      "Jūsų vardas:">
+<!ENTITY name.accesskey                  "v">
+<!ENTITY fullname.placeholder            "Jūsų vardas ir pavardė">
+<!ENTITY name.text                       "Jūsų vardas, kurį matys kiti">
+<!ENTITY name.error                      "Įveskite savo vardą">
+<!ENTITY email.label                     "El. pašto adresas:">
+<!ENTITY email.accesskey                 "a">
+<!ENTITY email3.placeholder              "Jūsų el. pašto adresas">
+<!ENTITY email.text                      "Jūsų turimas el. pašto adresas">
+<!ENTITY email.error                     "Netinkamas el. pašto adresas">
+<!ENTITY password.label                  "Slaptažodis:">
+<!ENTITY password.accesskey              "S">
+<!ENTITY password.placeholder            "Slaptažodis">
+<!ENTITY password.text                   "Įvesti nebūtina, nes bus panaudotas tik paskyros abonento vardui patikrinti">
+<!ENTITY password.toggle                 "Rodyti / slėpti slaptažodį">
+<!ENTITY rememberPassword.label          "Įsiminti slaptažodį">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "Jūsų prisijungimo vardas:">
+<!ENTITY usernameEx.accesskey            "p">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "DOMENAS\naudotojas">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Domeno prisijungimas">
+
+<!ENTITY protocol.label                  "Protokolas:">
+<!ENTITY imapLong.label                  "IMAP (nuotoliniai aplankai)">
+<!ENTITY pop3Long.label                  "POP3 (paštas laikomas jūsų kompiuteryje)">
+
+<!ENTITY manualConfigTable.summary       "Serverio nuostatos">
+<!ENTITY incoming.label                  "Laiškų gavimo serveris:">
+<!ENTITY incomingColumn.label            "Gaunami">
+<!ENTITY outgoing.label                  "Laiškų siuntimo serveris:">
+<!ENTITY outgoingColumn.label            "Siunčiami">
+<!ENTITY username.label                  "Abonento vardas:">
+<!ENTITY serverRow.label                 "Serveris:">
+<!ENTITY portRow.label                   "Prievadas:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Tapatumo nustatymas">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "„Exchange“">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Nustatyti automatiškai">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Nenaudojamas">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "„Exchange“ serveris:">
+
+<!ENTITY advancedSetup.label             "Sudėtingesnis derinimas">
+<!ENTITY advancedSetup.accesskey         "d">
+<!ENTITY cancel.label                    "Atsisakyti">
+<!ENTITY cancel.accesskey                "A">
+<!ENTITY continue.label                  "Tęsti">
+<!ENTITY continue.accesskey              "T">
+<!ENTITY stop.label                      "Stabdyti">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Patikrinti">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY manual-config.label             "Konfigūruoti rankiniu būdu…">
+<!ENTITY manual-config.accesskey         "r">
+<!ENTITY open-provisioner.label          "Gauti naują el. pašto adresą…">
+<!ENTITY open-provisioner.accesskey      "G">
+
+
+<!ENTITY get-help.label                  "Žinynas ir pagalba">
+<!ENTITY get-help.accesskey              "P">
+
+
+<!ENTITY warning.label                   "Dėmesio!">
+<!ENTITY incomingSettings.label          "Laiškų gavimas:">
+<!ENTITY outgoingSettings.label          "Laiškų siuntimas:">
+<!ENTITY technicaldetails.label          "Techninės detalės">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Aš suprantu pavojus.">
+<!ENTITY confirmWarning.accesskey        "s">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Baigta">
+<!ENTITY doneAccount.accesskey           "B">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Keisti nuostatas">
+<!ENTITY changeSettings.accesskey        "n">
+
+<!ENTITY contactYourProvider.description "„&brandShortName;“ gali jums leisti gauti paštą naudojant pateiktąsias nuostatas. Tačiau jums derėtų susisiekti su sistemos administratoriumi ar el. pašto paslaugos teikėju dėl šių netinkamų nuostatų. Plačiau apie tai – „Thunderbird“ žinyne.">
+
+<!ENTITY insecureServer.tooltip.title    "Dėmesio! Šis serveris nesaugus.">
+<!ENTITY insecureServer.tooltip.details  "Spustelėkite apskritimą, jei norite sužinoti daugiau.">
+
+<!ENTITY insecureUnencrypted.description "Jūsų laiškai ir prisijungimo duomenys bus siunčiami nešifruotu ryšiu, todėl juos galės perskaityti pašaliniai. „&brandShortName;“ jums leis gauti paštą, tačiau jums derėtų susisiekti su savo el. pašto paslaugos teikėju ir paprašyti, kad šis suteiktų galimybę jungtis šifruotu ryšiu.">
+<!ENTITY insecureSelfSigned.description  "Šis serveris naudoja liudijimą, kurio tapatumu negalime pasikliauti, tad nėra garantijos, jog pašalinės akys negalės perimti duomenų, keliaujančių tarp jūsų programos „&brandShortName;“ ir serverio. „&brandShortName;“ jums leis gauti paštą, tačiau jums tikrai derėtų priminti savo el. pašto paslaugos teikėjui, kad šis serveryje naudotų patikimą liudijimą.">
+<!ENTITY secureServer.description        "Sveikiname! Tai – saugus serveris.">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Zijbalk">
+<!ENTITY sidebar.reload.label           "Opnieuw laden">
+<!ENTITY sidebar.reload.accesskey       "n">
+<!ENTITY sidebar.picker.label           "Tabbladen">
+<!ENTITY sidebar.customize.label        "Zijbalk aanpassen…">
+<!ENTITY sidebar.customize.accesskey    "a">
+<!ENTITY sidebar.hide.label             "Tabblad verbergen">
+<!ENTITY sidebar.hide.accesskey         "v">
+<!ENTITY sidebar.switch.label           "Wisselen naar tabblad">
+<!ENTITY sidebar.switch.accesskey       "W">
+<!ENTITY sidebarCmd.label               "Zijbalk">
+<!ENTITY sidebarCmd.accesskey           "Z">
+<!ENTITY sidebar.loading.label          "Laden…">
+<!ENTITY sidebar.loadstopped.label      "Laden gestopt">
+<!ENTITY sidebar.loading.stop.label     "Stoppen">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "De zijbalk is momenteel leeg.">
+<!ENTITY sidebar.no-panels.add       'U kunt tabbladen toevoegen door op de knop ‘Tabbladen’ hierboven te klikken.'>
+<!ENTITY sidebar.no-panels.hide      'Klik op het menu ‘Beeld’ hierboven en selecteer ‘Zijbalk’ in het submenu ‘Tonen/Verbergen’ als u de zijbalk volledig wilt verbergen.'>
+<!ENTITY sidebar.sbDirectory.label   "Zijbalkmap…">
+
+<!ENTITY sidebar.pagenotfound.label  "Dit tabblad is momenteel niet beschikbaar.">
+<!ENTITY sidebar.close.tooltip       "Zijbalk sluiten">
+<!ENTITY sidebar.open.tooltip        "Zijbalk openen">
+
+<!ENTITY sidebar.search.label         "Zoeken">
+<!ENTITY sidebar.client-bookmarks.label     "Bladwijzers">
+<!ENTITY sidebar.client-history.label       "Geschiedenis">
+<!ENTITY sidebar.client-addressbook.label   "Adresboek">

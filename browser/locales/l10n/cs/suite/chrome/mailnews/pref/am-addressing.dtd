@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "Vytváření zpráv a adresování">
+<!ENTITY addressingGroupTitle.label "Adresování">
+<!ENTITY autocompleteToMyDomain.label     "Automaticky připojovat moji doménu do adres">
+<!ENTITY autocompleteToMyDomain.accesskey "u">
+<!ENTITY addressingText.label      "Při hledání adres:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Použít pro tento účet moje globální nastavení LDAP serverů">
+<!ENTITY useGlobal.accesskey       "L">
+<!ENTITY editDirectories.label     "Upravit adresáře…">
+<!ENTITY editDirectories.accesskey "i">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Použít jiný LDAP server:">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "Žádný">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label          "Vytváření zpráv">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Vytvářet zprávy v HTML formátu">
+<!ENTITY useHtml.accesskey                    "V">
+<!ENTITY autoQuote.label                      "Při odpovědi automaticky odcitovat původní zprávu">
+<!ENTITY autoQuote.accesskey                  "c">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label                           "Potom">
+<!ENTITY then.accesskey                       "t">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Při citaci">
+<!ENTITY quoting.accesskey                    "i">
+<!ENTITY aboveQuote.label                     "začít odpověď nad citovaným textem">
+<!ENTITY belowQuote.label                     "začít odpověď pod citovaným textem">
+<!ENTITY selectAndQuote.label                 "vybrat citovaný text">
+<!ENTITY place.label                          "Umístit podpis">
+<!ENTITY place.accesskey                      "U">
+<!ENTITY belowText.label                      "pod citovaný text (doporučeno)">
+<!ENTITY aboveText.label                      "pod odpověď (nad citovaný text)">
+<!ENTITY includeSigOnReply.label              "Při odpovědi vložit podpis">
+<!ENTITY includeSigOnReply.accesskey          "o">
+<!ENTITY includeSigOnForward.label            "Při přeposlání vložit podpis">
+<!ENTITY includeSigOnForward.accesskey        "p">
+
+<!ENTITY globalComposingPrefs.label           "Globální nastavení vytváření…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globální nastavení adresování…">
+<!ENTITY globalAddressingPrefs.accesskey      "b">

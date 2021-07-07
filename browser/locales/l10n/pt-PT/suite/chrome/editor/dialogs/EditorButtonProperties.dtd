@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propriedades do botão">
+
+<!ENTITY Settings.label "Definições">
+
+<!ENTITY ButtonType.label "Tipo">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Submeter">
+<!ENTITY reset.value "Repor">
+<!ENTITY button.value "Botão">
+
+<!ENTITY ButtonName.label "Nome:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Valor:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Índice de tabulação:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "Desativado">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Tecla de acesso:">
+<!ENTITY AccessKey.accesskey "T">
+
+<!ENTITY RemoveButton.label "Remover botão">
+<!ENTITY RemoveButton.accesskey "R">

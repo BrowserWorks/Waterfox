@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Όνομα:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "Ό">
+<!ENTITY editBookmarkOverlay.location.label                  "Τοποθεσία:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "Τ">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Διεύθυνση ροής:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "Δ">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Διεύθυνση ιστοσελίδας:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "ι">
+<!ENTITY editBookmarkOverlay.folder.label                    "Φάκελος:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Προβολή όλων των φακέλων σελιδοδεικτών">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Απόκρυψη">
+<!ENTITY editBookmarkOverlay.tags.label                      "Ετικέτες:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "Ε">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Διαχωρίστε τις ετικέτες με κόμματα">
+<!ENTITY editBookmarkOverlay.description.label               "Περιγραφή:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "Π">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Λέξη-κλειδί:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "Λ">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Εμφάνιση όλων των ετικετών">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Φόρτωση σελιδοδείκτη στην πλευρική στήλη">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "δ">
+<!ENTITY editBookmarkOverlay.choose.label                    "Επιλογή…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Νέος φάκελος">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "ο">

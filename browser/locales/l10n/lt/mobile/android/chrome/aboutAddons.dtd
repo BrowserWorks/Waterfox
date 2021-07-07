@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Priedai">
+<!ENTITY aboutAddons.header2                    "Jūsų priedai">
+
+<!ENTITY addonAction.enable                     "Įjungti">
+<!ENTITY addonAction.disable                    "Išjungti">
+<!ENTITY addonAction.uninstall                  "Pašalinti">
+<!ENTITY addonAction.undo                       "Atšaukti">
+<!ENTITY addonAction.update                     "Atnaujinti">
+
+<!ENTITY addonUnsigned.message                  "„&brandShortName;“ nepavyko patvirtinti šio priedo.">
+<!ENTITY addonUnsigned.learnMore                "Sužinoti daugiau">

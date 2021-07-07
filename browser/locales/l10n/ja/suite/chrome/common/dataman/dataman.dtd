@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "データマネージャー">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "すべてのデータ">
+<!ENTITY select.cookies.label "Cookie のみ">
+<!ENTITY select.permissions.label "許可設定のみ">
+<!ENTITY select.preferences.label "個人設定のみ">
+<!ENTITY select.passwords.label "パスワードのみ">
+<!ENTITY select.storage.label "ストレージのみ">
+
+<!ENTITY domain.search.placeholder "ドメインを検索">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "ドメイン">
+
+<!ENTITY domain.ctx.forgetdomain.label "このドメインのデータを消去">
+<!ENTITY domain.ctx.forgetdomain.accesskey "F">
+<!ENTITY domain.ctx.forgetglobal.label "グローバルデータを消去">
+<!ENTITY domain.ctx.forgetglobal.accesskey "F">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookie">
+<!ENTITY tab.permissions.label "許可設定">
+<!ENTITY tab.preferences.label "個人設定">
+<!ENTITY tab.passwords.label "パスワード">
+<!ENTITY tab.storage.label "ストレージ">
+<!ENTITY tab.formdata.label "フォームデータ">
+<!ENTITY tab.forget.label "データ消去">
+
+<!-- cookies -->
+<!ENTITY cookies.description "このドメインは、以下の Cookie をあなたのコンピューターに保存しました:">
+
+<!ENTITY cookies.tree.host.label "ウェブサイト">
+<!ENTITY cookies.tree.name.label "Cookie 名">
+<!ENTITY cookies.tree.expires.label "有効期限">
+
+<!ENTITY cookies.infobox.label "選択した Cookie についての情報">
+
+<!ENTITY cookies.info.name.label "名前:">
+<!ENTITY cookies.info.value.label "内容:">
+<!ENTITY cookies.info.host.label "ホスト:">
+<!ENTITY cookies.info.domain.label "ドメイン:">
+<!ENTITY cookies.info.path.label "パス:">
+<!ENTITY cookies.info.sendtype.label "送信対象:">
+<!ENTITY cookies.info.expires.label "有効期限:">
+
+<!ENTITY cookies.ctx.remove.label "削除">
+<!ENTITY cookies.ctx.remove.accesskey "R">
+<!ENTITY cookies.ctx.selectAll.label "すべて選択">
+<!ENTITY cookies.ctx.selectAll.accesskey "A">
+
+<!ENTITY cookies.button.remove.label "削除">
+<!ENTITY cookies.button.remove.accesskey "R">
+
+<!ENTITY cookies.blockOnRemove.label "このリストから削除したウェブサイトの Cookie はブロックする">
+<!ENTITY cookies.blockOnRemove.accesskey "W">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "標準設定を使用する">
+<!ENTITY perm.AskAlways "毎回確認する">
+<!ENTITY perm.NeverSave "保存しない">
+<!ENTITY perm.Allow "許可">
+<!ENTITY perm.AllowSameDomain "同じドメインのみ許可">
+<!ENTITY perm.AllowSession "セッション中のみ許可">
+<!ENTITY perm.Block "ブロック">
+
+<!ENTITY perm.host.placeholder "ホスト名を入力してください">
+<!ENTITY perm.button.add.label "追加">
+<!ENTITY perm.button.add.accesskey "A">
+
+<!-- preferences -->
+<!ENTITY prefs.description "コンテンツの設定は、ウェブサイトのズーム表示のレベルやサイト固有の設定を &brandShortName; に保存する機能です。">
+
+<!ENTITY prefs.tree.host.label "ウェブサイト">
+<!ENTITY prefs.tree.name.label "設定名">
+<!ENTITY prefs.tree.value.label "値">
+
+<!ENTITY prefs.ctx.remove.label "削除">
+<!ENTITY prefs.ctx.remove.accesskey "R">
+<!ENTITY prefs.ctx.selectAll.label "すべて選択">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+
+<!ENTITY prefs.button.remove.label "削除">
+<!ENTITY prefs.button.remove.accesskey "R">
+
+<!-- passwords -->
+<!ENTITY pwd.description "このドメインでは、以下のパスワードが保存されています:">
+
+<!ENTITY pwd.tree.host.label "ウェブサイト">
+<!ENTITY pwd.tree.username.label "ユーザー名">
+<!ENTITY pwd.tree.password.label "パスワード">
+
+<!ENTITY pwd.ctx.remove.label "削除">
+<!ENTITY pwd.ctx.remove.accesskey "R">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "パスワードをコピー">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY pwd.ctx.selectAll.label "すべて選択">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "削除">
+<!ENTITY pwd.button.remove.accesskey "R">
+
+<!-- storage -->
+<!ENTITY storage.description "このドメインは、あなたのコンピューターに保存された次のウェブストレージを使用します:">
+
+<!ENTITY storage.tree.host.label "ウェブサイト">
+<!ENTITY storage.tree.type.label "種類">
+<!ENTITY storage.tree.size.label "サイズ">
+
+<!ENTITY storage.ctx.remove.label "削除">
+<!ENTITY storage.ctx.remove.accesskey "R">
+<!ENTITY storage.ctx.selectAll.label "すべて選択">
+<!ENTITY storage.ctx.selectAll.accesskey "A">
+
+<!ENTITY storage.button.remove.label "削除">
+<!ENTITY storage.button.remove.accesskey "R">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "フィールドデータを検索">
+
+<!ENTITY fdata.tree.fieldname.label "フィールド名">
+<!ENTITY fdata.tree.value.label "入力した値">
+<!ENTITY fdata.tree.usecount.label "使用回数">
+<!ENTITY fdata.tree.firstused.label "最初の使用日時">
+<!ENTITY fdata.tree.lastused.label "最近の使用日時">
+
+<!ENTITY fdata.ctx.remove.label "削除">
+<!ENTITY fdata.ctx.remove.accesskey "R">
+<!ENTITY fdata.ctx.selectAll.label "すべて選択">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+
+<!ENTITY fdata.button.remove.label "削除">
+<!ENTITY fdata.button.remove.accesskey "R">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookie">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "許可設定">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "コンテンツの個人設定">
+<!ENTITY forget.preferences.accesskey "o">
+<!ENTITY forget.passwords.label "パスワード">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "ストレージ">
+<!ENTITY forget.storage.accesskey "S">
+<!ENTITY forget.formdata.label "フォームデータ">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "選択したデータを消去">
+<!ENTITY forget.button.accesskey "F">

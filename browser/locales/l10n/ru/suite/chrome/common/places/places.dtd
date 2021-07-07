@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Библиотека">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Управление">
+<!ENTITY organize.accesskey    "а">
+<!ENTITY organize.tooltip      "Управление вашими закладками">
+
+<!ENTITY file.close.label               "Закрыть">
+<!ENTITY file.close.accesskey           "З">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Вид">
+<!ENTITY views.accesskey                "и">
+<!ENTITY views.tooltip                  "Изменение внешнего вида">
+<!ENTITY view.columns.label             "Показать колонки">
+<!ENTITY view.columns.accesskey         "к">
+<!ENTITY view.sort.label                "Сортировка">
+<!ENTITY view.sort.accesskey            "р">
+<!ENTITY view.unsorted.label            "Без сортировки">
+<!ENTITY view.unsorted.accesskey        "е">
+<!ENTITY view.sortAscending.label       "Сортировка по алфавиту">
+<!ENTITY view.sortAscending.accesskey   "С">
+<!ENTITY view.sortDescending.label      "В обратном порядке">
+<!ENTITY view.sortDescending.accesskey  "о">
+
+<!ENTITY importBookmarksFromHTML.label     "Импорт закладок из HTML-файла…">
+<!ENTITY importBookmarksFromHTML.accesskey "И">
+<!ENTITY exportBookmarksToHTML.label       "Экспорт закладок в HTML-файл…">
+<!ENTITY exportBookmarksToHTML.accesskey   "Э">
+<!ENTITY importOtherBrowser.label          "Импорт данных из другого браузера…">
+<!ENTITY importOtherBrowser.accesskey      "п">
+
+<!ENTITY cmd.backup.label               "Создать резервную копию…">
+<!ENTITY cmd.backup.accesskey           "р">
+<!ENTITY cmd.restore2.label             "Восстановить резервную копию от">
+<!ENTITY cmd.restore2.accesskey         "с">
+<!ENTITY cmd.restoreFromFile.label      "Выбрать файл…">
+<!ENTITY cmd.restoreFromFile.accesskey  "б">
+
+<!ENTITY cmd.deleteDomainData.label     "Забыть об этом сайте">
+<!ENTITY cmd.deleteDomainData.accesskey "б">
+
+<!ENTITY cmd.open.label                  "Открыть">
+<!ENTITY cmd.open.accesskey              "О">
+<!ENTITY cmd.open_window.label           "Открыть в новом окне">
+<!ENTITY cmd.open_window.accesskey       "н">
+<!ENTITY cmd.open_private_window.label     "Открыть в новом приватном окне">
+<!ENTITY cmd.open_private_window.accesskey "ы">
+<!ENTITY cmd.open_tab.label              "Открыть в новой вкладке">
+<!ENTITY cmd.open_tab.accesskey          "ы">
+<!ENTITY cmd.open_all_in_tabs.label      "Открыть всё во вкладках">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "в">
+
+<!ENTITY cmd.properties.label      "Свойства">
+<!ENTITY cmd.properties.accesskey  "в">
+
+<!ENTITY cmd.sortby_name.label              "Сортировать по имени">
+<!ENTITY cmd.sortby_name.accesskey          "С">
+<!ENTITY cmd.context_sortby_name.accesskey  "р">
+
+<!ENTITY cmd.new_bookmark.label            "Новая закладка…">
+<!ENTITY cmd.new_bookmark.accesskey        "з">
+<!ENTITY cmd.new_folder.label              "Новая папка…">
+<!ENTITY cmd.new_folder.accesskey          "а">
+<!ENTITY cmd.context_new_folder.accesskey  "П">
+<!ENTITY cmd.new_separator.label           "Новый разделитель">
+<!ENTITY cmd.new_separator.accesskey       "р">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Обновить закладку на ленту новостей">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "н">
+
+<!ENTITY col.name.label          "Имя">
+<!ENTITY col.tags.label          "Метки">
+<!ENTITY col.url.label           "Адрес">
+<!ENTITY col.mostrecentvisit.label "Последнее посещение">
+<!ENTITY col.visitcount.label    "Число посещений">
+<!ENTITY col.description.label   "Описание">
+<!ENTITY col.dateadded.label     "Добавлена">
+<!ENTITY col.lastmodified.label  "Посл. изменение">
+
+<!ENTITY search.placeholder  "Поиск">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "Больше">
+<!ENTITY detailsPane.more.accesskey "ш">
+<!ENTITY detailsPane.less.label "Меньше">
+<!ENTITY detailsPane.less.accesskey "ш">
+<!ENTITY detailsPane.selectAnItemText.description "Выберите элемент для просмотра и редактирования его свойств">
+
+<!ENTITY view.label               "Вид">
+<!ENTITY view.accesskey           "и">
+<!ENTITY byDate.label             "По дате">
+<!ENTITY byDate.accesskey         "д">
+<!ENTITY bySite.label             "По сайтам">
+<!ENTITY bySite.accesskey         "с">
+<!ENTITY byMostVisited.label      "По частоте посещения">
+<!ENTITY byMostVisited.accesskey  "п">
+<!ENTITY byLastVisited.label      "По дате последнего посещения">
+<!ENTITY byLastVisited.accesskey  "о">
+<!ENTITY byDayAndSite.label       "По дате и сайтам">
+<!ENTITY byDayAndSite.accesskey   "и">

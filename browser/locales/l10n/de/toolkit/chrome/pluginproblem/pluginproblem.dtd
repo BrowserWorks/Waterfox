@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tapToPlayPlugin                                     "Tippen Sie hier, um das Plugin zu aktivieren.">
+<!ENTITY clickToActivatePlugin                               "Plugin aktivieren">
+<!ENTITY checkForUpdates                                     "Auf Updates prüfen…">
+<!ENTITY blockedPlugin.label                                 "Dieses Plugin wurde zu Ihrem Schutz blockiert.">
+<!ENTITY hidePluginBtn.label                                 "Plugin ausblenden">
+<!ENTITY managePlugins                                       "Plugins verwalten…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Seite neu laden,">
+<!ENTITY reloadPlugin.post                                   " um es erneut zu versuchen.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Absturzbericht senden">
+<!ENTITY report.submitting                                   "Meldung wird gesendet…">
+<!ENTITY report.submitted                                    "Absturzbericht gesendet.">
+<!ENTITY report.disabled                                     "Melden von Abstürzen deaktiviert.">
+<!ENTITY report.failed                                       "Senden fehlgeschlagen.">
+<!ENTITY report.unavailable                                  "Keine Meldungen verfügbar.">
+<!ENTITY report.comment                                      "Einen Kommentar hinzufügen (Kommentare sind öffentlich sichtbar)">
+<!ENTITY report.pageURL                                      "Seitenadresse einfügen">
+
+<!ENTITY plugin.file                                         "Datei">
+<!ENTITY plugin.mimeTypes                                    "MIME-Typen">
+<!ENTITY plugin.flashProtectedMode.label                     "Geschützten Modus von Adobe Flash aktivieren">
+<!ENTITY plugin.enableBlocklists.label                       "Gefährliche und unerwünschte Flash-Inhalte blockieren">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Over ongewenste berichten">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "&brandShortName; detecteert automatisch inkomende berichten die ongewenst zijn (ook bekend als spam). Berichten waarvan &brandShortName; denkt dat deze ongewenst zijn, worden gemarkeerd met een ongewenstberichtpictogram">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label  "U moet &brandShortName; eerst trainen in het herkennen van ongewenste berichten. Dit doet u door de berichten via de knop Ongewenst bericht als gewenst of ongewenst te markeren.">
+<!ENTITY info3.label  "Zodra &brandShortName; inkomende berichten correct als ongewenst herkent, kunt u deze automatisch laten verplaatsen naar de map Ongewenst.">
+<!ENTITY info4.label  "Voor meer informatie, klik op Help.">

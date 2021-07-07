@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "&syncBrand.fullName.label; 設定">
+
+<!-- First page of the wizard -->
+
+<!ENTITY setup.pickSetupType.description "歡迎，如果您從未使用過 &syncBrand.fullName.label;，您需要先建立一個帳號。">
+<!ENTITY button.createNewAccount.label "建立新帳號">
+<!ENTITY setup.haveAccount.label "我已有一個 &syncBrand.fullName.label; 帳號。">
+<!ENTITY button.connect.label "連線">
+
+<!ENTITY setup.choicePage.title.label     "您曾經使用過 &syncBrand.fullName.label; 嗎？">
+<!ENTITY setup.choicePage.new.label       "我從來沒使用過 &syncBrand.shortName.label;">
+<!ENTITY setup.choicePage.existing.label  "我正在別台電腦上使用 &syncBrand.shortName.label;">
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "伺服器">
+<!ENTITY server.accesskey           "S">
+<!ENTITY serverType.main.label      "&syncBrand.fullName.label; 伺服器">
+<!ENTITY serverType.custom2.label   "使用自訂伺服器…">
+<!ENTITY signIn.account2.label      "帳號">
+<!ENTITY signIn.account2.accesskey  "A">
+<!ENTITY signIn.password.label      "密碼">
+<!ENTITY signIn.password.accesskey  "P">
+<!ENTITY signIn.recoveryKey.label     "救援金鑰">
+<!ENTITY signIn.recoveryKey.accesskey "K">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "帳號資料">
+<!ENTITY setup.confirmPassword.label             "請再次輸入密碼">
+<!ENTITY setup.confirmPassword.accesskey         "C">
+<!ENTITY setup.emailAddress.label                "電子郵件地址">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "我同意">
+<!ENTITY setup.tosAgree1.accesskey  "a">
+<!ENTITY setup.tosLink.label        "服務條款">
+<!ENTITY setup.tosAgree2.label      "我同意">
+<!ENTITY setup.ppLink.label         "隱私權保護政策">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; 在乎您的隱私">
+<!ENTITY setup.newRecoveryKeyPage.description.label "為了確保您的隱私，您所有的資料會在上傳前就被加密。您需要救援金鑰才能解密您未上傳的資料。">
+<!ENTITY recoveryKeyEntry.label        "您的救援金鑰">
+<!ENTITY recoveryKeyEntry.accesskey    "K">
+<!ENTITY recoveryGenerateNewKey.label  "產生新的金鑰">
+<!ENTITY recoveryKeyBackup.description "您需要救援金鑰才能在其他電腦上存取 &syncBrand.fullName.label;。請記得留下備份，我們無法幫您找回救援金鑰。">
+
+<!ENTITY button.syncKeyBackup.print.label     "列印…">
+<!ENTITY button.syncKeyBackup.print.accesskey "P">
+<!ENTITY button.syncKeyBackup.save.label      "儲存…">
+<!ENTITY button.syncKeyBackup.save.accesskey  "S">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "請確認您不是來亂的機器人">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "新增裝置">
+<!ENTITY addDevice.showMeHow.label          "告訴我怎麼做。">
+<!ENTITY addDevice.dontHaveDevice.label     "裝置不在我手邊">
+<!ENTITY addDevice.setup.description.label  "若要啟用，請在您的另一台裝置當中的 &syncBrand.shortName.label; 偏好設定選擇「新增裝置」。">
+<!ENTITY addDevice.setup.enterCode.label    "然後，輸入這組配對碼:">
+<!ENTITY addDevice.dialog.description.label "若要啟用您的新裝置，請在您的裝置上的 &syncBrand.shortName.label; 偏好設定選擇「連線」。">
+<!ENTITY addDevice.dialog.enterCode.label   "在此輸入該裝置所提供的配對碼:">
+<!ENTITY addDevice.dialog.tryAgain.label    "請再試一次。">
+<!ENTITY addDevice.dialog.successful.label  "已成功新增此裝置。第一次的同步可能需要幾分鐘，並會在背景中完成。">
+<!ENTITY addDevice.dialog.recoveryKey.label "您需要輸入您的救援金鑰才能啟用您的裝置。請把這把金鑰印出來或儲存下來保存。">
+<!ENTITY addDevice.dialog.connected.label   "裝置已連線">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "登入">
+<!ENTITY existingRecoveryKey.description "您可以在其他裝置上的 &syncBrand.shortName.label; 偏好設定選擇「管理帳號」>「我的救援金鑰」找回您的救援金鑰。">
+<!ENTITY verifying.label              "驗證中…">
+<!ENTITY resetPassword.label          "重設密碼">
+<!ENTITY resetSyncKey.label           "我把我其他的裝置搞丟了。">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "同步選項">
+<!ENTITY syncComputerName.label       "電腦名稱:">
+<!ENTITY syncComputerName.accesskey   "C">
+
+<!ENTITY syncMy.label               "同步我的">
+<!ENTITY engine.addons.label        "附加元件">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "書籤">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "分頁">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "瀏覽紀錄">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "密碼">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label         "偏好設定">
+<!ENTITY engine.prefs.accesskey     "e">
+
+<!ENTITY choice2.merge.main.label      "將此電腦的資料與我的 &syncBrand.shortName.label; 資料合併">
+<!ENTITY choice2.merge.recommended.label "(建議)">
+<!ENTITY choice2.client.main.label     "用我的 &syncBrand.shortName.label; 資料取代此電腦上的全部資料">
+<!ENTITY choice2.server.main.label     "用此電腦的資料取代全部其他裝置的資料">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title "確認">
+<!ENTITY confirm.merge.label    "&syncBrand.fullName.label; 現在將會把此瀏覽器的所有資料合併到您的 Sync 帳號中。">
+<!ENTITY confirm.client2.label         "警告: 這台電腦上 &brandShortName; 的以下資料將會被刪除:">
+<!ENTITY confirm.client.moreinfo.label "&brandShortName; 將會複製您 &syncBrand.fullName.label; 上的資料到這台電腦。">
+<!ENTITY confirm.server2.label         "警告: 以下這些裝置中的資料將會被您目前的本機資料覆蓋:">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "完成設定">
+<!ENTITY changeOptions.label "您可以在以下的同步選項修改這個設定。">
+<!ENTITY continueUsing.label "您現在可以繼續使用 &brandShortName;。">

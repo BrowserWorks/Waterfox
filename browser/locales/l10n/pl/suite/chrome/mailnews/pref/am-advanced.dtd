@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Konfiguracja serwera poczty wychodzącej (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Podczas zarządzania tożsamościami można wskazać dowolny serwer z poniższej listy jako „Serwer poczty wychodzącej (SMTP)” lub użyć serwera ustawionego jako domyślny na tej liście, wybierając „Użyj domyślnego serwera”.">
+
+<!ENTITY smtpListAdd.label "Dodaj…">
+<!ENTITY smtpListAdd.accesskey "D">
+<!ENTITY smtpListEdit.label "Edytuj…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Usuń">
+<!ENTITY smtpListDelete.accesskey "U">
+<!ENTITY smtpListSetDefault.label "Jako domyślny">
+<!ENTITY smtpListSetDefault.accesskey "y">
+
+<!ENTITY serverDetails.label "Szczegóły wybranego serwera:">
+<!ENTITY serverDescription.label "Opis: ">
+<!ENTITY serverName.label "Nazwa serwera: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label "Nazwa użytkownika: ">
+<!ENTITY connectionSecurity.label "Bezpieczeństwo połączenia: ">
+<!ENTITY authMethod.label "Metoda uwierzytelniania: ">

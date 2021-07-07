@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Λήψη σε εξέλιξη…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Παύση">
+<!ENTITY cmd.resume.tooltip              "Συνέχιση">
+<!ENTITY cmd.retry.tooltip               "Επανάληψη">
+<!ENTITY cmd.cancel.tooltip              "Ακύρωση">
+<!ENTITY cmd.open.label                  "Άνοιγμα">
+<!ENTITY cmd.open.accesskey              "Ά">
+<!ENTITY cmd.show.label                  "Άνοιγμα φακέλου λήψης">
+<!ENTITY cmd.show.accesskey              "φ">
+<!ENTITY cmd.goToDownloadPage.label      "Μετάβαση στη σελίδα λήψης">
+<!ENTITY cmd.goToDownloadPage.accesskey  "Μ">
+<!ENTITY cmd.copyDownloadLink.label      "Αντιγραφή συνδέσμου λήψης">
+<!ENTITY cmd.copyDownloadLink.accesskey  "σ">
+<!ENTITY closeWhenDone.label             "Κλείσιμο παραθύρου όταν ολοκληρωθεί η λήψη.">
+<!ENTITY closeWhenDone.accesskey         "π">

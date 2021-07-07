@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kreator kont komunikatora">
+
+<!ENTITY accountProtocolTitle.label "Sieć komunikatora">
+<!ENTITY accountProtocolInfo.label "Wybierz sieć dla swojego konta komunikatora.">
+<!ENTITY accountProtocolField.label "Sieć:">
+<!ENTITY accountProtocolGetMore.label "Więcej…">
+
+<!ENTITY accountUsernameTitle.label "Nazwa użytkownika">
+<!ENTITY accountUsernameDuplicate.label "To konto jest już skonfigurowane!">
+
+<!ENTITY accountPasswordTitle.label "Hasło">
+<!ENTITY accountPasswordInfo.label "Wprowadź hasło w polu tekstowym poniżej.">
+<!ENTITY accountPasswordField.label "Hasło:">
+<!ENTITY accountPasswordManager.label "Podane hasło zostanie zachowane w Menedżerze haseł. Pozostaw pole wprowadzania hasła puste, aby podawać hasło przy każdej próbie logowania.">
+
+<!ENTITY accountAdvancedTitle.label "Zaawansowane">
+<!ENTITY accountAdvancedInfo.label "Ta część może zostać pominięta.">
+<!ENTITY accountAdvanced.newMailNotification.label "Powiadamiaj o nowych wiadomościach e-mail">
+<!ENTITY accountAliasGroupbox.caption "Alias lokalny">
+<!ENTITY accountAliasField.label "Alias:">
+<!ENTITY accountAliasInfo.label "Alias lokalny będzie wyświetlany jedynie w rozmowach użytkownika podczas pisania, a pozostali go nie zobaczą.">
+<!ENTITY accountProxySettings.caption "Ustawienia serwera proxy">
+<!ENTITY accountProxySettings.change.label "Zmień…">
+<!ENTITY accountProxySettings.change.accessKey "Z">
+
+<!ENTITY accountSummaryTitle.label "Podsumowanie">
+<!ENTITY accountSummaryInfo.label "Poniżej wyświetlone jest podsumowanie informacji podanych wcześniej. Należy upewnić się, że są prawidłowe przed utworzeniem konta.">
+<!ENTITY accountSummary.connectNow.label "Połącz z tym kontem.">

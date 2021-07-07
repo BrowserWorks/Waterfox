@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "垃圾邮件设置">
+<!ENTITY trainingDescription.label "如要启用，您必须使用工具栏的 垃圾邮件 按钮标记相应邮件以训练 &brandShortName; 来辨识垃圾邮件。您需要标识垃圾邮件以及非垃圾邮件。之后 &brandShortName; 就能自动辨别垃圾邮件。">
+<!ENTITY level.label "对此账户启用智能垃圾邮件控制">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "将垃圾消息移动至:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "“垃圾”文件夹位于：">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "其他：">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "自动删除垃圾邮件，如果超过">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "天">
+
+<!ENTITY whitelistHeader.label "不将这些发件人的邮件自动标记为垃圾邮件： ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "如果启用此功能，&brandShortName; 将自动将标签为此外部类别的消息识别为垃圾邮件。">
+<!ENTITY ispHeaders.label "信任下列 ISP 设置的垃圾邮件头：">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "选择">
+<!ENTITY junkActions.label "目的地和保留与否">
+
+<!ENTITY globalJunkPrefs.label "全局垃圾邮件设置…">
+<!ENTITY globalJunkPrefs.accesskey "G">

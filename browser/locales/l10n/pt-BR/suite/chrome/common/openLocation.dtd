@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/openLocation.xul -->
+
+
+<!ENTITY enter.label "Forneça um endereço ou selecione o arquivo que você deseja abrir:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "F">
+<!ENTITY chooseFile.label "Arquivo...">
+<!ENTITY chooseFile.accesskey "A">
+<!ENTITY newPrivate.label "Nova janela privativa">
+<!ENTITY newWindow.label "Nova janela">
+<!ENTITY newTab.label "Nova aba">
+<!ENTITY currentTab.label "Aba atual do navegador">
+<!ENTITY editNewWindow.label "Composer">
+<!ENTITY open.label "Abrir">
+<!ENTITY caption.label "Abrir">
+<!ENTITY openWhere.label "Abrir em:">
+<!ENTITY openWhere.accesskey "b">

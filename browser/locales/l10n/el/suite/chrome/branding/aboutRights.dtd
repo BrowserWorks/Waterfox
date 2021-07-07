@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Σχετικά με τα δικαιώματά σας">
+<!ENTITY rights.intro "Το &brandFullName; είναι ελεύθερο λογισμικό ανοικτού κώδικα που αναπτύσσεται από μια κοινότητα χιλιάδων ατόμων από όλο τον κόσμο. Υπάρχουν μερικά πράγματα που πρέπει να γνωρίζετε:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "Το &brandShortName; είναι διαθέσιμο σε εσάς υπό τους όρους της ">
+<!ENTITY rights.intro-point1b "άδειας Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Δηλαδή, μπορείτε να χρησιμοποιήσετε, να αντιγράψετε και να διανείμετε το &brandShortName; σε τρίτους. Είστε ευπρόσδεκτοι να τροποποιήσετε τον πηγαίο κώδικα του &brandShortName; ώστε να ταιριάζει στις ανάγκες σας. Η άδεια Mozilla Public License σας δίνει επίσης το δικαίωμα να διανείμετε τις τροποποιημένες εκδόσεις σας.">
+
+<!ENTITY rights.intro-point2aa "Η &vendorShortName; δεν σας παραχωρεί κανένα δικαίωμα για τα εμπορικά σήματα ή τα λογότυπα του &quot;&brandFullName;&quot;. Περισσότερες πληροφορίες σχετικά με τα εμπορικά σήματα μπορείτε να βρείτε ">
+<!ENTITY rights.intro-point2b "εδώ">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Ορισμένες λειτουργίες στο &brandShortName;, όπως η Αναφορά καταρρεύσεων, σας παρέχουν την επιλογή για αποστολή σχολείων στη &vendorShortName;. Επιλέγοντας την υποβολή σχολίων, παραχωρείτε στη &vendorShortName; το δικαίωμα χρήσης των σχολίων για βελτίωση των εφαρμογών της, τη δημοσίευση των σχολίων στις ιστοσελίδες της, καθώς και τη διανομή των σχολίων.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "Μπορείτε να βρείτε τις πολιτικές απορρήτου για τα προϊόντα της &vendorShortName;">
+<!ENTITY rights.intro-point3b "εδώ">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "Το &brandShortName; προσφέρει προαιρετικές υπηρεσίες πληροφοριών ιστοσελίδας, όπως υπηρεσίες προσθέτων ή ασφαλούς περιήγησης· ωστόσο, δεν μπορούμε να εγγυηθούμε ότι είναι 100&#37; ακριβή ή απαλλαγμένα από σφάλματα. Περισσότερες λεπτομέρειες, καθώς και πληροφορίες για την απενεργοποίηση αυτών των υπηρεσιών, μπορείτε να βρείτε στους ">
+<!ENTITY rights.intro-point4b "όρους υπηρεσίας">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "Υπηρεσίες ιστοσελίδας &brandFullName;">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "Η &vendorShortName; παρέχει προαιρετικές υπηρεσίες ιστού (&quot;Υπηρεσίες&quot;) που διατίθενται για χρήση σε αυτή την έκδοση του &brandShortName;, όπως περιγράφεται παρακάτω. Ορισμένες από αυτές τις υπηρεσίες (όπως η πρόταση προσθέτων και οι υπηρεσίες ενημερώσεων, η υπηρεσία ασφαλούς περιήγησης, ή η λειτουργία ειδοποίησης κατά την περιήγηση βάσει τοποθεσίας) είναι ενεργές από προεπιλογή. Αν δεν θέλετε να χρησιμοποιήσετε κάποια από αυτές τις Υπηρεσίες ή δεν αποδέχεστε τους παρακάτω όρους, μπορείτε να βρείτε τις οδηγίες απενεργοποίησης μιας συγκεκριμένης λειτουργίας ή Υπηρεσίας ">
+<!ENTITY rights3.webservices-b "εδώ">
+<!ENTITY rights3.webservices-c ". Άλλες λειτουργίες και υπηρεσίες μπορούν να (απ)ενεργοποιηθούν στις προτιμήσεις της εφαρμογής.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "Υπηρεσίες προσθέτων:">
+<!ENTITY rights.addons-b "Από προεπιλογή, το &brandShortName; θα προτείνει πρόσθετα στη σελίδα &view.discover.label; και θα κάνει έλεγχο για ενημερώσεις σε τακτά χρονικά διαστήματα. Αν θέλετε να απενεργοποιήσετε αυτές τις λειτουργίες για να εμποδίσετε την κοινοποίηση στοιχείων για τα εγκατεστημένα πρόσθετα στον διακομιστή, ακολουθήστε αυτά τα βήματα:">
+<!ENTITY rights.addons-term1 "Άνοιγμα προτιμήσεων εφαρμογής">
+<!ENTITY rights.addons-term2 "Επιλέξτε την καρτέλα &smart.label; στην κατηγορία &advance.label;">
+<!ENTITY rights.addons-term3 "Καταργήστε τις επιλογές &quot;&autoAddOnsUpdates.label;&quot; και &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "Οι υπηρεσίες προσθέτων είναι πλέον ανενεργές">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Ασφαλής περιήγηση:">
+<!ENTITY rights.safebrowsing-b "Η απενεργοποίηση της ασφαλούς περιήγησης δεν προτείνεται, καθώς μπορεί να οδηγηθείτε σε επικίνδυνες ιστοσελίδες. Αν επιθυμείτε να απενεργοποιήσετε πλήρως τη λειτουργία, ακολουθήστε αυτά τα βήματα:">
+<!ENTITY rights.safebrowsing-term1 "Ανοίξτε τις προτιμήσεις της εφαρμογής">
+<!ENTITY rights.safebrowsing-term2 "Επιλέξτε την κύρια καρτέλα &security.label;">
+<!ENTITY rights.safebrowsing-term3 "Καταργήστε τις επιλογές &quot;&blockAttackSites.label;&quot; και &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Η ασφαλής περιήγηση είναι πλέον ανενεργή">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Περιήγηση βάσει τοποθεσίας: ">
+<!ENTITY rights.locationawarebrowsing-b "είναι πάντα προαιρετική. Δεν αποστέλλονται ποτέ πληροφορίες τοποθεσίας χωρίς την άδειά σας. Αν θέλετε να απενεργοποιήσετε εντελώς τη λειτουργία, ακολουθήστε αυτά τα βήματα:">
+<!ENTITY rights.locationawarebrowsing-term1 "Ανοίξτε τις προτιμήσεις της εφαρμογής">
+<!ENTITY rights.locationawarebrowsing-term2 "Επιλέξτε την κύρια καρτέλα &security.label;">
+<!ENTITY rights.locationawarebrowsing-term3 "Επιλέξτε &quot;&geoDisabled.label;&quot;">
+<!ENTITY rights.locationawarebrowsing-term4 "Η περιήγηση βάσει τοποθεσίας είναι πλέον ανενεργή">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "Η &vendorShortName; οι συντελεστές, οι συνεργάτες και οι διανομείς της εργάζονται για να παρέχουν τις πιο ακριβείς και ενημερωμένες Υπηρεσίες. Ωστόσο, δεν μπορούμε να εγγυηθούμε ότι αυτές οι πληροφορίες είναι κατανοητές και χωρίς σφάλματα. Για παράδειγμα, η Υπηρεσία ασφαλούς περιήγησης ενδέχεται να μην αναγνωρίσει κάποιες επικίνδυνες ιστοσελίδες και ενδεχομένως να θεωρήσει ορισμένες ασφαλείς ιστοσελίδες ως ύποπτες, ενώ η Υπηρεσία περιήγησης βάσει τοποθεσίας μπορεί να μην είναι ακριβής. Ούτε εμείς ούτε οι πάροχοι υπηρεσιών μας δεν μπορούμε να εγγυηθούμε την ακρίβεια των παρεχόμενων τοποθεσιών.">
+<!ENTITY rights.webservices-term1 "Η &vendorShortName; διατηρεί το δικαίωμα να διακόψει ή να αλλάξει τις Υπηρεσίες κατά βούληση.">
+<!ENTITY rights.webservices-term2a "Είστε ευπρόσδεκτοι να χρησιμοποιείτε αυτές τις Υπηρεσίες μαζί με την συνοδευόμενη έκδοση του &brandShortName; και έχετε όλα τα απαραίτητα δικαιώματα να το κάνετε. Η &vendorShortName; και οι συνεργάτες του διατηρούν όλα τα άλλα δικαιώματα στις Υπηρεσίες. Αυτοί οι όροι δεν σκοπεύουν να περιορίσουν οποιαδήποτε δικαιώματα που προέρχονται από τις άδεις ανοικτού λογισμικού που συνοδεύουν το &brandShortName; και τις αντίστοιχες εκδόσεις πηγαίου κώδικα του &brandShortName;.">
+<!ENTITY rights.webservices-term3 "Οι Υπηρεσίες παρέχονται &quot;ως έχουν.&quot; Η &vendorShortName;, οι συντελεστές, οι συνεργάτες και οι διανομείς της παρέχουν τις Υπηρεσίες χωρίς οποιουδήποτε είδους εγγύηση, είτε ρητή είτε σιωπηρή, συμπεριλαμβανομένης ενδεικτικά και όχι περιοριστικά, της σιωπηρής εγγύησης εμπορευσιμότητας και καταλληλότητας των Υπηρεσιών για συγκεκριμένη χρήση. Ο κίνδυνος ως προς την ποιότητα και επίδοση των υπηρεσιών βαρύνει εξ ολοκλήρου εσάς. Μερικές νομοθεσίες δεν επιτρέπουν την εξαίρεση ή τον περιορισμό των σιωπηλών εγγυήσεων και έτσι αυτή η παράγραφος αποποίησης μπορεί να μην ισχύει για εσάς.">
+<!ENTITY rights.webservices-term4 "Σε καμία περίπτωση, εκτός εάν απαιτείται από την κείμενη νομοθεσία, η &vendorShortName;, οι συντελεστές, οι συνεργάτες και οι διανομείς της δεν είναι υπεύθυνοι απέναντί σας για ζημίες, συμπεριλαμβανομένων όλων των γενικών, ειδικών, τυχαίων ή συνεπακόλουθων ζημιών που μπορεί να προκύψουν από τη χρήση ή την αδυναμία χρήσης του &brandShortName; και των υπηρεσιών. Η συλλογική υπαιτιότητα κάτω από αυτούς τους όρους δεν μπορεί να υπερβαίνει τα 500$ (πεντακόσια δολάρια). Μερικές νομοθεσίες δεν επιτρέπουν την εξαίρεση ή τον περιορισμό κάποιων ζημιών, επομένως αυτή η εξαίρεση ή ο περιορισμός μπορεί να μην ισχύουν για εσάς.">
+<!ENTITY rights.webservices-term5 "Η &vendorShortName; μπορεί να ενημερώνει περιοδικά αυτούς τους όρους αν κριθεί απαραίτητο. Δεν είναι δυνατή η τροποποίηση ή η ακύρωση αυτών των όρων χωρίς την έγγραφη συναίνεση της &vendorShortName;.">
+<!ENTITY rights.webservices-term6a "Αυτοί οι όροι διέπονται και ερμηνεύονται σύμφωνα με τους νόμους της Γερμανίας και όλες οι διαφορές που προκύπτουν σε σχέση με αυτούς τους όρους υποβάλλονται στην αποκλειστική δικαιοδοσία του αρμόδιου δικαστηρίου στη Γερμανία. Εάν οποιοδήποτε τμήμα αυτών των όρων θεωρείται άκυρο ή μη εφαρμόσιμο, τα υπόλοιπα τμήματα θα παραμείνουν σε πλήρη ισχύ και πρακτική εφαρμογή. Σε περίπτωση διένεξης μεταξύ μιας μεταφρασμένης έκδοσης αυτών των όρων και της έκδοσης στην αγγλική γλώσσα, θα υπερισχύει η έκδοση της αγγλικής γλώσσας.">

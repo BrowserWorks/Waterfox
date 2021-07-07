@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Properti">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Properti Buku Alamat">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Properti Kontak">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Properti Milis">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Tampilkan Menu Konteks Buku Alamat">
+<!ENTITY addressbookPicker.label            "Buku Alamat:">
+<!ENTITY addressbookPicker.accesskey        "B">
+<!ENTITY searchContacts.label               "Cari Kontak:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Nama atau Email">
+
+<!ENTITY addtoToFieldMenu.label             "Tambahkan ke kotak Kepada">
+<!ENTITY addtoToFieldMenu.accesskey         "K">
+<!ENTITY addtoCcFieldMenu.label             "Tambahkan ke kotak Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Tambahkan ke kotak Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Hapus">
+<!ENTITY deleteAddrBookCard.accesskey       "H">
+<!ENTITY propertiesContext.label            "Properti">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Properti">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Sunting Kontak">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "Sunting Daftar">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "Kontak Baru">
+<!ENTITY newContactAbContext.accesskey      "C">
+<!ENTITY newListAbContext.label             "Daftar Baru">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "Tambahkan ke Kepada:">
+<!ENTITY toButton.accesskey                 "a">
+<!ENTITY ccButton.label                     "Tambahkan ke Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Tambahkan ke Bcc:">
+<!ENTITY bccButton.accesskey                "b">

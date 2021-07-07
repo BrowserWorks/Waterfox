@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "下载项">
+
+<!ENTITY downloadBehavior.label         "当开始一个下载项时">
+<!ENTITY doNothing.label                "什么也不打开">
+<!ENTITY doNothing.accesskey            "D">
+<!ENTITY openProgressDialog.label       "打开一个进度条对话框">
+<!ENTITY openProgressDialog.accesskey   "O">
+<!ENTITY openDM.label                   "打开下载管理器">
+<!ENTITY openDM.accesskey               "m">
+<!ENTITY flashWhenOpen.label            "如果下载管理器已经打开，只闪烁">
+<!ENTITY flashWhenOpen.accesskey        "f">
+
+<!ENTITY downloadLocation.label         "当保存文件时">
+<!ENTITY saveTo.label                   "保存文件至">
+<!ENTITY saveTo.accesskey               "v">
+<!ENTITY chooseDownloadFolder.label     "选择文件夹…">
+<!ENTITY chooseDownloadFolder.accesskey "C">
+<!ENTITY alwaysAsk.label                "每次都问我保存文件的位置">
+<!ENTITY alwaysAsk.accesskey            "A">
+
+<!ENTITY finishedBehavior.label         "当一个下载项结束时">
+<!ENTITY playSound.label                "声音播放">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY browse.label                   "浏览…">
+<!ENTITY browse.accesskey               "B">
+<!ENTITY playButton.label               "播放">
+<!ENTITY playButton.accesskey           "l">

@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title "Libreta de direcciones">
+<!ENTITY blankResultsPaneMessage.label "Esta libreta de direcciones muestra contactos solo tras una búsqueda">
+<!ENTITY localResultsOnlyMessage.label "Los contactos de las libretas de direcciones remotas no se muestran hasta que busca">
+<!ENTITY newContact.label "Contacto…">
+<!ENTITY newContact.accesskey "C">
+<!ENTITY newContact.key "N">
+<!ENTITY newListCmd.label "Lista de correo…">
+<!ENTITY newListCmd.accesskey "L">
+<!ENTITY newAddressBookCmd.label "Libreta de direcciones…">
+<!ENTITY newAddressBookCmd.accesskey "o">
+<!ENTITY newLDAPDirectoryCmd.label "Directorio LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey "D">
+<!ENTITY newIM.label "IM">
+<!ENTITY printContactViewCmd.label "Imprimir contacto…">
+<!ENTITY printContactViewCmd.accesskey "P">
+<!ENTITY printContactViewCmd.key "P">
+<!ENTITY printPreviewContactViewCmd.label "Vista preliminar del contacto">
+<!ENTITY printPreviewContactViewCmd.accesskey "v">
+<!ENTITY printAddressBook.label "Imprimir libreta de direcciones…">
+<!ENTITY printAddressBook.accesskey "A">
+<!ENTITY printPreviewAddressBook.label "Vista preliminar de la libreta de direcciones">
+<!ENTITY printPreviewAddressBook.accesskey "B">
+<!ENTITY deleteAbCmd.label "Eliminar libreta de direcciones">
+<!ENTITY deleteContactCmd.label "Eliminar contacto">
+<!ENTITY deleteContactsCmd.label "Eliminar contactos seleccionados">
+<!ENTITY deleteListCmd.label "Eliminar lista">
+<!ENTITY deleteListsCmd.label "Eliminar listas seleccionadas">
+<!ENTITY deleteItemsCmd.label "Eliminar elementos seleccionados">
+<!ENTITY swapFirstNameLastNameCmd.label "Intercambiar nombre y apellidos">
+<!ENTITY swapFirstNameLastNameCmd.accesskey "y">
+<!ENTITY propertiesCmd.label "Propiedades…">
+<!ENTITY propertiesCmd.accesskey "i">
+<!ENTITY propertiesCmd.key "i">
+<!ENTITY showAbToolbarCmd.label "Barra de herramientas de direcciones">
+<!ENTITY showAbToolbarCmd.accesskey "o">
+<!ENTITY layoutMenu.label "Disposición">
+<!ENTITY layoutMenu.accesskey "D">
+<!ENTITY showDirectoryPane.label "Panel de directorio">
+<!ENTITY showDirectoryPane.accesskey "P">
+<!ENTITY showContactPane2.label "Panel de contactos">
+<!ENTITY showContactPane2.accesskey "a">
+<!ENTITY menu_ShowNameAs.label "Mostrar nombre como">
+<!ENTITY menu_ShowNameAs.accesskey "n">
+<!ENTITY firstLastCmd.label "Nombre y apellidos">
+<!ENTITY firstLastCmd.accesskey "N">
+<!ENTITY lastFirstCmd.label "Apellidos, nombre">
+<!ENTITY lastFirstCmd.accesskey "L">
+<!ENTITY displayNameCmd.label "Nombre mostrado">
+<!ENTITY displayNameCmd.accesskey "D">
+<!ENTITY toggleDirectoryPaneCmd.key "S">
+<!ENTITY importCmd.label "Importar…">
+<!ENTITY importCmd.accesskey "I">
+<!ENTITY exportCmd.label "Exportar…">
+<!ENTITY exportCmd.accesskey "E">
+<!ENTITY newContactButton.label "Nuevo contacto">
+<!ENTITY newContactButton.accesskey "C">
+<!ENTITY newlistButton.label "Nueva lista">
+<!ENTITY newlistButton.accesskey "L">
+<!ENTITY editItemButton.label "Propiedades">
+<!ENTITY editItemButton.accesskey "P">
+<!ENTITY newmsgButton.label "Redactar">
+<!ENTITY newmsgButton.accesskey "C">
+<!ENTITY deleteItemButton.label "Eliminar">
+<!ENTITY deleteItemButton.accesskey "l">
+<!ENTITY newimButton.label "Mensaje instantáneo">
+<!ENTITY newimButton.accesskey "I">
+<!ENTITY printButton.label "Imprimir">
+<!ENTITY printButton.accesskey "r">
+<!ENTITY searchNameAndEmail.placeholder "Buscar en el nombre y dirección de correo">
+<!ENTITY searchBox.title "Buscar">
+<!ENTITY addressbookToolbar.tooltip "Barra de herramientas de direcciones">
+<!ENTITY newContactButton.tooltip "Crear un nuevo contacto de la libreta de direcciones">
+<!ENTITY newlistButton.tooltip "Crear nueva lista">
+<!ENTITY editItemButton.tooltip "Editar el elemento seleccionado">
+<!ENTITY newmsgButton.tooltip "Enviar un mensaje de correo">
+<!ENTITY newIM.tooltip "Enviar un mensaje o conversación instantáneos">
+<!ENTITY printButton.tooltip "Imprimir elemento seleccionado">
+<!ENTITY deleteItemButton.tooltip "Eliminar elemento seleccionado">
+<!ENTITY advancedButton.tooltip "Búsqueda avanzada de direcciones">
+<!ENTITY dirTreeHeader.label "Libretas de direcciones">
+<!ENTITY contact.heading "Contacto">
+<!ENTITY home.heading "Casa">
+<!ENTITY other.heading "Otros">
+<!ENTITY chat.heading "Chat">
+<!ENTITY phone.heading "Teléfono">
+<!ENTITY work.heading "Trabajo">
+<!ENTITY description.heading "Descripción">
+<!ENTITY addresses.heading "Direcciones">
+<!ENTITY mapItButton.label "Obtener mapa">
+<!ENTITY mapIt.tooltip "Obtener de la web un mapa de esta dirección">
+<!ENTITY statusText.label "">
+<!ENTITY hideSwapFnLnUI "true">

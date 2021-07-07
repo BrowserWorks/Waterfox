@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY certerror.pagetitle "Conexión no confiable">
+<!ENTITY certerror.longpagetitle "No se confía en esta conexión">
+<!ENTITY certerror.introPara1a "Ha pedido a &brandShortName; que se conecte de manera segura a <span class='hostname' />, pero no podemos confirmar que su conexión sea segura.">
+<!ENTITY certerror.introPara2 "Normalmente, cuando intenta conectar de manera segura, los sitios web
+presentarán una identificación confiable para demostrar que está visitando
+el sitio correcto. Sin embargo, la identidad de este sitio no se puede verificar.">
+<!ENTITY certerror.whatShouldIDo.heading "¿Qué debo hacer?">
+<!ENTITY certerror.whatShouldIDo.content "Si normalmente conecta a
+este sitio web sin problemas, este error podría querer decir que alguien
+está intentando hacerse pasar por el sitio, y no debería continuar.">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Este sitio usa Seguridad estricta de transporte de HTTP (HSTS) para especificar que &brandShortName; sólo se conecte a él de modo seguro. Como resultado, no es posible añadir una excepción para este certificado.">
+<!ENTITY certerror.getMeOutOfHere.label "Esto tiene mala pinta, mejor llévame a mi página de inicio">
+<!ENTITY certerror.expert.heading "Entiendo los riesgos">
+<!ENTITY certerror.expert.content "Si entiende lo que sucede, puede indicar a
+&brandShortName; que comience a confiar en la identificación de este sitio web.
+<b>Incluso si confía en el sitio web, este error podría querer decir que alguien
+está interfiriendo en su conexión.</b>">
+<!ENTITY certerror.expert.contentPara2 "No añada una excepción a menos que sepa que hay una buena razón por la que este sitio web no use identificación segura.">
+<!ENTITY certerror.addException.label "Añadir excepción…">
+<!ENTITY certerror.technical.heading "Detalles técnicos">
+<!ENTITY dnsNotFound.pageTitle "Servidor no encontrado">
+<!ENTITY malformedURI.pageTitle "URL no válida">

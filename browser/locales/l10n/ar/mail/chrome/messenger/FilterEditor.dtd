@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "قواعد التّرشيح">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "اسم المرشِّح:">
+<!ENTITY filterName.accesskey "ر">
+
+<!ENTITY junk.label "سخام">
+<!ENTITY notJunk.label "ليس سخامًا">
+
+<!ENTITY lowestPriorityCmd.label "الدنيا">
+<!ENTITY lowPriorityCmd.label "قليلة">
+<!ENTITY normalPriorityCmd.label "عادية">
+<!ENTITY highPriorityCmd.label "عالية">
+<!ENTITY highestPriorityCmd.label "القصوى">
+
+<!ENTITY contextDesc.label "طبّق المُرشّح عند:">
+<!ENTITY contextIncomingMail.label "وصول بريد جديد:">
+<!ENTITY contextIncomingMail.accesskey "ص">
+<!ENTITY contextManual.label "التشغيل اليدوي">
+<!ENTITY contextManual.accesskey "ش">
+<!ENTITY contextBeforeCls.label "رشّح قبل فرز السخام">
+<!ENTITY contextAfterCls.label "رشّح بعد فرز السخام">
+<!ENTITY contextOutgoing.label "بعد الإرسال">
+<!ENTITY contextOutgoing.accesskey "س">
+<!ENTITY contextArchive.label "الأرشفة">
+<!ENTITY contextArchive.accesskey "ش">
+
+<!ENTITY filterActionDesc.label "نفذ الإجراءات التالية:">
+<!ENTITY filterActionDesc.accesskey "ن">
+
+<!ENTITY filterActionOrderWarning.label "ملاحظة: ستُنفّذ إجراءات المرشِّح بترتيب مختلف.">
+<!ENTITY filterActionOrder.label "اطّلع على ترتيب التنفيذ">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "انقل الرسالة إلى">
+<!ENTITY copyMessage.label "انسخ الرسالة إلى">
+<!ENTITY forwardTo.label "مرِّر الرسالة إلى">
+<!ENTITY replyWithTemplate.label "رُد باستخدام قالب">
+<!ENTITY markMessageRead.label "أشِّر كمقروء">
+<!ENTITY markMessageUnread.label "علّم كغير مقروء">
+<!ENTITY markMessageStarred.label "أضِف نجمة">
+<!ENTITY setPriority.label "اجعل الأولويّة">
+<!ENTITY addTag.label "سِمْ الرّسالة">
+<!ENTITY setJunkScore.label "اجعل حالة السخام">
+<!ENTITY deleteMessage.label "احذف الرسالة">
+<!ENTITY deleteFromPOP.label "احذف من خادوم POP">
+<!ENTITY fetchFromPOP.label "اجلب من خادوم POP">
+<!ENTITY ignoreThread.label "تجاهل النقاش">
+<!ENTITY ignoreSubthread.label "تجاهل النقاش الفرعي">
+<!ENTITY watchThread.label "راقب النقاش">
+<!ENTITY stopExecution.label "أوقِف تشغيل التصفية">
+
+<!ENTITY addAction.tooltip "أضِف إجراءً جديدًا">
+<!ENTITY removeAction.tooltip "أزِل هذا الإجراء">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

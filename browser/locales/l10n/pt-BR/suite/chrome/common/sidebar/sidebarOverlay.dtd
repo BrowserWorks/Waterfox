@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Painel lateral">
+<!ENTITY sidebar.reload.label           "Recarregar">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "Abas">
+<!ENTITY sidebar.customize.label        "Personalizar painel lateral…">
+<!ENTITY sidebar.customize.accesskey    "s">
+<!ENTITY sidebar.hide.label             "Ocultar aba">
+<!ENTITY sidebar.hide.accesskey         "O">
+<!ENTITY sidebar.switch.label           "Alternar para aba">
+<!ENTITY sidebar.switch.accesskey       "t">
+<!ENTITY sidebarCmd.label               "Painel lateral">
+<!ENTITY sidebarCmd.accesskey           "P">
+<!ENTITY sidebar.loading.label          "Carregando…">
+<!ENTITY sidebar.loadstopped.label      "Carregamento interrompido">
+<!ENTITY sidebar.loading.stop.label     "Parar">
+<!ENTITY sidebar.loading.stop.accesskey "P">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "O painel lateral está vazio.">
+<!ENTITY sidebar.no-panels.add       'Você pode adicionar abas clicando no botão "Abas" acima.'>
+<!ENTITY sidebar.no-panels.hide      'Se quiser ocultar totalmente o painel lateral, clique no menu "Exibir" acima e selecione "Painel lateral" no submenu "Exibir/Ocultar".'>
+<!ENTITY sidebar.sbDirectory.label   "Diretório do painel lateral…">
+
+<!ENTITY sidebar.pagenotfound.label  "Esta aba não está disponível agora.">
+<!ENTITY sidebar.close.tooltip       "Fechar painel lateral">
+<!ENTITY sidebar.open.tooltip        "Abrir painel lateral">
+
+<!ENTITY sidebar.search.label         "Pesquisar">
+<!ENTITY sidebar.client-bookmarks.label     "Favoritos">
+<!ENTITY sidebar.client-history.label       "Histórico">
+<!ENTITY sidebar.client-addressbook.label   "Catálogo de endereços">

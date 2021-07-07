@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY places.library.title   "Biblioteka">
+<!ENTITY places.library.width "1000">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label         "Zarządzaj">
+<!ENTITY organize.accesskey     "Z">
+<!ENTITY organize.tooltip       "Zarządzaj zakładkami">
+
+<!ENTITY file.close.label   "Zamknij">
+<!ENTITY file.close.accesskey   "Z">
+<!ENTITY cmd.close.key   "w">
+<!ENTITY views.label   "Widoki">
+<!ENTITY views.accesskey   "W">
+<!ENTITY views.tooltip                  "Zmień widok">
+<!ENTITY view.columns.label   "Wyświetl kolumny">
+<!ENTITY view.columns.accesskey   "k">
+<!ENTITY view.sort.label   "Sortuj">
+<!ENTITY view.sort.accesskey   "S">
+<!ENTITY view.unsorted.label   "Nieposortowane">
+<!ENTITY view.unsorted.accesskey   "N">
+<!ENTITY view.sortAscending.label   "Porządek sortowania A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label   "Porządek sortowania Z > A">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importuj zakładki z pliku HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Eksportuj zakładki do pliku HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importuj dane z innej przeglądarki…">
+<!ENTITY importOtherBrowser.accesskey      "d">
+
+<!ENTITY cmd.backup.label   "Utwórz kopię zapasową…">
+<!ENTITY cmd.backup.accesskey   "U">
+<!ENTITY cmd.restore2.label   "Przywróć">
+<!ENTITY cmd.restore2.accesskey   "P">
+<!ENTITY cmd.restoreFromFile.label   "Wybierz plik…">
+<!ENTITY cmd.restoreFromFile.accesskey   "W">
+
+<!ENTITY col.name.label   "Nazwa">
+<!ENTITY col.tags.label   "Etykiety">
+<!ENTITY col.url.label   "Adres">
+<!ENTITY col.mostrecentvisit.label "Ostatnia wizyta">
+<!ENTITY col.visitcount.label "Liczba wizyt">
+<!ENTITY col.dateadded.label   "Dodano">
+<!ENTITY col.lastmodified.label   "Ostatnia modyfikacja">
+
+<!ENTITY cmd.find.key   "f">
+
+<!ENTITY maintenance.label   "Importowanie i kopie zapasowe">
+<!ENTITY maintenance.accesskey "I">
+<!ENTITY maintenance.tooltip    "Importuj zakładki lub utwórz ich kopie zapasowe">
+
+<!ENTITY backButton.tooltip   "Przejdź wstecz">
+
+<!ENTITY forwardButton.tooltip   "Przejdź do przodu">
+
+<!ENTITY detailsPane.selectAnItemText.description "Zaznacz element, by wyświetlić i edytować jego właściwości">
+

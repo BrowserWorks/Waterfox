@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Właściwości">
+
+<!ENTITY generalInfo.label                       "Informacje ogólne">
+<!ENTITY folderCharsetFallback2.label            "Rezerwowe kodowanie tekstu:">
+<!ENTITY folderCharsetFallback2.accesskey        "R">
+<!ENTITY folderCharsetEnforce2.label             "Stosuj wybrane kodowanie dla wszystkich wiadomości w folderze (indywidualne ustawienia i automatyczne wykrywanie kodowania tekstu będą pomijane)">
+<!ENTITY folderCharsetEnforce2.accesskey         "a">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Przebuduj indeks w pliku podsumowania">
+<!ENTITY folderRebuildSummaryFile2.label         "Napraw folder">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "f">
+<!ENTITY folderRebuildSummaryFile.explanation    "W przypadku uszkodzenia indeksu folderu (w pliku podsumowania .msf), wskutek czego program może wyświetlać nieprawidłową listę wiadomości, funkcja Napraw folder może pomóc przywrócić prawidłowe działanie programu.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Uwzględniaj wiadomości z tego folderu w wynikach globalnego wyszukiwania">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "U">
+
+<!ENTITY retention.label "Reguły przechowywania wiadomości">
+<!ENTITY retentionUseAccount.label  "Używaj domyślnych ustawień konta">
+<!ENTITY retentionUseAccount.accesskey "d">
+<!ENTITY daysOld.label "dni">
+<!ENTITY message.label "wiadomości">
+<!ENTITY retentionCleanup.label "W celu zaoszczędzenia miejsca na dysku, stare wiadomości mogą być nieodwracalnie usuwane.">
+<!ENTITY retentionCleanupImap.label "W celu zaoszczędzenia miejsca na dysku, stare wiadomości – zarówno lokalne kopie, jak i oryginały na zdalnym serwerze – mogą być nieodwracalnie usuwane.">
+<!ENTITY retentionCleanupPop.label "W celu zaoszczędzenia miejsca na dysku, stare wiadomości – łącznie z oryginałami na zdalnym serwerze – mogą być nieodwracalnie usuwane.">
+<!ENTITY retentionDeleteMsg.label "Usuń wiadomości starsze niż">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Nie usuwaj żadnych wiadomości">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Usuwaj wszystko, pomijając ostatnie">
+<!ENTITY retentionKeepRecent.accesskey "w">
+<!ENTITY retentionApplyToFlagged.label "Zawsze przechowuj wiadomości oznaczone gwiazdką">
+<!ENTITY retentionApplyToFlagged.accesskey "Z">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronizacja">
+<!ENTITY folderCheckForNewMessages2.label         "Pobierając wiadomości dla tego konta, zawsze sprawdzaj ten folder">
+<!ENTITY folderCheckForNewMessages2.accesskey     "P">
+
+<!ENTITY offlineFolder.check.label               "Wybrany folder będzie dostępny w trybie offline.">
+<!ENTITY offlineFolder.check.accesskey           "s">
+<!ENTITY offlineFolder.button.label              "Pobierz teraz">
+<!ENTITY offlineFolder.button.accesskey          "t">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Wybrana grupa dyskusyjna będzie dostępna w trybie offline.">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Pobierz teraz">
+<!ENTITY offlineNewsgroup.button.accesskey       "t">
+
+<!ENTITY folderProps.name.label                  "Nazwa:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Kolor ikony:">
+<!ENTITY folderProps.color.accesskey             "K">
+<!ENTITY folderProps.reset.tooltip               "Przywróć domyślny kolor">
+<!ENTITY folderProps.location.label              "Położenie:">
+<!ENTITY folderProps.location.accesskey          "P">
+
+<!ENTITY folderSharingTab.label                  "Współużytkowanie">
+<!ENTITY privileges.button.label                 "Uprawnienia…">
+<!ENTITY privileges.button.accesskey             "p">
+<!ENTITY permissionsDesc.label                   "Masz następujące uprawnienia:">
+<!ENTITY folderOtherUsers.label                  "Inni z dostępem do tego folderu:">
+<!ENTITY folderType.label                        "Typ folderu:">
+
+<!ENTITY folderQuotaTab.label                    "Limit miejsca">
+<!ENTITY folderQuotaUsage.label                  "Użycie:">
+<!ENTITY folderQuotaStatus.label                 "Stan:">
+
+<!ENTITY numberOfMessages.label                  "Liczba wiadomości:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "nieznana">
+<!ENTITY sizeOnDisk.label                        "Rozmiar na dysku:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "nieznany">

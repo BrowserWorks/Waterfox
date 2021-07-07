@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Innhald">
+
+<!ENTITY siteIcons.label                        "Nettsideikon">
+<!ENTITY useSiteIcons.label                     "Vis nettsideikon">
+<!ENTITY useSiteIcons.accesskey                 "V">
+
+<!ENTITY scrolling.label                        "Rulling">
+<!ENTITY useAutoScroll.label                    "Bruk autorulling">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Bruk jamn rulling">
+<!ENTITY useSmoothScroll.accesskey              "B">
+
+<!ENTITY zoomPrefs.label                        "Skaleringsval">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Område frå">
+<!ENTITY minZoom.accesskey                      "f">
+<!ENTITY maxZoom.label                          "til">
+<!ENTITY maxZoom.accesskey                      "i">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "Hugs zoom-nivå for kvar nettstad">
+<!ENTITY siteSpecific.accesskey                 "H">
+<!ENTITY textZoomOnly.label                     "Zoom berre tekst i staden for heile sider">
+<!ENTITY textZoomOnly.accesskey                 "Z">
+

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title                      "Integritet och säkerhet">
+
+<!ENTITY tracking.label                   "Spåra användare">
+<!ENTITY trackingIntro.label              "Webbplatser kan spåra hur du använder dem, och därmed påverka din integritet.">
+
+<!ENTITY doNotTrack.label                 "Meddela webbplatser att jag inte vill bli spårad">
+<!ENTITY doNotTrack.accesskey             "M">
+<!ENTITY trackProtect.label               "Förhindra spårning från kända webbplatser">
+<!ENTITY trackProtect.accesskey           "h">
+<!ENTITY warnTrackContent.label           "Varna mig när kända spårningsåtgärder upptäcks">
+<!ENTITY warnTrackContent.accesskey       "V">
+
+
+<!ENTITY geoLocation.label                "Positionsberoende surfning">
+<!ENTITY geoIntro.label                   "Webbplatser kan be om mer information om din aktuella position.">
+
+<!ENTITY geoEnabled.label                 "Be mig om tillåtelse om en sådan förfrågan kommer">
+<!ENTITY geoEnabled.accesskey             "m">
+<!ENTITY geoDisabled.label                "Inaktivera denna funktion och neka alla förfrågningar">
+<!ENTITY geoDisabled.accesskey            "I">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Säker surfning">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; kan blockera webbplatser som har rapporterats innehålla illasinnat innehåll.">
+
+<!ENTITY blockAttackSites.label           "Blockera rapporterade attackplatser (malware, viruses)">
+<!ENTITY blockAttackSites.accesskey       "B">
+
+<!ENTITY blockWebForgeries.label          "Blockera rapporterade webbförfalskningar (Phishing)">
+<!ENTITY blockWebForgeries.accesskey      "f">

@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY navigatorCmd.label "Nettlesar">
+<!ENTITY navigatorCmd.accesskey "N">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer (nettsideutviklar)">
+<!ENTITY editorCmd.accesskey "c">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Feilkonsoll">
+<!ENTITY errorConsoleCmd.accesskey "F">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Nettlesar">
+<!ENTITY taskComposer.tooltip "Composer (nettsideutviklar)">
+
+<!ENTITY webDevelopment.label "Nettsideutvikling">
+<!ENTITY webDevelopment.accesskey "e">
+
+<!ENTITY windowMenu.label "Vindauge">
+<!ENTITY windowMenu.accesskey "u">
+
+<!ENTITY tasksMenu.label "Verktøy">
+<!ENTITY tasksMenu.accesskey "e">
+
+<!ENTITY datamanCmd.label "Datahandsamar">
+<!ENTITY datamanCmd.accesskey "D">
+
+<!ENTITY passwordManagerCmd.label "Passorhandtering">
+<!ENTITY passwordManagerCmd.accesskey "P">
+
+<!ENTITY passwordDisplayCmd.label "Handsam lagra passord">
+<!ENTITY passwordDisplayCmd.accesskey "H">
+
+<!ENTITY passwordExpireCmd.label "Logg ut">
+<!ENTITY passwordExpireCmd.accesskey "u">
+
+<!ENTITY downloadManagerCmd.label "Nedlastingar">
+<!ENTITY downloadManagerCmd.accesskey "N">
+
+<!ENTITY addOnsManagerCmd.label "Utvidingshandsamar">
+<!ENTITY addOnsManagerCmd.accesskey "U">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Byt profil…">
+<!ENTITY switchProfileCmd.accesskey "y">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Konfigurer Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Synkroniser no">
+<!ENTITY syncSyncNowItem.accesskey "S">

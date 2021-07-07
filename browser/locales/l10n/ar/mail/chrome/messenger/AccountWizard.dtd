@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "مرشد الحسابات">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "لتتمكن من استقبال الرّسائل، ينبغي إعداد حساب بريد.">
+<!ENTITY accountTypeTitle.label "إعداد حساب جديد">
+<!ENTITY accountTypeDesc2.label "سيجمع المرشد المعلومات الضرورية لإعداد حساب بريد. إذا كنت لا تعرف المعلومات المطلوبة، رجاء راجع مدير نظامك أو مورد خدمة الإنترنت لك.">
+<!ENTITY accountTypeDirections.label "حدّد نوع الحساب الذي تريد ضبطه:">
+<!ENTITY accountTypeMail.label "حساب بريد">
+<!ENTITY accountTypeMail.accesskey "ب">
+<!ENTITY accountTypeNews.label "حساب مجموعة أخبار">
+<!ENTITY accountTypeNews.accesskey "م">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "الهويّة">
+<!ENTITY identityDesc.label "لكلّ حساب هويّة، و هي المعلومات التّي تعرّف هويتك للآخرين عند استقبالهم لرسائلك.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "أدخل الاسم الذي تريد أن يظهر في حقل &quot;مِن&quot; في رسائلك الصّادرة">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(مثلًا، ”فلان الفلاني“).">
+<!ENTITY fullnameLabel.label "اسمك:">
+<!ENTITY fullnameLabel.accesskey "س">
+
+<!ENTITY emailLabel.label "عنوان البريد:">
+<!ENTITY emailLabel.accesskey "ع">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "معلومات خادوم الوارد">
+<!ENTITY incomingServerTypeDesc.label "حدّد نوع خادوم الوارد الّذي تستخدمه.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "اترك الرسائل على الخادوم">
+<!ENTITY leaveMsgsOnSrvr.accesskey "ك">
+<!ENTITY portNum.label "المنفذ:">
+<!ENTITY portNum.accesskey "م">
+<!ENTITY defaultPortLabel.label "المبدئي:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "أدخل اسم خادوم الوارد لديك (مثلًا، ”mail.example.net“).">
+<!ENTITY incomingServer.label "خادوم الوارد:">
+<!ENTITY incomingServer.accesskey "خ">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "أدخل اسم مستخدم الوارد المُعطى من مزود خدمة البريد (مثلا، ”jsmith“).">
+<!ENTITY incomingUsername.label "اسم المستخدم:">
+<!ENTITY incomingUsername.accesskey "د">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "أدخل اسم خادوم الأخبار (NNTP) لديك (مثلًا، ”news.example.net“).">
+<!ENTITY newsServerLabel.label "خادوم مجموعة الأخبار:">
+<!ENTITY newsServerLabel.accesskey "خ">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "معلومات خادوم الصادر">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "أدخل اسم خادوم الصادر (SMTP) لديك (مثلًا، ”smtp.example.net“).">
+<!ENTITY outgoingServer.label "خادوم الصادر:">
+<!ENTITY outgoingServer.accesskey "خ">
+<!ENTITY outgoingUsername.description "أدخل اسم مستخدم الصادر المُعطى من مزود خدمة البريد (عادة ما يكون نفس اسم مستخدم الوارد).">
+<!ENTITY outgoingUsername.label "اسم مستخدم الصادر:">
+<!ENTITY outgoingUsername.accesskey "س">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "يمكنك تغيير إعدادات الخواديم الصادرة من إعدادات الحساب.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "سيُستخدم خادوم (SMTP) الصادر الموجود حاليًا، ”">
+<!ENTITY haveSmtp1.suffix3 "“.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "سيُستخدم اسم مستخدم الصادر (SMTP) الموجود حاليًا، ”">
+<!ENTITY haveSmtp2.suffix3 "“.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "خادوم الصادر (SMTP)، ”">
+<!ENTITY haveSmtp3.suffix3 "“، هو نفسه خادوم الوارد لذا سيُستعمل اسم مستخدم الوارد للوصول إليه.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "اسم الحساب">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "أدخل اسمًا تريد أن تستخدمه ليُشير إلى هذا الحساب (مثلًا، ”حساب العمل“ أو ”حساب المنزل“ أو ”حساب الأخبار“).">
+<!ENTITY accnameLabel.label "اسم الحساب:">
+<!ENTITY accnameLabel.accesskey "ب">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "تهانينا!">
+<!ENTITY completionText.label "رجاءً تأكّد من صحة المعلومات أدناه.">
+<!ENTITY serverTypePrefix.label "نوع خادوم الوارد:">
+<!ENTITY serverNamePrefix.label "اسم خادوم الوارد:">
+<!ENTITY smtpServerNamePrefix.label "اسم خادوم الصّادر (SMTP):‏">
+<!ENTITY newsServerNamePrefix.label "اسم خادوم الأخبار (NNTP):‏">
+<!ENTITY downloadOnLogin.label "نزِّل الرّسائل الآن">
+<!ENTITY downloadOnLogin.accesskey "ن">
+<!ENTITY deferStorageDesc.label "أزل الإشارة من مربّع الاختيار هذا لتخزين بريد هذا الحساب في مجلده الخاص. سيجعل ذلك من الحساب يبدو أنّه حساب أعلى مستوى. بغير ذلك، سيصبح جزءًا من المجلدات المحليّة لحساب صندوق الوارد العام.">
+<!ENTITY deferStorage.label "استخدم صندوق الوارد العامّ (تخزين البريد في المجلّدات المحليّة)">
+<!ENTITY deferStorage.accesskey "ع">
+<!ENTITY clickFinish.label "اضغط ”أنهِ“ لحفظ هذه الإعدادات و  إنهاء مرشد الحسابات.">
+<!ENTITY clickFinish.labelMac "انقر على ”تمّ“ لحفظ هذه الإعدادات و الخروج من مرشد الحسابات.">

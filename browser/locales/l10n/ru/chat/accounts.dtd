@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Учётные записи - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Статус мгновенных сообщений">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Создать учётную запись">
+<!ENTITY accountManager.newAccount.accesskey "а">
+<!ENTITY accountManager.close.label          "Закрыть">
+<!ENTITY accountManager.close.accesskey      "ы">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Учётные записи отсутствуют">
+<!ENTITY accountManager.noAccount.description "Щёлкните по кнопке «&accountManager.newAccount.label;», чтобы &brandShortName; провел вас через процесс её создания.">
+<!ENTITY account.autoSignOn.label     "Входить при запуске">
+<!ENTITY account.autoSignOn.accesskey "з">
+<!ENTITY account.connect.label        "Подключить">
+<!ENTITY account.connect.accesskey    "ю">
+<!ENTITY account.disconnect.label     "Отключить">
+<!ENTITY account.disconnect.accesskey "к">
+<!ENTITY account.delete.label         "Удалить">
+<!ENTITY account.delete.accesskey     "и">
+<!ENTITY account.edit.label           "Свойства">
+<!ENTITY account.edit.accesskey       "в">
+<!ENTITY account.moveup.label         "Вверх">
+<!ENTITY account.movedown.label       "Вниз">
+<!ENTITY account.cancelReconnection.label         "Отменить повторное подключение">
+<!ENTITY account.cancelReconnection.accesskey     "м">
+<!ENTITY account.copyDebugLog.label     "Копировать лог отладки">
+<!ENTITY account.copyDebugLog.accesskey "п">
+<!ENTITY account.showDebugLog.label     "Показать лог отладки">
+<!ENTITY account.showDebugLog.accesskey "о">
+<!ENTITY account.connecting           "Подключение…">
+<!ENTITY account.disconnecting        "Отключение…">
+<!ENTITY account.disconnected         "Не подключена">

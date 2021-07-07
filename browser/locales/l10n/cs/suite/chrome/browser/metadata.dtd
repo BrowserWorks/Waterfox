@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label "Nejsou nastaveny žádné vlastnosti.">
+
+<!ENTITY caption.label "Vlastnosti prvku">
+<!ENTITY image-sec.label "Vlastnosti obrázku">
+<!ENTITY image-url.label "Adresa:">
+<!ENTITY image-desc.label "Popis:">
+<!ENTITY image-alt.label "Alternativní text:">
+<!ENTITY image-width.label "Šířka:">
+<!ENTITY image-height.label "Výška:">
+<!ENTITY image-filesize.label "Velikost souboru:">
+<!ENTITY image-filesize.value "Neznámá">
+<!ENTITY insdel-sec.label "Vlastnosti vkládání/mazání">
+<!ENTITY insdel-cite.label "Informace:">
+<!ENTITY insdel-date.label "Datum:">
+<!ENTITY link-sec.label "Vlastnosti odkazu">
+<!ENTITY link-url.label "Adresa:">
+<!ENTITY link-target.label "Otevře se v:">
+<!ENTITY link-type.label "Typ cíle:">
+<!ENTITY link-lang.label "Jazyk cíle:">
+<!ENTITY link-rel.label "Vztah:">
+<!ENTITY link-rev.label "Zpětný vztah:">
+<!ENTITY misc-sec.label "Ostatní vlastnosti">
+<!ENTITY misc-lang.label "Jazyk textu:">
+<!ENTITY misc-title.label "Název:">
+<!ENTITY misc-tblsummary.label "Shrnutí tabulky:">
+<!ENTITY quote-sec.label "Vlastnosti uvozovek">
+<!ENTITY quote-cite.label "Informace:">

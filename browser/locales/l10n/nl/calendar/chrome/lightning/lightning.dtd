@@ -1,0 +1,110 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Agenda">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Gebeurtenis…">
+<!ENTITY lightning.menupopup.new.event.accesskey "G">
+<!ENTITY lightning.menupopup.new.task.label     "Taak…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Agenda…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "d">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Agendabestand…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "A">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Agenda">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Taken">
+<!ENTITY lightning.menu.view.tasks.accesskey           "T">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Gebeurtenissen en taken">
+<!ENTITY lightning.menu.eventtask.accesskey            "u">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-mail:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Voorkeur voor e-mailplanning aan clientzijde">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Voorlopig kunt u dit alleen inschakelen na het instellen van deze agenda in het eigenschappenvenster ervan als de agendaserver de planning verzorgt.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Deze optie is alleen beschikbaar als de agendaserver planning verzorgt. Bij inschakelen kan worden teruggevallen naar de standaard op e-mail gebaseerde planning in plaats van dit aan de server over te laten.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Accepteren">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Uitnodiging voor gebeurtenis accepteren">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Alle accepteren">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Uitnodiging voor gebeurtenis voor alle gelegenheden van de gebeurtenis accepteren">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Toevoegen">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "De gebeurtenis aan de agenda toevoegen">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Weigeren">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Uitnodiging voor gebeurtenis weigeren">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Alle weigeren">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Uitnodiging voor gebeurtenis voor alle gelegenheden van de gebeurtenis weigeren">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Weigeren">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Het tegenvoorstel weigeren">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Verwijderen">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Verwijderen uit agenda">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Details…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Gebeurtenisdetails tonen">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Deze berichten niet tonen">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Agenda">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Naar het agendatabblad">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Meer">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Klik om meer opties te tonen">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Opnieuw bevestigen">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Stuurt een nieuwe bevestiging naar de organisator">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Opnieuw plannen">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "De gebeurtenis opnieuw plannen">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Een kopie opslaan">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Een kopie van de gebeurtenis in de agenda opslaan, onafhankelijk van beantwoording naar de organisator. De lijst van genodigden zal worden gewist.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Voorlopig">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Uitnodiging voor gebeurtenis voorlopig accepteren">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Alle voorlopig">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Uitnodiging voor gebeurtenis voor alle gelegenheden van de gebeurtenis voorlopig accepteren">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Bijwerken">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Gebeurtenis bijwerken in agenda">
+<!ENTITY lightning.imipbar.description                                      "Dit bericht bevat een uitnodiging voor een gebeurtenis.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Nu een antwoord verzenden">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Een antwoord naar de organisator verzenden">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Een antwoord voor de hele serie naar de organisator verzenden">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Geen antwoord verzenden">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Uw deelnamestatus wijzigen zonder een antwoord naar de organisator te verzenden">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Uw deelnamestatus voor de serie wijzigen zonder een antwoord naar de organisator te verzenden">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Een nieuwe agenda maken">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Minimaand tonen">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Minidag tonen">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Niets tonen">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Paneel Vandaag tonen">
+<!ENTITY todaypane.showTodayPane.accesskey "P">
+<!ENTITY todaypane.statusButton.label "Paneel Vandaag">

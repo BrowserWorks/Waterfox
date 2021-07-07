@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "Kopiëren">
+<!ENTITY  copy.accesskey         "K">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Alles selecteren">
+<!ENTITY  selectall.accesskey    "A">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Koppeling(en) kopiëren">
+<!ENTITY  copyLinks.accesskey       "K">
+<!ENTITY  openInNewTab.label        "Openen in nieuw tabblad">
+<!ENTITY  openInNewTab.accesskey    "t">
+<!ENTITY  openInNewWindow.label     "Openen in nieuw venster">
+<!ENTITY  openInNewWindow.accesskey "v">
+
+<!ENTITY  generalTab            "Algemeen">
+<!ENTITY  generalTab.accesskey  "A">
+<!ENTITY  generalTitle          "Titel:">
+<!ENTITY  generalURL            "Adres:">
+<!ENTITY  generalType           "Type:">
+<!ENTITY  generalMode           "Rendermodus:">
+<!ENTITY  generalSize           "Grootte:">
+<!ENTITY  generalReferrer       "Verwijzende URL:">
+<!ENTITY  generalSource         "Bufferbron:">
+<!ENTITY  generalModified       "Gewijzigd:">
+<!ENTITY  generalEncoding2      "Tekstcodering:">
+<!ENTITY  generalMetaName       "Naam">
+<!ENTITY  generalMetaContent    "Inhoud">
+<!ENTITY  generalSecurityDetails           "Details">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "Formulieren">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "Formulieractie">
+<!ENTITY  formMethod            "Methode">
+<!ENTITY  formName              "Naam">
+<!ENTITY  formEncoding          "Codering:">
+<!ENTITY  formTarget            "Doel:">
+<!ENTITY  formFields            "Velden:">
+<!ENTITY  formLabel             "Label">
+<!ENTITY  formFName             "Veldnaam">
+<!ENTITY  formType              "Type">
+<!ENTITY  formCValue            "Huidige waarde">
+
+<!ENTITY  linksTab              "Koppelingen">
+<!ENTITY  linksTab.accesskey    "K">
+<!ENTITY  linkName              "Naam">
+<!ENTITY  linkAddress           "Adres">
+<!ENTITY  linkType              "Type">
+<!ENTITY  linkTarget            "Doel">
+<!ENTITY  linkAccessKey         "Sneltoets">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Adres:">
+<!ENTITY  mediaAlt              "Alternatieve tekst:">
+<!ENTITY  mediaLocation         "Locatie:">
+<!ENTITY  mediaText             "Geassocieerde tekst:">
+<!ENTITY  mediaAltHeader        "Alternatieve tekst">
+<!ENTITY  mediaAddress          "Adres">
+<!ENTITY  mediaType             "Type">
+<!ENTITY  mediaSize             "Grootte">
+<!ENTITY  mediaCount            "Aantal">
+<!ENTITY  mediaDimensions       "Afmetingen:">
+<!ENTITY  mediaPhysDimensions   "Werkelijke afmetingen:">
+<!ENTITY  mediaTitle            "Titel:">
+<!ENTITY  mediaDimension        "Afmetingen:">
+<!ENTITY  mediaLongdesc         "Lange beschrijving:">
+<!ENTITY  mediaBlockImage.accesskey "e">
+<!ENTITY  mediaSaveAs           "Opslaan als…">
+<!ENTITY  mediaSaveAs.accesskey "l">
+<!ENTITY  mediaSaveAs2.accesskey "p">
+<!ENTITY  mediaPreview          "Mediavoorbeeld:">
+
+<!ENTITY  feedTab               "Feeds">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "Abonneren">
+<!ENTITY  feedSubscribe.accesskey "A">
+
+<!ENTITY  permTab               "Toestemmingen">
+<!ENTITY  permTab.accesskey     "T">
+<!ENTITY  permUseDefault        "Standaard gebruiken">
+<!ENTITY  permAskAlways         "Altijd vragen">
+<!ENTITY  permAllow             "Toestaan">
+<!ENTITY  permAllowSession      "Toestaan voor sessie">
+<!ENTITY  permBlock             "Blokkeren">
+<!ENTITY  permissionsFor        "Toestemmingen voor:">
+<!ENTITY  permImage             "Afbeeldingen laden">
+<!ENTITY  permPopup             "Pop-upvensters openen">
+<!ENTITY  permCookie            "Cookies instellen">
+<!ENTITY  permNotifications     "Notificaties tonen">
+<!ENTITY  permInstall           "Extensies of thema’s installeren">
+<!ENTITY  permGeo               "Locatie doorgeven">
+
+<!ENTITY  securityTab           "Beveiliging">
+<!ENTITY  securityTab.accesskey "B">
+<!ENTITY  securityHeader        "Beveiligingsinformatie over deze pagina">
+<!ENTITY  securityView.certView "Certificaat bekijken">
+<!ENTITY  securityView.accesskey "C">
+<!ENTITY  securityView.unknown   "Onbekend">
+
+
+<!ENTITY  securityView.identity.header   "Website-identiteit">
+<!ENTITY  securityView.identity.owner    "Eigenaar:">
+<!ENTITY  securityView.identity.domain   "Website:">
+<!ENTITY  securityView.identity.verifier "Geverifieerd door:">
+
+<!ENTITY  securityView.identity.validity "Verloopt op:">
+
+<!ENTITY  securityView.privacy.header                   "Privacy &amp; geschiedenis">
+<!ENTITY  securityView.privacy.history                  "Heb ik deze website eerder dan vandaag bezocht?">
+<!ENTITY  securityView.privacy.cookies                  "Slaat deze website informatie (cookies) op op mijn computer?">
+<!ENTITY  securityView.privacy.viewCookies              "Cookies bekijken">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Heb ik wachtwoorden opgeslagen voor deze website?">
+<!ENTITY  securityView.privacy.viewPasswords            "Opgeslagen wachtwoorden bekijken">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "Technische details">

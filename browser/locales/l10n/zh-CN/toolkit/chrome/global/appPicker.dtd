@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY NoAppFound.label      "无法找到此文件类型对应的应用程序">
+<!ENTITY BrowseButton.label    "浏览…">
+<!ENTITY SendMsg.label         "发送此项目到：">

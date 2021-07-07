@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label         "Vedhæft dette billede til meddelelsen">
+<!ENTITY attachImageSource.accesskey     "V">
+
+<!ENTITY attachLinkSource.label          "Vedhæft kilden til dette link til meddelelsen">
+<!ENTITY attachLinkSource.accesskey      "V">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP 網路">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "直接連線選項">
+<!ENTITY prefProxy.label                     "Proxy 連線選項">
+<!ENTITY prefEnableHTTP10.label              "使用 HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "使用 HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "e">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "可透過這些選項來微調 HTTP 連線的效能或相容性。有些 Proxy 代理伺服器必需使用 HTTP/1.0 才能正常運作。（請參考發行公告以獲得進一步資訊）">
+<!ENTITY prefUseragent.label                 "使用者代理字串">
+<!ENTITY prefFirefoxCompat.label             "宣告 Firefox 相容性">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "通知已安裝 Lightning">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "警告: 關閉這些設定可能會造成網站或服務無法正常使用。">
+<!ENTITY prefFirefoxStrict.label             "標示為 Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "標示為 SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "標示為 SeaMonkey 並與 Firefox 相容">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "警告: 變更此設定可能會造成網站或服務無法正常使用。">

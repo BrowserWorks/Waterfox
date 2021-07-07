@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Erweiterte Konten-Einstellungen">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-Server-Verzeichnis:">
+<!ENTITY serverDirectory.accesskey "I">
+<!ENTITY usingSubscription.label "Nur abonnierte Ordner anzeigen">
+<!ENTITY usingSubscription.accesskey "N">
+<!ENTITY dualUseFolders.label "Server unterstützt Ordner, die Unterordner und Nachrichten enthalten">
+<!ENTITY dualUseFolders.accesskey "u">
+<!ENTITY maximumConnectionsNumber.label "Maximale Anzahl der aufrecht erhaltenen Serververbindungen">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Diese Einstellungen geben die Namensräume des IMAP-Servers an">
+<!ENTITY personalNamespace.label "Persönlicher Namensraum">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Öffentlich (gemeinsam verwendet)">
+<!ENTITY publicNamespace.accesskey "Ö">
+<!ENTITY otherUsersNamespace.label "Andere Benutzer">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Server erlauben, diese Namensräume zu übergehen">
+<!ENTITY overrideNamespaces.accesskey "e">
+<!ENTITY pop3DeferringDesc.label "Neue heruntergeladene Nachrichten für dieses Konto in folgendem Ordner speichern:" >
+<!ENTITY accountInbox.label "Posteingang für dieses Konto">
+<!ENTITY accountInbox.accesskey "d">
+<!ENTITY deferToServer.label "Posteingang eines anderen Kontos">
+<!ENTITY deferToServer.accesskey "a">
+<!ENTITY deferGetNewMail.label "Dieses Konto beim Abrufen von Nachrichten einschließen">
+<!ENTITY deferGetNewMail.accesskey "e">

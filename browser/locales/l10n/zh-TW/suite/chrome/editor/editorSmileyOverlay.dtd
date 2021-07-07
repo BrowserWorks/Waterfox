@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "笑臉符號">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "微笑">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "插入表情符號">
+<!ENTITY smiley2Cmd.label "皺眉頭">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "插入皺眉頭表情">
+<!ENTITY smiley3Cmd.label "眨眼">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "插入眨眼表情">
+<!ENTITY smiley4Cmd.label "吐舌頭">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "插入吐舌頭表情">
+<!ENTITY smiley5Cmd.label "大笑">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "插入大笑表情">
+<!ENTITY smiley6Cmd.label "不好意思">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "插入不好意思的表情">
+<!ENTITY smiley7Cmd.label "猶豫">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "插入猶豫表情">
+<!ENTITY smiley8Cmd.label "驚訝">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "插入驚訝表情">
+<!ENTITY smiley9Cmd.label "親吻">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "插入親吻表情">
+<!ENTITY smiley10Cmd.label "大叫">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "插入大叫表情">
+<!ENTITY smiley11Cmd.label "酷臉">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "插入酷臉表情">
+<!ENTITY smiley12Cmd.label "愛錢臉">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "插入愛錢臉表情">
+<!ENTITY smiley13Cmd.label "失言">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "插入失言的表情">
+<!ENTITY smiley14Cmd.label "無辜">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "插入無辜表情">
+<!ENTITY smiley15Cmd.label "大哭">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "插入大哭表情">
+<!ENTITY smiley16Cmd.label "閉嘴">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "插入別說出去表情">
+<!ENTITY SmileButton.label "插入表情符號">
+<!ENTITY SmileButton.tooltip "插入表情符號">

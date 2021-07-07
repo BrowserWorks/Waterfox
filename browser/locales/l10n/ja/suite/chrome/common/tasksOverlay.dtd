@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label	"最小化">
+<!ENTITY minimizeWindowCmd.key		"M">
+<!ENTITY zoomWindowCmd.label		"拡大/縮小">
+<!ENTITY navigatorCmd.label		"ブラウザー">
+<!ENTITY navigatorCmd.accesskey		"B">
+<!ENTITY navigatorCmd.commandkey	"1">
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label		"Composer">
+<!ENTITY editorCmd.accesskey		"C">
+<!ENTITY editorCmd.commandkey		"4">
+
+<!ENTITY errorConsoleCmd.label		"エラーコンソール">
+<!ENTITY errorConsoleCmd.accesskey	"C">
+<!ENTITY errorConsoleCmd.commandkey2	"j">
+
+<!ENTITY taskNavigator.tooltip		"ブラウザー">
+<!ENTITY taskComposer.tooltip		"Composer">
+
+<!ENTITY webDevelopment.label		"ウェブ開発">
+<!ENTITY webDevelopment.accesskey	"W">
+
+<!ENTITY windowMenu.label		"ウィンドウ">
+<!ENTITY windowMenu.accesskey		"W">
+
+<!ENTITY tasksMenu.label		"ツール">
+<!ENTITY tasksMenu.accesskey		"T">
+
+<!ENTITY datamanCmd.label		"データマネージャー">
+<!ENTITY datamanCmd.accesskey		"D">
+
+<!ENTITY passwordManagerCmd.label	"パスワードマネージャー">
+<!ENTITY passwordManagerCmd.accesskey	"P">
+
+<!ENTITY passwordDisplayCmd.label	"保存されているパスワードを管理">
+<!ENTITY passwordDisplayCmd.accesskey	"M">
+
+<!ENTITY passwordExpireCmd.label	"ログアウト">
+<!ENTITY passwordExpireCmd.accesskey	"l">
+
+<!ENTITY downloadManagerCmd.label	"ダウンロードマネージャー">
+<!ENTITY downloadManagerCmd.accesskey	"n">
+<!ENTITY downloadManagerCmd.commandkey	"j">
+
+<!ENTITY addOnsManagerCmd.label		"アドオンマネージャー">
+<!ENTITY addOnsManagerCmd.accesskey	"A">
+<!ENTITY addOnsManagerCmd.commandkey	"a">
+
+<!ENTITY switchProfileCmd.label		"プロファイルの切り換え...">
+<!ENTITY switchProfileCmd.accesskey	"h">
+
+<!ENTITY syncBrand.shortName.label	"Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label		"Sync をセットアップ...">
+<!ENTITY syncSetup.accesskey		"S">
+<!ENTITY syncSyncNowItem.label		"今すぐ同期する">
+<!ENTITY syncSyncNowItem.accesskey	"S">

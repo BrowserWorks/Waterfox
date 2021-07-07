@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title                  "Medien">
+<!ENTITY mediaHTML5Preferences.label       "Audio/Video">
+<!ENTITY allowMediaAutoplay.label          "Automatisches Abspielen von HTML5-Medieninhalten aktivieren">
+<!ENTITY allowMediaAutoplay.accesskey      "A">

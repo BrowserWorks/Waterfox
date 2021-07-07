@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Berichtenopslag">
+<!ENTITY securitySettings.label "Beveiligingsinstellingen">
+<!ENTITY serverSettings.label "Serverinstellingen">
+<!ENTITY serverType.label "Servertype:">
+<!ENTITY serverName.label "Servernaam:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "Gebruikersnaam:">
+<!ENTITY userName.accesskey "u">
+<!ENTITY port.label "Poort:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Standaard:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Op nieuwe berichten controleren om de">
+<!ENTITY biffStart.accesskey "c">
+<!ENTITY biffEnd.label "minuten">
+<!ENTITY useIdleNotifications.label "Directe servernotificaties toestaan als nieuwe berichten binnenkomen">
+<!ENTITY useIdleNotifications.accesskey "D">
+<!ENTITY connectionSecurity.label "Verbindingsbeveiliging:">
+<!ENTITY connectionSecurity.accesskey "V">
+<!ENTITY connectionSecurityType-0.label "Geen">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, mits beschikbaar">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Authenticatiemethode:">
+<!ENTITY authMethod.accesskey "A">
+<!ENTITY leaveOnServer.label "Berichten op de server laten">
+<!ENTITY leaveOnServer.accesskey "r">
+<!ENTITY headersOnly.label "Alleen berichtkoppen ophalen">
+<!ENTITY headersOnly.accesskey "k">
+<!ENTITY deleteByAgeFromServer.label "Voor maximaal">
+<!ENTITY deleteByAgeFromServer.accesskey "x">
+<!ENTITY daysEnd.label "dagen">
+<!ENTITY deleteOnServer2.label "Totdat ik ze verwijder">
+<!ENTITY deleteOnServer2.accesskey "w">
+<!ENTITY downloadOnBiff.label "Nieuwe berichten automatisch downloaden">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Als ik een bericht verwijder:">
+<!ENTITY modelMoveToTrash.label "Het naar deze map verplaatsen:">
+<!ENTITY modelMoveToTrash.accesskey "m">
+<!ENTITY modelMarkDeleted.label "Het alleen als verwijderd markeren">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Het direct verwijderen">
+<!ENTITY modelDeleteImmediately.accesskey "w">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Postvak IN opruimen bij afsluiten">
+<!ENTITY expungeOnExit.accesskey "I">
+<!ENTITY emptyTrashOnExit.label "Prullenbak leegmaken bij afsluiten">
+<!ENTITY emptyTrashOnExit.accesskey "f">
+<!ENTITY loginAtStartup.label "Op nieuwe berichten controleren bij opstarten">
+<!ENTITY loginAtStartup.accesskey "n">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Mij vragen voor het downloaden van meer dan">
+<!ENTITY maxMessagesStart.accesskey "d">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "berichten">
+<!ENTITY alwaysAuthenticate.label "Altijd om authenticatie vragen bij verbinden met deze server">
+<!ENTITY alwaysAuthenticate.accesskey "a">
+<!ENTITY newsrcFilePath1.label "News.rc-bestand:">
+<!ENTITY newsrcPicker1.label "News.rc-bestand selecteren">
+<!ENTITY abbreviate.label "Nieuwsgroepnamen in het mappenpaneel tonen als:">
+<!ENTITY abbreviateOn.label "Volledige namen (bijvoorbeeld ‘netscape.public.mozilla.mail-news’)">
+<!ENTITY abbreviateOff.label "Afgekorte namen (bijvoorbeeld ‘n.p.m.mail-news’)">
+<!ENTITY advancedButton.label "Geavanceerd…">
+<!ENTITY advancedButton.accesskey "G">
+<!ENTITY serverDefaultCharset2.label "Standaard tekstcodering:">
+<!ENTITY localPath1.label "Lokale map:">
+<!ENTITY localFolderPicker.label "Lokale map selecteren">
+<!ENTITY browseFolder.label "Bladeren…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "Bladeren…">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "Accountinstellingen">
+<!ENTITY accountSettingsDesc.label "Dit is een speciale account. Er zijn geen identiteiten mee verbonden.">
+<!ENTITY storeType.label "Type berichtenopslag:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "Eén bestand per map (mbox)">
+<!ENTITY maildirStore.label "Eén bestand per bericht (maildir)">

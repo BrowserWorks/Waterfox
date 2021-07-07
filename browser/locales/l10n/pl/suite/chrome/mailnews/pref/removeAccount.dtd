@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle "Usuń konto i dane">
+<!ENTITY removeButton.label "Usuń">
+<!ENTITY removeButton.accesskey "U">
+<!ENTITY removeAccount.label "Usuń informacje o koncie">
+<!ENTITY removeAccount.accesskey "s">
+<!ENTITY removeAccount.desc "Usuwa tylko informacje o koncie w programie &brandShortName;. Nie wpływa na konto na serwerze.">
+<!ENTITY removeData.label "Usuń dane wiadomości">
+<!ENTITY removeData.accesskey "d">
+<!ENTITY removeDataChat.label "Usuń dane rozmów">
+<!ENTITY removeDataChat.accesskey "d">
+<!ENTITY removeDataLocalAccount.desc "Usuwa z lokalnego dysku wszystkie wiadomości, foldery i filtry powiązane z tym kontem. Nie wpływa na wiadomości, które mogą być nadal przechowywane na serwerze. Nie wybieraj tej opcji, jeśli planujesz archiwizować lokalne dane lub używać ich w programie &brandShortName; później.">
+<!ENTITY removeDataServerAccount.desc "Usuwa z lokalnego dysku wszystkie wiadomości, foldery i filtry powiązane z tym kontem. Wiadomości i foldery będą nadal przechowywane na serwerze.">
+<!ENTITY removeDataChatAccount.desc "Usuwa wszystkie zapisy rozmów przechowywane dla tego konta na lokalnym dysku.">
+<!ENTITY showData.label "Wyświetl położenie danych">
+<!ENTITY showData.accesskey "W">
+<!ENTITY progressPending "Usuwanie wybranych danych…">
+<!ENTITY progressSuccess "Usunięcie się powiodło.">
+<!ENTITY progressFailure "Usunięcie się nie powiodło.">

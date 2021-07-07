@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "リンクの動作">
+<!ENTITY newWindow.label "リンクを開くときの動作">
+<!ENTITY newWindowDescription.label "本来は新しいウィンドウで開くリンクを:">
+<!ENTITY newWindowRestriction.label "スクリプトが新しいウィンドウを開こうとするとき:">
+<!ENTITY external.label "他のアプリケーションから開いたときの動作">
+<!ENTITY externalDescription.label "他のアプリケーションから開いたリンクを:">
+
+<!ENTITY openCurrent.label "現在のタブ/ウィンドウで開く">
+<!ENTITY newWindowGroupCurrent.accesskey "c">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "現在のウィンドウで新しいタブとして開く">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "新しいウィンドウで開く">
+<!ENTITY newWindowGroupWindow.accesskey "w">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "常にウィンドウをタブで開く">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "タブにカスタムウィンドウを流用しない">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "常に新しいウィンドウを開く">
+<!ENTITY dontDivert.accesskey "n">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  engineManager.title       "Управление списком поисковых систем">
+<!ENTITY  engineManager.style       "min-width: 35em;">
+<!ENTITY  engineManager.intro       "У вас установлены плагины для следующих поисковых систем:">
+
+<!ENTITY  columnLabel.name          "Название">
+<!ENTITY  columnLabel.keyword       "Краткое имя">
+
+<!-- Buttons -->
+<!ENTITY  up.label                  "Вверх">
+<!ENTITY  up.accesskey              "В">
+<!ENTITY  dn.label                  "Вниз">
+<!ENTITY  dn.accesskey              "н">
+<!ENTITY  remove.label              "Удалить">
+<!ENTITY  remove.accesskey          "У">
+<!ENTITY  edit.label                "Изменить…">
+<!ENTITY  edit.accesskey            "з">
+
+<!ENTITY  addEngine.label           "Плагины для других поисковых систем…">
+<!ENTITY  addEngine.accesskey       "л">
+
+<!ENTITY  enableSuggest.label       "Показывать поисковые предложения">
+<!ENTITY  enableSuggest.accesskey   "п">
+
+<!ENTITY  restoreDefaults.label     "Восстановить набор по умолчанию">
+<!ENTITY  restoreDefaults.accesskey "у">

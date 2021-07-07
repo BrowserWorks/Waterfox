@@ -1,0 +1,87 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Ιδιωτική περιήγηση">
+
+<!ENTITY editPageCmd.label "Επεξεργασία σελίδας">
+<!ENTITY editPageCmd.accesskey "Ε">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Γραμμή πλοήγησης">
+<!ENTITY navbarCmd.accesskey "π">
+<!ENTITY bookmarksToolbarCmd.label     "Γραμμή σελιδοδεικτών">
+<!ENTITY bookmarksToolbarCmd.accesskey "δ">
+
+<!ENTITY closeWindow.label "Κλείσιμο παραθύρου">
+<!ENTITY closeWindow.accesskey "π">
+
+<!ENTITY minimizeButton.tooltip       "Ελαχιστοποίηση">
+<!ENTITY restoreButton.tooltip        "Επαναφορά">
+
+<!ENTITY feedsMenu.label "Συνδρομή σε αυτή τη σελίδα">
+<!ENTITY feedsMenu.accesskey "Σ">
+
+<!ENTITY menuBar.tooltip                  "Γραμμή μενού">
+<!ENTITY bookmarksToolbar.tooltip         "Γραμμή σελιδοδεικτών">
+<!ENTITY navigationToolbar.tooltip        "Γραμμή πλοήγησης">
+
+<!ENTITY editBookmark.done.label "Τέλος">
+<!ENTITY editBookmark.cancel.label "Ακύρωση">
+<!ENTITY editBookmark.removeBookmark.accessKey "Α">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Πίσω">
+<!ENTITY backButton.tooltip           "Μετάβαση μια σελίδα πίσω">
+<!ENTITY forwardButton.label          "Εμπρός">
+<!ENTITY forwardButton.tooltip        "Μετάβαση μια σελίδα μπροστά">
+<!ENTITY reloadButton.label           "Ανανέωση">
+<!ENTITY reloadButton.tooltip         "Ανανέωση τρέχουσας σελίδας">
+<!ENTITY stopButton.label             "Διακοπή">
+<!ENTITY stopButton.tooltip           "Διακοπή φόρτωσης σελίδας">
+<!ENTITY searchButton.label           "Αναζήτηση">
+<!ENTITY searchButton.tooltip         'Πληκτρολογήστε μια λέξη στο πεδίο στα αριστερά και κάντε κλικ στο "Αναζήτηση"'>
+<!ENTITY goButton.label               "Μετάβαση">
+<!ENTITY goButton.tooltip             'Πληκτρολογήστε μια διεύθυνση στο πεδίο στα αριστερά και κάντε κλικ στο "Μετάβαση"'>
+<!ENTITY printButton.label            "Εκτύπωση">
+<!ENTITY printButton.tooltip          "Εκτύπωση σελίδας">
+
+<!ENTITY locationBar.tooltip          "Εισάγετε όρο αναζήτησης, λέξη-κλειδί ή διεύθυνση ιστού">
+<!ENTITY locationBar.accesskey        "θ">
+<!ENTITY locationBar.title            "Διεύθυνση">
+<!ENTITY proxyIcon.tooltip            "Σύρετε και εναποθέστε αυτό το εικονίδιο για δημιουργία συνδέσμου για αυτή τη σελίδα">
+
+<!ENTITY searchItem.title             "Αναζήτηση">
+
+<!ENTITY bookmarksButton.label        "Σελιδοδείκτες">
+<!ENTITY bookmarksButton.tooltip      "Λίστα σελιδοδεικτών">
+<!ENTITY homeButton.label             "Αρχική">
+<!ENTITY bookmarksToolbarItem.label   "Στοιχεία γραμμής σελιδοδεικτών">
+<!ENTITY bookmarksToolbarChevron.tooltip "Προβολή περισσότερων σελιδοδεικτών">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Τέλος">
+
+<!ENTITY popupIcon.tooltiptext      "Αποδοχή αναδυόμενων παραθύρων ιστοσελίδας">
+
+<!ENTITY viewSecurityInfo.label      "Προβολή πληροφοριών ασφάλειας">
+<!ENTITY viewSecurityInfo.accesskey  "α">
+<!ENTITY viewCertificate.label       "Προβολή πιστοποιητικού">
+<!ENTITY viewCertificate.accesskey   "π">
+<!ENTITY viewCertManager.label       "Άνοιγμα διαχείρισης πιστοποιητικών">
+<!ENTITY viewCertManager.accesskey   "δ">
+
+<!ENTITY zoomIn.tooltiptext          "Μεγαλύτερο">
+<!ENTITY zoomOut.tooltiptext         "Μικρότερο">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Дополнительно">
+
+<!ENTITY systemPref.caption               "Системные настройки">
+<!ENTITY systemPrefCheck.label            "Использовать настройки системы">
+<!ENTITY systemPrefCheck.accesskey        "с">
+<!ENTITY systemPref.desc                  "С этой опцией, &brandShortName; будет использовать системные настройки. Эти системные настройки будут перекрывать параметры &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption         "Интеграция с системой">
+<!ENTITY prefCheckDefaultClient.label     "Проверять при запуске параметры приложений по умолчанию">
+<!ENTITY prefCheckDefaultClient.accesskey "в">
+
+<!ENTITY printing.label                   "Печать">
+<!ENTITY useNativePrintDialog.label       "Использовать системный диалог печати (если поддерживается)">
+<!ENTITY useNativePrintDialog.accesskey   "м">
+<!ENTITY useGlobalPrintSettings.label     "Использовать глобальные настройки печати">
+<!ENTITY useGlobalPrintSettings.accesskey "л">
+
+<!ENTITY crashReports.caption             "Сообщения о падениях">
+<!ENTITY submitCrashes.label              "Отправлять сообщения о падениях">
+<!ENTITY submitCrashes.accesskey          "п">
+
+<!ENTITY devTools.caption                 "Инструменты разработчика">
+<!ENTITY allowDebugger.label              "Разрешить отладчику соединяться с &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "и">
+<!ENTITY allowRemoteConnections.label     "Разрешать соединения с других компьютеров">
+<!ENTITY allowRemoteConnections.accesskey "ш">
+<!ENTITY connectionPrompt.label           "Запрос для входящих соединений">
+<!ENTITY connectionPrompt.accesskey       "а">
+<!ENTITY remoteDebuggerPort.label         "Номер порта для соединения:">
+<!ENTITY remoteDebuggerPort.accesskey     "о">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "Προσαρμογή γραμμής εργαλείων">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Μπορείτε να προσθέσετε ή να αφαιρέσετε στοιχεία σύροντας εντός ή εκτός των γραμμών εργαλείων.">
+<!ENTITY show.label               "Εμφάνιση:">
+<!ENTITY iconsAndText.label       "Εικονίδια και κείμενο">
+<!ENTITY icons.label              "Εικονίδια">
+<!ENTITY text.label               "Κείμενο">
+<!ENTITY useSmallIcons.label      "Χρήση μικρών εικονιδίων">
+<!ENTITY restoreDefaultSet.label  "Επαναφορά προεπιλογών">
+<!ENTITY addNewToolbar.label      "Προσθήκη νέας γραμμής">
+<!ENTITY saveChanges.label        "Τέλος">
+<!ENTITY undoChanges.label        "Αναίρεση αλλαγών">

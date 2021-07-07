@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Üdvözli a &brandShortName;!">
+<!ENTITY header2.label "Szeretne új e-mail címet?">
+<!ENTITY other.languages "Csak azok a szolgáltatók lesznek felsorolva, amelyek az Ön környékén kínálnak címeket. Kattintson ide az összes szolgáltató megjelenítéséért.">
+<!ENTITY error.line1 "Sajnos nem találtunk semmilyen javasolt e-mail címet.">
+<!ENTITY error.line2 "Kereshet becenevekre vagy bármi másra is további e-mail címekért.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Kipróbálhatja az ">
+<!ENTITY error.suggest.middle "ingyenes e-mail fiók alternatívák">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Üdvözöljük, ">
+<!ENTITY success.title.after ", a következő e-mail címek állnak rendelkezésére:">
+<!ENTITY success.tip "(Kereshet becenevekre vagy bármi másra is további találatokért.)">
+<!ENTITY partnership.description "A &brandShortName; több szolgáltatóval áll partneri viszonyban, és új e-mail címet tud Önnek felajánlani. Ehhez írja be a nevét vagy bármilyen szót a fenti mezőkbe.">
+<!ENTITY existing.header "Már van címe, amelyet használni szeretne?">
+<!ENTITY tinyheader.title "Van e-mail címe?">
+<!ENTITY tinyheader.existing "Ugorja át ezt, és használja a meglévő e-mail címet">
+<!ENTITY content.close "Később akarom konfigurálni a postafiókomat.">
+<!ENTITY successful.title "Gratulálunk!">
+<!ENTITY successful.successMessage "Sikeresen beállította a postafiókját.">
+<!ENTITY successful.write "Írjon pár e-mailt.">
+<!ENTITY successful.write.desc "Mondja meg barátainak és családtagjainak, hogy új címe van.<br/> Végül is ezért hozta létre ezt a postafiókot, nem?">
+<!ENTITY successful.customize "Bővítse a &brandShortName; tudását kiegészítőkkel">
+<!ENTITY successful.customize.desc "Több ezer kiegészítő áll rendelkezésére, ezekkel igény szerint bővítheti a&brandShortName; tudását.">
+<!ENTITY successful.attach "Személyes aláírás beillesztése minden e-mail végére">
+<!ENTITY successful.attach.desc "Minden elküldött üzenete végére automatikusan beilleszthet egy idézetet vagy adatokat saját magáról.">
+<!ENTITY successful.close "Ablak bezárása">
+<!ENTITY input.namePlaceholder "Neve vagy beceneve">
+<!ENTITY input.search "Keresés">
+<!ENTITY search_engine.title "Keresőszolgáltatás beállítása">
+<!ENTITY search_engine.message "Az e-mail szolgáltatója a webes kereséshez is javasol megoldást.">
+<!ENTITY search_engine.button "Befejezés">

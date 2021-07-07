@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "سجل الترشيح">
+<!ENTITY viewLogInfo.text "يوثّق سجل الترشيح المرشِّحات التي شغِّلت في هذا الحساب. استخدم صندوق التأشير أدناه لتفعيل التسجيل.">
+<!ENTITY clearLog.label "امسح السجل">
+<!ENTITY clearLog.accesskey "م">
+<!ENTITY enableLog.label "مكّن سجل الترشيح">
+<!ENTITY enableLog.accesskey "م">
+<!ENTITY closeLog.label "أغلق">
+<!ENTITY closeLog.accesskey "غ">

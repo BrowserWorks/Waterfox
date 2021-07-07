@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Etiquetas">
+<!ENTITY pref.tags.caption          "Personalizar etiqueta">
+<!ENTITY pref.tags.description      "As etiquetas podem ser utilizadas para categorizar e dar prioridade às suas mensagens. Modificar a aparência e a importância das etiquetas usando as definições abaixo. Etiquetas perto do topo são mais importantes do que as que estão mais abaixo.">
+<!ENTITY tagColumn.label            "Etiqueta">
+<!ENTITY colorColumn.label          "Cor">
+<!ENTITY defaultTagName.label       "Etiqueta sem nome">
+<!ENTITY addTagButton.label         "Adicionar">
+<!ENTITY addTagButton.accesskey     "A">
+<!ENTITY deleteTagButton.label      "Apagar">
+<!ENTITY deleteTagButton.accesskey  "A">
+<!ENTITY raiseTagButton.label       "Aumentar importância">
+<!ENTITY raiseTagButton.accesskey   "u">
+<!ENTITY lowerTagButton.label       "Baixar Importância">
+<!ENTITY lowerTagButton.accesskey   "B">
+<!ENTITY restoreButton.label        "Restaurar predefinições">
+<!ENTITY restoreButton.accesskey    "s">

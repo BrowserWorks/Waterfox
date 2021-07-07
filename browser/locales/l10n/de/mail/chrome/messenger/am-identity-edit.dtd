@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Konfigurieren Sie diese Identität:">
+
+<!ENTITY settingsTab.label       "Einstellungen">
+<!ENTITY copiesFoldersTab.label "Kopien &amp; Ordner">
+<!ENTITY addressingTab.label    "Verfassen &amp; Adressieren">
+
+<!ENTITY publicData.label        "Öffentliche Daten">
+<!ENTITY privateData.label       "Private Daten">
+<!ENTITY identityAlias.label     "Identitätsbezeichnung:">
+<!ENTITY identityAlias.accesskey "b">

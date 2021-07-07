@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "字段集属性">
+
+<!ENTITY Legend.label "图例">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "编辑图列:">
+<!ENTITY EditLegendText.accesskey "t">
+<!ENTITY LegendAlign.label "图例对齐:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "默认">
+<!ENTITY AlignLeft.label "左对齐">
+<!ENTITY AlignCenter.label "居中">
+<!ENTITY AlignRight.label "右对齐">
+
+<!ENTITY RemoveFieldSet.label "移除字段集">
+<!ENTITY RemoveFieldSet.accesskey "R">

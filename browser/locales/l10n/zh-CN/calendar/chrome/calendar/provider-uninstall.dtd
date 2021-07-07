@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "卸载一个提供者">
+<!ENTITY providerUninstall.accept.label                    "取消订阅选中的项目">
+<!ENTITY providerUninstall.accept.accesskey                "U">
+<!ENTITY providerUninstall.cancel.label                    "保留附加组件">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "你已要求卸载或禁用：">
+<!ENTITY providerUninstall.postName.label                  "以下日历将被禁用。">
+<!ENTITY providerUninstall.reinstallNote.label             "除非计划重新安装这个提供者，否则你可以选择取消订阅来自这个提供者的日历。">

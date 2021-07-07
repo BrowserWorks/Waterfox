@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Címjegyzék használata</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+<h1 id="using_address_books">Címjegyzék használata</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#about_address_books">Címjegyzékek – áttekintés</a></li>
+    <li><a href="#adding_entries_to_your_address_books">Bejegyzések felvétele saját címjegyzékbe</a></li>
+    <li><a href="#creating_a_new_address_book">Új címjegyzék létrehozása</a></li>
+    <li><a href="#creating_a_new_address_book_card">Új névjegykártya létrehozása</a></li>
+    <li><a href="#creating_a_mailing_list">Levelezőlista létrehozása</a></li>
+    <li><a href="#editing_a_mailing_list">Levelezőlista szerkesztése</a></li>
+    <li><a href="#searching_address_books_and_directories">Keresés címjegyzékben és címtárban</a></li>
+    <li><a href="#importing_address_books">Címjegyzék importálása</a></li>
+    <li><a href="#exporting_address_books">Címjegyzék exportálása</a></li>
+    <li><a href="#adding_and_removing_ldap_directories">LDAP-címtár felvétele és eltávolítása</a></li>
+  </ul>
+</div>
+
+<h2 id="about_address_books">Címjegyzékek – áttekintés</h2>
+
+<p>A címjegyzékekben olyan személyek e-mail címét és egyéb adatait tárolhatjuk, akiknek gyakran küldünk levelet, ilyenek a munkatársak, a barátok és a családtagok.
+  A &brandShortName; Levelező és hírolvasó két címjegyzéket biztosít: ez a Személyes címjegyzék és az Összegyűjtött címek jegyzéke, de emellett további címjegyzékeket is létrehozhatunk. Más levelezőprogramokból és a &brandShortName; régebbi verzióiból is importálhatunk címjegyzékeket. Ezeket a címjegyzékeket a helyi merevlemez tárolja.</p>
+
+<p>Használhatunk LDAP-címtárból származó e-mail címeket is, az ilyen címjegyzékek LDAP-címtárkiszolgálókon tárolódnak. A címtárkiszolgálón jellemzően olyan személyek e-mail címeit tartalmazzák, akik nem szerepelnek a helyileg tárolt címjegyzékekben. Az LDAP (Lightweight Directory Access Protocol) protokoll az internetes vagy intranetes címtárszolgáltatások (például vállalati címjegyzékek) elérésére szolgáló ipari szabvány.</p>
+
+<h4>Személyes címjegyzék</h4>
+
+<p>A Személyes címjegyzékbe tetszőleges nevet felvehetünk. Létrehozhatunk levelezőlistákat, és szerkeszthetjük az egyes címbejegyzéseket.</p>
+
+<h4>Összegyűjtött címek</h4>
+
+<p>Alapértelmezés szerint az Összegyűjtött címek közé automatikusan bekerülnek az általunk küldött levelekben szereplő e-mail címek. Az elküldött levelek címzettjei akkor kerülnek be az Összegyűjött címek közé, amikor a Küldés gombra kattintunk.</p>
+
+<h4>LDAP-címtár (ha rendelkezésre áll)</h4>
+
+<p>Az LDAP-címtárak (szokásos elnevezésük még címkereső szolgáltatás) rendszerint olyan címzettek e-mail címeit tartalmazzák, akik nem találhatók meg a helyileg tárolt címjegyzékekben.
+  Az LDAP-címtárak az e-mail címek nagyméretű, központilag karbantartott adatbázisát kínálják, amely különösen hasznos lehet az <a href="#address_autocompletion">automatikus címkiegészítésénél</a>.</p>
+
+<p>Az automatikus címgyűjtés alapértelmezés szerint engedélyezett. A beállítás megváltoztatását kezdjük a Levelező ablakban:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk a Címjegyzék elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)</li>
+  <li>Az E-mail címek gyűjtése csoportban az <q>E-mail címek hozzáadása</q> mezőben válasszuk ki a kívánt lehetőséget:
+    <ul>
+      <li>Személyes címjegyzék</li>
+      <li>Összegyűjtött címek</li>
+    </ul>
+  </li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<h4>A Címjegyzék megnyitása</h4>
+
+<p>A Címjegyzék ablak megnyitása:</p>
+
+<ul>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát, vagy kattintsunk a bármelyik &brandShortName;-ablak bal alsó sarkában megtalálható Címjegyzék ikonra.
+
+    <table>
+      <tr>
+        <td colspan="2"><img src="images/taskbar-ab.png" alt=""/></td>
+      </tr>
+      <tr>
+        <td style="width: 80px;"></td>
+        <td><strong>Címjegyzék ikon</strong></td>
+      </tr>
+    </table>
+  </li>
+</ul>
+
+<h4>A Címjegyzék ablak beállítása</h4>
+
+<p>A Címjegyzék ablakban az adatok megjelenítési módjának megadása:</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát. Megjelenik a Címjegyzék ablaka.</li>
+  <li>Válasszuk ebben a Nézet menü megfelelő parancsát a beállítások megadásához:
+    <ul>
+      <li><b>Eszköztárak:</b> itt kiválaszthatjuk a megjeleníteni, illetve elrejteni kívánt elemeket.</li>
+      <li><b>Nevek megjelenítése:</b> adjuk meg a nevek megjelenítési módját (utónév/vezetéknév, vezetéknév/utónév vagy megjelenítendő név).</li>
+      <li><b>Rendezés:</b> adjuk meg, hogy mi szerint kívánunk rendezni.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="adding_entries_to_your_address_books">Bejegyzések felvétele saját címjegyzékbe</h2>
+
+<p>Saját címjegyzékbe a következő módon vehetünk fel bejegyzéseket:</p>
+
+<ul>
+  <li>Beérkezett üzenetnél kattintsunk az egér jobb oldali gombjával a Feladó vagy egy címzett (például Másolat) mezőre, és válasszuk a helyi menü <q>Felvétel a címjegyzékbe</q> parancsát.</li>
+  <li>A Címjegyzék ablakban kattintsunk az Új névjegy gombra.</li>
+  <li>Nyissunk meg egy üzenetet, így a feladó címe automatikusan bekerül az Összegyűjtött címek jegyzékébe (ha a műveletet engedélyeztük).</li>
+  <li>A Címjegyzék ablakban úgy másolhatunk át egy bejegyzést egyik címjegyzékből a másikba, hogy kijelöljük a bejegyzést, és áthúzzuk annak a címjegyzéknek a neve fölé, amelybe át szeretnénk másolni.</li>
+</ul>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="creating_a_new_address_book">Új címjegyzék létrehozása</h2>
+
+<p>A &brandShortName; Levelező és hírolvasó biztosít egy alapértelmezett személyes címjegyzéket, de továbbiakat is létrehozhatunk.</p>
+
+<p>Új címjegyzék létrehozása:</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát, vagy kattintsunk a bármelyik &brandShortName;-ablak bal alsó sarkában megtalálható Címjegyzék ikonra.
+    Megjelenik a Címjegyzék ablaka.
+
+    <table>
+      <tr>
+        <td colspan="2"><img src="images/taskbar-ab.png" alt=""/></td>
+      </tr>
+      <tr>
+        <td style="width: 80px;"></td>
+        <td><strong>Címjegyzék ikon</strong></td>
+      </tr>
+    </table>
+  </li>
+  <li>A Címjegyzék ablakban válasszuk a Fájl menüből az Új, majd a Címjegyzék parancsot. Az Új címjegyzék párbeszédpanel jelenik meg.</li>
+  <li>Írjuk be az új címjegyzék nevét, majd kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="creating_a_new_address_book_card">Új névjegykártya létrehozása</h2>
+
+<p>A névjegykártya nevek, e-mail címek, telefonszámok és más adatokat tárolására szolgál (ilyen például az, hogy az adott címzett egyszerű szöveges vagy formázott üzeneteket fogad-e).</p>
+
+<p>Névjegykártya létrehozása adott személyhez:</p>
+
+<ol>
+  <li>Kattintsunk az állapotsoron a Címjegyzék ikonra, vagy válasszuk az Ablak menü Címjegyzék parancsát.</li>
+  <li>Kattintsunk az Új névjegy gombra. (Ha több címjegyzékkel rendelkezünk, jelöljük ki, hogy melyikbe vesszük fel a névjegyet.)</li>
+  <li>Az Új névjegy párbeszédpanel a következő három lapból áll:
+    <ul>
+      <li><strong>Név</strong>: ezen a panellapon a következő adatok adhatók meg:
+        <ul>
+          <li>Vezetéknév és utónév (ahogy a címjegyzékben szeretnénk látni).</li>
+          <li>Megjelenítendő név (az Új üzenet ablak <q>Címzett</q> mezőjébe kerülő név).</li>
+          <li>Becenév (a használni kívánt rövid név).</li>
+          <li>E-mail cím (elsődleges vagy kiegészítő cím).</li>
+          <li>Az üzeneteket a következő formátumban szereti megkapni: ha tudjuk, hogy ez a címzett fogadni tudja a formázott üzeneteket (azaz ezekben hivatkozások, képek vagy táblázatok is szerepelhetnek), válasszuk a HTML beállítást. Ha ez a címzett csak egyszerű szöveges (formázás nélküli) üzeneteket fogadhat, a Sima szöveg elemet válasszuk. Ha nem vagyunk ebben biztosak, válasszuk az Ismeretlen elemet. Ekkor a &brandShortName; Levelező és hírolvasó a küldési formátumot a Beállítások párbeszédpanel Küldés formátuma beállítása alapján határozza meg. Ha még ebből sem állapítható meg a megfelelő formátum, a Levelező és hírolvasó megkérdezi ezt az üzenet elküldésekor.</li>
+          <li>Felhasználói név (az AIM becenév).</li>
+          <li>Telefon (a telefonszámok kerülnek ide).</li>
+        </ul>
+      </li>
+      <li><strong>Cím</strong>: ezen a panellapon az illető lakásának és munkahelyének postai levelezési címe és a weboldalának címe adható meg.
+
+        <p><strong>Tipp</strong>: ha megadjuk a címet, a &brandShortName; egy Térkép gombot jelenít meg, amikor ezt a névjegyet a címjegyzékben tekintjük meg. Erre kattintva térképet tartalmazó weboldal jeleníthető meg.</p>
+      </li>
+      <li><strong>Egyéb</strong>: ezen a panellapon további adatok adhatók meg.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Tipp</strong>: a bejegyzések címjegyzékbe történő gyors felvételéhez kattintsunk egy beérkezett üzenet tetszőleges címére, és válasszuk a helyi menü Felvétel a címjegyzékbe parancsát. Az Új névjegy párbeszédpanel jelenik meg, ahol beírhatjuk a további kívánt adatokat.</p>
+
+<h3 id="viewing_or_editing_card_properties">Névjegy tulajdonságainak megtekintése és szerkesztése</h3>
+
+<p>Adott névjegy tulajdonságainak megtekintése és szerkesztése:</p>
+
+<ol>
+  <li>Válasszuk ki a kártyát a listából a Címjegyzék ablakban.</li>
+  <li>Kattintsunk a Tulajdonságok gombra.</li>
+</ol>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="creating_a_mailing_list">Levelezőlista létrehozása</h2>
+
+<p>Ha gyakran küldünk üzeneteket címzettek adott csoportjának, egyszerűbbé és gyorsabbá tehető a címzés a kívánt neveket tartalmazó levelezőlista használatával.</p>
+
+<p>Levelezőlista létrehozása és felvétele címjegyzékbe:</p>
+
+<ol>
+  <li>A Címjegyzék ablakban kattintsunk az Új lista gombra.</li>
+  <li>A Levelezőlista párbeszédpanelen adjuk meg a következő adatokat:
+    <ul>
+      <li>A <q>Hozzáadás</q> lenyitható listán jelöljük ki, hogy melyik címjegyzékbe kerül a levelezőlista.</li>
+      <li><strong>Lista neve</strong>: ha a lista nevét beírjuk az üzenet <q>Címzett</q> mezőjébe, a listán szereplők valamennyien megkapják az üzenetet.</li>
+      <li><strong>Lista beceneve</strong>: a listanév rövid változata.</li>
+      <li><strong>Leírás</strong>: ez az Új üzenet ablakban a listanév után jelenik meg.</li>
+    </ul>
+  </li>
+  <li>Írjuk be a levelezőlistához adandó e-mail címeket.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>A Címjegyzék ablak bal oldalán a levelezőlista az alatt a címjegyzék alatt jelenik meg, amelyhez hozzáadtuk.</p>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="editing_a_mailing_list">Levelezőlista szerkesztése</h2>
+
+<p>A levelezőlisták abban a címjegyzékben tárolódnak, amelyben létrehoztuk.</p>
+
+<p>A lista valamelyik tagjának eltávolításához induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát.</li>
+  <li>Nyissuk le a kívánt levelezőlistát tartalmazó címjegyzéket a címjegyzék melletti háromszögre kattintással.</li>
+  <li>Nevére kattintva jelöljük ki a levelezőlistát. A lista neve mellett az ebben szereplő tagok listája jelenik meg.</li>
+  <li>Kattintsunk a törölni kívánt bejegyzésre.</li>
+  <li>Kattintsunk a Törlés gombra.</li>
+</ol>
+
+<p>Tagok felvétele levelezőlistára:</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát.</li>
+  <li>Nyissuk le a kívánt levelezőlistát tartalmazó címjegyzéket a címjegyzék melletti háromszögre kattintással.</li>
+  <li>Nevére kattintva jelöljük ki a levelezőlistát.</li>
+  <li>Kattintsunk a Tulajdonságok gombra.</li>
+  <li>Vegyük fel újabb bejegyzéseket, illetve neveket törölhetünk is a listáról.</li>
+  <li>Ha befejeztük a műveletet, kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="searching_address_books_and_directories">Keresés címjegyzékben és címtárban</h2>
+
+<p>A &brandShortName; Levelező és hírolvasó gyors keresést biztosít a címjegyzékekben vagy egy címtárban: kereshetünk név vagy e-mail cím alapján, de a keresési feltételek kombinációját is alkalmazhatjuk a pontosabb kereséshez.</p>
+
+<p>A név vagy e-mail cím szerinti gyors kereséshez induljunk ki a Címjegyzék ablakból:</p>
+
+<ol>
+  <li>A címjegyzékek listáján jelöljük ki azt a címjegyzéket vagy címtárat, amelyben keresni szeretnénk.</li>
+  <li>A<q>Név vagy e-mail cím tartalmazza</q> mezőbe írjuk be a keresett nevet vagy e-mail címet. Megadhatjuk a név vagy az e-mail cím egy részét, de beírhatjuk pontosan a keresett szöveget is.
+
+    <p>Amint befejeztük a beírást, a &brandShortName; Levelező és hírolvasó csak azokat a bejegyzéseket jeleníti meg, amelyben a név vagy az e-mail cím tartalmazza a keresett szöveget.</p>
+  </li>
+  <li>A keresett szöveg törléséhez és újból az összes bejegyzés megjelenítéséhez kattintsunk a Törlés gombra.</li>
+</ol>
+
+<h3 id="searching_for_specific_entries">Adott bejegyzések keresése</h3>
+
+<p>A címjegyzékekben vagy egy címtárban adott bejegyzéseket is megkereshetünk. Az Összetett keresés a címjegyzékben párbeszédpanel megjelenítéséhez induljunk ki a Címjegyzék ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Feladatok menü Címek keresése parancsát. Az Összetett keresés a címjegyzékben párbeszédpanel jelenik meg.</li>
+  <li>A <q>Keresési hely</q>mezőben jelöljük ki azt a címjegyzéket vagy címtárat, amelyben keresni szeretnénk.</li>
+  <li>Adjuk meg, hogy a Mozilla Levelező és hírolvasó a bejegyzések keresésénél az összes megadott feltételt figyelembe vegye-e, vagy találatnak számítson a legalább egy feltételnek eleget tevő bejegyzés.</li>
+  <li>A Több gombbal további feltételeket vehetünk fel, a Kevesebb gombbal eltávolíthatunk feltételeket.</li>
+  <li>A keresés indításához kattintsunk a Keresés gombra, az Alaphelyzet gombbal a kiindulási helyzetbe térhetünk vissza. A keresés eredménye a párbeszédpanel alsó részén jelenik meg.</li>
+  <li>A bejegyzések a kívánt oszlop szerint rendezhetők.</li>
+  <li>Adott bejegyzéshez tartozó névjegy megtekintéséhez kattintsunk a bejegyzésre, majd a Tulajdonságok gombra.</li>
+  <li>Levelet is írhatunk, ha kijelöljük a kívánt címzetteket, és az Új üzenet gombra kattintunk.</li>
+</ol>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="importing_address_books">Címjegyzék importálása</h2>
+
+<p>Ha másik felhasználói profilból, számítógépről vagy a &brandShortName; korábbi verziójából származó &brandShortName;-címjegyzékünk, illetve más levelezőprogramban készült címjegyünk van, ennek bejegyzéseit új címjegyzékként a Címjegyzék ablakba importálhatjuk. Amikor a &brandShortName; korábbi verziójából származó felhasználói profilt frissítjük, a címjegyzék is automatikusan átkerül a frissített profilba, nem szükséges kézzel importálni.</p>
+
+<p>A következő programokból, illetve formátumokból lehetséges címjegyzéket átvenni: Netscape Communicator, Netscape 6, korábbi Mozilla, Eudora, Outlook, Outlook Express, LDIF-fájl, tabulátorral elválasztott szöveg (.tab), vesszővel elválasztott szöveg (.csv) vagy szöveg (.txt). Címjegyzék importálásakor a Mozilla Levelező és hírolvasó új címjegyzéket hoz létre a beolvasott bejegyzésekből.</p>
+
+<p>A Mozilla Communicator, az Eudora, az Outlook és az Outlook Express programból <a href="#importing_mail_from_other_programs">üzeneteket és beállításokat</a> is importálhatunk.</p>
+
+<p>Címjegyzék importálását kezdjük a Levelező ablakban:</p>
+
+<ol>
+  <li>Válasszuk a Feladatok menü Importálás parancsát. A Levelező Importálás varázslója jelenik meg.</li>
+  <li>Az importálás végrehajtásához kövessük a varázsló utasításait.</li>
+</ol>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="exporting_address_books">Címjegyzék exportálása</h2>
+
+<p>Az exportált Mozilla-címjegyzéket másik felhasználói profilba is betölthetjük, átvihetjük másik számítógépre, vagy más, címjegyzéket beolvasni képes programban használhatjuk. Címjegyzéket a következő fájlformátumokba exportálhatunk: &brandShortName; (.ldif), tabulátorral elválasztott (.tab), vesszővel elválasztott (.csv) vagy szöveg (.txt).</p>
+
+<p>Címjegyzék exportálásához induljunk ki a Címjegyzék ablakból:</p>
+
+<ol>
+  <li>Jelöljük ki az exportálni kívánt címjegyzéket.</li>
+  <li>Válasszuk a Feladatok menü Exportálás parancsát.</li>
+  <li>A Címjegyzék exportálása párbeszédpanelen adjuk meg a címjegyzékfájl mentési helyét.</li>
+  <li>Válasszunk fájlformátumot (.ldif, vesszővel elválasztott vagy tabulátorral tagolt).</li>
+  <li>Adjuk meg a címjegyzékfájl nevét. Ebben a megfelelő kiterjesztés (.ldif, .csv, .tab vagy .txt) is szerepeljen.</li>
+  <li>Kattintsunk a Mentés gombra.</li>
+</ol>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="adding_and_removing_ldap_directories">LDAP-címtár felvétele és eltávolítása</h2>
+
+<p>Ha felveszünk egy LDAP-címtárat a címjegyzékbe, akkor kereshetünk a címtárban e-mail címekre és adatokra. A címtár felhasználható az elekronikus levelek címzésénél a cím automatikus kiegészítésére is.</p>
+
+<p>Az LDAP-címtár felvételénél vagy eltávolításánál általában a rendszergazda utasításait kell követni. A művelethez szükséges tudnivalókat tehát kérdezzük meg a rendszergazdától.</p>
+
+<p>Új címtár hozzáadását kezdjük a Címjegyzék ablakban:</p>
+
+<ol>
+  <li>Válasszuk a Fájl menüből az Új, majd az LDAP-címtár parancsot. A Címtárkiszolgáló tulajdonságai párbeszédpanel jelenik meg.</li>
+  <li>A Címtárkiszolgáló tulajdonságai párbeszédpanel Általános lapján adjuk meg a következő adatokat:
+    <ul>
+      <li><strong>Név</strong>: adjuk meg a címszolgáltató nevét (például InfoSpace címtár).</li>
+      <li><strong>Gépnév</strong>: adjuk meg a kiszolgáló nevét, például ldap.infospace.com.</li>
+      <li><strong>Alap DN</strong>: ez az alap megkülönböztető név beállítására szolgál. Adjuk meg a keresést adott országra vagy szervezetre korlátozó kódot. Például a c=JP a keresést Japánra korlátozza. Az Alap DN emellett a címtáron belüli keresést végző szervezetet is megadja (például o=Netscape Communications Corporation, c=US).</li>
+      <li><strong>Port száma</strong>: itt az LDAP-kiszolgáló portszáma adható meg. Az alapérték 389.</li>
+      <li><strong>Bejelentkezési DN</strong>: a hitelesítéshez (bejelentkezéshez az LDAP-kiszolgálóra) használt megkülönböztető név. Ha nem adjuk meg, akkor névtelenül fogunk bejelentkezni be az LDAP-kiszolgálóra.</li>
+      <li><strong>Biztonságos kapcsolat (SSL) használata</strong>: jelöljük be, ha az LDAP-kiszolgáló támogatja a biztonságos (titkosított) kapcsolatokat. Ha nem vagyunk biztosak benne, kérdezzük meg a rendszergazdát.</li>
+    </ul>
+  </li>
+  <li>Az LDAP-címtárkiszolgáló beállításainak megadásához váltsunk át a Haladó panellapra.</li>
+  <li>Ezen a következő adatok adhatók meg:
+    <ul>
+      <li><strong>Ne küldjön vissza többet, mint [_] találat</strong>: ezzel a beállítással a címtárkiszolgálóval visszaadott találatok számát korlátozhatjuk. Adjuk meg az automatikus címkiegészítéshez felkínált e-mail címek maximális számát.</li>
+      <li><strong>Körzet</strong>: a keresés hatókörét adja meg. A következő beállítások választhatók:
+        <ul>
+          <li><strong>Egy szint</strong>: az alap DN és az eggyel ez alatti szinten történik a keresés, és az itteni találatokat kapjuk vissza.</li>
+          <li><strong>Részfa</strong>: az alap DN és az eggyel ez alatti összes szinten történik a keresés, és az itteni találatokat kapjuk vissza. Ez a legkiterjedtebb keresés.</li>
+        </ul>
+      </li>
+      <li><strong>Keresési szűrő</strong>: adjuk meg a keresés hatókörén belül kapott eredményekre alkalmazni kívánt szűrőt.</li>
+    </ul>
+  </li>
+  <li>A Címtárkiszolgáló tulajdonságai párbeszédpanel bezárásához kattintsunk az OK gombra.</li>
+</ol>
+
+<p>Az éppen hozzáadott címtár megjelenik a címjegyzékek között a Címjegyzék ablakban.</p>
+
+<p>Címtár törlése:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot. A Beállítások párbeszédpanel jelenik meg.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk a Címjegyzék elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)</li>
+  <li>Az Automatikus címkiegészítés csoport alatt a párbeszédpanel jobb oldalán kattintsunk a Címtár szerkesztése gombra.</li>
+  <li>Az LDAP címtárkiszolgálók párbeszédpanelen jelöljük ki a törölni kívánt címtárat, és kattintsunk a Törlés gombra.</li>
+  <li>A párbeszédpanelek bezárásához kattintsunk kétszer az OK gombra.</li>
+</ol>
+
+<p>További tudnivalók a címtárak letöltéséről, illetve szinkronizálásáról a kapcsolat nélküli munkához, hogy lehessen keresni benne, és működjön az automatikus címkiegészítés kapcsolat nélküli módban is: <a href="#downloading_directory_entries_for_offline_use">Címtárbejegyzések letöltése kapcsolat nélküli használatra</a>.</p>
+
+<h3 id="directory_server_settings">Címtárkiszolgáló beállításai</h3>
+
+<p>A Címtárkiszolgáló tulajdonságai párbeszédpanel a Levelező ablakból a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát.</li>
+  <li>A címjegyzékek listáján jelöljük ki a kívánt címtárat.</li>
+  <li>Kattintsunk a Tulajdonságok gombra.</li>
+</ol>
+
+<p><strong>Általános panellap</strong></p>
+
+<ul>
+  <li><strong>Név</strong>: a címszolgáltató neve (például InfoSpace címtár).</li>
+  <li><strong>Gépnév</strong>: a kiszolgáló neve, például ldap.infospace.com.</li>
+  <li><strong>Alap DN</strong>: az alap megkülönböztető név. Az itt megadott kódok adott országra vagy szervezetre korlátozzák a keresést. Például a c=JP a keresést Japánra korlátozza. Az Alap DN emellett a címtáron belüli keresést végző szervezetet is megadja (például o=Netscape Communications Corporation, c=US).</li>
+  <li><strong>Port száma</strong>: itt az LDAP-kiszolgáló portszáma adható meg.
+    Az alapérték 389.</li>
+  <li><strong>Bejelentkezési DN</strong>: a hitelesítéshez (bejelentkezéshez az LDAP-kiszolgálóra) használt megkülönböztető név. Ha nem adjuk meg, akkor névtelenül fogunk bejelentkezni be az LDAP-kiszolgálóra.</li>
+  <li><strong>Biztonságos kapcsolat (SSL) használata</strong>: jelöljük be, ha az LDAP-kiszolgáló támogatja a biztonságos (titkosított) kapcsolatokat. Ha nem vagyunk biztosak benne, kérdezzük meg a rendszergazdát.</li>
+</ul>
+
+<p><strong>Haladó panellap</strong></p>
+
+<ul>
+  <li><strong>Ne küldjön vissza többet, mint [_] találat:</strong> ezzel a beállítással a címtárkiszolgálóval visszaadott találatok számát korlátozhatjuk. Adjuk meg az automatikus címkiegészítéshez felkínált e-mail címek maximális számát.</li>
+  <li><strong>Körzet</strong>: a keresés hatókörét adja meg.
+    <ul>
+      <li><strong>Egy szint</strong>: az alap DN és az eggyel ez alatti szinten történik a keresés, és az itteni találatokat kapjuk vissza.</li>
+      <li><strong>Részfa</strong>: az alap DN és az eggyel ez alatti összes szinten történik a keresés, és az itteni találatokat kapjuk vissza. Ez a legkiterjedtebb keresés.</li>
+    </ul>
+  </li>
+  <li><strong>Keresési szűrő</strong>: a keresés hatókörén belül kapott eredményekre alkalmazni kívánt szűrőt. adja meg.</li>
+</ul>
+
+<p>[ <a href="#using_address_books">Vissza a fejezet elejére</a> ]</p>
+</body>
+</html>

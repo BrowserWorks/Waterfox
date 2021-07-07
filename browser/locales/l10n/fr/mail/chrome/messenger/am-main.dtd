@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Paramètres du compte">
+<!ENTITY accountName.label "Nom du compte :">
+<!ENTITY accountName.accesskey "c">
+<!ENTITY identityTitle.label "Identité par défaut">
+<!ENTITY identityDesc.label "Chaque compte dispose d’informations sur l’expéditeur qui sont systématiquement transmises avec les messages. Elles vous identifient auprès de vos correspondants.">
+<!ENTITY name.label "Nom :">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "Adresse électronique :">
+<!ENTITY email.accesskey "A">
+<!ENTITY catchAll.label "Répondre avec cette identité lorsque les en-têtes de distribution correspondent à :">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Adresse pour la réponse :">
+<!ENTITY replyTo.accesskey "d">
+<!ENTITY replyTo.placeholder "Les destinataires enverront leur réponse à cette autre adresse">
+<!ENTITY organization.label "Organisation :">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Texte de signature :">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Utiliser HTML (par ex., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "U">
+<!ENTITY signatureFile.label "Apposer la signature à partir d’un fichier (texte, HTML ou image) :">
+<!ENTITY signatureFile.accesskey "H">
+<!ENTITY edit.label "Modifier…">
+<!ENTITY choose.label "Choisir…">
+<!ENTITY choose.accesskey "i">
+<!ENTITY editVCard.label "Modifier la carte…">
+<!ENTITY editVCard.accesskey "M">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Joindre ma carte de visite aux messages">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Gérer les identités…">
+<!ENTITY manageIdentities.accesskey "G">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Serveur sortant (SMTP) :">
+<!ENTITY smtpName.accesskey "s">
+<!ENTITY smtpDefaultServer.label "Utiliser le serveur par défaut">
+
+<!ENTITY smtpServerEdit.label "Modifier le serveur SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

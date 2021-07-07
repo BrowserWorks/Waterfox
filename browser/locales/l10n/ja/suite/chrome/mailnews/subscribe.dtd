@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "IMAP フォルダーとニュースグループの購読">
+<!ENTITY subscribeButton.label        "購読">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "購読を解除">
+<!ENTITY unsubscribeButton.accesskey  "U">
+<!ENTITY newGroupsTab.label           "新しいグループ">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "更新">
+<!ENTITY refreshButton.accesskey      "R">
+<!ENTITY stopButton.label             "中止">
+<!ENTITY stopButton.accesskey         "T">
+<!ENTITY server.label                 "アカウント:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "購読">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "メッセージ"> -->
+<!ENTITY namefield.label              "次を含む項目を表示:">
+<!ENTITY namefield.accesskey          "O">

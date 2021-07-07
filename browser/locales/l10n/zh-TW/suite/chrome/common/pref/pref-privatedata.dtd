@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
+    These entities go on top of the sanitize.dtd definitions
+-->
+<!ENTITY pref.privatedata.title           "私人資料">
+
+
+<!ENTITY clearPrivateData.label           "清除隱私資料">
+
+<!ENTITY alwaysClear.label                "結束 &brandShortName; 時清除隱私資料">
+<!ENTITY alwaysClear.accesskey            "w">
+
+<!--LOCALIZATION NOTE : The askBeforeClear label is
+    no longer used but we might bring it back later
+-->
+<!ENTITY askBeforeClear.label             "清除私密資料前先詢問我">
+<!ENTITY askBeforeClear.accesskey         "k">
+
+<!ENTITY clearDataSettings.label          "當我要求 &brandShortName; 清除私密資料的時候，它應該:">
+
+<!ENTITY clearData.label "清除下列隱私資料:">
+<!ENTITY clearData.cpd.label "手動">
+<!ENTITY clearData.onShutdown.label "結束時">
+
+
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+<!ENTITY clearDataDialog.label            "立刻清除…">
+<!ENTITY clearDataSilent.label            "立刻清除">
+<!ENTITY clearDataDialog.accesskey        "N">

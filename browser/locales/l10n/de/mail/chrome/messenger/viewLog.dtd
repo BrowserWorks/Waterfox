@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filter-Protokoll">
+<!ENTITY viewLogInfo.text "Das Filter-Protokoll ist eine Datei, die dokumentiert, welche Filter ausgeführt wurden. Verwenden Sie das Kästchen unten, um die Aufzeichnung zu aktivieren.">
+<!ENTITY clearLog.label "Protokoll leeren">
+<!ENTITY clearLog.accesskey "P">
+<!ENTITY enableLog.label "Filter-Protokoll aktivieren">
+<!ENTITY enableLog.accesskey "a">
+<!ENTITY closeLog.label "Schließen">
+<!ENTITY closeLog.accesskey "c">

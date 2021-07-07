@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "隐私浏览">
+
+<!ENTITY editPageCmd.label "编辑页面">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "导航工具栏">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "书签工具栏">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+
+<!ENTITY closeWindow.label "关闭窗口">
+<!ENTITY closeWindow.accesskey "W">
+
+<!ENTITY minimizeButton.tooltip       "最小化">
+<!ENTITY restoreButton.tooltip        "恢复">
+
+<!ENTITY feedsMenu.label "订阅此页">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip                  "菜单栏">
+<!ENTITY bookmarksToolbar.tooltip         "书签工具栏">
+<!ENTITY navigationToolbar.tooltip        "导航工具栏">
+
+<!ENTITY editBookmark.done.label "完成">
+<!ENTITY editBookmark.cancel.label "取消">
+<!ENTITY editBookmark.removeBookmark.accessKey "R">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "后退">
+<!ENTITY backButton.tooltip           "转到上一页">
+<!ENTITY forwardButton.label          "前进">
+<!ENTITY forwardButton.tooltip        "转到下一页">
+<!ENTITY reloadButton.label           "重新加载">
+<!ENTITY reloadButton.tooltip         "重新载入当前页面">
+<!ENTITY stopButton.label             "停止">
+<!ENTITY stopButton.tooltip           "停止载入此页面">
+<!ENTITY searchButton.label           "检索">
+<!ENTITY searchButton.tooltip         "在左边的区域中输入文本并单击 搜索">
+<!ENTITY goButton.label               "转到">
+<!ENTITY goButton.tooltip             "在左边的区域中输入地址后单击 转到">
+<!ENTITY printButton.label            "打印">
+<!ENTITY printButton.tooltip          "打印此页面">
+
+<!ENTITY throbber.tooltip             "转到 &vendorShortName; 主页">
+
+<!ENTITY throbber.tooltip2            "转到 &brandShortName; 主页">
+
+<!ENTITY locationBar.tooltip          "输入搜索条件、关键词或网址">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "地址">
+<!ENTITY proxyIcon.tooltip            "拖放这个图标来建立一个对此页的链接">
+
+<!ENTITY searchItem.title             "查找">
+
+<!ENTITY bookmarksButton.label        "书签">
+<!ENTITY bookmarksButton.tooltip      "书签列表">
+<!ENTITY homeButton.label             "主页">
+<!ENTITY bookmarksToolbarItem.label   "书签工具栏项目">
+<!ENTITY bookmarksToolbarChevron.tooltip "显示更多书签">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "完成">
+
+<!ENTITY popupIcon.tooltiptext      "解锁这个站点的弹出内容">
+
+<!ENTITY viewSecurityInfo.label      "查看安全信息">
+<!ENTITY viewSecurityInfo.accesskey  "S">
+<!ENTITY viewCertificate.label       "查看证书">
+<!ENTITY viewCertificate.accesskey   "C">
+<!ENTITY viewCertManager.label       "打开证书管理器">
+<!ENTITY viewCertManager.accesskey   "M">
+
+<!ENTITY zoomIn.tooltiptext          "放大">
+<!ENTITY zoomOut.tooltiptext         "缩小">

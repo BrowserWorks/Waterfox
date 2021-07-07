@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti položky formuláře">
+<!ENTITY windowTitleImage.label "Vlastnosti obrázku formuláře">
+
+<!ENTITY InputType.label "Typ pole">
+<!ENTITY InputType.accesskey "p">
+<!ENTITY text.value "Text">
+<!ENTITY password.value "Heslo">
+<!ENTITY checkbox.value "Zaškrtávací tlačítko">
+<!ENTITY radio.value "Výběrové tlačítko">
+<!ENTITY submit.value "Tlačítko pro odeslání">
+<!ENTITY reset.value "Tlačítko pro obnovení">
+<!ENTITY file.value "Soubor">
+<!ENTITY hidden.value "Skrytý">
+<!ENTITY image.value "Obrázek">
+<!ENTITY button.value "Tlačítko">
+
+<!ENTITY InputSettings.label "Nastavení pole">
+<!ENTITY InputName.label "Název pole:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Název skupiny:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Hodnota pole:">
+<!ENTITY InputValue.accesskey "H">
+<!ENTITY InitialValue.label "Počáteční hodnota:">
+<!ENTITY InitialValue.accesskey "H">
+<!ENTITY InputChecked.label "Zaškrtnuto">
+<!ENTITY InputChecked.accesskey "Z">
+<!ENTITY InputSelected.label "Výchozí výběr">
+<!ENTITY InputSelected.accesskey "b">
+<!ENTITY InputReadOnly.label "Pouze pro čtení">
+<!ENTITY InputReadOnly.accesskey "t">
+<!ENTITY InputDisabled.label "Zakázáno">
+<!ENTITY InputDisabled.accesskey "n">
+<!ENTITY tabIndex.label "Rejstřík pro tab:">
+<!ENTITY tabIndex.accesskey "R">
+<!ENTITY TextSize.label "Velikost pole:">
+<!ENTITY TextSize.accesskey "p">
+<!ENTITY TextLength.label "Maximální délka:">
+<!ENTITY TextLength.accesskey "M">
+<!ENTITY AccessKey.label "Přístupová klávesa:">
+<!ENTITY AccessKey.accesskey "k">
+<!ENTITY Accept.label "Akceptovat typy:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Vlastnosti obrázku:">
+<!ENTITY ImageProperties.accesskey "o">

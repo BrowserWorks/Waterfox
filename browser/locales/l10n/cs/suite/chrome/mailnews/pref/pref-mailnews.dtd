@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Pošta a diskusní skupiny">
+<!ENTITY generalSettings.caption          "Obecné nastavení">
+<!ENTITY confirmMove.label                "Potvrzovat přesun složek do koše">
+<!ENTITY confirmMove.accesskey            "P">
+<!ENTITY preserveThreading.label          "Při seřazování zpráv uchovávat vlákna">
+<!ENTITY preserveThreading.accesskey      "s">
+<!ENTITY loadInBackground.label           "Po otevření přepněte na nový panel">
+<!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailBiffOnNewWindow.label        "Kontrolovat nové zprávy při spuštění klienta pošty a diskusních skupin">
+<!ENTITY mailBiffOnNewWindow.accesskey    "K">
+
+<!ENTITY defaultMailSettings.description  "Použít aplikaci &brandShortName; jako výchozí program pro:">
+<!ENTITY setDefaultMail.label             "Pošta">
+<!ENTITY setDefaultMail.accesskey         "o">
+<!ENTITY setDefaultNews.label             "Diskusní skupiny">
+<!ENTITY setDefaultNews.accesskey         "D">
+<!ENTITY setDefaultFeed.label             "Kanály">
+<!ENTITY setDefaultFeed.accesskey         "a">
+
+<!ENTITY useInternalSettings.description  "Použít &brandShortName; Mail &amp; Novinky při otevření odkazu pro:">
+<!ENTITY useInternalMail.label            "E-mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Novinky (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "o">
+
+<!ENTITY messengerStartPage.caption       "Úvodní stránka">
+<!ENTITY enableStartPage.label            "Při spuštění pošty zobrazovat v oblasti zpráv úvodní stránku ">
+<!ENTITY enableStartPage.accesskey        "z">
+<!ENTITY location.label                   "Adresa:">
+<!ENTITY location.accesskey               "A">
+<!ENTITY useDefault.label                 "Obnovit výchozí">
+<!ENTITY useDefault.accesskey             "b">
+<!ENTITY rememberLastMsg.label            "Pamatovat si poslední vybranou zprávu">
+<!ENTITY rememberLastMsg.accesskey        "m">

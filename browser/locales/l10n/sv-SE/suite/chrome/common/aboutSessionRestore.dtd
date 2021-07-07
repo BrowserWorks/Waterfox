@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Återställ session">
+<!ENTITY restorepage.pagetitle      "Vill du återställa din session?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Din tidigare session i &brandShortName; avslutades oväntat. Vi ber om ursäkt för den olägenhet som uppstod. Du kan återställa flikarna och fönstren från din tidigare session, eller starta en ny session om de inte längre behövs.">
+<!ENTITY restorepage.remedies       "Om &brandShortName; ofta stängs oväntat:">
+<!ENTITY restorepage.dueToChrome    "Pröva med att stänga av eventuella nyligen installerade tillägg i tilläggshanteraren.">
+<!ENTITY restorepage.dueToContent   "Pröva med att återställa sessionen utan de webbplatser du misstänker kan orsaka problemet:">
+
+<!ENTITY restorepage.restoreButton  "Återställ föregående session">
+<!ENTITY restorepage.restore.access "Å">
+<!ENTITY restorepage.cancelButton   "Starta ny session">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "Återställ">
+<!ENTITY restorepage.listHeader     "Fönster och flikar">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Fönster &#37;S">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption	"SSL/TLS プロトコルのバージョン">
+<!ENTITY SSLTLSWarnings.caption		"SSL/TLS の警告">
+<!ENTITY SSLMixedContent.caption	"混在コンテンツ">
+<!ENTITY SSLClientAuthMethod.caption	"クライアント証明書の選択">
+
+<!ENTITY pref.ssltls.title		"Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description		"安全な接続に使用する暗号化プロトコルを制限できます。単一のバージョンまたは連続するバージョンの範囲を選択してください。">
+<!ENTITY limit.enable.label		"有効:">
+<!ENTITY limit.tls10.label		"TLS 1.0">
+<!ENTITY limit.tls10.accesskey		"T">
+<!ENTITY limit.tls11.label		"TLS 1.1">
+<!ENTITY limit.tls11.accesskey		"1">
+<!ENTITY limit.tls12.label		"TLS 1.2">
+<!ENTITY limit.tls12.accesskey		"2">
+<!ENTITY limit.tls13.label		"TLS 1.3">
+<!ENTITY limit.tls13.accesskey		"3">
+
+<!ENTITY warn.description2		"&brandShortName; は閲覧中のウェブページのセキュリティ状態を警告できます。以下の設定時に警告ダイアログを表示します:">
+<!ENTITY warn.enteringsecure		"暗号化されたページを読み込むとき">
+<!ENTITY warn.enteringsecure.accesskey	"L">
+<!ENTITY warn.insecurepost		"暗号化されていないページから暗号化されていないページへデータを送信するとき">
+<!ENTITY warn.insecurepost.accesskey	"S">
+<!ENTITY warn.leavingsecure		"暗号化されたページから離れるとき">
+<!ENTITY warn.leavingsecure.accesskey	"a">
+
+<!ENTITY mixed.description			"暗号化されたページには、盗聴や詐欺に対して脆弱な暗号化されていないコンテンツが含まれることがあります。&brandShortName; はそのようなページを検出してブロックします:">
+<!ENTITY warn.mixedactivecontent		"暗号化されたページに安全でないコンテンツが含まれるとき警告する">
+<!ENTITY warn.mixedactivecontent.accesskey	"W">
+<!ENTITY block.activecontent			"暗号化されたページ上の安全でないコンテンツは読み込まない">
+<!ENTITY block.activecontent.accesskey		"D">
+<!ENTITY warn.mixeddisplaycontent		"暗号化されたページに他の混在コンテンツが含まれるとき警告する">
+<!ENTITY warn.mixeddisplaycontent.accesskey	"c">
+<!ENTITY block.displaycontent			"暗号化されたページ上の混在コンテンツは読み込まない">
+<!ENTITY block.displaycontent.accesskey		"m">
+
+<!ENTITY certselect.description		"個人証明書を要求されたとき、&brandShortName; がどのようにウェブサイトにセキュリティ証明書を提示するか決定してください:">
+<!ENTITY certselect.auto		"自動選択する">
+<!ENTITY certselect.auto.accesskey	"A">
+<!ENTITY certselect.ask			"毎回確認する">
+<!ENTITY certselect.ask.accesskey	"E">

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Thread">
+<!ENTITY fromColumn.label "Von">
+<!ENTITY recipientColumn.label "Empfänger">
+<!ENTITY attachmentColumn.label "Anhänge">
+<!ENTITY subjectColumn.label "Betreff">
+<!ENTITY dateColumn.label "Datum">
+<!ENTITY priorityColumn.label "Priorität">
+<!ENTITY tagsColumn.label "Tags">
+<!ENTITY accountColumn.label "Account">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Größe">
+<!ENTITY junkStatusColumn.label "Junk-Status">
+<!ENTITY unreadColumn.label "Ungelesen im Thread">
+<!ENTITY totalColumn.label "Gesamt im Thread">
+<!ENTITY readColumn.label "Gelesen">
+<!ENTITY receivedColumn.label "Empfangen">
+<!ENTITY flagColumn.label "Kennzeichnung">
+<!ENTITY locationColumn.label "Adresse">
+<!ENTITY idColumn.label "Empfangsreihenfolge">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Wählen Sie die anzuzeigenden Spalten">
+<!ENTITY threadColumn2.tooltip "Nachrichtenthreads anzeigen">
+<!ENTITY fromColumn2.tooltip "Nach Von sortieren">
+<!ENTITY recipientColumn2.tooltip "Nach Empfänger sortieren">
+<!ENTITY attachmentColumn2.tooltip "Nach Anhängen sortieren">
+<!ENTITY subjectColumn2.tooltip "Nach Betreff sortieren">
+<!ENTITY dateColumn2.tooltip "Nach Datum sortieren">
+<!ENTITY priorityColumn2.tooltip "Nach Priorität sortieren">
+<!ENTITY tagsColumn2.tooltip "Nach Tags sortieren">
+<!ENTITY accountColumn2.tooltip "Nach Account sortieren">
+<!ENTITY statusColumn2.tooltip "Nach Status sortieren">
+<!ENTITY sizeColumn2.tooltip "Nach Größe sortieren">
+<!ENTITY junkStatusColumn2.tooltip "Nach Junk-Status sortieren">
+<!ENTITY unreadColumn2.tooltip "Anzahl an ungelesenen Nachrichten im Thread">
+<!ENTITY totalColumn2.tooltip "Gesamte Anzahl an Nachrichten im Thread">
+<!ENTITY readColumn2.tooltip "Nach Gelesen sortieren">
+<!ENTITY receivedColumn2.tooltip "Nach Empfangsdatum sortieren">
+<!ENTITY flagColumn2.tooltip "Nach Kennzeichnung sortieren">
+<!ENTITY locationColumn2.tooltip "Nach Adresse sortieren">
+<!ENTITY idColumn2.tooltip "Nach Empfangsreihenfolge sortieren">

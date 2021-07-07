@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Jaustukai">
+<!ENTITY insertSmiley.accesskey "J">
+
+<!ENTITY smiley1Cmd.label "Šypsena">
+<!ENTITY smiley1Cmd.accesskey "Š">
+<!ENTITY smiley1Cmd.tooltip "Įterpti šypsenos jaustuką">
+<!ENTITY smiley2Cmd.label "Pyktis">
+<!ENTITY smiley2Cmd.accesskey "P">
+<!ENTITY smiley2Cmd.tooltip "Įterpti pykčio jaustuką">
+<!ENTITY smiley3Cmd.label "Mirktelėjimas">
+<!ENTITY smiley3Cmd.accesskey "M">
+<!ENTITY smiley3Cmd.tooltip "Įterpti mirktelėjimo jaustuką">
+<!ENTITY smiley4Cmd.label "Parodyti liežuvį">
+<!ENTITY smiley4Cmd.accesskey "l">
+<!ENTITY smiley4Cmd.tooltip "Įterpti rodomo liežuvio jaustuką">
+<!ENTITY smiley5Cmd.label "Juokas">
+<!ENTITY smiley5Cmd.accesskey "u">
+<!ENTITY smiley5Cmd.tooltip "Įterpti juoko jaustuką">
+<!ENTITY smiley6Cmd.label "Nepatogumas">
+<!ENTITY smiley6Cmd.accesskey "p">
+<!ENTITY smiley6Cmd.tooltip "Įterpti nepatogumo jaustuką">
+<!ENTITY smiley7Cmd.label "Nedrąsumas">
+<!ENTITY smiley7Cmd.accesskey "N">
+<!ENTITY smiley7Cmd.tooltip "Įterpti nedrąsumo jaustuką">
+<!ENTITY smiley8Cmd.label "Nustebimas">
+<!ENTITY smiley8Cmd.accesskey "t">
+<!ENTITY smiley8Cmd.tooltip "Įterpti nustebimo jaustuką">
+<!ENTITY smiley9Cmd.label "Bučinys">
+<!ENTITY smiley9Cmd.accesskey "B">
+<!ENTITY smiley9Cmd.tooltip "Įterpti bučinio jaustuką">
+<!ENTITY smiley10Cmd.label "Rėksmas">
+<!ENTITY smiley10Cmd.accesskey "R">
+<!ENTITY smiley10Cmd.tooltip "Įterpti rėksmo jaustuką">
+<!ENTITY smiley11Cmd.label "„Cool“">
+<!ENTITY smiley11Cmd.accesskey "o">
+<!ENTITY smiley11Cmd.tooltip "Įterpti „Cool“ jaustuką">
+<!ENTITY smiley12Cmd.label "Pinigai burnoje">
+<!ENTITY smiley12Cmd.accesskey "b">
+<!ENTITY smiley12Cmd.tooltip "Įterpti pinigų burnoje jaustuką">
+<!ENTITY smiley13Cmd.label "Pėda burnoje">
+<!ENTITY smiley13Cmd.accesskey "ė">
+<!ENTITY smiley13Cmd.tooltip "Įterpti pėdos burnoje jaustuką">
+<!ENTITY smiley14Cmd.label "Naivumas">
+<!ENTITY smiley14Cmd.accesskey "v">
+<!ENTITY smiley14Cmd.tooltip "Įterpti naivumo jaustuką">
+<!ENTITY smiley15Cmd.label "Verksmas">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "Įterpti verksmo jaustuką">
+<!ENTITY smiley16Cmd.label "Suspaustos lūpos">
+<!ENTITY smiley16Cmd.accesskey "l">
+<!ENTITY smiley16Cmd.tooltip "Įterpti suspaustų lūpų jaustuką">
+<!ENTITY SmileButton.label "Įdėkite šypsenėlę">
+<!ENTITY SmileButton.tooltip "Įterpti jaustuką">

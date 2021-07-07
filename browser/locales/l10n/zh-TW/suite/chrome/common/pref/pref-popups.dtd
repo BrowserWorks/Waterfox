@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "彈出型視窗 (Popup)">
+
+<!ENTITY pref.popups.caption            "彈出型視窗 (Popup)">
+
+<!ENTITY popupBlock.label               "阻擋未經要求開啟的彈出型視窗 (Popup)">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "管理權限">
+<!ENTITY viewPermissions.accesskey      "M">
+
+<!ENTITY whenBlock.description          "當有彈出型視窗被擋掉時:">
+<!ENTITY playSound.label                "播放聲音:">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY systemSound.label              "系統嗶聲">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "自訂聲音檔案">
+<!ENTITY customSound.accesskey          "C">
+
+<!ENTITY selectSound.label              "瀏覽…">
+<!ENTITY selectSound.accesskey          "o">
+<!ENTITY playSoundButton.label          "播放">
+<!ENTITY playSoundButton.accesskey      "l">
+
+<!ENTITY displayIcon.label              "在瀏覽器狀態列顯示圖示">
+<!ENTITY displayIcon.accesskey          "D">
+
+<!ENTITY displayNotification.label      "在內容區域的最上面顯示通知列">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "注意: 把所有彈出型視窗擋掉可能會讓有些網站的重要功能失效，像登入視窗可能也會被擋掉。關於怎麼設定要阻擋哪些網站而哪些不阻擋，請按說明。就算已阻擋，有些網站還是有奇怪的方法可以彈出廣告視窗來。">
+
+

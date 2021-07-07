@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title "Vyskakovací okna">
+
+<!ENTITY pref.popups.caption "Vyskakovací okna">
+
+<!ENTITY popupBlock.label "Blokovat nevyžádaná vyskakovací okna">
+<!ENTITY popupBlock.accesskey "B">
+
+<!ENTITY viewPermissions.label "Spravovat oprávnění">
+<!ENTITY viewPermissions.accesskey "S">
+
+<!ENTITY whenBlock.description "Při zablokování vyskakovacího okna:">
+<!ENTITY playSound.label "Přehrát zvuk:">
+<!ENTITY playSound.accesskey "P">
+<!ENTITY systemSound.label "Zvuk nové pošty v systému">
+<!ENTITY systemSound.accesskey "u">
+<!ENTITY customSound.label "Vlastní zvukový soubor">
+<!ENTITY customSound.accesskey "V">
+
+<!ENTITY selectSound.label "Procházet…">
+<!ENTITY selectSound.accesskey "c">
+<!ENTITY playSoundButton.label "Přehrát">
+<!ENTITY playSoundButton.accesskey "h">
+
+<!ENTITY displayIcon.label "Zobrazit ikonku ve stavovém řádku prohlížeče">
+<!ENTITY displayIcon.accesskey "o">
+
+<!ENTITY displayNotification.label "Zobrazit informační lištu v horní části obsahu stránky">
+<!ENTITY displayNotification.accesskey  "r">
+
+<!ENTITY popupNote.description "Poznámka: Blokování všech vyskakovacích oken může zapříčinit to, že některé servery, jako třeba přihlašovací okna do bank či obchodů, přestanou fungovat. Pro více informací, jak povolit konkrétním serverům používat vyskakovací okna, klepněte na tlačítko Nápověda.">
+

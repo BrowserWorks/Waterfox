@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "ชื่อ: ">
+<!ENTITY directoryName.accesskey           "ช">
+<!ENTITY directoryHostname.label           "ชื่อโฮสต์: ">
+<!ENTITY directoryHostname.accesskey       "อ">
+<!ENTITY directoryBaseDN.label             "Base DN: ">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "ค้นหา">
+<!ENTITY findButton.accesskey              "f">
+<!ENTITY directorySecure.label             "ใช้การเชื่อมต่อแบบปลอดภัย (SSL)">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "ทั่วไป">
+<!ENTITY Offline.tab                       "ออฟไลน์">
+<!ENTITY Advanced.tab                      "ขั้นสูง">
+<!ENTITY portNumber.label                  "หมายเลขพอร์ต: ">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "ตัวกรองการค้นหา: ">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "ขอบเขต: ">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "1 ระดับ">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "ทรีย่อย">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "ไม่ต้องส่งกลับมากกว่า">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "ผลลัพธ์">
+<!ENTITY offlineText.label                 "คุณสามารถดาวน์โหลดสำเนาภายในของไดเรกทอรีนี้เพื่อให้พร้อมใช้งานเมื่อคุณกำลังทำงานออฟไลน์">
+<!ENTITY saslMechanism.label               "วิธีการเข้าสู่ระบบ: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "ธรรมดา">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

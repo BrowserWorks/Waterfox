@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Tải xuống">
+<!ENTITY aboutDownloads.header                     "Tải xuống của bạn">
+<!ENTITY aboutDownloads.empty                      "Không có tải xuống nào">
+
+<!ENTITY aboutDownloads.open                       "Mở">
+<!ENTITY aboutDownloads.remove                     "Xóa">
+<!ENTITY aboutDownloads.removeAll                  "Xoá tất cả">
+<!ENTITY aboutDownloads.pause                      "Tạm dừng">
+<!ENTITY aboutDownloads.resume                     "Tiếp tục">
+<!ENTITY aboutDownloads.cancel                     "Hủy bỏ">
+<!ENTITY aboutDownloads.retry                      "Thử lại">

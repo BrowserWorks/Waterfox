@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title "Correo y noticias">
+<!ENTITY generalSettings.caption "Configuración general">
+<!ENTITY confirmMove.label "Confirmar cuando se muevan carpetas a la papelera">
+<!ENTITY confirmMove.accesskey "C">
+<!ENTITY preserveThreading.label "Preservar las conversaciones al ordenar mensajes">
+<!ENTITY preserveThreading.accesskey "v">
+<!ENTITY loadInBackground.label "Cambiar a las pestañas nuevas al abrirlas">
+<!ENTITY loadInBackground.accesskey "m">
+<!ENTITY mailBiffOnNewWindow.label "Buscar correo nuevo sólo tras abrir Correo y noticias">
+<!ENTITY mailBiffOnNewWindow.accesskey "B">
+<!ENTITY defaultMailSettings.description "Hacer que &brandShortName; sea la aplicación predeterminada para:">
+<!ENTITY setDefaultMail.label "Correo">
+<!ENTITY setDefaultMail.accesskey "C">
+<!ENTITY setDefaultNews.label "Noticias">
+<!ENTITY setDefaultNews.accesskey "N">
+<!ENTITY setDefaultFeed.label "Canales">
+<!ENTITY setDefaultFeed.accesskey "e">
+<!ENTITY useInternalSettings.description "Usar Correo y Noticias &brandShortName; al abrir enlaces del navegador de:">
+<!ENTITY useInternalMail.label "Correo (mailto:)">
+<!ENTITY useInternalMail.accesskey "a">
+<!ENTITY useInternalNews.label "Noticias (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey "o">
+<!ENTITY messengerStartPage.caption "Página de inicio del correo">
+<!ENTITY enableStartPage.label "Al iniciar Correo, mostrar esta página en el área de mensaje">
+<!ENTITY enableStartPage.accesskey "j">
+<!ENTITY location.label "Dirección:">
+<!ENTITY location.accesskey "D">
+<!ENTITY useDefault.label "Rest. valores predet.">
+<!ENTITY useDefault.accesskey "D">
+<!ENTITY rememberLastMsg.label "Recordar el último mensaje seleccionado">
+<!ENTITY rememberLastMsg.accesskey "R">

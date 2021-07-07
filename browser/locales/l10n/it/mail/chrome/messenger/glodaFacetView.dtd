@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (glodaFacetView.filters.label): Label at the top of the
+     faceting sidebar.  Serves as a header both for the checkboxes under it as
+     well for labeled facets with multiple options. -->
+<!ENTITY glodaFacetView.filters.label "Visualizza:">
+
+<!-- LOCALIZATION NOTE (glodaFacetView.loading.label): Label that appears when
+     the search results take a long time to appear. -->
+<!ENTITY glodaFacetView.loading.label "Ricerca…">
+
+<!-- LOCALIZATION NOTE (glodaFacetView.empty.label): Label that appears when
+     there are no results that match the search query. -->
+<!ENTITY glodaFacetView.empty.label "Nessun risultato disponibile">
+
+<!-- LOCALIZATION NOTE (glodaFacetView.pageMore.label): Label at the bottom
+     of the results list to show more hits. -->
+<!ENTITY glodaFacetView.pageMore.label "Altro »">
+
+<!-- LOCALIZATION NOTE(glodaFacetView.results.message.openEmailAsList.label2): The
+     label for the button/link that causes us to display all of the emails in
+     the active set in a new thread pane display tab. -->
+<!ENTITY glodaFacetView.openEmailAsList.label "Mostra risultati come elenco">
+
+<!-- LOCALIZATION NOTE(glodaFacetView.results.message.openEmailAsList.tooltip):
+     The tooltip to display when hovering over the openEmailAsList label. -->
+<!ENTITY glodaFacetView.openEmailAsList.tooltip "Mostra tutti i messaggi del gruppo attivo in una nuova scheda.">

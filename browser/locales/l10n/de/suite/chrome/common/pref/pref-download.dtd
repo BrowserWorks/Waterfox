@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Downloads">
+
+<!ENTITY downloadBehavior.label         "Beim Starten eines Downloads">
+<!ENTITY doNothing.label                "Nichts öffnen">
+<!ENTITY doNothing.accesskey            "N">
+<!ENTITY openProgressDialog.label       "Fortschritts-Dialog öffnen">
+<!ENTITY openProgressDialog.accesskey   "F">
+<!ENTITY openDM.label                   "Download-Verwaltung öffnen">
+<!ENTITY openDM.accesskey               "M">
+<!ENTITY flashWhenOpen.label            "Download-Verwaltung nur aufblinken lassen, wenn er schon offen ist">
+<!ENTITY flashWhenOpen.accesskey        "u">
+
+<!ENTITY downloadLocation.label         "Speicherort von Dateien">
+<!ENTITY saveTo.label                   "Dateien speichern in">
+<!ENTITY saveTo.accesskey               "s">
+<!ENTITY chooseDownloadFolder.label     "Ordner wählen…">
+<!ENTITY chooseDownloadFolder.accesskey "h">
+<!ENTITY alwaysAsk.label                "Immer nachfragen, wo Dateien gespeichert werden sollen">
+<!ENTITY alwaysAsk.accesskey            "m">
+
+<!ENTITY downloadHistory.label          "Download-Liste">
+<!ENTITY removeEntries.label            "Download-Einträge entfernen">
+<!ENTITY removeEntries.accesskey        "o">
+<!ENTITY whenCompleted.label            "Wenn Sie beendet sind">
+<!ENTITY whenQuittingApp.label          "Beim Beenden von &brandShortName;">
+<!ENTITY neverRemove.label              "Nie">
+
+<!ENTITY finishedBehavior.label         "Wenn ein Download abgeschlossen wird">
+<!ENTITY playSound.label                "Einen Klang abspielen">
+<!ENTITY playSound.accesskey            "K">
+<!ENTITY showAlert.label                "Warnung anzeigen">
+<!ENTITY showAlert.accesskey            "W">
+<!ENTITY browse.label                   "Durchsuchen…">
+<!ENTITY browse.accesskey               "D">
+<!ENTITY playButton.label               "Wiedergabe">
+<!ENTITY playButton.accesskey           "W">

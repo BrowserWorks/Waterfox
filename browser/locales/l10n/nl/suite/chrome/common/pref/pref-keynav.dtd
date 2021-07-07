@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Toetsenbordnavigatie">
+<!ENTITY tabNavigationBehavior.label "Tab-toetsnavigatie">
+<!ENTITY tabNavigationLinks.label "Koppelingen">
+<!ENTITY tabNavigationLinks.accesskey "K">
+<!ENTITY tabNavigationForms.label "Knoppen, keuzerondjes, selectievakjes en selectielijsten">
+<!ENTITY tabNavigationForms.accesskey "n">
+<!ENTITY tabNavigationTextboxes.label "Let op: tekstvakken zijn altijd onderdeel van de tabvolgorde.">
+<!ENTITY tabNavigationDesc.label "Wanneer Tab of Shift+Tab wordt ingedrukt, omschakelen tussen:">
+<!ENTITY accessibilityBrowseWithCaret.label "Met cursor navigeren">
+<!ENTITY browseWithCaretDesc.label "Cursornavigatie maakt het mogelijk om te navigeren en selecteren in pagina’s met gebruik van cursortoetsen die een visuele cursor bewegen.">
+<!ENTITY browseWithCaretUse.label "Cursornavigatie gebruiken">
+<!ENTITY browseWithCaretUse.accesskey "C">
+<!ENTITY browseWithCaretShortCut.label "Gebruik F7 om cursornavigatie in-/uit te schakelen">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Waarschuw bij het inschakelen van cursornavigatie">
+<!ENTITY browseWithCaretWarn.accesskey "W">
+
+<!ENTITY modifiers.label "Modifiers">
+<!ENTITY acceleratorKey.label "Versnellingstoets:">
+<!ENTITY acceleratorKey.accesskey "V">
+<!ENTITY menuAccessKey.label "Accesskey menu:">
+<!ENTITY menuAccessKey.accesskey "m">
+<!ENTITY modifiersDesc.label "Noot: een waarde van nul schakelt een modifiertoets uit.">

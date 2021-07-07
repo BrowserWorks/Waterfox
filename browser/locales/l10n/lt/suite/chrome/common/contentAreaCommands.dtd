@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Context Menu -->
+
+<!ENTITY popupWindowRejectCmd.label     "Neatverti iškylančiųjų langų iš šios svetainės">
+<!ENTITY popupWindowRejectCmd.accesskey "N">
+<!ENTITY popupWindowAllowCmd.label      "Leisti atverti iškylančiuosius langus iš šios svetainės">
+<!ENTITY popupWindowAllowCmd.accesskey  "L">
+<!ENTITY openLinkCmdInTab.label       "Atverti saitą naujoje kortelėje">
+<!ENTITY openLinkCmdInTab.accesskey   "v">
+<!ENTITY openLinkCmd.label            "Atverti saitą naujame lange">
+<!ENTITY openLinkCmd.accesskey        "t">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Atverti saitą privačiojo naršymo lange">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "p">
+<!ENTITY openLinkInWindowCmd.label    "Atverti">
+<!ENTITY openLinkInWindowCmd.accesskey "A">
+<!ENTITY openFrameCmd.label           "Atverti kadrą naujame lange">
+<!ENTITY openFrameCmd.accesskey       "A">
+<!ENTITY openFrameCmdInTab.label      "Atverti kadrą naujoje kortelėje">
+<!ENTITY openFrameCmdInTab.accesskey  "t">
+<!ENTITY keywordfield.label           "Įdėti šios paieškos reikšminį žodį…">
+<!ENTITY keywordfield.accesskey       "p">
+<!ENTITY showOnlyThisFrameCmd.label     "Rodyti tik šį kadrą">
+<!ENTITY showOnlyThisFrameCmd.accesskey "o">
+<!ENTITY goBackCmd.label              "Atgal">
+<!ENTITY goBackCmd.accesskey          "A">
+<!ENTITY goForwardCmd.label           "Pirmyn">
+<!ENTITY goForwardCmd.accesskey       "P">
+<!ENTITY goUpCmd.label                "Aukštyn">
+<!ENTITY goUpCmd.accesskey            "A">
+<!ENTITY reloadCmd.label              "Atsiųsti iš naujo">
+<!ENTITY reloadCmd.accesskey          "n">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Stabdyti">
+<!ENTITY stopCmd.accesskey            "b">
+<!ENTITY reloadFrameCmd.label         "Atsiųsti kadrą iš naujo">
+<!ENTITY reloadFrameCmd.accesskey     "n">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Rodyti atrankos pirminį tekstą">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Rodyti „MathML“ pirminį tekstą">
+<!ENTITY viewPartialSourceCmd.accesskey "M">
+<!ENTITY viewPageSourceCmd.label      "Pirminis tekstas">
+<!ENTITY viewPageSourceCmd.accesskey  "t">
+<!ENTITY viewFrameSourceCmd.label     "Kadro pirminis tekstas">
+<!ENTITY viewFrameSourceCmd.accesskey "m">
+<!ENTITY viewPageInfoCmd.label        "Informacija apie tinklalapį">
+<!ENTITY viewPageInfoCmd.accesskey    "I">
+<!ENTITY viewFrameInfoCmd.label       "Informacija apie kadrą">
+<!ENTITY viewFrameInfoCmd.accesskey   "I">
+<!ENTITY fitImageCmd.label            "Priderinti paveikslą prie lango">
+<!ENTITY fitImageCmd.accesskey        "l">
+<!ENTITY reloadImageCmd.label         "Atsiųsti paveikslą iš naujo">
+<!ENTITY reloadImageCmd.accesskey     "n">
+<!ENTITY viewImageCmd.label           "Rodyti paveikslą">
+<!ENTITY viewImageCmd.accesskey       "y">
+<!ENTITY viewVideoCmd.label           "Rodyti vaizdo įrašą">
+<!ENTITY viewVideoCmd.accesskey       "y">
+<!ENTITY viewBGImageCmd.label         "Rodyti fono piešinį">
+<!ENTITY viewBGImageCmd.accesskey     "f">
+<!ENTITY setDesktopBackgroundCmd.label     "Naudoti kaip darbalaukio foną…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "d">
+<!ENTITY bookmarkPageCmd.label        "Tinklalapį įrašyti į adresyną">
+<!ENTITY bookmarkPageCmd.accesskey    "š">
+<!ENTITY bookmarkLinkCmd.label        "Saitą įrašyti į adresyną">
+<!ENTITY bookmarkLinkCmd.accesskey    "S">
+<!ENTITY bookmarkFrameCmd.label       "Kadrą įrašyti į adresyną">
+<!ENTITY bookmarkFrameCmd.accesskey   "d">
+<!ENTITY savePageAsCmd.label          "Įrašyti tinklalapį kaip…">
+<!ENTITY savePageCmd.label            "Įrašyti tinklalapį">
+<!ENTITY savePageCmd.accesskey        "r">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Įrašyti kadrą kaip…">
+<!ENTITY saveFrameCmd.label           "Įrašyti kadrą">
+<!ENTITY saveFrameCmd.accesskey       "r">
+
+
+<!ENTITY saveLinkAsCmd.label          "Įrašyti saistomą objektą kaip…">
+<!ENTITY saveLinkCmd.label            "Įrašyti saistomą objektą">
+<!ENTITY saveLinkCmd.accesskey        "Į">
+<!ENTITY saveImageAsCmd.label         "Įrašyti paveikslą kaip…">
+<!ENTITY saveImageCmd.label           "Įrašyti paveikslą">
+<!ENTITY saveImageCmd.accesskey       "r">
+<!ENTITY saveVideoCmd.label           "Įrašyti vaizdą kaip…">
+<!ENTITY saveVideoCmd.accesskey       "r">
+<!ENTITY saveAudioCmd.label           "Įrašyti garsą kaip…">
+<!ENTITY saveAudioCmd.accesskey       "r">
+<!ENTITY copyLinkCmd.label            "Kopijuoti saito adresą">
+<!ENTITY copyLinkCmd.accesskey        "j">
+<!ENTITY copyImageCmd.label           "Kopijuoti paveikslo adresą">
+<!ENTITY copyImageCmd.accesskey       "i">
+<!ENTITY copyVideoURLCmd.label        "Kopijuoti vaizdo adresą">
+<!ENTITY copyVideoURLCmd.accesskey    "i">
+<!ENTITY copyAudioURLCmd.label        "Kopijuoti garso adresą">
+<!ENTITY copyAudioURLCmd.accesskey    "i">
+<!ENTITY metadataCmd.label            "Savybės">
+<!ENTITY metadataCmd.accesskey        "S">
+<!ENTITY copyEmailCmd.label           "Kopijuoti el. pašto adresą">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label          "Kadras">
+<!ENTITY thisFrameMenu.accesskey      "K">
+<!ENTITY mediaPlay.label              "Groti">
+<!ENTITY mediaPlay.accesskey          "G">
+<!ENTITY mediaPause.label             "Pristabdyti">
+<!ENTITY mediaPause.accesskey         "P">
+<!ENTITY mediaMute.label              "Išjungti garsą">
+<!ENTITY mediaMute.accesskey          "r">
+<!ENTITY mediaUnmute.label            "Įjungti garsą">
+<!ENTITY mediaUnmute.accesskey        "r">
+<!ENTITY mediaPlaybackRate.label        "Atkūrimo sparta">
+<!ENTITY mediaPlaybackRate.accesskey    "o">
+<!ENTITY mediaPlaybackRate050.label     "Sumažinta (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "S">
+<!ENTITY mediaPlaybackRate100.label     "Normali">
+<!ENTITY mediaPlaybackRate100.accesskey "N">
+
+
+<!ENTITY mediaPlaybackRate150.label     "Padidinta (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "P">
+<!ENTITY mediaPlaybackRate200.label     "Dviguba">
+<!ENTITY mediaPlaybackRate200.accesskey "D">
+
+
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Rodyti mygtukus">
+<!ENTITY mediaShowControls.accesskey  "m">
+<!ENTITY mediaHideControls.label      "Nerodyti mygtukų">
+<!ENTITY mediaHideControls.accesskey  "m">
+<!ENTITY videoFullScreen.label        "Rodyti visame ekrane">
+<!ENTITY videoFullScreen.accesskey    "v">
+<!ENTITY videoSaveImage.label         "Įrašyti kadrą kaip…">
+<!ENTITY videoSaveImage.accesskey     "k">
+<!ENTITY videoShowStats.label         "Rodyti statistiką">
+<!ENTITY videoShowStats.accesskey     "s">
+<!ENTITY videoHideStats.label         "Nerodyti statistikos">
+<!ENTITY videoHideStats.accesskey     "s">
+<!ENTITY search.accesskey             "š">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Pakeisti puslapio kryptį">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "a">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Pakeisti teksto kryptį">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "k">
+<!ENTITY spellAddToDictionary.label     "Įtraukti į žodyną">
+<!ENTITY spellAddToDictionary.accesskey "t">
+<!ENTITY spellUndoAddToDictionary.label      "Atšaukti įtraukimą į žodyną">
+<!ENTITY spellUndoAddToDictionary.accesskey  "u">
+<!ENTITY spellIgnoreWord.label          "Praleisti žodį">
+<!ENTITY spellIgnoreWord.accesskey      "P">
+<!ENTITY spellCheckEnable.label         "Tikrinti rašybą">
+<!ENTITY spellCheckEnable.accesskey     "r">
+<!ENTITY spellNoSuggestions.label       "(Nėra rašybos siūlymų)">
+<!ENTITY spellDictionaries.label        "Kalbos">
+<!ENTITY spellDictionaries.accesskey    "K">
+<!ENTITY spellAddDictionaries.label     "Daugiau žodynų…">
+<!ENTITY spellAddDictionaries.accesskey "D">
+<!-- Developer Tools -->
+

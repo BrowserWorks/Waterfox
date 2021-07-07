@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Клавиатура">
+<!ENTITY tabNavigationBehavior.label "Навигация с помощью клавиши Tab">
+<!ENTITY tabNavigationLinks.label "Ссылкам">
+<!ENTITY tabNavigationLinks.accesskey "с">
+<!ENTITY tabNavigationForms.label "Кнопкам, переключателям, флажкам и спискам">
+<!ENTITY tabNavigationForms.accesskey "н">
+<!ENTITY tabNavigationTextboxes.label "Примечание: вы всегда можете попасть с помощью клавиши Tab в поля ввода текста и области прокрутки">
+<!ENTITY tabNavigationDesc.label "При нажатой клавише Tab или комбинации Shift+Tab перемещаться по:">
+<!ENTITY accessibilityBrowseWithCaret.label "Режим активного курсора">
+<!ENTITY browseWithCaretDesc.label "Режим активного курсора позволяет вам передвигаться по страницам и выделять на них текст, используя клавиши курсора для перемещения видимого курсора.">
+<!ENTITY browseWithCaretUse.label "Использовать режим активного курсора">
+<!ENTITY browseWithCaretUse.accesskey "п">
+<!ENTITY browseWithCaretShortCut.label "Использовать F7 для переключения режима активного курсора">
+<!ENTITY browseWithCaretShortCut.accesskey "л">
+<!ENTITY browseWithCaretWarn.label "Предупреждать меня перед включением режима активного курсора">
+<!ENTITY browseWithCaretWarn.accesskey "ж">
+
+<!ENTITY modifiers.label "Модификаторы">
+<!ENTITY acceleratorKey.label "Клавиша Accelerator:">
+<!ENTITY acceleratorKey.accesskey "A">
+<!ENTITY menuAccessKey.label "Клавиша доступа к меню:">
+<!ENTITY menuAccessKey.accesskey "м">
+<!ENTITY modifiersDesc.label "Примечание. Нулевое значение отключает клавишу модификатора.">

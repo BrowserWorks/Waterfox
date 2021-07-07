@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Innehåll">
+<!ENTITY pref.content.description               "Dessa inställningar påverkar hur webbplats- och meddelandeinnehåll visas i &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Webbplatsikoner">
+<!ENTITY useSiteIcons.label                     "Visa webbplatsikoner">
+<!ENTITY useSiteIcons.accesskey                 "i">
+<!ENTITY useFavIcons2.label                     "Försök använda serverns ikon när sidan inte anger någon">
+<!ENTITY useFavIcons2.accesskey                 "r">
+
+<!ENTITY scrolling.label                        "Rullning">
+<!ENTITY useAutoScroll.label                    "Använd automatisk rullning">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Använd mjuk rullning">
+<!ENTITY useSmoothScroll.accesskey              "n">
+
+<!ENTITY zoomPrefs.label                        "Zoominställningar">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Spännvidd från">
+<!ENTITY minZoom.accesskey                      "f">
+<!ENTITY maxZoom.label                          "till">
+<!ENTITY maxZoom.accesskey                      "i">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY defaultZoom.label                      "Standardzoom">
+<!ENTITY defaultZoom.accesskey                  "d">
+
+<!ENTITY siteSpecific.label                     "Kom ihåg vald zoomnivå för varje webbplats separat">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY textZoomOnly.label                     "Zooma bara text i stället för hela sidor">
+<!ENTITY textZoomOnly.accesskey                 "Z">
+<!ENTITY enableAutomaticImageResizing.label     "Förminska stora bilder så att de ryms i webbfönstret">
+<!ENTITY enableAutomaticImageResizing.accesskey "F">
+
+<!ENTITY allowHWAccel.label                     "Använd hårdvaruacceleration när det är tillgängligt">
+<!ENTITY allowHWAccel.accesskey                 "h">
+<!ENTITY blockAutoRefresh.label                 "Varna när webbplatsen försöker skicka vidare eller ladda om sidan">
+<!ENTITY blockAutoRefresh.accesskey             "V">
+
+<!ENTITY showZoomStatusPanel.label              "Visa zoomkontrollerna i statusfältet">

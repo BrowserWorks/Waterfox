@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label			"アドレス帳">
+<!ENTITY Addrbook.accesskey		"B">
+<!ENTITY GeneratedName.label		"名前">
+<!ENTITY GeneratedName.accesskey	"N">
+<!ENTITY PrimaryEmail.label		"メールアドレス">
+<!ENTITY PrimaryEmail.accesskey		"E">
+<!ENTITY Company.label			"組織">
+<!ENTITY Company.accesskey		"z">
+<!ENTITY _PhoneticName.label		"よみがな">
+<!ENTITY _PhoneticName.accesskey	"o">
+<!ENTITY NickName.label			"ニックネーム">
+<!ENTITY NickName.accesskey		"i">
+<!ENTITY SecondEmail.label		"別のメールアドレス">
+<!ENTITY SecondEmail.accesskey		"l">
+<!ENTITY Department.label		"部門">
+<!ENTITY Department.accesskey		"r">
+<!ENTITY JobTitle.label			"役職">
+<!ENTITY JobTitle.accesskey		"T">
+<!ENTITY CellularNumber.label		"携帯電話">
+<!ENTITY CellularNumber.accesskey	"M">
+<!ENTITY PagerNumber.label		"ポケットベル">
+<!ENTITY PagerNumber.accesskey		"P">
+<!ENTITY FaxNumber.label		"FAX">
+<!ENTITY FaxNumber.accesskey		"F">
+<!ENTITY HomePhone.label		"電話 (自宅)">
+<!ENTITY HomePhone.accesskey		"H">
+<!ENTITY WorkPhone.label		"電話 (会社)">
+<!ENTITY WorkPhone.accesskey		"W">
+<!ENTITY ChatName.label			"チャットネーム">
+<!ENTITY ChatName.accesskey		"C">
+<!ENTITY sortAscending.label		"昇順">
+<!ENTITY sortAscending.accesskey	"A">
+<!ENTITY sortDescending.label		"降順">
+<!ENTITY sortDescending.accesskey	"D">

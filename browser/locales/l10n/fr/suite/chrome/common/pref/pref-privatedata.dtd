@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
+    These entities go on top of the sanitize.dtd definitions
+-->
+<!ENTITY pref.privatedata.title           "Vie privée">
+
+
+<!ENTITY clearPrivateData.label           "Effacer mes traces">
+
+<!ENTITY alwaysClear.label                "Toujours effacer mes informations personnelles à la fermeture de &brandShortName;">
+<!ENTITY alwaysClear.accesskey            "T">
+
+<!--LOCALIZATION NOTE : The askBeforeClear label is
+    no longer used but we might bring it back later
+-->
+<!ENTITY askBeforeClear.label             "Demander avant d’effacer mes traces">
+<!ENTITY askBeforeClear.accesskey         "D">
+
+<!ENTITY clearDataSettings.label          "Quand je demande à &brandShortName; d’effacer mes traces, supprimer les éléments suivants :">
+
+<!ENTITY clearData.label "Effacer ces données personnelles :">
+<!ENTITY clearData.cpd.label "Manuellement">
+<!ENTITY clearData.onShutdown.label "À la fermeture">
+
+
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+<!ENTITY clearDataDialog.label            "Effacer mes traces maintenant…">
+<!ENTITY clearDataSilent.label            "Effacer mes traces maintenant">
+<!ENTITY clearDataDialog.accesskey        "m">

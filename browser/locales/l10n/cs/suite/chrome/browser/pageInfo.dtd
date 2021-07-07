@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "Kopírovat">
+<!ENTITY  copy.accesskey         "K">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Vybrat vše">
+<!ENTITY  selectall.accesskey    "a">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Kopírovat odkazy">
+<!ENTITY  copyLinks.accesskey       "p">
+<!ENTITY  openInNewTab.label        "Otevřít v novém panelu">
+<!ENTITY  openInNewTab.accesskey    "O">
+<!ENTITY  openInNewWindow.label     "Otevřít v novém okně">
+<!ENTITY  openInNewWindow.accesskey "t">
+
+<!ENTITY  generalTab            "Obecné">
+<!ENTITY  generalTab.accesskey  "O">
+<!ENTITY  generalTitle          "Název:">
+<!ENTITY  generalURL            "Adresa:">
+<!ENTITY  generalType           "Typ:">
+<!ENTITY  generalMode           "Režim vykreslování:">
+<!ENTITY  generalSize           "Velikost:">
+<!ENTITY  generalReferrer       "Odkazující URL:">
+<!ENTITY  generalSource         "Zdroj:">
+<!ENTITY  generalModified       "Změněno:">
+<!ENTITY  generalEncoding2      "Znaková sada textu:">
+<!ENTITY  generalMetaName       "Název">
+<!ENTITY  generalMetaContent    "Obsah">
+<!ENTITY  generalSecurityDetails           "Podrobnosti">
+<!ENTITY  generalSecurityDetails.accesskey "P">
+
+<!ENTITY  formsTab              "Formuláře">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "Akce formuláře">
+<!ENTITY  formMethod            "Metoda">
+<!ENTITY  formName              "Název">
+<!ENTITY  formEncoding          "Znaková sada:">
+<!ENTITY  formTarget            "Cíl:">
+<!ENTITY  formFields            "Prvky:">
+<!ENTITY  formLabel             "Označení">
+<!ENTITY  formFName             "Název pole">
+<!ENTITY  formType              "Typ">
+<!ENTITY  formCValue            "Současná hodnota">
+
+<!ENTITY  linksTab              "Odkazy">
+<!ENTITY  linksTab.accesskey    "d">
+<!ENTITY  linkName              "Název">
+<!ENTITY  linkAddress           "Adresa">
+<!ENTITY  linkType              "Typ">
+<!ENTITY  linkTarget            "Cíl">
+<!ENTITY  linkAccessKey         "Klávesová zkratka">
+
+<!ENTITY  mediaTab              "Média">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Adresa:">
+<!ENTITY  mediaAlt              "Alternativní text:">
+<!ENTITY  mediaLocation         "Umístění:">
+<!ENTITY  mediaText             "Přidružený text:">
+<!ENTITY  mediaAltHeader        "Alternativní text">
+<!ENTITY  mediaAddress          "Adresa">
+<!ENTITY  mediaType             "Typ">
+<!ENTITY  mediaSize             "Velikost">
+<!ENTITY  mediaCount            "Počet">
+<!ENTITY  mediaDimensions       "Rozměry:">
+<!ENTITY  mediaPhysDimensions   "Skutečné rozměry:">
+<!ENTITY  mediaTitle            "Název:">
+<!ENTITY  mediaDimension        "Rozměry:">
+<!ENTITY  mediaLongdesc         "Dlouhý popis:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Uložit jako…">
+<!ENTITY  mediaSaveAs.accesskey "j">
+<!ENTITY  mediaSaveAs2.accesskey "a">
+<!ENTITY  mediaPreview          "Náhled:">
+
+<!ENTITY  feedTab               "Kanály">
+<!ENTITY  feedTab.accesskey     "K">
+<!ENTITY  feedSubscribe         "Odebírat">
+<!ENTITY  feedSubscribe.accesskey "O">
+
+<!ENTITY  permTab               "Oprávnění">
+<!ENTITY  permTab.accesskey     "p">
+<!ENTITY  permUseDefault        "Použít výchozí">
+<!ENTITY  permAskAlways         "Vždy se zeptat">
+<!ENTITY  permAllow             "Povolit">
+<!ENTITY  permAllowSession      "Povolit pro relaci">
+<!ENTITY  permBlock             "Blokovat">
+<!ENTITY  permissionsFor        "Oprávnění pro server:">
+<!ENTITY  permImage             "Načítat obrázky">
+<!ENTITY  permPopup             "Otevírat vyskakovací okna">
+<!ENTITY  permCookie            "Ukládat cookies">
+<!ENTITY  permNotifications     "Zobrazovat oznámení">
+<!ENTITY  permInstall           "Instalovat doplňky">
+<!ENTITY  permGeo               "Prozradit polohu">
+
+<!ENTITY  securityTab           "Zabezpečení">
+<!ENTITY  securityTab.accesskey "b">
+<!ENTITY  securityHeader        "Bezpečnostní informace o této stránce">
+<!ENTITY  securityView.certView "Zobrazit certifikát">
+<!ENTITY  securityView.accesskey "c">
+<!ENTITY  securityView.unknown   "neznámý">
+
+
+<!ENTITY  securityView.identity.header   "Identita webového serveru">
+<!ENTITY  securityView.identity.owner    "Vlastník:">
+<!ENTITY  securityView.identity.domain   "Webový server: ">
+<!ENTITY  securityView.identity.verifier "Ověřil:">
+
+<!ENTITY  securityView.identity.validity "Platnost do:">
+
+<!ENTITY  securityView.privacy.header                   "Soukromí a historie">
+<!ENTITY  securityView.privacy.history                  "Navštívil jsem už někdy tento server?">
+<!ENTITY  securityView.privacy.cookies                  "Má tento server na mém počítači uloženy nějaké cookies?">
+<!ENTITY  securityView.privacy.viewCookies              "Zobrazit cookies">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "Z">
+<!ENTITY  securityView.privacy.passwords                "Mám pro tento server uložená hesla?">
+<!ENTITY  securityView.privacy.viewPasswords            "Zobrazit uložená hesla">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "h">
+
+<!ENTITY  securityView.technical.header                 "Technické detaily">

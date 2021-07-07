@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title "Crear nuevo calendario">
+<!ENTITY wizard.label "Crear un nuevo calendario">
+<!ENTITY wizard.description "Ubique su calendario">
+<!ENTITY initialpage.description "Su calendario puede guardarse en su ordenador o en un servidor, permitiendo así acceder a él remotamente o compartirlo con sus amigos o compañeros de trabajo.">
+<!ENTITY initialpage.computer.label "En mi ordenador">
+<!ENTITY initialpage.network.label "En la red">
+<!ENTITY locationpage.description "Proporcione información necesaria para acceder a su calendario remoto">
+<!ENTITY locationpage.login.description "Opcional: introduzca un nombre de usuario y una contraseña">
+<!ENTITY locationpage.username.label "Nombre de usuario:">
+<!ENTITY locationpage.password.label "Contraseña:">
+<!ENTITY custompage.shortdescription "Personalizar su calendario">
+<!ENTITY custompage.longdescription "Puede dar un apodo a su calendario y colorear los eventos de éste.">
+<!ENTITY finishpage.shortdescription "Calendario creado">
+<!ENTITY finishpage.longdescription "Se ha creado su calendario.">
+<!ENTITY sourcetabs.other.label "Otro">
+<!ENTITY buttons.create.label "Crear calendario">
+<!ENTITY buttons.create.accesskey "r">
+<!ENTITY buttons.find.label "Encontrar calendarios">
+<!ENTITY buttons.find.accesskey "E">
+<!ENTITY buttons.back.label "Atrás">
+<!ENTITY buttons.back.accesskey "A">
+<!ENTITY buttons.subscribe.label "Suscribirse">
+<!ENTITY buttons.subscribe.accesskey "S">
+<!ENTITY calendartype.label "Tipo del calendario:">
+<!ENTITY location.label "Dirección:">
+<!ENTITY location.placeholder "URL o nombre del servidor de calendario">
+<!ENTITY network.nocredentials.label "Esta dirección no requiere credenciales">
+<!ENTITY network.loading.description "Espere mientras se descubren sus calendarios.">
+<!ENTITY network.notfound.description "No se han podido encontrar calendarios en esta dirección. Revise su configuración.">
+<!ENTITY network.authfail.description "Las credenciales que ha introducido no han sido aceptadas. Revise su configuración.">
+<!ENTITY network.subscribe.single.description "Seleccione los calendario a los que desea suscribirse.">
+<!ENTITY network.subscribe.multiple.description "Hay disponibles múltiples tipos de calendario en esta dirección. Seleccione el tipo de calendario y luego marque los calendario a los que desea suscribirse.">

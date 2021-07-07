@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+
+<!ENTITY prefWindow.title "Nuostatos">
+<!ENTITY categoryHeader "Nuostatų grupės">
+
+<!ENTITY appear.label "Išvaizda">
+
+<!ENTITY fonts.label "Šriftai">
+<!ENTITY colors.label "Spalvos">
+
+
+
+<!ENTITY languages.label "Kalbos">
+
+<!ENTITY locationBar.label "Adreso laukas">
+<!ENTITY search.label "Paieška saityne">
+<!ENTITY tabWindows.label "Kortelės">
+<!ENTITY links.label "Saitų atvėrimas">
+
+
+<!ENTITY security.label "Privatumas ir saugumas">
+<!ENTITY privatedata.label "Privatieji duomenys">
+<!ENTITY cookies.label "Slapukai">
+<!ENTITY images.label "Paveikslai">
+<!ENTITY popups.label "Iškylantieji langai">
+<!ENTITY passwords.label "Slaptažodžiai">
+<!ENTITY masterpass.label "Pagrindiniai slaptažodžiai">
+
+<!ENTITY certs.label "Liudijimai">
+
+
+<!ENTITY scriptsAndWindows.label "Scenarijai ir papildiniai">
+<!ENTITY keynav.label "Klaviatūra">
+<!ENTITY findAsYouType.label "Paieška renkant tekstą">
+<!ENTITY cache.label "Podėlis">
+<!ENTITY offlineApps.label "Duomenys darbui neprisijungus">
+<!ENTITY proxies.label "Įgaliotieji serveriai">
+<!ENTITY httpnetworking.label "HTTP protokolas">
+<!ENTITY smart.label "Programinės įrangos diegimas">
+<!ENTITY mousewheel.label "Pelės ratukas">
+

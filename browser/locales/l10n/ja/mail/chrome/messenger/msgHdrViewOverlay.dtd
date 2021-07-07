@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label				"宛先">
+<!ENTITY fromField4.label			"差出人">
+<!ENTITY senderField4.label			"送信者">
+<!ENTITY author.label				"著者">
+<!ENTITY organizationField4.label		"組織">
+<!ENTITY replyToField4.label			"返信先">
+
+<!ENTITY subjectField4.label			"件名">
+<!ENTITY ccField4.label				"Cc">
+<!ENTITY bccField4.label			"Bcc">
+<!ENTITY newsgroupsField4.label			"ニュースグループ">
+<!ENTITY followupToField4.label			"Followup To">
+<!ENTITY tagsHdr4.label				"タグ">
+<!ENTITY dateField4.label			"送信日時">
+<!ENTITY userAgentField4.label			"User Agent">
+<!ENTITY referencesField4.label			"References">
+<!ENTITY messageIdField4.label			"Message ID">
+<!ENTITY inReplyToField4.label			"In Reply To">
+<!ENTITY originalWebsite4.label			"ウェブサイト">
+
+<!ENTITY hdrArchiveButton1.label		"アーカイブ">
+<!ENTITY hdrArchiveButton1.tooltip		"このメッセージをアーカイブに移動します">
+<!ENTITY hdrSmartReplyButton1.label		"適宜返信"><!-- en-US: "Smart Reply" -->
+<!ENTITY hdrReplyButton1.label			"返信">
+<!ENTITY hdrReplyButton2.tooltip		"このメッセージの差出人に返信します">
+<!ENTITY hdrReplyAllButton1.label		"全員に返信">
+<!ENTITY hdrReplyAllButton1.tooltip		"このメッセージの差出人と他の受信者全員に返信します">
+<!ENTITY hdrReplyListButton1.label		"リストに返信">
+<!ENTITY hdrReplyListButton1.tooltip		"メーリングリストに返信します">
+<!ENTITY hdrFollowupButton1.label		"フォローアップ">
+<!ENTITY hdrFollowupButton1.tooltip		"このニュースグループにフォローアップの投稿をします">
+<!ENTITY hdrForwardButton1.label		"転送">
+<!ENTITY hdrForwardButton1.tooltip		"このメッセージを転送します">
+<!ENTITY hdrJunkButton1.label			"迷惑マークを付ける">
+<!ENTITY hdrJunkButton1.tooltip			"このメッセージに迷惑マークを付けます">
+<!ENTITY hdrTrashButton1.label			"削除">
+<!ENTITY hdrTrashButton1.tooltip		"このメッセージを削除します">
+
+<!ENTITY hdrViewToolbarShowFull.label		"アイコンとテキストを表示">
+<!ENTITY hdrViewToolbarShowFull.accesskey	"a">
+<!ENTITY hdrViewToolbarShowIcons.label		"アイコンのみを表示">
+<!ENTITY hdrViewToolbarShowIcons.accesskey	"I">
+<!ENTITY hdrViewToolbarShowText.label		"テキストのみを表示">
+<!ENTITY hdrViewToolbarShowText.accesskey	"T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label	"差出人への返信ボタンを常に表示">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey	"R">
+
+<!ENTITY otherActionsButton2.label		"その他">
+<!ENTITY otherActionsButton.tooltip		"その他の操作">
+<!ENTITY otherActionsOpenConversation1.label	"スレッドを新しいタブで開く"><!-- en-US: "open in conversation" -->
+<!ENTITY otherActionsOpenConversation1.accesskey	"C">
+<!ENTITY otherActionsOpenInNewWindow1.label	"新しいウィンドウで開く">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey	"W">
+<!ENTITY otherActionsOpenInNewTab1.label	"新しいタブで開く">
+<!ENTITY otherActionsOpenInNewTab1.accesskey	"T">
+<!ENTITY markAsReadMenuItem1.label		"既読にする">
+<!ENTITY markAsReadMenuItem1.accesskey		"R">
+<!ENTITY markAsUnreadMenuItem1.label		"未読にする">
+<!ENTITY markAsUnreadMenuItem1.accesskey	"r">
+<!ENTITY saveAsMenuItem1.label			"名前を付けて保存...">
+<!ENTITY saveAsMenuItem1.accesskey		"S">
+<!ENTITY viewSourceMenuItem1.label		"ソースを表示">
+<!ENTITY viewSourceMenuItem1.accesskey		"V">
+<!ENTITY otherActionsPrint1.label		"印刷...">
+<!ENTITY otherActionsPrint1.accesskey		"P">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label			"添付ペインを初めから表示する">
+<!ENTITY startExpandedCmd.accesskey		"S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label		"開く">
+<!ENTITY openAttachmentCmd.accesskey		"O">
+<!ENTITY saveAsAttachmentCmd.label		"名前を付けて保存...">
+<!ENTITY saveAsAttachmentCmd.accesskey		"S">
+<!ENTITY detachAttachmentCmd.label		"添付ファイルを分離...">
+<!ENTITY detachAttachmentCmd.accesskey		"D">
+<!ENTITY deleteAttachmentCmd.label		"削除">
+<!ENTITY deleteAttachmentCmd.accesskey		"e">
+<!ENTITY openAllAttachmentsCmd.label		"すべて開く...">
+<!ENTITY openAllAttachmentsCmd.accesskey	"O">
+<!ENTITY saveAllAttachmentsCmd.label		"すべて保存...">
+<!ENTITY saveAllAttachmentsCmd.accesskey	"S">
+<!ENTITY detachAllAttachmentsCmd.label		"すべて分離...">
+<!ENTITY detachAllAttachmentsCmd.accesskey	"D">
+<!ENTITY deleteAllAttachmentsCmd.label		"すべて削除...">
+<!ENTITY deleteAllAttachmentsCmd.accesskey	"e">
+
+<!ENTITY openAttachment.tooltip			"添付ファイルを開きます">
+
+<!ENTITY detachedAttachmentFolder.show.label		"保存フォルダーを開く">
+<!ENTITY detachedAttachmentFolder.show.accesskey	"F">
+<!ENTITY detachedAttachmentFolder.showMac.label		"Finder に表示">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey	"F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label		"保存">
+<!ENTITY saveAttachmentButton1.tooltip		"添付ファイルを保存します">
+<!ENTITY saveAllAttachmentsButton1.label	"すべて保存">
+<!ENTITY saveAllAttachmentsButton1.tooltip	"添付されたすべてのファイルを保存します">
+
+<!ENTITY copyLinkCmd.label			"リンクの URL をコピー">
+<!ENTITY copyLinkCmd.accesskey			"C">
+
+<!ENTITY CopyMessageId.label			"メッセージ ID をコピー">
+<!ENTITY CopyMessageId.accesskey		"C">
+<!ENTITY OpenMessageForMsgId.label		"次の ID のメッセージを開く">
+<!ENTITY OpenMessageForMsgId.accesskey		"O">
+<!ENTITY OpenBrowserWithMsgId.label		"次のメッセージ ID をブラウザーで開く">
+<!ENTITY OpenBrowserWithMsgId.accesskey		"B">

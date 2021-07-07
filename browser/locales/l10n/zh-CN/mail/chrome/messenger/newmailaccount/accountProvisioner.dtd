@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "欢迎使用 &brandShortName;">
+<!ENTITY header2.label "需要一个新的电子邮件地址吗？">
+<!ENTITY other.languages "我们仅显示您所在区域的地址提供商。点击此处即可查看全部提供商。">
+<!ENTITY error.line1 "抱歉，我们无法找到任何推荐的电子邮箱地址。">
+<!ENTITY error.line2 "您可以尝试搜索昵称或者其他词语来找到更多电子邮件">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "您也可以尝试 ">
+<!ENTITY error.suggest.middle "其他免费的电子邮件账户">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "您好 ">
+<!ENTITY success.title.after "，如下电子邮件地址可用：">
+<!ENTITY success.tip "（您可以尝试搜索昵称或者其他词语来找到更多电子邮件）">
+<!ENTITY partnership.description "通过与一些电子邮件提供商合作，&brandShortName; 可以帮您注册一个新的电子邮件账户。您只需要在下面填写您的姓名（或任何其他想用的名称）即可。">
+<!ENTITY existing.header "已经有可用的地址？">
+<!ENTITY tinyheader.title "已经有地址了？">
+<!ENTITY tinyheader.existing "跳过并使用已有的电子邮箱">
+<!ENTITY content.close "我想稍后再来设置账户。">
+<!ENTITY successful.title "恭喜您！">
+<!ENTITY successful.successMessage "成功设置好了您的账户。">
+<!ENTITY successful.write "写电子邮件">
+<!ENTITY successful.write.desc "让您的朋友和家庭知道您的新邮箱地址。<br/>这也正是您注册邮箱的用处，对吧？">
+<!ENTITY successful.customize "使用超酷的附加组件来定制 &brandShortName;">
+<!ENTITY successful.customize.desc "有成千上万的附加组件可供您选用来定制 &brandShortName; 以符合您的需求。">
+<!ENTITY successful.attach "附加个人签名到我的电子邮件">
+<!ENTITY successful.attach.desc "您可以自动附加一句话或者您的信息到每封您发送消息的末尾。">
+<!ENTITY successful.close "关闭此窗口。">
+<!ENTITY input.namePlaceholder "你的名字或者昵称">
+<!ENTITY input.search "查找">
+<!ENTITY search_engine.title "定制您的搜索引擎">
+<!ENTITY search_engine.message "您的电子邮件提供商也可以为您提供网页搜索服务。">
+<!ENTITY search_engine.button "完成">

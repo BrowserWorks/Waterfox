@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "خصّص التّرويسات">
+<!ENTITY addButton.label "أضِف">
+<!ENTITY addButton.accesskey "ض">
+<!ENTITY removeButton.label "أزل">
+<!ENTITY removeButton.accesskey "ز">
+<!ENTITY newMsgHeader.label "ترويسة رسالة جديدة:">
+<!ENTITY newMsgHeader.accesskey "ج">

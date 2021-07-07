@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Certificaten beheren">
+<!ENTITY  managecerts.text         "Gebruik de certificaatbeheerder om uw persoonlijke certificaten en die van anderen en certificaatautoriteiten te beheren.">
+<!ENTITY  managecerts.button       "Certificaten beheren…">
+<!ENTITY  managecerts.accesskey    "C">
+<!ENTITY  managedevices.caption    "Beveiligingsapparaten beheren">
+<!ENTITY  managedevices.text       "Gebruik deze knop om uw beveiligingsapparaten, zoals smartcards, te beheren.">
+<!ENTITY  managedevices.button     "Beveiligingsapparaten beheren…">
+<!ENTITY  managedevices.accesskey  "B">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Certificaten">
+<!ENTITY  certs.label              "Certificaten">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Het Online Certificate Status Protocol (OCSP) gebruiken om de geldigheid van certificaten te bevestigen">
+<!ENTITY enableOCSP.accesskey                     "O">
+<!ENTITY validation.requireOCSP.description       "Wanneer een OCSP-serververbinding mislukt, het certificaat als ongeldig behandelen">
+<!ENTITY validation.requireOCSP.accesskey         "W">

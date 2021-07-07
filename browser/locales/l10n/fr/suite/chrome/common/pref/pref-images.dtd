@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Images">
+
+<!ENTITY imageBlocking.label            "Permissions sur les images">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Spécifier comment &brandShortName; gère les images.">
+
+<!ENTITY loadAllImagesRadio.label       "Accepter toutes les images">
+<!ENTITY loadAllImagesRadio.accesskey   "e">
+<!ENTITY loadOrgImagesRadio.label       "Accepter les images provenant du serveur initial seulement">
+<!ENTITY loadOrgImagesRadio.accesskey   "c">
+<!ENTITY loadNoImagesRadio.label        "Ne pas charger les images">
+<!ENTITY loadNoImagesRadio.accesskey    "N">
+<!ENTITY viewPermissions.label          "Gérer les permissions">
+<!ENTITY viewPermissions.accesskey      "p">
+<!ENTITY animLoopingTitle.label         "Les images animées doivent tourner en boucle :">
+<!ENTITY animLoopAsSpecified.label      "Autant de fois que spécifié par l’image">
+<!ENTITY animLoopAsSpecified.accesskey  "d">
+<!ENTITY animLoopOnce.label             "Une fois">
+<!ENTITY animLoopOnce.accesskey         "U">
+<!ENTITY animLoopNever.label            "Jamais">
+<!ENTITY animLoopNever.accesskey        "J">

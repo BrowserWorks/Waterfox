@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Новая вкладка">
+<!ENTITY tabCmd.accesskey "а">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Открыть адрес в Интернете…">
+<!ENTITY openCmd.accesskey "ы">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Открыть файл…">
+<!ENTITY openFileCmd.accesskey "к">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Закрыть другие вкладки">
+<!ENTITY closeOtherTabs.accesskey "а">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Закрыть вкладки справа">
+<!ENTITY  closeTabsToTheEnd.accesskey "п">
+
+<!ENTITY uploadFile.label "Выгрузить файл…">
+<!ENTITY uploadFile.accesskey "ф">
+
+<!ENTITY printSetupCmd.label "Параметры страницы…">
+<!ENTITY printSetupCmd.accesskey "м">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Найти на этой странице…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Показать/скрыть">
+<!ENTITY toolbarsCmd.accesskey "о">
+<!ENTITY tabbarCmd.label "Панель вкладок">
+<!ENTITY tabbarCmd.accesskey "а">
+<!ENTITY taskbarCmd.label "Строка состояния">
+<!ENTITY taskbarCmd.accesskey "т">
+<!ENTITY componentbarCmd.label "Панель компонентов">
+<!ENTITY componentbarCmd.accesskey "н">
+
+<!ENTITY fullScreenCmd.label "Полный экран">
+<!ENTITY fullScreenCmd.accesskey "э">
+
+<!ENTITY useStyleSheetMenu.label "Использовать стиль">
+<!ENTITY useStyleSheetMenu.accesskey "л">
+<!ENTITY useStyleSheetNone.label "Нет">
+<!ENTITY useStyleSheetNone.accesskey "е">
+<!ENTITY useStyleSheetPersistentOnly.label "Основной стиль">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "с">
+<!ENTITY bidiSwitchPageDirectionItem.label "Переключить направление текста">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "ю">
+<!ENTITY pageSourceCmd.label "Исходный код страницы">
+<!ENTITY pageSourceCmd.accesskey "х">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Информация о странице">
+<!ENTITY pageInfoCmd.accesskey "ф">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Перейти">
+<!ENTITY goMenu.accesskey "е">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Домой">
+<!ENTITY goHomeCmd.accesskey "м">
+<!ENTITY historyCmd.label "Журнал">
+<!ENTITY historyCmd.accesskey "у">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Недавно закрытые вкладки">
+<!ENTITY recentTabs.accesskey "а">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Недавно закрытые окна">
+<!ENTITY recentWindows.accesskey "д">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Восстановить предыдущую сессию">
+<!ENTITY historyRestoreLastSession.accesskey "с">
+<!ENTITY syncTabsMenu.label "Вкладки с других компьютеров">
+<!ENTITY syncTabsMenu.accesskey "л">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Закладки">
+<!ENTITY bookmarksMenu.accesskey "к">
+<!ENTITY addCurPageCmd.label "Добавить страницу в закладки">
+<!ENTITY addCurPageCmd.accesskey "к">
+<!ENTITY addCurPageAsCmd.label "Создать закладку…">
+<!ENTITY addCurPageAsCmd.accesskey "д">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Добавить группу вкладок в закладки…">
+<!ENTITY addCurTabsAsCmd.accesskey "г">
+<!ENTITY manBookmarksCmd.label "Управление закладками…">
+<!ENTITY manBookmarksCmd.accesskey "п">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Поиск в Интернете">
+<!ENTITY searchInternetCmd.accesskey "с">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Перевести страницу">
+<!ENTITY translateMenu.accesskey "р">
+
+<!ENTITY cookieMessageTitle.label "Изменились права на сохранение кук">
+<!ENTITY cookieDisplayCookiesCmd.label "Управление сохранёнными куками">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "п">
+<!ENTITY cookieAllowCookiesCmd.label "Разблокировать куки с этого веб-сайта">
+<!ENTITY cookieAllowCookiesCmd.accesskey "б">
+<!ENTITY cookieAllowCookiesMsg.label "Куки этого веб-сайта больше не будут блокироваться.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Разрешить куки с этого веб-сайта на один сеанс">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "ш">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Веб-сайт сможет сохранять куки только на один сеанс.">
+<!ENTITY cookieCookiesDefaultCmd.label "Права по умолчанию">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "в">
+<!ENTITY cookieCookiesDefaultMsg.label "Куки с этого веб-сайта будут сохраняться на основе настроек по умолчанию.">
+<!ENTITY cookieBlockCookiesCmd.label "Блокировать куки с этого веб-сайта">
+<!ENTITY cookieBlockCookiesCmd.accesskey "л">
+<!ENTITY cookieBlockCookiesMsg.label "Куки этого веб-сайта всегда будут отклоняться.">
+
+<!ENTITY cookieImageMessageTitle.label "Изменились права на загрузку изображений">
+<!ENTITY cookieDisplayImagesCmd.label "Управление правами на загрузку изображений">
+<!ENTITY cookieDisplayImagesCmd.accesskey "п">
+<!ENTITY cookieAllowImagesCmd.label "Разблокировать изображения с этого веб-сайта">
+<!ENTITY cookieAllowImagesCmd.accesskey "б">
+<!ENTITY cookieAllowImagesMsg.label "Изображения этого веб-сайта всегда будут загружаться.">
+<!ENTITY cookieImagesDefaultCmd.label "Права по умолчанию">
+<!ENTITY cookieImagesDefaultCmd.accesskey "в">
+<!ENTITY cookieImagesDefaultMsg.label "Изображения с этого веб-сайта будут загружаться на основе настроек по умолчанию.">
+<!ENTITY cookieBlockImagesCmd.label "Блокировать изображения с этого веб-сайта">
+<!ENTITY cookieBlockImagesCmd.accesskey "л">
+<!ENTITY cookieBlockImagesMsg.label "Изображения этого веб-сайта никогда не будут загружаться.">
+
+<!ENTITY popupsMessageChangeTitle.label "Изменились права на открытие всплывающих окон">
+<!ENTITY popupAllowCmd.label "Разрешить всплывающие окна с этого веб-сайта">
+<!ENTITY popupAllowCmd.accesskey "з">
+<!ENTITY popupAllowMsg.label "Всплывающие окна с этого веб-сайта всегда будут отображаться.">
+<!ENTITY popupDefaultCmd.label "Права по умолчанию">
+<!ENTITY popupDefaultCmd.accesskey "в">
+<!ENTITY popupDefaultMsg.label "Всплывающие окна с этого веб-сайта будут отображаться на основе настроек по умолчанию.">
+<!ENTITY popupBlockCmd.label "Блокировать всплывающие окна с этого веб-сайта">
+<!ENTITY popupBlockCmd.accesskey "л">
+<!ENTITY popupBlockMsg.label "Всплывающие окна с этого веб-сайта никогда не будут отображаться.">
+<!ENTITY popupsManage.label "Управление веб-сайтами со всплывающими окнами">
+<!ENTITY popupsManage.accesskey "п">
+
+<!ENTITY cookieCookieManager.label "Управление куками">
+<!ENTITY cookieCookieManager.accesskey "н">
+<!ENTITY cookieImageManager.label "Управление изображениями">
+<!ENTITY cookieImageManager.accesskey "и">
+<!ENTITY popupsManager.label "Управление всплывающими окнами">
+<!ENTITY popupsManager.accesskey "а">
+
+<!ENTITY clearPrivateDataCmd.label "Удалить личные данные…">
+<!ENTITY clearPrivateDataCmd.accesskey "е">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

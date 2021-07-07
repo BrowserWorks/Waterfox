@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/openLocation.xul -->
+
+
+<!ENTITY enter.label "Írja be a weboldal címét (URL), vagy válasszon ki egy helyi fájlt, melyet meg szeretne nyitni:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "R">
+<!ENTITY chooseFile.label "Tallózás…">
+<!ENTITY chooseFile.accesskey "T">
+<!ENTITY newPrivate.label "Új privát ablak">
+<!ENTITY newWindow.label "új böngészőablakban">
+<!ENTITY newTab.label "új böngészőlapon">
+<!ENTITY currentTab.label "aktuális böngészőlap">
+<!ENTITY editNewWindow.label "új HTML-szerkesztő ablakban">
+<!ENTITY open.label "Megnyitás">
+<!ENTITY caption.label "Weboldal megnyitása">
+<!ENTITY openWhere.label "Megnyitás:">
+<!ENTITY openWhere.accesskey "M">

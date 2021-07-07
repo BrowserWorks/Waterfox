@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Papildoma taisa">
+<!ENTITY AttName.label                  "Požymis:">
+<!ENTITY AttValue.label                 "Reikšmė:">
+<!ENTITY PropertyName.label             "Savybė:">
+<!ENTITY currentattributesfor.label     "HTML gairė:">
+<!ENTITY tree.attributeHeader.label     "Požymis">
+<!ENTITY tree.propertyHeader.label      "Savybė">
+<!ENTITY tree.valueHeader.label         "Reikšmė">
+<!ENTITY tabHTML.label                  "HTML požymiai">
+<!ENTITY tabCSS.label                   "Stilius">
+<!ENTITY tabJSE.label                   "„JavaScript“ įvykiai">
+
+<!ENTITY editAttribute.label    "Jei reikia pataisyti reikšmę, spustelėkite objekto vardą viršuje.">
+<!ENTITY removeAttribute.label  "Pašalinti požymį">

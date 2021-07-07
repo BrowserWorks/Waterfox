@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Laiškų filtrai">
+<!ENTITY nameColumn.label "Filtro pavadinimas">
+<!ENTITY activeColumn.label "Aktyvumas">
+<!ENTITY newButton.label "Naujas…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Taisyti…">
+<!ENTITY editButton.accesskey "T">
+<!ENTITY deleteButton.label "Pašalinti">
+<!ENTITY deleteButton.accesskey "š">
+<!ENTITY reorderUpButton.label "Pakelti">
+<!ENTITY reorderUpButton.accesskey "P">
+<!ENTITY reorderDownButton.label "Nuleisti">
+<!ENTITY reorderDownButton.accesskey "u">
+<!ENTITY filterHeader.label "Gaunamiems laiškams taikomi aktyvūs filtrai žemiau pateikta eile.">
+<!ENTITY filtersForPrefix.label "Paskyros pavadinimas:">
+<!ENTITY filtersForPrefix.accesskey "v">
+<!ENTITY viewLogButton.label "Filtrų žurnalas">
+<!ENTITY viewLogButton.accesskey "ž">
+<!ENTITY runFilters.label "Vykdyti dabar">
+<!ENTITY runFilters.accesskey "V">
+<!ENTITY stopFilters.label "Stabdyti">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Vykdyti pažymėtus filtrus, taikomus aplankui:">
+<!ENTITY folderPickerPrefix.accesskey "a">
+<!ENTITY choosethis.label "pasirinkti šį aplanką">
+<!ENTITY choosethisnewsserver.label "pasirinkti šį naujienų serverį">

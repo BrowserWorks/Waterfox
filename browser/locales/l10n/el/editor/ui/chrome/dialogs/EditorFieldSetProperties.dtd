@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Ιδιότητες ορισμού πεδίου">
+
+<!ENTITY Legend.label "Λεζάντα">
+<!ENTITY Legend.accesskey "ζ">
+
+<!ENTITY EditLegendText.label "Επεξεργασία λεζάντας:">
+<!ENTITY EditLegendText.accesskey "ξ">
+<!ENTITY LegendAlign.label "Στοίχιση λεζάντας:">
+<!ENTITY LegendAlign.accesskey "τ">
+<!ENTITY AlignDefault.label "Προεπιλογή">
+<!ENTITY AlignLeft.label "Αριστερά">
+<!ENTITY AlignCenter.label "Κέντρο">
+<!ENTITY AlignRight.label "Δεξιά">
+
+<!ENTITY RemoveFieldSet.label "Αφαίρεση συνόλου πεδίων">
+<!ENTITY RemoveFieldSet.accesskey "ρ">

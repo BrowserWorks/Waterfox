@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip		"メインメニュー">
+<!ENTITY Toolbar.tooltip		"メインツールバー">
+
+<!ENTITY multiline-expand.tooltip	"複数行入力に切り替え (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip	"1 行入力に切り替え (Ctrl+Down)">
+<!ENTITY multiline-send.tooltip		"このテキストを送信 (Ctrl+Enter)">
+<!ENTITY server-nick.tooltip		"ニックネームの変更または状態の設定。入力ボックスにフォーカスを移動するには ESC キーを押してください。">
+
+<!ENTITY Underline.label		"下線">
+<!ENTITY Bold.label			"太字">
+<!ENTITY Reverse.label			"反転">
+<!ENTITY Normal.label			"通常">
+<!ENTITY Color.label			"配色">
+<!ENTITY ForeBack.label			"xx=進む yy=戻る">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Navigeren met tabbladen">
+
+<!ENTITY tabDisplay.label "Tabbladweergave">
+<!ENTITY autoHide.label "De tabbladenwerkbalk verbergen wanneer slechts één tabblad is geopend">
+<!ENTITY autoHide.accesskey2 "b">
+<!ENTITY background.label "Naar vanuit koppelingen geopende nieuwe tabbladen schakelen">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Mij waarschuwen bij het sluiten van een venster met meerdere tabbladen">
+<!ENTITY warnOnClose.accesskey "n">
+<!ENTITY relatedAfterCurrent.label "Gerelateerde tabbladen openen na het huidige tabblad">
+<!ENTITY relatedAfterCurrent.accesskey "o">
+
+<!ENTITY openTabs.label "Tabbladen in plaats van vensters openen voor">
+<!ENTITY middleClick.label "Klikken met de middelste muisknop, Ctrl+klikken of Ctrl+Enter op koppelingen in een webpagina">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Klikken met de middelste muisknop, &#8984;+klikken of &#8984;+Return op koppelingen in een webpagina">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "Ctrl+Enter in de locatiebalk">
+<!ENTITY urlbar.accesskey "C">
+<!ENTITY urlbarMac.label "&#8984;+Return in de locatiebalk">
+<!ENTITY urlbarMac.accesskey "c">
+
+<!ENTITY openManagers.label "In een nieuw tabblad openen in plaats van in een onafhankelijk venster">
+<!ENTITY openDataManager.label "Gegevensbeheerder">
+<!ENTITY openDataManager.accesskey "G">
+<!ENTITY openAddOnsManager.label "Add-onbeheerder">
+<!ENTITY openAddOnsManager.accesskey "d">

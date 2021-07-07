@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Nie szyfruj">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "N">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Wymagaj szyfrowania">
+<!ENTITY menu_securityEncryptRequire.accesskey "W">
+
+<!ENTITY menu_securitySign.label "Podpisz cyfrowo tę wiadomość">
+<!ENTITY menu_securitySign.accesskey "P">
+
+<!ENTITY menu_securityAttachMyKey.label "Dołącz mój klucz publiczny">
+<!ENTITY menu_securityAttachMyKey.accesskey "D">
+
+<!ENTITY menu_securityTech.label "Technologia szyfrowania">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Pokaż informacje o zabezpieczeniach">
+<!ENTITY menu_securityStatus.accesskey "z">
+
+<!ENTITY securityButton.label "Zabezpieczenia">
+<!ENTITY securityButton.tooltip "Wyświetl lub zmień ustawienia zabezpieczeń">
+
+<!ENTITY menu_viewSecurityStatus.label "Informacje o zabezpieczeniach wiadomości">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

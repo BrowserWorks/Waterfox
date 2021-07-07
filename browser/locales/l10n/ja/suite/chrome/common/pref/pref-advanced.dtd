@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "詳細">
+
+<!ENTITY systemPref.caption               "システム設定">
+<!ENTITY systemPrefCheck.label            "システムの標準設定を使用する">
+<!ENTITY systemPrefCheck.accesskey        "U">
+<!ENTITY systemPref.desc                  "この項目にチェックを入れると、&brandShortName; 独自の設定よりもシステム標準の設定を優先するようになります。">
+
+<!ENTITY prefCheckDefault.caption         "システム統合">
+<!ENTITY prefCheckDefaultClient.label     "起動時に既定のプログラムの設定を確認する">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY printing.label                   "印刷">
+<!ENTITY useNativePrintDialog.label       "システムの印刷ダイアログを使用">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "グローバルの印刷設定を使用">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "クラッシュレポーター">
+<!ENTITY submitCrashes.label              "クラッシュレポートを送信する">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "開発ツール">
+<!ENTITY allowDebugger.label              "&brandShortName; にデバッガーの接続を許可する">
+<!ENTITY allowDebugger.accesskey          "A">
+<!ENTITY allowRemoteConnections.label     "他のコンピューターからの接続を許可する">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "接続要求があったときは確認する">
+<!ENTITY connectionPrompt.accesskey       "P">
+<!ENTITY remoteDebuggerPort.label         "接続ポート番号:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

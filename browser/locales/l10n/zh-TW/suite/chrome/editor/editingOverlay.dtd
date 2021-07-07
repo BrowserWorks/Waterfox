@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "開啟檔案…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "開啟網址…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "最近開啟頁面">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "儲存">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "另存新檔…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "儲存並變更文字編碼">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "發佈">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "發佈為…">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "反向">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "網站發佈設定…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "表單">
+<!ENTITY insertFormMenu.accesskey "F">
+<!ENTITY insertFormCmd.label "定義表單…">
+<!ENTITY insertFormCmd.accesskey "D">
+<!ENTITY insertInputTagCmd.label "表單欄位…">
+<!ENTITY insertInputTagCmd.accesskey "e">
+<!ENTITY insertInputImageCmd.label "表單圖片…">
+<!ENTITY insertInputImageCmd.accesskey "I">
+<!ENTITY insertTextAreaCmd.label "文字區域…">
+<!ENTITY insertTextAreaCmd.accesskey "T">
+<!ENTITY insertSelectCmd.label "選擇項目清單…">
+<!ENTITY insertSelectCmd.accesskey "S">
+<!ENTITY insertButtonCmd.label "定義按鈕…">
+<!ENTITY insertButtonCmd.accesskey "B">
+<!ENTITY insertLabelCmd.label "定義標籤">
+<!ENTITY insertLabelCmd.accesskey "L">
+<!ENTITY insertFieldSetCmd.label "定義表單集合…">
+<!ENTITY insertFieldSetCmd.accesskey "F">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "開新視窗">
+<!ENTITY newToolbarCmd.tooltip "建立新編輯頁面">
+<!ENTITY openToolbarCmd.label "開啟">
+<!ENTITY openToolbarCmd.tooltip "開啟本機檔案">
+<!ENTITY saveToolbarCmd.tooltip "儲存到本機位置">
+<!ENTITY publishToolbarCmd.tooltip "上傳檔案到遠端位置">
+<!ENTITY printToolbarCmd.label "列印">
+<!ENTITY printToolbarCmd.tooltip "列印此頁">
+<!ENTITY formToolbarCmd.label "表單">
+<!ENTITY formToolbarCmd.tooltip "插入新表單或編輯所選表單的屬性">

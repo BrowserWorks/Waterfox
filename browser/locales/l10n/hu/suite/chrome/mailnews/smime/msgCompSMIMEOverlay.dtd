@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+
+<!ENTITY menu_securityEncryptRequire.label "Üzenet titkosítása">
+<!ENTITY menu_securityEncryptRequire.accesskey "i">
+
+<!ENTITY menu_securitySign.label "Üzenet digitális aláírása">
+<!ENTITY menu_securitySign.accesskey "d">
+
+<!ENTITY menu_securityStatus.label "Biztonsági adatok megtekintése">
+<!ENTITY menu_securityStatus.accesskey "z">
+
+<!ENTITY securityButton.label "Biztonság">
+<!ENTITY securityButton.tooltip "Biztonsági beállítások megtekintése vagy módosítása">
+
+<!ENTITY menu_viewSecurityStatus.label "Üzenet biztonsági adatai">
+<!ENTITY menu_viewSecurityStatus.accesskey "e">

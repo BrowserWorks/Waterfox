@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Zertifikate verwalten">
+<!ENTITY  managecerts.text         "Verwenden Sie den Zertifikatverwaltung, um Ihre persönlichen Zertifikate sowie jene von anderen Personen und Zertifizierungsstellen zu verwalten.">
+<!ENTITY  managecerts.button       "Zertifikate verwalten…">
+<!ENTITY  managecerts.accesskey    "Z">
+<!ENTITY  managedevices.caption    "Kryptographie-Module verwalten">
+<!ENTITY  managedevices.text       "Verwenden Sie diese Schaltfläche, um Ihre Kryptographie-Module wie z.B. Smart Cards zu verwalten.">
+<!ENTITY  managedevices.button     "Kryptographie-Module verwalten…">
+<!ENTITY  managedevices.accesskey  "K">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Zertifikate">
+<!ENTITY  certs.label              "Zertifikate">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Das Online-Zertifikatsstatus-Protokoll (OCSP) verwenden, um die aktuelle Gültigkeit von Zertifikaten zu bestätigen">
+<!ENTITY enableOCSP.accesskey                     "O">
+<!ENTITY validation.requireOCSP.description       "Wenn eine OCSP-Server-Verbindung fehlschlägt, das Zertifikat als ungültig betrachten">
+<!ENTITY validation.requireOCSP.accesskey         "W">

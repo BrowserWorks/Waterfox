@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Jūsų „&syncBrand.fullName.label;“ raktas">
+<!ENTITY syncKey.page.description         "Šis raktas yra naudojamas duomenų, laikomų jūsų „&syncBrand.fullName.label;“ paskyroje, iššifravimui. Šį raktą turėsite įvesti kaskart, konfigūruodami „&syncBrand.fullName.label;“ naujame kompiuteryje ar kitame įrenginyje.">
+<!ENTITY syncKey.keepItSecret.heading     "Laikykite raktą paslaptyje">
+<!ENTITY syncKey.keepItSecret.description "Jūsų „&syncBrand.fullName.label;“ paskyros duomenys yra šifruojami, siekiant užtikrinti jūsų privatumą. Neturint šio rakto, jūsų asmeninių duomenų iššifravimui prireiktų ne vienerių metų. Vienintelis asmuo, kuris turėtų žinoti šį raktą, esate jūs – tik taip bus galima užtikrinti, kad tik jūs galėsite pasiekti savo duomenis „&syncBrand.fullName.label;“ paskyroje.">
+<!ENTITY syncKey.keepItSafe.heading       "Nepameskite rakto">
+<!ENTITY syncKey.keepItSafe1.description  "Nepameskite šio rakto.">
+<!ENTITY syncKey.keepItSafe2.description  " Mes neturime jo kopijos (jei turėtume, jis nebūtų slaptas!), tad, jei jį užmiršite, ">
+<!ENTITY syncKey.keepItSafe3.description  "mes negalėsime padėti jo atkurti">
+<!ENTITY syncKey.keepItSafe4.description  ". Šio rakto jums reikės kaskart, kai konfigūruosite „&syncBrand.fullName.label;“ naujame kompiuteryje ar kitame įrenginyje.">
+<!ENTITY syncKey.findOutMore1.label       "Daugiau sužinoti apie „&syncBrand.fullName.label;“ ir jūsų privatumą galite adresu ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "„&syncBrand.fullName.label;“ paslaugos teikimo nuostatus rasite adresu ">
+<!ENTITY syncKey.footer2.label            ". Privatumo nuostatus rasite adresu ">
+<!ENTITY syncKey.footer3.label            ".">

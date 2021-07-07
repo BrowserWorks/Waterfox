@@ -1,0 +1,121 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.label             "Kopijuoti">
+<!ENTITY  copy.accesskey         "K">
+
+<!ENTITY  selectall.label        "Pažymėti viską">
+<!ENTITY  selectall.accesskey    "v">
+
+
+<!ENTITY  copyLinks.label           "Kopijuoti saitą (-us)">
+<!ENTITY  copyLinks.accesskey       "o">
+<!ENTITY  openInNewTab.label        "Atverti naujoje kortelėje">
+<!ENTITY  openInNewTab.accesskey    "A">
+<!ENTITY  openInNewWindow.label     "Atverti naujame lange">
+<!ENTITY  openInNewWindow.accesskey "l">
+
+<!ENTITY  generalTab            "Bendroji">
+
+<!ENTITY  generalURL            "URL:">
+<!ENTITY  generalType           "Tipas:">
+<!ENTITY  generalMode           "Atvaizdavimo veiksena:">
+<!ENTITY  generalSize           "Dydis:">
+<!ENTITY  generalReferrer       "Iš kur ateina:">
+<!ENTITY  generalSource         "Šaltinis:">
+<!ENTITY  generalModified       "Atnaujintas:">
+
+<!ENTITY  generalMetaName       "Vardas">
+<!ENTITY  generalMetaContent    "Reikšmė">
+<!ENTITY  generalSecurityDetails           "Išsamiau">
+
+
+<!ENTITY  formsTab              "Formos">
+
+<!ENTITY  formAction            "Programa">
+<!ENTITY  formMethod            "Metodas">
+
+
+<!ENTITY  formTarget            "Paskirties objektas:">
+<!ENTITY  formFields            "Laukai">
+<!ENTITY  formLabel             "Pavadinimas">
+<!ENTITY  formFName             "Lauko vardas">
+<!ENTITY  formType              "Tipas">
+<!ENTITY  formCValue            "Dabartinė reikšmė">
+
+<!ENTITY  linksTab              "Saitai">
+
+
+<!ENTITY  linkAddress           "Adresas">
+
+<!ENTITY  linkTarget            "Paskirties objektas">
+<!ENTITY  linkAccessKey         "Spartusis klavišas">
+
+<!ENTITY  mediaTab              "Įvairialypė terpė">
+
+
+<!ENTITY  mediaAlt              "Alternatyvusis tekstas:">
+<!ENTITY  mediaAltHeader        "Alternatyvus tekstas">
+
+
+<!ENTITY  mediaSize             "Dydis">
+<!ENTITY  mediaCount            "Kiekis">
+<!ENTITY  mediaDimensions       "Matmenys:">
+<!ENTITY  mediaPhysDimensions   "Fiziniai matmenys:">
+<!ENTITY  mediaTitle            "Antraštės požymis:">
+<!ENTITY  mediaLongdesc         "Ilgas aprašas:">
+
+<!ENTITY  mediaSaveAs           "Įrašyti kaip…">
+
+
+<!ENTITY  mediaPreview          "Elemento peržiūra:">
+
+<!ENTITY  feedTab               "Sklaidos kanalai">
+
+<!ENTITY  feedSubscribe         "Prenumeruoti">
+
+
+<!ENTITY  permTab               "Leidimai">
+
+<!ENTITY  permUseDefault        "Naudoti numatytąsias nuostatas">
+<!ENTITY  permAskAlways         "Visada klausti">
+<!ENTITY  permAllow             "Leisti">
+<!ENTITY  permAllowSession      "Leisti šį seansą">
+<!ENTITY  permBlock             "Neleisti">
+<!ENTITY  permissionsFor        "Leidimai:">
+<!ENTITY  permImage             "Paveikslėlių įkėlimas">
+<!ENTITY  permPopup             "Iškylančiųjų langų atvėrimas">
+<!ENTITY  permCookie            "Slapukų įrašymas">
+<!ENTITY  permNotifications     "Pranešimų rodymas">
+<!ENTITY  permInstall           "Plėtinių ir grafinių apvalkalų diegimas">
+<!ENTITY  permGeo               "Jūsų buvimo vietos nustatymas">
+
+<!ENTITY  securityTab           "Saugumas">
+
+<!ENTITY  securityHeader        "Informacija apie šio tinklalapio saugumą">
+<!ENTITY  securityView.certView "Rodyti liudijimą">
+
+<!ENTITY  securityView.unknown   "Nežinomas">
+
+
+<!ENTITY  securityView.identity.header   "Svetainės tapatumas">
+<!ENTITY  securityView.identity.owner    "Savininkas: ">
+<!ENTITY  securityView.identity.domain   "Svetainė: ">
+<!ENTITY  securityView.identity.verifier "Tapatumą patvirtino: ">
+
+<!ENTITY  securityView.privacy.header                   "Privatumas ir žurnalas">
+<!ENTITY  securityView.privacy.history                  "Ar anksčiau jau lankiausi šioje svetainėje?">
+<!ENTITY  securityView.privacy.cookies                  "Ar ši svetainė turi įrašiusi slapukų mano kompiuteryje?">
+<!ENTITY  securityView.privacy.viewCookies              "Rodyti slapukus">
+
+<!ENTITY  securityView.privacy.passwords                "Ar turiu įsimintų šios svetainės slaptažodžių?">
+<!ENTITY  securityView.privacy.viewPasswords            "Rodyti slaptažodžius">
+
+
+<!ENTITY  securityView.technical.header                 "Techninė informacija">

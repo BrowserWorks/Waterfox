@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "聊天帳號精靈">
+
+<!ENTITY accountProtocolTitle.label   "聊天網路">
+<!ENTITY accountProtocolInfo.label    "請選擇您的聊天帳號的網路類型">
+<!ENTITY accountProtocolField.label   "網路:">
+<!ENTITY accountProtocolGetMore.label "取得更多…">
+
+<!ENTITY accountUsernameTitle.label   "使用者名稱">
+<!ENTITY accountUsernameDuplicate.label "這個帳號已經設定過了！">
+
+<!ENTITY accountPasswordTitle.label   "密碼">
+<!ENTITY accountPasswordInfo.label    "請在下面的對話框當中輸入密碼。">
+<!ENTITY accountPasswordField.label   "密碼:">
+<!ENTITY accountPasswordManager.label "您在此輸入的密碼將會被儲存在密碼管理員。若您想在每次連線時再輸入密碼請將此欄留空。">
+
+<!ENTITY accountAdvancedTitle.label   "進階選項">
+<!ENTITY accountAdvancedInfo.label    "如果您不想設定的話也可以跳過這一步。">
+<!ENTITY accountAdvanced.newMailNotification.label   "有新郵件時通知我">
+<!ENTITY accountAliasGroupbox.caption "本地別名">
+<!ENTITY accountAliasField.label      "別名:">
+<!ENTITY accountAliasInfo.label       "這將只會在您的對話視窗中出現，對方將看不到這個別名。">
+<!ENTITY accountProxySettings.caption "Proxy 設定值">
+<!ENTITY accountProxySettings.change.label     "修改…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "摘要">
+<!ENTITY accountSummaryInfo.label    "下面是您輸入的資訊概要。請在建立帳號前確認這些資訊無誤。">
+<!ENTITY accountSummary.connectNow.label "立即連線至此帳號。">
+

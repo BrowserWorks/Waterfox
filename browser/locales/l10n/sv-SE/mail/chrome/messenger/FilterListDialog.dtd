@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Meddelandefilter">
+<!ENTITY nameColumn.label "Filternamn">
+<!ENTITY activeColumn.label "Aktiv">
+<!ENTITY newButton.label "Ny…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopiera…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Redigera…">
+<!ENTITY editButton.accesskey "R">
+<!ENTITY deleteButton.label "Ta bort">
+<!ENTITY deleteButton.accesskey "T">
+<!ENTITY reorderTopButton "Flytta till toppen">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Ordna filter så det utförs före alla andra">
+<!ENTITY reorderUpButton.label "Flytta upp">
+<!ENTITY reorderUpButton.accesskey "u">
+<!ENTITY reorderDownButton.label "Flytta ner">
+<!ENTITY reorderDownButton.accesskey "y">
+<!ENTITY reorderBottomButton "Flytta till botten">
+<!ENTITY reorderBottomButton.accessKey "b">
+<!ENTITY reorderBottomButton.toolTip "Ordna filter så det utförs efter alla andra">
+<!ENTITY filterHeader.label "Aktiva filterregler körs i följande ordning.">
+<!ENTITY filtersForPrefix.label "Filterregler för:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filterlogg">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Kör nu">
+<!ENTITY runFilters.accesskey "K">
+<!ENTITY stopFilters.label "Stopp">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Kör markerade filter på:">
+<!ENTITY folderPickerPrefix.accesskey "å">
+<!ENTITY helpButton.label "Hjälp">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Sök filter efter namn…">
+
+
+

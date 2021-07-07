@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Log Filter">
+<!ENTITY viewLogInfo.text "Log filter merekam filter yang telah dijalankan pada akun ini. Gunakan kotak centang berikut untuk mengaktifkan proses logging.">
+<!ENTITY clearLog.label "Bersihkan Log">
+<!ENTITY clearLog.accesskey "B">
+<!ENTITY enableLog.label "Aktifkan Log Filter">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Tutup">
+<!ENTITY closeLog.accesskey "u">

@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Verzendopmaak">
+<!ENTITY sendMaildesc.label           "Wanneer opgemaakte (HTML-)berichten worden verzonden en van één of meer ontvangers niet bekend is of ze HTML kunnen ontvangen:">
+<!ENTITY askMe.label                  "Mij vragen wat te doen (Mail vraagt u een opmaak te kiezen)">
+<!ENTITY askMe.accesskey              "v">
+<!ENTITY convertPlain2.label          "Het bericht converteren naar platte tekst (opmaak kan verloren gaan)">
+<!ENTITY convertPlain2.accesskey      "c">
+<!ENTITY sendHTML2.label              "Het bericht alleen als HTML verzenden (kan weergaveproblemen veroorzaken)">
+<!ENTITY sendHTML2.accesskey          "H">
+<!ENTITY sendBoth2.label              "Het bericht als platte tekst en HTML verzenden (groter bericht)">
+<!ENTITY sendBoth2.accesskey          "z">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML- en plattetekstdomeinen">
+<!ENTITY domaindesc.label             "Wanneer u een bericht verzendt naar een adres met één van de hieronder genoemde domeinnamen, zal Mail het bericht automatisch in de opmaak van uw voorkeur verzenden (opgemaakte tekst of platte tekst).">
+<!ENTITY HTMLdomaintitle.label        "HTML-domeinen">
+<!ENTITY HTMLdomaintitle.accesskey    "T">
+<!ENTITY PlainTexttitle.label         "Plattetekstdomeinen">
+<!ENTITY PlainTexttitle.accesskey     "P">
+<!ENTITY AddButton.label              "Toevoegen…">
+<!ENTITY AddHtmlDomain.accesskey      "o">
+<!ENTITY AddPlainText.accesskey       "e">
+<!ENTITY DeleteButton.label           "Verwijderen">
+<!ENTITY DeleteHtmlDomain.accesskey   "r">
+<!ENTITY DeletePlainText.accesskey    "w">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "HTML-domeinnaam toevoegen">
+<!ENTITY add.htmldomain               "HTML-domeinnaam:">
+<!ENTITY add.plaintexttitle           "Plattetekstdomeinnaam toevoegen">
+<!ENTITY add.plaintextdomain          "Plattetekstdomeinnaam:">
+
+<!ENTITY domainnameError.title        "Domeinnaamfout">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "De domeinnaam @string@ is ongeldig en zal worden genegeerd. Geldige domeinnamen bevatten minstens één ‘.’ met tekens aan beide zijden ervan.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Het bericht automatisch als platte tekst verzenden als er geen noemenswaardige opmaak aanwezig is (andere opties worden genegeerd)">
+<!ENTITY autoDowngrade.accesskey      "a">

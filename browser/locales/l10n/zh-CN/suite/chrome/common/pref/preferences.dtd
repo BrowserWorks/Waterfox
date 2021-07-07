@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "首选项">
+<!ENTITY  preferencesDefaultTitleWin.title "选项">
+<!ENTITY  preferencesCloseButton.label "关闭">
+<!ENTITY  preferencesCloseButton.accesskey "C">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "首选项">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;">
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;">
+<!ENTITY categoryHeader "类别">
+
+<!ENTITY appear.label "外观">
+<!ENTITY content.label "内容">
+<!ENTITY fonts.label "字体">
+<!ENTITY colors.label "颜色">
+<!ENTITY media.label "媒体">
+<!ENTITY spellingPane.label "拼写检查">
+
+<!ENTITY navigator.label "浏览器">
+<!ENTITY history.label "历史记录">
+<!ENTITY languages.label "语言和字符编码">
+<!ENTITY applications.label "应用程序助手">
+<!ENTITY locationBar.label "地址栏">
+<!ENTITY search.label "互联网搜索">
+<!ENTITY tabWindows.label "标签式浏览">
+<!ENTITY links.label "链接行为">
+<!ENTITY download.label "下载项">
+
+<!ENTITY security.label "隐私和安全">
+<!ENTITY privatedata.label "隐私数据">
+<!ENTITY cookies.label "Cookie">
+<!ENTITY images.label "图片">
+<!ENTITY popups.label "弹出窗口">
+<!ENTITY passwords.label "密码">
+<!ENTITY masterpass.label "主密码">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "证书">
+
+<!ENTITY sync.label "同步">
+
+<!ENTITY advance.label "高级">
+<!ENTITY scriptsAndWindows.label "脚本和插件">
+<!ENTITY keynav.label "键盘导航">
+<!ENTITY findAsYouType.label "输入时同步查找">
+<!ENTITY cache.label "高速缓存">
+<!ENTITY offlineApps.label "离线应用">
+<!ENTITY proxies.label "代理服务器">
+<!ENTITY httpnetworking.label "HTTP 连网">
+<!ENTITY smart.label "软件安装">
+<!ENTITY mousewheel.label "鼠标滚轮">
+
+<!ENTITY debugging.label "调试">
+
+<!ENTITY focusSearch.key "f">

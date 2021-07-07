@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Pengaturan Akun">
+<!ENTITY accountName.label "Nama Akun:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Identitas Default">
+<!ENTITY identityDesc.label "Setiap akun memiliki satu identitas. Identitas ini akan digunakan oleh orang lain untuk mengenali Anda saat mereka membaca pesan Anda.">
+<!ENTITY name.label "Nama Anda:">
+<!ENTITY name.accesskey "a">
+<!ENTITY email.label "Alamat Email:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Balas dari identitas ini saat tajuk pengiriman cocok:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Alamat Balasan:">
+<!ENTITY replyTo.accesskey "B">
+<!ENTITY replyTo.placeholder "Penerima akan membalas ke alamat yang berbeda ini">
+<!ENTITY organization.label "Organisasi:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Teks untuk Tanda Tangan:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "Gunakan HTML (misalnya., &lt;b&gt;tebal&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Sertakan tanda tangan dari berkas (berkas teks, HTML, atau gambar):">
+<!ENTITY signatureFile.accesskey "H">
+<!ENTITY edit.label "Ubah…">
+<!ENTITY choose.label "Pilih…">
+<!ENTITY choose.accesskey "P">
+<!ENTITY editVCard.label "Ubah Kartu Nama…">
+<!ENTITY editVCard.accesskey "N">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Lampirkan vCard saya pada pesan">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Kelola Identitas…">
+<!ENTITY manageIdentities.accesskey "I">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Server Pengirim (SMTP):">
+<!ENTITY smtpName.accesskey "P">
+<!ENTITY smtpDefaultServer.label "Gunakan Server Default">
+
+<!ENTITY smtpServerEdit.label "Sunting server SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

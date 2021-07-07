@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Properti Daftar Pilihan">
+
+<!ENTITY Select.label "Daftar Pilihan">
+<!ENTITY SelectName.label "Nama Daftar:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Tinggi:">
+<!ENTITY SelectSize.accesskey "T">
+<!ENTITY SelectMultiple.label "Pilihan Berganda">
+<!ENTITY SelectMultiple.accesskey "B">
+<!ENTITY SelectDisabled.label "Mati">
+<!ENTITY SelectDisabled.accesskey "M">
+<!ENTITY SelectTabIndex.label "Nomor Indeks Tab:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Kelompok Pilihan">
+<!ENTITY OptGroupLabel.label "Label:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Mati">
+<!ENTITY OptGroupDisabled.accesskey "M">
+
+<!ENTITY Option.label "Pilihan">
+<!ENTITY OptionText.label "Teks:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Nilai:">
+<!ENTITY OptionValue.accesskey "N">
+<!ENTITY OptionSelected.label "Terpilih Saat Awal">
+<!ENTITY OptionSelected.accesskey "a">
+<!ENTITY OptionDisabled.label "Mati">
+<!ENTITY OptionDisabled.accesskey "M">
+
+<!ENTITY TextHeader.label "Teks">
+<!ENTITY ValueHeader.label "Nilai">
+<!ENTITY SelectedHeader.label "Terpilih">
+
+<!ENTITY AddOption.label "Tambah Pilihan">
+<!ENTITY AddOption.accesskey "T">
+<!ENTITY AddOptGroup.label "Tambah Kelompok">
+<!ENTITY AddOptGroup.accesskey "K">
+<!ENTITY RemoveElement.label "Hapus">
+<!ENTITY RemoveElement.accesskey "H">
+<!ENTITY MoveElementUp.label "Geser Atas">
+<!ENTITY MoveElementUp.accesskey "A">
+<!ENTITY MoveElementDown.label "Geser Bawah">
+<!ENTITY MoveElementDown.accesskey "B">

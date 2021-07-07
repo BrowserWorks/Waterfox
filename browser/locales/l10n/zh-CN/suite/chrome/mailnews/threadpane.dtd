@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "论题">
+<!ENTITY fromColumn.label "从">
+<!ENTITY recipientColumn.label "接收者">
+<!ENTITY attachmentColumn.label "附件">
+<!ENTITY subjectColumn.label "主题">
+<!ENTITY dateColumn.label "日期">
+<!ENTITY priorityColumn.label "优先">
+<!ENTITY tagsColumn.label "标签">
+<!ENTITY accountColumn.label "账户">
+<!ENTITY statusColumn.label "状态">
+<!ENTITY sizeColumn.label "大小">
+<!ENTITY junkStatusColumn.label "垃圾状态">
+<!ENTITY unreadColumn.label "未读邮件">
+<!ENTITY totalColumn.label "主题总计">
+<!ENTITY readColumn.label "已读">
+<!ENTITY receivedColumn.label "接收时间">
+<!ENTITY flagColumn.label "标记">
+<!ENTITY locationColumn.label "位置">
+<!ENTITY idColumn.label "按接收时间排序">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "选择要显示的列">
+<!ENTITY threadColumn2.tooltip "显示消息话题">
+<!ENTITY fromColumn2.tooltip "按发件人排序">
+<!ENTITY recipientColumn2.tooltip "按收件人排序">
+<!ENTITY attachmentColumn2.tooltip "按附件排序">
+<!ENTITY subjectColumn2.tooltip "按主题排序">
+<!ENTITY dateColumn2.tooltip "按日期排序">
+<!ENTITY priorityColumn2.tooltip "按优先级排序">
+<!ENTITY tagsColumn2.tooltip "按标签排序">
+<!ENTITY accountColumn2.tooltip "按账户排序">
+<!ENTITY statusColumn2.tooltip "按状态排序">
+<!ENTITY sizeColumn2.tooltip "按大小排序">
+<!ENTITY junkStatusColumn2.tooltip "按垃圾邮件状态排序">
+<!ENTITY unreadColumn2.tooltip "话题中未读的消息数">
+<!ENTITY totalColumn2.tooltip "话题中消息的总数">
+<!ENTITY readColumn2.tooltip "按已读排序">
+<!ENTITY receivedColumn2.tooltip "按接收日期排序">
+<!ENTITY flagColumn2.tooltip "按标记排序">
+<!ENTITY locationColumn2.tooltip "按位置排序">
+<!ENTITY idColumn2.tooltip "按接收顺序排序">

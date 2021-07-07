@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Вы собираетесь открыть:">
+<!ENTITY  from.label                  "из">
+<!ENTITY  actionQuestion.label        "Как &brandShortName; следует обработать этот файл?">
+
+<!ENTITY  openWith.label              "Открыть в">
+<!ENTITY  openWith.accesskey          "т">
+<!ENTITY  other.label                 "Выбрать…">
+
+<!ENTITY  saveFile.label              "Сохранить файл">
+<!ENTITY  saveFile.accesskey          "х">
+
+<!ENTITY  rememberChoice.label        "Выполнять автоматически для всех файлов данного типа.">
+<!ENTITY  rememberChoice.accesskey    "ы">
+
+<!ENTITY  whichIs.label              "являющийся:">
+
+<!ENTITY  chooseHandlerMac.label      "Выбрать…">
+<!ENTITY  chooseHandlerMac.accesskey  "а">
+<!ENTITY  chooseHandler.label         "Обзор…">
+<!ENTITY  chooseHandler.accesskey     "б">
+
+<!ENTITY  unknownPromptText.label     "Вы хотите сохранить этот файл?">

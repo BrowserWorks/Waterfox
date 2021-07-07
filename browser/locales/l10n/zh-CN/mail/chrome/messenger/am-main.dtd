@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "账户设置">
+<!ENTITY accountName.label "账户名称：">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "默认身份">
+<!ENTITY identityDesc.label "每个账户都有一个身份，其他人在读到您的消息时会看到该身份。">
+<!ENTITY name.label "您的姓名：">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "电子邮件：">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "当邮件投递头匹配时，以此身份回复：">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "回复地址：">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "接收者将回复到这个其他地址">
+<!ENTITY organization.label "工作单位：">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "签名文字:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "使用 HTML (例如, &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "附加一个文件（文本、HTML或图片）作为签名：">
+<!ENTITY signatureFile.accesskey "T">
+<!ENTITY edit.label "编辑…">
+<!ENTITY choose.label "选择…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "编辑名片…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "将我的个人名片附加到消息中">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "管理标识…">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "发送服务器 (SMTP)：">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "使用默认服务器">
+
+<!ENTITY smtpServerEdit.label "编辑 SMTP 服务器…">
+<!ENTITY smtpServerEdit.accesskey "P">

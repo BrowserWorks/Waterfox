@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Laiškų filtrai">
+<!ENTITY nameColumn.label "Filtro pavadinimas">
+<!ENTITY activeColumn.label "Taikymas">
+<!ENTITY newButton.label "Naujas…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopijuoti…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Taisyti…">
+<!ENTITY editButton.accesskey "T">
+<!ENTITY deleteButton.label "Pašalinti">
+<!ENTITY deleteButton.accesskey "š">
+<!ENTITY reorderTopButton "Viršun">
+<!ENTITY reorderTopButton.accessKey "V">
+<!ENTITY reorderTopButton.toolTip "Perkelti filtrą į viršų, kad jis būtų vykdomas pirmiausia">
+<!ENTITY reorderUpButton.label "Pakelti">
+<!ENTITY reorderUpButton.accesskey "k">
+<!ENTITY reorderDownButton.label "Nuleisti">
+<!ENTITY reorderDownButton.accesskey "u">
+<!ENTITY reorderBottomButton "Apačion">
+<!ENTITY reorderBottomButton.accessKey "a">
+<!ENTITY reorderBottomButton.toolTip "Perkelti filtrą į apačią, kad jis būtų vykdomas paskiausiai">
+<!ENTITY filterHeader.label "Gaunamiems laiškams taikomi pažymėti filtrai žemiau pateikta eile.">
+<!ENTITY filtersForPrefix.label "Paskyros pavadinimas:">
+<!ENTITY filtersForPrefix.accesskey "P">
+<!ENTITY viewLogButton.label "Filtravimo žurnalas">
+<!ENTITY viewLogButton.accesskey "r">
+<!ENTITY runFilters.label "Filtruoti dabar">
+<!ENTITY runFilters.accesskey "d">
+<!ENTITY stopFilters.label "Stabdyti">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Pažymėtus filtrus taikyti aplankui:">
+<!ENTITY folderPickerPrefix.accesskey "f">
+<!ENTITY helpButton.label "Žinynas">
+<!ENTITY helpButton.accesskey "Ž">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Ieškoti filtro pavadinimo…">
+

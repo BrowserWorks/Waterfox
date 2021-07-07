@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "新增至通訊錄…">
+<!ENTITY AddToAddressBook.accesskey        "B">
+<!ENTITY EditContact.label                 "編輯連絡人…">
+<!ENTITY EditContact.accesskey             "E">
+<!ENTITY ViewContact.label                 "檢視連絡人">
+<!ENTITY ViewContact.accesskey             "V">
+<!ENTITY SendMailTo.label                  "撰寫郵件給…">
+<!ENTITY SendMailTo.accesskey              "s">
+<!ENTITY CopyEmailAddress.label            "複製電子郵件地址">
+<!ENTITY CopyEmailAddress.accesskey        "C">
+<!ENTITY CopyNameAndEmailAddress.label     "複製姓名與電子郵件地址">
+<!ENTITY CopyNameAndEmailAddress.accesskey "N">
+<!ENTITY CreateFilterFrom.label            "由此建立篩選器…">
+<!ENTITY CreateFilterFrom.accesskey        "F">
+<!ENTITY openInBrowser.label               "用瀏覽器開啟">
+<!ENTITY openInBrowser.accesskey           "O">
+<!ENTITY bookmarkLinkCmd.label             "將此鏈結加入書籤…">
+<!ENTITY bookmarkLinkCmd.accesskey         "B">
+<!ENTITY copyLinkCmd.label                 "複製鏈結網址">
+<!ENTITY copyLinkCmd.accesskey             "C">
+<!ENTITY CopyMessageId.label               "複製 Message-ID">
+<!ENTITY CopyMessageId.accesskey           "C">
+<!ENTITY OpenMessageForMsgId.label         "開啟此 Message-ID 的郵件">
+<!ENTITY OpenMessageForMsgId.accesskey     "O">
+<!ENTITY OpenBrowserWithMsgId.label        "在瀏覽器開啟此 Message-ID 的郵件">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "B">

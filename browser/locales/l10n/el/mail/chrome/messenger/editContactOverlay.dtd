@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Διαγραφή">
+<!ENTITY editContactPanelDeleteContact.accesskey "γ">
+
+<!ENTITY editContactName.label "Όνομα:">
+<!ENTITY editContactName.accesskey "ν">
+
+<!ENTITY editContactEmail.label "Email:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Ευρετήριο διευθύνσεων:">
+<!ENTITY editContactAddressBook.accesskey "θ">
+
+<!ENTITY editContactPanelDone.label "Τέλος">
+<!ENTITY editContactPanelDone.accesskey "Ο">
+
+<!ENTITY contactMoveDisabledWarning.description "Δεν μπορείτε να τροποποιήσετε αυτό το ευρετήριο διευθύνσεων επειδή αυτή η επαφή είναι σε λίστα αλληλογραφίας.">

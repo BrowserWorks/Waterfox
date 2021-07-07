@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>A &brandShortName; Levelező és hírolvasó postafiókok beállítások</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+
+<h1 id="mail_and_newsgroups_account_settings">A postafiókok beállításai</h1>
+
+<p>Ez a fejezet a Postafiókok beállításai párbeszédpanelen található beállításokat ismerteti. A Beállítások párbeszédpanellel szemben, amelynek beállításai az összes postafiókot érintik, a Postafiókok beállításai párbeszédpanelen adott postafiók beállításai adhatók meg.</p>
+
+<p>A Postafiókok beállításai párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Induljunk ki a Levelező ablakból.</li>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát.</li>
+  <li>Jelöljük ki azt a postafiókot, amelynek beállításait látni vagy módosítani szeretnénk.</li>
+</ol>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#account_settings">Postafiók beállításai</a></li>
+    <li><a href="#server_settings">Kiszolgáló beállításai</a></li>
+    <li><a href="#copies_and_folders">Másolatok és mappák</a></li>
+    <li><a href="#addressing">Levélírás és címzés</a></li>
+    <li><a href="#synchronization_and_storage">Hálózat nélkül és lemezterület</a></li>
+    <li><a href="#junk_settings">Levélszemét beállítások</a></li>
+    <li><a href="#return_receipts">Tértivevények</a></li>
+    <li><a href="#security">Biztonság</a></li>
+    <li><a href="#local_folders">Helyi mappák</a></li>
+    <li><a href="#outgoing_server">Levélküldő kiszolgáló (SMTP)</a></li>
+  </ul>
+</div>
+
+<h2 id="account_settings">Postafiókok beállításai – Postafiók beállításai</h2>
+
+<p>Ez a témakör a postafiók beállításainak megtekintését és módosítását ismerteti (ilyen beállítás például a felhasználói név, a válaszcím és az aláírásfájl). A Postafiókok beállításai párbeszédpanel a Levelező ablakból a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>A következő adatok megjelenítéséhez jelöljük ki a kívánt postafiókot.</li>
+</ol>
+
+<ul>
+  <li><strong>Postafiók neve</strong>: az adott postafiók neve.</li>
+  <li>For any type of account but Blogs &amp; News Feeds:
+    <ul>
+  <li><strong>Személyes adatok</strong>: név, e-mail cím, válaszcím (ha eltér az e-mail címtől) és szervezet (választható).</li>
+  <li><strong>Csatolja ezt az aláírást</strong>: lehetővé teszi az aláírásfájl (szöveges vagy HTML formátumú) megadását, így az elküldött üzenetekre aláírás kerül.
+    A Tallózás gombra kattintva megkereshető a kívánt fájl (nem kötelező megadni).
+        <p>More signature options are located in
+          <a href="#addressing">Composition &amp; Addressing</a>.</p>
+      </li>
+  <li><strong>vCard csatolása a levelekhez</strong>: Kiválaszthatja, hogy szeretné-e a kimenő levelekhez a vCard-ját csatolni. Kattintsunk a Kártya szerkesztése gombra az adatok szerkesztéséhez (opcionális).</li>
+</ul>
+  </li>
+  <li>For Blogs &amp; News Feeds accounts:
+    <ul>
+      <li><strong>Check for new articles at startup</strong>: Select this
+        checkbox if you want to check this account automatically for new blogs
+        &amp; news messages whenever you start Mail &amp; Newsgroups.</li>
+      <li><strong>Check for new articles every [__] minutes</strong>: Select
+        this checkbox if you want to specify the number of minutes between feed
+        checks. You can also check for new blogs &amp; news messages at any time
+        by clicking Get Msgs in the Mail window.</li>
+      <li><strong>By default, show the article summary instead of loading the
+        web page</strong>: Select this checkbox if you want &brandShortName;
+        to display a brief summary of the article (bundled inside the feed)
+        instead of loading the full web page. Showing the article summary is
+        slightly faster than the full web page, but you may miss part of the
+        article content.</li>
+      <li><strong>Empty Trash on Exit</strong>: Empties the Trash folder
+        whenever you quit Mail &amp; Newsgroups.</li>
+      <li><strong>Manage Subscriptions…</strong>: Shows the Feed Subscriptions
+        dialog, that allows you to add, edit and remove feeds to this blogs
+        &amp; news feeds account.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="server_settings">Postafiókok beállításai – Kiszolgáló beállításai</h2>
+
+<p>A &brandShortName; Levelező és hírolvasó két típusú levelezőkiszolgálóval működhet: IMAP és POP. Ha nem vagyunk biztosak benne, hogy az internetszolgáltató melyiket támogatja, kérdezzük meg. Ha az internetszolgáltatónál mindkettő használható, a következő ismertetés segít eldönteni, hogy melyiket állítsuk be.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#about_internet_message_access_protocol">Az IMAP (Internet Message Access Protocol) protokoll</a></li>
+    <li><a href="#about_post_office_protocol">A POP (Post Office Protocol) protokoll</a></li>
+    <li><a href="#imap_server_settings">Az IMAP-kiszolgáló beállításai</a></li>
+    <li><a href="#advanced_imap_server_settings">Az IMAP-kiszolgáló speciális beállításai</a></li>
+    <li><a href="#pop_server_settings">A POP-kiszolgáló beállításai</a></li>
+    <li><a href="#news_server_settings">A hírcsoport-kiszolgáló beállításai</a></li>
+  </ul>
+</div>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="about_internet_message_access_protocol">Az IMAP (Internet Message Access Protocol) protokoll</h3>
+
+<p><strong>Előny</strong>: az üzenetek és ezek módosításai a kiszolgálón tárolódnak, így nem terhelik a helyi merevlemezt. A frissített postafiók mindig elérhető, a levelek több helyről is lekérhetők.
+  Modemes kapcsolatnál gyorsabb lesz a működés, mivel először csak az üzenetek fejléceit töltjük le.</p>
+
+<p><strong>Hátrány</strong>: nem minden internetszolgáltató támogatja az IMAP protokollt.</p>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="about_post_office_protocol">A POP (Post Office Protocol) protokoll</h3>
+
+<p><strong>Előny</strong>: az üzeneteink azonnal letöltődnek a helyi számítógépre, de megadhatjuk azt is, hogy a kiszolgálón maradjon másolat belőlük, illetve a helyben törölt üzentek törlődjenek le a kiszolgálóról is. A legtöbb internetszolgáltató napjainkban támogatja a POP-ot.</p>
+
+<p><strong>Hátrány</strong>: ha több számítógépet használunk, az üzenetek az egyik vagy a másik gépre kerülnek. A POP protokoll a lassabb kapcsolatoknál gyengébb teljesítményt ad, mint az IMAP. Több helyről nem érhető el az összes levelezési mappa.</p>
+
+<p>Megjegyezendő, hogy az újabb POP szerverek támogatják az üzenet fejlécének lekéréset szemben a teljes üzenet letöltésével, ahogyan azt az IMAP protokoll is lehetővé teszi. Ezen szolgáltatás használatával a POP protokoll levélkezelési sebessége majdnem olyan nyors, mint az IMAP protokollé.</p>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="imap_server_settings">Az IMAP-kiszolgáló beállításai</h3>
+
+<p>Az IMAP beállításai a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljük ki a postafiók nevét, és kattintsunk a Kiszolgáló beállításai kategóriára. (Ha a postafiók beállításánál IMAP-kiszolgálót adtunk meg, ennek beállításai jelennek meg.)</li>
+</ol>
+
+<ul>
+  <li><strong>Kiszolgálótípus</strong>: a postafiók létrehozásakor megadott kiszolgálótípus (Hírcsoport-kiszolgáló (NNTP)). A postafiókhoz rendelt kiszolgáló típusának módosításához törölnünk kell a postafiókot, majd újból létre kell hoznunk.</li>
+  <li><strong>Kiszolgáló</strong>: a postafiók létrehozásakor megadott kiszolgálónév. Ha problémák mutatkoznak a levelek lekérésénél erről a postafiókról, az internetszolgáltatóval vagy a rendszergazdával egyeztessük a kiszolgálónév helyességét.</li>
+  <li><strong>Felhasználói név</strong>: a postafiók létrehozásakor megadott felhasználói név.</li>
+  <li><strong>Port</strong>: ha az internetszolgáltató vagy a rendszergazda másként nem jelezte, ne módosítsuk ezt a beállítást.</li>
+  <li><strong>Biztonságos kapcsolat (SSL) használata</strong>: jelöljük be ezt a beállítást, ha a levelezőkiszolgálót titkosított üzenetek küldésére és fogadására állították be. Ha nem vagyunk biztosak benne, kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</li>
+  <li><strong>Biztonságos hitelesítés használata</strong>: Jelöljük be ezt a beállítást ha biztonságos eljárásokat szeretnénk használni a belépéshez, úgymint CRAM-MD5. Ha nem vagyunk biztosak abban, hogy ez a szolgáltatás rendelkezésünkre áll, akkor kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</li>
+  <li><strong>Új üzenetek ellenőrzése indításkor</strong>: jelöljük be, ha ennél a postafióknál a Levelező és hírolvasó minden indításakor automatikusan ellenőrizni szeretnénk az új leveleket.</li>
+  <li><strong>Új üzenetek ellenőrzése [__] percenként</strong>: jelöljük be, ha automatikusan ellenőrizni szeretnénk az új üzeneteket, és adjuk meg, hogy milyen időközönként. Ha nem jelöljük be a beállítást, az új üzeneteket a Levelező eszköztár Letöltés gombjával kérhetjük le.</li>
+  <li id="when_i_delete_a_message"><strong>Üzenetek törlésekor</strong>: adjuk meg az üzenetek törlésekor kért műveletet. <q>Áthelyezés a Törölt elemek közé</q> beállítás javasolt, ha a rendszergazda vagy a szolgáltató nem ad meg mást. A törlésre jelölt üzenetek eltávolítására csak a mappák tömörítésekor kerül sor.</li>
+  <li><strong>A Beérkezett üzenetek mappa kitisztítása kilépéskor</strong>: a törölt üzenetek eltávolítása a Beérkezett üzenetek mappából, amikor kilépünk a Levelező és hírolvasó programból. Akkor jelöljük be, ha az üzenetek törlésre jelölését választottuk.</li>
+  <li><strong>A Törölt elemek mappa ürítése kilépéskor</strong>: a Törölt elemek mappa tartalmának törlése, amikor kilépünk a Levelező és hírolvasó programból.</li>
+  <li><strong>Haladó</strong>: a postafióknál másik levélküldő kiszolgáló (SMTP) megadását teszi lehetővé. Ennek a gombnak a használatával szintén el tudjuk érni a <a href="#advanced_imap_server_settings">Haladó IMAP-kiszolgálóbeállítások</a> panelt.</li>
+  <li><strong>Helyi könyvtár</strong>: a merevlemezen a postafiók üzeneteinek tárolási helye.</li>
+</ul>
+
+<h3 id="advanced_imap_server_settings">Az IMAP-kiszolgáló speciális beállításai</h3>
+
+<p>Ezeket a beállításokat a kiszolgáló általában automatikusan megadja. Ha nem vagyunk biztosak ezekben, kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</p>
+
+<p>Az IMAP speciális beállításai a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljük ki a postafiók nevét, és kattintsunk a Kiszolgáló beállításai kategóriára.</li>
+  <li>Ha a levelezőkiszolgáló típusa IMAP, a Haladó gombra kattintva további beállítások adhatók meg:
+    <ul>
+      <li>az IMAP-kiszolgáló könyvtárának elérési útvonala</li>
+      <li>csak a <q>feliratkozott</q> mappák megjelenítése</li>
+      <li>almappák támogatása</li>
+      <li>személyes és nyilvános (megosztott mappa) névtartományok</li>
+    </ul>
+  </li>
+</ol>
+
+<p>További tudnivalók: <a href="#adding_and_removing_ldap_directories">LDAP-címtár felvétele és eltávolítása</a>.</p>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="pop_server_settings">A POP-kiszolgáló beállításai</h3>
+
+<p>A POP beállításai a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljük ki a postafiók nevét, és kattintsunk a Kiszolgáló beállításai kategóriára. (Ha a postafiók beállításánál POP-kiszolgálót adtunk meg, ennek beállításai jelennek meg.)</li>
+</ol>
+
+<ul>
+  <li><strong>Kiszolgálótípus</strong>: a postafiók létrehozásakor megadott kiszolgálótípus (POP levelezőkiszolgáló). A postafiókhoz rendelt kiszolgáló típusának módosításához törölnünk kell a postafiókot, majd újból létre kell hoznunk.</li>
+  <li><strong>Kiszolgáló</strong>: a postafiók létrehozásakor megadott kiszolgálónév. Ha problémák mutatkoznak a levelek lekérésénél erről a postafiókról, az internetszolgáltatóval vagy a rendszergazdával egyeztessük a kiszolgálónév helyességét.</li>
+  <li><strong>Felhasználói név</strong>: a postafiók létrehozásakor megadott felhasználói név.</li>
+  <li><strong>Port</strong>: ha az internetszolgáltató vagy a rendszergazda másként nem jelezte, ne módosítsuk ezt a beállítást.</li>
+  <li><strong>Biztonságos kapcsolat (SSL) használata</strong>: jelöljük be ezt a beállítást, ha a levelezőkiszolgálót titkosított üzenetek küldésére és fogadására állították be. Ha nem vagyunk biztosak benne, kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</li>
+  <li><strong>Biztonságos hitelesítés használata</strong>: Jelöljük be ezt a beállítást ha biztonságos eljárásokat szeretnénk használni a belépéshez, úgymint CRAM-MD5 és APOP. Ha nem vagyunk biztosak abban, hogy ezt a szolgáltatást támogatja a kiszolgáló, akkor kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</li>
+  <li><strong>Új üzenetek ellenőrzése indításkor</strong>: jelöljük be, ha ennél a postafióknál a Levelező és hírolvasó minden indításakor automatikusan ellenőrizni szeretnénk az új leveleket. POP típusú kiszolgálónál a Levelező és hírolvasó csak akkor tölti le az üzeneteket, ha a Levelező eszköztáron a Letöltés gombra kattintunk.</li>
+  <li><strong>Új üzenetek ellenőrzése [__] percenként</strong>: jelöljük be, ha automatikusan ellenőrizni szeretnénk az új üzeneteket, és adjuk meg, hogy milyen időközönként. Ha nem jelöljük be a beállítást, az új üzeneteket a Levelező eszköztár Letöltés gombjával tölthetjük le.</li>
+  <li><strong>Új üzenetek automatikus letöltése</strong>: a beállítás választásakor a Levelező és hírolvasó azonnal letölti az üzeneteket, amikor ellenőrzi a kiszolgálót.</li>
+  <li><strong>Csak a fejlécek letöltése</strong>: jelöljük be, ha csak az új üzenetek fejlécét szeretnénk letölteni, a teljes üzenet letöltése helyett. Az opció használatához a POP szervernek támogatnia kell a <q>TOP</q> parancsot. A legújabb POP szerverek támogatják ezt a parancsot, de ha nem vagyunk biztosak abban, hogy ezt a szolgáltatást támogatja a kiszolgáló, akkor kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</li>
+  <li><strong>Üzenetek megtartása a kiszolgálón</strong>: akkor jelöljük be, ha az üzenetek helyi gépre letöltése mellett ezek másolatát a levelezőkiszolgálón is meg szeretnénk tartani.
+    <ul>
+      <li><strong>Legfeljebb [___] napig</strong>: választásakor az üzenetek törlődnek a kiszolgálóról a megadott számú nap eltelte után.</li>
+      <li><strong>Amíg nem törlöm, vagy át nem helyezem</strong>  választásakor az üzenetek törlődnek a kiszolgálóról, ha töröljük vagy másik mappába helyezzük át őket.</li>
+    </ul>
+  </li>
+  <li><strong>A Törölt elemek mappa ürítése kilépéskor</strong>: a Törölt elemek mappa tartalmának eltávolítása, amikor kilépünk a Levelező és hírolvasó programból.</li>
+  <li><strong>Haladó</strong>: a postafióknál másik levélküldő kiszolgáló (SMTP) megadását teszi lehetővé.</li>
+  <li><strong>Helyi könyvtár</strong>: a merevlemezen a postafiók üzeneteinek tárolási helye.</li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="news_server_settings">A hírcsoport-kiszolgáló beállításai</h3>
+
+<p>A fejezet a hírcsoport-kiszolgáló beállításainak módosítását ismerteti. Ezek a beállítások a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljük ki a postafiók nevét, és kattintsunk a Kiszolgáló beállításai kategóriára. (Ha a postafiók beállításánál hírcsoport-kiszolgálót adtunk meg, ennek beállításai jelennek meg.)</li>
+</ol>
+
+<ul>
+  <li><strong>Kiszolgálótípus</strong>: a postafiók létrehozásakor megadott kiszolgálótípus (NNTP).</li>
+  <li><strong>Kiszolgáló</strong>: a postafiók létrehozásakor megadott kiszolgálónév. Ha problémák mutatkoznak a levelek e postafiókról történő letöltésénél, az internetszolgáltatóval vagy a rendszergazdával egyeztessük a kiszolgálónév helyességét.</li>
+  <li><strong>Port</strong>: ha az internetszolgáltató vagy a rendszergazda másként nem jelezte, ne módosítsuk ezt a beállítást.</li>
+  <li><strong>Biztonságos kapcsolat (SSL) használata</strong>: jelöljük be ezt a beállítást, ha a hírcsoportkiszolgálót titkosított üzenetek küldésére és fogadására állították be. Ha nem vagyunk biztosak benne, kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</li>
+  <li><strong>Új üzenetek ellenőrzése [__] percenként</strong>: jelöljük be, ha automatikusan ellenőrizni szeretnénk az új üzeneteket, és adjuk meg, hogy milyen időközönként. Ha nem jelöljük be a beállítást, az új üzeneteket a Levelező eszköztár Letöltés gombjával kérhetjük le.</li>
+  <li><strong>Jóváhagyás kérése, ha [__] üzenetnél többet kellene letölteni</strong>: ezzel a beállítással és az egyidejűleg letöltendő üzenetek megadásával lemezterületet takaríthatunk meg, és csökkenthetjük a letöltési időt.</li>
+  <li><strong>Kérje a hitelesítést a kiszolgálóhoz való kapcsolódáskor</strong>: Néhány kiszolgáló hitelesítés nélkül is engedélyez kommunikációt, de elrejt minden <em>személyes</em> csoportot/üzenetet, ha nem vagyunk bejelentkezve. Válasszuk ezt a beállítást, hogy a &brandShortName; kötelezővé tegye a hitelesítést minden kapcsolódáskor még akkor is, ha a kiszolgáló nem kérné. (egyéb elnevezés: <q>Erőltetett Hitelesítés (Pushed Authentication)</q>).</li>
+  <li><strong>Haladó</strong>: a postafióknál másik levélküldő kiszolgáló (SMTP) megadását teszi lehetővé.</li>
+  <li><strong>newsrc fájl</strong>: a newsrc fájl elérési útvonala tájékoztatásul jelenik meg. A newsrc fájl az egyes hírcsoportokban olvasott üzenetekről, valamint azokról a hírcsoportokról tartalmaz adatokat, amelyekre feliratkoztunk.</li>
+  <li><strong>Helyi könyvtár</strong>: a merevlemezen a postafiók üzeneteinek tárolási helye.</li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="copies_and_folders">Postafiókok beállításai – Másolatok és mappák</h2>
+
+<p>Ez a fejezet a másolatok automatikus küldésének, valamint az elküldött üzenetek, a piszkozatok és az üzenetsablonok tárolási helyének beállításait ismerteti.</p>
+
+<p>Alapértelmezés szerint a &brandShortName; Levelező és hírolvasó az elküldött üzenetek másolatait az aktuális fiók Elküldött elemek mappájában tárolja.
+  Hasonló módon a piszkozatok a Piszkozatok mappába, míg az üzenetsablonok a Sablonok mappába kerülnek.</p>
+
+<p>A Másolatok és mappák beállításai a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljünk ki egy postafiókot, és kattintsunk a Másolatok és mappák kategóriára. A Másolatok és mappák beállításai panel jelenik meg.</li>
+</ol>
+
+<ul>
+  <li><strong>Másolat helye</strong>: adjuk meg, hogy hol szeretnénk tárolni az elküldött levél- és hírcsoportüzenetek másolatait. Ha az aktuális postafióknál nem az alapértelmezett Elküldött elemek mappát szeretnénk használni, kattintsunk a Máshol választógombra, és adjuk meg a kívánt mappát.</li>
+  <li><strong>Rejtett másolatot kap</strong>: adjuk meg, hogy szeretnénk-e minden levélről rejtett másolatot küldeni más címzettnek, és írjuk be a címet. Ha szeretnénk minden levélről rejtett másolatot küldeni önmagunknak, akkor vegyük fel a saját címünket ebbe a listába. A címeket vesszővel válasszuk el egymástól (,).</li>
+  <li><strong>Piszkozatok tárolója</strong>: adjuk meg a piszkozatok tárolási helyét. Ha az aktuális postafióknál nem az alapértelmezett Piszkozatok mappát szeretnénk használni, kattintsunk a Máshol választógombra, és adjuk meg a kívánt mappát.</li>
+  <li><strong>Sablonok tárolója</strong>: adjuk meg az üzenetsablonok tárolási helyét. Ha az aktuális postafióknál nem az alapértelmezett Sablonok mappát szeretnénk használni, kattintsunk a Máshol választógombra, és adjuk meg a kívánt mappát.</li>
+  <li><strong>Jóváhagyás kérése üzenet mentésekor</strong>: jelöljük be, ha a piszkozatok és az üzenetsablonok mentésekor jóváhagyó párbeszédpanel megjelenítését kérjük. Ekkor ennél a műveletnél párbeszédpanel jelenik meg megadva, hogy a &brandShortName; Levelező és hírolvasó melyik mappába menti a piszkozatot vagy az üzenetsablont.</li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="addressing">Postafiókok beállításai – Levélírás és címzés</h2>
+
+<p>A Levélírás beállítópanelen adhatjuk meg a szöveg formázásának és a válaszok kezelésének beállításait.</p>
+
+<ul>
+  <li><strong>Levelek írása HTML formátumban</strong>: Alapértelmezett szerkesztőként használjuk a HTML-szerkesztőt levelek és hírcsoportüzenetek írásához. Ha nem jelöljük be, az egyszerű szövegszerkesztőt használhatjuk. A HTML-üzenetek, a weboldalakhoz hasonlóan, formázott szöveget, hivatkozást, képet és táblázatot is tartalmazhatnak. Előfordulhat, hogy nem minden címzett tudja fogadni a HTML-üzeneteket.
+
+    <p><strong>Tipp</strong>: Ha csak ritkán akarunk használni egy szerkesztőt, akkor a Shift billentyűt lenyomva tartva kattintsunk az Új üzenet vagy a Válasz gombra, hogy bekapcsoljuk a nem alapértelmezett, általunk választott szerkesztőt.</p>
+  </li>
+  <li><strong>Válaszoláskor automatikusan idézze az eredeti szöveget</strong>: bejelölésekor a válasz tartalmazni fogja az eredeti üzenet szövegét is. A legördülő menüből válasszuk ki, hogy a kurzor az idézett szöveg alá vagy fölé kerüljön. Választhatjuk, hogy válaszadáskor automatikusan idézze az eredeti szöveget.
+    <ul>
+      <li><strong>és aláírás</strong>: A legördülő menüből válasszuk ki, hogy hova szeretnénk az aláírásunkat helyezni. Ez csak abban az esetben választható, ha úgy döntöttünk, hogy <a href="#account_settings">aláírást használunk</a> és a kurzor az idézett szöveg fölé kerül.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Az itt megadott beállítások felülírják a Beállítások párbeszédpanelen az összes <a href="#addressing_preferences">címjegyzékre</a> megadott általános címtárkiszolgálói beállításokat. Az LDAP-kiszolgáló beállításai az <a href="#address_autocompletion">automatikus címkiegészítés</a> működését befolyásolják, és ezek az egyes fiókoknál megfelelően megváltoztathatók.</p>
+
+<p>Az automatikus címkiegészítés a címjegyzékek alapján egyező bejegyzéseket keres az üzenetek címzésénél az e-mail címek beírásakor.</p>
+
+<p>Ezek a beállítások a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljünk ki egy postafiókot, és kattintsunk a Címzés kategóriára.</li>
+</ol>
+
+<ul>
+  <li><strong>Saját tartomány automatikus hozzáfűzése</strong>: jelöljük be, ha azt szeretnénk, hogy a Levelező és hírolvasó automatikusan beíráskor kiegészítse a címeket a saját tartománnyal.</li>
+  <li><strong>A globális LDAP-kiszolgáló beállításainak használata ennél a postafióknál</strong>: ez az alapbeállítás. Akkor válasszuk, ha ennél a postafióknál nem akarjuk felülírni a globális LDAP-kiszolgáló beállításait.</li>
+  <li><strong>Másik LDAP-kiszolgáló használata</strong>: jelöljük be, és adjunk meg egy másik LDAP-kiszolgálót, ha a postafióknál másik LDAP-címtárkiszolgálót szeretnénk használni az automatikus címkiegészítéshez. Ha szükséges, adott címtárkiszolgáló beállításainak módosításához, címtárkiszolgáló felvételéhez vagy törléséhez kattintsunk a Címtár szerkesztése gombra. További tudnivalók: <a href="#adding_and_removing_ldap_directories">LDAP-címtár felvétele és eltávolítása</a>.</li>
+</ul>
+
+<p>Amikor egy olyan címzettnek próbálunk titkosított üzenetet küldeni, akinek a tanúsítványai nincsenek meg helyben, a program kiválasztott címtárban is megpróbálja megtalálni a megfelelő tanúsítványokat.</p>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="offline_and_disk_space">Postafiókok beállításai – Hálózat nélkül és lemezterület</h2>
+
+<p>A hálózat nélküli munka és a lemezterület beállításaival lemezterületet takaríthatunk meg, valamint beállíthatunk egy fiókot az internetkapcsolat nélküli munkára. A rendelkezésre álló beállítások az adott fiókhoz megadott kiszolgáló típusától (IMAP, POP vagy hírcsoport) függően változnak.</p>
+
+<div class="contentsBox">
+  <ul>
+    <li><a href="#offline_and_disk_space_settings_imap">A hálózat nélküli munka és a lemezterület beállításai (IMAP)</a></li>
+    <li><a href="#disk_space_settings">Lemezterület beállításai (POP)</a></li>
+    <li><a href="#offline_and_disk_space_settings_nntp">A hálózat nélküli munka és a lemezterület beállításai (hírcsoport)</a></li>
+  </ul>
+</div>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="offline_and_disk_space_settings_imap">A hálózat nélküli munka és a lemezterület beállításai (IMAP)</h3>
+
+<p>A megfelelő beállítások a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Válasszuk a Hálózat nélkül és lemezterület kategóriát egy IMAP postafióknál.</li>
+</ol>
+
+<ul>
+  <li><strong>A Beérkezett üzenetek mappában található leveleket tegye elérhetővé akkor is, amikor kapcsolat nélküli módban vagyok</strong>: ha bejelöljük, a Beérkezett üzenetek mappa kapcsolat nélküli üzemmódban is elérhető.</li>
+  <li><strong>Új mappák létrehozásakor jelölje ki őket kapcsolat nélküli használatra</strong>: ha bejelöljük, a létrehozott új mappák automatikusan rendelkezésre fognak állni a kapcsolat nélküli munkánál. Ha kikapcsoljuk a beállítást, az új mappák nem használhatók automatikusan kapcsolat nélkül. A kapcsolat nélküli munkához kézzel is kijelölhetjük a mappákat a Letöltés/szinkronizálás azonnal paranccsal (Fájl menü Kapcsolat nélkül parancs). A mappák kiválasztásához Az üzenetek letöltése és szinkronizálása párbeszédpanelen kattintsunk a Kiválasztás gombra.</li>
+  <li><strong>Mappák kiválasztása kapcsolat nélküli használathoz</strong>: Jelöljük ki a kapcsolat nélküli munkához a kívánt mappákat. További tudnivalók: <a href="#selecting_items_for_offline_viewing">Elemek kijelölése kapcsolat nélküli megtekintésre</a>.</li>
+  <li><strong>[___] KB-nál magyobb üzenetek</strong>: bejelölésével lemezterületet takaríthatunk meg a nagyméretű üzenetek letöltésének tiltásával.
+    Adjuk meg a letöltendő üzenetek maximális méretét.</li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="disk_space_settings">Lemezterület beállításai (POP)</h3>
+
+<p>A POP típusú postafiókok üzeneteit a rendszer mindig letölti a helyi számítógépre kivéve, ha engedélyezzük a <q>Csak a fejlécek letöltése</q> beállítást. Ez a témakör azt ismerteti, hogyan takaríthatunk meg lemezterületet ilyen postafióknál. Ha a postafiók beállításai között megadjuk a <q>Csak a fejlécek letöltése</q> beállítást, akkor ezeket a lemezterülettel összefüggő beállításokat nem fogja a program figyelembe venni. A megfelelő beállítások a következő lépésekkel jeleníthetők meg:</p>
+
+<p>Induljunk ki a Levelező ablakból.</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Kattintsunk a Lemezterület kategóriára (csak POP típusú postafióknál).</li>
+</ol>
+
+<ul>
+  <li><strong>[___] KB-nál magyobb üzenetek</strong>: bejelölésével lemezterületet takaríthatunk meg a nagyméretű üzenetek letöltésének tiltásával.
+    Adjuk meg a letöltendő üzenetek maximális méretét.</li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="offline_and_disk_space_settings_nntp">A hálózat nélküli munka és a lemezterület beállításai (hírcsoport)</h3>
+
+<p>A megfelelő beállítások a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát.
+    A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Válasszuk a Hálózat nélkül és lemezterület kategóriát egy hírcsoportfióknál.</li>
+</ol>
+
+<ul>
+  <li><strong>Hírcsoportok kiválasztása kapcsolat nélküli használathoz</strong>: Jelöljük ki a kapcsolat nélküli munkához a kívánt hírcsoportokat. További tudnivalók: <a href="#selecting_items_for_offline_viewing">Elemek kijelölése kapcsolat nélküli megtekintésre</a>.</li>
+</ul>
+
+<p>A következő beállítások segítségével lemezhelyet és letöltési időt takaríthatunk meg. Adjuk meg, hogy milyen üzeneteket nem szeretnénk helyben letölteni:</p>
+
+<ul>
+  <li><strong>Olvasott üzenetek</strong>: bejelölésekor csak az olvasatlan üzenetek törzsét tölti le a rendszer.</li>
+  <li><strong>[___] KB-nál magyobb üzenetek</strong>: bejelölésével lemezterületet takaríthatunk meg a nagyméretű üzenetek letöltésének tiltásával.
+    Adjuk meg a letöltendő üzenetek maximális méretét.</li>
+  <li><strong>[___] napnál régebbi üzenetek</strong>: bejelölésekor csak a megadott számú napnál nem régebbi üzeneteket tölti le a rendszer.</li>
+</ul>
+
+<p>A &brandShortName; képes a hírcsoportüzenetek automatikus törlésére. Ez a folyamat a <strong>Megtartás</strong> beállításcsoportban szabályozható:</p>
+
+<ul>
+  <li><strong>Minden üzenet</strong>: Az összes üzenetet megtartja. Soha nem törli automatikusan az üzeneteket.</li>
+  <li><strong>A legfrissebb [___] üzenet</strong>: Adjuk meg a megtartandó üzenetek számát. Csak az ezeknél régebbi üzenetek törlődnek.</li>
+  <li><strong>Az elmúlt [__] napon érkezett üzenetek</strong>: A megadott időintervallumban érkezett üzenetek megmaradnak.</li>
+</ul>
+
+<p>Az utóbbi két beállítás esetén tovább szűkíthető az automatikusan törlendő üzenetek köre. Ez különösen hasznos az összes üzenetet megtartó beállítással kombinálva.</p> 
+
+<ul>
+  <li><strong>Csak az olvasatlan üzenetek</strong>: bejelölésekor a &brandShortName; nem törli az olvasatlan üzeneteket.</li>
+  <li><strong>Csak [___] napnál újabb üzenetektörzsek</strong>: bejelölésekor csak a &brandShortName; megadott számú napnál nem régebbi üzeneteket nem törli le.</li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="return_receipts">Postafiókok beállításai – Tértivevények</h2>
+
+<p>Ez a témakör a Tértivevények panellapot ismerteti. A megfelelő párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Kattintsunk a postafiókuk Tértivevények kategóriájára.</li>
+</ol>
+
+<p>A Tértivevények panelen az adott postafiókra adhatjuk meg az elküldött levelekkel küldött tértivevények beállításait. A Tértivevények panelen azt is megadhatjuk, hogyan kezeljük a nekünk küldött tértivevényeket. Ezek a beállítások felülbírálják a tértivevényekre megadott globális beállításokat, amelyeket a <a href="#return_receipts_preferences">Levelező és hírolvasó beállításai – Tértivevények</a> részben adtunk meg.</p>
+
+<ul>
+  <li><strong>A globális tértivevény-beállítások használata ennél a postafióknál</strong>: alapértelmezés szerint minden postafiók a <a href="#return_receipts_preferences">Levelező és hírolvasó beállításai – Tértivevények</a> részben megadott beállításokat veszi át.</li>
+  <li><strong>Tértivevényekkel kapcsolatos beállítások ehhez a postafiókhoz</strong>: bejelölésével megváltoztathatjuk a postafiókhoz tartozó tértivevény-beállításokat.
+    <ul>
+      <li><strong>Mindig tértivevénnyel küldje az üzenetet</strong>: bejelölésével engedélyezzük, hogy minden ebből a postafiókból elküldött levélhez automatikusan csatolódjon egy tértivevény.</li>
+      <li><strong>Hagyja a beérkezett üzenetek mappában</strong>: a visszaigazóló üzenetek a postafiók Beérkezett üzenetek mappájába kerülnek.
+
+        <p><strong>Tipp</strong>: válasszuk ezt a beállítást, ha szeretnénk létrehozni egy szűrőt, amely automatikusan az általunk megadott mappába helyezi át a visszaigazoló üzeneteket. További tudnivalók a szűrők létrehozásáról és használatáról: <a href="#creating_message_filters">Levelezőszűrők létrehozása</a>.</p>
+      </li>
+      <li><strong>Tegye át az Elküldött elemek mappába</strong>: a beérkezett visszaigazoló üzenetek a postafiók Elküldött elemek mappájába kerülnek át.</li>
+      <li><strong>Sose küldjön tértivevényt</strong>: jelöljük be, ha nem szeretnénk a másoktól kapott tértivevény-kérésekre visszaigazoló üzenetet küldeni.</li>
+      <li><strong>Küldjön tértivevényt bizonyos üzenetekre</strong>: válasszuk ki a visszaigazolás-kérésekre adott válasz módját.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="security">Postafiókok beállításai – Biztonság</h2>
+
+<p>Ez a témakör az üzenetek biztonságára vonatkozó postafiók-beállításokat ismerteti. Ezek végrehajtása előtt azonban be kell szereznünk egy vagy több e-mail tanúsítványt. További tudnivalók: <a href="mailnews_security.xhtml">Üzenetek aláírása és titkosítása</a>.</p>
+
+<p>Levelező-postafiók biztonsági beállításai a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát.</li>
+  <li>Kattintsunk a Biztonság kategóriára annak a postafióknak a neve alatt, amelynek biztonsági beállításait meg szeretnénk adni.</li>
+</ol>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#about_certificates">Tanúsítványok – áttekintés</a></li>
+    <li><a href="#digital_signing">Digitális aláírás</a></li>
+    <li><a href="#encryption">Titkosítás</a></li>
+  </ul>
+</div>
+
+<h3 id="about_certificates">Tanúsítványok – áttekintés</h3>
+
+<p>A Postafiókok beállításai Biztonság panellapjának elsődleges célja a következő két tanúsítvány kijelölése:</p>
+
+<ul>
+  <li>a másoknak küldött üzenetek aláírásához használni kívánt e-mail tanúsítvány,</li>
+  <li>mások nekünk szánt üzeneteinek titkosításához használni kívánt e-mail tanúsítvány.</li>
+</ul>
+
+<p>A tanúsítványokat kiadó <a href="glossary.xhtml#certificate_authority">hitelesítésszolgáltató (CA)</a> irányelveitől függően a két tanúsítvány azonos is lehet, azonban ebben az esetben is kétszer kell megadni: egyszer a digitális aláíráshoz, egyszer a titkosításhoz.</p>
+
+<p>Az itt kijelölt tanúsítványok bekerülnek az összes általunk küldött digitálisan aláírt üzenetbe. Ezek lehetővé teszik a címzettek számára, hogy ellenőrizzék digitális aláírásunkat, és titkosítani tudják a nekünk szánt üzeneteiket.</p>
+
+<h3 id="digital_signing">Digitális aláírás</h3>
+
+<p>A <a href="#security">Biztonság panellap</a> Digitális aláírás csoportjában megadhatjuk az üzenetek digitális aláírásának módját:</p>
+
+<ul>
+  <li><strong>Az alábbi tanúsítvány használata az Ön által küldött levelek aláírásához</strong>: ha a mező üres, vagy nem a megfelelő tanúsítványt tartalmazza, kattintsunk a Kiválasztás gombra, és adjuk meg a kívánt tanúsítványt.</li>
+  <li><strong>Üzenetek digitális aláírása</strong>: jelöljük be a négyzetet, ha az összes elküldött üzenetet digitálisan alá szeretnénk írni. (A négyzet csak akkor jelölhető be, ha előbb megadtuk a megfelelő személyes tanúsítványt.)</li>
+</ul>
+
+<p>Az <q>Üzenet digitális aláírása</q> négyzet állapotától függetlenül az egyes üzenetek elküldése előtt ettől eltérő beállítást is megadhatunk.</p>
+
+<p>Az Új üzenet ablakban szerkesztett üzenet digitális aláírásának beállításához kattintsunk az ablak felső részén elhelyezkedő Biztonság ikon alatti nyílra, és változtassunk meg az <q>Üzenet digitális aláírása</q> beállítást.  További tudnivalók: <a href="mailnews_security.xhtml#signing_and_encrypting_a_new_message">Új üzenet aláírása és titkosítása</a>.</p>
+
+<h3 id="encryption">Titkosítás</h3>
+
+<p>A <a href="#security">Biztonság panellap</a> Titkosítás csoportjában megadhatjuk, hogy az üzenetek küldésénél mikor szeretnénk titkosítást használni:</p>
+
+<ul>
+  <li><strong>Az alábbi tanúsítvány használata az Önnek küldött levelek titkosításához és visszafejtéséhez</strong>: ha a mező üres, vagy nem a megfelelő tanúsítványt tartalmazza, kattintsunk a Kiválasztás gombra, és adjuk meg a kívánt tanúsítványt.</li>
+  <li><strong>Soha</strong>: a beállítás azt jelenti, hogy soha vagy csak alkalmanként szeretnénk titkosítani az üzeneteket.</li>
+  <li><strong>Mindig</strong>: akkor válasszuk, ha a titkosítást mindig használni szeretnénk. Ha nem áll rendelkezésre az összes szükséges tanúsítvány, az üzenetet mindaddig nem tudjuk elküldeni, míg ki nem kapcsoljuk a titkosítást az adott üzenetnél.</li>
+</ul>
+
+<p>Az itt választott titkosítási módszertől függetlenül az egyes üzenetek elküldése előtt ettől eltérő beállítást is megadhatunk.</p>
+
+<p>Az Új üzenet ablakban szerkesztett üzenet titkosításának beállításához kattintsunk az ablak felső részén elhelyezkedő Biztonság ikon alatti nyílra, és válasszuk ki a kívánt titkosítási beállítást. További tudnivalók: <a href="mailnews_security.xhtml#signing_and_encrypting_a_new_message">Új üzenet aláírása és titkosítása</a>.</p>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="local_folders">Postafiókok beállításai – Helyi mappák</h2>
+
+<p>A kapcsolat nélküli munka során elküldött különféle üzeneteket a &brandShortName; Levelező és hírolvasó a Helyi mappák fiókba menti. Az elküldendő üzenetek a Helyi mappák alatti Postázandó üzenetek mappába kerülnek. A Helyi mappák alatt létrehozott mappák a merevlemezen tárolódnak, így ez megfelelő hely a megőrizni kívánt üzenetek számára.</p>
+
+<p>A Helyi mappák beállításai a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljük ki a Helyi mappák kategóriát.</li>
+</ol>
+
+<ul>
+  <li><strong>Postafiók neve</strong>: a Helyi mappák fiókhoz rendelt név.</li>
+  <li><strong>Helyi könyvtár</strong>: a merevlemezen a postafiók üzeneteinek tárolási helye.</li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="outgoing_server">Postafiókok beállításai – Levélküldő kiszolgáló (SMTP)</h2>
+
+<p>A levélküldő kiszolgáló eljuttatja a kimenő levelünket a címzettekhez.</p>
+
+<p>A Levélküldő kiszolgáló (SMTP) beállításai a Levelező ablakból a következő lépésekkel jeleníthetők meg:</p>
+
+<ol>
+  <li>Kattintsunk bármelyik Levelező-ablakra.</li>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát.</li>
+  <li>Válasszuk a Levélküldő kiszolgálót (SMTP) és szerkesszük egy már meglévő kiszolgáló beállításait, vagy állítsuk be az új kiszolgálónak megfelelő paramétereket. Ha nem tudjuk pontosan mit válasszunk, akkor kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.<br/>
+  Az itt megadott kiszolgálók közül választhatunk a Levélküldő kiszolgáló legördülő menübel a <a href="#account_settings">Postafiókok beállításai</a> beállítópanelon.</li>
+</ol>
+
+<ul>
+  <li><strong>Leírás</strong>: A kiszolgáló-beállítások rövid leírása, amely a kiszolgálók listájának első részében jelenik meg.</li>
+  <li><strong>Kiszolgáló</strong>: Az SMTP-kiszolgáló kézbesíti a kimenő üzenetünket. Ha meg akarjuk változtatni az SMTP-kiszolgálót, akkor írjuk be a nevét ebbe a mezőbe.</li>
+  <li><strong>Port</strong>: A port, melyen keresztül az SMTP-kiszolgálóhoz csatlakozunk. Alapértelmezettként az ilyen kapcsolatokhoz alkalmazott szabványos portot tartalmazza. Változtassuk meg ezt, ha a levelezőkiszolgáló egy nem szabványos porton várja a kapcsolatot.</li>
+  <li><strong>Azonosító és jelszó használata</strong>: Ha az SMTP-kiszolgálónk hitelesítést kér levélküldéshez, akkor válasszuk ezt az elemet, és adjuk meg felhasználói nevünket.
+    Az első levélküldés alkalmával a jelszót is meg kell adni. Ugyanekkor be is állíthatjuk, hogy a &brandShortName; megjegyezze a jelszót a későbbi munkánkhoz.</li>
+  <li><strong>Biztonságos hitelesítés használata</strong>: Ha a levélküldő kiszolgáló támogatja a biztonságos hitelesítést, mint amilyen a CRAM-MD5 eljárás, akkor válasszuk ki ezt a lehetőséget. Ha nem tudjuk pontosan mit válasszunk, akkor kérdezzük meg az internetszolgáltatót vagy a rendszergazdát.</li>
+  <li><strong>Biztonságos kapcsolat használata</strong>: Ha a levélküldő kiszolgáló támogatja a titkosított kapcsolatot, akkor válasszunk egyet a következők közül (ha a választásunk nem támogatott a kiszolgálónk által, akkor hibaüzenetet fogunk kapni levélküldéskor):
+    <ul>
+      <li><strong>Soha</strong>: Ha nem szeretnénk titkosított kapcsolatot használni.</li>
+      <li><strong>STARTTLS, ha elérhető</strong>: a &brandShortName; megpróbál titkosított TLS-kapcsolatot használni. Ha a kiszolgáló nem támogatja ezt, akkor titkosítatlan kapcsolatot használunk.</li>
+      <li><strong>STARTTLS</strong>: Mindenképp titkosított TLS-kapcsolatot használunk. Ez a mechanizmus főként a szabványos 25-ös SMTP porton fut.</li>
+      <li><strong>SMTP SSL-en át</strong>: Mindenképp titkosított SSL-kapcsolatot használunk. Ehhez az alapértelmezett port a 465-ös.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[ <a href="#mail_and_newsgroups_account_settings">Vissza a fejezet elejére</a> ]</p>
+
+</body>
+</html>

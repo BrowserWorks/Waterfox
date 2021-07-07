@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Privat surfning">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Spårningsskydd">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Du surfar inte i privat läge">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; blockerar delar av sidor som kan spåra din surfningsaktivitet.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Vi kommer inte komma ihåg någon historik, men nerladdade filer och nya bokmärken kommer att sparas på din enhet.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "I privat surfning, kommer vi inte att spara din webbhistorik eller kakor. Bokmärken du lägger till och filer du laddar ner kommer fortfarande att sparas på din enhet.">
+
+<!ENTITY privatebrowsingpage.link.private "Vill du veta mer?">
+<!ENTITY privatebrowsingpage.link.normal "Öppna en ny privat flik">

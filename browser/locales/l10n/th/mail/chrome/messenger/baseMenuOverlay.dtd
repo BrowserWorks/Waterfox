@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "ช่วยเหลือ">
+<!ENTITY helpMenu.accesskey "ช">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "ช่วยเหลือ">
+<!ENTITY helpMenuWin.accesskey "ช">
+<!ENTITY aboutProduct2.label "เกี่ยวกับ &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "ก">
+<!ENTITY helpTroubleshootingInfo.label     "ข้อมูลการแก้ไขปัญหา">
+<!ENTITY helpTroubleshootingInfo.accesskey "ข">
+<!ENTITY helpSafeMode.label     "เริ่มการทำงานใหม่พร้อมปิดใช้งานส่วนเสริม…">
+<!ENTITY helpSafeMode.accesskey "ร">
+
+<!ENTITY helpSafeMode.stop.label     "เริ่มการทำงานใหม่พร้อมเปิดใช้งานส่วนเสริม">
+<!ENTITY helpSafeMode.stop.accesskey "ร">
+<!ENTITY productHelp.label "ความช่วยเหลือของ &brandShortName;">
+<!ENTITY productHelp.accesskey "ค">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "แป้นพิมพ์ลัด">
+<!ENTITY helpKeyboardShortcuts.accesskey "ป">
+
+<!ENTITY helpFeedbackPage.label "ส่งข้อคิดเห็น…">
+<!ENTITY helpFeedbackPage.accesskey "ส">
+
+<!ENTITY helpShowTour2.label "การเที่ยวชม &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "ร">
+
+<!ENTITY helpGetInvolvedPage.label "มีส่วนร่วม">
+<!ENTITY helpGetInvolvedPage.accesskey "ม">
+
+<!ENTITY helpDonationsPage.label "ทำการบริจาค">
+<!ENTITY helpDonationsPage.accesskey "ท">

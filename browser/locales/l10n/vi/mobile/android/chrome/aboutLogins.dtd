@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "Đăng nhập">
+<!ENTITY aboutLogins.update                      "Cập nhật">
+<!ENTITY aboutLogins.emptyLoginText              "Giữ thông tin đăng nhập an toàn">
+<!ENTITY aboutLogins.emptyLoginHint              "Thông tin đăng nhập và lý lịch bạn lưu lại bằng &brandShortName; sẽ hiển thị ở đây.">

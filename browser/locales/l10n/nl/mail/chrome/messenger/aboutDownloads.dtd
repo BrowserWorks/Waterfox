@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Opgeslagen bestanden">
+<!ENTITY aboutDownloads.empty                      "Geen opgeslagen bestanden">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Bijbehorende map openen">
+<!ENTITY cmd.show.accesskey                        "m">
+<!ENTITY cmd.showMac.label                         "Tonen in Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Openen">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Verwijderen uit geschiedenis">
+<!ENTITY cmd.removeFromHistory.accesskey           "V">
+<!ENTITY cmd.clearList.label                       "Lijst wissen">
+<!ENTITY cmd.clearList.accesskey                   "s">
+<!ENTITY cmd.clearList.tooltip                     "Verwijdert alle vermeldingen uit de lijst van opgeslagen bestanden, behalve actieve downloads">
+<!ENTITY cmd.searchDownloads.label                 "Zoeken…">
+<!ENTITY cmd.searchDownloads.key                   "F">

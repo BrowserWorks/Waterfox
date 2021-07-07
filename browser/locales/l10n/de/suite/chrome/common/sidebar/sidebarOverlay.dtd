@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Sidebar">
+<!ENTITY sidebar.reload.label           "Neu laden">
+<!ENTITY sidebar.reload.accesskey       "N">
+<!ENTITY sidebar.picker.label           "Tabs">
+<!ENTITY sidebar.customize.label        "Sidebar anpassen…">
+<!ENTITY sidebar.customize.accesskey    "a">
+<!ENTITY sidebar.hide.label             "Tab verstecken">
+<!ENTITY sidebar.hide.accesskey         "v">
+<!ENTITY sidebar.switch.label           "Zu Tab umschalten">
+<!ENTITY sidebar.switch.accesskey       "T">
+<!ENTITY sidebarCmd.label               "Sidebar">
+<!ENTITY sidebarCmd.accesskey           "b">
+<!ENTITY sidebar.loading.label          "Laden…">
+<!ENTITY sidebar.loadstopped.label      "Laden abgebrochen">
+<!ENTITY sidebar.loading.stop.label     "Stopp">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!ENTITY sidebar.no-panels.state     "Sidebar ist derzeit leer.">
+<!ENTITY sidebar.no-panels.add       'Sie können Tabs hinzufügen, indem Sie die "Tabs"-Schaltfläche oben anklicken.'>
+<!ENTITY sidebar.no-panels.hide      'Wenn die Sidebar völlig ausgeblendt werden soll, klicken Sie auf das "Ansicht"-Menü im obigen Menü und wählen Sie "Sidebar" vom "Anzeigen/Verstecken"-Untermenü.'>
+<!ENTITY sidebar.sbDirectory.label   "Sidebar-Verzeichnis…">
+
+<!ENTITY sidebar.pagenotfound.label  "Dieses Tab ist derzeit nicht verfügbar.">
+<!ENTITY sidebar.close.tooltip       "Sidebar schließen">
+<!ENTITY sidebar.open.tooltip        "Sidebar öffnen">
+
+<!ENTITY sidebar.search.label         "Suchen">
+<!ENTITY sidebar.client-bookmarks.label     "Lesezeichen">
+<!ENTITY sidebar.client-history.label       "Chronik">
+<!ENTITY sidebar.client-addressbook.label   "Adressbuch">

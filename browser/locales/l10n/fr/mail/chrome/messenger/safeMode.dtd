@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Mode sans échec de &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; s’exécute actuellement en mode sans échec dans lequel les paramètres, thèmes et extensions personnalisés sont temporairement désactivés.">
+<!ENTITY safeModeDescription2.label       "Il est possible de rendre tout ou partie de ces changements permanents :">
+
+<!ENTITY disableAddons.label              "Désactiver tous les modules complémentaires">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Réinitialiser les barres d’outils et les contrôles">
+<!ENTITY resetToolbars.accesskey          "R">
+
+<!ENTITY changeAndRestartButton.label     "Effectuer les changements et redémarrer">
+<!ENTITY changeAndRestartButton.accesskey "E">
+
+<!ENTITY continueButton.label             "Poursuivre en mode sans échec">
+<!ENTITY continueButton.accesskey         "P">

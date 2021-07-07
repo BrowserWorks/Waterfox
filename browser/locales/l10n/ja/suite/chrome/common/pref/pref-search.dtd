@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "インターネット検索">
+<!ENTITY legendHeader                     "既定の検索エンジン">
+<!ENTITY defaultSearchEngine.label        "使用する検索エンジン:">
+<!ENTITY defaultSearchEngine.accesskey    "S">
+
+<!-- Will be used by bug 595246 -->
+<!ENTITY engineManager.label              "検索エンジンの管理...">
+
+<!ENTITY searchResults.label              "検索結果">
+
+<!ENTITY openInTab.label                  "サイドバーからの検索結果を新しいタブで開く">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "コンテキストメニューからのウェブ検索結果をウィンドウの代わりにタブで開く">
+<!ENTITY openContextSearchTab.accesskey   "t">

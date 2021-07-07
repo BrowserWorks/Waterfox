@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle                    "Installera tillägg…">
+
+<!ENTITY name.label                     "Namn:">
+<!ENTITY name.accesskey                 "N">
+
+<!ENTITY name.autopick.label            "Välj ett namn automatiskt">
+<!ENTITY name.autopick.accesskey        "A">
+
+<!ENTITY source.label                   "Källa:">
+<!ENTITY source.accesskey               "K">
+
+<!ENTITY browse.label                   "Bläddra…">
+<!ENTITY browse.accesskey               "B">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Λήψεις">
+
+<!ENTITY downloadBehavior.label         "Κατά την έναρξη μιας λήψης">
+<!ENTITY doNothing.label                "Να μην ανοίξει τίποτα">
+<!ENTITY doNothing.accesskey            "Ν">
+<!ENTITY openProgressDialog.label       "Άνοιγμα παραθύρου προόδου">
+<!ENTITY openProgressDialog.accesskey   "Ά">
+<!ENTITY openDM.label                   "Άνοιγμα διαχείρισης λήψεων">
+<!ENTITY openDM.accesskey               "μ">
+<!ENTITY flashWhenOpen.label            "Ανάδειξη διαχείρισης λήψεων αν είναι ήδη ανοικτή">
+<!ENTITY flashWhenOpen.accesskey        "δ">
+
+<!ENTITY downloadLocation.label         "Κατά την αποθήκευση ενός αρχείου">
+<!ENTITY saveTo.label                   "Αποθήκευση αρχείων σε">
+<!ENTITY saveTo.accesskey               "θ">
+<!ENTITY chooseDownloadFolder.label     "Επιλογή φακέλου…">
+<!ENTITY chooseDownloadFolder.accesskey "Ε">
+<!ENTITY alwaysAsk.label                "Πάντα ερώτηση για την τοποθεσία αποθήκευσης αρχείων">
+<!ENTITY alwaysAsk.accesskey            "Π">
+
+<!ENTITY finishedBehavior.label         "Όταν ολοκληρώνεται μια λήψη">
+<!ENTITY playSound.label                "Αναπαραγωγή ήχου">
+<!ENTITY playSound.accesskey            "Α">
+<!ENTITY browse.label                   "Περιήγηση…">
+<!ENTITY browse.accesskey               "Π">
+<!ENTITY playButton.label               "Αναπαραγωγή">
+<!ENTITY playButton.accesskey           "π">

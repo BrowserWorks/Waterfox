@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title		"設定移行ウィザード">
+
+<!ENTITY importFrom.label		"オプション、ブックマーク、履歴、パスワードその他のデータをインポートする対象を選んでください:">
+<!ENTITY importFromUnix.label		"設定、ブックマーク、履歴、パスワードその他のデータをインポートする対象を選んでください:">
+
+<!ENTITY importFromIE.label		"Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey		"M">
+<!ENTITY importFromEdge.label		"Microsoft Edge">
+<!ENTITY importFromEdge.accesskey	"E">
+<!ENTITY importFromEdgeLegacy.label	"Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey	"L">
+<!ENTITY importFromEdgeBeta.label	"Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey	"d">
+<!ENTITY importFromNothing.label	"設定をインポートしない">
+<!ENTITY importFromNothing.accesskey	"D">
+<!ENTITY importFromSafari.label		"Safari">
+<!ENTITY importFromSafari.accesskey	"S">
+<!ENTITY importFromCanary.label		"Chrome Canary">
+<!ENTITY importFromCanary.accesskey	"n">
+<!ENTITY importFromChrome.label		"Chrome">
+<!ENTITY importFromChrome.accesskey	"C">
+<!ENTITY importFromChromeBeta.label	"Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey	"B">
+<!ENTITY importFromChromeDev.label	"Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey	"D">
+<!ENTITY importFromChromium.label	"Chromium">
+<!ENTITY importFromChromium.accesskey	"u">
+<!ENTITY importFromFirefox.label	"Firefox">
+<!ENTITY importFromFirefox.accesskey	"X">
+<!ENTITY importFrom360se.label		"360 Secure Browser">
+<!ENTITY importFrom360se.accesskey	"3">
+
+<!ENTITY noMigrationSources.label	"ブックマーク、履歴やパスワードなどのインポートする設定やデータを持つプログラムが見つかりませんでした。">
+
+<!ENTITY importSource.title		"設定とデータのインポート">
+<!ENTITY importItems.title		"インポートする項目">
+<!ENTITY importItems.label		"インポートする項目を選択してください:">
+
+<!ENTITY migrating.title		"インポートしています...">
+<!ENTITY migrating.label		"次の項目を現在インポートしています...">
+
+<!ENTITY selectProfile.title		"プロファイルの選択">
+<!ENTITY selectProfile.label		"インポートするプロファイルを選択してください:">
+
+<!ENTITY done.title			"インポート完了">
+<!ENTITY done.label			"次のデータが正常にインポートされました:">
+
+<!ENTITY closeSourceBrowser.label	"続ける前に、選択したブラウザーが閉じられていることを確認してください。">

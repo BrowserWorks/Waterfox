@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Attiva aggiornamenti per tutti i feed">
+<!ENTITY biffAll.accesskey             "A">
+
+<!ENTITY newFeedSettings.label         "Impostazioni predefinite per i nuovi feed">
+
+<!ENTITY manageSubscriptions.label     "Gestione sottoscrizioni…">
+<!ENTITY manageSubscriptions.accesskey "G">
+
+<!ENTITY feedWindowTitle.label         "Creazione nuovo account di feed">
+<!ENTITY feeds.accountName             "Blog e feed delle news">

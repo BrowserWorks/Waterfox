@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Чтобы сэкономить дисковое пространство, не загружать:">
+<!ENTITY doNotDownloadNntp.label "Чтобы сэкономить дисковое пространство, не загружать для работы в автономном режиме:">
+<!ENTITY doNotDownloadImap.label "Чтобы сэкономить дисковое пространство, загрузка сообщений с сервера и хранение локальных копий может быть ограничена по их возрасту или размеру.">
+<!ENTITY allFoldersOffline2.label "Хранить сообщения из всех папок для этой учётной записи на этом компьютере">
+<!ENTITY allFoldersOffline2.accesskey "н">
+<!ENTITY allFoldersOfflineNote.label "Примечание: Это изменение затронет все папки в этой учётной записи. Чтобы задать отдельные папки, используйте кнопку «Дополнительно…».">
+<!ENTITY offlineNotDownload.label "Сообщения размером более">
+<!ENTITY offlineNotDownload.accesskey "б">
+<!ENTITY autosyncNotDownload.label "Не загружать сообщения размером более">
+<!ENTITY autosyncNotDownload.accesskey "ж">
+<!ENTITY kb.label "КБ">
+<!ENTITY daysOld.label "дней">
+<!ENTITY message.label "сообщений">
+<!ENTITY nntpNotDownloadRead.label "Загружать только непрочитанные сообщения">
+<!ENTITY nntpNotDownloadRead.accesskey "а">
+<!ENTITY nntpDownloadMsg.label "Загружать сообщения только за последние">
+<!ENTITY nntpDownloadMsg.accesskey "г">
+<!ENTITY retentionCleanup.label "Для высвобождения места на диске старые сообщения могут быть полностью удалены.">
+<!ENTITY retentionCleanupImap.label "Для высвобождения места на диске старые сообщения могут быть полностью удалены (как локальные копии, так и оригиналы на удалённом сервере).">
+<!ENTITY retentionCleanupPop.label "Для высвобождения места на диске старые сообщения могут быть полностью удалены (в том числе оригиналы на удалённом сервере).">
+<!ENTITY retentionKeepMsg.label "Удалять сообщения старше">
+<!ENTITY retentionKeepMsg.accesskey "л">
+<!ENTITY retentionKeepAll.label "Не удалять сообщения">
+<!ENTITY retentionKeepAll.accesskey "е">
+<!ENTITY retentionKeepRecent.label "Удалять все, кроме последних">
+<!ENTITY retentionKeepRecent.accesskey "я">
+<!ENTITY retentionApplyToFlagged.label "Всегда хранить сообщения, отмеченные звёздочкой">
+<!ENTITY retentionApplyToFlagged.accesskey "с">
+<!ENTITY nntpRemoveMsgBody.label "Удалять содержимое из сообщений, хранящихся дольше">
+<!ENTITY nntpRemoveMsgBody.accesskey "д">
+<!ENTITY offlineSelectNntp.label "Выбрать группы новостей, доступные в автономном режиме…">
+<!ENTITY offlineSelectNntp.accesskey "ы">
+<!ENTITY offlineImapAdvancedOffline.label "Дополнительно…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "о">
+<!ENTITY syncGroupTitle.label "Синхронизация сообщений">
+<!ENTITY diskspaceGroupTitle.label "Дисковое пространство">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Синхронизировать все сообщения локально независимо от возраста">
+<!ENTITY allAutosync.accesskey           "х">
+<!ENTITY ageAutosyncBefore.label         "Синхронизировать сообщения за последние">
+<!ENTITY ageAutosync.accesskey           "н">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "дней">
+<!ENTITY weekAgeInterval.label           "недель">
+<!ENTITY monthAgeInterval.label          "месяцев">
+<!ENTITY yearAgeInterval.label           "лет">
+<!ENTITY ageAutosyncAfter.label          "">
