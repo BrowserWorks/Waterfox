@@ -112,6 +112,7 @@ DIRS += [
     'perf',
     'proxy',
     'threading',
+    'wasm',
 ]
 
 if CONFIG['JS_BUNDLED_EDITLINE']:
@@ -200,30 +201,6 @@ UNIFIED_SOURCES += [
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
     'vm/Xdr.cpp',
-    'wasm/AsmJS.cpp',
-    'wasm/WasmBaselineCompile.cpp',
-    'wasm/WasmBinaryIterator.cpp',
-    'wasm/WasmBinaryToAST.cpp',
-    'wasm/WasmBinaryToExperimentalText.cpp',
-    'wasm/WasmBinaryToText.cpp',
-    'wasm/WasmBuiltins.cpp',
-    'wasm/WasmCode.cpp',
-    'wasm/WasmCompartment.cpp',
-    'wasm/WasmCompile.cpp',
-    'wasm/WasmDebug.cpp',
-    'wasm/WasmFrameIter.cpp',
-    'wasm/WasmGenerator.cpp',
-    'wasm/WasmInstance.cpp',
-    'wasm/WasmIonCompile.cpp',
-    'wasm/WasmJS.cpp',
-    'wasm/WasmModule.cpp',
-    'wasm/WasmSignalHandlers.cpp',
-    'wasm/WasmStubs.cpp',
-    'wasm/WasmTable.cpp',
-    'wasm/WasmTextToBinary.cpp',
-    'wasm/WasmTextUtils.cpp',
-    'wasm/WasmTypes.cpp',
-    'wasm/WasmValidate.cpp'
 ]
 
 # jsarray.cpp and jsatom.cpp cannot be built in unified mode because
