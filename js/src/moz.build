@@ -16,6 +16,10 @@ component_stl    = ('Core', 'JavaScript: Standard Library')
 
 FILES_PER_UNIFIED_FILE = 6
 
+DIRS += [
+    'builtin',
+]
+
 with Files('*'):
     BUG_COMPONENT = component_engine
 
@@ -149,24 +153,6 @@ EXPORTS.js += [
 ]
 
 UNIFIED_SOURCES += [
-    'builtin/AtomicsObject.cpp',
-    'builtin/DataViewObject.cpp',
-    'builtin/Eval.cpp',
-    'builtin/Intl.cpp',
-    'builtin/MapObject.cpp',
-    'builtin/ModuleObject.cpp',
-    'builtin/Object.cpp',
-    'builtin/Profilers.cpp',
-    'builtin/Promise.cpp',
-    'builtin/Reflect.cpp',
-    'builtin/ReflectParse.cpp',
-    'builtin/SIMD.cpp',
-    'builtin/Stream.cpp',
-    'builtin/SymbolObject.cpp',
-    'builtin/TestingFunctions.cpp',
-    'builtin/TypedObject.cpp',
-    'builtin/WeakMapObject.cpp',
-    'builtin/WeakSetObject.cpp',
     'devtools/sharkctl.cpp',
     'ds/Bitmap.cpp',
     'ds/LifoAlloc.cpp',
@@ -393,8 +379,6 @@ UNIFIED_SOURCES += [
 
 # jsarray.cpp and jsatom.cpp cannot be built in unified mode because
 # xpcshell is broken during packaging when compiled with gcc-4.8.2
-# builtin/RegExp.cpp cannot be built in unified mode because it is built
-# without PGO
 # frontend/Parser.cpp cannot be built in unified mode because of explicit
 # template instantiations.
 # jsdtoa.cpp cannot be built in unified mode because we want to suppress
@@ -409,7 +393,6 @@ UNIFIED_SOURCES += [
 # vm/Interpreter.cpp is gigantic and destroys incremental build times for any
 # files unlucky enough to be unified with it.
 SOURCES += [
-    'builtin/RegExp.cpp',
     'frontend/Parser.cpp',
     'gc/StoreBuffer.cpp',
     'jsarray.cpp',
@@ -640,48 +623,8 @@ DIRS += [
 FINAL_LIBRARY = 'js'
 
 if CONFIG['_MSC_VER']:
-    if CONFIG['CPU_ARCH'] == 'x86':
-        SOURCES['builtin/RegExp.cpp'].no_pgo = True # Bug 772303
-    elif CONFIG['CPU_ARCH'] == 'x86_64' and CONFIG['JS_HAS_CTYPES']:
+     if CONFIG['CPU_ARCH'] == 'x86_64' and CONFIG['JS_HAS_CTYPES']:
         SOURCES['ctypes/CTypes.cpp'].no_pgo = True # Bug 810661
-
-# Prepare self-hosted JS code for embedding
-GENERATED_FILES += [('selfhosted.out.h', 'selfhosted.js')]
-selfhosted = GENERATED_FILES[('selfhosted.out.h', 'selfhosted.js')]
-selfhosted.script = 'builtin/embedjs.py:generate_selfhosted'
-selfhosted.inputs = [
-    'js.msg',
-    'builtin/TypedObjectConstants.h',
-    'builtin/SelfHostingDefines.h',
-    'builtin/Utilities.js',
-    'builtin/Array.js',
-    'builtin/AsyncIteration.js',
-    'builtin/Classes.js',
-    'builtin/Date.js',
-    'builtin/Error.js',
-    'builtin/Function.js',
-    'builtin/Generator.js',
-    'builtin/Intl.js',
-    'builtin/IntlCurrency.js',
-    'builtin/IntlData.js',
-    'builtin/Iterator.js',
-    'builtin/Map.js',
-    'builtin/Module.js',
-    'builtin/Number.js',
-    'builtin/Object.js',
-    'builtin/Promise.js',
-    'builtin/Reflect.js',
-    'builtin/RegExp.js',
-    'builtin/RegExpGlobalReplaceOpt.h.js',
-    'builtin/RegExpLocalReplaceOpt.h.js',
-    'builtin/String.js',
-    'builtin/Set.js',
-    'builtin/Sorting.js',
-    'builtin/TypedArray.js',
-    'builtin/TypedObject.js',
-    'builtin/WeakMap.js',
-    'builtin/WeakSet.js'
-]
 
 # Suppress warnings in third-party code.
 # We are keeping this in the main moz.build because it is file specific

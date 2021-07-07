@@ -1,0 +1,81 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+
+include('../js-config.mozbuild')
+include('../js-cxxflags.mozbuild')
+
+FINAL_LIBRARY = "js"
+
+# Includes should be relative to parent path
+LOCAL_INCLUDES += ["!..", ".."]
+
+UNIFIED_SOURCES += [
+    'AtomicsObject.cpp',
+    'DataViewObject.cpp',
+    'Eval.cpp',
+    'Intl.cpp',
+    'MapObject.cpp',
+    'ModuleObject.cpp',
+    'Object.cpp',
+    'Profilers.cpp',
+    'Promise.cpp',
+    'Reflect.cpp',
+    'ReflectParse.cpp',
+    'SIMD.cpp',
+    'Stream.cpp',
+    'SymbolObject.cpp',
+    'TestingFunctions.cpp',
+    'TypedObject.cpp',
+    'WeakMapObject.cpp',
+    'WeakSetObject.cpp',
+]
+
+# builtin/RegExp.cpp cannot be built in unified mode because it is built
+# without PGO
+SOURCES += [
+    'RegExp.cpp',
+]
+
+if CONFIG['_MSC_VER']:
+    if CONFIG['CPU_ARCH'] == 'x86':
+        SOURCES['RegExp.cpp'].no_pgo = True # Bug 772303
+
+# Prepare self-hosted JS code for embedding
+GENERATED_FILES += [('../selfhosted.out.h', '../selfhosted.js')]
+selfhosted = GENERATED_FILES[('../selfhosted.out.h', '../selfhosted.js')]
+selfhosted.script = 'embedjs.py:generate_selfhosted'
+selfhosted.inputs = [
+    '../js.msg',
+    'TypedObjectConstants.h',
+    'SelfHostingDefines.h',
+    'Utilities.js',
+    'Array.js',
+    'AsyncIteration.js',
+    'Classes.js',
+    'Date.js',
+    'Error.js',
+    'Function.js',
+    'Generator.js',
+    'Intl.js',
+    'IntlCurrency.js',
+    'IntlData.js',
+    'Iterator.js',
+    'Map.js',
+    'Module.js',
+    'Number.js',
+    'Object.js',
+    'Promise.js',
+    'Reflect.js',
+    'RegExp.js',
+    'RegExpGlobalReplaceOpt.h.js',
+    'RegExpLocalReplaceOpt.h.js',
+    'String.js',
+    'Set.js',
+    'Sorting.js',
+    'TypedArray.js',
+    'TypedObject.js',
+    'WeakMap.js',
+    'WeakSet.js'
+]
