@@ -21,8 +21,16 @@ pref("layout.css.backdrop-filter.enabled", true, locked);
 pref("toolkit.legacyUserProfileCustomizations.stylesheets", true, locked);
 pref("browser.uidensity", 1, locked);
 pref("browser.download.autohideButton", false);
+pref("browser.urlbar.trimURLs", false);
 pref("extensions.activeThemeID", "lepton@waterfox.net");
 pref("browser.uiCustomization.state", "{\"placements\":{\"widget-overflow-fixed-list\":[],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"urlbar-container\",\"save-to-pocket-button\",\"downloads-button\",\"library-button\",\"fxa-toolbar-menu-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"PersonalToolbar\":[\"import-button\",\"personal-bookmarks\"]},\"seen\":[\"profiler-button\",\"developer-button\"],\"dirtyAreaCache\":[\"nav-bar\",\"PersonalToolbar\"],\"currentVersion\":17,\"newElementCount\":3}");
+
+// Experimental preferences
+pref("fission.autostart", true);
+pref("image.avif.enabled", true);
+pref("image.jxl.enabled", true);
+pref("media.webrtc.hw.h264.enabled", true);
+pref("media.webrtc.platformencoder", true);
 
 // Try to nag a bit more about updates: Pop up a restart dialog an hour after the initial dialog
 pref("app.update.promptWaitTime", 3600);
@@ -48,6 +56,11 @@ pref("browser.safebrowsing.provider.mozilla.updateURL", "", locked);
 pref("browser.safebrowsing.provider.mozilla.gethashURL", "", locked);
 pref("datareporting.healthreport.uploadEnabled", false, locked);
 pref("datareporting.policy.dataSubmissionEnabled", false, locked);
+// Keep an eye on the below settings - if they break things, may need to revert
+pref("services.settings.poll_interval", -1, locked); // 24H
+// pref("services.settings.default_bucket", "", locked);
+// pref("services.settings.server", "", locked);
+
 // Make sure Unified Telemetry is really disabled, see: #18738.
 pref("toolkit.telemetry.unified", false, locked);
 pref("toolkit.telemetry.enabled", false, locked);
@@ -57,6 +70,26 @@ pref("extensions.getAddons.cache.enabled", false, locked); // https://blog.mozil
 
 // Disable the Pocket extension (Bug #18886 and #31602)
 pref("extensions.pocket.enabled", false, locked);
+pref("extensions.pocket.api", "", locked);
+pref("extensions.pocket.oAuthConsumerKey", "", locked);
+pref("extensions.pocket.showHome", false, locked);
+pref("browser.newtabpage.activity-stream.section.highlights.includePocket", false, locked);
+pref("browser.newtabpage.activity-stream.showSponsored", false, locked);
+pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false, locked);
+pref("browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", false, locked);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsoredTopSites", false, locked);
+
+// New tab preferences
+pref("browser.topsites.useRemoteSetting", false, locked);
+// Fetch sponsored Top Sites from Mozilla Tiles Service (Contile)
+pref("browser.topsites.contile.enabled", false, locked);
+pref("browser.topsites.contile.endpoint", "", locked);
+
+// The base URL for the Quick Suggest anonymizing proxy. To make a request to
+// the proxy, include a campaign ID in the path.
+pref("browser.partnerlink.attributionURL", "", locked);
+pref("browser.partnerlink.campaign.topsites", "", locked);
 
 // Don't load Mozilla domains in a separate tab process
 pref("browser.tabs.remote.separatedMozillaDomains", "", locked);
@@ -86,7 +119,6 @@ pref("signon.recipes.remoteRecipesEnabled", false, locked);
 
 // Third party stuff
 pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
-
 pref("plugin.state.flash", 0, locked); // Disable for defense-in-depth
 
 // Mozilla is relying on preferences to make sure no DRM blob is downloaded and
