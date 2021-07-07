@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY navbarOverflow.label                "Περισσότερα εργαλεία…">
+
+<!-- Tab context menu -->
+
+<!ENTITY  listAllTabs.label      "Παράθεση όλων των καρτελών">
+
+<!ENTITY tabCmd.label "Νέα καρτέλα">
+<!ENTITY openFileCmd.label "Άνοιγμα αρχείου…">
+<!ENTITY printCmd.label "Εκτύπωση…">
+
+<!ENTITY menubarCmd.label "Γραμμή μενού">
+<!ENTITY menubarCmd.accesskey "μ">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Πλοήγηση">
+
+<!ENTITY fullScreenCmd.label "Πλήρης οθόνη">
+
+<!ENTITY pictureInPictureHideToggle.label "Απόκρυψη διακόπτη εικόνας εντός εικόνας">
+<!ENTITY pictureInPictureHideToggle.accesskey "Α">
+
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.signin.label "Σύνδεση στο &brandProductName;">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Στείλτε άμεσα μια καρτέλα σε κάθε συσκευή που έχετε συνδεθεί.">
+
+<!ENTITY printButton.label            "Εκτύπωση">
+<!ENTITY printButton.tooltip          "Εκτύπωση σελίδας">
+
+<!ENTITY searchItem.title             "Αναζήτηση">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Αρχική σελίδα">
+<!ENTITY homeButton.defaultPage.tooltip "Αρχική σελίδα του &brandShortName;">
+
+<!ENTITY historyButton.label            "Ιστορικό">
+
+<!ENTITY downloads.label              "Λήψεις">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Λήψεις">
+
+<!ENTITY webDeveloperMenu.label       "Ανάπτυξη web">
+
+<!ENTITY newNavigatorCmd.label        "Νέο παράθυρο">
+<!ENTITY newPrivateWindow.label     "Νέο ιδιωτικό παράθυρο">
+
+<!ENTITY editMenu.label         "Επεξεργασία">
+<!ENTITY preferencesCmd2.label       "Επιλογές">
+<!ENTITY preferencesCmdUnix.label       "Προτιμήσεις">
+<!ENTITY logins.label                           "Συνδέσεις και κωδικοί πρόσβασης">
+
+<!ENTITY overflowCustomizeToolbar.label       "Προσαρμογή γραμμής εργαλείων…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "ο">
+
+<!ENTITY historyMenu.label "Ιστορικό">
+
+<!ENTITY appMenuHelp.label "Βοήθεια">
+
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Δεν υπάρχουν ανοικτές καρτέλες">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Εμφάνιση περισσότερων καρτελών αυτής της συσκευής">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Εμφάνιση όλων">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Εμφάνιση όλων των καρτελών αυτής της συσκευής">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ενεργοποιήστε τον συγχρονισμό καρτελών για να δείτε μια λίστα από καρτέλες από τις άλλες σας συσκευές.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Θέλετε να δείτε τις καρτέλες από τις άλλες σας συσκευές εδώ;">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Άνοιγμα προτιμήσεων συγχρονισμού">
+<!ENTITY appMenuRemoteTabs.welcome.label "Δείτε μια λίστα με καρτέλες από τις άλλες σας συσκευές.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Ο λογαριασμός σας πρέπει να επαληθευτεί.">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Σύνδεση άλλης συσκευής">
+
+<!ENTITY customizeMenu.addToToolbar.label "Προσθήκη στη γραμμή εργαλείων">
+<!ENTITY customizeMenu.addToToolbar.accesskey "Α">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Προσθήκη στο αναδυόμενο μενού">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "Μ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Ξεκαρφίτσωμα από το αναδυόμενο μενού">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "Ξ">
+<!ENTITY customizeMenu.addMoreItems.label "Προσθήκη περισσότερων στοιχείων…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "Π">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Περισσότερα">
+
+<!ENTITY contentSearchSubmit.tooltip  "Υποβολή αναζήτησης">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Αναζήτηση">
+<!ENTITY searchIcon.tooltip           "Αναζήτηση">
+
+<!ENTITY openLinkCmdInTab.accesskey   "τ">
+
+<!ENTITY fullZoom.label                 "Ζουμ">
+
+<!ENTITY sidebarCloseButton.tooltip     "Κλείσιμο πλαϊνής γραμμής">
+
+<!ENTITY allowPopups.accesskey "ν">
+
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Επεξεργασία προτιμήσεων φραγής αναδυόμενων παραθύρων…">
+<!ENTITY editPopupSettings.label "Επεξεργασία επιλογών φραγής αναδυόμενων παραθύρων…">
+<!ENTITY editPopupSettings.accesskey "ξ">
+<!ENTITY dontShowMessage.accesskey "Ν">
+
+<!ENTITY findOnCmd.label     "Εύρεση στη σελίδα…">
+
+<!ENTITY spellAddDictionaries.label "Προσθήκη λεξικών…">
+<!ENTITY spellAddDictionaries.accesskey "θ">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Καρτέλες φυλλομετρητή">
+
+
+<!ENTITY uiTour.infoPanel.close "Κλείσιμο">
+
+
+<!ENTITY panicButton.thankyou.msg1                "Το πρόσφατο ιστορικό σας έχει διαγραφτεί.">
+<!ENTITY panicButton.thankyou.msg2                "Καλή και ασφαλή περιήγηση!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Ευχαριστώ!">
+
+<!ENTITY sendToDevice.syncNotReady.label "Συγχρονισμός συσκευών…">
+
+<!ENTITY libraryButton.tooltip "Προβολή ιστορικού, σελιδοδεικτών και πολλών άλλων">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Οι λειτουργίες προσβασιμότητας ενεργοποιήθηκαν">
