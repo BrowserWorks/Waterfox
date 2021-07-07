@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "郵件安全">
+<!ENTITY subject.plaintextWarning "請注意: 郵件的主旨不會被加密。">
+<!ENTITY status.heading "您的訊息內容將以下列方式寄送:">
+<!ENTITY status.signed "數位簽署:">
+<!ENTITY status.encrypted "已編碼:">
+<!ENTITY status.certificates "憑證:">
+<!ENTITY view.label "檢視">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "收件者">
+<!ENTITY tree.status "狀態">
+<!ENTITY tree.issuedDate "發行日期">
+<!ENTITY tree.expiresDate "有效期限">
+

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY pref.formatting.title "Options d’expédition">
+<!ENTITY sendMaildesc.label "Lors de l’expédition d’un courrier en HTML à un destinataire ne figurant pas dans la liste de ceux pouvant recevoir du HTML :">
+<!ENTITY askMe.label "Me demander de choisir">
+<!ENTITY askMe.accesskey "M">
+
+
+<!ENTITY convertPlain2.label "Convertir au format texte simple (la mise en forme peut être perdue)">
+<!ENTITY convertPlain2.accesskey "C">
+<!ENTITY sendHTML2.label "Envoyer au format HTML uniquement (peut causer des problèmes d’affichage)">
+<!ENTITY sendHTML2.accesskey "E">
+<!ENTITY sendBoth2.label "Envoyer aux formats texte et HTML (taille plus importante)">
+<!ENTITY sendBoth2.accesskey "n">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title "Domaines HTML et texte simple">
+<!ENTITY domaindesc.label "Vous pouvez séparer les noms de domaines qui peuvent recevoir des messages en HTML de ceux qui n’en recevront qu’en texte simple. Quand vous enverrez un courrier vers un de ces domaines, il sera automatiquement converti au bon format (HTML ou texte simple).">
+<!ENTITY HTMLdomaintitle.label "Domaines HTML">
+<!ENTITY HTMLdomaintitle.accesskey "H">
+<!ENTITY PlainTexttitle.label "Domaines texte simple">
+<!ENTITY PlainTexttitle.accesskey "t">
+<!ENTITY AddButton.label "Ajouter…">
+<!ENTITY AddHtmlDomain.accesskey "A">
+<!ENTITY AddPlainText.accesskey "A">
+<!ENTITY DeleteButton.label "Retirer">
+<!ENTITY DeleteHtmlDomain.accesskey "R">
+<!ENTITY DeletePlainText.accesskey "R">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle "Ajouter un nom de domaine HTML">
+<!ENTITY add.htmldomain "Nom de domaine HTML :">
+<!ENTITY add.plaintexttitle "Ajouter un nom de domaine texte simple">
+<!ENTITY add.plaintextdomain "Nom de domaine texte simple :">
+
+<!ENTITY domainnameError.title "Erreur de nom de domaine">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label "Le nom de domaine @string@ est invalide et sera ignoré. Les noms de domaine valides doivent contenir au moins un « . » et des caractères de part et d’autre.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Envoyer automatiquement le message au format texte simple si aucune mise en forme notable n’est présent (ne tient pas compte des autres options)">
+<!ENTITY autoDowngrade.accesskey      "o">

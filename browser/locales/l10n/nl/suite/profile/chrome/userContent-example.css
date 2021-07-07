@@ -1,0 +1,47 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Bewerk dit bestand en kopieer het als userContent.css naar uw
+ * profielmap/chrome/
+ */
+
+/*
+ * Dit bestand kan worden gebruikt om een stijl toe te passen op alle websites
+ * die u bekijkt. Regels zonder !important worden genegeerd als de auteur eigen
+ * regels heeft ingesteld. Regels met !important gaan voor auteursregels.
+ */
+
+/*
+ * voorbeeld: het knipperen van ‘blink’-elementen uitzetten
+ *
+ * blink { text-decoration: none ! important; }
+ *
+ */
+
+/*
+ * voorbeeld: alle tabellen van een 2px rand voorzien
+ *
+ * table { border: 2px solid; }
+ */
+
+/*
+ * voorbeeld: het ‘marquee’-element uitzetten
+ *
+ * marquee { -moz-binding: none; }
+ *
+ */
+
+/*
+ * voorbeeld: zoekvelden op www.mozilla.org zwart-op-wit maken
+ *
+ * @-moz-document url-prefix(http://www.mozilla.org/) {
+ *   #q { background: white ! important; color: black ! important; }
+ * }
+ */
+
+/*
+ * Voor meer voorbeelden, zie http://www.mozilla.org/unix/customizing.html
+ */
+

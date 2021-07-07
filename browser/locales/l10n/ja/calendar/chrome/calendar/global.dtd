@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY month.1.name "1月" >
+<!ENTITY month.2.name "2月" >
+<!ENTITY month.3.name "3月" >
+<!ENTITY month.4.name "4月" >
+<!ENTITY month.5.name "5月" >
+<!ENTITY month.6.name "6月" >
+<!ENTITY month.7.name "7月" >
+<!ENTITY month.8.name "8月" >
+<!ENTITY month.9.name "9月" >
+<!ENTITY month.10.name "10月" >
+<!ENTITY month.11.name "11月" >
+<!ENTITY month.12.name "12月" >
+
+<!ENTITY onemonthbackward.tooltip "前の月へ移動します">
+<!ENTITY onemonthforward.tooltip "次の月へ移動します">
+<!ENTITY oneyearbackward.tooltip "前の年へ移動します">
+<!ENTITY oneyearforward.tooltip "次の年へ移動します">
+<!ENTITY showToday.tooltip "今日へ移動します">
+<!ENTITY onedayforward.tooltip "次の日へ移動します">
+<!ENTITY onedaybackward.tooltip "前の日へ移動します">
+<!ENTITY showselectedday.tooltip "選択した日の予定を表示します">

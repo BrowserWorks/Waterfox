@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editorWindow.titlemodifier "Composer">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!ENTITY compositionToolbar.tooltip "Barra di composizione">
+<!ENTITY previewToolbarCmd.label "Sfoglia">
+<!ENTITY previewToolbarCmd.tooltip "Carica questa pagina nel browser">
+<!ENTITY exportToTextCmd.label "Esporta come testo…">
+<!ENTITY exportToTextCmd.accesskey "t">
+<!ENTITY previewCmd.label "Sfoglia pagina">
+<!ENTITY previewCmd.accesskey "S">
+<!ENTITY sendPageCmd.label "Spedisci pagina…">
+<!ENTITY sendPageCmd.accesskey "d">
+<!ENTITY compositionToolbarCmd.label "Barra di composizione">
+<!ENTITY compositionToolbarCmd.accesskey "c">
+<!ENTITY formattingToolbarCmd.label "Barra di formattazione">
+<!ENTITY formattingToolbarCmd.accesskey "f">
+<!ENTITY editmodeToolbarCmd.label "Barra in modalità modifica">
+<!ENTITY editmodeToolbarCmd.accesskey "m">
+<!ENTITY formatMenu.label "Formato">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Griglia di posizionamento">
+<!ENTITY grid.accesskey "G">
+<!ENTITY pageProperties.label "Titolo pagina e proprietà…">
+<!ENTITY pageProperties.accesskey "n">
+<!ENTITY validateCmd.label "Convalida HTML">
+<!ENTITY validateCmd.accesskey "H">
+<!ENTITY NormalModeTab.label "Normale">
+<!ENTITY NormalMode.label "Modalità modifica normale">
+<!ENTITY NormalMode.accesskey "n">
+<!ENTITY NormalMode.tooltip "Mostra i bordi delle tabelle e le ancore">
+<!ENTITY AllTagsModeTab.label "Tag HTML">
+<!ENTITY AllTagsMode.label "Tag HTML">
+<!ENTITY AllTagsMode.accesskey "T">
+<!ENTITY AllTagsMode.tooltip "Mostra icone per tutti i tag HTML">
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Origine">
+<!ENTITY HTMLSourceMode.label "Sorgente HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Modifica il sorgente HTML">
+<!ENTITY PreviewModeTab.label "Anteprima">
+<!ENTITY PreviewMode.label "Anteprima">
+<!ENTITY PreviewMode.accesskey "A">
+<!ENTITY PreviewMode.tooltip "Mostra come WYSIWYG (come nel browser)">

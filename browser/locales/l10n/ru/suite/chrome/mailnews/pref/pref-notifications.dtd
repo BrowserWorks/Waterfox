@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Уведомления">
+<!ENTITY notifications.caption            "Уведомления">
+<!ENTITY newMessagesArrive.label          "При появлении новых сообщений:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Показывать уведомление в течение">
+<!ENTITY showAlertFor.accesskey           "о">
+<!ENTITY showAlertTimeEnd.label           "сек.">
+
+<!ENTITY showAlertPreviewText.label       "Отображать текст сообщения">
+<!ENTITY showAlertPreviewText.accesskey   "ж">
+<!ENTITY showAlertSubject.label           "Отображать тему">
+<!ENTITY showAlertSubject.accesskey       "е">
+<!ENTITY showAlertSender.label            "Отображать отправителя">
+<!ENTITY showAlertSender.accesskey        "п">
+<!ENTITY useSystemAlert.label             "Использовать уведомления рабочего стола операционной системы">
+<!ENTITY useSystemAlert.accesskey         "м">
+<!ENTITY useBuiltInAlert.label            "Использовать собственные окна уведомлений &brandShortName;">
+<!ENTITY useBuiltInAlert.accesskey        "ы">
+
+<!ENTITY showTrayIcon.label               "Показать значок в трее">
+<!ENTITY showTrayIcon.accesskey           "з">
+<!ENTITY showBalloon.label                "Показать всплывающее уведомление">
+<!ENTITY showBalloon.accesskey            "а">
+<!ENTITY bounceSystemDockIcon.label       "Анимировать иконку в доке">
+<!ENTITY bounceSystemDockIcon.accesskey   "н">
+
+<!ENTITY playSound.label                  "Подать звуковой сигнал">
+<!ENTITY playSound.accesskey              "д">
+<!ENTITY playButton.label                 "Прослушать">
+<!ENTITY playButton.accesskey             "ш">
+<!ENTITY systemsound.label                "Системный звуковой сигнал о приходе почты">
+<!ENTITY systemsound.accesskey            "и">
+<!ENTITY customsound.label                "Указать звуковой файл">
+<!ENTITY customsound.accesskey            "в">
+<!ENTITY browse.label                     "Обзор…">
+<!ENTITY browse.accesskey                 "б">
+<!ENTITY browse.title                     "Выбор файла">

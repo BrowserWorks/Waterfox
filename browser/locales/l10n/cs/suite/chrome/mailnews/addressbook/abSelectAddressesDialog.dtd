@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title "Vybrané adresy">
+
+<!-- Buttons -->
+<!ENTITY toButton.label "Komu->">
+<!ENTITY toButton.accesskey "M">
+<!ENTITY ccButton.label "Kopie->">
+<!ENTITY ccButton.accesskey "K">
+<!ENTITY bccButton.label "Skrytá kopie->">
+<!ENTITY bccButton.accesskey "K">
+<!ENTITY newButton.label "Nový…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Upravit…">
+<!ENTITY editButton.accesskey "U">
+<!ENTITY removeButton.label "Odebrat">
+<!ENTITY removeButton.accesskey "O">
+<!ENTITY lookIn.label "Kde hledat:">
+<!ENTITY lookIn.accesskey "D">
+<!ENTITY for.label "pro:">
+<!ENTITY for.accesskey "p">
+<!ENTITY for.placeholder "Jméno nebo e-mail">
+<!ENTITY addressMessageTo.label "Zaslat zprávu na:">
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip "Vytvoří nový kontakt">
+<!ENTITY addressPickerEditButton.tooltip "Upraví označený kontakt">
+

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "プロパティが設定されていません。">
+
+<!ENTITY caption.label         "要素のプロパティ">
+<!ENTITY image-sec.label       "画像のプロパティ">
+<!ENTITY image-url.label       "URL:">
+<!ENTITY image-desc.label      "説明:">
+<!ENTITY image-alt.label       "代替テキスト:">
+<!ENTITY image-width.label     "幅:">
+<!ENTITY image-height.label    "高さ:">
+<!ENTITY image-filesize.label  "ファイルサイズ:">
+<!ENTITY image-filesize.value  "不明">
+<!ENTITY insdel-sec.label      "挿入/削除のプロパティ">
+<!ENTITY insdel-cite.label     "情報:">
+<!ENTITY insdel-date.label     "日時:">
+<!ENTITY link-sec.label        "リンクのプロパティ">
+<!ENTITY link-url.label        "アドレス:">
+<!ENTITY link-target.label     "開くウィンドウ:">
+<!ENTITY link-type.label       "ターゲットのタイプ:">
+<!ENTITY link-lang.label       "ターゲットの言語:">
+<!ENTITY link-rel.label        "関係:">
+<!ENTITY link-rev.label        "逆の関係:">
+<!ENTITY misc-sec.label        "その他のプロパティ">
+<!ENTITY misc-lang.label       "テキストの言語:">
+<!ENTITY misc-title.label      "タイトル:">
+<!ENTITY misc-tblsummary.label "表の要約:">
+<!ENTITY quote-sec.label       "引用のプロパティ">
+<!ENTITY quote-cite.label      "情報:">

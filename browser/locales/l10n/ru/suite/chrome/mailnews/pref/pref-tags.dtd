@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Метки">
+<!ENTITY pref.tags.caption          "Настроить метки">
+<!ENTITY pref.tags.description      "Метки могут быть использованы для классификации и изменения приоритета сообщений. Изменяйте вид и важность меток, используя приведённые ниже настройки. Чем выше расположена метка, тем она важнее (т.е. метки расположенные наверху важнее, чем метки расположенные внизу).">
+<!ENTITY tagColumn.label            "Метка">
+<!ENTITY colorColumn.label          "Цвет">
+<!ENTITY defaultTagName.label       "Безымянная метка">
+<!ENTITY addTagButton.label         "Добавить">
+<!ENTITY addTagButton.accesskey     "Д">
+<!ENTITY deleteTagButton.label      "Удалить">
+<!ENTITY deleteTagButton.accesskey  "У">
+<!ENTITY raiseTagButton.label       "Повысить важность">
+<!ENTITY raiseTagButton.accesskey   "в">
+<!ENTITY lowerTagButton.label       "Понизить важность">
+<!ENTITY lowerTagButton.accesskey   "н">
+<!ENTITY restoreButton.label        "Восстановить значения по умолчанию">
+<!ENTITY restoreButton.accesskey    "у">

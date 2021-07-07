@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Kopie i foldery">
+<!ENTITY sendingPrefix.label "Wysyłając wiadomości:">
+<!ENTITY fccMailFolder.label "automatycznie umieszczaj ich kopie w:">
+<!ENTITY fccMailFolder.accesskey "i">
+<!ENTITY fccReplyFollowsParent.label "umieszczaj odpowiedzi w folderze wiadomości, na którą odpowiada użytkownik">
+<!ENTITY fccReplyFollowsParent.accesskey "o">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "wysyłaj kopię do:">
+<!ENTITY ccAddress.accesskey "j">
+<!ENTITY ccAddressList.placeholder "adresy e-mail rozdzielone przecinkami">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "wysyłaj ukrytą kopię do:">
+<!ENTITY bccAddress.accesskey "k">
+<!ENTITY bccAddressList.placeholder "adresy e-mail rozdzielone przecinkami">
+<!ENTITY saveMessageDlg.label "Wyświetlaj okno dialogowe potwierdzające zapisywanie wiadomości">
+<!ENTITY saveMessageDlg.accesskey "W">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "folderze Wysłane konta:">
+<!ENTITY sentFolderOn.accesskey "y">
+<!ENTITY sentInOtherFolder.label "innym folderze:">
+<!ENTITY sentInOtherFolder.accesskey "l">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archiwum">
+<!ENTITY keepArchives.label "Archiwum wiadomości przechowuj w:">
+<!ENTITY keepArchives.accesskey "r">
+<!ENTITY archiveHierarchyButton.label "Ustawienia archiwizacji…">
+<!ENTITY archiveHierarchyButton.accesskey "t">
+<!ENTITY archivesFolderOn.label "folderze Archiwum konta:">
+<!ENTITY archivesFolderOn.accesskey "A">
+<!ENTITY archiveInOtherFolder.label "innym folderze:">
+<!ENTITY archiveInOtherFolder.accesskey "d">
+<!ENTITY specialFolders.label "Szkice i szablony">
+<!ENTITY keepDrafts2.label "Szkice wiadomości przechowuj w:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "folderze Szkice konta:">
+<!ENTITY draftsFolderOn.accesskey "S">
+<!ENTITY draftInOtherFolder.label "innym folderze:">
+<!ENTITY draftInOtherFolder.accesskey "f">
+<!ENTITY keepTemplates.label "Szablony wiadomości przechowuj w:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "folderze Szablony konta:">
+<!ENTITY templatesFolderOn.accesskey "z">
+<!ENTITY templateInOtherFolder.label "innym folderze:">
+<!ENTITY templateInOtherFolder.accesskey "n">

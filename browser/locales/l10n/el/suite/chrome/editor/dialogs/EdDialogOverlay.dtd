@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Σύνθετη επεξεργασία…">
+<!ENTITY AdvancedEditButton.accessKey "π">
+<!ENTITY AdvancedEditButton.tooltip "Προσθήκη ή μετατροπή HTML attributes, style attributes, και JavaScript">
+<!ENTITY chooseFileButton.label "Επιλογή αρχείου...">
+<!ENTITY chooseFileButton.accessKey "χ">
+<!ENTITY chooseFileLinkButton.label "Επιλογή αρχείου...">
+<!ENTITY chooseFileLinkButton.accessKey "λ">
+<!ENTITY makeUrlRelative.label "Το URL είναι σχετικό με την τοποθεσία της σελίδας">
+<!ENTITY makeUrlRelative.accessKey "χ">
+<!ENTITY makeUrlRelative.tooltip "Αλλαγή μεταξύ σχετικού και απόλυτου URL. Πρέπει να αποθηκεύσετε πρώτα τη σελίδα για να γίνουν οι αλλαγές.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Εισάγετε μια ιστοσελίδα, ένα τοπικό αρχείο, ή επιλέξτε μια επώνυμη άγκυρα ή επικεφαλίδα από το μενού επιλογών του πεδίου:">
+<!ENTITY LinkURLEditField2.accessKey "ι">

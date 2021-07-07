@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Recibos de leitura">
+<!ENTITY useGlobalPrefs.label         "Usar as minhas preferências gerais dos recibos de leitura para esta conta">
+<!ENTITY useGlobalPrefs.accesskey     "a">
+<!ENTITY globalReceipts.label         "Preferências globais…">
+<!ENTITY globalReceipts.accesskey     "g">
+<!ENTITY useCustomPrefs.label         "Personalizar recibos de leitura para esta conta">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "Ao enviar mensagens, pedir sempre um recibo de leitura">
+<!ENTITY requestReceipt.accesskey     "o">
+<!ENTITY receiptArrive.label          "Quando chega um recibo:">
+<!ENTITY leaveIt.label                "Deixá-lo na caixa de Entrada">
+<!ENTITY leaveIt.accesskey            "D">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Movê-lo para a pasta &quot;Enviados&quot;">
+<!ENTITY moveToSent.accesskey         "v">
+<!ENTITY requestMDN.label             "Quando recebo um pedido de um recibo de leitura:">
+<!ENTITY returnSome.label             "Permitir recibos de leitura para algumas mensagens">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Nunca enviar um recibo de leitura">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Se eu não estiver no campo Para ou Cc da mensagem:">
+<!ENTITY notInToCc.accesskey          "u">
+<!ENTITY outsideDomain.label          "Se o remetente está fora do meu domínio:">
+<!ENTITY outsideDomain.accesskey      "m">
+<!ENTITY otherCases.label             "Nos outros casos:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "Perguntar-me">
+<!ENTITY alwaysSend.label             "Enviar sempre">
+<!ENTITY neverSend.label              "Nunca enviar">

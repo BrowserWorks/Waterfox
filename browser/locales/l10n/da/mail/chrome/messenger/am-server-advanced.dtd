@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Avancerede kontoindstillinger">
+<!ENTITY serverDirectory.label "IMAP-servermappe:">
+<!ENTITY serverDirectory.accesskey "I">
+<!ENTITY usingSubscription.label "Vis kun mapper der abonneres på">
+<!ENTITY usingSubscription.accesskey "V">
+<!ENTITY dualUseFolders.label "Serveren understøtter mapper med undermapper og meddelelser">
+<!ENTITY dualUseFolders.accesskey "u">
+<!ENTITY maximumConnectionsNumber.label "Maksimalt antal serverforbindelser der tilsluttes">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!ENTITY namespaceDesc.label "Disse egenskaber angiver navneområder for din IMAP-server">
+<!ENTITY personalNamespace.label "Personligt navneområde:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Offentlig (delt):">
+<!ENTITY publicNamespace.accesskey "O">
+<!ENTITY otherUsersNamespace.label "Andre brugere:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Tillad serveren at se bort fra disse navneområder">
+<!ENTITY overrideNamespaces.accesskey "n">
+<!ENTITY pop3DeferringDesc.label "Når der hentes mails fra denne kontos server, så benyt følgende mapper til nye meddelelser:" >
+<!ENTITY accountInbox.label "Indbakke for denne konto">
+<!ENTITY accountInbox.accesskey "I">
+<!ENTITY deferToServer.label "Indbakke for en anden konto">
+<!ENTITY deferToServer.accesskey "a">
+<!ENTITY deferGetNewMail.label "Medtag denne konto, når der hentes nye meddelelser">
+<!ENTITY deferGetNewMail.accesskey "M">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "添加至字典">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "撤销添加到字典">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "拼写检查">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "（无拼写建议）">
+<!ENTITY spellDictionaries.label "语言">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "清空">
+
+<!ENTITY fillLoginMenu.label          "填充登录信息">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "填充密码">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "填充用户名">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "（无登录信息建议）">
+<!ENTITY viewSavedLogins.label        "查看已保存的登录信息">

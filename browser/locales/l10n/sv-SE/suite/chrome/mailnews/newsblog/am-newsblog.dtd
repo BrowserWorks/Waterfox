@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "Sök efter nya artiklar vid start"> 
+<!ENTITY loginAtStartup.accesskey "S">
+<!ENTITY biffAll.label "Aktivera uppdateringar för alla RSS-kanaler">
+<!ENTITY biffAll.accesskey "u">
+
+<!ENTITY newFeedSettings.label "Standardinställningar för nya RSS-kanaler">
+
+<!ENTITY manageSubscriptions.label "Hantera prenumerationer…"> 
+<!ENTITY manageSubscriptions.accesskey "a">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "Bloggar &amp; nyhetskanaler">
+<!ENTITY feeds.wizardShortName "Kanaler">
+<!ENTITY feeds.wizardLongName "Bloggar &amp; nyhetskanaler">
+<!ENTITY feeds.wizardLongName.accesskey "B">

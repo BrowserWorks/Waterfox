@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "刪除">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "名字:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "電子郵件:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "通訊錄:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "完成">
+<!ENTITY editContactPanelDone.accesskey "D">
+
+<!ENTITY contactMoveDisabledWarning.description "因為聯絡人位於郵件群組中，您無法修改通訊錄。">
+

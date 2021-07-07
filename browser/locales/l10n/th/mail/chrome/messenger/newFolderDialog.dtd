@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "โฟลเดอร์ใหม่">
+<!ENTITY name.label                 "ชื่อ:">
+<!ENTITY name.accesskey             "ช">
+<!ENTITY description.label          "สร้างเป็นโฟลเดอร์ย่อยของ:">
+<!ENTITY description.accesskey      "ส">
+<!ENTITY folderRestriction1.label   "เซิร์ฟเวอร์นี้จำกัดโฟลเดอร์ไว้เพียงสองชนิดพิเศษ">
+<!ENTITY folderRestriction2.label   "อนุญาตให้โฟลเดอร์ใหม่ของคุณมี:">
+<!ENTITY foldersOnly.label          "โฟลเดอร์เท่านั้น">
+<!ENTITY messagesOnly.label         "ข้อความเท่านั้น">
+<!ENTITY accept.label               "สร้างโฟลเดอร์">
+<!ENTITY accept.accesskey           "ร">

@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Předvolby">
+<!ENTITY  preferencesDefaultTitleWin.title "Možnosti">
+<!ENTITY  preferencesCloseButton.label "Zavřít">
+<!ENTITY  preferencesCloseButton.accesskey "Z">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Předvolby">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;">
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;">
+<!ENTITY categoryHeader "Kategorie">
+
+<!ENTITY appear.label "Vzhled">
+<!ENTITY content.label "Obsah">
+<!ENTITY fonts.label "Písma">
+<!ENTITY colors.label "Barvy">
+<!ENTITY media.label "Multimédia">
+<!ENTITY spellingPane.label "Pravopis">
+
+<!ENTITY navigator.label "Prohlížeč">
+<!ENTITY history.label "Historie">
+<!ENTITY languages.label "Jazyky">
+<!ENTITY applications.label "Pomocné aplikace">
+<!ENTITY locationBar.label "Adresní řádek">
+<!ENTITY search.label "Hledání na webu">
+<!ENTITY tabWindows.label "Prohlížení v panelech">
+<!ENTITY links.label "Chování odkazů">
+<!ENTITY download.label "Stahování">
+
+<!ENTITY security.label "Soukromí a zabezpečení">
+<!ENTITY privatedata.label "Důvěrná data">
+<!ENTITY cookies.label "Cookies">
+<!ENTITY images.label "Obrázky">
+<!ENTITY popups.label "Vyskakovací okna">
+<!ENTITY passwords.label "Hesla">
+<!ENTITY masterpass.label "Hlavní heslo">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Certifikáty">
+
+<!ENTITY sync.label "Sync">
+
+<!ENTITY advance.label "Rozšířené">
+<!ENTITY scriptsAndWindows.label "Skripty a zásuvné moduly">
+<!ENTITY keynav.label "Navigace klávesnicí">
+<!ENTITY findAsYouType.label "Najít přímo při psaní">
+<!ENTITY cache.label "Mezipaměť">
+<!ENTITY offlineApps.label "Offline aplikace">
+<!ENTITY proxies.label "Proxy servery">
+<!ENTITY httpnetworking.label "HTTP spojení">
+<!ENTITY smart.label "Instalace software">
+<!ENTITY mousewheel.label "Kolečko myši">
+
+<!ENTITY debugging.label "Ladění">
+
+<!ENTITY focusSearch.key "f">

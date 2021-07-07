@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Síť a úložiště">
+<!ENTITY pref.offline.caption             "Režim offline">
+<!ENTITY textStartUp                      "Při startu:">
+<!ENTITY textStartUp.accesskey            "s">
+<!ENTITY menuitemRememberPrevState        "Pamatovat si předchozí stav">
+<!ENTITY menuitemAskMe                    "Při startu se zeptat na stav online">
+<!ENTITY menuitemAlwaysOnline             "Vždy začít v režimu online">
+<!ENTITY menuitemAlwaysOffline            "Vždy začít v režimu offline">
+<!ENTITY menuitemAutomatic                "Detekovat automaticky (je-li dostupné)">
+<!ENTITY textGoingOnline                  "Odeslat neodeslané zprávy při přechodu do režimu online?">
+<!ENTITY radioAutoSend                    "Ano">
+<!ENTITY radioAutoSend.accesskey          "A">
+<!ENTITY radioNotSend                     "Ne">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Zeptat se">
+<!ENTITY radioAskUnsent.accesskey         "p">
+<!ENTITY textGoingOffline                 "Stáhnout zprávy pro použití v režimu offline při přechodu do režimu offline?">
+<!ENTITY radioAutoDownload                "Ano">
+<!ENTITY radioAutoDownload.accesskey      "o">
+<!ENTITY radioNotDownload                 "Ne">
+<!ENTITY radioNotDownload.accesskey       "e">
+<!ENTITY radioAskDownload                 "Zeptat se">
+<!ENTITY radioAskDownload.accesskey       "Z">
+<!ENTITY mailConnections.caption          "Připojení k poště">
+<!ENTITY mailnewsTimeout.label            "Časový limit spojení:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "sekund">
+<!ENTITY Diskspace                        "Místo na disku">
+<!ENTITY offlineCompactFolders.label      "Provést údržbu složek, ušetří-li se celkově přes">
+<!ENTITY offlineCompactFolders.accesskey  "k">
+<!ENTITY offlineCompactFoldersMB.label    "MB">

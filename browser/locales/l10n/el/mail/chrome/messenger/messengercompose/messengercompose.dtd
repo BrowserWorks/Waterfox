@@ -1,0 +1,345 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Σύνταξη μηνύματος">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Αρχείο">
+<!ENTITY fileMenu.accesskey "χ">
+<!ENTITY newMenu.label "Νέο">
+<!ENTITY newMenu.accesskey "Ν">
+<!ENTITY newMessage.label "Μήνυμα">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "Μ">
+<!ENTITY newContact.label "Επαφή ευρετηρίου…">
+<!ENTITY newContact.accesskey "Ε">
+<!ENTITY attachMenu.label "Επισύναψη">
+<!ENTITY attachMenu.accesskey "ψ">
+<!ENTITY attachFileCmd.label "Αρχεία…">
+<!ENTITY attachFileCmd.accesskey "Α">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Ιστοσελίδα…">
+<!ENTITY attachPageCmd.accesskey "σ">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Προσωπική κάρτα (vCard)">
+<!ENTITY attachVCardCmd.accesskey "ο">
+<!ENTITY remindLater.label "Υπενθύμιση αργότερα">
+<!ENTITY remindLater.accesskey "Υ">
+<!ENTITY closeCmd.label "Κλείσιμο">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "λ">
+<!ENTITY saveCmd.label "Αποθήκευση">
+<!ENTITY saveCmd.key "s">
+<!ENTITY saveCmd.accesskey "θ">
+<!ENTITY saveAsCmd.label "Αποθήκευση ως">
+<!ENTITY saveAsCmd.accesskey "θ">
+<!ENTITY saveAsFileCmd.label "Αρχείο…">
+<!ENTITY saveAsFileCmd.accesskey "ρ">
+<!ENTITY saveAsDraftCmd.label "Προσχέδιο">
+<!ENTITY saveAsDraftCmd.accesskey "χ">
+<!ENTITY saveAsTemplateCmd.label "Πρότυπο">
+<!ENTITY saveAsTemplateCmd.accesskey "τ">
+<!ENTITY sendNowCmd.label "Άμεση αποστολή">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "π">
+<!ENTITY sendLaterCmd.label "Αναβολή αποστολής">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "β">
+<!ENTITY printSetupCmd.label "Διαμόρφωση σελίδας…">
+<!ENTITY printSetupCmd.accesskey "φ">
+<!ENTITY printPreviewCmd.label "Προεπισκόπηση εκτύπωσης">
+<!ENTITY printPreviewCmd.accesskey "ρ">
+<!ENTITY printCmd.label "Εκτύπωση…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "Ε">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Επεξεργασία">
+<!ENTITY editMenu.accesskey "ξ">
+<!ENTITY undoCmd.label "Αναίρεση">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "ν">
+<!ENTITY redoCmd.label "Επανάληψη">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "λ">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "δ">
+<!ENTITY deleteCmd.label "Διαγραφή">
+<!ENTITY deleteCmd.accesskey "Δ">
+<!ENTITY editRewrapCmd.label "Aναδίπλωση">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Μετονομασία συνημμένου…">
+<!ENTITY renameAttachmentCmd.accesskey "τ">
+<!ENTITY reorderAttachmentsCmd.label "Αναδιάταξη συνημμένων…">
+<!ENTITY reorderAttachmentsCmd.accesskey "δ">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Πίνακας συνημμένων">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "μ">
+<!ENTITY selectAllCmd.accesskey "λ">
+<!ENTITY findBarCmd.label "Εύρεση…">
+<!ENTITY findBarCmd.accesskey "Ε">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Εύρεση και αντικατάσταση…">
+<!ENTITY findReplaceCmd.accesskey "ρ">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Εύρεση ξανά">
+<!ENTITY findAgainCmd.accesskey "ρ">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Εύρεση προηγούμενου">
+<!ENTITY findPrevCmd.accesskey "ν">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Ανακατάταξη συνημμένων">
+<!ENTITY moveAttachmentTopPanelBtn.label "Μετακίνηση στην κορυφή">
+<!ENTITY moveAttachmentUpPanelBtn.label "Μετακίνηση πάνω">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Μετακίνηση μαζί">
+<!ENTITY moveAttachmentDownPanelBtn.label "Μετακίνηση κάτω">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Μετακίνηση στο κάτω μέρος">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Ταξινόμηση: Α - Ω">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Ταξινόμηση: Ω - Α">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Ταξινόμηση επιλεγμένων: Α - Ω">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Ταξινόμηση επιλεγμένων: Ω - Α">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Προβολή">
+<!ENTITY viewMenu.accesskey "β">
+<!ENTITY viewToolbarsMenuNew.label "Γραμμές εργαλείων">
+<!ENTITY viewToolbarsMenuNew.accesskey "λ">
+<!ENTITY menubarCmd.label "Γραμμή μενού">
+<!ENTITY menubarCmd.accesskey "μ">
+<!ENTITY showCompositionToolbarCmd.label "Γραμμή εργαλείων σύνταξης">
+<!ENTITY showCompositionToolbarCmd.accesskey "ξ">
+<!ENTITY showFormattingBarCmd.label "Γραμμή εργαλείων μορφοποίησης">
+<!ENTITY showFormattingBarCmd.accesskey "φ">
+<!ENTITY showTaskbarCmd.label "Γραμμή κατάστασης">
+<!ENTITY showTaskbarCmd.accesskey "μ">
+<!ENTITY customizeToolbar.label "Προσαρμογή…">
+<!ENTITY customizeToolbar.accesskey "μ">
+
+<!ENTITY addressSidebar.label "Πλευρική στήλη επαφών">
+<!ENTITY addressSidebar.accesskey "λ">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Μορφοποίηση">
+<!ENTITY formatMenu.accesskey "φ">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Επιλογές">
+<!ENTITY optionsMenu.accesskey "π">
+<!ENTITY checkSpellingCmd2.label "Ορθογραφικός έλεγχος…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "θ">
+<!ENTITY enableInlineSpellChecker.label "Ορθογραφικός έλεγχος κατά την πληκτρολόγηση">
+<!ENTITY enableInlineSpellChecker.accesskey "Α">
+<!ENTITY quoteCmd.label "Παράθεση μηνύματος">
+<!ENTITY quoteCmd.accesskey "θ">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Επισύναψη προσωπικής κάρτας (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Αποδεικτικό προβολής">
+<!ENTITY returnReceiptMenu.accesskey "β">
+<!ENTITY dsnMenu.label "Ειδοποίηση παράδοσης">
+<!ENTITY dsnMenu.accesskey "δ">
+<!ENTITY deliveryFormatMenu.label "Μορφή παράδοσης">
+<!ENTITY deliveryFormatMenu.accesskey "Μ">
+<!ENTITY autoFormatCmd.label "Αυτόματος εντοπισμός">
+<!ENTITY autoFormatCmd.accesskey "τ">
+<!ENTITY plainTextFormatCmd.label "Μόνο απλό κείμενο">
+<!ENTITY plainTextFormatCmd.accesskey "α">
+<!ENTITY htmlFormatCmd.label "Μόνο εμπλουτισμένο κείμενο (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "π">
+<!ENTITY bothFormatCmd.label "Απλό και HTML κείμενο">
+<!ENTITY bothFormatCmd.accesskey "κ">
+<!ENTITY priorityMenu.label "Προτεραιότητα">
+<!ENTITY priorityMenu.accesskey "ρ">
+<!ENTITY priorityButton.title "Προτεραιότητα">
+<!ENTITY priorityButton.tooltiptext "Αλλαγή προτεραιότητας του μηνύματος">
+<!ENTITY priorityButton.label "Προτεραιότητα:">
+<!ENTITY lowestPriorityCmd.label "Πολύ χαμηλή">
+<!ENTITY lowestPriorityCmd.accesskey "λ">
+<!ENTITY lowPriorityCmd.label "Χαμηλή">
+<!ENTITY lowPriorityCmd.accesskey "Χ">
+<!ENTITY normalPriorityCmd.label "Κανονική">
+<!ENTITY normalPriorityCmd.accesskey "κ">
+<!ENTITY highPriorityCmd.label "Υψηλή">
+<!ENTITY highPriorityCmd.accesskey "ψ">
+<!ENTITY highestPriorityCmd.label "Πολύ υψηλή">
+<!ENTITY highestPriorityCmd.accesskey "η">
+<!ENTITY fileCarbonCopyCmd.label "Αποστολή αντιγράφου σε">
+<!ENTITY fileCarbonCopyCmd.accesskey "γ">
+<!ENTITY fileHereMenu.label "Αποθήκευση εδώ">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Εργαλεία">
+<!ENTITY tasksMenu.accesskey "γ">
+<!ENTITY messengerCmd.label "Αλληλογραφία &amp; ομάδες συζήτησης">
+<!ENTITY messengerCmd.accesskey "γ">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Ευρετήριο">
+<!ENTITY addressBookCmd.accesskey "ρ">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Ρυθμίσεις λογαριασμού">
+<!ENTITY accountManagerCmd2.accesskey "θ">
+<!ENTITY accountManagerCmdUnix2.accesskey "μ">
+<!ENTITY preferencesCmd2.label "Επιλογές">
+<!ENTITY preferencesCmd2.accesskey "λ">
+<!ENTITY preferencesCmdUnix.label "Προτιμήσεις">
+<!ENTITY preferencesCmdUnix.accesskey "ρ">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Ελαχιστοποίηση">
+<!ENTITY bringAllToFront.label "Μεταφορά όλων μπροστά">
+<!ENTITY zoomWindow.label "Ζουμ">
+<!ENTITY windowMenu.label "Παράθυρο">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Αποστολή">
+<!ENTITY quoteButton.label "Σε παράθεση">
+<!ENTITY addressButton.label "Επαφές">
+<!ENTITY attachButton.label "Επισύναψη">
+<!ENTITY spellingButton.label "Ορθογραφία">
+<!ENTITY saveButton.label "Αποθήκευση">
+<!ENTITY printButton.label "Εκτύπωση">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Άμεση αποστολή μηνύματος">
+<!ENTITY sendlaterButton.tooltip "Αποστολή του μηνύματος αργότερα">
+<!ENTITY quoteButton.tooltip "Παράθεση προηγούμενου μηνύματος">
+<!ENTITY addressButton.tooltip "Επιλογή παραλήπτη από το Ευρετήριο Διευθύνσεων">
+<!ENTITY attachButton.tooltip2 "Προσθήκη ενός συνημμένου">
+<!ENTITY spellingButton.tooltip "Ορθογραφικός έλεγχος επιλογής ή ολόκληρου μηνύματος">
+<!ENTITY saveButton.tooltip "Αποθήκευση μηνύματος">
+<!ENTITY cutButton.tooltip              "Αποκοπή">
+<!ENTITY copyButton.tooltip             "Αντιγραφή">
+<!ENTITY pasteButton.tooltip            "Επικόλληση">
+<!ENTITY printButton.tooltip "Εκτύπωση μηνύματος">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Άλλοι τύποι πεδίων διευθυνσιοδότησης">
+<!ENTITY fromAddr2.label "Από">
+<!ENTITY fromAddr.accesskey "π">
+<!ENTITY toAddr2.label "Προς">
+<!ENTITY ccAddr2.label "Κοιν.">
+<!ENTITY bccAddr2.label "Κρυφή κοιν.">
+<!ENTITY replyAddr2.label "Απάντηση προς">
+<!ENTITY newsgroupsAddr2.label "Ομάδα ειδήσεων">
+<!ENTITY followupAddr2.label "Σε συνέχεια του ">
+<!ENTITY subject2.label "Θέμα">
+<!ENTITY subject.accesskey "Θ">
+<!ENTITY attachmentBucketCloseButton.tooltip "Απόκρυψη του πίνακα συνημμένων">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Εισαγωγή emoji">
+<!ENTITY smiley1Cmd.label "Χαμόγελο">
+<!ENTITY smiley2Cmd.label "Κατσούφιασμα">
+<!ENTITY smiley3Cmd.label "Κλείσιμο ματιού">
+<!ENTITY smiley4Cmd.label "Γλώσσα έξω">
+<!ENTITY smiley5Cmd.label "Γέλιο">
+<!ENTITY smiley6Cmd.label "Ντροπή">
+<!ENTITY smiley7Cmd.label "Αναποφασιστηκότητα">
+<!ENTITY smiley8Cmd.label "Έκπληξη">
+<!ENTITY smiley9Cmd.label "Φιλί">
+<!ENTITY smiley10Cmd.label "Κραυγή">
+<!ENTITY smiley11Cmd.label "Κουλ">
+<!ENTITY smiley12Cmd.label "Λεφτά στο στόμα">
+<!ENTITY smiley13Cmd.label "Πόδι στο στόμα">
+<!ENTITY smiley14Cmd.label "Αθωότητα">
+<!ENTITY smiley15Cmd.label "Κλάμα">
+<!ENTITY smiley16Cmd.label "Σφραγισμένα χείλη">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Δεν βρέθηκαν προτάσεις">
+<!ENTITY spellCheckIgnoreWord.label "Παράβλεψη λέξης">
+<!ENTITY spellCheckIgnoreWord.accesskey "ψ">
+<!ENTITY spellCheckAddToDictionary.label "Προσθήκη στο λεξικό">
+<!ENTITY spellCheckAddToDictionary.accesskey "ξ">
+<!ENTITY undo.label "Αναίρεση">
+<!ENTITY undo.accesskey "ν">
+<!ENTITY cut.label "Αποκοπή">
+<!ENTITY cut.accesskey "κ">
+<!ENTITY copy.label "Αντιγραφή">
+<!ENTITY copy.accesskey "γ">
+<!ENTITY paste.label "Επικόλληση">
+<!ENTITY paste.accesskey "κ">
+<!ENTITY pasteQuote.label "Επικόλληση ως παράθεση">
+<!ENTITY pasteQuote.accesskey "θ">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Άνοιγμα">
+<!ENTITY openAttachment.accesskey "γ">
+<!ENTITY delete.label "Διαγραφή">
+<!ENTITY delete.accesskey "Δ">
+<!ENTITY removeAttachment.label "Αφαίρεση συνημμένου">
+<!ENTITY removeAttachment.accesskey "ρ">
+<!ENTITY renameAttachment.label "Μετονομασία…">
+<!ENTITY renameAttachment.accesskey "τ">
+<!ENTITY reorderAttachments.label "Αναδιάταξη συνημμένων…">
+<!ENTITY reorderAttachments.accesskey "ν">
+<!ENTITY removeAllAttachments.label "Αφαίρεση όλων των συνημμένων">
+<!ENTITY removeAllAttachments.accesskey "ρ">
+<!ENTITY selectAll.label "Επιλογή όλων">
+<!ENTITY selectAll.accesskey "λ">
+<!ENTITY attachFile.label "Επισύναψη αρχείων…">
+<!ENTITY attachFile.accesskey "σ">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Μετατροπή σε…">
+<!ENTITY convertCloud.accesskey "Μ">
+<!ENTITY cancelUpload.label "Ακύρωση αποστολής">
+<!ENTITY cancelUpload.accesskey "ρ">
+<!ENTITY convertRegularAttachment.label "Κανονικό συνημμένο">
+<!ENTITY convertRegularAttachment.accesskey "Κ">
+<!ENTITY attachPage.label "Επισύναψη ιστοσελίδας…">
+<!ENTITY attachPage.accesskey "ι">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Εμφάνιση παραθύρου συνημμένων αρχικά">
+<!ENTITY initiallyShowAttachmentPane.accesskey "Ε">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Προσθήκη λεξικών…">
+<!ENTITY spellAddDictionaries.accesskey "θ">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Επαφές">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Προσαρμογή διεύθυνσης αποστολέα…">
+<!ENTITY customizeFromAddress.accesskey "δ">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Κύριο μέρος μηνύματος">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Γλώσσα ορθογραφικού ελέγχου">
+<!ENTITY encodingStatusPanel.tooltip "Κωδικοποίηση κειμένου">

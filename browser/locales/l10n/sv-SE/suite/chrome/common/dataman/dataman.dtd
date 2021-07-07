@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Data Manager">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Alla datatyper">
+<!ENTITY select.cookies.label "Enbart kakor">
+<!ENTITY select.permissions.label "Enbart sekretess">
+<!ENTITY select.preferences.label "Enbart inställningar">
+<!ENTITY select.passwords.label "Enbart lösenord">
+<!ENTITY select.storage.label "Enbart lagring">
+
+<!ENTITY domain.search.placeholder "Sök domäner">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Domän">
+
+<!ENTITY domain.ctx.forgetdomain.label "Rensa uppgifter om denna domän">
+<!ENTITY domain.ctx.forgetdomain.accesskey "R">
+<!ENTITY domain.ctx.forgetglobal.label "Rensa allmänna uppgifter">
+<!ENTITY domain.ctx.forgetglobal.accesskey "u">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Kakor">
+<!ENTITY tab.permissions.label "Sekretess">
+<!ENTITY tab.preferences.label "Inställningar">
+<!ENTITY tab.passwords.label "Lösenord">
+<!ENTITY tab.storage.label "Lagring">
+<!ENTITY tab.formdata.label "Formulärhistorik">
+<!ENTITY tab.forget.label "Rensa">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Denna domän har sparat följande kakor på denna dator:">
+
+<!ENTITY cookies.tree.host.label "Webbplats">
+<!ENTITY cookies.tree.name.label "Kakans namn">
+<!ENTITY cookies.tree.expires.label "Förfaller">
+
+<!ENTITY cookies.infobox.label "Information om den valda kakan">
+
+<!ENTITY cookies.info.name.label "Namn:">
+<!ENTITY cookies.info.value.label "Innehåll:">
+<!ENTITY cookies.info.host.label "Värd:">
+<!ENTITY cookies.info.domain.label "Domän:">
+<!ENTITY cookies.info.path.label "Sökväg:">
+<!ENTITY cookies.info.sendtype.label "Skicka vid:">
+<!ENTITY cookies.info.expires.label "Förfaller:">
+
+<!ENTITY cookies.ctx.remove.label "Ta bort">
+<!ENTITY cookies.ctx.remove.accesskey "T">
+<!ENTITY cookies.ctx.selectAll.label "Välj alla">
+<!ENTITY cookies.ctx.selectAll.accesskey "A">
+
+<!ENTITY cookies.button.remove.label "Ta bort">
+<!ENTITY cookies.button.remove.accesskey "T">
+
+<!ENTITY cookies.blockOnRemove.label "Utöver att rensa, blockera också framtida kakor från de listade webbplatserna">
+<!ENTITY cookies.blockOnRemove.accesskey "W">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Använd standard">
+<!ENTITY perm.AskAlways "Fråga alltid">
+<!ENTITY perm.NeverSave "Spara aldrig">
+<!ENTITY perm.Allow "Tillåt">
+<!ENTITY perm.AllowSameDomain "Tillåt inom domänen">
+<!ENTITY perm.AllowSession "Tillåt tillfälligt">
+<!ENTITY perm.Block "Blockera">
+
+<!ENTITY perm.host.placeholder "Ange ett servernamn">
+<!ENTITY perm.button.add.label "Lägg till">
+<!ENTITY perm.button.add.accesskey "L">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Innehållsinställningar är ett sätt för &brandShortName; att spara inställningar, t.ex. zoom-nivå, unikt för en webbplats.">
+
+<!ENTITY prefs.tree.host.label "Webbplats">
+<!ENTITY prefs.tree.name.label "Inställningsnamn">
+<!ENTITY prefs.tree.value.label "Värde">
+
+<!ENTITY prefs.ctx.remove.label "Ta bort">
+<!ENTITY prefs.ctx.remove.accesskey "T">
+<!ENTITY prefs.ctx.selectAll.label "Välj alla">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+
+<!ENTITY prefs.button.remove.label "Ta bort">
+<!ENTITY prefs.button.remove.accesskey "T">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Du har följande lösenord lagrade för denna domän:">
+
+<!ENTITY pwd.tree.host.label "Webbplats">
+<!ENTITY pwd.tree.username.label "Användarnamn">
+<!ENTITY pwd.tree.password.label "Lösenord">
+
+<!ENTITY pwd.ctx.remove.label "Ta bort">
+<!ENTITY pwd.ctx.remove.accesskey "T">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Kopiera lösenord">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "K">
+<!ENTITY pwd.ctx.selectAll.label "Välj alla">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "Ta bort">
+<!ENTITY pwd.button.remove.accesskey "T">
+
+<!-- storage -->
+<!ENTITY storage.description "Denna domän använder följande webblagring på din dator:">
+
+<!ENTITY storage.tree.host.label "Webbplats">
+<!ENTITY storage.tree.type.label "Typ">
+<!ENTITY storage.tree.size.label "Storlek">
+
+<!ENTITY storage.ctx.remove.label "Ta bort">
+<!ENTITY storage.ctx.remove.accesskey "T">
+<!ENTITY storage.ctx.selectAll.label "Markera allt">
+<!ENTITY storage.ctx.selectAll.accesskey "a">
+
+<!ENTITY storage.button.remove.label "Ta bort">
+<!ENTITY storage.button.remove.accesskey "b">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Sök formulärdata">
+
+<!ENTITY fdata.tree.fieldname.label "Fältnamn">
+<!ENTITY fdata.tree.value.label "Registrerat värde">
+<!ENTITY fdata.tree.usecount.label "Använd ggr">
+<!ENTITY fdata.tree.firstused.label "Först använd">
+<!ENTITY fdata.tree.lastused.label "Senast använd">
+
+<!ENTITY fdata.ctx.remove.label "Ta bort">
+<!ENTITY fdata.ctx.remove.accesskey "T">
+<!ENTITY fdata.ctx.selectAll.label "Välj alla">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+
+<!ENTITY fdata.button.remove.label "Ta bort">
+<!ENTITY fdata.button.remove.accesskey "T">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Kakor">
+<!ENTITY forget.cookies.accesskey "K">
+<!ENTITY forget.permissions.label "Sekretess">
+<!ENTITY forget.permissions.accesskey "S">
+<!ENTITY forget.preferences.label "Innehållsinställningar">
+<!ENTITY forget.preferences.accesskey "I">
+<!ENTITY forget.passwords.label "Lösenord">
+<!ENTITY forget.passwords.accesskey "L">
+<!ENTITY forget.storage.label "Lagring">
+<!ENTITY forget.storage.accesskey "a">
+<!ENTITY forget.formdata.label "Formulärdata">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "Rensa denna uppgift">
+<!ENTITY forget.button.accesskey "R">

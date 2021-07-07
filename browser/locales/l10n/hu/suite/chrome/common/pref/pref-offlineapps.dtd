@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Webalkalmazások">
+<!ENTITY pref.offlineCache.caption          "Offline webtartalom és felhasználói adatok">
+
+<!ENTITY clearOfflineAppCache.label         "Alaphelyzet">
+<!ENTITY clearOfflineAppCache.accesskey     "A">
+
+<!ENTITY offlineAlwaysAllow.label           "Minden webhely tárolhat adatokat kapcsolat nélküli felhasználás céljából">
+<!ENTITY offlineAlwaysAllow.accesskey       "M">
+<!ENTITY offlineExplicit.label              "Engedélyek">
+<!ENTITY offlineExplicit.accesskey          "E">
+<!ENTITY offlineNotifyAsk.label             "Figyelmeztetés, ha a webhely adatokat akar tárolni kapcsolat nélküli használatra">
+<!ENTITY offlineNotifyAsk.accesskey         "F">
+<!ENTITY offlineNotifyPermissions.label     "Engedélyek kezelése">
+<!ENTITY offlineNotifyPermissions.accesskey "E">
+
+<!ENTITY offlineAppsUsage.label             "A következő webhelyek tárolnak adatokat kapcsolat nélküli használatra:">
+<!ENTITY offlineAppsListRemove.label        "Törlés most…">
+<!ENTITY offlineAppsListRemove.accesskey    "T">

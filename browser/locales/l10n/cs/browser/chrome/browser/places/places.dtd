@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Knihovna stránek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Správa">
+<!ENTITY organize.accesskey    "S">
+<!ENTITY organize.tooltip      "Umožní správu záložek">
+
+<!ENTITY file.close.label               "Zavřít">
+<!ENTITY file.close.accesskey           "v">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Rozložení">
+<!ENTITY views.accesskey                "R">
+<!ENTITY views.tooltip                  "Změní rozložení">
+<!ENTITY view.columns.label             "Zobrazené sloupce">
+<!ENTITY view.columns.accesskey         "b">
+<!ENTITY view.sort.label                "Řazení položek">
+<!ENTITY view.sort.accesskey            "z">
+<!ENTITY view.unsorted.label            "Neřadit">
+<!ENTITY view.unsorted.accesskey        "e">
+<!ENTITY view.sortAscending.label       "Vzestupně">
+<!ENTITY view.sortAscending.accesskey   "V">
+<!ENTITY view.sortDescending.label      "Sestupně">
+<!ENTITY view.sortDescending.accesskey  "S">
+
+<!ENTITY importBookmarksFromHTML.label     "Importovat záložky z HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportovat záložky do HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importovat data z jiného prohlížeče…">
+<!ENTITY importOtherBrowser.accesskey      "d">
+
+<!ENTITY cmd.backup.label               "Zálohovat…">
+<!ENTITY cmd.backup.accesskey           "Z">
+<!ENTITY cmd.restore2.label             "Obnovit">
+<!ENTITY cmd.restore2.accesskey         "O">
+<!ENTITY cmd.restoreFromFile.label      "Vybrat soubor…">
+<!ENTITY cmd.restoreFromFile.accesskey  "V">
+
+<!ENTITY col.name.label          "Název">
+<!ENTITY col.tags.label          "Štítky">
+<!ENTITY col.url.label           "Adresa">
+<!ENTITY col.mostrecentvisit.label "Poslední návštěva">
+<!ENTITY col.visitcount.label    "Počet návštěv">
+<!ENTITY col.dateadded.label     "Přidáno">
+<!ENTITY col.lastmodified.label  "Poslední změna">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Import a záloha">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importuje a zálohuje záložky">
+
+<!ENTITY backButton.tooltip  "Přejde zpět">
+
+<!ENTITY forwardButton.tooltip  "Přejde vpřed">
+
+<!ENTITY detailsPane.selectAnItemText.description "Pro zobrazení a úpravu vlastností vyberte některou z položek">
+

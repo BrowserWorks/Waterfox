@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "内容">
+<!ENTITY pref.content.description               "这些设置会影响网站和消息内容在 &brandShortName; 上的显示。">
+
+<!ENTITY siteIcons.label                        "网站图标">
+<!ENTITY useSiteIcons.label                     "显示网站图标">
+<!ENTITY useSiteIcons.accesskey                 "S">
+<!ENTITY useFavIcons2.label                     "页面未定义图标时，尝试使用服务器的网站图标（Favicon）">
+<!ENTITY useFavIcons2.accesskey                 "i">
+
+<!ENTITY scrolling.label                        "滚动">
+<!ENTITY useAutoScroll.label                    "使用自动滚屏">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "使用平滑滚动">
+<!ENTITY useSmoothScroll.accesskey              "U">
+
+<!ENTITY zoomPrefs.label                        "缩放选项">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "范围从">
+<!ENTITY minZoom.accesskey                      "f">
+<!ENTITY maxZoom.label                          "至">
+<!ENTITY maxZoom.accesskey                      "o">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY defaultZoom.label                      "默认缩放">
+<!ENTITY defaultZoom.accesskey                  "D">
+
+<!ENTITY siteSpecific.label                     "记住每个站点上的缩放等级">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY textZoomOnly.label                     "仅放大文本而不是放大整个页面">
+<!ENTITY textZoomOnly.accesskey                 "Z">
+<!ENTITY enableAutomaticImageResizing.label     "调整大图像的尺寸以适应浏览器窗口">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+
+<!ENTITY allowHWAccel.label                     "当可用时使用硬件加速">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY blockAutoRefresh.label                 "当网站尝试重定向或者重新载入页面时发出警告">
+<!ENTITY blockAutoRefresh.accesskey             "W">
+
+<!ENTITY showZoomStatusPanel.label              "在状态栏显示缩放控件">

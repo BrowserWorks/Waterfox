@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindow.title           "邮件列表">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "添加到：">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "列表名称：">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "列表别名：">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "描述：">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "输入姓名或将地址拖到下面的邮件列表中：">
+<!ENTITY AddressTitle.accesskey         "m">

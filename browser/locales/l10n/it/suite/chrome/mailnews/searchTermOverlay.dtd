@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label "Soddisfano tutte le condizioni">
+<!ENTITY matchAll.accesskey "t">
+<!ENTITY matchAny.label "Soddisfano anche una sola condizione">
+<!ENTITY matchAny.accesskey "u">
+<!ENTITY matchAllMsgs.label "Tutte incondizionatamente">
+<!ENTITY matchAllMsgs.accesskey "z">
+<!ENTITY searchTermListAttributesFlexValue "1">
+<!ENTITY searchTermListOperatorsFlexValue "1">
+<!ENTITY searchTermListValueFlexValue "3">

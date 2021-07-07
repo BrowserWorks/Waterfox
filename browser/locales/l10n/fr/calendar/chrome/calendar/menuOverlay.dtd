@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Nouvel évènement…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Nouvelle tâche…">
+<!ENTITY event.new.task.accesskey               "t">
+
+<!ENTITY calendar.import.label                  "Importer…">
+<!ENTITY calendar.import.accesskey              "i">
+
+<!ENTITY calendar.export.label                  "Exporter l’agenda…">
+<!ENTITY calendar.export.accesskey              "x">
+
+<!ENTITY calendar.publish.label                 "Publier…">
+<!ENTITY calendar.publish.accesskey             "P">
+
+<!ENTITY calendar.deletecalendar.label          "Supprimer l’agenda sélectionné…">
+<!ENTITY calendar.deletecalendar.accesskey      "S">
+<!ENTITY calendar.unsubscribecalendar.label     "Se désabonner de l’agenda sélectionné…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "d">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Retirer l’agenda sélectionné…">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "Personnaliser…">
+<!ENTITY calendar.menu.customize.accesskey      "l">
+
+<!ENTITY showUnifinderCmd.label                 "Recherche d’évènements">
+<!ENTITY showUnifinderCmd.accesskey             "c">
+<!ENTITY showUnifinderCmd.tooltip               "Afficher/Masquer le panneau de recherche d’évènements">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Afficher les tâches dans l’agenda">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "i">
+
+<!ENTITY goTodayCmd.label                       "Aujourd’hui">
+<!ENTITY goTodayCmd.accesskey                   "A">
+
+<!ENTITY showCurrentView.label                  "Vue courante">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "Propriétés de l’agenda…">
+<!ENTITY calendar.properties.accesskey          "P">

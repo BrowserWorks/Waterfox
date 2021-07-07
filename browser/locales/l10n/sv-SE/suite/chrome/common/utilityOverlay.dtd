@@ -1,0 +1,209 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label                 "Arbeta i nedkopplat läge">
+<!ENTITY  offlineGoOfflineCmd.accesskey             "b">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label                   "Arkiv">
+<!ENTITY fileMenu.accesskey               "A">
+<!ENTITY newMenu.label                    "Nytt">
+<!ENTITY newMenu.accesskey                "N">
+<!ENTITY newBlankPageCmd.label            "Tom sida att redigera">
+<!ENTITY newBlankPageCmd.accesskey        "e">
+<!ENTITY newBlankPageCmd.key              "n">
+<!ENTITY newPageFromTemplateCmd.label "Sida från mall">
+<!ENTITY newPageFromTemplateCmd.accesskey "S">
+<!ENTITY newPageFromDraftCmd.label "Sida från utkast">
+<!ENTITY newPageFromDraftCmd.accesskey "d">
+<!ENTITY newNavigatorCmd.label "Fönster i webbläsaren">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "F">
+<!ENTITY newPrivateWindowCmd.label "Privat fönster">
+<!ENTITY newPrivateWindowCmd.key "B">
+<!ENTITY newPrivateWindowCmd.accesskey "r">
+<!ENTITY closeCmd.label "Stäng">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "S">
+<!ENTITY printSetupCmd.label "Utskriftsformat…">
+<!ENTITY printSetupCmd.accesskey "o">
+<!ENTITY printPreviewCmd.label "Förhandsgranska">
+<!ENTITY printPreviewCmd.accesskey "h">
+<!ENTITY printCmd.label "Skriv ut…">
+<!ENTITY printCmd.accesskey "u">
+<!ENTITY printCmd.key "P">
+
+<!-- LOCALIZATION NOTE (.modifiers): The following entites are for the
+     application menu. Never change the modifiers unless you are 100% sure that
+     they are different on your locale (should be very rare). -->
+<!ENTITY preferencesCmdMac.label          "Inställningar…">
+<!ENTITY preferencesCmdMac.key            ",">
+<!ENTITY preferencesCmdMac.modifiers      "accel">
+<!ENTITY servicesMenu.label               "Tjänster">
+<!ENTITY hideThisAppCmd.label             "Dölj &brandShortName;">
+<!ENTITY hideThisAppCmd.key               "D">
+<!ENTITY hideThisAppCmd.modifiers         "accel">
+<!ENTITY hideOtherAppsCmd.label           "Göm övriga">
+<!ENTITY hideOtherAppsCmd.key             "G">
+<!ENTITY hideOtherAppsCmd.modifiers       "accel,alt">
+<!ENTITY showAllAppsCmd.label             "Visa alla">
+<!ENTITY openHelpCmdMac.label             "&brandShortName; Hjälp">
+<!ENTITY openHelpCmdMac.accesskey         "H">
+<!ENTITY openHelpCmdMac.key               "?">
+<!ENTITY openHelpCmdMac.modifiers         "accel">
+
+<!ENTITY quitApplicationCmd.label         "Avsluta">
+<!ENTITY quitApplicationCmd.key           "Q">
+<!ENTITY quitApplicationCmd.accesskey     "A">
+<!ENTITY quitApplicationCmdMac.label      "Avsluta &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">
+<!ENTITY quitApplicationCmdUnix.label     "Avsluta">
+<!ENTITY quitApplicationCmdUnix.accesskey "A">
+
+<!ENTITY editMenu.label                   "Redigera">
+<!ENTITY editMenu.accesskey               "e">
+<!ENTITY undoCmd.label                    "Ångra">
+<!ENTITY undoCmd.key                      "Z">
+<!ENTITY undoCmd.accesskey                "Å">
+<!ENTITY redoCmd.label                    "Gör om">
+<!ENTITY redoCmd.key                      "Y">
+<!ENTITY redoCmdMac.key                   "Z">
+<!ENTITY redoCmd.accesskey                "r">
+<!ENTITY cutCmd.label                     "Klipp ut">
+<!ENTITY cutCmd.key                       "X">
+<!ENTITY cutCmd.accesskey                 "K">
+<!ENTITY copyCmd.label                    "Kopiera">
+<!ENTITY copyCmd.key                      "C">
+<!ENTITY copyCmd.accesskey                "o">
+<!ENTITY pasteCmd.label                   "Klistra in">
+<!ENTITY pasteCmd.key                     "V">
+<!ENTITY pasteCmd.accesskey               "l">
+<!ENTITY pasteGoCmd.label                 "Klistra in &amp; gå">
+<!ENTITY pasteGoCmd.accesskey             "G">
+
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+<!ENTITY pasteSearchCmd.label             "Klistra in &amp; sök">
+<!ENTITY pasteSearchCmd.accesskey         "s">
+<!ENTITY deleteCmd.label                  "Ta bort">
+<!ENTITY deleteCmd.accesskey              "T">
+<!ENTITY selectAllCmd.label               "Markera allt">
+<!ENTITY selectAllCmd.key                 "a">
+<!ENTITY selectAllCmd.accesskey           "M">
+<!ENTITY clearHistoryCmd.label            "Töm sökhistorik">
+<!ENTITY clearHistoryCmd.accesskey        "H">
+<!ENTITY showSuggestionsCmd.label         "Visa förslag">
+<!ENTITY showSuggestionsCmd.accesskey     "ö">
+<!ENTITY preferencesCmd.label             "Inställningar…">
+<!ENTITY preferencesCmd.key               "E">
+<!ENTITY preferencesCmd.accesskey         "I">
+<!ENTITY findBarCmd.key "F">
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findBarCmd.accesskey "S">
+<!ENTITY findCmd.key2 "VK_F19">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findReplaceCmdMac.key "F">
+<!ENTITY findReplaceCmd.accesskey "e">
+<!ENTITY findAgainCmd.label "Sök nästa">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "n">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Sök föregående">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "f">
+<!ENTITY findTypeTextCmd.label "Hitta text medan du skriver">
+<!ENTITY findTypeTextCmd.key "/">
+<!ENTITY findTypeTextCmd.accesskey "e">
+<!ENTITY findTypeLinksCmd.label "Hitta länkar medan du skriver">
+<!ENTITY findTypeLinksCmd.key "'">
+<!ENTITY findTypeLinksCmd.accesskey "H">
+
+<!ENTITY viewMenu.label                   "Visa">
+<!ENTITY viewMenu.accesskey               "V">
+<!ENTITY viewToolbarsMenu.label           "Visa/Dölj">
+<!ENTITY viewToolbarsMenu.accesskey       "i">
+<!ENTITY showTaskbarCmd.label             "Statusfält">
+<!ENTITY showTaskbarCmd.accesskey         "t">
+
+<!ENTITY helpMenu.label                   "Hjälp">
+<!ENTITY helpMenu.accesskey               "H">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+     for the help button in the menubar. -->
+<!ENTITY helpMenuWin.label                "Hjälp">
+<!ENTITY helpMenuWin.accesskey            "H">
+<!ENTITY openHelpCmd.label                "Hjälpinnehåll">
+<!ENTITY openHelpCmd.accesskey            "H">
+<!ENTITY openHelpCmd.key                  "VK_F1">
+
+<!ENTITY helpForIEUsers.label               "För Internet Explorer-användare">
+<!ENTITY helpForIEUsers.accesskey           "I">
+
+<!ENTITY helpTroubleshootingInfo.label      "Felsökningsinformation">
+<!ENTITY helpTroubleshootingInfo.accesskey  "F">
+<!ENTITY releaseCmd.label                   "Versionsfakta">
+<!ENTITY releaseCmd.accesskey               "V">
+<!ENTITY helpSafeMode.label                 "Starta om med tillägg inaktiverade">
+<!ENTITY helpSafeMode.accesskey             "t">
+<!ENTITY updateCmd.label                    "Sök efter uppdateringar…">
+<!ENTITY updateCmd.accesskey                "S">
+<!ENTITY aboutCmd.label                     "Om &brandShortName;">
+<!ENTITY aboutCmd.accesskey                 "O">
+<!ENTITY aboutCommPluginsCmd.label          "Om insticksmoduler">
+<!ENTITY aboutCommPluginsCmd.accesskey      "m">
+
+<!ENTITY direct.label                             "Uppkopplad (proxy: ingen)">
+<!ENTITY direct.accesskey                         "i">
+<!ENTITY manual.label                             "Uppkopplad (proxy: manuell)">
+<!ENTITY manual.accesskey                         "m">
+<!ENTITY pac.label                                "Uppkopplad (proxy: auto)">
+<!ENTITY pac.accesskey                            "a">
+<!ENTITY wpad.label                               "Uppkopplad (proxy: automatisk)">
+<!ENTITY wpad.accesskey                           "u">
+<!ENTITY system.label                             "Uppkopplad (proxy: systemproxy)">
+<!ENTITY system.accesskey                         "s">
+
+<!ENTITY proxy.label                              "Proxykonfiguration…">
+<!ENTITY proxy.accesskey                          "P">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "Byt textriktning">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "x">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY menubarCmd.label                         "Menyrad">
+<!ENTITY menubarCmd.accesskey                     "e">
+
+<!ENTITY customizeToolbarContext.label            "Inställningar…">
+<!ENTITY customizeToolbarContext.accesskey        "n">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "Inställningar för detta verktygsfält">
+<!ENTITY customizeToolbar.toolbarmode.accesskey   "t">
+<!ENTITY customizeToolbar.iconsAndText.label      "Ikoner och text">
+<!ENTITY customizeToolbar.iconsAndText.accesskey  "o">
+<!ENTITY customizeToolbar.icons.label             "Ikoner">
+<!ENTITY customizeToolbar.icons.accesskey         "I">
+<!ENTITY customizeToolbar.text.label              "Text">
+<!ENTITY customizeToolbar.text.accesskey          "T">
+<!ENTITY customizeToolbar.useSmallIcons.label     "Använd små ikoner">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "s">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "Visa text bredvid ikon">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "b">
+<!ENTITY customizeToolbar.useDefault.label        "Använd förvalda inställningar">
+<!ENTITY customizeToolbar.useDefault.accesskey    "g">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY allowPopups.accesskey        "e">
+<!ENTITY showPopupManager.label       "Hantera extrafönster">
+<!ENTITY showPopupManager.accesskey   "H">
+<!ENTITY dontShowMessage.label        "Visa inte detta meddelande när extrafönster blockeras">
+<!ENTITY dontShowMessage.accesskey    "i">
+
+<!ENTITY throbber.title "Aktivitetsikon">
+<!ENTITY throbber.tooltip2 "Gå till &brandShortName;s webbplats">
+
+<!ENTITY syncToolbarButton.label "Synk">

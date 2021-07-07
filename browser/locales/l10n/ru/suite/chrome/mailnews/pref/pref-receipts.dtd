@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Уведомления о прочтении">
+<!ENTITY prefReceipts.caption         "Уведомления о прочтении">
+<!ENTITY requestReceipt.label         "Всегда запрашивать уведомление о прочтении при отправке сообщений">
+<!ENTITY requestReceipt.accesskey     "з">
+<!ENTITY receiptArrive.label          "При получении уведомления о прочтении:">
+<!ENTITY leaveIt.label                "Оставлять его в папке «Входящие»">
+<!ENTITY leaveIt.accesskey            "В">
+<!ENTITY moveToSent.label             "Переместить его в «Отправленные»">
+<!ENTITY moveToSent.accesskey         "О">
+<!ENTITY requestMDN.label             "При получении запроса на уведомление о прочтении:">
+<!ENTITY returnSome.label             "Отправлять уведомления о прочтении для некоторых сообщений">
+<!ENTITY returnSome.accesskey         "у">
+<!ENTITY never.label                  "Никогда не отправлять уведомления о прочтении">
+<!ENTITY never.accesskey              "Н">
+<!ENTITY notInToCc.label              "Если я не нахожусь в списке «Кому» или «Копия»:">
+<!ENTITY notInToCc.accesskey          "Е">
+<!ENTITY outsideDomain.label          "Если отправитель не входит в мой домен:">
+<!ENTITY outsideDomain.accesskey      "м">
+<!ENTITY otherCases.label             "В остальных случаях:">
+<!ENTITY otherCases.accesskey         "т">
+<!ENTITY askMe.label                  "Спрашивать">
+<!ENTITY alwaysSend.label             "Отправлять">
+<!ENTITY neverSend.label              "Не отправлять">

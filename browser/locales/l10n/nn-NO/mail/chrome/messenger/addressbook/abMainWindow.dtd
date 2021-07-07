@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Adressebok">
+<!ENTITY blankResultsPaneMessage.label                  "Denne adresseboka viser kontaktar berre etter at du har gjort eit søk">
+<!ENTITY localResultsOnlyMessage.label                  "Kontaktar frå eksterne adressebøker vert ikkje viste før du søkjer">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Fil">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "Ny">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "Kontakt …">
+<!ENTITY newContact.accesskey                           "K">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "E-postliste …">
+<!ENTITY newListCmd.accesskey                           "E">
+<!ENTITY newAddressBookCmd.label                        "Adressebok …">
+<!ENTITY newAddressBookCmd.accesskey                    "d">
+<!ENTITY newCardDAVBookCmd.label                        "CardDAV-adressebok...">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-katalog …">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newMessageCmd.label                            "Melding">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "M">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Bruk Mac OS X adressebok">
+<!ENTITY osxAddressBook.accesskey                       "r">
+<!ENTITY closeCmd.label                                 "Lat att">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "L">
+<!ENTITY printSetupCmd.label                            "Utskriftsformat …">
+<!ENTITY printSetupCmd.accesskey                        "m">
+<!ENTITY printPreviewContactCmd.label                   "Førehandsvising av kort">
+<!ENTITY printPreviewContactCmd.accesskey               "r">
+<!ENTITY printPreviewAddressBook.label                  "Førehandsvising av adressebok">
+<!ENTITY printPreviewAddressBook.accesskey              "F">
+<!ENTITY printContactCmd.label                          "Skriv ut kontakt…">
+<!ENTITY printContactCmd.accesskey                      "S">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Skriv ut adressebok…">
+<!ENTITY printAddressBook.accesskey                     "k">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Rediger">
+<!ENTITY editMenu.accesskey                             "R">
+<!ENTITY deleteCmd.label                                "Slett">
+<!ENTITY deleteAbCmd.label                              "Slett adressebok">
+<!ENTITY deleteContactCmd.label                         "Slett kort">
+<!ENTITY deleteContactsCmd.label                        "Slett kort">
+<!ENTITY deleteListCmd.label                            "Slett liste">
+<!ENTITY deleteListsCmd.label                           "Slett lister">
+<!ENTITY deleteItemsCmd.label                           "Slett element">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Eigenskapar">
+<!ENTITY propertiesMenu.accesskey                       "e">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Eigenskapar for adressebok">
+<!ENTITY abPropertiesMenu.accesskey                     "e">
+<!ENTITY contactPropertiesMenu.label                    "Eigenskapar for kontaktar">
+<!ENTITY contactPropertiesMenu.accesskey                "e">
+<!ENTITY mailingListPropertiesMenu.label                "Eigenskapar for e-postliste">
+<!ENTITY mailingListPropertiesMenu.accesskey            "e">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Vis">
+<!ENTITY viewMenu.accesskey                             "V">
+<!ENTITY viewToolbarsMenu.label                         "Verktøylinjer">
+<!ENTITY viewToolbarsMenu.accesskey                     "e">
+<!ENTITY menubarCmd.label                               "Menylinje">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Adresseboklinje">
+<!ENTITY showAbToolbarCmd.accesskey                     "A">
+<!ENTITY showTaskbarCmd.label                           "Statuslinje">
+<!ENTITY showTaskbarCmd.accesskey                       "t">
+<!ENTITY customizeToolbar.label                         "Tilpass…">
+<!ENTITY customizeToolbar.accesskey                     "T">
+<!ENTITY layoutMenu.label                               "Utforming">
+<!ENTITY layoutMenu.accesskey                           "U">
+<!ENTITY showDirectoryPane.label                        "Katalogpanel">
+<!ENTITY showDirectoryPane.accesskey                    "K">
+<!ENTITY showContactPane2.label                         "Kontaktpanel">
+<!ENTITY showContactPane2.accesskey                     "o">
+<!ENTITY menu_ShowNameAs.label                          "Vis namn som">
+<!ENTITY menu_ShowNameAs.accesskey                      "n">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Fornamn Etternamn">
+<!ENTITY firstLastCmd2.accesskey                        "F">
+<!ENTITY lastFirstCmd.label                             "Etternamn, Fornamn">
+<!ENTITY lastFirstCmd.accesskey                         "E">
+<!ENTITY displayNameCmd.label                           "Vis namn">
+<!ENTITY displayNameCmd.accesskey                       "V">
+<!ENTITY sortMenu.label                                 "Sorter etter">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Verkty">
+<!ENTITY tasksMenu.accesskey                            "r">
+<!ENTITY messengerCmd.label                             "E-post og nyheitsgrupper">
+<!ENTITY messengerCmd.accesskey                         "E">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Søk i adresser …">
+<!ENTITY searchAddressesCmd.accesskey                   "ø">
+<!ENTITY importCmd.label                                "Importer …">
+<!ENTITY importCmd.accesskey                            "m">
+<!ENTITY exportCmd.label                                "Eksporter …">
+<!ENTITY exportCmd.accesskey                            "k">
+<!ENTITY preferencesCmd2.label                          "Innstillingar">
+<!ENTITY preferencesCmd2.accesskey                      "I">
+<!ENTITY preferencesCmdUnix.label                       "Innstillingar …">
+<!ENTITY preferencesCmdUnix.accesskey                   "n">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Ny kontakt">
+<!ENTITY newContactButton.accesskey                     "k">
+<!ENTITY newlistButton.label                            "Ny liste">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY showAsDefault.label                            "Standard startkatalog">
+<!ENTITY showAsDefault.accesskey                        "S">
+<!ENTITY editPropertiesButton.label                     "Rediger">
+<!ENTITY propertiesContext.label                        "Eigenskapar">
+<!ENTITY propertiesContext.accesskey                    "e">
+<!ENTITY abPropertiesContext.label                      "Eigenskapar">
+<!ENTITY abPropertiesContext.accesskey                  "e">
+<!ENTITY syncContext.label                              "Synkroniser">
+<!ENTITY syncContext.accesskey                          "y">
+<!ENTITY editContactContext.label                       "Rediger kontakt">
+<!ENTITY editContactContext.accesskey                   "R">
+<!ENTITY editMailingListContext.label                   "Rediger liste">
+<!ENTITY editMailingListContext.accesskey               "R">
+<!ENTITY newmsgButton.label                             "Skriv ny">
+<!ENTITY newmsgButton.accesskey                         "n">
+<!ENTITY newIM.label                                    "Lynmelding">
+<!ENTITY newIM.accesskey                                "L">
+<!ENTITY printButton.label                              "Skriv ut…">
+<!ENTITY printButton.accesskey                          "k">
+<!ENTITY deleteButton2.label                            "Slett">
+<!ENTITY deleteButton2.accesskey                        "S">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Vel kolonner å vise">
+<!ENTITY newContactButton.tooltip                       "Opprett eit nytt adressekort">
+<!ENTITY newlistButton.tooltip                          "Opprett ei ny liste">
+<!ENTITY editPropertiesButton.tooltip                   "Rediger valde element">
+<!ENTITY editAbPropertiesButton.tooltip                 "Rediger eigenskapane for den valde adresseboka">
+<!ENTITY editContactPropertiesButton.tooltip            "Rediger den valde kontakten">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Rediger vald e-postliste">
+<!ENTITY newmsgButton.tooltip                           "Send ein e-post">
+<!ENTITY newIM.tooltip                                  "Send ei melding eller chat">
+<!ENTITY deleteButton2.tooltip                          "Slett valde element">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Namn eller e-post">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Avansert adressesøk">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Snøggsøk">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Address Book">
+<!ENTITY Addrbook.accesskey                             "B">
+<!ENTITY GeneratedName.label                            "Namn">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "E-post">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Nettpratnamn">
+<!ENTITY ChatName.accesskey                             "e">
+<!ENTITY Company.label                                  "Firma">
+<!ENTITY Company.accesskey                              "F">
+<!ENTITY NickName.label                                 "Kallenamn">
+<!ENTITY NickName.accesskey                             "K">
+<!ENTITY SecondEmail.label                              "Anna e-postadresse">
+<!ENTITY SecondEmail.accesskey                          "n">
+<!ENTITY Department.label                               "Avdeling">
+<!ENTITY Department.accesskey                           "A">
+<!ENTITY JobTitle.label                                 "Tittel">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "Mobiltelefon">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Personsøkjar">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Faks">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Heimetelefon">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "Jobbtelefon">
+<!ENTITY WorkPhone.accesskey                            "J">
+<!ENTITY sortAscending.label                            "I stigande rekkjefølgje">
+<!ENTITY sortAscending.accesskey                        "s">
+<!ENTITY sortDescending.label                           "I søkkande rekkjefølgje">
+<!ENTITY sortDescending.accesskey                       "I">
+<!ENTITY _PhoneticName.label                            "Fonetisk namn">
+<!ENTITY _PhoneticName.accesskey                        "F">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Heime">
+<!ENTITY other.heading                                  "Anna">
+<!ENTITY chat.heading                                   "Nettprat">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Jobb">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Forklaring">
+<!ENTITY addresses.heading                              "Adresser">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Hent kart">
+<!ENTITY mapIt.tooltip                                  "Vis eit kart over denne adressa frå Internett">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Vindauge">
+<!ENTITY minimizeWindow.label                           "Minimer">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Send alle til framgrunnen">
+<!ENTITY zoomWindow.label                               "Zoom">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "اشترِك">
+<!ENTITY subscribeButton.label        "اشترِك">
+<!ENTITY subscribeButton.accesskey    "ش">
+<!ENTITY unsubscribeButton.label      "ألغِ الاشتراك">
+<!ENTITY unsubscribeButton.accesskey  "ل">
+<!ENTITY newGroupsTab.label           "مجموعات الأخبار">
+<!ENTITY newGroupsTab.accesskey       "ب">
+<!ENTITY refreshButton.label          "أعِد التّحميل">
+<!ENTITY refreshButton.accesskey      "ع">
+<!ENTITY stopButton.label             "قف">
+<!ENTITY stopButton.accesskey         "ق">
+<!ENTITY server.label                 "الحساب:">
+<!ENTITY server.accesskey             "ح">
+<!ENTITY subscribedHeader.label       "اشترِك">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "اعرض العناصر التي تحتوي:">
+<!ENTITY namefield.accesskey          "ع">

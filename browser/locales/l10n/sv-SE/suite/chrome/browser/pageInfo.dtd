@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 30em;">
+
+<!ENTITY  copy.key               "c">
+<!ENTITY  copy.label             "Kopiera">
+<!ENTITY  copy.accesskey         "K">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Markera allt">
+<!ENTITY  selectall.accesskey    "M">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Kopiera länk(ar)">
+<!ENTITY  copyLinks.accesskey       "l">
+<!ENTITY  openInNewTab.label        "Öppna i en ny flik">
+<!ENTITY  openInNewTab.accesskey    "f">
+<!ENTITY  openInNewWindow.label     "Öppna i ett nytt fönster">
+<!ENTITY  openInNewWindow.accesskey "Ö">
+
+<!ENTITY  generalTab            "Allmänt">
+<!ENTITY  generalTab.accesskey  "A">
+<!ENTITY  generalTitle          "Titel:">
+<!ENTITY  generalURL            "Adress:">
+<!ENTITY  generalType           "Typ:">
+<!ENTITY  generalMode           "Renderingsläge:">
+<!ENTITY  generalSize           "Storlek:">
+<!ENTITY  generalReferrer       "Hänvisande URL:">
+<!ENTITY  generalSource         "Källa:">
+<!ENTITY  generalModified       "Senast ändrad:">
+<!ENTITY  generalEncoding2      "Textkodning:">
+<!ENTITY  generalMetaName       "Namn">
+<!ENTITY  generalMetaContent    "Innehåll">
+<!ENTITY  generalSecurityDetails           "Detaljer">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "Formulär">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "Formuläråtgärd">
+<!ENTITY  formMethod            "Metod">
+<!ENTITY  formName              "Namn">
+<!ENTITY  formEncoding          "Kodning:">
+<!ENTITY  formTarget            "Mål:">
+<!ENTITY  formFields            "Fält:">
+<!ENTITY  formLabel             "Etikett">
+<!ENTITY  formFName             "Fältnamn">
+<!ENTITY  formType              "Typ">
+<!ENTITY  formCValue            "Nuvarande värde">
+
+<!ENTITY  linksTab              "Länkar">
+<!ENTITY  linksTab.accesskey    "L">
+<!ENTITY  linkName              "Namn">
+<!ENTITY  linkAddress           "Adress">
+<!ENTITY  linkType              "Typ">
+<!ENTITY  linkTarget            "Mål">
+<!ENTITY  linkAccessKey         "Snabbtangent">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Adress:">
+<!ENTITY  mediaAlt              "Ersättningstext:">
+<!ENTITY  mediaLocation         "Plats:">
+<!ENTITY  mediaText             "Tillhörande text:">
+<!ENTITY  mediaAltHeader        "Ersättningstext">
+<!ENTITY  mediaAddress          "Adress">
+<!ENTITY  mediaType             "Typ">
+<!ENTITY  mediaSize             "Storlek">
+<!ENTITY  mediaCount            "Antal gånger">
+<!ENTITY  mediaDimensions       "Dimensioner:">
+<!ENTITY  mediaPhysDimensions   "Egentlig storlek:">
+<!ENTITY  mediaTitle            "Titel:">
+<!ENTITY  mediaDimension        "Storlek:">
+<!ENTITY  mediaLongdesc         "Lång beskrivning:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "Spara som…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "p">
+<!ENTITY  mediaPreview          "Förhandsgranskning:">
+
+<!ENTITY  feedTab               "Kanaler">
+<!ENTITY  feedTab.accesskey     "K">
+<!ENTITY  feedSubscribe         "Prenumerera">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "Tillåtelser">
+<!ENTITY  permTab.accesskey     "T">
+<!ENTITY  permUseDefault        "Använd förinställning">
+<!ENTITY  permAskAlways         "Fråga alltid">
+<!ENTITY  permAllow             "Tillåt">
+<!ENTITY  permAllowSession      "Tillfälliga">
+<!ENTITY  permBlock             "Blockera">
+<!ENTITY  permissionsFor        "Tillåtelser för:">
+<!ENTITY  permImage             "Hämta bilder">
+<!ENTITY  permPopup             "Öppna extrafönster">
+<!ENTITY  permCookie            "Lagra kakor">
+<!ENTITY  permNotifications     "Visa notifieringar">
+<!ENTITY  permInstall           "Installera tillägg eller teman">
+<!ENTITY  permGeo               "Meddela plats">
+
+<!ENTITY  securityTab           "Säkerhet">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityHeader        "Säkerhetsinformation om sidan">
+<!ENTITY  securityView.certView "Visa certifikatet">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Okänd">
+
+
+<!ENTITY  securityView.identity.header   "Webbplatsens identitet">
+<!ENTITY  securityView.identity.owner    "Innehavare: ">
+<!ENTITY  securityView.identity.domain   "Webbplats: ">
+<!ENTITY  securityView.identity.verifier "Verifierad av: ">
+
+<!ENTITY  securityView.identity.validity "Upphör:">
+
+<!ENTITY  securityView.privacy.header                   "Integritet &amp; Historik">
+<!ENTITY  securityView.privacy.history                  "Har jag besökt den här webbplatsen tidigare i dag?">
+<!ENTITY  securityView.privacy.cookies                  "Lagrar den här webbplatsen uppgifter (kakor) på min dator?">
+<!ENTITY  securityView.privacy.viewCookies              "Visa kakor">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Har jag sparat några lösenord för den här webbplatsen?">
+<!ENTITY  securityView.privacy.viewPasswords            "Visa sparade lösenord">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "ö">
+
+<!ENTITY  securityView.technical.header                 "Tekniska detaljer">

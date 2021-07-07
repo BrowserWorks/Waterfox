@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "열기 선택:">
+<!ENTITY  from.label                  "원본 위치:">
+<!ENTITY  actionQuestion.label        "작업 선택:">
+
+<!ENTITY  openWith.label              "열기:">
+<!ENTITY  openWith.accesskey          "o">
+<!ENTITY  other.label                 "기타…">
+
+<!ENTITY  saveFile.label              "파일 저장">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "다시 묻지 않음">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "파일 형식:">
+
+<!ENTITY  chooseHandlerMac.label      "선택하기…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "찾아보기…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "이 파일을 저장하시겠습니까?">

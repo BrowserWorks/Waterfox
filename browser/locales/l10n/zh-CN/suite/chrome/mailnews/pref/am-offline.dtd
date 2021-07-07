@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "为了节省磁盘空间，请不要下载：">
+<!ENTITY doNotDownloadNntp.label "为了节省磁盘空间，请不要下载供脱机使用：">
+<!ENTITY doNotDownloadImap.label "要节省磁盘空间，可对从服务器下载并保存到本地供离线使用的消息进行大小或时间上的限制。">
+<!ENTITY allFoldersOffline2.label "在此计算机上保留此账户所有文件夹中的消息。">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "注意：更改此项将影响此账户的所有文件夹。要设置单个文件夹，请用 高级… 按钮。">
+<!ENTITY offlineNotDownload.label "消息大小超过">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "不下载大小超过">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "天">
+<!ENTITY message.label "条时询问我">
+<!ENTITY nntpNotDownloadRead.label "阅读">
+<!ENTITY nntpNotDownloadRead.accesskey "d">
+<!ENTITY nntpDownloadMsg.label "消息超过">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "将旧消息永久删除可释放更多的磁盘空间">
+<!ENTITY retentionCleanupImap.label "如果恢复原有磁盘空间，旧的信件，包括本地副本和服务器上的原本，都会永久删除。">
+<!ENTITY retentionCleanupPop.label "永久删除旧信息(包括服务器端原始信息)以便释放磁盘空间.">
+<!ENTITY retentionKeepMsg.label "删除超过">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "不要删除任何消息">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "除最近使用的全部删除">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "一律保留带标记消息">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "移除消息体，当消息超过">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "选择用于脱机工作的新闻组…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "高级…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "v">
+<!ENTITY syncGroupTitle.label "消息同步">
+<!ENTITY diskspaceGroupTitle.label "磁盘空间">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "同步所有消息至本地，忽略消息的时间">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "同步最近">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "天">
+<!ENTITY weekAgeInterval.label           "周">
+<!ENTITY monthAgeInterval.label          "月">
+<!ENTITY yearAgeInterval.label           "年">
+<!ENTITY ageAutosyncAfter.label          "">

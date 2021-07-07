@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Najít přímo při psaní">
+<!ENTITY findAsYouTypeBehavior.label "Najít přímo při psaní">
+<!ENTITY findAsYouTypeTip.label "Tip: pokud chcete ručně spustit funkci Najít psaný text, napište / pro hledání textu nebo ' pro hledání odkazů a následně napište hledaný text.">
+<!ENTITY findAsYouTypeTimeout.label "Vymazat aktuální hledání po několika sekundách nečinnosti">
+<!ENTITY findAsYouTypeTimeout.accesskey "m">
+<!ENTITY findAsYouTypeSound.label "Přehrát zvuk, pokud není nalezen daný text">
+<!ENTITY findAsYouTypeSound.accesskey "h">
+<!ENTITY findAsYouTypeEnableAuto.label "Najít automaticky při psaní na webové stránce:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "N">
+<!ENTITY findAsYouTypeAutoText.label "Libovolný text na stránce">
+<!ENTITY findAsYouTypeAutoText.accesskey "L">
+<!ENTITY findAsYouTypeAutoLinks.label "Pouze odkazy">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "P">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Zobrazit panel hledání při vyhledávání psaním">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "Z">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Pozn.: Vyhledávání psaním bez zobrazení panelu hledání neumožňuje vložení mezinárodního textu.">

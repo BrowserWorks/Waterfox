@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "สร้างปฏิทินใหม่" >
+<!ENTITY wizard.label             "สร้างปฏิทินใหม่" >
+<!ENTITY wizard.description       "ระบุตำแหน่งปฏิทินของคุณ" >
+
+<!ENTITY initialpage.description    "สามารถเก็บปฏิทินของคุณไว้ในคอมพิวเตอร์ของคุณหรือในเซิร์ฟเวอร์เพื่อให้สามารถเข้าถึงได้จากระยะไกลหรือแบ่งปันกับเพื่อนร่วมงานของคุณได้" >
+<!ENTITY initialpage.computer.label  "ในคอมพิวเตอร์ของฉัน">
+<!ENTITY initialpage.network.label  "ในเครือข่าย">
+
+<!ENTITY locationpage.description         "ระบุข้อมูลเกี่ยวกับสิ่งที่จำเป็นในการเข้าถึงปฏิทินระยะไกลของคุณ" >
+<!ENTITY locationpage.login.description   "เพิ่มเติม: ป้อนชื่อผู้ใช้และรหัสผ่าน" >
+<!ENTITY locationpage.username.label      "ชื่อผู้ใช้:" >
+<!ENTITY locationpage.password.label      "รหัสผ่าน:" >
+
+<!ENTITY custompage.shortdescription  "ปรับแต่งปฏิทินของคุณ" >
+<!ENTITY custompage.longdescription   "คุณสามารถตั้งชื่อเล่นปฏิทินของคุณและใส่สีเหตุการณ์จากปฏิทินนี้" >
+
+<!ENTITY finishpage.shortdescription  "สร้างปฏิทินแล้ว" >
+<!ENTITY finishpage.longdescription   "สร้างปฏิทินของคุณแล้ว" >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "อื่น ๆ">
+
+<!ENTITY buttons.create.label "สร้างปฏิทิน">
+<!ENTITY buttons.create.accesskey "ส">
+
+<!ENTITY buttons.find.label "ค้นหาปฏิทิน">
+<!ENTITY buttons.find.accesskey "ค">
+
+<!ENTITY buttons.back.label "ย้อนกลับ">
+<!ENTITY buttons.back.accesskey "ย">
+
+<!ENTITY buttons.subscribe.label "บอกรับ">
+<!ENTITY buttons.subscribe.accesskey "บ">
+
+<!ENTITY calendartype.label "ชนิดปฏิทิน:">
+<!ENTITY location.label "ตำแหน่งที่ตั้ง:">
+<!ENTITY location.placeholder "URL หรือชื่อโฮสต์ของเซิร์ฟเวอร์ปฏิทิน">
+
+<!ENTITY network.nocredentials.label "ตำแหน่งที่ตั้งนี้ไม่ต้องการข้อมูลรับรอง">
+<!ENTITY network.loading.description "โปรดรอในขณะที่กำลังค้นพบปฏิทินของคุณ">
+<!ENTITY network.notfound.description "ไม่พบปฏิทินที่ตำแหน่งที่ตั้งนี้ โปรดตรวจสอบการตั้งค่าของคุณ">
+<!ENTITY network.authfail.description "ไม่ยอมรับข้อมูลรับรองที่คุณป้อน โปรดตรวจสอบการตั้งค่าของคุณ">
+
+<!ENTITY network.subscribe.single.description "โปรดเลือกปฏิทินที่คุณต้องการบอกรับ">
+<!ENTITY network.subscribe.multiple.description "มีปฏิทินหลายชนิดสำหรับตำแหน่งที่ตั้งนี้ โปรดเลือกชนิดปฏิทิน จากนั้นทำเครื่องหมายปฏิทินที่คุณต้องการบอกรับ">

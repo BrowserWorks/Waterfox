@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title "Wybierz adresy">
+
+<!-- Buttons -->
+<!ENTITY toButton.label "Do:">
+<!ENTITY toButton.accesskey "D">
+<!ENTITY ccButton.label "Kopia:">
+<!ENTITY ccButton.accesskey "K">
+<!ENTITY bccButton.label "Ukryta kopia:">
+<!ENTITY bccButton.accesskey "U">
+<!ENTITY newButton.label "Nowa…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Edytuj…">
+<!ENTITY editButton.accesskey "e">
+<!ENTITY removeButton.label "Usuń">
+<!ENTITY removeButton.accesskey "U">
+<!ENTITY lookIn.label "Znajdź adresy w książce:">
+<!ENTITY lookIn.accesskey "S">
+<!ENTITY for.label "">
+<!ENTITY for.accesskey "">
+<!ENTITY for.placeholder "Imię, nazwisko lub e-mail">
+<!ENTITY addressMessageTo.label "Zaadresuj wiadomość:">
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip "Utwórz nową wizytówkę">
+<!ENTITY addressPickerEditButton.tooltip "Edytuj wybraną wizytówkę">
+

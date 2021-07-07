@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!ENTITY pref.proxies.title "Serwery proxy">
+<!ENTITY pref.proxies.desc "Proxy jest serwisem sieciowym, który może filtrować i przyśpieszyć połączenie z Internetem.">
+<!ENTITY proxyTitle.label "Konfiguracja proxy do połączenia z Internetem">
+<!ENTITY directTypeRadio.label "Bezpośrednie połączenie z Internetem">
+<!ENTITY directTypeRadio.accesskey "d">
+<!ENTITY systemTypeRadio.label "Używaj systemowych ustawień serwerów proxy">
+<!ENTITY systemTypeRadio.accesskey "U">
+<!ENTITY manualTypeRadio.label "Własna konfiguracja proxy">
+<!ENTITY manualTypeRadio.accesskey "W">
+<!ENTITY wpadTypeRadio.label "Automatycznie wykryj ustawienia proxy dla tej sieci">
+<!ENTITY wpadTypeRadio.accesskey "A">
+<!ENTITY autoTypeRadio.label "Automatyczna konfiguracja proxy (ścieżka do pliku PAC)">
+<!ENTITY autoTypeRadio.accesskey "A">
+<!ENTITY reload.label "Odśwież">
+<!ENTITY reload.accesskey "O">
+<!ENTITY http.label "Serwer proxy:">
+<!ENTITY http.accesskey "S">
+<!ENTITY port.label "Port:">
+<!ENTITY HTTPPort.accesskey "o">
+<!ENTITY advanced.label "Zaawansowane…">
+<!ENTITY advanced.accesskey "Z">
+<!ENTITY noproxy.label "Nie używaj proxy dla:">
+<!ENTITY noproxy.accesskey "n">
+<!ENTITY noproxyExplain.label "Przykład: .mozilla.org, .com.pl, 192.168.1.0/24">

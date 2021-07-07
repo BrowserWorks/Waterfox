@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Bantuan">
+<!ENTITY helpMenu.accesskey "n">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Bantuan">
+<!ENTITY helpMenuWin.accesskey "n">
+<!ENTITY aboutProduct2.label "Tentang &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "A">
+<!ENTITY helpTroubleshootingInfo.label     "Informasi Pemecahan Masalah…">
+<!ENTITY helpTroubleshootingInfo.accesskey "m">
+<!ENTITY helpSafeMode.label     "Mulai Ulang dengan Pengaya Dinonaktifkan…">
+<!ENTITY helpSafeMode.accesskey "n">
+<!ENTITY helpSafeMode.stop.label     "Mulai Ulang dengan Pengaya Diaktifkan">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "Bantuan &brandShortName;">
+<!ENTITY productHelp.accesskey "H">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Pintasan Papan Ketik">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Kirim Masukan...">
+<!ENTITY helpFeedbackPage.accesskey "S">
+
+<!ENTITY helpShowTour2.label "Tur &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "o">
+
+<!ENTITY helpGetInvolvedPage.label "Mari Terlibat">
+<!ENTITY helpGetInvolvedPage.accesskey "I">
+
+<!ENTITY helpDonationsPage.label "Berdonasi">
+<!ENTITY helpDonationsPage.accesskey "M">

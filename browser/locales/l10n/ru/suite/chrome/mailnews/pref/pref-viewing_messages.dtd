@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Отображение сообщений">
+<!ENTITY style.label                      "Стиль:">
+<!ENTITY style.accesskey                  "С">
+<!ENTITY regular.label                    "Обычный">
+<!ENTITY bold.label                       "Полужирный">
+<!ENTITY italic.label                     "Курсив">
+<!ENTITY boldItalic.label                 "Полужирный курсив">
+<!ENTITY size.label                       "Размер:">
+<!ENTITY size.accesskey                   "Р">
+<!ENTITY bigger.label                     "Больше">
+<!ENTITY smaller.label                    "Меньше">
+<!ENTITY color.label                      "Цвет:">
+<!ENTITY color.accesskey                  "Ц">
+<!ENTITY displayPlainText.caption         "Сообщения в виде простого текста">
+<!ENTITY fontPlainText.label              "Шрифт:">
+<!ENTITY fontPlainText.accesskey          "ф">
+<!ENTITY displayQuoted.label              "Настройки цитирования сообщений:">
+<!ENTITY wrapInMsg.label                  "Переносить текст по достижении ширины окна">
+<!ENTITY wrapInMsg.accesskey              "н">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Отображать смайлики как графику">
+<!ENTITY convertEmoticons.accesskey       "б">
+<!ENTITY generalMessageDisplay.caption    "Основные">
+<!ENTITY autoMarkAsRead.label             "Автоматически отмечать сообщения как прочитанные">
+<!ENTITY autoMarkAsRead.accesskey         "в">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Только после просмотра в течение">
+<!ENTITY markAsReadAfter.accesskey        "м">
+<!ENTITY secondsLabel.label               "сек.">
+
+<!ENTITY openingMessages.label            "При открытии сообщений отображать их в:">
+<!ENTITY newWindowRadio.label             "Новом окне сообщения">
+<!ENTITY newWindowRadio.accesskey         "Н">
+<!ENTITY existingWindowRadio.label        "Существующем окне сообщения">
+<!ENTITY existingWindowRadio.accesskey    "С">
+<!ENTITY disableContent.label             "Блокировать загрузку изображений и другого содержимого из Интернета">
+<!ENTITY disableContent.accesskey         "з">
+<!ENTITY showCondensedAddresses.label     "Показывать только имя для людей, находящихся в моей адресной книге">
+<!ENTITY showCondensedAddresses.accesskey "о">
+<!ENTITY closeMsgWindowOnDelete.label     "Закрывать окно сообщения при удалении сообщения">
+<!ENTITY closeMsgWindowOnDelete.accesskey "к">

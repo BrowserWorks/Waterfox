@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "您的 &syncBrand.fullName.label; 密钥">
+<!ENTITY syncKey.page.description         "此密钥是用于解码您的 &syncBrand.fullName.label; 账户中的数据。您每次在新的计算机或设备配置 &syncBrand.fullName.label; 时需要输入密钥。">
+<!ENTITY syncKey.keepItSecret.heading     "妥善保管它">
+<!ENTITY syncKey.keepItSecret.description "您的 &syncBrand.fullName.label; 账户已加密，以保护您的隐私。如果没有此密钥，任何人解密您的信息都将耗时数年。您是唯一拥有此密钥的人。这意味着您是唯一一个可以访问您的 &syncBrand.fullName.label; 数据的人。">
+<!ENTITY syncKey.keepItSafe.heading       "妥善保存">
+<!ENTITY syncKey.keepItSafe1.description  "不要丢失此密钥。">
+<!ENTITY syncKey.keepItSafe2.description  " 我们不会保留您密钥的副本（那样将无法保证其秘密性！）因此 ">
+<!ENTITY syncKey.keepItSafe3.description  "我们不能帮您恢复它">
+<!ENTITY syncKey.keepItSafe4.description  " 如果丢失的话。任何时候需要在一台新的电脑或者设备上使用 &syncBrand.fullName.label; 数据时，您都需要使用这个密钥。">
+<!ENTITY syncKey.findOutMore1.label       "了解更多有关 &syncBrand.fullName.label; 和您的隐私权，请访问 ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "&syncBrand.fullName.label; 服务条款可在 ">
+<!ENTITY syncKey.footer2.label            "。隐私权政策，请访问 ">
+<!ENTITY syncKey.footer3.label            ".">

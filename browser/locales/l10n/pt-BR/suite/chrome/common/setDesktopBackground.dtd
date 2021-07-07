@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Definir plano de fundo da área de trabalho">
+
+<!ENTITY position.label             "Posição:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Lado a lado">
+<!ENTITY position.stretch.label     "Toda a tela">
+<!ENTITY position.center.label      "Centralizar">
+<!ENTITY position.fill.label        "Preencher">
+<!ENTITY position.fit.label         "Ajustar">
+<!ENTITY picker.label               "Cor:">
+<!ENTITY picker.accesskey           "o">
+<!ENTITY preview.caption            "Visualizar">
+<!ENTITY apply.label                "Aplicar">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "Fechar">

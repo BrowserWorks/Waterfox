@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adressbuch">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Name">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-Mail-Adresse">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organisation">
+<!ENTITY Company.accesskey                     "O">
+<!ENTITY _PhoneticName.label                   "Phonetischer Name">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Spitzname">
+<!ENTITY NickName.accesskey                    "S">
+<!ENTITY SecondEmail.label                     "Weitere E-Mail-Adresse">
+<!ENTITY SecondEmail.accesskey                 "W">
+<!ENTITY Department.label                      "Abteilung">
+<!ENTITY Department.accesskey                  "g">
+<!ENTITY JobTitle.label                        "Titel">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobil">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pager">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Tel. privat">
+<!ENTITY HomePhone.accesskey                   "v">
+<!ENTITY WorkPhone.label                       "Tel. dienstlich">
+<!ENTITY WorkPhone.accesskey                   "h">
+<!ENTITY ChatName.label                        "Chatname">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Aufsteigend">
+<!ENTITY sortAscending.accesskey               "u">
+<!ENTITY sortDescending.label                  "Absteigend">
+<!ENTITY sortDescending.accesskey              "b">

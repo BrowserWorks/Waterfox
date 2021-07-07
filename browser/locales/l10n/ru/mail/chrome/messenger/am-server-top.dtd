@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Хранилище сообщений">
+<!ENTITY securitySettings.label "Настройки защиты">
+<!ENTITY serverSettings.label "Параметры сервера">
+<!ENTITY serverType.label "Тип сервера:">
+<!ENTITY serverName.label "Имя сервера:">
+<!ENTITY serverName.accesskey "я">
+<!ENTITY userName.label "Имя пользователя:">
+<!ENTITY userName.accesskey "м">
+<!ENTITY port.label "Порт:">
+<!ENTITY port.accesskey "р">
+<!ENTITY serverPortDefault.label "По умолчанию:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Проверять наличие новых сообщений каждые">
+<!ENTITY biffStart.accesskey "к">
+<!ENTITY biffEnd.label "минут">
+<!ENTITY useIdleNotifications.label "Разрешить серверу при поступлении новых сообщений немедленно отображать уведомление">
+<!ENTITY useIdleNotifications.accesskey "н">
+<!ENTITY connectionSecurity.label "Защита соединения:">
+<!ENTITY connectionSecurity.accesskey "щ">
+<!ENTITY connectionSecurityType-0.label "Нет">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, если доступно">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Метод аутентификации:">
+<!ENTITY authMethod.accesskey "е">
+<!ENTITY leaveOnServer.label "Оставлять копии сообщений на сервере">
+<!ENTITY leaveOnServer.accesskey "с">
+<!ENTITY headersOnly.label "Загружать только заголовки сообщений">
+<!ENTITY headersOnly.accesskey "г">
+<!ENTITY deleteByAgeFromServer.label "Не более">
+<!ENTITY deleteByAgeFromServer.accesskey "л">
+<!ENTITY daysEnd.label "дней">
+<!ENTITY deleteOnServer2.label "Пока я не удалю их">
+<!ENTITY deleteOnServer2.accesskey "у">
+<!ENTITY downloadOnBiff.label "Автоматически загружать новые сообщения">
+<!ENTITY downloadOnBiff.accesskey "а">
+<!ENTITY deleteMessagePrefix.label "При удалении сообщения:">
+<!ENTITY modelMoveToTrash.label "Переместить его в папку:">
+<!ENTITY modelMoveToTrash.accesskey "и">
+<!ENTITY modelMarkDeleted.label "Отметить его как удалённое">
+<!ENTITY modelMarkDeleted.accesskey "т">
+<!ENTITY modelDeleteImmediately.label "Удалить его сразу">
+<!ENTITY modelDeleteImmediately.accesskey "д">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Сжимать при выходе папку «Входящие»">
+<!ENTITY expungeOnExit.accesskey "ж">
+<!ENTITY emptyTrashOnExit.label "Опустошить при выходе папку «Удалённые»">
+<!ENTITY emptyTrashOnExit.accesskey "ш">
+<!ENTITY loginAtStartup.label "Проверять почту при запуске">
+<!ENTITY loginAtStartup.accesskey "в">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Спрашивать перед загрузкой более чем">
+<!ENTITY maxMessagesStart.accesskey "ш">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "сообщений">
+<!ENTITY alwaysAuthenticate.label "Всегда проводить аутентификацию при подключении к этому серверу">
+<!ENTITY alwaysAuthenticate.accesskey "о">
+<!ENTITY newsrcFilePath1.label "Файл News.rc:">
+<!ENTITY newsrcPicker1.label "Выбрать файл News.rc">
+<!ENTITY abbreviate.label "Показывать имена групп новостей:">
+<!ENTITY abbreviateOn.label "Полностью (например «netscape.public.mozilla.mail-news»)">
+<!ENTITY abbreviateOff.label "Аббревиатурой (например «n.p.m.mail-news»)">
+<!ENTITY advancedButton.label "Дополнительно…">
+<!ENTITY advancedButton.accesskey "п">
+<!ENTITY serverDefaultCharset2.label "Кодировка текста по умолчанию:">
+<!ENTITY localPath1.label "Локальный каталог:">
+<!ENTITY localFolderPicker.label "Выбор локального каталога">
+<!ENTITY browseFolder.label "Обзор…">
+<!ENTITY browseFolder.accesskey "б">
+<!ENTITY browseNewsrc.label "Обзор…">
+<!ENTITY browseNewsrc.accesskey "з">
+
+<!ENTITY accountTitle.label "Параметры учётной записи">
+<!ENTITY accountSettingsDesc.label "Эта учётная запись особенная. С ней не связаны никакие персональные данные.">
+<!ENTITY storeType.label "Тип хранилища сообщений:">
+<!ENTITY storeType.accesskey "х">
+<!ENTITY mboxStore2.label "Каждая папка в отдельном файле (mbox)">
+<!ENTITY maildirStore.label "Каждое сообщение в отдельном файле (maildir)">

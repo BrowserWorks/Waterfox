@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+ 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL-Einstellungen</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+</head>
+<body>
+ 
+<h1 id="ssl_settings">SSL-Einstellungen</h1>
+ 
+<p>Dieser Abschnitt beschreibt, wie Sie die Einstellungen f&#252;r SSL vornehmen.</p>
+ 
+<div class="contentsBox">In diesem Abschnitt:
+<ul>
+  <li><a href="#privacy_and_security_preferences_ssl">Datenschutz- &#38; Sicherheitseinstellungen - SSL</a></li>
+</ul>
+</div>
+ 
+<h2 id="privacy_and_security_preferences_ssl">Datenschutz- &#38;
+Sicherheitseinstellungen - SSL</h2>
+ 
+<p>Dieser Abschnitt beschreibt das Fenster <b>SSL-Einstellungen</b>. Sollten
+Sie es noch nicht vor sich haben, folgen Sie diesen Schritten:</p>
+ 
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <b><span class="noMac">Bearbeiten</span>
+      <span class="mac">&brandShortName;</span></b> und klicken Sie auf
+      <b>Einstellungen</b>.</li>
+  <li>Unter der Kategorie <b>Datenschutz &#38; Sicherheit</b> klicken Sie auf
+      <b>SSL</b>. (Wenn keine Unterkategorien sichtbar sind, doppelklicken Sie
+      auf Datenschutz &#38; Sicherheit, um die Liste anzuzeigen.)</li>
+</ol>
+ 
+<h3 id="ssl_protocol_versions">SSL Protokollversionen</h3>
+ 
+<p>Das &#34;Secure Sockets Layer&#34; (SSL) Protokoll regelt, wie sich der
+Webserver und der Browser gegenseitig authentifizieren und wie Daten, die
+zwischen den beiden ausgetauscht werden, verschl&#252;sselt werden. Das
+&#34;Transport Layer Security&#34; (TLS)-Protokoll ist ein IETF-Standard, der
+auf SSL basiert. TLS 1.0 kann man als SSL 3.1 bezeichnen.</p>
+ 
+<p>Sie sollten normalerweise diese drei Optionen aktiviert lassen um sicher zu
+gehen, dass sowohl &#228;ltere als auch neuere Webserver mit dem Browser
+zusammenarbeiten k&#246;nnen:</p>
+ 
+<ul>
+  <li><strong>SSL Version 3 aktivieren</strong>: Erm&#246;glicht neueren
+      Webservern die Zusammenarbeit mit dem Browser.</li>
+  <li><strong>TLS aktivieren</strong>: Erm&#246;glicht die Verwendung von TLS
+      f&#252;r Webserver, die TLS unterst&#252;tzen.</li>
+</ul>
+ 
+<p><strong>Wichtiger Hinweis zu TLS</strong>: Einige Server, deren
+SSL-Unterst&#252;tzung nicht korrekt arbeitet, k&#246;nnen den SSL-Handshake
+mit der Client-Software (z.B. Browser), die TLS unterst&#252;tzt, nicht
+durchf&#252;hren. Solche Webserver werden als &#34;TLS intolerant&#34;
+bezeichnet.</p>
+ 
+<p>Wenn die Option <b>TLS aktivieren</b> in den SSL-Einstellungen aktiviert
+ist, versucht der Browser das TLS-Protokoll beim Aufbau einer
+verschl&#252;sselten Verbindung zum Server zu verwenden. Wenn diese Verbindung
+fehlschl&#228;gt weil der Server &#34;TLS intolerant&#34; ist, wird der Browser
+SSL 3.0 verwenden.</p>
+ 
+<h3 id="ssl_warnings">SSL-Warnungen</h3>
+ 
+<p>Es ist einfach festzustellen ob eine betrachtete Web-Site eine
+verschl&#252;sselte Verbindung benutzt oder nicht. Wenn die Verbindung
+verschl&#252;sselt ist, dann ist das Schloss-Symbol in der unteren rechten Ecke
+des Browsers geschlossen. Ist die Verbindung unverschl&#252;sselt, ist das
+Schloss offen.</p>
+ 
+<p>Falls Sie weitere Warnungen wollen, k&#246;nnen Sie eine oder mehrere der
+Optionen im Abschnitt <b>SSL-Warnungen</b>  aktivieren. Manche Leute empfinden
+dieses Warnungen als st&#246;rend.</p>
+ 
+<p>Um eine dieser Browser-Warnungen zu aktivieren, w&#228;hlen Sie die
+entsprechende Option aus:</p>
+ 
+<ul>
+  <li><strong>Laden einer Seite, die Verschl&#252;sselung
+      unterst&#252;tzt</strong>: Diese Option zeigt beim Laden einer Seite, die
+      Verschl&#252;ssung unterst&#252;tzt, einen Hinweis an.</li>
+  <li><strong>Laden einer Seite, die Verschl&#252;sselung niedrigen Grades
+      verwendet</strong>: Diese Option zeigt beim Laden einer Seite, die nur
+      die Verschl&#252;ssung niedrigen Grades unterst&#252;tzt, einen Hinweis
+      an. (Verschl&#252;sselung niedrigen Grades ist die schw&#228;chste
+      verf&#252;gbare Verschl&#252;sselung und benutzt 40-Bit Schl&#252;ssel.)</li>
+  <li><strong>Verlassen einer Seite, die Verschl&#252;sselung
+      unterst&#252;tzt</strong>: Diese Option zeigt beim Verlassen einer
+      versch&#252;sselten Seite, einen Hinweis an.</li>
+  <li><strong>Senden von Formulardaten von einer unverschl&#252;sselten Seite
+      an eine unverschl&#252;sselte Seite</strong>: Diese Option zeigt, bei
+      jeder &#220;bermittlung von Daten &#252;ber eine unverschl&#252;sselte
+      Verbindung eine Warnung an. Wenn Sie unverschl&#252;sselte Informationen
+      &#252;ber das Internet senden, k&#246;nnen diese leicht von anderen Leuten
+      abgefangen werden.</li>
+  <li><strong>Ansehen einer Seite mit einer Mischung von sicheren und
+      unsicheren Inhalten</strong>: Mit dieser Option erhalten Sie bei jedem
+      Anschauen einer Seite, die unverschl&#252;sselte Informationen
+      enth&#228;lt, eine Warnung.</li>
+ </ul>
+
+ Codierung einstellen
+
+<p>Hier finden Sie kurze Erl&#228;uertungen zu 
+<a href="glossary.xhtml#authentication">Authentifizierung</a>,
+<a href="glossary.xhtml#encryption">Verschl&#252;sselung</a>, und
+<a href="glossary.xhtml#certificate">Zertifikate</a>.</p>
+
+<p>Weitere Informationen zu den Themen Chiffriercodes und Verschl&#252;sselung
+finden Sie online in folgenden Dokumenten:</p>
+ 
+<ul>
+  <li><a href="http://developer.mozilla.org/en/Introduction_to_Public-Key_Cry
+ptography">
+  Einf&#252;hrung in die Public-Key-Verschl&#252;sselung (in englisch) </a></li>
+  <li><a href="http://developer.mozilla.org/en/Introduction_to_SSL">
+  Einf&#252;hrung in SSL (in englisch) </a></li>
+  <li><a href="http://www.mozilla.org/projects/security/pki/nss/nss-3.11/nss-3.11-algorithms.html">
+  In NSS 3.11 verf&#252;gbare Verschl&#252;sselungstechnologien (in englisch) </a>.</li>
+</ul>
+ 
+</body>
+</html>

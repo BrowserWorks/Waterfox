@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Boas-vindas aos emails e grupos de notícias do &brandShortName;">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Boas-vindas aos emails e grupos de notícias do <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label
+"O &brandShortName; é um aplicativo poderoso de código aberto de email e grupos de notícias, 
+com suporte a detecção avançada de lixo eletrónico e outras funcionalidades úteis.">
+<!ENTITY features.title "Principais recursos">
+<!ENTITY feat_multiacc.label "Suporte a várias contas">
+<!ENTITY feat_junk.label "Detecção de spam">
+<!ENTITY feat_feeds.label "Leitor de Fontes de Notícias RSS">
+<!ENTITY feat_filters.label "Filtros de mensagens">
+<!ENTITY feat_htmlmsg.label "Suporte a mensagens HTML">
+<!ENTITY feat_abook.label "Catálogo de Endereços">
+<!ENTITY feat_tags.label "Rótulos e modos de visualização customizáveis">
+<!ENTITY feat_integration.label
+"Integração com os demais programas do &brandShortName;">
+<!ENTITY dict.title "Dicionários">
+<!ENTITY dict_intro.label "Dicionários são utilizados para revisar a ortografia das suas mensagens.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label2
+'Muitos idiomas adicionais podem ser instalados a partir da
+seção de <a id="dictURL" href="">dicionários</a> nas 
+<a href="https://addons.thunderbird.net/seamonkey/">extensões do SeaMonkey e Thunderbird</a>.'>
+<!ENTITY info.title "Links">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Nós</a> agradecemos os relatos de erros e pedidos de funcionalidades,
+mas primeiro leia as <a id="releaseNotesURL" href="">notas de atualização</a> e
+procure no <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

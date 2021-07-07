@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Oldal elhagyása">
+<!ENTITY safeb.palm.decline.label "Figyelmeztetés figyelmen kívül hagyása">
+<!ENTITY safeb.palm.reportPage.label "Miért nem jelenik meg ez a weboldal?">
+
+<!ENTITY safeb.blocked.malwarePage.title "Bejelentett támadó weboldal!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "A(z) <span id='malware_sitename'/> címen működő weboldalról bejelentés érkezett, hogy támadó weboldal, ezért a biztonsági beállítások alapján a böngésző a hozzáférést nem engedélyezi.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>A támadó weboldalak megpróbálnak olyan programokat telepíteni, amelyek személyes adatokat lopnak el, a számítógépet mások megtámadására használják, vagy károsítják a rendszert</p><p>Egyes támadó weboldalak szándékosan terjesztenek ártó szoftvereket, de sok olyan van, amelyet a tulajdonosa tudta vagy engedélye nélkül használnak ilyen célra.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Bejelentett, nem kívánatos szoftvereket terjesztő oldal!">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "A(z) <span id='unwanted_sitename'/> címen működő weboldalról bejelentés érkezett, hogy támadó weboldal, ezért a biztonsági beállítások alapján a böngésző a hozzáférést nem engedélyezi.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>A nem kívánatos szoftvereket terjesztő oldalak olyan szoftvereket terjesztenek, amelyek megtévesztőek és váratlan módokon befolyásolhatják rendszerét.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "Félrevezető oldal!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "A(z) <span id='phishing_sitename'/> címen működő weboldalról bejelentés érkezett, hogy félrevezető weboldal, ezért a biztonsági beállítások alapján a böngésző a hozzáférést nem engedélyezi.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>A félrevezető oldalak arra készültek, hogy olyasmire vegyék rá, amely veszélyes, például szoftverek telepítése, vagy a személyes információinak megszerzése, mint jelszavak, telefonszámok vagy bankkártyák.</p><p>Bármilyen információ megadása ezen a weboldalon személyazonosság-lopást vagy más csalást eredményezhet.</p>">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Az oldal rosszindulatú kódot tartalmazhat">
+<!-- Localization note (safeb.blocked.harmfulPage.shortDesc) - Please don't translate the contents of the <span id="harmful_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "A &brandShortName; blokkolta a(z) <span id='harmful_sitename'/> oldalt, mert lehet, hogy veszélyes alkalmazásokat próbál meg telepíteni, amelyek ellopják vagy törlik az információit (például képek, üzenetek és bankkártyaadatok).">
+<!ENTITY safeb.blocked.harmfulPage.longDesc "">
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+<!ENTITY reportDeceptiveSite.label "Félrevezető oldal jelentése…">
+<!ENTITY reportDeceptiveSite.accesskey "f">
+<!ENTITY notADeceptiveSite.label "Ez nem félrevezető webhely…">
+<!ENTITY notADeceptiveSite.accesskey "f">

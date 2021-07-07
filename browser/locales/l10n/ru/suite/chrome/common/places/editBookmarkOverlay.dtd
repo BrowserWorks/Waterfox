@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Имя:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "м">
+<!ENTITY editBookmarkOverlay.location.label                  "Адрес:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "д">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Адрес ленты новостей:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "л">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Адрес сайта:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "с">
+<!ENTITY editBookmarkOverlay.folder.label                    "Папка:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Показать все папки закладок">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Скрыть">
+<!ENTITY editBookmarkOverlay.tags.label                      "Метки:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "е">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Разделяйте метки запятыми">
+<!ENTITY editBookmarkOverlay.description.label               "Описание:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "п">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Краткое имя:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "р">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Показать все метки">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Загружать закладку в боковой панели">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "ж">
+<!ENTITY editBookmarkOverlay.choose.label                    "Выбрать…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Создать папку">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "о">

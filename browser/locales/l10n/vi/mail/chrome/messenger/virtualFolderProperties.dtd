@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Thư mục Tìm kiếm Được lưu Mới">
+<!ENTITY name.label                 "Tên:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Tạo thành thư mục con cho:">
+<!ENTITY description.accesskey      "c">
+
+<!ENTITY searchTermCaption.label "Cấu hình tiêu chuẩn đưa vào thư mục tìm kiếm được lưu này: ">
+
+<!ENTITY folderSelectionCaption.label "Chọn các thư mục để tìm trong: ">
+<!ENTITY chooseFoldersButton.label "Chọn…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "Tìm kiếm trực tuyến (Cung cấp kết quả cập nhật cho các thư mục IMAP và tin tức nhưng tăng thời gian mở thư mục)">
+<!ENTITY searchOnline.accesskey "T">
+<!ENTITY newFolderButton.label       "Tạo">
+<!ENTITY newFolderButton.accesskey   "o">
+<!ENTITY editFolderButton.label      "Cập nhật">
+<!ENTITY editFolderButton.accesskey  "U">

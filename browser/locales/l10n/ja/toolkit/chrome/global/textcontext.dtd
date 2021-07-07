@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label	"辞書に追加">
+<!ENTITY spellAddToDictionary.accesskey	"o">
+<!ENTITY spellUndoAddToDictionary.label	"辞書への追加を元に戻す">
+<!ENTITY spellUndoAddToDictionary.accesskey	"n">
+<!ENTITY spellCheckToggle.label		"スペルチェックを行う">
+<!ENTITY spellCheckToggle.accesskey	"g">
+<!ENTITY spellNoSuggestions.label	"(修正候補がありません)">
+<!ENTITY spellDictionaries.label	"言語">
+<!ENTITY spellDictionaries.accesskey	"l">
+
+<!ENTITY searchTextBox.clear.label	"消去">
+
+<!ENTITY fillLoginMenu.label		"ログイン情報を入力">
+<!ENTITY fillLoginMenu.accesskey	"F">
+<!ENTITY fillPasswordMenu.label		"パスワードを入力">
+<!ENTITY fillPasswordMenu.accesskey	"F">
+<!ENTITY fillUsernameMenu.label		"ユーザー名を入力">
+<!ENTITY fillUsernameMenu.accesskey	"F">
+<!ENTITY noLoginSuggestions.label	"(ログイン情報の候補なし)">
+<!ENTITY viewSavedLogins.label		"保存されたログイン情報を表示">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Žinynas">
+<!ENTITY helpMenu.accesskey "Ž">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Žinynas">
+<!ENTITY helpMenuWin.accesskey "Ž">
+<!ENTITY aboutProduct2.label "Apie „&brandShorterName;“">
+<!ENTITY aboutProduct2.accesskey "A">
+<!ENTITY helpTroubleshootingInfo.label     "Informacija problemų sprendimui">
+<!ENTITY helpTroubleshootingInfo.accesskey "s">
+<!ENTITY helpSafeMode.label     "Perleisti programą, išjungus priedus…">
+<!ENTITY helpSafeMode.accesskey "r">
+<!ENTITY helpSafeMode.stop.label     "Perleisti programą su įjungtais priedais">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "„&brandShortName;“ žinynas">
+<!ENTITY productHelp.accesskey "H">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Spartieji klavišai">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Siųsti atsiliepimą…">
+<!ENTITY helpFeedbackPage.accesskey "S">
+
+<!ENTITY helpShowTour2.label "Įvadas į „&brandShorterName;“">
+<!ENTITY helpShowTour2.accesskey "o">
+
+<!ENTITY helpGetInvolvedPage.label "Įsitraukite">
+<!ENTITY helpGetInvolvedPage.accesskey "I">
+
+<!ENTITY helpDonationsPage.label "Paaukokite">
+<!ENTITY helpDonationsPage.accesskey "M">

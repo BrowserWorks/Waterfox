@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Панель адреса">
+
+<!ENTITY autoComplete.label                    "Автодополнение">
+<!ENTITY autoCompleteMatchHistory.label        "Автоматически предлагать веб-сайты из журнала">
+<!ENTITY autoCompleteMatchHistory.accesskey    "в">
+<!ENTITY autoCompleteMatchBookmarks.label      "Автоматически предлагать веб-сайты из закладок">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "м">
+<!ENTITY autoCompleteAutoFill.label            "Автоматически подставлять лучший вариант">
+<!ENTITY autoCompleteAutoFill.accesskey        "о">
+<!ENTITY autoCompleteShowPopup.label           "Показывать список подходящих результатов">
+<!ENTITY autoCompleteShowPopup.accesskey       "з">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Подбирать совпадения только из тех адресов, которые были набраны ранее">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "б">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Совпадение">
+<!ENTITY autoCompleteMatch.accesskey           "д">
+<!ENTITY autoCompleteMatchAnywhere             "В любом месте ссылки или заголовка">
+<!ENTITY autoCompleteMatchWordsFirst           "Везде, отдавая предпочтение границам слов">
+<!ENTITY autoCompleteMatchWords                "Только на границах слов">
+<!ENTITY autoCompleteMatchStart                "Только в начале ссылки или заголовка">
+<!ENTITY showInternetSearch.label              "Показывать поисковую систему Интернета по умолчанию">
+<!ENTITY showInternetSearch.accesskey          "к">
+
+<!ENTITY formatting.label                      "Форматирование">
+<!ENTITY domainFormatting.label                "Подсвечивать эффективный домен для веб-сайтов и FTP-серверов">
+<!ENTITY domainFormatting.accesskey            "е">
+<!ENTITY highlightSecure.label                 "Подсвечивать веб-страницы с высоким уровнем защиты соединения">
+<!ENTITY highlightSecure.accesskey             "и">
+
+<!ENTITY unknownLocations.label                "Неизвестные адреса">
+<!ENTITY domainGuessing.label                  "Добавлять «www.» и «.com» к адресу, если веб-страница с исходным адресом не найдена.">
+<!ENTITY domainGuessing.accesskey              "а">
+<!ENTITY keywords.label                        "Выполнять поиск в Интернете, когда введённый текст не является веб-адресом">
+<!ENTITY keywords.accesskey                    "п">

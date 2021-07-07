@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "Ώρες">
+<!ENTITY time.minute.label "Λεπτά">
+<!ENTITY time.second.label "Δευτερόλεπτα">
+<!ENTITY time.millisecond.label "Χιλιοστά δευτερολέπτου">
+<!ENTITY time.dayperiod.label "ΠΜ/ΜΜ">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "εεεε">
+<!ENTITY date.month.placeholder "μμ">
+<!ENTITY date.day.placeholder "ηη">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "Έτος">
+<!ENTITY date.month.label "Μήνας">
+<!ENTITY date.day.label "Ημέρα">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "Απαλοιφή">

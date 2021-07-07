@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label "Tworzenie i adresowanie wiadomości">
+<!ENTITY addressingGroupTitle.label "Adresowanie">
+<!ENTITY autocompleteToMyDomain.label "Automatycznie dodawaj moją domenę do adresu">
+<!ENTITY autocompleteToMyDomain.accesskey "u">
+<!ENTITY addressingText.label "Podczas poszukiwania adresów:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label "Użyj globalnych ustawień serwera LDAP dla tego konta">
+<!ENTITY useGlobal.accesskey "g">
+<!ENTITY editDirectories.label "Edytuj katalogi…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label "Użyj innego serwera LDAP:">
+<!ENTITY directories.accesskey "L">
+<!ENTITY directoriesNone.label "brak">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label "Tworzenie wiadomości">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label "Twórz wiadomości w formacie HTML">
+<!ENTITY useHtml.accesskey "T">
+<!ENTITY autoQuote.label "Podczas tworzenia odpowiedzi automatycznie cytuj oryginalną wiadomość">
+<!ENTITY autoQuote.accesskey "a">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label "a następnie">
+<!ENTITY then.accesskey "t">
+<!ENTITY aboveQuote.label "rozpocznij odpowiedź powyżej cytowanego tekstu">
+<!ENTITY belowQuote.label "rozpocznij odpowiedź poniżej cytowanego tekstu">
+<!ENTITY selectAndQuote.label "zaznacz zacytowany tekst">
+<!ENTITY place.label "Dołącz sygnaturkę">
+<!ENTITY place.accesskey "r">
+<!ENTITY belowText.label "pod cytowanym tekstem (zalecane)">
+<!ENTITY aboveText.label "poniżej odpowiedzi (ponad cytowanym tekstem)">
+<!ENTITY includeSigOnReply.label "Dołączaj sygnaturkę przy odpowiadaniu">
+<!ENTITY includeSigOnReply.accesskey "s">
+<!ENTITY includeSigOnForward.label "Dołączaj sygnaturkę przy przekazywaniu">
+<!ENTITY includeSigOnForward.accesskey "p">
+
+<!ENTITY globalComposingPrefs.label "Globalne preferencje tworzenia wiadomości…">
+<!ENTITY globalComposingPrefs.accesskey "w">
+
+<!ENTITY globalAddressingPrefs.label "Globalne preferencje adresowania…">
+<!ENTITY globalAddressingPrefs.accesskey "G">

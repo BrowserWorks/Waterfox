@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "消息來源訂閱">
+<!ENTITY learnMore.label             "了解更多資訊來源">
+
+<!ENTITY feedTitle.label             "標題:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "來源 URL:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation.placeholder    "請輸入有效的消息來源網址以新增">
+<!ENTITY feedLocation2.placeholder   "輸入有效的資訊來源網址">
+<!ENTITY locationValidate.label      "驗證">
+<!ENTITY validateText.label          "確認是否有效並回傳有效的網址。">
+
+<!ENTITY feedFolder.label            "保存文章於:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "新文章檢查頻率: ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "分鐘">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "天">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "發布者推薦:">
+
+<!ENTITY quickMode.label             "顯示文章摘要而非載入網頁">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "自動依照資訊來源的 &lt;category&gt; 名稱建立分類標籤">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "為標籤加上前綴:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "輸入標籤前綴">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "新增">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "驗證">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "更新">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "移除">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "匯入">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "匯出">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "匯出包含資料夾結構的資訊來源；按住 Ctrl 再點擊，或是按下 Ctrl+Enter 以單純將資訊來源匯出為清單">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "關閉">

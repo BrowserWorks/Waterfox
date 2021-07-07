@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title "Štítky">
+<!ENTITY pref.tags.caption "Přizpůsobení štítků">
+<!ENTITY pref.tags.description "Štítky lze použít pro rozřazení zpráv dle kategorií a priorit. Níže si nastavte vzhled a význam jednotlivých štítků. Štítky jsou seřazeny podle důležitosti.">
+<!ENTITY tagColumn.label "Štítek">
+<!ENTITY colorColumn.label "Barva">
+<!ENTITY defaultTagName.label "Nepojmenovaný štítek">
+<!ENTITY addTagButton.label "Přidat">
+<!ENTITY addTagButton.accesskey "P">
+<!ENTITY deleteTagButton.label "Smazat">
+<!ENTITY deleteTagButton.accesskey "m">
+<!ENTITY raiseTagButton.label "Zvýšit prioritu">
+<!ENTITY raiseTagButton.accesskey "Z">
+<!ENTITY lowerTagButton.label "Snížit prioritu">
+<!ENTITY lowerTagButton.accesskey "S">
+<!ENTITY restoreButton.label "Obnovit výchozí">
+<!ENTITY restoreButton.accesskey "O">

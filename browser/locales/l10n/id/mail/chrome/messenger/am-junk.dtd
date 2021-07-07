@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Pengaturan Pesan Junk">
+<!ENTITY trainingDescription.label "Jika diaktifkan, Anda harus terlebih dahulu melatih &brandShortName; untuk mengidentifikasi surel sampah dengan menggunakan tombol bilah Junk untuk menandai pesan sebagai sampah atau bukan. Anda perlu mengidentifikasi baik pesan sampah maupun bukan. Setelah itu &brandShortName; akan dapat menandai sampah secara otomatis.">
+<!ENTITY level.label "Gunakan kendali surel sampah yang adaptif untuk akun ini">
+<!ENTITY level.accesskey "a">
+
+<!ENTITY move.label "Pindahkan pesan junk ke:">
+<!ENTITY move.accesskey "P">
+<!ENTITY junkFolderOn.label "Folder &quot;Junk&quot; di:">
+<!ENTITY junkFolderOn.accesskey "d">
+<!ENTITY otherFolder.label "Lainnya:">
+<!ENTITY otherFolder.accesskey "L">
+<!ENTITY purge1.label "Otomatis hapus pesan junk yang lebih lama dari">
+<!ENTITY purge1.accesskey "l">
+<!ENTITY purge2.label "hari">
+
+<!ENTITY whitelistHeader.label "Jangan secara otomatis menandai surel sebagai sampah jika pengirimnya berada di:">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "Jika diaktifkan, &brandShortName; akan secara otomatis menganggap pesan yang ditandai oleh pengelompokan eksternal ini sebagai sampah.">
+<!ENTITY ispHeaders.label "Percayai header email junk yang dikirim oleh: ">
+<!ENTITY ispHeaders.accesskey "P">
+
+<!ENTITY junkClassification.label "Pilihan">
+<!ENTITY junkActions.label "Tujuan dan Retensi">
+
+<!ENTITY globalJunkPrefs.label "Preferensi Pengaturan Sampah Global...">
+<!ENTITY globalJunkPrefs.accesskey "G">

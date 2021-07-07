@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Einen Provider deinstallieren">
+<!ENTITY providerUninstall.accept.label                    "Ausgewählte abbestellen">
+<!ENTITY providerUninstall.accept.accesskey                "b">
+<!ENTITY providerUninstall.cancel.label                    "Add-on behalten">
+<!ENTITY providerUninstall.cancel.accesskey                "h">
+<!ENTITY providerUninstall.preName.label                   "Sie möchten folgenden Provider deinstallieren oder deaktivieren:">
+<!ENTITY providerUninstall.postName.label                  "Dies wird dazu führen, dass die unten aufgeführten Kalender deaktiviert werden.">
+<!ENTITY providerUninstall.reinstallNote.label             "Falls Sie nicht vorhaben, diesen Provider erneut zu installieren, können Sie die betroffenen Kalender abbestellen.">

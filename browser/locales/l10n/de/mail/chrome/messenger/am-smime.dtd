@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Ende-zu-Ende-Verschlüsselung">
+<!ENTITY e2eLearnMore.label "Weitere Informationen">
+
+<!ENTITY e2eEnc.description "Ohne Ende-zu-Ende-Verschlüsselung ist der Inhalt Ihrer Nachrichten für Ihren E-Mail-Anbieter leicht zugänglich und kann auch Bestandteil einer Massenüberwachung werden.">
+<!ENTITY e2eeReqWarning.description "Falls Sie Verschlüsselung verwenden, benötigen Sie zum Senden einer Nachricht für jeden Empfänger dessen öffentlichen Schlüssel oder das Zertifikat.">
+
+<!ENTITY e2eSigning.description "Eine digitale Unterschrift ermöglicht den Empfängern zu überprüfen, dass die Nachricht von Ihnen gesendet sowie der Inhalt nicht geändert wurde.">
+<!ENTITY e2eTechPref.description "Bevorzugte Verschlüsselungs-Technologie:">
+
+<!ENTITY doNotEncrypt.label "Verschlüsselung standardmäßig nicht aktivieren">
+<!ENTITY doNotEncrypt.accesskey "n">
+<!ENTITY requireEncryptMessage.label "Verschlüsselung standardmäßig verlangen">
+<!ENTITY requireEncryptMessage.accesskey "v">
+<!ENTITY encryptionCert2.message "Persönliches Zertifikat für Verschlüsselung:">
+<!ENTITY digitalSign.certificate.button "Auswählen…">
+<!ENTITY digitalSign.certificate.accesskey "A">
+<!ENTITY digitalSign.certificate_clear.button "Leeren">
+<!ENTITY digitalSign.certificate_clear.accesskey "L">
+<!ENTITY encryption.certificate.button "Auswählen…">
+<!ENTITY encryption.certificate.accesskey "w">
+<!ENTITY encryption.certificate_clear.button "Leeren">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Digitale Unterschrift">
+<!ENTITY signMessage2.label "Eigene digitale Unterschrift standardmäßig hinzufügen">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Persönliches Zertifikat für digitale Unterschrift:">
+
+<!ENTITY sendingDefaults.label "Senden von Nachrichten - Standardeinstellungen">
+
+<!ENTITY technologyAutomatic.label "Automatische Auswahl anhand verfügbarer Schlüssel und Zertifikate">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "S/MIME-Zertifikate verwalten">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME-Kryptographie-Module verwalten">
+<!ENTITY manageDevices2.accesskey "K">
+
+<!ENTITY technologySMIME.label "S/MIME bevorzugen">
+<!ENTITY technologyOpenPGP.label "OpenPGP bevorzugen">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Zertifikat auswählen">
+<!ENTITY certPicker.info  "Zertifikat:">
+<!ENTITY certPicker.detailsLabel "Details des ausgewählten Zertifikats:">
+
+<!ENTITY openpgpKey.message "Persönlicher Schlüssel für Verschlüsselung und digitale Unterschrift:">
+<!ENTITY openpgpKey.button "Persönlichen Schlüssel auswählen…">
+<!ENTITY openpgpKey.accesskey "P">

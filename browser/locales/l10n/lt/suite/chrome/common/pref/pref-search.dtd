@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-search.xul -->
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+
+
+<!ENTITY pref.search.title                "Paieška saityne">
+<!ENTITY legendHeader                     "Ieškyklės">
+<!ENTITY defaultSearchEngine.label        "Numatytoji ieškyklė">
+<!ENTITY defaultSearchEngine.accesskey    "N">
+
+<!ENTITY engineManager.label              "Tvarkyti ieškykles…">
+
+<!ENTITY searchResults.label              "Paieškos rezultatai">
+
+<!ENTITY openInTab.label                  "Parankinės paieškos rezultatus rodyti naujoje kortelėje">
+<!ENTITY openInTab.accesskey              "P">
+<!ENTITY openContextSearchTab.label       "Kontekstinio meniu paiešką vykdyti naujoje kortelėje, o ne lange">
+<!ENTITY openContextSearchTab.accesskey   "K">
+<!ENTITY openSidebarSearchPanel.label     "Vykdant paiešką, paieškos kortelę atverti parankinėje">
+<!ENTITY openSidebarSearchPanel.accesskey "r">

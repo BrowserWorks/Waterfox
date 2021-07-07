@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Некоторые веб-страницы доступны более чем на одном языке. Укажите порядок выбора языка веб-страницы.">
+<!ENTITY languages.customize.title                      "Языки">
+<!ENTITY langtitle.label                                "Языки для веб-страниц">
+<!ENTITY languages.customize.prefAddLangDescript        "Выберите язык(и), которые хотели бы добавить.">
+<!ENTITY languages.customize.addButton.label            "Добавить…">
+<!ENTITY languages.customize.addButton.accesskey        "о">
+<!ENTITY languages.customize.deleteButton.label         "Удалить">
+<!ENTITY languages.customize.deleteButton.accesskey     "а">
+<!ENTITY languages.customize.add.title.label            "Добавление языков">
+<!ENTITY languages.customize.available.label            "Языки:">
+<!ENTITY languages.customize.active.label               "Языки в порядке предпочтения:">
+<!ENTITY languages.customize.active.accesskey           "з">
+<!ENTITY languages.customize.others.label               "Другие:">
+<!ENTITY languages.customize.others.accesskey           "и">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Кодировка текста для старых веб-страниц">
+<!ENTITY languages.customize.Fallback2.label            "Резервная кодировка текста:">
+<!ENTITY languages.customize.Fallback2.accesskey        "е">
+<!ENTITY languages.customize.Fallback2.desc             "Используется для старых веб-страниц, которые не указали свою кодировку.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "например: en-bz, ru-ru">
+<!ENTITY languages.customize.moveUp.label               "Вверх">
+<!ENTITY languages.customize.moveUp.accesskey           "х">
+<!ENTITY languages.customize.moveDown.label             "Вниз">
+<!ENTITY languages.customize.moveDown.accesskey         "н">

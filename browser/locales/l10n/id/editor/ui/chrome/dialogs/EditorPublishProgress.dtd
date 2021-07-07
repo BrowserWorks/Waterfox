@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "URL Situs:">
+<!ENTITY docSubdir.label       "Subdirektori laman:">
+<!ENTITY otherSubdir.label     "Subdirektori untuk Gambar:">
+
+<!ENTITY status.label          "Menayangkan…">
+<!ENTITY fileList.label        "Status Penayangan">
+<!ENTITY succeeded.label       "Sukses">
+<!ENTITY failed.label          "Gagal">
+
+<!ENTITY keepOpen              "Biarkan jendela ini terbuka setelah proses penayangan selesai.">
+<!ENTITY closeButton.label     "Tutup">

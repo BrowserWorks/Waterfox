@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Formuläregenskaper">
+
+<!ENTITY Settings.label "Inställningar">
+
+<!ENTITY FormName.label "Formulärnamn:">
+<!ENTITY FormName.accesskey "F">
+<!ENTITY FormAction.label "URL för åtgärd:">
+<!ENTITY FormAction.accesskey "å">
+<!ENTITY FormMethod.label "Metod:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Kodning:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Målram:">
+<!ENTITY FormTarget.accesskey "M">
+
+<!ENTITY RemoveForm.label "Ta bort formulär">
+<!ENTITY RemoveForm.accesskey "T">

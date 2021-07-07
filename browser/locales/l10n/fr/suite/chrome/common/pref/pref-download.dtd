@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Téléchargements">
+
+<!ENTITY downloadBehavior.label         "Au début d’un téléchargement">
+<!ENTITY doNothing.label                "Ne rien ouvrir">
+<!ENTITY doNothing.accesskey            "N">
+<!ENTITY openProgressDialog.label       "Ouvrir une boîte de progression">
+<!ENTITY openProgressDialog.accesskey   "u">
+<!ENTITY openDM.label                   "Ouvrir le gestionnaire de téléchargements">
+<!ENTITY openDM.accesskey               "O">
+<!ENTITY flashWhenOpen.label            "Faire seulement clignoter le gestionnaire de téléchargement s’il est ouvert">
+<!ENTITY flashWhenOpen.accesskey        "F">
+
+<!ENTITY downloadLocation.label         "Lors de l’enregistrement d’un fichier">
+<!ENTITY saveTo.label                   "Enregistrer les fichiers sous">
+<!ENTITY saveTo.accesskey               "E">
+<!ENTITY chooseDownloadFolder.label     "Choisir un répertoire…">
+<!ENTITY chooseDownloadFolder.accesskey "C">
+<!ENTITY alwaysAsk.label                "Toujours demander où enregistrer les fichiers">
+<!ENTITY alwaysAsk.accesskey            "T">
+
+<!ENTITY downloadHistory.label          "Historique des téléchargements">
+<!ENTITY removeEntries.label            "Retirer les entrées de téléchargements">
+<!ENTITY removeEntries.accesskey        "R">
+<!ENTITY whenCompleted.label            "lorsqu’ils sont terminés">
+<!ENTITY whenQuittingApp.label          "en quittant &brandShortName;">
+<!ENTITY neverRemove.label              "jamais">
+
+<!ENTITY finishedBehavior.label         "Lorsqu’un téléchargement est terminé">
+<!ENTITY playSound.label                "Lecture">
+<!ENTITY playSound.accesskey            "L">
+<!ENTITY showAlert.label                "Afficher un avertissement">
+<!ENTITY showAlert.accesskey            "f">
+<!ENTITY browse.label                   "Parcourir…">
+<!ENTITY browse.accesskey               "u">
+<!ENTITY playButton.label               "Jouer un son">
+<!ENTITY playButton.accesskey           "o">

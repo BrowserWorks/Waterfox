@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Plik">
+<!ENTITY fileMenu.accesskey        "P">
+<!ENTITY newMenu.label            "Utwórz">
+<!ENTITY newMenu.accesskey          "U">
+
+<!ENTITY editMenu.label          "Edycja">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Cofnij">
+<!ENTITY undoCmd.accesskey          "C">
+<!ENTITY redoCmd.label            "Przywróć">
+<!ENTITY redoCmd.accesskey          "r">
+<!ENTITY deleteCmd.label          "Usuń">
+<!ENTITY deleteCmd.accesskey        "U">
+<!ENTITY preferencesCmd2.label "Opcje">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Preferencje">
+<!ENTITY preferencesCmdUnix.accesskey     "P">
+
+<!ENTITY customizeCmd.label "Dostosuj">
+<!ENTITY customizeCmd.accesskey "D">
+
+<!ENTITY viewMenu.label          "Widok">
+<!ENTITY viewMenu.accesskey        "W">
+<!ENTITY viewToolbarsMenu.label        "Paski narzędzi">
+<!ENTITY viewToolbarsMenu.accesskey      "n">
+<!ENTITY showTaskbarCmd.label          "Pasek stanu">
+<!ENTITY showTaskbarCmd.accesskey        "e">
+
+<!ENTITY closeCmd.label      "Zamknij">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "Z">
+
+<!ENTITY quitApplicationCmd.label  "Zakończ">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "k">
+
+<!ENTITY quitApplicationCmdUnix.label  "Zakończ">
+<!ENTITY quitApplicationCmdUnix.accesskey  "k">
+
+<!ENTITY quitApplicationCmdMac.label  "Zakończ program &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "k">

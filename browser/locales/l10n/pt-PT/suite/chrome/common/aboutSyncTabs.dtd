@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+
+<!ENTITY tabs.otherComputers.label               "Separadores de outros computadores">
+
+<!ENTITY tabs.searchText.label                   "Digite aqui para localizar separadores…">
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+
+<!ENTITY tabs.context.openTab.label                   "Abrir este separador">
+<!ENTITY tabs.context.openTab.accesskey               "A">
+<!ENTITY tabs.context.openMultipleTabs.label          "Abrir separadores selecionados">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "o">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "Criar marcador para este separador…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "C">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "Criar marcadores para os separadores selecionados…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "C">
+<!ENTITY tabs.context.refreshList.label               "Atualizar lista">
+<!ENTITY tabs.context.refreshList.accesskey           "r">

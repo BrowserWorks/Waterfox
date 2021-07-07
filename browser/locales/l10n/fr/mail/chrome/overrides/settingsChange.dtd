@@ -1,0 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  settingsChangePreferences.label  "Les paramètres peuvent être modifiés en utilisant l’onglet « Pièces jointes » dans les préférences de &brandShortName;.">
+<!ENTITY  settingsChangeOptions.label      "Les paramètres peuvent être modifiés en utilisant l’onglet « Pièces jointes » dans les options de &brandShortName;.">

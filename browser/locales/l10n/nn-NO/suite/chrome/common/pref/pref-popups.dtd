@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Sprettoppvindauge">
+
+<!ENTITY pref.popups.caption            "Sprettoppvindauge">
+
+<!ENTITY popupBlock.label               "Blokker ikkje-førespurde sprettoppvindauge">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Handsam løyve">
+<!ENTITY viewPermissions.accesskey      "H">
+
+<!ENTITY whenBlock.description          "Når eit sprettoppvindu vert blokkert:">
+<!ENTITY playSound.label                "Spel av ein lyd:">
+<!ENTITY playSound.accesskey            "e">
+<!ENTITY systemSound.label              "Systemlyd">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "Tilpassa lydfil">
+<!ENTITY customSound.accesskey          "T">
+
+<!ENTITY selectSound.label              "Bla gjennom…">
+<!ENTITY selectSound.accesskey          "B">
+<!ENTITY playSoundButton.label          "Spel av">
+<!ENTITY playSoundButton.accesskey      "S">
+
+<!ENTITY displayIcon.label              "Vis eit ikon i statuslinja til nettlesaren">
+<!ENTITY displayIcon.accesskey          "V">
+
+<!ENTITY displayNotification.label      "Vis ei varslingslinje øvst i innhaldsområdet">
+<!ENTITY displayNotification.accesskey  "e">
+

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importas">
+<!ENTITY importAll.label          "Importuoti viską">
+<!ENTITY importAll.accesskey      "v">
+<!ENTITY importMail.label         "laiškus">
+<!ENTITY importMail.accesskey     "l">
+<!ENTITY importFeeds.label        "prenumeruojamus sklaidos kanalus">
+<!ENTITY importFeeds.accesskey    "s">
+<!ENTITY importAddressbook.label  "adresų knygas">
+<!ENTITY importAddressbook.accesskey "a">
+<!ENTITY importSettings.label     "nuostatas">
+<!ENTITY importSettings.accesskey "n">
+<!ENTITY importFilters.label      "filtrus">
+<!ENTITY importFilters.accesskey  "f">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "„&brandShortName;“ pašto programos importo vediklis">
+<!ENTITY importShortDesc.label    "Kitų programų laiškų, adresų knygų, nuostatų ir filtrų importas">
+
+<!ENTITY importDescription1.label "Šis vediklis į „&brandShortName;“ importuos laiškus, adresų knygų įrašus, nuostatas ir (arba) filtrus iš kitų el. pašto programų ar įprastų adresų knygoms formatų failų.">
+<!ENTITY importDescription2.label "Importavus, prie jų bus galima prieiti iš programos „&brandShortName;“.">
+
+<!ENTITY selectDescription.label  "Parinkite norimo importuoti failo tipą:">
+<!ENTITY selectDescriptionB.label "Parinkite esamą arba sukurkite naują paskyrą:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Vardas:">
+<!ENTITY acctName.accesskey       "V">
+<!ENTITY noModulesFound.label     "Nerasta nei programa, nei failas iš kurių būtų galima importuoti duomenis.">
+
+<!ENTITY back.label               "&lt; Atgal">
+<!ENTITY forward.label            "Toliau &gt;">
+<!ENTITY finish.label             "Baigti">
+<!ENTITY cancel.label             "Atsisakyti">
+
+<!ENTITY select.label             "Ką importuoti:">
+
+<!ENTITY title.label              "Antraštė">
+<!ENTITY processing.label         "Importuojama…">

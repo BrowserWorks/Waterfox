@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Paskyros ir duomenų šalinimas">
+<!ENTITY removeButton.label           "Pašalinti">
+<!ENTITY removeButton.accesskey       "š">
+<!ENTITY removeAccount.label          "Pašalinti paskyros duomenis">
+<!ENTITY removeAccount.accesskey      "p">
+<!ENTITY removeAccount.desc           "Pašalinti tik „&brandShortName;&quot; turimą informaciją apie šią paskyrą. Serveryje laikomi paskyros duomenys nebus paliesti.">
+<!ENTITY removeData.label             "Pašalinti elektroninių laiškų duomenis">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Pašalinti pokalbio duomenis">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Pašalinti visus laiškus, aplankus ir filtrus, susietus su šia paskyra iš kompiuterio disko. Laiškai, vis dar esantys serveryje, nebus paliesti. Nesirinkite šio varianto, jei planuojate archyvuoti turimus duomenis, arba vėliau juos vėl naudoti su „&brandShortName;“.">
+<!ENTITY removeDataServerAccount.desc "Pašalinti visus laiškus, aplankus ir filtrus, susietus su šia paskyra iš kompiuterio disko. Laiškai ir aplankai, esantys serveryje, nebus paliesti.">
+<!ENTITY removeDataChatAccount.desc   "Pašalina visus pokalbių įrašus, išsaugotus šios paskyros vietiniame diske.">
+<!ENTITY showData.label               "Rodyti duomenų vietą diske">
+<!ENTITY showData.accesskey           "R">
+<!ENTITY progressPending              "Šalinami pasirinkti duomenys…">
+<!ENTITY progressSuccess              "Pašalinta sėkmingai.">
+<!ENTITY progressFailure              "Pašalinti nepavyko.">

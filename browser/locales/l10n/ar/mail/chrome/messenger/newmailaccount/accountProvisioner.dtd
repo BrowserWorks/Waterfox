@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "مرحبًا بك في &brandShortName;">
+<!ENTITY header2.label "أتريد عنوان بريد إلكتروني جديد؟">
+<!ENTITY other.languages "سنُظهر فقط المزودين الذين يعرضون عناوين البريد في منطقتك.  انقر هنا لعرض كافة المزودين.">
+<!ENTITY error.line1 "المعذرة، لم نستطع أن نعثر على أي عناوين بريد مقترحة.">
+<!ENTITY error.line2 "يمكنك أن تجرب البحث عن الأسماء المستعارة أو أي كلمات أخرى لإيجاد المزيد من العناوين البريدية.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "يمكنك أيضًا تجربة أحد ">
+<!ENTITY error.suggest.middle "بدائل حسابات البريد المجانية">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "مرحبًا ">
+<!ENTITY success.title.after "، العناوين البريدية التالية متاحة لك:">
+<!ENTITY success.tip "(يمكنك أيضًا البحث عن الأسماء المستعارة أو أي كلمات أخرى لإيجاد المزيد من العناوين)">
+<!ENTITY partnership.description "بالاشتراك مع عدة مزودين، يوفر لك &brandShortName; حساب بريد جديد. أدخِل اسمك الأول واسم العائلة، أو أي كلمات تريدها، في الحقول أعلاه ليبدأ البحث.">
+<!ENTITY existing.header "لديك بريد إلكتروني تريد استخدامه؟">
+<!ENTITY tinyheader.title "لديك عنوان بريد؟">
+<!ENTITY tinyheader.existing "تجاوز هذا واستخدم بريدي الإلكتروني">
+<!ENTITY content.close "أظن أني سأؤجل إعداد حسابي لوقت لاحق.">
+<!ENTITY successful.title "تهانينا!">
+<!ENTITY successful.successMessage "لقد أعددتَ حسابك بنجاح.">
+<!ENTITY successful.write "اكتب رسالة">
+<!ENTITY successful.write.desc "أخبِر أصدقاءك وعائلتك عن عنوان بريدك الجديد.<br/>و إلا ما فائدة العنوان الجديد؟">
+<!ENTITY successful.customize "خصّص &brandShortName; مستخدمًا الإضافات الجميلة">
+<!ENTITY successful.customize.desc "هناك الآلاف من الإضافات التي تسمح لك بتخصيص &brandShortName; لجعله يتلاءم مع احتياجاتك.">
+<!ENTITY successful.attach "أضِف توقيعًا شخصيًا إلى رسائلك">
+<!ENTITY successful.attach.desc "يمكنك إضافة توقيع شخصي أو معلومات عن نفسك تلقائيًا إلى نهاية كل رسالة تكتبها.">
+<!ENTITY successful.close "أغلِق هذه النافذة.">
+<!ENTITY input.namePlaceholder "اسمك أو اسم مستعار">
+<!ENTITY input.search "ابحث">
+<!ENTITY search_engine.title "خصّص محرك البحث">
+<!ENTITY search_engine.message "مزوّد البريد لديك قد يزوّدك بقدرات البحث في الوب أيضًا.">
+<!ENTITY search_engine.button "أنهِ">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "郵件與新聞群組">
+<!ENTITY enbPluginCheckMailNews.accesskey "a">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label                       "郵件與新聞群組">
+<!ENTITY mail.accesskey                   "M">
+<!ENTITY addressbook.label                "通訊錄">
+<!ENTITY addressbook.accesskey            "A">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label            "訊息顯示">
+<!ENTITY notifications.label              "通知">
+<!ENTITY composingMessages.label          "編輯">
+<!ENTITY format.label                     "寄件格式">
+<!ENTITY address.label                    "通訊錄">
+<!ENTITY junk.label                       "垃圾與可疑郵件">
+<!ENTITY tags.label                       "標籤">
+<!ENTITY return.label                     "收件回執">
+<!ENTITY characterEncoding2.label         "文字編碼">
+<!ENTITY networkStorage.label             "網路與儲存空間">
+

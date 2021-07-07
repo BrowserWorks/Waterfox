@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smilefjes">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Smil">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Set inn smilefjes">
+<!ENTITY smiley2Cmd.label "Misnøgd">
+<!ENTITY smiley2Cmd.accesskey "M">
+<!ENTITY smiley2Cmd.tooltip "Set inn misnøgd fjes">
+<!ENTITY smiley3Cmd.label "Blink">
+<!ENTITY smiley3Cmd.accesskey "B">
+<!ENTITY smiley3Cmd.tooltip "Set inn blink">
+<!ENTITY smiley4Cmd.label "Geip">
+<!ENTITY smiley4Cmd.accesskey "G">
+<!ENTITY smiley4Cmd.tooltip "Set inn geip">
+<!ENTITY smiley5Cmd.label "Flirar">
+<!ENTITY smiley5Cmd.accesskey "F">
+<!ENTITY smiley5Cmd.tooltip "Set inn smilefjes">
+<!ENTITY smiley6Cmd.label "Brydd">
+<!ENTITY smiley6Cmd.accesskey "B">
+<!ENTITY smiley6Cmd.tooltip "Set inn brydd smilefjes">
+<!ENTITY smiley7Cmd.label "Ubestemt">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "Set inn ubestemt smilefjes">
+<!ENTITY smiley8Cmd.label "Overraska">
+<!ENTITY smiley8Cmd.accesskey "O">
+<!ENTITY smiley8Cmd.tooltip "Set inn overraska smilefjes">
+<!ENTITY smiley9Cmd.label "Kyss">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Set inn smilefjeskyss">
+<!ENTITY smiley10Cmd.label "Skrik">
+<!ENTITY smiley10Cmd.accesskey "S">
+<!ENTITY smiley10Cmd.tooltip "Set inn smilefjesskrik">
+<!ENTITY smiley11Cmd.label "Kul">
+<!ENTITY smiley11Cmd.accesskey "K">
+<!ENTITY smiley11Cmd.tooltip "Set inn kult smilefjes">
+<!ENTITY smiley12Cmd.label "Pengemunn">
+<!ENTITY smiley12Cmd.accesskey "P">
+<!ENTITY smiley12Cmd.tooltip "Set inn pengemunn-fjes">
+<!ENTITY smiley13Cmd.label "Fot-i-munn">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "Set inn Fot-i-munn-fjes">
+<!ENTITY smiley14Cmd.label "Uskuldig">
+<!ENTITY smiley14Cmd.accesskey "U">
+<!ENTITY smiley14Cmd.tooltip "Set inn uskuldig smilefjes">
+<!ENTITY smiley15Cmd.label "Gråtande">
+<!ENTITY smiley15Cmd.accesskey "G">
+<!ENTITY smiley15Cmd.tooltip "Set inn gråtande smilefjes">
+<!ENTITY smiley16Cmd.label "Munnen-er-forsegla">
+<!ENTITY smiley16Cmd.accesskey "M">
+<!ENTITY smiley16Cmd.tooltip "Set inn munnen-er-forsegla-smil">
+<!ENTITY SmileButton.label "Set inn smilefjes">
+<!ENTITY SmileButton.tooltip "Set inn smilefjes">

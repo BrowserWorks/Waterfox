@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Установка программного обеспечения">
+<!ENTITY addOnsTitle.label                    "Дополнения">
+<!ENTITY addOnsAllow.label                    "Разрешить веб-сайтам устанавливать дополнения и обновления">
+<!ENTITY addOnsAllow.accesskey                "ш">
+<!ENTITY allowedSitesLink.label               "Разрешённые веб-сайты">
+<!ENTITY autoAddOnsUpdates.label              "Автоматически проверять наличие обновлений">
+<!ENTITY autoAddOnsUpdates.accesskey          "в">
+<!ENTITY daily.label                          "ежедневно">
+<!ENTITY addOnsDaily.accesskey                "е">
+<!ENTITY weekly.label                         "еженедельно">
+<!ENTITY addOnsWeekly.accesskey               "о">
+<!ENTITY addOnsModeAutomatic.label            "Автоматически загружать и устанавливать обновления">
+<!ENTITY addOnsModeAutomatic.accesskey        "м">
+<!ENTITY enablePersonalized.label             "Настроить рекомендации дополнений">
+<!ENTITY enablePersonalized.accesskey         "с">
+<!ENTITY addonManagerLink.label               "Управление дополнениями">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Автоматически проверять наличие обновлений">
+<!ENTITY autoAppUpdates.accesskey             "и">
+<!ENTITY appDaily.accesskey                   "д">
+<!ENTITY appWeekly.accesskey                  "н">
+<!ENTITY appModeAutomatic.label               "Автоматически загружать и устанавливать обновление">
+<!ENTITY appModeAutomatic.accesskey           "ч">
+<!ENTITY updateHistoryButton.label            "Показать журнал обновлений…">
+<!ENTITY updateHistoryButton.accesskey        "з">

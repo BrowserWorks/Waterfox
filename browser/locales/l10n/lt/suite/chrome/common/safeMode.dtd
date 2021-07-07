@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "„&brandShortName;“ ribotoji veiksena">
+<!ENTITY window.width                 "45em">
+
+<!ENTITY safeModeDescription.label    "Šiuo metu „&brandShortName;“ veikia ribotąja veiksena, kurioje išjungtos jūsų nuostatos, plėtiniai ir apvalkalai.">
+<!ENTITY safeModeDescription2.label   "Dalį ar visus pakeitimus galite palikti ilgesniam laikui:">
+
+<!ENTITY disableAddons.label          "Išjungti visus priedus">
+<!ENTITY disableAddons.accesskey      "p">
+
+<!ENTITY resetToolbars.label          "Atstatyti priemonių juostų numatytąsias būsenas ir langų dydžius">
+<!ENTITY resetToolbars.accesskey      "j">
+
+<!ENTITY deleteBookmarks.label        "Pašalinti adresyną, paliekant tik atsargines kopijas">
+<!ENTITY deleteBookmarks.accesskey    "a">
+
+<!ENTITY resetUserPrefs.label         "Atstatyti visas „&brandShortName;“ numatytąsias nuostatas">
+<!ENTITY resetUserPrefs.accesskey     "v">
+
+<!ENTITY restoreSearch.label          "Atkurti numatytąsias paieškos sistemas">
+<!ENTITY restoreSearch.accesskey      "s">
+
+<!ENTITY changeAndRestartButton.label "Pakeisti ir paleisti iš naujo">
+<!ENTITY continueButton.label         "Palikti ribotąją veikseną">

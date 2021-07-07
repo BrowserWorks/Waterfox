@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Ασφαλής λειτουργία του &brandShortName;">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "Το &brandShortName; εκτελείται σε Ασφαλή λειτουργία, η οποία απενεργοποιεί προσωρινά όλες τις προσαρμοσμένες ρυθμίσεις, τα θέματα και τις επεκτάσεις σας.">
+<!ENTITY safeModeDescription2.label   "Μπορείτε να οριστικοποιήσετε κάποιες ή όλες τις αλλαγές:">
+
+<!ENTITY disableAddons.label          "Απενεργοποίηση όλων των προσθέτων">
+<!ENTITY disableAddons.accesskey      "Α">
+
+<!ENTITY resetToolbars.label          "Επαναφορά γραμμών εργαλείων και μεγεθών παραθύρων">
+<!ENTITY resetToolbars.accesskey      "Ε">
+
+<!ENTITY deleteBookmarks.label        "Διαγραφή όλων των σελιδοδεικτών εκτός από αντίγραφα ασφαλείας">
+<!ENTITY deleteBookmarks.accesskey    "α">
+
+<!ENTITY resetUserPrefs.label         "Επαναφορά όλων των προτιμήσεων χρήστη στις προεπιλογές του &brandShortName;">
+<!ENTITY resetUserPrefs.accesskey     "π">
+
+<!ENTITY restoreSearch.label          "Επαναφορά προεπιλεγμένων μηχανών αναζήτησης">
+<!ENTITY restoreSearch.accesskey      "ζ">
+
+<!ENTITY changeAndRestartButton.label "Αποθήκευση αλλαγών και επανεκκίνηση">
+<!ENTITY continueButton.label         "Συνέχεια σε Ασφαλή λειτουργία">

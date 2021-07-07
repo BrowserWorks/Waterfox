@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "Nazwa: ">
+<!ENTITY directoryName.accesskey "N">
+<!ENTITY directoryHostname.label "Nazwa hosta: ">
+<!ENTITY directoryHostname.accesskey "h">
+<!ENTITY directoryBaseDN.label "Bazowy DN: ">
+<!ENTITY directoryBaseDN.accesskey "B">
+<!ENTITY findButton.label "Znajdź">
+<!ENTITY findButton.accesskey "Z">
+<!ENTITY directorySecure.label "Użyj szyfrowanego połączenia (SSL)">
+<!ENTITY directorySecure.accesskey "U">
+<!ENTITY directoryLogin.label "Serwer Bind DN: ">
+<!ENTITY directoryLogin.accesskey "D">
+<!ENTITY General.tab "Ogólne">
+<!ENTITY Offline.tab "Tryb offline">
+<!ENTITY Advanced.tab "Zaawansowane">
+<!ENTITY portNumber.label "Numer portu: ">
+<!ENTITY portNumber.accesskey "p">
+<!ENTITY searchFilter.label "Filtr wyszukiwania: ">
+<!ENTITY searchFilter.accesskey "F">
+<!ENTITY scope.label "Obszar wyszukiwania:">
+<!ENTITY scope.accesskey "a">
+<!ENTITY scopeOneLevel.label "jeden poziom">
+<!ENTITY scopeOneLevel.accesskey "j">
+<!ENTITY scopeSubtree.label "wszystkie poziomy">
+<!ENTITY scopeSubtree.accesskey "s">
+<!ENTITY return.label "Nie zwracaj więcej niż">
+<!ENTITY return.accesskey "w">
+<!ENTITY results.label "wyników">
+<!ENTITY offlineText.label "W celu korzystania z zawartości katalogu w trybie offline należy utworzyć jego lokalną kopię.">
+<!ENTITY saslMechanism.label "Metoda uwierzytelniania: ">
+<!ENTITY saslMechanism.accesskey "M">
+<!ENTITY saslOff.label "Proste">
+<!ENTITY saslOff.accesskey "e">
+<!ENTITY saslGSSAPI.label "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey "K">
+
+<!ENTITY newDirectoryWidth "36em">

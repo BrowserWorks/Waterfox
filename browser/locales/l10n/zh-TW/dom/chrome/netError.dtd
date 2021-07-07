@@ -1,0 +1,101 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "頁面載入錯誤">
+<!ENTITY retry.label "重試">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "連線失敗">
+<!ENTITY connectionFailure.longDesc "<p>連線失敗，不過網址似乎是正確的。</p><ul><li>可能是網站暫停服務？請稍候重試。</li><li>無法瀏覽其它網站？請檢查網路連線。</li><li>電腦有開防火牆或 Proxy？請確定這些設定是否正確。</li></ul>">
+
+<!ENTITY deniedPortAccess.title "因安全考量禁止使用的 Port">
+<!ENTITY deniedPortAccess.longDesc "<p>網址所指定的 Port（例如 <q>mozilla.org:80</q> 表示使用 Port 80）通常<em>不是</em>給正常網站所使用的。為了安全考量，已取消對該網址的連線。</p>">
+
+<!ENTITY dnsNotFound.title "找不到網址">
+<!ENTITY dnsNotFound.longDesc "<p>瀏覽器找不到網址對應的伺服器主機。</p><ul><li>是否打錯了網域名稱？（例如把 <q><strong>www</strong>.mozilla.org</q> 打成 <q><strong>ww</strong>.mozilla.org</q>）</li><li>確定此網域存在嗎？或許網域已經過期了。</li><li>可以瀏覽其它網站嗎？若不行，請檢查您的網路連線狀態與 DNS 網域名稱伺服器設定。</li><li>電腦有開防火牆或 Proxy？請確定這些設定是否正確。</li></ul>">
+
+<!ENTITY fileNotFound.title "找不到檔案">
+<!ENTITY fileNotFound.longDesc "<ul><li>或許此項目已被改名或刪除了？</li><li>是否有拼錯字、大小寫錯誤？</li><li>您有存取該項目的權限嗎？</li></ul>">
+
+<!ENTITY fileAccessDenied.title "對檔案的存取要求已被拒絕">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>可能是檔案被刪除、移動了，或存取權限不足。</li></ul>">
+
+<!ENTITY generic.title "無法完成要求">
+<!ENTITY generic.longDesc "<p>沒有關於此問題或錯誤的詳細解說資訊。</p>">
+
+<!ENTITY malformedURI.title "不正確的網址">
+<!ENTITY malformedURI.longDesc "<p>網址不正確。請檢查網址是否有誤後再重試。</p>">
+
+<!ENTITY netInterrupt.title "資料傳輸中斷">
+<!ENTITY netInterrupt.longDesc "<p>瀏覽器連線成功，但傳輸被中斷了；請稍候重試。</p><ul><li>無法瀏覽其它網站？請檢查網路連線。</li><li>仍有其它問題？請洽詢您的網路管理員或網路業者。</li></ul>">
+
+<!ENTITY notCached.title "文件已過期">
+<!ENTITY notCached.longDesc "<p>您所請求的文件已不存在於瀏覽器的快取當中。</p><ul><li>為了您的安全，瀏覽器將不會自動重新請求敏感文件。</li><li>請點下重試以重新向網站請求取得文件。</li></ul>">
+
+<!ENTITY netOffline.title "離線模式">
+<!ENTITY netOffline.longDesc2 "<p>瀏覽器正在離線模式，無法連線到指定位置。</p><ul><li>目前的網路連線正常嗎？</li><li>請按下「重試」以切換到連線模式並重新載入頁面。</li></ul>">
+
+<!ENTITY contentEncodingError.title "內容編碼錯誤">
+<!ENTITY contentEncodingError.longDesc "<p>您嘗試檢視的頁面無法顯示，因為其中使用了無效或不支援的壓縮類型。</p><ul><li>請向網站擁有者回報此問題。</li></ul>">
+
+<!ENTITY unsafeContentType.title "不安全的檔案格式">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>請向網站擁有者回報此問題。</li>
+</ul>
+">
+
+<!ENTITY netReset.title "連線中斷">
+<!ENTITY netReset.longDesc "<p>網路連線被中斷，可能是中間的網路有問題。請稍候再重試。</p>">
+
+<!ENTITY netTimeout.title "網路連線逾時">
+<!ENTITY netTimeout.longDesc "<p>指定的網站一直沒有回應，瀏覽器已停止等待。</p><ul><li>該網站可能暫時流量過高？請稍候再試。</li><li>無法瀏覽其它網站？請檢查網路連線。</li><li>電腦有開防火牆或 Proxy？請確定這些設定是否正確。</li><li>仍有其它問題？請洽詢您的網路管理員或網路業者。</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "未知的通訊協定">
+<!ENTITY unknownProtocolFound.longDesc "<p>指定的網址使用了瀏覽器無法辨識的通訊協定（如 <q>wxyz://</q>），無法正確連線。</p><ul><li>您是要存取非文字的影音多媒體服務嗎？請檢查網站上是否有更多需求。</li><li>某些通訊協定需要另外安裝其它軟體或外掛程式才能使用。</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy 伺服器拒絕連線">
+<!ENTITY proxyConnectFailure.longDesc "<p>瀏覽器被設定為使用 Proxy 代理伺服器，但該伺服器拒絕連線。</p><ul><li>瀏覽器的 Proxy 設定正確嗎？請檢查並重試。</li><li>該 Proxy 允許您從這個區域的網路連線嗎？</li><li>仍有問題？請洽詢您的網路管理員或網路業者。</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "找不到 Proxy 伺服器">
+<!ENTITY proxyResolveFailure.longDesc "<p>瀏覽器被設定為使用 Proxy 代理伺服器，但找不到該伺服器。</p><ul><li>瀏覽器的 Proxy 設定正確嗎？請檢查並重試。</li><li>網路連線正常嗎？</li><li>仍有問題？請洽詢您的網路管理員或網路業者。</li></ul>">
+
+<!ENTITY redirectLoop.title "重新轉向發生迴圈">
+<!ENTITY redirectLoop.longDesc "<p>瀏覽器已停止試圖取得資料，因為網站似乎在無止盡的重新導向(Redirect)。</p><ul><li>您是否關掉或拒絕存取 Cookie (對有些網站是必要的)？</li><li><em>注意</em>: 若接受此網站存取 Cookie 也無法解決此問題，通常是伺服器設定錯誤而非您的電腦的問題。</li></ul>">
+
+<!ENTITY unknownSocketType.title "錯誤的回應">
+<!ENTITY unknownSocketType.longDesc "<p>網站回應錯誤，瀏覽器無法繼續。</p>">
+
+<!ENTITY nssFailure2.title "安全連線失敗">
+<!ENTITY nssFailure2.longDesc2 "<p>因為無法驗證已接收資料的真實性，無法顯示您嘗試檢視的頁面。</p><ul><li>請向網站擁有者回報此問題。</li></ul>">
+
+<!ENTITY nssBadCert.title "安全連線失敗">
+<!ENTITY nssBadCert.longDesc2 "<ul><li>可能是伺服器設定問題造成，或是有人嘗試偽裝成該伺服器。</li><li>若您以前可以與該伺服器正常連線，那麼這個錯誤可能只是暫時的，請稍候再試試看。</li> </ul>">
+
+<!ENTITY securityOverride.linkText "或者您也可以新增例外網站…">
+<!ENTITY securityOverride.warningContent "<p>您不應該在連線至無法完全信任的網路，或是以前沒有遇到警告的情況下新增此伺服器的例外。</p>
+<p>若您仍然想把此網站加入到例外清單，可以在進階加密設定當中新增。</p>">
+
+<!ENTITY cspBlocked.title "依內容安全政策封鎖">
+<!ENTITY cspBlocked.longDesc "<p>瀏覽器阻止了這個頁面載入，因為這個頁面有個內容安全政策不允許其以這種方式載入。</p>">
+
+<!ENTITY xfoBlocked.title "因 X-Frame-Options 封鎖">
+<!ENTITY xfoBlocked.longDesc "<p>因為這個頁面包含 X-Frame-Options 政策，不允許以這種方式載入，瀏覽器封鎖了這個頁面載入。</p>">
+
+<!ENTITY corruptedContentErrorv2.title "內容毀損錯誤">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>因為在資料傳輸過程當中偵測到錯誤，無法顯示您正要檢視的頁面。</p><ul><li>請通知網站管理者以讓他們知道這個問題。</li></ul>">
+
+<!ENTITY remoteXUL.title "遠端 XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>請聯絡網站管理員以通知他們這個問題。</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "您的連線並不安全">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> 使用過時的安全性技術，容易遭受攻擊。攻擊者可以簡單地得知您認為安全的資訊。網站管理員修正伺服器設定後您才能連線至此網站。</p><p>錯誤代碼: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "已封鎖頁面">
+
+<!ENTITY networkProtocolError.title "網路通訊協定錯誤">
+<!ENTITY networkProtocolError.longDesc "<p>因為偵測到網路通訊協定中的問題，無法顯示您嘗試檢視的頁面。</p><ul><li>請聯絡網站管理員來解決這個問題。</li></ul>">

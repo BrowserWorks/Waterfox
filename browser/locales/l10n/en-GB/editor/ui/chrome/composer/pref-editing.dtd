@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "New Page Settings">
+
+<!ENTITY  authorName.label          "Author:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Default Page Appearance">
+
+<!ENTITY defaultColors.label        "Reader's default colours (Don't set colours in page)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Use custom colours:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Normal text">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Link text">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "Active link text">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "Visited link text">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "Background:">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Background image:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "Choose File…">
+<!ENTITY chooseFile.accesskey       "o">
+

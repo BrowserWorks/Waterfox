@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Kildekoden for: ">
+
+<!ENTITY editMenu.label "Rediger">
+<!ENTITY editMenu.accesskey "R">
+<!ENTITY fileMenu.label "Filer">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "Gem side som…">
+<!ENTITY savePageCmd.accesskey "e">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Sideopsætning…">
+<!ENTITY pageSetupCmd.accesskey "O">
+<!ENTITY printPreviewCmd.label "Vis udskrift">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Udskriv…">
+<!ENTITY printCmd.accesskey "U">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Luk">
+<!ENTITY closeCmd.accesskey "L">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Gå til linje…">
+<!ENTITY goToLineCmd.accesskey "å">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Vis">
+<!ENTITY viewMenu.accesskey       "V">
+<!ENTITY reloadCmd.label "Genindlæs">
+<!ENTITY reloadCmd.accesskey "G">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Ombryd lange linjer">
+<!ENTITY menu_wrapLongLines.accesskey "O">
+<!ENTITY menu_highlightSyntax.label "Syntaksfremhævning">
+<!ENTITY menu_highlightSyntax.accesskey "S">
+<!ENTITY menu_textSize.label "Tekststørrelse">
+<!ENTITY menu_textSize.accesskey "e">
+<!ENTITY menu_textEnlarge.label "Forstør tekst">
+<!ENTITY menu_textEnlarge.accesskey "F">
+<!ENTITY menu_textReduce.label "Formindsk tekst">
+<!ENTITY menu_textReduce.accesskey "D">
+<!ENTITY menu_textReset.label "Normal">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Find på denne side…">
+<!ENTITY findOnCmd.accesskey "F">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Find næste">
+<!ENTITY findAgainCmd.accesskey "n">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Tilbage">
+<!ENTITY backCmd.accesskey "T">
+<!ENTITY forwardCmd.label "Fremad">
+<!ENTITY forwardCmd.accesskey "F">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Kopier linkadresse">
+<!ENTITY copyLinkCmd.accesskey "K">
+<!ENTITY copyEmailCmd.label "Kopier mailadresse">
+<!ENTITY copyEmailCmd.accesskey "m">

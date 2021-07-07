@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "แถบเครื่องมือปฏิทิน">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "ถ">
+<!ENTITY lightning.toolbar.task.name "แถบเครื่องมืองาน">
+<!ENTITY lightning.toolbar.task.name.accesskey "บ">
+
+<!ENTITY lightning.toolbar.sync.label "ประสาน">
+<!ENTITY lightning.toolbar.sync.tooltip "โหลดปฏิทินใหม่และประสานการเปลี่ยนแปลง">
+<!ENTITY lightning.toolbar.delete.label "ลบ">
+<!ENTITY lightning.toolbar.delete.tooltip "ลบเหตุการณ์หรืองานที่เลือก">
+<!ENTITY lightning.toolbar.edit.label "แก้ไข">
+<!ENTITY lightning.toolbar.edit.tooltip "แก้ไขเหตุการณ์หรืองานที่เลือก">
+<!ENTITY lightning.toolbar.gototoday.label "ไปยังวันนี้">
+<!ENTITY lightning.toolbar.gototoday.tooltip "ไปยังวันนี้">
+<!ENTITY lightning.toolbar.print.label "พิมพ์">
+<!ENTITY lightning.toolbar.print.tooltip "พิมพ์เหตุการณ์หรืองาน">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "ปฏิทิน">
+<!ENTITY lightning.toolbar.calendar.tooltip   "สลับไปยังแท็บปฏิทิน">
+<!ENTITY lightning.toolbar.calendar.accesskey "ส">
+<!ENTITY lightning.toolbar.task.label         "งาน">
+<!ENTITY lightning.toolbar.task.tooltip       "สลับไปยังแท็บงาน">
+<!ENTITY lightning.toolbar.task.accesskey     "ล">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "เหตุการณ์">
+<!ENTITY lightning.toolbar.newevent.tooltip   "สร้างเหตุการณ์ใหม่">
+<!ENTITY lightning.toolbar.newtask.label      "งาน">
+<!ENTITY lightning.toolbar.newtask.tooltip    "สร้างงานใหม่">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "วัน">
+<!ENTITY lightning.toolbar.day.accesskey             "ว">
+<!ENTITY lightning.toolbar.week.label                "สัปดาห์">
+<!ENTITY lightning.toolbar.week.accesskey            "ส">
+<!ENTITY lightning.toolbar.multiweek.label           "หลายสัปดาห์">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "ห">
+<!ENTITY lightning.toolbar.month.label               "เดือน">
+<!ENTITY lightning.toolbar.month.accesskey           "ด">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "เมนูแอป">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "แสดงเมนู &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "บานหน้าต่างปฏิทิน">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "บ">
+<!ENTITY lightning.toolbar.calendarpane.label        "แสดงบานหน้าต่างปฏิทิน">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "ส">

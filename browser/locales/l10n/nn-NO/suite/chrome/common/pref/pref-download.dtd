@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Nedlastingar">
+
+<!ENTITY downloadBehavior.label         "Når ei ny nedlasting startar">
+<!ENTITY doNothing.label                "Ikkje opne noko">
+<!ENTITY doNothing.accesskey            "I">
+<!ENTITY openProgressDialog.label       "Opne eigen framdriftsdialog">
+<!ENTITY openProgressDialog.accesskey   "f">
+<!ENTITY openDM.label                   "Opne nedlastingar">
+<!ENTITY openDM.accesskey               "n">
+<!ENTITY flashWhenOpen.label            "Blink nedlastingsvindauget dersom det allereie er ope">
+<!ENTITY flashWhenOpen.accesskey        "B">
+
+<!ENTITY downloadLocation.label         "Ved lagring av ei fil">
+<!ENTITY saveTo.label                   "Lagre filer til">
+<!ENTITY saveTo.accesskey               "L">
+<!ENTITY chooseDownloadFolder.label     "Vel mappe…">
+<!ENTITY chooseDownloadFolder.accesskey "V">
+<!ENTITY alwaysAsk.label                "Spør meg alltid om kvar filer skal lagrast">
+<!ENTITY alwaysAsk.accesskey            "S">
+
+<!ENTITY downloadHistory.label          "Nedlastingshistorikk">
+<!ENTITY removeEntries.label            "Fjern nedlastingsoppføringar">
+<!ENTITY removeEntries.accesskey        "F">
+<!ENTITY whenCompleted.label            "Når dei er fullførte">
+<!ENTITY whenQuittingApp.label          "Ved avslutning av &brandShortName;">
+<!ENTITY neverRemove.label              "Aldri">
+
+<!ENTITY finishedBehavior.label         "Når ei nedlasting fullfører">
+<!ENTITY playSound.label                "Spel av ein lyd">
+<!ENTITY playSound.accesskey            "S">
+<!ENTITY showAlert.label                "Vis eit varsel">
+<!ENTITY showAlert.accesskey            "v">
+<!ENTITY browse.label                   "Bla gjennom…">
+<!ENTITY browse.accesskey               "B">
+<!ENTITY playButton.label               "Spel av">
+<!ENTITY playButton.accesskey           "v">

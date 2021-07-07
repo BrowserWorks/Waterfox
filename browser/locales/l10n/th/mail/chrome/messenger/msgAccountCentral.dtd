@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "อีเมล">
+<!ENTITY readMsgsLink.label           "อ่านข้อความ">
+<!ENTITY composeMsgLink.label         "เขียนข้อความใหม่">
+
+<!ENTITY newsSectionHdr.label         "กลุ่มข่าว">
+<!ENTITY subscribeNewsLink.label      "จัดการการบอกรับกลุ่มข่าว">
+
+<!ENTITY feedsSectionHdr.label        "ฟีด">
+<!ENTITY subscribeFeeds.label         "จัดการการบอกรับ">
+
+<!ENTITY chat.label                   "แชท">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "บัญชี">
+<!ENTITY subscribeImapFolders.label   "จัดการการบอกรับโฟลเดอร์">
+<!ENTITY settingsLink.label           "ดูการตั้งค่าสำหรับบัญชีนี้">
+<!ENTITY setupNewAcct.label           "ตั้งค่าบัญชี:">
+
+<!ENTITY advFeaturesSectionHdr.label  "คุณลักษณะขั้นสูง">
+<!ENTITY searchMsgsLink.label         "ค้นหาข้อความ">
+<!ENTITY filtersLink.label            "จัดการตัวกรองข้อความ">
+<!ENTITY junkSettings.label           "การตั้งค่าจดหมายขยะ">
+<!ENTITY offlineLink.label            "การตั้งค่าออฟไลน์">

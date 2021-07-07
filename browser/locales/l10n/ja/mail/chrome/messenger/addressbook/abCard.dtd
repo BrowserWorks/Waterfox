@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab			"連絡先">
+<!ENTITY Contact.accesskey		"C">
+<!ENTITY Name.box			"名前">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id			"LastName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id			"FirstName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id		"PhoneticLastName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id		"PhoneticFirstName">
+
+<!ENTITY NameField1.label		"姓:">
+<!ENTITY NameField1.accesskey		"L">
+<!ENTITY NameField2.label		"名:">
+<!ENTITY NameField2.accesskey		"F">
+<!ENTITY PhoneticField1.label		"よみがな:">
+<!ENTITY PhoneticField2.label		"よみがな:">
+<!ENTITY DisplayName.label		"表示名:">
+<!ENTITY DisplayName.accesskey		"D">
+<!ENTITY preferDisplayName.label	"メッセージヘッダーでは常に表示名を優先する">
+<!ENTITY preferDisplayName.accesskey	"y">
+<!ENTITY NickName.label			"ニックネーム:">
+<!ENTITY NickName.accesskey		"N">
+
+<!ENTITY PrimaryEmail.label		"メールアドレス:">
+<!ENTITY PrimaryEmail.accesskey		"E">
+<!ENTITY SecondEmail.label		"別のメールアドレス:">
+<!ENTITY SecondEmail.accesskey		"i">
+<!ENTITY PreferMailFormat.label		"使用メール形式:">
+<!ENTITY PreferMailFormat.accesskey	"v">
+<!ENTITY PlainText.label		"テキスト">
+<!ENTITY HTML.label			"HTML">
+<!ENTITY Unknown.label			"不明">
+<!ENTITY chatName.label                 "チャットネーム:">
+
+<!ENTITY WorkPhone.label		"勤務先:">
+<!ENTITY WorkPhone.accesskey		"k">
+<!ENTITY HomePhone.label		"自宅:">
+<!ENTITY HomePhone.accesskey		"m">
+<!ENTITY FaxNumber.label		"FAX:">
+<!ENTITY FaxNumber.accesskey		"x">
+<!ENTITY PagerNumber.label		"ポケットベル:">
+<!ENTITY PagerNumber.accesskey		"g">
+<!ENTITY CellularNumber.label		"携帯電話:">
+<!ENTITY CellularNumber.accesskey	"b">
+
+<!ENTITY Home.tab			"プライベート">
+<!ENTITY Home.accesskey			"P">
+<!ENTITY HomeAddress.label		"番地:">
+<!ENTITY HomeAddress.accesskey		"d">
+<!ENTITY HomeAddress2.label		"">
+<!ENTITY HomeAddress2.accesskey		"">
+<!ENTITY HomeCity.label			"市区町村:">
+<!ENTITY HomeCity.accesskey		"y">
+<!ENTITY HomeState.label		"都道府県:">
+<!ENTITY HomeState.accesskey		"S">
+<!ENTITY HomeZipCode.label		"郵便番号:">
+<!ENTITY HomeZipCode.accesskey		"Z">
+<!ENTITY HomeCountry.label		"国:">
+<!ENTITY HomeCountry.accesskey		"u">
+<!ENTITY HomeWebPage.label		"ウェブページ:">
+<!ENTITY HomeWebPage.accesskey		"e">
+<!ENTITY Birthday.label			"誕生日:">
+<!ENTITY Birthday.accesskey		"B">
+<!ENTITY Month.placeholder		"月">
+<!ENTITY Day.placeholder		"日">
+<!ENTITY Year.placeholder		"西暦">
+<!ENTITY Age.label			"年齢:">
+<!ENTITY Age.placeholder		"年齢">
+
+<!ENTITY Work.tab			"仕事">
+<!ENTITY Work.accesskey			"W">
+<!ENTITY JobTitle.label			"役職:">
+<!ENTITY JobTitle.accesskey		"i">
+<!ENTITY Department.label		"部門:">
+<!ENTITY Department.accesskey		"m">
+<!ENTITY Company.label			"組織:">
+<!ENTITY Company.accesskey		"n">
+<!ENTITY WorkAddress.label		"番地:">
+<!ENTITY WorkAddress.accesskey		"d">
+<!ENTITY WorkAddress2.label		"">
+<!ENTITY WorkAddress2.accesskey		"">
+<!ENTITY WorkCity.label			"市区町村:">
+<!ENTITY WorkCity.accesskey		"y">
+<!ENTITY WorkState.label		"都道府県:">
+<!ENTITY WorkState.accesskey		"S">
+<!ENTITY WorkZipCode.label		"郵便番号:">
+<!ENTITY WorkZipCode.accesskey		"Z">
+<!ENTITY WorkCountry.label		"国:">
+<!ENTITY WorkCountry.accesskey		"u">
+<!ENTITY WorkWebPage.label		"ウェブページ:">
+<!ENTITY WorkWebPage.accesskey		"e">
+
+<!ENTITY Other.tab			"その他">
+<!ENTITY Other.accesskey		"h">
+<!ENTITY Custom1.label			"追加情報 1:">
+<!ENTITY Custom1.accesskey		"1">
+<!ENTITY Custom2.label			"追加情報 2:">
+<!ENTITY Custom2.accesskey		"2">
+<!ENTITY Custom3.label			"追加情報 3:">
+<!ENTITY Custom3.accesskey		"3">
+<!ENTITY Custom4.label			"追加情報 4:">
+<!ENTITY Custom4.accesskey		"4">
+<!ENTITY Notes.label			"メモ:">
+<!ENTITY Notes.accesskey		"N">
+
+<!ENTITY Chat.tab			"チャット">
+<!ENTITY Chat.accesskey			"a">
+<!ENTITY Gtalk.label			"Google Talk:">
+<!ENTITY Gtalk.accesskey		"G">
+<!ENTITY AIM.label			"AIM:">
+<!ENTITY AIM2.accesskey			"M">
+<!ENTITY Yahoo.label			"Yahoo!:">
+<!ENTITY Yahoo.accesskey		"Y">
+<!ENTITY Skype.label			"Skype:">
+<!ENTITY Skype.accesskey		"S">
+<!ENTITY QQ.label			"QQ:">
+<!ENTITY QQ.accesskey			"Q">
+<!ENTITY MSN.label			"MSN:">
+<!ENTITY MSN2.accesskey			"N">
+<!ENTITY ICQ.label			"ICQ:">
+<!ENTITY ICQ.accesskey			"I">
+<!ENTITY XMPP.label			"Jabber ID:">
+<!ENTITY XMPP.accesskey			"J">
+<!ENTITY IRC.label			"IRC:">
+<!ENTITY IRC.accesskey			"R">
+
+<!ENTITY Photo.tab			"顔写真">
+<!ENTITY Photo.accesskey		"o">
+<!ENTITY GenericPhoto.label		"汎用の写真">
+<!ENTITY GenericPhoto.accesskey		"G">
+<!ENTITY DefaultPhoto.label		"既定">
+<!ENTITY PhotoFile.label		"コンピューター上">
+<!ENTITY PhotoFile.accesskey		"n">
+<!ENTITY BrowsePhoto.label		"参照">
+<!ENTITY BrowsePhoto.accesskey		"r">
+<!ENTITY PhotoURL.label			"ウェブ上">
+<!ENTITY PhotoURL.accesskey		"b">
+<!ENTITY PhotoURL.placeholder		"ウェブ上の写真ファイルの URL を入力してください">
+<!ENTITY UpdatePhoto.label		"更新">
+<!ENTITY UpdatePhoto.accesskey		"u">
+<!ENTITY PhotoDropTarget.label		"ここに写真をドロップしてください">

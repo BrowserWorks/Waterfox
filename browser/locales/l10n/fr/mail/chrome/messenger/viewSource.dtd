@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Source de : ">
+
+<!ENTITY editMenu.label "Modifier">
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY fileMenu.label "Fichier">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "Enregistrer sous…">
+<!ENTITY savePageCmd.accesskey "s">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Mise en page…">
+<!ENTITY pageSetupCmd.accesskey "M">
+<!ENTITY printPreviewCmd.label "Aperçu avant impression">
+<!ENTITY printPreviewCmd.accesskey "r">
+<!ENTITY printCmd.label "Imprimer…">
+<!ENTITY printCmd.accesskey "p">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Fermer">
+<!ENTITY closeCmd.accesskey "F">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Aller à la ligne…">
+<!ENTITY goToLineCmd.accesskey "A">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Affichage">
+<!ENTITY viewMenu.accesskey       "h">
+<!ENTITY reloadCmd.label "Actualiser">
+<!ENTITY reloadCmd.accesskey "r">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Retour à la ligne automatique">
+<!ENTITY menu_wrapLongLines.accesskey "R">
+<!ENTITY menu_highlightSyntax.label "Coloration syntaxique">
+<!ENTITY menu_highlightSyntax.accesskey "C">
+<!ENTITY menu_textSize.label "Taille du texte">
+<!ENTITY menu_textSize.accesskey "x">
+<!ENTITY menu_textEnlarge.label "Plus grande">
+<!ENTITY menu_textEnlarge.accesskey "g">
+<!ENTITY menu_textReduce.label "Plus petite">
+<!ENTITY menu_textReduce.accesskey "p">
+<!ENTITY menu_textReset.label "Normale">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Rechercher dans la page…">
+<!ENTITY findOnCmd.accesskey "h">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Rechercher le suivant">
+<!ENTITY findAgainCmd.accesskey "v">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Page précédente">
+<!ENTITY backCmd.accesskey "p">
+<!ENTITY forwardCmd.label "Page suivante">
+<!ENTITY forwardCmd.accesskey "s">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Copier l’adresse du lien">
+<!ENTITY copyLinkCmd.accesskey "C">
+<!ENTITY copyEmailCmd.label "Copier l’adresse électronique">
+<!ENTITY copyEmailCmd.accesskey "o">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Ασφάλεια">
+<!ENTITY securityTab.label "Ασφάλεια">
+<!ENTITY securityHeading.label "Για αποστολή και λήψη υπογεγραμμένων ή κρυπτογραφημένων μηνυμάτων, θα πρέπει να ορίσετε ένα πιστοποιητικό ψηφιακής υπογραφής και ένα πιστοποιητικό κρυπτογράφησης.">
+<!ENTITY encryptionGroupTitle.label "Κρυπτογράφηση">
+<!ENTITY encryptionChoiceLabel.label "Προεπιλεγμένη ρύθμιση κρυπτογράφησης κατά την αποστολή μηνυμάτων:">
+<!ENTITY neverEncrypt.label "Ποτέ (χωρίς κρυπτογράφηση)">
+<!ENTITY neverEncrypt.accesskey "Π">
+<!ENTITY alwaysEncryptMessage.label "Απαιτείται (δεν γίνεται αποστολή αν δεν έχουν όλοι οι παραλήπτες πιστοποιητικό)">
+<!ENTITY alwaysEncryptMessage.accesskey "τ">
+<!ENTITY encryptionCert.message "Χρήση αυτού του πιστοποιητικού για κρυπτογράφηση &amp; αποκρυπτογράφηση ληφθέντων μηνυμάτων:">
+<!ENTITY digitalSign.certificate.button "Επιλογή…">
+<!ENTITY digitalSign.certificate.accesskey "Ε">
+<!ENTITY digitalSign.certificate_clear.button "Απαλοιφή">
+<!ENTITY digitalSign.certificate_clear.accesskey "Α">
+<!ENTITY encryption.certificate.button "Επιλογή…">
+<!ENTITY encryption.certificate.accesskey "γ">
+<!ENTITY encryption.certificate_clear.button "Απαλοιφή">
+<!ENTITY encryption.certificate_clear.accesskey "λ">
+<!ENTITY signingGroupTitle.label "Ψηφιακή υπογραφή">
+<!ENTITY signMessage.label "Ψηφιακή υπογραφή μηνυμάτων (από προεπιλογή)">
+<!ENTITY signMessage.accesskey "Ψ">
+<!ENTITY signingCert.message "Χρήση αυτού του πιστοποιητικού για ψηφιακή υπογραφή απεσταλμένων μηνυμάτων:">
+
+<!ENTITY certificates.label "Πιστοποιητικά">
+<!ENTITY manageCerts2.label "Διαχείριση πιστοποιητικών…">
+<!ENTITY manageCerts2.accesskey "Δ">
+<!ENTITY manageDevices.label "Διαχείριση συσκευών ασφαλείας…">
+<!ENTITY manageDevices.accesskey "χ">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Επιλογή πιστοποιητικού">
+<!ENTITY certPicker.info  "Πιστοποιητικό:">
+<!ENTITY certPicker.detailsLabel "Λεπτομέρειες επιλεγμένου πιστοποιητικού:">

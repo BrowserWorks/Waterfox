@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Import">
+<!ENTITY importAll.label          "Import Everything">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "Mail">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "Feed Subscriptions">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Address Books">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Settings">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "Filters">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; Import Wizard">
+<!ENTITY importShortDesc.label    "Import Mail, Address Books, Settings and Filters from other programs">
+
+<!ENTITY importDescription1.label "This wizard will import mail messages, address book entries, preferences, and/or filters from other mail programs and common address book formats into &brandShortName;.">
+<!ENTITY importDescription2.label "Once they have been imported, you will be able to access them from within &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Please select the type of file that you would like to import:">
+<!ENTITY selectDescriptionB.label "Please select an existing account or create a new account:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Name:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "No application or file to import data from was found.">
+
+<!ENTITY back.label               "&lt; Back">
+<!ENTITY forward.label            "Next &gt;">
+<!ENTITY finish.label             "Finish">
+<!ENTITY cancel.label             "Cancel">
+
+<!ENTITY select.label             "or select the type of material to import:">
+
+<!ENTITY title.label              "Title">
+<!ENTITY processing.label         "Importing…">

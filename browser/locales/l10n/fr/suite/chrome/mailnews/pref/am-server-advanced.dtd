@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Paramètres avancés des comptes">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "Dossier sur le serveur IMAP :">
+<!ENTITY serverDirectory.accesskey "D">
+<!ENTITY usingSubscription.label "Afficher seulement les dossiers avec abonnement">
+<!ENTITY usingSubscription.accesskey "V">
+<!ENTITY dualUseFolders.label "Le serveur prend en charge les dossiers qui contiennent des sous-dossiers et des messages">
+<!ENTITY dualUseFolders.accesskey "m">
+<!ENTITY maximumConnectionsNumber.label "Nombre maximum de connexions au serveur à conserver en mémoire cache">
+<!ENTITY maximumConnectionsNumber.accesskey "N">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Ces préférences spécifient les espaces de noms sur votre serveur IMAP">
+<!ENTITY personalNamespace.label "Espace de noms personnel :">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Public (partagé) :">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Autres utilisateurs :">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Permettre au serveur d’ignorer ces espaces de noms">
+<!ENTITY overrideNamespaces.accesskey "o">
+<!ENTITY pop3DeferringDesc.label "Lorsque vous téléchargez du courrier depuis le compte de ce serveur, utiliser les répertoires de Courrier entrant suivants pour stocker les messages :" >
+<!ENTITY accountInbox.label "Courrier entrant de ce compte">
+<!ENTITY accountInbox.accesskey "e">
+<!ENTITY deferToServer.label "Courrier entrant d’un autre compte">
+<!ENTITY deferToServer.accesskey "a">
+<!ENTITY deferGetNewMail.label "Inclure ce serveur lors de la relève du nouveau courrier">
+<!ENTITY deferGetNewMail.accesskey "I">

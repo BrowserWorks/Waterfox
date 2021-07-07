@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title			"新しいカレンダー" >
+<!ENTITY wizard.label			"新しいカレンダーを作成します" >
+<!ENTITY wizard.description		"カレンダーの保存先" >
+
+<!ENTITY initialpage.description	"カレンダーをこのコンピューターに保存するか、サーバーに保存することができます。サーバーに保存したカレンダーは、リモートからアクセスしたり友人や同僚と共有したりできます。">
+<!ENTITY initialpage.computer.label	"このコンピューターに保存する">
+<!ENTITY initialpage.network.label	"ネットワークのサーバーに保存する">
+
+<!ENTITY locationpage.description	"リモートのカレンダーへの接続に必要な情報を入力してください。" >
+<!ENTITY locationpage.login.description	"オプション: ユーザー名とパスワードを入力" >
+<!ENTITY locationpage.username.label	"ユーザー名:" >
+<!ENTITY locationpage.password.label	"パスワード:" >
+
+<!ENTITY custompage.shortdescription	"カレンダーのカスタマイズ" >
+<!ENTITY custompage.longdescription	"カレンダー名と、このカレンダーの予定に付ける色を指定してください。" >
+
+<!ENTITY finishpage.shortdescription	"カレンダーの作成完了" >
+<!ENTITY finishpage.longdescription	"カレンダーが作成されました。" >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label		"その他">
+
+<!ENTITY buttons.create.label		"カレンダーを作成">
+<!ENTITY buttons.create.accesskey	"r">
+
+<!ENTITY buttons.find.label		"カレンダーを検索">
+<!ENTITY buttons.find.accesskey		"F">
+
+<!ENTITY buttons.back.label		"戻る">
+<!ENTITY buttons.back.accesskey		"B">
+
+<!ENTITY buttons.subscribe.label	"購読">
+<!ENTITY buttons.subscribe.accesskey	"S">
+
+<!ENTITY calendartype.label		"カレンダーの形式:">
+<!ENTITY location.label			"場所:">
+<!ENTITY location.placeholder		"カレンダーサーバーの URL またはホスト名">
+
+<!ENTITY network.nocredentials.label	"この場所はログイン情報を必要としません">
+<!ENTITY network.loading.description	"カレンダーが見つかるまでしばらくお待ちください。">
+<!ENTITY network.notfound.description	"この場所にカレンダーが見つかりませんでした。設定を確認してください。">
+<!ENTITY network.authfail.description	"入力した認証情報が拒否されました。設定を確認してください。">
+
+<!ENTITY network.subscribe.single.description	"購読するカレンダーを選択してください。">
+<!ENTITY network.subscribe.multiple.description	"この場所では複数のカレンダー形式が利用できます。カレンダーの形式を選択し、購読するカレンダーにチェックを入れてください。">

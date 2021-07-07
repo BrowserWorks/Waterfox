@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Laiškų adresavimas">
+<!ENTITY emailCollectiontitle.label            "Adresų kaupimas">
+<!ENTITY emailCollectionPicker.label           "El. pašto adresus automatiškai įtraukti į:">
+<!ENTITY emailCollectionPicker.accesskey       "E">
+<!ENTITY emailCollectiontext.label             "Išsiunčiamų laiškų elektroninio pašto adresus galima automatiškai įtraukti į adresų knygą.">
+<!-- Autocompletion -->
+
+<!ENTITY addressingTitle.label                 "Adresų užbaigimas pagal surinktą pradžią">
+<!ENTITY highlightNonMatches.label             "Paryškinti adresus, kurių nepavyksta užbaigti">
+<!ENTITY highlightNonMatches.accesskey         "P">
+<!ENTITY addressingEnable.label                "adresų knygose">
+<!ENTITY addressingEnable.accesskey            "a">
+<!ENTITY autocompleteText.label                "Adresų, kurių pradžios sutampa su surinktu tekstu, ieškoti:">
+<!ENTITY directories.label                     "katalogų serveryje:">
+<!ENTITY directories.accesskey                 "s">
+<!ENTITY directoriesNone.label                 "Nėra">
+<!ENTITY editDirectories.label                 "Tvarkyti katalogus…">
+<!ENTITY editDirectories.accesskey             "T">

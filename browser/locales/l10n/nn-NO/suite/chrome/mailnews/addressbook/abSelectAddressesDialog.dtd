@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Vel adresser">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Til->"> 
+<!ENTITY toButton.accesskey                  "T"> 
+<!ENTITY ccButton.label                      "Kopi til->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "Blindkopi til->">  
+<!ENTITY bccButton.accesskey                 "B">  
+<!ENTITY newButton.label                     "Ny…"> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "Endre…"> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "Fjern"> 
+<!ENTITY removeButton.accesskey              "r"> 
+<!ENTITY lookIn.label                        "Sjå i:"> 
+<!ENTITY lookIn.accesskey                    "S"> 
+<!ENTITY for.label                           "etter:"> 
+<!ENTITY for.accesskey                       "e"> 
+<!ENTITY for.placeholder                     "Namn eller e-post">
+<!ENTITY addressMessageTo.label              "Adresser melding til:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Lag ny kontakt"> 
+<!ENTITY addressPickerEditButton.tooltip     "Rediger vald kontakt"> 
+

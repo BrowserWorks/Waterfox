@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Sveiki! Čia „&brandShortName;“">
+<!ENTITY header2.label "Norite susikurti naują el. pašto adresą?">
+<!ENTITY other.languages "Rodomi tik tie paslaugos teikėjai, kurie ją siūlo jūsų regione. Spustelėkite čia, jeigu norite pamatyti visus teikėjus.">
+<!ENTITY error.line1 "Deja, nepavyko rasti el. pašto adresų pasiūlymų.">
+<!ENTITY error.line2 "Taip pat galite adresų ieškoti pagal savo slapyvardį, pravardę ar kitus duomenis">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Arba galbūt norėsite išbandyti vieną iš ">
+<!ENTITY error.suggest.middle "nemokamų el. pašto paskyrų alternatyvų">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Sveiki, ">
+<!ENTITY success.title.after "! Jūs galite susikurti vieną iš šių el. pašto adresų:">
+<!ENTITY success.tip "Taip pat galite adresų ieškoti pagal savo slapyvardį, pravardę ar kitus duomenis">
+<!ENTITY partnership.description "Bendradarbiaudami su keletu paslaugos teikėjų, mes galime jums pasiūlyti tiesiai programoje „&brandShortName;“ susikurti naują el. pašto paskyrą. Jeigu norite pradėti, tiesiog įveskite savo vardą ir pavardę arba bet kokius kitus žodžius į viršuje esantį lauką.">
+<!ENTITY existing.header "Jau turite el. pašto paskyrą, kurią norite užregistruoti programoje?">
+<!ENTITY tinyheader.title "Jau turite el. pašto adresą?">
+<!ENTITY tinyheader.existing "Praleisti šį žingsnį ir registruoti turimą el. pašto paskyrą">
+<!ENTITY content.close "El. pašto paskyrą aš susikonfigūruosiu vėliau.">
+<!ENTITY successful.title "Sveikiname!">
+<!ENTITY successful.successMessage "Jūs sėkmingai susikūrėte paskyrą.">
+<!ENTITY successful.write "Rašyti laišką">
+<!ENTITY successful.write.desc "Praneškite apie savo naująjį el. pašto adresą draugams ir šeimai.<br/>Juk dėl to šią paskyrą ir susikūrėte, ar ne?">
+<!ENTITY successful.customize "Papildyti programą „&brandShortName;“ priedais">
+<!ENTITY successful.customize.desc "Yra tūkstančiai priedų, kuriuos galite įdiegti į „&brandShortName;“ programą, taip pritaikydami ją savo pomėgiams ir poreikiams.">
+<!ENTITY successful.attach "Siunčiamuose laiškuose naudoti prierašą">
+<!ENTITY successful.attach.desc "Visų siunčiamų laiškų gale galite automatiškai įterpti citatą, savo kontaktinius duomenis ar kitą informaciją.">
+<!ENTITY successful.close "Užverti šį langą.">
+<!ENTITY input.namePlaceholder "Jūsų vardas arba pravardė">
+<!ENTITY input.search "Ieškoti">
+<!ENTITY search_engine.title "Keisti ieškyklę">
+<!ENTITY search_engine.message "Jūsų el. pašto paslaugos teikėjas taip pat gali teikti paieškos saityne galimybę.">
+<!ENTITY search_engine.button "Baigti">

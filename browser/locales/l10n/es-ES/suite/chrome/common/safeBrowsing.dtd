@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "¡Sácame de aquí!">
+<!ENTITY safeb.palm.decline.label "Ignorar esta advertencia">
+<!ENTITY safeb.palm.reportPage.label "¿Por qué ha sido bloqueada esta página?">
+<!ENTITY safeb.blocked.malwarePage.title "¡Página señalada como atacante!">
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Esta página web en <span id='malware_sitename' /> ha sido identificada como una página atacante y ha sido bloqueada basándose en sus preferencias de seguridad.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Las páginas atacantes intentan instalar programas que roban información privada, usan su equipo para atacar a otros o dañan su sistema.</p><p>Algunas páginas atacantes distribuyen software dañino intencionadamente , pero muchas han sido comprometidas sin el conocimiento ni permiso de sus propietarios.</p>">
+<!ENTITY safeb.blocked.unwantedPage.title "¡Página sospechosa de servir software no deseado!">
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Esta página web en <span id='unwanted_sitename'/> ha sido identificada como una web que contiene software no deseado y ha sido bloqueada basándose en sus preferencias de seguridad.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>Las páginas con software no deseado intentan instalar software que puede aparentar hacer algo diferente a lo que hace y afectar a su sistema de manera no esperada.</p>">
+<!ENTITY safeb.blocked.phishingPage.title2 "¡Sitio engañoso!">
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "Esta página web en <span id='phising_sitename' /> ha sido identificada como un sitio engañoso y ha sido bloqueada basándose en sus preferencias de seguridad.">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Los sitios engañosos están diseñados para inducirle a hacer algo peligroso, como instalar software o revelar su información personal, como contraseñas, números de teléfono o tarjeta de crédito.</p><p>Introducir información en esta paǵina web puede dar como resultado el robo de identidad u otros fraudes.</p>">
+<!ENTITY safeb.blocked.harmfulPage.title "El sitio que intenta visitar puede contener malware.">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ha bloqueado la página web en <span id='harmful_sitename'/> porque podría intentar instalar aplicaciones peligrosas que roben o eliminen su información (por ejemplo, fotos, contraseñas, mensajes y tarjetas de crédito).">
+<!ENTITY safeb.blocked.harmfulPage.longDesc "">
+<!ENTITY reportDeceptiveSite.label "Informar de sitio engañoso…">
+<!ENTITY reportDeceptiveSite.accesskey "I">
+<!ENTITY notADeceptiveSite.label "Este no es un sitio engañoso…">
+<!ENTITY notADeceptiveSite.accesskey "E">

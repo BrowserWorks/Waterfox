@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importo vediklis">
+
+<!ENTITY importFrom.label               "Importuoti parinktis, adresyną, žurnalą, slaptažodžius ir kitus duomenis iš:">
+<!ENTITY importFromUnix.label           "Importuoti nuostatas, adresyną, žurnalą, slaptažodžius ir kitus duomenis iš:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "„Microsoft Edge“">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Nieko neimportuoti">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "„Chrome Canary“">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "„Chrome Beta“">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "„Chrome Dev“">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "„Chromium“">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "F">
+<!ENTITY importFrom360se.label          "„360 Secure Browser“">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Nepavyko rasti programų, kuriose būtų adresyno, naršymo žurnalo ar įrašytų slaptažodžių duomenų.">
+
+<!ENTITY importSource.title             "Duomenų ir nuostatų importas">
+<!ENTITY importItems.title              "Importuotini elementai">
+<!ENTITY importItems.label              "Pasirinkite, ką importuoti:">
+
+<!ENTITY migrating.title                "Importuojama…">
+<!ENTITY migrating.label                "Importuojami šie elementai…">
+
+<!ENTITY selectProfile.title            "Profilio pasirinkimas">
+<!ENTITY selectProfile.label            "Galima importuoti iš šių profilių:">
+
+<!ENTITY done.title                     "Importas baigtas">
+<!ENTITY done.label                     "Sėkmingai importuota:">
+
+<!ENTITY closeSourceBrowser.label       "Prieš tęsdami įsitikinkite, kad pasirinkta naršyklė yra išjungta.">

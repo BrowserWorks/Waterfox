@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Otwórz plik…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Otwórz adres internetowy…">
+<!ENTITY openRemoteCmd.accesskey "i">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Ostatnio edytowane strony">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Zapisz">
+<!ENTITY saveCmd.accesskey "p">
+<!ENTITY saveAsCmd.label "Zapisz jako…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Zapisz i zmień kodowanie tekstu">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "m">
+<!ENTITY publishCmd.label "Publikuj">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Opublikuj jako…">
+<!ENTITY publishAsCmd.accesskey "j">
+<!ENTITY fileRevert.label "Przywróć">
+<!ENTITY fileRevert.accesskey "y">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Ustawienia publikowanej witryny…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nowy">
+<!ENTITY newToolbarCmd.tooltip "Utwórz nową stronę Kompozytora Stron">
+<!ENTITY openToolbarCmd.label "Otwórz">
+<!ENTITY openToolbarCmd.tooltip "Otwórz lokalny plik">
+<!ENTITY saveToolbarCmd.tooltip "Zapisz plik na lokalnym dysku">
+<!ENTITY publishToolbarCmd.tooltip "Prześlij plik na zdalny serwer">
+<!ENTITY printToolbarCmd.label "Drukuj">
+<!ENTITY printToolbarCmd.tooltip "Drukuj bieżącą stronę">

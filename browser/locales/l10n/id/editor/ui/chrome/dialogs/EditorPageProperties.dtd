@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Properti Laman">
+<!ENTITY location.label "Lokasi:">
+<!ENTITY lastModified.label "Diubah Terakhir:">
+<!ENTITY titleInput.label "Judul:">
+<!ENTITY titleInput.accessKey "J">
+<!ENTITY authorInput.label "Penyusun:">
+<!ENTITY authorInput.accessKey "P">
+<!ENTITY descriptionInput.label "Keterangan:">
+<!ENTITY descriptionInput.accessKey "K">
+<!ENTITY locationNewPage.label "[Laman baru, belum disimpan]">
+<!ENTITY EditHEADSource1.label "Canggih:">
+<!ENTITY EditHEADSource2.label "Untuk menyunting isi lainnya pada region &lt;head&gt; gunakan &quot;Kode Sumber HTML&quot; pada menu Tampilan atau Bilah Alat Mode Sunting.">

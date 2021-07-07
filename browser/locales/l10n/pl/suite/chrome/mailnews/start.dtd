@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Witamy w Kurierze Poczty &brandShortName;">
+<!ENTITY headline.label 'Witamy w Kurierze Poczty programu <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label "Kurier Poczty jest rozbudowanym klientem poczty i grup dyskusyjnych, posiadającym zaawansowany filtr niechcianej poczty i inne przydatne narzędzia.">
+<!ENTITY features.title "Możliwości">
+<!ENTITY feat_multiacc.label "Obsługa wielu kont">
+<!ENTITY feat_junk.label "Filtr niechcianej poczty">
+<!ENTITY feat_feeds.label "Czytnik aktualności">
+<!ENTITY feat_filters.label "Filtrowanie wiadomości">
+<!ENTITY feat_htmlmsg.label "Obsługa wiadomości w formacie HTML ">
+<!ENTITY feat_abook.label "Książka adresowa">
+<!ENTITY feat_tags.label "Łatwe do dostosowania etykiety dla wiadomości oraz ustawienia okna poczty">
+<!ENTITY feat_integration.label "Ściśle zintegrowany z &brandShortName;">
+<!ENTITY dict.title "Słowniki">
+<!ENTITY dict_intro.label "Słowniki są używane do sprawdzania poprawności pisowni.">
+<!ENTITY dict_info.label 'Wiele dodatkowych słowników można zainstalować z sekcji <a id="dictURL" href="">słowniki</a> witryny <a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>.'>
+<!ENTITY info.title "Więcej informacji">
+<!ENTITY info_bugs.label '<a href="http://www.mozilla.org/mailnews/">Cieszymy się z wszelkich uwag i propozycji</a>, jednak prosimy przeczytać wcześniej <a id="releaseNotesURL" href="">informacje o wydaniu</a> oraz sprawdzić <a href="https://bugzilla.mozilla.org/query.cgi">Bugzillę</a>.'>

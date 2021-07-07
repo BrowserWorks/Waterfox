@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "บัญชี - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "สถานะข้อความโต้ตอบแบบทันที">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "บัญชีใหม่">
+<!ENTITY accountManager.newAccount.accesskey "บ">
+<!ENTITY accountManager.close.label          "ปิด">
+<!ENTITY accountManager.close.accesskey      "ป">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "ยังไม่มีบัญชีที่กำหนดค่า">
+<!ENTITY accountManager.noAccount.description "คลิกที่ปุ่ม &accountManager.newAccount.label; เพื่อให้ &brandShortName; แนะนำคุณผ่านกระบวนการกำหนดค่า">
+<!ENTITY account.autoSignOn.label     "ลงชื่อเข้าเมื่อเริ่มการทำงาน">
+<!ENTITY account.autoSignOn.accesskey "ล">
+<!ENTITY account.connect.label        "เชื่อมต่อ">
+<!ENTITY account.connect.accesskey    "ช">
+<!ENTITY account.disconnect.label     "ตัดการเชื่อมต่อ">
+<!ENTITY account.disconnect.accesskey "ต">
+<!ENTITY account.delete.label         "ลบ">
+<!ENTITY account.delete.accesskey     "บ">
+<!ENTITY account.edit.label           "คุณสมบัติ">
+<!ENTITY account.edit.accesskey       "ค">
+<!ENTITY account.moveup.label         "ย้ายขึ้น">
+<!ENTITY account.movedown.label       "ย้ายลง">
+<!ENTITY account.cancelReconnection.label         "ยกเลิกการเชื่อมต่อใหม่">
+<!ENTITY account.cancelReconnection.accesskey     "ย">
+<!ENTITY account.copyDebugLog.label     "คัดลอกรายการบันทึกการดีบั๊ก">
+<!ENTITY account.copyDebugLog.accesskey "ด">
+<!ENTITY account.showDebugLog.label     "แสดงรายการบันทึกการดีบั๊ก">
+<!ENTITY account.showDebugLog.accesskey "ส">
+<!ENTITY account.connecting           "กำลังเชื่อมต่อ…">
+<!ENTITY account.disconnecting        "กำลังตัดการเชื่อมต่อ…">
+<!ENTITY account.disconnected         "ไม่ได้เชื่อมต่อ">

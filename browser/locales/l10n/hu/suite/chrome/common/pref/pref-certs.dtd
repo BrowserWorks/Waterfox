@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Tanúsítványkezelő">
+<!ENTITY  managecerts.text         "A tanúsítványkezelő segítségével mind a saját személyes, mind más emberek és hitelesítésszolgáltatók tanúsítványait kezelheti.">
+<!ENTITY  managecerts.button       "Tanúsítványok kezelése…">
+<!ENTITY  managecerts.accesskey    "T">
+<!ENTITY  managedevices.caption    "Adatvédelmi eszközök kezelése">
+<!ENTITY  managedevices.text       "Ezzel a gombbal kezelheti az adatvédelmi eszközeit, pl. az intelligens chipkártyákat.">
+<!ENTITY  managedevices.button     "Adatvédelmi eszközök kezelése…">
+<!ENTITY  managedevices.accesskey  "A">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Tanúsítványok">
+<!ENTITY  certs.label              "Tanúsítványok">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Az Online Certificate Status Protocol (OCSP) használata a tanúsítványok érvényességének ellenőrzésére">
+<!ENTITY enableOCSP.accesskey                     "O">
+<!ENTITY validation.requireOCSP.description       "Ha a kapcsolat az OCSP-kiszolgálóval nem jön létre, akkor a tanúsítvány érvénytelenként kezelése">
+<!ENTITY validation.requireOCSP.accesskey         "H">

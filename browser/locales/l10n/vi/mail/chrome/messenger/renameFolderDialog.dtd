@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY renameFolderDialog.title          "Đổi tên Thư mục">
+<!ENTITY rename.label                      "Nhập tên mới cho thư mục của bạn:">
+<!ENTITY rename.accesskey                  "N">
+<!ENTITY accept.label                      "Đổi tên">
+<!ENTITY accept.accesskey                  "i">
+

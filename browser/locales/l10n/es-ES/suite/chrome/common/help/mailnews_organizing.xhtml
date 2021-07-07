@@ -1,0 +1,955 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+    <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Organizar sus mensajes y controlar el correo basura</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+        type="text/css"/>
+</head>
+
+<body>
+<h1 id="organizing_your_messages">Organizar sus mensajes</h1>
+
+<div class="contentsBox">
+  <ul>
+    <li><a href="#creating_a_folder">Crear una carpeta</a></li>
+    <li><a href="#renaming_a_folder">Renombrar una carpeta</a></li>
+    <li><a href="#moving_or_copying_a_folder">Mover o copiar una
+    carpeta</a></li>
+    <li><a href="#filing_messages_in_folders">Archivar mensajes en
+    carpetas</a></li>
+    <li><a href="#sharing_folders_with_other_users">Compartir carpetas con
+    otros usuarios (sólo IMAP)</a></li>
+    <li><a href="#tagging_messages">Etiquetar los mensajes</a></li>
+    <li><a href="#marking_or_flagging_messages">Marcar o señalar
+    mensajes</a></li>
+    <li><a href="#using_message_views">Usar las vistas de mensajes</a></li>
+    <li><a href="#creating_message_filters">Crear filtros de mensajes</a></li>
+    <li><a href="#searching_through_messages">Buscar entre los
+    mensajes</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_folder">Crear una carpeta</h2>
+
+<p>Para crear una carpeta para los mensajes, comenzando desde la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Archivo, elija Nueva, y luego Carpeta.
+  Aparecerá el cuadro de diálogo de Nueva carpeta.</li>
+  <li>Escriba el nombre de la carpeta.</li>
+  <li>Despliegue la lista de debajo y elija una ubicación para la
+  carpeta, y luego pulse Aceptar. La nueva carpeta aparecerá en la
+  lista de carpetas.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="renaming_a_folder">Renombrar una carpeta</h2>
+
+<p>Para renombrar una carpeta, comenzando desde la ventana de Correo y
+noticias:</p>
+
+<ol>
+  <li>Seleccione la carpeta que quiera renombrar.</li>
+  <li>Abra el menú Archivo y elija Renombrar carpeta. Aparecerá
+  el cuadro de diálogo de Renombrar carpeta.</li>
+  <li>Escriba el nuevo nombre y pulse Aceptar.</li>
+</ol>
+
+<p><strong>Nota</strong>: si cambia el nombre a una carpeta que ha estado
+usando para almacenar <a href="#creating_message_filters">mensajes
+filtrados</a>, el filtro se actualizará automáticamente para
+usar el nuevo nombre de la carpeta.</p>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="moving_or_copying_a_folder">Mover o copiar una carpeta</h2>
+
+<p>Se puede copiar una carpeta y su contenido a otra cuenta de correo, o
+mover a una carpeta dentro de la misma cuenta de correo.</p>
+
+<p>Para mover o copiar una carpeta, comenzando desde la ventana de Correo y
+noticias:</p>
+
+<ol>
+  <li>Seleccione la carpeta que quiera mover o copiar.</li>
+  <li>Haga una de las siguientes acciones:
+    <ul>
+      <li>Para mover la carpeta debajo de otra carpeta de la misma cuenta,
+      arrastre la carpeta encima del nombre de la otra carpeta. La carpeta
+      que acaba de mover pasa a ser una subcarpeta de la otra.</li>
+      <li>Para copiar la carpeta a otra cuenta, arrastre la carpeta encima
+      del nombre de la otra cuenta.</li>
+      <li>Para copiar la carpeta debajo de otra carpeta de otra cuenta,
+      arrastre la carpeta encima del nombre del nombre de la otra carpeta de
+      la otra cuenta. La carpeta que acaba de copiar se convierte en una
+      subcarpeta de la otra carpeta.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="filing_messages_in_folders">Guardar mensajes en
+carpetas</h2>
+
+<p>Se pueden mover mensajes de una carpeta a otra usando uno de estos
+métodos:</p>
+
+<ul>
+  <li>Seleccione el mensaje, pulse el botón Archivo en la barra
+  de herramientas, y elija la carpeta de destino.</li>
+  <li>Arrastre y suelte mensajes en la carpeta que desee.
+  <p><strong>Nota</strong>: si se arrastra y suelta un mensaje de una
+  carpeta de un servidor IMAP o POP en una carpeta local del disco duro,
+  el mensaje se mueve a la carpeta local y se borra del servidor.</p>
+  </li>
+</ul>
+
+<p>Para copiar un mensaje de una carpeta a otra:</p>
+
+<ol>
+  <li>Seleccione el mensaje y pulse con el botón derecho del
+  ratón para ver el menú desplegable.</li>
+  <li>Seleccione <q>Copiar a</q> y luego elija la cuenta de destino y la
+  carpeta en la lista desplegable.</li>
+</ol>
+
+<p><strong>Truco</strong>: también puede copiar un mensaje entre
+carpetas manteniendo pulsada la tecla Mays mientras arrastra el mensaje desde
+la lista de mensajes a la carpeta de destino.</p>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="sharing_folders_with_other_users">Compartir carpetas con otros
+usuarios (sólo IMAP)</h2>
+
+<p>Los usuarios con cuentas de correo IMAP pueden compartir carpetas de correo
+con otros usuarios en la misma red. Compartir carpetas permite a distintos
+usuarios ver y trabajar con los mismos mensajes, de manera similar a un grupo
+de noticias. Para usar carpetas compartidas, su servidor de correo IMAP debe
+permitir la gestión de Listas de Control de Acceso (ACLs).
+Confírmelo con el administrador del sistema o servicio de asistencia a
+usuarios en caso de no estar seguro de si las carpetas compartidas se permiten
+en su servidor de correo IMAP.</p>
+
+<p>Para compartir una carpeta de correo con otros usuarios en su red, o para
+ver la información de compartición de una carpeta, comenzando
+desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Dentro de una cuenta IMAP, seleccione una carpeta que quiera compartir,
+  o seleccione una carpeta de la que quiera conocer sus privilegios de
+  compartición.
+  <p>Las carpetas listadas bajo Carpetas locales y las listadas bajo una
+  cuenta de correo POP no pueden ser compartidas.</p>
+  </li>
+  <li>Abra el menú Editar y escoja Propiedades de carpeta.</li>
+  <li>Pulse la pestaña Compartir.</li>
+  <li>Pulse Privilegios. Puede que se le solicite introducir su nombre de
+  usuario y contraseña de red.
+  <p>El botón Privilegios sólo está disponible si el
+  servidor de correo IMAP le permite establecer privilegios de
+  compartición de carpetas. Si este botón no está
+  disponible, puede ver los priviliegios de compartición de la carpeta,
+  pero no cambiarlos.</p>
+  </li>
+  <li>Siga las instrucciones en la pantalla para añadir usuarios
+  y para establecer sus privilegios de acceso a carpetas.
+    <ul>
+      <li><strong>Privilegios de lectura</strong>: los usuarios pueden leer
+      mensajes y copiar su contenido, pero no pueden modificar o borrar
+      mensajes, ni copiar mensajes en la carpeta. Los usuarios pueden marcar
+      mensajes como leídos o no leídos. Vea <a
+      href="#marking_or_flagging_messages">Marcar o señalar
+      mensajes</a> para instrucciones sobre cómo señalar
+      mensajes.</li>
+      <li><strong>Privilegios de lectura y escritura</strong>: además
+      de los privilegios de lectura, los usuarios pueden modificar y borrar
+      mensajes. Los usuarios también pueden copiar o mover mensajes a
+      la carpeta.</li>
+      <li><strong>Gestionar privilegios</strong>: además de los
+      privilegios de lectura y escritura, los usuarios pueden añadir
+      y eliminar usuarios y cambiar sus permisos en la carpeta.</li>
+    </ul>
+  </li>
+  <li>Pulse Aceptar para confirmar sus cambios.</li>
+  <li>Pulse Aceptar para cerrar el cuadro de diálogo de propiedades de
+  la carpeta.</li>
+</ol>
+
+<p>En la lista de carpetas de su cuenta de correo, las carpetas compartidas
+muestran un icono distintivo para indicar que están
+compartidas.</p>
+
+<p>Para enviar un mensaje que indica a otros cómo pueden suscribirse a
+su carpeta compartida, comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione la carpeta compartida.</li>
+  <li>Pulse con el botón derecho del ratón para mostrar un
+  menú emergente y escoja Copiar ubicación de la carpeta.</li>
+  <li>Pulse Redactar para mostrar una ventana de redacción de
+  mensaje.</li>
+  <li>Pulse en el cuerpo del mensaje, abra el menú Editar y escoja
+  Pegar.</li>
+  <li>Escriba los destinatarios del mensaje, escriba un asunto, y escriba el
+  texto del mensaje. Cuéntele a los destinatarios del mensaje que
+  pueden suscribirse a la carpeta compartida pulsando el enlace que ha copiado
+  en el mensaje.
+  <p>Sólo los destinatarios del mensaje que comparten la misma red
+  podrán suscribirse a su carpeta compartida.</p>
+  </li>
+  <li>Pulse Enviar.</li>
+</ol>
+
+<h3 id="subscribing_to_a_shared_folder">Suscribirse a una carpeta
+compartida</h3>
+
+<p>Suscribirse a una carpeta compartida es similar a suscribirse a un
+grupo de noticias. Para suscribirse a una carpeta compartida, comenzando
+desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Archivo y escoja Suscribirse. Verá el cuadro
+  de diálogo Suscribirse.</li>
+  <li>Si es preciso, haga clic en la lista desplegable de cuentas para
+  elegir otra cuenta de correo IMAP.</li>
+  <li>Seleccione la carpeta a la que quiere suscribirse.</li>
+  <li>Pulse Suscribirse o haga clic en la casilla de la columna Suscribirse
+  junto a la carpeta. Verá que hay una marca de selección junto
+  a cada carpeta a la cual se haya suscrito. Pulse Cancelar suscripción
+  para cancelar una selección.</li>
+  <li>Pulse Aceptar. La lista de carpetas a las que está suscrito
+  aparece en la ventana de Correo y noticias.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="tagging_messages">Etiquetar mensajes</h2>
+
+<p>Se pueden aplicar etiquetas a los mensajes para ayudar a la
+organización y prioridad de tareas. Se puede aplicar un color y etiqueta
+de texto estándar a los mensajes, o se pueden crear sus propios colores
+y textos de etiquetas para ajustarse a sus necesidades.</p>
+
+<p>Una forma muy potente de usar las etiquetas es usar un filtro de mensajes
+para etiquetar los mensajes entrantes de un determinado remitente
+automáticamente. Por ejemplo, se puede configurar un filtro de mensajes
+para que los mensajes entrantes de nuestro jefe tengan la etiqueta de
+<q>Importante</q> y aparezcan en rojo. Veáse <a
+href="#creating_message_filters">Crear filtros de mensajes</a> para más
+información.</p>
+
+<h3 id="applying_a_tag">Aplicar una etiqueta</h3>
+
+<p>Para aplicar una etiqueta a un mensaje, comenzando desde la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione el mensaje que quiera etiquetar.</li>
+  <li>Abra el menú mensaje, y elija Etiqueta.</li>
+  <li>Elija la etiqueta que quiera aplicar de la lista.</li>
+</ol>
+
+<p>La fila resumen del mensaje cambia al color elegido de la etiqueta con la
+mayor prioridad. Para ver el texto de la etiqueta, debe mostrar la columna
+Etiqueta en la ventana de Correo y noticias.</p>
+
+<p><strong>Truco</strong>: para etiquetar rápidamente mensajes o
+eliminar una etiqueta, seleccione uno o más mensajes y pulse una de las
+teclas numéricas 1-9 en su teclado. Pulse 0 para eliminar todas las
+etiquetas.</p>
+
+<p>Para mostrar la columna de Etiqueta, vaya a la ventana de Correo y
+noticias:</p>
+
+<ul>
+  <li>Pulse el icono de Mostrar/Ocultar columnas <img
+  src="images/columns.png" alt="" /> y seleccione Etiqueta en la lista. </li>
+</ul>
+
+<p><strong>Nota</strong>: las etiquetas de mensajes se aplican de manera
+individual por cuenta. Por ejemplo, si se mueve o copia un mensaje etiquetado
+de una cuenta a otra, las etiquetas no se conservan. Igualmente, si se
+reenvía un mensaje con etiqueta a otro destino, la etiqueta no se
+conserva. Para cuentas IMAP, si el servidor IMAP soporta palabras clave
+definidas por el usuario, las etiquetas se mantienen si se consulta la cuenta
+desde otro sitio.</p>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="customizing_tags">Personalizar etiquetas</h3>
+
+<p>Se pueden personalizar los colores y textos de las etiquetas, y su orden,
+para ajustarse a nuestras necesidades.</p>
+
+<p>Para personalizar las etiquetas, comience desde la ventana de Correo y
+noticias:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría Correo y grupos de noticias, elija Etiquetas (si
+    no hay subcategorías visibles, haga doble clic en Correo y noticias
+    para expandir la lista).</li>
+  <li>Edite el texto de la etiqueta, o modifíquelo con el que prefiera.
+    La etiqueta puede tener hasta 32 caracteres de largo.</li>
+  <li>Para cambiar el color de la etiqueta, pulse el botón desplegable
+    junto al texto y seleccione un nuevo color.</li>
+  <li>Pulse los botones Subir y Bajar para reordenar las etiquetas. Las
+    etiquetas en la parte superior de la lista tendrán mayor prioridad
+    al colorear los mensajes.</li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p>Los cambios se aplican inmediatamente a todos los mensajes etiquetados en
+  todas las cuentas de correo.</p>
+
+<p><strong>Truco</strong>: para deshacer toda la personalización y
+  restaurar los valores predeterminados del color y texto de las etiquetas,
+  siga los pasos descritos anteriormente para mostrar las opciones de
+  etiquetas, y a continuación elija Restaurar valores
+  predeterminados.</p>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="sorting_messages_by_tags">Ordenar los mensajes por etiquetas</h3>
+
+<p>Para ordenar los mensajes por etiquetas, comience desde la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Para mostrar la columna Etiqueta si está oculta, pulse el
+    icono Mostrar/Ocultar columnas <img src="images/columns.png" alt="" />
+    y elija Etiqueta de la lista.</li>
+  <li>Pulse la columna Etiqueta para ordenar los mensajes por etiqueta, y
+    dentro de cada etiqueta, para ordenar los mensajes alfabéticamente
+    por fecha.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="removing_tags">Eliminar etiquetas</h3>
+
+<p>Para eliminar la etiqueta de un mensaje, comience desde la ventana de
+  Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione uno o más mensajes con etiquetas.</li>
+  <li>Abra el menú Mensaje, y elija Etiqueta.</li>
+  <li>Elija la etiqueta que quiere eliminar, o <q>Ninguna</q> para eliminar
+    todas las etiquetas de este mensaje.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="marking_or_flagging_messages">Marcar o señalar
+mensajes</h2>
+
+<p>Puede suceder que quiera marcar un mensaje que ya ha leído como
+no leído para responderlo o volver a leerlo más tarde.</p>
+
+<p>Para marcar un mensaje como no leído, comenzando desde la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione una carpeta de correo o noticias para mostrar los mensajes
+  que contenga.</li>
+  <li>Pulse en la columna de Leído de cada mensaje que quiera marcar
+  como no leído. Los mensajes marcados como no leídos tienen el
+  símbolo <img src="images/mail_unread.png" alt="" /> en dicha columna.
+  Los mensajes marcados como leídos aparecen con el símbolo <img
+  src="images/mail_read.png" alt="" />. Si la columna Leído no
+  está visible, pulse el icono de Mostrar/Ocultar columnas <img
+  src="images/columns.png" alt="" /> y seleccione Leído de la lista.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_read_column.png" alt="" /></td>
+  </tr>
+  <tr>
+    <td width="80"></td>
+    <td><strong>Columna de Leído</strong></td>
+  </tr>
+</table>
+
+<p>Se pueden marcar los mensajes que se quieran descargar después para
+  <a href="mailnews_offline.xhtml#downloading_selected_or_flagged_messages_for_offline_use">usar
+  sin conexión</a>.</p>
+
+<p>Para marcar mensajes, comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione una carpeta de correo o noticias para mostrar los mensajes que
+  contiene.</li>
+  <li>Pulse en la columna Marcar de cada mensaje que quiera descargar.
+  Aparecerá una bandera <img src="images/mail_flag.png" alt="" /> donde
+  se pulsó para indicar que el mensaje ha sido marcado. Si la columna
+  Marcar no está visible, pulse el icono de Mostrar/Ocultar columnas
+  <img src="images/columns.png" alt="" /> y seleccione Marcar de la lista.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_flag_column.png" alt="" /></td>
+  </tr>
+  <tr>
+    <td width="80"></td>
+    <td><strong>Columna Marcar</strong></td>
+  </tr>
+</table>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="using_message_views">Usar las vistas de mensaje</h2>
+
+<p>Puede aplicar vista predefinidas o personalizadas para ayudarle a filtrar
+  los mensajes mostrados.</p>
+
+<p>Para usar una vista de mensajes, abra el menú Ver y escoja Mensajes.
+  Escoja una opción del submenú.</p>
+
+<ul>
+  <li><strong>Todos</strong>: escoja esta opción para ver todos los
+    mensajes.</li>
+  <li><strong>No leídos</strong>: escoja esta opción para ver sólo los
+    mensajes no leídos.</li>
+  <li><strong>Etiquetas</strong>: escoja una <a
+    href="#tagging_messages">etiqueta</a> para ver únicamente los mensajes
+    etiquetados con ella.</li>
+  <li><strong>Vistas personalizadas</strong>: escoja una vista personalizada.
+    Hay cinco vistas predefinidas: <q>Gente que conozco</q>, <q>Correo
+    reciente</q>, <q>Últimos 5 días</q>, <q>No es basura</q> y
+    <q>Tiene adjuntos</q>.</li>
+  <li><strong>Personalizar</strong>: escoja esta opción para ver o
+    modificar los valores de las vistas predefinidas, o crear su propia vista
+    personalizada.</li>
+</ul>
+
+<p><strong>Ayuda</strong>: puede cambiar rápidamente la vista de mensajes
+  usando la lista Ver en la barra de búsqueda. Si no ve la barra de búsquedas,
+  abra el menú Ver, escoja Mostrar/Ocultar y luego escoja Barra de
+  búsqueda.</p>
+
+<table>
+  <tr><td colspan="2"><img src="images/mail_quicksearch.png" alt="" /></td></tr>
+  <tr>
+    <td width="80"></td>
+    <td><strong>Barra de búsqueda rápida de correo</strong></td>
+  </tr>
+</table>
+
+<h3 id="creating_a_custom_view">Crear una vista personalizada</h3>
+
+<p>Puede crear vistas de mensajes personalizadas para mostrar sólo los
+  mensajes que cumplan ciertos criterios.</p>
+
+<p>Para cambiar o crear una vista de mensajes personalizada:</p>
+
+<ol>
+  <li>Abra el menú Ver, escoja Mensajes y luego escoja
+  Personalizar...</li>
+  <li>Para crear una nueva vista, haga clic en Nuevo. Para modificar una
+  vista, seleccione una vista y haga clic en Editar.</li>
+  <li>Escriba un nombre para la vista de mensajes.</li>
+  <li>Seleccione el tipo de concordancias que quiere que use Correo y
+  noticias: <q>que cumplan <em>todas</em> las siguientes</q> condiciones
+  (criterios) que elija, o <q>que cumplan <em>cualquiera</em> de las
+  siguientes</q>.</li>
+  <li>Use las listas desplegables para elegir los criterios de
+  búsqueda (por ejemplo, <q>Asunto</q>, <q>Remitente</q>,
+  <q>contiene</q>, <q>no contiene</q>) y luego escriba el texto o frase que
+  quiere que se cumpla.
+
+  <p><strong>Ayuda</strong>: para buscar mensajes que contienen una
+  cabecera no listada en el primer menú desplegable (por ejemplo, si
+  quiere buscar mensajes que incluyan la cabecera Resent-From), escoja
+  Personalizar y escriba la cabecera por la que quiere buscar. Correo y
+  noticias &brandShortName; añade su cabecera personalizada a la lista
+  desplegable, para que pueda elegirla para buscar entradas coincidentes.
+  Asegúrese de que introduce la cabecera personalizada correctamente,
+  ya que Correo y noticias sólo encontrará las entradas que
+  coincidan exactamente con lo que usted escriba.</p>
+  </li>
+  <li>Pulse Más para añadir criterios y Menos para
+  eliminarlos.</li>
+  <li>Pulse Aceptar para confirmar sus valores.</li>
+  <li>Pulse Aceptar en el cuadro de diálogo Personalizar vistas de
+  mensajes. La vista seleccionada se aplica automáticamente.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="creating_message_filters">Crear filtros de mensajes</h2>
+
+<p>Los filtros de mensajes le permiten gestionar y organizar los mensajes. Se
+  pueden crear filtros de mensajes que &brandShortName; usa para realizar
+  automáticamente ciertas acciones sobre los mensajes entrantes basadas en los
+  criterios que se especifiquen. Por ejemplo, se puede crear un filtro de
+  mensaje que automáticamente mueva los mensajes entrantes a una carpeta
+  determinada. Los filtros de mensajes operan se aplican a cada cuenta.</p>
+
+<p>Si no está viendo el cuadro de diálogo de filtros de mensaje, vaya a la
+  ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Herramientas y elija Filtros de mensaje. Verá el cuadro de
+    diálogo de filtros de mensaje.</li>
+  <li>Si tiene varias cuentas, elija la cuenta a la que quiera aplicar el
+    filtro.</li>
+  <li>Elija Nuevo. Use el cuadro de diálogo de reglas de filtrado para
+    especificar los tipos de mensaje sobre los que actuar y las acciones a
+    realizar por el filtro.</li>
+  <li>Escriba un nombre para el filtro.</li>
+  <li>Selecciones cuándo quiere que se aplique el filtro. Este valor le permite
+    definir que algunos filtros se apliquen de manera automática (al comprobar
+    el correo), bajo demanda (al ejecutarlos manualmente), o en ambos casos.
+    <q>Tras clasificarlo</q> significa que los controles de correo basura y
+    correo fraudulento se ejecutarán antes de aplicar el filtro.</li>
+  <li>Seleccione la clase de coincidencia que debe usar Correo: <q>que se
+    cumplan <em>todas</em> las reglas</q> que indique, <q>que se cumplan
+    <em>cualquiera</em> de las reglas</q>, o que se <em>incluyan todos los
+    mensajes</em>.</li>
+  <li>Use las listas desplegables para elegir el criterio de búsqueda (por
+    ejemplo, <q>Asunto</q>, <q>Remitente</q>, <q>contiene</q>, <q>no
+    contiene</q>) y luego escriba el texto o frase que quiera buscar.
+
+    <p><strong>Truco</strong>: para buscar mensajes que contengan una cabecera
+      que no esté en la primera lista (por ejemplo, si quiere buscar mensajes
+      que incluyan la cabecera Resent-From), elija Personalizar y escriba la
+      cabecera por la que quiera buscar. &brandShortName; añade la cabecera
+      personalizada a la lista desplegable, para que pueda elegirla para buscar
+      entradas. Asegúrese de que introduce la cabecera personalizada
+      correctamente, puesto que &brandShortName; sólo encontrará las entradas
+      que coincidan exactamente con lo que haya escrito.</p>
+  </li>
+  <li>Pulse en <q>+</q> para añadir criterios y en <q>-</q> para
+    quitarlos.</li>
+  <li>Use la lista para elegir la acción que quiera realizar sobre los mensajes
+    cuando se cumpla la condición indicada (por ejemplo, Mover mensaje a). Use
+    <q>+</q> y <q>-</q> para añadir o eliminar acciones.
+ 
+    <p><strong>Truco</strong>: para poner automáticamente una etiqueta a los
+      mensajes entrantes, elija <q>Etiquetar mensaje</q> en la lista
+      desplegable.</p>
+
+    <p><strong>Truco</strong>: los filtros de mensajes se aplican uno detrás de
+      otro. Podría ser que no se quiera que se ejecuten todos los filtros si
+      uno o más mensajes cumplen ciertas condiciones. Por ejemplo, puede que
+      quiera etiquetar todos los mensajes con la dirección de correo de su jefe
+      como <q>Importante</q>, y puede que quiera que todos los mensajes que
+      contienen la palabra <q>Informe</q> en su asunto se muevan a una carpeta
+      llamada <q>Lecturas pendientes</q>, pero no quiere que ningún mensaje de
+      su jefe se mueva a otra carpeta, incluso si contiene <q>Informe</q> en el
+      asunto. Así que el primer filtro de mensaje que defina debería usar como
+      regla la dirección de correo de su jefe, y contendría dos acciones:
+      <q>Etiquetar mensaje</q> como <q>Importante</q> y <q>Detener ejecución de
+      los filtros</q>.</p>
+  </li>
+  <li>Si ha elegido <q>Mover</q> or <q>Copiar</q> el mensaje a una carpeta,
+    entonces elija una carpeta de destino en la que guardar los mensajes, o
+    cree una nueva.</li>
+  <li>Pulse Aceptar para confirmar las opciones.</li>
+  <li>Pulse Aceptar en el cuadro de diálogo de filtros de mensaje. El filtro
+    comienza a actuar sobre los mensajes entrantes en el momento en que se
+    pulsa Aceptar.</li>
+</ol>
+
+<p><strong>Nota</strong>: también puede ejecutar los filtros de mensajes
+  manualmente en cualquier momento. En la ventana de Correo, elija Herramientas
+  y luego seleccione Ejecutar filtros en la carpeta para aplicar los filtros en
+  carpeta actual, o Ejecutar filtros en el mensaje para aplicar los filtros en
+  los mensajes seleccionados (si hay alguno).</p>
+
+<p>Para gestionar los filtros, comenzando desde la ventana de Correo y
+  noticias:</p>
+
+<ol>
+  <li>Abra el menú Herramientas y elija Filtros de mensaje. Verá el cuadro de
+    diálogo de filtros de mensaje.</li>
+  <li>Si tiene varias cuentas de correo, elija la cuenta para la que va a crear
+    el filtro.</li>
+  <li>Puede realizar las siguientes acciones:
+    <ul>
+      <li><strong>Para activar o desactivar un filtro</strong>: marque o
+        desmarque la casilla que hay a la derecha del nombre del filtro para
+        activarlo o desactivarlo, cambiando el estado cada vez que se pulse en
+        la casilla.</li>
+      <li><strong>Para editar un filtro</strong>: seleccione el nombre del
+        filtro y pulse Editar o haga doble clic en el  nombre del filtro. Use
+        el cuadro de diálog de reglas de filtrado para realizar cambios.</li>
+      <li><strong>Para borrar un filtro</strong>: seleccione el nombre del
+        filtro y pulse en Borrar.</li>
+      <li><strong>Para cambiar el orden de aplicación de los filtros</strong>:
+        en la lista de filtros, pulse en el nombre de uno y pulse los botones
+        Subir o Bajar para moverlo.
+        
+        <p><strong>Nota</strong>: los filtros se aplican a cada mensaje
+          entrante en el orden que se indique, hasta que la acción elegida
+          borre el mensaje o lo mueva de la bandeja de entrada.</p>
+      </li>
+    </ul>
+  </li>
+  <li>Pulse Aceptar cuando haya terminado de realizar los cambios en los
+    filtros. Si ha creado un filtro nuevo, comienza a actuar en el momento de
+    pulsar Aceptar.</li>
+</ol>
+
+<p><strong>Nota</strong>: si se borra una carpeta donde almacenaba mensajes
+  mediante un filtro, el filtro dejará de funcionar. Los mensajes que
+  coincidan con el criterio del filtro se quedarán en la bandeja de entrada. Si
+  se renombra o se mueve la carpeta, el filtro se actualizará automáticamente
+  para usar el nombre nuevo.</p>
+
+<p><strong>Truco</strong>: si tiene mensajes que quiere mover a otra carpeta,
+  use la opción Ejecutar filtros en la carpeta del menú Herramientas.</p>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+  sección</a>]</p>
+
+<h3 id="filtering_messages_from_a_specific_sender">Filtrar mensajes de un
+  remitente específico</h3>
+
+<p>Puede crear rápidamente filtros para los mensajes de alguien en particular.
+  Por ejemplo, si quiere mover automáticamente todos los mensajes entrantes del
+  profesor de su hijo en una carpeta llamada <q>Colegio</q>, puede crear un
+  filtro rápidamente para hacer esto.</p>
+
+<p>Para crear un filtro para los mensajes de un remitente específico,
+  comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione un mensaje del remitente específico.</li>
+  <li>Abra el menú Mensaje, y elija Crear filtro. O, en el panel de cabecera
+    del mensaje, haga clic con el botón derecho en el nombre del remitente y
+    elija Crear filtro a partir de.</li>
+  <li>Verá el cuadro de diálogo de reglas de filtrado. Usando la dirección de
+    correo del remitente, &brandShortName; precumplimenta el criterio de
+    coincidencia y la acción del filtro (Mover mensaje a). Puede cambiar o
+    añadir nuevas reglas a los criterios de coincidencia.</li>
+  <li>Elija una carpeta de destino para almacenar los mensajes que reciba de
+    esa persona en concreto, o cree una carpeta nueva. Tambié puede elegir
+    otras acciones para este filtro, o cambiar la predeterminada.</li>
+  <li>Observe que, si deja el nombre del filtro vacío, &brandShortName;
+    le proporcionará un nombre basándose en la primera condición.</li>
+  <li>Pulse Aceptar para confirmar los datos. Verá el cuadro de diálogo
+    <a href="#creating_message_filters">Filtros de mensajes</a>, donde puede
+    crear, borrar o editar filtros de mensajes.</li>
+  <li>Pulse Aceptar. El filtro comienza a actuar en el momento en que se pulsa
+    Aceptar.</li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="searching_through_messages">Buscar entre los mensajes</h2>
+
+<p>&brandShortName; permite encontrar texto rápidamente en un solo
+mensaje, buscar mensajes por asunto o remitente, o usar una combinación
+de criterios para realizar una búsqueda avanzada por todos los mensajes
+en una carpeta concreta de correo, noticias o cuenta.</p>
+
+<p>Para localizar texto en un solo mensaje, comenzando desde la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Seleccione el mensaje, abra el menú Editar y elija Buscar en
+  este mensaje.</li>
+  <li>Escriba el texto que quiera buscar en el cuadro de diálogo.</li>
+  <li>Pulse en Buscar para encontrar la primera ocurrencia del texto.</li>
+  <li>Pulse en Buscar para seguir encontrando ocurrencias, o pulse Cancelar
+  cuando haya terminado.</li>
+  <li>Elija Repetir la búsqueda en el menú Editar para continuar
+  buscando el texto en el resto del mensaje.</li>
+</ol>
+
+<p>Para buscar rápidamente en los mensajes de una carpeta por asunto o
+remitente, comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>A la derecha de <q>El asunto o remitente contiene:</q>, escriba el texto
+  del asunto o nombre del remitente que quiera encontrar. Puede escribir
+  sólo una parte del asunto o del remitente, o puede escribir la
+  palabra exacta o nombre que quiera buscar.
+  
+  <p>En el momento en que deje de escribir, &brandShortName; muestra
+  sólo aquellos mensajes donde el asunto o el remitente contiene el
+  texto de búsqueda que se haya introducido.</p>
+  </li>
+  <li>Pulse en Limpiar para borrar el texto de búsqueda y mostrar todos
+  los mensajes de la carpeta seleccionada.</li>
+</ol>
+
+<h3 id="searching_for_specific_messages">Buscar mensajes
+específicos</h3>
+
+<p>Puede realizar búsquedas en las carpetas de correo o grupos de
+noticias para mensajes específicos. Si todavía no está
+viendo el cuadro de diálogo de Buscar mensajes, vaya a la ventana de
+Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Herramientas y elija Buscar mensajes. Aparecerá el cuadro
+    de diálogo de Buscar mensajes.</li>
+  <li>Junto a <q>Buscar mensaje en</q>, elija la cuenta, grupo de noticias o
+    carpeta en la que quiera realizar la búsqueda.</li>
+  <li>Marque la casilla <q>Buscar en subcarpetas</q> para incluir todas las
+    subcarpetas en la búsqueda.</li>
+  <li>Junto a <q>Realizar operaciones de búsqueda en</q>, seleccione una opción
+    donde buscar los mensajes en grupos de noticias o cuentas IMAP:
+    <ul>
+      <li>Elija <q>Sistema local</q> para usar para la búsqueda sólo la
+        información guardada localmente sin ninguna actividad de red. Este modo
+        incluye todas las cabeceras de mensaje principales. No puede buscar en
+        el cuerpo de los mensajes de modo local a menos que la cuenta y sus
+        carpetas hayan sido configuradas para su
+        <a href="mailnews_account_settings.xhtml#synchronization_and_storage">sncronización</a>.
+      </li>
+    <li>Elija <q>Servidor remoto</q> para realizar todas las búsquedas en el
+      servidor en el que se encuentran los mensajes. Esto le permitirá buscar
+      también contenido en el cuerpo de los mensajes que no hayan sido
+      sincronizados.</li>
+  </ul>
+  <p><strong>Nota</strong>: este menú estará desactivado si no es posible
+    buscar de modo remoto en el servidor (p.e.: en las cuentas POP).</p>
+  </li>
+  <li>Seleccione la opción adecuada para indicar si el resultado de la
+  búsqueda debe cumplir todas las condiciones especificadas o
+  sólo una de ellas para ser cierta.</li>
+  <li>Use las listas desplegables para indicar los distintos criterios de
+  búsqueda (por ejemplo, <q>Asunto</q> y <q>contiene</q>) y luego
+  escriba el texto o frase que quiera buscar.
+
+  <p><strong>Truco</strong>: para buscar mensajes que contengan una cabecera
+  que no esté en la primera lista (por ejemplo, si quiere buscar
+  mensajes que incluyan la cabecera Resent-From), elija Personalizar y escriba
+  la cabecera por la que quiera buscar. &brandShortName; añade esta
+  cabecera personalizada a la lista desplegable, para así poder
+  seleccionarla a la hora de definir criterios de búsqueda.
+  Asegúrese de que introduce la cabecera personalizada correctamente,
+  ya que Correo y noticias sólo encontrará entradas que
+  coincidan exactamente con lo que haya escrito.</p>
+  </li>
+  <li>Pulse el botón Más para añadir criterios, y el
+  botón Menos para quitarlos.</li>
+  <li>Pulse en Buscar para comenzar, o pulse Limpiar para borrar las entradas.
+  Los resultados de la búsqueda aparecen en la parte inferior del
+  cuadro de diálogo Buscar mensajes.
+    <ul>
+      <li>Para abrir un mensaje para leerlo, selecciónelo y pulse en
+      el botón Abrir, o haga doble clic en el mensaje.</li>
+      <li>Para ordenar los mensajes por un campo concreto, pulse en la columna
+      por la que quiera ordenar.</li>
+      <li>Para mover o copiar un mensaje del área de resultados a
+      otra carpeta, seleccione el mensaje y luego elija la carpeta de
+      destino desde la lista desplegable. Si la carpeta de destino
+      está en la misma cuenta, el mensaje se mueve a la carpeta.
+      Si la carpeta de destino es de otra cuenta distinta, el mensaje se
+      copiará en esa carpeta.</li>
+      <li>Para borrar un mensaje del área de resultados, seleccione el
+      mensaje y pulse el botón Borrar.</li>
+      <li>Para abrir la carpeta donde se almacena el mensaje, seleccione el
+      mensaje y pulse en Abrir carpeta del mensaje.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#organizing_your_messages">Volver al principio de la
+sección</a>]</p>
+
+<h1 id="controlling_junk_mail">Controlar el correo basura</h1>
+
+<p>Esta sección describe cómo usar los controles de correo
+basura de &brandShortName; para filtrar el correo no deseado, y cómo
+funciona la detección de phishing.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#using_junk_mail_controls">Usar los controles de correo
+      basura</a></li>
+    <li><a href="#junk_controls_options">Opciones de los controles de correo
+      basura</a></li>
+    <li><a href="#junk_controls_and_filters">Controles de correo basura y
+      filtros</a></li>
+    <li><a href="#phishing_detection">Detección de phishing</a></li>
+  </ul>
+</div>
+
+<h2 id="using_junk_mail_controls">Usar los controles de correo basura</h2>
+
+<p>Los controles de correo basura de &brandShortName; pueden evaluar sus
+mensajes entrantes e identificar mensajes que posiblemente son correo basura
+(o no solicitado). La funcionalidad utiliza el método de
+clasificación Bayesiano. Primero debe entrenar a &brandShortName;
+mostrándole una cierta cantidad de mensajes que son correo basura, y
+otros que no lo son. A partir de ese momento, déjele clasificar los
+mensajes automáticamente por usted. Si &brandShortName; comete
+algún error, corríjalo.</p>
+
+<p>Para usar los controles de correo basura:</p>
+
+<ol>
+  <li>Primero, entrene a &brandShortName; para reconocer los mensajes de
+    correo basura y los que no lo son. Hay tres maneras de cambiar el estado de
+    correo basura de los mensajes seleccionados:
+    <ul>
+      <li>Abra el menú Mensaje, escoja <q>Marcar</q> y elija <q>Como
+        correo basura</q> o <q>Como correo normal</q>.</li>
+        <li>Pulsar en el botón Correo basura de la barra de
+        herramientas.</li>
+      <li><img src="images/mail_junk_column.png" style="float:right" alt="" />
+        <p>Pulsar en la columna de estado de correo basura de la lista de
+        mensajes para cambiar su estado (si no la ve, pulse el botón
+        del extremo derecho (<img src="images/columns.png" alt="" />) en la
+        barra de cabeceras de la lista y seleccione Estado de correo basura
+        del menú desplegable).</p>
+      </li>
+    </ul>
+    <p>Cuando cambia el estado de correo basura, aparece o desaparece un icono
+      con forma de papelera en la columna de estado de correo basura para
+      indicar el estado en este aspecto del mensaje seleccionado.</p>
+  </li>
+  <li>Abra el menú Editar y escoja Configuración de cuentas de
+    correo y noticias. Verá el cuadro de diálgo de
+    configuración de correo y noticias.</li>
+  <li>Haga clic en la categoría Configuración de correo basura
+    de su cuenta de correo.</li>
+  <li>Active la característica y &brandShortName; clasificará automáticamente
+    los mensajes entrantes (vea <a href="#junk_controls_options">Opciones de
+    controles de correo basura</a>). Puede encontrar detalles sobre el resto de
+    la configuración en la descripción del panel de preferencias de
+    <a href="mailnews_account_settings.xhtml#junk_settings">Configuración de
+    correo basura</a>.</li>
+  <li>Si lo ha entrenado para borrar los mensajes que contienen virus,
+    considere deshabilitar la lista blanca (muchos virus de correo
+    envían lotes de mensajes a direcciones que figuran en la libreta de
+    direcciones del ordenador infectado).</li>
+  <li>Asegúrese de corregir los controles de correo basura cuando
+    clasifican mensajes incorrectamente, ya sea considerándolos correo
+    basura cuando no lo son, o viceversa.</li>
+  <li>Para analizar los mensajes existentes, seleccione los mensajes, abra el
+    menú Herramientas y escoja <q>Ejecutar controles de correo
+    basura</q>.</li>
+</ol>
+
+<p><strong>Nota</strong>: &brandShortName; sólo ejecutará los
+controles de correo basura cuando la base de datos de entrenamiento tiene
+información sobre mensajes de correo que no es basura. Si los controles
+de correo basura no funcionan, seleccione algunos mensajes y márquelos
+explícitamente como correo que no es basura.</p>
+
+<p>[<a href="#controlling_junk_mail">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="junk_controls_options">Opciones de los controles de correo basura</h2>
+
+<p>Para realizar un ajuste fino sobre el funcionamiento de los controles de
+  correo basura, use el
+  <a href="mailnews_preferences.xhtml#junk_and_suspect_preferences">panel de
+  preferencias de correo basura y sospechoso</a> para la configuración común a
+  todas las cuentas y la
+  <a href="mailnews_account_settings.xhtml#junk_settings">configuración de
+  correo basura</a> del administrador de cuentas para la que sea específica de
+  cada cuenta.</p>
+
+<p>[<a href="#controlling_junk_mail">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="junk_controls_and_filters">Controles de correo basura y filtros</h2>
+
+<p>Los controles de correo basura se ejecutan después de los filtros de correo
+  (a menos que configure el filtro para que se ejecute tras clasificar los
+  mensajes, entendiendo <q>clasificarlos</q> por analizarlos para determinar si
+  son correo basura o fraudulento) y se aplican únicamente a la bandeja de
+  entrada y sus subcarpetas. Use esto en su propio beneficio; por ejemplo,
+  puede filtrar correo del que esté seguro que no es correo basura a una
+  carpeta especial fuera de la bandeja de entrada, de manera que los mensajes
+  no puedan ser clasificados como correo basura (especialmente útil si se
+  suscribe a <em>boletines (newsletters)</em> o si está en una lista de correo
+  moderada).</p>
+
+<p>[<a href="#controlling_junk_mail">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="phishing_detection">Detección de phishing</h2>
+
+<p><em>Phishing</em> es un modelo de negocio fraudulento particularmente
+  común en el cual un tercero crea sitios web falsos diseñados
+  para incitar a los visitantes a divulgar datos personales tales como
+  números de tarjetas de crédito, nombres de cuentas de usuario,
+  contraseñas y números de la Seguridad Social. Haciéndose
+  pasar por entidades bancarias, compañías de tarjetas de
+  crédito y tiendas en línea, los timadores a menudo convencen a
+  los destinatarios de sus mensajes para que respondan.</p>
+
+<p>En muchos casos, usted recibirá un enlace a una página de
+  <em>phishing</em> a través de un mensaje de correo electrónico
+  que dice proceder de una dirección aparentemente oficial.
+  También puede acabar visitando esas páginas si sigue algunos
+  enlaces que encuentre por la web o a traves de la mensajería
+  instantánea.</p>
+  
+<p><strong>Consejo</strong>: puesto que una <a href="glossary.xhtml#url">URL</a>
+  falsa puede parecer muy similar a una genuina, es más seguro usar un
+  marcador que haya creado usted, o escribir la URL en la barra de direcciones
+  usted mismo en lugar de seguir un enlace en un mensaje de correo
+  electrónico. Tenga siempre presente el riesgo de una URL falsa si se
+  le pide iniciar sesión o proporcionar información privada en
+  un sitio web.</p>
+
+<p>El detector de <em>phishing</em> de Correo &brandShortName; está
+  activado por omisión. Cuando encuentra un mensaje que parece ser
+  fraudulento, le mostrará una barar de advertencia en la ventana del
+  mensaje.</p>
+
+<p>Si piensa que el mensaje es válido, puede pulsar en el botón
+  <q>No es fraudulento</q>, y la barra de advertencia desaparecerá.</p>
+
+<p>Cuando un usuario hace clic dentro de un mensaje en un enlace que parece
+  ser una URL falsa, &brandShortName; preguntará al usuario mediante
+  una ventana de diálogo antes de que se abra el sitio web.</p>
+
+<p>Esta ventana aparecerá si alguna de las siguientes condiciones es
+  cierta: el nombre de host de la URL en curso es una
+  <a href="glossary.xhtml#ip_address">dirección IP</a>, o el texto del
+  enlace es una URL cuyo nombre de host no coincide con el nombre de host de
+  la URL real.</p>
+
+<p><strong>Nota</strong>: la detección de <em>phishing</em> tiene mayor
+  precedencia que la detección de correo basura.</p>
+
+<p>Para más detalles técnicos sobre este asunto, vea el documento
+  en línea (en inglés)
+  <a href="http://www.honeynet.org/papers/phishing/">Conozca a su enemigo:
+  <em>phishing</em></a>.</p>
+
+<p>[<a href="#controlling_junk_mail">Volver al principio de la
+  sección</a>]</p>
+</body>
+</html>

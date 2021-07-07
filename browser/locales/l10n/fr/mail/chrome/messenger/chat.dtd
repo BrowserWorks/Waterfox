@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Contacts en ligne">
+<!ENTITY offlineContactsHeader.label   "Contacts déconnectés">
+<!ENTITY conversationsHeader.label     "Conversations">
+<!ENTITY searchResultConversation.label "Résultats de recherche">
+<!ENTITY chat.noConv.title             "Les conversations seront affichées ici.">
+<!ENTITY chat.noConv.description       "Utiliser la liste de contacts dans le panneau de gauche pour débuter une conversation.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; n’a pas de conversations stockées pour ce contact.">
+<!ENTITY chat.noAccount.title             "Vous n’avez pas encore défini de compte de messagerie instantanée.">
+<!ENTITY chat.noAccount.description       "Laissez &brandShortName; vous guider dans le processus de création de compte.">
+<!ENTITY chat.accountWizard.button       "Démarrer">
+<!ENTITY chat.noConnectedAccount.title             "Vos comptes de messagerie instantanée ne sont pas connectés.">
+<!ENTITY chat.noConnectedAccount.description       "Vous pouvez lancer les connexions à partir du dialogue « État des connexions » :">
+<!ENTITY chat.showAccountManager.button       "Afficher les états de connexion">
+
+<!ENTITY chat.participants             "Participants :">
+<!ENTITY chat.previousConversations    "Conversations précédentes :">
+<!ENTITY chat.ongoingConversation      "Conversation en cours">
+
+<!ENTITY openConversationCmd.label     "Démarrer une conversation">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Fermer la conversation">
+<!ENTITY closeConversationCmd.accesskey "C">
+<!ENTITY aliasCmd.label                "Renommer">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Supprimer le contact">
+<!ENTITY deleteCmd.accesskey           "S">
+
+<!ENTITY openConversationButton.tooltip  "Démarrer une conversation">
+<!ENTITY closeConversationButton.tooltip "Fermer une conversation">
+
+<!ENTITY addBuddyButton.label          "Ajouter un contact">
+<!ENTITY joinChatButton.label          "Rejoindre une discussion">
+<!ENTITY chatAccountsButton.label      "Afficher les comptes">
+
+<!ENTITY status.available          "Disponible">
+<!ENTITY status.unavailable        "Occupé">
+<!ENTITY status.offline            "Déconnecté">
+
+<!ENTITY openLinkCmd.label            "Ouvrir le lien…">
+<!ENTITY openLinkCmd.accesskey        "O">

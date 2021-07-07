@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title			"ツールバーのカスタマイズ">
+<!ENTITY dialog.dimensions		"width: 92ch; height: 36em;">
+<!ENTITY instructions.description	"ドラッグ &amp; ドロップによりツールバーのアイテムを追加、削除や移動できます。">
+<!ENTITY show.label			"表示:">
+<!ENTITY iconsAndText.label		"アイコンとテキスト">
+<!ENTITY icons.label			"アイコンのみ">
+<!ENTITY text.label			"テキストのみ">
+<!ENTITY iconsBesideText.label		"アイコンの横にテキスト">
+<!ENTITY useSmallIcons.label		"小さいアイコンを使用">
+<!ENTITY restoreDefaultSet.label	"初期設定に戻す">
+<!ENTITY showTitlebar2.label		"タイトルバー">
+<!ENTITY extraDragSpace2.label		"ドラッグスペース">
+<!ENTITY saveChanges.label		"完了">
+<!ENTITY undoChanges.label		"元に戻す">

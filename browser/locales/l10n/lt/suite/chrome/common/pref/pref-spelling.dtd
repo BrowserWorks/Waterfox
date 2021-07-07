@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Rašybos tikrinimas">
+<!ENTITY generalSpelling.label                "Bendrosios">
+<!ENTITY checkSpellingWhenTyping.label        "Tikrinti rašybą renkant tekstą:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "T">
+<!ENTITY dontCheckSpelling.label              "niekada">
+<!ENTITY multilineCheckSpelling.label         "kelių eilučių laukuose">
+<!ENTITY alwaysCheckSpelling.label            "visuose laukuose">
+<!ENTITY spellForMailAndNews.label            "Paštas ir naujienų grupės">
+<!ENTITY checkSpellingBeforeSend.label        "Tikrinti rašybą prieš išsiunčiant laišką">
+<!ENTITY checkSpellingBeforeSend.accesskey    "s">
+<!ENTITY spellCheckInline.label               "Tikrinti rašybą rašant tekstą">
+<!ENTITY spellCheckInline.accesskey           "r">
+<!ENTITY languagePopup.label                  "Kalba:">
+<!ENTITY languagePopup.accessKey              "K">
+<!ENTITY moreDictionaries.label               "Atsiųsti kitų kalbų žodynus…">
+<!ENTITY noSpellCheckAvailable.label          "Nėra įdiegtų žodynų.">

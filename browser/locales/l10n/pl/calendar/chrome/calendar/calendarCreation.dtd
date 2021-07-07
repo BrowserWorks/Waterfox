@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Nowy kalendarz" >
+<!ENTITY wizard.label             "Nowy kalendarz" >
+<!ENTITY wizard.description       "Lokalizacja kalendarza" >
+
+<!ENTITY initialpage.description    "Kalendarz może być przechowywany na komputerze lokalnym albo
+na serwerze, dzięki czemu można będzie go używać zdalnie lub współdzielić ze znajomymi lub współpracownikami.">
+<!ENTITY initialpage.computer.label  "Kalendarz lokalny">
+<!ENTITY initialpage.network.label   "Kalendarz zdalny">
+
+<!ENTITY locationpage.description         "Format, położenie i dostęp do kalendarza zdalnego.">
+<!ENTITY locationpage.login.description   "Jeśli to konieczne, wprowadź nazwę użytkownika i hasło" >
+<!ENTITY locationpage.username.label      "Nazwa użytkownika:" >
+<!ENTITY locationpage.password.label      "Hasło:" >
+
+<!ENTITY custompage.shortdescription  "Ustawienia kalendarza" >
+<!ENTITY custompage.longdescription   "Wybierz nazwę dla kalendarza. Możliwe jest także wybranie koloru, którym wyróżniane będą wszystkie zdarzenia tego kalendarza." >
+
+<!ENTITY finishpage.shortdescription  "Utworzono kalendarz" >
+<!ENTITY finishpage.longdescription   "Kalendarz został utworzony." >
+
+<!ENTITY sourcetabs.other.label "Inne">
+
+<!ENTITY buttons.create.label "Utwórz kalendarz">
+<!ENTITY buttons.create.accesskey "U">
+
+<!ENTITY buttons.find.label "Znajdź kalendarze">
+<!ENTITY buttons.find.accesskey "Z">
+
+<!ENTITY buttons.back.label "Wstecz">
+<!ENTITY buttons.back.accesskey "W">
+
+<!ENTITY buttons.subscribe.label "Subskrybuj">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Typ kalendarza:">
+<!ENTITY location.label "Położenie:">
+<!ENTITY location.placeholder "Adres lub nazwa hosta serwera kalendarza">
+
+<!ENTITY network.nocredentials.label "To położenie nie wymaga danych logowania">
+<!ENTITY network.loading.description "Proszę czekać, kalendarze są wykrywane.">
+<!ENTITY network.notfound.description "Nie można odnaleźć kalendarzy w tym położeniu. Proszę sprawdzić ustawienia.">
+<!ENTITY network.authfail.description "Podane dane logowania nie zostały przyjęte. Proszę sprawdzić ustawienia.">
+
+<!ENTITY network.subscribe.single.description "Wybierz kalendarze do subskrypcji.">
+<!ENTITY network.subscribe.multiple.description "Dla tego położenia dostępnych jest wiele typów kalendarza. Wybierz typ, a następnie oznacz kalendarze do subskrypcji.">

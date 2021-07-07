@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Správce identit tohoto účtu. První identita je používána jako výchozí.">
+<!ENTITY identitiesListAdd.label "Přidat…">
+<!ENTITY identitiesListAdd.accesskey "P">
+<!ENTITY identitiesListEdit.label "Upravit…">
+<!ENTITY identitiesListEdit.accesskey "U">
+<!ENTITY identitiesListDefault.label "Nastavit jako výchozí">
+<!ENTITY identitiesListDefault.accesskey "N">
+<!ENTITY identitiesListDelete.label "Smazat">
+<!ENTITY identitiesListDelete.accesskey "m">
+<!ENTITY identitiesListClose.label "Zavřít">
+<!ENTITY identitiesListClose.accesskey "Z">

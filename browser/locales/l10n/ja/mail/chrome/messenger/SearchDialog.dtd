@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xhtml -->
+<!ENTITY searchHeading.label		"次の中からメッセージを検索:">
+<!ENTITY searchHeading.accesskey	"h">
+<!ENTITY searchSubfolders.label		"サブフォルダーも検索する">
+<!ENTITY searchSubfolders.accesskey	"e">
+<!ENTITY searchOnServer.label		"サーバー上のメッセージを検索する">
+<!ENTITY searchOnServer.accesskey	"u">
+<!ENTITY resetButton.label		"リセット">
+<!ENTITY resetButton.accesskey		"C">
+<!ENTITY openButton.label		"開く">
+<!ENTITY openButton.accesskey		"n">
+<!ENTITY deleteButton.label		"削除">
+<!ENTITY deleteButton.accesskey		"D">
+<!ENTITY searchDialogTitle.label	"メッセージを検索">
+<!ENTITY results.label			"検索結果">
+<!ENTITY moveButton.label		"移動">
+<!ENTITY moveButton.accesskey		"T">
+<!ENTITY closeCmd.key			"W">
+<!ENTITY openInFolder.label		"フォルダーを開く">
+<!ENTITY openInFolder.accesskey		"r">
+<!ENTITY saveAsVFButton.label		"検索フォルダーとして保存">
+<!ENTITY saveAsVFButton.accesskey	"v">
+
+<!-- for abSearchDialog.xhtml -->
+<!ENTITY abSearchHeading.label		"次の中からカードを検索:">
+<!ENTITY abSearchHeading.accesskey	"h"> 
+<!ENTITY propertiesButton.label		"プロパティ">
+<!ENTITY propertiesButton.accesskey	"P">
+<!ENTITY composeButton.label		"新しいメッセージ">
+<!ENTITY composeButton.accesskey	"W">
+<!ENTITY deleteCardButton.label		"削除">
+<!ENTITY deleteCardButton.accesskey	"D">
+<!ENTITY abSearchDialogTitle.label	"アドレスを検索">

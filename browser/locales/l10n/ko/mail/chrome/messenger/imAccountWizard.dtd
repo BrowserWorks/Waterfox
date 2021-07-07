@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "채팅 계정 관리자">
+
+<!ENTITY accountProtocolTitle.label   "채팅 네트워크">
+<!ENTITY accountProtocolInfo.label    "채팅 계정의 네트워크를 선택해 주십시오.">
+<!ENTITY accountProtocolField.label   "네트워크:">
+<!ENTITY accountProtocolGetMore.label "그 외…">
+
+<!ENTITY accountUsernameTitle.label   "사용자명">
+<!ENTITY accountUsernameDuplicate.label "이 계정은 설정이 끝난 상태입니다.">
+
+<!ENTITY accountPasswordTitle.label   "비밀번호">
+<!ENTITY accountPasswordInfo.label    "계정 비밀번호를 입력해 주십시오.">
+<!ENTITY accountPasswordField.label   "비밀번호:">
+<!ENTITY accountPasswordManager.label "입력된 암호는 암호 관리자에 저장됩니다.암호가 필요없거나 계정 접속시에 암호를 매회 입력하고 싶은 경우 이 박스에 아무것도 입력하지 않으시면 됩니다.">
+
+<!ENTITY accountAdvancedTitle.label   "상세 설정">
+<!ENTITY accountAdvancedInfo.label    "이 순서는 특히 필요가 없으면 건너뛸 수 있습니다.">
+<!ENTITY accountAdvanced.newMailNotification.label   "새 메일 알림">
+<!ENTITY accountAliasGroupbox.caption "로컬 별명">
+<!ENTITY accountAliasField.label      "별명:">
+<!ENTITY accountAliasInfo.label       "별명은 대화중에 표시되는 이름입니다. 상대는 볼 수 없습니다.">
+<!ENTITY accountProxySettings.caption "프록시 설정">
+<!ENTITY accountProxySettings.change.label     "변경…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "요약">
+<!ENTITY accountSummaryInfo.label    "아래는 입력한 계정 정보의 요약입니다. 계정를 작성하기 전에 확인해 주십시오.">
+<!ENTITY accountSummary.connectNow.label "계정 지금 접속">

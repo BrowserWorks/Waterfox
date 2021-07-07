@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Panel prohlížeče">
+<!ENTITY tabCmd.accesskey "P">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Otevřít adresu…">
+<!ENTITY openCmd.accesskey "o">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Otevřít soubor…">
+<!ENTITY openFileCmd.accesskey "s">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Zavřít ostatní panely">
+<!ENTITY closeOtherTabs.accesskey "p">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Zavřít panely vpravo">
+<!ENTITY  closeTabsToTheEnd.accesskey "n">
+
+<!ENTITY uploadFile.label "Nahrát soubor…">
+<!ENTITY uploadFile.accesskey "S">
+
+<!ENTITY printSetupCmd.label "Vzhled stránky…">
+<!ENTITY printSetupCmd.accesskey "v">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Najít na této stránce…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Nástrojové lišty">
+<!ENTITY toolbarsCmd.accesskey "N">
+<!ENTITY tabbarCmd.label "Lišta s panely">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "Stavový řádek">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Lišta komponent">
+<!ENTITY componentbarCmd.accesskey "K">
+
+<!ENTITY fullScreenCmd.label "Celá obrazovka">
+<!ENTITY fullScreenCmd.accesskey "C">
+
+<!ENTITY useStyleSheetMenu.label "Styl stránky">
+<!ENTITY useStyleSheetMenu.accesskey "y">
+<!ENTITY useStyleSheetNone.label "Žádný">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "Základní styl">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "z">
+<!ENTITY bidiSwitchPageDirectionItem.label "Změnit orientaci stránky">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "o">
+<!ENTITY pageSourceCmd.label "Zdrojový kód stránky">
+<!ENTITY pageSourceCmd.accesskey "j">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Informace o stránce">
+<!ENTITY pageInfoCmd.accesskey "i">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Přejít">
+<!ENTITY goMenu.accesskey "p">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Domů">
+<!ENTITY goHomeCmd.accesskey "d">
+<!ENTITY historyCmd.label "Historie">
+<!ENTITY historyCmd.accesskey "h">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Naposledy zavřené panely">
+<!ENTITY recentTabs.accesskey "p">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Naposledy zavřená okna">
+<!ENTITY recentWindows.accesskey "d">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Obnovit předchozí relaci">
+<!ENTITY historyRestoreLastSession.accesskey "O">
+<!ENTITY syncTabsMenu.label "Panely z jiných počítačů">
+<!ENTITY syncTabsMenu.accesskey "P">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Záložky">
+<!ENTITY bookmarksMenu.accesskey "o">
+<!ENTITY addCurPageCmd.label "Přidat stránku do záložek">
+<!ENTITY addCurPageCmd.accesskey "P">
+<!ENTITY addCurPageAsCmd.label "Přidat do záložek jako…">
+<!ENTITY addCurPageAsCmd.accesskey "J">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Přidat skupinu panelů do záložek…">
+<!ENTITY addCurTabsAsCmd.accesskey "K">
+<!ENTITY manBookmarksCmd.label "Správce záložek…">
+<!ENTITY manBookmarksCmd.accesskey "S">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Hledání na webu">
+<!ENTITY searchInternetCmd.accesskey "W">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Přeložit stránku">
+<!ENTITY translateMenu.accesskey "l">
+
+<!ENTITY cookieMessageTitle.label "Oprávnění ke cookies bylo změněno">
+<!ENTITY cookieDisplayCookiesCmd.label "Správa cookies">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "C">
+<!ENTITY cookieAllowCookiesCmd.label "Povolit cookies z tohoto serveru">
+<!ENTITY cookieAllowCookiesCmd.accesskey "P">
+<!ENTITY cookieAllowCookiesMsg.label "Cookies z tohoto serveru budou vždy povoleny.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Povolit cookies pro relaci z tohoto serveru">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "S">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Tento server bude moci nastavit cookies pouze pro aktuální relaci.">
+<!ENTITY cookieCookiesDefaultCmd.label "Použít výchozí oprávnění pro cookies">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "Cookies budou pro tento server povoleny nebo zakázány podle výchozího nastavení.">
+<!ENTITY cookieBlockCookiesCmd.label "Blokovat cookies z tohoto serveru">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "Cookies z tohoto serveru budou vždy zakázány.">
+
+<!ENTITY cookieImageMessageTitle.label "Oprávnění k obrázkům změněno">
+<!ENTITY cookieDisplayImagesCmd.label "Správa obrázků">
+<!ENTITY cookieDisplayImagesCmd.accesskey "O">
+<!ENTITY cookieAllowImagesCmd.label "Povolit obrázky z tohoto serveru">
+<!ENTITY cookieAllowImagesCmd.accesskey "P">
+<!ENTITY cookieAllowImagesMsg.label "Obrázky z tohoto serveru budou vždy staženy.">
+<!ENTITY cookieImagesDefaultCmd.label "Použít výchozí nastavení práv k obrázkům">
+<!ENTITY cookieImagesDefaultCmd.accesskey "U">
+<!ENTITY cookieImagesDefaultMsg.label "Obrázky z tohoto serveru budou staženy na základě výchozího nastavení.">
+<!ENTITY cookieBlockImagesCmd.label "Blokovat obrázky z tohoto serveru">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "Obrázky z tohoto serveru nebudou nikdy stahovány.">
+
+<!ENTITY popupsMessageChangeTitle.label "Oprávnění k vyskakovacím oknům změněno">
+<!ENTITY popupAllowCmd.label "Povolit vyskakovací okna pro tento server">
+<!ENTITY popupAllowCmd.accesskey "a">
+<!ENTITY popupAllowMsg.label "Vyskakovací okna z tohoto serveru budou vždy povolena.">
+<!ENTITY popupDefaultCmd.label "Použít výchozí oprávnění pro vyskakovací okna">
+<!ENTITY popupDefaultCmd.accesskey "u">
+<!ENTITY popupDefaultMsg.label "Vyskakovací okna z tohoto serveru budou zobrazována na základě výchozího nastavení.">
+<!ENTITY popupBlockCmd.label "Blokovat vyskakovací okna pro tento server">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "Vyskakovací okna z tohoto serveru nebudou zobrazována.">
+<!ENTITY popupsManage.label "Správa vyskakovacích oken">
+<!ENTITY popupsManage.accesskey "S">
+
+<!ENTITY cookieCookieManager.label "Správce cookies">
+<!ENTITY cookieCookieManager.accesskey "c">
+<!ENTITY cookieImageManager.label "Správce obrázků">
+<!ENTITY cookieImageManager.accesskey "o">
+<!ENTITY popupsManager.label "Správce vyskakovacích oken">
+<!ENTITY popupsManager.accesskey "v">
+
+<!ENTITY clearPrivateDataCmd.label "Vymazat důvěrná data">
+<!ENTITY clearPrivateDataCmd.accesskey "m">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

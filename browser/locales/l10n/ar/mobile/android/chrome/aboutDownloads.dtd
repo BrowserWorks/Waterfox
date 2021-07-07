@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "التنزيلات">
+<!ENTITY aboutDownloads.header                     "تنزيلاتك">
+<!ENTITY aboutDownloads.empty                      "لا تنزيلات">
+
+<!ENTITY aboutDownloads.open                       "افتح">
+<!ENTITY aboutDownloads.remove                     "حذف">
+<!ENTITY aboutDownloads.removeAll                  "احذف الكل">
+<!ENTITY aboutDownloads.pause                      "ألبِث">
+<!ENTITY aboutDownloads.resume                     "أكمل">
+<!ENTITY aboutDownloads.cancel                     "ألغِ">
+<!ENTITY aboutDownloads.retry                      "أعِد المحاولة">

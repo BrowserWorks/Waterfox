@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "検索">
+
+<!ENTITY newPref.namePlaceholder       "名前">
+
+<!ENTITY newPref.valueBoolean          "真偽値">
+<!ENTITY newPref.valueString           "文字列">
+<!ENTITY newPref.valueInteger          "整数値">
+
+<!ENTITY newPref.stringPlaceholder     "文字列を入力">
+<!ENTITY newPref.numberPlaceholder     "数値を入力">
+
+<!ENTITY newPref.toggleButton          "切り替え">
+<!ENTITY newPref.cancelButton          "キャンセル">
+
+<!ENTITY contextMenu.copyPrefName      "名前をコピー">
+<!ENTITY contextMenu.copyPrefValue     "値をコピー">

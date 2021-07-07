@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ปรับแต่งส่วนหัว">
+<!ENTITY addButton.label "เพิ่ม">
+<!ENTITY addButton.accesskey "พ">
+<!ENTITY removeButton.label "เอาออก">
+<!ENTITY removeButton.accesskey "อ">
+<!ENTITY newMsgHeader.label "ส่วนหัวข้อความใหม่:">
+<!ENTITY newMsgHeader.accesskey "ม">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Всплывающие окна">
+
+<!ENTITY pref.popups.caption            "Всплывающие окна">
+
+<!ENTITY popupBlock.label               "Блокировать всплывающие окна">
+<!ENTITY popupBlock.accesskey           "л">
+
+<!ENTITY viewPermissions.label          "Управление разрешениями">
+<!ENTITY viewPermissions.accesskey      "р">
+
+<!ENTITY whenBlock.description          "Если всплывающее окно было заблокировано:">
+<!ENTITY playSound.label                "Подать звуковой сигнал:">
+<!ENTITY playSound.accesskey            "о">
+<!ENTITY systemSound.label              "Системный звук">
+<!ENTITY systemSound.accesskey          "и">
+<!ENTITY customSound.label              "Указать звуковой файл">
+<!ENTITY customSound.accesskey          "к">
+
+<!ENTITY selectSound.label              "Обзор…">
+<!ENTITY selectSound.accesskey          "б">
+<!ENTITY playSoundButton.label          "Прослушать">
+<!ENTITY playSoundButton.accesskey      "ш">
+
+<!ENTITY displayIcon.label              "Показывать значок в строке состояния браузера">
+<!ENTITY displayIcon.accesskey          "в">
+
+<!ENTITY displayNotification.label      "Отображать панель уведомления в верхней части веб-страницы">
+<!ENTITY displayNotification.accesskey  "т">
+
+<!ENTITY popupNote.description          "Примечание: блокирование всплывающих окон может привести к тому, что важные функции некоторых веб-сайтов будут вам недоступны, например, окна регистрации в банковских системах и онлайн-магазинах. Чтобы получить более подробную информацию о том, как разрешать некоторым веб-сайтам открывать всплывающие окна при их общем блокировании, нажмите кнопку «Справка». Даже если вы блокируете всплывающие окна, веб-сайты могут использовать другие способы открытия окон с рекламой.">
+

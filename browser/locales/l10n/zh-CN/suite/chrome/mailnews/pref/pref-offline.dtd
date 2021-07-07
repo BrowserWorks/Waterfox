@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "网络和存储">
+<!ENTITY pref.offline.caption             "脱机">
+<!ENTITY textStartUp                      "启动时：">
+<!ENTITY textStartUp.accesskey            "W">
+<!ENTITY menuitemRememberPrevState        "记住上次的联机状态">
+<!ENTITY menuitemAskMe                    "启动时询问联机状态">
+<!ENTITY menuitemAlwaysOnline             "启动时自动联机">
+<!ENTITY menuitemAlwaysOffline            "一律以离线状态启动">
+<!ENTITY menuitemAutomatic                "自动检测(如果适用)">
+<!ENTITY textGoingOnline                  "联机时发送未发送的消息吗？">
+<!ENTITY radioAutoSend                    "是">
+<!ENTITY radioAutoSend.accesskey          "Y">
+<!ENTITY radioNotSend                     "不">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "询问我">
+<!ENTITY radioAskUnsent.accesskey         "s">
+<!ENTITY textGoingOffline                 "切换至脱机状态时下载消息以供脱机使用吗？">
+<!ENTITY radioAutoDownload                "是">
+<!ENTITY radioAutoDownload.accesskey      "e">
+<!ENTITY radioNotDownload                 "不">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "询问我">
+<!ENTITY radioAskDownload.accesskey       "k">
+<!ENTITY mailConnections.caption          "邮件连接">
+<!ENTITY mailnewsTimeout.label            "连接超时：">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "秒">
+<!ENTITY Diskspace                        "磁盘空间">
+<!ENTITY offlineCompactFolders.label      "需要节省空间时压缩全部文件夹">
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "MB 合计">

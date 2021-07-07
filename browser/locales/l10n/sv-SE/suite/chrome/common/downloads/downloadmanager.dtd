@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Filhämtaren">
+
+<!ENTITY menuBar.tooltip                 "Menyrad">
+<!ENTITY searchBar.tooltip               "Sökrad">
+
+<!ENTITY search.placeholder              "Sök hämtningar">
+<!ENTITY search.label                    "Sök hämtningar">
+<!ENTITY search.accesskey                "S">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Rensa listan">
+<!ENTITY cmd.clearList.tooltip           "Tar bort färdiga, avbrutna eller misslyckade hämtningar från listan">
+<!ENTITY cmd.clearList.accesskey         "R">
+
+<!ENTITY col.name.label                  "Namn">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Filnamn">
+<!ENTITY col.status.label                "Status">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "Status">
+<!ENTITY col.actionPlay.label            "Pause/Återuppta/Försök igen">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "Pause/Återuppta/Försök igen">
+<!ENTITY col.actionStop.label            "Avbryt/Ta bort">
+<!ENTITY col.actionStop.accesskey        "A">
+<!ENTITY col.actionStop.tooltip          "Avbryt/Ta bort">
+<!ENTITY col.progress.label              "Förlopp">
+<!ENTITY col.progress.accesskey          "F">
+<!ENTITY col.progress.tooltip            "Förlopp">
+<!ENTITY col.timeremaining.label         "Tid kvar">
+<!ENTITY col.timeremaining.accesskey     "k">
+<!ENTITY col.timeremaining.tooltip       "Tid kvar">
+<!ENTITY col.transferred.label           "Överfört">
+<!ENTITY col.transferred.accesskey       "Ö">
+<!ENTITY col.transferred.tooltip         "Överfört">
+<!ENTITY col.transferrate.label          "Hastighet">
+<!ENTITY col.transferrate.accesskey      "H">
+<!ENTITY col.transferrate.tooltip        "Hastighet">
+<!ENTITY col.timeelapsed.label           "Använd tid">
+<!ENTITY col.timeelapsed.accesskey       "v">
+<!ENTITY col.timeelapsed.tooltip         "Använd tid">
+<!ENTITY col.starttime.label             "Starttid">
+<!ENTITY col.starttime.accesskey         "a">
+<!ENTITY col.starttime.tooltip           "Starttid">
+<!ENTITY col.endtime.label               "Sluttid">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "Sluttid">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Färdigt (&#37;)">
+<!ENTITY col.source.label                "Källa">
+<!ENTITY col.source.accesskey            "ä">
+<!ENTITY col.source.tooltip              "Källa">
+
+<!ENTITY view.columns.label              "Visa kolumner">
+<!ENTITY view.columns.accesskey          "o">
+<!ENTITY view.sortBy.label               "Sortera">
+<!ENTITY view.sortBy.accesskey           "S">
+
+<!ENTITY view.unsorted.label             "Osorterat">
+<!ENTITY view.unsorted.accesskey         "O">
+<!ENTITY view.sortAscending.label        "Stigande">
+<!ENTITY view.sortAscending.accesskey    "S">
+<!ENTITY view.sortDescending.label       "Fallande">
+<!ENTITY view.sortDescending.accesskey   "F">
+
+<!ENTITY cmd.pause.label                 "Pause">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "Återuppta">
+<!ENTITY cmd.resume.accesskey            "Å">
+<!ENTITY cmd.retry.label                 "Försök igen">
+<!ENTITY cmd.retry.accesskey             "i">
+<!ENTITY cmd.cancel.label                "Avbryt">
+<!ENTITY cmd.cancel.accesskey            "A">
+<!ENTITY cmd.remove.label                "Ta bort från listan">
+<!ENTITY cmd.remove.accesskey            "b">
+<!ENTITY cmd.open.label                  "Öppna">
+<!ENTITY cmd.open.accesskey              "Ö">
+<!ENTITY cmd.show.label                  "Öppna mappen">
+<!ENTITY cmd.show.accesskey              "m">
+<!ENTITY cmd.goToDownloadPage.label      "Gå till hämtningssidan">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "Kopiera hämtningens länk">
+<!ENTITY cmd.copyDownloadLink.accesskey  "l">
+<!ENTITY cmd.properties.label            "Egenskaper…">
+<!ENTITY cmd.properties.accesskey        "e">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Tillåt nedladdning">
+<!ENTITY cmd.unblock2.accesskey           "T">
+

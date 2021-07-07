@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtravimo taisyklės">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Filtro pavadinimas:">
+<!ENTITY filterName.accesskey "F">
+
+<!ENTITY recentFolders.label "Paskiausi">
+
+<!ENTITY junk.label "Brukalas">
+<!ENTITY notJunk.label "Ne brukalas">
+
+<!ENTITY lowestPriorityCmd.label "žemiausią">
+<!ENTITY lowPriorityCmd.label "žemą">
+<!ENTITY normalPriorityCmd.label "normalų">
+<!ENTITY highPriorityCmd.label "aukštą">
+<!ENTITY highestPriorityCmd.label "aukščiausią">
+
+<!ENTITY contextDesc.label "Filtrą taikyti, kai:">
+<!ENTITY contextIncomingMail.label "tikrinamas paštas:">
+<!ENTITY contextIncomingMail.accesskey "t">
+<!ENTITY contextManual.label "nurodoma filtruoti laiškus">
+<!ENTITY contextManual.accesskey "n">
+<!ENTITY contextBeforeCls.label "prieš atrenkant brukalą">
+<!ENTITY contextAfterCls.label "atrinkus brukalą">
+
+
+
+
+
+<!ENTITY filterActionDesc.label "atlikti šiuos veiksmus:">
+<!ENTITY filterActionDesc.accesskey "v">
+
+<!ENTITY filterActionOrderWarning.label "Pastaba: filtrai bus vykdomi kita tvarka.">
+<!ENTITY filterActionOrder.label "Parodyti vykdymo tvarką">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "Perkelti į aplanką:">
+<!ENTITY copyMessage.label "Nukopijuoti į aplanką:">
+<!ENTITY forwardTo.label "Persiųsti:">
+<!ENTITY replyWithTemplate.label "Atsakyti naudojantis šablonu">
+<!ENTITY markMessageRead.label "Pažymėti kaip skaitytą">
+<!ENTITY markMessageUnread.label "Pažymėti kaip neskaitytą">
+<!ENTITY markMessageStarred.label "Pažymėti vėliavėle">
+<!ENTITY setPriority.label "Nustatyti prioritetą:">
+<!ENTITY addTag.label "Priskirti gairę:">
+<!ENTITY setJunkScore.label "Priskirti brukalo statusą:">
+<!ENTITY deleteMessage.label "Pašalinti laišką">
+<!ENTITY deleteFromPOP.label "Pašalinti iš POP serverio">
+<!ENTITY fetchFromPOP.label "Atsiųsti laiško tekstą iš POP serverio">
+<!ENTITY ignoreThread.label "Nepaisyti gijos">
+<!ENTITY ignoreSubthread.label "Nepaisyti gijos atšakos">
+<!ENTITY watchThread.label "Stebėti giją">
+<!ENTITY stopExecution.label "Stabdyti filtrų vykdymą">
+
+<!ENTITY addAction.tooltip "Pridėti naują veiksmą">
+<!ENTITY removeAction.tooltip "Pašalinti šį veiksmą">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

@@ -1,0 +1,113 @@
+<!ENTITY aboutDialog.title          "A &brandFullName; névjegye">
+
+<!-- LOCALIZATION NOTE (update.*):
+# These strings are also used in the update pane of preferences.
+# See about:preferences#advanced.
+-->
+<!-- LOCALIZATION NOTE (update.checkForUpdatesButton.*, update.updateButton.*):
+# Only one button is present at a time.
+# The button when displayed is located directly under the Thunderbird version in
+# the about dialog.
+-->
+<!ENTITY update.checkForUpdatesButton.label       "Frissítések keresése">
+<!ENTITY update.checkForUpdatesButton.accesskey   "F">
+<!ENTITY update.updateButton.label3               "Újraindítás a &brandShorterName; frissítéséhez">
+<!ENTITY update.updateButton.accesskey            "r">
+
+
+<!-- LOCALIZATION NOTE (warningDesc.version): This is a warning about the experimental nature of Nightly builds. It is only shown in this version. -->
+<!ENTITY warningDesc.version        "A(z) &brandShortName; egy kísérleti változat, és instabil lehet.">
+<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly builds automatically send Telemetry data back to Mozilla. It is only shown in this version. "It" refers to brandShortName. -->
+<!ENTITY warningDesc.telemetryDesc  "Automatikusan információkat küld a teljesítményről, hardverről, felhasználási módról és testreszabásokról a &vendorShortName;nak, hogy a &brandShortName; jobb lehessen.">
+
+<!-- LOCALIZATION NOTE (community.exp.*) This paragraph is shown in "experimental" builds, i.e. Nightly builds, instead of the other "community.*" strings below. -->
+<!ENTITY community.exp.start        "">
+<!-- LOCALIZATION NOTE (community.exp.mozillaLink): This is a link title that links to https://www.mozilla.org/. -->
+<!ENTITY community.exp.mozillaLink  "&vendorShortName;">
+<!ENTITY community.exp.middle       " egy ">
+<!-- LOCALIZATION NOTE (community.exp.creditslink): This is a link title that links to about:credits. -->
+<!ENTITY community.exp.creditsLink  "nemzetközi közösség">
+<!ENTITY community.exp.end          ", amely a nyílt, nyilvános és mindenki számára elérhető internetért dolgozik.">
+
+<!ENTITY community.start2           "A &brandShortName;öt a ">
+<!-- LOCALIZATION NOTE (community.mozillaLink): This is a link title that links to https://www.mozilla.org/. -->
+<!ENTITY community.mozillaLink      "&vendorShortName;">
+<!ENTITY community.middle2          " tervezte, egy ">
+<!-- LOCALIZATION NOTE (community.creditsLink): This is a link title that links to about:credits. -->
+<!ENTITY community.creditsLink      "nemzetközi közösség">
+<!ENTITY community.end3             ", amely a nyílt, nyilvános és mindenki számára elérhető internetért dolgozik.">
+
+<!ENTITY helpus.start               "Szeretne segíteni? ">
+<!-- LOCALIZATION NOTE (helpus.donateLink): This is a link title that links to the thunderbird donation page -->
+<!ENTITY helpus.donateLink          "Támogasson,">
+<!ENTITY helpus.middle              " vagy ">
+<!-- LOCALIZATION NOTE (helpus.getInvolvedLink): This is a link title that links to https://www.thunderbird.net/get-involved/. -->
+<!ENTITY helpus.getInvolvedLink     "vegyen részt!">
+<!ENTITY helpus.end                 "">
+
+<!ENTITY releaseNotes.link          "Kiadási megjegyzések">
+
+<!-- LOCALIZATION NOTE (bottomLinks.license): This is a link title that links to about:license. -->
+<!ENTITY bottomLinks.license        "Licencinformációk">
+
+<!-- LOCALIZATION NOTE (bottomLinks.rights): This is a link title that links to about:rights. -->
+<!ENTITY bottomLinks.rights         "Végfelhasználói jogok">
+
+<!-- LOCALIZATION NOTE (bottomLinks.privacy): This is a link title that links to https://www.mozilla.org/legal/privacy/. -->
+<!ENTITY bottomLinks.privacy        "Adatvédelmi irányelvek">
+
+<!-- LOCALIZATION NOTE (update.checkingForUpdates): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.checkingForUpdates  "Frissítések keresése…">
+<!-- LOCALIZATION NOTE (update.noUpdatesFound): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.noUpdatesFound      "A &brandShortName; naprakész">
+<!-- LOCALIZATION NOTE (update.adminDisabled): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.adminDisabled       "A frissítéseket a rendszergazda letiltotta">
+<!-- LOCALIZATION NOTE (update.otherInstanceHandlingUpdates): try to make the localized text short -->
+<!ENTITY update.otherInstanceHandlingUpdates "A &brandShortName; frissítését egy másik példány végzi">
+
+<!-- LOCALIZATION NOTE (update.failed.start,update.failed.linkText,update.failed.end):
+     update.failed.start, update.failed.linkText, and update.failed.end all go into
+     one line with linkText being wrapped in an anchor that links to a site to download
+     the latest version of Firefox (e.g. https://www.firefox.com). As this is all in
+     one line, try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.failed.start        "A frissítés sikertelen.">
+<!ENTITY update.failed.linkText     "Töltse le a legújabb verziót">
+<!ENTITY update.failed.end          "">
+
+<!-- LOCALIZATION NOTE (update.manual.start,update.manual.end): update.manual.start and update.manual.end
+     all go into one line and have an anchor in between with text that is the same as the link to a site
+     to download the latest version of Firefox (e.g. https://www.firefox.com). As this is all in one line,
+     try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.manual.start        "Töltse le a ">
+<!ENTITY update.manual.linkText     "legújabb verziót">
+<!ENTITY update.manual.end          "">
+
+<!-- LOCALIZATION NOTE (update.unsupported.start,update.unsupported.linkText,update.unsupported.end):
+     update.unsupported.start, update.unsupported.linkText, and
+     update.unsupported.end all go into one line with linkText being wrapped in
+     an anchor that links to a site to provide additional information regarding
+     why the system is no longer supported. As this is all in one line, try to
+     make the localized text short (see bug 843497 for screenshots). -->
+<!ENTITY update.unsupported.start    "Nem végezhet további frissítéseket ezen a rendszeren.">
+<!ENTITY update.unsupported.linkText "További tudnivalók">
+<!ENTITY update.unsupported.end      "">
+
+<!-- LOCALIZATION NOTE (update.downloading.start,update.downloading.end): update.downloading.start and
+     update.downloading.end all go into one line, with the amount downloaded inserted in between. As this
+     is all in one line, try to make the localized text short (see bug 596813 for screenshots). The — is
+     the "em dash" (long dash).
+     example: Downloading update — 111 KB of 13 MB -->
+<!ENTITY update.downloading.start   "Frissítés letöltése — ">
+<!ENTITY update.downloading.end     "">
+
+<!ENTITY update.applying            "Frissítés alkalmazása…">
+
+<!ENTITY update.restarting          "Újraindítás…">
+
+<!-- LOCALIZATION NOTE (channel.description.start,channel.description.end): channel.description.start and
+     channel.description.end create one sentence, with the current channel label inserted in between.
+     example: You are currently on the _Stable_ update channel. -->
+<!ENTITY channel.description.start  "Jelenleg a(z) ">
+<!ENTITY channel.description.end    " frissítési csatornát használja.">
+
+<!ENTITY cmdCloseMac.commandKey "w">

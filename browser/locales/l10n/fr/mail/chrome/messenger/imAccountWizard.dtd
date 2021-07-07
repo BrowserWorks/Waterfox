@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Assistant de création de compte de messagerie instantanée">
+
+<!ENTITY accountProtocolTitle.label   "Réseau de messagerie instantanée">
+<!ENTITY accountProtocolInfo.label    "Veuillez choisir le réseau pour votre compte.">
+<!ENTITY accountProtocolField.label   "Réseau :">
+<!ENTITY accountProtocolGetMore.label "Obtenir plus de réseaux…">
+
+<!ENTITY accountUsernameTitle.label   "Nom d’utilisateur">
+<!ENTITY accountUsernameDuplicate.label "Ce compte est déjà configuré !">
+
+<!ENTITY accountPasswordTitle.label   "Mot de passe">
+<!ENTITY accountPasswordInfo.label    "Veuillez saisir votre mot de passe.">
+<!ENTITY accountPasswordField.label   "Mot de passe :">
+<!ENTITY accountPasswordManager.label "Ce mot de passe sera conservé dans le gestionnaire de mots de passe. Laissez cette boîte vide si vous voulez que le mot de passe vous soit demandé à chaque connexion.">
+
+<!ENTITY accountAdvancedTitle.label   "Options avancées">
+<!ENTITY accountAdvancedInfo.label    "Vous pouvez sauter cette étape si vous le désirez.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Signaler les nouveaux courriels">
+<!ENTITY accountAliasGroupbox.caption "Alias local">
+<!ENTITY accountAliasField.label      "Alias :">
+<!ENTITY accountAliasInfo.label       "Ceci ne sera affiché que dans vos conversations lorsque vous discutez, vos contacts ne le verront pas.">
+<!ENTITY accountProxySettings.caption "Paramètres de proxy">
+<!ENTITY accountProxySettings.change.label     "Modifier…">
+<!ENTITY accountProxySettings.change.accessKey "M">
+
+<!ENTITY accountSummaryTitle.label   "Résumé">
+<!ENTITY accountSummaryInfo.label    "Un résumé des informations que vous avez saisies est affiché ci-dessous. Veuillez le vérifier avant la création du compte.">
+<!ENTITY accountSummary.connectNow.label "Se connecter à ce compte maintenant.">

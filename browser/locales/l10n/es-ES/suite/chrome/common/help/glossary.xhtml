@@ -1,0 +1,1025 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Glosario</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Este glosario se proporciona sólo para su información,
+  y no se pretende que sea fiable como descripción completa o autorizada de los
+  términos definidos a continuación, ni de las ramificaciones de seguridad o
+  privacidad de las tecnologías descritas en él.</div>
+
+<h1 id="glossary">Glosario</h1>
+
+<dl>
+
+<dt id="certificate_manager">administrador de certificados.</dt><dd>La parte
+  del navegador que permite ver y administrar certificados. Para ver la ventana
+  del administrador de certificados: abrir el menú <span
+  class="mac">&brandShortName;</span><span class="noMac">Editar</span>,
+  elegir Preferencias, hacer clic en Privacidad y Seguridad, y luego elegir
+  Administrar certificados.</dd>
+
+<dt id="password_manager">administrador de contraseñas.</dt><dd>La parte del
+  navegador que puede ayudar a recordar algunos o todos los nombres y
+  contraseñas almacenándolas en el disco duro, e introduciéndolas
+  automáticamente cuando se visitan esos sitios web.</dd>
+
+<dt id="cookie_manager">administrador de cookies.</dt><dd>La parte del
+  navegador que puede utilizar para controlar <a
+  href="#cookie">cookies</a>.</dd>
+
+<dt id="cryptographic_algorithm">algoritmos criptográficos.</dt><dd>Un conjunto
+  de reglas o directrices usadas para realizar operaciones criptográficas tales
+  como <a href="#encryption">cifrado</a> y <a
+  href="#decryption">descifrado</a>.</dd>
+
+<dt id="helper_application">aplicación auxiliar.</dt><dd>Cualquier aplicación
+  que se use para abrir o ver un fichero descargado por el navegador. Un <a
+  href="#plugin">plugin</a> es un tipo especial de aplicación auxiliar que se
+  instala en el directorio de plugins y suele tener como función ejecutarse
+  internamente en el navegador. Microsoft Word, Adobe Photoshop, y otras
+  aplicaciones externas están consideradas aplicaciones auxiliares pero no
+  plugins, ya que no se instalan automáticamente en el directorio del
+  navegador, pero se pueden ejecutar desde el cuadro de diálogo al efectuar una
+  descarga.</dd>
+
+<dt id="web_application">aplicación web</dt><dd>Una aplicación que no se está
+  ejecutando en su equipo sino remotamente en un <a href="#website">sitio web</a>.
+  Los ejemplos incluyen sistemas de correo web o sistemas basados en web en los
+  que introduce información en un formulario y recibe una respuesta en forma de
+  una <a href="#web_page">página web</a>. Una aplicación web <i>sin conexión</i>
+  puede funcionar sin una conexión activa a <a href="#internet">Internet</a>
+  guardando las páginas relevantes localmente antes de ejecutar la
+  aplicación.</dd>
+
+<dt id="grippy">asa</dt><dd>Un pequeño elemento cuadrado a la izquierda de
+  la barra de menú y las barras de herramientas. El asa permite al usuario
+  plegar rápidamente la barra de menú y las barras de herramientas.
+  <span class="mac">Las asas no están disponibles en macOS.</span>
+  </dd>
+
+<dt id="subject">asunto.</dt><dd>La entidad (persona, organización, o router)
+  identificada por medio de un <a href="#certificate">certificado</a>. En
+  particular, el campo asunto de un certificado contiene el <a
+  href="#subject_name">nombre de asunto</a> de la entidad certificada y otras
+  características.</dd>
+
+<dt id="certificate_authority">autoridad certificadora (CA).</dt><dd>Un
+  servicio que emite un certificado tras verificar la identidad de la persona o
+  entidad que se pretende identificar con el certificado. Una CA también
+  renueva y revoca certificados y genera una lista de certificados revocados a
+  intervalos regulares. Las CAs pueden ser independientes o una persona u
+  organización que usa software servidor de emisión de certificados (como puede
+  ser el sistema de gestión de certificados de &brandShortName;). Ver también
+  <a href="#certificate">certificado</a>, <a href="#crl">CRL (lista de
+  revocación de certificados)</a>.</dd>
+
+<dt id="component_bar">barra de componentes.</dt><dd>Es la barra de
+  herramientas que está situada en la esquina inferior izquierda de cualquier
+  ventana de &brandShortName;. La barra de componentes permite que se pueda
+  cambiar entre los componentes de &brandShortName; haciendo clic en los iconos
+  del navegador, Correo y Noticias, Composer, etc.</dd>
+
+<dt id="location_bar">barra de direcciones.</dt><dd>El campo (y botones
+  asociados) que están cerca del borde superior de la ventana del navegador
+  donde se puede escribir una <a href="#url">URL</a> o buscar término.</dd>
+
+<dt id="status_bar">barra de estado.</dt><dd>Es la barra de herramientas
+  situada en la parte inferior de cualquier ventana de &brandShortName;.
+  Incluye la <a href="#component_bar">barra de componentes</a> a la izquierda y
+  los iconos de estado a la derecha.</dd>
+
+<dt id="personal_toolbar">barra de marcadores.</dt><dd>Es la barra de
+  herramientas que se puede personalizar y que por defecto aparece justo
+  debajo de la barra de direcciones en el navegador. Contiene botones estándar
+  como Inicio, Marcadores, etc. que se pueden añadir o borrar. También se
+  pueden añadir botones en los marcadores preferidos o en las carpetas que
+  contienen grupos de marcadores.</dd>
+
+<dt id="menu_bar">Barra de menús</dt><dd>La barra de herramientas
+  <span class="mac">en la parte superior de la pantalla</span><span
+  class="noMac">cerca de la parte superior de cualquier ventana de
+  &brandShortName;</span> que incluye los menús Archivo, Editar y Ver.</dd>
+
+<dt id="navigation_toolbar">barra de navegación.</dt><dd>Es la barra de
+  herramientas que se encuentra cerca de la parte superior de la ventana del
+  navegador que incluye los botones de Anterior y Siguiente.</dd>
+
+<dt id="notification_bar">barra de notificación</dt><dd>Una barra que aparece
+  en la parte superior del área de contenido para informarle sobre algo que
+  precisa de su atención, p.e. cuando el administrador de contraseñas puede
+  guardar una contraseña para usted, cuando se ha bloqueado una ventana
+  emergente o se necesita un plugin adicional.</dd>
+
+<dt id="ca">CA.</dt><dd>Ver <a href="#certificate_authority">autoridad
+  certificadora (CA)</a>.</dd>
+
+<dt id="root_ca">CA raíz.</dt><dd>La <a href="#certificate_authority">autoridad
+  certificadora (CA)</a> con certificado firmado por sí misma en la parte más
+  alta de una <a href="#certificate_chain">cadena de certificados</a>. Ver
+  también <a href="#subordinate_ca">CA subordinada</a>.</dd>
+
+<dt id="subordinate_ca">CA subordinada.</dt><dd>Una <a href=
+  "#certificate_authority">autoridad certificadora (CA)</a> cuyo certificado
+  está firmado por otra CA subordinada o por la CA raíz. Ver también
+  <a href="#certificate_chain">cadena de certificados</a> y
+  <a href="#root_ca">CA raíz</a>.</dd>
+
+<dt id="cache">caché.</dt><dd>Una colección de copias de páginas web
+  almacenadas en el disco duro del ordenador o en su memoria de acceso
+  aleatorio (RAM, Random Access Memory). El navegador acumula estas copias
+  mientras navega por la Web. Cuando se hace clic en un enlace o se escribe una
+  <a href="#url">URL</a> para acceder a una página web cuyo contenido ya está
+  en la caché, el navegador compara la copia almacenada con el original. Si no
+  ha habido cambios, el navegador usa la copia de la caché en vez de volver a
+  recuperar el original, ahorrando tiempo de procesamiento y descarga.</dd>
+
+<dt id="certificate_chain">cadena de certificados.</dt><dd>Una serie jerárquica
+  de certificados firmados por autoridades certificadoras sucesivas. Un
+  certificado de una CA identifica a una <a
+  href="#certificate_authority">autoridad certificadora (CA)</a> y se usa para
+  firmar certificados emitidos por esa autoridad. Un certificado de una CA
+  también puede estar firmado por el certificado CA de una CA padre y así
+  sucesivamente hasta la <a href="#root_ca">CA raíz</a>.</dd>
+
+<dt id="feed">canal</dt><dd>Una fuente actualizada con frecuencia de
+  referencias a páginas web, normalmente noticias o artículos de blogs.
+  Técnicamente es un documento XML disponible a través de una URL pública,
+  compuesto de varios elementos en su interior, cada uno de los cuales contiene
+  ciertos metadatos (posiblemente incluyendo un resumen) y una URL al artículo
+  completo del blog o sitio de noticias. El documento XML se regenera a
+  intervalos regulares, o siempre que se publica un nuevo artículo en el sitio
+  web. Las aplicaciones web pueden suscribirse a la URL que sirve el canal y
+  presentar los nuevos artículos a medida que se actualizan en el documento
+  XML subyacente. Hay formatos XML específicos para los canales, lo más comunes
+  de los cuales son <a href="#rss">RSS</a> y Atom.</dd>
+
+<dt id="certificate">certificado.</dt><dd>El equivalente digital de una tarjeta
+  fiscal. Un certificado especifica el nombre de una persona física, empresa u
+  otra entidad y certifica que una clave pública, que está incluida en el
+  certificado, pertenece a esa entidad. Cuando se firma un mensaje o datos
+  digitalmente, la firma digital para ese mensaje se crea con la ayuda de la
+  clave privada que corresponde a la clave pública en el certificado. Un
+  certificado es emitido y firmado digitalmente por una <a
+  href="#certificate_authority">autoridad certificadora (CA)</a>. La validez de
+  un certificado se puede verificar comprobando la <a
+  href="#digital_signature">firma digital</a> de la CA. También se llama
+  identificación digital, pasaporte digital, certificado de clave pública
+  X.509, y certificado de seguridad. Ver también
+  <a href="#public-key_cryptography">criptografía con clave pública</a>.</dd>
+
+<dt id="ca_certificate">certificado de CA.</dt><dd>Un certificado que
+  identifica a una autoridad certificadora. Ver también
+  <a href="#certificate_authority">autoridad certificadora (CA)</a>, <a href=
+  "#subordinate_ca">CA subordinada</a>, <a href="#root_ca">CA raíz</a>.</dd>
+
+<dt id="encryption_certificate">certificado de cifrado.</dt><dd>Un
+  <a href="#certificate">certificado</a> cuya clave pública se usa sólo para
+  cifrado. Los certificados de cifrado no se usan para operaciones de firma.
+  Ver también <a href="#dual_key_pairs">pares de claves duales</a>, <a
+  href="#signing_certificate">certificado de firma</a>.</dd>
+
+<dt id="signing_certificate">certificado de firma.</dt><dd>Un certificado cuya
+  correspondiente <a href="#private_key">clave privada</a> se usa para firmar
+  los datos que se transmiten, para que el receptor pueda verificar la
+  identidad de quien lo envía. Las Autoridades de Certificados (CAs) suelen
+  emitir certificados de firma que sirven para firmar mensajes de correo
+  electrónico y también para usarse como
+  <a href="#encryption_certificate">certificado de cifrado</a>, usado para
+  cifrar mensajes de correo electrónico. Ver también <a href=
+  "#dual_key_pairs">pares de claves duales</a>, <a href=
+  "#digital_signature">firma digital</a>.</dd>
+
+<dt id="security_certificate">certificado de seguridad.</dt><dd>Ver
+  <a href="#certificate">certificado</a>.</dd>
+
+<dt id="object-signing certificate">certificado para la firma de objetos.</dt>
+  <dd>Un certificado cuya clave privada correspondiente se usa para firmar
+  objetos como ficheros de código. Ver también <a href="#object_signing">firma
+  de objetos</a>.</dd>
+
+<dt id="client_ssl_certificate">certificado SSL de cliente.</dt><dd>Un
+  certificado que un <a href="#client">cliente</a> (como pueda ser un
+  navegador) presenta a un <a href="#server">servidor</a> para acreditar la
+  identidad del cliente (o la identidad de la persona que usa el cliente)
+  usando el protocolo <a href="#ssl">SSL (capa de conexiones seguras)</a>. Ver
+  también <a href="#client_authentication">identificación del cliente</a>.</dd>
+
+<dt id="server_ssl_certificate">certificado SSL de servidor.</dt><dd>Un
+  certificado que un <a href="#server">servidor</a> presenta a un
+  <a href="#client">cliente</a> para verificar la autenticidad de la identidad
+  del servidor usando el protocolo <a href="#ssl">SSL (capa de conexiones
+  seguras).</a></dd>
+
+<dt id="encryption">cifrado.</dt><dd>El proceso de juntar o separar información
+  de manera que se enmascara su significado. Por ejemplo, las conexiones
+  cifradas entre dos ordenadores hace que sea muy difícil de descifrar, o
+  <em>desencriptar</em>, la información que viaja por la conexión. La
+  información cifrada sólo puede ser descifrada por alguien que tenga la clave
+  apropiada. Ver también <a href="#public-key_cryptography">criptografía con
+  clave pública</a>.</dd>
+
+<dt id="symmetric_encryption">cifrado simétrico.</dt><dd>Un método de cifrado
+  que usa una sola clave criptográfica para cifrar y descifrar un mensaje
+  determinado.</dd>
+
+<dt id="cipher">cifrar.</dt><dd>Ver <a href=
+  "#cryptographic_algorithm">algoritmos criptográficos</a>.</dd>
+
+<dt id="key">clave.</dt><dd>Un número de cierta longitud utilizado por
+  <a href="#cryptographic_algorithm">algoritmos criptográficos</a> para cifrar
+  o descifrar datos. Por ejemplo, la clave pública de una persona permite que
+  otras personas cifren mensajes para esa persona. Los mensajes cifrados deben
+  descifrarse usando la clave privada. Ver también <a href=
+  "#public-key_cryptography">criptografía con clave pública</a>.</dd>
+
+<dt id="encryption_key">clave de cifrado.</dt><dd>Una clave privada que se usa
+  sólo para cifrado. Una clave de cifrado y su equivalente clave pública, más
+  una <a href="#signing_key">clave de firma</a> y su clave pública equivalente,
+  constituyen un <a href="#dual_key_pairs">par de claves dual</a>.</dd>
+
+<dt id="signing_key">clave de firma.</dt><dd>Una clave privada usada sólo para
+  firmar. Una clave de firma y su clave pública equivalente, junto con una <a
+  href="#encryption_key">clave de cifrado</a> y su equivalente clave privada,
+  constituyen <a href="#dual_key_pairs">pares de claves duales</a>.</dd>
+
+<dt id="master_key">clave principal.</dt><dd>Una clave simétrica usada por el
+  <a href="#certificate_manager">administrador de certificados</a> para cifrar
+  información. Por ejemplo, el <a href="#password_manager">administrador de
+  contraseñas</a> usa el administrador de certificados y la clave principal
+  para cifrar contraseñas de correo electrónico, de páginas web y otra
+  información confidencial que esté almacenada. Ver también <a
+  href="#symmetric_encryption">cifrado simétrico</a>.</dd>
+
+<dt id="private_key">clave privada.</dt><dd>Uno de los elementos del par de
+  <a href="#key">claves</a> usadas en criptografía de clave pública. La clave
+  privada se mantiene en secreto y se usa para descifrar los datos que han sido
+  cifrados con la correspondiente clave pública.</dd>
+
+<dt id="public_key">clave pública.</dt><dd>Uno de los elementos del par de <a
+  href="#key">claves</a> que se usan en la criptografía de clave pública. La
+  clave pública se distribuye libremente y se publica como parte de un <a
+  href="#certificate">certificado</a>. Suele usarse para cifrar los datos que
+  se mandan al propietario de la clave, que descifra los datos con la
+  correspondiente clave privada.</dd>
+
+<dt id="client">cliente.</dt><dd>El software (como puede ser un navegador) que
+  realiza peticiones y recibe información de un <a href="#server">servidor</a>,
+  que normalmente se ejecuta en una máquina distinta. A un ordenador en el que
+  se ejecuta software cliente se le suele llamar cliente.</dd>
+
+<dt id="add-on">complemento</dt><dd>Una pieza de software que puede añadirse a
+  &brandShortName; para cambiar su apariencia, comportamiento, o para añadir
+  nuevas características. También puede cambiar el idioma mostrado en la
+  interfaz de usuario. Ver también <a href="#extension">extensión</a>, <a
+  href="#language_pack">paquete de idioma</a>, <a href="#plugin">plugin</a> y
+  <a href="#theme">tema</a>.</dd>
+
+<dt id="secure_connection">conexión segura</dt><dd>Una conexión entre un
+  cliente y un servidor que usa algún tipo de cifrado (normalmente, <a
+  href="#ssl">SSL</a>) para asegurar que no puede ser interceptada por
+  terceros. La mayoría de las veces, el servidor es el que proporciona el
+  certificado para identificarse a sí mismo.</dd>
+
+<dt id="secure_connection">conexión segura</dt><dd>Una conexión que usa
+  <a href="#ssl">SSL</a> o <a href="#tls">TLS</a>. Toda la comunicación entre
+  su equipo y el servidor está <a href="#encryption">cifrada</a> de modo que
+  nadie que esté espiando su conexión podrá leerlo. Tenga en cuenta que los
+  datos sólo se cifran durante la transmisión entre su aplicación cliente y el
+  servidor, tras lo cual ya no está cifrada. Para probar su identidad al
+  cliente, el servidor necesita identificarse a sí mismo usando un
+  <a href="#certificate">certificado</a>. Un certificado no válido puede
+  indicar un ataque en el servidor o la conexión, por lo que es importante
+  hacer caso a los avisos sobre certificados.</dd>
+
+<dt id="tooltip">consejo.</dt><dd>Una pequeña caja de texto que aparece cuando
+  se mantiene el puntero del ratón unos segundos sobre ciertos elementos de la
+  pantalla. Normalmente contienen información relativa al elemento sobre el
+  que se ha situado el puntero.</dd>
+
+<dt id="implicit_consent">consentimiento implícito.</dt><dd>También conocido
+  como consentimiento <q>opt-out</q> (exclusión opcional). Se usa para
+  describir las opciones de privacidad que pueden permitir a los sitios web
+  recoger información sobre Vd. (por ejemplo, mediante <a
+  href="#cookie">cookies</a> y formularios en línea) a menos que se niegue
+  explícitamente a dar su consentimiento seleccionando una opción en la página
+  web que el sitio proporciona para ese fin. Mientras la información se recoge,
+  puede que no se solicite ningún consentimiento. Vea también
+  <a href="#user_tracking">rastreo del usuario</a></dd>
+
+<dt id="encrypted_password">contraseña cifrada</dt><dd>Usada para la
+  <a href="#password-based_authentication">identificación basada en
+  contraseña</a> para conseguir la
+  <a href="#secure_authentication">identificación segura</a>. La contraseña del
+  usuario se cifra antes de ser enviada al servidor (p.e., por métodos como
+  <a href="#cram_md5">CRAM-MD5</a>) para evitar que nadie espiando la conexión
+  pueda verla en texto en claro. Este mecanismo se usa frecuentemente cuando no
+  hay disponible una <a href="#secure_connection">conexión segura</a>.</dd>
+
+<dt id="certificate_backup_password">contraseña de copia de seguridad para
+  certificados.</dt><dd>Una contraseña que protege un certificado del que se
+  está haciendo una copia de seguridad o ya se ha hecho con anterioridad. El
+  administrador de certificados pide que se ponga una contraseña cuando se hace
+  una copia de seguridad de un certificado, que será necesaria para restaurar
+  un certificado del cual se ha hecho una copia de seguridad.</dd>
+
+<dt id="master_password">contraseña maestra.</dt><dd>Una contraseña usada por
+  el administrador de certificados para proteger la clave principal u otras
+  claves privadas almacenadas en un <a href="#security_device">dispositivo de
+  seguridad</a>. El administrador de certificados necesita acceso a las claves
+  privadas, por ejemplo, cuando se firman mensajes de correo o se usa uno de
+  los certificados propios para identificarse en una página web. Se necesita
+  acceder a la clave maestra cuando el administrador de contraseñas o el
+  administrador de formularios leen o añaden datos a la información personal.
+  Se puede establecer o cambiar contraseña maestra desde el panel de
+  preferencias de contraseñas maestras. Cada dispositivo de seguridad
+  necesita una contraseña maestra independiente. Ver también <a
+  href="#private_key">clave privada</a>, <a href="#master_key">clave
+  principal</a>.</dd>
+
+<dt id="cookie">cookie.</dt><dd>Una pequeña cantidad de información almacenada
+  en el ordenador generada por algunos <a href="#website">sitios web</a>.
+  Cuando se visita uno de estos sitios web, se pide al navegador que ponga una
+  o más cookies en el disco duro. Después, cuando se vuelve a ese sitio web, el
+  navegador manda las cookies pertenecientes a ese sitio. Las cookies ayudan a
+  las páginas web a guardar información acerca de usted, como el contenido de
+  un carro de la compra. Se puede controlar en las preferencias cómo se usan las
+  cookies y cuánta información deseamos que los sitios web puedan almacenar en
+  ellas. Ver también <a href="#third-party_cookie">cookie externa</a>.</dd>
+
+<dt id="foreign_cookie">cookie externa.</dt><dd>Vea <a
+  href="#third-party_cookie">cookie de terceros</a>.</dd>
+
+<dt id="third-party_cookie">cookie de terceros.</dt><dd>Una <a
+  href="#cookie">cookie</a> de un sitio web que se almacena en el ordenador
+  cuando se visita un sitio web distinto. A veces un <a href="#website">sitio
+  web</a> muestra contenido que es albergado en otro sitio web. Ese contenido
+  puede ser cualquier cosa, desde una imagen a texto o un anuncio. El segundo
+  sitio web que alberga tales elementos también tiene la capacidad de guardar
+  cookies en su navegador, incluso si Vd. no lo visita directamente. Las
+  cookies de terceros también se conocen como <q>cookies externas</q>.</dd>
+
+<dt id="cram_md5">CRAM-MD5</dt><dd>Un
+  <a href="#cryptographic_algorithm">algoritmo criptográfico</a> usado para el
+  <a href="#encrypted_password">cifrado de contraseñas</a> para conseguir
+  <a href="#secure_authentication">identificación segura</a>.</dd>
+
+<dt id="cryptography">criptografía.</dt><dd>El arte y práctica de ensamblar
+  (cifrar) y desensamblar (descifrar) información. Por ejemplo, las técnicas
+  criptográficas se usan para componer y descomponer la información que circula
+  entre páginas web comerciales y nuestro navegador. Ver también <a
+  href="#public-key_cryptography">criptografía con clave pública</a>.</dd>
+
+<dt id="public-key_cryptography">criptografía con clave pública.</dt><dd>Un
+  conjunto de estándares y técnicas ampliamente conocidas que permiten a una
+  entidad (una persona, una organización, o hardware, como un router) verificar
+  electrónicamente su identidad o firmar y cifrar datos. Para ello, se
+  necesitan dos claves: una <a href="#public_key">clave pública</a> y una
+  <a href="#private_key">clave privada</a>. La clave pública se publica como
+  parte de un <a href="#certificate">certificado</a>, que asocia esa clave con
+  una identidad concreta. La correspondiente clave privada se mantiene en
+  secreto. Los datos cifrados con la clave pública sólo se pueden descifrar con
+  la clave privada.</dd>
+
+<dt id="crl">CRL (lista de revocación de certificados).</dt><dd>Una lista de
+  certificados revocados que se genera y está firmada por una <a href=
+  "#certificate_authority">autoridad certificadora (CA)</a>. La última CRL se
+  puede descargar al navegador o a un servidor, luego haga una comprobación
+  contra él para asegurarse que los certificados todavía son válidos antes de
+  permitir su uso para identificaciones.</dd>
+
+<dt id="decryption">descifrado.</dt><dd>El proceso de descomponer datos que han
+  sido cifrados. Ver también <a href="#encryption">cifrado</a>.</dd>
+
+<dt id="tamper_detection">detección de alteraciones.</dt><dd>Un mecanismo que
+  asegura que los datos recibidos en formato electrónico no han sido alterados;
+  es decir, que los datos recibidos se corresponden en su totalidad con la
+  versión original de los mismos datos.</dd>
+
+<dt id="ip_address">dirección IP (dirección de protocolo de
+  Internet.</dt><dd>La dirección de una máquina en una red
+  <a href="#tcp_ip">TCP/IP</a>. Cada ordenador en <a
+  href="#internet">Internet</a> tiene una dirección IP. Los <a
+  href="#client">clientes</a> tienen una IP permanente o una asignada
+  dinámicamente cada vez que se conectan a la red. Las direcciones IP se
+  escriben como cuatro conjuntos de números, de esta forma: 204.171.64.2.</dd>
+
+<dt id="security_device">dispositivo de seguridad.</dt><dd>Hardware o software
+  que proporciona servicios criptográficos como cifrar y descifrar y puede
+  almacenar certificados y claves. Una <a href="#smart_card">tarjeta
+  inteligente</a> es un ejemplo de un dispositivo de seguridad implementado en
+  hardware. El <a href="#certificate_manager">administrador de
+  certificados</a> tiene su propio dispositivo de seguridad interno, llamado <a
+  href="#software_security_device">dispositivo de seguridad software</a>, que
+  está siempre disponible mientras se ejecuta el navegador. Cada dispositivo de
+  seguridad está protegido por su propia <a href="#master_password">contraseña
+  maestra</a>.</dd>
+
+<dt id="software_security_device">dispositivo de seguridad software.</dt>
+  <dd>El <a href="#security_device">dispositivo de seguridad</a> predeterminado
+  que usa el <a href="#certificate_manager">administrador de certificados</a>
+  para almacenar claves privadas asociadas con los certificados. Adicionalmente
+  al uso de claves privadas, el dispositivo de seguridad software almacena la
+  clave principal usada por el <a href="#password_manager">administrador de
+  contraseñas</a> para cifrar contraseñas de correo, de páginas web, y otra
+  información importante. Ver también <a href="#private_key">clave privada</a>
+  y <a href="#master_password">contraseña maestra</a>.</dd>
+
+<dt id="distinguished_name">DN, nombre distinguido (Distinguished
+  Name).</dt><dd>Un nombre indicado de una manera especial que identifica de
+  manera única el asunto de un <a href="#certificate">certificado</a>.</dd>
+
+<dt id="do_not_track">Do Not Track</dt><dd>Un mecanismo que permite a los
+  usuarios informar a los <a href="#website">sitios web</a> que no quieren
+  ser <a href="#user_tracking">rastreados</a> por sitios web de terceros y
+  <a href="#web_application">aplicaciones web</a>. Se añade una preferencia
+  sobre el rastreo del usuario en la cabecera <a href="#http">HTTP</a> y se
+  envía al sitio web. &brandShortName; permite enviar solicitudes <q>Do Not
+  Track</q>, pero los sitios web no están obligados a respetar lo indicado
+  en ella.</dd>
+
+<dt id="extension">extensión</dt><dd>Un tipo de <a
+  href="#add-on">complemento</a> que cambia el comportamiento de
+  &brandShortName; o le añade nuevas funcionalidaes.</dd>
+
+<dt id="fips_pubs_140-1">FIPS PUBS 140-1.</dt><dd>Siglas de Federal Information
+  Processing Standards Publications (FIPS PUBS) 140-1, es un estándar del
+  gobierno de EEUU para implementar módulos criptográficos -es decir, hardware
+  o software que cifra y descifra datos o realiza otras operaciones
+  criptográficas, como la creación o comprobación de firmas digitales. Muchos
+  productos vendidos al gobierno de EEUU deben ser compatibles con uno o más de
+  los estándares de FIPS.</dd>
+
+<dt id="object_signing">firma de objetos.</dt><dd>Una
+  tecnología que permite a los desarrolladores de software firmar el
+  código Java, scripts en JavaScript, o cualquier otro tipo de fichero,
+  y que permite a los usuarios identificar a los firmantes y controlar el
+  acceso por el código firmado a los recursos locales.</dd>
+
+<dt id="digital_signature">firma digital.</dt><dd>Un
+  código creado a partir de los datos a firmar y la clave privada del
+  firmante. Este código es único para cada nueva porción
+  de datos. Una simple coma añadida a un mensaje cambia la firma digital
+  para ese mensaje. Cuando una firma digital se valida correctamente con el
+  software apropiado, no indica sólo que el mensaje o transacción
+  son correctos, sino que también es una garantía de que los
+  datos del mensaje no han cambiado desde que se firmó digitalmente. Una
+  firma digital no tiene nada que ver con una firma escrita a mano, aunque a
+  veces puede tener propósitos legales similares. Ver también
+  <a href="#nonrepudiation">no repudio</a>, <a href=
+  "#tamper_detection">detección de alteraciones</a>.</dd>
+
+<dt id="ftp">FTP (protocolo de transferencia de ficheros).</dt>
+  <dd>Un estándar que permite a los usuarios transferir ficheros de un ordenador a otro a
+  través de la red. Se puede usar el navegador para obtener ficheros
+  usando FTP.</dd>
+
+<dt id="gssapi">GSSAPI (Generic Security Services Application Program
+  Interface, Interfaz de programación de aplicaciones de servicios genéricos de
+  seguridad)</dt><dd>Ver <a href="#kerberos">Kerberos</a>.</dd>
+     
+<dt id="html">HTML (lenguaje de hipertexto basado en marcas).</dt>
+  <dd> El formato que se usa en las páginas web. El estándar HTML define marcas
+  (tags) o códigos para definir las propiedades del texto, tipos de
+  letra, estilos, imágenes y otros elementos que forman parte de una
+  página web.</dd>
+  
+<dt id="http">HTTP (protocolo de transferencias de hipertexto).</dt>
+  <dd>El protocolo usado para transferir <a href="#web_page">páginas
+  web</a> (documentos hipertexto) entre navegadores y
+  <a href="#server">servidores</a> a través de la
+  <a href="#world_wide_web">World Wide Web</a>.</dd>
+  
+<dt id="https">HTTPS (protocolo seguro de transferencias de hipertexto).</dt>
+  <dd>La versión segura del protocolo HTTP que usa
+  <a href="#ssl">SSL</a> para asegurar la privacidad de los datos del cliente
+  (como la información de tarjetas de crédito) mientras se
+  transmiten por <a href="#internet">Internet</a>.</dd>
+    
+<dt id="fingerprint">huella (certificado).</dt><dd>Ver <a href=
+  "#certificate_fingerprint">huella de un certificado</a>.</dd>
+
+<dt id="fingerprinting">huella (navegador)</dt><dd>Un método de
+  <a href="#user_tracking">rastreo de usuarios</a> por el cual se identifica
+  a un usuario basándose en características del navegador como las versiones
+  del navegador y del sistema operativo, las preferencias de idioma
+  establecidas o los <a href="#plugin">plugins</a> instalados.</dd>
+
+<dt id="certificate_fingerprint">huella de un certificado.</dt>
+  <dd>Un número único asociado con un
+  certificado. El número no es parte del certificado en sí pero
+  es el resultado de aplicar una función matemática al contenido
+  del certificado. Si el contenido del certificado cambia, incluso en un
+  sólo carácter, la función produce un número
+  distinto. Por tanto, las huellas de certificados pueden usarse para verificar
+  que los certificados no han sido modificados.</dd>
+
+<dt id="authentication">identificación.</dt><dd>El uso de
+  una contraseña, certificado, número de identificación
+  personal (PIN), u otra información para validar una identidad en una
+  red de ordenadores. Ver también <a href=
+  "#password-based_authentication">identificación con
+  contraseñas</a>, <a href=
+  "#certificate-based_authentication">identificación con
+  certificados</a>, <a href="#client_authentication">identificación del
+  cliente</a>, <a href="#server_authentication">identificación del
+  servidor</a>, <a href="#secure_authentication">identificación
+  segura</a>.</dd>
+
+<dt id="certificate-based_authentication">identificación con certificados.</dt>
+  <dd>Verificación de la identidad basada en
+  <a href="#certificate">certificados</a> y cifrado mediante clave pública.
+  Ver también <a href="#password-based_authentication">identificación con
+  contraseñas</a>.</dd>
+
+<dt id="password-based_authentication">identificación con contraseñas.</dt>
+  <dd>Identificación confidencial usando un nombre
+  y una contraseña. Ver también <a href=
+  "#authentication">identificación</a>.</dd>
+
+<dt id="client_authentication">identificación del cliente.</dt>
+  <dd>El proceso de identificar un <a href=
+  "#client">cliente</a> en un <a href="#server">servidor</a>, por ejemplo con
+  un usuario y contraseña o con un <a href=
+  "#client_ssl_certificate">certificado SSL de cliente</a> y algunos datos
+  firmados digitalmente. Ver también <a href=
+  "#ssl">SSL (capa de conexiones seguras)</a>, <a href=
+  "#server_authentication">identificación en el servidor</a>.</dd>
+
+<dt id="server_authentication">identificación del servidor.</dt>
+  <dd>El proceso de identificarse el <a href=
+  "#server">servidor</a> a un <a href="#client">cliente</a> usando un <a href=
+  "#server_ssl_certificate">certificado SSL de servidor</a>. Ver también
+  <a href="#client_authentication">identificación del cliente</a>,
+  <a href="#ssl">SSL (capa de conexiones seguras)</a>.</dd>
+
+<dt id="digital_id">identificación digital.</dt><dd>Ver
+  <a href="#certificate">certificado</a>.</dd>
+
+<dt id="misrepresentation">identificación falsa.</dt>
+  <dd>La presentación de una entidad como una persona u organización que no
+  es. Por ejemplo, una página web puede aparentar ser un almacén de muebles
+  cuando en realidad es un sitio web que toma números de tarjetas de crédito y
+  no manda nada. Ver también <a href="#spoofing">spoofing</a>.</dd>
+
+<dt id="secure_authentication">identificación segura</dt><dd>Un tipo de
+  <a href="#authentication">identificación</a> que se puede conseguir
+  mediante el <a href="#encrypted_password">cifrado de la contraseña</a> o por
+  mecanismos como <a href="#kerberos">Kerberos</a> y <a href="#ntlm">NTLM</a>.
+  No debe confundirse con una <a href="#secure_connection">conexión
+  segura</a>.</dd>
+  
+<dt id="eavesdropping">indiscreción.</dt><dd>Intercepción no
+  deseada de la información enviada a través de la red por una
+  entidad a la que dicha información no está destinada.</dd>
+
+<dt id="imap">IMAP (protocolo de acceso a mensajes de Internet).</dt>
+  <dd>Un protocolo estándar para servidores de correo que permite almacenar
+  todos los mensajes y los cambios en el servidor en vez del disco duro del
+  ordenador. Usar IMAP en vez de <a href="#pop">POP</a>
+  ahorra espacio en disco y permite acceder a las carpetas del correo,
+  incluyendo mensajes enviados, borradores y carpetas personalizadas, desde
+  cualquier lugar. Usar un servidor IMAP con una conexión de
+  módem es por lo general más rápido que usar un servidor
+  POP, ya que inicialmente se descargan sólo las cabeceras de los
+  mensajes. No todos los <a href="#isp">ISPs</a> ofrecen servicios IMAP.</dd>
+
+<dt id="internet">Internet.</dt><dd>Una red mundial de millones
+  de ordenadores que se comunican entre sí usando protocolos
+  estándar como <a href="#tcp_ip">TCP/IP</a>. Desarrollado
+  originalmente para el ejército de EEUU en 1969, Internet creció
+  para incluir instituciones de educación e investigación y, a
+  finales los años 90, a millones de empresas, organizaciones y
+  particulares. Hoy en día Internet se usa para correo
+  electrónico, navegar por la <a href="#world_wide_web">World Wide
+  Web (WWW)</a>, mensajería instantánea, grupos, y otros
+  muchos servicios.</dd>
+  
+<dt id="irc">IRC (charla retransmitida por Internet).</dt>
+  <dd>Un protocolo usado para charlar con otras personas en tiempo
+  real usando un <a href="#client">cliente</a> IRC.</dd>
+  
+<dt id="isp">ISP (proveedor de servicios de Internet).</dt>
+  <dd>Una institución o compañía que proporciona
+  conexiones a <a href="#internet">Internet</a>.</dd>
+
+<dt id="java">Java.</dt><dd>Un lenguaje de programación
+  desarrollado por Sun Microsystems. Un programa Java puede ejecutarse en
+  muchos tipos distintos de ordenadores, evitando así que los
+  programadores tengan que crear versiones distintas de un mismo programa para
+  cada tipo de ordenador. El navegador puede descargar y ejecutar
+  automáticamente programas escritos en Java (también llamados
+  <em>applets</em>).</dd>
+
+<dt id="javascript">JavaScript.</dt><dd>Un lenguaje de
+  <em>scripting</em> usado comúnmente para construir
+  <a href="#web_page">páginas web</a>. Los programadores usan
+  JavaScript para hacer las páginas web más interactivas;
+  por ejemplo, para mostrar formularios y botones. JavaScript puede
+  usarse junto con <a href="#java">Java</a>, pero son dos lenguajes
+  técnicamente distintos. No es necesario tener Java instalado
+  para que JavaScript funcione correctamente.</dd>
+
+<dt id="kerberos">Kerberos</dt><dd>Un mecanismo para usar
+  <em>single-signon</em> (inicio de sesión único),
+  <a href="#smart_card">tarjetas inteligentes</a>, u otros métodos
+  personalizados para <a href="#authentication">identificar</a> el acceso
+  sin utilizar <a href="#password-based_authentication">contraseñas</a> para
+  cada servicio individual. Se usa sobre todo en grandes redes
+  empresariales/institucionales donde la identificación se proporciona por
+  servicios centralizados como <a href="#ldap">LDAP</a>.</dd>
+
+<dt id="latex">LaTeX</dt><dd>Un procesador de textos y lenguaje de marcas de
+  documentos para documentos de imprenta, ampliamente usado en el mundo
+  académico. En particular, proporciona una sintaxis de texto sencillo para
+  escribir fórmulas matemáticas complejas.</dd>
+
+<dt id="ldap">LDAP (protocolo ligero de acceso a directorios).</dt>
+  <dd>Un protocolo estándar para acceder a servicios de directorio,
+  como libros de direcciones corporativos, desde cualquier plataforma. Se
+  puede configurar el navegador para acceder a directorios LDAP desde la
+  libreta de direcciones. También se pueden configurar el correo y
+  las noticias para usar un servidor de directorio LDAP para
+  autocompletar direcciones de correo electrónico.</dd>
+
+<dt id="malware">Malware</dt><dd>Abreviatura de <q>Soft<u>ware</u>
+  <u>Mal</u>icioso</q> y un término general para una variedad de software
+  diseñado para dificultar la operación del equipo, recopilar información
+  confidencial u obtener acceso a su equipo. Pueden ser distribuidos por
+  <a href="#web_page">páginas web</a> infectadas o como adjunto de mensajes
+  de correo. Entre los ejemplos se incluyen virus, gusanos, troyanos, spyware
+  o adware. El malware puede redistribuirse a sí mismo enviando mensajes para
+  infectar otros equipos.</dd>
+
+<dt id="bookmark">marcador.</dt><dd>Una dirección de
+  <a href="#web_page">página web</a> almacenada
+  (<a href="#url">URL</a>) a la que se puede acceder fácilmente haciendo clic
+  en un icono en la <a href="#personal_toolbar">barra de marcadores</a> o
+  eligiendo el nombre del marcador en el menú Marcadores.</dd>
+
+<dt id="frame">marco.</dt>
+  <dd>Los marcos son <a href="#web_page">páginas web</a> contenidas
+  dentro de una <q>meta</q> página que las mantiene
+  coordinadas. A menudo se les conoce por su término en inglés,
+  <em><q>frame</q></em>.</dd>
+
+<dt id="mathml">MathML (Mathematical Markup Language, lenguaje de marcado
+  matemático)</dt><dd>El lenguaje de marcado usado para escribir notaciones
+  matemáticas en <a href="#web_page">páginas web</a>.</dd>
+
+<dt id="security_module">módulo de seguridad.</dt><dd>Ver
+  <a href="#pkcs_11_module">módulo PKCS #11</a>.</dd>
+
+<dt id="pkcs_11_module">módulo PKCS #11.</dt><dd>Un
+  programa en el ordenador que gestiona los servicios criptográficos
+  como el cifrado y descifrado usando el estándar PKCS #11. Otros nombres
+  son <em>módulos criptográficos</em>, <em>proveedores de
+  servicios criptográficos</em>, o <em>módulos de seguridad</em>.
+  Los módulos PKCS #11 controlan dispositivos tanto hardware como
+  software. Un módulo PKCS #11 siempre controla una o más
+  ranuras, que pueden implementarse mediante algún lector físico
+  (por ejemplo, para leer tarjetas inteligentes) o mediante software. Cada
+  ranura de un módulo PKCS #11 puede, sin embargo, contener un <a href=
+  "#security_device">dispositivo de seguridad</a> (también llamado
+  <em>token</em>) que es el dispositivo hardware o software que proporciona los
+  servicios criptográficos y almacena certificados y claves. El
+  <a href="#certificate_manager">administrador de certificados</a> lleva
+  dos módulos internos PKCS #11. Se pueden instalar módulos
+  adicionales en el ordenador para controlar lectores de tarjetas
+  inteligentes u otros dispositivos hardware.</dd>
+
+<dt id="search_engine">motor de búsqueda o buscador.</dt>
+  <dd>Un programa basado en una página web que
+  permite a los usuarios buscar y recuperar información
+  específica de la <a href="#world_wide_web">World Wide Web (WWW)</a>.
+  El motor de búsqueda puede buscar en todo el texto de los documentos
+  web o una lista de palabras clave,
+  o usar técnicas de revisión de documentos web e indexarlos
+  manualmente para poder ser recuperados. Normalmente, el usuario escribe una
+  palabra o una frase, también llamada consulta, en un cuadro de
+  búsquedas, y el motor de búsqueda muestra los enlaces a las
+  páginas web relevantes.</dd>
+
+<dt id="location_aware_browsing">navegación basada en ubicación</dt><dd>Un
+  método para determinar la ubicación de un usuario para proporcionar servicios
+  personalizados para la ubicación actual, o para el propósito de
+  <a href="#user_tracking">rastrear al usuario</a>. Además de la
+  <a href="#ip_address">dirección IP</a>, se usa información específica del
+  proveedor como puntos de acceso inalámbricos para determinar la longitud y
+  latitud y altitud así como la velocidad y dirección (si están disponibles)
+  que se entrega al <a href="#website">sitio web</a> solicitante. Es
+  proporcionada por un <a href="#geolocation_service">servicio de
+  geolocalización</a>.</dd>
+
+<dt id="caret_browsing">navegación con cursor</dt><dd>Una característica de
+  &brandShortName; que le permite desplazarse por el texto en las páginas web y
+  los mensajes de correo (o esta ventana de ayuda) con un cursor. Usando su
+  teclado, puede desplazarse y seleccionar texto como lo haría en un editor de
+  textos. Puede activar y desactivar el modo del cursor pulsando la tecla
+  <kbd>F7</kbd>. El modo de navegación con cursor también puede activarse y
+  desactivarse en las preferencias Avanzadas - Navegación con teclado.</dd>
+
+<dt id="private_browsing">navegación privada</dt><dd>Navegar en una sesión en la
+  que no se conservan datos privados (tales como el historial de navegación, las
+  <a href="#cookie">cookies</a>, y el contenido <a href="#cache">cacheado</a>)
+  más allá de la duración de la sesión privada. La navegación privada no debe
+  confundirse con la navegación anónima y no evita el
+  <a href="#user_tracking">rastreo de usuario</a> ni la monitorización de la
+  actividad web por un proveedor de Internet o el empleador.</dd>
+
+<dt id="safe_browsing">navegación segura</dt><dd>Protección contra amenazas
+  habituales de <a href="#malware">malware</a> y <a href="#phishing">phishing</a>
+  mediante la comprobación de cada <a href="#web_page">página web</a> contra
+  una lista de sitios web identificados como tales. Si la página web que está a
+  punto de visitar ha sido identificada como contenedora de contenido malicioso,
+  &brandShortName; evita su carga y muestra en su lugar una advertencia.</dd>
+
+<dt id="nonrepudiation">no repudio.</dt><dd>Característica del correo
+  electrónico seguro que asegura que el remitente de un mensaje no puede negar
+  la evidencia de que ha sido él quien lo ha enviado. Una firma normal escrita
+  a mano proporciona una forma de no repudio. Una <a
+  href="#digital_signature">firma digital</a> proporciona otra.</dd>
+
+<dt id="subject_name">nombre de asunto.</dt><dd>Un <a href=
+  "#distinguished_name">DN (nombre distinguido)</a> que describe de manera
+  única el <a href="#subject">asunto</a> de un <a href=
+  "#certificate">certificado</a>.</dd>
+
+<dt id="ntlm">NTLM (NT LAN Manager)</dt><dd>Un protocolo para la
+  <a href="#authentication">identificación</a> en redes locales que es
+  propietaria de Microsoft Windows. Se usa sobre todo en redes
+  empresariales/institucionales.</dd>
+   
+<dt id="ocsp">OCSP (protocolo de estado del certificado en línea).</dt>
+  <dd>Un conjunto de reglas que el
+  <a href="#certificate_manager">administrador de certificados</a> sigue
+  para realizar una comprobación en línea de
+  la validez del certificado cada vez que éste se usa. Este proceso
+  supone comprobar el certificado contra una lista de certificados
+  válidos mantenidos en una página web específica. El
+  ordenador debe estar en línea para que funcione el OCSP.</dd>
+
+<dt id="opml">OPML (lenguaje de marcado para procesadores de esquemas)</dt><dd>Un
+  formato XML usado para listas colecciones de <a href="#feed">canales</a>.
+  Aunque más genérico en su especificación, hoy en día se usa principalmente
+  para exportar e importar colecciones de canales entre diferentes agregadores
+  o lectores de canales, como &brandShortName;.</dd>
+
+<dt id="home_page">página de inicio.</dt><dd>Es la página que se visitará al
+  abrir el navegador o al pulsar en el botón de Inicio. También se usa para
+  referirse a la página principal de un sitio web, a partir de la cual se puede
+  explorar el resto de ese sitio web.</dd>
+
+<dt id="web_page">página web.</dt><dd>Un único
+  documento en la World Wide Web que se especifica por una
+  dirección única o <a href="#url">URL</a> y que puede
+  contener texto, hiperenlaces y gráficos.</dd>
+
+<dt id="dual_key_pairs">pares de claves duales.</dt><dd>Dos
+  pares de clavespública y privada -cuatro claves en total- que
+  corresponden a dos certificados separados. La clave privada de un par se usa
+  para firmar operaciones, y las claves pública y privada del otro par
+  se usan para operaciones de cifrado y descifrado. Cada par corresponde a un
+  <a href="#certificate">certificado</a> separado. Ver también <a href=
+  "#public-key_cryptography">criptografía con clave
+  pública</a>.</dd>
+
+<dt id="language_pack">paquete de idioma</dt><dd>Un tipo de <a
+  href="#add-on">complemento</a> que añade un nuevo idioma a la interfaz de
+  usuario de &brandShortName;.</dd>
+
+<dt id="phishing">Phishing</dt><dd><em>Phishing</em> es el término en inglés
+  dado a un modelo de actividad fraudulenta en el cual un tercero crea sitios
+  web falsos, haciéndose pasar por los de entidades bancarias, compañías de
+  tarjetas de crédito y sitios de compra en línea, intentando recopilar
+  información personal de las víctimas que caigan engañados por ellos.</dd>
+  
+<dt id="PKCS_11">PKCS #11.</dt><dd>El estándar en
+  criptografía de clave pública que gobierna los dispositivos de
+  seguridad como tarjetas inteligentes. Ver también <a href=
+  "#security_device">dispositivo de seguridad</a>, <a href=
+  "#smart_card">tarjeta inteligente</a>.</dd>
+
+<dt id="pki">PKI (infraestructura de clave pública).</dt>
+  <dd>Los estándares y servicios que facilitan el uso de
+  criptografía de clave pública y certificados en una
+  red.</dd>
+
+<dt id="plugin">plugin.</dt><dd>Un tipo de <a href=
+  "#helper_application">aplicación auxiliar</a> que añade nuevas
+  funcionalidades al navegador, como poder reproducir audio o vídeo. Al
+  contrario de lo que sucede con otras aplicaciones auxiliares, un plugin se
+  auto instala en el directorio de plugins en el directorio principal de la
+  instalación y lo normal es que sea el navegador el que lo ejecute
+  internamente. Por ejemplo, un plugin de audio permite escuchar archivos de
+  audio en una <a href="#web_page">página web</a> o en un mensaje de
+  correo electrónico. Macromedia Flash Player y Java son ejemplos de
+  plugin.</dd>
+
+<dt id="pop">POP (protocolo de oficina postal).</dt>
+  <dd>Un protocolo estándar en servidores de correo
+  que requiere que se descarguen los mensajes nuevos al disco duro; aunque se
+  puede elegir dejar las copias en el servidor. Con POP, se pueden almacenar
+  todos los mensaje, incluyendo el correo enviado, borradores y carpetas
+  personalizadas, en un ordenador solamente. Por otro lado, <a href=
+  "#imap">IMAP</a> permite almacenar
+  permanentemente todos los mensajes así como los cambios en el
+  servidor, al cual se puede acceder desde cualquier ordenador. La
+  mayoría de los <a href="#isp">ISPs</a> admiten el uso de
+  POP.</dd>
+
+<dt id="proxy">proxy.</dt><dd>Es un programa intermediario que
+  actúa tanto como <a href="#server">servidor</a> como <a href=
+  "#client">cliente</a>, con la finalidad de realizar peticiones en el nombre
+  de otros clientes.</dd>
+
+<dt id="slot">ranura.</dt><dd>Una parte del hardware, o su
+  equivalente en software, controlada por un <a href=
+  "#pkcs_11_module">módulo PKCS #11</a> y diseñada para contener
+  un <a href="#security_device">dispositivo de seguridad</a>.</dd>
+
+<dt id="user_tracking">rastreo de usuario</dt><dd>Métodos que algunos
+  <a href="#website">sitios web</a>, incluyendo anunciantes y servicios de
+  análisis, emplean para determinar patrones de cómo navega usted por la web
+  (p.e., qué sitios web ha visitado, qué preferencias ha hecho públicas al
+  usar botones incrustados por redes sociales y su historial de compras). Esta
+  información se usa principalmente para mostrar ofertas o anuncios de
+  productos o servicios dirigidos. Los mecanismos de rastreo de usuario
+  incluyen <a href="#cookie">cookies</a> y
+  <a href="#fingerprinting">huella del navegador</a>. Vea también
+  <a href="#do_not_track">Do Not Track</a>.</dd>
+
+<dt id="certificate_renewal">renovación de certificados.</dt>
+  <dd>El proceso de renovar un <a href=
+  "#certificate">certificado</a> que está a punto de caducar.</dd>
+
+<dt id="rss">RSS (Sindicación realmente simple)</dt><dd>Un formato de datos
+  <a href="#xml">XML</a> para <a href="#feed">feeds</a> web.</dd>
+
+<dt id="geolocation_service">servicio de geolocalización</dt><dd>Un servicio
+  web para la <a href="#location_aware_browsing">navegación basada en
+  ubicación</a>.</dd>
+
+<dt id="server">servidor.</dt><dd>Es el software (como el que
+  sirve páginas web) que recibe peticiones de un <a href=
+  "#client">cliente</a> al que le manda la información solicitada, que
+  normalmente se ejecuta en una máquina distinta. Una máquina en
+  la que se ejecuta software de servidor, se le llama servidor.</dd>
+
+<dt id="website">sitio web.</dt><dd>Un grupo de páginas
+  web relacionadas vinculadas por hiperenlaces y gestionadas por una
+  única compañía, organización, o particular. Un
+  sitio web puede incluir texto, gráficos, ficheros de audio y
+  vídeo, y enlaces a otros sitios web.</dd>
+
+<dt id="spoofing">spoofing.</dt><dd>Aparentar ser alguien que no se es. Por
+  ejemplo, una persona puede aparentar tener la dirección de correo
+  <tt>jdoe@mozilla.com</tt>, o una máquina puede identificarse como un sitio
+  web llamado <tt>www.mozilla.com</tt> sin serlo en realidad. El spoofing es
+  una forma de <a href="#misrepresentation">identificación falsa</a>.</dd>
+
+<dt id="smtp">SMTP (protocolo de transferencia simple de correo).</dt>
+  <dd>Un protocolo que envía mensajes de correo electrónico
+  a través de <a href="#internet">Internet</a>.</dd>
+  
+<dt id="socks">SOCKS</dt>
+  <dd>Un protocolo que un servidor <a href="#proxy">proxy</a> puede
+  utilizar para aceptar solicitudes de usuarios cliente en una red
+  interna y re-enviarlas a través de <a href="#internet">Internet</a>.</dd>
+  
+<dt id="ssl">SSL (capa de conexiones seguras).</dt>
+  <dd>Un protocolo que permite una identificación recíproca
+  entre un <a href="#client">cliente</a> y un <a href="#server">servidor</a>
+  con la finalidad de establecer una conexión comprobada y cifrada.
+  SSL se ejecuta por encima del protocolo <a href="#tcp_ip">TCP/IP</a> y
+  por debajo de <a href="#http">HTTP</a>, <a href="#ldap">LDAP</a>,
+  <a href="#imap">IMAP</a>, NNTP, y otros protocolos de red de alto nivel.
+  El nuevo estándar de la Internet Engineering Task Force (IETF)
+  llamado Transport Layer Security (TLS) está basado en SSL. Ver
+  también <a href="#encryption">cifrado</a>,
+  <a href="#authentication">identificación</a>.</dd>
+
+<dt id="starttls">STARTTLS</dt><dd>Una extensión a protocolos estándares TCP
+  comunes (como SMTP, POP o IMAP) de manera que el cliente puede pedir al
+  servidor que use <a href="#tls">TLS</a> en el mismo puerto TCP que las
+  conexiones no seguras.</dd>
+  
+<dt id="smart_card">tarjeta inteligente.</dt><dd>Un
+  pequeño dispositivo, normalmente de tamaño similar a una
+  tarjeta de crédito, que contiene un microprocesador y puede almacenar
+  información criptográfica como claves y certificados,
+  además de realizar operaciones criptográficas. Las tarjetas
+  inteligentes usan el estándar <a href="#PKCS_11">PKCS #11</a>. Una
+  tarjeta inteligente es una clase de <a href="#security_device">dispositivo de
+  seguridad</a>.</dd>
+
+<dt id="tcp">TCP.</dt><dd>Ver <a href=
+  "#tcp_ip">TCP/IP (protocolo de control de la transmisión/protocolo
+  de Internet</a>.</dd>
+
+<dt id="tcp_ip">TCP/IP (protocolo de control de la transmisión/protocolo de
+  Internet).</dt><dd>Un protocolo de sistemas Unix utilizado para conectar
+  ordenadores independientemente del sistema operativo. TCP/IP es un protocolo
+  esencial de Internet y se ha convertido en un estándar global.</dd>
+
+<dt id="theme">tema</dt><dd>Un tipo de <a href="#add-on">complemento</a> que
+  cambia la apariencia de &brandShortName;.</dd>
+
+<dt id="tls">TLS</dt><dd>Seguridad en la Capa de Transporte (Transport Layer
+  Security, TLS) es el nuevo estándar del Grupo de Trabajo de Ingeniería de
+  Internet (Internet Engineering Task Force, IETF) basado en SSL (Capa de
+  Conexiones Seguras, Secure Sockets Layer). Ver también <a href="#ssl">SSL</a>
+  y <a href="#encryption">cifrado</a>.</dd>
+
+<dt id="token">token.</dt><dd>Ver <a href=
+  "#security_device">dispositivo de seguridad</a>.</dd>
+
+<dt id="security_token"><em>token</em> de seguridad.</dt><dd>Ver
+  <a href="#security_device">dispositivo de seguridad</a>.</dd>
+
+<dt id="trust">trust.</dt><dd>Relación de confianza en una
+  persona u otra entidad. En el contexto de la <a href="#pki">PKI
+  (infraestructura de clave pública)</a>, trust se refiere a la
+  relación entre el usuario de un certificado y la <a
+  href="#certificate_authority">autoridad certificadora (CA)</a> que
+  emitió el certificado. Si se usa el administrador de certificados
+  para especificar que se confía en una CA, el administrador de
+  certificados confiará en los certificados válidos
+  emitidos por esa CA a menos que se especifique lo contrario en las
+  opciones de certificados individuales. En la pestaña de
+  autoridades del administrador de certificados se pueden especificar
+  los tipos de certificados de las CAs en que confía o no.</dd>
+
+<dt id="url">URL (localizador uniforme de recursos).</dt>
+  <dd>El formato estándar de direcciones que le dice al navegador
+  cómo localizar un archivo u otro recurso en la Web. Por
+  ejemplo: <tt>http://www.mozilla.org.</tt>Se pueden escribir URLs en
+  la <a href="#location_bar">barra de direcciones</a> del navegador para
+  acceder a <a href="#web_page">páginas web</a>. Las URLs
+  también se usan en los enlaces de las páginas para poder
+  ir a otras al pinchar en ellos. También se conoce como
+  dirección de Internet o dirección Web.</dd>
+
+<dt id="certificate_verification">verificación de certificados.</dt>
+  <dd>Cuando el <a href="#certificate_manager">administrador de
+  certificados</a> verifica un
+  certificado, confirma que la firma digital fue creada por una CA cuyo propio
+  certificado está almacenado en el administrador de certificados y
+  marcado como de confianza para emitir ese tipo de certificados.
+  También confirma que el certificado a verificar no está en los
+  sitios en los que no se confía. Finalmente, si el <a href=
+  "#ocsp">OCSP (protocolo de estado del certificado en
+  línea)</a> está activado, el administrador de
+  certificados también realiza una comprobación en línea,
+  buscando el certificado en una lista de certificados válidos
+  mantenidos en una URL especificada bien en el propio certificado o bien en
+  las preferencias de validación del navegador. Si cualquiera de estos
+  controles falla, el administrador de certificados marca el certificado como
+  no verificado y no reconocerá la identidad a la que certifica.</dd>
+
+<dt id="world_wide_web">World Wide Web.</dt><dd>También conocida
+  como la Web. Una parte de <a href="#internet">Internet</a> que se
+  refiere al conjunto de páginas web almacenadas en
+  <a href="#server">servidores</a> web y mostradas en los
+  <a href="#client">clientes</a> llamados navegadores web
+  (como &brandShortName;).</dd>
+  
+<dt id="wpad">WPAD (autodescubrimiento de proxies web).</dt>
+  <dd>Una propuesta de protocolo de Internet que permite a un
+  navegador web localizar automáticamente y conversar con
+  servidores <a href="#proxy">proxy</a> en una red.</dd>
+
+<dt id="xml">XML (lenguaje extensible basado en marcas).</dt>
+  <dd>Un estándar abierto para describir datos. A diferencia de
+  HTML, XML permite al desarrollador de una página web definir
+  marcas especiales. Para más información, vea el
+  documento en Internet de W3C
+  <a href="http://www.w3.org/XML/">Lenguaje Extensible basado en
+  Marcas (XML)</a>.</dd>
+
+<dt id="xslt">XSLT (transformaciones del lenguaje extensible de hojas de estilo).</dt>
+  <dd>Un lenguaje usado para convertir un documento XML en otro
+  documento XML o en otro formato.</dd>
+
+<dt id="xul">XUL (Lenguaje de interfaz de usuario XML).</dt>
+  <dd>Un lenguaje de marcas XML para crear interfaces de usuario en
+  aplicaciones.</dd>
+</dl>
+
+</body>
+</html>

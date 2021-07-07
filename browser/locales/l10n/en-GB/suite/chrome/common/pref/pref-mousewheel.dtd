@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Mouse Wheel">
+<!ENTITY mouseWheelPanel.label           "Specify mouse wheel behaviour when used with this modifier key: ">
+<!ENTITY usingJustTheWheel.label         "No modifier key">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "Vertical scrolling">
+<!ENTITY mouseWheelHorizGroup.label      "Horizontal scrolling">
+<!ENTITY sameAsVertical.label            "Same as vertical scrolling">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "Do nothing">
+<!ENTITY doNothing.accesskey             "D">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "Scroll the document">
+<!ENTITY scrollDocument.accesskey        "S">
+<!ENTITY scrollDocumentHoriz.accesskey   "c">
+<!ENTITY history.label                   "Move back and forward in the browsing history">
+<!ENTITY history.accesskey               "M">
+<!ENTITY historyHoriz.accesskey          "b">
+<!ENTITY zoom.label                      "Zoom the page in or out">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "o">
+<!ENTITY wheelSpeed.label                "Mouse wheel speed:">
+<!ENTITY wheelSpeed.accesskey            "w">
+<!ENTITY wheelSpeedHoriz.accesskey       "u">
+<!ENTITY reverseDirection.label          "Reverse direction">
+<!ENTITY reverseDirection.accesskey      "R">
+<!ENTITY reverseDirectionHoriz.accesskey "e">

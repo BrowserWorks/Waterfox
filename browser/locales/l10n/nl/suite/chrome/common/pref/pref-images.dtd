@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Afbeeldingen">
+
+<!ENTITY imageBlocking.label            "Acceptatiebeleid voor afbeeldingen">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+    appear
+-->
+<!ENTITY imageDetails                   "Opgeven hoe &brandShortName; omgaat met afbeeldingen.">
+
+<!ENTITY loadAllImagesRadio.label       "Alle afbeeldingen laden">
+<!ENTITY loadAllImagesRadio.accesskey   "A">
+<!ENTITY loadOrgImagesRadio.label       "Alleen afbeeldingen van de oorspronkelijke server laden">
+<!ENTITY loadOrgImagesRadio.accesskey   "o">
+<!ENTITY loadNoImagesRadio.label        "Geen afbeeldingen laden">
+<!ENTITY loadNoImagesRadio.accesskey    "G">
+<!ENTITY viewPermissions.label          "Toestemmingen beheren">
+<!ENTITY viewPermissions.accesskey      "T">

@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Locatiebalk">
+
+<!ENTITY autoComplete.label                    "Autoaanvullen">
+<!ENTITY autoCompleteMatchHistory.label        "Automatisch websites voorstellen vanuit de navigatiegeschiedenis">
+<!ENTITY autoCompleteMatchHistory.accesskey    "A">
+<!ENTITY autoCompleteMatchBookmarks.label      "Automatisch websites voorstellen vanuit bladwijzers">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "v">
+<!ENTITY autoCompleteAutoFill.label            "Automatisch de beste overeenkomst invullen">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Lijst met overeenkomende resultaten tonen">
+<!ENTITY autoCompleteShowPopup.accesskey       "L">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Alleen met eerder ingetypte websites vergelijken">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "e">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Overeenkomst">
+<!ENTITY autoCompleteMatch.accesskey           "O">
+<!ENTITY autoCompleteMatchAnywhere             "Overal in de locatie of titel">
+<!ENTITY autoCompleteMatchWordsFirst           "Overal, maar met voorkeur voor woordgrenzen">
+<!ENTITY autoCompleteMatchWords                "Alleen op woordgrenzen">
+<!ENTITY autoCompleteMatchStart                "Alleen aan het begin van de locatie of titel">
+<!ENTITY showInternetSearch.label              "Standaard internetzoekmachine tonen">
+<!ENTITY showInternetSearch.accesskey          "S">
+
+<!ENTITY formatting.label                      "Opmaak">
+<!ENTITY domainFormatting.label                "Effectieve domein van websites en FTP-servers markeren">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Webpagina’s met een hoge verbindingsbeveiliging markeren">
+<!ENTITY highlightSecure.accesskey             "b">
+
+<!ENTITY unknownLocations.label                "Onbekende locaties">
+<!ENTITY domainGuessing.label                  "Automatisch ‘www.’ en ‘.com’ aan de locatie toevoegen als een webpagina niet wordt gevonden">
+<!ENTITY domainGuessing.accesskey              "t">
+<!ENTITY keywords.label                        "Een webzoekopdracht uitvoeren als de ingevoerde tekst geen weblocatie is">
+<!ENTITY keywords.accesskey                    "w">

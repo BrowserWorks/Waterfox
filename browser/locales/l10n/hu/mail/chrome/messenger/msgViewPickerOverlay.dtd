@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Nézet:">
+<!ENTITY viewPicker.accesskey "N">
+<!ENTITY viewAll.label "Összes">
+<!ENTITY viewAll.accesskey "s">
+<!ENTITY viewUnread.label "Olvasatlan">
+<!ENTITY viewUnread.accesskey "O">
+<!ENTITY viewNotDeleted.label "Nem törölt">
+<!ENTITY viewNotDeleted.accesskey "r">
+<!ENTITY viewTags.label "Címkék">
+<!ENTITY viewTags.accesskey "C">
+<!ENTITY viewCustomViews.label "Egyéni nézetek">
+<!ENTITY viewCustomViews.accesskey "E">
+<!ENTITY viewVirtualFolder.label "Nézet mentése mappaként…">
+<!ENTITY viewVirtualFolder.accesskey "m">
+<!ENTITY viewCustomizeView.label "Testreszabás…">
+<!ENTITY viewCustomizeView.accesskey "T">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Skriva &amp; adressera">
+<!ENTITY addressingGroupTitle.label "Adressera">
+<!ENTITY addressingText.label      "För att söka efter adresser:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Använd mina globala LDAP-serverinställningar för detta konto">
+<!ENTITY useGlobal.accesskey       "A">
+<!ENTITY editDirectories.label     "Redigera kataloger…">
+<!ENTITY editDirectories.accesskey "R">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Använd en annan LDAP-server:">
+<!ENTITY directories.accesskey     "e">
+<!ENTITY directoriesNone.label     "Ingen">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Skriva">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Skriv meddelanden i HTML-format">
+<!ENTITY useHtml.accesskey                    "S">
+<!ENTITY autoQuote.label                      "Citera automatiskt originalmeddelandet när du svarar">
+<!ENTITY autoQuote.accesskey                  "C">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "När du citerar,">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "börja mitt svar ovanför citatet">
+<!ENTITY belowQuote.label                     "börja mitt svar under citatet">
+<!ENTITY selectAndQuote.label                 "markera citat">
+<!ENTITY place.label                          "och placera min signatur">
+<!ENTITY place.accesskey                      "o">
+<!ENTITY belowText.label                      "efter citerad text (rekommenderas)">
+<!ENTITY aboveText.label                      "efter mitt svar (före citerad text)">
+<!ENTITY includeSigOnReply.label              "Använd signatur för svar">
+<!ENTITY includeSigOnReply.accesskey          "n">
+<!ENTITY includeSigOnForward.label            "Använd signatur för vidarebefordring">
+<!ENTITY includeSigOnForward.accesskey        "v">
+
+<!ENTITY globalComposingPrefs.label           "Globala skrivinställningar…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globala adressinställningar…">
+<!ENTITY globalAddressingPrefs.accesskey      "a">

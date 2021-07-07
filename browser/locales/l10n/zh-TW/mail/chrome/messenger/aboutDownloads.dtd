@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "已存檔案">
+<!ENTITY aboutDownloads.empty                      "沒有已儲存的檔案">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "開啟所在資料夾">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "在 Finder 中顯示">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "開啟">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "自下載記錄移除">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "清空下載清單">
+<!ENTITY cmd.clearList.accesskey                   "C">
+<!ENTITY cmd.clearList.tooltip                     "除了正在下載中的項目之外，清除清單中的所有項目。">
+<!ENTITY cmd.searchDownloads.label                 "搜尋…">
+<!ENTITY cmd.searchDownloads.key                   "F">
+
