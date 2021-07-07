@@ -115,14 +115,17 @@ DIRS += [
     'wasm',
 ]
 
+if CONFIG['JS_HAS_CTYPES']:
+    DIRS += ['ctypes']
+
 if CONFIG['JS_BUNDLED_EDITLINE']:
     DIRS += ['editline']
 
 if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']
 
-if CONFIG['JS_HAS_CTYPES']:
-    DIRS += ['ctypes']
+if CONFIG['MOZ_VTUNE']:
+    DIRS += ['vtune']
 
 UNIFIED_SOURCES += [
     'jsalloc.cpp',
@@ -247,15 +250,6 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
         'vm/TraceLoggingGraph.cpp',
         'vm/TraceLoggingTypes.cpp',
     ]
-
-if CONFIG['MOZ_VTUNE']:
-    SOURCES += [
-        'vtune/ittnotify_static.c',
-        'vtune/jitprofiling.c',
-        'vtune/VTuneWrapper.cpp',
-    ]
-    if CONFIG['CC_TYPE'] != 'msvc':
-        SOURCES['vtune/ittnotify_static.c'].flags += ['-Wno-varargs', '-Wno-unknown-pragmas']
 
 DIRS += [
     'build',
