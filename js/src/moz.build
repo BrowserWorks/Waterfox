@@ -18,6 +18,7 @@ FILES_PER_UNIFIED_FILE = 6
 
 DIRS += [
     'builtin',
+    'devtools',
 ]
 
 with Files('*'):
@@ -57,9 +58,6 @@ if not CONFIG['JS_DISABLE_SHELL']:
 
 TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']
 
-CONFIGURE_SUBST_FILES += [
-    'devtools/rootAnalysis/Makefile',
-]
 CONFIGURE_DEFINE_FILES += [
     'js-confdefs.h',
 ]
@@ -153,7 +151,6 @@ EXPORTS.js += [
 ]
 
 UNIFIED_SOURCES += [
-    'devtools/sharkctl.cpp',
     'ds/Bitmap.cpp',
     'ds/LifoAlloc.cpp',
     'ds/MemoryProtectionExceptionHandler.cpp',
@@ -406,11 +403,6 @@ SOURCES += [
 if CONFIG['JS_POSIX_NSPR']:
     UNIFIED_SOURCES += [
         'vm/PosixNSPR.cpp',
-    ]
-
-if CONFIG['MOZ_INSTRUMENTS']:
-    SOURCES += [
-        'devtools/Instruments.cpp',
     ]
 
 if CONFIG['ENABLE_TRACE_LOGGING']:
