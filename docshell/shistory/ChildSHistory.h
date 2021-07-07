@@ -78,7 +78,7 @@ class ChildSHistory : public nsISupports, public nsWrapperCache {
   void SetLength(uint32_t aLength) { mLength = aLength; }
 
  private:
-  virtual ~ChildSHistory() = default;
+  virtual ~ChildSHistory();
 
   class PendingAsyncHistoryNavigation
       : public Runnable,

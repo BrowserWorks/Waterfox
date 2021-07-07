@@ -59,6 +59,13 @@ CanonicalBrowsingContext::CanonicalBrowsingContext(WindowContext* aParentWindow,
   MOZ_RELEASE_ASSERT(XRE_IsParentProcess());
 }
 
+CanonicalBrowsingContext::~CanonicalBrowsingContext() {
+  if (mSessionHistory) {
+    static_cast<nsSHistory*>(mSessionHistory.get())
+        ->SetBrowsingContext(nullptr);
+  }
+}
+
 /* static */
 already_AddRefed<CanonicalBrowsingContext> CanonicalBrowsingContext::Get(
     uint64_t aId) {
@@ -696,8 +703,21 @@ void CanonicalBrowsingContext::SetCrossGroupOpenerId(uint64_t aOpenerId) {
   mCrossGroupOpenerId = aOpenerId;
 }
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(CanonicalBrowsingContext, BrowsingContext,
-                                   mSessionHistory)
+NS_IMPL_CYCLE_COLLECTION_CLASS(CanonicalBrowsingContext)
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(CanonicalBrowsingContext,
+                                                BrowsingContext)
+  if (tmp->mSessionHistory) {
+    static_cast<nsSHistory*>(tmp->mSessionHistory.get())
+        ->SetBrowsingContext(nullptr);
+  }
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mSessionHistory)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(CanonicalBrowsingContext,
+                                                  BrowsingContext)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSessionHistory)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_ADDREF_INHERITED(CanonicalBrowsingContext, BrowsingContext)
 NS_IMPL_RELEASE_INHERITED(CanonicalBrowsingContext, BrowsingContext)
