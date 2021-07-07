@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Vis:">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "Alle">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "Ulesne">
+<!ENTITY viewUnread.accesskey "U">
+<!ENTITY viewNotDeleted.label "Ikkje sletta">
+<!ENTITY viewNotDeleted.accesskey "I">
+<!ENTITY viewTags.label "Merkelapp">
+<!ENTITY viewTags.accesskey "M">
+<!ENTITY viewCustomViews.label "Eigendefinerte visingar">
+<!ENTITY viewCustomViews.accesskey "E">
+<!ENTITY viewVirtualFolder.label "Lagre vising som mappe …">
+<!ENTITY viewVirtualFolder.accesskey "L">
+<!ENTITY viewCustomizeView.label "Tilpass …">
+<!ENTITY viewCustomizeView.accesskey "T">

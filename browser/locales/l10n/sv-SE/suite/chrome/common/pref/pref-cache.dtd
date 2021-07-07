@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Cache">
+<!ENTITY pref.cache.caption              "Anger cachestorlek">
+<!ENTITY cachePara                       "Cachen används för att lagra kopior av ofta besökta webbplatser på hårddisken. Det gör att du inte behöver vara uppkopplad mot Internet lika länge. När du klickar på Uppdatera visas alltid den senaste versionen av en sida.">
+<!ENTITY cacheCheck.label                "Låt &brandShortName; sköta storleken på min cache.">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "Använd upp till">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB diskutrymme för cachen.">
+<!ENTITY diskCacheFolder.label           "Sökväg till cachemappen:">
+<!ENTITY clearDiskCache.label            "Töm cachen">
+<!ENTITY clearDiskCache.accesskey        "T">
+<!ENTITY chooseDiskCacheFolder.label     "Välj mapp…">
+<!ENTITY chooseDiskCacheFolder.accesskey "V">
+<!ENTITY diskCacheFolderExplanation      "Cachefiler kommer att lagras i en undermapp med namn &quot;Cache&quot; till den mapp du väljer. Starta om &brandShortName; för att ändringarna ska börja gälla.">
+<!ENTITY docCache.label                  "Dokumentet i cachen ska jämföras med dokumentet på nätet:">
+<!ENTITY docCache.accesskey              "j">
+<!ENTITY checkOncePerSession.label       "En gång per session">
+<!ENTITY checkEveryTime.label            "Varje gång jag återser sidan">
+<!ENTITY checkNever.label                "Aldrig">
+<!ENTITY checkAutomatically.label        "När sidan har blivit för gammal">
+
+<!ENTITY prefetchTitle.label             "Förhandshämtning av länkade sidor">
+<!ENTITY enablePrefetch.label            "Förhandshämta webbsidor vid inaktivitet, så att länkade sidor i för förhandshämtning anpassade webbsidor kan läsas in snabbare.">
+<!ENTITY enablePrefetch.accesskey        "F">
+
+<!ENTITY debugCache.label                "Felsökning">
+<!ENTITY debugEnableMemCache.label       "Aktivera minnescache">
+<!ENTITY debugEnableMemCache.accesskey   "A">
+<!ENTITY debugEnableDiskCache.label      "Aktivera diskcache">
+<!ENTITY debugEnableDiskCache.accesskey  "D">

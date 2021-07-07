@@ -1,0 +1,207 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Πρόβλημα φόρτωσης σελίδας">
+<!ENTITY retry.label "Δοκιμή ξανά">
+<!ENTITY returnToPreviousPage.label "Επιστροφή">
+<!ENTITY returnToPreviousPage1.label "Επιστροφή (Προτείνεται)">
+<!ENTITY advanced2.label "Για προχωρημένους…">
+<!ENTITY viewCertificate.label "Προβολή πιστοποιητικού">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Ο διακομιστής δεν βρέθηκε">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Αν η διεύθυνση είναι σωστή, ορίστε τρία ακόμη πράγματα που μπορείτε να δοκιμάσετε:</strong>
+<ul>
+  <li>Προσπαθήστε ξανά αργότερα.</li>
+  <li>Ελέγξτε τη σύνδεση δικτύου σας.</li>
+  <li>Αν έχετε συνδεθεί, αλλά υπό την εποπτεία ενός τείχους προστασίας, ελέγξτε αν το &brandShortName; έχει άδεια για πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Ελέγξτε το όνομα του αρχείου για εσφαλμένα κεφαλαία ή άλλα ορθογραφικά λάθη.</li>
+  <li>Ελέγξτε αν το αρχείο έχει μετακινηθεί, μετονομαστεί ή διαγραφεί.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Ενδέχεται να έχει διαγραφεί, μετακινηθεί, ή να μην επιτρέπεται η πρόσβαση λόγω των δικαιωμάτων του αρχείου.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>Για κάποιο λόγο, το &brandShortName; δεν μπορεί να φορτώσει αυτή τη σελίδα.</p>
+">
+
+<!ENTITY captivePortal.title "Σύνδεση στο δίκτυο">
+<!ENTITY captivePortal.longDesc2 "
+<p>Πρέπει να συνδεθείτε σε αυτό το δίκτυο πριν μπορέσετε να αποκτήσετε πρόσβαση στο διαδίκτυο.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Άνοιγμα σελίδας σύνδεσης δικτύου">
+
+<!ENTITY malformedURI.pageTitle "Μη έγκυρο URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc '<p>Το ζητούμενο έγγραφο δεν είναι διαθέσιμο στην κρυφή μνήμη του &brandShortName;.</p><ul><li>Ως μέτρο ασφαλείας, το &brandShortName; δεν ζητά εκ νέου τα ευαίσθητα έγγραφα.</li><li>Κάντε κλικ στο "Δοκιμή ξανά" για να εκ νέου αίτηση του εγγράφου από την ιστοσελίδα.</li></ul>'>
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Πατήστε το &quot;Δοκιμή ξανά&quot; για εναλλαγή σε λειτουργία εντός σύνδεσης και εκ νέου φόρτωση της σελίδας.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Παρακαλώ επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε σχετικά με αυτό το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Παρακαλώ επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε σχετικά με αυτό το πρόβλημα.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Ίσως να χρειάζεται να εγκαταστήσετε κάποιο άλλο λογισμικό για το άνοιγμα αυτής της διεύθυνσης.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Ελέγξτε τις ρυθμίσεις διακομιστή μεσολάβησης για να επιβεβαιώσετε ότι είναι σωστές.</li>
+  <li>Επικοινωνήστε με τον διαχειριστή του δικτύου σας για να βεβαιωθείτε ότι ο διακομιστής μεσολάβησης
+    λειτουργεί.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Ελέγξτε τις ρυθμίσεις διακομιστή μεσολάβησης για να επιβεβαιώσετε ότι είναι σωστές.</li>
+  <li>Ελέγξτε αν ο υπολογιστής σας διαθέτει λειτουργική σύνδεση δικτύου.</li>
+  <li>Αν ο υπολογιστής ή το δίκτυό σας προστατεύονται από τείχος προστασίας ή διακομιστή μεσολάβησης, βεβαιωθείτε
+    ότι επιτρέπεται στο &brandShortName; η πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Αυτό το πρόβλημα μπορεί να προέρχεται από την απενεργοποίηση ή την άρνηση αποδοχής των
+    cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Βεβαιωθείτε ότι έχετε εγκατεστημένο τον Personal Security
+    Manager.</li>
+  <li>Αυτό μπορεί να προέρχεται από μια μη-τυπική ρύθμιση του εξυπηρετητή.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Η σελίδα που προσπαθείτε να δείτε δεν μπορεί να εμφανιστεί επειδή δεν είναι δυνατή η πιστοποίηση της αυθεντικότητας των ληφθέντων δεδομένων.</li>
+  <li>Επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους πληροφορήσετε για το πρόβλημα.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "Το &brandShortName; ανίχνευσε μια πιθανή απειλή ασφαλείας και δεν συνέχισε στο <span class='hostname'/>. Αν επισκεφθείτε αυτή την ιστοσελίδα, οι επιτιθέμενοι ίσως προσπαθήσουν να υποκλέψουν πληροφορίες, όπως κωδικούς πρόσβασης, email ή στοιχεία πιστωτικών καρτών.">
+<!ENTITY certerror.sts.introPara "Το &brandShortName; ανίχνευσε μια πιθανή απειλή ασφαλείας και δεν συνέχισε στο <span class='hostname'/>, επειδή αυτή η ιστοσελίδα απαιτεί μια ασφαλή σύνδεση.">
+
+<!ENTITY certerror.expiredCert.introPara "Το &brandShortName; ανίχνευσε ένα ζήτημα και δεν συνέχισε στο <span class='hostname'/>. Είτε η ιστοσελίδα έχει ρυθμιστεί με λάθος τρόπο είτε το ρολόι του υπολογιστή σας έχει οριστεί σε λάθος ώρα.">
+<!ENTITY certerror.expiredCert.secondPara2 "Το πιστοποιητικό της ιστοσελίδας έχει πιθανώς λήξει, εμποδίζοντας την ασφαλή σύνδεση του &brandShortName;. Αν επισκεφθείτε αυτή την ιστοσελίδα, οι επιτιθέμενοι ενδέχεται να αποπειραθούν να υποκλέψουν πληροφορίες, όπως τους κωδικούς πρόσβασης, τα email ή τα στοιχεία των πιστωτικών καρτών σας.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Το πιστοποιητικό της ιστοσελίδας έχει πιθανώς λήξει, εμποδίζοντας την ασφαλή σύνδεση του &brandShortName;.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Τι μπορείτε να κάνετε γι' αυτό;">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Το ζήτημα οφείλεται κατά πάσα πιθανότητα στην ιστοσελίδα και δεν μπορείτε να κάνετε τίποτα για να το διορθώσετε.</p>
+<p>Αν είστε σε εταιρικό δίκτυο ή χρησιμοποιείτε λογισμικό anti-virus, μπορείτε να απευθυνθείτε στις ομάδες υποστήριξης για βοήθεια. Μπορείτε επίσης να ειδοποιήσετε το διαχειριστή της ιστοσελίδας για το πρόβλημα.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Το ρολόι του υπολογιστή σας έχει οριστεί σε <span id='wrongSystemTime_systemDate2'/>. Βεβαιωθείτε ότι ο υπολογιστής σας έχει ρυθμιστεί στη σωστή ώρα, ημερομηνία και ζώνη ώρας στις ρυθμίσεις συστήματος και, έπειτα, κάντε ανανέωση του <span class='hostname'/>.</p>
+<p>Αν το ρολόι έχει ήδη οριστεί στη σωστή ώρα, η ιστοσελίδα έχει πιθανότατα ρυθμιστεί εσφαλμένα και δεν μπορείτε να κάνετε τίποτα για να επιλύσετε το ζήτημα. Μπορείτε να ειδοποιήσετε το διαχειριστή της ιστοσελίδας σχετικά με το πρόβλημα.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Το ζήτημα οφείλεται κατά πάσα πιθανότητα στην ιστοσελίδα και δεν μπορείτε να κάνετε τίποτα για να το διορθώσετε. Μπορείτε να ειδοποιήσετε το διαχειριστή της ιστοσελίδας για το πρόβλημα.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Η ιστοσελίδα ενδέχεται να είναι προσωρινά μη διαθέσιμη ή πολύ απασχολημένη. Δοκιμάστε ξανά σε λίγο.</li>
+  <li>Αν δεν μπορείτε να φορτώσετε καμία σελίδα, ελέγξτε τη σύνδεση δικτύου
+    του υπολογιστή σας.</li>
+  <li>Αν ο υπολογιστής ή το δίκτυό σας προστατεύονται από τείχος προστασίας ή διακομιστή μεσολάβησης, βεβαιωθείτε
+    ότι επιτρέπεται στο &brandShortName; η πρόσβαση στο διαδίκτυο.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>Το &brandShortName; εμπόδισε τη φόρτωση της σελίδας με αυτό τον τρόπο, επειδή η σελίδα έχει μια πολιτική προστασίας περιεχομένου που δεν το επιτρέπει.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>Το &brandShortName; εμπόδισε τη φόρτωση της σελίδας, επειδή η σελίδα έχει μια πολιτική X-Frame-Options που δεν το επιτρέπει.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Η σελίδα που προσπαθείτε να προβάλετε δεν μπορεί να εμφανιστεί, λόγω σφάλματος στην μετάδοση των δεδομένων.</p><ul><li>Ενημερώστε τους ιδιοκτήτες της ιστοσελίδας για αυτό το πρόβλημα.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Αποδοχή ρίσκου και συνέχεια">
+
+<!ENTITY errorReporting.automatic2 "Αναφορά σφαλμάτων όπως αυτό για να βοηθήσετε τη Mozilla στον εντοπισμό και αποκλεισμό κακόβουλων ιστοσελίδων">
+<!ENTITY errorReporting.learnMore "Μάθετε περισσότερα…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Παρακαλούμε επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε για αυτό το πρόβλημα.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Πληροφορίες για προχωρημένους: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Προειδοποίηση: Πιθανός κίνδυνος ασφαλείας">
+<!ENTITY certerror.sts.pagetitle  "Δεν έγινε σύνδεση: Πιθανό ζήτημα ασφαλείας">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "Το <span class='hostname'></span> έχει μια πολιτική ασφαλείας, που ονομάζεται HTTP Strict Transport Security (HSTS) και σημαίνει ότι το &brandShortName; μπορεί να συνδεθεί μόνο με ασφαλή τρόπο. Δεν μπορείτε να προσθέσετε μια εξαίρεση για να επισκεφθείτε αυτή την ιστοσελίδα.">
+<!ENTITY certerror.copyToClipboard.label "Αντιγραφή κειμένου στο πρόχειρο">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "Το <p><span class='hostname'></span> χρησιμοποιεί παρωχημένη και ευάλωτη σε επίθεση τεχνολογία ασφάλειας. Ένας εισβολέας θα μπορούσε εύκολα να αποκαλύψει πληροφορίες που θεωρείτε ασφαλείς. Ο διαχειριστής του ιστότοπου θα πρέπει να τον διορθώσει προτού μπορέσετε να τον επισκεφθείτε.</p><p>Κωδικός σφάλματος: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Αποκλεισμένη σελίδα">
+
+<!ENTITY certerror.mitm.longDesc "Το <span class='hostname'></span> είναι πιθανώς μια ασφαλής ιστοσελίδα, αλλά δεν ήταν δυνατή η δημιουργία ασφαλούς σύνδεσης. Αυτό το ζήτημα προκαλείται από το <span class='mitm-name'/>, που είναι λογισμικό είτε στον υπολογιστή σας είτε στο δίκτυό σας.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Αν το λογισμικό προστασίας σας από ιούς περιλαμβάνει μια λειτουργία που σαρώνει κρυπτογραφημένες συνδέσεις (συχνά, ονομάζεται “σάρωση web” ή “σάρωση https”), μπορείτε να απενεργοποιήσετε αυτή τη λειτουργία. Αν αυτό δεν λειτουργεί, μπορείτε να καταργήσετε και να εγκαταστήσετε εκ νέου το λογισμικό προστασίας από ιούς.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Αν είστε σε ένα εταιρικό δίκτυο, μπορείτε να επικοινωνήσετε με το τμήμα πληροφορικής σας.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Αν δεν είστε εξοικειωμένοι με το <span class='mitm-name'/>, τότε ίσως πρόκειται για επίθεση και δεν θα πρέπει να συνεχίσετε στην ιστοσελίδα.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Αν δεν είστε εξοικειωμένοι με το <span class='mitm-name'/>, τότε ίσως πρόκειται για επίθεση και δεν μπορείτε να κάνετε τίποτα για να προσπελάσετε την ιστοσελίδα.">
+
+<!ENTITY clockSkewError.longDesc "Ο υπολογιστής σας νομίζει ότι είναι <span id='wrongSystemTime_systemDate1'/>, εμποδίζοντας την ασφαλή σύνδεση του &brandShortName;. Για να επισκεφθείτε το <span class='hostname'></span>, ενημερώστε το ρολόι του υπολογιστή στην τρέχουσα ημερομηνία, ώρα και ζώνη ώρας από τις ρυθμίσεις συστήματος και, έπειτα, κάντε ανανέωση του <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Μοιάζει να προκαλείται από τις ρυθμίσεις ασφαλείας του δικτύου σας. Θέλετε να αποκατασταθούν οι προεπιλεγμένες ρυθμίσεις;">
+<!ENTITY prefReset.label "Επαναφορά προεπιλεγμένων ρυθμίσεων">
+
+<!ENTITY enableTls10.longDesc "Αυτή η ιστοσελίδα ενδέχεται να μην υποστηρίζει το πρωτόκολλο TLS 1.2, το οποίο είναι η παλαιότερη έκδοση που υποστηρίζεται από το &brandShortName;. Η ενεργοποίηση του TLS 1.0 και του TLS 1.1 ίσως επιτρέψει αυτή τη σύνδεση.">
+<!ENTITY enableTls10.note "Τα TLS 1.0 και TLS 1.1 θα απενεργοποιηθούν οριστικά σε μια μελλοντική έκδοση.">
+<!ENTITY enableTls10.label "Ενεργοποίηση TLS 1.0 και 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Δεν είναι δυνατή η εμφάνιση αυτής της σελίδας επειδή υπήρξε ένα σφάλμα στο πρωτόκολλο δικτύου.</p><ul><li>Επικοινωνήστε με τους ιδιοκτήτες της ιστοσελίδας για να τους ενημερώσετε για το πρόβλημα.</li></ul>">

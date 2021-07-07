@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "À propos de vos droits">
+<!ENTITY rights.intro "&brandFullName; est un logiciel libre et ouvert, réalisé par une communauté de milliers de contributeurs dans le monde. Voici ce que vous devriez savoir :">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; est disponible suivant les modalités de la ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c " (Licence publique Mozilla). Ceci signifie que vous pouvez utiliser, copier et distribuer &brandShortName; à d’autres personnes. Vous pouvez également modifier le code source de &brandShortName; à votre gré pour répondre à vos besoins. La Licence publique Mozilla vous autorise aussi à distribuer vos versions modifiées.">
+
+<!ENTITY rights.intro-point2a "Mozilla ne vous cède aucun droit sur les marques déposées et logos Mozilla et SeaMonkey. Vous pouvez consulter des ">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; ne vous cède aucun droit sur les marques déposées et logos « &brandFullName; ». Vous pouvez consulter des ">
+<!ENTITY rights.intro-point2b "informations complémentaires">
+<!ENTITY rights.intro-point2c " sur ces marques déposées.">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "Certaines fonctionnalités de &brandShortName;, comme le rapporteur de plantages, vous permettent de fournir un retour à &vendorShortName;. En choisissant d’envoyer ces informations, vous donnez à &vendorShortName; et Mozilla la permission d’utiliser ce retour pour améliorer ses logiciels, de le publier sur ses sites web et de le distribuer.">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Certaines fonctionnalités de &brandShortName;, comme le rapporteur de plantages, vous permettent de fournir un retour à &vendorShortName;. En choisissant d’envoyer ces informations, vous donnez à &vendorShortName; la permission d’utiliser ce retour pour améliorer ses logiciels, de le publier sur ses sites web et de le distribuer.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "Vous pouvez également consulter la ">
+<!ENTITY rights.intro-point3b "politique de confidentialité">
+<!ENTITY rights.intro-point3c " sur les logiciels de &vendorShortName;.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; met également à disposition des services facultatifs d’information sur les sites web, comme les services des modules complémentaires et du blocage de sites malveillants ; cependant, nous ne pouvons pas garantir à 100 &#37; qu’ils soient appropriés ou dénués d’erreur. Vous pouvez trouver plus de détails, y compris des informations sur la manière de désactiver les services, dans les ">
+<!ENTITY rights.intro-point4b "modalités d’utilisation">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "Services de sites web de &brandFullName;">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a "&brandFullName; met à disposition des services facultatifs (« Services »), comme la suggestion et la mise à jour de modules complémentaires, la fonctionnalité de blocage de sites malveillants, ou la Navigation géolocalisée, qui sont mis à votre disposition dans cette version binaire de &brandShortName; comme décrit ci-dessous. Ces services sont activés par défaut. Si vous ne voulez pas utiliser Les Services ou si vous trouvez que les modalités ci-dessous ne sont pas acceptables, les instructions pour désactiver un service ou une fonctionnalité en particulier sont disponibles ">
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "&vendorShortName; met à disposition des services facultatifs (« Services »), comme la suggestion et la mise à jour de modules complémentaires, la fonctionnalité de blocage de sites malveillants, ou la Navigation géolocalisée, qui sont mis à votre disposition dans cette version binaire de &brandShortName; comme décrit ci-dessous. Ces services sont activés par défaut. Si vous ne voulez pas utiliser Les Services ou si vous trouvez que les modalités ci-dessous ne sont pas acceptables, les instructions pour désactiver un service ou une fonctionnalité en particulier sont disponibles ">
+<!ENTITY rights3.webservices-b "ici">
+<!ENTITY rights3.webservices-c ". Les autres fonctionnalités ou services peuvent être désactivés depuis les préférences de l’application.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "Services de modules complémentaires : ">
+<!ENTITY rights.addons-b "Par défaut, &brandShortName; suggèrera des modules complémentaires sur la page &view.discover.label; et recherchera des mises à jour à intervalles réguliers. Si vous souhaitez désactiver ces fonctionnalités pour éviter de communiquer au serveur des informations sur les modules installés, suivez ces instructions :">
+<!ENTITY rights.addons-term1 "Ouvrez les préférences de l’application">
+<!ENTITY rights.addons-term2 "Sélectionnez le panneau &smart.label; dans la catégorie &advance.label;">
+<!ENTITY rights.addons-term3 "Décochez les options pour « &autoAddOnsUpdates.label; » et « &enablePersonalized.label; »">
+<!ENTITY rights.addons-term4 "Les services des modules complémentaires sont à présent désactivés">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Blocage de sites malveillants : ">
+<!ENTITY rights.safebrowsing-b "Désactiver le blocage de sites malveillants est déconseillé car vous pourriez naviguer sur des sites non sécurisés. Si vous souhaitez désactiver la fonctionnalité complètement, suivez ces instructions :">
+<!ENTITY rights.safebrowsing-term1 "Ouvrez les préférences de l’application">
+<!ENTITY rights.safebrowsing-term2 "Sélectionnez le panneau &security.label;">
+<!ENTITY rights.safebrowsing-term3 "Décochez les options pour « &blockAttackSites.label; » et « &blockWebForgeries.label; »">
+<!ENTITY rights.safebrowsing-term4 "Le blocage de sites malveillants est à présent désactivé">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Navigation selon la localisation géographique : ">
+<!ENTITY rights.locationawarebrowsing-b "se fait toujours à la demande. Aucune information concernant votre localisation n’est jamais envoyée sans votre permission. Si vous souhaitez désactiver la fonctionnalité complètement, suivez ces instructions :">
+<!ENTITY rights.locationawarebrowsing-term1 "Ouvrez les préférences de l’application.">
+<!ENTITY rights.locationawarebrowsing-term2 "Sélectionnez le panneau &security.label;.">
+<!ENTITY rights.locationawarebrowsing-term3 "Sélectionnez l’option pour « &geoDisabled.label; ».">
+<!ENTITY rights.locationawarebrowsing-term4 "La localisation géographique est alors désactivée.">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "&vendorShortName; et Mozilla ainsi que ses contributeurs, concédants de licence et partenaires travaillent pour produire les Services les plus exacts et les plus à jour. Cependant, nous ne pouvons pas garantir que ces informations sont exhaustives et dénuées d’erreur. Par exemple, le service de blocage des sites malveillants peut ne pas identifier certains sites dangereux ou identifier à tort certains sites sûrs comme malveillants. Par ailleurs, tous les emplacements indiqués par le service de localisation géographique ne sont que des estimations et ni nous ni nos fournisseurs de service ne pouvons garantir leur précision.">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "&vendorShortName; ainsi que ses contributeurs, concédants de licence et partenaires travaillent pour produire les Services les plus exacts et les plus à jour. Cependant, nous ne pouvons pas garantir que ces informations sont exhaustives et dénuées d’erreur. Par exemple, le service de blocage des sites malveillants peut ne pas identifier certains sites dangereux ou identifier à tort certains sites sûrs comme malveillants. Par ailleurs, tous les emplacements indiqués par le service de localisation géographique ne sont que des estimations et ni nous ni nos fournisseurs de service ne pouvons garantir leur précision.">
+<!ENTITY rights.webservices-term1 "&vendorShortName; peut arrêter ou modifier Les Services à sa discrétion.">
+<!ENTITY rights.webservices-term2 "Vous pouvez utiliser ces Services avec la version de &brandShortName; qui les accompagne, et vous avez tous les droits nécessaires pour le faire. &vendorShortName; et ses concédants de licence se réservent tous les autres droits dans les Services. Les présentes modalités ne sont pas destinées à limiter les droits concédés par les licences de logiciels libres applicables à &brandShortName; et au code source des versions correspondantes de &brandShortName;.">
+<!ENTITY rights.webservices-term2a "Vous pouvez utiliser ces Services avec la version de &brandShortName; qui les accompagne, et vous avez tous les droits nécessaires pour le faire. &vendorShortName; et ses concédants de licence se réservent tous les autres droits dans les Services. Les présentes modalités ne sont pas destinées à limiter les droits concédés par les licences de logiciels libres applicables à &brandShortName; et au code source des versions correspondantes de &brandShortName;.">
+<!ENTITY rights.webservices-term3 "Les Services sont fournis « tels quels ». &vendorShortName;, ses contributeurs, concédants de licence et distributeurs, déclinent toutes garanties, expresses ou implicites, y compris mais sans s’y limiter, les garanties que les Services sont commercialisables et s’adaptent à vos besoins particuliers. Vous supportez intégralement les risques quant à la sélection des Services pour vos besoins et quant à la qualité et aux performances des Services. Certaines juridictions n’autorisent pas l’exclusion ou la limitation des garanties implicites, et donc cette clause de non-garantie peut ne pas s’appliquer pour vous.">
+<!ENTITY rights.webservices-term4 "Sauf si requis par la loi, &vendorShortName;, ses contributeurs, concédants de licence et distributeurs ne seront pas passibles de dommages indirects, particuliers, accessoires, de dommages et intérêts punitifs ou exemplaires résultant de l’utilisation ou par tout moyen relatif à l’utilisation de &brandShortName; et des Services. La responsabilité collective sous les présentes modalités n’excédera pas 500 $ (cinq cents dollars). Certaines juridictions n’autorisent pas l’exclusion ou la limitation de certains dommages, et donc ces exclusions et limitations peuvent ne pas s’appliquer pour vous.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; peut mettre à jour les présentes modalités si nécessaire de temps à autre. Ces modalités ne peuvent pas être modifiées ou annulées sans l’accord écrit de &vendorShortName;.">
+<!ENTITY rights.webservices-term6 "Les présentes modalités sont régies par les lois de l’état de Californie, États-Unis d’Amérique, à l’exclusion de conflit avec des dispositions légales. Si une partie de ces modalités est invalidée ou ne peut pas être mise en application, les parties restantes demeureront pleinement applicables. Dans l’éventualité d’un conflit entre une version traduite de ces modalités et la version en langue anglaise, la version en langue anglaise fera foi.">
+
+<!ENTITY rights.webservices-term6a "Les présentes conditions sont régies et interprétées conformément au droit allemand. Tous les litiges en relation avec les présentes conditions doivent être soumis à la juridiction exclusive du tribunal compétent en Allemagne. Si une partie de ces modalités est invalidée ou ne peut pas être mise en application, les parties restantes demeureront pleinement applicables. Dans l’éventualité d’un conflit entre une version traduite de ces modalités et la version en langue anglaise, la version en langue anglaise fera foi.">

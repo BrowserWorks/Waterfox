@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navigation mit der Tastatur">
+<!ENTITY tabNavigationBehavior.label "Navigation mit der Tab-Taste">
+<!ENTITY tabNavigationLinks.label "Links">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Schaltflächen, Auswahlknöpfen, Kästchen und Auswahllisten">
+<!ENTITY tabNavigationForms.accesskey "S">
+<!ENTITY tabNavigationTextboxes.label "Anmerkung: Text-Eingabefelder und scrollbare Bereiche sind immer Teil der Tab-Reihenfolge.">
+<!ENTITY tabNavigationDesc.label "Wenn Tab oder Umschalt+Tab gedrückt werden, bewegen zwischen:">
+<!ENTITY accessibilityBrowseWithCaret.label "Browsing mit Textcursor">
+<!ENTITY browseWithCaretDesc.label "Textcursor-Browsing ermöglicht Ihnen, innerhalb von Seiten zu navigieren und Teile zu markieren, indem Sie die Pfeiltasten verwenden, um einen sichtbaren Textcursor zu bewegen.">
+<!ENTITY browseWithCaretUse.label "Textcursor-Browsing verwenden">
+<!ENTITY browseWithCaretUse.accesskey "T">
+<!ENTITY browseWithCaretShortCut.label "Das F7-Tastenkürzel verwenden, um Textcursor-Browsing umzuschalten">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Eine Warnung anzeigen, bevor Textcursor-Browsing aktiviert wird">
+<!ENTITY browseWithCaretWarn.accesskey "W">

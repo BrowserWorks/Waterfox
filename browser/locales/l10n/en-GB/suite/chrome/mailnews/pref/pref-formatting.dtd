@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Send Format">
+<!ENTITY sendMaildesc.label           "When sending formatted (HTML) messages and one or more recipients are not listed as being able to receive HTML:">
+<!ENTITY askMe.label                  "Ask me what to do (Mail prompts you to choose a format)">
+<!ENTITY askMe.accesskey              "k">
+<!ENTITY convertPlain2.label          "Convert the message to plain text (formatting may be lost)">
+<!ENTITY convertPlain2.accesskey      "C">
+<!ENTITY sendHTML2.label              "Send the message as HTML only (may cause display problems)">
+<!ENTITY sendHTML2.accesskey          "S">
+<!ENTITY sendBoth2.label              "Send the message as both plain text and HTML (larger size)">
+<!ENTITY sendBoth2.accesskey          "n">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML and Plain Text Domains">
+<!ENTITY domaindesc.label             "When you send a message to an address with one of the domain names listed below, Mail automatically sends the message in the preferred format (formatted text or plain text).">
+<!ENTITY HTMLdomaintitle.label        "HTML Domains">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Plain Text Domains">
+<!ENTITY PlainTexttitle.accesskey     "P">
+<!ENTITY AddButton.label              "Add…">
+<!ENTITY AddHtmlDomain.accesskey      "A">
+<!ENTITY AddPlainText.accesskey       "d">
+<!ENTITY DeleteButton.label           "Delete">
+<!ENTITY DeleteHtmlDomain.accesskey   "e">
+<!ENTITY DeletePlainText.accesskey    "t">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Add HTML Domain Name">
+<!ENTITY add.htmldomain               "HTML Domain Name:">
+<!ENTITY add.plaintexttitle           "Add Plain Text Domain Name">
+<!ENTITY add.plaintextdomain          "Plain Text Domain Name:">
+
+<!ENTITY domainnameError.title        "Domain Name Error">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "The domain name @string@ is invalid and will be ignored. Valid domain names must include at least one '.' and characters on either side of it.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Automatically send the message as plain text if no significant formatting is present (overrides other options)">
+<!ENTITY autoDowngrade.accesskey      "o">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Insérer un caractère">
+<!ENTITY category.label "Catégorie">
+<!ENTITY letter.label "Lettre :">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Caractère :">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "Accents sur les majuscules">
+<!ENTITY accentLower.label "Accents sur les minuscules">
+<!ENTITY otherUpper.label "Autres majuscules">
+<!ENTITY otherLower.label "Autres minuscules">
+<!ENTITY commonSymbols.label "Symboles communs">
+<!ENTITY insertButton.label "Insérer">
+<!ENTITY closeButton.label "Fermer">

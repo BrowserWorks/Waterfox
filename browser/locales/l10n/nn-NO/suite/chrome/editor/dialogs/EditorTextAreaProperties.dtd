@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eigenskapar for tekstområde">
+
+<!ENTITY Settings.label "Innstillingar">
+
+<!ENTITY TextAreaName.label "Feltnamn:">
+<!ENTITY TextAreaName.accessKey "F">
+<!ENTITY TextAreaRows.label "Rader:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Kolonner:">
+<!ENTITY TextAreaCols.accessKey "K">
+<!ENTITY TextAreaReadOnly.label "Berre lesetilgjenge">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "Avslegen">
+<!ENTITY TextAreaDisabled.accessKey "A">
+<!ENTITY TextAreaTabIndex.label "Tabulatorindeks:">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Snøggtast:">
+<!ENTITY TextAreaAccessKey.accessKey "S">
+<!ENTITY InitialText.label "Opphavleg tekst:">
+<!ENTITY InitialText.accessKey "O">
+
+<!ENTITY TextAreaWrap.label "Modus for tekstbryting">
+<!ENTITY TextAreaWrap.accessKey "t">
+<!ENTITY WrapDefault.value "Standard">
+<!ENTITY WrapOff.value "Avslegen">
+<!ENTITY WrapHard.value "Hard">
+<!ENTITY WrapSoft.value "Mjuk">
+<!ENTITY WrapPhysical.value "Fysisk">
+<!ENTITY WrapVirtual.value "Virtuell">

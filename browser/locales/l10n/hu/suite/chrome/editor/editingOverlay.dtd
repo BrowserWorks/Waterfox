@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Fájl megnyitása…">
+<!ENTITY openFileCmd.accesskey "F">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Webcím megnyitása…">
+<!ENTITY openRemoteCmd.accesskey "W">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Legutóbb szerkesztett oldalak">
+<!ENTITY fileRecentMenu.accesskey "L">
+<!ENTITY saveCmd.label "Mentés">
+<!ENTITY saveCmd.accesskey "M">
+<!ENTITY saveAsCmd.label "Mentés másként…">
+<!ENTITY saveAsCmd.accesskey "e">
+<!ENTITY saveAsChangeEncodingCmd2.label "Mentés és a karakterkódolás megváltoztatása">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "Közzététel">
+<!ENTITY publishCmd.accesskey "ö">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Közzététel másként…">
+<!ENTITY publishAsCmd.accesskey "z">
+<!ENTITY fileRevert.label "Visszatérés az utoljára mentett változathoz">
+<!ENTITY fileRevert.accesskey "u">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Közzététel helyének beállításai…">
+<!ENTITY publishSettings.accesskey "z">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Űrlap">
+<!ENTITY insertFormMenu.accesskey "r">
+<!ENTITY insertFormCmd.label "Űrlap megadása…">
+<!ENTITY insertFormCmd.accesskey "m">
+<!ENTITY insertInputTagCmd.label "Űrlapmező…">
+<!ENTITY insertInputTagCmd.accesskey "e">
+<!ENTITY insertInputImageCmd.label "Űrlapkép…">
+<!ENTITY insertInputImageCmd.accesskey "k">
+<!ENTITY insertTextAreaCmd.label "Szövegterület…">
+<!ENTITY insertTextAreaCmd.accesskey "t">
+<!ENTITY insertSelectCmd.label "Választólista…">
+<!ENTITY insertSelectCmd.accesskey "V">
+<!ENTITY insertButtonCmd.label "Gomb megadása…">
+<!ENTITY insertButtonCmd.accesskey "G">
+<!ENTITY insertLabelCmd.label "Címke megadása">
+<!ENTITY insertLabelCmd.accesskey "C">
+<!ENTITY insertFieldSetCmd.label "Mezőcsoport megadása…">
+<!ENTITY insertFieldSetCmd.accesskey "o">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Új">
+<!ENTITY newToolbarCmd.tooltip "Új HTML-szerkesztő oldal létrehozása">
+<!ENTITY openToolbarCmd.label "Megnyitás">
+<!ENTITY openToolbarCmd.tooltip "Helyi fájl megnyitása">
+<!ENTITY saveToolbarCmd.tooltip "Fájl mentése helyi lemezre">
+<!ENTITY publishToolbarCmd.tooltip "Fájl feltöltése távoli kiszolgálóra">
+<!ENTITY printToolbarCmd.label "Nyomtatás">
+<!ENTITY printToolbarCmd.tooltip "Oldal kinyomtatása">
+<!ENTITY formToolbarCmd.label "Űrlap">
+<!ENTITY formToolbarCmd.tooltip "Új űrlap beszúrása vagy a kiválasztott űrlap tulajdonságainak szerkesztése">

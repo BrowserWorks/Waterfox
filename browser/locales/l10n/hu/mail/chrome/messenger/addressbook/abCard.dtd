@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kapcsolat">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Név">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "LastName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "FirstName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticLastName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticFirstName">
+
+<!ENTITY NameField1.label               "Utónév:">
+<!ENTITY NameField1.accesskey           "U">
+<!ENTITY NameField2.label               "Vezetéknév:">
+<!ENTITY NameField2.accesskey           "V">
+<!ENTITY PhoneticField1.label           "Fonetikus:">
+<!ENTITY PhoneticField2.label           "Fonetikus:">
+<!ENTITY DisplayName.label              "Megjelenítendő név:">
+<!ENTITY DisplayName.accesskey          "M">
+<!ENTITY preferDisplayName.label        "A megjelenítendő név használata az üzenetfejlécben levő helyett">
+<!ENTITY preferDisplayName.accesskey    "j">
+<!ENTITY NickName.label                 "Becenév:">
+<!ENTITY NickName.accesskey             "B">
+
+<!ENTITY PrimaryEmail.label             "E-mail:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "További e-mail:">
+<!ENTITY SecondEmail.accesskey          "i">
+<!ENTITY PreferMailFormat.label         "Az üzeneteket a következő formátumban szereti megkapni:">
+<!ENTITY PreferMailFormat.accesskey     "k">
+<!ENTITY PlainText.label                "Normál szöveg">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Ismeretlen">
+<!ENTITY chatName.label                 "Csevegési név:">
+
+<!ENTITY WorkPhone.label                "Munkahelyi:">
+<!ENTITY WorkPhone.accesskey            "u">
+<!ENTITY HomePhone.label                "Otthoni:">
+<!ENTITY HomePhone.accesskey            "O">
+<!ENTITY FaxNumber.label                "Fax:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "Személyhívó:">
+<!ENTITY PagerNumber.accesskey          "h">
+<!ENTITY CellularNumber.label           "Mobil:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Magánjellegű">
+<!ENTITY Home.accesskey                 "g">
+<!ENTITY HomeAddress.label              "Cím:">
+<!ENTITY HomeAddress.accesskey          "C">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Város:">
+<!ENTITY HomeCity.accesskey             "r">
+<!ENTITY HomeState.label                "Állam/tartomány:">
+<!ENTITY HomeState.accesskey            "t">
+<!ENTITY HomeZipCode.label              "Irányítószám:">
+<!ENTITY HomeZipCode.accesskey          "t">
+<!ENTITY HomeCountry.label              "Ország:">
+<!ENTITY HomeCountry.accesskey          "g">
+<!ENTITY HomeWebPage.label              "Weboldal:">
+<!ENTITY HomeWebPage.accesskey          "W">
+<!ENTITY Birthday.label                 "Születési dátum:">
+<!ENTITY Birthday.accesskey             "s">
+<!ENTITY Month.placeholder              "Hónap">
+<!ENTITY Day.placeholder                "Nap">
+<!ENTITY Year.placeholder               "Év">
+<!ENTITY Age.label                      "Kor:">
+<!ENTITY Age.placeholder                "Kor">
+
+<!ENTITY Work.tab                       "Munkahelyi">
+<!ENTITY Work.accesskey                 "M">
+<!ENTITY JobTitle.label                 "Beosztás:">
+<!ENTITY JobTitle.accesskey             "e">
+<!ENTITY Department.label               "Részleg:">
+<!ENTITY Department.accesskey           "R">
+<!ENTITY Company.label                  "Szervezet:">
+<!ENTITY Company.accesskey              "z">
+<!ENTITY WorkAddress.label              "Cím:">
+<!ENTITY WorkAddress.accesskey          "m">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Város:">
+<!ENTITY WorkCity.accesskey             "V">
+<!ENTITY WorkState.label                "Állam/tartomány:">
+<!ENTITY WorkState.accesskey            "t">
+<!ENTITY WorkZipCode.label              "Irányítószám:">
+<!ENTITY WorkZipCode.accesskey          "I">
+<!ENTITY WorkCountry.label              "Ország:">
+<!ENTITY WorkCountry.accesskey          "g">
+<!ENTITY WorkWebPage.label              "Weboldal:">
+<!ENTITY WorkWebPage.accesskey          "W">
+
+<!ENTITY Other.tab                      "Egyéb">
+<!ENTITY Other.accesskey                "E">
+<!ENTITY Custom1.label                  "1. egyéni:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "2. egyéni:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "3. egyéni:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "4. egyéni:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Megjegyzések:">
+<!ENTITY Notes.accesskey                "j">
+
+<!ENTITY Chat.tab                       "Csevegés">
+<!ENTITY Chat.accesskey                 "e">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber-azonosító:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC becenév:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Fénykép">
+<!ENTITY Photo.accesskey                "p">
+<!ENTITY GenericPhoto.label             "Általános fénykép">
+<!ENTITY GenericPhoto.accesskey         "l">
+<!ENTITY DefaultPhoto.label             "Alapértelmezett">
+<!ENTITY PhotoFile.label                "Ezen a számítógépen">
+<!ENTITY PhotoFile.accesskey            "n">
+<!ENTITY BrowsePhoto.label              "Tallózás">
+<!ENTITY BrowsePhoto.accesskey          "T">
+<!ENTITY PhotoURL.label                 "A weben">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "Illessze be vagy írja be a fénykép webcímét">
+<!ENTITY UpdatePhoto.label              "Frissítés">
+<!ENTITY UpdatePhoto.accesskey          "F">
+<!ENTITY PhotoDropTarget.label          "Húzzon új fényképet ide">

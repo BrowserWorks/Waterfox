@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title "Sottoscrizioni">
+<!ENTITY subscribeButton.label "Sottoscrivi">
+<!ENTITY subscribeButton.accesskey "S">
+<!ENTITY unsubscribeButton.label "Rimuovi sottoscrizione">
+<!ENTITY unsubscribeButton.accesskey "R">
+<!ENTITY newGroupsTab.label "Nuovi gruppi">
+<!ENTITY newGroupsTab.accesskey "N">
+<!ENTITY refreshButton.label "Aggiorna">
+<!ENTITY refreshButton.accesskey "A">
+<!ENTITY stopButton.label "Interrompi">
+<!ENTITY stopButton.accesskey "t">
+<!ENTITY server.label "Account:">
+<!ENTITY server.accesskey "c">
+<!ENTITY subscribedHeader.label "Sottoscritto">
+<!ENTITY namefield.label "Mostra gli elementi che contengono:">
+<!ENTITY namefield.accesskey "M">

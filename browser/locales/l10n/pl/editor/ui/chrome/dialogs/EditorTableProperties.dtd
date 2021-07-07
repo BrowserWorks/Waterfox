@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Właściwości tabeli">
+<!ENTITY applyButton.label                "Zastosuj">
+<!ENTITY applyButton.accesskey            "a">
+<!ENTITY closeButton.label                "Zamknij">
+<!ENTITY tableTab.label                   "Tabela">
+<!ENTITY cellTab.label                    "Komórki">
+<!ENTITY tableRows.label                  "Wiersze:">
+<!ENTITY tableRows.accessKey              "r">
+<!ENTITY tableColumns.label               "Kolumny:">
+<!ENTITY tableColumns.accessKey           "l">
+<!ENTITY tableHeight.label                "Wysokość:">
+<!ENTITY tableHeight.accessKey            "W">
+<!ENTITY tableWidth.label                 "Szerokość:">
+<!ENTITY tableWidth.accessKey             "S">
+<!ENTITY tableBorderSpacing.label         "Obramowanie i odstępy">
+<!ENTITY tableBorderWidth.label           "Szerokość obramowania:">
+<!ENTITY tableBorderWidth.accessKey       "b">
+<!ENTITY tableSpacing.label               "Odstęp:">
+<!ENTITY tableSpacing.accessKey           "O">
+<!ENTITY tablePadding.label               "Marginesy:">
+<!ENTITY tablePadding.accessKey           "M">
+<!ENTITY tablePxBetwCells.label           "pikseli pomiędzy komórkami">
+<!ENTITY tablePxBetwBrdrCellContent.label "pikseli pomiędzy obramowaniem a zawartością komórki">
+<!ENTITY tableAlignment.label             "Wyrównanie tabeli:">
+<!ENTITY tableAlignment.accessKey         "y">
+<!ENTITY tableCaption.label               "Podpis:">
+<!ENTITY tableCaption.accessKey           "P">
+<!ENTITY tableCaptionAbove.label          "Powyżej tabeli">
+<!ENTITY tableCaptionBelow.label          "Poniżej tabeli">
+<!ENTITY tableCaptionLeft.label           "Po lewej stronie">
+<!ENTITY tableCaptionRight.label          "Po prawej stronie">
+<!ENTITY tableCaptionNone.label           "Brak">
+<!ENTITY tableInheritColor.label           "(pozostaw bez zaznaczenia, aby było widoczne tło strony)">
+
+<!ENTITY cellSelection.label              "Zaznaczenie">
+<!ENTITY cellSelectCell.label             "Komórka">
+<!ENTITY cellSelectRow.label              "Wiersz">
+<!ENTITY cellSelectColumn.label           "Kolumna">
+<!ENTITY cellSelectNext.label             "Następne">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "Poprzednie">
+<!ENTITY cellSelectPrevious.accessKey     "d">
+<!ENTITY applyBeforeChange.label          "Uwaga: wprowadzone zmiany będą zastosowane przy przejściu do następnego elementu.">
+<!ENTITY cellContentAlignment.label       "Wyrównanie zawartości">
+<!ENTITY cellHorizontal.label             "W poziomie:">
+<!ENTITY cellHorizontal.accessKey         "p">
+<!ENTITY cellVertical.label               "W pionie:">
+<!ENTITY cellVertical.accessKey           "i">
+<!ENTITY cellStyle.label                  "Styl komórki:">
+<!ENTITY cellStyle.accessKey              "k">
+<!ENTITY cellNormal.label                 "Zwykły">
+<!ENTITY cellHeader.label                 "Nagłówek">
+<!ENTITY cellTextWrap.label               "Opływanie tekstu:">
+<!ENTITY cellTextWrap.accessKey           "O">
+<!ENTITY cellWrap.label                   "Opływaj">
+<!ENTITY cellNoWrap.label                 "Nie opływaj tekstu">
+<!ENTITY cellAlignTop.label               "Do góry">
+<!ENTITY cellAlignMiddle.label            "Do środka">
+<!ENTITY cellAlignBottom.label            "Do dołu">
+<!ENTITY cellAlignJustify.label           "Wyjustowana">
+<!ENTITY cellInheritColor.label           "(pozostaw bez zaznaczenia, aby było widoczne tło tabeli)">
+<!ENTITY cellUseCheckboxHelp.label        "Użyj pól wyboru, aby wybrać, które z powyższych właściwości zostaną zastosowane do zaznaczonych komórek">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Rozmiar">
+<!ENTITY pixels.label                     "pikseli">
+<!ENTITY backgroundColor.label            "Kolor tła:">
+<!ENTITY backgroundColor.accessKey        "t">
+<!ENTITY AlignLeft.label                  "Do lewej">
+<!ENTITY AlignCenter.label                "Do środka">
+<!ENTITY AlignRight.label                 "Do prawej">

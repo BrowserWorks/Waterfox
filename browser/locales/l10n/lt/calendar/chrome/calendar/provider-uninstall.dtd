@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Pašalinti teiktuvą">
+<!ENTITY providerUninstall.accept.label                    "Atsisakyti prenumeratos">
+<!ENTITY providerUninstall.accept.accesskey                "A">
+<!ENTITY providerUninstall.cancel.label                    "Nešalinti priedo">
+<!ENTITY providerUninstall.cancel.accesskey                "N">
+<!ENTITY providerUninstall.preName.label                   "Jūs nurodėte išjungti arba pašalinti priedą:">
+<!ENTITY providerUninstall.postName.label                  "Tai reiškia, kad reikės išjungti žemiau išvardintus kalendorius.">
+<!ENTITY providerUninstall.reinstallNote.label             "Jei neplanuojate iš naujo įdiegti šio tiektuvo, galite atsisakyti šio teiktuvo teikiamų kalendorių prenumeratos.">

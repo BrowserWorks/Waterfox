@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "历史记录">
+
+<!ENTITY  pref.history.caption              "浏览历史">
+<!ENTITY  historyPages.label                "历史是以前已浏览过页面的一个列表。">
+<!ENTITY  enableHistory.label               "记住浏览过的页面">
+<!ENTITY  enableHistory.accesskey           "R">
+<!ENTITY  clearHistory.label                "清除历史">
+<!ENTITY  clearHistory.accesskey            "s">
+
+<!ENTITY  locationBarHistory.caption        "地址栏历史">
+<!ENTITY  urlBarHistoryEnabled.caption      "启用地址栏历史记录">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "E">
+<!ENTITY  clearLocationBar.label            "清除地址栏存储的站点列表。">
+<!ENTITY  clearLocationBarButton.label      "清空地址栏">
+<!ENTITY  clearLocationBarButton.accesskey  "L">
+<!ENTITY  formfillHistory.caption           "表单和搜索历史">
+<!ENTITY  enableFormfill.label              "启用表单和搜索历史记录">
+<!ENTITY  enableFormfill.accesskey          "n">
+<!ENTITY  formfillExpire.label              "记住所有表单及搜索历史记录">
+<!ENTITY  formfillExpire.accesskey          "f">
+<!ENTITY  formfillDays.label                "天">

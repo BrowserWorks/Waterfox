@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "ถึง">
+<!ENTITY fromField4.label "จาก">
+<!ENTITY senderField4.label "ผู้ส่ง">
+<!ENTITY author.label "ผู้เขียน">
+<!ENTITY organizationField4.label "องค์กร">
+<!ENTITY replyToField4.label "ตอบกลับถึง">
+
+<!ENTITY subjectField4.label "หัวเรื่อง">
+<!ENTITY ccField4.label "สำเนาถึง">
+<!ENTITY bccField4.label "สำเนาลับถึง">
+<!ENTITY newsgroupsField4.label "กลุ่มข่าว">
+<!ENTITY followupToField4.label "ติดตามถึง">
+<!ENTITY tagsHdr4.label "ป้ายกำกับ">
+<!ENTITY dateField4.label "วันที่">
+<!ENTITY userAgentField4.label "ตัวแทนผู้ใช้">
+<!ENTITY referencesField4.label "การอ้างอิง">
+<!ENTITY messageIdField4.label "ID ข้อความ">
+<!ENTITY inReplyToField4.label "ตอบกลับถึง">
+<!ENTITY originalWebsite4.label "เว็บไซต์">
+
+<!ENTITY hdrArchiveButton1.label "เก็บถาวร">
+<!ENTITY hdrArchiveButton1.tooltip "เก็บข้อความนี้ถาวร">
+<!ENTITY hdrSmartReplyButton1.label "ตอบกลับแบบอัจฉริยะ">
+<!ENTITY hdrReplyButton1.label "ตอบกลับ">
+<!ENTITY hdrReplyButton2.tooltip "ตอบกลับถึงผู้ส่งของข้อความนี้">
+<!ENTITY hdrReplyAllButton1.label "ตอบกลับทั้งหมด">
+<!ENTITY hdrReplyAllButton1.tooltip "ตอบกลับถึงผู้ส่งและผู้รับทั้งหมด">
+<!ENTITY hdrReplyListButton1.label "ตอบกลับรายชื่อ">
+<!ENTITY hdrReplyListButton1.tooltip "ตอบกลับถึงรายชื่อผู้รับจดหมาย">
+<!ENTITY hdrFollowupButton1.label "ติดตาม">
+<!ENTITY hdrFollowupButton1.tooltip "โพสต์การติดตามไปยังกลุ่มข่าวนี้">
+<!ENTITY hdrForwardButton1.label "ส่งต่อ">
+<!ENTITY hdrForwardButton1.tooltip "ส่งต่อข้อความนี้">
+<!ENTITY hdrJunkButton1.label "ขยะ">
+<!ENTITY hdrJunkButton1.tooltip "ทำเครื่องหมายข้อความนี้ว่าเป็นขยะ">
+<!ENTITY hdrTrashButton1.label "ลบ">
+<!ENTITY hdrTrashButton1.tooltip "ลบข้อความนี้">
+
+<!ENTITY hdrViewToolbarShowFull.label "แสดงไอคอนและข้อความ">
+<!ENTITY hdrViewToolbarShowFull.accesskey "ไ">
+<!ENTITY hdrViewToolbarShowIcons.label "แสดงไอคอนเท่านั้น">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "อ">
+<!ENTITY hdrViewToolbarShowText.label "แสดงข้อความเท่านั้น">
+<!ENTITY hdrViewToolbarShowText.accesskey "ข">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "แสดงการตอบกลับถึงผู้ส่งเสมอ">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "ก">
+
+<!ENTITY otherActionsButton2.label "เพิ่มเติม">
+<!ENTITY otherActionsButton.tooltip "การกระทำเพิ่มเติม">
+<!ENTITY otherActionsOpenConversation1.label "เปิดในการสนทนา">
+<!ENTITY otherActionsOpenConversation1.accesskey "า">
+<!ENTITY otherActionsOpenInNewWindow1.label "เปิดในหน้าต่างใหม่">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "น">
+<!ENTITY otherActionsOpenInNewTab1.label "เปิดในแท็บใหม่">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "ท">
+<!ENTITY markAsReadMenuItem1.label "ทำเครื่องหมายว่าอ่านแล้ว">
+<!ENTITY markAsReadMenuItem1.accesskey "อ">
+<!ENTITY markAsUnreadMenuItem1.label "ทำเครื่องหมายว่ายังไม่ได้อ่าน">
+<!ENTITY markAsUnreadMenuItem1.accesskey "ย">
+<!ENTITY saveAsMenuItem1.label "บันทึกเป็น…">
+<!ENTITY saveAsMenuItem1.accesskey "บ">
+<!ENTITY viewSourceMenuItem1.label "ดูต้นฉบับ">
+<!ENTITY viewSourceMenuItem1.accesskey "ด">
+<!ENTITY otherActionsPrint1.label "พิมพ์…">
+<!ENTITY otherActionsPrint1.accesskey "พ">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "แสดงบานหน้าต่างไฟล์แนบตั้งแต่เริ่มต้น">
+<!ENTITY startExpandedCmd.accesskey    "ส">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "เปิด">
+<!ENTITY openAttachmentCmd.accesskey    "ป">
+<!ENTITY saveAsAttachmentCmd.label    "บันทึกเป็น…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "บ">
+<!ENTITY detachAttachmentCmd.label    "แยกออก…">
+<!ENTITY detachAttachmentCmd.accesskey    "แ">
+<!ENTITY deleteAttachmentCmd.label    "ลบ">
+<!ENTITY deleteAttachmentCmd.accesskey    "ล">
+<!ENTITY openAllAttachmentsCmd.label    "เปิดทั้งหมด…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "ป">
+<!ENTITY saveAllAttachmentsCmd.label    "บันทึกทั้งหมด…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "บ">
+<!ENTITY detachAllAttachmentsCmd.label    "แยกออกทั้งหมด…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "ย">
+<!ENTITY deleteAllAttachmentsCmd.label    "ลบทั้งหมด…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "ล">
+
+<!ENTITY openAttachment.tooltip "เปิดไฟล์ที่แนบ">
+
+<!ENTITY detachedAttachmentFolder.show.label        "เปิดโฟลเดอร์ที่บรรจุ">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "ฟ">
+<!ENTITY detachedAttachmentFolder.showMac.label     "แสดงใน Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "บันทึก">
+<!ENTITY saveAttachmentButton1.tooltip     "บันทึกไฟล์ที่แนบ">
+<!ENTITY saveAllAttachmentsButton1.label   "บันทึกทั้งหมด">
+<!ENTITY saveAllAttachmentsButton1.tooltip "บันทึกไฟล์ที่แนบทั้งหมด">
+
+<!ENTITY copyLinkCmd.label        "คัดลอกตำแหน่งที่ตั้งลิงก์">
+<!ENTITY copyLinkCmd.accesskey    "ค">
+
+<!ENTITY CopyMessageId.label "คัดลอก ID ข้อความ">
+<!ENTITY CopyMessageId.accesskey "ค">
+<!ENTITY OpenMessageForMsgId.label "เปิดข้อความสำหรับ ID">
+<!ENTITY OpenMessageForMsgId.accesskey "ป">
+<!ENTITY OpenBrowserWithMsgId.label "เปิดเบราว์เซอร์พร้อม ID ข้อความ">
+<!ENTITY OpenBrowserWithMsgId.accesskey "เ">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label "Wszystkie warunki spełnione">
+<!ENTITY matchAll.accesskey "W">
+<!ENTITY matchAny.label "Spełniony dowolny z warunków">
+<!ENTITY matchAny.accesskey "S">
+<!ENTITY matchAllMsgs.label "Brak warunków, wszystkie wiadomości">
+<!ENTITY matchAllMsgs.accesskey "B">
+
+<!ENTITY searchTermListAttributesFlexValue "1">
+<!ENTITY searchTermListOperatorsFlexValue "1">
+<!ENTITY searchTermListValueFlexValue "3">

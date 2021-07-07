@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label     "Todos os campos abaixo">
+<!ENTITY matchAll.accesskey "T">
+<!ENTITY matchAny.label     "Pelo menos um dos campos abaixo">
+<!ENTITY matchAny.accesskey "c">
+<!ENTITY matchAllMsgs.label     "Todas as mensagens">
+<!ENTITY matchAllMsgs.accesskey "m">
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the search widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+<!ENTITY searchTermListAttributesFlexValue "4">
+<!ENTITY searchTermListOperatorsFlexValue "4">
+<!ENTITY searchTermListValueFlexValue "4">

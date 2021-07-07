@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title		"表のプロパティ">
+<!ENTITY applyButton.label		"適用">
+<!ENTITY applyButton.accesskey		"A">
+<!ENTITY closeButton.label		"閉じる">
+<!ENTITY tableTab.label			"表">
+<!ENTITY cellTab.label			"セル">
+<!ENTITY tableRows.label		"行数:">
+<!ENTITY tableRows.accessKey		"R">
+<!ENTITY tableColumns.label		"列数:">
+<!ENTITY tableColumns.accessKey		"C">
+<!ENTITY tableHeight.label		"高さ:">
+<!ENTITY tableHeight.accessKey		"G">
+<!ENTITY tableWidth.label		"幅:">
+<!ENTITY tableWidth.accessKey		"W">
+<!ENTITY tableBorderSpacing.label	"枠線と余白">
+<!ENTITY tableBorderWidth.label		"枠線の太さ:">
+<!ENTITY tableBorderWidth.accessKey	"B">
+<!ENTITY tableSpacing.label		"セルとセルの間隔:">
+<!ENTITY tableSpacing.accessKey		"S">
+<!ENTITY tablePadding.label		"枠線内側の余白:">
+<!ENTITY tablePadding.accessKey		"P">
+<!ENTITY tablePxBetwCells.label		"px">
+<!ENTITY tablePxBetwBrdrCellContent.label "px">
+<!ENTITY tableAlignment.label		"表の配置:">
+<!ENTITY tableAlignment.accessKey	"T">
+<!ENTITY tableCaption.label		"表題">
+<!ENTITY tableCaption.accessKey		"N">
+<!ENTITY tableCaptionAbove.label	"表の上">
+<!ENTITY tableCaptionBelow.label	"表の下">
+<!ENTITY tableCaptionLeft.label		"表の左">
+<!ENTITY tableCaptionRight.label	"表の右">
+<!ENTITY tableCaptionNone.label		"なし">
+<!ENTITY tableInheritColor.label	"(ページ背景を透過表示)"><!-- (^^; 透過するのは色だけじゃない -->
+
+<!ENTITY cellSelection.label		"編集対象の選択">
+<!ENTITY cellSelectCell.label		"セル">
+<!ENTITY cellSelectRow.label		"行">
+<!ENTITY cellSelectColumn.label		"列">
+<!ENTITY cellSelectNext.label		"次へ">
+<!ENTITY cellSelectNext.accessKey	"N">
+<!ENTITY cellSelectPrevious.label	"前へ">
+<!ENTITY cellSelectPrevious.accessKey	"P">
+<!ENTITY applyBeforeChange.label	"選択対象を変更すると現在の設定が適用されます。">
+<!ENTITY cellContentAlignment.label	"配置:">
+<!ENTITY cellHorizontal.label		"水平位置:">
+<!ENTITY cellHorizontal.accessKey	"Z">
+<!ENTITY cellVertical.label		"垂直位置:">
+<!ENTITY cellVertical.accessKey		"V">
+<!ENTITY cellStyle.label		"セルの種別:">
+<!ENTITY cellStyle.accessKey		"C">
+<!ENTITY cellNormal.label		"通常">
+<!ENTITY cellHeader.label		"見出し">
+<!ENTITY cellTextWrap.label		"テキストの折り返し:">
+<!ENTITY cellTextWrap.accessKey		"T">
+<!ENTITY cellWrap.label			"折り返す">
+<!ENTITY cellNoWrap.label		"折り返さない">
+<!ENTITY cellAlignTop.label		"上">
+<!ENTITY cellAlignMiddle.label		"中央">
+<!ENTITY cellAlignBottom.label		"下">
+<!ENTITY cellAlignJustify.label		"両端そろえ">
+<!ENTITY cellInheritColor.label		"(表の背景を透過表示)">
+<!ENTITY cellUseCheckboxHelp.label	"選択中のセルに適用するプロパティをチェックボックスで指定してください。">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label			"サイズ">
+<!ENTITY pixels.label			"px">
+<!ENTITY backgroundColor.label		"背景色:">
+<!ENTITY backgroundColor.accessKey	"B">
+<!ENTITY AlignLeft.label		"左">
+<!ENTITY AlignCenter.label		"中央">
+<!ENTITY AlignRight.label		"右">

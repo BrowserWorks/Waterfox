@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "邮件 &amp; 新闻组">
+<!ENTITY generalSettings.caption          "常规设置">
+<!ENTITY confirmMove.label                "移动文件夹至回收站时进行确定">
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "在信息排序时保持进程">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY loadInBackground.label           "在新标签页中打开时，立即切换过去">
+<!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailBiffOnNewWindow.label        "只在打开邮箱或新闻组时检查是否有新邮件">
+<!ENTITY mailBiffOnNewWindow.accesskey    "O">
+
+<!ENTITY defaultMailSettings.description  "将 &brandShortName; 设为下列应用的默认程序：">
+<!ENTITY setDefaultMail.label             "邮件">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "新闻">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "收取点">
+<!ENTITY setDefaultFeed.accesskey         "e">
+
+<!ENTITY useInternalSettings.description  "使用 &brandShortName; 邮件 &amp; 新闻组打开此类浏览器链接：">
+<!ENTITY useInternalMail.label            "邮件 (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "新闻组 (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "邮件起始页">
+<!ENTITY enableStartPage.label            "在登录邮箱后，在信息区域显示开始页面">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "位置：">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "恢复默认值">
+<!ENTITY useDefault.accesskey             "D">
+<!ENTITY rememberLastMsg.label            "记住上次选择的信息">
+<!ENTITY rememberLastMsg.accesskey        "R">

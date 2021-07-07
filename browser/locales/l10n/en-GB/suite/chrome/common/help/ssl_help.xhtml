@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL/TLS Settings</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="ssltls_settings">SSL/TLS Settings</h1>
+
+<p>This section describes how to set your SSL/TLS preferences.</p>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_tlsssl">Privacy &amp; Security
+      Preferences - SSL/TLS</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_ssltls">Privacy &amp; Security
+  Preferences - SSL/TLS</h2>
+
+<p>This section describes how to use the SSL/TLS preferences panel. If you are
+  not already viewing the panel, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Privacy &amp; Security category, click SSL/TLS. (If no
+    subcategories are visible, double-click Privacy &amp; Security to expand
+    the list.)</li>
+</ol>
+
+<h3 id="ssltls_protocol_versions">SSL/TLS Protocol Versions</h3>
+
+<p>The <a href="glossary.xhtml#ssl">Secure Sockets Layer (SSL)</a> protocol
+  and its successor, the <a href="glossary.xhtml#tls">Transport Layer Security
+  (TLS)</a> protocol, are standards which define rules governing mutual
+  authentication between a web site and browser software and the encryption
+  of information that flows between them.  They are also used for secure
+  communication in various other protocols, e.g., for protection of sensitive
+  information exchanged with email, calendar, or directory servers.</p>
+
+<p>The SSL 2.0 and SSL 3.0 protocols are insecure and thus deprecated. The
+  current TLS protocol is based on SSL but with its own version numbering.
+  TLS 1.0 can be thought of as SSL 3.1, TLS 1.1 is in turn an update to TLS
+  1.0, etc. Newer protocols are preferred over older ones as they provide
+  better security and more features. Older protocols are supported to ensure
+  compatibility.</p>
+
+<p>By default, &brandShortName; will select the most secure version which is
+  widely supported to connect to the server. If that attempt doesn&apos;t
+  succeed, it will try to connect with the next older version, etc., to the
+  extent allowed by the settings in this panel. The connection will fail if no
+  protocol supported by both sides is found. You can exclude older versions
+  explicitly or allow newer versions which may not be widely supported yet
+  with the following options:</p>
+
+<ul>
+  <li><strong>Enable</strong>: Tick the <strong>TLS 1.0</strong>,
+    <strong>TLS 1.1</strong>, and/or <strong>TLS 1.2</strong>
+    boxes to indicate which protocol versions can be used for a secure
+    connection to a server.</li>
+</ul>
+
+<p><strong>Notes</strong>:</p>
+
+<ul>
+  <li>At least one protocol version must be selected, thus it is not possible
+    to untick the last remaining box.</li>
+  <li>Also, the selection must be contiguous. It is not possible to select both
+    TLS 1.0 and TLS 1.2 but to exclude the intermediate TLS 1.1 version.</li>
+  <li>You can extend the range by multiple versions. For example, if only TLS
+    1.0 is currently ticked and you select TLS 1.2, the TLS 1.1 version is
+    automatically selected as well.</li>
+  <li>Tickboxes may appear ticked but grayed out if you cannot untick them
+    without violating these rules. Untick the outermost boxes to regain
+    access to an enclosed intermediate version.</li>
+</ul>
+
+<h3 id="ssltls_warnings">SSL/TLS Warnings</h3>
+
+<p>It&apos;s easy to tell when the web site you are viewing is using an encrypted
+  connection. If the connection is encrypted, the lock icon in the lower-right
+  corner of the browser window is locked
+  (<img src="chrome://communicator/skin/icons/lock-secure.png"/>). If the
+  connection is not encrypted, the lock icon is unlocked
+  (<img src="chrome://communicator/skin/icons/lock-insecure.png"/>). Encrypted
+  pages which contain some unencrypted items (mixed content) are shown with a
+  broken-lock icon
+  (<img src="chrome://communicator/skin/icons/lock-broken.png"/>).</p>
+
+<p>If you want additional warnings, you can select one or more of the warning
+  tickboxes in the SSL/TLS preferences panel. Unless stated otherwise, a
+  notification bar will be presented at the top of the page triggering the
+  alert, with an option to enter this panel to change the option if the alert
+  is considered annoying.</p>
+
+<p>To activate any of these warnings, select the corresponding tickbox:</p>
+
+<ul>
+  <li><strong>Loading a page that supports encryption</strong>: Select this
+    warning if you want to be reminded whenever you are loading a page that
+    supports encryption.</li>
+  <li><strong>Leaving a page that supports encryption</strong>: Select this
+    warning if you want to be reminded whenever you are leaving a page that
+    supports encryption for one that does not.</li>
+  <li><strong>Sending form data from an unencrypted page to an unencrypted
+    page</strong>: Select this warning if you want to be alerted whenever you
+    are submitting data over an unencrypted connection. When this option is
+    selected, a dialogue box will be presented to the user <em>before</em> the
+    page is actually opened, which allows the loading of the page to be
+    cancelled before any potentially sensitive information is sent over an
+    unencrypted connection that can easily be intercepted by others.
+
+    <p><strong>Note</strong>: Submitting a form from an encrypted to an
+      unencrypted page will always prompt a dialogue prior to opening the page,
+      regardless of this setting.</p>
+  </li>
+</ul>
+
+<h3 id="mixed_content">Mixed Content</h3>
+
+<p>In general, there are two major issues related to transmitting sensitive
+  information over an unencrypted connection: One is the danger of someone
+  eavesdropping on the line, thus listening to the content transmitted; the
+  other of someone intercepting requests for the desired page and replacing
+  the legitimate content of that page with own (potentially malicious)
+  content. While so-called <q>Man In The Middle</q> attacks can usually be
+  detected in encrypted connections (e.g., by a certificate mismatch or an
+  invalid certificate presented by the interceptor), no such verification
+  exists for unencrypted connections.</p>
+
+<p>The term <q>Mixed Content</q> refers to a web page which itself is
+  encrypted, but which includes content on the same or a different server
+  which is <em>not</em> encrypted. Consequently, this part of the page is
+  still subject to the vulnerabilities of an unencrypted line. While there
+  are legitimate uses of that concept (such as including a company logo from
+  a different insecure web site into an otherwise secure page), such designs
+  should be avoided.</p>
+
+<p>There are two general types of mixed content:</p>
+
+<ul>
+  <li><strong>Mixed Active Content</strong> (or Mixed Script Content): This
+    is content which has the potential to hide or modify parts of a web page,
+    or to actively leak content from the secure part of the page to its
+    insecure part. Examples include scripts (JavaScript), style sheets (CSS),
+    or the embedding of entire web pages into the main web page (iframes).</li>
+  <li><strong>Mixed Passive Content</strong> (or Mixed Display Content):
+    This type of content does <em>not</em> have the potential to alter or
+    monitor the web page as such. Examples include images and audio or video
+    streams. It is however possible that sensitive information is passed as
+    an encoding of the content&apos;s location (URL), as cookies, or returned
+    with the content itself (e.g., as text included in an image). Thus, passive
+    content isn&apos;t entirely harmless either.</li>
+</ul>
+
+<p>The following options allow you to be warned about and/or to block both
+  mixed active and mixed passive content:</p>
+
+<ul>
+  <li><strong>Warn me when encrypted pages contain insecure content</strong>:
+    Tick this to instruct &brandShortName; to present a notification bar when
+    mixed <em>active</em> content was loaded or blocked. The notification bar
+    contains a button to open this preference panel.</li>
+  <li><strong>Don&apos;t load insecure content on encrypted pages</strong>:
+    Tick this to prevent mixed active content from being loaded at all but
+    to be blocked. If also the <q>Warn me</q> option is ticked, the
+    notification bar will contain two additional buttons:
+    <ul>
+      <li><strong>Keep Blocking</strong>: Dismiss the notification bar without
+        loading the potentially insecure content.</li>
+      <li><strong>Unblock</strong>:
+        Load the potentially insecure content <em>once</em> but not
+        automatically when this page is visited again in the future.</li>
+    </ul>
+    <strong>Note</strong>: The selection of <q>Unblock</q> for a specific site
+    can be revoked in the Permissions tab of the Data Manager. When in a
+    <a href="using_priv_help.xhtml#browsing_in_a_private_window">private
+    window</a>, these options aren&apos;t available in the notification bar.
+  </li>
+  <li><strong>Warn me when encrypted pages contain other types of mixed
+    content</strong>: Tick this to instruct &brandShortName; to present a
+    notification bar when mixed <em>passive</em> content was loaded or blocked.
+    The notification bar contains a button to open this preference panel.</li>
+  <li><strong>Don&apos;t load other types of mixed content on encrypted
+    pages</strong>: Tick this to prevent mixed passive content from being
+    loaded at all but to be blocked. If also the <q>Warn me</q> option is
+    ticked, a notification is presented that such content was blocked.</li>
+</ul>
+
+<p>For short definitions, click
+  <a href="glossary.xhtml#authentication">authentication</a>,
+  <a href="glossary.xhtml#encryption">encryption</a>, or
+  <a href="glossary.xhtml#certificate">certificate</a>.</p>
+
+<p>For more information about ciphers and encryption, see the following online
+  documents:</p>
+
+<ul>
+  <li>
+    <a href="https://developer.mozilla.org/en-US/docs/Introduction_to_Public-Key_Cryptography">Introduction
+    to Public-Key Cryptography</a></li>
+  <li>
+    <a href="https://developer.mozilla.org/en-US/docs/Introduction_to_SSL">Introduction
+    to SSL</a></li>
+  <li>
+    <a href="https://developer.mozilla.org/en-US/docs/NSS">Technologies
+      Available in the Network Security Services (NSS)</a>.</li>
+</ul>
+
+</body>
+</html>

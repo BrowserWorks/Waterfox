@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title		"既存のメールアドレスのセットアップ">
+<!ENTITY emailWizard.caption		"現在のメールアドレスを入力してください">
+<!ENTITY name.label			"あなたのお名前:">
+<!ENTITY name.accesskey			"n">
+<!ENTITY fullname.placeholder		"あなたのフルネーム">
+<!ENTITY name.text			"受信者に表示される名前です">
+<!ENTITY name.error			"お名前を入力してください">
+<!ENTITY email.label			"メールアドレス:">
+<!ENTITY email.accesskey		"E">
+<!ENTITY email3.placeholder		"あなたのメールアドレス">
+<!ENTITY email.text			"既存のメールアドレスです">
+<!ENTITY email.error			"メールアドレスが正しくありません">
+<!ENTITY password.label			"パスワード:">
+<!ENTITY password.accesskey		"P">
+<!ENTITY password.placeholder		"アカウントのパスワード">
+<!ENTITY password.text			"入力は任意です。ユーザー名の確認にのみ使用されます。">
+<!ENTITY password.toggle		"パスワードを表示または隠す">
+<!ENTITY rememberPassword.label		"パスワードを記憶する">
+<!ENTITY rememberPassword.accesskey	"m">
+<!ENTITY usernameEx.label		"ログイン名:">
+<!ENTITY usernameEx.accesskey		"l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder		"YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text		"ドメインへのログイン">
+
+<!ENTITY protocol.label			"プロトコル:">
+<!ENTITY imapLong.label			"IMAP (リモートフォルダー)">
+<!ENTITY pop3Long.label			"POP3 (メールをコンピューターに保存)">
+
+<!ENTITY manualConfigTable.summary	"サーバー設定">
+<!ENTITY incoming.label			"受信サーバー:">
+<!ENTITY incomingColumn.label		"受信サーバー">
+<!ENTITY outgoing.label			"送信サーバー:">
+<!ENTITY outgoingColumn.label		"送信サーバー">
+<!ENTITY username.label			"ユーザー名:">
+<!ENTITY serverRow.label		"サーバー:">
+<!ENTITY portRow.label			"ポート番号:">
+<!ENTITY sslRow.label			"SSL:">
+<!ENTITY auth.label			"認証方式">
+<!ENTITY imap.label			"IMAP">
+<!ENTITY pop3.label			"POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label			"Exchange">
+<!ENTITY smtp.label			"SMTP">
+<!ENTITY autodetect.label		"自動検出">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label		"接続の保護なし">
+<!ENTITY starttls.label			"STARTTLS">
+<!ENTITY sslTls.label			"SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label	"Exchange サーバー:">
+
+<!ENTITY advancedSetup.label		"詳細設定">
+<!ENTITY advancedSetup.accesskey	"A">
+<!ENTITY cancel.label			"キャンセル">
+<!ENTITY cancel.accesskey		"a">
+<!ENTITY continue.label			"続ける">
+<!ENTITY continue.accesskey		"C">
+<!ENTITY stop.label			"中止">
+<!ENTITY stop.accesskey			"S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label		"再テスト">
+<!ENTITY half-manual-test.accesskey	"t">
+<!ENTITY manual-config.label		"手動設定...">
+<!ENTITY manual-config.accesskey	"M">
+<!ENTITY open-provisioner.label		"新しいメールアドレスを取得...">
+<!ENTITY open-provisioner.accesskey	"g">
+<!ENTITY get-help.label			"ヘルプ">
+<!ENTITY get-help.accesskey		"H">
+
+<!ENTITY warning.label			"警告！">
+<!ENTITY incomingSettings.label		"受信サーバー設定:">
+<!ENTITY outgoingSettings.label		"送信サーバー設定:">
+<!ENTITY technicaldetails.label		"技術的な詳細">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label		"接続する上での危険性を理解しました">
+<!ENTITY confirmWarning.accesskey	"u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label		"完了">
+<!ENTITY doneAccount.accesskey		"D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label		"設定変更">
+<!ENTITY changeSettings.accesskey	"S">
+
+<!ENTITY contactYourProvider.description	"提供された設定を使用して &brandShortName; であなたのメールを受信することができます。ただし、これらの接続が不適当でないか、サーバーの管理者またはメールプロバイダーと連絡をとってください。詳しい情報は Thunderbird FAQ をご覧ください。">
+
+<!ENTITY insecureServer.tooltip.title		"警告！ このサーバーは安全ではありません。">
+<!ENTITY insecureServer.tooltip.details		"詳細は丸印をクリックしてください。">
+
+<!ENTITY insecureUnencrypted.description	"あなたのメールと認証情報が暗号化されずに送信されるため、パスワード (およびメッセージの内容) が他の人々に簡単に読まれる危険性があります。このまま &brandShortName; でメールの送受信ができますが、メールプロバイダーに、安全な接続を行うサーバーを構成するように連絡してください。">
+<!ENTITY insecureSelfSigned.description		"サーバーが、自己署名された信頼できない証明書を使用しているため、&brandShortName; とサーバーの間の通信が盗聴されないことを保証できません。このまま &brandShortName; でメールの送受信ができますが、信頼できる証明書を使用しているメールプロバイダーを利用すべきです。">
+<!ENTITY secureServer.description		"設定が完了しました。このサーバーは安全な接続を行うサーバーです。">

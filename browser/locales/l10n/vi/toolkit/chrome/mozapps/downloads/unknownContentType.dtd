@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Bạn phải chọn để mở:">
+<!ENTITY  from.label                  "từ:">
+<!ENTITY  actionQuestion.label        "&brandShortName; nên làm gì với tập tin này?">
+
+<!ENTITY  openWith.label              "Mở bằng">
+<!ENTITY  openWith.accesskey          "B">
+<!ENTITY  other.label                 "Khác…">
+
+<!ENTITY  saveFile.label              "Lưu Tập Tin">
+<!ENTITY  saveFile.accesskey          "L">
+
+<!ENTITY  rememberChoice.label        "Ghi nhớ cách xử lý cho các tập tin như thế này.">
+<!ENTITY  rememberChoice.accesskey    "T">
+
+<!ENTITY  whichIs.label              "là:">
+
+<!ENTITY  chooseHandlerMac.label      "Chọn…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "Duyệt…">
+<!ENTITY  chooseHandler.accesskey     "D">
+
+<!ENTITY  unknownPromptText.label     "Bạn có muốn lưu tập tin này không?">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Lägg till i adressbok…">
+<!ENTITY AddToAddressBook.accesskey        "L">
+<!ENTITY EditContact.label                 "Ändra kontakt…">
+<!ENTITY EditContact.accesskey             "Ä">
+<!ENTITY ViewContact.label                 "Visa kontakt">
+<!ENTITY ViewContact.accesskey             "V">
+<!ENTITY SendMailTo.label                  "Skriv meddelande till…">
+<!ENTITY SendMailTo.accesskey              "S">
+<!ENTITY CopyEmailAddress.label            "Kopiera e-postadress">
+<!ENTITY CopyEmailAddress.accesskey        "K">
+<!ENTITY CopyNameAndEmailAddress.label     "Kopiera namn och e-postadress">
+<!ENTITY CopyNameAndEmailAddress.accesskey "n">
+<!ENTITY CreateFilterFrom.label            "Skapa filter från…">
+<!ENTITY CreateFilterFrom.accesskey        "f">
+<!ENTITY openInBrowser.label               "Öppna i webbläsaren">
+<!ENTITY openInBrowser.accesskey           "i">
+<!ENTITY bookmarkLinkCmd.label             "Skapa bokmärke för denna länk…">
+<!ENTITY bookmarkLinkCmd.accesskey         "b">
+<!ENTITY copyLinkCmd.label                 "Kopiera länkadress">
+<!ENTITY copyLinkCmd.accesskey             "o">
+<!ENTITY CopyMessageId.label               "Kopiera meddelandeadressen">
+<!ENTITY CopyMessageId.accesskey           "p">
+<!ENTITY OpenMessageForMsgId.label         "Öppna meddelandet på adressen">
+<!ENTITY OpenMessageForMsgId.accesskey     "Ö">
+<!ENTITY OpenBrowserWithMsgId.label        "Öppna webbläsaren med meddelandeadressen">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "w">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Ny virtuel mappe">
+<!ENTITY name.label "Navn:">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "Opret som en undermappe til:">
+<!ENTITY description.accesskey "O">
+
+<!ENTITY searchTermCaption.label "Indstil søgekriterierne for denne virtuelle mappe:">
+
+<!ENTITY folderSelectionCaption.label "Vælg mapper der skal søges i:">
+<!ENTITY chooseFoldersButton.label "Vælg…">
+<!ENTITY chooseFoldersButton.accesskey "V">
+
+<!ENTITY searchOnline.label "Søg online (Giver opdateret resultater ved IMAP og nyhedsgrupper, men forøger tiden at åben mappen)">
+<!ENTITY searchOnline.accesskey "G">
+<!ENTITY newFolderButton.label       "Opret">
+<!ENTITY newFolderButton.accesskey   "p">
+<!ENTITY editFolderButton.label      "Opdater">
+<!ENTITY editFolderButton.accesskey  "d">

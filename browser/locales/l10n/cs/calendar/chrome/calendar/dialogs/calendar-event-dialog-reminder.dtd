@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title "Nastavení připomenutí">
+<!ENTITY reminder.add.label "Přidat">
+<!ENTITY reminder.add.accesskey "P">
+<!ENTITY reminder.remove.label "Odebrat">
+<!ENTITY reminder.remove.accesskey "O">
+
+<!ENTITY reminder.reminderDetails.label "Podrobnosti připomenutí">
+<!ENTITY reminder.action.label "Volba akce">
+
+<!ENTITY reminder.action.alert.label "Zobrazit upozornění">
+<!ENTITY reminder.action.email.label "Poslat e-mail">
+
+<!ENTITY alarm.units.minutes "minuty">
+<!ENTITY alarm.units.hours "hodiny">
+<!ENTITY alarm.units.days "dny">

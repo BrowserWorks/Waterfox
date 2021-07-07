@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Emotikonkę">
+<!ENTITY insertSmiley.accesskey "E">
+
+<!ENTITY smiley1Cmd.label "Uśmiech">
+<!ENTITY smiley1Cmd.accesskey "U">
+<!ENTITY smiley1Cmd.tooltip "Wstaw uśmiechniętą buzię">
+<!ENTITY smiley2Cmd.label "Dezaprobata">
+<!ENTITY smiley2Cmd.accesskey "D">
+<!ENTITY smiley2Cmd.tooltip "Wstaw smutną buzię">
+<!ENTITY smiley3Cmd.label "Mrugnięcie">
+<!ENTITY smiley3Cmd.accesskey "M">
+<!ENTITY smiley3Cmd.tooltip "Wstaw buzię z przymrużonym okiem">
+<!ENTITY smiley4Cmd.label "Wystawiony język">
+<!ENTITY smiley4Cmd.accesskey "W">
+<!ENTITY smiley4Cmd.tooltip "Wstaw buzię z wystawionym językiem">
+<!ENTITY smiley5Cmd.label "Śmiech">
+<!ENTITY smiley5Cmd.accesskey "i">
+<!ENTITY smiley5Cmd.tooltip "Wstaw śmiejącą się buzię">
+<!ENTITY smiley6Cmd.label "Zakłopotanie">
+<!ENTITY smiley6Cmd.accesskey "Z">
+<!ENTITY smiley6Cmd.tooltip "Wstaw zawstydzoną buzię">
+<!ENTITY smiley7Cmd.label "Niezdecydowanie">
+<!ENTITY smiley7Cmd.accesskey "N">
+<!ENTITY smiley7Cmd.tooltip "Wstaw niezdecydowaną buzię">
+<!ENTITY smiley8Cmd.label "Niespodzianka">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "Wstaw zaskoczoną buzię">
+<!ENTITY smiley9Cmd.label "Pocałunek">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Wstaw całującą buzię">
+<!ENTITY smiley10Cmd.label "Krzyk">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "Wstaw krzyczącą buzię">
+<!ENTITY smiley11Cmd.label "Spoko">
+<!ENTITY smiley11Cmd.accesskey "S">
+<!ENTITY smiley11Cmd.tooltip "Wstaw wyluzowaną buzię">
+<!ENTITY smiley12Cmd.label "Dam sobie za to obciąć rękę">
+<!ENTITY smiley12Cmd.accesskey "r">
+<!ENTITY smiley12Cmd.tooltip "Wstaw buzię pewną siebie">
+<!ENTITY smiley13Cmd.label "Moja gafa">
+<!ENTITY smiley13Cmd.accesskey "g">
+<!ENTITY smiley13Cmd.tooltip "Wstaw zatkaną buzię">
+<!ENTITY smiley14Cmd.label "Niewinność">
+<!ENTITY smiley14Cmd.accesskey "e">
+<!ENTITY smiley14Cmd.tooltip "Wstaw niewinną buzię">
+<!ENTITY smiley15Cmd.label "Płacz">
+<!ENTITY smiley15Cmd.accesskey "c">
+<!ENTITY smiley15Cmd.tooltip "Wstaw płaczącą buzię">
+<!ENTITY smiley16Cmd.label "Nic nie powiem">
+<!ENTITY smiley16Cmd.accesskey "o">
+<!ENTITY smiley16Cmd.tooltip "Wstaw milczącą buzię">
+<!ENTITY SmileButton.label "Wstaw emotikonkę">
+<!ENTITY SmileButton.tooltip "Wstaw emotikonkę">

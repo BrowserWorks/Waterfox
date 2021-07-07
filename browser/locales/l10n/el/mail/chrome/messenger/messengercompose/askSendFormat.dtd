@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Ερώτηση για email σε HTML">
+
+<!ENTITY recipient.label "Μερικοί από τους παραλήπτες δεν είναι καταγεγραμμένοι ως ικανοί να λαμβάνουν email σε HTML.">
+
+<!ENTITY question.label "Θέλετε να μετατραπεί το μήνυμα σε μορφή απλού κειμένου, ή να γίνει αποστολή σε μορφή HTML;">
+
+<!ENTITY plainTextAndHtml.label "Αποστολή σε απλό κείμενο και HTML">
+<!ENTITY plainTextAndHtml.accesskey "π">
+<!ENTITY plainTextOnly.label "Αποστολή μόνο σε απλό κείμενο">
+<!ENTITY plainTextOnly.accesskey "λ">
+<!ENTITY htmlOnly.label "Aποστολή μόνο σε HTML">
+<!ENTITY htmlOnly.accesskey "τ">
+
+<!ENTITY send.label "Αποστολή">
+<!ENTITY send.accesskey "σ">

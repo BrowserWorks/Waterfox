@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Grafik-Eigenschaften">
+
+<!ENTITY pixelsPopup.value "Pixel">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Grafik-Adresse:">
+<!ENTITY locationEditField.accessKey "d">
+<!ENTITY locationEditField.tooltip "Geben Sie Dateinamen oder Adresse der Grafik an">
+<!ENTITY locationEditField.shortenedDataURI "Gekürzte Daten-URI (Kopieren legt die komplette URI in die Zwischenablage)">
+<!ENTITY title.label "Tooltip:">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "Das HTML-Attribut 'title', das als Tooltip angezeigt wird">
+<!ENTITY altText.label "Alternativtext:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Geben Sie Text an, der statt der Grafik angezeigt werden soll">
+<!ENTITY noAltText.label "Alternativtext nicht verwenden">
+<!ENTITY noAltText.accessKey "n">
+
+<!ENTITY previewBox.label "Grafikvorschau">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Originalgröße:">
+<!ENTITY actualSizeRadio.label "Originalgröße">
+<!ENTITY actualSizeRadio.accessKey "O">
+<!ENTITY actualSizeRadio.tooltip "Zu der Originalgröße der Grafik zurückkehren">
+<!ENTITY customSizeRadio.label "Benutzerdef. Größe">
+<!ENTITY customSizeRadio.accessKey "G">
+<!ENTITY customSizeRadio.tooltip "Die Größe der Grafik, wie sie in der Seite angezeigt wird, verändern">
+<!ENTITY heightEditField.label "Höhe:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Breite:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY constrainCheckbox.label "Proportional">
+<!ENTITY constrainCheckbox.accessKey "P">
+<!ENTITY constrainCheckbox.tooltip "Die Seitenverhältnisse der Grafik beibehalten">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Image Map">
+<!ENTITY removeImageMapButton.label "Entfernen">
+<!ENTITY removeImageMapButton.accessKey "E">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Text an Grafik ausrichten:">
+<!ENTITY bottomPopup.value "Unten">
+<!ENTITY topPopup.value "Oben">
+<!ENTITY centerPopup.value "Mitte">
+<!ENTITY wrapRightPopup.value "Rechts umbrechen">
+<!ENTITY wrapLeftPopup.value "Links umbrechen">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Außenbereich">
+<!ENTITY leftRightEditField.label "Links und rechts:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "Oben und unten:">
+<!ENTITY topBottomEditField.accessKey "u">
+<!ENTITY borderEditField.label "Durchgezogener Rand:">
+<!ENTITY borderEditField.accessKey "R">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Rand um verlinkte Grafik anzeigen">
+<!ENTITY showImageLinkBorder.accessKey "v">
+<!ENTITY LinkAdvancedEditButton.label "Erweitertes Link-Editieren…">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Hinzufügen oder ändern von HTML-Attributen, Style-Attributen und JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formular">
+<!ENTITY imageLocationTab.label "Adresse">
+<!ENTITY imageDimensionsTab.label "Dimensionen">
+<!ENTITY imageAppearanceTab.label "Erscheinungsbild">
+<!ENTITY imageLinkTab.label "Link">

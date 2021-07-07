@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Berichtenfilters">
+<!ENTITY nameColumn.label "Filternaam">
+<!ENTITY activeColumn.label "Ingeschakeld">
+<!ENTITY newButton.label "Nieuw…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Bewerken…">
+<!ENTITY editButton.accesskey "B">
+<!ENTITY deleteButton.label "Verwijderen">
+<!ENTITY deleteButton.accesskey "V">
+<!ENTITY reorderUpButton.label "Omhoog verplaatsen">
+<!ENTITY reorderUpButton.accesskey "m">
+<!ENTITY reorderDownButton.label "Omlaag verplaatsen">
+<!ENTITY reorderDownButton.accesskey "l">
+<!ENTITY filterHeader.label "Ingeschakelde filters worden automatisch in de onderstaande volgorde uitgevoerd.">
+<!ENTITY filtersForPrefix.label "Filters voor:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filterlogboek">
+<!ENTITY viewLogButton.accesskey "i">
+<!ENTITY runFilters.label "Nu uitvoeren">
+<!ENTITY runFilters.accesskey "u">
+<!ENTITY stopFilters.label "Stoppen">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Geselecteerde filter(s) uitvoeren op:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY choosethis.label "deze map kiezen">
+<!ENTITY choosethisnewsserver.label "deze nieuwsserver kiezen">

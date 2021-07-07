@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label		"ページの配色と背景">
+<!ENTITY pageColors.label		"ページの配色">
+<!ENTITY defaultColorsRadio.label	"ページ独自の配色を指定しない">
+<!ENTITY defaultColorsRadio.accessKey	"D">
+<!ENTITY defaultColorsRadio.tooltip	"読者側の配色設定が使用されます">
+<!ENTITY customColorsRadio.label	"配色を指定する:">
+<!ENTITY customColorsRadio.accessKey	"C">
+<!ENTITY customColorsRadio.tooltip	"読者側の配色設定を上書き指定します">
+
+<!ENTITY normalText.label		"通常のテキスト">
+<!ENTITY normalText.accessKey		"N">
+<!ENTITY linkText.label			"リンクテキスト">
+<!ENTITY linkText.accessKey		"L">
+<!ENTITY activeLinkText.label		"アクティブリンク">
+<!ENTITY activeLinkText.accessKey	"A">
+<!ENTITY visitedLinkText.label		"訪問済リンク">
+<!ENTITY visitedLinkText.accessKey	"V">
+<!ENTITY background.label		"背景:">
+<!ENTITY background.accessKey		"B">
+<!ENTITY colon.character		":">
+<!ENTITY backgroundImage.label		"背景画像:">
+<!ENTITY backgroundImage.accessKey	"m">
+<!ENTITY backgroundImage.tooltip	"画像ファイルをページの背景として使用します">
+<!ENTITY backgroundImage.shortenedDataURI	"短縮データ URI (コピーすると完全 URI がクリップボードに置かれます)">

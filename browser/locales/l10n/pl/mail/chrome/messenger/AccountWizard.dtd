@@ -1,0 +1,102 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Kreator kont">
+<!ENTITY accountWizard.size "width: 63em; height: 44em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Aby otrzymywać wiadomości, należy najpierw skonfigurować konto.">
+<!ENTITY accountTypeTitle.label "Konfiguracja nowego konta">
+<!ENTITY accountTypeDesc2.label "Kreator kont przystępuje do zebrania informacji niezbędnych do utworzenia nowego konta. Skontaktuj się z administratorem sieci lub dostawcą usług internetowych, jeśli nie znasz wszystkich wymaganych danych.">
+<!ENTITY accountTypeDirections.label "Wybierz rodzaj konta, które chcesz skonfigurować:">
+<!ENTITY accountTypeMail.label "Konto pocztowe">
+<!ENTITY accountTypeMail.accesskey "p">
+<!ENTITY accountTypeNews.label "Konto grup dyskusyjnych">
+<!ENTITY accountTypeNews.accesskey "g">
+<!ENTITY accountTypeMovemail.label "Skrzynka systemu UNIX (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Tożsamość">
+<!ENTITY identityDesc.label "Poniższe dane określają tożsamość posiadacza konta i umożliwiają odbiorcom wiadomości identyfikację nadawcy.">
+
+<!ENTITY fullnameDesc.label "Wprowadź imię, nazwisko lub pseudonim, który będzie używany w polu „Od:” wysyłanych wiadomości">
+<!ENTITY fullnameExample.label "(na przykład: „Michał Wołodyjowski”).">
+<!ENTITY fullnameLabel.label "Twoje imię, nazwisko lub pseudonim:">
+<!ENTITY fullnameLabel.accesskey "T">
+
+<!ENTITY emailLabel.label "Adres e-mail:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informacje o serwerze poczty przychodzącej">
+<!ENTITY incomingServerTypeDesc.label "Wybierz typ serwera poczty przychodzącej.">
+<!ENTITY imapType.label "Serwer IMAP">
+<!ENTITY imapType.accesskey "I">
+<!ENTITY popType.label "Serwer POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Zostawiaj wiadomości na serwerze">
+<!ENTITY leaveMsgsOnSrvr.accesskey "Z">
+
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "t">
+<!ENTITY defaultPortLabel.label "Domyślny:">
+<!ENTITY defaultPortValue.label "">
+
+<!ENTITY incomingServer.description "Wprowadź nazwę serwera poczty przychodzącej (na przykład: „mail.example.net”).">
+<!ENTITY incomingServer.label "Serwer poczty przychodzącej:">
+<!ENTITY incomingServer.accesskey "S">
+<!ENTITY incomingUsername.description "Wprowadź, podaną przez dostawcę poczty, nazwę użytkownika (na przykład: „jkowalski”).">
+<!ENTITY incomingUsername.label "Nazwa użytkownika:">
+<!ENTITY incomingUsername.accesskey "u">
+
+<!ENTITY newsServerNameDesc.label "Podaj nazwę serwera grup dyskusyjnych (NNTP) (na przykład: „news.example.net”).">
+<!ENTITY newsServerLabel.label "Serwer grup dyskusyjnych:">
+<!ENTITY newsServerLabel.accesskey "n">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Informacje o serwerze poczty wychodzącej">
+<!ENTITY outgoingServer.description "Wprowadź nazwę serwera poczty wychodzącej (SMTP) (na przykład: „smtp.example.net”).">
+<!ENTITY outgoingServer.label "Serwer poczty wychodzącej:">
+<!ENTITY outgoingServer.accesskey "o">
+<!ENTITY outgoingUsername.description "Wprowadź, podaną przez dostawcę poczty, nazwę użytkownika dla serwera poczty wychodzącej (zazwyczaj taką samą, jak dla serwera poczty przychodzącej).">
+<!ENTITY outgoingUsername.label "Nazwa użytkownika poczty wychodzącej:">
+<!ENTITY outgoingUsername.accesskey "a">
+
+<!ENTITY modifyOutgoing.suffix "Ustawienia serwera poczty wychodzącej można zmieniać za pomocą opcji dostępnych w oknie konfiguracji kont.">
+<!ENTITY haveSmtp1.prefix "Zostanie użyty domyślny serwer poczty wychodzącej (SMTP) – „">
+<!ENTITY haveSmtp1.suffix3 "”.">
+<!ENTITY haveSmtp2.prefix "Do wysyłania wiadomości z tego konta zostanie użyta nazwa użytkownika domyślnego serwera poczty wychodzącej (SMTP) – „">
+<!ENTITY haveSmtp2.suffix3 "”.">
+<!ENTITY haveSmtp3.prefix "Wprowadzone nazwy serwerów poczty wychodzącej i przychodzącej są takie same: „">
+<!ENTITY haveSmtp3.suffix3 "”. Powyższa nazwa użytkownika będzie używana również podczas wysyłania wiadomości.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Nazwa konta">
+<!ENTITY accnameDesc.label "Wprowadź nazwę, która będzie używana do oznaczenia tego konta (na przykład: „Konto osobiste”, „Konto służbowe”, „Grupy dyskusyjne”).">
+<!ENTITY accnameLabel.label "Nazwa konta:">
+<!ENTITY accnameLabel.accesskey "N">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Konfiguracja zakończona">
+<!ENTITY completionText.label "Kreator kont utworzy nowe konto używając poniższych danych. Czy wprowadzone dane są poprawne?">
+<!ENTITY serverTypePrefix.label "Typ serwera poczty przychodzącej:">
+<!ENTITY serverNamePrefix.label "Nazwa serwera poczty przychodzącej:">
+<!ENTITY smtpServerNamePrefix.label "Nazwa serwera poczty wychodzącej (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Nazwa serwera grup dyskusyjnych (NNTP):">
+<!ENTITY downloadOnLogin.label "Pobierz wiadomości">
+<!ENTITY downloadOnLogin.accesskey "P">
+<!ENTITY deferStorageDesc.label "Odznaczenie poniższego pola wyboru spowoduje, że poczta dla tego konta będzie przechowywana w swoim własnym katalogu. Konto to będzie wtedy widoczne jako konto najwyższego poziomu. W przeciwnym wypadku konto to stanie się częścią globalnej skrzynki odbiorczej.">
+<!ENTITY deferStorage.label "Używaj globalnej skrzynki odbiorczej (konto Lokalne foldery będzie wykorzystywane do przechowywania poczty)">
+<!ENTITY deferStorage.accesskey "U">
+<!ENTITY clickFinish.label "Kliknij przycisk „Zakończ”, aby zapamiętać wprowadzone dane i zakończyć konfigurację konta.">
+<!ENTITY clickFinish.labelMac "Kliknij przycisk „Zakończ”, aby zapamiętać wprowadzone dane i zakończyć konfigurację konta.">

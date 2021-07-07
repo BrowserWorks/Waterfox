@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label		"オンラインの連絡先">
+<!ENTITY offlineContactsHeader.label		"オフラインの連絡先">
+<!ENTITY conversationsHeader.label		"会話">
+<!ENTITY searchResultConversation.label		"検索結果">
+<!ENTITY chat.noConv.title			"ここに会話が表示されます。">
+<!ENTITY chat.noConv.description		"左パネルのリストから会話を開始するアカウントを選んでください。">
+<!ENTITY chat.noPreviousConv.description	"&brandShortName; には、このアカウントの以前の会話が保存されていません。">
+<!ENTITY chat.noAccount.title			"チャットアカウントをセットアップしてください。">
+<!ENTITY chat.noAccount.description		"&brandShortName; がチャットアカウントのセットアップをお手伝いします。">
+<!ENTITY chat.accountWizard.button		"セットアップ開始">
+<!ENTITY chat.noConnectedAccount.title		"チャットアカウントが接続されていません。">
+<!ENTITY chat.noConnectedAccount.description	"'インスタントメッセージの状態' ダイアログから接続できます:">
+<!ENTITY chat.showAccountManager.button		"チャット状態を表示">
+
+<!ENTITY chat.participants			"参加者:">
+<!ENTITY chat.previousConversations		"以前の会話:">
+<!ENTITY chat.ongoingConversation		"継続中の会話">
+
+<!ENTITY openConversationCmd.label		"会話を開始">
+<!ENTITY openConversationCmd.accesskey		"c">
+<!ENTITY closeConversationCmd.label		"会話を閉じる">
+<!ENTITY closeConversationCmd.accesskey		"C">
+<!ENTITY aliasCmd.label				"名前変更">
+<!ENTITY aliasCmd.accesskey			"R">
+<!ENTITY deleteCmd.label			"連絡先を削除">
+<!ENTITY deleteCmd.accesskey			"v">
+
+<!ENTITY openConversationButton.tooltip		"会話を開始します">
+<!ENTITY closeConversationButton.tooltip	"会話を閉じます">
+
+<!ENTITY addBuddyButton.label			"連絡先追加">
+<!ENTITY joinChatButton.label			"チャット参加">
+<!ENTITY chatAccountsButton.label		"アカウント表示">
+
+<!ENTITY status.available			"利用可能">
+<!ENTITY status.unavailable			"利用不可">
+<!ENTITY status.offline				"オフライン">
+
+<!ENTITY openLinkCmd.label			"リンクを開く...">
+<!ENTITY openLinkCmd.accesskey			"O">

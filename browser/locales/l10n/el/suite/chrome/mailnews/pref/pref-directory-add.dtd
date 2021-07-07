@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Όνομα:">
+<!ENTITY directoryName.accesskey           "ν">
+<!ENTITY directoryHostname.label           "Όνομα κεντρικού υπολογιστή: ">
+<!ENTITY directoryHostname.accesskey       "ε">
+<!ENTITY directoryBaseDN.label             "DN βάσης: ">
+<!ENTITY directoryBaseDN.accesskey         "β">
+<!ENTITY findButton.label                  "Εύρεση">
+<!ENTITY findButton.accesskey              "ρ">
+<!ENTITY directorySecure.label             "Χρήση ασφαλούς σύνδεσης (SSL)">
+<!ENTITY directorySecure.accesskey         "Χ">
+<!ENTITY directoryLogin.label              "DN σύνδεσης: ">
+<!ENTITY directoryLogin.accesskey          "δ">
+<!ENTITY General.tab                       "Γενικά">
+<!ENTITY Offline.tab                       "Εκτός σύνδεσης">
+<!ENTITY Advanced.tab                      "Για προχωρημένους">
+<!ENTITY portNumber.label                  "Αριθμός θύρας:">
+<!ENTITY portNumber.accesskey              "α">
+<!ENTITY searchFilter.label                "Φίλτρο αναζήτησης: ">
+<!ENTITY searchFilter.accesskey            "ζ">
+<!ENTITY scope.label                       "Εμβέλεια: ">
+<!ENTITY scope.accesskey                   "β">
+<!ENTITY scopeOneLevel.label               "Ένα επίπεδο">
+<!ENTITY scopeOneLevel.accesskey           "Έ">
+<!ENTITY scopeSubtree.label                "Υπόδεντρο">
+<!ENTITY scopeSubtree.accesskey            "Υ">
+<!ENTITY return.label                      "Να μην επιστρέφονται πάνω από">
+<!ENTITY return.accesskey                  "ρ">
+<!ENTITY results.label                     "αποτελέσματα">
+<!ENTITY offlineText.label                 "Μπορείτε να κάνετε λήψη ενός τοπικού αντιγράφου αυτού του καταλόγου για εργασία εκτός σύνδεσης.">
+<!ENTITY saslMechanism.label               "Μέθοδος σύνδεσης: ">
+<!ENTITY saslMechanism.accesskey           "σ">
+<!ENTITY saslOff.label                     "Απλή">
+<!ENTITY saslOff.accesskey                 "λ">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : This file contains the Storage Inspector strings. -->
+
+<!ENTITY searchBox.placeholder "Filtra elementi">
+
+<!ENTITY storage.popupMenu.deleteAllLabel "Elimina tutto">
+
+<!ENTITY storage.popupMenu.deleteAllSessionCookiesLabel "Elimina tutti i cookie di sessione">
+
+<!ENTITY storage.popupMenu.copyLabel "Copia">

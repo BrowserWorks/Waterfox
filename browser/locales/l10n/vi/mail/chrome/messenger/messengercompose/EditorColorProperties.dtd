@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Màu và nền trang">
+<!ENTITY pageColors.label "Màu Trang">
+<!ENTITY defaultColorsRadio.label "Màu mặc định của người đọc (Không thiết lập màu trong trang)">
+<!ENTITY defaultColorsRadio.accessKey "M">
+<!ENTITY defaultColorsRadio.tooltip "Dùng thiết lập màu từ trình duyệt của người đọc">
+<!ENTITY customColorsRadio.label "Dùng màu tùy chọn:">
+<!ENTITY customColorsRadio.accessKey "D">
+<!ENTITY customColorsRadio.tooltip "Những thiết lập màu này sẽ hiển thị đè lên các thiết lập trình duyệt của người đọc">
+
+<!ENTITY normalText.label "Chữ thường">
+<!ENTITY normalText.accessKey "B">
+<!ENTITY linkText.label "Chữ liên kết">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "Chữ liên kết đang chọn">
+<!ENTITY activeLinkText.accessKey "C">
+<!ENTITY visitedLinkText.label "Chữ liên kết đã thăm">
+<!ENTITY visitedLinkText.accessKey "t">
+<!ENTITY background.label "Nền:">
+<!ENTITY background.accessKey "N">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Hình nền:">
+<!ENTITY backgroundImage.accessKey "H">
+<!ENTITY backgroundImage.tooltip "Dùng một tập tin ảnh làm nền cho trang của bạn">
+<!ENTITY backgroundImage.shortenedDataURI "URI dữ liệu rút ngắn (bản sao sẽ đặt URI đầy đủ vào bảng tạm)">

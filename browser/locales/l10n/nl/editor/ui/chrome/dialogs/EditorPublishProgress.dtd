@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "Website-URL:">
+<!ENTITY docSubdir.label       "Paginasubmap:">
+<!ENTITY otherSubdir.label     "Afbeeldingssubmap:">
+
+<!ENTITY status.label          "Publiceren…">
+<!ENTITY fileList.label        "Publicatiestatus">
+<!ENTITY succeeded.label       "Geslaagd">
+<!ENTITY failed.label          "Mislukt">
+
+<!ENTITY keepOpen              "Dit venster open houden nadat het publiceren is voltooid.">
+<!ENTITY closeButton.label     "Sluiten">

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Ansigt">
+<!ENTITY insertSmiley.accesskey "A">
+
+<!ENTITY smiley1Cmd.label "Smil">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Indsæt smil">
+<!ENTITY smiley2Cmd.label "Ked af det">
+<!ENTITY smiley2Cmd.accesskey "P">
+<!ENTITY smiley2Cmd.tooltip "Indsæt ked af det">
+<!ENTITY smiley3Cmd.label "Blink">
+<!ENTITY smiley3Cmd.accesskey "B">
+<!ENTITY smiley3Cmd.tooltip "Indsæt blink">
+<!ENTITY smiley4Cmd.label "Ræk tunge">
+<!ENTITY smiley4Cmd.accesskey "t">
+<!ENTITY smiley4Cmd.tooltip "Indsæt ræk tunge">
+<!ENTITY smiley5Cmd.label "Grinende">
+<!ENTITY smiley5Cmd.accesskey "G">
+<!ENTITY smiley5Cmd.tooltip "Indsæt grinende">
+<!ENTITY smiley6Cmd.label "Flov">
+<!ENTITY smiley6Cmd.accesskey "F">
+<!ENTITY smiley6Cmd.tooltip "Indsæt flov">
+<!ENTITY smiley7Cmd.label "Ubeslutsom">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "Indsæt ubeslutsom">
+<!ENTITY smiley8Cmd.label "Overraskelse">
+<!ENTITY smiley8Cmd.accesskey "O">
+<!ENTITY smiley8Cmd.tooltip "Indsæt overraskelse">
+<!ENTITY smiley9Cmd.label "Kys">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Indsæt kys">
+<!ENTITY smiley10Cmd.label "Råb">
+<!ENTITY smiley10Cmd.accesskey "R">
+<!ENTITY smiley10Cmd.tooltip "Indsæt råb">
+<!ENTITY smiley11Cmd.label "Sej">
+<!ENTITY smiley11Cmd.accesskey "e">
+<!ENTITY smiley11Cmd.tooltip "Indsæt sej">
+<!ENTITY smiley12Cmd.label "Penge i mund">
+<!ENTITY smiley12Cmd.accesskey "n">
+<!ENTITY smiley12Cmd.tooltip "Indsæt penge i mund">
+<!ENTITY smiley13Cmd.label "Fod i mund">
+<!ENTITY smiley13Cmd.accesskey "d">
+<!ENTITY smiley13Cmd.tooltip "Indsæt fod i mund">
+<!ENTITY smiley14Cmd.label "Uskyldig">
+<!ENTITY smiley14Cmd.accesskey "y">
+<!ENTITY smiley14Cmd.tooltip "Indsæt uskyldig">
+<!ENTITY smiley15Cmd.label "Græder">
+<!ENTITY smiley15Cmd.accesskey "æ">
+<!ENTITY smiley15Cmd.tooltip "Indsæt græder">
+<!ENTITY smiley16Cmd.label "Lukket med syv segl">
+<!ENTITY smiley16Cmd.accesskey "m">
+<!ENTITY smiley16Cmd.tooltip "Indsæt lukket med syv segl">
+<!ENTITY SmileButton.label "Indsæt smiley">
+<!ENTITY SmileButton.tooltip "Indsæt smiley">

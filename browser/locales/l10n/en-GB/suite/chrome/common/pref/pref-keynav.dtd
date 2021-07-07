@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Keyboard Navigation">
+<!ENTITY tabNavigationBehavior.label "Tab Key Navigation">
+<!ENTITY tabNavigationLinks.label "Links">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Buttons, radio buttons, tickboxes, and selection lists">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "Note: text boxes and scrollable regions are always part of the tabbing order.">
+<!ENTITY tabNavigationDesc.label "When Tab or Shift+Tab is pressed, move between:">
+<!ENTITY accessibilityBrowseWithCaret.label "Browse With Caret">
+<!ENTITY browseWithCaretDesc.label "Caret browsing enables you to navigate and select within pages using the cursor keys to move a visible caret.">
+<!ENTITY browseWithCaretUse.label "Use caret browsing">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "Use the F7 shortcut to toggle caret browsing">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Warn me before turning on caret browsing">
+<!ENTITY browseWithCaretWarn.accesskey "W">
+
+<!ENTITY modifiers.label "Modifiers">
+<!ENTITY acceleratorKey.label "Accelerator key:">
+<!ENTITY acceleratorKey.accesskey "A">
+<!ENTITY menuAccessKey.label "Menu access key:">
+<!ENTITY menuAccessKey.accesskey "M">
+<!ENTITY modifiersDesc.label "Note: A value of zero disables a modifier key.">

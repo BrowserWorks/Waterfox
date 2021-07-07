@@ -1,0 +1,1270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+    <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Usar el correo de &brandShortName;</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+        type="text/css"/>
+</head>
+
+<body>
+<h1 id="reading_messages">Leer mensajes</h1>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#getting_new_messages">Obtener nuevos mensajes</a></li>
+    <li><a href="#choosing_how_you_view_the_mail_window">Elegir cómo ver la
+      ventana de Correo y noticias</a></li>
+    <li><a href="#sorting_and_threading_messages">Ordenar los mensajes y
+      conversaciones</a></li>
+    <li><a href="#saving_and_printing_messages">Guardar e imprimir
+      mensajes</a></li>
+    <li><a href="#controlling_images_scripts_and_plugins">Controlar imágenes,
+      scripts y plugins</a></li>
+  </ul>
+</div>
+
+<h2 id="getting_new_messages">Obtener nuevos mensajes</h2>
+
+<p>Para una cuenta IMAP, puede recuperar los mensajes nuevos automáticamente y
+  mostrarlos en la bandeja de entrada simplemente abriendo Correo y noticias y
+  seleccionando la bandeja de entrada de la cuenta IMAP.</p>
+
+<p>Para cuentas POP, debe seleccionar la bandeja de entrada y pulsar Recibir
+  mensajes para recuperar sus mensajes. Por defecto, los mensajes de su cuenta
+  POP se descarga completos y se borran del servidor POP una vez los recupera.
+  Puede <a href="mailnews_account_settings.xhtml#pop_server_settings">cambiar su
+  configuración del servidor POP</a> para descargar sólo las cabeceras y/o
+  mantener una copia de los mensajes en el servidor además de descargarlos a su
+  ordenador.</p>
+
+<p>Para cuentas de noticias, al expandirse la lista de grupos de noticias de
+  la cuenta se buscarán automáticamente nuevos elementos, igual que sucede si
+  simplemente selecciona uno de los grupos de noticias. Mientras está leyendo
+  un grupo de noticias, puede forzar una comprobación en busca de nuevos
+  artículos haciendo clic en Recibir mensajes.</p>
+
+<p>Para cuentas de canales de blogs y noticias, la primera vez que expanda la
+  cuenta se comprobará en busca de nuevos artículos. Además de eso, puede
+  forzar la comprobación en cualquier momento haciendo clic en Recibir
+  mensajes.</p>
+
+<p>También se puede configurar &brandShortName; para obtener los mensajes nuevos
+  al iniciarse y que compruebe si hay mensajes nuevos cada cierto tiempo.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_mail.png" alt="" /></td>
+  </tr>
+  <tr>
+    <td width="20"></td>
+    <td><strong>Icono de Correo y noticias</strong></td>
+  </tr>
+</table>
+
+<p>El icono de Correo y noticias en la barra de estado muestra una flecha
+  verde para indicarle que han llegado mensajes nuevos.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_newmail.png" alt="" /></td>
+  </tr>
+  <tr>
+    <td width="20"></td>
+    <td><strong>Notificación de correo nuevo</strong></td>
+  </tr>
+</table>
+
+<p>Para configurar &brandShortName; para que compruebe automáticamente
+  si hay correo nuevo, comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias, y verá el cuadro de diálogo Configuración de cuentas de correo
+    y noticias.</li>
+  <li>Si tiene varias cuentas, seleccione una y elija la categoría
+  Configuración del servidor de esa cuenta.</li>
+  <li>Seleccione una o ambas de las siguientes opciones en el apartado de
+  configuración del servidor:
+    <ul>
+      <li><strong>Comprobar si hay correo nuevo al inicio</strong>: marque
+      esta casilla si quiere comprobar si hay mensajes nuevos en esta cuenta
+      automáticamente cada vez que inicie Correo y noticias. Para
+      cuentas POP, Correo y noticias comprobará si hay mensajes nuevos,
+      pero no los descargará hasta que se pulse el botón Obtener
+      mensajes o a menos que se haya especificado <q>Descargar correo nuevo
+      automaticamente</q>.</li>
+      <li><strong>Comprobar si hay correo nuevo cada [__] minutos</strong>:
+      marque esta casilla si quiere especificar el número de minutos
+      entre dos comprobaciones de correo. Puede comprobar si hay correo nuevo
+      en cualquier momento pulsando el botón Obtener mensajes en la
+      ventana de Correo y noticias.</li>
+    </ul>
+  </li>
+  <li>Pulse Aceptar. Su configuración tendrá efecto la
+  próxima vez que inicie Correo y noticias.</li>
+</ol>
+
+<p>Para configurar Correo y noticias de &brandShortName; de modo que
+  reproduzca un sonido o muestre una alerta cuando llegue correo nuevo, vea <a
+  href="mailnews_preferences.xhtml#notifications">Preferencias de Correo y
+  noticias - Notificaciones</a>.</p>
+
+<p>Siempre se pueden recuperar los mensajes manualmente en cualquier momento.
+Para obtener los mensajes nuevos para la cuenta o grupo seleccionado, lleve a
+cabo una de las siguientes acciones:</p>
+
+<ul>
+  <li>Pulse el botón Recibir mensajes en la barra de herramientas de
+  Correo y noticias.</li>
+  <li>Abra el menú Archivo (en la ventana de Correo y noticias) y elija
+  Recibir mensajes nuevos.</li>
+</ul>
+
+<p>Para obtener los mensajes nuevos para todas las cuentas de correo,
+comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Pulse con el ratón en el triángulo que hay en el
+  botón Recibir mensajes en la barra de herramientas de Correo y
+  noticias.</li>
+  <li>Elija Recibir todos los mensajes nuevos. Correo y noticias de
+  &brandShortName; recupera los mensajes nuevos en todas sus cuentas de
+  correo.
+  <p>Si no ha iniciado sesión en alguna de las cuentas de correo, se
+  le pedirá que introduzca el usuario y contraseña antes de
+  recuperar los mensajes para esa cuenta (si ya ha almacenado su usuario y
+  contraseña en el administrador de contraseñas, no se le
+  pedirá esta información).</p>
+  </li>
+</ol>
+
+<p><strong>Nota</strong>: también se puede abrir el menú Archivo (en la ventana
+  de Correo y noticias) y elegir <q>Recibir mensajes nuevos de</q>.</p>
+
+<p>Para obtener los mensajes para una cuenta de correo específica,
+comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Pulse con el ratón en el triángulo que hay en el
+  botón Recibir mensjes en la barra de herramientas de Correo y
+  noticias.</li>
+  <li>Elija la cuenta para la que quiere recuperar el correo.</li>
+</ol>
+
+<p><strong>Nota</strong>: Correo y noticias le pide la contaseña la
+primera vez que recupera los mensajes de una cuenta. En ese momento, puede
+hacer que la contraseña quede almacenada en el administrado de
+contraseñas.</p>
+
+<p>El administrador de contraseñas puede guardar todos los usuarios
+y contraseñas en su ordenador e introducirlos por usted
+automáticamente. Para más información, vea <a
+href="using_priv_help.xhtml#using_the_password_manager">Usar el
+administrador de contraseñas</a>.</p>
+
+<p>[<a href="#reading_messages">Volver al principio de
+la sección</a>]</p>
+
+<h2 id="choosing_how_you_view_the_mail_window">Elegir cómo ver
+la ventana de Correo y noticias</h2>
+
+<p>Se puede personalizar el aspecto de la ventana de Correo y noticias
+(la ventana que se muestra al elegir Correo y noticias desde el menú
+Ventana):</p>
+
+<ul>
+  <li>Abra el menú Ver y elija Mostrar/Ocultar para mostrar u
+  ocultar la barra de herramientas de correo, la barra de búsquedas o
+  la barra de estado.</li>
+  <li>Expanda o contraiga cualquier panel para cambiar la vista de tres
+  paneles a dos.</li>
+</ul>
+
+<p>[<a href="#reading_messages">Volver al principio de
+la sección</a>]</p>
+
+<h2 id="sorting_and_threading_messages">Ordenar mensajes y
+conversaciones</h2>
+
+<p>Para ordenar los mensajes por categorías como asunto, remitente,
+fecha o prioridad, comenzando desde la ventana de Correo y noticias:</p>
+
+<ul>
+  <li>Pulse la columna apropiada en la ventana de la lista de mensajes.
+  También puede abrir el menú Ver, elegir Ordenar por, y
+  elegir la columna por la que quiera ordenar.</li>
+</ul>
+
+<p>Para volver a ordenar los encabezados de las columnas, comenzando desde
+la ventana de Correo y noticias:</p>
+
+<ul>
+  <li>Pulse y arrastre un encabezado de columna a la izquierda o a la derecha
+  para reposicionar la columna.</li>
+</ul>
+
+<p>Para agrupar los mensajes por conversación (asunto), de tal forma
+que cada mensaje esté agrupado con todas sus respuestas:</p>
+
+<ul>
+  <li>Pulse el botón de conversación que está a la
+  izquierda de los encabezados de asunto, remitente y fecha. O abra el
+  menú Ver, elija Ordenar por y luego escoja Conversación.</li>
+</ul>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/threadbutton.png" alt="" /></td>
+  </tr>
+  <tr>
+    <td width="20"></td>
+    <td><strong>Botón de conversaciones</strong></td>
+  </tr>
+</table>
+
+<p><strong>Truco</strong>: el botón Conversación ordena
+automáticamente las conversaciones por la fecha de los mensajes que
+contienen. Si quiere usar otro criterio de ordenación para las
+conversaciones, abra el menú Ver y seleccione la opción deseada
+del submenú Ordenar por.</p>
+
+<p><strong>Truco</strong>: seleccione <q>Preservar las conversaciones al ordenar
+  mensajes</q> en las <a
+  href="mailnews_preferences.xhtml#mail_and_newsgroups">Preferencias de Correo y
+  noticias</a> si quiere que &brandShortName; mantenga el agrupamiento anidado
+  de mensajes al ordenar éstos haciendo clic en las cabeceras de columna. En
+  este modo, el botón de conversación alterna entre agrupamiento de mensajes
+  anidado y no anidado. Si no se selecciona <q>Preservar las conversaciones al
+  ordenar mensajes</q>, &brandShortName; muestra los mensajes automáticamente no
+  anidados cuando usted los ordena haciendo clic en una cabecera de columna.</p>
+
+<p><strong>Truco</strong>: para ayudarle a identificar mensajes sin leer
+en una conversación sin expandir donde ha leído el mensaje
+superior, &brandShortName; subraya el mensaje superior.</p>
+
+<p>[<a href="#reading_messages">Volver al principio de la sección</a>]</p>
+
+<h2 id="saving_and_printing_messages">Guardar e imprimir
+  mensajes</h2>
+
+<p>Para guardar un mensaje de correo como texto sin formato, HTML, o un
+  archivo de Outlook:</p>
+
+<ol>
+  <li>En la ventana de Correo y noticias, seleccione el mensaje.</li>
+  <li>Abra el menú Archivo y elija Guardar como, y luego elija
+  Archivo.</li>
+  <li>En la lista desplegable <q>Archivos de tipo</q>, escoja un tipo de
+  archivo (archivos HTML, archivos de texto o archivos de correo). Escoja
+  <q>Archivos de correo</q> si quiere guardar el mensaje en un formato que
+  le permita abrirlo desde Microsoft Outlook o Outlook Express.</li>
+  <li>Cambie la extensión del nombre de archivo para que termine en
+  .html, .txt o .eml, dependiendo del tipo de archivo que haya elegido en el
+  paso 3.</li>
+  <li>Elija un nombre de archivo y un directorio y pulse en el botón
+  Guardar.</li>
+</ol>
+
+<p>Para imprimir un mensaje seleccionado:</p>
+
+<ul>
+  <li>Pulse en el botón Imprimir.</li>
+</ul>
+
+<p>[ <a href="#reading_messages">Volver al principio de la sección</a>
+]</p>
+
+<h2 id="controlling_images_scripts_and_plugins">Controlar imágenes, scripts
+  y plugins</h2>
+
+<p>Por defecto, las imágenes y otro contenido que esté situado remotamente no
+  se mostrarán en los mensajes que recibe, salvo de remitentes a los que haya
+  autorizado en sus libretas de direcciones. Para cambiar esta
+  configuración:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Correo y noticias, pulse en Visualización (si no
+    hay subcategorías visibles, haga doble clic en Correo y noticias para
+    expandir la lista).</li>
+  <li>Desmarque <q>Bloquear imágenes y otro contenido de orígenes
+    remotos</q>.</li>
+  <li>Pulse Aceptar para que el cambio surta efecto.</li>
+</ol>
+
+<p><strong>Nota</strong>: vea <q>Permitir imágenes remotas en el correo HTML</q>
+  en <a href="mailnews_addressbooks.xhtml#creating_a_new_address_book_card">Crear
+  una nueva tarjeta en una libreta de direcciones</a> para obtener detalles de
+  cómo cambiar qué remitentes pueden mostrar contenido remoto.</p>  
+
+<p>Por defecto, los plugins no están activados en los mensajes que recibe. Para
+  cambiar estos valores:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Avanzadas, pulse en Scripts y plugins (si no
+    hay subcategorías visibles, haga doble clic en Avanzadas para
+    expandir la lista).
+    <ul>
+      <li>Bajo <q>Habilitar plugins para</q>, marque <q>Correo y noticias</q>
+        para habilitar los plugins.</li>
+    </ul>
+  </li>
+  <li>Pulse Aceptar para que los cambios surtan efecto.</li>
+</ol>
+
+<p>[ <a href="#reading_messages">Volver al principio de la sección</a>
+]</p>
+
+<h1 id="sending_messages">Enviar mensajes</h1>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#composing_mail_and_newsgroup_messages">Redactar mensajes de
+      correo y noticias</a></li>
+    <li><a href="#using_the_message_composition_window">Usar la ventana de
+      redacción de mensajes</a></li>
+    <li><a href="#addressing_a_message">Enviar un mensaje</a></li>
+    <li><a href="#selecting_message_sending_options">Seleccionar opciones de
+      envío de mensajes</a></li>
+    <li><a href="#replying_to_a_message">Responder a un mensaje</a></li>
+    <li><a href="#forwarding_a_message">Reenviar un mensaje</a></li>
+    <li><a href="#confirming_that_your_message_was_opened">Confirmar que su
+      mensaje ha sido abierto</a></li>
+    <li><a href="#saving_and_editing_a_draft_message">Guardar y editar un
+      borrador</a></li>
+    <li><a href="#creating_and_using_templates">Crear y usar plantillas</a></li>
+  </ul>
+</div>
+
+<h2 id="composing_mail_and_newsgroup_messages">Redactar mensajes de correo y
+noticias</h2>
+
+<p>Puede seleccionar direcciones, redactar, responder o enviar un mensaje
+nuevo mediante una de las siguientes formas:</p>
+
+<ul>
+  <li>En cualquier ventana de &brandShortName;, abra el menú Archivo y
+  elija Nuevo, y luego Mensaje.</li>
+  <li>Pulse el botón Redactar en la barra de herramientas de Correo y
+  noticias.</li>
+  <li>Cuando esté viendo un mensaje, pulse en Responder, Reenviar
+  o Responder a todos en la barra de herramientas de Correo y noticias.</li>
+  <li>Desde la ventana de la libreta de direcciones, seleccione una
+  dirección y pulse el botón Redactar.</li>
+</ul>
+
+<p><strong>Truco</strong>: use la opción Configuración de cuentas de correo y
+  noticias - <a href="mailnews_account_settings.xhtml#addressing">Redacción y
+  direcciones</a> para especificar el editor de texto HTML para redactar
+  mensajes enviados desde esta cuenta (puede especificar un editor diferente
+  para cada una de sus cuentas). Vea <a
+  href="mailnews_getting_started.xhtml#changing_the_settings_for_an_account">Cambiar
+  la configuración de una cuenta</a> para más información.</p>
+
+<p><strong>Nota</strong>: en general, no es posible redactar mensajes para
+  publicarlos en cuentas de canales de blogs y noticias. Si quiere publicar
+  artículos en un blog (y tiene los permisos apropiados para hacerlo), tendrá
+  que usar los mecanismos proporcionados por el sistema de blogs específico. En
+  algunos casos, esto puede incluir el envío de un mensaje de correo electrónico
+  a una dirección específica.</p>
+
+<p>Redactar los mensajes en formato HTML le permite usar diferentes tipos de
+  letra, colores y estilos en el texto (tales como negrita o cursiva), tablas,
+  listas numeradas y no numeradas, e imágenes en sus mensajes. Sin embargo,
+  algunos destinatarios quizá sólo puedan leer mensajes redactados en texto sin
+  formato. Si ocasionalmente quiere usar el editor de texto sin formato, puede
+  mantener pulsada la tecla Mayúsculas mientras hace clic en el botón Redactar
+  o Responder para usar el editor de texto sin formato cuando sea necesario.</p>
+
+<p>[<a href="#sending_messages">Volver al principio de la sección</a>]</p>
+
+<h2 id="using_the_message_composition_window">Usar la ventana de
+redacción de mensajes</h2>
+
+<p>Use la ventana de redacción de mensajes para elegir direcciones, redactar y
+  enviar mensajes de correo y grupos de noticias. Indique primero si quiere
+  redactar los mensajes en texto sin formato o HTML de manera predeterminada en
+  el panel de preferencias de
+  <a href="mailnews_account_settings.xhtml#addressing">Redacción y
+  direcciones</a> (abra el menú Editar y elija Configuración de cuentas de
+  correo y noticias).</p>
+
+<p>Para ver la ventana de redacción, pulse el botón Redactar en la barra de
+  herramientas.</p>
+
+<p>La ventana de redacción contiene:</p>
+
+<ul>
+  <li>Barra de herramientas de Correo y noticias
+    <p>Puede pulsar los siguientes botones:</p>
+    <ul>
+      <li><strong>Enviar</strong>: para enviar un mensaje al acabarlo.</li>
+      <li><strong>Dirección</strong>: para buscar nombres en las
+      libretas de direcciones.</li>
+      <li><strong>Adjuntar</strong>: para adjuntar un archivo a un mensaje.
+      Vea <a href="#using_attachments">Usar adjuntos</a> para más
+      información.</li>
+      <li><strong>Ortografía</strong>: para comprobar la
+      ortografía del texto de su mensaje.</li>
+      <li><strong>Seguridad</strong>: para mostrar información sobre si
+      su mensaje será enviado cifrado o firmado digitalmente (o ambas
+      cosas).</li>
+      <li><strong>Guardar</strong>: guardar el mensaje como borrador.</li>
+    </ul>
+  </li>
+  <li>&Aacute;rea de direcciones: donde introduce las direcciones de correo de
+  los destinatarios.</li>
+  <li>&Aacute;rea de adjuntos: cuando adjunta archivos a un mensaje (lo cual
+  puede hacerse pulsando en esta área o pulsando el botón
+  Adjuntar), los nombres de archivo se listan en el área de adjuntos a
+  la derecha del área de direcciones.</li>
+  <li>&Aacute;rea del cuerpo del mensaje: donde escribe el contenido de su
+  mensaje.</li>
+</ul>
+
+<p>Si ha elegido redactar los mensajes usando el editor HTML, verá
+una barra adicional con botones para dar formato al texto similares a los
+de &brandShortName; Composer.</p>
+
+<p>Para obtener ayuda sobre el uso del editor HTML, vea <a
+href="composer_help.xhtml#formatting_your_web_pages">Dar formato a sus
+páginas web</a>.</p>
+
+<p>[<a href="#sending_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="addressing_a_message">Enviar un mensaje</h2>
+
+<p>Para enviar un mensaje:</p>
+
+<ol>
+  <li>Escriba el nombre en el área de direcciones.
+    <p>Si ha habilitado el <a
+      href="mailnews_preferences.xhtml#address_autocompletion">autocompletado
+      automático</a> (está habilitado por defecto), escriba las primeras letras
+      del nombre del destinatario y espere a que se complete la dirección (o
+      puede escribir una parte del nombre e immediatamente pulsar la tecla
+      <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> para que
+      Correo y noticias intente completar la dirección correcta).</p>
+  </li>
+  <li>Si se muestran varias direcciones, seleccione una y pulse la tecla
+  Enter.
+    <p><strong>Nota</strong>: use una coma para separar varias direcciones en
+    la misma línea. No use la coma para separar nombres o apellidos.
+    Por ejemplo, múltiples entradas podrían figurar como</p>
+    <p><tt>address1@mozilla.org, address2@mozilla.org,
+    address3@mozilla.org)</tt></p>
+  </li>
+  <li>Si quiere que este mensaje se envíe desde una cuenta distinta,
+  seleccione en el cuadro <q>De</q> la cuenta que quiera. Vea <a
+  href="#changing_the_account_from_which_a_message_is_sent">Cambiar la cuenta
+  desde la que se envía un mensaje</a> para más
+  información.</li>
+  <li>Si es necesario, seleccione <q>Para</q> para elegir otro tipo de
+  destinatario:
+    <ul>
+      <li><strong>Para</strong>: para los destinatarios principales del
+      mensaje.</li>
+      <li><strong>Cc</strong>: para los destinarios secundarios (copia
+      carbón).</li>
+      <li><strong>Bcc</strong>: para recipientes secundarios que no se
+      identifican a los otros recipientes, incluidos a los del campo Cc (con
+      copia oculta).</li>
+      <li><strong>Responder-a</strong>: para responder con una
+      dirección de correo distinta de la cual se envió el
+      mensaje.</li>
+      <li><strong>Grupo de noticias</strong>: para mandar mensajes a grupos de
+      noticias.</li>
+      <li><strong>Followup-To</strong>: para redirigir un mensaje a un grupo
+      de noticias, de tal forma que las respuestas vayan directamente al grupo
+      indicado en vez de al original.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Truco</strong>: puede mandar un mensaje rápidamente a la
+dirección de un mensaje que está viendo haciendo clic encima de
+la dirección del remitente, y seleccionando luego Redactar mensaje en
+el menú desplegable.</p>
+
+<p id="changing_the_account_from_which_a_message_is_sent"><strong>Cambiar la
+cuenta desde la que se envía un mensaje</strong></p>
+
+<p>Si tiene varias cuentas de correo, la cuenta que aparece en el campo
+De está tomada de la cuenta (o servidor) seleccionado al elegir
+crear un mensaje nuevo. Sin embargo, &brandShortName; también permite
+cambiar la cuenta desde la que se manda un mensaje mientras se está
+redactando. Si pulsa en el campo De, cuando se despliegue la lista de las
+cuentas definidas, seleccione la que quiera. Se guardará una copia del
+mensaje en la carpeta de Enviados de la cuenta desde la que envió
+el mensaje.</p>
+
+<p><strong>Acerca del completado automático de direcciones</strong></p>
+
+<p>El completado automático de direcciones le permite seleccionar
+direcciones fácilmente desde la ventana de redacción sin tener
+que buscar los nombres o escribirlos completamente. &brandShortName;
+automáticamente comprueba las libretas de direcciones y un servidor de
+directorio <a href="glossary.xhtml#ldap">LDAP</a>
+(si está disponible) y completa el nombre si encuentra una coincidencia
+única. También evita errores al mostrar todas las elecciones
+posibles con toda la información disponible si encuentra varias
+coincidencias. El completado automático de direcciones está
+habilitado por defecto.</p>
+
+<p> Si no quiere usar una dirección de las sugeridas por Correo y
+noticias, pulse la tecla Retroceso o Supr para borrar caracteres e introduzca
+una dirección alternativa.</p>
+
+<p>Para desactivar el completado automático de direcciones:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+  <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y noticias, elija Libreta de
+  direcciones (si no hay subcategorías visibles, haga doble clic en
+  Correo y noticias para expandir la lista).</li>
+  <li>En la sección de autocompletado, desmarque <q>Libretas de
+  direcciones locales</q> y <q>Servidor de directorio</q>.</li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="selecting_message_sending_options">Seleccionar opciones de
+envío de los mensajes</h2>
+
+<p>Mientras se está redactando un mensaje, se pueden seleccionar las
+siguientes opciones de envío desde el menú de Opciones:</p>
+
+<ul>
+  <li><strong>Seleccionar direcciones</strong>: esta opción le permite
+    elegir las direcciones de destino desde las libretas de direcciones o un
+    directorio remoto. Para buscar una dirección en una libreta de
+    direcciones o un directorio, introduzca las primeras letras del nombre o
+    apellidos del destinatario para comenzar la búsqueda. Seleccione una
+    dirección y luego elija con el ratón Para:, Cc: o Bcc: para
+    enviar el mensaje.</li>
+  <li><strong>Citar mensaje</strong>: escoja esta opción para que el texto
+    del mensaje seleccionado aparezca como texto citado en el mensaje que
+    está redactando.</li>
+  <li><strong>Devolver recibo</strong>: escoja esta opción para solicitar un
+    mensaje de confirmación cuando el destinatario vea (abra) el mensaje. Tenga
+    en cuenta que el mensaje puede elegir no devolverle un acuse de recibo. Esta
+    opción le permite activar o desactivar las solicitudes de acuse de recibo de
+    manera individual por cada mensaje. Para solicitar un acuse de recibo
+    automáticamente siempre que envíe un mensaje, use las preferencias de acuses
+    de recibo. Vea <a
+    href="mailnews_preferences.xhtml#return_receipts_preferences">Preferencias
+    de Correo y noticias - Acuses de recibo</a> para más información.</li>
+  <li><strong>Formato</strong>: enviar el mensaje como texto sin formato, o en
+    formato HTML, o ambos. Si elige <q>Detección automática</q>,
+    se le preguntará el formato que quiere usar si no se sabe si el
+    destinatario puede ver un mensaje en formato HTML. El formato que elija
+    aquí tiene preferencia sobre el indicado en el comando Preferencias
+    del menú <span class="mac">&brandShortName;</span><span
+    class="noMac">Editar</span>.</li>
+  <li><strong>Prioridad</strong>: elija una prioridad para el mensaje:
+    la menor, baja, normal, alta o la mayor.</li>
+  <li><strong>Codificación de texto</strong>: escoja la codificación
+    de texto que desee usar en este mensaje.</li>
+  <li><strong>Enviar una copia a</strong>: elija esta opción si quiere
+    guardar una copia adicional del mensaje enviado en una carpeta distinta de
+    la predeterminada. Luego elija la carpeta que desee.</li>
+  <li><strong>Cifrar este mensaje</strong>: elija esta opción para que
+    &brandShortName; cifre este mensaje (sin cambiar la configuración por
+    defecto).</li>
+  <li><strong>Firmar digitalmente este mensaje</strong>: elija esta opción para
+    que &brandShortName; firme digitalmente este mensaje (sin cambiar la
+    configuración por defecto).</li>
+</ul>
+
+<p>Además, en el menú Editar hay disponibles la siguientes opciones:</p>
+
+<ul>
+  <li><strong>Reajuste de línea</strong>: si está redactando un
+    mensaje con el editor de texto sin formato, puede usar el comando Reajuste
+    de línea para que se ajusten las líneas del texto citado a la
+    ventana de redacción del mensaje. Este comando vuelve a distribuir
+    el texto seleccionado al número de caracteres especificado por las
+    preferencias de <a href="mailnews_preferences.xhtml#composition">redacción
+    de mensaje</a>. Este comando es más útil cuando se está respondiendo a
+    un mensaje donde el mensaje original se cita en la respuesta y éste
+    contiene líneas largas.
+    <p>Se puede usar el menú Configuración de cuentas de correo y
+      noticias en Editar para especificar que se quiere usar el editor de texto
+      sencillo para redactar mensajes. Para ello, seleccione el panel
+      Redacción y direcciones de la cuenta y desmarque <q>Redactar
+      mensajes en formato HTML</q>. Si sólo se quiere usar el editor de
+      texto sin formato de vez en cuando, se puede hacer presionando la tecla
+      Mayúsculas y sin soltarla pulsar el botón Redactar o
+      Responder, según la acción que se necesite realizar.</p>
+  </li>
+  <li><strong>Revisar ortografía</strong>: revisa la ortografía del texto
+    del mensaje antes de enviarlo. También puede pulsar el botón
+    Ortografía.</li>
+  <li><strong>Revisar ortografía según escribe</strong>: elija esta opción
+    para que se revise la ortografía del texto del mensaje a medida que lo
+    escribe.</li>
+</ul>
+
+<p>[<a href="#sending_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="replying_to_a_message">Responder a un mensaje</h2>
+
+<p>Para responder a un mensaje de correo:</p>
+
+<ul>
+  <li>Seleccione el mensaje.</li>
+  <li>Pulse en el botón Responder para responder sólo al remitente.</li>
+  <li>Pulse en el botón Responder Todos para responder a todas las direcciones
+    del mensaje.</li>
+</ul>
+
+<p>Para incluir el mensaje original cada vez que conteste a cualquier mensaje,
+  y para especificar cómo situar el mensaje original en la respuesta:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias.</li>
+  <li>Si tiene múltiples cuentas, seleccione una y pulse la categoría
+    <a href="mailnews_account_settings.xhtml#addressing">Redacción y
+    direcciones</a> de esa cuenta.</li>
+  <li>Seleccione <q>Citar automáticamente el mensaje original al
+    responder</q>.</li>
+  <li>Especifique dónde situar su respuesta en el mensaje. <q>Comenzar mi
+    respuesta bajo el texto citado</q> es la opción predeterminada.</li>
+  <li>Si ha decidido <a
+    href="mailnews_account_settings.xhtml#account_settings">adjuntar una
+    firma</a> en cada mensaje saliente y seleccionó en el paso anterior iniciar
+    su respuesta sobre el mensaje citado, puede también configurar dónde situar
+    su firma:
+    <ul>
+      <li>Seleccione <q>bajo el texto citado (recomendado)</q> para situar su
+        firma al final de todo el mensaje, bajo el texto citado.</li>
+      <li>Seleccione <q>bajo mi respuesta (sobre el texto citado)</q> para
+        situar su firma entre su respuesta y el texto citado.</li>
+    </ul>
+    <p><strong>Nota</strong>: si ha creado una firma, puede
+      <a href="mailnews_account_settings.xhtml#addressing">omitirla</a>
+      opcionalmente al responder a un mensaje.</p>
+  </li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="forwarding_a_message">Reenviar un mensaje</h2>
+
+<p>Cuando se reenvía un mensaje, se puede especificar cómo se incluye su
+  contenido en el nuevo mensaje: <em>en línea</em> (en el cuerpo del
+  mensaje), o como <em>adjunto</em>.</p>
+
+<p>Para reenviar un mensaje:</p>
+
+<ol>
+  <li>Seleccione el mensaje y pulse el botón Reenviar.</li>
+  <li>Escriba el nombre o dirección de correo electrónico del
+    destinatario.</li>
+  <li>Pulse el botón Enviar.</li>
+</ol>
+
+<p>Para configurar las opciones de reenvío de mensajes:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, elija
+    <a href="mailnews_preferences.xhtml#composition">Redacción de mensajes</a>
+    (si no hay subcategorías visibles, haga doble clic en Correo y noticias para
+    expandir la lista).</li>
+  <li>Para reenviar mensajes, elija Incorporado (en el cuerpo del mensaje) o
+    Como adjunto.
+
+    <p><strong>Nota</strong>: si ha creado una firma y la re-envía en línea,
+      su ubicación depende de la respectiva configuración de respuesta. Puede
+      <a href="mailnews_account_settings.xhtml#addressing">omitir la firma</a>
+      opcionalmente al re-enviar un mensaje.</p>
+  </li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p><strong>Truco</strong>: para no tener en cuenta el comportamiento
+  predeterminado al reenviar un mensaje, seleccione el mensaje, abra el menú
+  Mensaje y escoja Reenviar como, y a continuación escoja entre Incorporado o
+  Adjunto.</p>
+
+<p>[<a href="#sending_messages">Volver al principio de la sección</a>]</p>
+
+<h2 id="confirming_that_your_message_was_opened">Confirmar que su mensaje ha
+  sido abierto</h2>
+
+<p>Puede usar acuses de recibo para notificarle cuándo un destinatario ha visto
+  (abierto) su mensaje. El destinatario debe estar utilizando un programa de
+  correo que tenga la función estándar de Notificación de Disposición de
+  Mensaje (MDN). Tenga en cuenta que el destinatario puede elegir no enviarle
+  un acuse de recibo, incluso si usted lo ha solicitado. Los mensajes que se
+  envían a un grupo de noticias no incluyen una solicitud de acuse de recibo,
+  puesto que los servidores de noticias no permiten esta característica.</p>
+
+<p>Para solicitar acuses de recibo para todos los mensajes que envíe, puede usar
+  las preferencias globales de <a
+  href="mailnews_preferences.xhtml#return_receipts_preferences">acuses de
+  recibo</a> para especificar cómo gestionar las solicitudes de acuse de recibo
+  que usted reciba. Puede variar estas preferencias globales en cada cuenta
+  individual de correo.</p>
+
+<p>Para solicitar un acuse de recibo para un mensaje individual:</p>
+
+<ul>
+  <li>Desde una ventana de redacción de mensaje, abra el menú Opciones y escoja
+    Acuse de recibo.</li>
+</ul>
+
+<p>Para solicitar automáticamente acuses de recibo cuando envíe mensajes de
+  cualquiera de sus cuentas de correo:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría de Correo y noticias, pulse <a
+    href="mailnews_preferences.xhtml#return_receipts_preferences">Acuses de
+    recibo</a> (si no hay subcategorías visibles, haga doble clic en Correo y
+    noticias para expandir la lista).</li>
+  <li>Seleccione <q>Cuando envío un mensaje, solicitar siempre un acuse de
+    recibo</q>.</li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p>Para más información sobre cómo configurar las preferencias de acuse de
+  recibo, vea <a
+  href="mailnews_preferences.xhtml#return_receipts_preferences">Preferencias de
+  Correo y noticias - Acuses de recibo</a>.</p>
+
+<p>[<a href="#sending_messages">Volver al principio de la sección</a>]</p>
+
+<h2 id="saving_and_editing_a_draft_message">Guardar y editar borradores</h2>
+
+<p>Para guardar un mensaje de correo como borrador, para poder terminarlo
+  después:</p>
+
+<ul>
+  <li>En la ventana de redacción, pulse el botón Guardar, o abra el menú
+    Archivo y elija Guardar como borrador. Por defecto, el mensaje se guarda
+    en la carpeta de borradores de la cuenta actual.
+    <p><strong>Nota</strong>: el mensaje permacerá abierto después de salvarlo
+      como borrador.</p>
+  </li>
+</ul>
+
+<p>Para editar o enviar un borrador de mensaje, comenzando desde la ventana de
+  Correo y noticias:</p>
+
+<ol>
+  <li>Elija la carpeta Borradores de la cuenta en la que se creó el borrador
+    del mensaje.</li>
+  <li>Pulse en el mensaje que quiera editar.</li>
+  <li>En la esquina superior derecha del mensaje, pulse el botón Editar
+    borrador (N. del T: si el botón no está visible, pulse en el símbolo
+    <q>+</q> a la izquierda del mensaje).</li>
+  <li>Realice los cambios necesarios en el mensaje.</li>
+  <li>Pulse el botón Enviar para mandar el mensaje o pulse el botón Guardar
+    para archivar el mensaje y continuar en otro momento.
+    <p><strong>Nota</strong>: enviar el mensaje hace que se elimine de la
+      carpeta Borradores.</p>
+  </li>
+</ol>
+
+<p><strong>Truco</strong>: también puede hacer doble clic en el mensaje para
+  abrirlo y editarlo. Esto es especialmente últil si el panel de mensajes está
+  cerrado.</p>
+
+<p>Para borrar uno o más borradores no deseados, comenzando desde la ventana de
+  Correo y noticias:</p>
+
+<ol>
+  <li>Pulse en la carpeta Borradores de la cuenta donde ha creado los
+    borradores.</li>
+  <li>Seleccione los borradores que quiere eliminar.</li>
+  <li>Pulse Borrar en la barra de herramientas de Correo y noticias.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="creating_and_using_templates">Crear y usar
+plantillas</h2>
+
+<p>Las plantillas son útiles para establecer un formato predeterminado
+para mensajes que envíe regularmente, como informes semanales. Se puede
+guardar un mensaje como una plantilla desde cualquier ventana en la que se
+muestre, incluso en la ventana de redacción de mensajes.</p>
+
+<p>Para guardar un mensaje como una plantilla:</p>
+
+<ol>
+  <li>En la ventana de Correo y noticias, pulse Redactar para crear un nuevo
+  mensaje y establezca el tipo, tamaño y color de letra, color de fondo
+  y cualquier otra característica de formato predeterminada que desee.
+  <p>Alternativamente, abra un mensaje existente que ya tenga el formato que
+  desea.</p>
+  </li>
+  <li>Mientras se está viendo el mensaje, abra el menú Archivo,
+  elija Guardar como, y luego Plantilla. El archivo de plantilla se guarda
+  en la carpeta de plantillas de la cuenta actual.</li>
+</ol>
+
+<p>Para redactar un mensaje usando una plantilla:</p>
+
+<ol>
+  <li>En la ventana de Correo y noticias, seleccione la carpeta Plantillas de
+  la cuenta donde creó la plantilla del mensaje.</li>
+  <li>Haga doble clic en el mensaje que quiera editar.</li>
+  <li>Edite el mensaje y luego guárdelo (para ubicarlo en la carpeta de
+  borradores) o envíelo.
+  <p><strong>Nota</strong>: enviar el mensaje no elimina la plantilla de
+  carpeta Borradores. La plantilla se preserva para uso futuro.</p>
+  </li>
+</ol>
+
+<p>Para borrar una o más plantillas de mensajes no deseadas, comenzando
+desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Pulse en la carpeta Plantillas de la cuenta donde creó las
+  plantillas de mensaje.</li>
+  <li>Seleccione las plantillas de mensaje que quiera borrar.</li>
+  <li>Pulse Borrar en la barra de herramientas de Correo y noticias.</li>
+</ol>
+
+<p>[ <a href="#sending_messages">Volver al principio de la sección</a>
+]</p>
+
+<h1 id="creating_html_mail_messages">Crear mensajes de correo en
+HTML</h1>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#using_html_in_your_messages">Usar HTML en los
+      mensajes</a></li>
+    <li><a href="#choosing_html_mail_sending_options">Elegir las opciones de
+      envío de mensajes en HTML</a></li>
+    <li><a href="#specifying_recipients_for_html_messages">Especificar
+      destinatarios para los mensajes con HTML</a></li>
+    <li><a href="#viewing_the_message_source_for_html_messages">Ver el origen
+      del mensaje en mensajes con HTML</a></li>
+    <li><a href="#using_the_html_mail_question_dialog_box">Usar el cuadro de
+      diálogo para preguntar sobre el correo HTML</a></li>
+  </ul>
+</div>
+
+<h2 id="using_html_in_your_messages">Usar HTML en los mensajes</h2>
+
+<p>Los mensajes en HTML pueden incluir texto con formato, enlaces,
+imágenes, y tablas (como una página web). Sin embargo, es
+posible que algunos destinatarios no puedan recibir mensajes en HTML.
+&brandShortName; puede redactar mensajes de correo y de grupos de noticias
+usando tanto el editor HTML o el editor de texto sin formato para cada
+cuenta que tenga. Además, puede elegir si las direcciones deben
+recibir de manera predeterminada los mensajes en HTML o texto sin formato,
+y qué hacer en caso de que no se sepa si algún destinatario
+puede recibir o no mensajes en formato HTML.</p>
+
+<p>Para especificar si usar el editor HTML como el predeterminado para
+redactar mensajes, comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de la cuenta
+  de correo y noticias, donde verá el cuadro de diálogo
+  correspondiente.</li>
+  <li>Seleccione la cuenta de correo o noticias que quera usar.</li>
+  <li>Vaya al panel Redacción y direcciones y seleccione <q>Redactar
+  mensajes en formato HTML</q>. Verá la barra de herramientas de
+  formato en la ventana de redacción de mensajes. Si quiere usar texto
+  sin formato con esta cuenta, desmarque la casilla.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="editing_or_inserting_html_elements">Editar o insertar elementos
+HTML</h3>
+
+<p>Si sabe cómo trabajar con código fuente HTML, puede editar
+o insertar etiquetas HTML adicionales, atributos de estilo y JavaScript
+en su mensajes de correo. Si no está seguro de cómo hacerlo,
+es mejor no cambiarlo. Para trabajar con código HTML, use uno de
+estos métodos:</p>
+
+<ul>
+  <li>Sitúe el punto de inserción donde quiera insertar el
+  código HTML y abra el menú Insertar y escoja HTML. En el
+  cuadro de diálogo Insertar HTML, introduzca etiquetas HTML y texto,
+  y luego pulse Insertar para introducir sus cambios.</li>
+  <li>Seleccione el código fuente HTML que quiere editar, luego abra
+  el menú Insertar y escoja HTML. En el cuadro de diálogo
+  Insertar HTML, edite el texto y las etiquetas HTML, y luego pulse Insertar
+  para introducir sus cambios.</li>
+  <li>Seleccione un elemento como una tabla, un enlace interno, una imagen,
+  un enlace, o una línea horizontal. Haga doble clic en el elemento
+  para abrir el cuadro de diálogo de propiedades asociado a ese
+  elemento. Pulse Edición avanzada para abrir el editor avanzado de
+  propiedades. Puede usar el editor avanzado de propiedades para añadir
+  atributos HTML y JavaScript a objetos.</li>
+</ul>
+
+<p>Para más información sobre la edición de código
+fuente HTML, vea <a
+href="composer_help.xhtml#using_the_advanced_property_editor">Usar el editor
+avanzado de propiedades</a>.</p>
+
+<p>[<a href="#creating_html_mail_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="choosing_html_mail_sending_options">Elegir las opciones de envío
+de mensajes en HTML</h2>
+
+<p>Por defecto, Correo y noticias le pregunta antes de enviar mensajes HTML
+cuando no es conocido si el programa de correo del destinatario puede mostrar
+mensajes formateados en HTML.</p>
+
+<p>Para elegir las opciones de envío en formato HTML, comenzando desde
+la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+  <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, elija <a
+  href="mailnews_preferences.xhtml#send_format">Formato de envío</a> (si no hay
+  subcategorías visibles, haga doble clic en Correo y noticias para
+  expandir la lista).
+  
+  <p><strong>Nota</strong>: esta opción se aplica sólo a los
+  mensajes de correo, no a los mensajes de grupos de noticias.</p>
+  </li>
+  <li>Seleccione la opción que desee y pulse Aceptar.</li>
+</ol>
+
+<p>Si mientras está redactando un mensaje se da cuenta de que uno
+o más destinatarios quizá no puedan recibir correo en formato
+HTML, puede convertir fácilmente el mensaje a un formato distinto
+al pulsar el botón de Enviar:</p>
+
+<ol>
+  <li>En la ventana de redacción, abra el menú de Opciones
+  y elija Formato.</li>
+  <li>Seleccione el formato que quiera usar para enviar el mensaje:
+    <ul>
+      <li><strong>Autodetectar</strong>: &brandShortName; elige el formato
+      apropiado para el texto del mensaje. Si no puede determinar el formato
+      le pide a usted que elija uno.</li>
+      <li><strong>Texto sin formato</strong>: el mensaje puede perder formato,
+      como el texto en negrita, pero todos los programas de correo
+      serán capaces de mostrar el mensaje.</li>
+      <li><strong>&Uacute;nicamente texto enriquecido (HTML)</strong>: algunos
+      programas de correo pueden tener problemas para mostrar el mensaje.
+      Elija esta opción sólo si está seguro de que el
+      programa de correo del destinatario puede mostrar correo en formato
+      HTML.</li>
+      <li><strong>Texto simple y enriquecido (HTML)</strong>: Esta
+      opción usa más espacio en disco, pero puede ser la mejor
+      elección si no está seguro de si el programa de correo del
+      destinatario puede visualizar correo en formato HTML.</li>
+    </ul>
+  </li>
+  <li>Cuando haya terminado de redactar el mensaje, pulse Enviar.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="specifying_recipients_for_html_messages">Especificar destinatarios
+para los mensajes con HTML</h2>
+
+<p>Puede ahorrar tiempo indicando individualmente si cada destinatario de
+la libreta de direcciones prefiere recibir los mensajes en formato HTML
+o en texto sin formato.</p>
+
+<ol>
+  <li>Abra el menú Ventana y elija Libreta de direcciones.</li>
+  <li>Seleccione la libreta de direcciones en la izquierda y luego seleccione
+  la tarjeta de la persona en la derecha.</li>
+  <li>Pulse el botón Propiedades para mostrar el cuadro de
+  diálogo <q>Tarjeta para</q>.</li>
+  <li>En la pestaña Contacto, use la lista desplegable <q>Prefiere
+  recibir mensajes con formato</q> para seleccionar HTML si sabe que este
+  destinatario puede leer mensajes en formato HTML (como los mensajes que
+  incluyen enlaces, imágenes o tablas).
+  <p>Si este destinatario sólo puede leer mensajes enviados como texto
+  sencillo (sin formato), entonces elija Texto sin formato. Si no lo sabe o no
+  está seguro, elija Desconocido.</p>
+  <p>Si elige Desconocido, &brandShortName; determina el formato de
+  envío teniendo en cuenta la configuración indicada en el
+  cuadro de diálogo de Preferencias para Correo y noticias. Si aun
+  así &brandShortName; no puede determinar el formato correcto, le
+  preguntará para que elija un formato de envío cuando
+  envíe el mensaje.</p>
+  </li>
+  <li> Elija Aceptar.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="viewing_the_message_source_for_html_messages">Ver el origen del
+mensaje en mensajes con HTML</h2>
+
+<p>Se puede ver rápidamente el código HTML y cualquier otro
+que genera un mensaje en HTML que haya recibido:</p>
+
+<ol>
+  <li>Abra el mensaje.</li>
+  <li>Abra el menú Ver y elija Ver origen del mensaje.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="using_the_html_mail_question_dialog_box">Usar el cuadro de
+diálogo para preguntar sobre el correo HTML</h2>
+
+<p>El cuadro de diálogo de pregunta de formato del mensaje aparece
+cuando se intenta enviar un mensaje a alguien cuyo programa de correo puede no
+ser capaz de mostrar mensajes en HTML o cuando &brandShortName; no puede
+determinar si el destinatario puede ver mensajes en formato HTML. Si tiene
+duda, envíe el mensaje en los dos formatos, HTML y texto sin formato.</p>
+
+<p>[<a href="#creating_html_mail_messages">Volver al principio de la
+sección</a>]</p>
+
+<h1 id="using_attachments">Usar adjuntos</h1>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#attaching_a_file_or_web_page">Adjuntar un fichero o una página
+      web</a></li>
+    <li><a href="#viewing_and_opening_attachments">Ver y abrir adjuntos</a></li>
+    <li><a href="#saving_attachments">Guardar adjuntos</a></li>
+  </ul>
+</div>
+
+<h2 id="attaching_a_file_or_web_page">Adjuntar un archivo o una
+página web</h2>
+
+<p>Para adjuntar un archivo a un mensaje saliente:</p>
+
+<ol>
+  <li>En la ventana de redacción del mensaje, pulse el botón
+  Adjuntar o abra el menú Archivo y elija Adjuntar archivo. Verá
+  el cuadro de diálogo <q>Introduzca el fichero a adjuntar</q>.
+  <p><strong>Truco</strong>: también se puede pulsar en el interior del
+  área de adjuntos para adjuntar un fichero.</p>
+  </li>
+  <li>Escriba el nombre del fichero que quiera adjuntar, o también
+  puede seleccionarlo del disco duro.</li>
+  <li>Pulse en el botón Abrir. El nombre del fichero aparece en el
+  área de adjuntos.</li>
+</ol>
+
+<p><strong>Truco</strong>: también puede arrastrar y soltar uno o
+más ficheros desde el escritorio al área de adjuntos en la
+ventana de redacción de mensajes.</p>
+
+<p>Para adjuntar una página web a un mensaje de correo saliente:</p>
+
+<ol>
+  <li>En la ventana de redacción, abra el menú Archivo y
+  elija Adjuntar página web.</li>
+  <li>En el cuadro de diálogo, introduzca la URL de la página y
+  pulse en Aceptar. La URL de la página web aparece en el área
+  de adjuntos.</li>
+</ol>
+
+<p><strong>Tip</strong>: Cuando esté viendo una página en la ventana del
+  navegador, puede enviar la página a alguien abriendo el menú Archivo y
+  eligiendo Enviar Página.</p>
+
+<p>[<a href="#using_attachments">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="viewing_and_opening_attachments">Ver y abrir adjuntos</h2>
+
+<p>Si recibe un adjunto que consiste en un tipo de archivo que &brandShortName;
+  puede mostrar (como archivos gráficos o en formato HTML), verá el adjunto
+  incorporado (en el cuerpo del mensaje). Para otros tipos de archivo,
+  &brandShortName; permite que se abra el adjunto usando otras aplicaciones, o
+  también puede guardarlo en el disco duro.</p>
+
+<p>Para abrir el adjunto, asegúrese de que tiene un programa en su
+ordenador que pueda abrir archivos del mismo tipo que el fichero adjunto.
+Por ejemplo, si quiere abrir un archivo .DOC, asegúrese de que tiene
+un programa en su ordenador que pueda abrir
+archivos .DOC.</p>
+
+<p>Para abrir un adjunto:</p>
+
+<ol>
+  <li>Haga doble clic en el adjunto que quiera (si hay más de
+    uno).</li>
+  <li>En el cuadro de diálogo de descarga, elija qué quiere
+    que haga &brandShortName; con el adjunto:
+    <ul>
+      <li>Si &brandShortName; encuentra una aplicación en su disco
+        duro que puede abrir el adjunto, puede abrirlo usando esa
+        aplicación. Pulse <q>Elegir</q> para usar una aplicación
+        distinta para abrir el adjunto.</li>
+      <li>Si &brandShortName; no puede encontrar una aplicación en el
+        disco duro que pueda abrir el adjunto, puede guardarlo en disco. No
+        podrá abrir el adjunto, pero al menos puede tenerlo guardado
+        hasta que pueda instalar una aplicación que pueda abrirlo.</li>
+      <li>Pulse en <q>Avanzado</q> para añadir un tipo nuevo de archivo
+        a la lista de aplicaciones auxiliares. &brandShortName; usa las
+        aplicaciones auxiliares para determinar cómo se abren los
+        distintos tipo de archivo por otras aplicaciones dentro de
+        &brandShortName;. Para más información, vea <a
+        href="nav_help.xhtml#plugins_and_downloads">Plugins y
+        descargas</a>.</li>
+    </ul>
+  </li>
+  <li>Pulse Aceptar.</li>
+</ol>
+
+<p><strong>Nota</strong>: si está viendo su correo usando un servidor
+de correo IMAP, todos los adjuntos se quedan en el servidor.</p>
+
+<p>[<a href="#using_attachments">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="saving_attachments">Guardar adjuntos</h2>
+
+<p>Para guardar un adjunto:</p>
+
+<ol>
+  <li>En la parte derecha del sobre del mensaje, bajo <q>Adjuntos</q>,
+  seleccione el adjunto que quiera guardar.</li>
+  <li>Haga clic con el botón derecho <span class="mac">o, si tiene
+  un ratón de un solo botón, <kbd>Ctrl</kbd>-clic</span> en el
+  adjunto y elija Guardar como en el menú emergente.</li>
+  <li>Elija un nombre de archivo y un directorio para guardar el adjunto
+  en el disco duro y pulse Aceptar, &brandShortName; descarga el adjunto
+  y lo guarda en la ubicación especificada.</li>
+</ol>
+
+<p><strong>Truco</strong>: para guardar todos los adjuntos, haga clic con
+el botón derecho <span class="mac">o, si tiene un ratón de un
+solo botón, <kbd>Ctrl</kbd>-clic</span> en el primero de los adjuntos,
+y elija Guardar todos. Entonces puede especificar el directorio donde quiere
+guardar todos los adjuntos.</p>
+
+<p>[ <a href="#using_attachments">Volver al principio de la
+sección</a> ]</p>
+
+<h1 id="deleting_messages">Borrar mensajes</h1>
+
+<div class="contentsBox">En esta sección:
+
+<ul>
+  <li><a href="#deleting_pop_or_imap_messages">Borrar mensajes
+  POP o IMAP</a></li>
+  <li><a href="#moving_messages_to_and_from_the_trash">Mover
+  mensajes hacia y desde la papelera</a></li>
+</ul>
+</div>
+
+<h2 id="deleting_pop_or_imap_messages">Borrar mensajes
+POP o IMAP</h2>
+
+<p>Cómo borre los mensajes depende del tipo de su servidor de correo:
+POP o IMAP. Los mensajes POP eliminados se mueven automáticamente
+a la carpeta Papelera. Los usuarios IMAP pueden establecer diferentes
+opciones para borrar los mensajes.</p>
+
+<p>Para borrar mensajes de su bandeja de entrada o de otras bandejas,
+comenzando desde la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>En la lista de mensajes, seleccione los mensajes y pulse Borrar.
+  Por defecto, Correo y noticias mueve los mensajes seleccionados
+  a la carpeta Papelera.</li>
+  <li>Para borrar mensajes permanentemente, abra el menú Archivo y
+  escoja Vaciar papelera.</li>
+</ol>
+
+<p>Para borrar mensajes sin abrirlos, comenzando desde la ventana de Correo
+y noticias:</p>
+
+<ol>
+  <li>Abra el menú Ver y escoja Disposición, y en el
+    submenú desmarque Mensaje.
+  <p>Alternativamente, haga clic en la guía del panel de mensajes
+    (el área estriada bajo la lista de mensajes para cerrar el panel
+    de mensajes.</p>
+  </li>
+  <li>En la lista de mensajes, seleccione los mensajes y pulse Borrar.</li>
+</ol>
+
+<p>Para configurar las preferencias de borrado para los mensajes IMAP:</p>
+
+<ol>
+  <li>Abra el menú Editar y escoja Configuración de cuentas de correo y
+    noticias. Verá el cuadro de diálogo de esa opción.</li>
+  <li>Localice la cuenta IMAP que desee, y pulse en la categoría de
+    Configuración del servidor bajo el nombre de la cuenta.</li>
+  <li>Seleccione las <a
+    href="mailnews_account_settings.xhtml#when_i_delete_a_message">opciones</a>
+    que desee para borrar mensajes y pulse Aceptar.</li>
+</ol>
+
+<p>[<a href="#deleting_messages">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="moving_messages_to_and_from_the_trash">Mover mensajes hacia y
+desde la papelera</h2>
+
+<p>Si usa un servidor POP para su correo, o si configura IMAP para usar la
+papelera, siga los siguientes pasos para borrar los mensajes de la carpeta
+de entrada u otras carpetas:</p>
+
+<ol>
+  <li>En la lista de mensajes, seleccione los mensajes que quiera
+  borrar.</li>
+  <li>Pulse el botón de Borrar. &brandShortName; moverá los
+  mensajes a la papelera.</li>
+</ol>
+
+<p>Para recuperar mensajes de la papelera:</p>
+
+<ol>
+  <li>Pulse en la carpeta de la papelera.</li>
+  <li>Seleccione los mensajes que quiera recuperar y arrástrelos
+  a otra carpeta.</li>
+</ol>
+
+<p>Para borrar mensajes permanentemente:</p>
+
+<ul>
+  <li>Abra el menú Archivo y elija Vaciar papelera.</li>
+</ul>
+
+<p>[ <a href="#deleting_messages">Volver al principio de la
+sección</a> ]</p>
+</body>
+</html>

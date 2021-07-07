@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Configuración del servidor de salida (SMTP)">
+
+<!ENTITY smtpDescription.label "Al administrar sus identidades puede usar un servidor de esta lista seleccionándolo como servidor de salida (SMTP), o puede usar el servidor predeterminado seleccionando en esta lista &quot;Usar servidor predeterminado&quot;.">
+
+<!ENTITY smtpListAdd.label "Añadir…">
+<!ENTITY smtpListAdd.accesskey "d">
+<!ENTITY smtpListEdit.label "Editar…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Eliminar">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "Establecer predet.">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "Detalles del servidor seleccionado:">
+<!ENTITY serverDescription.label "Descripción: ">
+<!ENTITY serverName.label "Nombre del servidor: ">
+<!ENTITY serverPort.label "Puerto: ">
+<!ENTITY userName.label "Nombre de usuario: ">
+<!ENTITY connectionSecurity.label "Seguridad de la conexión: ">
+<!ENTITY authMethod.label "Método de identificación: ">

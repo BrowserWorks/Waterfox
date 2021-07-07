@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Pakvietimai">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Atnaujinamas pakvietimų sąrašas.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Nepatvirtintų pakvietimų nerasta.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Priimti">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Atmesti">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Pasikartojantis įvykis">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Įvykis, trunkantis visą dieną">
+<!ENTITY calendar.invitations.list.location.text                        "Vieta: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Organizuoja: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Dalyvauja: ">
+<!ENTITY calendar.invitations.list.none.text                            "Niekas">

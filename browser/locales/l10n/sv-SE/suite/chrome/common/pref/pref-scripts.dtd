@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Skript &amp; Insticksmoduler">
+
+<!ENTITY navigator.label                 "Webbläsare">
+<!ENTITY navigator.accesskey             "W">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Aktivera JavaScript för:">
+<!ENTITY allowScripts.label              "Tillåt skript att:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "Flytta eller ändra storlek på fönster">
+<!ENTITY allowWindowFlip.label           "Höja eller sänka fönster">
+<!ENTITY allowWindowStatusChange.label   "Byta text i statusfältet">
+<!ENTITY allowContextmenuDisable.label   "Blockera eller ersätta snabbvalsmenyer">
+<!ENTITY allowHideStatusBar.label        "Dölja statusfältet">
+
+<!ENTITY debugging.label                  "JavaScript-felsökning">
+<!ENTITY debugEnableDump.label            "Aktivera JavaScript dump() utdata">
+<!ENTITY debugEnableDump.accesskey        "A">
+<!ENTITY debugStrictJavascript.label      "Visa strikta JavaScript-varningar">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "Visa JavaScript-fel och varningar från användargränssnittet">
+<!ENTITY debugConsoleJavascript.accesskey "a">
+
+<!ENTITY enablePlugins.label             "Aktivera insticksmoduler för">
+<!ENTITY enablePluginForSuite.label      "Sviten">
+<!ENTITY enablePluginForSuite.accesskey  "v">
+
+<!ENTITY whenPageRequiresPlugins.label   "När en sida behöver insticksmoduler">
+<!ENTITY activateAllPlugins.label        "Aktivera alla insticksmoduler som standard">
+<!ENTITY activateAllPlugins.accesskey    "s">
+<!ENTITY warnPluginsRequired.label       "Varna mig om ytterligare insticksmoduler behöver installeras">
+<!ENTITY warnPluginsRequired.accesskey   "i">

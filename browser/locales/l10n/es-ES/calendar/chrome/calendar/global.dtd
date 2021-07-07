@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Medianoche">
+<!ENTITY time.noon "Mediodía">
+<!ENTITY day.1.Ddd "Dom">
+<!ENTITY day.1.Ddd.accesskey "D">
+<!ENTITY day.2.Ddd "Lun">
+<!ENTITY day.2.Ddd.accesskey "L">
+<!ENTITY day.3.Ddd "Mar">
+<!ENTITY day.3.Ddd.accesskey "M">
+<!ENTITY day.4.Ddd "Mié">
+<!ENTITY day.4.Ddd.accesskey "i">
+<!ENTITY day.5.Ddd "Jue">
+<!ENTITY day.5.Ddd.accesskey "J">
+<!ENTITY day.6.Ddd "Vie">
+<!ENTITY day.6.Ddd.accesskey "V">
+<!ENTITY day.7.Ddd "Sáb">
+<!ENTITY day.7.Ddd.accesskey "S">
+<!ENTITY day.1.name "Domingo">
+<!ENTITY day.2.name "Lunes">
+<!ENTITY day.3.name "Martes">
+<!ENTITY day.4.name "Miércoles">
+<!ENTITY day.5.name "Jueves">
+<!ENTITY day.6.name "Viernes">
+<!ENTITY day.7.name "Sábado">
+<!ENTITY month.1.name "Enero">
+<!ENTITY month.2.name "Febrero">
+<!ENTITY month.3.name "Marzo">
+<!ENTITY month.4.name "Abril">
+<!ENTITY month.5.name "Mayo">
+<!ENTITY month.6.name "Junio">
+<!ENTITY month.7.name "Julio">
+<!ENTITY month.8.name "Agosto">
+<!ENTITY month.9.name "Septiembre">
+<!ENTITY month.10.name "Octubre">
+<!ENTITY month.11.name "Noviembre">
+<!ENTITY month.12.name "Diciembre">
+<!ENTITY onemonthbackward.tooltip "Un mes hacia atrás">
+<!ENTITY onemonthforward.tooltip "Un mes hacia delante">
+<!ENTITY oneyearbackward.tooltip "Un año hacia atrás">
+<!ENTITY oneyearforward.tooltip "Un año hacia delante">
+<!ENTITY showToday.tooltip "Ir a hoy">
+<!ENTITY onedayforward.tooltip "Un día hacia delante">
+<!ENTITY onedaybackward.tooltip "Un día hacia atrás">
+<!ENTITY showselectedday.tooltip "Mostrar eventos para el día seleccionado">

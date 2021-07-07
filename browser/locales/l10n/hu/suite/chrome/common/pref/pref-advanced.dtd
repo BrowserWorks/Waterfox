@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Speciális">
+
+<!ENTITY systemPref.caption               "Rendszerbeállítások">
+<!ENTITY systemPrefCheck.label            "Rendszerbeállítások használata">
+<!ENTITY systemPrefCheck.accesskey        "R">
+<!ENTITY systemPref.desc                  "Ha bejelöli ezt a négyzetet, akkor a &brandShortName; rendszerbeállításokat használja. A rendszerbeállítások felülbírálják a &brandShortName; beállításait.">
+
+<!ENTITY prefCheckDefault.caption         "Rendszer alapbeállításai">
+<!ENTITY prefCheckDefaultClient.label     "Alapértelmezett programok beállításának ellenőrzése induláskor">
+<!ENTITY prefCheckDefaultClient.accesskey "A">
+
+<!ENTITY printing.label                   "Nyomtatás">
+<!ENTITY useNativePrintDialog.label       "Natív nyomtatás párbeszédablak használata (ha támogatott)">
+<!ENTITY useNativePrintDialog.accesskey   "N">
+<!ENTITY useGlobalPrintSettings.label     "Globális nyomtatási beállítások használata">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "Hibabejelentő">
+<!ENTITY submitCrashes.label              "Hibajelentés küldése">
+<!ENTITY submitCrashes.accesskey          "b">
+
+<!ENTITY devTools.caption                 "Fejlesztői eszközök">
+<!ENTITY allowDebugger.label              "Kapcsolódás engedélyezése a &brandShortName; programhoz debugerrel">
+<!ENTITY allowDebugger.accesskey          "K">
+<!ENTITY allowRemoteConnections.label     "Kapcsolatok engedélyezése más számítógépekről">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "Engedély kérése a bejövő kapcsolatokhoz">
+<!ENTITY connectionPrompt.accesskey       "E">
+<!ENTITY remoteDebuggerPort.label         "Port száma:">
+<!ENTITY remoteDebuggerPort.accesskey     "P">

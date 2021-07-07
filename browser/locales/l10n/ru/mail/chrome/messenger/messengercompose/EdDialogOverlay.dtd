@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Дополнительно…">
+<!ENTITY AdvancedEditButton.accessKey "Д">
+<!ENTITY AdvancedEditButton.tooltip "Добавление или изменение HTML-атрибутов, атрибутов стилей и JavaScript">
+<!ENTITY chooseFileButton.label "Выбрать файл…">
+<!ENTITY chooseFileButton.accessKey "р">
+<!ENTITY chooseFileLinkButton.label "Выбрать файл…">
+<!ENTITY chooseFileLinkButton.accessKey "б">
+<!ENTITY makeUrlRelative.label "Относительный URL">
+<!ENTITY makeUrlRelative.accessKey "И">
+<!ENTITY makeUrlRelative.tooltip "Изменить абсолютный URL на относительный. Перед изменением вам нужно сохранить страницу.">
+
+<!ENTITY LinkURLEditField2.label "Введите адрес веб-страницы, локального файла или выберите якорь или заголовок с именем из контекстного меню поля:">
+<!ENTITY LinkURLEditField2.accessKey "а">

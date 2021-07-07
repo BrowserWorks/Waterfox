@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "Agenda-abonnementen">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Agenda’s tonen met de tekst:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Zoeken">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Selecteer agenda’s om op te abonneren:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Abonneren">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Abonnement opzeggen">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Zoeken…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Geen overeenkomsten gevonden.">

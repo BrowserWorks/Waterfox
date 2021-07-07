@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Préférences avancées du proxy">
+<!ENTITY  protocols.caption           "Proxies à protocole spécifique">
+<!ENTITY  protocols.description       "Normalement, le même proxy peut gérer tous les protocoles listés ici.">
+<!ENTITY  http.label                  "Proxy HTTP :">
+<!ENTITY  http.accesskey              "H">
+<!ENTITY  ssl.label                   "Proxy SSL :">
+<!ENTITY  ssl.accesskey               "S">
+<!ENTITY  ftp.label                   "Proxy FTP :">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Utiliser les paramètres du proxy HTTP pour tous les protocoles">
+<!ENTITY  reuseProxy.accesskey        "U">
+<!ENTITY  port.label                  "Port :">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "Proxy générique">
+<!ENTITY  socks.description           "Un proxy SOCKS est un proxy générique utilisé parfois dans les environnements d’entreprise ou similaires.">
+<!ENTITY  socks.label                 "Hôte SOCKS :">
+<!ENTITY  socks.accesskey             "C">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "K">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "v">
+<!ENTITY  socksRemoteDNS.label        "Utiliser aussi pour la résolution DNS (recommandé pour SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

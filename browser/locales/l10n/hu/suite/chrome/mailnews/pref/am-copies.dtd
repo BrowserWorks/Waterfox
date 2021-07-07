@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Másolatok és mappák">
+<!ENTITY sendingPrefix.label "Üzenetküldéskor automatikusan: ">
+<!ENTITY fccMailFolder.label "Másolat elhelyezése:">
+<!ENTITY fccMailFolder.accesskey "M">
+<!ENTITY fccReplyFollowsParent.label "Válaszok elhelyezése a megválaszolt levél mappájába">
+<!ENTITY fccReplyFollowsParent.accesskey "V">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Másolatot kap (Cc):">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "A címeket vesszővel válassza el">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Rejtett másolatot kap (Bcc):">
+<!ENTITY bccAddress.accesskey "R">
+<!ENTITY bccAddressList.placeholder "A címeket vesszővel válassza el">
+<!ENTITY saveMessageDlg.label "Jóváhagyás kérése üzenet mentésekor">
+<!ENTITY saveMessageDlg.accesskey "J">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "„Elküldött elemek” mappa itt:">
+<!ENTITY sentFolderOn.accesskey "E">
+<!ENTITY sentInOtherFolder.label "Máshol:">
+<!ENTITY sentInOtherFolder.accesskey "M">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Üzenetarchívumok tárolója">
+<!ENTITY keepArchives.label "Üzenetarchívumok tárolója:">
+<!ENTITY keepArchives.accesskey "t">
+<!ENTITY archiveHierarchyButton.label "Archiválási beállítások…">
+<!ENTITY archiveHierarchyButton.accesskey "b">
+<!ENTITY archivesFolderOn.label "„Archív” mappa itt:">
+<!ENTITY archivesFolderOn.accesskey "v">
+<!ENTITY archiveInOtherFolder.label "Másik mappa:">
+<!ENTITY archiveInOtherFolder.accesskey "M">
+<!ENTITY specialFolders.label "Piszkozatok és sablonok">
+<!ENTITY keepDrafts2.label "Piszkozatok tárolása itt:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "„Piszkozatok” mappa itt:">
+<!ENTITY draftsFolderOn.accesskey "P">
+<!ENTITY draftInOtherFolder.label "Máshol:">
+<!ENTITY draftInOtherFolder.accesskey "s">
+<!ENTITY keepTemplates.label "Sablonok tárolója:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "„Sablonok” mappa itt:">
+<!ENTITY templatesFolderOn.accesskey "S">
+<!ENTITY templateInOtherFolder.label "Máshol:">
+<!ENTITY templateInOtherFolder.accesskey "h">

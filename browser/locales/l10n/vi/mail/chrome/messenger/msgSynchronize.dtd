@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Tải xuống và đồng bộ hóa thư">
+<!ENTITY MsgSelect.label "Các mục để Sử dụng Ngoại tuyến">
+<!ENTITY MsgSyncDesc.label "Nếu bạn đã chọn thư mục hoặc nhóm tin để dùng ngoại tuyến, bạn có thể tải/đồng bộ chúng ngay bây giờ. Nếu chưa, hãy sử dụng nút &quot;Chọn&quot; để chọn thư mục thư và nhóm tin để dùng ngoại tuyến.">
+<!ENTITY MsgSyncDirections.label "Tải và/hoặc đồng bộ những mục sau:">
+<!ENTITY syncTypeMail.label "Thư">
+<!ENTITY syncTypeMail.accesskey "T">
+<!ENTITY syncTypeNews.label "Nhóm tin">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Gửi các thư chưa gửi">
+<!ENTITY sendMessage.accesskey "G">
+<!ENTITY workOffline.label "Làm việc ngoại tuyến khi tải và/hoặc đồng bộ xong">
+<!ENTITY workOffline.accesskey "o">
+<!ENTITY selectButton.label "Chọn…">
+<!ENTITY selectButton.accesskey "C">
+<!ENTITY MsgSelectDesc.label "Chọn thư mục và nhóm tin để dùng ngoại tuyến.">
+<!ENTITY MsgSelectInd.label "Tải">
+<!ENTITY MsgSelectItems.label "Thư mục và Nhóm tin">

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Foutconsole">
+
+<!ENTITY errFile.label        "Bronbestand:">
+<!ENTITY errLine.label        "Regel:">
+<!ENTITY errColumn.label      "Kolom:">
+
+<!ENTITY all.label            "Alles">
+<!ENTITY all.accesskey        "A">
+<!ENTITY errors.label         "Fouten">
+<!ENTITY errors.accesskey     "F">
+<!ENTITY warnings.label       "Waarschuwingen">
+<!ENTITY warnings.accesskey   "W">
+<!ENTITY messages.label       "Berichten">
+<!ENTITY messages.accesskey   "B">
+<!ENTITY clear.label          "Wissen">
+<!ENTITY clear.accesskey      "s">
+<!ENTITY codeEval.label       "Code:">
+<!ENTITY codeEval.accesskey   "C">
+<!ENTITY evaluate.label       "Evalueren">
+<!ENTITY evaluate.accesskey   "E">
+<!ENTITY filter2.label        "Filter:">
+<!ENTITY filter2.accesskey    "t">
+
+<!ENTITY copyCmd.label         "Kopiëren">
+<!ENTITY copyCmd.accesskey     "K">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Sorteervolgorde Eerste > Laatste">
+<!ENTITY sortFirst.accesskey   "E">
+<!ENTITY sortLast.label        "Sorteervolgorde Laatste > Eerste">
+<!ENTITY sortLast.accesskey    "L">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Menubalk">
+<!ENTITY modeToolbar.tooltip   "Moduswerkbalk">
+<!ENTITY entryToolbar.tooltip  "JavaScript-invoerwerkbalk">
+<!ENTITY toolbarsCmd.label     "Tonen/verbergen">
+<!ENTITY toolbarsCmd.accesskey "T">
+<!ENTITY toolbarMode.label     "Modus">
+<!ENTITY toolbarMode.accesskey "M">
+<!ENTITY toolbarEval.label     "JavaScript-invoer">
+<!ENTITY toolbarEval.accesskey "J">

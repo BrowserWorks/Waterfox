@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Supprimer">
+<!ENTITY editContactPanelDeleteContact.accesskey "S">
+
+<!ENTITY editContactName.label "Nom :">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Adresse électronique :">
+<!ENTITY editContactEmail.accesskey "d">
+
+<!ENTITY editContactAddressBook.label "Carnet d’adresses :">
+<!ENTITY editContactAddressBook.accesskey "C">
+
+<!ENTITY editContactPanelDone.label "Terminé">
+<!ENTITY editContactPanelDone.accesskey "T">
+
+<!ENTITY contactMoveDisabledWarning.description "Vous ne pouvez modifier le carnet d’adresses car le contact est dans une liste de diffusion.">

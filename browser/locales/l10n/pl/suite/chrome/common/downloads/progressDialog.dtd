@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title "Pobieranie…">
+<!ENTITY closeWindow.key "w">
+<!ENTITY cmd.pause.tooltip "Wstrzymaj">
+<!ENTITY cmd.resume.tooltip "Kontynuuj">
+<!ENTITY cmd.retry.tooltip "Pobierz ponownie">
+<!ENTITY cmd.cancel.tooltip "Anuluj">
+<!ENTITY cmd.open.label "Otwórz">
+<!ENTITY cmd.open.accesskey "O">
+<!ENTITY cmd.show.label "Otwórz folder zawierający">
+<!ENTITY cmd.show.accesskey "f">
+<!ENTITY cmd.goToDownloadPage.label "Przejdź do strony pobierania">
+<!ENTITY cmd.goToDownloadPage.accesskey "P">
+<!ENTITY cmd.copyDownloadLink.label "Kopiuj adres źródłowy">
+<!ENTITY cmd.copyDownloadLink.accesskey "K">
+<!ENTITY closeWhenDone.label "Zamknij to okno po ukończeniu pobierania.">
+<!ENTITY closeWhenDone.accesskey "k">

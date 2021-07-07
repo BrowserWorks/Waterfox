@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "デスクトップの背景に設定">
+
+<!ENTITY position.label             "位置:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "並べて表示">
+<!ENTITY position.stretch.label     "拡大して表示">
+<!ENTITY position.center.label      "中央に表示">
+<!ENTITY position.fill.label        "ページ幅に合わせる">
+<!ENTITY position.fit.label         "画面サイズに合わせる">
+<!ENTITY picker.label               "背景色:">
+<!ENTITY picker.accesskey           "C">
+<!ENTITY preview.caption            "プレビュー">
+<!ENTITY apply.label                "設定">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "閉じる">

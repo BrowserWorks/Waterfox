@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (identityDialog.style): This value should be roughly
+     equal to the value of accountManager.size entity minus the value
+     of accountTree.width entity. -->
+<!ENTITY identityListDesc.label "Κάντε ρύθμιση των παραμέτρων αυτής της ταυτότητας:">
+
+<!ENTITY settingsTab.label       "Ρυθμίσεις">
+<!ENTITY copiesFoldersTab.label "Αντίγραφα &amp; φάκελοι">
+<!ENTITY addressingTab.label    "Σύνθεση &amp; διευθυνσιοδότηση">
+
+<!ENTITY publicData.label        "Δημόσια Δεδομένα">
+<!ENTITY privateData.label       "Ιδιωτικά δεδομένα">
+<!ENTITY identityAlias.label     "Ετικέτα ταυτότητας:">
+<!ENTITY identityAlias.accesskey "τ">

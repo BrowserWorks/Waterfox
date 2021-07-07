@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Chataccountwizard">
+
+<!ENTITY accountProtocolTitle.label   "Chatnetwerk">
+<!ENTITY accountProtocolInfo.label    "Kies het netwerk van uw chataccount.">
+<!ENTITY accountProtocolField.label   "Netwerk:">
+<!ENTITY accountProtocolGetMore.label "Meer…">
+
+<!ENTITY accountUsernameTitle.label   "Gebruikersnaam">
+<!ENTITY accountUsernameDuplicate.label "Deze account is al geconfigureerd!">
+
+<!ENTITY accountPasswordTitle.label   "Wachtwoord">
+<!ENTITY accountPasswordInfo.label    "Voer uw wachtwoord in het onderstaande veld in.">
+<!ENTITY accountPasswordField.label   "Wachtwoord:">
+<!ENTITY accountPasswordManager.label "Het hier ingevoerde wachtwoord zal in de wachtwoordenbeheerder worden opgeslagen. Laat dit veld leeg als u wilt dat telkens wanneer deze account wordt verbonden om uw wachtwoord wordt gevraagd.">
+
+<!ENTITY accountAdvancedTitle.label   "Geavanceerde opties">
+<!ENTITY accountAdvancedInfo.label    "Voel u vrij om deze stap over te slaan, als u dat wilt.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Melding geven bij nieuwe e-mail">
+<!ENTITY accountAliasGroupbox.caption "Lokale alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Deze zal alleen tijdens gesprekken worden weergegeven; buddy’s op andere computers zullen hem niet zien.">
+<!ENTITY accountProxySettings.caption "Proxyinstellingen">
+<!ENTITY accountProxySettings.change.label     "Wijzigen…">
+<!ENTITY accountProxySettings.change.accessKey "W">
+
+<!ENTITY accountSummaryTitle.label   "Samenvatting">
+<!ENTITY accountSummaryInfo.label    "Hieronder wordt een samenvatting van de ingevoerde gegevens weergegeven. Controleer deze voordat de account wordt aangemaakt.">
+<!ENTITY accountSummary.connectNow.label "Deze account nu verbinden">

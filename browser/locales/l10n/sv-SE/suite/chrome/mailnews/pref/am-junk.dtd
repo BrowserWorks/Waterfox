@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY junkSettings.label "Skräppost">
+<!ENTITY trainingDescription.label "Om aktiverad: Du måste först lära &brandShortName; att identifiera skräppost genom att använda skräppostknappen i verktygsfältet för att märka meddelanden som skräppost eller inte. Du behöver identifiera både skräppostmeddelanden och meddelanden som ej är skräppost. Därefter kommer &brandShortName; kunna markera skräppost automatiskt.">
+<!ENTITY level.label "Aktivera inlärningsbar skräppostkontroll för detta konto">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Flytta nya skräppostmeddelanden till:">
+<!ENTITY move.accesskey "F">
+<!ENTITY junkFolderOn.label "Mappen &quot;Skräppost&quot; i:">
+<!ENTITY junkFolderOn.accesskey "M">
+<!ENTITY otherFolder.label "Annan:">
+<!ENTITY otherFolder.accesskey "n">
+<!ENTITY purge1.label "Ta bort skräppost automatiskt när den är äldre än">
+<!ENTITY purge1.accesskey "b">
+<!ENTITY purge2.label "dagar">
+
+<!ENTITY whitelistHeader.label "Märk inte e-post som skräppost om avsändaren är i: ">
+<!ENTITY whitelistHeader.accesskey "i">
+
+<!ENTITY ispHeadersWarning.label "Om detta är aktivt kommmer, &brandShortName; automatisk betrakta meddelanden flaggade av denna externa klassning som skräppost.">
+<!ENTITY ispHeaders.label "Lita på skräppostmärkt brevhuvud av: ">
+<!ENTITY ispHeaders.accesskey "å">
+
+<!ENTITY junkClassification.label "Urval">
+<!ENTITY junkActions.label "Destination och sparande">
+
+<!ENTITY globalJunkPrefs.label "Gemensamma skräppostinställningar…">
+<!ENTITY globalJunkPrefs.accesskey "G">

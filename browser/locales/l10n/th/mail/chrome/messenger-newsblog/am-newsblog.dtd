@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "เปิดใช้งานการอัปเดตสำหรับฟีดทั้งหมด">
+<!ENTITY biffAll.accesskey             "ป">
+
+<!ENTITY newFeedSettings.label         "การตั้งค่าเริ่มต้นสำหรับฟีดใหม่">
+
+<!ENTITY manageSubscriptions.label     "จัดการการบอกรับ…">
+<!ENTITY manageSubscriptions.accesskey "จ">
+
+<!ENTITY feedWindowTitle.label         "ตัวช่วยบัญชีฟีด">
+<!ENTITY feeds.accountName             "บล็อกและฟีดข่าว">

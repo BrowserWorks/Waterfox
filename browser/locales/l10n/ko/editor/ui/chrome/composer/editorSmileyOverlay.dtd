@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "미소">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "미소">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "미소 표정 삽입">
+<!ENTITY smiley2Cmd.label "시무룩">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "시무룩 표정 삽입">
+<!ENTITY smiley3Cmd.label "윙크">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "윙크 표정 삽입">
+<!ENTITY smiley4Cmd.label "메롱">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "메롱 표정 삽입">
+<!ENTITY smiley5Cmd.label "활짝 웃음">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "활짝 웃는 표정 삽입">
+<!ENTITY smiley6Cmd.label "난처">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "난처함 표정 삽입">
+<!ENTITY smiley7Cmd.label "고민">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "고민 표정 삽입">
+<!ENTITY smiley8Cmd.label "놀람">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "놀람 표정 삽입">
+<!ENTITY smiley9Cmd.label "키스">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "키스 표정 삽입">
+<!ENTITY smiley10Cmd.label "고함">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "고함 표정 삽입">
+<!ENTITY smiley11Cmd.label "멋짐">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "멋짐 표정 삽입">
+<!ENTITY smiley12Cmd.label "돈">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "돈 표정 삽입">
+<!ENTITY smiley13Cmd.label "횡설수설">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "횡설수설 표정 삽입">
+<!ENTITY smiley14Cmd.label "순진">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "순진 표정 삽입">
+<!ENTITY smiley15Cmd.label "울음">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "울음 표정 삽입">
+<!ENTITY smiley16Cmd.label "함구">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "함구 표정 삽입">
+<!ENTITY SmileButton.label "스마일리 삽입">
+<!ENTITY SmileButton.tooltip "웃는 얼굴 삽입">

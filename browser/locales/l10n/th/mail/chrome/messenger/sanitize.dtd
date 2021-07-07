@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title         "ล้างประวัติล่าสุด">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "ช่วงเวลาที่จะล้าง: ">
+<!ENTITY clearTimeDuration.accesskey      "ช">
+<!ENTITY clearTimeDuration.lastHour       "ชั่วโมงที่แล้ว">
+<!ENTITY clearTimeDuration.last2Hours     "สองชั่วโมงที่แล้ว">
+<!ENTITY clearTimeDuration.last4Hours     "สี่ชั่วโมงที่แล้ว">
+<!ENTITY clearTimeDuration.today          "วันนี้">
+<!ENTITY clearTimeDuration.everything     "ทั้งหมด">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "รายละเอียด">
+<!ENTITY detailsProgressiveDisclosure.accesskey "ร">
+
+
+<!ENTITY historyGroup.label                "ประวัติ">
+
+<!ENTITY itemHistory.label                 "ประวัติการเรียกดู">
+<!ENTITY itemHistory.accesskey             "ป">
+<!ENTITY itemCookies.label                 "คุกกี้">
+<!ENTITY itemCookies.accesskey             "ค">
+<!ENTITY itemCache.label                   "แคช">
+<!ENTITY itemCache.accesskey               "แ">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "การกระทำนี้ไม่สามารถเลิกทำได้">
+
+<!ENTITY dialog.width                 "28em">

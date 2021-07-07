@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "匯入">
+<!ENTITY importAll.label          "匯入全部">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "郵件">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "消息來源訂閱">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "通訊錄">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "設定">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "篩選器">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; 郵件匯入精靈">
+<!ENTITY importShortDesc.label    "從其它程式匯入郵件、通訊錄、設定、篩選器">
+
+<!ENTITY importDescription1.label "此精靈可以從其它程式匯入郵件訊息、通訊錄項目、消息來源訂閱、偏好設定，以及篩選條件到 &brandShortName;。">
+<!ENTITY importDescription2.label "匯入成功後，您就能從 &brandShortName; 裡面存取之前的郵件或通訊錄等設定。">
+
+<!ENTITY selectDescription.label  "請選擇您想匯入的程式資料類型:">
+<!ENTITY selectDescriptionB.label "請選擇現有帳號或建立新帳號:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "名稱:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "沒有找到可匯入資料的應用程式或檔案。">
+
+<!ENTITY back.label               "&lt; 上一步">
+<!ENTITY forward.label            "下一步 &gt;">
+<!ENTITY finish.label             "完成">
+<!ENTITY cancel.label             "取消">
+
+<!ENTITY select.label             "選擇要匯入的資料類型:">
+
+<!ENTITY title.label              "頭銜">
+<!ENTITY processing.label         "匯入中…">

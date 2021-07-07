@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Om &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; är experimentell och kan vara instabil.">
+<!ENTITY aboutPage.checkForUpdates.link         "Sök efter uppdateringar »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Söker efter uppdateringar…">
+<!ENTITY aboutPage.checkForUpdates.none         "Finns inga uppdateringar">
+<!ENTITY aboutPage.checkForUpdates.available2   "Hämta uppdatering">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Hämtar uppdatering…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Installera uppdatering">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Support">
+<!ENTITY aboutPage.privacyPolicy.label          "Sekretesspolicy">
+<!ENTITY aboutPage.rights.label                 "Lär känna dina rättigheter">
+<!ENTITY aboutPage.relNotes.label               "Versionsfakta">
+<!ENTITY aboutPage.credits.label                "Medarbetare">
+<!ENTITY aboutPage.license.label                "Licensinformation">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+
+<!ENTITY aboutPage.logoTrademark                "Firefox och Firefox logotyper är varumärken som tillhör Mozilla Foundation.">

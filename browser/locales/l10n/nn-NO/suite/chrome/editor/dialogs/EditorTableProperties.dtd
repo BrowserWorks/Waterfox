@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Tabelleigenskapar">
+<!ENTITY applyButton.label                "Bruk">
+<!ENTITY applyButton.accesskey            "B">
+<!ENTITY closeButton.label                "Lat att">
+<!ENTITY tableTab.label                   "Tabell">
+<!ENTITY cellTab.label                    "Celler">
+<!ENTITY tableRows.label                  "Rader:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Kolonner:">
+<!ENTITY tableColumns.accessKey           "K">
+<!ENTITY tableHeight.label                "Høgd:">
+<!ENTITY tableHeight.accessKey            "ø">
+<!ENTITY tableWidth.label                 "Breidde:">
+<!ENTITY tableWidth.accessKey             "B">
+<!ENTITY tableBorderSpacing.label         "Kantlinjer og mellomrom">
+<!ENTITY tableBorderWidth.label           "Kantlinje:">
+<!ENTITY tableBorderWidth.accessKey       "K">
+<!ENTITY tableSpacing.label               "Mellomrom:">
+<!ENTITY tableSpacing.accessKey           "M">
+<!ENTITY tablePadding.label               "Padding:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "pikslar mellom celler">
+<!ENTITY tablePxBetwBrdrCellContent.label "pikslar mellom kantlinja og innhaldet i cella">
+<!ENTITY tableAlignment.label             "Tabelljustering:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Forklaring:">
+<!ENTITY tableCaption.accessKey           "F">
+<!ENTITY tableCaptionAbove.label          "Over tabellen">
+<!ENTITY tableCaptionBelow.label          "Under tabellen">
+<!ENTITY tableCaptionLeft.label           "Venstre for tabellen">
+<!ENTITY tableCaptionRight.label          "Høgre for tabellen">
+<!ENTITY tableCaptionNone.label           "Ingen">
+<!ENTITY tableInheritColor.label           "(Lat sidefargen skina gjennom)">
+
+<!ENTITY cellSelection.label              "Merka område">
+<!ENTITY cellSelectCell.label             "Celle">
+<!ENTITY cellSelectRow.label              "Rad">
+<!ENTITY cellSelectColumn.label           "Kolonne">
+<!ENTITY cellSelectNext.label             "Neste">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "Førre:">
+<!ENTITY cellSelectPrevious.accessKey     "F">
+<!ENTITY applyBeforeChange.label          "Desse endringane vil verta nytta før byte av merkt område.">
+<!ENTITY cellContentAlignment.label       "Innhaldsjustering">
+<!ENTITY cellHorizontal.label             "Horisontal:">
+<!ENTITY cellHorizontal.accessKey         "H">
+<!ENTITY cellVertical.label               "Vertikal:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Cellestil:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "Normal">
+<!ENTITY cellHeader.label                 "Overskrift">
+<!ENTITY cellTextWrap.label               "Tekstbryting:">
+<!ENTITY cellTextWrap.accessKey           "b">
+<!ENTITY cellWrap.label                   "Linjebryting">
+<!ENTITY cellNoWrap.label                 "Inga tekstbryting">
+<!ENTITY cellAlignTop.label               "Topp">
+<!ENTITY cellAlignMiddle.label            "Midten">
+<!ENTITY cellAlignBottom.label            "Botn">
+<!ENTITY cellAlignJustify.label           "Justering">
+<!ENTITY cellInheritColor.label           "(Lat tabellfargen skina gjennom)">
+<!ENTITY cellUseCheckboxHelp.label        "Bruk avkryssingsboksar for å avgjera kva eigenskapar som skal gjelda alle merka celler">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Storleik">
+<!ENTITY pixels.label                     "pikslar">
+<!ENTITY backgroundColor.label            "Bakgrunnsfarge:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "Venstre">
+<!ENTITY AlignCenter.label                "Midtstill">
+<!ENTITY AlignRight.label                 "Høgre">

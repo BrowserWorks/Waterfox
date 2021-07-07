@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Hantera identiteter för detta konto. Den första identiteten används som standard.">
+<!ENTITY identitiesListAdd.label  "Lägg till…">
+<!ENTITY identitiesListAdd.accesskey  "L">
+<!ENTITY identitiesListEdit.label "Redigera…">
+<!ENTITY identitiesListEdit.accesskey "R">
+<!ENTITY identitiesListDefault.label "Ange standard">
+<!ENTITY identitiesListDefault.accesskey "A">
+<!ENTITY identitiesListDelete.label "Ta bort">
+<!ENTITY identitiesListDelete.accesskey "T">
+<!ENTITY identitiesListClose.label "Stäng">
+<!ENTITY identitiesListClose.accesskey "S">

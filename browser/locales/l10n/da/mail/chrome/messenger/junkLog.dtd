@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Spam-log">
+<!ENTITY adaptiveJunkLogInfo.label "Logning af spam-aktivitet.">
+<!ENTITY clearLog.label "Ryd log">
+<!ENTITY clearLog.accesskey "R">
+<!ENTITY closeLog.label "Luk">
+<!ENTITY closeLog.accesskey "L">

@@ -1,0 +1,97 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- First page of the wizard -->
+
+<!ENTITY button.createNewAccount.label "Lag ein ny konto">
+<!ENTITY setup.haveAccount.label "Eg har allereie ein &syncBrand.fullName.label;-konto.">
+<!ENTITY button.connect.label "Kople til">
+
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "Server">
+<!ENTITY server.accesskey           "S">
+<!ENTITY serverType.main.label      "&syncBrand.fullName.label;-serveren">
+<!ENTITY serverType.custom2.label   "Bruk ein annan server…">
+<!ENTITY signIn.account2.label      "Konto">
+<!ENTITY signIn.account2.accesskey  "K">
+<!ENTITY signIn.password.label      "Passord">
+<!ENTITY signIn.password.accesskey  "P">
+<!ENTITY signIn.recoveryKey.label     "Oppattbyggingsnykel">
+<!ENTITY signIn.recoveryKey.accesskey "O">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "Kontodetaljar">
+<!ENTITY setup.confirmPassword.label             "Stadfest passord">
+<!ENTITY setup.confirmPassword.accesskey         "e">
+<!ENTITY setup.emailAddress.label                "E-postadresse">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "Eg er samd i">
+<!ENTITY setup.tosAgree1.accesskey  "E">
+<!ENTITY setup.tosLink.label        "tenestevilkåra">
+<!ENTITY setup.tosAgree2.label      "og">
+<!ENTITY setup.ppLink.label         "personvernpraksisen">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; bryr seg om sikkerheita di">
+<!ENTITY setup.newRecoveryKeyPage.description.label "For å beskytte personvernet ditt, vil alle data krypterast før dei vert lasta opp. Oppattbyggingsnykelen som er nødvendig for å dekryptere dine data vil ikkje lastast opp.">
+<!ENTITY recoveryKeyEntry.label        "Oppattbyggingsnykelen din">
+<!ENTITY recoveryKeyEntry.accesskey    "O">
+<!ENTITY recoveryGenerateNewKey.label  "Generer ein ny nykel">
+<!ENTITY recoveryKeyBackup.description "Oppattbyggingsnykelen din er påkravd for å få tilgang til &syncBrand.fullName.label; på fleire maskiner. Lag ein sikkerheitskopi. Vi kan ikkje hjelpe deg med å finne tilbake ein gløymt oppattbyggingsnykel.">
+
+<!ENTITY button.syncKeyBackup.print.label     "Skriv ut…">
+<!ENTITY button.syncKeyBackup.print.accesskey "S">
+<!ENTITY button.syncKeyBackup.save.label      "Lagre…">
+<!ENTITY button.syncKeyBackup.save.accesskey  "L">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "Stadfest at du ikkje er ein robot">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "Legg til ei eining">
+<!ENTITY addDevice.showMeHow.label          "Vis meg korleis.">
+<!ENTITY addDevice.dontHaveDevice.label     "Eg har ikkje eininga med meg">
+<!ENTITY addDevice.dialog.tryAgain.label    "Prøv ein gong til.">
+<!ENTITY addDevice.dialog.recoveryKey.label "For å aktivere eininga må du skrive inn oppattbyggingsnykelen. Skriv gjerne ut eller lagre denne nykelen og ta han med deg.">
+<!ENTITY addDevice.dialog.connected.label   "Eining tilkopla">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "Logg inn">
+<!ENTITY existingRecoveryKey.description "Du kan skaffe ein kopi av oppattbyggingsnykelen din ved å gå til &syncBrand.shortName.label; Innstillingar på den andre eininga, og velje &#x0022;Min oppattbyggingsnykel&#x0022; under &#x0022;Handter konto&#x0022;.">
+<!ENTITY verifying.label              "Stadfestar…">
+<!ENTITY resetPassword.label          "Tilbakestill passord">
+<!ENTITY resetSyncKey.label           "Eg har mista den andre eininga mi.">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "Sync-innstillingar">
+<!ENTITY syncComputerName.label       "Datamaskinnamn:">
+<!ENTITY syncComputerName.accesskey   "D">
+
+<!ENTITY syncMy.label               "Synkroniser">
+<!ENTITY engine.addons.label        "Utvidingar">
+<!ENTITY engine.addons.accesskey    "U">
+<!ENTITY engine.bookmarks.label     "Bokmerke">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "Faner">
+<!ENTITY engine.tabs.accesskey      "F">
+<!ENTITY engine.history.label       "Historikk">
+<!ENTITY engine.history.accesskey   "H">
+<!ENTITY engine.passwords.label     "Passord">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label         "Innstillingar">
+<!ENTITY engine.prefs.accesskey     "n">
+
+<!ENTITY choice2.merge.recommended.label "(tilrådd)">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title "Stadfest">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "Konfigurasjonen er fullført">

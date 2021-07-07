@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Σύνθεση">
+<!ENTITY generalComposing.label               "Γενικά">
+<!ENTITY forwardMsg.label                     "Προώθηση μηνυμάτων:">
+<!ENTITY inline.label                         "Εντός μηνύματος">
+<!ENTITY inline.accesskey                     "ν">
+<!ENTITY asAttachment.label                   "Ως συνημμένο">
+<!ENTITY asAttachment.accesskey               "Ω">
+
+<!ENTITY replyQuoteInline.label               "Παράθεση ενσωματωμένων συνημμένων στις απαντήσεις">
+<!ENTITY replyQuoteInline.accesskey           "Π">
+<!ENTITY warnOnSendAccelKey.label             "Επιβεβαίωση κατά τη χρήση συντόμευσης πληκτρολογίου για αποστολή μηνύματος">
+<!ENTITY warnOnSendAccelKey.accesskey         "β">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Αυτόματη αποθήκευση μηνύματος κάθε">
+<!ENTITY autoSave.accesskey                   "υ">
+<!ENTITY autoSaveEnd.label                    "λεπτά">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Αναδίπλωση μηνυμάτων απλού κειμένου στους">
+<!ENTITY wrapOutMsg.accesskey                 "Α">
+<!ENTITY char.label                           "χαρακτήρες">
+
+<!ENTITY defaultMessagesHeader.label          "Προεπιλογές για μηνύματα HTML">
+<!ENTITY font.label                           "Γραμματοσειρά:">
+<!ENTITY font.accesskey                       "Γ">
+<!ENTITY size.label                           "Μέγεθος:">
+<!ENTITY size.accesskey                       "Μ">
+<!ENTITY fontColor.label                      "Κείμενο:">
+<!ENTITY fontColor.accesskey                  "Κ">
+<!ENTITY bgColor.label                        "Φόντο:">
+<!ENTITY bgColor.accesskey                    "Φ">
+<!ENTITY defaultCompose.label                 "Προεπιλεγμένη μορφή σύνθεσης:">
+<!ENTITY defaultBodyText.label                "Κύριο μέρος (το πλήκτρο Enter εισάγει νέα γραμμή)">
+<!ENTITY defaultBodyText.accesskey            "ο">
+<!ENTITY defaultParagraph.label               "Παράγραφος (το πλήκτρο Enter δημιουργεί νέα παράγραφο)">
+<!ENTITY defaultParagraph.accesskey           "Π">
+
+<!ENTITY selectHeaderType.label               "Επιλογή τύπου κεφαλίδας απάντησης:">
+<!ENTITY selectHeaderType.accesskey           "ύ">
+<!ENTITY noReplyOption.label                  "Χωρίς κεφαλίδα απάντησης">
+<!-- LOCALIZATION NOTE (authorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwrotesingle preference. [Author] needs to be
+  translated. -->
+<!ENTITY authorWroteOption.label              "Ο/Η [συντάκτης] έγραψε:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_ondateauthorwrote preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY onDateAuthorWroteOption.label        "Στις [ημερομηνία], ο/η [συντάκτης] έγραψε:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwroteondate preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY authorWroteOnDateOption.label        "Ο/Η [συντάκτης] έγραψε στις [ημερομηνία]:">

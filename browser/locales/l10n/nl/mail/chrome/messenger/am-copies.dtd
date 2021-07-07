@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopieën &amp; mappen">
+<!ENTITY sendingPrefix.label "Bij het verzenden van berichten, automatisch:">
+<!ENTITY fccMailFolder.label "Een kopie plaatsen in:">
+<!ENTITY fccMailFolder.accesskey "k">
+<!ENTITY fccReplyFollowsParent.label "Antwoorden plaatsen in de map van het bericht waarop wordt geantwoord">
+<!ENTITY fccReplyFollowsParent.accesskey "w">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc naar deze e-mailadressen:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Scheid adressen met komma’s">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc naar deze e-mailadressen:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Scheid adressen met komma’s">
+<!ENTITY saveMessageDlg.label "Bevestiging weergeven als berichten zijn opgeslagen">
+<!ENTITY saveMessageDlg.accesskey "z">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Map ‘Verzonden’ in:">
+<!ENTITY sentFolderOn.accesskey "V">
+<!ENTITY sentInOtherFolder.label "Anders:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Berichtarchieven">
+<!ENTITY keepArchives.label "Berichtarchieven bewaren in:">
+<!ENTITY keepArchives.accesskey "t">
+<!ENTITY archiveHierarchyButton.label "Archiveringsopties…">
+<!ENTITY archiveHierarchyButton.accesskey "h">
+<!ENTITY archivesFolderOn.label "Map ‘Archieven’ in:">
+<!ENTITY archivesFolderOn.accesskey "r">
+<!ENTITY archiveInOtherFolder.label "Anders:">
+<!ENTITY archiveInOtherFolder.accesskey "n">
+<!ENTITY specialFolders.label "Concepten en sjablonen">
+<!ENTITY keepDrafts2.label "Conceptberichten bewaren in:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Map ‘Concepten’ in:">
+<!ENTITY draftsFolderOn.accesskey "M">
+<!ENTITY draftInOtherFolder.label "Anders:">
+<!ENTITY draftInOtherFolder.accesskey "d">
+<!ENTITY keepTemplates.label "Berichtsjablonen bewaren in:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Map ‘Sjablonen’ in:">
+<!ENTITY templatesFolderOn.accesskey "S">
+<!ENTITY templateInOtherFolder.label "Anders:">
+<!ENTITY templateInOtherFolder.accesskey "e">

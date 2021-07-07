@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "スレッド">
+<!ENTITY fromColumn.label "差出人">
+<!ENTITY recipientColumn.label "受信者">
+<!ENTITY attachmentColumn.label "添付">
+<!ENTITY subjectColumn.label "件名">
+<!ENTITY dateColumn.label "送信日時">
+<!ENTITY priorityColumn.label "重要度">
+<!ENTITY tagsColumn.label "タグ">
+<!ENTITY accountColumn.label "アカウント">
+<!ENTITY statusColumn.label "状態">
+<!ENTITY sizeColumn.label "サイズ">
+<!ENTITY junkStatusColumn.label "迷惑マーク">
+<!ENTITY unreadColumn.label "スレッド中の未読数">
+<!ENTITY totalColumn.label "スレッド中の合計">
+<!ENTITY readColumn.label "既読">
+<!ENTITY receivedColumn.label "受信日時">
+<!ENTITY flagColumn.label "フラグ">
+<!ENTITY locationColumn.label "フォルダー">
+<!ENTITY idColumn.label "受信順">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "表示する列を選択します">
+<!ENTITY threadColumn2.tooltip "メッセージをスレッド形式で表示します">
+<!ENTITY fromColumn2.tooltip "差出人で並べ替えます">
+<!ENTITY recipientColumn2.tooltip "受信者で並べ替えます">
+<!ENTITY attachmentColumn2.tooltip "添付ファイルの有無で並べ替えます">
+<!ENTITY subjectColumn2.tooltip "件名で並べ替えます">
+<!ENTITY dateColumn2.tooltip "送信日時で並べ替えます">
+<!ENTITY priorityColumn2.tooltip "重要度で並べ替えます">
+<!ENTITY tagsColumn2.tooltip "タグで並べ替えます">
+<!ENTITY accountColumn2.tooltip "アカウントで並べ替えます">
+<!ENTITY statusColumn2.tooltip "状態で並べ替えます">
+<!ENTITY sizeColumn2.tooltip "サイズで並べ替えます">
+<!ENTITY junkStatusColumn2.tooltip "迷惑マークの有無で並べ替えます">
+<!ENTITY unreadColumn2.tooltip "スレッド中の未読メッセージ数">
+<!ENTITY totalColumn2.tooltip "スレッド中のメッセージ総数">
+<!ENTITY readColumn2.tooltip "既読かどうかで並べ替えます">
+<!ENTITY receivedColumn2.tooltip "受信日時で並べ替えます">
+<!ENTITY flagColumn2.tooltip "フラグの有無で並べ替えます">
+<!ENTITY locationColumn2.tooltip "フォルダーで並べ替えます">
+<!ENTITY idColumn2.tooltip "受信順で並べ替えます">

@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Adresselinje">
+
+<!ENTITY autoComplete.label                    "Autofullfør">
+<!ENTITY autoCompleteMatchHistory.label        "Foreslå automatisk nettstadar frå historikken">
+<!ENTITY autoCompleteMatchHistory.accesskey    "a">
+<!ENTITY autoCompleteMatchBookmarks.label      "Foreslå automatisk nettstadar frå bokmerke">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "b">
+<!ENTITY autoCompleteAutoFill.label            "Automatisk fyll ut det beste treffet">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Vis ei liste med resultat">
+<!ENTITY autoCompleteShowPopup.accesskey       "V">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Berre fullfør med nettsider du har manuelt skrive inn før">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "B">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Samanlikn med">
+<!ENTITY autoCompleteMatch.accesskey           "S">
+<!ENTITY autoCompleteMatchAnywhere             "Alt i adressa eller tittelen">
+<!ENTITY autoCompleteMatchWordsFirst           "Alt, men føretrekk starten/slutten av ord">
+<!ENTITY autoCompleteMatchWords                "Berre i starten/slutten av ord">
+<!ENTITY autoCompleteMatchStart                "Berre i starten av adressene eller titlane">
+<!ENTITY showInternetSearch.label              "Vis standard Internett-søkjemotor">
+<!ENTITY showInternetSearch.accesskey          "V">
+
+<!ENTITY formatting.label                      "Formatering">
+<!ENTITY domainFormatting.label                "Uthevar domenenamnet på nettstadar og FTP-tenarar">
+<!ENTITY domainFormatting.accesskey            "U">
+<!ENTITY highlightSecure.label                 "Uthev nettsider som har høg sikkerheit i tilkoplinga">
+<!ENTITY highlightSecure.accesskey             "h">
+
+<!ENTITY unknownLocations.label                "Ukjende adresser">
+<!ENTITY domainGuessing.label                  "Legg til «www.» og «.com» i adressa dersom ei nettside ikkje er funne">
+<!ENTITY domainGuessing.accesskey              "L">
+<!ENTITY keywords.label                        "Utfør eit nettsidesøk dersom innskriven tekst ikkje er ei nettsideadresse">
+<!ENTITY keywords.accesskey                    "U">

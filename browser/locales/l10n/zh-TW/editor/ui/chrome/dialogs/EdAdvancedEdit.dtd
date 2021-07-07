@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "進階屬性編輯器">
+<!ENTITY AttName.label                  "屬性:">
+<!ENTITY AttValue.label                 "內含值:">
+<!ENTITY PropertyName.label             "屬性:">
+<!ENTITY currentattributesfor.label     "目前屬性:">
+<!ENTITY tree.attributeHeader.label     "屬性">
+<!ENTITY tree.propertyHeader.label      "屬性">
+<!ENTITY tree.valueHeader.label         "值">
+<!ENTITY tabHTML.label                  "HTML 屬性">
+<!ENTITY tabCSS.label                   "行內樣式">
+<!ENTITY tabJSE.label                   "JavaScript 事件">
+
+<!ENTITY editAttribute.label    "選擇上面的項目以編輯設定值">
+<!ENTITY removeAttribute.label  "移除">
+

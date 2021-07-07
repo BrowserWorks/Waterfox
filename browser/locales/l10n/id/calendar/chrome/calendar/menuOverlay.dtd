@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Acara Baru…">
+<!ENTITY event.new.event.accesskey              "A">
+
+<!ENTITY event.new.task                         "Tugas Baru…">
+<!ENTITY event.new.task.accesskey               "T">
+
+<!ENTITY calendar.import.label                  "Impor…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Ekspor…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Umumkan…">
+<!ENTITY calendar.publish.accesskey             "U">
+
+<!ENTITY calendar.deletecalendar.label          "Hapus Kalender Terpilih…">
+<!ENTITY calendar.deletecalendar.accesskey      "H">
+<!ENTITY calendar.unsubscribecalendar.label     "Berhenti Berlangganan Kalender Terpilih…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Hapus Kalender yang Dipilih…">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "Suka-suka…">
+<!ENTITY calendar.menu.customize.accesskey      "S">
+
+<!ENTITY showUnifinderCmd.label                 "Cari Acara">
+<!ENTITY showUnifinderCmd.accesskey             "a">
+<!ENTITY showUnifinderCmd.tooltip               "Alihkan panel temukan acara">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Tampilkan Tugas di Kalender">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "Hari Ini">
+<!ENTITY goTodayCmd.accesskey                   "H">
+
+<!ENTITY showCurrentView.label                  "Tampilan Sekarang">
+<!ENTITY showCurrentView.accesskey              "T">
+
+<!ENTITY calendar.properties.label              "Properti Kalender…">
+<!ENTITY calendar.properties.accesskey          "a">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Επαφές σε σύνδεση">
+<!ENTITY offlineContactsHeader.label   "Επαφές εκτός σύνδεσης">
+<!ENTITY conversationsHeader.label     "Συνομιλίες">
+<!ENTITY searchResultConversation.label "Αποτέλεσμα αναζήτησης">
+<!ENTITY chat.noConv.title             "Οι συνομιλίες θα εμφανιστούν εδώ.">
+<!ENTITY chat.noConv.description       "Χρησιμοποιήστε τη λίστα επαφών στην αριστερή προβολή για έναρξη συνομιλίας.">
+<!ENTITY chat.noPreviousConv.description       "Το &brandShortName; δεν έχει επί του παρόντος προηγούμενες συνομιλίες αποθηκευμένες για αυτήν την επαφή.">
+<!ENTITY chat.noAccount.title             "Δεν έχετε ρυθμίσει ακόμη κάποιον λογαριασμό συνομιλίας.">
+<!ENTITY chat.noAccount.description       "Αφήστε το &brandShortName; να σας καθοδηγήσει στη διαδικασία ρύθμισης του λογαριασμού συνομιλίας σας.">
+<!ENTITY chat.accountWizard.button       "Έναρξη">
+<!ENTITY chat.noConnectedAccount.title             "Οι λογαριασμοί συνομιλίας σας δεν είναι συνδεδεμένοι.">
+<!ENTITY chat.noConnectedAccount.description       "Μπορείτε να τους συνδέσετε από το παράθυρο 'Κατάσταση συνομιλίας':">
+<!ENTITY chat.showAccountManager.button       "Εμφάνιση κατάστασης συνομιλίας">
+
+<!ENTITY chat.participants             "Συμμετέχοντες:">
+<!ENTITY chat.previousConversations    "Προηγούμενες συνομιλίες:">
+<!ENTITY chat.ongoingConversation      "Συνομιλία σε εξέλιξη">
+
+<!ENTITY openConversationCmd.label     "Έναρξη συνομιλίας">
+<!ENTITY openConversationCmd.accesskey "σ">
+<!ENTITY closeConversationCmd.label    "Κλείσιμο συνομιλίας">
+<!ENTITY closeConversationCmd.accesskey "Κ">
+<!ENTITY aliasCmd.label                "Μετονομασία">
+<!ENTITY aliasCmd.accesskey            "Μ">
+<!ENTITY deleteCmd.label               "Αφαίρεση επαφής">
+<!ENTITY deleteCmd.accesskey           "φ">
+
+<!ENTITY openConversationButton.tooltip  "Έναρξη συνομιλίας">
+<!ENTITY closeConversationButton.tooltip "Κλείσιμο συνομιλίας">
+
+<!ENTITY addBuddyButton.label          "Προσθήκη επαφής">
+<!ENTITY joinChatButton.label          "Συμμετοχή σε συνομιλία">
+<!ENTITY chatAccountsButton.label      "Εμφάνιση λογαριασμών">
+
+<!ENTITY status.available          "Διαθέσιμος/-η">
+<!ENTITY status.unavailable        "Μη διαθέσιμος/-η">
+<!ENTITY status.offline            "Εκτός σύνδεσης">
+
+<!ENTITY openLinkCmd.label            "Άνοιγμα συνδέσμου…">
+<!ENTITY openLinkCmd.accesskey        "Ά">

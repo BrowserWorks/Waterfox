@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY migration.title "&brandFullName;: importazione dati">
+<!ENTITY migration.welcome "Benvenuto">
+<!ENTITY migration.importing "Importazione">
+<!ENTITY migration.list.description "&brandShortName; può importare dati dai calendari delle applicazioni più diffuse. Sono stati trovati sul proprio computer dati delle seguenti applicazioni. Selezionare da quali di queste si vogliono importare dei dati.">
+<!ENTITY migration.progress.description "Importazione dati selezionati">

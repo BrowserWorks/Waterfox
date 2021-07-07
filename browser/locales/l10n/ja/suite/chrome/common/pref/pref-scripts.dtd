@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title		"スクリプトとプラグイン">
+
+<!ENTITY navigator.label		"ブラウザー">
+<!ENTITY navigator.accesskey		"B">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label		"JavaScript を有効にする:">
+<!ENTITY allowScripts.label		"以下のスクリプトを許可する:">
+<!ENTITY allowScripts.accesskey		"s">
+<!ENTITY allowWindowMoveResize.label	"ウィンドウの移動または大きさを変更する">
+<!ENTITY allowWindowFlip.label		"ウィンドウのフォーカス (前面か背面か) を切り換える">
+<!ENTITY allowWindowStatusChange.label	"ステータスバーのテキストを変更する">
+<!ENTITY allowContextmenuDisable.label	"コンテキストメニューを無効化または変更する">
+<!ENTITY allowHideStatusBar.label	"ステータスバーを隠す">
+
+<!ENTITY debugging.label		"JavaScript デバッグ">
+<!ENTITY debugEnableDump.label		"JavaScript の dump() 出力を有効にする">
+<!ENTITY debugEnableDump.accesskey	"E">
+<!ENTITY debugStrictJavascript.label	"厳格な JavaScript 警告を表示する">
+<!ENTITY debugStrictJavascript.accesskey	"J">
+<!ENTITY debugConsoleJavascript.label	"chrome の JavaScript エラーと警告を表示する">
+<!ENTITY debugConsoleJavascript.accesskey	"c">
+
+<!ENTITY enablePlugins.label		"プラグインを有効にする">
+<!ENTITY enablePluginForSuite.label	"Suite">
+<!ENTITY enablePluginForSuite.accesskey	"u">
+
+<!ENTITY whenPageRequiresPlugins.label	"プラグインの読み込みを要求されたとき">
+<!ENTITY activateAllPlugins.label	"既定ですべてのプラグインを有効化">
+<!ENTITY activateAllPlugins.accesskey	"d">
+<!ENTITY warnPluginsRequired.label	"プラグインを追加する必要があるときは警告する">
+<!ENTITY warnPluginsRequired.accesskey	"W">

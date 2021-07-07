@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "您已決定開啟:">
+<!ENTITY  from.label                  "從:">
+<!ENTITY  actionQuestion.label        "&brandShortName; 應該如何處理此檔案？">
+
+<!ENTITY  openWith.label              "開啟方式:">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "其它…">
+
+<!ENTITY  saveFile.label              "儲存檔案">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "對此類檔案自動採用此處理方式。">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "檔案類型:">
+
+<!ENTITY  chooseHandlerMac.label      "選擇…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "瀏覽…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "您確定要儲存此檔案？">
+

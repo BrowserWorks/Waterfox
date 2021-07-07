@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "File">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Nuovo">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Modifica">
+<!ENTITY editMenu.accesskey        "m">
+<!ENTITY undoCmd.label            "Annulla">
+<!ENTITY undoCmd.accesskey          "A">
+<!ENTITY redoCmd.label            "Ripeti">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "Elimina">
+<!ENTITY deleteCmd.accesskey        "E">
+<!ENTITY preferencesCmd2.label "Opzioni">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Preferenze">
+<!ENTITY preferencesCmdUnix.accesskey     "p">
+
+<!ENTITY customizeCmd.label "Personalizza">
+<!ENTITY customizeCmd.accesskey "z">
+
+<!ENTITY viewMenu.label          "Visualizza">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Barre degli strumenti">
+<!ENTITY viewToolbarsMenu.accesskey      "S">
+<!ENTITY showTaskbarCmd.label          "Barra di stato">
+<!ENTITY showTaskbarCmd.accesskey        "B">
+
+<!ENTITY closeCmd.label      "Chiudi">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "h">
+
+<!ENTITY quitApplicationCmd.label  "Esci">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "E">
+
+<!ENTITY quitApplicationCmdUnix.label  "Esci">
+<!ENTITY quitApplicationCmdUnix.accesskey  "E">
+
+<!ENTITY quitApplicationCmdMac.label  "Esci da &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "C">

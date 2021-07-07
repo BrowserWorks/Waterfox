@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Pomoc do &brandShortName; &mdash; preferencji przeglądarki</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="navigator_preferences">Preferencje przeglądarki</h1>
+
+<p>Ten rozdział objaśnia używanie panelu preferencji przeglądarki. Jeżeli panel nie jest w&nbsp;tej chwili widoczny, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>Wybrać kategorię Przeglądarka.</li>
+</ol>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#navigator">Przeglądarka</a></li>
+    <li><a href="#history">Historia</a></li>
+    <li><a href="#languages">Języki</a></li>
+    <li><a href="#helper_applications">Aplikacje pomocnicze</a></li>
+    <li><a href="#location_bar">Pasek adresu</a></li>
+    <li><a href="#internet_search">Wyszukiwanie</a></li>
+    <li><a href="#tabbed_browsing">Karty</a></li>
+    <li><a href="#downloads">Pobieranie plików</a></li>
+  </ul>
+</div>
+
+<h2 id="navigator">Preferencje przeglądarki &mdash; Przeglądarka</h2>
+
+<p>Ta część objaśnia ustawienia głównego panelu preferencji przeglądarki. Jeżeli panel nie jest w&nbsp;tej chwili widoczny, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>Wybrać kategorię Przeglądarka.</li>
+</ol>
+
+<p>Panel preferencji przeglądarki umożliwia dopasowanie przeglądarki w&nbsp;trzech aspektach:</p>
+
+<ul>
+  <li><strong>Wyświetl przy starcie przeglądarki</strong>: Wybór jednej z&nbsp;trzech opcji określa, co zostanie wyświetlone zaraz po uruchomieniu:
+    <ol>
+      <li>
+        <ul>
+          <li>Wybierz <strong>po uruchomieniu przeglądarki</strong>, aby ustawić co ma się wyświetlać po uruchomieniu przeglądarki.</li>
+          <li>Wybierz <strong>po otwarciu okna</strong>, aby ustawić co ma się wyświetlać po otwarciu kolejnego okna przeglądarki.</li>
+          <li>Wybierz <strong>po otwarciu karty</strong>, aby ustawić co ma się wyświetlać po otwarciu kolejnej karty.</li>
+        </ul>
+      </li>
+      <li>Wybierz spośród (zaznaczając pola):
+        <ul>
+          <li><strong>Pustą stronę</strong>: Przeglądarka przy każdym starcie nie będzie otwierała żadnej strony WWW.</li>
+          <li><strong>Stronę domową</strong>: Przeglądarka przy każdym starcie będzie otwierał wybraną poniżej stronę domową.</li>
+          <li><strong>Ostatnio odwiedzoną stronę</strong>: Przeglądarka będzie otwierała stronę otwartą przed zamknięciem &brandShortName;.</li>
+          <li><strong>Przywróć poprzednią sesję</strong>: Przeglądarka będzie przywracała okna oraz karty otwarte przed zamknięciem &brandShortName; wraz z danymi wprowadzonymi w formularzach jak i historią przeglądania. Ta opcja jest dostępna wyłącznie z <strong>Wyświetlaj po uruchomieniu przeglądarki</strong>.</li>
+        </ul>
+      </li>
+    </ol>
+  </li>
+  <li class="win"><strong>Domyślna przeglądarka</strong>: Umożliwia ustawienie &brandShortName; jako domyślnej przeglądarki stron WWW&nbsp;lub sygnalizuje, że &brandShortName; już nią jest.
+    <ul>
+      <li><strong>Ustaw jako domyślną przeglądarkę</strong>: Jeżeli przycisk jest aktywny, kliknięcie spowoduje ustawienie &brandShortName; jako domyślnej przeglądarki stron WWW. Jeżeli jest nieaktywny, oznacza to, że &brandShortName; już jest domyślną przeglądarką.</li>
+    </ul>
+  </li>
+  <!-- TODO: start localizing -->
+  <li><strong>When restoring sessions and windows</strong>: Choose how many
+    (if any) browser tabs should be restored at a time upon startup.
+    <ul>
+      <li><strong>Restore all tabs immediately</strong>: All the tabs you had
+        open the last time will be restored and loaded at once. This can affect
+        startup performance negatively if a large amount of tabs needs to be
+        restored in parallel.</li>
+      <li><strong>Restore [__] tab(s) at a time</strong>: If you choose this,
+        only the specified amount of tabs will be restored at a time. If you
+        had more tabs open than specified here, any extra tabs will only be
+        loaded once the loading of one of the other tabs has finished.</li>
+      <li><strong>Only restore tabs when I need them</strong>: This disables
+        automatic restoring of tabs, i.e. tabs will only be loaded if you
+        switch to or reload them.</li>
+    </ul>
+  </li>
+  <!-- TODO: stop localizing -->
+  <li><strong>Preferencje przycisku Strona domowa</strong>: Wprowadzić w&nbsp;polu adres strony WWW, która ma być stroną domową, lub wykonać jedną z&nbsp;poniższych czynności:
+    <ul>
+      <li><strong>Wybierz plik</strong>: Przycisk umożliwia wybór pliku z&nbsp;dysku, który zostanie wczytany jako strona domowa.</li>
+      <li><strong>Użyj bieżącej strony</strong>: W&nbsp;pole tekstowe należy wpisać adres (URL) strony, która ma zostać stroną domową dla przeglądarki. Można także kliknąć jeden z&nbsp;poniższych przycisków:</li>
+      <li><strong>Użyj bieżących kart</strong>: Jeżeli w&nbsp;przeglądarce jest otwarta więcej niż jedna strona, przycisk ten pozwoli na ustawienie ich jako grupy stron domowych (grupę kart, które zostaną otwarte jako strona domowa). Po kliknięciu na ten przycisk, w&nbsp;polu adresu strony domowej pojawi się komunikat <q>Strony otwarte w&nbsp;kartach zachowano jako stronę domową</q>.
+        
+        <p><strong>Ostrzeżenie</strong>: Edycja pola adresu strony domowej po ustawieniu grupy stron domowych spowoduje ich utratę.</p>
+      
+      </li>
+      <li><strong>Przywróć domyślne</strong>: Przywraca domyślną stronę domową programu.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="history">Preferencje przeglądarki &mdash; Historia</h2>
+
+<p>Ta część objaśnia ustawienia panelu preferencji dotyczących historii odwiedzanych stron WWW. Jeżeli panel nie jest w&nbsp;tej chwili widoczny należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Przeglądarka wybrać podkategorię Historia. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Przeglądarka.)</li>
+</ol>
+
+<p>Panel preferencji historii umożliwia konfigurację ustawień dotyczących listy odwiedzonych stron WWW.</p>
+
+<ul>
+  <li><strong>Przeglądanie historii</strong>:
+    <ul>
+      <li><strong>Wyczyść historię</strong>: Naciśnięcie przycisku powoduje wyczyszczenie listy odwiedzonych stron.</li>
+      <li><strong>Zawsze pamiętaj odwiedzone strony przez minimum [__] dni</strong>: Należy wpisać liczbę dni, w ciągu których &brandShortName; powinna pamiętać odwiedzone wcześniej strony. Jeżeli strony nie będą ręcznie usunięte z historii, to &brandShortName; powinna je pamiętać te strony przez przynajmniej tyle dni, ile zostanie tutaj wpisane, bez względu na inne ustawienia innych preferencji historii. Po tym czasie &brandShortName; może usuwać pozycje z historii bazując na kryteriach określonych w następnych dwóch preferencjach.</li>
+      <li><strong>Pamiętaj odwiedzone strony przez maksymalnie [__] dni</strong>: Należy wpisać maksymalną ilość dni, w ciągu których &brandShortName; ma przechowywać historię odwiedzin stron. Na przykład, po ustawieniu 180 dni, strony odwiedzone 180 lub mniej dni temu będą pamiętane  i później jeżeli strony nie będą usunięte z historii ręcznie lub nie zostanie osiągnięta maksymalna liczba odwiedzonych stron, którą określa się w następnej preferencji.</li>
+      <li><strong>Zapamiętaj maksymalnie [__] odwiedzonych stron</strong>: Należy wpisać maksymalną liczbę odwiedzonych stron, które &brandShortName; powinna pamiętać. Kiedy liczba odwiedzonych stron przekroczy liczbę określoną w tej preferencji, to &brandShortName; usunie tak dużo najstarszych pozycji z historii, aby osiągnąć określoną tu wartość ponownie.</li>
+      <li><strong>&brandShortName; zapamięta strony odwiedzone w&nbsp;ciągu ostatnich [__] dni</strong>: Liczba wprowadzona w&nbsp;pole tekstowe określa liczbę dni, podczas których &brandShortName; będzie pamiętać odwiedzone przez użytkownika strony. Przykładowo, jeżeli wprowadzoną liczbą będzie 10, historia odwiedzonych stron będzie zawierać strony odwiedzone w&nbsp;ciągu ostatnich 10 dni.</li>
+    </ul>
+  </li>
+  <li><strong>Wyczyść historię</strong>: Kliknięcie na ten przycisk spowoduje wyczyszczenie listy odwiedzonych stron.</li>
+  <li><strong>Historia paska adresu</strong>:
+    <ul>
+      <li><strong>Wyczyść pasek adresu</strong>: Naciśnięcie tego przycisku spowoduje wyczyszczenie listy stron wpisywanych do paska adresu.</li>
+    </ul>
+  </li>
+<!-- TODO: start localizing -->
+  <li><strong>Form and Search History</strong>:
+    <ul>
+      <li><strong>Enable form and search history</strong>: Select this to let
+        &brandShortName; keep a history of the forms you fill in and the
+        searches you do.</li>
+      <li><strong>Remember form and search history for up to [__] days</strong>:
+        Type the maximum number of days you want &brandShortName; to keep track
+        of forms you fill in and searches you do. For example, if you set this
+        number to 180 days, forms and searches 180 days old or less will be
+        kept.</li>
+    </ul>
+  </li>
+<!-- TODO: stop localizing -->
+</ul>
+
+<p>Więcej informacji o&nbsp;historii w&nbsp;&brandShortName; można znaleźć w&nbsp;rozdziale <a href="nav_help.xhtml#retracing_your_steps">Cofanie się do poprzednio odwiedzonych stron</a>.</p>
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="languages">Preferencje przeglądarki &mdash; Języki</h2>
+
+<p>Ta część objaśnia ustawienia panelu preferencji dotyczących wyboru wersji językowych dostępnych na niektórych stronach WWW. Jeżeli panel nie jest w&nbsp;tej chwili widoczny należy wykonać poniższe czynności:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Przeglądarka wybrać podkategorię Języki. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Przeglądarka.)</li>
+</ol>
+
+<p>Panel preferencji języków umożliwia określanie i&nbsp;wybór języka oraz sposobu kodowania liter na stronach WWW&nbsp;dających możliwość wyboru wersji językowej strony:</p>
+
+<ul>
+  <li><strong>Lista preferowanych wersji językowych</strong>:
+    <ul>
+      <li><strong>Przenieś w&nbsp;górę / Przenieś w&nbsp;dół</strong>: Zaznaczenie danego języka, a&nbsp;następnie kliknięcie jednego z&nbsp;tych przycisków pozwoli na jego przeniesienie w&nbsp;górę lub w&nbsp;dół hierarchii priorytetów wyboru wersji językowej. Wyższa pozycja na liście oznacza wyższy priorytet wyboru.</li>
+      <li><strong>Dodaj</strong>: Przycisk pozwala na dodanie kolejnego języka do listy języków preferowanych stron WWW. W oknie dialogowym należy wybrać język z listy. Jeżeli na liście nie ma języka, który użytkownik chce dodać, należy wprowadzić jego kod (mogą być użyte dwu- i trzyliterowe kody) w polu poniżej listy. Lista kodów języków jest dostępna online w dokumencie <a href="http://www.loc.gov/standards/iso639-2/php/code_list.php">Codes for the Representation of Names of Languages</a>. Naciśnięcie klawisza OK powoduje zamknięcie okna dialogowego i zapisanie zmian.</li>
+      <li><strong>Usuń</strong>: Przycisk pozwala na usunięcie z&nbsp;listy zaznaczonego języka.</li>
+    </ul>
+  </li>
+  <!-- TODO: start localizing -->
+  <li><strong>Character Encoding for Legacy Content</strong>:
+    <ul>
+      <li><strong>Fallback Character Encoding</strong>: Web pages are supposed
+      to declare the character encoding in which they are to be displayed,
+      but legacy content may not do so. Use the drop-down list to select the
+      default character encoding to be used for such web pages. This setting
+      does not affect any web pages which properly declare their encoding.
+      </li>
+    </ul>
+  </li>
+  <!-- TODO: stop localizing -->
+</ul>
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="helper_applications">Preferencje przeglądarki &mdash; Aplikacje pomocnicze</h2>
+
+<p>Ta część objaśnia ustawienia panelu preferencji dotyczących typów plików i&nbsp;powiązanych z&nbsp;nimi aplikacji pomocniczych. Jeżeli panel nie jest w&nbsp;tej chwili widoczny należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Przeglądarka wybrać podkategorię Aplikacje. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Przeglądarka.)</li>
+</ol>
+
+<p>Panel preferencji aplikacji pomocniczych umożliwia ustawienie  postępowania z różnymi typami zawartości (np. z plikami PDF). Wyświetla listę typów zawartości i pozwala wybrać czynność do wykonania dla każdego z nich. Aby przefiltrować listę można użyć pola wyszukiwania. Wprowadzony do niego tekst pozwoli zawęzić listę elementów, zarówno po typie zawartości jak i czynności.</p>
+<p>Można wybrać zainstalowaną aplikację dla dowolnego typu zawartości. Dla wybranych typów można również wybrać <a href="glossary.xhtml#web_application">aplikację sieciową</a>, należy wybrać <a href="glossary.xhtml#plugin">wtyczkę</a> w &brandShortName;, aby obsługiwać typ zawartości lub zapisać plik na dysku komputera.</p>
+<p>Aby określić czynność dla typu zawartości, należy wybrać z listy ten typ. Pole określania czynności dla niego zmieni się w menu rozwijalne. Z menu można wybrać odpowiednią czynność do obsługi tego typu. Zależnie od typu można:</p>
+
+<ul>
+  <li>Wybrać aplikację za pomocą menu. Jeżeli używana ma być aplikacja niedostępna w menu, należy wybrać opcję <strong>Użyj innej aplikacji</strong> i wybrać ją z wyświetlonej listy lub wskazać jej położenie na dysku.</li>
+  <li>Wybrać wtyczkę z wyświetlonego menu.</li>
+  <li>Wybrać opcję <strong>Zapisz plik</strong>, aby zapisywać pliki tego typu na dysku komputera. Jeżeli użytkownik wybrał opcję <strong>Pobieraj pliki automatycznie do wybranego katalogu pobierania</strong> w panelu <strong>Pobieranie plików</strong> to &brandShortName; będzie zapisywać te pliki automatycznie. W przeciwnym wypadku za każdym razem użytkownik będzie proszony o wskazanie miejsca , w którym ten plik ma być zapisany.</li>
+  <li>Wybrać opcję <strong>Zawsze pytaj</strong>, powodującą, że &brandShortName; za każdym razem będzie pytać co ma zrobić po napotkaniu takiego pliku. Wyświetlane będzie wtedy okno dialogowe, w którym będzie można wybrać co zrobić z plikiem.</li>
+</ul>
+
+<p><strong>Uwaga:</strong> Jeżeli domyślna wtyczka obsługująca dany typ pliku jest dostępna, a użytkownik wybierze inną aplikację do obsługi takiego pliku, to &brandShortName; będzie w ten sposób obsługiwać tylko pliki wskazywane bezpośrednio. Natomiast jeżeli pliki takie będą osadzone na stronie, to &brandShortName; będzie używać do obsługi tego pliku wskazanego typu aplikacji. Proszę przeczytać również <a href="nav_help.xhtml#plugins_and_downloads">Wtyczki i pobieranie plików</a>.</p>
+
+<p>Więcej informacji o&nbsp;obsłudze różnych typów plików w&nbsp;&brandShortName; można znaleźć w&nbsp;rozdziale <a href="nav_help.xhtml#plugins_and_downloads">Zarządzanie różnymi typami plików</a>.</p>
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="location_bar">Preferencje przeglądarki &mdash; Pasek adresu</h2>
+
+<p>Ta część objaśnia ustawienia panelu preferencji dotyczących paska wpisywania adresu strony WWW. Jeżeli panel nie jest w&nbsp;tej chwili widoczny należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Przeglądarka wybrać podkategorię Pasek adresu. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Przeglądarka.)</li>
+</ol>
+
+<p>Panel preferencji paska adresu umożliwia ustawienie opcji dokładnie określających działanie paska adresu.</p>
+
+<ul>
+  <li id="location_bar_autocomplete"><strong>Automatyczne uzupełnianie</strong>:
+    <ul>
+      <li><strong>Automatycznie uzupełniaj na podstawie historii przeglądania</strong>: Zaznaczenie tej opcji powoduje uaktywnienie funkcji automatycznego uzupełniania tekstu wprowadzanego do paska adresu na podstawie historii odwiedzanych stron.
+        <ul>
+          <li><strong>Uwzględniaj tylko adresy, które zostały wpisane ręcznie</strong>: Wyświetla tylko adresy witryn, które zostały wpisane ręcznie w pasku adresu, a nie pokazuje adresów witryn otwartych innymi sposobami, np. poprzez odnośniki na innych stronach WWW.</li>
+          <li><strong>Wyłącznie w adresach (bez tytułów stron)</strong>: Wyświetla tylko adresy witryn, których adres jest zgodny z tym co jest wprowadzane, bez uwzględniania tytułów stron.</li>
+          <li><strong>Szukaj</strong>:
+            <ul>
+              <li><strong>Gdziekolwiek w adresie bądź tytule</strong>: Podpowiedzi funkcji automatycznego uzupełniania będą zawierały wszystkie strony WWW, których adres lub tytuł częściowo odpowiadają wprowadzonemu wyrażeniu.</li>
+              <li><strong>Gdziekolwiek, ale preferuj granice słów</strong>: Podpowiedzi funkcji automatycznego uzupełniania będą zawierały wszystkie strony WWW, których adres lub tytuł częściowo odpowiadają wprowadzonemu wyrażeniu, ale preferowane będą te, których dowolne słowo z adresu lub tytułu strony rozpoczyna się od wprowadzonych znaków. Więcej w kolejnym punkcie. To jest ustawienie domyślne.</li>
+              <li><strong>Wyłącznie na granicach słów</strong>: Podpowiedzi funkcji automatycznego uzupełniania będą zawierały wszystkie strony WWW, których dowolne słowo w adresie lub tytule będzie rozpoczynało się od wprowadzonego tekstu. Wszystkie słowa (lub lepiej ciągi znaków) zawierające w środku duże litery będą traktowane jako więcej niż jedno słowo, ponieważ wszystkie znaki nie będące małymi literami są traktowane jako granice słów, czyli jest możliwe dopasowanie do krótszych ciągów znaków, jeżeli np. tytuł strony będzie zapisany jako StronaGłówna.</li>
+              <li><strong>Wyłącznie na początku adresu bądź tytułu</strong>: Podpowiedzi funkcji automatycznego uzupełniania będą zawierały wszystkie strony WWW, których adres lub tytuł rozpoczyna się od wprowadzonego tekstu.</li>
+            </ul></li>
+          <li><strong>Automatycznie uzupełniaj najodpowiedniejszą pozycją</strong>: Wprowadzone w pasku adresu znaki &brandShortName; będzie automatycznie uzupełniać z użyciem adresów stron WWW już odwiedzonych tak, by jak najbardziej pasowały. <span class="unix"><strong>Uwaga</strong>: Włączenie tej opcji będzie powodowało wstępne uzupełnienie adresów lokalnych (jak ścieżek do plików na lokalnym dysku komputera) nawet wtedy, gdy opcja <q>Automatycznie uzupełniaj na podstawie historii przeglądania</q> będzie wyłączona.</span></li>
+           <li><strong>Pokaż listę pasujących wyników</strong>: W trakcie wprowadzania tekstu w pasku adresu &brandShortName; będzie wyświetlała listę rozwijalną pasujących adresów odwiedzonych witryn. <span class="unix"><strong>Uwaga</strong>: Pomimo wyłączenia opcji <q>Automatycznie uzupełniaj na podstawie historii przeglądania</q> pasujące pozycje z lokalnego dysku komputera użytkownika wciąż będą się pojawiać w liście rozwijalnej.</span></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+<!-- TODO: start localizing -->
+  <li><strong>Formatting</strong>:
+    <ul>
+      <li><strong>Highlight the effective domain for websites and FTP
+        servers</strong>: Grays out all of the URL except for the effective
+        domain, so that it is clear which site you are visiting.</li>
+    </ul>
+  </li>
+<!-- TODO: stop localizing -->
+  <li><strong>Wyszukiwarka internetowa</strong>:
+    <ul>
+      <li><strong>Wyświetl domyślną wyszukiwarkę internetową</strong>: Wyświetla poniżej paska adresu element, którego wybranie umożliwi wyszukanie w domyślnej wyszukiwarce internetowej wprowadzonego w pasku adresu wyrażenia.</li>
+    </ul>
+  </li>
+  <li><strong>Nieznane adresy</strong>
+    <ul>
+      <li><strong>Automatycznie dodaj <q>www.</q> oraz <q>.com</q> do wprowadzanego adresu, jeżeli odnalezienie witryny nie będzie możliwe.</strong>: Zaznaczenie tej opcji spowoduje, że &brandShortName; będzie automatycznie dodawała <tt>www.</tt> na początek oraz <tt>.com</tt> na koniec adresu strony, która nie zostanie odnaleziona. Więcej informacji w dokumencie w języku angielskim odnośnie odgadywania nazw domen na stronie <a href="http://www.mozilla.org/docs/end-user/domain-guessing.html">Domain Guessing</a>.</li>
+      <li><strong>Wykonaj wyszukiwanie w sieci, gdy wpisany tekst nie jest adresem internetowym</strong>: Zaznaczenie tej opcji spowoduje, że &brandShortName; będzie automatycznie wyszukiwała wprowadzony w pasku adresu tekst w wyszukiwarce internetowej, jeżeli nie będzie on adresem strony lub pliku. &brandShortName;  będzie wyszukiwała wprowadzony tekst po naciśnięciu klawisza <kbd class="noMac">Enter</kbd><kbd class="mac">Return</kbd> w pasku adresu.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="internet_search">Preferencje przeglądarki &mdash; Wyszukiwanie</h2>
+
+<p>Ta część objaśnia ustawienia panelu preferencji dotyczących wyszukiwania w&nbsp;Internecie. Jeżeli panel nie jest w&nbsp;tej chwili widoczny należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Przeglądarka wybrać podkategorię Wyszukiwanie. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Przeglądarka.)</li>
+</ol>
+
+<p>Panel preferencji wyszukiwania umożliwia konfigurację wyszukiwania słów kluczowych w&nbsp;wyszukiwarkach przy użyciu &brandShortName;:</p>
+
+<ul>
+  <li><strong>Domyślna wyszukiwarka</strong>:
+    <ul>
+      <li><strong>Domyślna wyszukiwarka internetowa</strong>: Z&nbsp;listy rozwijalnej należy wybrać domyślną wyszukiwarkę.</li>
+    </ul>
+  </li>
+  <li><strong>Wyniki wyszukiwania</strong>:
+    <ul>
+      <li><strong>Otwórz panel Szukaj w&nbsp;panelu bocznym, kiedy dostępne będą rezultaty wyszukiwania</strong>: Zaznaczenie tej opcji powoduje otwarcie wyników wyszukiwania w&nbsp;panelu Szukaj panelu bocznego &brandShortName;.</li>
+      <li><strong>Otwórz kartę zamiast okna dla kontekstowego wyszukiwania internetowego</strong>: Zaznaczenie tej opcji powoduje otwarcie wyników wyszukiwania kontekstowego w nowej karcie, zamiast w nowym oknie. Wyszukiwanie kontekstowe to wyszukiwanie uruchamiane opcją dostępną w&nbsp;menu kontekstowym dostępnej po zaznaczeniu słów na stronie WWW.</li>
+    </ul>
+  </li>
+  <li><strong>Interfejs wyszukiwania panelu szukaj w&nbsp;panelu bocznym</strong>:
+    <ul>
+      <li><strong>Podstawowy</strong>: Wybór tej opcji powoduje używanie tylko jednej wyszukiwarki do szukania słów kluczowych.</li>
+      <li><strong>Zaawansowany</strong>: Wybór tej opcji powoduje możliwość wyboru jednej lub więcej wyszukiwarki do szukania słów kluczowych.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="tabbed_browsing">Preferencje przeglądarki &mdash; Karty</h2>
+
+<p>Niniejsza część objaśnia ustawienia panelu preferencji dotyczących przeglądania przy użyciu kart. Jeżeli panel nie jest w&nbsp;tej chwili widoczny, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Nawigator wybrać podkategorię Karty. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Przeglądarka.)</li>
+</ol>
+
+<p>Panel preferencji kart umożliwia ustawianie przeglądania stron WWW&nbsp;przy użyciu kart:</p>
+
+<ul>
+  <li><strong>Wyświetlanie kart</strong>:
+    <ul>
+      <li><strong>Ukryj pasek kart, jeżeli otwarta jest tylko jedna karta</strong>: Zaznaczenie tej opcji spowoduje wyświetlanie paska wyboru karty tylko w&nbsp;przypadku otwarcia więcej niż jednej karty przeglądarki.</li>
+      <li><strong>Pokazuj nowo otwarte karty na pierwszym planie</strong>: Zaznaczenie tej opcji umożliwia przełączanie pomiędzy kartami przy wyborze polecenia <q>Otwórz odnośnik w&nbsp;nowej karcie</q>.</li>
+<!-- TODO: start localizing -->
+      <li><strong>Warn me when closing a window with multiple tabs</strong>:
+        Select this to make &brandShortName; warn you when you try to close a
+        browser window which has multiple tabs open in it.</li>
+      <li><strong>Open related tabs after current tab</strong>:
+        Select this to make new tabs open next to the tab from which they have
+        been opened. When unchecked, new tabs open after the last tab on the
+        tab bar.</li>
+<!-- TODO: stop localizing -->
+    </ul>
+  </li>
+  <li><strong>Podczas otwierania grupy zakładek</strong>:
+    <ul>
+      <li><strong>Otwórz wszystkie jako nowe karty</strong>: Zaznaczenie tej opcji umożliwia otwieranie grup zakładek w&nbsp;nowych kartach.</li>
+      <li><strong>Otwórz w&nbsp;bieżących kartach</strong>: Zaznaczenie tej opcji umożliwia nadpisywanie obecnie otwartej grupy kart.</li>
+    </ul>
+  </li>
+  <li><strong>Otwórz strony w&nbsp;nowej karcie zamiast w&nbsp;nowym oknie, jeżeli</strong>:
+    <ul>
+      <li><strong>Odnośnik zostanie otworzony za pomocą: <span class="mac">Przycisku myszy z&nbsp;wciśniętym klawiszem <kbd>Cmd</kbd> na klawiaturze lub naciśnięcia przycisków <kbd>Cmd</kbd>+<kbd>Return</kbd></span><span class="noMac">Środkowego przycisku myszy, lewego przycisku myszy z&nbsp;wciśniętym klawiszem <kbd>Ctrl</kbd> na klawiaturze lub naciśnięcia klawiszy <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></strong>: Zaznaczenie tej opcji powoduje otwarcie w&nbsp;nowej karcie strony, do której wiedzie adres odnośnika otwartego przy pomocy jednej z&nbsp;wymienionych metod.
+
+        <p><strong>Wskazówka</strong>: Używaj wyszukiwania odnośników podczas wprowadzania, aby przejść do odnośnika, który chcesz wywołać przy pomocy skrótów klawiaturowych wymienionych powyżej.</p></li>
+      <li><strong>Po wprowadzeniu adresu strony w&nbsp;pasku adresu zostaną użyte klawisze <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd>+<kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd></strong>: Zaznaczenie tej opcji spowoduje otwarcie strony w&nbsp;nowej karcie jeżeli wprowadzony w&nbsp;pasku adresu odnośnik został potwierdzony powyższą kombinacją klawiszy.</li>
+    </ul>
+  </li>
+</ul>
+<!-- TODO: start localizing -->
+  <p>[<a href="#navigator_preferences">Return to beginning of section</a>]</p>
+
+  <h2 id="link_behavior">Browser Preferences - Link Behavior</h2>
+
+  <p>This section describes how to use the Link Behavior preferences panel. If
+    you&apos;re not already viewing it, follow these steps:</p>
+
+  <ol>
+    <li>Open the <span class="mac">&brandShortName;</span>
+      <span class="noMac">Edit</span> menu and choose Preferences.</li>
+    <li>Under the Browser category, click Link Behavior. (If no subcategories
+      are visible, double-click Browser to expand the list.)</li>
+  </ol>
+
+  <p>The Link Behavior preferences panel allows you to configure how links are
+    opened in &brandShortName;:</p>
+<!-- TODO: stop localizing -->
+<ul>
+  <li><strong>Otwieranie odnośników</strong>: Jeżeli witryna jest zaprojektowana, aby otwierać strony w&nbsp;nowych oknach, można wymusić określony sposób ich otwierania. <!-- TODO: start localizing -->You can define the behavior separately for links with a target attribute and windows opened using JavaScript:
+    <ul>
+    <!-- old localization
+      <li><strong>ostatnio aktywnej karcie lub oknie</strong>: Wymusi otwieranie odnośników w&nbsp;ostatnio aktywnej karcie lub oknie.</li>
+      <li><strong>nowej karcie w&nbsp;ostatnim aktywnym oknie</strong>: Wymusi otwieranie odnośników w&nbsp;nowej karcie w&nbsp;ostatnim aktywnym oknie.</li>
+      <li><strong>nowym oknie</strong>: Wymusi otwieranie odnośników w&nbsp;nowym oknie. Jest to domyślnym ustawieniem, które nie zmienia domyślnego zachowania witryn.</li> -->
+      <li><strong>Open links meant to open a new window in</strong>:
+        <ul>
+          <li><strong>The current tab/window</strong>: Open the linked page in
+            the current tab of the active window.</li>
+          <li><strong>A new tab in the current window</strong>: Open the linked
+            page in a new tab instead of a new window.</li>
+          <li><strong>A new window</strong>: Open the linked page in a new
+            window. (This does not override the webpage design and disables
+            the below options for pages opened from scripts.)</li>
+        </ul>
+      </li>
+      <li><strong>When scripts want to open a new window</strong>:
+        <ul>
+          <li><strong>Always divert windows into tabs</strong>: Open the page to
+            be loaded in a tab according to the above settings.</li>
+          <li><strong>Don&apos;t divert custom windows into tabs</strong>: Open
+            the page to be loaded in a popup window if the script explicitly
+            specifies features of the new window (such as size or position),
+            else open the page in a tab according to the above settings.</li>
+          <li><strong>Always open new windows</strong>: Open the page to be
+            loaded in a new window. (This does not override the webpage
+           design.)</li>
+        </ul>
+      </li>
+      <!-- TODO: stop localizing -->
+    </ul>
+  </li>
+  <li><strong>Odnośniki otwierane z&nbsp;innych aplikacji</strong>: Jeżeli inna aplikacja otwiera stronę przy pomocy &brandShortName; (np. wywołanie odnośnika z&nbsp;programu pocztowego), można zmienić miejsce otworzenia strony:
+    <ul>
+      <li><strong>ostatnio aktywnej karcie lub oknie</strong>: Wymusi otwieranie odnośników w&nbsp;ostatnio aktywnej karcie lub oknie.</li>
+      <li><strong>nowej karcie w&nbsp;ostatnim aktywnym oknie</strong>: Wymusi otwieranie odnośników w&nbsp;nowej karcie w&nbsp;ostatnim aktywnym oknie.</li>
+      <li><strong>nowym oknie</strong>: Wymusi otwieranie odnośników w&nbsp;nowym oknie.</li>
+    </ul>
+  </li>
+</ul>
+
+<!-- TODO: start localizing -->
+<div class="win">
+    <p>To ensure that &brandShortName; opens a new window, select the Browser
+        option in <a href="cs_nav_prefs_appearance.xhtml#appearance">Appearance
+        Preferences - Appearance</a>.</p>
+  
+    <p>If you want &brandShortName; to open a new tab instead of a new window when
+       you launch it and it is already running, ensure the following:</p>
+ 
+    <ul>
+      <li>If &brandShortName; is launched from the command line, no command line
+        parameters that open windows (like <kbd>-new-window</kbd>) are used.</li>
+      <li>No <q>When &brandShortName; starts up, open</q> option is set in
+        <a href="cs_nav_prefs_appearance.xhtml#appearance">Appearance Preferences
+        - Appearance</a>.</li>
+      <li>The <q>Links from other applications</q> preference is set to <q>A new
+        tab in the current window</q>.</li>
+    </ul>
+</div>
+<!-- TODO: stop localizing -->
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+<h2 id="downloads">Preferencje przeglądarki &mdash; Pobieranie plików</h2>
+
+<p>Ten rodział objaśnia ustawienia panelu preferencji dotyczące Menedżera pobierania plików. Jeżeli panel nie jest w&nbsp;tej chwili widoczny, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Przeglądarka wybrać podkategorię Pobieranie plików. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Przeglądarka.)</li>
+</ol>
+
+<p>Panel pobierania plików pozwala na ustawienie opcji Menedżera pobierania plików w&nbsp;&brandShortName;:</p>
+
+<ul>
+  <li><strong>Rozpoczynając pobieranie plików</strong>:
+    <ul>
+<!-- TODO: start localizing -->
+      <li><strong>Flash the download manager if it is already open</strong>:
+        Select this to change focus to the Download Manager if it is currently
+        open. It displays the status for current and previous downloads in a
+        single window. This option only takes effect if the Download Manager
+        is already open and overrides the other settings.</li>
+<!-- TODO: stop localizing -->
+      <li><strong>Otwórz Menedżera pobierania plików</strong>: Zaznaczenie tej opcji spowoduje wyświetlanie Menedżera pobierania plików przy rozpoczynaniu pobierania, jeżeli te okno nie jest już otwarte.</li>
+      <li><strong>Wyświetl okno postępu</strong>: Zaznaczenie tej opcji spowoduje wyświetlenie okna dialogowego postępu pobierania, które pokazuje informacje o&nbsp;bieżącym pobieraniu. Stan każdego pobierania jest pokazywany w&nbsp;osobnym oknie dialogowym.</li>
+      <li><strong>Nie otwieraj okna</strong>: Zaznaczenie tej opcji spowoduje pobieranie plików w&nbsp;sposób niewidoczny dla użytkownika. Żadne z&nbsp;pobierań nie będzie wyświetlało okna dialogowego stanu pobierania.</li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li><strong>Podczas zapisywania pliku</strong>:
+    <ul>
+<!-- TODO: start localizing -->
+      <li><strong>Save files to</strong>: Select this if you want files to be
+        saved to the specified folder without &brandShortName; prompting you
+        for the download location.</li>
+      <li><strong>Always ask me where to save files</strong>: Select this if
+        you always want to be able to choose a folder for the file to be saved.
+        The default will be the folder you last downloaded a file to.</li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li><strong>Download retention</strong>:
+    <ul>
+      <li><strong>Remove downloads</strong>: This determines when a completed
+        entry is removed from the Download Manager listing (the downloaded
+        file will <em>not</em> be affected):
+         <ul>
+          <li><strong>When they have completed</strong>: Select this to
+            remove an entry immediately once the download is successfully
+            completed.</li>
+          <li><strong>When quitting &brandShortName;</strong>: Select this
+            to retain all entries until closing the program, the list will
+            be empty upon restarting &brandShortName;.</li>
+          <li><strong>Never</strong>: Select this to not remove <em>any</em>
+            entry automatically, even after &brandShortName; is restarted.
+            You can remove them manually in the Download Manager.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+<!-- TODO: stop localizing -->
+
+<ul>
+  <li><strong>Gdy pobieranie zostanie zakończone</strong>:
+    <ul>
+      <li><strong>Odegraj dźwięk</strong>: Zaznacz aby &brandShortName; odtwarzała wybrany dźwięk (zazwyczaj w&nbsp;formacie WAV) kiedy pobieranie zostanie zakończone. Użyj przycisku <q>Przeglądaj</q> aby wybrać plik i&nbsp;<q>Odtwórz</q> żeby odtworzyć dźwięk.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Więcej informacji na temat pobierania plików ze stron WWW&nbsp;w&nbsp;rozdziale <a href= "nav_help.xhtml#plugins_and_downloads">Wtyczki i&nbsp;pobieranie</a>.</p>
+
+<p>[<a href="#navigator_preferences">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

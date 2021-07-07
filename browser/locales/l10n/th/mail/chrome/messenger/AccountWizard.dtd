@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "ตัวช่วยบัญชี">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "คุณต้องตั้งค่าบัญชีก่อนจึงจะสามารถรับข้อความได้">
+<!ENTITY accountTypeTitle.label "การตั้งค่าบัญชีใหม่">
+<!ENTITY accountTypeDesc2.label "ตัวช่วยนี้จะรวบรวมข้อมูลที่จำเป็นเพื่อใช้ตั้งค่าบัญชี หากคุณไม่รู้ข้อมูลที่ถามไว้ โปรดติดต่อผู้ดูแลระบบหรือผู้ให้บริการอินเทอร์เน็ตของคุณ">
+<!ENTITY accountTypeDirections.label "เลือกประเภทบัญชีที่คุณต้องการตั้งค่า:">
+<!ENTITY accountTypeMail.label "บัญชีอีเมล">
+<!ENTITY accountTypeMail.accesskey "อ">
+<!ENTITY accountTypeNews.label "บัญชีกลุ่มข่าว">
+<!ENTITY accountTypeNews.accesskey "ก">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "ข้อมูลประจำตัว">
+<!ENTITY identityDesc.label "แต่ละบัญชีจะมีข้อมูลประจำตัว ซึ่งเป็นข้อมูลที่ระบุตัวตนคุณแก่ผู้อื่นเมื่อพวกเขาได้รับข้อความจากคุณ">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "ป้อนชื่อที่คุณต้องการให้ปรากฏในช่อง &quot;จาก&quot; ของข้อความขาออกของคุณ">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(ตัวอย่างเช่น &quot;John Smith&quot;)">
+<!ENTITY fullnameLabel.label "ชื่อของคุณ:">
+<!ENTITY fullnameLabel.accesskey "ช">
+
+<!ENTITY emailLabel.label "ที่อยู่อีเมล:">
+<!ENTITY emailLabel.accesskey "ท">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "ข้อมูลเซิร์ฟเวอร์ขาเข้า">
+<!ENTITY incomingServerTypeDesc.label "เลือกประเภทเซิร์ฟเวอร์ขาเข้าที่คุณกำลังใช้">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "ฝากข้อความไว้บนเซิร์ฟเวอร์">
+<!ENTITY leaveMsgsOnSrvr.accesskey "ฝ">
+<!ENTITY portNum.label "พอร์ต:">
+<!ENTITY portNum.accesskey "พ">
+<!ENTITY defaultPortLabel.label "ค่าเริ่มต้น:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "ป้อนชื่อเซิร์ฟเวอร์ขาเข้าของคุณ (ตัวอย่างเช่น &quot;mail.example.net&quot;)">
+<!ENTITY incomingServer.label "เซิร์ฟเวอร์ขาเข้า:">
+<!ENTITY incomingServer.accesskey "ซ">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "ป้อนชื่อผู้ใช้ขาเข้าที่ผู้ให้บริการอีเมลระบุให้คุณ (ตัวอย่างเช่น &quot;jsmith&quot;)">
+<!ENTITY incomingUsername.label "ชื่อผู้ใช้:">
+<!ENTITY incomingUsername.accesskey "ผ">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "ป้อนชื่อเซิร์ฟเวอร์ข่าวของคุณ (NNTP) (ตัวอย่างเช่น &quot;news.example.net&quot;)">
+<!ENTITY newsServerLabel.label "เซิร์ฟเวอร์กลุ่มข่าว:">
+<!ENTITY newsServerLabel.accesskey "เ">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "ข้อมูลเซิร์ฟเวอร์ขาออก">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "ป้อนชื่อเซิร์ฟเวอร์ขาออกของคุณ (SMTP) (ตัวอย่างเช่น &quot;smtp.example.net&quot;)">
+<!ENTITY outgoingServer.label "เซิร์ฟเวอร์ขาออก:">
+<!ENTITY outgoingServer.accesskey "ร">
+<!ENTITY outgoingUsername.description "ป้อนชื่อผู้ใช้ขาออกที่คุณได้รับจากผู้ให้บริการอีเมลของคุณ (โดยปกติมักจะเหมือนกับชื่อผู้ใช้ขาเข้าของคุณ)">
+<!ENTITY outgoingUsername.label "ชื่อผู้ใช้ขาออก:">
+<!ENTITY outgoingUsername.accesskey "ใ">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "คุณสามารถเปลี่ยนเซิร์ฟเวอร์ขาออกได้ในการตั้งค่าบัญชี">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "เซิร์ฟเวอร์ขาออกที่มีอยู่ของคุณ (SMTP) &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot; จะถูกใช้">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "ชื่อผู้ใช้ขาออก (SMTP) ที่มีอยู่ของคุณ &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot; จะถูกใช้">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "เซิร์ฟเวอร์ขาออก (SMTP) ของคุณ &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot; เหมือนกับเซิร์ฟเวอร์ขาเข้าของคุณ ชื่อผู้ใช้ขาเข้าของคุณจะถูกใช้ในการเข้าถึงแทน">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "ชื่อบัญชี">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "ป้อนชื่อที่คุณต้องการอ้างถึงบัญชีนี้ (ตัวอย่างเช่น &quot;บัญชีที่ทำงาน&quot;, &quot;บัญชีที่บ้าน&quot; หรือ &quot;บัญชีข่าว&quot;)">
+<!ENTITY accnameLabel.label "ชื่อบัญชี:">
+<!ENTITY accnameLabel.accesskey "บ">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "ขอแสดงความยินดี!">
+<!ENTITY completionText.label "โปรดยืนยันว่าข้อมูลด้านล่างถูกต้อง">
+<!ENTITY serverTypePrefix.label "ชนิดเซิร์ฟเวอร์ขาเข้า:">
+<!ENTITY serverNamePrefix.label "ชื่อเซิร์ฟเวอร์ขาเข้า:">
+<!ENTITY smtpServerNamePrefix.label "ชื่อเซิร์ฟเวอร์ขาออก (SMTP):">
+<!ENTITY newsServerNamePrefix.label "ชื่อเซิร์ฟเวอร์ข่าว (NNTP):">
+<!ENTITY downloadOnLogin.label "ดาวน์โหลดข้อความเดี๋ยวนี้">
+<!ENTITY downloadOnLogin.accesskey "ด">
+<!ENTITY deferStorageDesc.label "ยกเลิกการกาเครื่องหมายในกล่องกาเครื่องหมายนี้เพื่อเก็บจดหมายสำหรับบัญชีนี้ในไดเรกทอรีของบัญชีนี้เอง ซึ่งจะทำให้บัญชีนี้ปรากฏเป็นบัญชีระดับบนสุด มิฉะนั้น จะกลายเป็นส่วนหนึ่งของบัญชีกล่องขาเข้าส่วนกลางของโฟลเดอร์ภายในเครื่องแทน">
+<!ENTITY deferStorage.label "ใช้กล่องขาเข้าส่วนกลาง (เก็บจดหมายในโฟลเดอร์ภายในเครื่อง)">
+<!ENTITY deferStorage.accesskey "ส">
+<!ENTITY clickFinish.label "คลิก เสร็จสิ้น เพื่อบันทึกการตั้งค่าเหล่านี้และออกจากตัวช่วยบัญชี">
+<!ENTITY clickFinish.labelMac "คลิก เสร็จสิ้น เพื่อบันทึกการตั้งค่าเหล่านี้และออกจากตัวช่วยบัญชี">

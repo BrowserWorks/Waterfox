@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Lägg till i ordlista">
+<!ENTITY spellAddToDictionary.accesskey "ä">
+<!ENTITY spellUndoAddToDictionary.label "Ångra Lägg till i ordlista">
+<!ENTITY spellUndoAddToDictionary.accesskey "g">
+<!ENTITY spellCheckToggle.label "Kontrollera stavning">
+<!ENTITY spellCheckToggle.accesskey "r">
+<!ENTITY spellNoSuggestions.label "(Inga stavningsförslag)">
+<!ENTITY spellDictionaries.label "Språk">
+<!ENTITY spellDictionaries.accesskey "S">
+
+<!ENTITY searchTextBox.clear.label "Rensa">
+
+<!ENTITY fillLoginMenu.label          "Fyll i inloggning">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "Fyll i lösenord">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "Fyll i användarnamn">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(Inga inloggningsförslag)">
+<!ENTITY viewSavedLogins.label        "Visa sparade inloggningar">

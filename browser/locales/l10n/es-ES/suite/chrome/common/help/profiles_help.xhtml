@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Administración de los perfiles</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+
+<body>
+<h1 id="managing_profiles">Administración de los perfiles</h1>
+
+<p>Si utiliza Internet en casa y en el trabajo, puede que quiera tener acceso
+  a un grupo distinto de marcadores, preferencias, libretas de direcciones,
+  cuentas de correo, configuraciones del panel lateral, etc. De igual modo,
+  puede que los miembros de su familia quieran compartir una copia del mismo
+  navegador pero manteniendo separadas sus identidades en Internet.</p>
+
+<p>El administrador de perfiles le permite crear diferentes perfiles, cada
+  uno con sus propios marcadores, preferencias, configuración del
+  correo, y demás. Usted crea automáticamente un perfil por
+  defecto cuando instala su navegador por primera vez. Tras crear uno o
+  más perfiles adicionales, se le preguntará cuál de ellos
+  quiere utilizar cada vez que inicie el navegador.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#creating_a_new_profile">Crear un perfil nuevo</a></li>
+    <li><a href="#deleting_or_renaming_a_profile">Borrar o renombrar un
+      perfil</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_new_profile">Crear un perfil nuevo</h2>
+
+<p>Para crear un perfil:</p>
+
+<ol>
+  <li>Abra el administrador de perfiles:
+    <ul>
+      <li><strong>Si &brandShortName; está ejecutándose</strong>: abra el
+        menú Herramientas y escoja Intercambiar perfil.</li>
+      <li><strong>Si &brandShortName; está cerrado</strong>:
+        <span class="win">haga clic en el menú Inicio y seleccione Programas,
+        luego &brandShortName;, y entonces haga clic en Administrador de
+        perfiles.</span><span class="mac">mantenga pulsada la tecla
+        <kbd>Option</kbd> mientras inicia &brandShortName; desde Finder o
+        el Dock.</span><span class="unix">escriba lo siguiente en la línea de
+        órdenes: <kbd>./mozilla -profilemanager</kbd>.</span>
+      </li>
+    </ul>
+  </li>
+  <li>Haga clic en Crear perfil, lea la descripción del perfil, y
+    después haga clic en Siguiente.</li>
+  <li>Escriba un nombre para el perfil. Puede ser el nombre que quiera, como
+    su nombre real o un nombre que esté relacionado con aquello para lo
+    que vaya a usar el perfil, como por ejemplo <q>Escuela</q>.</li>
+  <li>Acepte la ubicación por defecto para el perfil nuevo, o haga
+    clic en el botón &quot;Elegir carpeta&quot; y navegue hasta la
+    localización que quiera.</li>
+  <li>Si tiene instalados paquetes de idioma adicionales, haga clic
+    en Selección de regiones y elija el juego de idiomas/contenidos que
+    quiera.</li>
+  <li>Haga clic en Terminar.</li>
+</ol>
+
+<p>[<a href="#managing_profiles">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="deleting_or_renaming_a_profile">Borrar o renombrar un perfil</h2>
+
+<p>Puede que quiera borrar perfiles que no utilice normalmente. Para borrar o
+  renombrar un perfil existente:</p>
+
+<ol>
+  <li>Abra el administrador de perfiles:
+    <ul>
+      <li><strong>Si &brandShortName; está ejecutándose</strong>:
+        abra el menú Herramientas y escoja Intercambiar perfil.
+        <strong>Nota:</strong> no puede borrar el perfil que está
+        usando.</li>
+      <li><strong>Si &brandShortName; está cerrado</strong>:
+        <span class="win">haga clic en el menú Inicio y seleccione
+        Programas, luego &brandShortName;, y entonces haga clic en
+        Administrador de perfiles.</span><span class="mac">mantenga pulsada
+        la tecla <kbd>Option</kbd> mientras inicia &brandShortName; desde Finder
+        o el Dock.</span><span class="unix">escriba lo siguiente en la
+        línea de comandos: <kbd>./mozilla -profilemanager</kbd>.</span>
+      </li>
+    </ul>
+  </li>
+  <li>Para borrar un perfil, seleccione su nombre y haga clic en Borrar perfil.
+    En la ventana de confirmación, escoja una de las siguientes
+    opciones:
+    <ul>
+      <li><strong>Borrar archivos</strong>: borrar todas las carpetas
+        que forman el perfil con sus datos guardados (marcadores,
+        preferencias, cuentas de correo y demás). <em>Asegúrese
+        de que no necesitará nada de ese perfil en el futuro antes de
+        elegir esta opción.</em></li>
+      <li><strong>No borrar archivos</strong>: elimina el perfil de la
+        lista de perfile disponibles, pero mantiene la carpeta que contiene
+        el perfil. Al elegir esa opción no se borrará
+        ningún dato guardado en el perfil.</li>
+    </ul>
+  </li>
+  <li>Para cambiar el nombre de un perfil, seleccione su nombre, haga clic
+    en Renombrar perfil, y siga las instrucciones.</li>
+</ol>
+</body>
+</html>

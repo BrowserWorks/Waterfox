@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Composition &amp; Addressing">
+<!ENTITY addressingGroupTitle.label "Addressing">
+<!ENTITY addressingText.label      "When looking up addresses:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Use my global LDAP server preferences for this account">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "Edit Directories…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Use a different LDAP server:">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "None">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Composition">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Compose messages in HTML format">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "Automatically quote the original message when replying">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "When quoting,">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "start my reply above the quote">
+<!ENTITY belowQuote.label                     "start my reply below the quote">
+<!ENTITY selectAndQuote.label                 "select the quote">
+<!ENTITY place.label                          "and place my signature">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "below the quote (recommended)">
+<!ENTITY aboveText.label                      "below my reply (above the quote)">
+<!ENTITY includeSigOnReply.label              "Include signature for replies">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Include signature for forwards">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "Global Composing Preferences…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Global Addressing Preferences…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

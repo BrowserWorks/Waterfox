@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY searchHeading.label "Cerca tra i messaggi in:">
+<!ENTITY searchHeading.accesskey "n">
+<!ENTITY searchSubfolders.label "Cerca nelle sottocartelle">
+<!ENTITY searchSubfolders.accesskey "o">
+<!ENTITY searchOnHeading.label "Effettua operazioni di ricerca su:">
+<!ENTITY searchOnHeading.accesskey "z">
+<!ENTITY searchOnRemote.label "Server remoto">
+<!ENTITY searchOnLocal.label "Sistema locale">
+<!ENTITY resetButton.label "Cancella">
+<!ENTITY resetButton.accesskey "a">
+<!ENTITY openButton.label "Apri">
+<!ENTITY openButton.accesskey "p">
+<!ENTITY deleteButton.label "Elimina">
+<!ENTITY deleteButton.accesskey "E">
+<!ENTITY searchDialogTitle.label "Ricerca messaggi">
+<!ENTITY results.label "Risultati">
+<!ENTITY moveHereMenu.label "Sposta qua">
+<!ENTITY moveHereMenu.accesskey "a">
+<!ENTITY moveButton.label "Sposta in">
+<!ENTITY moveButton.accesskey "S">
+<!ENTITY goToFolderButton.label "Apri cartella messaggi">
+<!ENTITY goToFolderButton.accesskey "l">
+<!ENTITY saveAsVFButton.label "Salva come cartella di ricerca">
+<!ENTITY saveAsVFButton.accesskey "v">
+<!ENTITY abSearchHeading.label "Cerca in:">
+<!ENTITY abSearchHeading.accesskey "n">
+<!ENTITY propertiesButton.label "Proprietà">
+<!ENTITY propertiesButton.accesskey "P">
+<!ENTITY composeButton.label "Scrivi">
+<!ENTITY composeButton.accesskey "r">
+<!ENTITY abSearchDialogTitle.label "Ricerca avanzata Rubrica">

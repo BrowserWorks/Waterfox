@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "Symbolleiste anpassen">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Sie können Einträge hinzufügen oder entfernen, in dem Sie sie in oder von den Symballeisten ziehen.">
+<!ENTITY show.label               "Anzeigen:">
+<!ENTITY iconsAndText.label       "Symbole und Text">
+<!ENTITY icons.label              "Symbole">
+<!ENTITY text.label               "Text">
+<!ENTITY useSmallIcons.label      "Kleine Symbole verwenden">
+<!ENTITY restoreDefaultSet.label  "Standards wiederherstellen">
+<!ENTITY addNewToolbar.label      "Neue Symbolleiste hinzufügen">
+<!ENTITY saveChanges.label        "Fertigstellen">
+<!ENTITY undoChanges.label        "Änderungen rückgäging machen">

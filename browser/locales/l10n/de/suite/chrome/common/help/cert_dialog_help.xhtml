@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Zertifikatinformation und Entscheidungen</title>
+    <link rel="stylesheet" type="text/css" href="helpFileLayout.css"/>
+</head>
+<body>
+<div class="boilerPlate">Dieses Dokument wird Ihnen nur zur Information zur
+    Verf&#252;gung gestellt. Es kann Ihnen dabei helfen bestimmte Schritte zu
+    unternehmen um Ihre Privatsph&#228;re und die Sicherheit Ihrer
+    pers&#246;nlichen Informationen im Internet zu sch&#252;tzen. Dieses Dokument
+    behandelt aber nicht alle Aspekte der Sicherheit und Privatsph&#228;re im
+    Internet und es stellt keine Empfehlung dar, was ein angemessener Schutz
+    f&#252;r Ihre Privatsph&#228;re und die Sicherheit Ihrer pers&#246;nlichen
+    Informationen im Internet ist.</div>
+
+<h1 id="certificate_information_and_decisions">Zertifikatinformation und Entscheidungen</h1>
+<p>Dieser Abschnitt beschreibt, wie Sie die verschiedenen Fenster benutzen, die zu verschiedenen
+    Zeiten vom Zertifikat-Manager angezeigt werden. Die hier gegebenen zus&#228;tzlichen
+    Informationen erscheinen, wenn Sie den Hilfe-Button in einem der Fenster anklicken.</p>
+
+<div class="contentsBox">In diesem Abschnitt:
+    <ul>
+        <li><a href="#certificate_viewer">Zertifikat-Anzeige</a></li>
+        <li><a href="#choose_security_device">Sicherheitseinrichtungen w&#228;hlen</a></li>
+        <li><a href="#encryption_key_copy">Kopie des Verschl&#252;sselungs-Keys</a></li>
+        <li><a href="#certificate_backup">Zertifikat-Sicherung</a></li>
+        <li><a href="#user_identification_request">Benutzer-Identifikations-Anforderung</a></li>
+        <li><a href="#new_certificate_authority">Neue Zertifizierungsstellen</a></li>
+        <li><a href="#web_site_certificates">Zertifikate f&#252;r Webseiten</a></li>
+    </ul>
+</div>
+
+<h2 id="certificate_viewer">Zertifikat-Anzeige</h2>
+
+
+<p>Die Zertifikat-Anzeige zeigt Informationen &#252;ber ein Zertifikat an, das Sie in
+   einem der Tabs des Zertifikats-Managers selektiert haben. Der Tab Allgemeines fasst
+   Informationen dar&#252;ber zusammen, wer das Zertifikat ausgegeben hat, seinen
+   Verifizierungsstatus, wof&#252;r es benutzt werden kann usw. Der Tab Details bietet
+   vollst&#228;ndige Einzelheiten &#252;ber den Inhalt des Zertifikates.</p>
+
+<p>Wenn Sie derzeit noch nicht die Zertifikat-Anzeige aufgerufen haben, folgen Sie diesen Schritten:</p>
+
+<ol>
+    <li>&#246;ffnen Sie das <span class="mac">&brandShortName;</span>
+	<span class="noMac">Bearbeiten</span>-Men&#252; und w&#228;hlen Sie Einstellungen.</li>
+    <li>Unter der Kategorie Privatsph&#228;re &amp; Sicherheit w&#228;hlen Sie Zertifikate.
+        (Wenn keine Unterkategorien zu sehen sind, klicken Sie doppelt auf Privatsph&#228;re
+        &amp; Sicherheit, um die Liste zu erweitern.)</li>
+    <li>W&#228;hlen Sie Zertifikat-Verwaltung.</li>
+    <li>Klicken Sie auf das Tab f&#252;r den Zertifikattyp, dessen Einzelheiten Sie sehen
+        m&#246;chten.</li>
+   <li>W&#228;hlen Sie das Zertifikat, dessen Details Sie sehen m&#246;chten.</li>
+   <li>Klicken Sie Anzeige.</li>
+</ol>
+
+
+<div class="contentsBox">In diesem Abschnitt:
+    <ul>
+        <li><a href="#general_tab">Tab Allgemeines</a></li>
+        <li><a href="#details_tab">Tab Details</a></li>
+    </ul>
+</div>
+
+<h3 id="general_tab">Tab Allgemeines</h3>
+
+<p>Wenn Sie zuerst die Zertifikat-Anzeige &#246;ffnen, zeigt der Tab Allgemeines
+   verschiedene Informationen &#252;ber das selektierte Zertifikat an:</p>
+
+<ul>
+    <li><strong>Dieses Zertifikat wurde f&#252;r die folgenden Zwecke verifiziert</strong>:
+        Siehe <a href="glossary.xhtml#certificate_verification">Zertifikat-Verifizierung</a>
+        f&#252;r eine Diskussion dar&#252;ber, wie der Zertifikat-Manager Zertifikate
+        verifiziert. Es gibt folgende Benutzungsarten:
+    <ul>
+       <li><strong>SSL Client-Zertifikat</strong>: Zertifikat, um Sie gegen&#252;ber
+           Webseiten zu identifizieren.</li>
+       <li><strong>SSL Server-Zertifikat</strong>: Zertifikat, um einen Webserver
+           gegen&#252;ber Browsern zu identifizieren.</li>
+       <li><strong>Email Signatur-Zertifikat</strong>: Zertifikat, um Sie f&#252;r die
+           digitale Signatur von Email zu identifizieren.</li>
+        <li><strong>Email Empf&#228;nger-Zertifikat</strong>: Zertifikat, um jemand
+            anderes zu identifizieren, so dass Sie dieser Person verschl&#252;sselte Email
+            senden k&#246;nnen.</li>
+       <li><strong>Status-Beantwortungs-Zertifikat</strong>: Zertifikat, um einen
+            Online-Status-Beantworter zu identifizieren, der das Online Certificate Status
+            Protocol (OCSP) benutzt, um die G&#252;ltigkeit von Zertifikaten zu pr&#252;fen.
+            F&#252;r weitere Informationen &#252;ber OCSP, siehe
+            <a href="validation_help.xhtml">Validierungs-Einstellungen</a>.</li>
+        <li><strong>SSL Zertifizierungsstelle</strong>: Zertifikat, um eine
+            Zertifizierungsstelle zu identifizieren &mdash; das hei&#223;t, ein Dienst, der
+            Zertifikate ausgibt, die zur Benutzung f&#252;r die Identifikation in
+            Computer-Netzwerken dienen.</li>
+    </ul>
+    </li>
+    <li><strong>Ausgestellt f&#252;r</strong>: Fasst die folgenden Informationen &#252;ber das
+        Zertifikat zusammen:
+    <ul>
+        <li><strong>Allgemeiner Name</strong>: Der Name der Person oder sonstigen Einheit, welche
+            durch das Zertifikat identifiziert wird.</li>
+        <li><strong>Organisation</strong>: Der Name der Organisation, zu der die Einheit
+            geh&#246;rt (wie der Name einer Firma).</li>
+        <li><strong>Organisationseinheit</strong>: Der Name der Organisationseinheit, zu dem
+            diese Einheit geh&#246;rt (wie Finanzabteilung).</li>
+        <li><strong>Seriennummer</strong>: Die Seriennummer des Zertifikats.</li>
+    </ul>
+    </li>
+    <li><strong>Ausgestellt von</strong>: Fasst Informationen (&#228;hnlich wie diejenigen
+        unter <q>Ausgestellt f&#252;r</q>; s. oben) &#252;ber die Zertifizierungsstelle (CA)
+        zusammen, die das Zertifikat ausgestellt hat.</li>
+    <li><strong>Validit&#228;t</strong>: Gibt den Zeitraum an, in dem das Zertifikat
+        g&#252;ltig ist.</li>
+    <li><strong>Fingerabdr&#252;cke</strong>: Zeigt die Fingerabdr&#252;cke des Zertifikats
+        an. Ein Fingerabdruck ist eine eindeutige Nummer, welceh durch die Anwendung einer
+        mathematischen Funktion auf die Inhalte des Zertifikats erzeugt wird. Der Fingerabdruck
+        eines Zertifikates kann benutzt werden, um zu verifzieren, dass das Zertifikt nicht
+        ver&#228;ndert wurde.</li>
+</ul>
+
+<h3 id="details_tab">Tab Details</h3>
+
+<p>Klicken Sie auf das Tab Details am Kopf der Zertifikat-Anzeige, um detaillierte
+   Informationen &#252;ber das gew&#228;hlte Zertifikat zu sehen. Um Informationen zu
+   irgendeinem Zertifikat im Zertifikats-Hierarchie-Bereich zu untersuchen, selektieren
+   Sie dessen Namen, selektieren Sie das Feld unter Zertifikat-Layout, das Sie untersuchen
+   m&#246;chten und lesen Sie den Inhalt des Feldes unter Feld-Wert:</p>
+
+<ul>
+    <li><strong>Zertifikatshierarchie</strong>: Zeigt die Zertifikatskette an, mit dem von
+        Ihnen gew&#228;hlten Zertifikat am Ende. Eine Zertifikatskette ist eine hierarchische
+        Serie von Zertifikaten, die von aufeinanderfolgenden Zertifizierungsstellen (CAs)
+        signiert wurden. Ein CA-Zertifikat identifiziert eine
+	<a href="glossary.xhtml#certificate_authority">Zertifizierungsstelle</a> und wird
+        benutzt, um Zertifikate zu signieren, die von dieser Zertifizierungsstelle ausgestellt
+        wurden. Ein CA-Zertifikat kann umgekehrt durch das CA-Zertifikat einer
+        Eltern-Zertifizierungsstelle signiert sein und so weiter bis zu einer
+	<a href="glossary.xhtml#root_ca">Root-/Wurzel-CA</a>.</li>
+    <li><strong>Zertifikats-Layout</strong>: Zeigt die Felder des Zertifikats an, das unter
+        Zertifikatshierarchie selektiert wurde.</li>
+    <li><strong>Feld-Wert</strong>: Zeigt den Inhalt des Feldes, das unter Zertifikats-Layout
+        gew&#228;hlt wurde.</li>
+</ul>
+
+<p>Die Zertifikat-Anzeige zeigt, wann immer m&#246;glich,  grundlegende ANSI-Typen in
+   menschlich lesbarer Form an. F&#252;r Felder, dessen Inhalt der Zertifikat-Manager nicht
+   interpretieren kann, zeigt er die aktuellen Werte, welche in dem Zertifikat enthalten sind.</p>
+
+<h2 id="choose_security_device">Sicherheitseinrichtungen w&#228;hlen</h2>
+
+<p>Eine Sicherheitseinrichtung (manchmal als Token bezeichnet), ist eine Hardware- oder
+   Software-Einrichtung, die kryptografische Dienste wie Ver- und Entschl&#252;sslung bietet
+   und Zertifikate und Schl&#252;ssel speichert. Das Fenster Sicherheitseinrichtungen
+   w&#228;hlen erscheint, wann immer der Zertifkats-Manager Hilfe bei der Entscheidung braucht,
+   welche Sicherheitseinrichtung benutzt werden soll beim Import eines Zertifikats oder der
+   Durchf&#252;hrung einer kryptografischen Operation wie der Erstellung von Schl&#252;sseln
+   f&#252;r ein neues Zertifikat. Dieses Fenster erlaubt es Ihnen, eine von zwei oder mehreren
+   Sicherheitseinrichtungen zu w&#228;hlen, die der Zertifikat-Manager auf Ihrem Rechner
+   entdeckt hat.</p>
+
+<p>Eine Smart-Card ist ein Beispiel einer Sicherheitseinrichtung. Wenn z. B. in einem
+   Smart-Card-Leser, der mit Ihrem Computer verbunden ist, eine Smart-Card eingesteckt ist,
+   wird der Name der Smart-Card im DropDown-Men&#252; erscheinen. In diesem Fall m&#252;ssen
+   Sie den Namen der Smart-Card aus dem Men&#252; w&#228;hlen, damit der Zertifikat-Manager
+   weiss, dass Sie diese Karte benutzen wollen.</p>
+
+<p>Der Zertifikat-Manager enth&#228;lt au&#223;erdem seine eigene, eingebaute
+   Sicherheitseinrichtung, die immer benutzt werden kann, gleichg&#252;ltig, welche
+   zus&#228;tzlichen Einrichtungen vorhanden sind oder nicht.</p>
+
+<h2 id="encryption_key_copy">Kopie des Verschl&#252;sselungs-Keys</h2>
+
+<p><a href="glossary.xhtml#certificate_authority">Zertifizierungsstellen (CAs)</a>, die
+   gesonderte Zertifikate f&#252;r Email-Signatur und -Verschl&#252;sselung ausstellen,
+   machen typischerweise Sicherungskopien Ihres privaten
+   <a href="glossary.xhtml#encryption_key">Verschl&#252;sslungs-Keys</a> w&#228;hrend der
+   Zertifkat-Eintragung.</p>
+
+<p>Die Dialogbox Kopie des Verschl&#252;sselungs-Keys erlaubt es Ihnen, der Erstellung
+   einer solchen Sicherung zuzustimmen oder die Zertifizierungsanforderung abzubrechen.
+   Eine Zertifizierungsstelle, die eine Sicherungskopie Ihres Verschl&#252;sselungskeys
+   archiviert hat, hat die potentielle M&#246;glichkeit, jede Nachricht zu
+   entschl&#252;sseln, die mit Ihrem entsprechenden &#246;ffentlichen Schl&#252;ssel
+   verschl&#252;sselt wurde.</p>
+
+<p>Aus der Dialogbox Kopie des Verschl&#252;sselungskeys k&#246;nnen Sie folgende Aktionen
+   w&#228;hlen:</p>
+
+<ul>
+    <li><strong>Zertifikat anzeigen</strong>: Um das Zertifikat anzuzeigen, welches die CA
+        identifiziert, die eine Sicherungskopie angefordert hat, klicken Sie auf Zertifikat
+        anzeigen.</li>
+    <li><strong>Fortsetzen</strong>: Wenn Sie der Zertifizierungsstelle, die durch das CA-Zertifikat
+        identifiziert wird, hinsichtllich der Entschl&#252;sselung verschl&#252;sselter
+        Nachrichten vertrauen, klicken Sie Fortsetzen.
+        <p>Wenn Sie nicht sicher sind, ob Sie der CA vertrauen sollen, die eine Sicherungskopie
+        angefordert hat, sprechen Sie mit Ihrem Systemadministrator.</p></li>
+    <li><strong>Abbruch</strong>: Wenn Sie der CA, welche die Sicherungskopie anfordert, nicht
+        trauen, sollten Sie von ihr kein Zertifikat anfordern. Klicken Sie auf Abbruch, um sowohl
+        die Sicherungsprozedur als auch die Zertifikatsanforderung abzubrechen.</li>
+</ul>
+
+<p>Nachdem Ihre Zertifizierungsstelle eine Sicherungskopie des Verschl&#252;sselungs-Keys
+   gemacht hat, k&#246;nnen Sie diesen Schl&#252;ssel zum Zugriff auf Ihre verschl&#252;sselte
+   Email benutzen, selbst wenn Sie Ihr Passwort oder Ihre eigene Kopie des Schl&#252;ssels
+   verlieren. Wenn keine Sicherungskopie Ihres Verschl&#252;sselungs-Keys existiert und Sie Ihr
+   Passwort oder den Schl&#252;ssel verlieren, besteht keine M&#246;glichkeit mehr f&#252;r Sie,
+   Email zu lesen, die mit diesem Schl&#252;ssel verschl&#252;sselt wurden.</p>
+
+<h2 id="certificate_backup">Zertifikat-Sicherung</h2>
+
+<p>Wenn Sie ein Zertifikat erhalten, machen Sie eine Sicherungskopie des Zertifikates und dessen
+   privaten Schl&#252;ssels und bewahren Sie die Kopie an einem sicheren Ort auf. Z. B.
+   k&#246;nnen Sie die Kopie auf einer Floppy speichern und mit anderen wertvollen Dingen hinter
+   Schlo&#223; und Riegel weglegen. Auf diese Weise k&#246;nnen Sie das Zertifikat leicht
+   zur&#252;ckholen, selbst wenn Sie Platten- oder Dateifehler-Probleme haben.</p>
+
+<p>Es kann zumindest unangenehm sein und in manchen Situationen sogar eine Katastrophe
+   bedeuten, wenn Sie Ihr Zertifikat und den dazugeh&#246;rigen privaten Schl&#252;ssel
+   verlieren, je nachdem wof&#252;r Sie es benutzen. Ein Beispiel:</p>
+
+<ul>
+    <li>Wenn Sie ein Zertifikat verlieren, das Sie gegen&#252;ber wichtigen Webseiten
+        identifiziert, sind Sie nicht mehr in der Lage, auf diese Seiten zuzugreifen, bis Sie
+        ein neues Zertifikat erhalten haben.</li>
+    <li>Wenn Sie ein Zertifikat verlieren, das Sie zum Verschl&#252;sseln von Email benutzt
+        haben, k&#246;nnen Sie keine einzige Ihrer verschl&#252;sselten Emails mehr lesen
+        &mdash;, einschlie&#223;lich verschl&#252;sselter Nachrichten, die Sie verschickt
+        haben und verschl&#252;sselter Nachrichten, die Sie erhalten haben. Wenn Sie in diesem
+        Fall keine Sicherungskopie des mit dem Zertifikats verbundenen privaten Schl&#252;ssels
+        erhalten k&#246;nnen, sind Sie nicht mehr in der Lage, irgendeine der Nachrichten zu
+        lesen, die mit diesem Schl&#252;ssel verschl&#252;sselt wurden.</li>
+</ul>
+
+<p>Wie andere wertvolle Daten sollten Zertifikate gesichert werden, um zuk&#252;nftig
+   &#228;rger und Kosten zu vermeiden. Tun Sie dies jetzt, damit Sie es nicht vergessen.</p>
+
+<h2 id="user_identification_request">Benutzer-Identifikations-Anforderung</h2>
+<p>Einige Webseiten erfordern es, dass Sie sich mit einem Zertifikat anstelle von Name und
+   Passwort identifizieren, weil Zertifikate eine verl&#228;sslichere Form der Identifikation
+   bieten. Diese Methode, sich selbst &#252;ber das Internet zu identifizieren, wird manchmal
+   als <a href="glossary.xhtml#client_authentication">Client-Authentifizierung</a> bezeichnet.</p>
+
+<p>Der Zertitikats-Manager kann jedoch mehr als ein Zertifikat f&#252;r den Zweck gespeichert
+   haben, Sie gegen&#252;ber einer Webseite zu identifizieren. In diesem Fall &#246;ffnet der
+   Zertifikat-Manager die Dialogbox Benutzer-Identifikations-Anforderung, die zwei Arten von
+   Information anzeigt:</p>
+
+<p><strong>Diese Seite erfordert Ihre Identifikation durch ein Zertifikat</strong>:
+    Dieser Abschnitt der Dialogbox zeigt die folgende Information an:</p>
+    <ul>
+        <li><strong>Rechnername</strong>: Der Name des Servers, der die Identifizierung
+            anfordert, benutzt als Teil seiner URL. Z. B. ist der Rechnername f&#252;r die
+            Netscape-Webseite <tt>home.netscape.com</tt>.</li>
+        <li><strong>Organisation</strong>: Der Name der Organisation, welche die Webseite
+            unterh&#228;lt.</li>
+        <li><strong>Ausgestellt unter</strong>: Der Name der
+            <a href="glossary.xhtml#certificate_authority">Zertifizierungsstelle (CA)</a>
+            welche das Zertifikat ausgestellt hat.</li>
+    </ul>
+
+<p><strong>W&#228;hlen Sie das zu benutzende Zertifikat</strong>: Die Zertifikate, die Sie
+   f&#252;r den Zweck zur Verf&#252;gung haben, Sie gegen&#252;ber einer Webseite zu
+   identifizieren, werden in der Drop-Down-Liste in diesem Abschnitt der Dialogbox angezeigt.
+   W&#228;hlen Sie das Zertifikat, das mit der gr&#246;&#223;eren Wahrscheinlichkeit von der
+   Webseite anerkannt wird, die Sie besuchen wollen.</p>
+
+<p>Um Ihnen bei der Entscheidung zu helfen, werden die folgenden Details des gew&#228;hlten
+   Zertifikats angezeigt:</p>
+<ul>
+    <li><strong>Ausgestellt f&#252;r</strong>: Zeigt Informationen &#252;ber die durch
+        das Zertifikat identifizierte Person an (z. B. Ihr Name und Ihre Email-Adresse)
+        und die Seriennummer und G&#252;ltigkeitsdaten des Zertifikates.</li>
+    <li><strong>Ausgestellt von</strong>: Fasst Informationen &#252;ber die
+        Zertifizierungsstelle zusammen, die das Zertifikat ausgestellt hat, wie dessen
+        Name, &#246;rtlichkeit und Staat.</li>
+</ul>
+
+<h2 id="new_certificate_authority">Neue Zertifizierungsstellen</h2>
+
+<p>Die Zertifikate, die der Zertifikat-Manager entweder auf Ihrem Computer oder auf einer
+   externen Sicherheitseinrichtung wie einer Smart-Card gespeichert hat, enthalten Zertifikate,
+   die eine <a href="glossary.xhtml#certificate_authority">Zertifizierungssstelle (CA)</a> 
+   identifizieren. Um andere Zertifikate zu erkennen, die er gespeichert hat, muss der
+   Zertifikat-Manager Zertifikate f&#252;r die Zertifizierungsstellen besitzen, die diese
+   Zertitikate ausgestellt oder deren Ausstellung autorisiert haben.</p>
+
+<p>Wenn Sie entscheiden, dass Sie einer Zertifizierungsstelle trauen, l&#228;dt der
+   Zertifikat-Manager deren Zertifikat und kann dann die Art von Zertifikaten erkennen,
+   f&#252;r deren Ausstellung Sie dieser Zertifizierungsstelle vertrauen.</p>
+
+<p>Bevor er ein neues Zertifikat einer Zertifizierungsstelle abruft, erm&#246;glicht Ihnen
+   der Zertifikat-Manger, die Zwecke anzugeben, f&#252;r die Sie diesem Zertifikat vertrauen,
+   wenn &#252;berhaupt. Sie k&#246;nnen irgendwelche der folgenden Optionen w&#228;hlen:</p>
+
+<ul>
+    <li><strong>Vertraue dieser CA zur Identifizierung von Webseiten</strong>: Zertifikate
+	f&#252;r einige Seiten, wie jene, die finanzielle Transaktionen durchf&#252;hren,
+	k&#246;nnen sehr wichtig sein, und unangemessene oder falsche Identifikation kann
+	negative Konsequenzen haben.</li>
+    <li><strong>Vertraue dieser CA zur Identifizierung von Email-Benutzern</strong>: Wenn Sie
+	beabsichtigen, Email-Benutzern vertrauliche Informationen in verschl&#252;sselter Form
+	zu senden, sollten Sie sehr sorgf&#228;ltig die Prozeduren der Zertifizierungsstelle
+	f&#252;r die Identifikation m&#246;glicher Zertifikatseigner untersuchen und ob diese
+	f&#252;r Ihre Zwecke geeignet sind, bevor Sie diese Option w&#228;hlen.</li>
+    <li><strong>Vertrauen Sie dieser CA zur Identifikation von Software-Entwicklern</strong>: 
+        Auswahl dieser Option bedeutet, dass Sie der Zertifizierungsstelle f&#252;r die Ausgabe
+	von Zertifikaten vertrauen, die die Quelle von Java-Applets und JavaScript-Skripten
+	identifizieren, die speziellen Zugang zu Ihrem Rechner erfordern, wie die
+	M&#246;glichkeit zum &#228;ndern von Dateien. Da solche Zugriffsprivilegien missbraucht
+	werden k&#246;nnen, um z. B. Daten auf Ihrer Festplatte zu l&#246;schen, sollten Sie
+	sehr sorgf&#228;ltig sein bei der Wahl dieser Option, es sei denn, Sie sind sicher, das
+	Sie der Zertifizierungsstelle f&#252;r diesen Zweck vertrauen.</li>
+</ul>
+
+<p>Bevor Sie entscheiden, einer neuen Zertifizierungsstelle zu vertrauen, stellen Sie sicher,
+   das Sie wissen, wer diese Zertifizierungsstelle betreibt. Stellen Sie sicher, dass die
+   Regelungen und Prozeduren dieser Zertifizierungsstelle geeignet sind f&#252;r die Art der
+   von ihr ausgegebenen Zertifikate. Z. B., wenn die Zertifizierungsstelle Zertifikate ausgibt,
+   die Webseiten f&#252;r finanzielle Transaktionen identifizieren, sollten Sie mit dem
+   Ma&#223; an Sicherheit, dass diese Zertifizierungsstelle bietet, einverstanden sein.</p>
+
+<ul>
+    <li><strong>Anzeige</strong>: Klicken Sie auf diesen Button, um das Zertifikat anzuzeigen,
+        das Sie gerade abrufen wollen. Wenn Sie entscheiden, das Sie dieses Zertifikat nicht
+	abrufen wollen, klicken Sie auf Abbruch.</li>
+</ul>
+<h2 id="web_site_certificates">Zertifikate f&#252;r Webseiten</h2>
+
+<p>Wenn Sie versuchen eine Webseite zu &#246;ffnen, welche <a href="glossary.xhtml#ssl">SSL</a> zur
+  <a href="glossary.xhtml#authentication">Authentifizierung</a> und
+  <a href="glossary.xhtml#encryption">Verschl&#252;sselung</a> benutzt, erhalten Sie
+  m&#246;glicherweise eine Fehlerseite. Es gibt 2 Arten von Fehlern, 
+  <a href="#secure_connection_failed_page">Sichere Verbindung fehlgeschlagen</a> und
+  <a href="#untrusted_connection_page">Keine vertrauensw&#252;rdige Verbindung</a>.</p>
+
+
+<div class="contentsBox">In diesem Abschnitt:
+  <ul>
+   <li><a href="#secure_connection_failed_page">Sichere Verbindung fehlgeschlagen Seite</a></li>
+   <li><a href="#untrusted_connection_page">Keine vertrauensw&#252;rdige Verbindung Seite</a></li>
+   <li><a href="#secure_connection_failed_dialog">Sichere Verbindung fehlgeschlagen Dialog</a></li>
+   <li><a href="#certificate_expired">Zertifikat abgelaufen</a></li>
+   <li><a href="#certificate_not_yet_valid">Zertifikat noch nicht g&#252;ltig</a></li>
+   <li><a href="#domain_name_mismatch">Domain-Name nicht &#252;bereinstimmend</a></li>
+  </ul>
+ </div>
+
+<h3 id="secure_connection_failed_page">Sichere Verbindung fehlgeschlagen Seite</h3>
+
+<p>Sollten Sie das SSL-Protokoll deaktiviert haben (z.Bsp. &#252;ber die 
+  <a href="ssl_help.xhtml#ssl_settings">SSL-Einstellungen</a>) oder die Webseite welche Sie
+  sich ansehn wollen nutzt eine &#228;ltere, unsichere Version des SSL-Protokolls wird Ihnen
+  eine Seite mit dem Titel &quot;Sichere Verbindung fehlgeschlagen&quot;.
+  Auf der Seite werden Ihnen einige allgemeine Hintergrund-Informationen (z. Bsp. der 
+  <strong>Fehler-Code</strong> welcher eine eindeutige Kennung des Problems enthält, welches
+  &brandShortName; auf dieser Webseite gefunden hat) sowie einer Schaltfl&#228;che
+  <strong>Erneut versuchen</strong> welche ein neu laden der Webseite durchf&#252;hrt.</p>
+
+<h3 id="untrusted_connection_page">Keine vertrauensw&#252;rdige Verbindung Seite</h3>
+
+<p>Wenn SSL aktiviert ist wird Ihnen eine Fehler-Seite mit dem Titel
+  &quot;Keine vertrauensw&#252;rdige Verbindung&quot; angezeigt. Es gibt viele verschiedene
+  Gr&#252;nde, weshalb eine Verbindung nicht vertrauensw&#252;rdig ist. Hier eine Liste 
+  der am h&#228;ufigsten vorkommenden Gr&#252;nde:</p>
+
+<ul>
+  <li>das Zertifikat der Webseite ist <a href="#certificate_expired">nicht mehr g&#252;ltig (abgelaufen)</a></li>
+  <li>das Zertifikat der Webseite ist <a href="#certificate_not_yet_valid">noch nicht g&#252;ltig</a></li>
+  <li>das Zertifikat der Webseite ist f&#252;r eine andere Webseite g&#252;ltig
+    (siehe <a href="#domain_name_mismatch">Domain-Name nicht &#252;bereinstimmend</a>)</li>
+  <li>das Zertifikat der Webseite ist ein selbst erstelltes (somit ist die Identit&#228;t der Webseite nicht
+    verifizierbar).</li>
+  <li>der Austeller des Zertifikats ist nicht g&#252;ltig (&brandShortName; kann die Identit&#228;t der Webseite nicht
+    verifizieren, da die 
+    <a href="glossary.xhtml#certificate_authority">Zertifizierungsstelle (CA)</a> 
+    nicht erkannt wurde</li>
+</ul>
+
+<p>Die Seite welche in den beschriebenen F&#228;llen angezeigt wird ist dazu gedacht, Ihnen
+  zu erkl&#228;ren, warum &brandShortName; keine sichere Verbindung mit der Webseite aufbaun konnte.
+  Es wird Ihnen signalisiert, dass die Identit&#228;t der Webseite nicht verifiziert werden konnte und bietet
+  Ihnen die M&#246;glichkeit, die Webseite zu verlassen, indem Sie auf die Schaltfl&#228;che
+  <strong>Das klingt schlimm, stattdessen auf die Startseite gehen</strong> klicken. 
+  Wenn Sie sich nicht sicher sind, was Sie tun sollen wird empfohlen, dieser Anweisung zu folgen.</p>
+
+<p>Wenn Sie etwas mehr &#252;ber das aktuelle Problem wissen wollen, k&#246;nnen Sie die Anzeige
+  erweitern, indem Sie auf den Pfeil bei <strong>Techniche Details</strong> klicken. 
+  Dieser Abschnitt enth&#338;lt auch einen eindeutigen <strong>Fehler Code</strong> welcher
+  das Problem enthält, welches &brandShortName; auf dieser Webseite gefunden hat.</p>
+
+<h4 id="add_security_exception">Eine Sicherheits-Ausnahme hinzuf&#252;gen</h4>
+
+<p>Der Abschnitt <strong>Ich kenne das Risiko</strong> der Seite erlaubt es Ihnen
+  &brandShortName; mitzuteilen, dass Sie die Sicherheits-Pr&#252;fungen dieser Webseite
+  umgehen wollen. Wenn Sie diesen Abschnitt erweitern indem Sie auf den Pfeil klicken,
+  sehen Sie eine Schaltfl&#228;che <strong>Ausnahme hinzuf&#252;gen</strong> welche einen Dialog 
+  &#246;ffnet, in welchem Sie das Zertifikat der Seite ansehn k&#246;nnen und 
+  optional eine Sicherheits-Ausnahme f&#252;r diese Webseite einrichten k&#246;nnen.
+  Die Sicherheits-Ausnahmen k&#246;nnen permanent oder f&#252;r die aktuelle Sitzung 
+  konfiguriert werden. Diese Ausnahmen k&#246;nnen im Zertifikat-Manager im Tab 
+  <a href="certs_help.xhtml#servers">Servers</a> administriert werden.</p>
+
+<h3 id="secure_connection_failed_dialog">Sichere Verbindung fehlgeschlagen Dialog</h3>
+
+<p>Im Falle da&#223; &brandShortName; den Grund f&#252;r das Problem nicht ermitteln kann,
+  wird ein <q>Sichere Verbindung fehlgeschlagen</q> Dialog zus&#228;tzlich zur 
+  <a href="#untrusted_connection_page">Keine vertrauensw&#252;rdige Verbindung Seite</a>
+  angezeigt. Der Dialog enth&#228;lt eine Schaltfl&#228;che <strong>Zertifikat zeigen</strong> 
+  welcher es Ihnen erlaubt, das Zertifikat der Seite genauer zu untersuchen.</p>
+
+<h3 id="certificate_expired">Zertifikat abgelaufen</h3>
+
+<p>Wie eine Kreditkarte, ein F&#252;hrerschein und viele andere Formen der Identifikation
+   ist ein <a href="glossary.xhtml#certificate">Zertifikat</a> nur f&#252;r eine bestimmte
+   Zeitperiode g&#252;ltig. Wenn ein Zertifikat ausl&#228;uft, muss der Eigent&#252;mer des
+   Zertifikats ein neues erhalten.</p>
+
+<p>Der Zertifikat-Manager warnt Sie, wenn Sie eine Webseite aufsuchen, dessen Server-Zertifikat
+   abgelaufen ist. Das erste, was Sie sicherstellen sollten, ist, das Datum und Zeit auf Ihrem
+   Computer korrekt sind. Wenn die Uhr Ihres Computers auf eine Zeit nach dem Ablaufdatum
+   gestellt ist, behandelt der Zertifkat-Manager das Zertifikat als abgelaufen.</p>
+
+<p>Wenn Ihre Computeruhr korrekt gestellt ist, m&#252;ssen Sie die Entscheidung treffen, ob
+   Sie der Webseite vertrauen. Diese Entscheidung h&#228;ngt davon ab, was Sie auf 
+   der Webseite tun wollen und was Sie sonst &#252;ber diese Webseite wissen. Die 
+   meisten kommerziellen Seiten werden sicherstellen, das ihre Zertifikate vor dem 
+   Ablauf erneuert werden. Wenn Sie sich entscheiden fortzufahren, m&#252;ssen Sie 
+   eine <a href="#add_security_exception">Sicherheits-Ausnahme</a> einrichten.</p>
+
+<h3 id="certificate_not_yet_valid">Zertifikat noch nicht g&#252;ltig</h3>
+<p>Wie eine Kreditkarte, ein F&#252;hrerschein und viele andere Formen der Identifikation
+   ist ein <a href="glossary.xhtml#certificate">Zertifikat</a> nur f&#252;r eine bestimmte
+   Zeitperiode g&#252;ltig.</p>
+
+<p>&brandShortName; <a href="#untrusted_connection_page">warnt</a> Sie, wenn Sie
+   versuchen eine Seite aufzurufen, dessen Zertifikats eine G&#252;ltigkeits-Dauer 
+   aufweist, welche noch nicht begonnen hat. Pr&#252;fen Sie als erstes, ob die 
+   Datums und Uhrzeit-Einstellungen Ihres Computers korrekt sind. Wenn diese falsch 
+   sind, interpretiert &brandShortName; m&#246;glicherweise das Zertifiakt als ung&#252;ltig, 
+   obwohl dies eigentlich nicht der Fall ist.</p>
+
+<p>Wenn Ihre Computeruhr korrekt gestellt ist, m&#252;ssen Sie die Entscheidung treffen, ob
+   Sie der Seite vertrauen. Diese Entscheidung h&#228;ngt davon ab, was Sie auf der Seite tun
+   wollen und was Sie sonst &#252;ber diese Seite wissen. Die meisten kommerziellen Seiten
+   werden sicherstellen, das die G&#252;ltigkeitsperiode f&#252;r ihre Zertifikate begonnen
+   hat, bevor sie verwendet werden. Wenn Sie sich entscheiden fortzufahren, m&#252;ssen Sie 
+   eine <a href="#add_security_exception">Sicherheits-Ausnahme</a> einrichten.</p>
+
+<h3 id="domain_name_mismatch">Domain-Name nicht &#252;bereinstimmend</h3>
+<p>Ein Server-<a href="glossary.xhtml#certificate">Zertifikat</a> spezifiziert den Namen
+   des Servers in der Form seines Domain-Namens. So ist z. B. der Domain-Name f&#252;r die
+   Mozilla-Webseite <tt>www.mozilla.org</tt>. Wenn der Domain-Name in einem Server-Zertifikat
+   nicht dem aktuellen Domain-Namen der Webseite entspricht, kann dies ein Zeichen daf&#252;r
+   sein, das irgendjemand versucht, Ihre Kommunikation mit der Webseite abzuh&#246;ren.</p>
+
+<p>&brandShortName; <a href="#untrusted_connection_page">warnt</a> Sie, wenn Sie
+   versuchen eine Webseite aufzurufen, dessen Zertifikat f&#252;r eine andere Domain
+   ausgestellt wurde. Die Entscheidung, ob Sie der Webseite trotzdem vertrauen,
+   h&#228;ngt davon ab, was Sie auf der Webseite machen wollen und was Sie &#252;ber die
+   Webseite wissen. Die meisten kommerziellen Webseiten achten darauf, da&#223; das 
+   Zertifikat auf die korrekte Adresse ausgestellt ist. Wenn Sie sich entscheiden 
+   fortzufahren, m&#252;ssen Sie eine <a href="#add_security_exception">
+   Sicherheits-Ausnahme</a> einrichten.</p>
+
+<p>Wenn Sie entscheiden, das Zertifikat trotzdem zu aktzeptieren (f&#252;r diese Sitzung oder permanet),
+   sollten Sie vorsichtig sein bei Ihren Aktionen auf dieser Webseite und jede Information als
+   m&#246;glicherweise suspekt behandeln.</p>
+
+</body>
+</html>

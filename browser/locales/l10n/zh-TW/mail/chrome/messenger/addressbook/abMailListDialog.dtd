@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "新增郵件群組">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "新增到: ">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "清單名稱:">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "群組暱稱: ">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "描述: ">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "輸入 Email 地址以加入群組信名單:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "上移">
+<!ENTITY DownButton.label               "下移">
+

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "一部のウェブページは複数の言語で提供されています。これらのページで使用する言語の優先順位を設定してください。">
+<!ENTITY languages.customize.title                      "言語">
+<!ENTITY langtitle.label                                "ウェブページの言語">
+<!ENTITY languages.customize.prefAddLangDescript        "追加する言語を選択してください。">
+<!ENTITY languages.customize.addButton.label            "追加...">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+<!ENTITY languages.customize.deleteButton.label         "削除">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.add.title.label            "言語を追加">
+<!ENTITY languages.customize.available.label            "言語:">
+<!ENTITY languages.customize.active.label               "言語の優先順位:">
+<!ENTITY languages.customize.active.accesskey           "L">
+<!ENTITY languages.customize.others.label               "その他:">
+<!ENTITY languages.customize.others.accesskey           "O">
+<!ENTITY languages.customize.Fallback2.grouplabel       "古いウェブページでのテキストエンコーディング">
+<!ENTITY languages.customize.Fallback2.label            "代替テキストエンコーディング:">
+<!ENTITY languages.customize.Fallback2.accesskey        "T">
+<!ENTITY languages.customize.Fallback2.desc             "このテキストエンコーディングは、テキストエンコーディングが宣言されていない古いウェブページで使用されます。">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "例: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "上へ">
+<!ENTITY languages.customize.moveUp.accesskey           "U">
+<!ENTITY languages.customize.moveDown.label             "下へ">
+<!ENTITY languages.customize.moveDown.accesskey         "D">

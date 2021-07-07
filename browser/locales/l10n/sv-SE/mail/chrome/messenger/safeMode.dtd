@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; felsäkert läge">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; körs nu i felsäkert läge vilket innebär att dina egna inställningar, teman och tillägg för tillfället har inaktiverats.">
+<!ENTITY safeModeDescription2.label   "Du kan göra dessa ändringar permanenta:">
+
+<!ENTITY disableAddons.label          "Inaktivera alla tillägg">
+<!ENTITY disableAddons.accesskey      "A">
+
+<!ENTITY resetToolbars.label          "Återställ verktygsfälten">
+<!ENTITY resetToolbars.accesskey      "Å">
+
+<!ENTITY changeAndRestartButton.label "Gör ändringarna och starta om">
+<!ENTITY changeAndRestartButton.accesskey "G">
+
+<!ENTITY continueButton.label         "Fortsätt i felsäkert läge">
+<!ENTITY continueButton.accesskey         "F">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(senza titolo)">
+<!ENTITY  newTab.label           "Nuova scheda">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Chiudi scheda">
+<!ENTITY  closeTab.accesskey         "C">
+<!ENTITY  closeOtherTabs.label   "Chiudi altre schede">
+<!ENTITY  closeOtherTabs.accesskey         "a">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Chiudi le schede a destra">
+<!ENTITY  closeTabsToTheEnd.accesskey "d">
+<!ENTITY  reloadAllTabs.label    "Ricarica tutte le schede">
+<!ENTITY  reloadAllTabs.accesskey         "t">
+<!ENTITY  reloadTab.label        "Ricarica scheda">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "Crea segnalibro con tutte le schede">
+<!ENTITY  bookmarkGroup.accesskey  "s">
+<!ENTITY  closeTabButton.tooltip   "Chiudi scheda corrente">
+<!ENTITY  newTabButton.tooltip   "Apre una nuova scheda">
+<!ENTITY  listAllTabs.tooltip    "Elenca tutte le schede">
+<!ENTITY  undoCloseTab.label    "Riapri scheda chiusa">
+<!ENTITY  undoCloseTab.accesskey  "h">

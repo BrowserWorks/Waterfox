@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Fontos hírek">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "A Firefoxba mentett információk szinkronizálásához ezzel a &brandShortName; telepítéssel, jelentkezzen be a &syncBrand.fxAccount.label;jával.">
+<!ENTITY continue-button "Folytatás">
+
+<!ENTITY mainText "A &brandShortName; ezen telepítésének egy új profilja van. Nem osztja meg a könyvjelzőit, jelszavait és felhasználói beállításait a Firefox egyéb telepítéseivel (beleértve a Firefoxot, a Firefox ESR-t, a Firefox Betát, a Firefox Developer Editiont és a Firefox Nightlyt is) ezen a számítógépen.">

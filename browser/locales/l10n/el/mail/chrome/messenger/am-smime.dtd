@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Κρυπτογράφηση από άκρο σε άκρο">
+<!ENTITY e2eLearnMore.label "Μάθετε περισσότερα">
+
+<!ENTITY e2eEnc.description "Χωρίς κρυπτογράφηση από άκρο σε άκρο, τα περιεχόμενα των μηνυμάτων εκτίθενται εύκολα στον πάροχο ηλεκτρονικού ταχυδρομείου σας και σε μαζική παρακολούθηση.">
+<!ENTITY e2eeReqWarning.description "Αν απαιτήσετε κρυπτογράφηση, θα πρέπει να έχετε το δημόσιο κλειδί ή το πιστοποιητικό κάθε παραλήπτη για να στείλετε ένα μήνυμα.">
+
+<!ENTITY e2eSigning.description "Μια ψηφιακή υπογραφή επιτρέπει στους παραλήπτες να επαληθεύσουν ότι το μήνυμα εστάλη από εσάς και ότι το περιεχόμενο δεν έχει αλλάξει.">
+<!ENTITY e2eTechPref.description "Προτιμώμενη τεχνολογία κρυπτογράφησης:">
+
+<!ENTITY doNotEncrypt.label "Να μην είναι ενεργή η κρυπτογράφηση από προεπιλογή">
+<!ENTITY doNotEncrypt.accesskey "Ν">
+<!ENTITY requireEncryptMessage.label "Απαίτηση κρυπτογράφησης από προεπιλογή">
+<!ENTITY requireEncryptMessage.accesskey "φ">
+<!ENTITY encryptionCert2.message "Προσωπικό πιστοποιητικό για κρυπτογράφηση:">
+<!ENTITY digitalSign.certificate.button "Επιλογή…">
+<!ENTITY digitalSign.certificate.accesskey "Ε">
+<!ENTITY digitalSign.certificate_clear.button "Απαλοιφή">
+<!ENTITY digitalSign.certificate_clear.accesskey "Α">
+<!ENTITY encryption.certificate.button "Επιλογή…">
+<!ENTITY encryption.certificate.accesskey "π">
+<!ENTITY encryption.certificate_clear.button "Απαλοιφή">
+<!ENTITY encryption.certificate_clear.accesskey "φ">
+<!ENTITY signingGroupTitle.label "Ψηφιακή υπογραφή">
+<!ENTITY signMessage2.label "Προσθήκη ψηφιακής υπογραφής από προεπιλογή">
+<!ENTITY signMessage.accesskey "Ψ">
+
+<!ENTITY signingCert2.message "Προσωπικό πιστοποιητικό για ψηφιακή υπογραφή:">
+
+<!ENTITY sendingDefaults.label "Προεπιλεγμένες ρυθμίσεις για αποστολή μηνυμάτων">
+
+<!ENTITY technologyAutomatic.label "Αυτόματη επιλογή βάσει διαθέσιμων κλειδιών ή πιστοποιητικών">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Διαχείριση πιστοποιητικών S/MIME">
+<!ENTITY manageCerts3.accesskey "Δ">
+<!ENTITY manageDevices2.label "Συσκευές ασφαλείας S/MIME">
+<!ENTITY manageDevices2.accesskey "φ">
+
+<!ENTITY technologySMIME.label "Να προτιμάται το S/MIME">
+<!ENTITY technologyOpenPGP.label "Να προτιμάται το OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Επιλογή πιστοποιητικού">
+<!ENTITY certPicker.info  "Πιστοποιητικό:">
+<!ENTITY certPicker.detailsLabel "Λεπτομέρειες επιλεγμένου πιστοποιητικού:">
+
+<!ENTITY openpgpKey.message "Προσωπικό κλειδί για κρυπτογράφηση και ψηφιακή υπογραφή:">
+<!ENTITY openpgpKey.button "Ορισμός προσωπικού κλειδιού…">
+<!ENTITY openpgpKey.accesskey "ο">

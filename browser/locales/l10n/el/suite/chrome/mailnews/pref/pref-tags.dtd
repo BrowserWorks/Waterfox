@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Ετικέτες">
+<!ENTITY pref.tags.caption          "Προσαρμογή ετικετών">
+<!ENTITY pref.tags.description      "Οι ετικέτες είναι χρήσιμες για τον ορισμό κατηγοριών και προτεραιότητας των μηνυμάτων σας. Αλλάξτε την εμφάνιση και τη σημασία των ετικετών με τις παρακάτω ρυθμίσεις. Οι ετικέτες κοντά στο πάνω μέρος είναι πιο σημαντικές από αυτές που βρίσκονται πιο κάτω.">
+<!ENTITY tagColumn.label            "Ετικέτα">
+<!ENTITY colorColumn.label          "Χρώμα">
+<!ENTITY defaultTagName.label       "Ετικέτα χωρίς τίτλο">
+<!ENTITY addTagButton.label         "Προσθήκη">
+<!ENTITY addTagButton.accesskey     "Π">
+<!ENTITY deleteTagButton.label      "Διαγραφή">
+<!ENTITY deleteTagButton.accesskey  "Δ">
+<!ENTITY raiseTagButton.label       "Αύξηση σημασίας">
+<!ENTITY raiseTagButton.accesskey   "Α">
+<!ENTITY lowerTagButton.label       "Μείωση σημασίας">
+<!ENTITY lowerTagButton.accesskey   "Μ">
+<!ENTITY restoreButton.label        "Επαναφορά προεπιλογών">
+<!ENTITY restoreButton.accesskey    "ν">

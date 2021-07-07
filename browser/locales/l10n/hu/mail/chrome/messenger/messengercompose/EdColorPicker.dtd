@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Szín">
+<!ENTITY lastPickedColor.label "Utoljára kiválasztott szín">
+<!ENTITY lastPickedColor.accessKey "U">
+<!ENTITY chooseColor1.label "Válasszon színt:">
+<!ENTITY chooseColor2.label "Írjon be egy HTML-színkódot">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(pl.: &quot;#0000ff&quot; vagy &quot;blue&quot;):">
+<!ENTITY default.label "Alapértelmezett">
+<!ENTITY default.accessKey "A">
+<!ENTITY palette.label "Paletta:">
+<!ENTITY standardPalette.label "Szabványos">
+<!ENTITY webPalette.label "Minden webszín">
+<!ENTITY background.label "Háttér:">
+<!ENTITY background.accessKey "H">
+<!ENTITY table.label "Táblázat">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Cellák">
+<!ENTITY cell.accessKey "C">

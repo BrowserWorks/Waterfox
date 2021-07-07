@@ -1,0 +1,4 @@
+<!ENTITY options.title "Indstillinger for Udviklerværktøj">
+<!ENTITY options.status.label "Status:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Tillad forbindelser fra andre computere">

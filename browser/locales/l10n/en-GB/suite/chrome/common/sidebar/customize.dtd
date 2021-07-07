@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Customise &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Tabs in &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "T">
+
+<!ENTITY sidebar.customize.title                "Customise Sidebar">
+<!ENTITY sidebar.customize.current2.label       "Tabs in Sidebar:">
+<!ENTITY sidebar.customize.current2.accesskey   "T">
+<!ENTITY sidebar.customize.customize.label      "Customise Tab…">
+<!ENTITY sidebar.customize.customize.accesskey  "C">
+<!ENTITY sidebar.customize.remove.label         "Remove">
+<!ENTITY sidebar.customize.remove.accesskey     "R">
+<!ENTITY sidebar.customize.additional.label     "Available Tabs:">
+<!ENTITY sidebar.customize.additional.accesskey "v">
+<!ENTITY sidebar.customize.add.label            "Add">
+<!ENTITY sidebar.customize.add.accesskey        "A">
+<!ENTITY sidebar.customize.preview.label        "Preview…">
+<!ENTITY sidebar.customize.preview.accesskey    "P">
+<!ENTITY sidebar.customize.up.label             "Move Up">
+<!ENTITY sidebar.customize.up.accesskey         "U">
+<!ENTITY sidebar.customize.down.label           "Move Down">
+<!ENTITY sidebar.customize.down.accesskey       "D">
+<!ENTITY sidebar.more.label                     "Find More Tabs…">
+<!ENTITY sidebar.more.accesskey                 "F">

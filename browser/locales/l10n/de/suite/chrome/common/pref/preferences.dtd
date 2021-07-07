@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Einstellungen">
+<!ENTITY categoryHeader "Kategorie">
+
+<!ENTITY appear.label "Erscheinungsbild">
+<!ENTITY content.label "Inhalte">
+<!ENTITY fonts.label "Schriftarten">
+<!ENTITY colors.label "Farben">
+<!ENTITY media.label "Medien">
+<!ENTITY spellingPane.label "Rechtschreibung">
+
+<!ENTITY navigator.label "Browser">
+<!ENTITY history.label "Chronik">
+<!ENTITY languages.label "Sprachen">
+<!ENTITY applications.label "Hilfsanwendungen">
+<!ENTITY locationBar.label "Adressleiste">
+<!ENTITY search.label "Internet-Suche">
+<!ENTITY tabWindows.label "Tabbed Browsing">
+<!ENTITY links.label "Link-Verhalten">
+<!ENTITY download.label "Downloads">
+
+<!ENTITY security.label "Datenschutz &amp; Sicherheit">
+<!ENTITY privatedata.label "Private Daten">
+<!ENTITY cookies.label "Cookies">
+<!ENTITY images.label "Grafiken">
+<!ENTITY popups.label "Pop-up-Fenster">
+<!ENTITY passwords.label "Passwörter">
+<!ENTITY masterpass.label "Master-Passwort">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Zertifikate">
+
+<!ENTITY sync.label "Sync">
+
+<!ENTITY advance.label "Erweitert">
+<!ENTITY scriptsAndWindows.label "Skripte &amp; Plugins">
+<!ENTITY keynav.label "Navigation mit der Tastatur">
+<!ENTITY findAsYouType.label "Suche beim Tippen">
+<!ENTITY cache.label "Cache">
+<!ENTITY offlineApps.label "Offline-Apps">
+<!ENTITY proxies.label "Proxies">
+<!ENTITY httpnetworking.label "HTTP-Verbindungen">
+<!ENTITY smart.label "Software-Installation">
+<!ENTITY mousewheel.label "Mausrad">
+
+<!ENTITY focusSearch.key "f">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-search.xul -->
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+
+
+<!ENTITY pref.search.title                "互联网搜索">
+<!ENTITY legendHeader                     "缺省的搜索引擎">
+<!ENTITY defaultSearchEngine.label        "用当前引擎搜索:">
+<!ENTITY defaultSearchEngine.accesskey    "S">
+
+<!ENTITY engineManager.label              "管理搜索引擎…">
+
+<!ENTITY searchResults.label              "搜索结果">
+
+<!ENTITY openInTab.label                  "对侧边栏搜索结果打开新的标签页">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "从上下文菜单中启动网络搜索时, 打开一个标签而不是一个窗口">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "当在地址栏有搜索请求时，在侧边栏上打开搜索标签">
+<!ENTITY openSidebarSearchPanel.accesskey "O">

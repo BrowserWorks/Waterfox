@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Introduce tu correo electrónico existente">
+<!ENTITY emailWizard.caption             "Utilizar tu correo electrónico actual">
+<!ENTITY name.label                      "Tu nombre:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "Tu nombre completo">
+<!ENTITY name.text                       "Tu nombre, como se muestra a otros usuarios">
+<!ENTITY name.error                      "Por favor, ingresa tu nombre">
+<!ENTITY email.label                     "Correo electrónico:">
+<!ENTITY email.accesskey                 "E">
+<!ENTITY email3.placeholder              "Tu dirección de correo electrónico">
+<!ENTITY email.text                      "Tu correo electrónico existente">
+<!ENTITY email.error                     "Dirección de correo electrónico no válido">
+<!ENTITY password.label                  "Contraseña:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Contraseña">
+<!ENTITY password.text                   "Opcional, se usará solamente para verificar el nombre de usuario">
+<!ENTITY password.toggle                 "Mostrar/Ocultar contraseña">
+<!ENTITY rememberPassword.label          "Recordar contraseña">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "Tu inicio de sesión:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "TUDOMINIO\tunombredeusuario">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Inicio de sesión de dominio">
+
+<!ENTITY protocol.label                  "Protocolo:">
+<!ENTITY imapLong.label                  "IMAP (carpetas remotas)">
+<!ENTITY pop3Long.label                  "POP3 (mantener correo en tu equipo)">
+
+<!ENTITY manualConfigTable.summary       "Ajustes del servidor">
+<!ENTITY incoming.label                  "Entrante:">
+<!ENTITY incomingColumn.label            "Entrante">
+<!ENTITY outgoing.label                  "Saliente:">
+<!ENTITY outgoingColumn.label            "Saliente">
+<!ENTITY username.label                  "Nombre de usuario:">
+<!ENTITY serverRow.label                 "Servidor:">
+<!ENTITY portRow.label                   "Puerto:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Autenticación">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Detección automática">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Ninguno">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Servidor de Exchange:">
+
+<!ENTITY advancedSetup.label             "Configuración avanzada">
+<!ENTITY advancedSetup.accesskey         "A">
+<!ENTITY cancel.label                    "Cancelar">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Continuar">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "Detener">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Volver a probar">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY manual-config.label             "Configurar manualmente…">
+<!ENTITY manual-config.accesskey         "M">
+<!ENTITY open-provisioner.label          "Obtener una nueva dirección de correo electrónico…">
+<!ENTITY open-provisioner.accesskey      "g">
+
+
+<!ENTITY get-help.label                  "Obtener ayuda">
+<!ENTITY get-help.accesskey              "H">
+
+
+<!ENTITY warning.label                   "¡Advertencia!">
+<!ENTITY incomingSettings.label          "Configuraciones de entrada:">
+<!ENTITY outgoingSettings.label          "Configuraciones de salida:">
+<!ENTITY technicaldetails.label          "Detalles técnicos">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Entiendo los riesgos.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Hecho">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Cambiar configuraciones">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; puede permitirte llegar a tu correo, utilizando las configuraciones proporcionadas. Sin embargo, debes contactar a tu administrador o proveedor de correo electrónico con respecto a estas conexiones incorrectas. Mira las preguntas frecuentes de Thunderbird para más información.">
+
+<!ENTITY insecureServer.tooltip.title    "¡Advertencia! Este es un servidor inseguro.">
+<!ENTITY insecureServer.tooltip.details  "Haz clic en el círculo para más detalles.">
+
+<!ENTITY insecureUnencrypted.description "Tu correo electrónico y autenticación se envían sin cifrar, por lo que tu contraseña (y tu mensaje) podrían ser leídos fácilmente por otras personas. &brandShortName; te permitirá acceder a tu correo, pero debes contactar a tu proveedor de correo electrónico para configurar el servidor con una conexión segura.">
+<!ENTITY insecureSelfSigned.description  "El servidor utiliza un certificado en el que no podemos confiar, por lo que no podemos estar seguros de que alguien esté interceptando el tráfico entre &brandShortName; y tu servidor. &brandShortName; te permitirá acceder a tu correo, pero deberías conseguir que tu proveedor de correo electrónico configure el servidor con un certificado de confianza.">
+<!ENTITY secureServer.description        "¡Felicidades! Este servidor es seguro.">

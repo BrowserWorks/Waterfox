@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "通訊錄">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "名稱">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "電子郵件">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "公司">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "姓名注音">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "暱稱">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "其它 Email">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "部門">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "頭銜">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "行動電話">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "呼叫器">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "傳真">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "住家電話">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "商務電話">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ScreenName.label                      "網路代號">
+<!ENTITY ScreenName.accesskey                  "S">
+<!ENTITY ChatName.label                        "聊天名稱">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "由小到大">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "由大到小">
+<!ENTITY sortDescending.accesskey              "D">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "發送 Email 到">
+<!ENTITY composeEmail.accesskey                "C">
+<!ENTITY copyAddress.label                     "複製電子郵件地址">
+<!ENTITY copyAddress.accesskey                 "a">
+<!ENTITY deleteAddrBookCard.label              "刪除">
+<!ENTITY deleteAddrBookCard.accesskey          "D">
+<!ENTITY newAddrBookCard.label                 "新增名片卡…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "新增郵件群組 (Mailing List)…">
+<!ENTITY newAddrBookMailingList.accesskey      "M">
+<!ENTITY addrBookCardProperties.label          "屬性">
+<!ENTITY addrBookCardProperties.accesskey      "P">

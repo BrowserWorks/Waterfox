@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adressböcker">
+<!ENTITY emailCollectiontitle.label	       "Insamling av e-postadresser">
+<!ENTITY emailCollectionPicker.label           "Spara e-postadresserna i:">
+<!ENTITY emailCollectionPicker.accesskey       "S">
+<!ENTITY emailCollectiontext.label	       "E-postadresser från dina utgående meddelanden kan automatiskt lagras i en lokal adressbok.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Automatisk komplettering av e-postadresser">
+<!ENTITY highlightNonMatches.label             "Markera adresser som inte autokompletteras">
+<!ENTITY highlightNonMatches.accesskey         "M">
+<!ENTITY addressingEnable.label                "Lokala adressböcker">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "När en e-postadress börjar skrivas in, sök efter matchande e-postadresser i:">
+<!ENTITY directories.label                     "Katalogserver:">
+<!ENTITY directories.accesskey                 "t">
+<!ENTITY directoriesNone.label                 "Ingen">
+<!ENTITY editDirectories.label                 "Redigera kataloger…">
+<!ENTITY editDirectories.accesskey             "e">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+
+<!ENTITY pref.mouseWheel.title           "Pelės ratukas">
+<!ENTITY mouseWheelPanel.label           "Pasirinkite pelės ratuko veiksmą, kai paspaustas šis klavišas:">
+<!ENTITY usingJustTheWheel.label         "Be klavišo">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!ENTITY mouseWheelGroup.label           "Vertikalus slinkimas">
+<!ENTITY mouseWheelHorizGroup.label      "Horizontalus slinkimas">
+<!ENTITY sameAsVertical.label            "Tas pats, kaip slenkant vertikaliai">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "Nedaryti nieko">
+<!ENTITY doNothing.accesskey             "N">
+<!ENTITY doNothingHoriz.accesskey        "e">
+<!ENTITY scrollDocument.label            "Slinkti dokumentą">
+<!ENTITY scrollDocument.accesskey        "S">
+<!ENTITY scrollDocumentHoriz.accesskey   "l">
+<!ENTITY history.label                   "Judėti atgal arba pirmyn naršymo keliu">
+<!ENTITY history.accesskey               "J">
+<!ENTITY historyHoriz.accesskey          "u">
+<!ENTITY zoom.label                      "Didinti arba mažinti tinklalapio mastelį">
+<!ENTITY zoom.accesskey                  "D">
+<!ENTITY zoomHoriz.accesskey             "i">
+<!ENTITY wheelSpeed.label                "Pelės ratuko greitis:">
+<!ENTITY wheelSpeed.accesskey            "g">
+<!ENTITY wheelSpeedHoriz.accesskey       "r">
+<!ENTITY reverseDirection.label          "Priešinga kryptimi">
+<!ENTITY reverseDirection.accesskey      "P">
+<!ENTITY reverseDirectionHoriz.accesskey "k">

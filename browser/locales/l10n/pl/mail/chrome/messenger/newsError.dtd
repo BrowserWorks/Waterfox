@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newsError.title "Błąd wczytywania wiadomości">
+
+<!ENTITY articleNotFound.title "Nie odnaleziono wiadomości">
+
+<!ENTITY articleNotFound.desc "Serwer grup dyskusyjnych zgłasza, że nie może odnaleźć wiadomości.">
+
+<!ENTITY serverResponded.title "Odpowiedź serwera grup dyskusyjnych:">
+
+<!ENTITY articleExpired.title "Prawdopodobnie wiadomość jest przedawniona.">
+
+<!ENTITY trySearching.title "Wyszukaj wiadomość:">
+
+<!ENTITY removeExpiredArticles.title "Usuń wszystkie przedawnione wiadomości">

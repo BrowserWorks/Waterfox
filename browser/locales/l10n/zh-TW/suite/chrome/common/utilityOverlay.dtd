@@ -1,0 +1,209 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label                 "離線模式">
+<!ENTITY  offlineGoOfflineCmd.accesskey             "k">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label                   "檔案">
+<!ENTITY fileMenu.accesskey               "F">
+<!ENTITY newMenu.label                    "新增">
+<!ENTITY newMenu.accesskey                "N">
+<!ENTITY newBlankPageCmd.label            "設計師頁面">
+<!ENTITY newBlankPageCmd.accesskey        "p">
+<!ENTITY newBlankPageCmd.key              "n">
+<!ENTITY newPageFromTemplateCmd.label "由範本開始編輯">
+<!ENTITY newPageFromTemplateCmd.accesskey "T">
+<!ENTITY newPageFromDraftCmd.label "由草稿開始編輯">
+<!ENTITY newPageFromDraftCmd.accesskey "D">
+<!ENTITY newNavigatorCmd.label "瀏覽器視窗">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "B">
+<!ENTITY newPrivateWindowCmd.label "隱私視窗">
+<!ENTITY newPrivateWindowCmd.key "B">
+<!ENTITY newPrivateWindowCmd.accesskey "W">
+<!ENTITY closeCmd.label "關閉">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY printSetupCmd.label "頁面設定…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "預覽列印">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "列印…">
+<!ENTITY printCmd.accesskey "P">
+<!ENTITY printCmd.key "P">
+
+<!-- LOCALIZATION NOTE (.modifiers): The following entites are for the
+     application menu. Never change the modifiers unless you are 100% sure that
+     they are different on your locale (should be very rare). -->
+<!ENTITY preferencesCmdMac.label          "偏好設定…">
+<!ENTITY preferencesCmdMac.key            ",">
+<!ENTITY preferencesCmdMac.modifiers      "accel">
+<!ENTITY servicesMenu.label               "服務">
+<!ENTITY hideThisAppCmd.label             "隱藏 &brandShortName;">
+<!ENTITY hideThisAppCmd.key               "H">
+<!ENTITY hideThisAppCmd.modifiers         "accel">
+<!ENTITY hideOtherAppsCmd.label           "隱藏其他視窗">
+<!ENTITY hideOtherAppsCmd.key             "H">
+<!ENTITY hideOtherAppsCmd.modifiers       "accel,alt">
+<!ENTITY showAllAppsCmd.label             "全部顯示">
+<!ENTITY openHelpCmdMac.label             "&brandShortName; 使用說明">
+<!ENTITY openHelpCmdMac.accesskey         "H">
+<!ENTITY openHelpCmdMac.key               "?">
+<!ENTITY openHelpCmdMac.modifiers         "accel">
+
+<!ENTITY quitApplicationCmd.label         "結束">
+<!ENTITY quitApplicationCmd.key           "Q">
+<!ENTITY quitApplicationCmd.accesskey     "x">
+<!ENTITY quitApplicationCmdMac.label      "離開 &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">
+<!ENTITY quitApplicationCmdUnix.label     "離開">
+<!ENTITY quitApplicationCmdUnix.accesskey "Q">
+
+<!ENTITY editMenu.label                   "編輯">
+<!ENTITY editMenu.accesskey               "E">
+<!ENTITY undoCmd.label                    "復原">
+<!ENTITY undoCmd.key                      "Z">
+<!ENTITY undoCmd.accesskey                "U">
+<!ENTITY redoCmd.label                    "取消「復原」">
+<!ENTITY redoCmd.key                      "Y">
+<!ENTITY redoCmdMac.key                   "Z">
+<!ENTITY redoCmd.accesskey                "R">
+<!ENTITY cutCmd.label                     "剪下">
+<!ENTITY cutCmd.key                       "X">
+<!ENTITY cutCmd.accesskey                 "t">
+<!ENTITY copyCmd.label                    "複製">
+<!ENTITY copyCmd.key                      "C">
+<!ENTITY copyCmd.accesskey                "C">
+<!ENTITY pasteCmd.label                   "貼上">
+<!ENTITY pasteCmd.key                     "V">
+<!ENTITY pasteCmd.accesskey               "P">
+<!ENTITY pasteGoCmd.label                 "貼上並瀏覽">
+<!ENTITY pasteGoCmd.accesskey             "G">
+
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+<!ENTITY pasteSearchCmd.label             "貼上並搜尋">
+<!ENTITY pasteSearchCmd.accesskey         "e">
+<!ENTITY deleteCmd.label                  "刪除">
+<!ENTITY deleteCmd.accesskey              "D">
+<!ENTITY selectAllCmd.label               "全選">
+<!ENTITY selectAllCmd.key                 "A">
+<!ENTITY selectAllCmd.accesskey           "A">
+<!ENTITY clearHistoryCmd.label            "清除搜尋記錄">
+<!ENTITY clearHistoryCmd.accesskey        "h">
+<!ENTITY showSuggestionsCmd.label         "顯示搜尋建議">
+<!ENTITY showSuggestionsCmd.accesskey     "S">
+<!ENTITY preferencesCmd.label             "偏好設定…">
+<!ENTITY preferencesCmd.key               "E">
+<!ENTITY preferencesCmd.accesskey         "e">
+<!ENTITY findBarCmd.key "F">
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findBarCmd.accesskey "F">
+<!ENTITY findCmd.key2 "VK_F19">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findReplaceCmdMac.key "F">
+<!ENTITY findReplaceCmd.accesskey "l">
+<!ENTITY findAgainCmd.label "找下一個">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "找前一個">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "v">
+<!ENTITY findTypeTextCmd.label "文字隨打即找">
+<!ENTITY findTypeTextCmd.key "/">
+<!ENTITY findTypeTextCmd.accesskey "x">
+<!ENTITY findTypeLinksCmd.label "對鏈結隨打即找">
+<!ENTITY findTypeLinksCmd.key "'">
+<!ENTITY findTypeLinksCmd.accesskey "k">
+
+<!ENTITY viewMenu.label                   "檢視">
+<!ENTITY viewMenu.accesskey               "V">
+<!ENTITY viewToolbarsMenu.label           "顯示／隱藏">
+<!ENTITY viewToolbarsMenu.accesskey       "w">
+<!ENTITY showTaskbarCmd.label             "狀態列">
+<!ENTITY showTaskbarCmd.accesskey         "S">
+
+<!ENTITY helpMenu.label                   "說明">
+<!ENTITY helpMenu.accesskey               "H">
+
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+     for the help button in the menubar. -->
+<!ENTITY helpMenuWin.label                "說明">
+<!ENTITY helpMenuWin.accesskey            "H">
+<!ENTITY openHelpCmd.label                "使用說明">
+<!ENTITY openHelpCmd.accesskey            "H">
+<!ENTITY openHelpCmd.key                  "VK_F1">
+
+<!ENTITY helpForIEUsers.label               "給 IE 使用者">
+<!ENTITY helpForIEUsers.accesskey           "I">
+<!ENTITY helpTroubleshootingInfo.label      "疑難排解資訊">
+<!ENTITY helpTroubleshootingInfo.accesskey  "T">
+<!ENTITY releaseCmd.label                   "發行公告">
+<!ENTITY releaseCmd.accesskey               "N">
+<!ENTITY helpSafeMode.label                 "重新啟動，但停用附加元件">
+<!ENTITY helpSafeMode.accesskey             "R">
+<!ENTITY updateCmd.label                    "檢查更新…">
+<!ENTITY updateCmd.accesskey                "C">
+<!ENTITY aboutCmd.label                     "關於 &brandShortName;">
+<!ENTITY aboutCmd.accesskey                 "A">
+<!ENTITY aboutCommPluginsCmd.label          "關於外掛程式">
+<!ENTITY aboutCommPluginsCmd.accesskey      "P">
+
+<!ENTITY direct.label                             "連線（Proxy: 無）">
+<!ENTITY direct.accesskey                         "n">
+<!ENTITY manual.label                             "連線（Proxy: 手動）">
+<!ENTITY manual.accesskey                         "M">
+<!ENTITY pac.label                                "連線（Proxy: 自動設定）">
+<!ENTITY pac.accesskey                            "A">
+<!ENTITY wpad.label                               "連線（Proxy: 自動搜尋）">
+<!ENTITY wpad.accesskey                           "D">
+<!ENTITY system.label                             "連線（Proxy: 系統 Proxy）">
+<!ENTITY system.accesskey                         "S">
+
+<!ENTITY proxy.label                              "設定 Proxy …">
+<!ENTITY proxy.accesskey                          "C">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "改變文字方向">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "w">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY menubarCmd.label                         "選單列">
+<!ENTITY menubarCmd.accesskey                     "e">
+
+<!ENTITY customizeToolbarContext.label            "自訂…">
+<!ENTITY customizeToolbarContext.accesskey        "C">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "此工具列的設定">
+<!ENTITY customizeToolbar.toolbarmode.accesskey   "e">
+<!ENTITY customizeToolbar.iconsAndText.label      "圖示與文字">
+<!ENTITY customizeToolbar.iconsAndText.accesskey  "a">
+<!ENTITY customizeToolbar.icons.label             "圖示">
+<!ENTITY customizeToolbar.icons.accesskey         "o">
+<!ENTITY customizeToolbar.text.label              "文字">
+<!ENTITY customizeToolbar.text.accesskey          "T">
+<!ENTITY customizeToolbar.useSmallIcons.label     "使用小圖示">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "s">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "在圖示旁顯示說明文字">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "b">
+<!ENTITY customizeToolbar.useDefault.label        "使用預設設定值">
+<!ENTITY customizeToolbar.useDefault.accesskey    "U">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY allowPopups.accesskey        "p">
+<!ENTITY showPopupManager.label       "管理彈出型視窗">
+<!ENTITY showPopupManager.accesskey   "M">
+<!ENTITY dontShowMessage.label        "在彈出型視窗被封鎖時不要顯示此訊息">
+<!ENTITY dontShowMessage.accesskey    "D">
+
+<!ENTITY throbber.title "「載入中」圓圈">
+<!ENTITY throbber.tooltip2 "前往 &brandShortName; 首頁">
+
+<!ENTITY syncToolbarButton.label "同步">

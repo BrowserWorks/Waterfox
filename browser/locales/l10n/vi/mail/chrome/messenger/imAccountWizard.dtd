@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Trình kết nối tài khoản trò chuyện">
+
+<!ENTITY accountProtocolTitle.label   "Mạng trò chuyện">
+<!ENTITY accountProtocolInfo.label    "Vui lòng chọn mạng của tài khoản trò chuyện của bạn.">
+<!ENTITY accountProtocolField.label   "Mạng:">
+<!ENTITY accountProtocolGetMore.label "Nhận thêm…">
+
+<!ENTITY accountUsernameTitle.label   "Tên đăng nhập">
+<!ENTITY accountUsernameDuplicate.label "Tài khoản này đã được cấu hình!">
+
+<!ENTITY accountPasswordTitle.label   "Mật khẩu">
+<!ENTITY accountPasswordInfo.label    "Vui lòng nhập mật khẩu của bạn vào ô bên dưới.">
+<!ENTITY accountPasswordField.label   "Mật khẩu:">
+<!ENTITY accountPasswordManager.label "Mật khẩu được nhập vào đây sẽ được lưu trong trình quản lý mật khẩu. Để trống ô này nếu bạn muốn được nhắc nhập mật khẩu mỗi khi tài khoản này được kết nối.">
+
+<!ENTITY accountAdvancedTitle.label   "Tùy chọn nâng cao">
+<!ENTITY accountAdvancedInfo.label    "Hãy bỏ qua bước này nếu bạn muốn.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Thông báo thư mới">
+<!ENTITY accountAliasGroupbox.caption "Bí danh cục bộ">
+<!ENTITY accountAliasField.label      "Bí danh:">
+<!ENTITY accountAliasInfo.label       "Điều này sẽ chỉ được hiển thị trong các cuộc hội thoại của bạn khi bạn nói chuyện, những người liên lạc từ xa sẽ không nhìn thấy nó.">
+<!ENTITY accountProxySettings.caption "Cài đặt proxy">
+<!ENTITY accountProxySettings.change.label     "Thay đổi…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "Tóm tắt">
+<!ENTITY accountSummaryInfo.label    "Một bản tóm tắt các thông tin bạn đã nhập được hiển thị dưới đây. Vui lòng kiểm tra nó trước khi tài khoản được tạo.">
+<!ENTITY accountSummary.connectNow.label "Kết nối tài khoản này ngay bây giờ.">

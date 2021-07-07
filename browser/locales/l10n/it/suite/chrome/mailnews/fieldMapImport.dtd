@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--null-->
+<!ENTITY fieldMapImport.title "Importazione rubrica">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Dati importati per il record: ">
+<!ENTITY fieldMapImport.next.label "Prossimo">
+<!ENTITY fieldMapImport.next.accesskey "P">
+<!ENTITY fieldMapImport.previous.label "Precedente">
+<!ENTITY fieldMapImport.previous.accesskey "d">
+<!ENTITY fieldMapImport.text "Utilizzare Muovi su e Muovi giù per far corrispondere i campi della rubrica sulla sinistra ai dati corrispondenti da importare sulla colonna di destra. Togliere il segno di spunta dalle categorie che non si desidera importare.">
+<!ENTITY fieldMapImport.up.label "Sposta su">
+<!ENTITY fieldMapImport.up.accesskey "u">
+<!ENTITY fieldMapImport.down.label "Sposta giù">
+<!ENTITY fieldMapImport.down.accesskey "o">
+<!ENTITY fieldMapImport.fieldListTitle "Campi della rubrica">
+<!ENTITY fieldMapImport.dataTitle "Record da importare">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Il primo record contiene i nomi dei campi">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "I">

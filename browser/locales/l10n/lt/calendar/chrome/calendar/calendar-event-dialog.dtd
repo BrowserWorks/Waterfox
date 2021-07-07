@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Taisomas įrašas" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Keičiant pabaigos datą, išlaikyti trukmę">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Nuo" >
+<!ENTITY newevent.to.label                  "Iki" >
+
+<!ENTITY newevent.status.label                    "Būsena" >
+<!ENTITY newevent.status.accesskey                "B" >
+<!ENTITY newevent.eventStatus.none.label          "Neapibrėžta" >
+<!ENTITY newevent.eventStatus.none.accesskey      "N" >
+<!ENTITY newevent.todoStatus.none.label           "Neapibrėžta" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Atšauktas" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "A" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Atšauktas" >
+<!ENTITY newevent.status.tentative.label          "Preliminarus" >
+<!ENTITY newevent.status.tentative.accesskey      "P" >
+<!ENTITY newevent.status.confirmed.label          "Patvirtintas" >
+<!ENTITY newevent.status.confirmed.accesskey      "t" >
+<!ENTITY newevent.status.needsaction.label        "Reikalingas veiksmas" >
+<!ENTITY newevent.status.inprogress.label         "Vyksta" >
+<!ENTITY newevent.status.completed.label          "Užbaigtas" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; užbaigta">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Pranešti dalyviams">
+<!ENTITY event.attendees.notify.accesskey            "t">
+<!ENTITY event.attendees.notifyundisclosed.label     "Atskiras kvietimas kiekvienam dalyviui">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "A">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Pažymėjus, kiekvienam dalyviui bus siunčiamas atskiras asmeninis kvietimas, todėl visas dalyvių sąrašas kvietime nebus atskleistas.">
+<!ENTITY event.attendees.disallowcounter.label       "Neleisti alternatyvių pasiūlymų">
+<!ENTITY event.attendees.disallowcounter.accesskey   "N">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Pažymėjus, nebus priimami alternatyvūs pasiūlymai">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Naujas">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Įvykis">
+<!ENTITY  event.menu.item.new.event.accesskey             "v">
+<!ENTITY  event.menu.item.new.task.label                  "Darbas">
+<!ENTITY  event.menu.item.new.task.accesskey              "D">
+<!ENTITY  event.menu.item.new.message.label               "Laiškas">
+<!ENTITY  event.menu.item.new.message.accesskey           "L">
+<!ENTITY  event.menu.item.new.contact.label               "Adresatas">
+<!ENTITY  event.menu.item.new.contact.accesskey           "A">
+<!ENTITY  event.menu.item.close.label                     "Užverti">
+<!ENTITY  event.menu.item.close.accesskey                 "U">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Įrašyti">
+<!ENTITY  event.menu.item.save.accesskey                  "r">
+<!ENTITY  event.menu.item.save.tab.accesskey              "r">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Įrašyti ir užverti">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "v">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "i">
+
+<!ENTITY  event.menu.item.delete.label                    "Šalinti…">
+<!ENTITY  event.menu.item.delete.accesskey                "Š">
+<!ENTITY  event.menu.item.page.setup.label                "Puslapio nuostatos">
+<!ENTITY  event.menu.item.page.setup.accesskey            "P">
+<!ENTITY  event.menu.item.print.label                     "Spausdinti">
+<!ENTITY  event.menu.item.print.accesskey                 "S">
+
+<!ENTITY  event.menu.edit.label                           "Taisa">
+<!ENTITY  event.menu.edit.accesskey                       "T">
+<!ENTITY  event.menu.edit.undo.label                      "Atšaukti">
+<!ENTITY  event.menu.edit.undo.accesskey                  "A">
+<!ENTITY  event.menu.edit.redo.label                      "Atstatyti">
+<!ENTITY  event.menu.edit.redo.accesskey                  "t">
+<!ENTITY  event.menu.edit.cut.label                       "Iškirpti">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "Kopijuoti">
+<!ENTITY  event.menu.edit.copy.accesskey                  "K">
+<!ENTITY  event.menu.edit.paste.label                     "Įdėti">
+<!ENTITY  event.menu.edit.paste.accesskey                 "d">
+<!ENTITY  event.menu.edit.select.all.label                "Pažymėti visus">
+<!ENTITY  event.menu.edit.select.all.accesskey            "v">
+
+<!ENTITY  event.menu.view.label                           "Rodymas">
+<!ENTITY  event.menu.view.accesskey                       "R">
+<!ENTITY  event.menu.view.toolbars.label                  "Priemonių juostos">
+<!ENTITY  event.menu.view.toolbars.accesskey              "j">
+<!ENTITY  event.menu.view.toolbars.event.label            "Įvykio juosta">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "v">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Tvarkyti…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "T">
+<!ENTITY  event.menu.view.showlink.label                  "Rodyti saitą">
+<!ENTITY  event.menu.view.showlink.accesskey              "s">
+
+<!ENTITY  event.menu.options.label                            "Nuostatos">
+<!ENTITY  event.menu.options.accesskey                        "N">
+<!ENTITY  event.menu.options.attendees.label                  "Pakviesti dalyvius…">
+<!ENTITY  event.menu.options.attendees.accesskey              "P">
+<!ENTITY  event.menu.options.timezone2.label                  "Rodyti laiko juostas">
+<!ENTITY  event.menu.options.timezone2.accesskey              "j">
+<!ENTITY  event.menu.options.priority2.label                  "Prioritetas">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Neapibrėžtas">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "N">
+<!ENTITY  event.menu.options.priority.low.label               "Žemas">
+<!ENTITY  event.menu.options.priority.low.accesskey           "Ž">
+<!ENTITY  event.menu.options.priority.normal.label            "Vidutinis">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "V">
+<!ENTITY  event.menu.options.priority.high.label              "Aukštas">
+<!ENTITY  event.menu.options.priority.high.accesskey          "A">
+<!ENTITY  event.menu.options.privacy.label                    "Viešumas">
+<!ENTITY  event.menu.options.privacy.accesskey                "V">
+<!ENTITY  event.menu.options.privacy.public.label             "Viešas įvykis">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "V">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Rodyti tik laiką ir datą">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "R">
+<!ENTITY  event.menu.options.privacy.private.label            "Asmeninis įvykis">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "A">
+<!ENTITY  event.menu.options.show.time.label                  "Įvykio laiką rodyti kaip">
+<!ENTITY  event.menu.options.show.time.accesskey              "l">
+<!ENTITY  event.menu.options.show.time.busy.label             "užimtą">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "u">
+<!ENTITY  event.menu.options.show.time.free.label             "laisvą">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "l">
+
+<!ENTITY event.invite.attendees.label                     "Pakviesti dalyvius…">
+<!ENTITY event.invite.attendees.accesskey                 "P">
+<!ENTITY event.email.attendees.label                      "Rašyti laišką visiems dalyviams…">
+<!ENTITY event.email.attendees.accesskey                  "v">
+<!ENTITY event.email.tentative.attendees.label            "Rašyti laišką preliminariai apsisprendusiems dalyviams…">
+<!ENTITY event.email.tentative.attendees.accesskey        "n">
+<!ENTITY event.remove.attendees.label2                    "Šalinti visus dalyvius">
+<!ENTITY event.remove.attendees.accesskey                 "Š">
+<!ENTITY event.remove.attendee.label                      "Šalinti dalyvį">
+<!ENTITY event.remove.attendee.accesskey                  "a">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Įrašyti">
+<!ENTITY  event.toolbar.saveandclose.label                "Įrašyti ir užverti">
+<!ENTITY  event.toolbar.delete.label                      "Šalinti">
+<!ENTITY  event.toolbar.attendees.label                   "Pakviesti dalyvius">
+<!ENTITY  event.toolbar.privacy.label                     "Viešumas">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Įrašyti">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Įrašyti ir užverti">
+<!ENTITY  event.toolbar.delete.tooltip                    "Pašalinti">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Pakviesti dalyvių">
+<!ENTITY  event.toolbar.attachments.tooltip               "Pridėti priedų">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Keisti viešumą">
+<!ENTITY  event.toolbar.priority.tooltip                  "Keisti prioritetą">
+<!ENTITY  event.toolbar.status.tooltip                    "Keisti būseną">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Keisti užimtumą įvykio metu">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Pritaikyti pasiūlytus pakeitimus">
+<!ENTITY counter.button.proposal.accesskey                "s">
+<!ENTITY counter.button.proposal.tooltip2                 "Įvykio savybių laukai bus užpildyti, naudojant alternatyvaus pasiūlymo duomenis. Įvykio dalyviai bus informuoti tik įrašius pakeitimus">
+<!ENTITY counter.button.original.label                    "Pritaikyti pirminius duomenis">
+<!ENTITY counter.button.original.accesskey                "d">
+<!ENTITY counter.button.original.tooltip2                 "Įvykio savybių laukai bus užpildyti, naudojant pirminius jo duomenis, buvusius iki gaunant alternatyvų pasiūlymą">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Pavadinimas:" >
+<!ENTITY event.title.textbox.accesskey                    "P">
+<!ENTITY event.location.label                             "Vieta:" >
+<!ENTITY event.location.accesskey                         "V">
+<!ENTITY event.categories.label                           "Kategorija:">
+<!ENTITY event.categories.accesskey                       "K">
+<!ENTITY event.categories.textbox.label                   "Pridėti naują kategoriją" >
+<!ENTITY event.calendar.label                             "Kalendorius:" >
+<!ENTITY event.calendar.accesskey                         "o">
+<!ENTITY event.attendees.label                            "Dalyviai" >
+<!ENTITY event.attendees.accesskey                        "l">
+<!ENTITY event.alldayevent.label                          "Visos dienos įvykis" >
+<!ENTITY event.alldayevent.accesskey                      "V">
+<!ENTITY event.from.label                                 "Pradžia:" >
+<!ENTITY event.from.accesskey                             "P">
+<!ENTITY task.from.label                                  "Pradžia:" >
+<!ENTITY task.from.accesskey                              "P">
+<!ENTITY event.to.label                                   "Pabaiga:" >
+<!ENTITY event.to.accesskey                               "I">
+<!ENTITY task.to.label                                    "Terminas:" >
+<!ENTITY task.to.accesskey                                "e">
+<!ENTITY task.status.label                                "Būsena:" >
+<!ENTITY task.status.accesskey                            "B">
+<!ENTITY event.repeat.label                               "Kartojimasis:" >
+<!ENTITY event.repeat.accesskey                           "t">
+<!ENTITY event.until.label                                "Iki:">
+<!ENTITY event.until.accesskey                            "I">
+<!ENTITY event.reminder.label                             "Priminimas:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Aprašas:" >
+<!ENTITY event.description.accesskey                      "š">
+<!ENTITY event.attachments.label                          "Priedai:" >
+<!ENTITY event.attachments.accesskey                      "P" >
+<!ENTITY event.attachments.menubutton.label               "Pridėti">
+<!ENTITY event.attachments.menubutton.accesskey           "d">
+<!ENTITY event.attachments.url.label                      "tinklalapį…">
+<!ENTITY event.attachments.url.accesskey                  "t">
+<!ENTITY event.attachments.popup.remove.label             "Pašalinti" >
+<!ENTITY event.attachments.popup.remove.accesskey         "š" >
+<!ENTITY event.attachments.popup.open.label               "Atverti" >
+<!ENTITY event.attachments.popup.open.accesskey           "v" >
+<!ENTITY event.attachments.popup.removeAll.label          "Pašalinti visus" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "v" >
+<!ENTITY event.attachments.popup.attachPage.label         "Pridėti tinklalapį…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "t" >
+<!ENTITY event.url.label                                  "Saitas:" >
+<!ENTITY event.priority2.label                            "Prioritetas:">
+
+<!ENTITY event.reminder.none.label                        "be priminimo" >
+<!ENTITY event.reminder.0minutes.before.label             "likus 0 minučių" >
+<!ENTITY event.reminder.5minutes.before.label             "likus 5 minutėms" >
+<!ENTITY event.reminder.15minutes.before.label            "likus 15 minučių" >
+<!ENTITY event.reminder.30minutes.before.label            "likus 30 minučių" >
+<!ENTITY event.reminder.1hour.before.label                "likus 1 valandai" >
+<!ENTITY event.reminder.2hours.before.label               "likus 2 valandoms" >
+<!ENTITY event.reminder.12hours.before.label              "likus 12 valandų" >
+<!ENTITY event.reminder.1day.before.label                 "likus 1 dienai" >
+<!ENTITY event.reminder.2days.before.label                "likus 2 dienoms" >
+<!ENTITY event.reminder.1week.before.label                "likus 1 savaitei" >
+<!ENTITY event.reminder.custom.label                      "parinkti kitokį…" >
+
+<!ENTITY event.reminder.multiple.label                    "Keli priminimai…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Rodyti laiką kaip:">
+<!ENTITY event.statusbarpanel.privacy.label               "Viešumas:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Kartojimosi keitimas">
+
+<!ENTITY event.repeat.does.not.repeat.label             "nesikartoja">
+<!ENTITY event.repeat.daily.label                       "kasdien">
+<!ENTITY event.repeat.weekly.label                      "kas savaitę">
+<!ENTITY event.repeat.every.weekday.label               "darbo dienomis">
+<!ENTITY event.repeat.bi.weekly.label                   "kas dvi savaites">
+<!ENTITY event.repeat.monthly.label                     "kas mėnesį">
+<!ENTITY event.repeat.yearly.label                      "kas metus">
+<!ENTITY event.repeat.custom.label                      "parinkti kitą…">
+
+<!ENTITY event.recurrence.pattern.label                 "Kartojimosi šablonas">
+<!ENTITY event.recurrence.occurs.label                  "Ciklo pagrindas:" >
+<!ENTITY event.recurrence.day.label                     "diena" >
+<!ENTITY event.recurrence.week.label                    "savaitė" >
+<!ENTITY event.recurrence.month.label                   "mėnuo" >
+<!ENTITY event.recurrence.year.label                    "metai" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Įvykis kartojasi kas" >
+<!ENTITY repeat.units.days.both                         "d." >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Įvykis kartojasi darbo dienomis" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Įvykis kartojasi kas" >
+<!ENTITY repeat.units.weeks.both                        "sav." >
+<!ENTITY event.recurrence.on.label                      "šiomis dienomis:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Įvykis kartojasi kas" >
+<!ENTITY repeat.units.months.both                       "mėn." >
+<!ENTITY event.recurrence.monthly.every.label           "mėnesio" >
+<!ENTITY event.recurrence.monthly.first.label           "pirmąjį">
+<!ENTITY event.recurrence.monthly.second.label          "antrąjį">
+<!ENTITY event.recurrence.monthly.third.label           "trečiąjį">
+<!ENTITY event.recurrence.monthly.fourth.label          "ketvirtąjį">
+<!ENTITY event.recurrence.monthly.fifth.label           "penktąjį">
+<!ENTITY event.recurrence.monthly.last.label            "paskutinįjį">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "sekmadienį" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "pirmadienį" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "antradienį" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "trečiadienį" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "ketvirtadienį" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "penktadienį" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "šeštadienį" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "dieną">
+<!ENTITY event.recurrence.repeat.recur.label            "šiomis dienomis:">
+
+<!ENTITY event.recurrence.every.label                        "Įvykis kartojasi kas" >
+<!ENTITY repeat.units.years.both                             "m." >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "ir įvyksta" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "sausio" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "vasario" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "kovo" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "balandžio" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "gegužės" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "birželio" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "liepos" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "rugpjūčio" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "rugsėjo" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "spalio" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "lapkričio" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "gruodžio" >
+<!ENTITY event.recurrence.yearly.every.label                 "mėnesio">
+<!ENTITY event.recurrence.yearly.first.label                 "pirmąjį">
+<!ENTITY event.recurrence.yearly.second.label                "antrąjį">
+<!ENTITY event.recurrence.yearly.third.label                 "trečiąjį">
+<!ENTITY event.recurrence.yearly.fourth.label                "ketvirtąjį">
+<!ENTITY event.recurrence.yearly.fifth.label                 "penktąjį">
+<!ENTITY event.recurrence.yearly.last.label                  "paskutinįjį">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "sekmadienį" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "pirmadienį" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "antradienį" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "trečiadienį" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "ketvirtadienį" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "penktadienį" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "šeštadienį" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "d." >
+<!ENTITY event.recurrence.of.label                           "of" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "sausio" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "vasario" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "kovo" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "balandžio" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "gegužės" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "birželio" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "liepos" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "rugpjūčio" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "rugsėjo" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "spalio" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "lapkričio" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "gruodžio" >
+
+<!ENTITY event.recurrence.range.label                   "Pasikartojimų kiekis">
+<!ENTITY event.recurrence.forever.label                 "Neribotas" >
+<!ENTITY event.recurrence.repeat.for.label              "Kartotis" >
+<!ENTITY event.recurrence.appointments.label            "k." >
+<!ENTITY event.repeat.until.label                       "Kartotis iki" >
+<!ENTITY event.recurrence.preview.label                 "Peržiūra">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Pakviesti dalyvių">
+<!ENTITY event.organizer.label                  "Organizuoja">
+<!ENTITY event.freebusy.suggest.slot            "Pasiūlyti laiką:">
+<!ENTITY event.freebusy.button.next.slot        "Vėliau">
+<!ENTITY event.freebusy.button.previous.slot    "Anksčiau">
+<!ENTITY event.freebusy.zoom                    "Mastelis:">
+<!ENTITY event.freebusy.legend.free             "Laisvas" >
+<!ENTITY event.freebusy.legend.busy             "Užimtas" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Galbūt užimtas" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Nepasiekiamas" >
+<!ENTITY event.freebusy.legend.unknown          "Nežinoma" >
+<!ENTITY event.attendee.role.required           "Būtinas dalyvis">
+<!ENTITY event.attendee.role.optional           "Nebūtinas dalyvis">
+<!ENTITY event.attendee.role.chair              "Pirmininkas">
+<!ENTITY event.attendee.role.nonparticipant     "Nedalyvauja">
+<!ENTITY event.attendee.usertype.individual     "Asmuo">
+<!ENTITY event.attendee.usertype.group          "Grupė">
+<!ENTITY event.attendee.usertype.resource       "Išteklius">
+<!ENTITY event.attendee.usertype.room           "Kambarys">
+<!ENTITY event.attendee.usertype.unknown        "Nežinomas">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Prašom parinkti laiko juostą">
+<!ENTITY event.timezone.custom.label     "Daugiau laiko juostų…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Įvykis">
+<!ENTITY read.only.title.label           "Pavadinimas:">
+<!ENTITY read.only.calendar.label        "Kalendorius:">
+<!ENTITY read.only.event.start.label     "Pradžia:">
+<!ENTITY read.only.task.start.label      "Pradžia:">
+<!ENTITY read.only.event.end.label       "Pabaiga:">
+<!ENTITY read.only.task.due.label        "Terminas:">
+<!ENTITY read.only.repeat.label          "Pasikartojimas:">
+<!ENTITY read.only.location.label        "Vieta:">
+<!ENTITY read.only.category.label        "Kategorija:">
+<!ENTITY read.only.organizer.label       "Organizuoja:">
+<!ENTITY read.only.reminder.label        "Priminimas:">
+<!ENTITY read.only.attachments.label     "Priedai:">
+<!ENTITY read.only.attendees.label       "Dalyviai">
+<!ENTITY read.only.description.label     "Aprašas">
+<!ENTITY read.only.link.label            "Saitas">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Įrašyti ir užverti">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Išsaugoti pakeitimus ir uždaryti langą, nekečiant dalyvavimo būsenos ir nesiunčiant atsakymo">
+<!ENTITY summary.dialog.accept.label            "Priimti">
+<!ENTITY summary.dialog.accept.tooltiptext      "Priimk kvietimą">
+<!ENTITY summary.dialog.tentative.label         "Preliminariai">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Kvietimą preliminariai priimti">
+<!ENTITY summary.dialog.decline.label           "Atmesti">
+<!ENTITY summary.dialog.decline.tooltiptext     "Atmesti kvietimą">
+<!ENTITY summary.dialog.dontsend.label          "Atsakymo nesiųsti">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Nesiųsdami pranešimo organizatoriui pakeiskite savo dalyvavimo būseną ir uždarykite šį langą">
+<!ENTITY summary.dialog.send.label              "Siųsti atsakymą">
+<!ENTITY summary.dialog.send.tooltiptext        "Išsiųsti atsakymą organizatoriui ir užverti langą">

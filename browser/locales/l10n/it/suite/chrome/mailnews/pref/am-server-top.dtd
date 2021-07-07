@@ -1,0 +1,78 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Archiviazione messaggi">
+<!ENTITY securitySettings.label "Impostazioni sicurezza">
+<!ENTITY serverSettings.label "Impostazioni server">
+<!ENTITY serverType.label "Tipo di server:">
+<!ENTITY serverName.label "Nome del server:">
+<!ENTITY serverName.accesskey "s">
+<!ENTITY userName.label "Nome utente:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Porta:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Predefinito:">
+<!ENTITY biffStart.label "Controlla la presenza di nuovi messaggi ogni ">
+<!ENTITY biffStart.accesskey "m">
+<!ENTITY biffEnd.label "minuti">
+<!ENTITY useIdleNotifications.label "Consenti le notifiche immediate dal server quando arrivano nuovi messaggi">
+<!ENTITY useIdleNotifications.accesskey "C">
+<!ENTITY connectionSecurity.label "Sicurezza della connessione:">
+<!ENTITY connectionSecurity.accesskey "c">
+<!ENTITY connectionSecurityType-0.label "Nessuna">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, se disponibile">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Metodo di autenticazione:">
+<!ENTITY authMethod.accesskey "z">
+<!ENTITY leaveOnServer.label "Lascia i messaggi sul server">
+<!ENTITY leaveOnServer.accesskey "L">
+<!ENTITY headersOnly.label "Scarica solo intestazioni">
+<!ENTITY headersOnly.accesskey "t">
+<!ENTITY deleteByAgeFromServer.label "Per al più">
+<!ENTITY deleteByAgeFromServer.accesskey "ù">
+<!ENTITY daysEnd.label "giorni">
+<!ENTITY deleteOnServer2.label "Finché non li elimino">
+<!ENTITY deleteOnServer2.accesskey "h">
+<!ENTITY downloadOnBiff.label "Scarica automaticamente ogni nuovo messaggio">
+<!ENTITY downloadOnBiff.accesskey "o">
+<!ENTITY username.label "Nome di accesso">
+<!ENTITY deleteMessagePrefix.label "Quando si elimina un messaggio:">
+<!ENTITY modelMoveToTrash.label "Spostalo nella cartella:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Marca solo come eliminato">
+<!ENTITY modelMarkDeleted.accesskey "l">
+<!ENTITY modelDeleteImmediately.label "Elimina immediatamente">
+<!ENTITY modelDeleteImmediately.accesskey "t">
+<!ENTITY expungeOnExit.label "Ripulisci la cartella 'In arrivo' dai messaggi eliminati prima di uscire">
+<!ENTITY expungeOnExit.accesskey "g">
+<!ENTITY emptyTrashOnExit.label "Svuota il Cestino prima di uscire">
+<!ENTITY emptyTrashOnExit.accesskey "u">
+<!ENTITY loginAtStartup.label "All'avvio controlla l'arrivo di nuovi messaggi">
+<!ENTITY loginAtStartup.accesskey "d">
+<!ENTITY maxMessagesStart.label "Chiedi prima di scaricare più di">
+<!ENTITY maxMessagesStart.accesskey "h">
+<!ENTITY maxMessagesEnd.label "messaggi">
+<!ENTITY alwaysAuthenticate.label "Chiedi sempre l'autenticazione quando ci si connette a questo server">
+<!ENTITY alwaysAuthenticate.accesskey "u">
+<!ENTITY newsrcFilePath.label "File newsrc:">
+<!ENTITY newsrcPicker.label "Selezionare file newsrc">
+<!ENTITY abbreviate.label "Visualizza i nomi dei gruppi di discussione nel pannello cartelle come:">
+<!ENTITY abbreviateOn.label "Nomi completi (Ad esempio, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Nomi abbreviati (Ad esempio, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Avanzate…">
+<!ENTITY serverDefaultCharset2.label "Codifica predefinita del testo:">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY localPath.label "Cartella locale:">
+<!ENTITY localFolderPicker.label "Selezione cartella locale">
+<!ENTITY browseFolder.label "Scegli cartella…">
+<!ENTITY browseFolder.accesskey "r">
+<!ENTITY browseNewsrc.label "Seleziona…">
+<!ENTITY browseNewsrc.accesskey "z">
+<!ENTITY accountTitle.label "Impostazioni account">
+<!ENTITY accountSettingsDesc.label "Questo è un account speciale. Non ci sono identità associate.">
+<!ENTITY storeType.label "Tipo di archivio messaggi:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "Un file per cartella (mbox)">
+<!ENTITY maildirStore.label "Un file per messaggio (maildir)">

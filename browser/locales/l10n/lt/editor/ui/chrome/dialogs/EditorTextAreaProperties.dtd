@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Teksto lauko savybės">
+
+<!ENTITY Settings.label "Nuostatos">
+
+<!ENTITY TextAreaName.label "Lauko vardas:">
+<!ENTITY TextAreaName.accessKey "v">
+<!ENTITY TextAreaRows.label "Eilutės:">
+<!ENTITY TextAreaRows.accessKey "E">
+<!ENTITY TextAreaCols.label "Stulpeliai:">
+<!ENTITY TextAreaCols.accessKey "S">
+<!ENTITY TextAreaReadOnly.label "Tik skaityti">
+<!ENTITY TextAreaReadOnly.accessKey "a">
+<!ENTITY TextAreaDisabled.label "Neveiksnus">
+<!ENTITY TextAreaDisabled.accessKey "N">
+<!ENTITY TextAreaTabIndex.label "Tabuliacijos indeksas:">
+<!ENTITY TextAreaTabIndex.accessKey "T">
+<!ENTITY TextAreaAccessKey.label "Kreipties klavišas:">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "Pradinis tekstas:">
+<!ENTITY InitialText.accessKey "P">
+
+<!ENTITY TextAreaWrap.label "Laužymo veiksena:">
+<!ENTITY TextAreaWrap.accessKey "L">
+<!ENTITY WrapDefault.value "Numatytoji">
+<!ENTITY WrapOff.value "Išjungta">
+<!ENTITY WrapHard.value "Statinė">
+<!ENTITY WrapSoft.value "Dinaminė">
+<!ENTITY WrapPhysical.value "Fizinė">
+<!ENTITY WrapVirtual.value "Virtuali">

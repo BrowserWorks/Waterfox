@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Gomb tulajdonságai">
+
+<!ENTITY Settings.label "Beállítások">
+
+<!ENTITY ButtonType.label "Típus">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Elküldés">
+<!ENTITY reset.value "Alaphelyzet">
+<!ENTITY button.value "Gomb">
+
+<!ENTITY ButtonName.label "Név:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Érték:">
+<!ENTITY ButtonValue.accesskey "r">
+<!ENTITY tabIndex.label "Bejárási sorrend:">
+<!ENTITY tabIndex.accesskey "B">
+<!ENTITY ButtonDisabled.label "Tiltva">
+<!ENTITY ButtonDisabled.accesskey "l">
+<!ENTITY AccessKey.label "Hívóbillentyű:">
+<!ENTITY AccessKey.accesskey "H">
+
+<!ENTITY RemoveButton.label "Gomb eltávolítása">
+<!ENTITY RemoveButton.accesskey "G">

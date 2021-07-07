@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Namn">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Förnamn:">
+<!ENTITY NameField1.accesskey           "F">
+<!ENTITY NameField2.label               "Efternamn:">
+<!ENTITY NameField2.accesskey           "t">
+<!ENTITY PhoneticField1.label           "Fonetisk:">
+<!ENTITY PhoneticField2.label           "Fonetisk:">
+<!ENTITY DisplayName.label              "Kortnamn:">
+<!ENTITY DisplayName.accesskey          "o">
+<!ENTITY preferDisplayName.label        "Föredra alltid kortnamn istället för visningsnamnet i meddelandet">
+<!ENTITY preferDisplayName.accesskey    "a">
+<!ENTITY preferDisplayName2.accesskey   "v">
+<!ENTITY NickName.label                 "Smeknamn:">
+<!ENTITY NickName.accesskey             "S">
+
+<!ENTITY PrimaryEmail.label             "E-postadress:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Annan e-post:">
+<!ENTITY SecondEmail.accesskey          "n">
+<!ENTITY PreferMailFormat.label         "Föredrar att få meddelanden kodade som:">
+<!ENTITY PreferMailFormat.accesskey     "d">
+<!ENTITY PlainText.label                "Oformaterad text">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Okänt">
+<!ENTITY ScreenName.label               "Skärmnamn:">
+<!ENTITY ScreenName.accesskey           "m">
+
+<!ENTITY chatName.label                 "Chattnamn:">
+
+<!ENTITY WorkPhone.label                "Arbete:">
+<!ENTITY WorkPhone.accesskey            "b">
+<!ENTITY HomePhone.label                "Hem:">
+<!ENTITY HomePhone.accesskey            "H">
+<!ENTITY FaxNumber.label                "Fax:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "Sökare:">
+<!ENTITY PagerNumber.accesskey          "r">
+<!ENTITY CellularNumber.label           "Mobil:">
+<!ENTITY CellularNumber.accesskey       "l">
+
+<!ENTITY Home.tab                       "Privat">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adress:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Ort:">
+<!ENTITY HomeCity.accesskey             "O">
+<!ENTITY HomeState.label                "Delstat/Region:">
+<!ENTITY HomeState.accesskey            "s">
+<!ENTITY HomeZipCode.label              "Postnummer:">
+<!ENTITY HomeZipCode.accesskey          "u">
+<!ENTITY HomeCountry.label              "Land:">
+<!ENTITY HomeCountry.accesskey          "L">
+<!ENTITY HomeWebPage.label              "Webbplats:">
+<!ENTITY HomeWebPage.accesskey          "W">
+<!ENTITY Birthday.label                 "Födelsedag:">
+<!ENTITY Birthday.accesskey             "F">
+<!ENTITY In.label                       "">
+<!ENTITY Year.placeholder               "År">
+<!ENTITY Or.value                       "eller">
+<!ENTITY Age.placeholder                "Ålder">
+<!ENTITY YearsOld.label                 "">
+
+<!ENTITY Work.tab                       "Arbete">
+<!ENTITY Work.accesskey                 "A">
+<!ENTITY JobTitle.label                 "Titel:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "Avdelning:">
+<!ENTITY Department.accesskey           "v">
+<!ENTITY Company.label                  "Organisation:">
+<!ENTITY Company.accesskey              "r">
+<!ENTITY WorkAddress.label              "Adress:">
+<!ENTITY WorkAddress.accesskey          "e">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Ort:">
+<!ENTITY WorkCity.accesskey             "t">
+<!ENTITY WorkState.label                "Delstat/Region:">
+<!ENTITY WorkState.accesskey            "g">
+<!ENTITY WorkZipCode.label              "Postnummer:">
+<!ENTITY WorkZipCode.accesskey          "m">
+<!ENTITY WorkCountry.label              "Land:">
+<!ENTITY WorkCountry.accesskey          "n">
+<!ENTITY WorkWebPage.label              "Webbplats:">
+<!ENTITY WorkWebPage.accesskey          "b">
+
+<!ENTITY Other.tab                      "Övrigt">
+<!ENTITY Other.accesskey                "Ö">
+<!ENTITY Custom1.label                  "Övrigt 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Övrigt 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Övrigt 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Övrigt 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Anteckningar">
+<!ENTITY Notes.accesskey                "n">
+
+<!ENTITY Chat.tab                       "Chatt">
+<!ENTITY Chat.accesskey                 "c">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM.accesskey                  "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN.accesskey                  "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC Smeknamn:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "F">
+<!ENTITY PhotoDesc.label                "Välj en av de följande:">
+<!ENTITY GenericPhoto.label             "Allmän bild">
+<!ENTITY GenericPhoto.accesskey         "A">
+<!ENTITY DefaultPhoto.label             "Standard">
+<!ENTITY PhotoFile.label                "Från den här datorn">
+<!ENTITY PhotoFile.accesskey            "d">
+<!ENTITY BrowsePhoto.label              "Bläddra">
+<!ENTITY BrowsePhoto.accesskey          "B">
+<!ENTITY PhotoURL.label                 "Från internet">
+<!ENTITY PhotoURL.accesskey             "i">
+<!ENTITY PhotoURL.placeholder           "Klistra in eller skriv in webbadressen till en bild">
+<!ENTITY UpdatePhoto.label              "Uppdatera">
+<!ENTITY UpdatePhoto.accesskey          "u">
+<!ENTITY PhotoDropTarget.label          "Dra en ny bild hit">

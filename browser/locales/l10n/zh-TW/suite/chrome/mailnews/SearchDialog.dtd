@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "搜尋訊息於:">
+<!ENTITY searchHeading.accesskey     "e">
+<!ENTITY searchSubfolders.label      "搜尋子資料夾">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnHeading.label       "於下列位置搜尋:">
+<!ENTITY searchOnHeading.accesskey   "P">
+<!ENTITY searchOnRemote.label        "遠端伺服器">
+<!ENTITY searchOnLocal.label         "本機系統">
+<!ENTITY resetButton.label           "清除">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "開啟">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "刪除">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "搜尋訊息">
+<!ENTITY results.label               "結果">
+<!ENTITY moveHereMenu.label          "移動至此">
+<!ENTITY moveHereMenu.accesskey      "H">
+<!ENTITY moveButton.label            "移至">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY goToFolderButton.label      "開啟郵件匣">
+<!ENTITY goToFolderButton.accesskey  "n">
+<!ENTITY saveAsVFButton.label        "存為即時搜尋資料夾">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "尋找:">
+<!ENTITY abSearchHeading.accesskey   "e">
+<!ENTITY propertiesButton.label      "屬性">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "發新信件">
+<!ENTITY composeButton.accesskey     "o">
+<!ENTITY abSearchDialogTitle.label   "進階通訊錄搜尋">
+

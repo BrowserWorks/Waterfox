@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Upozornění">
+<!ENTITY notifications.caption            "Upozornění">
+<!ENTITY newMessagesArrive.label          "Při přijetí nové zprávy:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Zobrazit upozornění po dobu">
+<!ENTITY showAlertFor.accesskey           "u">
+<!ENTITY showAlertTimeEnd.label           "sekund">
+
+<!ENTITY showAlertPreviewText.label       "Zobrazit náhled na tělo zprávy">
+<!ENTITY showAlertPreviewText.accesskey   "n">
+<!ENTITY showAlertSubject.label           "Zobrazit předmět">
+<!ENTITY showAlertSubject.accesskey       "p">
+<!ENTITY showAlertSender.label            "Zobrazit odesílatele">
+<!ENTITY showAlertSender.accesskey        "o">
+<!ENTITY useSystemAlert.label             "Použít systémová oznámení">
+<!ENTITY useSystemAlert.accesskey         "s">
+<!ENTITY useBuiltInAlert.label            "Použít pro upozornění vlastní okna &brandShortName;">
+<!ENTITY useBuiltInAlert.accesskey        "l">
+
+<!ENTITY showTrayIcon.label               "Zobrazit ikonu v oznamovací oblasti">
+<!ENTITY showTrayIcon.accesskey           "i">
+<!ENTITY showBalloon.label                "Zobrazit bublinové upozornění">
+<!ENTITY showBalloon.accesskey            "b">
+<!ENTITY bounceSystemDockIcon.label       "Animovat ikonku v doku">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "Přehrát zvuk">
+<!ENTITY playSound.accesskey              "P">
+<!ENTITY playButton.label                 "Přehrát">
+<!ENTITY playButton.accesskey             "h">
+<!ENTITY systemsound.label                "Zvuk nové pošty v systému">
+<!ENTITY systemsound.accesskey            "n">
+<!ENTITY customsound.label                "Vlastní zvukový soubor">
+<!ENTITY customsound.accesskey            "V">
+<!ENTITY browse.label                     "Procházet…">
+<!ENTITY browse.accesskey                 "c">
+<!ENTITY browse.title                     "Výběr souboru">

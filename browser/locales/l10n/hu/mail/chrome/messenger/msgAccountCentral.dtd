@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-mail">
+<!ENTITY readMsgsLink.label           "Üzenet olvasása">
+<!ENTITY composeMsgLink.label         "Új üzenet létrehozása">
+
+<!ENTITY newsSectionHdr.label         "Hírcsoportok">
+<!ENTITY subscribeNewsLink.label      "Hírcsoport-feliratkozások kezelése">
+
+<!ENTITY feedsSectionHdr.label        "Hírforrások">
+<!ENTITY subscribeFeeds.label         "Feliratkozások kezelése">
+
+<!ENTITY chat.label                   "Csevegés">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Postafiókok">
+<!ENTITY subscribeImapFolders.label   "Mappafeliratkozások kezelése">
+<!ENTITY settingsLink.label           "Postafiók tulajdonságainak megtekintése">
+<!ENTITY setupNewAcct.label           "Fiók beállítása:">
+
+<!ENTITY advFeaturesSectionHdr.label  "További funkciók">
+<!ENTITY searchMsgsLink.label         "Üzenetek keresése">
+<!ENTITY filtersLink.label            "Üzenetszűrők beállítása">
+<!ENTITY junkSettings.label           "Levélszemét-kezelés beállításai">
+<!ENTITY offlineLink.label            "Kapcsolat nélküli munka beállításai">

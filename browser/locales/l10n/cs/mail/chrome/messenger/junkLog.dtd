@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Protokol adaptivní nevyžádané pošty">
+<!ENTITY adaptiveJunkLogInfo.label "Povolit protokol aktivit adaptivní nevyžádané pošty.">
+<!ENTITY clearLog.label "Vymazat protokol">
+<!ENTITY clearLog.accesskey "m">
+<!ENTITY closeLog.label "Zavřít">
+<!ENTITY closeLog.accesskey "Z">

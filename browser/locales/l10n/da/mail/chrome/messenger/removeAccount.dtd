@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Slet konto og data">
+<!ENTITY removeButton.label           "Slet">
+<!ENTITY removeButton.accesskey       "S">
+<!ENTITY removeAccount.label          "Slet kontoinformation">
+<!ENTITY removeAccount.accesskey      "l">
+<!ENTITY removeAccount.desc           "Sletter kun &brandShortName;s kendskab til denne konto. Selve kontoen på mailserveren berøres ikke.">
+<!ENTITY removeData.label             "Slet meddelelser og data">
+<!ENTITY removeData.accesskey         "e">
+<!ENTITY removeDataChat.label         "Fjern korrespondance-data">
+<!ENTITY removeDataChat.accesskey     "F">
+<!ENTITY removeDataLocalAccount.desc  "Sletter alle meddelelser, mapper og filtre, som hører til denne konto, fra din lokale harddisk. Dette berører ikke meddelelser, som opbevares på mailserveren. Vælg ikke dette, hvis du vil gemme lokale data og senere have adgang til dem i &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Sletter alle meddelelser, mapper og filtre, som hører til denne konto, fra din lokale harddisk. Dine meddelelser og mapper på mailserveren slettes ikke.">
+<!ENTITY removeDataChatAccount.desc   "Fjern alle gemte logs af denne kontos korrespondancer fra din lokale harddisk.">
+<!ENTITY showData.label               "Vis data-placering">
+<!ENTITY showData.accesskey           "V">
+<!ENTITY progressPending              "Slet valgte data…">
+<!ENTITY progressSuccess              "Sletning udført.">
+<!ENTITY progressFailure              "Sletning mislykkedes.">

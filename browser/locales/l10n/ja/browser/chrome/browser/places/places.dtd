@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title		"ブラウジングライブラリー"><!-- (^^; Library/Archive -->
+<!ENTITY places.library.width		"750"><!-- en-US: 700 -->
+<!ENTITY places.library.height		"500"><!-- en-US: 500 -->
+<!ENTITY organize.label			"管理">
+<!ENTITY organize.accesskey		"O">
+<!ENTITY organize.tooltip		"履歴とブックマークを管理します">
+
+<!ENTITY file.close.label		"閉じる">
+<!ENTITY file.close.accesskey		"C">
+<!ENTITY cmd.close.key			"w">
+<!ENTITY views.label			"表示">
+<!ENTITY views.accesskey		"V">
+<!ENTITY views.tooltip			"表示する項目を変更します">
+<!ENTITY view.columns.label		"表示する列">
+<!ENTITY view.columns.accesskey		"C">
+<!ENTITY view.sort.label		"項目の表示順序">
+<!ENTITY view.sort.accesskey		"S">
+<!ENTITY view.unsorted.label		"並べ替えない">
+<!ENTITY view.unsorted.accesskey	"U">
+<!ENTITY view.sortAscending.label	"昇順 (A &gt; Z)">
+<!ENTITY view.sortAscending.accesskey	"A">
+<!ENTITY view.sortDescending.label	"降順 (Z &gt; A)">
+<!ENTITY view.sortDescending.accesskey	"Z">
+
+<!ENTITY importBookmarksFromHTML.label		"HTML からインポート...">
+<!ENTITY importBookmarksFromHTML.accesskey	"I">
+<!ENTITY exportBookmarksToHTML.label		"HTML としてエクスポート...">
+<!ENTITY exportBookmarksToHTML.accesskey	"E">
+<!ENTITY importOtherBrowser.label		"他のブラウザーからデータをインポート...">
+<!ENTITY importOtherBrowser.accesskey		"A">
+
+<!ENTITY cmd.backup.label			"バックアップ...">
+<!ENTITY cmd.backup.accesskey			"B">
+<!ENTITY cmd.restore2.label			"復元">
+<!ENTITY cmd.restore2.accesskey			"R">
+<!ENTITY cmd.restoreFromFile.label		"ファイルを選択...">
+<!ENTITY cmd.restoreFromFile.accesskey		"C">
+
+<!ENTITY col.name.label			"名前">
+<!ENTITY col.tags.label			"タグ">
+<!ENTITY col.url.label			"URL">
+<!ENTITY col.mostrecentvisit.label	"最近表示した日時">
+<!ENTITY col.visitcount.label		"表示回数">
+<!ENTITY col.dateadded.label		"追加日時">
+<!ENTITY col.lastmodified.label		"変更日時">
+
+<!ENTITY cmd.find.key		"f">
+
+<!ENTITY maintenance.label	"インポートとバックアップ">
+<!ENTITY maintenance.accesskey	"I">
+<!ENTITY maintenance.tooltip	"ブックマークのインポートとバックアップができます">
+
+<!ENTITY backButton.tooltip	"フォルダー表示履歴を前に戻ります">
+
+<!ENTITY forwardButton.tooltip	"フォルダー表示履歴を次に進みます">
+
+<!ENTITY detailsPane.selectAnItemText.description "各項目を選択すると、名前や詳細情報の表示や編集ができます">

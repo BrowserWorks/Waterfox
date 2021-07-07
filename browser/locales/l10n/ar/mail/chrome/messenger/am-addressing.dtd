@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "التحرير و العنْوَنة">
+<!ENTITY addressingGroupTitle.label "العنْوَنة">
+<!ENTITY addressingText.label      "عند البحث عن عناوين:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "استخدم تفضيلاتي العامّة لخادوم LDAP لهذا الحساب">
+<!ENTITY useGlobal.accesskey       "س">
+<!ENTITY editDirectories.label     "حرِّر الأدلّة…">
+<!ENTITY editDirectories.accesskey "ح">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "استخدم خادوم LDAP آخر:">
+<!ENTITY directories.accesskey     "ت">
+<!ENTITY directoriesNone.label     "لا شيء">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "التحرير">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "اكتب الرسائل بتنسيق HTML">
+<!ENTITY useHtml.accesskey                    "ك">
+<!ENTITY autoQuote.label                      "اقتبِس الرّسالة الأصليّة تلقائيًّا عند الرّد">
+<!ENTITY autoQuote.accesskey                  "س">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "عند الاقتباس،">
+<!ENTITY quoting.accesskey                    "ق">
+<!ENTITY aboveQuote.label                     "ابدأ ردّي فوق الاقتباس">
+<!ENTITY belowQuote.label                     "ابدأ ردّي تحت الاقتباس">
+<!ENTITY selectAndQuote.label                 "حدد الاقتباس">
+<!ENTITY place.label                          "وضَع توقيعي">
+<!ENTITY place.accesskey                      "ض">
+<!ENTITY belowText.label                      "تحت الاقتباس (مستحسن)">
+<!ENTITY aboveText.label                      "تحت ردّي (فوق الاقتباس)">
+<!ENTITY includeSigOnReply.label              "ضمّن توقيعي في الردود">
+<!ENTITY includeSigOnReply.accesskey          "ع">
+<!ENTITY includeSigOnForward.label            "ضمّن توقيعي عند التمرير">
+<!ENTITY includeSigOnForward.accesskey        "و">
+
+<!ENTITY globalComposingPrefs.label           "إعدادات التحرير العامة…">
+<!ENTITY globalComposingPrefs.accesskey       "ع">
+
+<!ENTITY globalAddressingPrefs.label          "إعدادات العنونة العامة…">
+<!ENTITY globalAddressingPrefs.accesskey      "م">

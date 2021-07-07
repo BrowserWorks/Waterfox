@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Meddelande">
+<!ENTITY newMessageCmd.accesskey         "M">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Kontakt…">
+<!ENTITY newContactCmd.accesskey         "K">
+
+<!ENTITY sendPage.label                  "Skicka sida…">
+<!ENTITY sendPage.accesskey              "S">
+
+<!ENTITY contextSendThisPage.label       "Skicka denna sida…">
+<!ENTITY contextSendThisPage.accesskey   "d">
+<!ENTITY contextSendThisLink.label       "Skicka denna länk…">
+<!ENTITY contextSendThisLink.accesskey   "n">
+<!ENTITY contextSendImage.label          "Skicka bild…">
+<!ENTITY contextSendImage.accesskey      "b">
+<!ENTITY contextSendVideo.label          "Skicka video…">
+<!ENTITY contextSendVideo.accesskey      "v">
+<!ENTITY contextSendAudio.label          "Skicka audio…">
+<!ENTITY contextSendAudio.accesskey      "a">
+<!ENTITY contextSendFrame.label          "Skicka ram…">
+<!ENTITY contextSendFrame.accesskey      "r">
+
+<!ENTITY sendLinkCmd.label               "Skicka länk…"> 
+<!ENTITY sendLinkCmd.accesskey           "l">
+

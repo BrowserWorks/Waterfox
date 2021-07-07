@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Импорт">
+<!ENTITY importAll.label          "Импортировать всё">
+<!ENTITY importAll.accesskey      "п">
+<!ENTITY importMail.label         "Почту">
+<!ENTITY importMail.accesskey     "ч">
+<!ENTITY importFeeds.label        "Подписки на ленты новостей">
+<!ENTITY importFeeds.accesskey    "и">
+<!ENTITY importAddressbook.label  "Адресные книги">
+<!ENTITY importAddressbook.accesskey "д">
+<!ENTITY importSettings.label     "Настройки">
+<!ENTITY importSettings.accesskey "с">
+<!ENTITY importFilters.label      "Фильтры">
+<!ENTITY importFilters.accesskey  "л">
+
+<!ENTITY  window.width            "50em">
+<!ENTITY  window.macWidth         "55em">
+
+<!ENTITY importTitle.label        "Мастер импорта &brandShortName;">
+<!ENTITY importShortDesc.label    "Импорт почты, адресных книг, настроек и фильтров из других программ">
+
+<!ENTITY importDescription1.label "Мастер импортирует почтовые сообщения, содержимое адресных книг, подписки на ленты новостей, настройки и/или фильтры из других почтовых программ и распространённых форматов адресных книг в &brandShortName;.">
+<!ENTITY importDescription2.label "Импортированная однажды, эта информация будет доступна для вас из &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Выберите программу, из которой хотите произвести импорт:">
+<!ENTITY selectDescriptionB.label "Выберите существующую учётную запись или создайте новую учётную запись:">
+<!ENTITY selectDescription.accesskey "ы">
+<!ENTITY acctName.label           "Имя:">
+<!ENTITY acctName.accesskey       "м">
+<!ENTITY noModulesFound.label     "Не найдено приложения или файла, из которого можно импортировать данные.">
+
+<!ENTITY back.label               "&lt; Назад">
+<!ENTITY forward.label            "Далее &gt;">
+<!ENTITY finish.label             "Готово">
+<!ENTITY cancel.label             "Отмена">
+
+<!ENTITY select.label             "или выберите то, что хотите импортировать:">
+
+<!ENTITY title.label              "Заголовок">
+<!ENTITY processing.label         "Идёт импорт…">

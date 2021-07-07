@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Μήνυμα">
+<!ENTITY newMessageCmd.accesskey         "Μ">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Επαφή…">
+<!ENTITY newContactCmd.accesskey         "Ε">
+
+<!ENTITY sendPage.label                  "Αποστολή σελίδας…">
+<!ENTITY sendPage.accesskey              "Α">
+
+<!ENTITY contextSendThisPage.label       "Αποστολή σελίδας…">
+<!ENTITY contextSendThisPage.accesskey   "λ">
+<!ENTITY contextSendThisLink.label       "Αποστολή συνδέσμου…">
+<!ENTITY contextSendThisLink.accesskey   "δ">
+<!ENTITY contextSendImage.label          "Αποστολή εικόνας…">
+<!ENTITY contextSendImage.accesskey      "κ">
+<!ENTITY contextSendVideo.label          "Αποστολή βίντεο…">
+<!ENTITY contextSendVideo.accesskey      "β">
+<!ENTITY contextSendAudio.label          "Αποστολή ήχου…">
+<!ENTITY contextSendAudio.accesskey      "χ">
+<!ENTITY contextSendFrame.label          "Αποστολή καρέ…">
+<!ENTITY contextSendFrame.accesskey      "κ">
+
+<!ENTITY sendLinkCmd.label               "Αποστολή συνδέσμου…"> 
+<!ENTITY sendLinkCmd.accesskey           "σ">
+

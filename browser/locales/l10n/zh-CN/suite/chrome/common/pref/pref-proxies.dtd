@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-proxies.xul -->
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+
+
+<!ENTITY  pref.proxies.title            "代理服务器">
+<!ENTITY  pref.proxies.desc             "代理服务器是一种能为你过滤及加速互联网连接的网络服务.">
+<!ENTITY  proxyTitle.label              "配置访问因特网的代理">
+<!ENTITY  directTypeRadio.label         "直接连接到因特网">
+<!ENTITY  directTypeRadio.accesskey     "D">
+<!ENTITY  systemTypeRadio.label         "使用系统代理设置">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  manualTypeRadio.label         "手动配置代理:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  wpadTypeRadio.label           "自动搜素代理配置">
+<!ENTITY  wpadTypeRadio.accesskey       "A">
+<!ENTITY  autoTypeRadio.label           "自动代理配置 URL:">
+<!ENTITY  autoTypeRadio.accesskey       "c">
+<!ENTITY  reload.label                  "重新加载">
+<!ENTITY  reload.accesskey              "R">
+<!ENTITY  http.label                    "代理服务器:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "端口:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "高级…">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "不使用代理:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "例如： .mozilla.org.cn, .net.nz, 192.168.1.0/24">

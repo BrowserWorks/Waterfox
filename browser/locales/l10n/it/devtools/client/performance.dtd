@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!ENTITY performanceUI.bufferStatusTooltip "Le informazioni vengono salvate in un buffer circolare: una volta raggiunto il limite di registrazione, i dati sovrascrivono i campioni all’inizio della registrazione.">
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Attivare la modalità multiprocesso di Firefox nelle preferenze per effettuare la registrazione in tempo reale.">
+
+<!ENTITY performanceUI.bufferStatusFull "Il buffer è pieno. I campioni più vecchi verranno sovrascritti.">
+
+<!ENTITY performanceUI.unavailableNoticePB "La registrazione dei profili non è al momento disponibile. Chiudere tutte le finestre in modalità Navigazione anonima e riprovare.">
+
+<!ENTITY performanceUI.loadingNotice "Caricamento in corso…">
+
+<!ENTITY performanceUI.toolbar.waterfall "Sequenza temporale">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Visualizza le diverse operazioni eseguite dal browser nel corso della registrazione, mostrandole in sequenza come una cascata.">
+<!ENTITY performanceUI.toolbar.js-calltree "Albero delle chiamate">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Evidenzia le funzioni JavaScript in cui il browser ha speso più tempo nel corso della registrazione.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Allocazioni">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Visualizza in che modo è stata allocata la memoria nel corso della registrazione.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Flame chart JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Visualizza lo stack di chiamata JavaScript nel corso della registrazione.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Flame chart allocazioni">
+
+<!ENTITY performanceUI.table.totalDuration "Tempo totale">
+<!ENTITY performanceUI.table.totalDuration.tooltip "Il tempo trascorso in questa funzione e nelle funzioni chiamate.">
+<!ENTITY performanceUI.table.selfDuration "Tempo individuale">
+<!ENTITY performanceUI.table.selfDuration.tooltip "Il tempo trascorso esclusivamente in questa funzione.">
+<!ENTITY performanceUI.table.totalPercentage "Costo totale">
+<!ENTITY performanceUI.table.totalPercentage.tooltip "La percentuale di tempo trascorso in questa funzione e nelle funzioni chiamate.">
+<!ENTITY performanceUI.table.selfPercentage "Costo individuale">
+<!ENTITY performanceUI.table.selfPercentage.tooltip "La percentuale di tempo trascorso esclusivamente in questa funzione.">
+<!ENTITY performanceUI.table.samples "Campioni">
+<!ENTITY performanceUI.table.samples.tooltip "Quante volte questa funzione è stata rilevata nello stack durante il campionamento.">
+<!ENTITY performanceUI.table.function "Funzione">
+<!ENTITY performanceUI.table.function.tooltip "Il nome e la posizione nel sorgente della funzione campionata.">
+<!ENTITY performanceUI.table.totalAlloc "Allocazioni totali">
+<!ENTITY performanceUI.table.totalAlloc.tooltip "Il numero di allocazioni di oggetti campionate in questa posizione e in tutti gli elementi chiamati.">
+
+<!ENTITY performanceUI.options.filter.tooltiptext "Seleziona i dati da visualizzare nella sequenza temporale">
+
+<!ENTITY performanceUI.options.gear.tooltiptext "Configura preferenze prestazioni.">
+
+<!ENTITY performanceUI.invertTree "Inverti albero chiamate">
+<!ENTITY performanceUI.invertTree.tooltiptext "Invertendo la visualizzazione dell’albero verranno mostrate prima le chiamate dai riquadri (frame) più recenti.">
+
+<!ENTITY performanceUI.invertFlameGraph "Inverti Flame chart">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Invertendo il grafico verranno mostrate prima le chiamate dai riquadri (frame) più recenti.">
+
+<!ENTITY performanceUI.showPlatformData "Visualizza dati piattaforma Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "La visualizzazione dei dati della piattaforma Gecko permette di includerne i simboli nei rapporti del Profiler JavaScript.">
+
+<!ENTITY performanceUI.showJITOptimizations "Visualizza ottimizzazioni JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Visualizza le ottimizzazioni JIT rilevate in ogni frame JavaScript.">
+
+<!ENTITY performanceUI.flattenTreeRecursion "Appiattisci albero ricorsioni">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Appiattisci le ricorsioni durante l’analisi delle funzioni.">
+
+<!ENTITY performanceUI.enableMemory "Registra memoria">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Registra l’utilizzo della memoria durante la profilazione.">
+
+<!ENTITY performanceUI.enableAllocations "Registra allocazioni">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Registra le allocazioni di oggetti durante la profilazione.">
+
+<!ENTITY performanceUI.enableFramerate "Frequenza registrazione">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Frequenza con cui viene registrata la profilazione.">
+
+<!ENTITY performanceUI.console.recordingNoticeStart "Registrazione attuale via">
+<!ENTITY performanceUI.console.recordingNoticeEnd "">
+
+<!ENTITY performanceUI.console.stopCommandStart "Interrompere la registrazione digitando">
+<!ENTITY performanceUI.console.stopCommandEnd "nella console.">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Панель навигации по веб-сайту">
+<!ENTITY linkToolbar.accesskey "П">
+<!ENTITY linkToolbar.tooltip "Панель навигации по веб-сайту">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Всегда показывать">
+<!ENTITY linkToolbarAlways.accesskey "В">
+<!ENTITY linkToolbarAsNeeded.label "Показывать по мере надобности">
+<!ENTITY linkToolbarAsNeeded.accesskey "м">
+<!ENTITY linkToolbarNever.label "Всегда прятать">
+<!ENTITY linkToolbarNever.accesskey "р">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Самый верх">
+<!ENTITY upButton.label "Наверх">
+<!ENTITY firstButton.label "Первый">
+<!ENTITY prevButton.label "Предыдущий">
+<!ENTITY nextButton.label "Следующий">
+<!ENTITY lastButton.label "Последний">
+
+<!ENTITY documentButton.label "Документ">
+
+<!ENTITY tocButton.label "Содержание">
+<!ENTITY chapterButton.label "Главы">
+<!ENTITY sectionButton.label "Разделы">
+<!ENTITY subSectionButton.label "Подразделы">
+<!ENTITY appendixButton.label "Приложения">
+<!ENTITY glossaryButton.label "Глоссарий">
+<!ENTITY indexButton.label "Индекс">
+
+<!ENTITY moreButton.label "Ещё">
+
+<!ENTITY helpButton.label "Справка">
+<!ENTITY searchButton.label "Поиск">
+
+<!ENTITY authorButton.label "Автор(ы)">
+<!ENTITY copyrightButton.label "Авторские права">
+
+<!ENTITY bookmarkButton.label "Закладки">
+
+<!ENTITY alternateButton.label "Другие версии">
+
+<!ENTITY feedButton.label "Подписаться">

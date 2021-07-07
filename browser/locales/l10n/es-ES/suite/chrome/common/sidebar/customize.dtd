@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.customize.title.label "Personalizar &sidebarName;">
+<!ENTITY sidebar.customize.current.label "Pestañas en &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey "T">
+<!ENTITY sidebar.customize.title "Personalizar el panel lateral">
+<!ENTITY sidebar.customize.current2.label "Pestañas en el panel lateral:">
+<!ENTITY sidebar.customize.current2.accesskey "T">
+<!ENTITY sidebar.customize.customize.label "Personalizar pestaña…">
+<!ENTITY sidebar.customize.customize.accesskey "n">
+<!ENTITY sidebar.customize.remove.label "Eliminar">
+<!ENTITY sidebar.customize.remove.accesskey "R">
+<!ENTITY sidebar.customize.additional.label "Pestañas disponibles:">
+<!ENTITY sidebar.customize.additional.accesskey "s">
+<!ENTITY sidebar.customize.add.label "Añadir">
+<!ENTITY sidebar.customize.add.accesskey "A">
+<!ENTITY sidebar.customize.preview.label "Vista preliminar…">
+<!ENTITY sidebar.customize.preview.accesskey "P">
+<!ENTITY sidebar.customize.up.label "Subir">
+<!ENTITY sidebar.customize.up.accesskey "U">
+<!ENTITY sidebar.customize.down.label "Bajar">
+<!ENTITY sidebar.customize.down.accesskey "B">
+<!ENTITY sidebar.more.label "Encontrar más pestañas…">
+<!ENTITY sidebar.more.accesskey "E">

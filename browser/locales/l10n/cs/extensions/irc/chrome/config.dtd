@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Předvolby ChatZilly">
+
+<!ENTITY loading.label "Načítání, čekejte prosím…">
+
+<!ENTITY homepage.url "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "Domovská stránka ChatZilly">
+
+<!ENTITY object.add.label "Přidat…">
+<!ENTITY object.add.hint "Přidá novou síť, kanál či uživatele do předvoleb">
+<!ENTITY object.add.accesskey "P">
+
+<!ENTITY object.del.label "Odebrat">
+<!ENTITY object.del.hint "Odstraní aktuální objekt a vymaže všechny jeho předvolby">
+<!ENTITY object.del.accesskey "O">
+
+<!ENTITY object.reset.label "Obnovit">
+<!ENTITY object.reset.hint "Nastaví výchozí předvolby pro aktuální objekt">
+<!ENTITY object.reset.accesskey "v">
+
+<!ENTITY dialog.apply "Použít">
+
+<!ENTITY network "Síť">
+<!ENTITY channel "Kanál">
+<!ENTITY user "Uživatel">
+
+<!ENTITY config.add.title "Přidat nový objekt">
+
+<!ENTITY config.type.label "Typ:">
+<!ENTITY config.type.hint "Typ objektu pro který chcete přidat předvolby">
+<!ENTITY config.type.accesskey "T">
+<!ENTITY config.network.label "Síť:">
+<!ENTITY config.network.hint "Známe jméno sítě či serveru?">
+<!ENTITY config.network.accesskey "S">
+<!ENTITY config.target.label "Cíl:">
+<!ENTITY config.target.hint "Cílový kanál či uživatelské jméno">
+<!ENTITY config.target.accesskey "C">

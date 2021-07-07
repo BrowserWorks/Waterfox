@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Account Firefox">
+<!ENTITY aboutAccounts.connected.description "Connesso come:">
+<!ENTITY aboutAccounts.syncPreferences.label "Tocca qui per accedere alle impostazioni di Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "Nessuna connessione a Internet">
+<!ENTITY aboutAccounts.retry.label "Riprova">
+
+<!ENTITY aboutAccounts.restrictedError.title "Profilo limitato">
+<!ENTITY aboutAccounts.restrictedError.description "Non è possibile gestire l’account Firefox da questo profilo.">

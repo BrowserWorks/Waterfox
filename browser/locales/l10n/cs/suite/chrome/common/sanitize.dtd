@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title             "Vymazání důvěrných dat">
+
+<!-- LOCALIZATION NOTE (sanitizeDialog.width): width of the Clear Recent
+     History dialog -->
+<!ENTITY sanitizeDialog.width             "34em">
+
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear"
+     dropdown. -->
+<!ENTITY clearTimeDuration.label          "Časové období mazání:">
+<!ENTITY clearTimeDuration.accesskey      "m">
+<!ENTITY clearTimeDuration.lastHour       "Poslední hodina">
+<!ENTITY clearTimeDuration.last2Hours     "Poslední dvě hodiny">
+<!ENTITY clearTimeDuration.last4Hours     "Poslední čtyři hodiny">
+<!ENTITY clearTimeDuration.today          "Dnešek">
+<!ENTITY clearTimeDuration.everything     "Vše">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for
+     languages that require it. -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!--  LOCALIZATION NOTE (sanitizeSelectedWarning): Warning that appears
+      when not all items are selected in the in Clear Private data dialog. -->
+<!ENTITY sanitizeSelectedWarning          "Všechny vybrané položky budou vymazány.">
+
+<!-- LOCALIZATION NOTE (sanitizeUndoWarning): Second warning
+     paragraph that always appears. -->
+<!ENTITY sanitizeUndoWarning              "Tuto akci nelze vzít zpět.">
+
+<!ENTITY sanitizeItems.label              "Vymazat následující položky:">
+
+<!-- LOCALIZATION NOTE : Try to make sure to not have overlapped  accesskeys
+     with pref-privatedata.dtd. These entities are also used in the private
+     data preferences dialog. -->
+<!ENTITY itemHistory.label                "Historie prohlížení">
+<!ENTITY itemHistory.accesskey            "H">
+<!ENTITY itemHistoryS.accesskey           "r">
+<!ENTITY itemUrlBar.label                 "Historie adresního řádku">
+<!ENTITY itemUrlBar.accesskey             "a">
+<!ENTITY itemUrlBarS.accesskey            "t">
+<!ENTITY itemDownloads.label              "Historie stahování">
+<!ENTITY itemDownloads.accesskey          "s">
+<!ENTITY itemDownloadsS.accesskey         "s">
+<!ENTITY itemFormSearchHistory.label      "Formuláře a historie hledání">
+<!ENTITY itemFormSearchHistory.accesskey  "F">
+<!ENTITY itemFormSearchHistoryS.accesskey "m">
+<!ENTITY itemCache.label                  "Mezipaměť">
+<!ENTITY itemCache.accesskey              "p">
+<!ENTITY itemCacheS.accesskey             "e">
+<!ENTITY itemCookies.label                "Cookies">
+<!ENTITY itemCookies.accesskey            "C">
+<!ENTITY itemCookiesS.accesskey           "k">
+<!ENTITY itemOfflineApps.label            "Offline obsah">
+<!ENTITY itemOfflineApps.accesskey        "O">
+<!ENTITY itemOfflineAppsS.accesskey       "i">
+<!ENTITY itemPasswords.label              "Uložená hesla">
+<!ENTITY itemPasswords.accesskey          "U">
+<!ENTITY itemPasswordsS.accesskey         "h">
+<!ENTITY itemSessions.label               "Relace s autentizací">
+<!ENTITY itemSessions.accesskey           "R">
+
+<!ENTITY itemSessionsS.accesskey          "u">
+
+<!ENTITY sanitizeButton.label            "Vymazat důvěrná data">
+<!ENTITY itemSitePreferences.label        "Nastavení pro daný server">
+<!ENTITY itemSitePreferences.accesskey    "p">
+<!ENTITY itemSitePreferencesS.accesskey   "t">

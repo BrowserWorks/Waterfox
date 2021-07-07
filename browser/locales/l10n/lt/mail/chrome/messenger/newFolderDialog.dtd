@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Naujas aplankas">
+<!ENTITY name.label                 "Vardas:">
+<!ENTITY name.accesskey             "V">
+<!ENTITY description.label          "Naują aplanką įdėti į šį aplanką:">
+<!ENTITY description.accesskey      "d">
+<!ENTITY folderRestriction1.label   "Šis serveris gali turėti tik dviejų tipų aplankus.">
+<!ENTITY folderRestriction2.label   "Naujame aplanke bus laikomi:">
+<!ENTITY foldersOnly.label          "Tik aplankai">
+<!ENTITY messagesOnly.label         "Tik laiškai">
+<!ENTITY accept.label               "Sukurti aplanką">
+<!ENTITY accept.accesskey           "k">

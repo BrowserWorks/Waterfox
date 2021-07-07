@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "مساعدة">
+<!ENTITY helpMenu.accesskey "ة">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "مساعدة">
+<!ENTITY helpMenuWin.accesskey "ة">
+<!ENTITY aboutProduct2.label "عن &brandShorterName;">
+<!ENTITY helpTroubleshootingInfo.label     "معلومات معالجة الأعطال">
+<!ENTITY helpTroubleshootingInfo.accesskey "ط">
+<!ENTITY helpSafeMode.label     "أعِد التشغيل مع تعطيل الإضافات…">
+<!ENTITY helpSafeMode.accesskey "ض">
+<!ENTITY helpSafeMode.stop.label     "أعِد التشغيل مع تفعيل الإضافات">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "اختصارات لوحة المفاتيح">
+
+<!ENTITY helpFeedbackPage.label "أرسِل تعليقًا…">
+
+
+<!ENTITY helpGetInvolvedPage.label "شارِك معنا">
+
+<!ENTITY helpDonationsPage.label "تبرّع">

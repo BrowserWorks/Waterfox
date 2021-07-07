@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Huvudlösenord">
+<!ENTITY  managepassword.caption                 "Tidsgräns för huvudlösenord">
+<!ENTITY  managepassword.text                    "&brandShortName; kommer att fråga efter ditt huvudlösenord:">
+<!ENTITY  managepassword.askfirsttime            "Första gången det behövs">
+<!ENTITY  managepassword.askfirsttime.accesskey  "F">
+<!ENTITY  managepassword.askeverytime            "Varje gång det behövs">
+<!ENTITY  managepassword.askeverytime.accesskey  "V">
+<!ENTITY  managepassword.asktimeout              "Om det inte har använts på ">
+<!ENTITY  managepassword.asktimeout.accesskey    "O">
+<!ENTITY  managepassword.timeout.unit            "minuter eller längre">
+
+<!ENTITY  changepassword.caption                 "Ändra huvudlösenord">
+<!ENTITY  changepassword.text                    "Ditt huvudlösenord skyddar känslig information som webblösenord och certifikat.">
+<!ENTITY  changepassword.button                  "Ändra lösenord…">
+<!ENTITY  changepassword.accesskey               "Ä">
+
+<!ENTITY  resetpassword.caption                  "Ta bort huvudlösenord">
+<!ENTITY  resetpassword.text                     "Om du tar bort ditt huvudlösenord kommer alla dina lagrade webb- och e-post-lösenord, formulärdata, personliga certifikat och hemliga nycklar att tas bort.">
+<!ENTITY  resetpassword.button                   "Ta bort lösenord">
+<!ENTITY  resetpassword.accesskey                "b">

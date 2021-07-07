@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption "Wersje protokołów SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption "Ostrzeżenia SSL/TLS">
+<!ENTITY SSLMixedContent.caption "Zawartość częściowo szyfrowana">
+<!ENTITY SSLClientAuthMethod.caption "Wybór certyfikatu klienta">
+
+<!ENTITY pref.ssltls.title "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description "Tutaj można wybrać jeden bądź więcej protokołów szyfrowania, które będą używane przy połączeniach szyfrowanych.">
+<!ENTITY limit.enable.label "Włącz:">
+<!ENTITY limit.tls10.label "TLS 1.0">
+<!ENTITY limit.tls10.accesskey "T">
+<!ENTITY limit.tls11.label "TLS 1.1">
+<!ENTITY limit.tls11.accesskey "1">
+<!ENTITY limit.tls12.label "TLS 1.2">
+<!ENTITY limit.tls12.accesskey "2">
+<!ENTITY limit.tls13.label "TLS 1.3">
+<!ENTITY limit.tls13.accesskey "3">
+
+<!ENTITY warn.description2 "&brandShortName; może informować o poziomie bezpieczeństwa oglądanych stron WWW. Ostrzeżenie z pytaniem o zezwolenie zostanie wyświetlone przed:">
+<!ENTITY warn.enteringsecure "Wczytaniem strony, która używa szyfrowania">
+<!ENTITY warn.enteringsecure.accesskey "W">
+<!ENTITY warn.insecurepost "Przesyłaniem danych pomiędzy stronami, które nie używają szyfrowania">
+<!ENTITY warn.insecurepost.accesskey "s">
+<!ENTITY warn.leavingsecure "Opuszczeniem strony, która używa szyfrowania">
+<!ENTITY warn.leavingsecure.accesskey "O">
+
+<!ENTITY mixed.description "Szyfrowane strony mogą zawierać niezaszyfrowaną zawartość, która jest niezabezpieczona przed podsłuchiwaniem bądź oszustwami. &brandShortName; może rozpoznawać i blokować te zagrożenia:">
+<!ENTITY warn.mixedactivecontent "Ostrzegaj, jeśli szyfrowane witryny zawierają niezabezpieczoną zawartość">
+<!ENTITY warn.mixedactivecontent.accesskey "g">
+<!ENTITY block.activecontent "Nie wczytuj niezabezpieczonej zawartości na szyfrowanych stronach">
+<!ENTITY block.activecontent.accesskey "N">
+<!ENTITY warn.mixeddisplaycontent "Ostrzegaj, jeśli szyfrowane witryny zawierają inne rodzaje zawartości częściowo szyfrowanej">
+<!ENTITY warn.mixeddisplaycontent.accesskey "d">
+<!ENTITY block.displaycontent "Nie wczytuj innych rodzajów zawartości częściowo szyfrowanej na szyfrowanych stronach">
+<!ENTITY block.displaycontent.accesskey "z">
+
+<!ENTITY certselect.description "Określ sposób, w jaki &brandShortName; dokona wyboru certyfikatu do przedstawienia stronom WWW, które tego zażądają:">
+<!ENTITY certselect.auto "Wybierz automatycznie">
+<!ENTITY certselect.auto.accesskey "a">
+<!ENTITY certselect.ask "Pytaj za każdym razem">
+<!ENTITY certselect.ask.accesskey "e">

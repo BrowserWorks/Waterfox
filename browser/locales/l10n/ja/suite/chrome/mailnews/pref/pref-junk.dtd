@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "迷惑メールフィルター">
+<!ENTITY junkSettings.caption "迷惑メールフィルターの設定 (共通)">
+<!ENTITY junkMail.intro "アカウントごとの迷惑メールフィルターの設定はアカウント設定で行ってください。">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "手動で迷惑マークを付けたときに次の処理を実行する:">
+<!ENTITY manualMark.accesskey           "W">
+<!ENTITY manualMarkModeMove.label       "メッセージをアカウント別の &quot;迷惑メール&quot; フォルダーへ移動する">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "メッセージを削除する">
+<!ENTITY manualMarkModeDelete.accesskey "D">
+
+<!ENTITY markAsRead.intro               "次のときメッセージを既読にする:">
+<!ENTITY autoMarkAsRead.label           "&brandShortName; が迷惑メールであると判断したとき">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "手動で迷惑マークを付けたとき"><!--When I manually mark them as junk-->
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "迷惑メールフィルターのログを有効にする">
+<!ENTITY enableJunkLogging.accesskey    "E">
+<!ENTITY openJunkLog.label              "ログを表示">
+<!ENTITY openJunkLog.accesskey          "S">
+<!ENTITY resetTrainingData.label        "学習データをリセット">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "疑いのあるメール">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "フィッシング詐欺メール">
+<!ENTITY enablePhishingDetector.label     "表示中のメッセージにフィッシング詐欺の疑いがあるときに知らせる">
+<!ENTITY enablePhishingDetector.accesskey "T">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "ウイルス対策">
+<!ENTITY antiVirus.label                  "ウイルス対策ソフトに受信メッセージをスキャンさせる">
+<!ENTITY antiVirus.accesskey              "A">

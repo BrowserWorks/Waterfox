@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Rediger denne kontos identiteter. Den øverste identitet bruges som standard.">
+<!ENTITY identitiesListAdd.label "Tilføj…">
+<!ENTITY identitiesListAdd.accesskey "T">
+<!ENTITY identitiesListEdit.label "Rediger…">
+<!ENTITY identitiesListEdit.accesskey "R">
+<!ENTITY identitiesListDefault.label "Angiv som standard">
+<!ENTITY identitiesListDefault.accesskey "n">
+<!ENTITY identitiesListDelete.label "Slet">
+<!ENTITY identitiesListDelete.accesskey "S">
+<!ENTITY identitiesListClose.label "Afslut">
+<!ENTITY identitiesListClose.accesskey "A">

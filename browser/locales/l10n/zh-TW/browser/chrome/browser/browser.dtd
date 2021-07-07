@@ -1,0 +1,288 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "開啟選單">
+
+<!ENTITY navbarOverflow.label                "更多工具…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "釘選分頁">
+<!ENTITY  unpinTab.label                     "還原成普通分頁">
+
+<!ENTITY  listAllTabs.label      "列出所有分頁">
+
+<!ENTITY tabCmd.label "開新分頁">
+<!ENTITY openFileCmd.label "開啟檔案…">
+<!ENTITY printCmd.label "列印…">
+
+<!ENTITY taskManagerCmd.label "工作管理員">
+
+<!ENTITY menubarCmd.label "選單列">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "導覽">
+<!ENTITY personalbarCmd.label "書籤工具列">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "書籤">
+<!ENTITY bookmarksToolbarItem.label "書籤工具列項目">
+
+<!ENTITY fullScreenCmd.label "全螢幕">
+
+<!ENTITY pictureInPictureHideToggle.label "隱藏子母畫面切換按鈕">
+<!ENTITY pictureInPictureHideToggle.accesskey "H">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; 設定">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "連結其他裝置…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.signin.label "登入 &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "開啟 &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; 服務">
+<!ENTITY fxa.menu.account.label "帳號">
+<!ENTITY fxa.menu.settings.label "設定">
+<!ENTITY fxa.menu.accountSettings.label "帳號設定">
+<!ENTITY fxa.menu.manageAccount2.label "管理帳號">
+<!ENTITY fxa.menu.signOut.label "登出…">
+<!ENTITY fxa.menu.setupSync.label "設定 &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "立即傳送分頁到任何您登入過的裝置。">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "已進入全螢幕模式">
+<!ENTITY fullscreenWarning.generic.label "此文件已進入全螢幕模式">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "離開全螢幕模式（Esc）">
+<!ENTITY exitDOMFullscreenMac.button "離開全螢幕模式（Esc）">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "可控制您的滑鼠游標，按 Esc 取回控制權。">
+<!ENTITY pointerlockWarning.generic.label "此文件可控制您的滑鼠游標，按 Esc 取回控制權。">
+
+<!ENTITY showAllBookmarks2.label "顯示所有書籤">
+<!ENTITY recentBookmarks.label "最近加入的書籤">
+<!ENTITY bookmarksToolbarChevron.tooltip "顯示更多書籤">
+
+<!ENTITY printButton.label            "列印">
+<!ENTITY printButton.tooltip          "列印此頁">
+
+<!ENTITY searchItem.title             "搜尋">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "首頁">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; 首頁">
+
+<!ENTITY bookmarksButton.label          "書籤">
+
+<!ENTITY bookmarksSubview.label             "書籤">
+<!ENTITY bookmarksMenuButton2.label         "書籤選單">
+<!ENTITY bookmarksMenuButton.other.label    "其他書籤">
+<!ENTITY bookmarksMenuButton.mobile.label   "行動書籤">
+<!ENTITY viewBookmarksSidebar2.label        "檢視書籤欄">
+<!ENTITY hideBookmarksSidebar.label         "隱藏書籤側邊欄">
+<!ENTITY viewBookmarksToolbar.label         "檢視書籤工具列">
+<!ENTITY hideBookmarksToolbar.label         "隱藏書籤工具列">
+<!ENTITY searchBookmarks.label              "搜尋書籤">
+<!ENTITY bookmarkingTools.label             "書籤工具">
+<!ENTITY addBookmarksMenu.label             "在工具列中加入書籤選單">
+<!ENTITY removeBookmarksMenu.label          "從工具列移除書籤選單">
+
+<!ENTITY historyButton.label            "歷史">
+
+<!ENTITY downloads.label              "下載">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "下載項目">
+<!ENTITY addons.label                 "附加元件">
+
+<!ENTITY webDeveloperMenu.label       "網頁開發者">
+
+<!ENTITY newNavigatorCmd.label        "開新視窗">
+<!ENTITY newPrivateWindow.label     "開新隱私視窗">
+
+<!ENTITY editMenu.label         "編輯">
+<!ENTITY preferencesCmd2.label       "選項">
+<!ENTITY preferencesCmdUnix.label       "偏好設定">
+<!ENTITY logins.label                           "登入資訊與密碼">
+
+<!ENTITY overflowCustomizeToolbar.label       "自訂工具列…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "歷史">
+<!ENTITY historyUndoMenu.label "最近關閉的分頁">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "最近關閉的視窗">
+
+<!ENTITY appMenuHistory.showAll.label "顯示所有瀏覽記錄">
+
+<!ENTITY appMenuHistory.clearRecent.label "清除最近的歷史記錄…">
+<!ENTITY appMenuHistory.restoreSession.label "回復先前的瀏覽狀態">
+<!ENTITY appMenuHistory.viewSidebar.label "檢視歷史側邊欄">
+<!ENTITY appMenuHistory.hideSidebar.label "隱藏瀏覽紀錄側邊欄">
+<!ENTITY appMenuHistory.recentHistory.label "最近紀錄">
+<!ENTITY appMenuHelp.label "說明">
+
+<!ENTITY appMenuRemoteTabs.label "同步的分頁">
+
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "無已開啟的分頁">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "顯示更多">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "顯示來自此裝置的更多分頁">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "全部顯示">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "顯示來自此裝置的所有分頁">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "開啟分頁同步功能以檢視您其他裝置中的分頁清單。">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "想在這裡看到您其他裝置上開啟的分頁嗎？">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "開啟 Sync 偏好設定">
+<!ENTITY appMenuRemoteTabs.welcome.label "檢視您其他裝置中的分頁清單。">
+<!ENTITY appMenuRemoteTabs.unverified.label "需要驗證您的帳號。">
+<!ENTITY appMenuRemoteTabs.signintosync.label "登入 &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "開啟 &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "管理裝置…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "檢視「同步的分頁」側邊欄">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "隱藏已同步分頁側邊欄">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "連結其他裝置">
+
+<!ENTITY appMenuRecentHighlights.label "近期焦點">
+
+<!ENTITY customizeMenu.addToToolbar.label "新增至工具列">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "新增到收藏選單">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "從收藏選單取消釘選">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "自工具列移除">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "新增更多項目…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "更多">
+
+<!ENTITY contentSearchSubmit.tooltip  "送出搜尋">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "搜尋">
+<!ENTITY searchIcon.tooltip           "搜尋">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "複製鏈結">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "將頁面儲存至 Pocket">
+<!ENTITY pocketMenuitem.label         "檢視 Pocket 清單">
+
+<!ENTITY emailPageCmd.label           "郵寄鏈結…">
+
+<!ENTITY fullZoom.label                 "縮放">
+
+<!ENTITY sidebarCloseButton.tooltip     "關閉側邊欄">
+
+<!ENTITY quitApplicationCmdWin2.label       "結束">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "結束 &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "離開">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "離開 &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "編輯彈出型視窗阻擋偏好設定…">
+<!ENTITY editPopupSettings.label "編輯彈出型視窗阻擋選項…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "尋找文字…">
+
+<!ENTITY spellAddDictionaries.label "新增字典…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "瀏覽器分頁">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "自動隱藏">
+
+
+<!ENTITY uiTour.infoPanel.close "關閉">
+
+<!ENTITY panicButton.thankyou.msg1                "已清除您最近的瀏覽紀錄。">
+<!ENTITY panicButton.thankyou.msg2                "安全地瀏覽吧！">
+<!ENTITY panicButton.thankyou.buttonlabel         "謝啦！">
+
+<!ENTITY updateAvailable.panelUI.label "下載 &brandShorterName; 更新">
+<!ENTITY updateManual.panelUI.label "下載全新乾淨的 &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "無法繼續更新">
+<!ENTITY updateRestart.panelUI.label2 "重新啟動以更新 &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "正在同步裝置…">
+
+<!ENTITY pageAction.shareUrl.label "分享">
+<!ENTITY pageAction.shareMore.label "更多…">
+
+<!ENTITY libraryButton.tooltip "檢視瀏覽紀錄、已存書籤等資料">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "已開啟輔助功能">

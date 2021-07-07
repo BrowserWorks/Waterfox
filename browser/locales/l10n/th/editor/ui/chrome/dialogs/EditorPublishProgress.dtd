@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "URL ไซต์:">
+<!ENTITY docSubdir.label       "ไดเรกทอรีย่อยหน้า:">
+<!ENTITY otherSubdir.label     "ไดเรกทอรีย่อยภาพ:">
+
+<!ENTITY status.label          "กำลังเผยแพร่…">
+<!ENTITY fileList.label        "สถานะการเผยแพร่">
+<!ENTITY succeeded.label       "สำเร็จ">
+<!ENTITY failed.label          "ล้มเหลว">
+
+<!ENTITY keepOpen              "เปิดหน้าต่างนี้ค้างไว้หลังจากการเผยแพร่เสร็จสมบูรณ์">
+<!ENTITY closeButton.label     "ปิด">

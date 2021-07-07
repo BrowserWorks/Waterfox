@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "设置">
+<!ENTITY security.caption "安全及认证">
+<!ENTITY serverName.label "服务器名称：">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "描述:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "端口：">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "用户名：">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "连接安全：">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "无">
+<!ENTITY connectionSecurityType-1.label "STARTTLS，如果可用">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP服务器">
+<!ENTITY serverPortDefault.label "默认：">
+<!ENTITY authMethod.label "验证方式：">
+<!ENTITY authMethod.accesskey "i">

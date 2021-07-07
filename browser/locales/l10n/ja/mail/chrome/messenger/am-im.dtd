@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title			"アカウント情報"><!-- "Account properties" -->
+<!ENTITY accountWindow.width			"300">
+<!ENTITY account.general			"一般">
+<!ENTITY account.advanced			"詳細オプション">
+<!ENTITY account.name				"ユーザー名:">
+<!ENTITY account.password			"パスワード:">
+<!ENTITY account.alias				"別名:">
+<!ENTITY account.newMailNotification		"新着メールを通知する"><!-- "Notify on new Mail" -->
+<!ENTITY account.autojoin			"自動参加するチャンネル:">
+<!ENTITY account.proxySettings.caption		"プロキシー設定:">
+<!ENTITY account.proxySettings.change.label	"変更...">
+<!ENTITY account.proxySettings.change.accessKey	"C">

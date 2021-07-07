@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle		"セッションの復元">
+<!ENTITY restorepage.pagetitle		"前回終了時のウィンドウとタブを復元しますか？">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc		"&brandShortName; は前回正常に終了できませんでした。ご不便をおかけして申し訳ありません。前回終了時のウィンドウとタブを復元することもできますし、復元の必要がなければ新しいセッションを開始することもできます。">
+<!ENTITY restorepage.remedies		"&brandShortName; が繰り返し異常終了する場合:">
+<!ENTITY restorepage.dueToChrome	"最近インストールしたアドオンをアドオンマネージャーで無効化してください。">
+<!ENTITY restorepage.dueToContent	"問題の原因となりそうなウェブページを除外して起動してみてください:">
+
+<!ENTITY restorepage.restoreButton	"タブを復元">
+<!ENTITY restorepage.restore.access	"R">
+<!ENTITY restorepage.cancelButton	"状態を復元せずに起動">
+<!ENTITY restorepage.cancel.access	"S">
+
+<!ENTITY restorepage.restoreHeader	"復元">
+<!ENTITY restorepage.listHeader		"ウィンドウとタブ">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel	"ウィンドウ &#37;S">

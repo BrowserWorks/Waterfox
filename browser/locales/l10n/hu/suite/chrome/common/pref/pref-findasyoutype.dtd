@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Gépelőkeresés">
+<!ENTITY findAsYouTypeBehavior.label "Gépelőkeresés">
+<!ENTITY findAsYouTypeTip.label "Ötlet: A gépelőkeresés kézi indításához gépeljen be egy / jelet a szöveg, illetve egy ' jelet a hivatkozások kereséséhez, majd írja be a keresendő szöveget.">
+<!ENTITY findAsYouTypeTimeout.label "Az aktuális keresés törlése néhány másodperc tétlenség után">
+<!ENTITY findAsYouTypeTimeout.accesskey "t">
+<!ENTITY findAsYouTypeSound.label "Hangjelzés, ha a szöveg nem található">
+<!ENTITY findAsYouTypeSound.accesskey "H">
+<!ENTITY findAsYouTypeEnableAuto.label "Automatikus keresés egy weboldalon gépeléskor:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "A">
+<!ENTITY findAsYouTypeAutoText.label "Az oldal teljes szövegében">
+<!ENTITY findAsYouTypeAutoText.accesskey "A">
+<!ENTITY findAsYouTypeAutoLinks.label "Csak a hivatkozásokban">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "C">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Keresés eszköztár megjelenítése gépelőkeresés közben">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "K">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Megjegyzés: A gépelőkeresés – a keresés eszköztár nélkül – nem használható ékezetes szövegek keresésére.">

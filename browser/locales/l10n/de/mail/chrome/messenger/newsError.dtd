@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (newsError.title): The title of the news error page.
+     Not generally visible. -->
+<!ENTITY newsError.title "Problem beim Laden des Beitrags">
+
+<!-- LOCALIZATION NOTE (articleNotFound.title): The main heading for the news
+     error page. -->
+<!ENTITY articleNotFound.title "Beitrag nicht gefunden">
+
+<!-- LOCALIZATION NOTE (articleNotFound.desc): A longer description for the news
+     error page. -->
+<!ENTITY articleNotFound.desc "Der Newsgroup-Server kann den Beitrag nicht finden.">
+
+<!-- LOCALIZATION NOTE (serverResponded.title): A string preceding the text
+     response from the newsgroup server describing the error. -->
+<!ENTITY serverResponded.title "Antwort des Newsgroup-Servers:">
+
+<!-- LOCALIZATION NOTE (articleExpired.title): A string explaining that the
+     article may have expired. -->
+<!ENTITY articleExpired.title "Eventuell ist der Beitrag abgelaufen.">
+
+<!-- LOCALIZATION NOTE (trySearching.title): A string preceding the message's
+     ID. -->
+<!ENTITY trySearching.title "Versuchen Sie, nach dem Beitrag zu suchen:">
+
+<!-- LOCALIZATION NOTE (removeExpiredArticles.title): The label for the button
+     to remove all expired articles from the newsgroup. -->
+<!ENTITY removeExpiredArticles.title "Alle abgelaufenen Beiträge entfernen">

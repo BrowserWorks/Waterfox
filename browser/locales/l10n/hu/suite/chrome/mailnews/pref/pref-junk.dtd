@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Levélszemét kezelése">
+<!ENTITY junkSettings.caption "Globális levélszemét kezelési beállítások">
+<!ENTITY junkMail.intro "A postafiókok egyedi levélszemét kezelési beállításait a Postafiókok beállításainál adhatja meg">
+<!-- Junk Mail Controls -->
+
+<!ENTITY manualMark.label               "A levélszemét kézi megjelölésekor:">
+<!ENTITY manualMark.accesskey           "m">
+<!ENTITY manualMarkModeMove.label       "Áthelyezés a „Szemét” mappába">
+<!ENTITY manualMarkModeMove.accesskey   "t">
+<!ENTITY manualMarkModeDelete.label     "Törlés">
+<!ENTITY manualMarkModeDelete.accesskey "T">
+
+<!ENTITY markAsRead.intro               "Üzenet jelölése olvasottnak">
+<!ENTITY autoMarkAsRead.label           "Ha a &brandShortName; jelöli levészemétnek">
+<!ENTITY autoMarkAsRead.accesskey       "j">
+<!ENTITY manualMarkAsRead.label         "Kézi levélszemétnek jelölés esetén">
+<!ENTITY manualMarkAsRead.accesskey     "K">
+
+<!ENTITY enableJunkLogging.label        "Levélszemétnapló bekapcsolása">
+<!ENTITY enableJunkLogging.accesskey    "n">
+<!ENTITY openJunkLog.label              "Levélszemétnapló">
+<!ENTITY openJunkLog.accesskey          "L">
+<!ENTITY resetTrainingData.label        "Tanulási adatok törlése">
+<!ENTITY resetTrainingData.accesskey    "T">
+
+<!ENTITY pref.suspectMail.caption       "Gyanús levelek">
+<!-- Phishing Detector -->
+
+<!ENTITY pref.phishing.caption            "Becsapós e-mail">
+<!ENTITY enablePhishingDetector.label     "Figyelmeztetés a becsapós e-mailekre">
+<!ENTITY enablePhishingDetector.accesskey "b">
+<!-- Anti Virus -->
+
+<!ENTITY pref.antivirus.caption           "Antivírus">
+<!ENTITY antiVirus.label                  "Könnyűvé teszi a vírusellenes szoftverek számára a bejövő üzenetek ellenőrzését">
+<!ENTITY antiVirus.accesskey              "a">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Establecer fondo de escritorio">
+<!ENTITY position.label "Posición:">
+<!ENTITY position.accesskey "P">
+<!ENTITY position.tile.label "Título">
+<!ENTITY position.stretch.label "Ajustar">
+<!ENTITY position.center.label "Centrar">
+<!ENTITY position.fill.label "Rellenar">
+<!ENTITY position.fit.label "Encajar">
+<!ENTITY picker.label "Color:">
+<!ENTITY picker.accesskey "C">
+<!ENTITY preview.caption "Vista preliminar">
+<!ENTITY apply.label "Aplicar">
+<!ENTITY apply.accesskey "A">
+<!ENTITY close.label "Cerrar">

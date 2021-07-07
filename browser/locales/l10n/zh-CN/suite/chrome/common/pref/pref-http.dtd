@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP 连网">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "直接连接选项">
+<!ENTITY prefProxy.label                     "代理连接选项">
+<!ENTITY prefEnableHTTP10.label              "使用 HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "使用 HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "e">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "此类选项可以对 HTTP 连接的性能和兼容性进行微调。某些代理服务器必需使用 HTTP/1.0 连接（见发行日志了解细节）。">
+<!ENTITY prefUseragent.label                 "用户代理字符串">
+<!ENTITY prefFirefoxCompat.label             "宣告 Firefox 兼容">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "宣告 Lightning 已安装">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "警告：禁用这些设置可能导致网站或服务不能正常工作。">
+<!ENTITY prefFirefoxStrict.label             "标识为 Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "标识为 SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "标识为 SeaMonkey 并与 Firefox 兼容">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "警告：更改此项设置可能导致网站或服务不能正常工作。">

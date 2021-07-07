@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Szűrőnapló">
+<!ENTITY viewLogInfo.text "A Szűrőnapló dokumentálja a postafiókon lefutott szűrőket. Az alábbi jelölőnégyzet segítségével engedélyezhető a naplózás.">
+<!ENTITY clearLog.label "Napló törlése">
+<!ENTITY clearLog.accesskey "N">
+<!ENTITY enableLog.label "Szűrőnapló engedélyezése">
+<!ENTITY enableLog.accesskey "S">
+<!ENTITY closeLog.label "Bezárás">
+<!ENTITY closeLog.accesskey "B">

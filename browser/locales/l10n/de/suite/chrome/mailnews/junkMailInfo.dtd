@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Über Junk-Mail">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "Mail erkennt automatisch eingehende Nachrichten, die anscheinend Junk-Mail (auch bekannt als Spam) sind. Nachrichten, die Mail als Junk interpretiert, zeigen ein Junk-Symbol an">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Sie müssen Mail trainieren, um Junk-Mail erkennen zu können, indem Sie die Junk-Schaltfläche in der Symbolleiste verwenden und Nachrichten als Junk oder nicht Junk klassifizieren.">
+<!ENTITY info3.label   "Wenn Mail Ihre Junk-Mails korrekt identifiziert, können Sie Junk-Mail-Filter verwenden, um eingehende Mail automatisch in einen Junk-Ordner zu verschieben.">
+<!ENTITY info4.label   "Für weitere Informationen klicken Sie die Hilfe-Schaltfläche.">

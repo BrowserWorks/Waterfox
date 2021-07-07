@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Internet Search">
+<!ENTITY legendHeader                     "Default Search Engine">
+<!ENTITY defaultSearchEngine.label        "Search using:">
+<!ENTITY defaultSearchEngine.accesskey    "S">
+
+<!ENTITY engineManager.label              "Manage Search Engines…">
+
+<!ENTITY searchResults.label              "Search Results">
+
+<!ENTITY openInTab.label                  "Open new tabs for sidebar search results">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "Open a tab instead of a window for a context menu web search">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "Open the Search tab in the Sidebar when a search is invoked">
+<!ENTITY openSidebarSearchPanel.accesskey "O">

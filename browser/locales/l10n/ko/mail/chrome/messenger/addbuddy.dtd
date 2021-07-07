@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- (^m^) 채팅 "Add contact" 대화상자 -->
+<!ENTITY addBuddyWindow.title	"연락처 추가">
+<!-- en-US: "Add contact" -->
+<!ENTITY name.label		"사용자명">
+<!ENTITY account.label		"계정">

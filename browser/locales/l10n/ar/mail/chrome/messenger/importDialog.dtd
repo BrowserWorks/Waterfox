@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "استيراد">
+<!ENTITY importAll.label          "استورد كل شيء">
+<!ENTITY importAll.accesskey      "ك">
+<!ENTITY importMail.label         "البريد">
+<!ENTITY importMail.accesskey     "ر">
+<!ENTITY importFeeds.label        "اشتراكات التلقيمات">
+<!ENTITY importFeeds.accesskey    "ت">
+<!ENTITY importAddressbook.label  "دفاتر العناوين">
+<!ENTITY importAddressbook.accesskey "د">
+<!ENTITY importSettings.label     "الإعدادات">
+<!ENTITY importSettings.accesskey "ع">
+<!ENTITY importFilters.label      "المرشحات">
+<!ENTITY importFilters.accesskey  "ح">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "مرشد استيراد بريد &brandShortName;">
+<!ENTITY importShortDesc.label    "استورد البريد، ودفاتر العناوين، والإعدادات، والمرشحات من برامج أخرى">
+
+<!ENTITY importDescription1.label "هذا المرشد سوف يستورد رسائل البريد، ومدخلات دفاتر العناوين، والتفضيلات، والمرشحات من برامج بريد أخرى ومن صيغ دفاتر عناوين شائعة إلى &brandShortName;.">
+<!ENTITY importDescription2.label "بمجرّد استيرادها سيمكنك الوصول إليها من بريد &brandShortName; و/أو دفتر العناوين.">
+
+<!ENTITY selectDescription.label  "من فضلك اختر نوع الملف الذي ترغب باستيراده:">
+<!ENTITY selectDescriptionB.label "من فضلك اختر حسابا موجودا أو أنشئ حسابا جديدا:">
+<!ENTITY selectDescription.accesskey "ض">
+<!ENTITY acctName.label           "الاسم:">
+<!ENTITY acctName.accesskey       "س">
+<!ENTITY noModulesFound.label     "لم يُعثر على أي تطبيق أو ملف لاستيراد البيانات منه.">
+
+<!ENTITY back.label               "&lt; السابق">
+<!ENTITY forward.label            "التالي &gt;">
+<!ENTITY finish.label             "أنهِ">
+<!ENTITY cancel.label             "ألغِ">
+
+<!ENTITY select.label             "أو اختر نوع المحتوى للاستيراد:">
+
+<!ENTITY title.label              "العنوان">
+<!ENTITY processing.label         "يستورد…">

@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Nouvel onglet">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Ouvrir le site web…">
+<!ENTITY openCmd.accesskey "W">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Ouvrir un fichier…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Fermer les autres onglets">
+<!ENTITY closeOtherTabs.accesskey "a">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Fermer les onglets situés à droite">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+
+<!ENTITY uploadFile.label "Télécharger le fichier vers…">
+<!ENTITY uploadFile.accesskey "h">
+
+<!ENTITY printSetupCmd.label "Mise en page…">
+<!ENTITY printSetupCmd.accesskey "M">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Rechercher dans la page…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Barres d’outils">
+<!ENTITY toolbarsCmd.accesskey "t">
+<!ENTITY tabbarCmd.label "Barre des onglets">
+<!ENTITY tabbarCmd.accesskey "o">
+<!ENTITY taskbarCmd.label "Barre d’état">
+<!ENTITY taskbarCmd.accesskey "t">
+<!ENTITY componentbarCmd.label "Barre des composants">
+<!ENTITY componentbarCmd.accesskey "c">
+
+<!ENTITY fullScreenCmd.label "Plein écran">
+<!ENTITY fullScreenCmd.accesskey "P">
+
+<!ENTITY useStyleSheetMenu.label "Style de la page">
+<!ENTITY useStyleSheetMenu.accesskey "y">
+<!ENTITY useStyleSheetNone.label "Aucune">
+<!ENTITY useStyleSheetNone.accesskey "A">
+<!ENTITY useStyleSheetPersistentOnly.label "Style par défaut">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "d">
+<!ENTITY bidiSwitchPageDirectionItem.label "Changer le sens de la page">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "g">
+<!ENTITY pageSourceCmd.label "Code source de la page">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Informations sur la page">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Aller à">
+<!ENTITY goMenu.accesskey "l">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Accueil">
+<!ENTITY goHomeCmd.accesskey "A">
+<!ENTITY historyCmd.label "Historique">
+<!ENTITY historyCmd.accesskey "i">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Onglets récemment fermés">
+<!ENTITY recentTabs.accesskey "g">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Fenêtres récemment fermées">
+<!ENTITY recentWindows.accesskey "c">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Restaurer la session précédente">
+<!ENTITY historyRestoreLastSession.accesskey "t">
+<!ENTITY syncTabsMenu.label "Onglets d’autres ordinateurs">
+<!ENTITY syncTabsMenu.accesskey "O">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Marque-pages">
+<!ENTITY bookmarksMenu.accesskey "M">
+<!ENTITY addCurPageCmd.label "Marquer cette page">
+<!ENTITY addCurPageCmd.accesskey "M">
+<!ENTITY addCurPageAsCmd.label "Classer cette page…">
+<!ENTITY addCurPageAsCmd.accesskey "C">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Marquer ce groupe d’onglets…">
+<!ENTITY addCurTabsAsCmd.accesskey "g">
+<!ENTITY manBookmarksCmd.label "Organiser les marque-pages…">
+<!ENTITY manBookmarksCmd.accesskey "O">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Rechercher sur Internet">
+<!ENTITY searchInternetCmd.accesskey "c">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Traduire la page">
+<!ENTITY translateMenu.accesskey "r">
+
+<!ENTITY cookieMessageTitle.label "Permissions des cookies">
+<!ENTITY cookieDisplayCookiesCmd.label "Gérer les cookies stockés">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "G">
+<!ENTITY cookieAllowCookiesCmd.label "Autoriser les cookies de ce site">
+<!ENTITY cookieAllowCookiesCmd.accesskey "A">
+<!ENTITY cookieAllowCookiesMsg.label "Les cookies de ce site seront systématiquement acceptés.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Autoriser les cookies de session de ce site">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "s">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Ce site sera seulement autorisé à définir des cookies pour la session en cours.">
+<!ENTITY cookieCookiesDefaultCmd.label "Permissions des cookies par défaut">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "P">
+<!ENTITY cookieCookiesDefaultMsg.label "Les cookies de ce site seront acceptés ou rejetés en se basant sur les paramètres par défaut.">
+<!ENTITY cookieBlockCookiesCmd.label "Bloquer les cookies de ce site">
+<!ENTITY cookieBlockCookiesCmd.accesskey "I">
+<!ENTITY cookieBlockCookiesMsg.label "Les cookies de ce site seront systématiquement rejetés.">
+
+<!ENTITY cookieImageMessageTitle.label "Permissions des images">
+<!ENTITY cookieDisplayImagesCmd.label "Gérer les permissions sur les images">
+<!ENTITY cookieDisplayImagesCmd.accesskey "G">
+<!ENTITY cookieAllowImagesCmd.label "Autoriser les images de ce site">
+<!ENTITY cookieAllowImagesCmd.accesskey "A">
+<!ENTITY cookieAllowImagesMsg.label "Les images de ce site seront toujours chargées.">
+<!ENTITY cookieImagesDefaultCmd.label "Permissions des images par défaut">
+<!ENTITY cookieImagesDefaultCmd.accesskey "P">
+<!ENTITY cookieImagesDefaultMsg.label "Les images de ce site seront téléchargées en se basant sur les paramètres par défaut.">
+<!ENTITY cookieBlockImagesCmd.label "Bloquer les images de ce site">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "Les images de ce site ne seront jamais chargées.">
+
+<!ENTITY popupsMessageChangeTitle.label "Permissions de popup modifiées">
+<!ENTITY popupAllowCmd.label "Autoriser les fenêtres popup pour ce site">
+<!ENTITY popupAllowCmd.accesskey "A">
+<!ENTITY popupAllowMsg.label "Les fenêtres popup de ce site seront toujours affichées.">
+<!ENTITY popupDefaultCmd.label "Utiliser les permissions de popups par défaut">
+<!ENTITY popupDefaultCmd.accesskey "U">
+<!ENTITY popupDefaultMsg.label "Les fenêtres popup de ce site seront affichées selon les paramètres par défaut.">
+<!ENTITY popupBlockCmd.label "Bloquer les popups de ce site">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "Les fenêtres popup de ce site ne seront pas affichées.">
+<!ENTITY popupsManage.label "Gérer les fenêtres popup">
+<!ENTITY popupsManage.accesskey "G">
+
+<!ENTITY cookieCookieManager.label "Cookies">
+<!ENTITY cookieCookieManager.accesskey "o">
+<!ENTITY cookieImageManager.label "Images">
+<!ENTITY cookieImageManager.accesskey "I">
+<!ENTITY popupsManager.label "Gestionnaire de fenêtres popup">
+<!ENTITY popupsManager.accesskey "p">
+
+<!ENTITY clearPrivateDataCmd.label "Effacer mes traces…">
+<!ENTITY clearPrivateDataCmd.accesskey "f">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

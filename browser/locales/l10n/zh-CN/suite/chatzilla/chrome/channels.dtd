@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "加入频道">
+
+<!ENTITY network.label     "网络：">
+<!ENTITY network.accesskey "N">
+
+<!ENTITY channel.label     "频道：">
+<!ENTITY channel.accesskey "C">
+
+<!ENTITY topics.label     "搜索主题及频道名称">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label     "加入">
+<!ENTITY join.accesskey "J">
+
+<!ENTITY minusers.label     "最少用户数：">
+<!ENTITY minusers.accesskey "M">
+
+<!ENTITY maxusers.label     "最大用户数：">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "立即刷新">
+<!ENTITY refresh.accesskey "">
+
+
+<!ENTITY col.network "网络">
+<!ENTITY col.name  "名称">
+<!ENTITY col.users "用户">
+<!ENTITY col.topic "主题">

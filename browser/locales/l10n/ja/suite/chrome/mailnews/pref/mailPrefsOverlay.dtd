@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label	"メールとニュースグループ">
+<!ENTITY enbPluginCheckMailNews.accesskey	"a">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label			"メールとニュースグループ">
+<!ENTITY mail.accesskey			"M">
+<!ENTITY addressbook.label		"アドレス帳">
+<!ENTITY addressbook.accesskey		"A">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label		"メッセージの表示">
+<!ENTITY notifications.label		"通知">
+<!ENTITY composingMessages.label	"メッセージの作成">
+<!ENTITY format.label			"送信形式">
+<!ENTITY address.label			"アドレス帳">
+<!ENTITY junk.label			"迷惑メール">
+<!ENTITY tags.label			"タグ">
+<!ENTITY return.label			"開封確認">
+<!ENTITY characterEncoding2.label	"テキストエンコーディング">
+<!ENTITY networkStorage.label		"ネットワークとディスク領域">

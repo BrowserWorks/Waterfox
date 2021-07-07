@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+
+<!ENTITY pref.receipts.title          "Recibo de leitura">
+<!ENTITY prefReceipts.caption         "Recibo de leitura">
+<!ENTITY requestReceipt.label         "Ao enviar mensagens, pedir sempre um recibo de leitura">
+<!ENTITY requestReceipt.accesskey     "o">
+<!ENTITY receiptArrive.label          "Quando chega um recibo:">
+<!ENTITY leaveIt.label                "Deixar na caixa de entrada">
+<!ENTITY leaveIt.accesskey            "d">
+<!ENTITY moveToSent.label             "Mover para a minha pasta &quot;Enviados&quot;">
+<!ENTITY moveToSent.accesskey         "v">
+<!ENTITY requestMDN.label             "Quando recebo um pedido de um recibo de leitura:">
+<!ENTITY returnSome.label             "Permitir recibos de leitura para algumas mensagens">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Nunca enviar um recibo de leitura">
+<!ENTITY never.accesskey              "n">
+<!ENTITY notInToCc.label              "Se não estiver na mensagem em Para ou Cc:">
+<!ENTITY notInToCc.accesskey          "s">
+<!ENTITY outsideDomain.label          "Se o remetente estiver fora do meu domínio:">
+<!ENTITY outsideDomain.accesskey      "t">
+<!ENTITY otherCases.label             "Em todos os outros casos:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "Perguntar-me">
+<!ENTITY alwaysSend.label             "Enviar Sempre">
+<!ENTITY neverSend.label              "Nunca enviar">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript "Niektóre strony WWW dostępne są w kilku wersjach językowych. SeaMonkey wykorzysta poniższą listę preferencji do wyboru wersji językowej pobieranych dokumentów. Pierwszy język na liście ma największy priorytet.">
+<!ENTITY languages.customize.title "Języki">
+<!ENTITY langtitle.label "Języki">
+<!ENTITY languages.customize.prefAddLangDescript "Wybierz język, który zostanie dodany do listy preferencji.">
+<!ENTITY languages.customize.addButton.label "Dodaj…">
+<!ENTITY languages.customize.addButton.accesskey "D">
+<!ENTITY languages.customize.deleteButton.label "Usuń">
+<!ENTITY languages.customize.deleteButton.accesskey "U">
+<!ENTITY languages.customize.add.title.label "Dodaj język">
+<!ENTITY languages.customize.available.label "Języki:">
+<!ENTITY languages.customize.active.label "Lista preferowanych wersji językowych:">
+<!ENTITY languages.customize.active.accesskey "L">
+<!ENTITY languages.customize.others.label "Inne:">
+<!ENTITY languages.customize.others.accesskey "I">
+<!ENTITY languages.customize.Fallback2.grouplabel "Kodowanie tekstu dla przestarzałych treści">
+<!ENTITY languages.customize.Fallback2.label "Rezerwowe kodowanie tekstu:">
+<!ENTITY languages.customize.Fallback2.accesskey "z">
+<!ENTITY languages.customize.Fallback2.desc "Kodowanie tekstu używane w przypadku treści, które same go nie określają.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples "(wprowadź kod języka, np.: en-bz, ar-jo)">
+<!ENTITY languages.customize.moveUp.label "Przenieś w górę">
+<!ENTITY languages.customize.moveUp.accesskey "g">
+<!ENTITY languages.customize.moveDown.label "Przenieś w dół">
+<!ENTITY languages.customize.moveDown.accesskey "r">

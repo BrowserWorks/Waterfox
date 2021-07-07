@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Account Settings">
+<!ENTITY accountName.label "Account Name:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Default Identity">
+<!ENTITY identityDesc.label "Each account has an identity, which is the information that other people see when they read your messages.">
+<!ENTITY name.label "Your Name:">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "Email Address:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Reply from this identity when delivery headers match:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Reply-to Address:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Recipients will reply to this other address">
+<!ENTITY organization.label "Organisation:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Signature text:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Use HTML (e.g., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Attach the signature from a file instead (text, HTML, or image):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Edit…">
+<!ENTITY choose.label "Choose…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "Edit Card…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Attach my vCard to messages">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Manage Identities…">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Outgoing Server (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Use Default Server">
+
+<!ENTITY smtpServerEdit.label "Edit SMTP server…">
+<!ENTITY smtpServerEdit.accesskey "P">

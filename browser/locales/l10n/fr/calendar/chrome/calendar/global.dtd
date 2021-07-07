@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Minuit" >
+<!ENTITY time.noon "Midi" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Dim" >
+<!ENTITY day.1.Ddd.accesskey "D">
+<!ENTITY day.2.Ddd "Lun" >
+<!ENTITY day.2.Ddd.accesskey "L">
+<!ENTITY day.3.Ddd "Mar" >
+<!ENTITY day.3.Ddd.accesskey "M">
+<!ENTITY day.4.Ddd "Mer" >
+<!ENTITY day.4.Ddd.accesskey "e">
+<!ENTITY day.5.Ddd "Jeu" >
+<!ENTITY day.5.Ddd.accesskey "J">
+<!ENTITY day.6.Ddd "Ven" >
+<!ENTITY day.6.Ddd.accesskey "V">
+<!ENTITY day.7.Ddd "Sam" >
+<!ENTITY day.7.Ddd.accesskey "S">
+
+<!ENTITY day.1.name "Dimanche" >
+<!ENTITY day.2.name "Lundi" >
+<!ENTITY day.3.name "Mardi" >
+<!ENTITY day.4.name "Mercredi" >
+<!ENTITY day.5.name "Jeudi" >
+<!ENTITY day.6.name "Vendredi" >
+<!ENTITY day.7.name "Samedi" >
+
+<!ENTITY month.1.name "Janvier" >
+<!ENTITY month.2.name "Février" >
+<!ENTITY month.3.name "Mars" >
+<!ENTITY month.4.name "Avril" >
+<!ENTITY month.5.name "Mai" >
+<!ENTITY month.6.name "Juin" >
+<!ENTITY month.7.name "Juillet" >
+<!ENTITY month.8.name "Août" >
+<!ENTITY month.9.name "Septembre" >
+<!ENTITY month.10.name "Octobre" >
+<!ENTITY month.11.name "Novembre" >
+<!ENTITY month.12.name "Décembre" >
+
+<!ENTITY onemonthbackward.tooltip "Aller au mois précédent" >
+<!ENTITY onemonthforward.tooltip "Aller au mois suivant" >
+<!ENTITY oneyearbackward.tooltip "Aller à l’année précédente" >
+<!ENTITY oneyearforward.tooltip "Aller à l’année suivante" >
+<!ENTITY showToday.tooltip "Aller à aujourd’hui">
+<!ENTITY onedayforward.tooltip "Aller au jour suivant">
+<!ENTITY onedaybackward.tooltip "Aller au jour précédent">
+<!ENTITY showselectedday.tooltip "Afficher les évènements de la journée sélectionnée">

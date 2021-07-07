@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "搜尋">
+
+<!ENTITY newPref.namePlaceholder       "名稱">
+
+<!ENTITY newPref.valueBoolean          "布林（Boolean）值">
+<!ENTITY newPref.valueString           "字串">
+<!ENTITY newPref.valueInteger          "整數">
+
+<!ENTITY newPref.stringPlaceholder     "請輸入字串">
+<!ENTITY newPref.numberPlaceholder     "請輸入數字">
+
+<!ENTITY newPref.toggleButton          "切換">
+<!ENTITY newPref.cancelButton          "取消">
+
+<!ENTITY contextMenu.copyPrefName      "複製名稱">
+<!ENTITY contextMenu.copyPrefValue     "複製值">
+

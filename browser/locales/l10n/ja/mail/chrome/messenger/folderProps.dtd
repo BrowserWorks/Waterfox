@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label		"プロパティ">
+
+<!ENTITY generalInfo.label			"一般情報">
+<!ENTITY folderCharsetFallback2.label		"フォールバックテキストエンコーディング:">
+<!ENTITY folderCharsetFallback2.accesskey	"E">
+<!ENTITY folderCharsetEnforce2.label		"このエンコーディングをフォルダー内のすべてのメッセージに適用する (各メッセージのテキストエンコーディング指定や自動判別結果は無視されます)">
+<!ENTITY folderCharsetEnforce2.accesskey	"A">
+<!ENTITY folderRebuildSummaryFileTip2.label	"要約ファイルの索引を再構築します">
+<!ENTITY folderRebuildSummaryFile2.label	"フォルダーを修復">
+<!ENTITY folderRebuildSummaryFile2.accesskey	"R">
+<!ENTITY folderRebuildSummaryFile.explanation	"フォルダーの索引ファイル (.msf) が損傷し、削除したはずのメッセージが表示されてしまうことがあります。このような問題が起こったときはフォルダーを修復してください。">
+<!ENTITY folderIncludeInGlobalSearch.label	"このフォルダーのメッセージをグローバル検索の対象に含める">
+<!ENTITY folderIncludeInGlobalSearch.accesskey	"G">
+
+<!ENTITY retention.label			"保管ポリシー"><!-- (^^; Retention Policy -->
+<!ENTITY retentionUseAccount.label		"アカウント設定に従う">
+<!ENTITY retentionUseAccount.accesskey		"U">
+<!-- (^^; 以下 am-offline.dtd と同一 -->
+<!ENTITY daysOld.label				"日">
+<!ENTITY message.label				"通">
+<!ENTITY retentionCleanup.label			"古いメッセージを完全に削除してディスク領域を開放できます。">
+<!ENTITY retentionCleanupImap.label		"ローカルのコピーとリモートサーバー上の古いメッセージを完全に削除してディスク領域を開放できます。">
+<!ENTITY retentionCleanupPop.label		"このコンピューターとリモートサーバー上の古いメッセージを完全に削除してディスク領域を開放できます。">
+<!ENTITY retentionDeleteMsg.label		"送信日時から次の日数以上経過したメッセージを削除する">
+<!ENTITY retentionDeleteMsg.accesskey		"m">
+<!ENTITY retentionKeepAll.label			"メッセージを自動削除しない">
+<!ENTITY retentionKeepAll.accesskey		"A">
+<!ENTITY retentionKeepRecent.label		"最近のメッセージを次の数だけ残して削除する">
+<!ENTITY retentionKeepRecent.accesskey		"l">
+<!ENTITY retentionApplyToFlagged.label		"スター付きのメッセージは残す">
+<!ENTITY retentionApplyToFlagged.accesskey	"e">
+
+<!ENTITY folderSynchronizationTab.label		"同期">
+<!ENTITY folderCheckForNewMessages2.label	"このフォルダーに新着メッセージがないか確認する"><!-- (^m^) Bug 545469#c23 参照。 en-US: When getting new messages for this account, always check this folder" -->
+<!ENTITY folderCheckForNewMessages2.accesskey	"c">
+
+<!ENTITY offlineFolder.check.label		"このフォルダーをオフラインで使用する">
+<!ENTITY offlineFolder.check.accesskey		"S">
+<!ENTITY offlineFolder.button.label		"今すぐダウンロード">
+<!ENTITY offlineFolder.button.accesskey		"D">
+
+<!ENTITY selectofflineNewsgroup.check.label	"このニュースグループをオフラインで使用する">
+<!ENTITY selectofflineNewsgroup.check.accesskey	"o">
+<!ENTITY offlineNewsgroup.button.label		"今すぐダウンロード">
+<!ENTITY offlineNewsgroup.button.accesskey	"D">
+
+<!ENTITY folderProps.name.label			"名前:">
+<!ENTITY folderProps.name.accesskey		"N">
+<!ENTITY folderProps.color.label		"アイコンの色:">
+<!ENTITY folderProps.color.accesskey		"I">
+<!ENTITY folderProps.reset.tooltip		"既定の色に戻します">
+<!ENTITY folderProps.location.label		"場所:">
+<!ENTITY folderProps.location.accesskey		"L">
+
+<!ENTITY folderSharingTab.label			"共有">
+<!ENTITY privileges.button.label		"アクセス権限...">
+<!ENTITY privileges.button.accesskey		"P">
+<!ENTITY permissionsDesc.label			"以下のアクセス権限があります:">
+<!ENTITY folderOtherUsers.label			"このフォルダーにアクセス可能な他のユーザー:">
+<!ENTITY folderType.label			"フォルダーの種類:">
+
+<!ENTITY folderQuotaTab.label			"クォータ"><!-- (^^; RFC 2087 -->
+<!ENTITY folderQuotaUsage.label			"使用容量:">
+<!ENTITY folderQuotaStatus.label		"使用割合:">
+
+<!ENTITY numberOfMessages.label			"メッセージ数:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label			"不明">
+<!ENTITY sizeOnDisk.label			"ディスク上のサイズ:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label			"不明">

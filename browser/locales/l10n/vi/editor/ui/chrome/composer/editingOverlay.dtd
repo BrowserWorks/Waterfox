@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Mở tập tin…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Mở địa chỉ web…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Trang gần đây">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "Lưu">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Lưu với…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "Lưu và thay đổi bảng mã văn bản">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "Xuất bản">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Xuất bản dưới dạng…">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "Hoàn nguyên">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Cài đặt xuất bản trang web…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Mới">
+<!ENTITY newToolbarCmd.tooltip "Tạo trang Composer mới">
+<!ENTITY openToolbarCmd.label "Mở">
+<!ENTITY openToolbarCmd.tooltip "Mở tập tin trên máy">
+<!ENTITY saveToolbarCmd.tooltip "Lưu tập tin vào máy">
+<!ENTITY publishToolbarCmd.tooltip "Tải tập tin lên máy khác">
+<!ENTITY printToolbarCmd.label "In">
+<!ENTITY printToolbarCmd.tooltip "In trang này">

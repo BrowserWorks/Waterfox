@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "Hauptmenü">
+<!ENTITY Toolbar.tooltip    "Haupt-Symbolleiste">
+
+
+<!ENTITY multiline-expand.tooltip   "Zu Mehrzeilen-Eingabe wechseln (Strg+Auf)">
+<!ENTITY multiline-contract.tooltip "Zu Einzelzeilen-Eingabe wechseln (Strg+Ab)">
+<!ENTITY multiline-send.tooltip     "Diesen Text senden (Strg+Eingabetaste)">
+<!ENTITY server-nick.tooltip        "Wechseln Sie den Nick oder setzen Sie den Abwesenheitsstatus. Um das Eingabefeld zu fokussieren, drücken Sie Escape.">
+
+<!ENTITY Underline.label             "Unterstrichen">
+<!ENTITY Bold.label                  "Fett">
+<!ENTITY Reverse.label               "Anzeige umkehren">
+<!ENTITY Normal.label                "Normal">
+<!ENTITY Color.label                 "Farbe">
+<!ENTITY ForeBack.label              "xx=Vordergrund yy=Hintergrund">

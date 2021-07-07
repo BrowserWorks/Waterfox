@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "ความปลอดภัยข้อความ">
+<!ENTITY signatureCert.label "ดูใบรับรองลายเซ็น">
+<!ENTITY encryptionCert.label "ดูใบรับรองการเข้ารหัส">
+
+<!ENTITY signer.name "เซ็นโดย:">
+<!ENTITY recipient.name "เข้ารหัสสำหรับ:">
+<!ENTITY email.address "ที่อยู่อีเมล:">
+<!ENTITY issuer.name "ออกใบรับรองโดย:">
+
+<!-- LOCALIZATION NOTE(SMIME.label): This a name for a technical standard. You should not translate it, but if applicable, you may write it using localized characters. -->
+<!ENTITY SMIME.label "S/MIME">

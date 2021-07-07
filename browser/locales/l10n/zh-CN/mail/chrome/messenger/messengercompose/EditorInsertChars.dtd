@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "插入字符">
+<!ENTITY category.label "类别">
+<!ENTITY letter.label "字母:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "字符：">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "重音符大写">
+<!ENTITY accentLower.label "重音符小写">
+<!ENTITY otherUpper.label "其它大写">
+<!ENTITY otherLower.label "其它小写">
+<!ENTITY commonSymbols.label "一般符号">
+<!ENTITY insertButton.label "插入">
+<!ENTITY closeButton.label "关闭">

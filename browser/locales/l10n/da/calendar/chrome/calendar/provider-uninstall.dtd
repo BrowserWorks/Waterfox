@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Fjern en udbyder">
+<!ENTITY providerUninstall.accept.label                    "Fjern markerede">
+<!ENTITY providerUninstall.accept.accesskey                "F">
+<!ENTITY providerUninstall.cancel.label                    "Behold udbyder">
+<!ENTITY providerUninstall.cancel.accesskey                "B">
+<!ENTITY providerUninstall.preName.label                   "Du har valgt at afinstallere eller deaktivere:">
+<!ENTITY providerUninstall.postName.label                  "Dette vil deaktivere nedenstående kalendere.">
+<!ENTITY providerUninstall.reinstallNote.label             "Medmindre du ønsker at geninstallere denne udbyder, kan du vælge at fjerne abonnement på denne udbyders kalendere.">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Rede e armazenamento">
+<!ENTITY pref.offline.caption             "Offline">
+<!ENTITY textStartUp                      "Ao iniciar:">
+<!ENTITY textStartUp.accesskey            "o">
+<!ENTITY menuitemRememberPrevState        "Memorizar estado online anterior">
+<!ENTITY menuitemAskMe                    "Perguntar-me pelo estado online no arranque">
+<!ENTITY menuitemAlwaysOnline             "Iniciar sempre no modo online">
+<!ENTITY menuitemAlwaysOffline            "Iniciar sempre no modo offline">
+<!ENTITY menuitemAutomatic                "Detetar automaticamente (se disponível)">
+<!ENTITY textGoingOnline                  "Enviar mensagens não enviadas ao ficar online?">
+<!ENTITY radioAutoSend                    "Sim">
+<!ENTITY radioAutoSend.accesskey          "S">
+<!ENTITY radioNotSend                     "Não">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Perguntar-me">
+<!ENTITY radioAskUnsent.accesskey         "P">
+<!ENTITY textGoingOffline                 "Transferir mensagens para utilização no modo offline?">
+<!ENTITY radioAutoDownload                "Sim">
+<!ENTITY radioAutoDownload.accesskey      "i">
+<!ENTITY radioNotDownload                 "Não">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "Perguntar-me">
+<!ENTITY radioAskDownload.accesskey       "e">
+<!ENTITY mailConnections.caption          "Ligações de correio">
+<!ENTITY mailnewsTimeout.label            "Ligação expira em:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "segundos">
+<!ENTITY Diskspace                        "Espaço em disco">
+<!ENTITY offlineCompactFolders.label      "Compactar todas as pastas se puder poupar mais de">
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "Total em MB">

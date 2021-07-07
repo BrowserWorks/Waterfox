@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "Over &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; is experimenteel en kan onstabiel zijn.">
+<!ENTITY aboutPage.checkForUpdates.link         "Controleren op updates »">
+<!ENTITY aboutPage.checkForUpdates.checking     "Updates zoeken…">
+<!ENTITY aboutPage.checkForUpdates.none         "Geen updates beschikbaar">
+<!ENTITY aboutPage.checkForUpdates.available2   "Update downloaden">
+<!ENTITY aboutPage.checkForUpdates.downloading  "Update downloaden…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "Update installeren">
+<!ENTITY aboutPage.faq.label                    "FAQ">
+<!ENTITY aboutPage.support.label                "Ondersteuning">
+<!ENTITY aboutPage.privacyPolicy.label          "Privacybeleid">
+<!ENTITY aboutPage.rights.label                 "Ken uw rechten">
+<!ENTITY aboutPage.relNotes.label               "Uitgaveopmerkingen">
+<!ENTITY aboutPage.credits.label                "Credits">
+<!ENTITY aboutPage.license.label                "Licentie-informatie">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox en de Firefox-logo’s zijn handelsmerken van de Mozilla Foundation.">

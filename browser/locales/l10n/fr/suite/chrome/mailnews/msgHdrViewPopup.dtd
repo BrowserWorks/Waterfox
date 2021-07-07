@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Ajouter l’adresse au carnet d’adresses">
+<!ENTITY AddToAddressBook.accesskey        "j">
+<!ENTITY EditContact.label                 "Modifier le contact…">
+<!ENTITY EditContact.accesskey             "f">
+<!ENTITY ViewContact.label                 "Afficher le contact">
+<!ENTITY ViewContact.accesskey             "A">
+<!ENTITY SendMailTo.label                  "Écrire un courrier à">
+<!ENTITY SendMailTo.accesskey              "r">
+<!ENTITY CopyEmailAddress.label            "Copier l’adresse électronique">
+<!ENTITY CopyEmailAddress.accesskey        "C">
+<!ENTITY CopyNameAndEmailAddress.label     "Copier le nom et l’adresse électronique">
+<!ENTITY CopyNameAndEmailAddress.accesskey "n">
+<!ENTITY CreateFilterFrom.label            "Créer un filtre…">
+<!ENTITY CreateFilterFrom.accesskey        "f">
+<!ENTITY openInBrowser.label               "Ouvrir dans le navigateur">
+<!ENTITY openInBrowser.accesskey           "O">
+<!ENTITY bookmarkLinkCmd.label             "Marquer ce lien…">
+<!ENTITY bookmarkLinkCmd.accesskey         "M">
+<!ENTITY copyLinkCmd.label                 "Copier l’adresse du lien">
+<!ENTITY copyLinkCmd.accesskey             "C">
+<!ENTITY CopyMessageId.label               "Copier l’identifiant du message">
+<!ENTITY CopyMessageId.accesskey           "I">
+<!ENTITY OpenMessageForMsgId.label         "Ouvrir le message pour l’identifiant">
+<!ENTITY OpenMessageForMsgId.accesskey     "D">
+<!ENTITY OpenBrowserWithMsgId.label        "Ouvrir le navigateur avec l’identifiant de message">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "O">

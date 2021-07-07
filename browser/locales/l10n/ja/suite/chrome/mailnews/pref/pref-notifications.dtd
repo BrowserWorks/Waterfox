@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title	"通知">
+<!ENTITY notifications.caption		"通知">
+<!ENTITY newMessagesArrive.label	"新着メッセージが届いたとき:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label		"警告を">
+<!ENTITY showAlertFor.accesskey		"S">
+<!ENTITY showAlertTimeEnd.label		"秒間表示する">
+
+<!ENTITY showAlertPreviewText.label	"メッセージテキストのプレビューを表示する">
+<!ENTITY showAlertPreviewText.accesskey	"v">
+<!ENTITY showAlertSubject.label		"件名を表示する">
+<!ENTITY showAlertSubject.accesskey	"u">
+<!ENTITY showAlertSender.label		"送信者を表示する">
+<!ENTITY showAlertSender.accesskey	"n">
+<!ENTITY useSystemAlert.label		"オペレーティングシステムのデスクトップ通知を利用する">
+<!ENTITY useSystemAlert.accesskey	"d">
+<!ENTITY useBuiltInAlert.label		"&brandShortName; の通知ウィンドウを使用する">
+<!ENTITY useBuiltInAlert.accesskey	"w">
+
+<!ENTITY showTrayIcon.label		"システムトレイにアイコンを表示する">
+<!ENTITY showTrayIcon.accesskey		"t">
+<!ENTITY showBalloon.label		"バルーンを表示する">
+<!ENTITY showBalloon.accesskey		"o">
+<!ENTITY bounceSystemDockIcon.label	"Dock アイコンをバウンドさせる">
+<!ENTITY bounceSystemDockIcon.accesskey	"A">
+
+<!ENTITY playSound.label		"サウンドを鳴らす">
+<!ENTITY playSound.accesskey		"P">
+<!ENTITY playButton.label		"再生">
+<!ENTITY playButton.accesskey		"l">
+<!ENTITY systemsound.label		"システムの新着メール音">
+<!ENTITY systemsound.accesskey		"M">
+<!ENTITY customsound.label		"サウンドファイルを指定する">
+<!ENTITY customsound.accesskey		"C">
+<!ENTITY browse.label			"参照...">
+<!ENTITY browse.accesskey		"B">
+<!ENTITY browse.title			"ファイル選択">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ตัวกรองข้อความ">
+<!ENTITY nameColumn.label "ชื่อตัวกรอง">
+<!ENTITY activeColumn.label "เปิดใช้งานอยู่">
+<!ENTITY newButton.label "ใหม่…">
+<!ENTITY newButton.accesskey "ห">
+<!ENTITY newButton.popupCopy.label "คัดลอก…">
+<!ENTITY newButton.popupCopy.accesskey "ค">
+<!ENTITY editButton.label "แก้ไข…">
+<!ENTITY editButton.accesskey "ก">
+<!ENTITY deleteButton.label "ลบ">
+<!ENTITY deleteButton.accesskey "บ">
+<!ENTITY reorderTopButton "ย้ายไปด้านบนสุด">
+<!ENTITY reorderTopButton.accessKey "น">
+<!ENTITY reorderTopButton.toolTip "จัดเรียงตัวกรองใหม่เพื่อให้ตัวกรองนี้ทำงานก่อนตัวกรองอื่น">
+<!ENTITY reorderUpButton.label "ย้ายขึ้น">
+<!ENTITY reorderUpButton.accesskey "ข">
+<!ENTITY reorderDownButton.label "ย้ายลง">
+<!ENTITY reorderDownButton.accesskey "ล">
+<!ENTITY reorderBottomButton "ย้ายไปด้านล่างสุด">
+<!ENTITY reorderBottomButton.accessKey "ง">
+<!ENTITY reorderBottomButton.toolTip "จัดเรียงตัวกรองใหม่เพื่อให้ตัวกรองนี้ทำงานหลังจากตัวกรองอื่นทั้งหมด">
+<!ENTITY filterHeader.label "ตัวกรองที่เปิดใช้งานจะทำงานโดยอัตโนมัติตามลำดับที่แสดงด้านล่าง">
+<!ENTITY filtersForPrefix.label "ตัวกรองสำหรับ:">
+<!ENTITY filtersForPrefix.accesskey "ต">
+<!ENTITY viewLogButton.label "รายการบันทึกตัวกรอง">
+<!ENTITY viewLogButton.accesskey "ร">
+<!ENTITY runFilters.label "เรียกใช้เดี๋ยวนี้">
+<!ENTITY runFilters.accesskey "เ">
+<!ENTITY stopFilters.label "หยุด">
+<!ENTITY stopFilters.accesskey "ย">
+<!ENTITY folderPickerPrefix.label "เรียกใช้ตัวกรองที่เลือกบน:">
+<!ENTITY folderPickerPrefix.accesskey "ใ">
+<!ENTITY helpButton.label "ช่วยเหลือ">
+<!ENTITY helpButton.accesskey "ช">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "ค้นหาตัวกรองตามชื่อ…">

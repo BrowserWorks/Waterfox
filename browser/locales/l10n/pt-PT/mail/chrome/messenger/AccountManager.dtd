@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Definições da conta">
+<!ENTITY  accountManagerCloseButton.label "Fechar">
+
+<!ENTITY accountActionsButton.label "Ações da conta">
+<!ENTITY accountActionsButton.accesskey "A">
+<!ENTITY addMailAccountButton.label "Adicionar conta de correio…">
+<!ENTITY addMailAccountButton.accesskey "A">
+<!ENTITY addIMAccountButton.label "Adicionar conta de chat…">
+<!ENTITY addIMAccountButton.accesskey "c">
+<!ENTITY addFeedAccountButton.label "Adicionar conta de fontes…">
+<!ENTITY addFeedAccountButton.accesskey "f">
+<!ENTITY addOtherAccountButton.label "Adicionar outra conta…">
+<!ENTITY addOtherAccountButton.accesskey "o">
+<!ENTITY setDefaultButton.label "Utilizar como predefinida">
+<!ENTITY setDefaultButton.accesskey "U">
+<!ENTITY removeButton.label "Remover conta">
+<!ENTITY removeButton.accesskey "R">
+
+<!ENTITY addonsButton.label "Extensões e temas">
+
+<!-- AccountManager.xhtml -->
+<!-- LOCALIZATION NOTE : this is part of an inline-style attribute on the account
+     setting dialog, which specifies the width and height in em units of the dialog.
+     Localizers ONLY can increase these widths if they are having difficulty getting
+     panel content to fit.
+     1ch = The width of the "0" (ZERO, U+0030) glyph for the current font.
+     1em = The height of the font.
+     XUL/FE DEVELOPERS: DO NOT MODIFY THIS VALUE. It represents the correct size of
+     this window for en-US. -->
+<!ENTITY accountManager.size "width: 135ch; height: 50em;">
+<!ENTITY accountTree.width "width: 32ch;">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Tartalom">
+<!ENTITY pref.content.description               "Ezek a beállítások a webhely és a szöveges tartalom megjelenését befolyásolják a &brandShortName; böngészőben.">
+
+<!ENTITY siteIcons.label                        "Webhely ikonok">
+<!ENTITY useSiteIcons.label                     "Webhely ikonok megjelenítése">
+<!ENTITY useSiteIcons.accesskey                 "s">
+<!ENTITY useFavIcons2.label                     "Próbálja a kiszolgáló faviconját használni, ha a lap nem határoz meg ikont.">
+<!ENTITY useFavIcons2.accesskey                 "i">
+
+<!ENTITY scrolling.label                        "Görgetés">
+<!ENTITY useAutoScroll.label                    "Automatikus görgetés">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Finom görgetés">
+<!ENTITY useSmoothScroll.accesskey              "F">
+
+<!ENTITY zoomPrefs.label                        "Nagyítási beállítások">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Tartomány:">
+<!ENTITY minZoom.accesskey                      "T">
+<!ENTITY maxZoom.label                          "eddig:">
+<!ENTITY maxZoom.accesskey                      "e">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY defaultZoom.label                      "Alapértelmezett nagyítás">
+<!ENTITY defaultZoom.accesskey                  "A">
+
+<!ENTITY siteSpecific.label                     "Minden webhely egyedi nagyításának megjegyzése">
+<!ENTITY siteSpecific.accesskey                 "M">
+<!ENTITY textZoomOnly.label                     "Csak a szöveg nagyítása a teljes oldal helyett">
+<!ENTITY textZoomOnly.accesskey                 "C">
+<!ENTITY enableAutomaticImageResizing.label     "Nagy képek átméretezése, hogy elférjen a böngésző ablakban">
+<!ENTITY enableAutomaticImageResizing.accesskey "N">
+
+<!ENTITY allowHWAccel.label                     "Hardveres gyorsítás használata, ha lehetséges">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY blockAutoRefresh.label                 "Figyelmeztetés, ha a webhely átirányítja vagy frissíti az oldalt">
+<!ENTITY blockAutoRefresh.accesskey             "F">
+
+<!ENTITY showZoomStatusPanel.label              "Nagyítási vezérlőelemek megjelenítése az állapotsorban">

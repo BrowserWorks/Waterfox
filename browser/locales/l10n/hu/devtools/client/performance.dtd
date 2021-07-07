@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+
+
+<!ENTITY performanceUI.bufferStatusTooltip "A profilozó a mintákat körkörös pufferben tárolja, és amikor a puffer eléri a felvétel korlátját, az újabb minták elkezdik felülírni a felvétel elején lévő mintákat.">
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.nonE10SBuild): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a non-multiprocess build. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Engedélyezze a többszálú Firefoxot a beállításokban a felvételadatok valós idejű megjelenítéséhez.">
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+
+<!ENTITY performanceUI.bufferStatusFull "A puffer megtelt. A régebbi minták mostantól felülírásra kerülnek.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+
+<!ENTITY performanceUI.unavailableNoticePB "A profil rögzítése jelenleg nem érhető el. Zárja be az összes privát böngészési ablakot, és próbálja újra.">
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+
+<!ENTITY performanceUI.loadingNotice "Betöltés…">
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+
+<!ENTITY performanceUI.toolbar.waterfall "Vízesés">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Megjeleníti a böngésző által a felvétel alatt végzett különböző műveleteket, vízesésszerű elrendezésben.">
+<!ENTITY performanceUI.toolbar.js-calltree "Hívási fa">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Kiemeli azokat a JavaScript függvényeket, amelyekben a böngésző a legtöbb időt töltötte a felvétel alatt.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Foglalások">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Megjeleníti, hogy a memória hol lett lefoglalva a felvétel alatt.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS lángdiagram">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Megjeleníti a JavaScript hívási vermet a felvétel idején.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Foglalások lángdiagram">
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+
+<!ENTITY performanceUI.table.totalDuration            "Teljes idő">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "A függvényben és az általa hívott függvényekben töltött idő.">
+<!ENTITY performanceUI.table.selfDuration             "Saját idő">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "A függvényen belül töltött idő.">
+<!ENTITY performanceUI.table.totalPercentage          "Teljes költség">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  " A függvényben és az általa hívott függvényekben töltött idő százalékban.">
+<!ENTITY performanceUI.table.selfPercentage           "Saját költség">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "A függvényben és az általa hívott függvényekben töltött idő százalékban.">
+<!ENTITY performanceUI.table.samples                  "Minták">
+<!ENTITY performanceUI.table.samples.tooltip          "A függvény ennyiszer volt a verem tetején, amikor a profilozó mintát vett.">
+<!ENTITY performanceUI.table.function                 "Függvény">
+<!ENTITY performanceUI.table.function.tooltip         "A mintavételezett függvény neve és helye.">
+<!ENTITY performanceUI.table.totalAlloc               "Mintavételezett foglalások összesen">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Ezen a helyen és hívottakban mintavételezett objektumfoglalások teljes száma.">
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+
+<!ENTITY performanceUI.options.filter.tooltiptext "Válassza ki az idővonalon megjelenítendő adatokat">
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!ENTITY performanceUI.options.gear.tooltiptext "Teljesítménybeállítások megadása.">
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!ENTITY performanceUI.invertTree             "Hívási fa megfordítása">
+<!ENTITY performanceUI.invertTree.tooltiptext "A hívási fa megfordítása megjeleníti a profilozott hívási útvonalakat a legfiatalabb keretektől, és kiterjedve a régebbi keretekre.">
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!ENTITY performanceUI.invertFlameGraph             "Lángdiagram megfordítása">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "A lángdiagram megfordítása megjeleníti a profilozott hívási útvonalakat a legfiatalabb keretektől, és kiterjedve a régebbi keretekre.">
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!ENTITY performanceUI.showPlatformData             "A Gecko platform adatainak megjelenítése">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "A platform adatainak megjelenítése lehetővé teszi a JavaScript profilozó jelentéseibe a Gecko platform szimbólumainak felvételét is.">
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!ENTITY performanceUI.showJITOptimizations             "JIT optimalizációk megjelenítése">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Az egyes JavaScript keretekben mért JIT optimalizálási adatok megjelenítése.">
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!ENTITY performanceUI.flattenTreeRecursion             "Fa rekurzió kisimítása">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Rekurzió kisimítása függvények vizsgálatakor.">
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableMemory             "Memória rögzítése">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Memóriafogyasztás rögzítése profilozáskor.">
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!ENTITY performanceUI.enableAllocations             "Foglalások rögzítése">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Objektumfoglalások rögzítése profilozáskor.">
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+
+<!ENTITY performanceUI.enableFramerate             "Képkockasebesség rögzítése">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Képkockasebesség rögzítése profilozáskor.">
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+
+<!ENTITY performanceUI.console.recordingNoticeStart "Rögzítés folyamatban ezen keresztül:">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+
+<!ENTITY performanceUI.console.stopCommandStart "Állítsa le a felvételt ennek beírásával: ">
+<!ENTITY performanceUI.console.stopCommandEnd   "a konzolba.">

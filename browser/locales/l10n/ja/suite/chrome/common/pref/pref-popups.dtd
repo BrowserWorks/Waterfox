@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "ポップアップウィンドウ">
+
+<!ENTITY pref.popups.caption            "ポップアップウィンドウ">
+
+<!ENTITY popupBlock.label               "要求していないポップアップウィンドウを自動的に閉じる">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "許可設定の管理">
+<!ENTITY viewPermissions.accesskey      "M">
+
+<!ENTITY whenBlock.description          "ポップアップウィンドウを自動的に閉じた場合:">
+<!ENTITY playSound.label                "サウンドを鳴らす:">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY systemSound.label              "システムのビープ音">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "次のサウンドファイルを再生する">
+<!ENTITY customSound.accesskey          "C">
+
+<!ENTITY selectSound.label              "参照...">
+<!ENTITY selectSound.accesskey          "o">
+<!ENTITY playSoundButton.label          "再生">
+<!ENTITY playSoundButton.accesskey      "l">
+
+<!ENTITY displayIcon.label              "ステータスバーにアイコンを表示する">
+<!ENTITY displayIcon.accesskey          "D">
+
+<!ENTITY displayNotification.label      "コンテンツ領域の上部に通知バーを表示する"><!--Display a notification bar at the top of the content area-->
+<!ENTITY displayNotification.accesskey  "N">
+
+<!ENTITY popupNote.description          "注意: 銀行や通信販売等のサイトでは、ポップアップウィンドウが表示されないように設定すると、ログインなどの重要な機能が利用できないことがあります。その場合は、許可するサイトに加えてください。ポップアップブロック機能を有効にしたまま、特定のサイトのみポップアップを有効にする方法についての詳細は [ヘルプ] をクリックしてください。また、サイトによっては別の方法でポップアップブロック機能を回避する場合があります。">
+

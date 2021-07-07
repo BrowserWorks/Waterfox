@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "站点 URL:">
+<!ENTITY docSubdir.label       "页面子目录:">
+<!ENTITY otherSubdir.label     "图像子目录:">
+
+<!ENTITY status.label          "正在发布…">
+<!ENTITY fileList.label        "发布状态">
+<!ENTITY succeeded.label       "成功">
+<!ENTITY failed.label          "失败">
+
+<!ENTITY keepOpen              "发布完毕后不要关闭此窗口。">
+<!ENTITY closeButton.label     "关闭">

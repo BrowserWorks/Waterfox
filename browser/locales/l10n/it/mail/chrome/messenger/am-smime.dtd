@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Crittografia end-to-end">
+<!ENTITY e2eLearnMore.label "Ulteriori informazioni">
+
+<!ENTITY e2eEnc.description "Senza la crittografia end-to-end, i contenuti dei messaggi sono esposti al proprio fornitore di posta elettronica e alla sorveglianza di massa.">
+<!ENTITY e2eeReqWarning.description "Per poter inviare un messaggio crittato, è necessario disporre della chiave pubblica o del certificato di ogni destinatario.">
+
+<!ENTITY e2eSigning.description "La firma digitale consente ai destinatari di verificare che il messaggio sia stato inviato dal mittente e che il contenuto non sia stato modificato.">
+<!ENTITY e2eTechPref.description "Tecnologia di crittografia preferita:">
+
+<!ENTITY doNotEncrypt.label "Non attivare la crittografia per impostazione predefinita">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Richiedi la crittografia per impostazione predefinita">
+<!ENTITY requireEncryptMessage.accesskey "R">
+<!ENTITY encryptionCert2.message "Certificato personale per la crittografia:">
+<!ENTITY digitalSign.certificate.button "Seleziona…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Pulisci">
+<!ENTITY digitalSign.certificate_clear.accesskey "P">
+<!ENTITY encryption.certificate.button "Seleziona…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Pulisci">
+<!ENTITY encryption.certificate_clear.accesskey "c">
+<!ENTITY signingGroupTitle.label "Firma digitale">
+<!ENTITY signMessage2.label "Aggiungi la firma digitale per impostazione predefinita">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Certificato personale per la firma digitale:">
+
+<!ENTITY sendingDefaults.label "Impostazioni predefinite per l’invio dei messaggi">
+
+<!ENTITY technologyAutomatic.label "Seleziona automaticamente in base alle chiavi o ai certificati disponibili">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Gestione certificati S/MIME">
+<!ENTITY manageCerts3.accesskey "G">
+<!ENTITY manageDevices2.label "Dispositivi di sicurezza S/MIME">
+<!ENTITY manageDevices2.accesskey "d">
+
+<!ENTITY technologySMIME.label "Utilizza S/MIME">
+<!ENTITY technologyOpenPGP.label "Utilizza OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Seleziona certificato">
+<!ENTITY certPicker.info  "Certificato:">
+<!ENTITY certPicker.detailsLabel "Dettagli del certificato selezionato:">
+
+<!ENTITY openpgpKey.message "Chiave personale per crittografia e firma digitale:">
+<!ENTITY openpgpKey.button "Imposta chiave personale…">
+<!ENTITY openpgpKey.accesskey "p">

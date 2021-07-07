@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "쓰기 및 주소">
+<!ENTITY addressingGroupTitle.label "쓰기 및 주소">
+<!ENTITY addressingText.label      "주소 검색 설정:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "글로벌 LDAP 서버에서 계정 가져오기">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "디렉터리 편집…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "다른 LDAP 서버 사용:">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "없음">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "메시지 쓰기">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "HTML 형식으로 메일 쓰기">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "회신할 때 원문 자동으로 인용">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "인용할 때,">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "인용문 위에서 회신 시작">
+<!ENTITY belowQuote.label                     "인용문 아래에서 회신 시작">
+<!ENTITY selectAndQuote.label                 "인용문 선택">
+<!ENTITY place.label                          "서명 추가">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "아래 인용 (권장)">
+<!ENTITY aboveText.label                      "내 회신 아래 (위 인용)">
+<!ENTITY includeSigOnReply.label              "회신 시에 서명 포함">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "전달 시에 서명 포함">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "전역 편집 설정…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "전역 주소 설정…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

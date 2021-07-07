@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "ตัวเก็บประวัติจะจัดเก็บตัวอย่างที่สุ่มไว้ในบัฟเฟอร์แบบวงกลม และเมื่อบัฟเฟอร์ถึงขีดจำกัดในการอัดบันทึกแล้ว ตัวอย่างที่สุ่มภายหลังก็จะเริ่มเขียนทับตัวอย่างที่สุ่มที่อัดบันทึกไว้เมื่อตอนเริ่ม">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "เปิดใช้งาน Firefox แบบหลายกระบวนการในค่ากำหนดเพื่อเปิดใช้การแสดงผลข้อมูลการอัดบันทึกแบบเรียลไทม์">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "บัฟเฟอร์เต็มแล้ว ตัวอย่างที่สุ่มก่อนหน้านี้จะถูกเขียนทับ">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "การอัดบันทึกประวัติไม่พร้อมใช้งานในขณะนี้ โปรดปิดหน้าต่างการท่องเว็บแบบส่วนตัวทั้งหมดแล้วลองอีกครั้ง">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "กำลังโหลด…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "น้ำตก">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "แสดงแผนภูมิที่แสดงการทำงานต่าง ๆ ของเบราว์เซอร์ระหว่างที่อัดบันทึกโดยจัดเค้าโครงตามลำดับเป็นแบบน้ำตก">
+<!ENTITY performanceUI.toolbar.js-calltree "แผนภูมิการเรียก">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "เน้นฟังก์ชัน JavaScript ที่เบราว์เซอร์ใช้เวลาส่วนใหญ่ระหว่างที่อัดบันทึก">
+<!ENTITY performanceUI.toolbar.memory-calltree "การจัดสรร">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "แสดงตำแหน่งที่จัดสรรหน่วยความจำระหว่างที่อัดบันทึก">
+<!ENTITY performanceUI.toolbar.js-flamegraph "แผนภูมิเปลวไฟ JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "แสดงสแตกการเรียก JavaScript ระหว่างที่อัดบันทึก">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "แผนภูมิเปลวไฟการจัดสรร">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "เวลารวม">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "จำนวนเวลาที่ใช้กับฟังก์ชันนี้และฟังก์ชันอื่น ๆ ที่เรียก">
+<!ENTITY performanceUI.table.selfDuration             "เวลาเฉพาะส่วน">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "จำนวนเวลาที่ใช้กับเฉพาะฟังก์ชันนี้">
+<!ENTITY performanceUI.table.totalPercentage          "ต้นทุนรวม">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "ร้อยละของเวลาที่ใช้กับฟังก์ชันนี้และฟังก์ชันอื่น ๆ ที่เรียก">
+<!ENTITY performanceUI.table.selfPercentage           "ต้นทุนเฉพาะส่วน">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "ร้อยละของเวลาที่ใช้กับฟังก์ชันนี้">
+<!ENTITY performanceUI.table.samples                  "ตัวอย่าง">
+<!ENTITY performanceUI.table.samples.tooltip          "จำนวนครั้งที่ฟังก์ชันนี้อยู่บนสแตกเมื่อตัวเก็บประวัติสุ่มตัวอย่าง">
+<!ENTITY performanceUI.table.function                 "ฟังก์ชัน">
+<!ENTITY performanceUI.table.function.tooltip         "ชื่อและตำแหน่งต้นทางของฟังก์ชันที่ถูกสุ่มตัวอย่าง">
+<!ENTITY performanceUI.table.totalAlloc               "การจัดสรรที่ถูกสุ่มตัวอย่างรวม">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "จำนวนการจัดสรรวัตถุที่ถูกสุ่มตัวอย่างรวมที่ตำแหน่งนี้และในตำแหน่งที่ถูกเรียก">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "เลือกข้อมูลที่จะแสดงผลในเส้นเวลา">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "กำหนดค่าค่ากำหนดประสิทธิภาพ">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "กลับแผนภูมิการเรียก">
+<!ENTITY performanceUI.invertTree.tooltiptext "การกลับแผนภูมิการเรียกจะแสดงผลเส้นทางการเรียกที่ถูกเก็บประวัติโดยเริ่มจากเฟรมที่ใหม่สุดไปยังเฟรมที่เก่าสุด">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "กลับแผนภูมิเปลวไฟ">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "การกลับแผนภูมิเปลวไฟจะแสดงผลเส้นทางการเรียกที่ถูกเก็บประวัติโดยเริ่มจากเฟรมที่ใหม่สุดไปยังเฟรมที่เก่าสุด">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "แสดงข้อมูลแพลตฟอร์ม Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "การแสดงข้อมูลแพลตฟอร์มจะให้รายงานตัวเก็บประวัติ JavaScript รวมสัญลักษณ์ของแพลตฟอร์ม Gecko เข้าไปด้วย">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "แสดงการปรับ JIT ให้เหมาะสม">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "แสดงข้อมูลการปรับ JIT ให้เหมาะสมที่ถูกสุ่มตัวอย่างในเฟรม JavaScript แต่ละเฟรม">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "ลดรูปแบบโครงสร้างการเวียนแผนภูมิซ้ำ">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "ลดรูปแบบโครงสร้างการเวียนซ้ำเมื่อตรวจสอบฟังก์ชัน">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "อัดบันทึกการใช้หน่วยความจำ">
+<!ENTITY performanceUI.enableMemory.tooltiptext "อัดบันทึกการใช้หน่วยความจำขณะเก็บประวัติ">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "อัดบันทึกการจัดสรร">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "อัดบันทึกการจัดสรรวัตถุขณะเก็บประวัติ">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "อัดบันทึกอัตราเฟรม">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "อัดบันทึกอัตราเฟรมขณะเก็บประวัติ">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "ขณะนี้กำลังอัดบันทึกผ่าน">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "หยุดการอัดบันทึกโดยการป้อน">
+<!ENTITY performanceUI.console.stopCommandEnd   "ลงในคอนโซล">

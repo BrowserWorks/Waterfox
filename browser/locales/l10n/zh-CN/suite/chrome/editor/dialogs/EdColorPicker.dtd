@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "颜色">
+<!ENTITY lastPickedColor.label "上次所选颜色">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY setColor1.label "单击一种颜色或">
+<!ENTITY setColor2.label "输入一个 HTML 颜色字符串">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY chooseColor1.label "选择颜色：">
+<!ENTITY chooseColor2.label "输入一个 HTML 颜色字符串">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "（例如：&quot;#0000ff&quot; 或 &quot;blue&quot;）：">
+<!ENTITY default.label "默认值">
+<!ENTITY default.accessKey "D">
+<!ENTITY palette.label "调色板:">
+<!ENTITY standardPalette.label "标准">
+<!ENTITY webPalette.label "全部 web 颜色">
+<!ENTITY background.label "背景：">
+<!ENTITY background.accessKey "B">
+<!ENTITY table.label "表格">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "单元">
+<!ENTITY cell.accessKey "C">

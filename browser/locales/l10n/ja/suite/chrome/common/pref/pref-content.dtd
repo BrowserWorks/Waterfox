@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title			"コンテンツ">
+<!ENTITY pref.content.description		"これらの設定は &brandShortName; でウェブサイトやメッセージがどのように表示されるかを決めます。">
+<!ENTITY siteIcons.label			"ウェブサイトのアイコン">
+<!ENTITY useSiteIcons.label			"ウェブサイトのアイコンを表示する">
+<!ENTITY useSiteIcons.accesskey			"S">
+<!ENTITY useFavIcons2.label			"ページにアイコンが設定されていないときサーバーの favicon を使用する">
+<!ENTITY useFavIcons2.accesskey			"i">
+
+<!ENTITY scrolling.label			"スクロール">
+<!ENTITY useAutoScroll.label			"自動スクロールを使用する">
+<!ENTITY useAutoScroll.accesskey		"t">
+<!ENTITY useSmoothScroll.label			"スムーズスクロールを使用する">
+<!ENTITY useSmoothScroll.accesskey		"U">
+
+<!ENTITY zoomPrefs.label                        "ズームオプション">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label				"ズーム範囲">
+<!ENTITY minZoom.accesskey			"f">
+<!ENTITY maxZoom.label				"から">
+<!ENTITY maxZoom.accesskey			"o">
+<!ENTITY percent.label				"&#37;">
+
+<!ENTITY defaultZoom.label			"既定のズーム">
+<!ENTITY defaultZoom.accesskey			"D">
+
+<!ENTITY siteSpecific.label			"サイト別のズームレベルを記憶する">
+<!ENTITY siteSpecific.accesskey			"m">
+<!ENTITY textZoomOnly.label			"テキストだけをズームする">
+<!ENTITY textZoomOnly.accesskey			"Z">
+<!ENTITY enableAutomaticImageResizing.label	"大きな画像をブラウザーウィンドウに合わせて縮小表示する">
+<!ENTITY enableAutomaticImageResizing.accesskey	"R">
+
+<!ENTITY allowHWAccel.label			"ハードウェアアクセラレーション機能を使用する (可能な場合)">
+<!ENTITY allowHWAccel.accesskey			"e">
+<!ENTITY blockAutoRefresh.label			"ウェブページが自動的に転送や再読み込みさせようとしたときに警告する">
+<!ENTITY blockAutoRefresh.accesskey		"W">
+
+<!ENTITY showZoomStatusPanel.label		"ステータスバーにズームコントロールを表示する">

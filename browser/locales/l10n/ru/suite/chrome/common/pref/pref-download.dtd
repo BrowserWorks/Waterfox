@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Загрузки">
+
+<!ENTITY downloadBehavior.label         "При начале загрузки">
+<!ENTITY doNothing.label                "Не открывать ничего">
+<!ENTITY doNothing.accesskey            "е">
+<!ENTITY openProgressDialog.label       "Открыть диалоговое окно состояния загрузки">
+<!ENTITY openProgressDialog.accesskey   "ы">
+<!ENTITY openDM.label                   "Открыть окно управления загрузками">
+<!ENTITY openDM.accesskey               "к">
+<!ENTITY flashWhenOpen.label            "Просто мигнуть окном управления загрузками, если оно уже открыто">
+<!ENTITY flashWhenOpen.accesskey        "о">
+
+<!ENTITY downloadLocation.label         "При сохранении файла">
+<!ENTITY saveTo.label                   "Путь для сохранения файлов">
+<!ENTITY saveTo.accesskey               "у">
+<!ENTITY chooseDownloadFolder.label     "Выбрать папку…">
+<!ENTITY chooseDownloadFolder.accesskey "п">
+<!ENTITY alwaysAsk.label                "Всегда выдавать запрос на сохранение файлов">
+<!ENTITY alwaysAsk.accesskey            "г">
+
+<!ENTITY downloadHistory.label          "Журнал загрузок">
+<!ENTITY removeEntries.label            "Удалять записи о загрузках">
+<!ENTITY removeEntries.accesskey        "л">
+<!ENTITY whenCompleted.label            "По их завершении">
+<!ENTITY whenQuittingApp.label          "При выходе из &brandShortName;">
+<!ENTITY neverRemove.label              "Никогда">
+
+<!ENTITY finishedBehavior.label         "По завершении загрузки">
+<!ENTITY playSound.label                "Подать звуковой сигнал">
+<!ENTITY playSound.accesskey            "а">
+<!ENTITY showAlert.label                "Показать уведомление">
+<!ENTITY showAlert.accesskey            "з">
+<!ENTITY browse.label                   "Обзор…">
+<!ENTITY browse.accesskey               "б">
+<!ENTITY playButton.label               "Прослушать">
+<!ENTITY playButton.accesskey           "ш">

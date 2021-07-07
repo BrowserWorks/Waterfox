@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Χωρίς τίτλο)">
+<!ENTITY  newTab.label           "Νέα καρτέλα">
+<!ENTITY  newTab.accesskey       "Ν">
+<!ENTITY  closeTab.label         "Κλείσιμο καρτέλας">
+<!ENTITY  closeTab.accesskey         "Κ">
+<!ENTITY  closeOtherTabs.label   "Κλείσιμο άλλων καρτελών">
+<!ENTITY  closeOtherTabs.accesskey         "ά">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Κλείσιμο καρτελών στα δεξιά">
+<!ENTITY  closeTabsToTheEnd.accesskey "δ">
+<!ENTITY  reloadAllTabs.label    "Ανανέωση όλων των καρτελών">
+<!ENTITY  reloadAllTabs.accesskey         "Α">
+<!ENTITY  reloadTab.label        "Ανανέωση καρτέλας">
+<!ENTITY  reloadTab.accesskey         "Α">
+<!ENTITY  bookmarkGroup.label    "Προσθήκη σελιδοδείκτη σε αυτή την ομάδα καρτελών">
+<!ENTITY  bookmarkGroup.accesskey  "Π">
+<!ENTITY  closeTabButton.tooltip   "Κλείσιμο τρέχουσας καρτέλας">
+<!ENTITY  newTabButton.tooltip   "Άνοιγμα νέας καρτέλας">
+<!ENTITY  listAllTabs.tooltip    "Λίστα όλων των καρτελών">
+<!ENTITY  undoCloseTab.label    "Αναίρεση κλεισίματος καρτέλας">
+<!ENTITY  undoCloseTab.accesskey  "Α">

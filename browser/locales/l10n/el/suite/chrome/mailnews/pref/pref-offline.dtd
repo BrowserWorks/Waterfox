@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Δίκτυο &amp; αποθήκευση">
+<!ENTITY pref.offline.caption             "Εκτός σύνδεσης">
+<!ENTITY textStartUp                      "Κατά την εκκίνηση:">
+<!ENTITY textStartUp.accesskey            "Κ">
+<!ENTITY menuitemRememberPrevState        "Αποθήκευση προηγούμενης κατάστασης σύνδεσης">
+<!ENTITY menuitemAskMe                    "Ερώτηση για κατάσταση σύνδεσης κατά την εκκίνηση">
+<!ENTITY menuitemAlwaysOnline             "Πάντα έναρξη με σύνδεση">
+<!ENTITY menuitemAlwaysOffline            "Πάντα έναρξη εκτός σύνδεσης">
+<!ENTITY menuitemAutomatic                "Αυτόματη ανίχνευση (αν είναι δυνατό)">
+<!ENTITY textGoingOnline                  "Αποστολή μη απεσταλμένων μηνυμάτων κατά τη σύνδεση;">
+<!ENTITY radioAutoSend                    "Ναι">
+<!ENTITY radioAutoSend.accesskey          "Ν">
+<!ENTITY radioNotSend                     "Όχι">
+<!ENTITY radioNotSend.accesskey           "Ό">
+<!ENTITY radioAskUnsent                   "Ερώτηση">
+<!ENTITY radioAskUnsent.accesskey         "τ">
+<!ENTITY textGoingOffline                 "Λήψη μηνυμάτων για χρήση εκτός σύνδεσης κατά την αποσύνδεση;">
+<!ENTITY radioAutoDownload                "Ναι">
+<!ENTITY radioAutoDownload.accesskey      "α">
+<!ENTITY radioNotDownload                 "Όχι">
+<!ENTITY radioNotDownload.accesskey       "χ">
+<!ENTITY radioAskDownload                 "Ερώτηση">
+<!ENTITY radioAskDownload.accesskey       "ρ">
+<!ENTITY mailConnections.caption          "Συνδέσεις αλληλογραφίας">
+<!ENTITY mailnewsTimeout.label            "Λήξη χρονικού ορίου σύνδεσης:">
+<!ENTITY mailnewsTimeout.accesskey        "ξ">
+<!ENTITY mailnewsTimeoutSeconds.label     "δευτερόλεπτα">
+<!ENTITY Diskspace                        "Χώρος δίσκου">
+<!ENTITY offlineCompactFolders.label      "Συμπίεση όλων των φακέλων όταν θα εξοικονομηθούν πάνω από">
+<!ENTITY offlineCompactFolders.accesskey  "Σ">
+<!ENTITY offlineCompactFoldersMB.label    "MB συνολικά">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Programma predefinito">
+<!ENTITY defaultClient.intro  "Utilizza &brandShortName; come programma predefinito per:">
+
+<!ENTITY browser.label "Browser">
+<!ENTITY email.label "Email">
+<!ENTITY newsgroups.label "Gruppi di discussione">
+<!ENTITY feeds.label "Feed">
+
+<!ENTITY checkOnStartup.label "Verifica ad ogni avvio di &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "V">

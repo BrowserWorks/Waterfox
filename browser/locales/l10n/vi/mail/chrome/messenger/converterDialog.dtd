@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Công cụ chuyển đổi loại lưu trữ thư">
+<!ENTITY converterDialog.continueButton "Tiếp tục">
+<!ENTITY converterDialog.cancelButton "Hủy bỏ">
+<!ENTITY converterDialog.finishButton "Hoàn thành">
+<!ENTITY converterDialog.complete "Việc chuyển đổi đã hoàn tất. Bây giờ &brandShortName; sẽ khởi động lại.">
+<!ENTITY converterDialog.error "Chuyển đổi thất bại.">
+

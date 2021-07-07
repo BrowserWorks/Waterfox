@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Новый список рассылки">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Добавить в:">
+<!ENTITY addToAddressBook.accesskey     "о">
+<!ENTITY ListName.label                 "Имя списка:">
+<!ENTITY ListName.accesskey             "м">
+<!ENTITY ListNickName.label             "Псевдоним списка:">
+<!ENTITY ListNickName.accesskey         "е">
+<!ENTITY ListDescription.label          "Описание:">
+<!ENTITY ListDescription.accesskey      "п">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Введите адреса, чтобы добавить их в список рассылки:">
+<!ENTITY AddressTitle.accesskey         "и">
+<!ENTITY UpButton.label                 "Вверх">
+<!ENTITY DownButton.label               "Вниз">
+

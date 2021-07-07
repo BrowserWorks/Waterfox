@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Mesterjelszó">
+<!ENTITY  managepassword.caption                 "Mesterjelszó lejárata">
+<!ENTITY  managepassword.text                    "A &brandShortName; mikor kérdezze a mesterjelszót:">
+<!ENTITY  managepassword.askfirsttime            "Amikor először szükség van rá">
+<!ENTITY  managepassword.askfirsttime.accesskey  "A">
+<!ENTITY  managepassword.askeverytime            "Minden alkalommal">
+<!ENTITY  managepassword.askeverytime.accesskey  "M">
+<!ENTITY  managepassword.asktimeout              "Ha ">
+<!ENTITY  managepassword.asktimeout.accesskey    "H">
+<!ENTITY  managepassword.timeout.unit            "percig nincs használva">
+
+<!ENTITY  changepassword.caption                 "Mesterjelszó megváltoztatása">
+<!ENTITY  changepassword.text                    "A mesterjelszó olyan érzékeny adatokat véd, mint a webes jelszavak és tanúsítványok.">
+<!ENTITY  changepassword.button                  "Jelszó megváltoztatása…">
+<!ENTITY  changepassword.accesskey               "m">
+
+<!ENTITY  resetpassword.caption                  "Mesterjelszó törlése">
+<!ENTITY  resetpassword.text                     "Ha törli a mesterjelszót, minden tárolt webes és e-mail jelszó, űrlapadat, valamint a személyes tanúsítványok és a személyes kulcsok elvesznek.">
+<!ENTITY  resetpassword.button                   "Jelszó törlése">
+<!ENTITY  resetpassword.accesskey                "t">

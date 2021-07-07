@@ -1,0 +1,371 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.key "S">
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "วางโดยไม่มีการจัดรูปแบบ">
+<!ENTITY pasteNoFormatting.accesskey "ว">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAs.label "วางเป็น">
+<!ENTITY pasteAs.accesskey "ง">
+<!ENTITY pasteAsQuotationCmd.label "วางเป็นถ้อยคำอ้างอิง">
+<!ENTITY pasteAsQuotationCmd.accesskey "ป">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY findBarCmd.label "ค้นหา…">
+<!ENTITY findReplaceCmd.label "ค้นหาแล้วแทนที่…">
+<!ENTITY enableInlineSpellChecker.label "ตรวจสอบการสะกดคำเมื่อคุณพิมพ์">
+<!ENTITY enableInlineSpellChecker.accesskey "ต">
+<!ENTITY checkSpellingCmd2.label "ตรวจสอบการสะกดคำ…">
+<!ENTITY checkSpellingCmd2.accesskey "ร">
+<!ENTITY checkSpellingCmd2.key "p">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "แทรก">
+<!ENTITY insertMenu.accesskey "ท">
+<!ENTITY insertLinkCmd2.label "ลิงก์…">
+<!ENTITY insertLinkCmd2.accesskey "ล">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "จุดยึดที่มีชื่อ…">
+<!ENTITY insertAnchorCmd.accesskey "จ">
+<!ENTITY insertImageCmd.label "ภาพ…">
+<!ENTITY insertImageCmd.accesskey "ภ">
+<!ENTITY insertHLineCmd.label "เส้นแนวนอน">
+<!ENTITY insertHLineCmd.accesskey "ส">
+<!ENTITY insertTableCmd.label "ตาราง…">
+<!ENTITY insertTableCmd.accesskey "ต">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "คณิตศาสตร์…">
+<!ENTITY insertMathCmd.accesskey "ค">
+<!ENTITY insertCharsCmd.label "อักขระและสัญลักษณ์…">
+<!ENTITY insertCharsCmd.accesskey "อ">
+<!ENTITY insertBreakAllCmd.label "แบ่งภาพที่อยู่ด้านล่าง">
+<!ENTITY insertBreakAllCmd.accesskey "แ">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "สร้างลิงก์…">
+<!ENTITY createLinkCmd.accesskey "ส">
+<!ENTITY editLinkCmd.label "แก้ไขลิงก์ในตัวเขียนใหม่">
+<!ENTITY editLinkCmd.accesskey "ก">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.title "แบบอักษร">
+<!ENTITY FontFaceSelect.tooltip "เลือกแบบอักษร">
+<!ENTITY fontfaceMenu.label "แบบอักษร">
+<!ENTITY fontfaceMenu.accesskey "บ">
+<!ENTITY fontVarWidth.label "ความกว้างแปรผัน">
+<!ENTITY fontVarWidth.accesskey "ค">
+<!ENTITY fontFixedWidth.label "ความกว้างคงที่">
+<!ENTITY fontFixedWidth.accesskey "ว">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.title "ขนาดแบบอักษร">
+<!ENTITY FontSizeSelect.tooltip "เลือกขนาดแบบอักษร">
+<!ENTITY decreaseFontSize.label "เล็กลง">
+<!ENTITY decreaseFontSize.accesskey "ล">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "ใหญ่ขึ้น">
+<!ENTITY increaseFontSize.accesskey "ห">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "ขนาด">
+<!ENTITY fontSizeMenu.accesskey "ข">
+<!ENTITY size-tinyCmd.label "เล็กมาก">
+<!ENTITY size-tinyCmd.accesskey "ล">
+<!ENTITY size-smallCmd.label "เล็ก">
+<!ENTITY size-smallCmd.accesskey "ก">
+<!ENTITY size-mediumCmd.label "ปานกลาง">
+<!ENTITY size-mediumCmd.accesskey "ป">
+<!ENTITY size-largeCmd.label "ใหญ่">
+<!ENTITY size-largeCmd.accesskey "ห">
+<!ENTITY size-extraLargeCmd.label "ใหญ่มาก">
+<!ENTITY size-extraLargeCmd.accesskey "ม">
+<!ENTITY size-hugeCmd.label "มหึมา">
+<!ENTITY size-hugeCmd.accesskey "ห">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "ลักษณะข้อความ">
+<!ENTITY fontStyleMenu.accesskey "ก">
+<!ENTITY styleBoldCmd.label "ตัวหนา">
+<!ENTITY styleBoldCmd.accesskey "ต">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "ตัวเอียง">
+<!ENTITY styleItalicCmd.accesskey "ว">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "ขีดเส้นใต้">
+<!ENTITY styleUnderlineCmd.accesskey "ข">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "ขีดทับ">
+<!ENTITY styleStrikeThruCmd.accesskey "ท">
+<!ENTITY styleSuperscriptCmd.label "ตัวยก">
+<!ENTITY styleSuperscriptCmd.accesskey "ย">
+<!ENTITY styleSubscriptCmd.label "ตัวห้อย">
+<!ENTITY styleSubscriptCmd.accesskey "ห">
+<!ENTITY styleNonbreakingCmd.label "ช่องว่างแบบไม่แบ่งบรรทัด">
+<!ENTITY styleNonbreakingCmd.accesskey "ม">
+<!ENTITY styleEm.label "ตัวเน้น">
+<!ENTITY styleEm.accesskey "น">
+<!ENTITY styleStrong.label "ตัวเน้นแบบเข้ม">
+<!ENTITY styleStrong.accesskey "ต">
+<!ENTITY styleCite.label "การกล่าวถึง">
+<!ENTITY styleCite.accesskey "ก">
+<!ENTITY styleAbbr.label "ตัวย่อ">
+<!ENTITY styleAbbr.accesskey "ว">
+<!ENTITY styleAcronym.label "อักษรย่อ">
+<!ENTITY styleAcronym.accesskey "อ">
+<!ENTITY styleCode.label "โค้ด">
+<!ENTITY styleCode.accesskey "ค">
+<!ENTITY styleSamp.label "ส่งออกตัวอย่าง">
+<!ENTITY styleSamp.accesskey "ส">
+<!ENTITY styleVar.label "ตัวแปร">
+<!ENTITY styleVar.accesskey "ป">
+
+<!ENTITY formatFontColor.label "สีข้อความ…">
+<!ENTITY formatFontColor.accesskey "ส">
+<!ENTITY tableOrCellColor.label "สีพื้นหลังของตารางหรือเซลล์…">
+<!ENTITY tableOrCellColor.accesskey "พ">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "เอาจุดยึดที่มีชื่อออก">
+<!ENTITY formatRemoveNamedAnchors.accesskey "อ">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "ย่อหน้า">
+<!ENTITY paragraphMenu.accesskey "ย">
+<!ENTITY paragraphParagraphCmd.label "ย่อหน้า">
+<!ENTITY paragraphParagraphCmd.accesskey "ย">
+<!ENTITY heading1Cmd.label "หัวเรื่อง 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "หัวเรื่อง 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "หัวเรื่อง 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "หัวเรื่อง 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "หัวเรื่อง 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "หัวเรื่อง 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "ที่อยู่">
+<!ENTITY paragraphAddressCmd.accesskey "ท">
+<!ENTITY paragraphPreformatCmd.label "ย่อหน้าที่จัดรูปแบบไว้ล่วงหน้า">
+<!ENTITY paragraphPreformatCmd.accesskey "ย">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "รายการ">
+<!ENTITY formatlistMenu.accesskey "ร">
+<!ENTITY noneCmd.label "ไม่มี">
+<!ENTITY noneCmd.accesskey "ม">
+<!ENTITY listBulletCmd.label "มีสัญลักษณ์แสดงหัวข้อย่อย">
+<!ENTITY listBulletCmd.accesskey "ส">
+<!ENTITY listNumberedCmd.label "มีลำดับเลข">
+<!ENTITY listNumberedCmd.accesskey "ล">
+<!ENTITY listTermCmd.label "คำ">
+<!ENTITY listTermCmd.accesskey "ค">
+<!ENTITY listDefinitionCmd.label "นิยาม">
+<!ENTITY listDefinitionCmd.accesskey "น">
+<!ENTITY listPropsCmd.label "คุณสมบัติรายการ…">
+<!ENTITY listPropsCmd.accesskey "ค">
+
+<!ENTITY ParagraphSelect.title "ย่อหน้า">
+<!ENTITY ParagraphSelect.tooltip "เลือกรูปแบบย่อหน้า">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "เนื้อความ">
+<!ENTITY bodyTextCmd.accesskey "น">
+<!-- isn't used in menu now, but may be added in future -->
+<!ENTITY advancedPropertiesCmd.label "คุณสมบัติขั้นสูง">
+<!ENTITY advancedPropertiesCmd.accesskey "ค">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "จัดชิดแนว">
+<!ENTITY alignMenu.accesskey "จ">
+<!ENTITY alignLeft.label "ซ้าย">
+<!ENTITY alignLeft.accesskey "ซ">
+<!ENTITY alignLeft.tooltip "จัดชิดแนวซ้าย">
+<!ENTITY alignCenter.label "กึ่งกลาง">
+<!ENTITY alignCenter.accesskey "ง">
+<!ENTITY alignCenter.tooltip "จัดชิดแนวกลาง">
+<!ENTITY alignRight.label "ขวา">
+<!ENTITY alignRight.accesskey "ข">
+<!ENTITY alignRight.tooltip "จัดชิดแนวขวา">
+<!ENTITY alignJustify.label "เต็มแนว">
+<!ENTITY alignJustify.accesskey "ต">
+<!ENTITY alignJustify.tooltip "จัดเต็มแนว">
+
+<!-- Layer toolbar items -->
+<!ENTITY absolutePosition.label "การวางตำแหน่ง">
+<!ENTITY layer.tooltip "เลเยอร์">
+<!ENTITY decreaseZIndex.label "ส่งไปข้างหลัง">
+<!ENTITY layerSendToBack.tooltip "ส่งไปข้างหลัง">
+<!ENTITY increaseZIndex.label "นำมาข้างหน้า">
+<!ENTITY layerBringToFront.tooltip "นำมาข้างหน้า">
+
+<!ENTITY increaseIndent.label "เพิ่มการเยื้อง">
+<!ENTITY increaseIndent.accesskey "พ">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "ลดการเยื้อง">
+<!ENTITY decreaseIndent.accesskey "ล">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "สีและพื้นหลังของหน้า…">
+<!ENTITY colorsAndBackground.accesskey "ส">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "ตาราง">
+<!ENTITY tableMenu.accesskey "ต">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "เลือก">
+<!ENTITY tableSelectMenu.accesskey "เ">
+
+<!ENTITY tableSelectMenu2.label "เลือกตาราง">
+<!ENTITY tableSelectMenu2.accesskey "เ">
+<!ENTITY tableInsertMenu2.label "แทรกตาราง">
+<!ENTITY tableInsertMenu2.accesskey "ท">
+<!ENTITY tableDeleteMenu2.label "ลบตาราง">
+<!ENTITY tableDeleteMenu2.accesskey "บ">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "แทรก">
+<!ENTITY tableInsertMenu.accesskey "ท">
+<!ENTITY tableTable.label "ตาราง">
+<!ENTITY tableTable.accesskey "ต">
+<!ENTITY tableRow.label "แถว">
+<!ENTITY tableRows.label "แถว">
+<!ENTITY tableRow.accesskey "ถ">
+<!ENTITY tableRowAbove.label "แถวจากด้านบน">
+<!ENTITY tableRowAbove.accesskey "บ">
+<!ENTITY tableRowBelow.label "แถวจากด้านล่าง">
+<!ENTITY tableRowBelow.accesskey "ล">
+<!ENTITY tableColumn.label "คอลัมน์">
+<!ENTITY tableColumns.label "คอลัมน์">
+<!ENTITY tableColumn.accesskey "ค">
+<!ENTITY tableColumnBefore.label "คอลัมน์จากด้านซ้าย">
+<!ENTITY tableColumnBefore.accesskey "ซ">
+<!ENTITY tableColumnAfter.label "คอลัมน์จากด้านขวา">
+<!ENTITY tableColumnAfter.accesskey "ข">
+<!ENTITY tableCell.label "เซลล์">
+<!ENTITY tableCells.label "เซลล์">
+<!ENTITY tableCell.accesskey "ซ">
+<!ENTITY tableCellContents.label "เนื้อหาเซลล์">
+<!ENTITY tableCellContents.accesskey "น">
+<!ENTITY tableAllCells.label "เซลล์ทั้งหมด">
+<!ENTITY tableAllCells.accesskey "ท">
+<!ENTITY tableCellBefore.label "เซลล์จากด้านซ้าย">
+<!ENTITY tableCellBefore.accesskey "ซ">
+<!ENTITY tableCellAfter.label "เซลล์จากด้านขวา">
+<!ENTITY tableCellAfter.accesskey "ข">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "ลบ">
+<!ENTITY tableDeleteMenu.accesskey "ล">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "ผ">
+<!ENTITY tableJoinCells.accesskey "ผ">
+<!ENTITY tableSplitCell.label "แยกเซลล์">
+<!ENTITY tableSplitCell.accesskey "ย">
+<!ENTITY convertToTable.label "สร้างตารางจากส่วนที่เลือก">
+<!ENTITY convertToTable.accesskey "ส">
+<!ENTITY tableProperties.label "คุณสมบัติตาราง…">
+<!ENTITY tableProperties.accesskey "ค">
+
+<!-- Toolbar-only items -->
+<!ENTITY menuBar.tooltip "แถบเมนู">
+<!ENTITY formatToolbar.tooltip "แถบเครื่องมือการจัดรูปแบบ">
+<!ENTITY cutToolbarCmd.tooltip "ตัด">
+<!ENTITY copyToolbarCmd.tooltip "คัดลอก">
+<!ENTITY pasteToolbarCmd.tooltip "วาง">
+<!ENTITY printToolbarCmd.label "พิมพ์">
+<!ENTITY printToolbarCmd.tooltip "พิมพ์หน้านี้">
+<!ENTITY findToolbarCmd.label "ค้นหา">
+<!ENTITY findToolbarCmd.tooltip "ค้นหาข้อความในหน้า">
+<!ENTITY spellToolbarCmd.label "การสะกด">
+<!ENTITY spellToolbarCmd.tooltip "ตรวจสอบการสะกดของส่วนที่เลือกหรือทั้งหน้า">
+<!ENTITY imageToolbarCmd.label "ภาพ">
+<!ENTITY imageToolbarCmd.tooltip "แทรกภาพใหม่หรือแก้ไขคุณสมบัติของภาพที่เลือก">
+<!ENTITY hruleToolbarCmd.label "เส้นแนวนอน">
+<!ENTITY hruleToolbarCmd.tooltip "แทรกเส้นแนวนอนใหม่หรือแก้ไขคุณสมบัติของเส้นที่เลือก">
+<!ENTITY tableToolbarCmd.label "ตาราง">
+<!ENTITY tableToolbarCmd.tooltip "แทรกตารางใหม่หรือแก้ไขคุณสมบัติของตารางที่เลือก">
+<!ENTITY linkToolbarCmd.label "ลิงก์">
+<!ENTITY linkToolbarCmd.tooltip "แทรกลิงก์ใหม่หรือแก้ไขคุณสมบัติของลิงก์ที่เลือก">
+<!ENTITY anchorToolbarCmd.label "จุดยึด">
+<!ENTITY anchorToolbarCmd.tooltip "แทรกจุดยึดที่มีชื่อใหม่หรือแก้ไขคุณสมบัติของจุดยึดที่เลือก">
+<!ENTITY colorButtons.title "สี">
+<!ENTITY TextColorButton.tooltip "เลือกสีสำหรับข้อความ">
+<!ENTITY BackgroundColorButton.tooltip "เลือกสีสำหรับพื้นหลัง">
+<!ENTITY throbber.tooltip "ไปยังหน้าแรกของ &vendorShortName;">
+<!ENTITY throbber.tooltip2 "ไปยังหน้าแรกของ &brandShortName;">
+<!ENTITY HighlightColorButton.label "ปากกาเน้นข้อความ">
+<!ENTITY HighlightColorButton.tooltip "เลือกสีเน้นสำหรับข้อความ">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSize.label "ขนาดแบบอักษร">
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "ตั้งขนาดแบบอักษร">
+<!ENTITY smaller.label "เล็กลง">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "ขนาดแบบอักษรเล็กลง">
+<!ENTITY larger.label "ใหญ่ขึ้น">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "ขนาดแบบอักษรใหญ่ขึ้น">
+<!ENTITY bold.label "ตัวหนา">
+<!ENTITY boldToolbarCmd.tooltip "ตัวหนา">
+<!ENTITY italic.label "ตัวเอียง">
+<!ENTITY italicToolbarCmd.tooltip "ตัวเอียง">
+<!ENTITY underline.label "ขีดเส้นใต้">
+<!ENTITY underlineToolbarCmd.tooltip "ขีดเส้นใต้">
+<!ENTITY bullets.label "สัญลักษณ์แสดงหัวข้อย่อย">
+<!ENTITY bulletListToolbarCmd.tooltip "นำไปใช้หรือเอารายการที่มีสัญลักษณ์แสดงหัวข้อย่อยออก">
+<!ENTITY numbers.label "ตัวเลข">
+<!ENTITY numberListToolbarCmd.tooltip "นำไปใช้หรือเอารายการที่มีลำดับเลขออก">
+<!ENTITY outdent.label "เยื้องออก">
+<!ENTITY outdentToolbarCmd.tooltip "เยื้องข้อความออก (ย้ายไปทางซ้าย)">
+<!ENTITY indent.label "เยื้องเข้า">
+<!ENTITY indentToolbarCmd.tooltip "เยื้องข้อความเข้า (ย้ายไปทางขวา)">
+<!ENTITY AlignPopupButton.label "การจัดชิดแนว">
+<!ENTITY AlignPopupButton.tooltip "เลือกการจัดข้อความชิดแนว">
+<!ENTITY InsertPopupButton.label "แทรก">
+<!ENTITY InsertPopupButton.tooltip "แทรกลิงก์, จุดยึด, ภาพ, เส้นแนวนอน, หรือตาราง">
+<!ENTITY alignLeftButton.label "จัดชิดแนวซ้าย">
+<!ENTITY alignLeftButton.tooltip "จัดข้อความชิดขอบซ้าย">
+<!ENTITY alignCenterButton.label "จัดชิดแนวกลาง">
+<!ENTITY alignCenterButton.tooltip "จัดข้อความอยู่กึ่งกลาง">
+<!ENTITY alignRightButton.label "จัดชิดแนวขวา">
+<!ENTITY alignRightButton.tooltip "จัดข้อความชิดขอบขวา">
+<!ENTITY alignJustifyButton.label "จัดเต็มแนว">
+<!ENTITY alignJustifyButton.tooltip "จัดข้อความชิดขอบซ้ายและขวา">
+
+<!-- Structure Toolbar Context Menu items -->
+<!ENTITY structSelect.label         "เลือก">
+<!ENTITY structSelect.accesskey     "ล">
+<!ENTITY structRemoveTag.label      "เอาป้ายกำกับออก">
+<!ENTITY structRemoveTag.accesskey  "อ">
+<!ENTITY structChangeTag.label      "เปลี่ยนป้ายกำกับ">
+<!ENTITY structChangeTag.accesskey  "ป">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "แทรก">
+<!ENTITY insertTOC.accesskey      "ท">
+<!ENTITY updateTOC.label          "อัปเดต">
+<!ENTITY updateTOC.accesskey      "เ">
+<!ENTITY removeTOC.label          "เอาออก">
+<!ENTITY removeTOC.accesskey      "า">
+<!ENTITY tocMenu.label            "สารบัญ…">
+<!ENTITY tocMenu.accesskey        "ส">

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "RSS-prenumerationer">
+<!ENTITY learnMore.label             "Läs mer om RSS-kanaler">
+
+<!ENTITY feedTitle.label             "Titel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Kanal-URL:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Ange en giltig kanal-URL">
+<!ENTITY locationValidate.label      "Validera">
+<!ENTITY validateText.label          "Kontrollera validering och hämta en giltig webbadress.">
+
+<!ENTITY feedFolder.label            "Lagra artiklar i:">
+<!ENTITY feedFolder.accesskey        "L">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Sök efter nya artiklar var ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minuter">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dagar">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Utgivaren rekommenderar:">
+
+<!ENTITY quickMode.label             "Visa sammanfattning för artikeln istället för att läsa in webbsidan">
+<!ENTITY quickMode.accesskey         "V">
+
+<!ENTITY autotagEnable.label         "Skapa automatiskt etiketter från &lt;kategori&gt; kanalnamn">
+<!ENTITY autotagEnable.accesskey     "u">
+<!ENTITY autotagUsePrefix.label      "Märk etiketter med prefix:">
+<!ENTITY autotagUsePrefix.accesskey  "M">
+<!ENTITY autoTagPrefix.placeholder   "Ange ett etikettprefix">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Lägg till">
+<!ENTITY button.addFeed.accesskey    "L">
+<!ENTITY button.verifyFeed.label     "Verifiera">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Uppdatera">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "Ta bort">
+<!ENTITY button.removeFeed.accesskey "T">
+<!ENTITY button.importOPML.label     "Importera">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportera">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Exporta kanaler med mappstruktur; ctrl klick eller ctrl enter för arr exportera kanaler som en lista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Stäng">

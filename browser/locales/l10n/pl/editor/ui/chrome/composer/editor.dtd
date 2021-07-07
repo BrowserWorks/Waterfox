@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Kompozytor Stron">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Pasek narzędzi edycyjnych">
+<!ENTITY previewToolbarCmd.label "Podgląd">
+<!ENTITY previewToolbarCmd.tooltip "Otwórz bieżącą stronę w nowym oknie przeglądarki">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Eksportuj do formatu tekstowego…">
+<!ENTITY exportToTextCmd.accesskey "t">
+<!ENTITY previewCmd.label "Otwórz stronę w przeglądarce">
+<!ENTITY previewCmd.accesskey "g">
+<!ENTITY sendPageCmd.label "Wyślij stronę…">
+<!ENTITY sendPageCmd.accesskey "s">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Pasek narzędzi edycji">
+<!ENTITY compositionToolbarCmd.accesskey "k">
+<!ENTITY formattingToolbarCmd.label "Pasek narzędzi formatowania">
+<!ENTITY formattingToolbarCmd.accesskey "r">
+<!ENTITY editmodeToolbarCmd.label "Pasek trybu edycji">
+<!ENTITY editmodeToolbarCmd.accesskey "e">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "F">
+<!ENTITY grid.label "Siatka">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "Właściwości i tytuł strony…">
+<!ENTITY pageProperties.accesskey "o">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Weryfikuj poprawność kodu HTML">
+<!ENTITY validateCmd.accesskey "W">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Zwykły">
+<!ENTITY NormalMode.label "Zwykły tryb edycji">
+<!ENTITY NormalMode.accesskey "w">
+<!ENTITY NormalMode.tooltip "Pokaż obramowanie tabeli oraz kotwice">
+<!ENTITY AllTagsModeTab.label "Znaczniki">
+<!ENTITY AllTagsMode.label "Pokaż znaczniki">
+<!ENTITY AllTagsMode.accesskey "z">
+<!ENTITY AllTagsMode.tooltip "Wyświetl ikony dla wszystkich znaczników HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Źródło">
+<!ENTITY HTMLSourceMode.label "Źródło HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Edytuj źródło HTML">
+<!ENTITY PreviewModeTab.label "Podgląd">
+<!ENTITY PreviewMode.label "Podgląd">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "Wyświetl jako WYSIWYG (tak jak w przeglądarce)">

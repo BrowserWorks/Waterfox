@@ -1,0 +1,122 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Ευρετήριο">
+<!ENTITY blankResultsPaneMessage.label                  "Αυτό το ευρετήριο εμφανίζει επαφές μόνο μετά από αναζήτηση">
+<!ENTITY localResultsOnlyMessage.label                  "Οι επαφές από απομακρυσμένα ευρετήρια δεν εμφανίζονται μέχρι να κάνετε αναζήτηση">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Επαφή…">
+<!ENTITY newContact.accesskey                           "Ε">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Λίστα αλληλογραφίας…">
+<!ENTITY newListCmd.accesskey                           "Λ">
+<!ENTITY newAddressBookCmd.label                        "Ευρετήριο διευθύνσεων…">
+<!ENTITY newAddressBookCmd.accesskey                    "τ">
+<!ENTITY newLDAPDirectoryCmd.label                      "Κατάλογος LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "Κ">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Εκτύπωση επαφής…">
+<!ENTITY printContactViewCmd.accesskey                  "Ε">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Προεπισκόπηση εκτύπωσης επαφής">
+<!ENTITY printPreviewContactViewCmd.accesskey           "σ">
+<!ENTITY printAddressBook.label                         "Εκτύπωση ευρετηρίου…">
+<!ENTITY printAddressBook.accesskey                     "ρ">
+<!ENTITY printPreviewAddressBook.label                  "Προεπισκόπηση εκτύπωσης ευρετηρίου">
+<!ENTITY printPreviewAddressBook.accesskey              "η">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Διαγραφή ευρετηρίου">
+<!ENTITY deleteContactCmd.label                         "Διαγραφή επαφής">
+<!ENTITY deleteContactsCmd.label                        "Διαγραφή επιλεγμένων επαφών">
+<!ENTITY deleteListCmd.label                            "Διαγραφή λίστας">
+<!ENTITY deleteListsCmd.label                           "Διαγραφή επιλεγμένων λιστών">
+<!ENTITY deleteItemsCmd.label                           "Διαγραφή επιλεγμένων στοιχείων">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Εναλλαγή ονόματος/επωνύμου">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "λ">
+<!ENTITY propertiesCmd.label                            "Ιδιότητες…">
+<!ENTITY propertiesCmd.accesskey                        "ι">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Γραμμή ευρετηρίων διευθύνσεων">
+<!ENTITY showAbToolbarCmd.accesskey                     "ρ">
+<!ENTITY layoutMenu.label                               "Διάταξη">
+<!ENTITY layoutMenu.accesskey                           "Δ">
+<!ENTITY showDirectoryPane.label                        "Προβολή καταλόγων">
+<!ENTITY showDirectoryPane.accesskey                    "κ">
+<!ENTITY showContactPane2.label                         "Προβολή επαφών">
+<!ENTITY showContactPane2.accesskey                     "ε">
+<!ENTITY menu_ShowNameAs.label                          "Εμφάνιση ονόματος ως">
+<!ENTITY menu_ShowNameAs.accesskey                      "ν">
+<!ENTITY firstLastCmd.label                             "Όνομα Επώνυμο">
+<!ENTITY firstLastCmd.accesskey                         "Ό">
+<!ENTITY lastFirstCmd.label                             "Επώνυμο, Όνομα">
+<!ENTITY lastFirstCmd.accesskey                         "π">
+<!ENTITY displayNameCmd.label                           "Εμφανιζόμενο όνομα">
+<!ENTITY displayNameCmd.accesskey                       "Ε">
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Εισαγωγή…">
+<!ENTITY importCmd.accesskey                            "Ε">
+<!ENTITY exportCmd.label                                "Εξαγωγή…">
+<!ENTITY exportCmd.accesskey                            "Ε">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Νέα επαφή">
+<!ENTITY newContactButton.accesskey                     "ε">
+<!ENTITY newlistButton.label                            "Νέα λίστα">
+<!ENTITY newlistButton.accesskey                        "λ">
+<!ENTITY editItemButton.label                           "Ιδιότητες">
+<!ENTITY editItemButton.accesskey                       "Ι">
+<!ENTITY newmsgButton.label                             "Σύνθεση">
+<!ENTITY newmsgButton.accesskey                         "Σ">
+<!ENTITY deleteItemButton.label                         "Διαγραφή">
+<!ENTITY deleteItemButton.accesskey                     "Δ">
+<!ENTITY newimButton.label                              "Άμεσο μήνυμα">
+<!ENTITY newimButton.accesskey                          "Ά">
+<!ENTITY printButton.label                              "Εκτύπωση">
+<!ENTITY printButton.accesskey                          "κ">
+<!ENTITY searchNameAndEmail.placeholder                 "Αναζήτηση ονομάτων και email">
+<!ENTITY searchBox.title                                "Αναζήτηση">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Γραμμή ευρετηρίων διευθύνσεων">
+<!ENTITY newContactButton.tooltip                       "Δημιουργία νέας επαφής ευρετηρίου">
+<!ENTITY newlistButton.tooltip                          "Δημιουργία νέας λίστας">
+<!ENTITY editItemButton.tooltip                         "Επεξεργασία επιλεγμένου στοιχείου">
+<!ENTITY newmsgButton.tooltip                           "Αποστολή μηνύματος email">
+<!ENTITY newIM.tooltip                                  "Αποστολή άμεσου μηνύματος ή συνομιλία">
+<!ENTITY printButton.tooltip                            "Εκτύπωση επιλεγμένου στοιχείου">
+<!ENTITY deleteItemButton.tooltip                       "Διαγραφή επιλεγμένου στοιχείου">
+<!ENTITY advancedButton.tooltip                         "Σύνθετη αναζήτηση διεύθυνσης">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Ευρετήρια">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Επαφή">
+<!ENTITY home.heading                                   "Οικία">
+<!ENTITY other.heading                                  "Άλλο">
+<!ENTITY chat.heading                                   "Συνομιλία">
+<!ENTITY phone.heading                                  "Τηλέφωνο">
+<!ENTITY work.heading                                   "Εργασία">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Περιγραφή">
+<!ENTITY addresses.heading                              "Διευθύνσεις">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Λήψη χάρτη">
+<!ENTITY mapIt.tooltip                                  "Προβολή χάρτη διεύθυνσης από το διαδίκτυο">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Probléma az oldal betöltése közben">
+<!ENTITY retry.label "Próbálja újra">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "A kapcsolódás sikertelen">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Ez a cím tiltva van">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "A kiszolgáló nem található">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Ellenőrizze a címet, hogy nincs-e benne elgépelés, például: <strong>ww</strong>.example.com a <strong>www</strong>.example.com</li> helyett. <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Keresés</button> </div> <li>Ha semmilyen oldalt nem tud betölteni, ellenőrizze az eszköz adatkapcsolatát, illetve Wi-Fi kapcsolatát. <button id='wifi'>Kapcsolja be a Wi-Fi-t</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "A fájl nem található">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Ellenőrizze a fájlnevet, hogy jól írta-e.</li> <li>Ellenőrizze, hogy a fájlt áthelyezték-e, átnevezték-e vagy eltávolították-e.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "A fájl elérése megtagadva">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Lehet hogy törölve lett, át lett helyezve, vagy a fájljogosultságok megakadályozzák a hozzáférést.</li> </ul>">
+
+<!ENTITY generic.title "Hoppá!">
+<!ENTITY generic.longDesc "<p>A &brandShortName; nem tudja betölteni az oldalt valamilyen okból.</p>">
+
+<!ENTITY malformedURI.title "A cím érvénytelen">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>A webcímeket általában <strong>http://www.example.com/</strong> formában írják.</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Keresés</button> </div> <li>Ellenőrizze, hogy előre dőlő perjeleket használ-e (azaz: <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "A kapcsolat megszakadt">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "A dokumentum lejárt">
+<!ENTITY notCached.longDesc "<p>A kért dokumentum nem érhető el a &brandShortName; gyorsítótárában.</p><ul><li>Biztonsági okokból a &brandShortName; nem kéri le automatikusan az érzékeny adatokat tartalmazó dokumentumokat.</li><li>Kattintson a „Próbálja újra” gombra, hogy újra lekérje a dokumentumot a webhelyről.</li></ul>">
+
+<!ENTITY netOffline.title "Kapcsolat nélküli mód">
+
+<!ENTITY contentEncodingError.title "Tartalomkódolási hiba">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Értesítse a webhely tulajdonosait erről a problémáról.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Nem biztonságos fájltípus">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Értesítse a webhely tulajdonosait erről a problémáról.</li> </ul>">
+
+<!ENTITY netReset.title "A kapcsolat alaphelyzetbe állt">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "A kapcsolat időtúllépés miatt megszakadt">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "A cím nem volt érthető">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Lehet, hogy egyéb szoftvert kell telepítenie a cím megnyitásához.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "A proxykiszolgáló visszautasította a kapcsolatokat">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Ellenőrizze a proxybeállításokat, hogy helyesek-e.</li> <li>Kérdezze meg a hálózati rendszergazdától, hogy a proxykiszolgáló működik-e.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Nem található a proxykiszolgáló">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Ellenőrizze a proxybeállításokat, hogy helyesek-e.</li> <li>Ellenőrizze, hogy az eszköznek van működő adatkapcsolata vagy Wi-Fi kapcsolata. <button id='wifi'>Kapcsolja be a Wi-Fi-t</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Az oldal nem megfelelően van átirányítva">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ez a probléma sokszor a letiltott vagy visszautasított sütik miatt jelentkezik.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Váratlan válasz a kiszolgálótól">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Ellenőrizze, hogy a rendszerre telepítve van-e a Personal Security Manager modul.</li> <li>A hibát okozhatja a kiszolgáló nem szabványos beállítása is.</li> </ul>">
+
+<!ENTITY nssFailure2.title "A biztonságos kapcsolat sikertelen">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>A megtekinteni kívánt oldal nem jeleníthető meg, mert a kapott adatok hitelessége nem ellenőrizhető.</li> <li>Lépjen kapcsolatba a webhely üzemeltetőjével, és értesítse a problémáról.</li> </ul>">
+
+<!ENTITY nssBadCert.title "A biztonságos kapcsolat sikertelen">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Ezt okozhatja a kiszolgáló nem megfelelő beállítása, de az is lehet, hogy valaki megpróbál a kiszolgáló nevében fellépni.</li> <li>Ha korábban már sikeresen kapcsolódott ehhez a kiszolgálóhoz, akkor lehet, hogy a hiba csak ideiglenes, és később újra próbálkozhat.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>A webhely ideiglenesen nem érhető el vagy túlterhelt. Próbálja újra pár perc múlva.</li> <li>Ha semmilyen oldalt nem tud betölteni, ellenőrizze az eszköz adatkapcsolatát, illetve Wi-Fi kapcsolatát. <button id='wifi'>Kapcsolja be a Wi-Fi-t</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Blokkolva a tartalombiztonsági irányelv szerint">
+<!ENTITY cspBlocked.longDesc "<p>A &brandShortName; nem engedte meg, hogy az oldalt ezen a módon betöltse, mert az oldal tartalombiztonsági irányelve ezt tiltja.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Sérült tartalom hiba">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A megtekinteni kívánt oldal nem jeleníthető meg, mert az adatátvitel közben hiba történt.</p><ul><li>Lépjen kapcsolatba a webhely üzemeltetőjével, és értesítse a problémáról.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Vagy hozzáadhat egy kivételt…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Oldal elhagyása">
+<!ENTITY securityOverride.exceptionButtonLabel "Kivétel hozzáadása…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Ne adjon hozzá kivételt, ha nem teljesen megbízható internetkapcsolatot használ, vagy ha nem szokta látni ezt a figyelmeztetést ennél a kiszolgálónál.</p> <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Távoli XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Értesítse a webhely tulajdonosait erről a problémáról.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Nem lehet biztonságosan kapcsolódni">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Speciális információ: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "A kapcsolat nem biztonságos">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Speciális információ: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "A kapcsolat nem biztonságos">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> olyan biztonsági technológiát használ, amely elavult, és sérülékeny a támadásokkal szemben. Egy támadó könnyen felfedhet olyan információkat, amelyeket biztonságosnak gondol. A weboldal rendszergazdájának ki kell javítania a kiszolgálót, mielőtt meglátogathatja az oldalt.</p><p>Hibakód: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Hálózati protokoll hiba">
+<!ENTITY networkProtocolError.longDesc "<p>Az oldal amit meg akar tekinteni nem jeleníthető meg, mert hiba lett észlelve a hálózati protokollban.</p><ul><li>Lépjen kapcsolatba a webhely tulajdonosaival, hogy értesítse őket a problémáról.</li></ul>">

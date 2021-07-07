@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Über Junk-Nachrichten (Junk = Spam)">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; verfügt über einen speziellen Filter zur Erkennung von unerwünschter Post (Junk), der alle eingehenden Nachrichten untersucht und gegebenenfalls aussortiert. Unerwünschte Nachrichten werden dann automatisch durch ein Junk-Symbol gekennzeichnet: ">
+<!ENTITY info1b.label  " ">
+<!ENTITY info2.label   "Um &brandShortName; zu trainieren, sodass dieser im Laufe der Zeit Junk zuverlässig selbst erkennt, verwenden Sie die Junk-Schaltfläche in der Symbolleiste. Stufen Sie bitte jede falsch eingestufte Nachricht korrekt als &quot;Junk&quot; oder &quot;Kein Junk&quot; ein. Nach einiger Zeit werden Sie sich weitgehend auf den Junk-Filter verlassen können. ">
+<!ENTITY info3.label   "Bedenken Sie, dass die Einstellungen des Junk-Filters für jedes Konto getrennt vorgenommen werden können bzw. müssen.">
+<!ENTITY info4.label   " ">

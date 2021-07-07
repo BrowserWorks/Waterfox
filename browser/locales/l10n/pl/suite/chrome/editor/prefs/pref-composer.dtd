@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composer.title "Kompozytor Stron">
+
+<!ENTITY recentFiles.title "Ostatnio edytowane strony">
+<!ENTITY documentsInMenu.label "Ogranicz listę ostatnio edytowanych stron do:">
+<!ENTITY documentsInMenu.accesskey "n">
+
+<!ENTITY savingFiles.title "Podczas zapisywania lub publikowania stron">
+<!ENTITY preserveExisting.label "Zachowaj oryginalne formatowanie źródła">
+<!ENTITY preserveExisting.accesskey "o">
+<!ENTITY preserveExisting.tooltip      "Zachowuj łamanie wierszy oraz oryginalne formatowanie strony">
+<!ENTITY saveAssociatedFiles.label "Zachowaj obrazy oraz inne powiązane pliki podczas zapisywania strony">
+<!ENTITY saveAssociatedFiles.accesskey "Z">
+<!ENTITY showPublishDialog.label "Zawsze pokazuj dialog publikowania podczas publikowania stron" >
+<!ENTITY showPublishDialog.accesskey   "a">
+
+<!ENTITY composerEditing.label "Edytowanie">
+<!ENTITY maintainStructure.label "Zachowaj układ tabeli podczas wstawiania i usuwania komórek">
+<!ENTITY maintainStructure.tooltip "Zachowuje prostokątny kształt tabeli automatycznie dostosowując układ komórek po wstawieniu lub usunięciu komórki">
+<!ENTITY maintainStructure.accesskey "m">
+<!ENTITY useCSS.label "Użyj arkuszy stylów CSS (Cascading Style Sheets) zamiast elementów i atrybutów HTML">
+<!ENTITY useCSS.accesskey "U">
+<!ENTITY crInPCreatesNewP.label     "Enter w akapicie zawsze tworzy nowy akapit">
+<!ENTITY crInPCreatesNewP.accesskey "r">

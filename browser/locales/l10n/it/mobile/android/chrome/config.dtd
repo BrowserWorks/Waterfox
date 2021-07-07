@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder "Cerca">
+
+<!ENTITY newPref.namePlaceholder "Nome">
+
+<!ENTITY newPref.valueBoolean "Booleano">
+<!ENTITY newPref.valueString "Stringa">
+<!ENTITY newPref.valueInteger "Intero">
+
+<!ENTITY newPref.stringPlaceholder "Inserire una stringa">
+<!ENTITY newPref.numberPlaceholder "Inserire un numero">
+
+<!ENTITY newPref.toggleButton "Imposta">
+<!ENTITY newPref.cancelButton "Annulla">
+
+<!ENTITY contextMenu.copyPrefName "Copia nome">
+<!ENTITY contextMenu.copyPrefValue "Copia valore">

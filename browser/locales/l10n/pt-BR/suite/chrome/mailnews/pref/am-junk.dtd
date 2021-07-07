@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Spam">
+<!ENTITY trainingDescription.label "Se ativado, primeiro você deve primeiro treinar o &brandShortName; a identificar mensagens indesejadas através do botão “Spam”. Você precisa identificar tanto as mensagens que são spam como as que não são. Depois disso, o &brandShortName; será capaz de identificar mensagens como spam automaticamente.">
+<!ENTITY level.label "Identificar spam ao receber mensagens desta conta">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Mover novos spams para:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "Pasta &quot;Spam&quot; da conta:">
+<!ENTITY junkFolderOn.accesskey "P">
+<!ENTITY otherFolder.label "Outra pasta:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Excluir automaticamente os spams após">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "dias">
+
+<!ENTITY whitelistHeader.label "Não marcar mensagens como spam automaticamente se o remetente estiver em:">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "Se ativado, o &brandShortName; considerará mensagens marcadas por esse serviço como spam automaticamente.">
+<!ENTITY ispHeaders.label "Confiar em cabeçalhos de spam definidos por: ">
+<!ENTITY ispHeaders.accesskey "C">
+
+<!ENTITY junkClassification.label "Seleção">
+<!ENTITY junkActions.label "Destino e retenção">
+
+<!ENTITY globalJunkPrefs.label "Preferências globais de Spam…">
+<!ENTITY globalJunkPrefs.accesskey "S">

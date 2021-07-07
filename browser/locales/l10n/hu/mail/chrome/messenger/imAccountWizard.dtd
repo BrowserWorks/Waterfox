@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Csevegőfiók varázsló">
+
+<!ENTITY accountProtocolTitle.label   "Csevegőhálózat">
+<!ENTITY accountProtocolInfo.label    "Válassza ki a csevegőfiók hálózatát.">
+<!ENTITY accountProtocolField.label   "Hálózat:">
+<!ENTITY accountProtocolGetMore.label "Még több…">
+
+<!ENTITY accountUsernameTitle.label   "Felhasználónév">
+<!ENTITY accountUsernameDuplicate.label "Ez a fiók már be van állítva!">
+
+<!ENTITY accountPasswordTitle.label   "Jelszó">
+<!ENTITY accountPasswordInfo.label    "Adja meg jelszavát az alábbi mezőben.">
+<!ENTITY accountPasswordField.label   "Jelszó:">
+<!ENTITY accountPasswordManager.label "Az itt megadott jelszót a Jelszókezelő fogja tárolni. Hagyja üresen ezt a mezőt, ha a jelszavát a fiók minden csatlakoztatásakor be szeretné kéretni.">
+
+<!ENTITY accountAdvancedTitle.label   "Speciális beállítások">
+<!ENTITY accountAdvancedInfo.label    "Nyugodtan hagyja ki ezt a lépést, ha azt szeretné.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Értesítés új levélről">
+<!ENTITY accountAliasGroupbox.caption "Helyi álnév">
+<!ENTITY accountAliasField.label      "Álnév:">
+<!ENTITY accountAliasInfo.label       "Ez beszélgetéseiben csak akkor jelenik meg, amikor Ön beszél, a távoli partnerek nem fogják látni.">
+<!ENTITY accountProxySettings.caption "Proxybeállítások">
+<!ENTITY accountProxySettings.change.label     "Módosítás…">
+<!ENTITY accountProxySettings.change.accessKey "d">
+
+<!ENTITY accountSummaryTitle.label   "Összefoglaló">
+<!ENTITY accountSummaryInfo.label    "Alább látható a megadott információk összegzése. Ellenőrizze ezeket a fiók létrehozása előtt. ">
+<!ENTITY accountSummary.connectNow.label "Fiók csatlakozása most.">

@@ -1,0 +1,288 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Άνοιγμα μενού">
+
+<!ENTITY navbarOverflow.label                "Περισσότερα εργαλεία…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Καρφίτσωμα καρτέλας">
+<!ENTITY  unpinTab.label                     "Ξεκαρφίτσωμα καρτέλας">
+
+<!ENTITY  listAllTabs.label      "Προβολή καρτελών σε λίστα">
+
+<!ENTITY tabCmd.label "Νέα καρτέλα">
+<!ENTITY openFileCmd.label "Άνοιγμα αρχείου…">
+<!ENTITY printCmd.label "Εκτύπωση…">
+
+<!ENTITY taskManagerCmd.label "Διαχείριση εργασιών">
+
+<!ENTITY menubarCmd.label "Γραμμή μενού">
+<!ENTITY menubarCmd.accesskey "μ">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Πλοήγηση">
+<!ENTITY personalbarCmd.label "Γραμμή σελιδοδεικτών">
+<!ENTITY personalbarCmd.accesskey "γ">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Σελιδοδείκτες">
+<!ENTITY bookmarksToolbarItem.label "Στοιχεία γραμμής σελιδοδεικτών">
+
+<!ENTITY fullScreenCmd.label "Πλήρης οθόνη">
+
+<!ENTITY pictureInPictureHideToggle.label "Απόκρυψη διακόπτη εικόνας εντός εικόνας">
+<!ENTITY pictureInPictureHideToggle.accesskey "Α">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Ρυθμίσεις &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Σύνδεση άλλης συσκευής…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.signin.label "Σύνδεση στο &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Ενεργοποίηση &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Υπηρεσίες &brandProductName;">
+<!ENTITY fxa.menu.account.label "Λογαριασμός">
+<!ENTITY fxa.menu.settings.label "Ρυθμίσεις">
+<!ENTITY fxa.menu.accountSettings.label "Ρυθμίσεις λογαριασμού">
+<!ENTITY fxa.menu.manageAccount2.label "Διαχείριση λογαριασμού">
+<!ENTITY fxa.menu.signOut.label "Αποσύνδεση…">
+<!ENTITY fxa.menu.setupSync.label "Ρύθμιση &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Στείλτε άμεσα μια καρτέλα σε κάθε συσκευή που έχετε συνδεθεί.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "Το ">
+<!ENTITY fullscreenWarning.afterDomain.label "εκτελείται σε πλήρη οθόνη">
+<!ENTITY fullscreenWarning.generic.label "Αυτό το έγγραφο εμφανίζεται σε πλήρη οθόνη">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Έξοδος από πλήρη οθόνη (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Έξοδος από πλήρη οθόνη (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "Το ">
+<!ENTITY pointerlockWarning.afterDomain.label "ελέγχει τον κέρσορα. Πατήστε Esc για ανάκτηση ελέγχου.">
+<!ENTITY pointerlockWarning.generic.label "Αυτό το έγγραφο ελέγχει τον κέρσορα. Πατήστε Esc για ανάκτηση ελέγχου.">
+
+<!ENTITY showAllBookmarks2.label "Προβολή όλων των σελιδοδεικτών">
+<!ENTITY recentBookmarks.label "Πρόσφατοι σελιδοδείκτες">
+<!ENTITY bookmarksToolbarChevron.tooltip "Προβολή περισσότερων σελιδοδεικτών">
+
+<!ENTITY printButton.label            "Εκτύπωση">
+<!ENTITY printButton.tooltip          "Εκτύπωση σελίδας">
+
+<!ENTITY searchItem.title             "Αναζήτηση">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Αρχική σελίδα">
+<!ENTITY homeButton.defaultPage.tooltip "Αρχική σελίδα του &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Σελιδοδείκτες">
+
+<!ENTITY bookmarksSubview.label             "Σελιδοδείκτες">
+<!ENTITY bookmarksMenuButton2.label         "Μενού σελιδοδεικτών">
+<!ENTITY bookmarksMenuButton.other.label    "Άλλοι σελιδοδείκτες">
+<!ENTITY bookmarksMenuButton.mobile.label   "Σελιδοδείκτες κινητού">
+<!ENTITY viewBookmarksSidebar2.label        "Προβολή στήλης σελιδοδεικτών">
+<!ENTITY hideBookmarksSidebar.label         "Απόκρυψη στήλης σελιδοδεικτών">
+<!ENTITY viewBookmarksToolbar.label         "Προβολή γραμμής σελιδοδεικτών">
+<!ENTITY hideBookmarksToolbar.label         "Απόκρυψη γραμμής σελιδοδεικτών">
+<!ENTITY searchBookmarks.label              "Αναζήτηση σελιδοδεικτών">
+<!ENTITY bookmarkingTools.label             "Εργαλεία σελιδοδεικτών">
+<!ENTITY addBookmarksMenu.label             "Προσθήκη μενού σελιδοδεικτών στη γραμμή εργαλείων">
+<!ENTITY removeBookmarksMenu.label          "Αφαίρεση μενού σελιδοδεικτών από τη γραμμή εργαλείων">
+
+<!ENTITY historyButton.label            "Ιστορικό">
+
+<!ENTITY downloads.label              "Λήψεις">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Λήψεις">
+<!ENTITY addons.label                 "Πρόσθετα">
+
+<!ENTITY webDeveloperMenu.label       "Ανάπτυξη web">
+
+<!ENTITY newNavigatorCmd.label        "Νέο παράθυρο">
+<!ENTITY newPrivateWindow.label     "Νέο ιδιωτικό παράθυρο">
+
+<!ENTITY editMenu.label         "Επεξεργασία">
+<!ENTITY preferencesCmd2.label       "Επιλογές">
+<!ENTITY preferencesCmdUnix.label       "Προτιμήσεις">
+<!ENTITY logins.label                           "Συνδέσεις και κωδικοί πρόσβασης">
+
+<!ENTITY overflowCustomizeToolbar.label       "Προσαρμογή γραμμής εργαλείων…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "ο">
+
+<!ENTITY historyMenu.label "Ιστορικό">
+<!ENTITY historyUndoMenu.label "Πρόσφατα κλεισμένες καρτέλες">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Πρόσφατα κλεισμένα παράθυρα">
+
+<!ENTITY appMenuHistory.showAll.label "Προβολή όλου του ιστορικού">
+
+<!ENTITY appMenuHistory.clearRecent.label "Εκκαθάριση πρόσφατου ιστορικού…">
+<!ENTITY appMenuHistory.restoreSession.label "Επαναφορά προηγούμενης συνεδρίας">
+<!ENTITY appMenuHistory.viewSidebar.label "Προβολή στήλης ιστορικού">
+<!ENTITY appMenuHistory.hideSidebar.label "Απόκρυψη στήλης ιστορικού">
+<!ENTITY appMenuHistory.recentHistory.label "Πρόσφατο ιστορικό">
+<!ENTITY appMenuHelp.label "Βοήθεια">
+
+<!ENTITY appMenuRemoteTabs.label "Συγχρονισμένες καρτέλες">
+
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Δεν υπάρχουν ανοικτές καρτέλες">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Εμφάνιση περισσότερων">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Εμφάνιση περισσότερων καρτελών από αυτή τη συσκευή">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Εμφάνιση όλων">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Εμφάνιση όλων των καρτελών από αυτή τη συσκευή">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ενεργοποιήστε τον συγχρονισμό καρτελών για να δείτε μια λίστα από καρτέλες από τις άλλες σας συσκευές.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Θέλετε να δείτε τις καρτέλες από τις άλλες σας συσκευές εδώ;">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Άνοιγμα προτιμήσεων συγχρονισμού">
+<!ENTITY appMenuRemoteTabs.welcome.label "Δείτε μια λίστα με καρτέλες από τις άλλες σας συσκευές.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Ο λογαριασμός σας πρέπει να επαληθευτεί.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Σύνδεση στο &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Ενεργοποίηση &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Διαχείριση συσκευών…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Προβολή στήλης συγχρονισμένων καρτελών">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Απόκρυψη στήλης συγχρονισμένων καρτελών">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Σύνδεση άλλης συσκευής">
+
+<!ENTITY appMenuRecentHighlights.label "Πρόσφατες κορυφαίες στιγμές">
+
+<!ENTITY customizeMenu.addToToolbar.label "Προσθήκη στη γραμμή εργαλείων">
+<!ENTITY customizeMenu.addToToolbar.accesskey "Α">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Προσθήκη στο αναδυόμενο μενού">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "Μ">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Ξεκαρφίτσωμα από το αναδυόμενο μενού">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "Ξ">
+<!ENTITY customizeMenu.removeFromToolbar.label "Αφαίρεση από τη γραμμή εργαλείων">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "Α">
+<!ENTITY customizeMenu.addMoreItems.label "Προσθήκη περισσότερων αντικειμένων…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "α">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Περισσότερα">
+
+<!ENTITY contentSearchSubmit.tooltip  "Υποβολή αναζήτησης">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Αναζήτηση">
+<!ENTITY searchIcon.tooltip           "Αναζήτηση">
+
+<!ENTITY openLinkCmdInTab.accesskey   "τ">
+
+<!ENTITY pageAction.copyLink.label    "Αντιγραφή συνδέσμου">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Αποθήκευση σελίδας στο Pocket">
+<!ENTITY pocketMenuitem.label         "Προβολή λίστας Pocket">
+
+<!ENTITY emailPageCmd.label           "Αποστολή συνδέσμου…">
+
+<!ENTITY fullZoom.label                 "Ζουμ">
+
+<!ENTITY sidebarCloseButton.tooltip     "Κλείσιμο πλευρικής στήλης">
+
+<!ENTITY quitApplicationCmdWin2.label       "Έξοδος">
+<!ENTITY quitApplicationCmdWin2.accesskey   "ξ">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Έξοδος από το &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Έξοδος">
+<!ENTITY quitApplicationCmd.accesskey   "ξ">
+<!ENTITY quitApplicationCmdMac2.label   "Έξοδος από το &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "ν">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Επεξεργασία προτιμήσεων φραγής αναδυόμενων παραθύρων…">
+<!ENTITY editPopupSettings.label "Επεξεργασία επιλογών φραγής αναδυόμενων παραθύρων…">
+<!ENTITY editPopupSettings.accesskey "ξ">
+<!ENTITY dontShowMessage.accesskey "Ν">
+
+<!ENTITY findOnCmd.label     "Εύρεση στη σελίδα…">
+
+<!ENTITY spellAddDictionaries.label "Προσθήκη λεξικών…">
+<!ENTITY spellAddDictionaries.accesskey "θ">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Καρτέλα προγράμματος περιήγησης">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Αυτόματη απόκρυψη">
+
+
+<!ENTITY uiTour.infoPanel.close "Κλείσιμο">
+
+<!ENTITY panicButton.thankyou.msg1                "Έγινε εκκαθάριση του πρόσφατου ιστορικού σας.">
+<!ENTITY panicButton.thankyou.msg2                "Καλή και ασφαλή περιήγηση!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Ευχαριστώ!">
+
+<!ENTITY updateAvailable.panelUI.label "Λήψη ενημέρωσης για το &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Λήψη μιας φρέσκιας έκδοσης του &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Δεν μπορείτε να εκτελέσετε περαιτέρω ενημερώσεις">
+<!ENTITY updateRestart.panelUI.label2 "Επανεκκίνηση για ενημέρωση του &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Συγχρονισμός συσκευών…">
+
+<!ENTITY pageAction.shareUrl.label "Κοινή χρήση">
+<!ENTITY pageAction.shareMore.label "Περισσότερα…">
+
+<!ENTITY libraryButton.tooltip "Προβολή ιστορικού, σελιδοδεικτών και πολλών άλλων">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Οι λειτουργίες προσβασιμότητας ενεργοποιήθηκαν">

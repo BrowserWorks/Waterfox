@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Niechciana i podejrzana poczta">
+<!ENTITY junkSettings.caption "Ustawienia niechcianej poczty">
+<!ENTITY junkMail.intro "Aby zmienić ustawienia niechcianej poczty dotyczące konkretnego konta, przejdź do Konfiguracji kont.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label "W przypadku ręcznego oznaczenia wiadomości jako niechcianej:">
+<!ENTITY manualMark.accesskey "y">
+<!ENTITY manualMarkModeMove.label "Przenieś wiadomości do folderu „Niechciane”">
+<!ENTITY manualMarkModeMove.accesskey "P">
+<!ENTITY manualMarkModeDelete.label "Usuń wiadomości">
+<!ENTITY manualMarkModeDelete.accesskey "U">
+
+<!ENTITY markAsRead.intro "Oznacz wiadomości jako przeczytane:">
+<!ENTITY autoMarkAsRead.label "Kiedy program &brandShortName; rozpozna wiadomości jako niechciane">
+<!ENTITY autoMarkAsRead.accesskey "e">
+<!ENTITY manualMarkAsRead.label "W przypadku ręcznego oznaczenia ich jako niechciane">
+<!ENTITY manualMarkAsRead.accesskey "k">
+
+<!ENTITY enableJunkLogging.label "Włącz dziennik niechcianej poczty">
+<!ENTITY enableJunkLogging.accesskey "W">
+<!ENTITY openJunkLog.label "Pokaż dziennik">
+<!ENTITY openJunkLog.accesskey "d">
+<!ENTITY resetTrainingData.label "Resetuj dane treningowe">
+<!ENTITY resetTrainingData.accesskey "R">
+
+<!ENTITY pref.suspectMail.caption "Podejrzana poczta">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption "Fałszywe wiadomości">
+<!ENTITY enablePhishingDetector.label "Informuj, jeżeli wyświetlana wiadomość może być próbą oszustwa">
+<!ENTITY enablePhishingDetector.accesskey "I">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption "Ochrona antywirusowa">
+<!ENTITY antiVirus.label "Ułatw programom antywirusowym analizowanie przychodzących wiadomości pocztowych">
+<!ENTITY antiVirus.accesskey "a">

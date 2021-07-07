@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+
+<!ENTITY menu_securityEncryptRequire.label "Criptografar">
+<!ENTITY menu_securityEncryptRequire.accesskey "C">
+
+<!ENTITY menu_securitySign.label "Assinar digitalmente">
+<!ENTITY menu_securitySign.accesskey "A">
+
+<!ENTITY menu_securityStatus.label "Propriedades de segurança">
+<!ENTITY menu_securityStatus.accesskey "o">
+
+<!ENTITY securityButton.label "Segurança">
+<!ENTITY securityButton.tooltip "Ver ou alterar as opções de segurança">
+
+<!ENTITY menu_viewSecurityStatus.label "Propriedades de segurança">
+<!ENTITY menu_viewSecurityStatus.accesskey "o">

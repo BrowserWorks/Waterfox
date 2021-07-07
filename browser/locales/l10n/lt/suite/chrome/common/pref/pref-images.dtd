@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Paveikslai">
+
+<!ENTITY imageBlocking.label            "Paveikslų atsiuntimo taisyklės">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+
+<!ENTITY imageDetails                   "Nurodykite, kaip valdyti paveikslų atsiuntimą iš svetainių.">
+
+<!ENTITY loadAllImagesRadio.label       "Įkelti visus paveikslus">
+<!ENTITY loadAllImagesRadio.accesskey   "k">
+<!ENTITY loadOrgImagesRadio.label       "Įkelti paveikslus tik iš pirminės svetainės serverio">
+<!ENTITY loadOrgImagesRadio.accesskey   "p">
+<!ENTITY loadNoImagesRadio.label        "Neįkelti paveikslų">
+<!ENTITY loadNoImagesRadio.accesskey    "N">
+<!ENTITY viewPermissions.label          "Tvarkyti leidimus">
+<!ENTITY viewPermissions.accesskey      "T">
+<!ENTITY animLoopingTitle.label         "Paveikslo animacijos ciklo kartojimas">
+<!ENTITY animLoopAsSpecified.label      "Kartoti tiek kartų, kiek nurodyta paveikslo nuostatose">
+<!ENTITY animLoopAsSpecified.accesskey  "r">
+<!ENTITY animLoopOnce.label             "Vieną kartą">
+<!ENTITY animLoopOnce.accesskey         "V">
+<!ENTITY animLoopNever.label            "Neanimuoti">
+<!ENTITY animLoopNever.accesskey        "N">

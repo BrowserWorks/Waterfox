@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Настройки для новой страницы">
+
+<!ENTITY  authorName.label          "Автор:">
+<!ENTITY  authorName.accesskey      "А">
+<!ENTITY  pageColorHeader           "Оформление по умолчанию">
+
+<!ENTITY defaultColors.label        "Цвета пользователя по умолчанию (не устанавливать цвета на странице)">
+<!ENTITY defaultColors.accesskey    "Ц">
+<!ENTITY customColors.label         "Использовать цвета:">
+<!ENTITY customColors.accesskey     "И">
+
+<!ENTITY normalText.label           "Обычный текст">
+<!ENTITY normalText.accesskey       "ы">
+<!ENTITY linkText.label             "Текст ссылки">
+<!ENTITY linkText.accesskey         "Т">
+<!ENTITY activeLinkText.label       "Активная ссылка">
+<!ENTITY activeLinkText.accesskey   "к">
+<!ENTITY visitedLinkText.label      "Просмотренная ссылка">
+<!ENTITY visitedLinkText.accesskey  "П">
+<!ENTITY background.label           "Фон:">
+<!ENTITY background.accesskey       "о">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Фоновое изображение:">
+<!ENTITY backgroundImage.accesskey  "Ф">
+<!ENTITY chooseFile.label           "Выбрать файл…">
+<!ENTITY chooseFile.accesskey       "б">
+

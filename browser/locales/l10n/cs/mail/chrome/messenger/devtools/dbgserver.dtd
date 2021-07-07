@@ -1,0 +1,4 @@
+<!ENTITY options.title "Možnosti Nástrojů pro vývojáře">
+<!ENTITY options.status.label "Stav:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Povolit připojení z jiných počítačů">

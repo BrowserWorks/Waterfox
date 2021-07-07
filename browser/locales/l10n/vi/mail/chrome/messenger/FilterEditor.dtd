@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Quy tắc bộ lọc">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Tên bộ lọc:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Thư rác">
+<!ENTITY notJunk.label "Không phải thư rác">
+
+<!ENTITY lowestPriorityCmd.label "Thấp nhất">
+<!ENTITY lowPriorityCmd.label "Thấp">
+<!ENTITY normalPriorityCmd.label "Bình thường">
+<!ENTITY highPriorityCmd.label "Cao">
+<!ENTITY highestPriorityCmd.label "Cao nhất">
+
+<!ENTITY contextDesc.label "Áp dụng bộ lọc khi:">
+<!ENTITY contextIncomingMail.label "Nhận thư mới:">
+<!ENTITY contextIncomingMail.accesskey "G">
+<!ENTITY contextManual.label "Chạy thủ công">
+<!ENTITY contextManual.accesskey "R">
+<!ENTITY contextBeforeCls.label "Lọc trước khi phân loại thư rác">
+<!ENTITY contextAfterCls.label "Lọc sau khi phân loại thư rác">
+<!ENTITY contextOutgoing.label "Sau khi gửi">
+<!ENTITY contextOutgoing.accesskey "S">
+<!ENTITY contextArchive.label "Lưu trữ">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Thực hiện các hành động này:">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!ENTITY filterActionOrderWarning.label "Lưu ý: Các hành động lọc sẽ được chạy theo thứ tự khác.">
+<!ENTITY filterActionOrder.label "Xem thứ tự thực hiện">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Di chuyển thư tới">
+<!ENTITY copyMessage.label "Sao chép thư đến">
+<!ENTITY forwardTo.label "Chuyển tiếp thư tới">
+<!ENTITY replyWithTemplate.label "Trả lời bằng mẫu">
+<!ENTITY markMessageRead.label "Đánh dấu là đã đọc">
+<!ENTITY markMessageUnread.label "Đánh dấu là chưa đọc">
+<!ENTITY markMessageStarred.label "Thêm sao">
+<!ENTITY setPriority.label "Đặt mức độ ưu tiên thành">
+<!ENTITY addTag.label "Dán nhãn cho thư">
+<!ENTITY setJunkScore.label "Đặt trạng thái thư rác thành">
+<!ENTITY deleteMessage.label "Xóa thư">
+<!ENTITY deleteFromPOP.label "Xóa trên máy chủ POP">
+<!ENTITY fetchFromPOP.label "Lấy từ máy chủ POP">
+<!ENTITY ignoreThread.label "Bỏ qua chủ đề">
+<!ENTITY ignoreSubthread.label "Bỏ qua chủ đề con">
+<!ENTITY watchThread.label "Theo dõi chủ đề">
+<!ENTITY stopExecution.label "Dừng thực thi bộ lọc">
+
+<!ENTITY addAction.tooltip "Thêm một hành động mới">
+<!ENTITY removeAction.tooltip "Xóa hành động này">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

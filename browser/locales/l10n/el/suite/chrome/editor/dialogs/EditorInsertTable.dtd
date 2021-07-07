@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Εισαγωγή πίνακα">
+
+<!ENTITY size.label "Μέγεθος">
+<!ENTITY numRowsEditField.label "Σειρές:">
+<!ENTITY numRowsEditField.accessKey "ρ">
+<!ENTITY numColumnsEditField.label "Στήλες:">
+<!ENTITY numColumnsEditField.accessKey "τ">
+<!ENTITY widthEditField.label "Πλάτος:">
+<!ENTITY widthEditField.accessKey "Π">
+<!ENTITY borderEditField.label "Πλαίσιο:">
+<!ENTITY borderEditField.accessKey "λ">
+<!ENTITY borderEditField.tooltip "Εισάγετε ένα μέγεθος για το πλαίσιο πίνακα, ή εισάγετε μηδέν (0) για χωρίς πλαίσιο">
+<!ENTITY pixels.label "εικονοστοιχεία">

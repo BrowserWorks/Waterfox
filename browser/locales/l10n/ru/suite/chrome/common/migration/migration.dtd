@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Мастер импорта">
+
+<!ENTITY importAllFrom.label             "Импортировать все объекты из:">
+<!ENTITY importBookmarksFrom.label       "Импортировать закладки из:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Файла">
+<!ENTITY importFromFile.accesskey        "Ф">
+<!ENTITY importFromNothing.label         "Не импортировать ничего">
+<!ENTITY importFromNothing.accesskey     "н">
+
+<!ENTITY importSource.title              "Импорт настроек и данных">
+<!ENTITY importItems.title               "Объекты для импорта">
+<!ENTITY importItems.label               "Выберите объекты для импорта:">
+
+<!ENTITY selectProfile.title             "Выбор профиля">
+<!ENTITY selectProfile.label             "Импорт может быть произведён из следующих профилей:">
+
+<!ENTITY migrating.title                 "Идёт импорт…">
+<!ENTITY migrating.label                 "В данное время импортируются следующие объекты…">
+
+<!ENTITY done.title                      "Импорт успешно завершён">
+<!ENTITY done.label                      "Следующие объекты были успешно импортированы:">

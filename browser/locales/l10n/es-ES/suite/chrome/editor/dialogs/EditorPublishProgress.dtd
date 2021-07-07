@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY siteUrl.label "URL del sitio:">
+<!ENTITY docSubdir.label "Subdirectorio de la página:">
+<!ENTITY otherSubdir.label "Subdirectorio de imágenes:">
+<!ENTITY status.label "Publicando…">
+<!ENTITY fileList.label "Estado de la publicación">
+<!ENTITY succeeded.label "Completado">
+<!ENTITY failed.label "Fallido">
+<!ENTITY keepOpen "Mantener esta ventana abierta una vez completada la publicación.">
+<!ENTITY closeButton.label "Cerrar">

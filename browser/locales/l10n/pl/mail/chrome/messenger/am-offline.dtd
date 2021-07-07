@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Pobrane wiadomości przechowywane są lokalnie na komputerze użytkownika. Aby zaoszczędzić miejsce na dysku:">
+<!ENTITY doNotDownloadNntp.label "Wiadomości udostępniane w trybie offline przechowywane są lokalnie na komputerze użytkownika. Aby zaoszczędzić miejsce na dysku:">
+<!ENTITY doNotDownloadImap.label "Wiadomości udostępniane w trybie offline przechowywane są lokalnie na komputerze użytkownika. Aby zaoszczędzić miejsce na dysku kopie mogą być przechowywane przez ograniczony czas lub wedle rozmiaru.">
+<!ENTITY allFoldersOffline2.label "Przechowuj wiadomości we wszystkich folderach dla tego konta lokalnie na komputerze">
+<!ENTITY allFoldersOffline2.accesskey "P">
+<!ENTITY allFoldersOfflineNote.label "Uwaga: zmiana tej opcji wpływa na wszystkie foldery w tym koncie. Aby ustawić poszczególne foldery, użyj przycisku „Zaawansowane…”.">
+<!ENTITY offlineNotDownload.label "Nie pobieraj wiadomości większych niż">
+<!ENTITY offlineNotDownload.accesskey "N">
+<!ENTITY autosyncNotDownload.label "Nie pobieraj wiadomości większych niż">
+<!ENTITY autosyncNotDownload.accesskey "N">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "dni">
+<!ENTITY message.label "wiadomości">
+<!ENTITY nntpNotDownloadRead.label "Nie pobieraj treści przeczytanych wiadomości">
+<!ENTITY nntpNotDownloadRead.accesskey "h">
+<!ENTITY nntpDownloadMsg.label "Nie pobieraj treści wiadomości starszych niż">
+<!ENTITY nntpDownloadMsg.accesskey "b">
+<!ENTITY retentionCleanup.label "W celu zaoszczędzenia miejsca na dysku, stare wiadomości mogą być nieodwracalnie usuwane.">
+<!ENTITY retentionCleanupImap.label "W celu zaoszczędzenia miejsca na dysku, stare wiadomości – zarówno lokalne kopie, jak i oryginały na zdalnym serwerze – mogą być nieodwracalnie usuwane.">
+<!ENTITY retentionCleanupPop.label "W celu zaoszczędzenia miejsca na dysku, stare wiadomości – łącznie z oryginałami na zdalnym serwerze – mogą być nieodwracalnie usuwane.">
+<!ENTITY retentionKeepMsg.label "Usuwaj wiadomości starsze niż">
+<!ENTITY retentionKeepMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Nie usuwaj żadnych wiadomości">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Usuwaj wszystko, pomijając ostatnie">
+<!ENTITY retentionKeepRecent.accesskey "k">
+<!ENTITY retentionApplyToFlagged.label "Zawsze przechowuj wiadomości oznaczone gwiazdką">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+<!ENTITY nntpRemoveMsgBody.label "Usuwaj treść wiadomości starszych niż">
+<!ENTITY nntpRemoveMsgBody.accesskey "U">
+<!ENTITY offlineSelectNntp.label "Wybierz grupy dostępne w trybie offline…">
+<!ENTITY offlineSelectNntp.accesskey "W">
+<!ENTITY offlineImapAdvancedOffline.label "Zaawansowane…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "Z">
+<!ENTITY syncGroupTitle.label "Synchronizacja wiadomości">
+<!ENTITY diskspaceGroupTitle.label "Miejsce na dysku">
+
+<!ENTITY allAutosync.label "Synchronizuj wszystkie wiadomości niezależnie od wieku">
+<!ENTITY allAutosync.accesskey "S">
+<!ENTITY ageAutosyncBefore.label "Synchronizuj tylko wiadomości z ostatnich">
+<!ENTITY ageAutosync.accesskey "t">
+<!ENTITY ageAutosyncMiddle.label "">
+<!ENTITY dayAgeInterval.label "dni">
+<!ENTITY weekAgeInterval.label "tygodni">
+<!ENTITY monthAgeInterval.label "miesięcy">
+<!ENTITY yearAgeInterval.label "lat">
+<!ENTITY ageAutosyncAfter.label "">

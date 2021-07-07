@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "ปรับแต่งแถบเครื่องมือ">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "เพิ่มหรือลบรายการได้ โดยลากเข้าหรือออกจากแถบเครื่องมือ">
+<!ENTITY show.label               "แสดง:">
+<!ENTITY iconsAndText.label       "ไอคอนและข้อความ">
+<!ENTITY icons.label              "ไอคอน">
+<!ENTITY text.label               "ข้อความ">
+<!ENTITY iconsBesideText.label    "ไอคอนข้างข้อความ">
+<!ENTITY useSmallIcons.label      "ใช้ไอคอนเล็ก">
+<!ENTITY restoreDefaultSet.label  "เรียกคืนค่าเริ่มต้น">
+<!ENTITY showTitlebar2.label      "แถบชื่อเรื่อง">
+<!ENTITY extraDragSpace2.label    "พื้นที่ลาก">
+<!ENTITY saveChanges.label        "เสร็จสิ้น">
+<!ENTITY undoChanges.label        "เลิกทำการเปลี่ยนแปลง">

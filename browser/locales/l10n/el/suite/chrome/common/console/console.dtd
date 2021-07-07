@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Κονσόλα σφαλμάτων">
+
+<!ENTITY errFile.label        "Αρχείο προέλευσης:">
+<!ENTITY errLine.label        "Γραμμή:">
+<!ENTITY errColumn.label      "Στήλη:">
+
+<!ENTITY all.label            "Όλα">
+<!ENTITY all.accesskey        "Ό">
+<!ENTITY errors.label         "Σφάλματα">
+<!ENTITY errors.accesskey     "φ">
+<!ENTITY warnings.label       "Προειδοποιήσεις">
+<!ENTITY warnings.accesskey   "δ">
+<!ENTITY messages.label       "Μηνύματα">
+<!ENTITY messages.accesskey   "Μ">
+<!ENTITY clear.label          "Απαλοιφή">
+<!ENTITY clear.accesskey      "λ">
+<!ENTITY codeEval.label       "Κώδικας:">
+<!ENTITY codeEval.accesskey   "ώ">
+<!ENTITY evaluate.label       "Εκτίμηση">
+<!ENTITY evaluate.accesskey   "κ">
+<!ENTITY filter2.label        "Φίλτρο:">
+<!ENTITY filter2.accesskey    "ί">
+
+<!ENTITY copyCmd.label         "Αντιγραφή">
+<!ENTITY copyCmd.accesskey     "Α">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Σειρά ταξινόμησης: Πρώτο > Τελευταίο">
+<!ENTITY sortFirst.accesskey   "Π">
+<!ENTITY sortLast.label        "Σειρά ταξινόμησης: Τελευταίο > Πρώτο">
+<!ENTITY sortLast.accesskey    "Τ">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Γραμμή μενού">
+<!ENTITY modeToolbar.tooltip   "Γραμμή λειτουργίας">
+<!ENTITY entryToolbar.tooltip  "Γραμμή καταχωρήσεων Javascript">
+<!ENTITY toolbarsCmd.label     "Εμφάνιση/Απόκρυψη">
+<!ENTITY toolbarsCmd.accesskey "ν">
+<!ENTITY toolbarMode.label     "Λειτουργία">
+<!ENTITY toolbarMode.accesskey "Λ">
+<!ENTITY toolbarEval.label     "Καταχώρηση JavaScript">
+<!ENTITY toolbarEval.accesskey "J">

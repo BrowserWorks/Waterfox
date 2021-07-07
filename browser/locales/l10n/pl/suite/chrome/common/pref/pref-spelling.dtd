@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<!ENTITY prefSpelling.title "Pisownia">
+<!ENTITY generalSpelling.label "Ogólne">
+<!ENTITY checkSpellingWhenTyping.label "Sprawdzaj pisownię podczas pisania:">
+<!ENTITY checkSpellingWhenTyping.accesskey "d">
+<!ENTITY dontCheckSpelling.label "nigdy">
+<!ENTITY multilineCheckSpelling.label "w polach wielowierszowych">
+<!ENTITY alwaysCheckSpelling.label "we wszystkich polach">
+<!ENTITY spellForMailAndNews.label "Kurier Poczty">
+<!ENTITY checkSpellingBeforeSend.label "Sprawdzaj pisownię przed wysłaniem wiadomości">
+<!ENTITY checkSpellingBeforeSend.accesskey "p">
+<!ENTITY spellCheckInline.label "Sprawdzaj pisownię podczas pisania">
+<!ENTITY spellCheckInline.accesskey "o">
+<!ENTITY languagePopup.label "Język:">
+<!ENTITY languagePopup.accessKey "J">
+<!ENTITY moreDictionaries.label "Pobierz więcej słowników&#x2026;">
+<!ENTITY noSpellCheckAvailable.label "Brak dostępnych słowników.">

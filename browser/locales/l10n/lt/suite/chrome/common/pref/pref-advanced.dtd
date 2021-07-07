@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+
+<!ENTITY pref.advanced.title              "Kitkas">
+
+<!ENTITY systemPref.caption               "Sistemos nuostatos">
+<!ENTITY systemPrefCheck.label            "Naudoti operacinės sistemos nuostatas">
+<!ENTITY systemPrefCheck.accesskey        "N">
+<!ENTITY systemPref.desc                  "Pažymėkite šią parinkti, jei norite, kad būtų naudojamos nuostatos, parinktos operacinėje sistemoje. Tokiu atveju sistemos nuostatos nustelbs „&brandShortName;“ nuostatas">
+
+<!ENTITY prefCheckDefault.caption         "Sistemos numatytosios nuostatos">
+<!ENTITY prefCheckDefaultClient.label     "Paleidžiant programą tikrinti, ar ji yra numatytoji">
+<!ENTITY prefCheckDefaultClient.accesskey "P">
+
+<!ENTITY crashReports.caption             "Strigčių pranešiklis">
+<!ENTITY submitCrashes.label              "Siųsti strigčių pranešimus">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "Programuotojų priemonės">
+<!ENTITY allowDebugger.label              "Leisti derintuvei jungtis prie „&brandShortName;“">
+<!ENTITY allowDebugger.accesskey          "L">
+<!ENTITY allowRemoteConnections.label     "Leisti prisijungimus iš kitų kompiuterių">
+<!ENTITY allowRemoteConnections.accesskey "k">
+<!ENTITY connectionPrompt.label           "Reikalauti įeinančių ryšių patvirtinimo">
+<!ENTITY connectionPrompt.accesskey       "R">
+<!ENTITY remoteDebuggerPort.label         "Prievado numeris jungimuisi:">
+<!ENTITY remoteDebuggerPort.accesskey     "e">

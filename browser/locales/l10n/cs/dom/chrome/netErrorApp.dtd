@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This file exists to allow applications to override one or more messages
+     from netError.dtd; Applications which want to do this should override
+     this file with their own version of netErrorApp.dtd -->
+
+<!-- An example (from Firefox):
+
+<!ENTITY securityOverride.linkText "Nebo můžete přidat výjimku…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Rychle odsud pryč">
+<!ENTITY securityOverride.exceptionButtonLabel "Přidat výjimku">
+
+<!ENTITY securityOverride.warningContent "
+<p>Není doporučováno přidávat výjimku, pokud nemůžete svému internetovému spojení plně důvěřovat nebo pokud nejste u tohoto serveru zvyklí vídat podobná varování.</p>
+<p>Pokud si přesto přejete výjimku pro tuto stránku přidat, můžete tak učinit v rozšířeném nastavení šifrování.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+-->
+
+<!-- An example (from Firefox):
+
+<!ENTITY securityOverride.linkText "Or you can add an exception…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Get me out of here!">
+<!ENTITY securityOverride.exceptionButtonLabel "Add Exception…">
+
+<!ENTITY securityOverride.warningContent "
+<p>You should not add an exception if you are using an internet connection that you do not trust completely or if you are not used to seeing a warning for this server.</p>
+<p>If you still wish to add an exception for this site, you can do so in your advanced encryption settings.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+-->

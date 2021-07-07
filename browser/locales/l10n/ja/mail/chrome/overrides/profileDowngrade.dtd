@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title	"&brandProductName; の古いバージョンを実行しています">
+<!ENTITY window.style	"width: 490px;">
+
+<!ENTITY window.nosync2	"&brandProductName; の新しいバージョンには、この古いバージョンのプロファイルと互換性の無い変更が含まれている可能性があります。このプロファイルを新しいバージョンでのみ使用するか、この &brandShortName; のバージョン用に新しいプロファイルを作成してください。新しいプロファイルを作成する場合、アカウントやカレンダー、アドオンを再セットアップする必要があります。">
+
+<!ENTITY window.moreinfo	"詳細情報...">
+<!ENTITY window.create		"新しいプロファイルを作成">
+<!ENTITY window.quit-win	"終了">
+<!ENTITY window.quit-nonwin	"終了">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Pour :">
+<!ENTITY fromField.label "De :">
+<!ENTITY senderField.label "Expéditeur :">
+<!ENTITY organizationField.label "Organisation :">
+<!ENTITY replyToField.label "Réponse à :">
+
+<!ENTITY subjectField.label "Sujet : ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Copie à : ">
+<!ENTITY bccField.label "Copie cachée à : ">
+<!ENTITY newsgroupsField.label "Groupes : ">
+<!ENTITY followupToField.label "Faire suivre à : ">
+
+<!ENTITY tagsHdr.label "Étiquette : ">
+<!ENTITY dateField.label "Date : ">
+<!ENTITY userAgentField.label "Agent utilisateur : ">
+<!ENTITY referencesField.label "Références : ">
+<!ENTITY messageIdField.label "ID de message : ">
+<!ENTITY inReplyToField.label "En réponse à : ">
+<!ENTITY originalWebsite.label "Site web : ">
+
+<!ENTITY editMessage.label                 "Modifier le brouillon…">
+<!ENTITY editMessage.accesskey             "b">
+
+<!ENTITY attachmentsTree.label             "Pièces jointes :">
+<!ENTITY attachmentsTree.accesskey         "j">
+<!ENTITY openAttachmentCmd.label           "Ouvrir">
+<!ENTITY openAttachmentCmd.accesskey       "O">
+<!ENTITY viewAttachmentCmd.label           "Code source du message">
+<!ENTITY viewAttachmentCmd.accesskey       "u">
+<!ENTITY saveAsAttachmentCmd.label         "Enregistrer sous…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "E">
+<!ENTITY detachAttachmentCmd.label         "Détacher…">
+<!ENTITY detachAttachmentCmd.accesskey     "a">
+<!ENTITY deleteAttachmentCmd.label         "Supprimer">
+<!ENTITY deleteAttachmentCmd.accesskey     "S">
+<!ENTITY saveAllAttachmentsCmd.label       "Tout enregistrer…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "T">
+<!ENTITY detachAllAttachmentsCmd.label     "Tout détacher…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "d">
+<!ENTITY deleteAllAttachmentsCmd.label     "Tout supprimer…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "s">

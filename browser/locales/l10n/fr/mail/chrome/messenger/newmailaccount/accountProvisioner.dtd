@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Bienvenue dans &brandShortName;">
+<!ENTITY header2.label "Voulez-vous une nouvelle adresse électronique ?">
+<!ENTITY other.languages "Nous n’affichons que les fournisseurs proposant des adresses dans votre région. Cliquez ici pour afficher tous les fournisseurs.">
+<!ENTITY error.line1 "Désolé, nous n’avons pu trouver aucune des adresses électroniques suggérées.">
+<!ENTITY error.line2 "Vous pouvez essayer de chercher des pseudonymes ou d’autres termes pour trouver plus d’adresses">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Vous pouvez aussi essayer l’un des ">
+<!ENTITY error.suggest.middle "fournisseurs d’adresses électroniques gratuites suivants">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Bonjour ">
+<!ENTITY success.title.after ", les adresses électroniques suivantes sont disponibles pour vous :">
+<!ENTITY success.tip "(Vous pouvez aussi essayer de chercher des pseudonymes ou d’autres termes pour trouver plus d’adresses)">
+<!ENTITY partnership.description "En partenariat avec plusieurs fournisseurs, &brandShortName; peut vous offrir une nouvelle adresse électronique. Indiquez vos prénom et nom, ou tout autre terme désiré, dans les champs ci-dessous pour démarrer.">
+<!ENTITY existing.header "Vous avez déjà une adresse que vous voulez utiliser ?">
+<!ENTITY tinyheader.title "Vous avez déjà une adresse ?">
+<!ENTITY tinyheader.existing "Passer cette étape et utiliser mon adresse existante">
+<!ENTITY content.close "Je configurerai mon compte plus tard.">
+<!ENTITY successful.title "Bravo !">
+<!ENTITY successful.successMessage "Vous avez créé votre compte.">
+<!ENTITY successful.write "Rédiger des messages">
+<!ENTITY successful.write.desc "Indiquez à votre famille et vos amis votre nouvelle adresse.<br/>C’est bien pour cela que vous avez créé ce nouveau compte, n’est-ce pas ?">
+<!ENTITY successful.customize "Personnalisez &brandShortName; avec des modules complémentaires">
+<!ENTITY successful.customize.desc "Il existe des milliers de modules complémentaires qui permettent de personnaliser &brandShortName; pour qu’il réponde à vos besoins.">
+<!ENTITY successful.attach "Ajouter une signature à mes messages">
+<!ENTITY successful.attach.desc "Vous pouvez ajouter automatiquement une citation ou des informations à la fin de chaque message que vous envoyez.">
+<!ENTITY successful.close "Fermer cette fenêtre.">
+<!ENTITY input.namePlaceholder "Votre prénom ou votre pseudo">
+<!ENTITY input.search "Rechercher">
+<!ENTITY search_engine.title "Personnalisez votre moteur de recherche">
+<!ENTITY search_engine.message "Votre fournisseur peut aussi proposer des fonctionnalités de recherche sur le Web.">
+<!ENTITY search_engine.button "Terminer">

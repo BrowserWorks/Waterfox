@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Atualizações">
+<!ENTITY addOnsTitle.label                    "Complementos">
+<!ENTITY addOnsAllow.label                    "Permitir que sites instalem extensões e atualizações">
+<!ENTITY addOnsAllow.accesskey                "P">
+<!ENTITY allowedSitesLink.label               "Sites permitidos">
+<!ENTITY autoAddOnsUpdates.label              "Procurar por atualizações automaticamente">
+<!ENTITY autoAddOnsUpdates.accesskey          "o">
+<!ENTITY daily.label                          "Todo dia">
+<!ENTITY addOnsDaily.accesskey                "d">
+<!ENTITY weekly.label                         "Toda semana">
+<!ENTITY addOnsWeekly.accesskey               "k">
+<!ENTITY addOnsModeAutomatic.label            "Baixar e instalar atualizações automaticamente">
+<!ENTITY addOnsModeAutomatic.accesskey        "m">
+<!ENTITY enablePersonalized.label             "Personalizar recomendações de complementos">
+<!ENTITY enablePersonalized.accesskey         "P">
+<!ENTITY addonManagerLink.label               "Gerenciar complementos">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Procurar atualizações automaticamente">
+<!ENTITY autoAppUpdates.accesskey             "o">
+<!ENTITY appDaily.accesskey                   "d">
+<!ENTITY appWeekly.accesskey                  "w">
+<!ENTITY appModeAutomatic.label               "Baixar e instalar a atualização automaticamente">
+<!ENTITY appModeAutomatic.accesskey           "u">
+<!ENTITY updateHistoryButton.label            "Exibir histórico de atualizações…">
+<!ENTITY updateHistoryButton.accesskey        "s">

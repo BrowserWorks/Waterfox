@@ -1,0 +1,111 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel			"カレンダー">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label		"予定...">
+<!ENTITY lightning.menupopup.new.event.accesskey	"E">
+<!ENTITY lightning.menupopup.new.task.label		"ToDo...">
+<!ENTITY lightning.menupopup.new.task.accesskey		"T">
+<!ENTITY lightning.menupopup.new.calendar.label		"カレンダー...">
+<!ENTITY lightning.menupopup.new.calendar.accesskey	"n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label	"カレンダーファイル...">
+<!ENTITY lightning.menupopup.open.calendar.accesskey	"C">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label		"カレンダー">
+<!ENTITY lightning.menu.view.calendar.accesskey		"n">
+<!ENTITY lightning.menu.view.tasks.label		"ToDo">
+<!ENTITY lightning.menu.view.tasks.accesskey		"k">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label			"予定とToDo">
+<!ENTITY lightning.menu.eventtask.accesskey		"n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label		"メール:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label	"メールクライアント側のスケジュールを優先する">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1	"今のところ、カレンダーサーバーで予定を管理している場合、このカレンダーをプロパティダイアログでセットアップした後にしか有効にできません。">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2	"このオプションは、カレンダーサーバーで予定を管理している場合のみ利用可能です。有効にすると、予定をサーバーではなくメールクライアント側で処理できるようにします。">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label			"参加">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext		"招待を承諾します">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label		"すべて参加">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext	"すべての招待を承諾して参加します">
+<!ENTITY lightning.imipbar.btnAdd.label				"追加">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext			"カレンダーに予定を追加します">
+<!ENTITY lightning.imipbar.btnDecline.label			"辞退">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext		"招待を辞退します">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label		"すべて辞退">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext	"すべての招待を辞退します">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label		"拒否">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext	"対案を拒否します">
+<!ENTITY lightning.imipbar.btnDelete.label			"削除">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext		"カレンダーから削除します">
+<!ENTITY lightning.imipbar.btnDetails.label			"詳細...">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext		"予定の詳細を表示します">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label		"今後はこれらのメッセージを表示しない">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label		"カレンダー">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext		"カレンダータブへ移動します">
+<!ENTITY lightning.imipbar.btnMore.label			"その他">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext			"クリックするとその他のオプションを表示します">
+<!ENTITY lightning.imipbar.btnReconfirm2.label			"再確認">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext		"主催者に再確認のメールを送信します">
+<!ENTITY lightning.imipbar.btnReschedule.label			"予定変更">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext		"予定を組み直します">
+<!ENTITY lightning.imipbar.btnSaveCopy.label			"コピーを保存">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext		"主催者への返信とは別に、予定のコピーをカレンダーに保存します。参加者のリストは消去されます。">
+<!ENTITY lightning.imipbar.btnTentative.label			"仮承諾">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext		"招待を仮承諾します">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label	"すべて仮承諾">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext	"すべての招待を仮承諾します">
+<!ENTITY lightning.imipbar.btnUpdate.label			"更新">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext		"カレンダーの予定を更新します">
+<!ENTITY lightning.imipbar.description				"メッセージに参加依頼が含まれています。">
+
+<!ENTITY lightning.imipbar.btnSend.label			"返答を今すぐ送信">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext			"返答を主催者へ送信します">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext		"一連の招待の返答を主催者へ送信します">
+<!ENTITY lightning.imipbar.btnDontSend.label			"返答を送信しない">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext		"返答を主催者へ送信せずに参加状態を変更します">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext	"返答を主催者へ送信せずに一連の招待の参加状態を変更します">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key		"C">
+<!ENTITY lightning.keys.event.showTasks.key		"D">
+<!ENTITY lightning.keys.event.new			"I">
+<!ENTITY lightning.keys.todo.new			"D">
+
+<!-- Account Central page -->
+<!-- (^a^) mail/chrome/messenger/msgAccountCentral.dtd と表現をそろえる -->
+<!ENTITY lightning.acctCentral.newCalendar.label	"新しいカレンダーを作成する">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label			"日付選択を表示">
+<!ENTITY todaypane.showMinimonth.accesskey		"M">
+<!ENTITY todaypane.showMiniday.label			"日付を表示">
+<!ENTITY todaypane.showMiniday.accesskey		"d">
+<!ENTITY todaypane.showNone.label			"表示なし">
+<!ENTITY todaypane.showNone.accesskey			"N">
+<!ENTITY todaypane.showTodayPane.label			"Today ペインを表示">
+<!ENTITY todaypane.showTodayPane.accesskey		"o">
+<!ENTITY todaypane.statusButton.label			"Today ペイン">

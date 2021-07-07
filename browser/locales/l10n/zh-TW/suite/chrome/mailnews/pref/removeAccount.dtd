@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "移除帳號與資料">
+<!ENTITY removeButton.label           "移除">
+<!ENTITY removeButton.accesskey       "R">
+<!ENTITY removeAccount.label          "移除帳號資訊">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "僅移除此帳號中與 &brandShortName; 有關的資訊，不影響伺服器上的帳號本身。">
+<!ENTITY removeData.label             "移除訊息資料">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "移除對話資料">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "從您的本機磁碟中移除此帳號的所有訊息、資料夾與相關聯的過濾器。這不會影響部分仍儲存在伺服器上的訊息。若您只打算要封存本機資料，或之後還要在 &brandShortName; 使用的話，請不要選擇此選項。">
+<!ENTITY removeDataServerAccount.desc "從您的本機磁碟中移除此帳號的所有訊息、資料夾與相關聯的過濾器。您的訊息與資料夾仍保留在伺服器上。">
+<!ENTITY removeDataChatAccount.desc   "移除此帳號所有儲存在本機磁碟中的對話紀錄。">
+<!ENTITY showData.label               "顯示資料位置">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "正在移除所選的資料…">
+<!ENTITY progressSuccess              "移除成功。">
+<!ENTITY progressFailure              "移除失敗。">

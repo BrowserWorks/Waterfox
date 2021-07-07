@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey            "p">
+
+<!ENTITY findOnCmd.commandkey           "F">
+<!ENTITY findAgainCmd.commandkey        "G">
+<!ENTITY findAgainCmd.commandkey2       "VK_F3">
+
+<!ENTITY backButton.label               "Bakåt">
+<!ENTITY backButton.accesskey           "B">
+<!ENTITY backButton.tooltip             "Gå bakåt en sida">
+<!ENTITY forwardButton.label            "Framåt">
+<!ENTITY forwardButton.accesskey        "F">
+<!ENTITY forwardButton.tooltip          "Gå framåt en sida">
+<!ENTITY copyCmd.label                  "Kopiera">
+<!ENTITY copyCmd.accesskey              "o">
+<!ENTITY selectAllCmd.label             "Markera allt">
+<!ENTITY selectAllCmd.accesskey         "a">
+<!ENTITY goBackCmd.commandkey           "ö">
+<!ENTITY goForwardCmd.commandkey        "ä">
+<!ENTITY homeButton.label               "Hem">
+<!ENTITY homeButton.tooltip             "Gå till startsidan för Hjälp">
+<!ENTITY printButton.label              "Skriv ut">
+<!ENTITY printButton.tooltip            "Skriv ut denna sida">
+<!ENTITY closeWindow.commandkey         "W">
+
+<!ENTITY search.emptytext               "Sök">
+<!ENTITY searchHeader.label             "Sökresultat">
+<!ENTITY toctab.label                   "Innehåll">
+<!ENTITY toctab.accesskey               "I">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY helpSearch.commandkey          "k">
+
+<!ENTITY zLevel.label                   "Alltid överst">
+<!ENTITY zLevel.accesskey               "v">
+
+<!ENTITY fullZoomReduceBtn.label        "Zooma ut">
+<!ENTITY fullZoomReduceBtn.accesskey    "u">
+<!ENTITY fullZoomEnlargeBtn.label       "Zooma in">
+<!ENTITY fullZoomEnlargeBtn.accesskey   "Z">

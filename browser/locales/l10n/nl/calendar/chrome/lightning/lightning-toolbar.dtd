@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Agendawerkbalk">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "n">
+<!ENTITY lightning.toolbar.task.name "Taakwerkbalk">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Synchroniseren">
+<!ENTITY lightning.toolbar.sync.tooltip "Agenda’s opnieuw laden en wijzigingen synchroniseren">
+<!ENTITY lightning.toolbar.delete.label "Verwijderen">
+<!ENTITY lightning.toolbar.delete.tooltip "Geselecteerde gebeurtenissen of taken verwijderen">
+<!ENTITY lightning.toolbar.edit.label "Bewerken">
+<!ENTITY lightning.toolbar.edit.tooltip "Geselecteerde gebeurtenis of taak bewerken">
+<!ENTITY lightning.toolbar.gototoday.label "Naar vandaag gaan">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Naar vandaag gaan">
+<!ENTITY lightning.toolbar.print.label "Afdrukken">
+<!ENTITY lightning.toolbar.print.tooltip "Gebeurtenissen of taken afdrukken">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Agenda">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Wisselen naar het agendatabblad">
+<!ENTITY lightning.toolbar.calendar.accesskey "A">
+<!ENTITY lightning.toolbar.task.label         "Taken">
+<!ENTITY lightning.toolbar.task.tooltip       "Wisselen naar het takentabblad">
+<!ENTITY lightning.toolbar.task.accesskey     "k">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Gebeurtenis">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Een nieuwe gebeurtenis maken">
+<!ENTITY lightning.toolbar.newtask.label      "Taak">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Een nieuwe taak maken">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Dag">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Week">
+<!ENTITY lightning.toolbar.week.accesskey            "k">
+<!ENTITY lightning.toolbar.multiweek.label           "Meerdere weken">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "e">
+<!ENTITY lightning.toolbar.month.label               "Maand">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Het &brandShortName;-menu weergeven">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Agendapaneel">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "v">
+<!ENTITY lightning.toolbar.calendarpane.label        "Agendapaneel tonen">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "t">

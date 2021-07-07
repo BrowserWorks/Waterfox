@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Νήμα">
+<!ENTITY fromColumn.label "Από">
+<!ENTITY recipientColumn.label "Παραλήπτης">
+<!ENTITY attachmentColumn.label "Συνημμένα">
+<!ENTITY subjectColumn.label "Θέμα">
+<!ENTITY dateColumn.label "Ημερομηνία">
+<!ENTITY priorityColumn.label "Προτεραιότητα">
+<!ENTITY tagsColumn.label "Ετικέτες">
+<!ENTITY accountColumn.label "Λογαριασμός">
+<!ENTITY statusColumn.label "Κατάσταση">
+<!ENTITY sizeColumn.label "Μέγεθος">
+<!ENTITY junkStatusColumn.label "Κατάσταση ανεπιθύμητων">
+<!ENTITY unreadColumn.label "Μη αναγνωσμένα στο νήμα">
+<!ENTITY totalColumn.label "Συνολικά στο νήμα">
+<!ENTITY readColumn.label "Αναγνωσμένα">
+<!ENTITY receivedColumn.label "Ληφθέντα">
+<!ENTITY flagColumn.label "Σημαία">
+<!ENTITY locationColumn.label "Τοποθεσία">
+<!ENTITY idColumn.label "Σειρά παραλαβής">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Επιλογή στηλών για εμφάνιση">
+<!ENTITY threadColumn2.tooltip "Προβολή νημάτων μηνυμάτων">
+<!ENTITY fromColumn2.tooltip "Ταξινόμηση κατά αποστολέα">
+<!ENTITY recipientColumn2.tooltip "Ταξινόμηση κατά παραλήπτη">
+<!ENTITY attachmentColumn2.tooltip "Ταξινόμηση κατά συνημμένα">
+<!ENTITY subjectColumn2.tooltip "Ταξινόμηση κατά θέμα">
+<!ENTITY dateColumn2.tooltip "Ταξινόμηση κατά ημερομηνία">
+<!ENTITY priorityColumn2.tooltip "Ταξινόμηση κατά προτεραιότητα">
+<!ENTITY tagsColumn2.tooltip "Ταξινόμηση κατά ετικέτες">
+<!ENTITY accountColumn2.tooltip "Ταξινόμηση κατά λογαριασμό">
+<!ENTITY statusColumn2.tooltip "Ταξινόμηση κατά κατάσταση">
+<!ENTITY sizeColumn2.tooltip "Ταξινόμηση κατά μέγεθος">
+<!ENTITY junkStatusColumn2.tooltip "Ταξινόμηση κατά κατάσταση ανεπιθύμητων">
+<!ENTITY unreadColumn2.tooltip "Αριθμός μη αναγνωσμένων μηνυμάτων στο νήμα">
+<!ENTITY totalColumn2.tooltip "Αριθμός συνολικών μηνυμάτων στο νήμα">
+<!ENTITY readColumn2.tooltip "Ταξινόμηση κατά αναγνωσμένα">
+<!ENTITY receivedColumn2.tooltip "Ταξινόμηση κατά ημερομηνία παραλαβής">
+<!ENTITY flagColumn2.tooltip "Ταξινόμηση κατά σημαία">
+<!ENTITY locationColumn2.tooltip "Ταξινόμηση κατά τοποθεσία">
+<!ENTITY idColumn2.tooltip "Ταξινόμηση κατά σειρά παραλαβής">

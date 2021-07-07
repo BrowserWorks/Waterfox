@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Zadejte adresu stránky (URL) nebo místního souboru, který chcete otevřít:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "V">
+<!ENTITY chooseFile.label "Vybrat soubor…">
+<!ENTITY chooseFile.accesskey "S">
+<!ENTITY newPrivate.label "Nové anonymní okno">
+<!ENTITY newWindow.label "Nové okno prohlížeče">
+<!ENTITY newTab.label "Nový panel prohlížeče">
+<!ENTITY currentTab.label "Aktuální panel prohlížeče">
+<!ENTITY editNewWindow.label "Nové okno editoru">
+<!ENTITY open.label "Otevřít">
+<!ENTITY caption.label "Otevření adresy">
+<!ENTITY openWhere.label "Umístit do:">
+<!ENTITY openWhere.accesskey "U">

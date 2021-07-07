@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Nouvelle liste de diffusion">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Ajouter à :">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Nom de la liste :">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Pseudo de la liste :">
+<!ENTITY ListNickName.accesskey         "P">
+<!ENTITY ListDescription.label          "Description :">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Saisissez les adresses à ajouter à la liste de diffusion :">
+<!ENTITY AddressTitle.accesskey         "S">
+<!ENTITY UpButton.label                 "Vers le haut">
+<!ENTITY DownButton.label               "Vers le bas">
+

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Címkék">
+<!ENTITY pref.tags.caption          "Címkék testreszabása">
+<!ENTITY pref.tags.description      "A címkék használatával kategórizálhatja üzeneteit és megadhatja azok fontosságát. Ezen a párbeszédablakon megváltoztathatja az egyes címkék megjelenését és fontosságát. A felső címkék a fontosabbakat jelölik mint az alattuk lévők.">
+<!ENTITY tagColumn.label            "Címke">
+<!ENTITY colorColumn.label          "Szín">
+<!ENTITY defaultTagName.label       "Névtelen címke">
+<!ENTITY addTagButton.label         "Hozzáadás">
+<!ENTITY addTagButton.accesskey     "H">
+<!ENTITY deleteTagButton.label      "Törlés">
+<!ENTITY deleteTagButton.accesskey  "T">
+<!ENTITY raiseTagButton.label       "Fontosság növelése">
+<!ENTITY raiseTagButton.accesskey   "n">
+<!ENTITY lowerTagButton.label       "Fontosság csökkentése">
+<!ENTITY lowerTagButton.accesskey   "c">
+<!ENTITY restoreButton.label        "Alapértelmezés visszaállítása">
+<!ENTITY restoreButton.accesskey    "A">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Автономные веб-приложения">
+<!ENTITY pref.offlineCache.caption          "Автономное веб-содержимое и данные пользователя">
+
+<!ENTITY clearOfflineAppCache.label         "Очистить">
+<!ENTITY clearOfflineAppCache.accesskey     "ч">
+
+<!ENTITY offlineAlwaysAllow.label           "Разрешать всем веб-сайтам хранить данные для автономной работы">
+<!ENTITY offlineAlwaysAllow.accesskey       "а">
+<!ENTITY offlineExplicit.label              "Позволять только веб-сайтам с явными разрешениями">
+<!ENTITY offlineExplicit.accesskey          "о">
+<!ENTITY offlineNotifyAsk.label             "Уведомлять меня, когда веб-сайты хотят сохранить данные для автономной работы">
+<!ENTITY offlineNotifyAsk.accesskey         "в">
+<!ENTITY offlineNotifyPermissions.label     "Управление разрешениями">
+<!ENTITY offlineNotifyPermissions.accesskey "п">
+
+<!ENTITY offlineAppsUsage.label             "Следующие веб-сайты используют автономное хранилище:">
+<!ENTITY offlineAppsListRemove.label        "Удалить данные…">
+<!ENTITY offlineAppsListRemove.accesskey    "и">

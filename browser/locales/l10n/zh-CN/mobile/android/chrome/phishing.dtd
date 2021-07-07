@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "离开这里！">
+<!ENTITY safeb.palm.decline.label "忽略此警告">
+<!ENTITY safeb.palm.reportPage.label "为什么拦截此页面？">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "结果由 <a id='advisory_provider'/> 提供">
+
+<!ENTITY safeb.blocked.malwarePage.title "本页面据举报有攻击行为！">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "根据举报，位于 <span id='malware_sitename'/> 的此网页有攻击行为。现已依照您的安全首选项予以拦截。">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>有攻击行为的网页会尝试安装能窃取个人隐私、利用您的电脑攻击他人，或者损害您的系统的程序。</p><p>某些攻击页面是在故意散布有害软件，但更多网站则是在连网站所有者都不知情的情况下，成为了恶意软件散布的温床。</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "诈骗网站！">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "根据举报，位于 <span id='phishing_sitename'/> 的此网页是诈骗网站。现已依照您的安全首选项予以拦截。">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>诈骗网站会诱导您做出严重威胁您安全的举动，例如安装恶意软件或者套取您的个人信息（如密码、电话号码、信用卡信息）。</p><p>在此网页上输入任何信息都可能使您的身份信息遭到盗用，您也可能受到其他方式的欺骗。</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "此网站据举报提供流氓软件！">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "根据举报，位于 <span id='unwanted_sitename'/> 的此网页提供流氓软件。现已依照您的安全首选项予以拦截。">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "提供流氓软件的网页可能会诱导您安装具有欺骗性的软件，并以流氓的方式损害您的系统。">
+
+<!ENTITY safeb.blocked.harmfulPage.title "此网站可能包含恶意软件">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; 已拦截此网页，它可能会尝试安装窃取或破坏您的数据（例如照片、邮件等一切信息）的危险软件。">

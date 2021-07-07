@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Thuộc tính tài khoản">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Tổng quát">
+<!ENTITY account.advanced              "Tùy chọn nâng cao">
+<!ENTITY account.name                  "Tên đăng nhập:">
+<!ENTITY account.password              "Mật khẩu:">
+<!ENTITY account.alias                 "Bí danh:">
+<!ENTITY account.newMailNotification   "Thông báo trên thư mới">
+<!ENTITY account.autojoin              "Tự động tham gia các kênh:">
+<!ENTITY account.proxySettings.caption "Cài đặt proxy:">
+<!ENTITY account.proxySettings.change.label     "Thay đổi…">
+<!ENTITY account.proxySettings.change.accessKey "C">

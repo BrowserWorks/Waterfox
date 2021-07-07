@@ -1,0 +1,279 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Atverti meniu">
+<!ENTITY navbarOverflow.label                "Daugiau priemonių…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Įsegti kortelę">
+<!ENTITY  unpinTab.label                     "Išsegti kortelę">
+
+<!ENTITY  listAllTabs.label      "Pateikti visas korteles">
+
+<!ENTITY tabCmd.label "Nauja kortelė">
+<!ENTITY openFileCmd.label "Atverti…">
+<!ENTITY printCmd.label "Spausdinti…">
+
+<!ENTITY taskManagerCmd.label "Užduočių tvarkytuvė">
+
+<!ENTITY menubarCmd.label "Meniu juosta">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigacija">
+<!ENTITY personalbarCmd.label "Adresyno juosta">
+<!ENTITY personalbarCmd.accesskey "A">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Adresynas">
+<!ENTITY bookmarksToolbarItem.label "Adresyno juostos elementai">
+
+<!ENTITY fullScreenCmd.label "Visas ekranas">
+
+<!ENTITY pictureInPictureHideToggle.label "Slėpti vaizdo-vaizde perjungimą">
+<!ENTITY pictureInPictureHideToggle.accesskey "S">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "„&syncBrand.shortName.label;“ nuostatas">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Susieti kitą įrenginį…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+<!ENTITY fxa.menu.signin.label "Prisijungti prie „&brandProductName;“">
+<!ENTITY fxa.menu.turnOnSync.label "Įjungti „&syncBrand.shortName.label;“">
+<!ENTITY fxa.menu.firefoxServices.label "„&brandProductName;“ paslaugos">
+<!ENTITY fxa.menu.account.label "Paskyra">
+<!ENTITY fxa.menu.settings.label "Nuostatos">
+<!ENTITY fxa.menu.accountSettings.label "Paskyros nuostatos">
+<!ENTITY fxa.menu.manageAccount2.label "Tvarkyti paskyrą">
+<!ENTITY fxa.menu.signOut.label "Atsijungti…">
+<!ENTITY fxa.menu.setupSync.label "Konfigūruoti „&syncBrand.shortName.label;“…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Akimirksniu persiųskite kortelę į bet kurį susietą įrenginį.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "dabar yra visame ekrane">
+<!ENTITY fullscreenWarning.generic.label "Šis dokumentas dabar yra visame ekrane">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Grįžti iš viso ekrano (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Grįžti iš viso ekrano (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "valdo jūsų žymeklį. Spustelėkite Esc, norėdami atgauti valdymą.">
+<!ENTITY pointerlockWarning.generic.label "Šis dokumentas valdo jūsų žymeklį. Spustelėkite Esc, norėdami atgauti valdymą.">
+
+<!ENTITY showAllBookmarks2.label "Rodyti visą adresyną">
+<!ENTITY recentBookmarks.label "Paskiausiai įtraukti į adresyną">
+<!ENTITY bookmarksToolbarChevron.tooltip "Kiti adresai">
+
+<!ENTITY printButton.label            "Spausdinti">
+<!ENTITY printButton.tooltip          "Spausdinti šį tinklalapį">
+
+<!ENTITY searchItem.title             "Paieška">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Pradžios tinklalapis">
+<!ENTITY homeButton.defaultPage.tooltip "„&brandShortName;“ pradžios tinklalapis">
+
+<!ENTITY bookmarksButton.label          "Adresynas">
+
+<!ENTITY bookmarksSubview.label             "Adresynas">
+<!ENTITY bookmarksMenuButton2.label         "Adresyno meniu">
+<!ENTITY bookmarksMenuButton.other.label    "Kiti adresai">
+<!ENTITY bookmarksMenuButton.mobile.label   "Mobilusis adresynas">
+<!ENTITY viewBookmarksSidebar2.label        "Rodyti adresyną parankinėje">
+<!ENTITY hideBookmarksSidebar.label         "Nerodyti adresyno parankinėje">
+<!ENTITY viewBookmarksToolbar.label         "Rodyti adresyno juostą">
+<!ENTITY hideBookmarksToolbar.label         "Slėpti adresyno juostą">
+<!ENTITY searchBookmarks.label              "Ieškoti adresyne">
+<!ENTITY bookmarkingTools.label             "Adresyno priemonės">
+<!ENTITY addBookmarksMenu.label             "Pridėti adresyno meniu į priemonių juostą">
+<!ENTITY removeBookmarksMenu.label          "Išimti adresyno meniu iš priemonių juostos">
+
+<!ENTITY historyButton.label            "Žurnalas">
+
+<!ENTITY downloads.label              "Atsiuntimai">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Atsiuntimai">
+<!ENTITY addons.label                 "Priedai">
+
+<!ENTITY webDeveloperMenu.label       "Saityno kūrėjams">
+
+<!ENTITY newNavigatorCmd.label        "Naujas langas">
+<!ENTITY newPrivateWindow.label     "Naujas privataus naršymo langas">
+
+<!ENTITY editMenu.label         "Taisa">
+<!ENTITY preferencesCmd2.label       "Nuostatos">
+<!ENTITY preferencesCmdUnix.label       "Nuostatos">
+<!ENTITY logins.label                           "Prisijungimai ir slaptažodžiai">
+
+<!ENTITY overflowCustomizeToolbar.label       "Tvarkyti priemonių juostą…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "T">
+
+<!ENTITY historyMenu.label "Žurnalas">
+<!ENTITY historyUndoMenu.label "Paskiausiai užvertos kortelės">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Paskiausiai užverti langai">
+
+<!ENTITY appMenuHistory.showAll.label "Rodyti visą žurnalą">
+<!ENTITY appMenuHistory.clearRecent.label "Valyti žurnalą…">
+<!ENTITY appMenuHistory.restoreSession.label "Atkurti paskiausiąjį seansą">
+<!ENTITY appMenuHistory.viewSidebar.label "Rodyti žurnalo parankinę">
+<!ENTITY appMenuHistory.hideSidebar.label "Slėpti žurnalo parankinę">
+<!ENTITY appMenuHistory.recentHistory.label "Žurnalas">
+<!ENTITY appMenuHelp.label "Žinynas">
+
+<!ENTITY appMenuRemoteTabs.label "Sinchronizuotos kortelės">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Nėra atvirų kortelių">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Rodyti daugiau">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Rodyti daugiau kortelių iš šio įrenginio">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Rodyti visas">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Rodyti visas korteles iš šio įrenginio">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Įjunkite kortelių sinchronizavimą, norėdami peržiūrėti kituose įrenginiuose esančias korteles.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Norite čia matyti savo korteles iš kitų įrenginių?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Atverti sinchronizavimo nuostatas">
+<!ENTITY appMenuRemoteTabs.welcome.label "Peržiūrėkite kituose įrenginiuose esančias korteles.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Jūsų paskyra turi būti patvirtinta.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Jungtis prie „&syncBrand.shortName.label;“…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Įjungti „&syncBrand.shortName.label;“…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Tvarkyti įrenginius…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Rodyti sinchronizuotų kortelių parankinę">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Slėpti sinchronizuotų kortelių parankinę">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Susieti kitą įrenginį">
+
+<!ENTITY appMenuRecentHighlights.label "Paskiausi akcentai">
+
+<!ENTITY customizeMenu.addToToolbar.label "Pridėti į priemonių juostą">
+<!ENTITY customizeMenu.addToToolbar.accesskey "P">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Pridėti į perpildymo meniu">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Išsegti iš perpildymo meniu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "I">
+<!ENTITY customizeMenu.removeFromToolbar.label "Pašalinti iš priemonių juostos">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "š">
+<!ENTITY customizeMenu.addMoreItems.label "Pridėti daugiau elementų…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "d">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Daugiau">
+
+<!ENTITY contentSearchSubmit.tooltip  "Išsiųsti paiešką">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Ieškoti">
+<!ENTITY searchIcon.tooltip           "Paieška">
+
+<!ENTITY openLinkCmdInTab.accesskey   "k">
+
+<!ENTITY pageAction.copyLink.label    "Kopijuoti saitą">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Įrašyti tinklalapį į „Pocket“">
+<!ENTITY pocketMenuitem.label         "Peržiūrėti „Pocket“ sąrašą">
+
+<!ENTITY emailPageCmd.label           "Išsiųsti saitą el. paštu…">
+
+<!ENTITY fullZoom.label                 "Mastelis">
+
+<!ENTITY sidebarCloseButton.tooltip     "Užverti parankinę">
+
+<!ENTITY quitApplicationCmdWin2.label       "Baigti darbą">
+<!ENTITY quitApplicationCmdWin2.accesskey   "B">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Baigti „&brandShorterName;“ darbą">
+<!ENTITY quitApplicationCmd.label       "Baigti darbą">
+<!ENTITY quitApplicationCmd.accesskey   "B">
+<!ENTITY quitApplicationCmdMac2.label   "Baigti „&brandShorterName;“ darbą">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Iškylančiųjų langų valdymas…">
+<!ENTITY editPopupSettings.label "Iškylančiųjų langų valdymas…">
+<!ENTITY editPopupSettings.accesskey "v">
+<!ENTITY dontShowMessage.accesskey "n">
+
+<!ENTITY findOnCmd.label     "Ieškoti šiame tinklalapyje…">
+
+<!ENTITY spellAddDictionaries.label "Daugiau žodynų…">
+<!ENTITY spellAddDictionaries.accesskey "D">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Kortelių juosta">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Automatiškai slėpti">
+
+
+<!ENTITY uiTour.infoPanel.close "Užverti">
+
+<!ENTITY panicButton.thankyou.msg1                "Paskiausi žurnalo įrašai išvalyti.">
+<!ENTITY panicButton.thankyou.msg2                "Saugaus naršymo!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Ačiū!">
+
+<!ENTITY updateAvailable.panelUI.label "Parsiųsti „&brandShorterName;“ naujinimą">
+<!ENTITY updateManual.panelUI.label "Parsiųsti šviežią „&brandShorterName;“ kopiją">
+<!ENTITY updateUnsupported.panelUI.label "Tolimesnių naujinimų atlikti negalite">
+<!ENTITY updateRestart.panelUI.label2 "Perleiskite, norėdami atnaujinti „&brandShorterName;“">
+
+<!ENTITY sendToDevice.syncNotReady.label "Sinchronizuojami įrenginiai…">
+
+<!ENTITY pageAction.shareUrl.label "Dalintis">
+<!ENTITY pageAction.shareMore.label "Daugiau…">
+
+<!ENTITY libraryButton.tooltip "Peržiūrėti žurnalą, adresyno įrašus ir daugiau">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Prieinamumo funkcijos įjungtos">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!ENTITY calendar.invitations.dialog.invitations.text "Invitaciones">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text "Actualizando lista de invitaciones.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text "No se han encontrado invitaciones sin confirmar.">
+<!ENTITY calendar.invitations.list.accept.button.label "Aceptar">
+<!ENTITY calendar.invitations.list.decline.button.label "Rechazar">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label "Konfiguruj usługę &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey "o">
+<!ENTITY weaveDesc.label "&syncBrand.fullName.label; umożliwia dostęp do twojej historii przeglądania, zakładek, haseł i otwartych kart z poziomu każdego twojego urządzenia.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "Konto &syncBrand.fullName.label;">
+<!ENTITY accountName.label "Nazwa konta:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label "Aktualizuj">
+<!ENTITY updatePass.accesskey "u">
+<!ENTITY resetPass.label "Resetuj">
+<!ENTITY resetPass.accesskey "R">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label "Zarządzaj kontem">
+<!ENTITY manageAccount.accesskey "Z">
+<!ENTITY viewQuota.label "Wyświetl limity">
+<!ENTITY viewQuota.accesskey "W">
+<!ENTITY changePassword.label "Zmień hasło">
+<!ENTITY changePassword.accesskey "m">
+<!ENTITY myRecoveryKey.label "Mój klucz odzyskiwania">
+<!ENTITY myRecoveryKey.accesskey "k">
+<!ENTITY resetSync.label "Resetuj synchronizację">
+<!ENTITY resetSync.accesskey "e">
+<!ENTITY unlinkDevice.label "Odłącz to urządzenie">
+<!ENTITY unlinkDevice.accesskey "O">
+<!ENTITY addDevice.label "Dodaj urządzenie">
+<!ENTITY addDevice.accesskey "D">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label "Nazwa urządzenia:">
+<!ENTITY syncComputerName.accesskey "N">
+
+<!ENTITY syncMy2.label "Synchronizuj moje:">
+<!ENTITY engine.addons.label "dodatki">
+<!ENTITY engine.addons.accesskey "d">
+<!ENTITY engine.bookmarks.label "zakładki">
+<!ENTITY engine.bookmarks.accesskey "z">
+<!ENTITY engine.tabs.label "karty">
+<!ENTITY engine.tabs.accesskey "k">
+<!ENTITY engine.history.label "historia">
+<!ENTITY engine.history.accesskey "s">
+<!ENTITY engine.passwords.label "hasła">
+<!ENTITY engine.passwords.accesskey "h">
+<!ENTITY engine.prefs.label "preferencje">
+<!ENTITY engine.prefs.accesskey "p">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label "Warunki korzystania z usługi">
+<!ENTITY prefs.ppLink.label "Polityka prywatności">

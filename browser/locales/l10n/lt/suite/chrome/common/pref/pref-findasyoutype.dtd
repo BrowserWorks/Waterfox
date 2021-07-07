@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Paieška renkant tekstą">
+<!ENTITY findAsYouTypeBehavior.label "Paieška renkant tekstą">
+<!ENTITY findAsYouTypeTip.label "Patarimas. Paiešką renkant galima įjungti ir rankiniu būdu: prieš ieškomą ženklų seką surinkite / (jei norite ieškoti tekste) arba ' (jei norite ieškoti tik saituose).">
+<!ENTITY findAsYouTypeTimeout.label "Pašalinti ieškinį, kai kelias sekundes nieko nerenkama">
+<!ENTITY findAsYouTypeTimeout.accesskey "š">
+<!ENTITY findAsYouTypeSound.label "Signalizuoti garsu, jei surinkto teksto nerasta">
+<!ENTITY findAsYouTypeSound.accesskey "g">
+<!ENTITY findAsYouTypeEnableAuto.label "Renkamo teksto automatiškai ieškoti:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "a">
+<!ENTITY findAsYouTypeAutoText.label "visame tinklalapio tekste">
+<!ENTITY findAsYouTypeAutoText.accesskey "n">
+<!ENTITY findAsYouTypeAutoLinks.label "tik saituose">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "s">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Vykdant paiešką renkant tekstą, rodyti paieškos juostą">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "r">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Pastaba. Jeigu paieškos juosta nerodoma, paieška renkant tekstą riboja galimus įvesti simbolius.">

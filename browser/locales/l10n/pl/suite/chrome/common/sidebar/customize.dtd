@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label "Dostosuj &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label "Karty w Panelu bocznym:">
+<!ENTITY sidebar.customize.current.accesskey "n">
+<!ENTITY sidebar.customize.customize.label "Dostosuj kartę…">
+<!ENTITY sidebar.customize.customize.accesskey "s">
+<!ENTITY sidebar.customize.remove.label "Usuń">
+<!ENTITY sidebar.customize.remove.accesskey "U">
+<!ENTITY sidebar.customize.additional.label "Dostępne karty">
+<!ENTITY sidebar.customize.additional.accesskey "p">
+<!ENTITY sidebar.customize.add.label "Dodaj">
+<!ENTITY sidebar.customize.add.accesskey "D">
+<!ENTITY sidebar.customize.preview.label "Podgląd…">
+<!ENTITY sidebar.customize.preview.accesskey "l">
+<!ENTITY sidebar.customize.up.label "W dół">
+<!ENTITY sidebar.customize.up.accesskey "d">
+<!ENTITY sidebar.customize.down.label "W górę">
+<!ENTITY sidebar.customize.down.accesskey "g">
+<!ENTITY sidebar.more.label "Znajdź więcej kart…">
+<!ENTITY sidebar.more.accesskey "Z">

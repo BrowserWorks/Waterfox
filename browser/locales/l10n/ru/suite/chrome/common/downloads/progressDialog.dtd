@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Идёт загрузка…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Приостановить">
+<!ENTITY cmd.resume.tooltip              "Возобновить">
+<!ENTITY cmd.retry.tooltip               "Повторить">
+<!ENTITY cmd.cancel.tooltip              "Отменить">
+<!ENTITY cmd.open.label                  "Открыть">
+<!ENTITY cmd.open.accesskey              "т">
+<!ENTITY cmd.show.label                  "Открыть папку с файлом">
+<!ENTITY cmd.show.accesskey              "п">
+<!ENTITY cmd.goToDownloadPage.label      "Перейти на страницу загрузки">
+<!ENTITY cmd.goToDownloadPage.accesskey  "е">
+<!ENTITY cmd.copyDownloadLink.label      "Копировать ссылку на загрузку">
+<!ENTITY cmd.copyDownloadLink.accesskey  "п">
+<!ENTITY closeWhenDone.label             "Закрыть это окно после завершения загрузок.">
+<!ENTITY closeWhenDone.accesskey         "а">

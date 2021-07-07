@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Hjälp">
+<!ENTITY helpMenu.accesskey "H">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Hjälp">
+<!ENTITY helpMenuWin.accesskey "H">
+<!ENTITY aboutProduct2.label "Om &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "O">
+<!ENTITY helpTroubleshootingInfo.label     "Felsökningsinformation">
+<!ENTITY helpTroubleshootingInfo.accesskey "F">
+<!ENTITY helpSafeMode.label     "Starta om utan tillägg…">
+<!ENTITY helpSafeMode.accesskey "S">
+
+<!ENTITY helpSafeMode.stop.label     "Starta om med tillägg aktiverade">
+<!ENTITY helpSafeMode.stop.accesskey "S">
+<!ENTITY productHelp.label "&brandShortName; Hjälp">
+<!ENTITY productHelp.accesskey "H">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Tangentbordsgenvägar">
+<!ENTITY helpKeyboardShortcuts.accesskey "T">
+
+<!ENTITY helpFeedbackPage.label "Skicka in återkoppling…">
+<!ENTITY helpFeedbackPage.accesskey "S">
+
+<!ENTITY helpShowTour2.label "&brandShorterName; Guide">
+<!ENTITY helpShowTour2.accesskey "G">
+
+<!ENTITY helpGetInvolvedPage.label "Engagera dig">
+<!ENTITY helpGetInvolvedPage.accesskey "E">
+
+<!ENTITY helpDonationsPage.label "Gör en donation">
+<!ENTITY helpDonationsPage.accesskey "d">

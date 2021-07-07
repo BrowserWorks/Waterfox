@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label				"項目の編集">
+
+<!ENTITY event.dialog.keepDurationButton.tooltip	"終了日時を変更しても期間の長さを維持します">
+<!ENTITY event.dialog.keepDurationButton.accesskey	"K">
+
+<!ENTITY newevent.from.label				"開始日時">
+<!ENTITY newevent.to.label				"終了日時">
+
+<!ENTITY newevent.status.label				"状態">
+<!ENTITY newevent.status.accesskey			"S">
+<!ENTITY newevent.eventStatus.none.label		"指定なし">
+<!ENTITY newevent.eventStatus.none.accesskey		"o">
+<!ENTITY newevent.todoStatus.none.label			"指定なし">
+<!ENTITY newevent.eventStatus.cancelled.label		"キャンセル">
+<!ENTITY newevent.eventStatus.cancelled.accesskey	"n">
+<!ENTITY newevent.todoStatus.cancelled.label		"キャンセル">
+<!ENTITY newevent.status.tentative.label		"未確定">
+<!ENTITY newevent.status.tentative.accesskey		"T">
+<!ENTITY newevent.status.confirmed.label		"確認済み">
+<!ENTITY newevent.status.confirmed.accesskey		"C">
+<!ENTITY newevent.status.needsaction.label		"行動が必要">
+<!ENTITY newevent.status.inprogress.label		"進行中">
+<!ENTITY newevent.status.completed.label		"完了">
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label			"&#37;">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label			"参加者に通知する">
+<!ENTITY event.attendees.notify.accesskey		"f">
+<!ENTITY event.attendees.notifyundisclosed.label	"参加者ごとに招待メールを分ける">
+<!ENTITY event.attendees.notifyundisclosed.accesskey	"x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip	"このオプションは、参加者ごとに個別の招待メールを送信します。各招待メールには受信した参加者のみが含まれ、他の参加者の識別情報は非公開になります。">
+<!ENTITY event.attendees.disallowcounter.label		"対案を許可しない">
+<!ENTITY event.attendees.disallowcounter.accesskey	"a">
+<!ENTITY event.attendees.disallowcounter.tooltip	"対案を承諾しないことを示します">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2			"I">
+<!ENTITY event.dialog.new.task.key2			"D">
+<!ENTITY event.dialog.new.message.key2			"N">
+<!ENTITY event.dialog.close.key				"W">
+<!ENTITY event.dialog.save.key				"S">
+<!ENTITY event.dialog.saveandclose.key			"L">
+<!ENTITY event.dialog.print.key				"P">
+<!ENTITY event.dialog.undo.key				"Z">
+<!ENTITY event.dialog.redo.key				"Y">
+<!ENTITY event.dialog.cut.key				"X">
+<!ENTITY event.dialog.copy.key				"C">
+<!ENTITY event.dialog.paste.key				"V">
+<!ENTITY event.dialog.select.all.key			"A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label			"新規作成">
+<!ENTITY  event.menu.item.new.accesskey			"N">
+<!ENTITY  event.menu.item.new.event.label		"予定">
+<!ENTITY  event.menu.item.new.event.accesskey		"E">
+<!ENTITY  event.menu.item.new.task.label		"ToDo">
+<!ENTITY  event.menu.item.new.task.accesskey		"T">
+<!ENTITY  event.menu.item.new.message.label		"メッセージ">
+<!ENTITY  event.menu.item.new.message.accesskey		"M">
+<!ENTITY  event.menu.item.new.contact.label		"アドレス帳の連絡先">
+<!ENTITY  event.menu.item.new.contact.accesskey		"C">
+<!ENTITY  event.menu.item.close.label			"閉じる">
+<!ENTITY  event.menu.item.close.accesskey		"C">
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label			"保存">
+<!ENTITY  event.menu.item.save.accesskey		"S">
+<!ENTITY  event.menu.item.save.tab.accesskey		"a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label		"保存して閉じる">
+<!ENTITY  event.menu.item.saveandclose.accesskey	"l">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey	"z">
+
+<!ENTITY  event.menu.item.delete.label			"削除...">
+<!ENTITY  event.menu.item.delete.accesskey		"D">
+<!ENTITY  event.menu.item.page.setup.label		"ページ設定">
+<!ENTITY  event.menu.item.page.setup.accesskey		"u">
+<!ENTITY  event.menu.item.print.label			"印刷">
+<!ENTITY  event.menu.item.print.accesskey		"P">
+
+<!ENTITY  event.menu.edit.label				"編集">
+<!ENTITY  event.menu.edit.accesskey			"E">
+<!ENTITY  event.menu.edit.undo.label			"元に戻す">
+<!ENTITY  event.menu.edit.undo.accesskey		"U">
+<!ENTITY  event.menu.edit.redo.label			"やり直し">
+<!ENTITY  event.menu.edit.redo.accesskey		"R">
+<!ENTITY  event.menu.edit.cut.label			"切り取り">
+<!ENTITY  event.menu.edit.cut.accesskey			"t">
+<!ENTITY  event.menu.edit.copy.label			"コピー">
+<!ENTITY  event.menu.edit.copy.accesskey		"C">
+<!ENTITY  event.menu.edit.paste.label			"貼り付け">
+<!ENTITY  event.menu.edit.paste.accesskey		"P">
+<!ENTITY  event.menu.edit.select.all.label		"すべて選択">
+<!ENTITY  event.menu.edit.select.all.accesskey		"A">
+
+<!ENTITY  event.menu.view.label				"表示">
+<!ENTITY  event.menu.view.accesskey			"V">
+<!ENTITY  event.menu.view.toolbars.label		"ツールバー">
+<!ENTITY  event.menu.view.toolbars.accesskey		"T">
+<!ENTITY  event.menu.view.toolbars.event.label		"予定ツールバー">
+<!ENTITY  event.menu.view.toolbars.event.accesskey	"E">
+<!ENTITY  event.menu.view.toolbars.customize.label	"カスタマイズ...">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey	"C">
+<!ENTITY  event.menu.view.showlink.label		"関連リンクを表示">
+<!ENTITY  event.menu.view.showlink.accesskey		"R">
+
+<!ENTITY  event.menu.options.label				"オプション">
+<!ENTITY  event.menu.options.accesskey				"O">
+<!ENTITY  event.menu.options.attendees.label			"参加者を追加...">
+<!ENTITY  event.menu.options.attendees.accesskey		"I">
+<!ENTITY  event.menu.options.timezone2.label			"タイムゾーンを表示">
+<!ENTITY  event.menu.options.timezone2.accesskey		"z">
+<!ENTITY  event.menu.options.priority2.label			"重要度">
+<!ENTITY  event.menu.options.priority2.accesskey		"y">
+<!ENTITY  event.menu.options.priority.notspecified.label	"指定なし">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey	"o">
+<!ENTITY  event.menu.options.priority.low.label			"低">
+<!ENTITY  event.menu.options.priority.low.accesskey		"L">
+<!ENTITY  event.menu.options.priority.normal.label		"標準">
+<!ENTITY  event.menu.options.priority.normal.accesskey		"N">
+<!ENTITY  event.menu.options.priority.high.label		"高">
+<!ENTITY  event.menu.options.priority.high.accesskey		"H">
+<!ENTITY  event.menu.options.privacy.label			"プライバシー">
+<!ENTITY  event.menu.options.privacy.accesskey			"P">
+<!ENTITY  event.menu.options.privacy.public.label		"公開">
+<!ENTITY  event.menu.options.privacy.public.accesskey		"u">
+<!ENTITY  event.menu.options.privacy.confidential.label		"日時のみ公開">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey	"S">
+<!ENTITY  event.menu.options.privacy.private.label		"プライベート">
+<!ENTITY  event.menu.options.privacy.private.accesskey		"r">
+<!ENTITY  event.menu.options.show.time.label			"この時間の表示">
+<!ENTITY  event.menu.options.show.time.accesskey		"T">
+<!ENTITY  event.menu.options.show.time.busy.label		"予定あり">
+<!ENTITY  event.menu.options.show.time.busy.accesskey		"B">
+<!ENTITY  event.menu.options.show.time.free.label		"空き">
+<!ENTITY  event.menu.options.show.time.free.accesskey		"F">
+
+<!ENTITY event.invite.attendees.label			"参加者を追加...">
+<!ENTITY event.invite.attendees.accesskey		"I">
+<!ENTITY event.email.attendees.label			"参加者全員にメッセージを作成...">
+<!ENTITY event.email.attendees.accesskey		"A">
+<!ENTITY event.email.tentative.attendees.label		"未確定な参加者にメッセージを作成...">
+<!ENTITY event.email.tentative.attendees.accesskey	"U">
+<!ENTITY event.remove.attendees.label2			"すべての参加者を削除">
+<!ENTITY event.remove.attendees.accesskey		"r">
+<!ENTITY event.remove.attendee.label			"参加者を削除">
+<!ENTITY event.remove.attendee.accesskey		"e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2			"保存">
+<!ENTITY  event.toolbar.saveandclose.label		"保存して閉じる">
+<!ENTITY  event.toolbar.delete.label			"削除">
+<!ENTITY  event.toolbar.attendees.label			"参加者を追加">
+<!ENTITY  event.toolbar.privacy.label			"プライバシー">
+
+<!ENTITY  event.toolbar.save.tooltip2			"保存します">
+<!ENTITY  event.toolbar.saveandclose.tooltip		"保存して閉じます">
+<!ENTITY  event.toolbar.delete.tooltip			"削除します">
+<!ENTITY  event.toolbar.attendees.tooltip		"参加者を追加します">
+<!ENTITY  event.toolbar.attachments.tooltip		"URL を添付します">
+<!ENTITY  event.toolbar.privacy.tooltip			"プライバシー設定を変更します">
+<!ENTITY  event.toolbar.priority.tooltip		"重要度を変更します">
+<!ENTITY  event.toolbar.status.tooltip			"状態を変更します">
+<!ENTITY  event.toolbar.freebusy.tooltip		"空き時間情報の設定を切り替えます">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label			"提案を適用">
+<!ENTITY counter.button.proposal.accesskey		"p">
+<!ENTITY counter.button.proposal.tooltip2		"予定フィールドに対案からの値が設定され、変更部分がすべての参加者に通知されます">
+<!ENTITY counter.button.original.label			"元のデータを適用">
+<!ENTITY counter.button.original.accesskey		"r">
+<!ENTITY counter.button.original.tooltip2		"予定フィールドに対案が作られる前の元の予定からの値が設定されます。">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label			"件名:">
+<!ENTITY event.title.textbox.accesskey			"I">
+<!ENTITY event.location.label				"場所:">
+<!ENTITY event.location.accesskey			"L">
+<!ENTITY event.categories.label				"カテゴリー:">
+<!ENTITY event.categories.accesskey			"y">
+<!ENTITY event.categories.textbox.label			"新しいカテゴリーを追加">
+<!ENTITY event.calendar.label				"カレンダー:">
+<!ENTITY event.calendar.accesskey			"C">
+<!ENTITY event.attendees.label				"参加者:">
+<!ENTITY event.attendees.accesskey			"n">
+<!ENTITY event.alldayevent.label			"終日の予定">
+<!ENTITY event.alldayevent.accesskey			"d">
+<!ENTITY event.from.label				"開始日時:">
+<!ENTITY event.from.accesskey				"S">
+<!ENTITY task.from.label				"着手日時:">
+<!ENTITY task.from.accesskey				"S">
+<!ENTITY event.to.label					"終了日時:">
+<!ENTITY event.to.accesskey				"u">
+<!ENTITY task.to.label					"締切日時:">
+<!ENTITY task.to.accesskey				"u">
+<!ENTITY task.status.label				"状態:">
+<!ENTITY task.status.accesskey				"a">
+<!ENTITY event.repeat.label				"繰り返し:">
+<!ENTITY event.repeat.accesskey				"R">
+<!ENTITY event.until.label				"終了日:">
+<!ENTITY event.until.accesskey				"B">
+<!ENTITY event.reminder.label				"アラーム:">
+<!ENTITY event.reminder.accesskey			"m">
+<!ENTITY event.description.label			"詳細:">
+<!ENTITY event.description.accesskey			"p">
+<!ENTITY event.attachments.label			"添付:">
+<!ENTITY event.attachments.accesskey			"h">
+<!ENTITY event.attachments.menubutton.label		"添付">
+<!ENTITY event.attachments.menubutton.accesskey		"A">
+<!ENTITY event.attachments.url.label			"ウェブページ...">
+<!ENTITY event.attachments.url.accesskey		"W">
+
+<!ENTITY event.attachments.popup.remove.label		"削除">
+<!ENTITY event.attachments.popup.remove.accesskey	"R">
+<!ENTITY event.attachments.popup.open.label		"開く">
+<!ENTITY event.attachments.popup.open.accesskey		"O">
+<!ENTITY event.attachments.popup.removeAll.label	"すべて削除">
+<!ENTITY event.attachments.popup.removeAll.accesskey	"A">
+<!ENTITY event.attachments.popup.attachPage.label	"URL を添付..."><!-- (^a^) event.menu.options.attachments.label と同じ -->
+<!ENTITY event.attachments.popup.attachPage.accesskey	"g">
+<!ENTITY event.url.label				"関連リンク:">
+<!ENTITY event.priority2.label				"重要度:">
+
+<!ENTITY event.reminder.none.label			"通知しない">
+<!ENTITY event.reminder.0minutes.before.label		"0 分前">
+<!ENTITY event.reminder.5minutes.before.label		"5 分前">
+<!ENTITY event.reminder.15minutes.before.label		"15 分前">
+<!ENTITY event.reminder.30minutes.before.label		"30 分前">
+<!ENTITY event.reminder.1hour.before.label		"1 時間前">
+<!ENTITY event.reminder.2hours.before.label		"2 時間前">
+<!ENTITY event.reminder.12hours.before.label		"12 時間前">
+<!ENTITY event.reminder.1day.before.label		"1 日前">
+<!ENTITY event.reminder.2days.before.label		"2 日前">
+<!ENTITY event.reminder.1week.before.label		"1 週間前">
+<!ENTITY event.reminder.custom.label			"手動設定...">
+
+<!ENTITY event.reminder.multiple.label			"複数のアラーム...">
+
+<!ENTITY event.statusbarpanel.freebusy.label		"空き時間情報:">
+<!ENTITY event.statusbarpanel.privacy.label		"プライバシー:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label				"周期の編集">
+
+<!ENTITY event.repeat.does.not.repeat.label		"繰り返さない">
+<!ENTITY event.repeat.daily.label			"毎日">
+<!ENTITY event.repeat.weekly.label			"毎週">
+<!ENTITY event.repeat.every.weekday.label		"平日">
+<!ENTITY event.repeat.bi.weekly.label			"隔週">
+<!ENTITY event.repeat.monthly.label			"毎月">
+<!ENTITY event.repeat.yearly.label			"毎年">
+<!ENTITY event.repeat.custom.label			"手動設定...">
+
+<!ENTITY event.recurrence.pattern.label			"繰り返す周期">
+<!ENTITY event.recurrence.occurs.label			"周期">
+<!ENTITY event.recurrence.day.label			"毎日">
+<!ENTITY event.recurrence.week.label			"毎週">
+<!ENTITY event.recurrence.month.label			"毎月">
+<!ENTITY event.recurrence.year.label			"毎年">
+
+<!ENTITY event.recurrence.pattern.every.label		"間隔:">
+<!ENTITY repeat.units.days.both				"日ごと">
+<!ENTITY event.recurrence.pattern.every.weekday.label	"平日">
+
+<!ENTITY event.recurrence.pattern.weekly.every.label	"">
+<!ENTITY repeat.units.weeks.both			"週ごとの次の曜日:">
+<!ENTITY event.recurrence.on.label			"">
+
+<!ENTITY event.recurrence.pattern.monthly.every.label	"">
+<!ENTITY repeat.units.months.both			"カ月ごとの">
+<!ENTITY event.recurrence.monthly.every.label		"">
+<!ENTITY event.recurrence.monthly.first.label		"第 1">
+<!ENTITY event.recurrence.monthly.second.label		"第 2">
+<!ENTITY event.recurrence.monthly.third.label		"第 3">
+<!ENTITY event.recurrence.monthly.fourth.label		"第 4">
+<!ENTITY event.recurrence.monthly.fifth.label		"第 5">
+<!ENTITY event.recurrence.monthly.last.label		"最終">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label	"日曜日">
+<!ENTITY event.recurrence.pattern.monthly.week.2.label	"月曜日">
+<!ENTITY event.recurrence.pattern.monthly.week.3.label	"火曜日">
+<!ENTITY event.recurrence.pattern.monthly.week.4.label	"水曜日">
+<!ENTITY event.recurrence.pattern.monthly.week.5.label	"木曜日">
+<!ENTITY event.recurrence.pattern.monthly.week.6.label	"金曜日">
+<!ENTITY event.recurrence.pattern.monthly.week.7.label	"土曜日">
+<!ENTITY event.recurrence.repeat.dayofmonth.label	"日">
+<!ENTITY event.recurrence.repeat.recur.label		"指定日">
+
+<!ENTITY event.recurrence.every.label			"">
+<!ENTITY repeat.units.years.both			"年ごとの">
+<!ENTITY event.recurrence.pattern.yearly.every.month.label	"指定日">
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label	"">
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label		"1月">
+<!ENTITY event.recurrence.pattern.yearly.month.2.label		"2月">
+<!ENTITY event.recurrence.pattern.yearly.month.3.label		"3月">
+<!ENTITY event.recurrence.pattern.yearly.month.4.label		"4月">
+<!ENTITY event.recurrence.pattern.yearly.month.5.label		"5月">
+<!ENTITY event.recurrence.pattern.yearly.month.6.label		"6月">
+<!ENTITY event.recurrence.pattern.yearly.month.7.label		"7月">
+<!ENTITY event.recurrence.pattern.yearly.month.8.label		"8月">
+<!ENTITY event.recurrence.pattern.yearly.month.9.label		"9月">
+<!ENTITY event.recurrence.pattern.yearly.month.10.label		"10月">
+<!ENTITY event.recurrence.pattern.yearly.month.11.label		"11月">
+<!ENTITY event.recurrence.pattern.yearly.month.12.label		"12月">
+<!ENTITY event.recurrence.yearly.every.label			"毎">
+<!ENTITY event.recurrence.yearly.first.label			"第 1">
+<!ENTITY event.recurrence.yearly.second.label			"第 2">
+<!ENTITY event.recurrence.yearly.third.label			"第 3">
+<!ENTITY event.recurrence.yearly.fourth.label			"第 4">
+<!ENTITY event.recurrence.yearly.fifth.label			"第 5">
+<!ENTITY event.recurrence.yearly.last.label			"最終">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label		"日曜日">
+<!ENTITY event.recurrence.pattern.yearly.week.2.label		"月曜日">
+<!ENTITY event.recurrence.pattern.yearly.week.3.label		"火曜日">
+<!ENTITY event.recurrence.pattern.yearly.week.4.label		"水曜日">
+<!ENTITY event.recurrence.pattern.yearly.week.5.label		"木曜日">
+<!ENTITY event.recurrence.pattern.yearly.week.6.label		"金曜日">
+<!ENTITY event.recurrence.pattern.yearly.week.7.label		"土曜日">
+<!ENTITY event.recurrence.pattern.yearly.day.label		"日">
+<!ENTITY event.recurrence.of.label				"">
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label		"1月">
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label		"2月">
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label		"3月">
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label		"4月">
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label		"5月">
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label		"6月">
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label		"7月">
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label		"8月">
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label		"9月">
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label	"10月">
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label	"11月">
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label	"12月">
+
+<!ENTITY event.recurrence.range.label			"繰り返す期間">
+<!ENTITY event.recurrence.forever.label			"永久に繰り返す">
+<!ENTITY event.recurrence.repeat.for.label		"">
+<!ENTITY event.recurrence.appointments.label		"回繰り返す">
+<!ENTITY event.repeat.until.label			"指定日まで繰り返す">
+<!ENTITY event.recurrence.preview.label			"プレビュー">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label				"参加者の追加">
+<!ENTITY event.organizer.label				"主催者">
+<!ENTITY event.freebusy.suggest.slot			"提案時間帯:">
+<!ENTITY event.freebusy.button.next.slot		"次の時間帯">
+<!ENTITY event.freebusy.button.previous.slot		"前の時間帯">
+<!ENTITY event.freebusy.zoom				"拡大/縮小:">
+<!ENTITY event.freebusy.legend.free			"空き">
+<!ENTITY event.freebusy.legend.busy			"予定あり">
+<!ENTITY event.freebusy.legend.busy_tentative		"未確定">
+<!ENTITY event.freebusy.legend.busy_unavailable		"不在">
+<!ENTITY event.freebusy.legend.unknown			"不明">
+<!ENTITY event.attendee.role.required			"参加必須">
+<!ENTITY event.attendee.role.optional			"参加任意">
+<!ENTITY event.attendee.role.chair			"司会者">
+<!ENTITY event.attendee.role.nonparticipant		"非参加者">
+<!ENTITY event.attendee.usertype.individual		"個人">
+<!ENTITY event.attendee.usertype.group			"グループ">
+<!ENTITY event.attendee.usertype.resource		"リソース">
+<!ENTITY event.attendee.usertype.room			"部屋">
+<!ENTITY event.attendee.usertype.unknown		"不明">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label				"タイムゾーンを指定してください">
+<!ENTITY event.timezone.custom.label			"他のタイムゾーン...">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label			"一般">
+<!ENTITY read.only.title.label				"件名:">
+<!ENTITY read.only.calendar.label			"カレンダー:">
+<!ENTITY read.only.event.start.label			"開始日時:">
+<!ENTITY read.only.task.start.label			"着手日時:">
+<!ENTITY read.only.event.end.label			"終了日時:">
+<!ENTITY read.only.task.due.label			"締切日時:">
+<!ENTITY read.only.repeat.label				"繰り返し:">
+<!ENTITY read.only.location.label			"場所:">
+<!ENTITY read.only.category.label			"カテゴリー:">
+<!ENTITY read.only.organizer.label			"主催者:">
+<!ENTITY read.only.reminder.label			"アラーム:">
+<!ENTITY read.only.attachments.label			"添付:">
+<!ENTITY read.only.attendees.label			"参加者">
+<!ENTITY read.only.description.label			"詳細">
+<!ENTITY read.only.link.label				"関連リンク">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label			"保存して閉じる">
+<!ENTITY summary.dialog.saveclose.tooltiptext		"変更を保存し参加状態を変更せずにウィンドウを閉じ、返答を送信します">
+<!ENTITY summary.dialog.accept.label			"承諾">
+<!ENTITY summary.dialog.accept.tooltiptext		"招待を承諾します">
+<!ENTITY summary.dialog.tentative.label			"仮承諾">
+<!ENTITY summary.dialog.tentative.tooltiptext		"招待を承諾しますが未確定です">
+<!ENTITY summary.dialog.decline.label			"辞退">
+<!ENTITY summary.dialog.decline.tooltiptext		"招待を辞退します">
+<!ENTITY summary.dialog.dontsend.label			"返答を送信しない">
+<!ENTITY summary.dialog.dontsend.tooltiptext		"返答を主催者へ送信せずに参加状態を変更し、ウィンドウを閉じます">
+<!ENTITY summary.dialog.send.label			"今すぐ返答を送信">
+<!ENTITY summary.dialog.send.tooltiptext		"返答を主催者へ送信してウィンドウを閉じます">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importer un carnet d’adresses">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Enregistrement :">
+<!ENTITY fieldMapImport.next.label "Suivant">
+<!ENTITY fieldMapImport.next.accesskey "S">
+<!ENTITY fieldMapImport.previous.label "Précédent">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "Utiliser Monter et Descendre pour faire correspondre les champs dans le carnet d’adresses à gauche avec les bonnes données à importer à droite. Ne pas cocher les articles que vous ne voulez pas importer.">
+<!ENTITY fieldMapImport.up.label "Monter">
+<!ENTITY fieldMapImport.up.accesskey "M">
+<!ENTITY fieldMapImport.down.label "Descendre">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "Champs du carnet d’adresses :">
+<!ENTITY fieldMapImport.dataTitle "Données d’enregistrement à importer :">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Le premier enregistrement contient le nom des champs">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "n">

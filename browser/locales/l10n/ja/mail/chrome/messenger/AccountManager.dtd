@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label	"アカウント設定">
+<!ENTITY  accountManagerCloseButton.label	"閉じる">
+
+<!ENTITY accountActionsButton.label	"アカウント操作">
+<!ENTITY accountActionsButton.accesskey	"A">
+<!ENTITY addMailAccountButton.label	"メールアカウントを追加...">
+<!ENTITY addMailAccountButton.accesskey	"A">
+<!ENTITY addIMAccountButton.label	"チャットアカウントを追加...">
+<!ENTITY addIMAccountButton.accesskey	"C">
+<!ENTITY addFeedAccountButton.label	"フィードアカウントを追加...">
+<!ENTITY addFeedAccountButton.accesskey	"F">
+<!ENTITY addOtherAccountButton.label	"他のサービスのアカウントを追加...">
+<!ENTITY addOtherAccountButton.accesskey	"O">
+<!ENTITY setDefaultButton.label		"既定のアカウントに設定">
+<!ENTITY setDefaultButton.accesskey	"D">
+<!ENTITY removeButton.label		"アカウントを削除">
+<!ENTITY removeButton.accesskey		"R">
+
+<!ENTITY addonsButton.label		"拡張機能とテーマ">
+
+<!-- AccountManager.xhtml -->
+<!-- LOCALIZATION NOTE : this is part of an inline-style attribute on the account
+     setting dialog, which specifies the width and height in em units of the dialog.
+     Localizers ONLY can increase these widths if they are having difficulty getting
+     panel content to fit.
+     1ch = The width of the "0" (ZERO, U+0030) glyph for the current font.
+     1em = The height of the font.
+     XUL/FE DEVELOPERS: DO NOT MODIFY THIS VALUE. It represents the correct size of
+     this window for en-US. -->
+<!ENTITY accountManager.size "width: 70em; height: 46.6em;"><!-- en-US: width: 105ch; height: 55em;-->
+<!ENTITY accountTree.width "width: 17em;"><!-- en-US: width: 32ch; -->

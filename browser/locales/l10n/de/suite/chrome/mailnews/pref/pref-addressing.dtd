@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adressieren">
+<!ENTITY emailCollectiontitle.label            "Sammeln von E-Mail-Adressen">
+<!ENTITY emailCollectionPicker.label           "E-Mail-Adressen hinzufügen zu:">
+<!ENTITY emailCollectionPicker.accesskey       "E">
+<!ENTITY emailCollectiontext.label             "E-Mail-Adressen von ausgehenden Nachrichten können automatisch zu einem lokalen Adressbuch hinzugefügt werden.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Adressen-Autovervollständigen">
+<!ENTITY highlightNonMatches.label             "Adressen, die nicht automatisch vervollständigt werden können, hervorheben">
+<!ENTITY highlightNonMatches.accesskey         "A">
+<!ENTITY addressingEnable.label                "Lokale Adressbücher">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "Beim Adressieren von Nachrichten, passende Einträge suchen in:">
+<!ENTITY directories.label                     "Verzeichnis-Server:">
+<!ENTITY directories.accesskey                 "V">
+<!ENTITY directoriesNone.label                 "Keines">
+<!ENTITY editDirectories.label                 "Verzeichnisse bearbeiten…">
+<!ENTITY editDirectories.accesskey             "z">

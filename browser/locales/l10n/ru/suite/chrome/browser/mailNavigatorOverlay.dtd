@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Сообщение">
+<!ENTITY newMessageCmd.accesskey         "б">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Контакт…">
+<!ENTITY newContactCmd.accesskey         "н">
+
+<!ENTITY sendPage.label                  "Отправить страницу…">
+<!ENTITY sendPage.accesskey              "О">
+
+<!ENTITY contextSendThisPage.label       "Отправить эту страницу…">
+<!ENTITY contextSendThisPage.accesskey   "т">
+<!ENTITY contextSendThisLink.label       "Отправить эту ссылку…">
+<!ENTITY contextSendThisLink.accesskey   "с">
+<!ENTITY contextSendImage.label          "Отправить изображение…">
+<!ENTITY contextSendImage.accesskey      "п">
+<!ENTITY contextSendVideo.label          "Отправить видео…">
+<!ENTITY contextSendVideo.accesskey      "п">
+<!ENTITY contextSendAudio.label          "Отправить аудио…">
+<!ENTITY contextSendAudio.accesskey      "п">
+<!ENTITY contextSendFrame.label          "Отправить фрейм…">
+<!ENTITY contextSendFrame.accesskey      "т">
+
+<!ENTITY sendLinkCmd.label               "Отправить ссылку…"> 
+<!ENTITY sendLinkCmd.accesskey           "т">
+

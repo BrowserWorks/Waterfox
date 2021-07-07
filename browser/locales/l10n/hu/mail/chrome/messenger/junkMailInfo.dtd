@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Levélszemét">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "A &brandShortName; automatikusan felismeri a beérkezett kéretlen reklámüzeneteket, más néven a levélszemetet. A &brandShortName; által levélszemétnek tartott üzenetek mellett megjelenik a levélszemét ikon">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Eleinte a &brandShortName; programot tanítani kell a levélszemét felismerésére. Használja a Levélszemét gombot az eszköztáron az üzenetek megjelölésére.">
+<!ENTITY info3.label   "Ha a &brandShortName; már helyesen azonosítja a levélszemeteket, a Levélszemét kezelése lehetőség segítségével automatikusan a Szemét mappába helyezheti át a beérkező levélszemetet.">
+<!ENTITY info4.label   "További tudnivalókért kattintson a Súgó gombra.">

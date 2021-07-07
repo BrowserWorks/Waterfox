@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "الاسم: ">
+<!ENTITY directoryName.accesskey           "س">
+<!ENTITY directoryHostname.label           "اسم المستضيف: ">
+<!ENTITY directoryHostname.accesskey       "م">
+<!ENTITY directoryBaseDN.label             "‏DN‏ الأساسي: ">
+<!ENTITY directoryBaseDN.accesskey         "ا">
+<!ENTITY findButton.label                  "ابحث">
+<!ENTITY findButton.accesskey              "ب">
+<!ENTITY directorySecure.label             "استخدم اتصالا آمنا (SSL)">
+<!ENTITY directorySecure.accesskey         "ص">
+<!ENTITY directoryLogin.label              "‏Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "عام">
+<!ENTITY Offline.tab                       "غير متّصل">
+<!ENTITY Advanced.tab                      "متقدم">
+<!ENTITY portNumber.label                  "رقم المَنْفذ: ">
+<!ENTITY portNumber.accesskey              "م">
+<!ENTITY searchFilter.label                "مُرشِّح البحث: ">
+<!ENTITY searchFilter.accesskey            "ش">
+<!ENTITY scope.label                       "الهدف: ">
+<!ENTITY scope.accesskey                   "ه">
+<!ENTITY scopeOneLevel.label               "مستوى واحد">
+<!ENTITY scopeOneLevel.accesskey           "ى">
+<!ENTITY scopeSubtree.label                "شجرة فرعيّة">
+<!ENTITY scopeSubtree.accesskey            "ف">
+<!ENTITY return.label                      "لا تُرجع أكثر من">
+<!ENTITY return.accesskey                  "ت">
+<!ENTITY results.label                     "النتائج">
+<!ENTITY offlineText.label                 "يمكنك تنزيل نسخة محليّة من هذا الدليل لتكون متاحة للاستخدام عندما تعمل بدون اتصال.">
+<!ENTITY saslMechanism.label               "طريقة الولوج: ">
+<!ENTITY saslMechanism.accesskey           "و">
+<!ENTITY saslOff.label                     "بسيطة">
+<!ENTITY saslOff.accesskey                 "س">
+<!ENTITY saslGSSAPI.label                  "‪Kerberos (GSSAPI)‬">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

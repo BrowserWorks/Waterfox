@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "Potwierdzenia doręczenia wiadomości">
+<!ENTITY useGlobalPrefs.label "Użyj globalnych ustawień potwierdzenia doręczenia wiadomości dla tego konta">
+<!ENTITY useGlobalPrefs.accesskey "U">
+<!ENTITY globalReceipts.label "Ustawienia globalne…">
+<!ENTITY globalReceipts.accesskey "a">
+<!ENTITY useCustomPrefs.label "Dostosuj ustawienia potwierdzenia doręczenia wiadomości dla tego konta">
+<!ENTITY useCustomPrefs.accesskey "c">
+<!ENTITY requestReceipt.label "Zawsze żądaj potwierdzeń doręczenia wysyłanych wiadomości">
+<!ENTITY requestReceipt.accesskey "Z">
+<!ENTITY receiptArrive.label "Otrzymane potwierdzenia doręczenia wiadomości:">
+<!ENTITY leaveIt.label "pozostawiaj w folderze Odebrane">
+<!ENTITY leaveIt.accesskey "f">
+<!ENTITY moveToSent.label "przenoś do folderu Wysłane">
+<!ENTITY moveToSent.accesskey "W">
+<!ENTITY requestMDN.label "Po otrzymaniu żądania potwierdzenia doręczenia wiadomości:">
+<!ENTITY returnSome.label "Wysyłaj potwierdzenia doręczenia wiadomości tylko w poniższych przypadkach:">
+<!ENTITY returnSome.accesskey "r">
+<!ENTITY never.label "Nigdy nie wysyłaj potwierdzeń doręczenia wiadomości">
+<!ENTITY never.accesskey "N">
+<!ENTITY notInToCc.label "Jeśli w polu „Do” lub „Kopia” nie ma mojego adresu:">
+<!ENTITY notInToCc.accesskey "J">
+<!ENTITY outsideDomain.label "Jeżeli nadawca jest spoza mojej domeny:">
+<!ENTITY outsideDomain.accesskey "s">
+<!ENTITY otherCases.label "W innych przypadkach:">
+<!ENTITY otherCases.accesskey "i">
+<!ENTITY askMe.label "Wyświetlaj pytanie">
+<!ENTITY alwaysSend.label "Zawsze wysyłaj">
+<!ENTITY neverSend.label "Nigdy nie wysyłaj">

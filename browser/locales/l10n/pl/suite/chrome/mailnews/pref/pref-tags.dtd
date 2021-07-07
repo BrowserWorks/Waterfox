@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title "Etykiety">
+<!ENTITY pref.tags.caption "Dostosuj etykiety">
+<!ENTITY pref.tags.description "Etykiety mogą być używane do klasyfikowania wiadomości oraz nadawania im priorytetów. Można modyfikować dostępność i ważność poniższych etykiet. Etykiety na górze listy są ważniejsze od tych na dole.">
+<!ENTITY tagColumn.label "Etykieta">
+<!ENTITY colorColumn.label "Kolor">
+<!ENTITY defaultTagName.label "Etykieta bez nazwy">
+<!ENTITY addTagButton.label "Dodaj">
+<!ENTITY addTagButton.accesskey "D">
+<!ENTITY deleteTagButton.label "Usuń">
+<!ENTITY deleteTagButton.accesskey "U">
+<!ENTITY raiseTagButton.label "Zwiększ ważność">
+<!ENTITY raiseTagButton.accesskey "w">
+<!ENTITY lowerTagButton.label "Zmniejsz ważność">
+<!ENTITY lowerTagButton.accesskey "Z">
+<!ENTITY restoreButton.label "Przywróć domyślne">
+<!ENTITY restoreButton.accesskey "P">

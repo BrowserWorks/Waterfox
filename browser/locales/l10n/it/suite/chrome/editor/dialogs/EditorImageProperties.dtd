@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietà immagine">
+
+<!ENTITY pixelsPopup.value "pixel">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Indirizzo immagine:">
+<!ENTITY locationEditField.accessKey "I">
+<!ENTITY locationEditField.tooltip "Inserisci il nome del file o l'indirizzo dell'immagine">
+<!ENTITY locationEditField.shortenedDataURI "URI accorciato (il comando 'copia' copierà la URI completa negli appunti)">
+<!ENTITY title.label "Suggerimento:">
+<!ENTITY title.accessKey "u">
+<!ENTITY title.tooltip "L'attributo html 'title' che viene mostrato come suggerimento.">
+<!ENTITY altText.label "Testo alternativo:">
+<!ENTITY altText.accessKey "T">
+<!ENTITY altTextEditField.tooltip "Inserire il testo da visualizzare in mancanza dell'immagine">
+<!ENTITY noAltText.label "Non usare testo alternativo">
+<!ENTITY noAltText.accessKey "N">
+
+<!ENTITY previewBox.label "Anteprima immagine">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Dimensione originale:">
+<!ENTITY actualSizeRadio.label "Dimensione originale">
+<!ENTITY actualSizeRadio.accessKey "D">
+<!ENTITY actualSizeRadio.tooltip "Torna alle dimensioni reali dell'immagine">
+<!ENTITY customSizeRadio.label "Dimensioni personalizzate">
+<!ENTITY customSizeRadio.accessKey "z">
+<!ENTITY customSizeRadio.tooltip "Modifica le dimensioni di visualizzazione dell'immagine">
+<!ENTITY heightEditField.label "Altezza:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Larghezza:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Mantieni proporzioni">
+<!ENTITY constrainCheckbox.accessKey "M">
+<!ENTITY constrainCheckbox.tooltip "Mantieni le proporzioni dell'immagine">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Mappa immagine">
+<!ENTITY removeImageMapButton.label "Rimuovi">
+<!ENTITY removeImageMapButton.accessKey "R">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Allineamento del testo rispetto all'immagine:">
+<!ENTITY bottomPopup.value "alla base">
+<!ENTITY topPopup.value "alla sommità">
+<!ENTITY centerPopup.value "al centro">
+<!ENTITY wrapRightPopup.value "inserisci a destra">
+<!ENTITY wrapLeftPopup.value "inserisci a sinistra">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Spaziatura">
+<!ENTITY leftRightEditField.label "Destra e sinistra:">
+<!ENTITY leftRightEditField.accessKey "D">
+<!ENTITY topBottomEditField.label "Sopra e sotto:">
+<!ENTITY topBottomEditField.accessKey "S">
+<!ENTITY borderEditField.label "Bordo pieno:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Visualizza un bordo attorno all'immagine per indicare la presenza del collegamento">
+<!ENTITY showImageLinkBorder.accessKey "V">
+<!ENTITY LinkAdvancedEditButton.label "Modifica avanzata collegamento…">
+<!ENTITY LinkAdvancedEditButton.accessKey "M">
+<!ENTITY LinkAdvancedEditButton.tooltip "Aggiunge o modifica attributi HTML, stili e JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Modulo">
+<!ENTITY imageLocationTab.label "Indirizzo">
+<!ENTITY imageDimensionsTab.label "Dimensioni">
+<!ENTITY imageAppearanceTab.label "Aspetto">
+<!ENTITY imageLinkTab.label "Collegamento">

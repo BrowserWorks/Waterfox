@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "キーボードナビゲーション">
+<!ENTITY tabNavigationBehavior.label "タブキーナビゲーション">
+<!ENTITY tabNavigationLinks.label "リンク">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "ボタン、ラジオボタン、チェックボックス、リスト要素">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "注: いずれの設定でも、テキストボックスとスクロール可能な領域が含まれます。">
+<!ENTITY tabNavigationDesc.label "Tab か Shift+Tab を押したときの移動先:">
+<!ENTITY accessibilityBrowseWithCaret.label "キャレットブラウズ">
+<!ENTITY browseWithCaretDesc.label "キャレットブラウズモードをオンにすると、ウェブページ中を移動可能なカーソル (キャレット) が表示され、キーボードでテキストを選択できるようになります。">
+<!ENTITY browseWithCaretUse.label "キャレットブラウズを利用する">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "F7 キーを押したときキャレットブラウズモードに切り替える">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "キャレットブラウズを有効にする前に警告を出す">
+<!ENTITY browseWithCaretWarn.accesskey "W">
+
+<!ENTITY modifiers.label "修飾キー">
+<!ENTITY acceleratorKey.label "アクセラレーターキー:">
+<!ENTITY acceleratorKey.accesskey "A">
+<!ENTITY menuAccessKey.label "メニューアクセスキー:">
+<!ENTITY menuAccessKey.accesskey "M">
+<!ENTITY modifiersDesc.label "注: 値を 0 にすると修飾キーが無効になります。">

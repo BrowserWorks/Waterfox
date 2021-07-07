@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Průvodce vytvářením účtu">
+<!ENTITY accountWizard.size "width: 44em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Pokud chcete přijímat zprávy, musíte nejdříve nastavit účet.">
+<!ENTITY accountTypeTitle.label "Vytvoření nového účtu">
+<!ENTITY accountTypeDesc2.label "Tento průvodce vás provede nastavením účtu. Pokud nebudete znát požadované informace, kontaktujte prosím svého systémového administrátora nebo poskytovatele internetového připojení.">
+<!ENTITY accountTypeDirections.label "Vyberte si typ účtu, který chcete nastavit:">
+<!ENTITY accountTypeMail.label "E-mailový účet">
+<!ENTITY accountTypeMail.accesskey "E">
+<!ENTITY accountTypeNews.label "Účet pro diskusní skupiny">
+<!ENTITY accountTypeNews.accesskey "d">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identita">
+<!ENTITY identityDesc.label "Každý účet obsahuje identifikační informace, které ostatní lidé vidí při čtení vašich zpráv.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Zadejte vaše jméno ve tvaru, v jakém se bude objevovat v poli „Od“ při odesílání zpráv.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(například: „Jiří Novák“).">
+<!ENTITY fullnameLabel.label "Vaše jméno:">
+<!ENTITY fullnameLabel.accesskey "V">
+
+<!ENTITY emailLabel.label "E-mailová adresa:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informace o příchozím serveru">
+<!ENTITY incomingServerTypeDesc.label "Vyberte typ příchozího serveru.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Výchozí:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Vložte název příchozího serveru (např. „mail.example.net“).">
+<!ENTITY incomingServer.label "Příchozí server:">
+<!ENTITY incomingServer.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Ponechat zprávy na serveru">
+<!ENTITY leaveMsgsOnSrvr.accesskey "z">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Vložte uživatelské jméno příchozího serveru, které vám bylo přiděleno poskytovatelem (např. „jnovak“).">
+<!ENTITY incomingUsername.label "Uživatelské jméno:">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Vložte název serveru diskusních skupin (NNTP) (např. „news.example.net“).">
+<!ENTITY newsServerLabel.label "Server diskusních skupin:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Informace o odchozím serveru">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Vložte název odchozího serveru (SMTP) (např. „smtp.example.net“).">
+<!ENTITY outgoingServer.label "Odchozí server:">
+<!ENTITY outgoingServer.accesskey "O">
+<!ENTITY outgoingUsername.description "Vložte uživatelské jméno odchozího serveru, které vám bylo přiděleno poskytovatelem (většinou stejné jako uživatelské jméno příchozího serveru).">
+<!ENTITY outgoingUsername.label "Uživatelské jméno:">
+<!ENTITY outgoingUsername.accesskey "U">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Nastavení odchozího serveru lze změnit v nastavení účtu.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Bude použit stávající odchozí server (SMTP) „">
+<!ENTITY haveSmtp1.suffix3 "“.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Bude použito uživatelské jméno odchozího serveru (SMTP) „">
+<!ENTITY haveSmtp2.suffix3 "“.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Váš odchozí server (SMTP) „">
+<!ENTITY haveSmtp3.suffix3 "“ je shodný s příchozím. Pro přístup bude použito uživatelské jméno příchozího serveru.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Název účtu">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Zadejte název, pod kterým chcete tento účet vést (např. „Pracovní účet“, „Domácí“ nebo „Diskusní skupiny“).">
+<!ENTITY accnameLabel.label "Název účtu:">
+<!ENTITY accnameLabel.accesskey "N">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Blahopřejeme!">
+<!ENTITY completionText.label "Ověřte prosím, zda jsou níže uvedené položky v pořádku.">
+<!ENTITY serverTypePrefix.label "Typ serveru pro příchozí zprávy:">
+<!ENTITY serverNamePrefix.label "Adresa serveru pro příchozí zprávy:">
+<!ENTITY smtpServerNamePrefix.label "Název odchozího serveru (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Název diskusního serveru (NNTP):">
+<!ENTITY downloadOnLogin.label "Stáhnout zprávy">
+<!ENTITY downloadOnLogin.accesskey "S">
+<!ENTITY deferStorageDesc.label "Zrušte zaškrtnutí, pokud chcete vytvořit nový samostatný účet s poštou ukládanou v oddělené složce. V opačném případě bude tento účet součástí účtu globální Doručené pošty v Místních složkách.">
+<!ENTITY deferStorage.label "Použít globální Doručenou poštu (ukládat poštu v Místních složkách)">
+<!ENTITY deferStorage.accesskey "g">
+<!ENTITY clickFinish.label "Klepnutím na tlačítko Dokončit uložíte nastavení a ukončíte tohoto průvodce.">
+<!ENTITY clickFinish.labelMac "Klepnutím na tlačítko Hotovo uložíte nastavení a ukončíte tohoto průvodce.">

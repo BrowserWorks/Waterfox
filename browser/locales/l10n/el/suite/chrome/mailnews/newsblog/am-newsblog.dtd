@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label "Ενεργοποίηση ενημερώσεων για όλες τις ροές">
+<!ENTITY biffAll.accesskey "Ε">
+
+<!ENTITY newFeedSettings.label "Προεπιλεγμένες ρυθμίσεις για ροές ειδήσεων">
+
+<!ENTITY manageSubscriptions.label "Διαχείριση συνδρομών…">
+<!ENTITY manageSubscriptions.accesskey "Δ">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "Blog &amp; ροές ειδήσεων">
+<!ENTITY feeds.wizardShortName "Ροές">
+<!ENTITY feeds.wizardLongName "Blog &amp; ροές ειδήσεων">
+<!ENTITY feeds.wizardLongName.accesskey "ρ">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Kontoinställningar">
+<!ENTITY accountName.label "Kontonamn:">
+<!ENTITY accountName.accesskey "K">
+<!ENTITY identityTitle.label "Förinställd identitet">
+<!ENTITY identityDesc.label "Varje konto har en identitet, vilken är den information som visas för dem som läser dina meddelanden.">
+<!ENTITY name.label "Ditt namn:">
+<!ENTITY name.accesskey "n">
+<!ENTITY email.label "E-postadress:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Svara från denna identitet när leveranshuvud matchar:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Svarsadress:">
+<!ENTITY replyTo.accesskey "S">
+<!ENTITY replyTo.placeholder "Mottagare svarar till denna alternativa adress">
+<!ENTITY organization.label "Organisation:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Signatur:">
+<!ENTITY signatureText.accesskey "i">
+<!ENTITY signatureHtml.label "Använd HTML">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Hämta signaturen från en fil istället:">
+<!ENTITY signatureFile.accesskey "f">
+<!ENTITY choose.label "Välj…">
+<!ENTITY choose.accesskey "V">
+<!ENTITY editVCard.label "Redigera kort…">
+<!ENTITY editVCard.accesskey "R">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Bifoga mitt vCard till meddelanden">
+<!ENTITY attachVCard.accesskey "f">
+
+<!ENTITY manageIdentities.label "Hantera identiteter…">
+<!ENTITY manageIdentities.accesskey "a">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Utgående server (SMTP):">
+<!ENTITY smtpName.accesskey "U">
+<!ENTITY smtpDefaultServer.label "Använd standardservern">
+
+<!ENTITY smtpServerEdit.label "Redigera SMTP-server…">
+<!ENTITY smtpServerEdit.accesskey "P">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Master-Passwort">
+
+<!ENTITY  changepassword.caption                 "Master-Passwort ändern">
+<!ENTITY  changepassword.text                    "Ihr Master-Passwort schützt sensible Informationen wie Web-Passwörter und Zertifikate.">
+<!ENTITY  changepassword.button                  "Passwort ändern…">
+<!ENTITY  changepassword.accesskey               "P">
+
+<!ENTITY  resetpassword.caption                  "Master-Passwort zurücksetzen">
+<!ENTITY  resetpassword.text                     "Wenn Sie Ihr Master-Passwort zurücksetzen, gehen all Ihre gespeicherten Web- und E-Mail-Passwörter, Formulardaten, persönlichen Zertifikate und privaten Schlüssel verloren.">
+<!ENTITY  resetpassword.button                   "Passwort zurücksetzen">
+<!ENTITY  resetpassword.accesskey                "z">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Lag ny kalender" >
+<!ENTITY wizard.label             "Lag ein ny kalender" >
+<!ENTITY wizard.description       "Lokaliser kalenderen" >
+
+<!ENTITY initialpage.description    "Kalenderen kan anten lagrast lokalt, eller på ein tenar slik at han er tilgjengeleg for andre." >
+<!ENTITY initialpage.computer.label  "På datamaskina mi">
+<!ENTITY initialpage.network.label  "På nettverket">
+
+<!ENTITY locationpage.description         "Spesifiser informasjon om kvar ein finn kalenderen" >
+<!ENTITY locationpage.login.description   "Valfritt: Spesifiser brukarnamn og passord" >
+<!ENTITY locationpage.username.label      "Brukarnamn:" >
+<!ENTITY locationpage.password.label      "Passord:" >
+
+<!ENTITY custompage.shortdescription  "Tilpass kalenderen din" >
+<!ENTITY custompage.longdescription   "Du kan gje kalenderen din eit eige namn, og eigen farge for hendingar i kalenderen." >
+
+<!ENTITY finishpage.shortdescription  "Kalender laga" >
+<!ENTITY finishpage.longdescription   "Kalenderen er laga." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Anna">
+
+<!ENTITY buttons.create.label "Lag kalender">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Finn kalendrar">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "Tilbake">
+<!ENTITY buttons.back.accesskey "b">
+
+<!ENTITY buttons.subscribe.label "Abonner">
+<!ENTITY buttons.subscribe.accesskey "b">
+
+<!ENTITY calendartype.label "Kalendertype:">
+<!ENTITY location.label "Adresse:">
+<!ENTITY location.placeholder "URL eller vertsnamn på kalenderserveren">
+
+<!ENTITY network.nocredentials.label "Denne adressa krev ikkje innlogging">
+<!ENTITY network.loading.description "Vent medan kalendrane dine blir oppdaga.">
+<!ENTITY network.notfound.description "Kan ikkje finna kalendrar på denne adressa. Kontroller innstillingane dine.">
+<!ENTITY network.authfail.description "Innlogginga du spesifiserte fungerte ikkje. Ver snill og kontroller innstillingane dine.">
+
+<!ENTITY network.subscribe.single.description "Vel kalendrane du vil abonnere på.">
+<!ENTITY network.subscribe.multiple.description "Fleire kalendertypar er tilgjengelege på denne adressa. Vel ei kalendertype og marker kalendrane du vil abonnera på.">

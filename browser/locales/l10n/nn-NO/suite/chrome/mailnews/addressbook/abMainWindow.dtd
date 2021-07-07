@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Adressebok">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Kontakt…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newContact.accesskey                           "K">
+<!ENTITY newListCmd.label                               "E-postliste…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY newListCmd.accesskey                           "E">  
+<!ENTITY newAddressBookCmd.label                        "Adressebok…"> 
+<!ENTITY newAddressBookCmd.accesskey                    "d">  
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-katalog…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Skriv ut kontakt…">
+<!ENTITY printContactViewCmd.accesskey                  "k">
+<!ENTITY printPreviewContactViewCmd.label               "Utskriftsførehandsvising av kontakt">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printAddressBook.label                         "Skriv ut adressebok…"> 
+<!ENTITY printAddressBook.accesskey                     "a"> 
+<!ENTITY printPreviewAddressBook.label                  "Utskritsførehandsvisning av adressebok"> 
+<!ENTITY printPreviewAddressBook.accesskey              "U">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Slett adressebok">  
+<!ENTITY deleteContactCmd.label                         "Slett kontakt">
+<!ENTITY deleteContactsCmd.label                        "Slett valde kontaktar">
+<!ENTITY deleteListCmd.label                            "Slett liste">
+<!ENTITY deleteListsCmd.label                           "Slett valde lister">
+<!ENTITY deleteItemsCmd.label                           "Slett valde element">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Byt om for/etternamn">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "B">  
+<!ENTITY propertiesCmd.label                            "Eigenskapar…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY propertiesCmd.accesskey                        "E">  
+<!ENTITY propertiesCmd.key                              "i">  
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Adressebokverktøylinje"> 
+<!ENTITY showAbToolbarCmd.accesskey                     "A">  
+<!ENTITY layoutMenu.label                               "Utforming">
+<!ENTITY layoutMenu.accesskey                           "U">
+<!ENTITY showDirectoryPane.label                        "Mappepanel">
+<!ENTITY showDirectoryPane.accesskey                    "M">
+<!ENTITY showContactPane2.label                         "Kontaktpanel">
+<!ENTITY showContactPane2.accesskey                     "K">
+<!ENTITY menu_ShowNameAs.label                          "Vis namn som"> 
+<!ENTITY menu_ShowNameAs.accesskey                      "n"> 
+<!ENTITY firstLastCmd.label                             "Fornamn, etternamn">  
+<!ENTITY firstLastCmd.accesskey                         "F"> 
+<!ENTITY lastFirstCmd.label                             "Etternamn, fornamn">  
+<!ENTITY lastFirstCmd.accesskey                         "E"> 
+<!ENTITY displayNameCmd.label                           "Visingsnamn">  
+<!ENTITY displayNameCmd.accesskey                       "V"> 
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importer…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksporter…">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->  
+<!ENTITY newContactButton.label                         "Ny kontakt">
+<!ENTITY newContactButton.accesskey                     "N">
+<!ENTITY newlistButton.label                            "Ny liste">  
+<!ENTITY newlistButton.accesskey                        "L">  
+<!ENTITY editItemButton.label                           "Eigenskapar">
+<!ENTITY editItemButton.accesskey                       "E">
+<!ENTITY newmsgButton.label                             "Skriv nytt">  
+<!ENTITY newmsgButton.accesskey                         "n">  
+<!ENTITY deleteItemButton.label                         "Slett">
+<!ENTITY deleteItemButton.accesskey                     "S">
+<!ENTITY newimButton.label                              "Lynmelding">  
+<!ENTITY newimButton.accesskey                          "L">  
+<!ENTITY searchNameAndEmail.placeholder                 "Søk i namn og e-postadresse">
+<!ENTITY searchBox.title                                "Søk">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Adressebok-verktøylinje">
+<!ENTITY newContactButton.tooltip                       "Lag ein ny adressebok-kontakt">
+<!ENTITY newlistButton.tooltip                          "Lag ei ny liste"> 
+<!ENTITY editItemButton.tooltip                         "Rediger valt element">
+<!ENTITY newmsgButton.tooltip                           "Send ein e-post"> 
+<!ENTITY newIM.tooltip                                  "Send ei melding eller chat"> 
+<!ENTITY deleteItemButton.tooltip                       "Slett valt element">
+<!ENTITY throbber.tooltip                               "Gå til &vendorShortName;s-heimesida">
+<!ENTITY advancedButton.tooltip                         "Avansert adressesøk">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Adressebøker">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Heim">
+<!ENTITY other.heading                                  "Anna">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Arbeid">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Skildring">
+<!ENTITY addresses.heading                              "Adresser">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Hent kart">
+<!ENTITY mapIt.tooltip                                  "Viser eit kart med denne adressa frå nettet">
+
+<!-- Status Bar -->  
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title "Protokół HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label "Ustawienia bezpośredniego połączenia">
+<!ENTITY prefProxy.label "Ustawienia połączeń proxy">
+<!ENTITY prefEnableHTTP10.label "Użyj protokołu HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey "y">
+<!ENTITY prefEnableHTTP11.label "Użyj protokołu HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey "r">
+<!ENTITY prefPara "Poniższe opcje pozwalają na dostosowanie ustawień połączeń HTTP w celu zwiększenia wydajności lub kompatybilności. Niektóre serwery proxy wymagają protokołu HTTP w wersji HTTP/1.0 (szczegóły w notatkach do bieżącego wydania).">
+<!ENTITY prefUseragent.label "Identyfikator programu">
+<!ENTITY prefFirefoxCompat.label "Deklaruj kompatybilność z przeglądarką Firefox">
+<!ENTITY prefFirefoxCompat.accesskey "F">
+<!ENTITY prefLightningShow.label "Deklaruj instalację Lightninga">
+<!ENTITY prefLightningShow.accesskey "L">
+<!ENTITY prefCompatWarning "UWAGA: dezaktywowanie tych ustawień może skutkować nieprawidłowym działaniem witryn bądź serwisów internetowych.">

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importera">
+<!ENTITY importAll.label          "Importera allting">
+<!ENTITY importAll.accesskey      "a">
+<!ENTITY importMail.label         "E-post">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "RSS-prenumerationer">
+<!ENTITY importFeeds.accesskey    "p">
+<!ENTITY importAddressbook.label  "Adressböcker">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Inställningar">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Filter">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Guide för import till &brandShortName; E-post">
+<!ENTITY importShortDesc.label    "Importera e-post, adressböcker, inställningar och filter från andra program">
+
+<!ENTITY importDescription1.label "Denna guide hjälper dig att importera e-post, innehållet i adressböcker, inställningar och/eller filter från andra e-postprogram och vanliga adressboksformat till &brandShortName;.">
+<!ENTITY importDescription2.label "När de väl har importerats kan du använda dem i &brandShortName; E-post och/eller adressboken.">
+
+<!ENTITY selectDescription.label  "Välj det program som du vill importera från:">
+<!ENTITY selectDescriptionB.label "Välj ett existerade konto eller skapa ett nytt konto:">
+<!ENTITY selectDescription.accesskey "p">
+<!ENTITY acctName.label           "Namn:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Hittade inget program eller fil att importera data från.">
+
+<!ENTITY back.label               "&lt; Bakåt">
+<!ENTITY forward.label            "Nästa &gt;">
+<!ENTITY finish.label             "Slutför">
+<!ENTITY cancel.label             "Avbryt">
+
+<!ENTITY select.label             "Välj vilken typ av material som ska importeras:">
+
+<!ENTITY title.label              "Titel">
+<!ENTITY processing.label         "Importerar…">

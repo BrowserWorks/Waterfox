@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Anda telah meluncurkan versi &brandProductName; yang lebih lama">
+<!ENTITY window.style "width: 490px">
+
+<!ENTITY window.nosync2 "Versi terbaru &brandProductName; mungkin telah membuat perubahan pada profil Anda yang tidak lagi kompatibel dengan versi yang lebih lama ini. Gunakan profil ini hanya dengan versi yang lebih baru itu, atau buat profil baru untuk pemasangan &brandShortName;. Membuat profil baru memerlukan pengaturan akun, kalender, dan pengaya Anda lagi.">
+
+<!ENTITY window.moreinfo "Informasi lebih lanjut...">
+<!ENTITY window.create "Buat Profil Baru">
+<!ENTITY window.quit-win "Keluar">
+<!ENTITY window.quit-nonwin "Berhenti">

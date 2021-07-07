@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "Debugging">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "Rendering">
+<!ENTITY debugXULBox.label                "Debug delle XUL box">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "Disattiva la cache XUL">
+<!ENTITY debugDisableXULCache.accesskey   "D">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "Eventi">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowShowFrameCounts.label        "Mostra il numero di frame">

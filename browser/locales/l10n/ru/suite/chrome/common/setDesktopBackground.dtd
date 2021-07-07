@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Сделать фоном рабочего стола">
+
+<!ENTITY position.label             "Расположение:">
+<!ENTITY position.accesskey         "н">
+<!ENTITY position.tile.label        "Замостить">
+<!ENTITY position.stretch.label     "Растянуть">
+<!ENTITY position.center.label      "По центру">
+<!ENTITY position.fill.label        "Заполнение">
+<!ENTITY position.fit.label         "По размеру">
+<!ENTITY picker.label               "Цвет:">
+<!ENTITY picker.accesskey           "в">
+<!ENTITY preview.caption            "Предпросмотр">
+<!ENTITY apply.label                "Применить">
+<!ENTITY apply.accesskey            "м">
+<!ENTITY close.label                "Закрыть">

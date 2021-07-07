@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "Klaida įkeliant tinklalapį">
+<!ENTITY gopherAddon.title      "„Gopher“ protokolas">
+<!ENTITY gopherAddon.shortDesc  "„gopher“ protokolas programoje neregistruotas.">
+<!ENTITY gopherAddon.longDesc   "Šis adresas naudoja „gopher“ protokolą, kuris programoje nebepalaikomas, todėl naršyklė negali prisijungti prie šios svetaines. Jeigu norite naršyti „Gopher“ serverius šia programa, galite parsisiųsti šią funkciją realizuojantį priedą iš „Mozillos“ priedų svetainės.">
+<!ENTITY goToAddOn.label        "Eiti į priedo tinklalapį">

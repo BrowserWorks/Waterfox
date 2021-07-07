@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Tùy biến thanh công cụ">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Bạn có thể thêm hoặc bớt các biểu tượng bằng cách kéo hoặc thả trên các thanh công cụ.">
+<!ENTITY show.label               "Hiện:">
+<!ENTITY iconsAndText.label       "Biểu tượng và văn bản">
+<!ENTITY icons.label              "Biểu tượng">
+<!ENTITY text.label               "Văn bản">
+<!ENTITY iconsBesideText.label    "Biểu tượng bên cạnh văn bản">
+<!ENTITY useSmallIcons.label      "Dùng các biểu tượng nhỏ">
+<!ENTITY restoreDefaultSet.label  "Khôi phục về mặc định">
+<!ENTITY showTitlebar2.label      "Thanh tiêu đề">
+<!ENTITY extraDragSpace2.label    "Kéo khoảng trắng">
+<!ENTITY saveChanges.label        "Xong">
+<!ENTITY undoChanges.label        "Hoàn tác các thay đổi">

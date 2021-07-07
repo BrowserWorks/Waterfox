@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Σενάρια &amp; αρθρώματα">
+
+<!ENTITY navigator.label                 "Πρόγραμμα περιήγησης">
+<!ENTITY navigator.accesskey             "Π">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Ενεργοποίηση JavaScript για">
+<!ENTITY allowScripts.label              "Να επιτρέπεται στα σενάρια να κάνουν:">
+<!ENTITY allowScripts.accesskey          "σ">
+<!ENTITY allowWindowMoveResize.label     "Μετακίνηση ή αλλαγή μεγέθους υπαρχόντων παραθύρων">
+<!ENTITY allowWindowFlip.label           "Μετακίνηση παραθύρων στο προσκήνιο ή το παρασκήνιο">
+<!ENTITY allowWindowStatusChange.label   "Αλλαγή κειμένου γραμμής κατάστασης">
+<!ENTITY allowContextmenuDisable.label   "Απενεργοποίηση ή αντικατάσταση μενού επιλογών">
+<!ENTITY allowHideStatusBar.label        "Απόκρυψη γραμμής κατάστασης">
+
+<!ENTITY debugging.label                  "Έλεγχος σφαλμάτων JavaScript">
+<!ENTITY debugEnableDump.label            "Ενεργοποίηση εξόδου JavaScript dump()">
+<!ENTITY debugEnableDump.accesskey        "Ε">
+<!ENTITY debugStrictJavascript.label      "Εμφάνιση αυστηρών προειδοποιήσεων JavaScript">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "Εμφάνιση σφαλμάτων και προειδοποιήσεων chrome JavaScript">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "Ενεργοποίηση αρθρωμάτων για">
+<!ENTITY enablePluginForSuite.label      "Σουίτα">
+<!ENTITY enablePluginForSuite.accesskey  "υ">
+
+<!ENTITY whenPageRequiresPlugins.label   "Όταν μια σελίδα απαιτεί αρθρώματα">
+<!ENTITY activateAllPlugins.label        "Ενεργοποίηση όλων των αρθρωμάτων από προεπιλογή">
+<!ENTITY activateAllPlugins.accesskey    "π">
+<!ENTITY warnPluginsRequired.label       "Προειδοποίηση αν απαιτείται εγκατάσταση επιπρόσθετων αρθρωμάτων">
+<!ENTITY warnPluginsRequired.accesskey   "Π">

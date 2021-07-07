@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Ασφαλής λειτουργία &brandShortName;">
+<!ENTITY window.width                     "39em">
+
+<!ENTITY safeModeDescription.label        "Το &brandShortName; εκτελείται σε Ασφαλή λειτουργία, η οποία απενεργοποιεί προσωρινά όλες τις ρυθμίσεις, τα θέματα και τις επεκτάσεις.">
+<!ENTITY safeModeDescription2.label       "Μπορείτε να οριστικοποιήσετε κάποιες ή όλες τις αλλαγές:">
+
+<!ENTITY disableAddons.label              "Απενεργοποίηση όλων των προσθέτων">
+<!ENTITY disableAddons.accesskey          "π">
+
+<!ENTITY resetToolbars.label              "Επαναφορά γραμμών εργαλείων και στοιχείων ελέγχου">
+<!ENTITY resetToolbars.accesskey          "φ">
+
+<!ENTITY changeAndRestartButton.label     "Αποθήκευση αλλαγών και επανεκκίνηση">
+<!ENTITY changeAndRestartButton.accesskey "θ">
+
+<!ENTITY continueButton.label             "Συνέχεια σε Ασφαλή λειτουργία">
+<!ENTITY continueButton.accesskey         "χ">

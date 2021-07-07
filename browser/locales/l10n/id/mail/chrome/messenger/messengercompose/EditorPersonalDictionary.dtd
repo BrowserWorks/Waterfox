@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Kamus Pemeriksa Ejaan Pribadi">
+
+<!ENTITY wordEditField.label "Kata baru:">
+<!ENTITY wordEditField.accessKey "b">
+<!ENTITY AddButton.label "Tambah">
+<!ENTITY AddButton.accessKey "T">
+<!ENTITY DictionaryList.label "Kata-kata dalam kamus:">
+<!ENTITY DictionaryList.accessKey "K">
+<!ENTITY RemoveButton.label "Hapus">
+<!ENTITY RemoveButton.accessKey "H">
+
+<!ENTITY CloseButton.label "Tutup">
+<!ENTITY CloseButton.accessKey "T">

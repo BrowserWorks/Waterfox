@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Namnlös)">
+<!ENTITY  newTab.label           "Ny flik">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Stäng flik">
+<!ENTITY  closeTab.accesskey         "S">
+<!ENTITY  closeOtherTabs.label   "Stäng alla andra flikar">
+<!ENTITY  closeOtherTabs.accesskey         "ä">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Stäng flikar till höger">
+<!ENTITY  closeTabsToTheEnd.accesskey "h">
+<!ENTITY  reloadAllTabs.label    "Uppdatera alla flikar">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "Uppdatera flik">
+<!ENTITY  reloadTab.accesskey         "U">
+<!ENTITY  bookmarkGroup.label    "Bokmärke vid den här flikgruppen">
+<!ENTITY  bookmarkGroup.accesskey  "B">
+<!ENTITY  closeTabButton.tooltip   "Stäng den aktuella fliken">
+<!ENTITY  newTabButton.tooltip   "Öppna en ny flik">
+<!ENTITY  listAllTabs.tooltip    "Lista alla flikar">
+<!ENTITY  undoCloseTab.label    "Ångra Stäng flik">
+<!ENTITY  undoCloseTab.accesskey  "Å">

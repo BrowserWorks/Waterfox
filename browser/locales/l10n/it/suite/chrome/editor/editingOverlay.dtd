@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Apri file…">
+<!ENTITY openFileCmd.accesskey "f">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Apri pagina web…">
+<!ENTITY openRemoteCmd.accesskey "w">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Pagine recenti">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Salva">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Salva con nome…">
+<!ENTITY saveAsCmd.accesskey "m">
+<!ENTITY saveAsChangeEncodingCmd2.label "Salva e cambia la codifica del testo">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "S">
+<!ENTITY publishCmd.label "Pubblica">
+<!ENTITY publishCmd.accesskey "u">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Pubblica con nome…">
+<!ENTITY publishAsCmd.accesskey "b">
+<!ENTITY fileRevert.label "Torna all'ultimo salvataggio">
+<!ENTITY fileRevert.accesskey "T">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Impostazioni pubblicazione…">
+<!ENTITY publishSettings.accesskey "m">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Modulo">
+<!ENTITY insertFormMenu.accesskey "M">
+<!ENTITY insertFormCmd.label "Definisci modulo…">
+<!ENTITY insertFormCmd.accesskey "D">
+<!ENTITY insertInputTagCmd.label "Campo del modulo…">
+<!ENTITY insertInputTagCmd.accesskey "C">
+<!ENTITY insertInputImageCmd.label "Immagine del modulo…">
+<!ENTITY insertInputImageCmd.accesskey "n">
+<!ENTITY insertTextAreaCmd.label "Area di testo…">
+<!ENTITY insertTextAreaCmd.accesskey "A">
+<!ENTITY insertSelectCmd.label "Lista di selezione…">
+<!ENTITY insertSelectCmd.accesskey "L">
+<!ENTITY insertButtonCmd.label "Definisci pulsante…">
+<!ENTITY insertButtonCmd.accesskey "s">
+<!ENTITY insertLabelCmd.label "Definisci etichetta">
+<!ENTITY insertLabelCmd.accesskey "e">
+<!ENTITY insertFieldSetCmd.label "Definisci insieme di elementi…">
+<!ENTITY insertFieldSetCmd.accesskey "d">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nuovo">
+<!ENTITY newToolbarCmd.tooltip "Crea una nuova pagina con Composer">
+<!ENTITY openToolbarCmd.label "Apri">
+<!ENTITY openToolbarCmd.tooltip "Carica una pagina locale">
+<!ENTITY saveToolbarCmd.tooltip "Salva la pagina localmente">
+<!ENTITY publishToolbarCmd.tooltip "Memorizza i file presso un indirizzo remoto">
+<!ENTITY printToolbarCmd.label "Stampa">
+<!ENTITY printToolbarCmd.tooltip "Stampa la pagina">

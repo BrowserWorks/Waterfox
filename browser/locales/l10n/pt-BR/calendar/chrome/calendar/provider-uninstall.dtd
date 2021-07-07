@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Desinstalar provedor">
+<!ENTITY providerUninstall.accept.label                    "Cancelar inscrição no provedor selecionado">
+<!ENTITY providerUninstall.accept.accesskey                "C">
+<!ENTITY providerUninstall.cancel.label                    "Manter extensão">
+<!ENTITY providerUninstall.cancel.accesskey                "M">
+<!ENTITY providerUninstall.preName.label                   "Você solicitou desinstalar ou desabilitar:">
+<!ENTITY providerUninstall.postName.label                  "Isto fará com que as agendas abaixo sejam desativadas.">
+<!ENTITY providerUninstall.reinstallNote.label             "A menos que pretenda reinstalar este provedor, você pode cancelar a inscrição nas agendas deste provedor.">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eigenschaften des benannten Ankers">
+<!ENTITY anchorNameEditField.label "Anker-Name:">
+<!ENTITY anchorNameEditField.accessKey "N">
+<!ENTITY nameInput.tooltip "Geben Sie einen eindeutigen Namen für diesen benannten Anker (Ziel) an">
+
+

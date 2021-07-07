@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Conversieprogramma voor type berichtenopslag">
+<!ENTITY converterDialog.continueButton "Doorgaan">
+<!ENTITY converterDialog.cancelButton "Annuleren">
+<!ENTITY converterDialog.finishButton "Voltooien">
+<!ENTITY converterDialog.complete "De conversie is voltooid. &brandShortName; zal nu herstarten.">
+<!ENTITY converterDialog.error "Conversie mislukt.">
+

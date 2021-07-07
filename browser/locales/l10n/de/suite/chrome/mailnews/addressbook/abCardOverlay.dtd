@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Name">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Vorname:">
+<!ENTITY NameField1.accesskey           "V">
+<!ENTITY NameField2.label               "Nachname:">
+<!ENTITY NameField2.accesskey           "c">
+<!ENTITY PhoneticField1.label           "Phonetisch:">
+<!ENTITY PhoneticField2.label           "Phonetisch:">
+<!ENTITY DisplayName.label              "Anzeigename:">
+<!ENTITY DisplayName.accesskey          "z">
+<!ENTITY preferDisplayName.label        "Anzeigename immer statt Namen aus dem Nachrichtenkopf verwenden">
+<!ENTITY preferDisplayName.accesskey    "u">
+<!ENTITY NickName.label                 "Spitzname:">
+<!ENTITY NickName.accesskey             "S">
+
+<!ENTITY PrimaryEmail.label             "E-Mail:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Weitere E-Mail:">
+<!ENTITY SecondEmail.accesskey          "W">
+<!ENTITY PreferMailFormat.label         "Bevorzugt folgendes Nachrichten-Format:">
+<!ENTITY PreferMailFormat.accesskey     "B">
+<!ENTITY PlainText.label                "Reiner Text">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Unbekannt">
+<!ENTITY ScreenName.label               "AOL-Name:">
+<!ENTITY ScreenName.accesskey           "O">
+
+<!ENTITY WorkPhone.label                "Dienstlich:">
+<!ENTITY WorkPhone.accesskey            "h">
+<!ENTITY HomePhone.label                "Privat:">
+<!ENTITY HomePhone.accesskey            "a">
+<!ENTITY FaxNumber.label                "Fax:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "Pager:">
+<!ENTITY PagerNumber.accesskey          "g">
+<!ENTITY CellularNumber.label           "Mobiltelefon:">
+<!ENTITY CellularNumber.accesskey       "M">
+
+<!ENTITY Home.tab                       "Privat">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adresse:">
+<!ENTITY HomeAddress.accesskey          "A">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Ort:">
+<!ENTITY HomeCity.accesskey             "O">
+<!ENTITY HomeState.label                "Bundesland:">
+<!ENTITY HomeState.accesskey            "B">
+<!ENTITY HomeZipCode.label              "PLZ:">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "Land:">
+<!ENTITY HomeCountry.accesskey          "L">
+<!ENTITY HomeWebPage.label              "Web-Seite:">
+<!ENTITY HomeWebPage.accesskey          "W">
+<!ENTITY Birthday.label                 "Geburtstag:">
+<!ENTITY Birthday.accesskey             "G">
+<!ENTITY In.label                       "">
+<!ENTITY Year.placeholder               "Jahr">
+<!ENTITY Or.value                       "oder">
+<!ENTITY Age.placeholder                "Alter">
+<!ENTITY YearsOld.label                 "">
+
+<!ENTITY Work.tab                       "Dienstlich">
+<!ENTITY Work.accesskey                 "D">
+<!ENTITY JobTitle.label                 "Titel:">
+<!ENTITY JobTitle.accesskey             "T">
+<!ENTITY Department.label               "Abteilung:">
+<!ENTITY Department.accesskey           "e">
+<!ENTITY Company.label                  "Organisation:">
+<!ENTITY Company.accesskey              "s">
+<!ENTITY WorkAddress.label              "Adresse:">
+<!ENTITY WorkAddress.accesskey          "A">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Ort:">
+<!ENTITY WorkCity.accesskey             "O">
+<!ENTITY WorkState.label                "Bundesland:">
+<!ENTITY WorkState.accesskey            "B">
+<!ENTITY WorkZipCode.label              "PLZ:">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "Land:">
+<!ENTITY WorkCountry.accesskey          "L">
+<!ENTITY WorkWebPage.label              "Web-Seite:">
+<!ENTITY WorkWebPage.accesskey          "W">
+
+<!ENTITY Other.tab                      "Andere">
+<!ENTITY Other.accesskey                "n">
+<!ENTITY Custom1.label                  "Benutzerdef. 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Benutzerdef. 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Benutzerdef. 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Benutzerdef. 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Anmerkungen:">
+<!ENTITY Notes.accesskey                "A">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "F">
+<!ENTITY PhotoDesc.label                "Wählen Sie eine der folgenden Optionen:">
+<!ENTITY GenericPhoto.label             "Generisches Foto">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "Standard">
+<!ENTITY PhotoFile.label                "Auf diesem Computer">
+<!ENTITY PhotoFile.accesskey            "C">
+<!ENTITY BrowsePhoto.label              "Durchsuchen">
+<!ENTITY BrowsePhoto.accesskey          "s">
+<!ENTITY PhotoURL.label                 "Im Web">
+<!ENTITY PhotoURL.accesskey             "W">
+<!ENTITY PhotoURL.placeholder           "Fügen Sie die Web-Adresse eines Fotos ein oder geben Sie diese ein">
+<!ENTITY UpdatePhoto.label              "Aktualisieren">
+<!ENTITY UpdatePhoto.accesskey          "A">

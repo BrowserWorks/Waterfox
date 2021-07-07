@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- mac -->
+<!-- LOCALIZATION NOTE: FILE Do not translate all the entities ending with
+  Cmd.key. -->
+
+<!-- LOCALIZATION NOTE (.modifiers): The following entites are for the
+  application menu. Never change the modifiers unless you are 100% sure that
+  they are different on your locale (should be very rare). -->
+<!ENTITY preferencesCmd.label           "Innstillingar…">
+<!ENTITY preferencesCmd.key             ",">
+<!ENTITY preferencesCmd.modifiers       "accel">
+<!ENTITY servicesMenu.label             "Tenester">
+<!ENTITY hideThisAppCmd.label           "Gøym &brandShortName;">
+<!ENTITY hideThisAppCmd.key             "H">
+<!ENTITY hideThisAppCmd.modifiers       "accel">
+<!ENTITY hideOtherAppsCmd.label         "Gøym andre">
+<!ENTITY hideOtherAppsCmd.key           "H">
+<!ENTITY hideOtherAppsCmd.modifiers     "accel,alt">
+<!ENTITY showAllAppsCmd.label           "Vis alle">
+<!ENTITY quitApplicationCmd.label       "Avslutt &brandShortName;"> 
+<!ENTITY quitApplicationCmd.key         "Q">
+<!ENTITY quitApplicationCmd.modifiers   "accel">
+<!-- End of Application menu -->
+
+<!ENTITY closeCmd.label                 "Lat att">  
+<!ENTITY closeCmd.key                   "W">  
+
+<!ENTITY printSetupCmd.label            "Utskriftsformat…">
+<!ENTITY printSetupCmd.accesskey        "k">
+
+<!ENTITY findReplaceCmd.key             "F">
+<!ENTITY redoCmd.key                    "Z">
+
+<!-- Keys for toggling Sidebar, Folder Pane in mailNews and Directory Pane in
+  Address Book -->
+<!ENTITY showHideSidebarCmd.key         "S">
+<!ENTITY toggleFolderPaneCmd.key        "S">
+<!ENTITY toggleDirectoryPaneCmd.key     "S">
+
+<!ENTITY historyCmd.key                 "H">  
+
+<!ENTITY findTypeTextCmd.key            "">
+<!ENTITY findTypeLinksCmd.key           "">
+
+<!ENTITY accel.emacs_conflict           "accel">
+
+<!ENTITY minimizeWindowCmd.label        "Minimer">
+<!ENTITY minimizeWindowCmd.key          "M">
+<!ENTITY zoomWindowCmd.label            "Zoom">
+
+<!-- Help menu -->
+<!ENTITY openHelpCmd.label              "&brandShortName; Hjelp">
+<!ENTITY openHelpCmd.accesskey          "H">
+<!ENTITY openHelpCmd.key                "?">
+<!ENTITY openHelpCmd.modifiers          "accel">
+
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY ctrlKey.label                   "Ctrl">
+<!ENTITY altKey.label                    "Tilval">
+<!ENTITY shiftKey.label                  "Shift">

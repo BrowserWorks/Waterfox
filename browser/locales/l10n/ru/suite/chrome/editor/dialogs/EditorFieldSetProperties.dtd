@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства набора полей">
+
+<!ENTITY Legend.label "Легенда">
+<!ENTITY Legend.accesskey "Л">
+
+<!ENTITY EditLegendText.label "Изменить легенду:">
+<!ENTITY EditLegendText.accesskey "И">
+<!ENTITY LegendAlign.label "Выравнивание легенды:">
+<!ENTITY LegendAlign.accesskey "В">
+<!ENTITY AlignDefault.label "По умолчанию">
+<!ENTITY AlignLeft.label "Влево">
+<!ENTITY AlignCenter.label "По центру">
+<!ENTITY AlignRight.label "Вправо">
+
+<!ENTITY RemoveFieldSet.label "Удалить набор полей">
+<!ENTITY RemoveFieldSet.accesskey "У">

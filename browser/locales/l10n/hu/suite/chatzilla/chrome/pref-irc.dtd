@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref-irc.window.title "ChatZilla">
+
+<!ENTITY pref-irc.open.title     "A ChatZilla beállításai">
+<!ENTITY pref-irc.open.desc      "A ChatZilla beállításai túl kiterjedtek ahhoz, hogy beleférjenek ebbe a beállításablakba, így innen nyithatja meg a beállítások ablakát.">
+<!ENTITY pref-irc.open.label     "A ChatZilla beállításainak megnyitása">
+<!ENTITY pref-irc.open.accesskey "m">
+<!ENTITY startup.chat.label "ChatZilla">
+<!ENTITY startup.chat.accesskey "Z">

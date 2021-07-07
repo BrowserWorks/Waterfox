@@ -1,0 +1,216 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Seiten-Ladefehler">
+<!ENTITY retry.label "Nochmals versuchen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Fehler: Verbindung fehlgeschlagen">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Fehler: Port aus Sicherheitsgründen blockiert">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Fehler: Server nicht gefunden">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Bitte überprüfen Sie die Adresse auf Tippfehler, wie
+    <strong>ww</strong>.example.com statt
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Suchen</button>
+    </div>
+  <li>Wenn Sie auch keine andere Website aufrufen können, überprüfen Sie bitte die Daten- oder WLAN-Verbindung.
+    <button id='wifi'>WLAN aktivieren</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Fehler: Datei nicht gefunden">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Bitte überprüfen Sie die Adresse auf Rechtschreib-, Groß-/Kleinschreibungs- oder andere Fehler.</li>
+  <li>Bitte überprüfen Sie, ob die Adresse umbenannt, gelöscht oder verschoben wurde.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Zugriff auf die Datei wurde verweigert">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Sie wurde möglicherweise entfernt, verschoben, oder Dateiberechtigungen könnten den Zugriff verhindern.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Fehler: Anfrage konnte nicht ausgeführt werden">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; konnte die Seite aus unbekanntem Grund nicht laden.</p>
+">
+
+<!ENTITY malformedURI.title "Fehler: Ungültige Adresse">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Web-Adressen sehen für gewöhnlich folgendermaßen aus:
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Suchen</button>
+    </div>
+  <li>Bitte stellen Sie sicher, dass Sie nicht den umgekehrten,
+    sondern den einfachen Schrägstrich verwenden (<strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Fehler: Datenübertragung unterbrochen">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Dokument erloschen">
+<!ENTITY notCached.longDesc "<p>Das angefragte Dokument ist nicht mehr im Cache verfügbar.</p><ul><li>Als Sicherheitsmaßnahme fordert &brandShortName; nicht automatisch vertrauliche Dokumente erneut an.</li><li>Klicken Sie auf &quot;Nochmals versuchen&quot;, um das Dokument erneut anzufordern.</li></ul>">
+
+<!ENTITY netOffline.title "Offline-Modus">
+
+<!ENTITY contentEncodingError.title "Content-Encoding-Fehler">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Kontaktieren Sie bitte den Inhaber der Website, um ihn über dieses Problem zu informieren.</li> 
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Unsicherer Dateityp">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Bitte kontaktieren Sie die Webseitenbetreiber, um sie über dieses Problem zu informieren.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Fehler: Verbindung unterbrochen">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Fehler: Netzwerk-Zeitüberschreitung">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Adresse nicht erkannt">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Eventuell müssen Sie andere Software installieren, um diese Adresse aufrufen zu können.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Fehler: Proxy-Server verweigert die Verbindung">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Überprüfen Sie bitte, ob die Proxy-Einstellungen korrekt sind</li>
+  <li>Kontaktieren Sie bitte Ihren Netzwerk-Administrator, um sicherzustellen, dass der Proxy-Server 
+	funktioniert</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Fehler: Proxy-Server nicht gefunden">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Überprüfen Sie bitte, ob die Proxy-Einstellungen korrekt sind.</li>
+  <li>Überprüfen Sie bitte, ob Ihr Gerät eine funktionierende Daten- oder WLAN-Verbindung hat.
+    <button id='wifi'>WLAN aktivieren</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Fehler: Umleitungsfehler">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dieses Problem kann manchmal auftreten, wenn Cookies deaktiviert oder abgelehnt 
+	werden.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Fehler: Unerwartete Antwort">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Bitte stellen Sie sicher, dass auf Ihrem System der Personal-Security-Manager 
+	installiert ist.</li>
+  <li>Dies kann mit einer nicht-standardgemäßen Konfiguration des Servers zusammenhängen.</li>
+</ul> 
+">
+
+<!ENTITY nssFailure2.title "Fehler: Gesicherte Verbindung fehlgeschlagen">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Die Website kann nicht angezeigt werden, da die Authentizität der erhaltenen Daten nicht verifiziert werden konnte.</li>
+  <li>Kontaktieren Sie bitte den Inhaber der Website, um ihn über dieses Problem zu informieren.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Sichere Verbindung fehlgeschlagen">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Dies könnte ein Problem mit der Konfiguration des Servers sein oder jemand, der vorgibt, 
+	der Server zu sein.</li>
+  <li>Falls Sie früher bereits erfolgreich eine Verbindung zu dem Server aufgebaut haben, 
+	könnte dies ein vorübergehender Fehler sein. Versuchen Sie es in diesem Fall später noch einmal.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Die Website könnte vorübergehend nicht erreichbar oder überlastet sein, versuchen Sie es bitte später nochmals.</li>
+  <li>Wenn Sie auch keine andere Website aufrufen können, überprüfen Sie bitte die Daten- oder WLAN-Verbindung Ihres Geräts.
+    <button id='wifi'>WLAN aktivieren</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blockiert von der Content-Security-Policy (CSP)">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; hat diese Webseite daran gehindert, auf diese Weise geladen zu werden, weil die Webseite eine Content-Security-Policy (CSP) hat, die dies nicht erlaubt.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fehler: Beschädigte Inhalte">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Die Seite, die Sie anzusehen versuchen, kann nicht angezeigt werden, da ein Fehler in der Datenübertragung festgestellt wurde.</p><ul><li>Bitte kontaktieren Sie die Website-Betreiber, um sie über dieses Problem zu verständigen.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Oder Sie können eine Ausnahme hinzufügen…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Website verlassen!">
+<!ENTITY securityOverride.exceptionButtonLabel "Ausnahme hinzufügen…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Sie sollten keine Ausnahme hinzufügen, wenn Sie nicht absolutes Vertrauen in die Sicherheit Ihrer aktuellen Verbindung haben oder wenn Sie bisher keine Warnung für diesen Server erhalten haben.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Remote-XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Bitte informieren Sie den Website-Inhaber über dieses Problem.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Keine sichere Verbindung möglich">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Weitere Informationen: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Diese Verbindung ist nicht sicher">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Weitere Informationen: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Diese Verbindung ist nicht sicher">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> verwendet Sicherheitstechnologie, welche veraltet und verwundbar ist. Ein Angreifer könnte leicht Informationen entschlüsseln, welche Sie für sicher hielten. Der Website-Administrator muss dieses Problem auf dem Server beheben, bevor Sie die Seite aufrufen können.</p><p>Fehlercode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Netzwerkprotokoll-Fehler">
+<!ENTITY networkProtocolError.longDesc "<p>Die angeforderte Seite kann nicht angezeigt werden, da ein Fehler bei der Verwendung des Netzwerkprotokolls erkannt wurde.</p><ul><li>Kontaktieren Sie bitte den Betreiber der Website, um ihn über dieses Problem zu informieren.</li></ul>">

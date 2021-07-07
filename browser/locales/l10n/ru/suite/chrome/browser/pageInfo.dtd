@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "Копировать">
+<!ENTITY  copy.accesskey         "п">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Выделить всё">
+<!ENTITY  selectall.accesskey    "в">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Копировать ссылку(и)">
+<!ENTITY  copyLinks.accesskey       "и">
+<!ENTITY  openInNewTab.label        "Открыть в новой вкладке">
+<!ENTITY  openInNewTab.accesskey    "т">
+<!ENTITY  openInNewWindow.label     "Открыть в новом окне">
+<!ENTITY  openInNewWindow.accesskey "к">
+
+<!ENTITY  generalTab            "Основная">
+<!ENTITY  generalTab.accesskey  "а">
+<!ENTITY  generalTitle          "Заголовок:">
+<!ENTITY  generalURL            "Адрес:">
+<!ENTITY  generalType           "Тип:">
+<!ENTITY  generalMode           "Тип визуализации:">
+<!ENTITY  generalSize           "Размер:">
+<!ENTITY  generalReferrer       "Ссылающийся URL:">
+<!ENTITY  generalSource         "Источник кэширования:">
+<!ENTITY  generalModified       "Последнее изменение:">
+<!ENTITY  generalEncoding2      "Кодировка текста:">
+<!ENTITY  generalMetaName       "Имя">
+<!ENTITY  generalMetaContent    "Содержимое">
+<!ENTITY  generalSecurityDetails           "Подробнее">
+<!ENTITY  generalSecurityDetails.accesskey "о">
+
+<!ENTITY  formsTab              "Формы">
+<!ENTITY  formsTab.accesskey    "ы">
+<!ENTITY  formAction            "Обработчик">
+<!ENTITY  formMethod            "Метод">
+<!ENTITY  formName              "Имя">
+<!ENTITY  formEncoding          "Тип содержимого:">
+<!ENTITY  formTarget            "Целевой объект:">
+<!ENTITY  formFields            "Поля:">
+<!ENTITY  formLabel             "Метка">
+<!ENTITY  formFName             "Имя поля">
+<!ENTITY  formType              "Тип">
+<!ENTITY  formCValue            "Текущее значение">
+
+<!ENTITY  linksTab              "Ссылки">
+<!ENTITY  linksTab.accesskey    "с">
+<!ENTITY  linkName              "Имя">
+<!ENTITY  linkAddress           "Адрес">
+<!ENTITY  linkType              "Тип">
+<!ENTITY  linkTarget            "Целевой объект">
+<!ENTITY  linkAccessKey         "Клавиша доступа">
+
+<!ENTITY  mediaTab              "Мультимедиа">
+<!ENTITY  mediaTab.accesskey    "л">
+<!ENTITY  mediaURL              "Адрес:">
+<!ENTITY  mediaAlt              "Альтернативный текст:">
+<!ENTITY  mediaLocation         "Расположение:">
+<!ENTITY  mediaText             "Связанный текст:">
+<!ENTITY  mediaAltHeader        "Альтернативный текст">
+<!ENTITY  mediaAddress          "Адрес">
+<!ENTITY  mediaType             "Тип">
+<!ENTITY  mediaSize             "Размер">
+<!ENTITY  mediaCount            "Количество">
+<!ENTITY  mediaDimensions       "Указанные размеры:">
+<!ENTITY  mediaPhysDimensions   "Реальные размеры:">
+<!ENTITY  mediaTitle            "Описание:">
+<!ENTITY  mediaDimension        "Размеры:">
+<!ENTITY  mediaLongdesc         "Длинное описание:">
+<!ENTITY  mediaBlockImage.accesskey "л">
+<!ENTITY  mediaSaveAs           "Сохранить как…">
+<!ENTITY  mediaSaveAs.accesskey "к">
+<!ENTITY  mediaSaveAs2.accesskey "х">
+<!ENTITY  mediaPreview          "Предпросмотр мультимедиа:">
+
+<!ENTITY  feedTab               "Ленты новостей">
+<!ENTITY  feedTab.accesskey     "н">
+<!ENTITY  feedSubscribe         "Подписаться">
+<!ENTITY  feedSubscribe.accesskey "д">
+
+<!ENTITY  permTab               "Разрешения">
+<!ENTITY  permTab.accesskey     "з">
+<!ENTITY  permUseDefault        "По умолчанию">
+<!ENTITY  permAskAlways         "Всегда спрашивать">
+<!ENTITY  permAllow             "Разрешить">
+<!ENTITY  permAllowSession      "Разрешить на сессию">
+<!ENTITY  permBlock             "Блокировать">
+<!ENTITY  permissionsFor        "Разрешения для:">
+<!ENTITY  permImage             "Загружать изображения">
+<!ENTITY  permPopup             "Открывать всплывающие окна">
+<!ENTITY  permCookie            "Устанавливать куки">
+<!ENTITY  permNotifications     "Отображать уведомления">
+<!ENTITY  permInstall           "Устанавливать расширения или темы">
+<!ENTITY  permGeo               "Узнавать местоположение">
+
+<!ENTITY  securityTab           "Защита">
+<!ENTITY  securityTab.accesskey "щ">
+<!ENTITY  securityHeader        "Информация о защите этой страницы">
+<!ENTITY  securityView.certView "Просмотреть сертификат">
+<!ENTITY  securityView.accesskey "с">
+<!ENTITY  securityView.unknown   "Неизвестно">
+
+
+<!ENTITY  securityView.identity.header   "Подлинность веб-сайта">
+<!ENTITY  securityView.identity.owner    "Владелец:">
+<!ENTITY  securityView.identity.domain   "Веб-сайт:">
+<!ENTITY  securityView.identity.verifier "Подтверждено:">
+
+<!ENTITY  securityView.identity.validity "Действителен по:">
+
+<!ENTITY  securityView.privacy.header                   "Приватность и История">
+<!ENTITY  securityView.privacy.history                  "Посещал ли я этот веб-сайт до сегодняшнего дня?">
+<!ENTITY  securityView.privacy.cookies                  "Хранит ли этот веб-сайт информацию (куки) на моём компьютере?">
+<!ENTITY  securityView.privacy.viewCookies              "Просмотреть куки">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "о">
+<!ENTITY  securityView.privacy.passwords                "Сохранял ли я для этого веб-сайта какие-либо пароли?">
+<!ENTITY  securityView.privacy.viewPasswords            "Просмотреть сохранённые пароли">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "м">
+
+<!ENTITY  securityView.technical.header                 "Технические детали">

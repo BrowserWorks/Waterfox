@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Farbe">
+<!ENTITY lastPickedColor.label "Letzte gewählte Farbe">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY chooseColor1.label "Farbe auswählen:">
+<!ENTITY chooseColor2.label "HTML-Farbstring eingeben">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(z.B.: &quot;#0000ff&quot; oder &quot;blue&quot;):">
+<!ENTITY default.label "Standard">
+<!ENTITY default.accessKey "S">
+<!ENTITY palette.label "Palette:">
+<!ENTITY standardPalette.label "Standard">
+<!ENTITY webPalette.label "Alle Web-Farben">
+<!ENTITY background.label "Hintergrund für:">
+<!ENTITY background.accessKey "g">
+<!ENTITY table.label "Tabelle">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Zelle(n)">
+<!ENTITY cell.accessKey "Z">

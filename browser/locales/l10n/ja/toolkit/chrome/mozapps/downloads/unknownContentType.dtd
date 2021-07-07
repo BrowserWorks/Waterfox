@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label			"次のファイルを開こうとしています:">
+<!ENTITY  from.label			"ファイルの場所:">
+<!ENTITY  actionQuestion.label		"このファイルをどのように処理するか選んでください">
+
+<!ENTITY  openWith.label		"プログラムで開く:">
+<!ENTITY  openWith.accesskey		"o">
+<!ENTITY  other.label			"その他...">
+
+<!ENTITY  saveFile.label		"ファイルを保存する">
+<!ENTITY  saveFile.accesskey		"s">
+
+<!ENTITY  rememberChoice.label		"今後この種類のファイルは同様に処理する">
+<!ENTITY  rememberChoice.accesskey	"a">
+
+<!ENTITY  whichIs.label			"ファイルの種類:">
+
+<!ENTITY  chooseHandlerMac.label	"選択...">
+<!ENTITY  chooseHandlerMac.accesskey	"C">
+<!ENTITY  chooseHandler.label		"参照...">
+<!ENTITY  chooseHandler.accesskey	"B">
+
+<!ENTITY  unknownPromptText.label	"このファイルを保存しますか？">

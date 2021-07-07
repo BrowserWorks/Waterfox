@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Sans titre)">
+<!ENTITY  newTab.label           "Nouvel onglet">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Fermer l’onglet">
+<!ENTITY  closeTab.accesskey         "F">
+<!ENTITY  closeOtherTabs.label   "Fermer les autres onglets">
+<!ENTITY  closeOtherTabs.accesskey         "a">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Fermer les onglets situés à droite">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "Actualiser tous les onglets">
+<!ENTITY  reloadAllTabs.accesskey         "c">
+<!ENTITY  reloadTab.label        "Actualiser l’onglet">
+<!ENTITY  reloadTab.accesskey         "r">
+<!ENTITY  bookmarkGroup.label    "Marquer ce groupe d’onglets">
+<!ENTITY  bookmarkGroup.accesskey  "M">
+<!ENTITY  closeTabButton.tooltip   "Fermer l’onglet courant">
+<!ENTITY  newTabButton.tooltip   "Ouvrir un nouvel onglet">
+<!ENTITY  listAllTabs.tooltip    "Afficher la liste de tous les onglets">
+<!ENTITY  undoCloseTab.label    "Annuler la fermeture de l’onglet">
+<!ENTITY  undoCloseTab.accesskey  "u">

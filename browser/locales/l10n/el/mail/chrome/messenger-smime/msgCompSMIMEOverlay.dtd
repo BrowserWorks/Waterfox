@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Χωρίς κρυπτογράφηση">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "ω">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Απαίτηση κρυπτογράφησης">
+<!ENTITY menu_securityEncryptRequire.accesskey "γ">
+
+<!ENTITY menu_securitySign.label "Ψηφιακή υπογραφή μηνύματος">
+<!ENTITY menu_securitySign.accesskey "Ψ">
+
+<!ENTITY menu_securityAttachMyKey.label "Επισύναψη δημόσιου κλειδιού">
+<!ENTITY menu_securityAttachMyKey.accesskey "Ε">
+
+<!ENTITY menu_securityTech.label "Τεχνολογία κρυπτογράφησης">
+<!ENTITY menu_securityTech.accesskey "Τ">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Προβολή πληροφοριών ασφάλειας">
+<!ENTITY menu_securityStatus.accesskey "λ">
+
+<!ENTITY securityButton.label "Ασφάλεια">
+<!ENTITY securityButton.tooltip "Προβολή ή αλλαγή ρυθμίσεων ασφαλείας">
+
+<!ENTITY menu_viewSecurityStatus.label "Πληροφορίες ασφάλειας μηνύματος">
+<!ENTITY menu_viewSecurityStatus.accesskey "φ">

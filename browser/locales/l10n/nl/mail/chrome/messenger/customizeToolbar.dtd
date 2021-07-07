@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Werkbalk aanpassen">
+<!ENTITY dialog.dimensions        "width: 115ch; height: 45em;">
+<!ENTITY instructions.description "U kunt items toevoegen of verwijderen door ze naar of van de werkbalken te slepen.">
+<!ENTITY show.label               "Tonen:">
+<!ENTITY iconsAndText.label       "Pictogrammen en tekst">
+<!ENTITY icons.label              "Pictogrammen">
+<!ENTITY text.label               "Tekst">
+<!ENTITY iconsBesideText.label    "Pictogrammen naast tekst">
+<!ENTITY useSmallIcons.label      "Kleine pictogrammen">
+<!ENTITY restoreDefaultSet.label  "Standaardset herstellen">
+<!ENTITY showTitlebar2.label      "Titelbalk">
+<!ENTITY extraDragSpace2.label    "Sleepruimte">
+<!ENTITY saveChanges.label        "Gereed">
+<!ENTITY undoChanges.label        "Wijzigingen ongedaan maken">

@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "我的足迹">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "管理">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "管理您的书签">
+
+<!ENTITY file.close.label               "关闭">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "视图">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "更换您的视图">
+<!ENTITY view.columns.label             "显示列">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "排序">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "不排序">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z 升序">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A 降序">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "从 HTML 文件导入书签…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "导出书签到 HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "从其他浏览器导入数据…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "备份…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "恢复">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "选择文件…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "名称">
+<!ENTITY col.tags.label          "标签">
+<!ENTITY col.url.label           "网址">
+<!ENTITY col.mostrecentvisit.label "上次访问">
+<!ENTITY col.visitcount.label    "访问次数">
+<!ENTITY col.dateadded.label     "添加日期">
+<!ENTITY col.lastmodified.label  "修改日期">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "导入和备份">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "导入及备份您的书签">
+
+<!ENTITY backButton.tooltip  "返回上一步">
+
+<!ENTITY forwardButton.tooltip  "转到下一页">
+
+<!ENTITY detailsPane.selectAnItemText.description "选择一个条目来查看或编辑其属性">
+

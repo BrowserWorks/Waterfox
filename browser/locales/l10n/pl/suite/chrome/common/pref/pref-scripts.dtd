@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!ENTITY pref.scripts.title "Skrypty i wtyczki">
+
+<!ENTITY navigator.label "Przeglądarka">
+<!ENTITY navigator.accesskey "r">
+
+<!ENTITY enableJavaScript.label "Włącz interpretację kodu JavaScript w komponentach">
+<!ENTITY allowScripts.label "Pozwól skryptom na:">
+<!ENTITY allowScripts.accesskey "m">
+<!ENTITY allowWindowMoveResize.label "Zmienianie rozmiaru lub położenia istniejących okien">
+<!ENTITY allowWindowFlip.label "Zmienianie aktywnego okna poprzez przenoszenie nieaktywnego na górę">
+<!ENTITY allowWindowStatusChange.label "Zmienianie domyślnego tekstu wyświetlanego w pasku stanu">
+<!ENTITY allowContextmenuDisable.label "Wyłączanie lub zmienianie menu kontekstowego">
+<!ENTITY allowHideStatusBar.label "Ukrywanie paska stanu">
+
+<!ENTITY enableDrmMedia.label "Aktywuj odtwarzanie treści chronionych przez DRM dla">
+<!ENTITY enableEmeForSuite.label "Zewnętrzne moduły odtwarzania treści chronionych">
+<!ENTITY enableEmeForSuite.accesskey "Z">
+
+<!ENTITY enablePlugins.label "Aktywuj wtyczki dla">
+<!ENTITY enablePluginForSuite.label "Pakiet SeaMonkey">
+<!ENTITY enablePluginForSuite.accesskey "S">
+
+<!ENTITY whenPageRequiresPlugins.label "Gdy strona wymaga wtyczek">
+<!ENTITY activateAllPlugins.label "Domyślnie aktywuj wszystkie wtyczki">
+<!ENTITY activateAllPlugins.accesskey "a">
+<!ENTITY warnPluginsRequired.label "Ostrzegaj, gdy dodatkowe wtyczki muszą zostać zainstalowane">
+<!ENTITY warnPluginsRequired.accesskey "O">

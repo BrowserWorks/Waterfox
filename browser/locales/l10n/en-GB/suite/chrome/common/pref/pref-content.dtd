@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Content">
+<!ENTITY pref.content.description               "These settings influence how web site and message content appears in &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Web site icons">
+<!ENTITY useSiteIcons.label                     "Show web site icons">
+<!ENTITY useSiteIcons.accesskey                 "S">
+<!ENTITY useFavIcons2.label                     "Try to use the server&apos;s favicon when the page doesn&apos;t define an icon">
+<!ENTITY useFavIcons2.accesskey                 "i">
+
+<!ENTITY scrolling.label                        "Scrolling">
+<!ENTITY useAutoScroll.label                    "Use autoscrolling">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Use smooth scrolling">
+<!ENTITY useSmoothScroll.accesskey              "U">
+
+<!ENTITY zoomPrefs.label                        "Zoom options">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Range from">
+<!ENTITY minZoom.accesskey                      "f">
+<!ENTITY maxZoom.label                          "to">
+<!ENTITY maxZoom.accesskey                      "o">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY defaultZoom.label                      "Default zoom">
+<!ENTITY defaultZoom.accesskey                  "D">
+
+<!ENTITY siteSpecific.label                     "Remember zoom levels on per-site basis">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY textZoomOnly.label                     "Zoom only text instead of full pages">
+<!ENTITY textZoomOnly.accesskey                 "Z">
+<!ENTITY enableAutomaticImageResizing.label     "Resize large images to fit in the browser window">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+
+<!ENTITY allowHWAccel.label                     "Use hardware acceleration when available">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY blockAutoRefresh.label                 "Warn me when web sites try to redirect or reload the page">
+<!ENTITY blockAutoRefresh.accesskey             "W">
+
+<!ENTITY showZoomStatusPanel.label              "Show zoom controls in the status bar">

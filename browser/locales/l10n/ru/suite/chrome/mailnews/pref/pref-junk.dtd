@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Спам и подозрительная почта">
+<!ENTITY junkSettings.caption "Общие настройки анти-спам фильтров">
+<!ENTITY junkMail.intro "Для установки настроек анти-спам фильтра специфичных для учетной записи перейдите в параметры учетной записи.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Когда я сам помечаю сообщения как спам:">
+<!ENTITY manualMark.accesskey           "о">
+<!ENTITY manualMarkModeMove.label       "Перемещать их в папку «Спам» учетной записи">
+<!ENTITY manualMarkModeMove.accesskey   "м">
+<!ENTITY manualMarkModeDelete.label     "Удалять их">
+<!ENTITY manualMarkModeDelete.accesskey "д">
+
+<!ENTITY markAsRead.intro               "Отметить сообщения, как прочитанные:">
+<!ENTITY autoMarkAsRead.label           "Когда &brandShortName; определяет, что они являются спамом">
+<!ENTITY autoMarkAsRead.accesskey       "п">
+<!ENTITY manualMarkAsRead.label         "Когда я сам помечаю их как спам">
+<!ENTITY manualMarkAsRead.accesskey     "с">
+
+<!ENTITY enableJunkLogging.label        "Включить журнал анти-спам фильтра">
+<!ENTITY enableJunkLogging.accesskey    "ж">
+<!ENTITY openJunkLog.label              "Показать журнал">
+<!ENTITY openJunkLog.accesskey          "к">
+<!ENTITY resetTrainingData.label        "Удалить данные обучения, имеющиеся в адаптивном фильтре">
+<!ENTITY resetTrainingData.accesskey    "и">
+
+<!ENTITY pref.suspectMail.caption       "Подозрительная почта">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Мошеннические письма">
+<!ENTITY enablePhishingDetector.label     "Информировать, не является ли читаемое мною сообщение подозрительным письмом, рассылаемым мошенниками">
+<!ENTITY enablePhishingDetector.accesskey "ф">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Работа с антивирусом">
+<!ENTITY antiVirus.label                  "Облегчить для антивируса сканирование входящих сообщений">
+<!ENTITY antiVirus.accesskey              "л">

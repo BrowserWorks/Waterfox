@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "ชั่วโมง">
+<!ENTITY time.minute.label "นาที">
+<!ENTITY time.second.label "วินาที">
+<!ENTITY time.millisecond.label "มิลลิวินาที">
+<!ENTITY time.dayperiod.label "AM/PM">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "ปปปป">
+<!ENTITY date.month.placeholder "ดด">
+<!ENTITY date.day.placeholder "วว">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "ปี">
+<!ENTITY date.month.label "เดือน">
+<!ENTITY date.day.label "วัน">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "ล้าง">

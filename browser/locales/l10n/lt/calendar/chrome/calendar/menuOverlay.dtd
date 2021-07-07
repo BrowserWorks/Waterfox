@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Naujas įvykis…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Naujas darbas…">
+<!ENTITY event.new.task.accesskey               "d">
+
+<!ENTITY calendar.import.label                  "Importuoti…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Eksportuoti…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publikuoti…">
+<!ENTITY calendar.publish.accesskey             "P">
+
+<!ENTITY calendar.deletecalendar.label          "Naikinti pažymėtą kalendorių…">
+<!ENTITY calendar.deletecalendar.accesskey      "N">
+<!ENTITY calendar.unsubscribecalendar.label     "Atsisakyti pažymėto kalendoriaus prenumeratos…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "A">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Šalinti pažymėtą kalendorių…">
+<!ENTITY calendar.removecalendar.accesskey      "Š">
+
+
+<!ENTITY calendar.menu.customize.label          "Tvarkyti…">
+<!ENTITY calendar.menu.customize.accesskey      "T">
+
+<!ENTITY showUnifinderCmd.label                 "Rasti įvykius">
+<!ENTITY showUnifinderCmd.accesskey             "R">
+<!ENTITY showUnifinderCmd.tooltip               "Rodyti/slėpti įvykių paieškos polangį">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Rodyti darbus kalendoriuje">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "R">
+
+<!ENTITY goTodayCmd.label                       "Į šiandieną">
+<!ENTITY goTodayCmd.accesskey                   "š">
+
+<!ENTITY showCurrentView.label                  "Dabartinis vaizdas">
+<!ENTITY showCurrentView.accesskey              "D">
+
+<!ENTITY calendar.properties.label              "Kalendoriaus savybės…">
+<!ENTITY calendar.properties.accesskey          "l">

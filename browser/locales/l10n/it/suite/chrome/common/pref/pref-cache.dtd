@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Cache">
+<!ENTITY pref.cache.caption              "Imposta opzioni cache">
+<!ENTITY cachePara                       "La cache mantiene copie di pagine web visitate di frequente sul proprio hard disk. (Facendo clic su Ricarica viene sempre caricata la versione più aggiornata della pagina)">
+<!ENTITY cacheCheck.label                "Lascia gestire a &brandShortName; la dimensione della cache">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "Utilizza fino a">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB di spazio su disco per la cache">
+<!ENTITY diskCacheFolder.label           "Percorso cartella cache:">
+<!ENTITY clearDiskCache.label            "Svuota cache">
+<!ENTITY clearDiskCache.accesskey        "c">
+<!ENTITY chooseDiskCacheFolder.label     "Scegli cartella…">
+<!ENTITY chooseDiskCacheFolder.accesskey "S">
+<!ENTITY diskCacheFolderExplanation      "I file della cache verranno memorizzati in una cartella chiamata &quot;Cache&quot; all'interno della cartella specificata. Riavvia &brandShortName; affinché le modifiche abbiano effetto.">
+<!ENTITY docCache.label                  "Confronta la pagina in cache con la pagina in rete:">
+<!ENTITY docCache.accesskey              "n">
+<!ENTITY checkOncePerSession.label       "Una volta per sessione">
+<!ENTITY checkEveryTime.label            "Ogni volta che visualizzo la pagina">
+<!ENTITY checkNever.label                "Mai">
+<!ENTITY checkAutomatically.label        "Quando la pagina è scaduta">
+
+<!ENTITY prefetchTitle.label             "Caricamento preventivo collegamenti">
+<!ENTITY enablePrefetch.label            "Carica le pagine web collegate durante i tempi morti, in modo che le pagine progettate per la navigazione sequenziale possano essere caricate più agevolmente">
+<!ENTITY enablePrefetch.accesskey        "w">
+
+<!ENTITY debugCache.label                "Debugging">
+<!ENTITY debugEnableMemCache.label       "Abilita cache di memoria">
+<!ENTITY debugEnableMemCache.accesskey   "m">
+<!ENTITY debugEnableDiskCache.label      "Abilita la cache del disco">
+<!ENTITY debugEnableDiskCache.accesskey  "d">

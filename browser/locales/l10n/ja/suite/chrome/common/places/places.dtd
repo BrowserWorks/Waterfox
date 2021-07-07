@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "ブラウジングライブラリー">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "整理">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "ブックマークを整理します">
+
+<!ENTITY file.close.label               "閉じる">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "表示">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "表示項目を変更します">
+<!ENTITY view.columns.label             "表示する列">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "項目の表示順序">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "並べ替えない">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "昇順 (A &gt; Z)">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "降順 (Z &gt; A)">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML からインポート...">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "HTML としてエクスポート...">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "他のブラウザーからデータをインポート...">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "バックアップ...">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "復元">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "ファイルを選択...">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY cmd.deleteDomainData.label     "このサイトの履歴を消去">
+<!ENTITY cmd.deleteDomainData.accesskey "F">
+
+<!ENTITY cmd.open.label                  "開く">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.open_window.label           "新しいウィンドウで開く">
+<!ENTITY cmd.open_window.accesskey       "N">
+<!ENTITY cmd.open_private_window.label     "プライベートウィンドウで開く">
+<!ENTITY cmd.open_private_window.accesskey "P">
+<!ENTITY cmd.open_tab.label              "新しいタブで開く">
+<!ENTITY cmd.open_tab.accesskey          "w">
+<!ENTITY cmd.open_all_in_tabs.label      "タブですべて開く">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "O">
+
+<!ENTITY cmd.properties.label      "プロパティ">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "名前順に並べ替える">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "新しいブックマーク...">
+<!ENTITY cmd.new_bookmark.accesskey        "B">
+<!ENTITY cmd.new_folder.label              "新しいフォルダー...">
+<!ENTITY cmd.new_folder.accesskey          "o">
+<!ENTITY cmd.context_new_folder.accesskey  "F">
+<!ENTITY cmd.new_separator.label           "新しい区切り">
+<!ENTITY cmd.new_separator.accesskey       "S">
+
+<!ENTITY cmd.reloadLivebookmark.label      "ライブブックマークを再読み込み">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY col.name.label          "サイト名">
+<!ENTITY col.tags.label          "タグ">
+<!ENTITY col.url.label           "URL">
+<!ENTITY col.mostrecentvisit.label "最近表示した日時">
+<!ENTITY col.visitcount.label    "訪問回数">
+<!ENTITY col.description.label   "説明">
+<!ENTITY col.dateadded.label     "追加日時">
+<!ENTITY col.lastmodified.label  "変更日時">
+
+<!ENTITY search.placeholder  "検索">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "詳細を表示">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "詳細を隠す">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "各項目を選択すると、名前や詳細情報の表示や編集ができます">
+
+<!ENTITY view.label               "表示">
+<!ENTITY view.accesskey           "w">
+<!ENTITY byDate.label             "日付順に並べる">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "サイト名順に並べる">
+<!ENTITY bySite.accesskey         "S">
+<!ENTITY byMostVisited.label      "表示回数順に並べる">
+<!ENTITY byMostVisited.accesskey  "V">
+<!ENTITY byLastVisited.label      "最後に表示した日時順に並べる">
+<!ENTITY byLastVisited.accesskey  "L">
+<!ENTITY byDayAndSite.label       "日付とサイト名順に並べる">
+<!ENTITY byDayAndSite.accesskey   "t">

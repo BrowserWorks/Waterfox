@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Обсуждение">
+<!ENTITY fromColumn.label "От">
+<!ENTITY recipientColumn.label "Адресат">
+<!ENTITY attachmentColumn.label "Вложения">
+<!ENTITY subjectColumn.label "Тема">
+<!ENTITY dateColumn.label "Дата">
+<!ENTITY priorityColumn.label "Важность">
+<!ENTITY tagsColumn.label "Метки">
+<!ENTITY accountColumn.label "Учётная запись">
+<!ENTITY statusColumn.label "Состояние">
+<!ENTITY sizeColumn.label "Размер">
+<!ENTITY junkStatusColumn.label "Спам">
+<!ENTITY unreadColumn.label "Не прочитано в обсуждении">
+<!ENTITY totalColumn.label "Всего в обсуждении">
+<!ENTITY readColumn.label "Прочитано">
+<!ENTITY receivedColumn.label "Получено">
+<!ENTITY flagColumn.label "Флаг">
+<!ENTITY locationColumn.label "Расположение">
+<!ENTITY idColumn.label "Порядок получения">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Выбрать колонки для отображения">
+<!ENTITY threadColumn2.tooltip "Просмотреть сообщения по обсуждениям">
+<!ENTITY fromColumn2.tooltip "Сортировать по автору">
+<!ENTITY recipientColumn2.tooltip "Сортировать по адресату">
+<!ENTITY attachmentColumn2.tooltip "Сортировать по наличию вложений">
+<!ENTITY subjectColumn2.tooltip "Сортировать по теме">
+<!ENTITY dateColumn2.tooltip "Сортировать по дате отправки">
+<!ENTITY priorityColumn2.tooltip "Сортировать по важности">
+<!ENTITY tagsColumn2.tooltip "Сортировать по меткам">
+<!ENTITY accountColumn2.tooltip "Сортировать по учётной записи">
+<!ENTITY statusColumn2.tooltip "Сортировать по состоянию">
+<!ENTITY sizeColumn2.tooltip "Сортировать по размеру">
+<!ENTITY junkStatusColumn2.tooltip "Сортировать по метке спама">
+<!ENTITY unreadColumn2.tooltip "Число непрочитанных сообщений в обсуждении">
+<!ENTITY totalColumn2.tooltip "Общее число сообщений в обсуждении">
+<!ENTITY readColumn2.tooltip "Сортировать по прочтению">
+<!ENTITY receivedColumn2.tooltip "Сортировать по дате получения">
+<!ENTITY flagColumn2.tooltip "Сортировать по наличию флага">
+<!ENTITY locationColumn2.tooltip "Сортировать по расположению">
+<!ENTITY idColumn2.tooltip "Сортировать по порядку получения">

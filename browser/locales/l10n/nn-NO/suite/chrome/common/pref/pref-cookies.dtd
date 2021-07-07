@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Infokapslar">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Løyve for infokapslar">
+
+<!ENTITY disableCookies.label           "Blokker infokapslar">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "Tillat infokapslar berre frå opphavleg nettstad (ingen tredjeparts infokapslar)">
+<!ENTITY accNo3rdPartyCookies.accesskey "T">
+
+<!ENTITY acc3rdPartyVisited.label       "Tillat tredjeparts infokapslar berre frå tidlegare besøkte nettsider">
+<!ENTITY acc3rdPartyVisited.accesskey   "l">
+
+<!ENTITY accAllCookies.label            "Tillat alle infokapslar">
+<!ENTITY accAllCookies.accesskey        "a">
+
+<!ENTITY cookieRetentionPolicy.label    "Reglar for å behalde infokapslar">
+
+<!ENTITY acceptNormally.label           "Tillat infokapslar normalt">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Tillat berre for programøkta">
+<!ENTITY acceptForSession.accesskey     "b">
+
+<!ENTITY acceptforNDays.label           "Tillat infokapslar for">
+<!ENTITY acceptforNDays.accesskey       "f">
+<!ENTITY days.label                     "dagar">
+
+<!ENTITY manageCookies.label            "Handter infokapslar og nettstad">
+<!ENTITY manageCookiesDescription.label "Tillèt at du kan vise og handtere lagra infokapslar og innstillingar pr. nettstad. Innstillingar pr. nettstad vil overstyre innstillingane ovanfor.">
+
+<!ENTITY viewCookies.label              "Infokapselhandtering">
+<!ENTITY viewCookies.accesskey          "I">
+

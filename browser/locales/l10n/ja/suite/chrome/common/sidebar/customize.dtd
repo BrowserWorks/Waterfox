@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label "&sidebarName; の設定">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label "&sidebarName; のタブ:">
+<!ENTITY sidebar.customize.current.accesskey "T">
+
+<!ENTITY sidebar.customize.title                "サイドバーのカスタマイズ">
+<!ENTITY sidebar.customize.current2.label       "サイドバー内のタブ:">
+<!ENTITY sidebar.customize.current2.accesskey   "T">
+<!ENTITY sidebar.customize.customize.label "タブを設定...">
+<!ENTITY sidebar.customize.customize.accesskey "C">
+<!ENTITY sidebar.customize.remove.label "削除">
+<!ENTITY sidebar.customize.remove.accesskey "R">
+<!ENTITY sidebar.customize.additional.label "使用可能なタブ:">
+<!ENTITY sidebar.customize.additional.accesskey "v">
+<!ENTITY sidebar.customize.add.label "追加">
+<!ENTITY sidebar.customize.add.accesskey "A">
+<!ENTITY sidebar.customize.preview.label "プレビュー...">
+<!ENTITY sidebar.customize.preview.accesskey "P">
+<!ENTITY sidebar.customize.up.label "上へ">
+<!ENTITY sidebar.customize.up.accesskey "U">
+<!ENTITY sidebar.customize.down.label "下へ">
+<!ENTITY sidebar.customize.down.accesskey "D">
+<!ENTITY sidebar.more.label "さらにタブを検索...">
+<!ENTITY sidebar.more.accesskey "F">

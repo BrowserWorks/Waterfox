@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "重要消息">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "若要与这份已安装的 &brandShortName; 同步您已保存至 Firefox 的信息，请登录您的 &syncBrand.fxAccount.label;。">
+<!ENTITY continue-button "继续">
+
+<!ENTITY mainText "这份已安装的 &brandShortName; 有了一个新的配置文件，不再与此计算机上安装的其他 Firefox（包含 Firefox、Firefox ESR、Firefox Beta、Firefox Developer Edition 及 Firefox Nightly）共享书签、密码、用户首选项等信息。">

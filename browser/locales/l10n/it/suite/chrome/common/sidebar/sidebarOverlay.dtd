@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Barra laterale">
+<!ENTITY sidebar.reload.label           "Ricarica">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "Schede">
+<!ENTITY sidebar.customize.label        "Personalizza la Barra laterale…">
+<!ENTITY sidebar.customize.accesskey    "P">
+<!ENTITY sidebar.hide.label             "Nascondi scheda">
+<!ENTITY sidebar.hide.accesskey         "N">
+<!ENTITY sidebar.switch.label           "Visualizza scheda">
+<!ENTITY sidebar.switch.accesskey       "V">
+<!ENTITY sidebarCmd.label               "Barra laterale">
+<!ENTITY sidebarCmd.accesskey           "B">
+<!ENTITY sidebar.loading.label          "Caricamento in corso…">
+<!ENTITY sidebar.loadstopped.label      "Riprendi caricamento">
+<!ENTITY sidebar.loading.stop.label     "Interrompi">
+<!ENTITY sidebar.loading.stop.accesskey "I">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "La Barra laterale al momento è vuota.">
+<!ENTITY sidebar.no-panels.add       'È possibile aggiungere schede facendo clic sul pulsante "Schede" in alto.'>
+<!ENTITY sidebar.no-panels.hide      'Se si desidera nascondere completamente la Barra laterale, fare clic sul menu "Visualizza" in alto e selezionare "Barra laterale" dal sottomenu "Mostra/Nascondi".'>
+<!ENTITY sidebar.sbDirectory.label   "Indice schede…">
+
+<!ENTITY sidebar.pagenotfound.label  "Questa scheda non è al momento disponibile.">
+<!ENTITY sidebar.close.tooltip       "Chiudi la Barra laterale">
+<!ENTITY sidebar.open.tooltip        "Apri la Barra laterale">
+
+<!ENTITY sidebar.search.label         "Ricerca">
+<!ENTITY sidebar.client-bookmarks.label     "Segnalibri">
+<!ENTITY sidebar.client-history.label       "Cronologia">
+<!ENTITY sidebar.client-addressbook.label   "Rubrica">

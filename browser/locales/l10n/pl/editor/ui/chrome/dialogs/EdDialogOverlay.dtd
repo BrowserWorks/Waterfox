@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label       "Zaawansowana edycja…">
+<!ENTITY AdvancedEditButton.accessKey   "e">
+<!ENTITY AdvancedEditButton.tooltip "Dodaj lub modyfikuj atrybuty HTML, stylów i JavaScript">
+<!ENTITY chooseFileButton.label         "Wybierz plik…">
+<!ENTITY chooseFileButton.accessKey     "W">
+<!ENTITY chooseFileLinkButton.label     "Wybierz plik…">
+<!ENTITY chooseFileLinkButton.accessKey "p">
+<!ENTITY makeUrlRelative.label          "Adres URL jest względny w stosunku do adresu strony">
+<!ENTITY makeUrlRelative.accessKey      "r">
+<!ENTITY makeUrlRelative.tooltip        "Powoduje zamianę istniejącego adresu URL na względny lub bezwzględny. Aby użyć tej funkcji, należy uprzednio zachować stronę.">
+<!ENTITY LinkURLEditField2.label "Wprowadź adres strony, nazwę lokalnego pliku lub wybierz kotwicę albo nagłówek z menu kontekstowego pola:">
+<!ENTITY LinkURLEditField2.accessKey "a">

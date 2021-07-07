@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Журнал посещений">
+
+<!ENTITY  pref.history.caption              "Журнал посещений">
+<!ENTITY  historyPages.label                "Журнал посещений — это список посещённых вами ранее страниц.">
+<!ENTITY  enableHistory.label               "Помнить адреса страниц">
+<!ENTITY  enableHistory.accesskey           "м">
+<!ENTITY  clearHistory.label                "Очистить журнал">
+<!ENTITY  clearHistory.accesskey            "и">
+
+<!ENTITY  locationBarHistory.caption        "Журнал посещений панели адреса">
+<!ENTITY  urlBarHistoryEnabled.caption      "Включить журнал посещений панели адреса">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "ю">
+<!ENTITY  clearLocationBar.label            "Очистить список веб-сайтов в меню панели адреса.">
+<!ENTITY  clearLocationBarButton.label      "Очистить список">
+<!ENTITY  clearLocationBarButton.accesskey  "ь">
+<!ENTITY  formfillHistory.caption           "История поиска и данные форм">
+<!ENTITY  enableFormfill.label              "Включить историю поиска и данные форм">
+<!ENTITY  enableFormfill.accesskey          "н">
+<!ENTITY  formfillExpire.label              "Помнить историю поиска и данные форм за последние">
+<!ENTITY  formfillExpire.accesskey          "ф">
+<!ENTITY  formfillDays.label                "дней">

@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Gavėjas">
+<!ENTITY fromField4.label "Nuo">
+<!ENTITY senderField4.label "Siuntėjas">
+<!ENTITY author.label "Autorius">
+<!ENTITY organizationField4.label "Organizacija">
+<!ENTITY replyToField4.label "Atsakymą gaus">
+
+<!ENTITY subjectField4.label "Tema">
+<!ENTITY ccField4.label "Kopija">
+<!ENTITY bccField4.label "Nematomoji kopija">
+<!ENTITY newsgroupsField4.label "Naujienų grupės">
+<!ENTITY followupToField4.label "Atsakyti į grupę">
+<!ENTITY tagsHdr4.label "Gairės">
+<!ENTITY dateField4.label "Data">
+<!ENTITY userAgentField4.label "Pašto programa">
+<!ENTITY referencesField4.label "Nuorodos">
+<!ENTITY messageIdField4.label "Laiško ID">
+<!ENTITY inReplyToField4.label "Atsakymas į">
+<!ENTITY originalWebsite4.label "Svetainė">
+
+<!ENTITY hdrArchiveButton1.label "Archyvuoti">
+<!ENTITY hdrArchiveButton1.tooltip "Archyvuoti šį laišką">
+<!ENTITY hdrSmartReplyButton1.label "Atsakyti parenkant gavėjus">
+<!ENTITY hdrReplyButton1.label "Atsakyti">
+<!ENTITY hdrReplyButton2.tooltip "Atsakyti laiško siuntėjui">
+<!ENTITY hdrReplyAllButton1.label "Atsakyti visiems">
+<!ENTITY hdrReplyAllButton1.tooltip "Atsakyti laiško siuntėjui ir visiems gavėjams">
+<!ENTITY hdrReplyListButton1.label "Atsakyti grupei">
+<!ENTITY hdrReplyListButton1.tooltip "Atsakyti el. pašto grupei">
+<!ENTITY hdrFollowupButton1.label "Atsakyti grupei">
+<!ENTITY hdrFollowupButton1.tooltip "Atsakyti naujienų grupei">
+<!ENTITY hdrForwardButton1.label "Persiųsti">
+<!ENTITY hdrForwardButton1.tooltip "Persiųsti šį laišką">
+<!ENTITY hdrJunkButton1.label "Brukalas">
+<!ENTITY hdrJunkButton1.tooltip "Pažymėti šį laišką kaip brukalą">
+<!ENTITY hdrTrashButton1.label "Pašalinti">
+<!ENTITY hdrTrashButton1.tooltip "Pašalinti šį laišką">
+
+<!ENTITY hdrViewToolbarShowFull.label "Rodyti piktogramas ir tekstą">
+<!ENTITY hdrViewToolbarShowFull.accesskey "i">
+<!ENTITY hdrViewToolbarShowIcons.label "Rodyti tik piktogramas">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "p">
+<!ENTITY hdrViewToolbarShowText.label "Rodyti tik tekstą">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Visada siūlyti atsakyti siuntėjui">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "s">
+
+<!ENTITY otherActionsButton2.label "Daugiau">
+<!ENTITY otherActionsButton.tooltip "Daugiau veiksmų">
+<!ENTITY otherActionsOpenConversation1.label "Atverti diskusijoje">
+<!ENTITY otherActionsOpenConversation1.accesskey "d">
+<!ENTITY otherActionsOpenInNewWindow1.label "Atverti naujame lange">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "l">
+<!ENTITY otherActionsOpenInNewTab1.label "Atverti naujoje kortelėje">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "k">
+<!ENTITY markAsReadMenuItem1.label "Pažymėti kaip skaitytą">
+<!ENTITY markAsReadMenuItem1.accesskey "ž">
+<!ENTITY markAsUnreadMenuItem1.label "Pažymėti kaip neskaitytą">
+<!ENTITY markAsUnreadMenuItem1.accesskey "ž">
+<!ENTITY saveAsMenuItem1.label "Įrašyti kaip…">
+<!ENTITY saveAsMenuItem1.accesskey "r">
+<!ENTITY viewSourceMenuItem1.label "Pirminis tekstas…">
+<!ENTITY viewSourceMenuItem1.accesskey "P">
+<!ENTITY otherActionsPrint1.label "Spausdinti…">
+<!ENTITY otherActionsPrint1.accesskey "S">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Iškart rodyti priedų polangį">
+<!ENTITY startExpandedCmd.accesskey    "r">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Atverti">
+<!ENTITY openAttachmentCmd.accesskey    "A">
+<!ENTITY saveAsAttachmentCmd.label    "Įrašyti kaip…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "r">
+<!ENTITY detachAttachmentCmd.label    "Išimti…">
+<!ENTITY detachAttachmentCmd.accesskey    "m">
+<!ENTITY deleteAttachmentCmd.label    "Pašalinti">
+<!ENTITY deleteAttachmentCmd.accesskey    "š">
+<!ENTITY openAllAttachmentsCmd.label    "Atverti visus…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "A">
+<!ENTITY saveAllAttachmentsCmd.label    "Įrašyti visus…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "r">
+<!ENTITY detachAllAttachmentsCmd.label    "Išimti visus…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "m">
+<!ENTITY deleteAllAttachmentsCmd.label    "Pašalinti visus…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "š">
+
+<!ENTITY openAttachment.tooltip "Atverti pridėtą failą">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Atverti aplanką">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "a">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Parodyti programoje „Finder“">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Įrašyti">
+<!ENTITY saveAttachmentButton1.tooltip     "Įrašyti priedą kaip failą">
+<!ENTITY saveAllAttachmentsButton1.label   "Įrašyti visus">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Įrašyti visus priedus kaip failus">
+
+<!ENTITY copyLinkCmd.label        "Kopijuoti saito adresą">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+<!ENTITY CopyMessageId.label "Kopijuoti laiško ID">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Atverti laišką su šiuo ID">
+<!ENTITY OpenMessageForMsgId.accesskey "A">
+<!ENTITY OpenBrowserWithMsgId.label "Naršyklėje atverti laišką su šiuo ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "N">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Προσαρμογή γραμμής εργαλείων">
+<!ENTITY dialog.dimensions        "width: 100ch; height: 36em;">
+<!ENTITY instructions.description "Προσθέστε ή αφαιρέστε στοιχεία σύροντάς τα σε ή από γραμμές εργαλείων.">
+<!ENTITY show.label               "Εμφάνιση:">
+<!ENTITY iconsAndText.label       "Εικονίδια και κείμενο">
+<!ENTITY icons.label              "Εικονίδια">
+<!ENTITY text.label               "Κείμενο">
+<!ENTITY iconsBesideText.label    "Εικονίδια δίπλα στο κείμενο">
+<!ENTITY useSmallIcons.label      "Χρήση μικρών εικονιδίων">
+<!ENTITY restoreDefaultSet.label  "Επαναφορά προεπιλεγμένου σετ">
+<!ENTITY showTitlebar2.label      "Γραμμή τίτλου">
+<!ENTITY extraDragSpace2.label    "Χώρος μεταφοράς">
+<!ENTITY saveChanges.label        "Τέλος">
+<!ENTITY undoChanges.label        "Ακύρωση Αλλαγών">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.locationBar.title "Barra degli indirizzi">
+<!ENTITY autoComplete.label "Autocompletamento">
+<!ENTITY autoCompleteMatchHistory.label "Suggerisci automaticamente i siti web dalla Cronologia">
+<!ENTITY autoCompleteMatchHistory.accesskey "u">
+<!ENTITY autoCompleteMatchBookmarks.label "Suggerisci automaticamente i siti web dai Segnalibri">
+<!ENTITY autoCompleteMatchBookmarks.accesskey "S">
+<!ENTITY autoCompleteAutoFill.label "Riempi automaticamente con la corrispondenza più simile">
+<!ENTITY autoCompleteAutoFill.accesskey "R">
+<!ENTITY autoCompleteShowPopup.label "Mostra elenco dei risultati corrispondenti">
+<!ENTITY autoCompleteShowPopup.accesskey "M">
+<!ENTITY autoCompleteMatchOnlyTyped.label "Trova corrispondenze solo con indirizzi inseriti in precedenza">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey "T">
+<!ENTITY autoCompleteMatch.label "Confronta">
+<!ENTITY autoCompleteMatch.accesskey "C">
+<!ENTITY autoCompleteMatchAnywhere "ovunque nell'indirizzo o nel titolo">
+<!ENTITY autoCompleteMatchWordsFirst "ovunque ma preferendo gli estremi delle parole">
+<!ENTITY autoCompleteMatchWords "solo agli estremi delle parole">
+<!ENTITY autoCompleteMatchStart "solo all'inizio dell'indirizzo o del titolo">
+<!ENTITY showInternetSearch.label "Mostra il motore di ricerca predefinito per Internet">
+<!ENTITY showInternetSearch.accesskey "M">
+<!ENTITY formatting.label "Formattazione">
+<!ENTITY domainFormatting.label "Evidenzia il dominio effettivo per i siti web e i server FTP">
+<!ENTITY domainFormatting.accesskey "d">
+<!ENTITY highlightSecure.label "Evidenzia pagine web con un livello di sicurezza della connessione alto">
+<!ENTITY highlightSecure.accesskey "E">
+<!ENTITY unknownLocations.label "Indirizzi sconosciuti">
+<!ENTITY domainGuessing.label "Aggiungi &quot;www.&quot; e &quot;.com&quot; all'indirizzo se la pagina web non viene trovata">
+<!ENTITY domainGuessing.accesskey "u">
+<!ENTITY keywords.label "Esegui una ricerca sul web quando il testo inserito non è un indirizzo web">
+<!ENTITY keywords.accesskey "E">

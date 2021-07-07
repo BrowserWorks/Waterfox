@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Lagra infokapslar">
+<!ENTITY     tab.bannedservers.label        "Nettstad for infokapslar">
+<!ENTITY     treehead.cookiename.label      "Infokapselnamn">
+<!ENTITY     treehead.cookiedomain.label    "Nettstad">
+<!ENTITY     treehead.cookieexpires.label   "Går ut">
+<!ENTITY     treehead.infoselected.label    "Informasjon om vald infokapsel">
+<!ENTITY     button.removecookie.label      "Slett infokapsel">
+<!ENTITY     button.removecookie.accesskey  "S">
+<!ENTITY     button.removeallcookies.label  "Slett alle infokapslar">
+<!ENTITY     button.removeallcookies.accesskey "e">
+
+<!ENTITY     search.placeholder             "Søk i infokapslar">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Namn:">
+<!ENTITY     props.value.label              "Innhald:">
+<!ENTITY     props.domain.label             "Vert:">
+<!ENTITY     props.path.label               "Sti:">
+<!ENTITY     props.secure.label             "Send for:">
+<!ENTITY     props.expires.label            "Går ut:">
+
+<!ENTITY     treehead.sitename.label        "Nettstad">
+<!ENTITY     treehead.scheme.label          "Skjema">
+<!ENTITY     treehead.status.label          "Status">
+<!ENTITY     windowtitle.label              "Infokapselhandsamar">
+
+<!ENTITY     blockSite.label                "Blokker">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Tillat">
+<!ENTITY     allowSite.accesskey            "T">
+<!ENTITY     allowSiteSession.label         "Programøkt">
+<!ENTITY     allowSiteSession.accesskey     "P">
+<!ENTITY     removepermission.label         "Slett nettstad">
+<!ENTITY     removepermission.accesskey     "n">
+<!ENTITY     removeallpermissions.label     "Slett alle nettstadar">
+<!ENTITY     removeallpermissions.accesskey "a">
+
+<!ENTITY     futureCookies.accesskey        "D">

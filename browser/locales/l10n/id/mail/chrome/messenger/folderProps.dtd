@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Keterangan:">
+
+<!ENTITY generalInfo.label                       "Informasi Umum">
+<!ENTITY folderCharsetFallback2.label            "Pengodean Teks Alternatif:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "Terapkan penyandian ke semua pesan di folder (pengaturan penyandian teks pesan individual dan deteksi otomatis akan diabaikan)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Buat Ulang Berkas Indeks Ringkasan">
+<!ENTITY folderRebuildSummaryFile2.label         "Perbaiki Folder">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "P">
+<!ENTITY folderRebuildSummaryFile.explanation    "Terkadang berkas indeks folder (.msf) rusak dan pesan mungkin tidak terlihat atau pesan yang dihapus masih tampak; proses perbaikan folder mungkin dapat mengatasi masalah ini.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Sertakan pesan pada folder ini pada hasil Pencarian Global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Kebijakan Penyimpanan">
+<!ENTITY retentionUseAccount.label  "Gunakan pengaturan akun saya">
+<!ENTITY retentionUseAccount.accesskey "a">
+<!ENTITY daysOld.label "hari">
+<!ENTITY message.label "pesan">
+<!ENTITY retentionCleanup.label "Untuk mengembalikan ruang disk, pesan lama dapat dihapus secara permanen">
+<!ENTITY retentionCleanupImap.label "Untuk mengembalikan ruang disk, pesan yang sudah usang dapat dihapus secara permanen, termasuk salinan lokal dan dan pesan asli yang disimpan di server jarak jauh.">
+<!ENTITY retentionCleanupPop.label "Untuk mengembalikan ruang disk, pesan yang sudah usang dapat dihapus secara permanen, termasuk salinan lokal dan dan pesan asli yang disimpan di server jarak jauh.">
+<!ENTITY retentionDeleteMsg.label "Hapus pesan yang lebih dari">
+<!ENTITY retentionDeleteMsg.accesskey "l">
+<!ENTITY retentionKeepAll.label "Jangan hapus pesan apa pun">
+<!ENTITY retentionKeepAll.accesskey "J">
+<!ENTITY retentionKeepRecent.label "Hapus selain yang paling akhir">
+<!ENTITY retentionKeepRecent.accesskey "a">
+<!ENTITY retentionApplyToFlagged.label "Selalu simpan pesan berbintang">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sinkronisasi">
+<!ENTITY folderCheckForNewMessages2.label         "Periksa pesan baru pada folder ini saat mengambil pesan baru">
+<!ENTITY folderCheckForNewMessages2.accesskey     "P">
+
+<!ENTITY offlineFolder.check.label               "Pilih folder ini untuk penggunaan luring">
+<!ENTITY offlineFolder.check.accesskey           "o">
+<!ENTITY offlineFolder.button.label              "Unduh Sekarang">
+<!ENTITY offlineFolder.button.accesskey          "U">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Pilih newsgroup ini untuk penggunaan luring">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Unduh Sekarang">
+<!ENTITY offlineNewsgroup.button.accesskey       "U">
+
+<!ENTITY folderProps.name.label                  "Nama:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Warna Ikon:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Kembalikan warna bawaan">
+<!ENTITY folderProps.location.label              "Lokasi:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Berbagi-pakai">
+<!ENTITY privileges.button.label                 "Hak akses…">
+<!ENTITY privileges.button.accesskey             "H">
+<!ENTITY permissionsDesc.label                   "Anda mempunyai hak akses berikut:">
+<!ENTITY folderOtherUsers.label                  "Orang lain dengan akses ke folder ini:">
+<!ENTITY folderType.label                        "Jenis Folder:">
+
+<!ENTITY folderQuotaTab.label                    "Kuota">
+<!ENTITY folderQuotaUsage.label                  "Penggunaan:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Jumlah pesan:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "tidak diketahui">
+<!ENTITY sizeOnDisk.label                        "Ukuran pada diska:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "tidak diketahui">

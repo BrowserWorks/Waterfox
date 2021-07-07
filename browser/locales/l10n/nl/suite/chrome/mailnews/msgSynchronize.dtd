@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!ENTITY MsgSynchronize.label "Berichten downloaden en synchroniseren">
+<!ENTITY MsgSelect.label "Items voor offlinegebruik">
+<!ENTITY MsgSyncDesc.label "Als u al e-mailmappen of nieuwsgroepen hebt geselecteerd voor offlinegebruik, kunt u deze nu downloaden en/of synchroniseren. Gebruik anders de knop ‘Selecteren’ om e-mailmappen en nieuwsgroepen te selecteren voor offlinegebruik.">
+<!ENTITY MsgSyncDirections.label "Het volgende downloaden en/of synchroniseren:">
+<!ENTITY syncTypeMail.label "E-mailberichten">
+<!ENTITY syncTypeMail.accesskey "E">
+<!ENTITY syncTypeNews.label "Nieuwsgroepberichten">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Niet-verzonden berichten verzenden">
+<!ENTITY sendMessage.accesskey "v">
+<!ENTITY workOffline.label "Offline werken zodra het downloaden en/of synchroniseren is voltooid">
+<!ENTITY workOffline.accesskey "O">
+<!ENTITY selectButton.label "Selecteren…">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Kies e-mailmappen en nieuwsgroepen voor offlinegebruik.">
+<!ENTITY MsgSelectInd.label "Downloaden">
+<!ENTITY MsgSelectItems.label "Mappen en nieuwsgroepen">

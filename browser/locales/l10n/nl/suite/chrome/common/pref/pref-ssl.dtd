@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS-protocolversies">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS-waarschuwingen">
+<!ENTITY SSLMixedContent.caption            "Gemengde inhoud">
+<!ENTITY SSLClientAuthMethod.caption        "Clientcertificaatselectie">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "U kunt het aantal encryptieprotocols voor beveiligde verbindingen beperken. Kies een versie of een opeenvolgende reeks van versies.">
+<!ENTITY limit.enable.label                 "Inschakelen:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; kan u waarschuwingen geven over de beveiligingsstatus van de webpagina die u bekijkt. Stel &brandShortName; in om een waarschuwing te tonen als:">
+<!ENTITY warn.enteringsecure                "Het laden van een pagina die versleuteling ondersteunt">
+<!ENTITY warn.enteringsecure.accesskey      "l">
+<!ENTITY warn.insecurepost                  "Het verzenden van formuliergegevens van een versleutelde naar een niet-versleutelde pagina">
+<!ENTITY warn.insecurepost.accesskey        "z">
+<!ENTITY warn.leavingsecure                 "Het verlaten van een pagina die versleuteling ondersteunt">
+<!ENTITY warn.leavingsecure.accesskey       "v">
+
+<!ENTITY mixed.description                  "Versleutelde pagina’s kunnen niet-versleutelde inhoud bevatten die kwetsbaar is voor afluisteren en vervalsing. &brandShortName; kan dat detecteren en blokkeren:">
+<!ENTITY warn.mixedactivecontent            "Mij waarschuwen wanneer versleutelde pagina’s niet-beveiligde inhoud bevatten">
+<!ENTITY warn.mixedactivecontent.accesskey  "M">
+<!ENTITY block.activecontent                "Niet-beveiligde inhoud niet laden op versleutelde pagina’s">
+<!ENTITY block.activecontent.accesskey      "N">
+<!ENTITY warn.mixeddisplaycontent           "Mij waarschuwen wanneer versleutelde pagina’s andere typen van gemengde inhoud bevat">
+<!ENTITY warn.mixeddisplaycontent.accesskey "i">
+<!ENTITY block.displaycontent               "Andere typen van gemengde inhoud niet laden op versleutelde pagina’s">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "Bepaal hoe &brandShortName; een beveiligingscertificaat selecteert om aan te bieden aan websites die er een vereisen:">
+<!ENTITY certselect.auto                    "Automatisch selecteren">
+<!ENTITY certselect.auto.accesskey          "A">
+<!ENTITY certselect.ask                     "Elke keer vragen">
+<!ENTITY certselect.ask.accesskey           "E">

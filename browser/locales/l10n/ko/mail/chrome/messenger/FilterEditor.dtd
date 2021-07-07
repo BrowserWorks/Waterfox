@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "필터 규칙">
+<!ENTITY filterEditorDialog.dimensions "width:100ch;">
+<!ENTITY filterName.label "필터 이름:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "스팸 메일">
+<!ENTITY notJunk.label "정상 메일">
+
+<!ENTITY lowestPriorityCmd.label "최하위">
+<!ENTITY lowPriorityCmd.label "하위">
+<!ENTITY normalPriorityCmd.label "기본">
+<!ENTITY highPriorityCmd.label "상위">
+<!ENTITY highestPriorityCmd.label "최상위">
+
+<!ENTITY contextDesc.label "필터 적용:">
+<!ENTITY contextIncomingMail.label "새 메일 받을 때:">
+<!ENTITY contextIncomingMail.accesskey "G">
+<!ENTITY contextManual.label "수동으로 실행">
+<!ENTITY contextManual.accesskey "R">
+<!ENTITY contextBeforeCls.label "스팸 분류 전에 적용">
+<!ENTITY contextAfterCls.label "스팸 분류 후에 적용">
+<!ENTITY contextOutgoing.label "발송 이후에 적용">
+<!ENTITY contextOutgoing.accesskey "S">
+<!ENTITY contextArchive.label "보관">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "다음 방식으로 처리:">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!ENTITY filterActionOrderWarning.label "참고: 필터는 다른 순서대로 적용됩니다.">
+<!ENTITY filterActionOrder.label "실행 순서를 참고하세요.">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "메시지 이동 위치:">
+<!ENTITY copyMessage.label "메시지 복사 위치:">
+<!ENTITY forwardTo.label "메시지 전달 위치:">
+<!ENTITY replyWithTemplate.label "템플릿으로 회신:">
+<!ENTITY markMessageRead.label "읽음으로 표시">
+<!ENTITY markMessageUnread.label "읽지 않음 표시">
+<!ENTITY markMessageStarred.label "별표 추가">
+<!ENTITY setPriority.label "중요도 설정">
+<!ENTITY addTag.label "태그 작성">
+<!ENTITY setJunkScore.label "스팸 상태 설정:">
+<!ENTITY deleteMessage.label "메시지 삭제">
+<!ENTITY deleteFromPOP.label "POP3 서버에서 삭제">
+<!ENTITY fetchFromPOP.label "POP3 서버에서 받아오기">
+<!ENTITY ignoreThread.label "글타래 무시">
+<!ENTITY ignoreSubthread.label "하위 글타래 무시">
+<!ENTITY watchThread.label "글타래 보기">
+<!ENTITY stopExecution.label "필터 실행 중단">
+
+<!ENTITY addAction.tooltip "새로운 동작 추가">
+<!ENTITY removeAction.tooltip "동작 제거">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

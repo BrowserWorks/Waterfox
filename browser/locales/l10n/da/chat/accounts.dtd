@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Konti - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Status for chat">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Ny konto">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Luk">
+<!ENTITY accountManager.close.accesskey      "L">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Ingen eksisterende konto">
+<!ENTITY accountManager.noAccount.description "Klik på knappen &accountManager.newAccount.label; for at starte kontoguiden.">
+<!ENTITY account.autoSignOn.label     "Opret forbindelse ved start">
+<!ENTITY account.autoSignOn.accesskey "s">
+<!ENTITY account.connect.label         "Opret forbindelse">
+<!ENTITY account.connect.accesskey    "O">
+<!ENTITY account.disconnect.label     "Afbryd">
+<!ENTITY account.disconnect.accesskey "A">
+<!ENTITY account.delete.label         "Slet">
+<!ENTITY account.delete.accesskey     "S">
+<!ENTITY account.edit.label           "Egenskaber">
+<!ENTITY account.edit.accesskey       "E">
+<!ENTITY account.moveup.label         "Flyt op">
+<!ENTITY account.movedown.label       "Flyt ned">
+<!ENTITY account.cancelReconnection.label         "Fortryd genopret forbindelse">
+<!ENTITY account.cancelReconnection.accesskey     "F">
+<!ENTITY account.copyDebugLog.label     "Kopier debug-log">
+<!ENTITY account.copyDebugLog.accesskey "K">
+<!ENTITY account.showDebugLog.label     "Vis debug-log">
+<!ENTITY account.showDebugLog.accesskey "V">
+<!ENTITY account.connecting           "Forbinder…">
+<!ENTITY account.disconnecting        "Afbryder…">
+<!ENTITY account.disconnected         "Ikke forbundet">

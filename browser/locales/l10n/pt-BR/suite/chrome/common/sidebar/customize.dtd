@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Personalizar &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Abas no &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "A">
+
+<!ENTITY sidebar.customize.title                "Personalizar painel lateral">
+<!ENTITY sidebar.customize.current2.label       "Abas no painel lateral:">
+<!ENTITY sidebar.customize.current2.accesskey   "A">
+<!ENTITY sidebar.customize.customize.label      "Personalizar aba...">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Remover">
+<!ENTITY sidebar.customize.remove.accesskey     "R">
+<!ENTITY sidebar.customize.additional.label     "Abas disponíveis:">
+<!ENTITY sidebar.customize.additional.accesskey "v">
+<!ENTITY sidebar.customize.add.label            "Adicionar">
+<!ENTITY sidebar.customize.add.accesskey        "A">
+<!ENTITY sidebar.customize.preview.label        "Visualizar…">
+<!ENTITY sidebar.customize.preview.accesskey    "V">
+<!ENTITY sidebar.customize.up.label             "Para cima">
+<!ENTITY sidebar.customize.up.accesskey         "c">
+<!ENTITY sidebar.customize.down.label           "Para baixo">
+<!ENTITY sidebar.customize.down.accesskey       "b">
+<!ENTITY sidebar.more.label                     "Encontrar mais abas…">
+<!ENTITY sidebar.more.accesskey                 "m">

@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Eigenschaften">
+
+<!ENTITY generalInfo.label                       "Allgemein">
+<!ENTITY folderCharsetFallback2.label            "Textkodierung bei fehlgeschlagener Erkennung:">
+<!ENTITY folderCharsetFallback2.accesskey        "f">
+<!ENTITY folderCharsetEnforce2.label             "Textkodierung auf alle Nachrichten in diesem Ordner anwenden (die jeweilige eingestellte oder automatisch bestimmte Zeichenkodierung wird ignoriert).">
+<!ENTITY folderCharsetEnforce2.accesskey         "k">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Zusammenfassungsdatei (*.msf) neu erstellen">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparieren">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Die Zusammenfassungsdatei (*.msf) wird manchmal beschädigt, dadurch fehlen scheinbar Nachrichten oder gelöschte Nachrichten werden weiterhin aufgelistet. Reparieren der Zusammenfassungsdatei kann die Probleme meist beheben.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Nachrichten dieses Ordners für die globale Suche indizieren">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "N">
+
+<!ENTITY retention.label "Speicherplatz">
+<!ENTITY retentionUseAccount.label "Einstellungen des Kontos verwenden">
+<!ENTITY retentionUseAccount.accesskey "E">
+<!ENTITY daysOld.label "Tage">
+<!ENTITY message.label "Nachrichten">
+<!ENTITY retentionCleanup.label "Alte Nachrichten endgültig löschen, um Speicherplatz freizugeben:">
+<!ENTITY retentionCleanupImap.label "Alte Nachrichten endgültig löschen, um Speicherplatz freizugeben - sowohl lokale Kopien als auch auf dem IMAP-Server:">
+<!ENTITY retentionCleanupPop.label "Alte Nachrichten endgültig löschen, um Speicherplatz freizugeben - einschließlich der Originale auf dem POP-Server:">
+<!ENTITY retentionDeleteMsg.label "Nachrichten, die älter sind als">
+<!ENTITY retentionDeleteMsg.accesskey "N">
+<!ENTITY retentionKeepAll.label "Keine Nachrichten">
+<!ENTITY retentionKeepAll.accesskey "K">
+<!ENTITY retentionKeepRecent.label "Alle außer den neuesten">
+<!ENTITY retentionKeepRecent.accesskey "u">
+<!ENTITY retentionApplyToFlagged.label "Gekennzeichnete Nachrichten immer behalten">
+<!ENTITY retentionApplyToFlagged.accesskey "z">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronisation">
+<!ENTITY folderCheckForNewMessages2.label        "Diesen Ordner auf neue Nachrichten überprüfen, wenn Nachrichten für dieses Konto empfangen werden">
+<!ENTITY folderCheckForNewMessages2.accesskey    "D">
+
+<!ENTITY offlineFolder.check.label               "Diesen Ordner zum Offline-Lesen auswählen">
+<!ENTITY offlineFolder.check.accesskey           "O">
+<!ENTITY offlineFolder.button.label              "Jetzt herunterladen">
+<!ENTITY offlineFolder.button.accesskey          "J">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Diese Newsgruppe zum Offline-Lesen auswählen">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "N">
+<!ENTITY offlineNewsgroup.button.label           "Jetzt herunterladen">
+<!ENTITY offlineNewsgroup.button.accesskey       "h">
+
+<!ENTITY folderProps.name.label                  "Name des Ordners:">
+<!ENTITY folderProps.name.accesskey              "O">
+<!ENTITY folderProps.color.label                 "Symbolfarbe:">
+<!ENTITY folderProps.color.accesskey             "S">
+<!ENTITY folderProps.reset.tooltip               "Standardfarbe wiederherstellen">
+<!ENTITY folderProps.location.label              "Adresse:">
+<!ENTITY folderProps.location.accesskey          "A">
+
+<!ENTITY folderSharingTab.label                  "Freigabe">
+<!ENTITY privileges.button.label                 "Berechtigungen…">
+<!ENTITY privileges.button.accesskey             "B">
+<!ENTITY permissionsDesc.label                   "Sie haben folgende Berechtigungen:">
+<!ENTITY folderOtherUsers.label                  "Andere Personen mit Zugang zu diesem Ordner:">
+<!ENTITY folderType.label                        "Ordnertyp:">
+
+<!ENTITY folderQuotaTab.label                    "Kontingent">
+<!ENTITY folderQuotaUsage.label                  "Belegung:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Anzahl der Nachrichten:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "unbekannt">
+<!ENTITY sizeOnDisk.label                        "Größe auf Datenträger:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "unbekannt">

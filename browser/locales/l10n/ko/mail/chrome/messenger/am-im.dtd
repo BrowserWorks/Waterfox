@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "계정 정보">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "일반">
+<!ENTITY account.advanced              "상세 옵션">
+<!ENTITY account.name                  "사용자명:">
+<!ENTITY account.password              "비밀번호:">
+<!ENTITY account.alias                 "닉네임:">
+<!ENTITY account.newMailNotification   "새로인 메일 도착 알림">
+<!ENTITY account.autojoin              "자동 참여 채널:">
+<!ENTITY account.proxySettings.caption "프록시 설정:">
+<!ENTITY account.proxySettings.change.label     "바꾸기…">
+<!ENTITY account.proxySettings.change.accessKey "C">

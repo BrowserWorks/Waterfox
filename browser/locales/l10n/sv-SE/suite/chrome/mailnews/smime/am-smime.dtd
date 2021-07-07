@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Säkerhet">
+<!ENTITY securityTab.label "Säkerhet">
+<!ENTITY securityHeading.label "För att kunna skicka och ta emot signerade eller krypterade meddelanden bör du ange både ett signeringscertifikat och ett krypteringscertifikat.">
+<!ENTITY encryptionGroupTitle.label "Kryptering">
+<!ENTITY encryptionChoiceLabel.label "Förvald krypteringsinställning när meddelanden skickas:">
+<!ENTITY neverEncrypt.label "Aldrig (använder inte kryptering)">
+<!ENTITY neverEncrypt.accesskey "A">
+<!ENTITY alwaysEncryptMessage.label "Erfordras (kan inte skickas såvida inte alla mottagare har certifikat)">
+<!ENTITY alwaysEncryptMessage.accesskey "f">
+<!ENTITY encryptionCert.message "Använd detta certifikat för att kryptera och dekryptera meddelanden till dig:">
+<!ENTITY digitalSign.certificate.button "Välj…">
+<!ENTITY digitalSign.certificate.accesskey "V">
+<!ENTITY digitalSign.certificate_clear.button "Rensa">
+<!ENTITY digitalSign.certificate_clear.accesskey "R">
+<!ENTITY encryption.certificate.button "Välj…">
+<!ENTITY encryption.certificate.accesskey "ä">
+<!ENTITY encryption.certificate_clear.button "Rensa">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Elektronisk signering">
+<!ENTITY signMessage.label "Signera meddelanden (som förval)">
+<!ENTITY signMessage.accesskey "S">
+<!ENTITY signingCert.message "Använd detta certifikat för att signera meddelanden du skickar:">
+
+<!ENTITY certificates.label "Certifikat">
+<!ENTITY manageCerts2.label "Hantera certifikat…">
+<!ENTITY manageCerts2.accesskey "H">
+<!ENTITY manageDevices.label "Hantera säkerhetsenheter…">
+<!ENTITY manageDevices.accesskey "k">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Välj certifikat">
+<!ENTITY certPicker.info  "Certifikat:">
+<!ENTITY certPicker.detailsLabel "Detaljer för valt certifikat:">

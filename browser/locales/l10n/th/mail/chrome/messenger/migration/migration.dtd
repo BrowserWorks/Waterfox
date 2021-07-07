@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "ตัวช่วยนำเข้า">
+
+<!ENTITY importFromWin.label            "นำเข้าตัวเลือก การตั้งค่าบัญชี สมุดรายชื่อ ตัวกรองและข้อมูลอื่น ๆ จาก:">
+<!ENTITY importFromNonWin.label         "นำเข้าค่ากำหนด การตั้งค่าบัญชี สมุดรายชื่อ ตัวกรองและข้อมูลอื่น ๆ จาก:">
+<!ENTITY importSourceNotFound.label     "ไม่พบแอปพลิเคชันที่จะนำเข้าข้อมูล">
+
+<!ENTITY importFromNothing.label        "ไม่นำเข้าสิ่งใด">
+<!ENTITY importFromNothing.accesskey    "ม">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 หรือใหม่กว่า">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "นำเข้าการตั้งค่าและโฟลเดอร์จดหมาย">
+<!ENTITY importItems.title              "รายการที่จะนำเข้า">
+<!ENTITY importItems.label              "เลือกรายการที่จะนำเข้า:">
+
+<!ENTITY migrating.title                "กำลังนำเข้า…">
+<!ENTITY migrating.label                "รายการดังต่อไปนี้กำลังถูกนำเข้า…">
+
+<!ENTITY selectProfile.title            "เลือกโปรไฟล์">
+<!ENTITY selectProfile.label            "โปรไฟล์ดังต่อไปนี้พร้อมที่จะนำเข้า:">
+
+<!ENTITY done.title                     "การนำเข้าเสร็จสมบูรณ์">
+<!ENTITY done.label                     "รายการดังต่อไปนี้ถูกนำเข้าได้สำเร็จ:">

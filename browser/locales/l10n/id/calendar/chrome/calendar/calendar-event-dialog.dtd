@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Sunting Item" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Jangan ubah durasi saat mengubah tanggal akhir">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Dari" >
+<!ENTITY newevent.to.label                  "Ke" >
+
+<!ENTITY newevent.status.label                    "Status" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Tidak Ditentukan" >
+<!ENTITY newevent.eventStatus.none.accesskey      "T" >
+<!ENTITY newevent.todoStatus.none.label           "Tidak Ditentukan" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Dibatalkan" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "b" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Dibatalkan" >
+<!ENTITY newevent.status.tentative.label          "Tentatif" >
+<!ENTITY newevent.status.tentative.accesskey      "f" >
+<!ENTITY newevent.status.confirmed.label          "Telah Dikonfirmasi" >
+<!ENTITY newevent.status.confirmed.accesskey      "k" >
+<!ENTITY newevent.status.needsaction.label        "Butuh Tindakan" >
+<!ENTITY newevent.status.inprogress.label         "Dalam Proses" >
+<!ENTITY newevent.status.completed.label          "Selesai pada" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; selesai">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Beri tahu peserta">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "Undangan terpisah untuk masing-masing peserta">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Opsi ini mengirimkan satu surel undangan per peserta. Tiap undangan hanya berisi penerima bersangkutan sehingga identitas peserta lainnya tidak ditampilkan.">
+<!ENTITY event.attendees.disallowcounter.label       "Larang penghitung">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Menunjukkan bahwa Anda tidak akan menerima proposal tandingan">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "l">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Baru">
+<!ENTITY  event.menu.item.new.accesskey                   "B">
+<!ENTITY  event.menu.item.new.event.label                 "Acara">
+<!ENTITY  event.menu.item.new.event.accesskey             "A">
+<!ENTITY  event.menu.item.new.task.label                  "Tugas">
+<!ENTITY  event.menu.item.new.task.accesskey              "T">
+<!ENTITY  event.menu.item.new.message.label               "Pesan">
+<!ENTITY  event.menu.item.new.message.accesskey           "P">
+<!ENTITY  event.menu.item.new.contact.label               "Buka Alamat dan Kontak">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "Tutup">
+<!ENTITY  event.menu.item.close.accesskey                 "T">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Simpan">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Simpan dan Tutup">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "m">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Hapus…">
+<!ENTITY  event.menu.item.delete.accesskey                "H">
+<!ENTITY  event.menu.item.page.setup.label                "Tata Laman">
+<!ENTITY  event.menu.item.page.setup.accesskey            "L">
+<!ENTITY  event.menu.item.print.label                     "Cetak">
+<!ENTITY  event.menu.item.print.accesskey                 "C">
+
+<!ENTITY  event.menu.edit.label                           "Sunting">
+<!ENTITY  event.menu.edit.accesskey                       "S">
+<!ENTITY  event.menu.edit.undo.label                      "Batal">
+<!ENTITY  event.menu.edit.undo.accesskey                  "B">
+<!ENTITY  event.menu.edit.redo.label                      "Ulang">
+<!ENTITY  event.menu.edit.redo.accesskey                  "U">
+<!ENTITY  event.menu.edit.cut.label                       "Potong">
+<!ENTITY  event.menu.edit.cut.accesskey                   "P">
+<!ENTITY  event.menu.edit.copy.label                      "Salin">
+<!ENTITY  event.menu.edit.copy.accesskey                  "S">
+<!ENTITY  event.menu.edit.paste.label                     "Tempel">
+<!ENTITY  event.menu.edit.paste.accesskey                 "T">
+<!ENTITY  event.menu.edit.select.all.label                "Pilih Semua">
+<!ENTITY  event.menu.edit.select.all.accesskey            "a">
+
+<!ENTITY  event.menu.view.label                           "Tampilan">
+<!ENTITY  event.menu.view.accesskey                       "T">
+<!ENTITY  event.menu.view.toolbars.label                  "Bilah Alat">
+<!ENTITY  event.menu.view.toolbars.accesskey              "t">
+<!ENTITY  event.menu.view.toolbars.event.label            "Bilah Aksi">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "B">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Ubahsuai…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "U">
+<!ENTITY  event.menu.view.showlink.label                  "Tampilkan Tautan Terkait">
+<!ENTITY  event.menu.view.showlink.accesskey              "T">
+
+<!ENTITY  event.menu.options.label                            "Opsi">
+<!ENTITY  event.menu.options.accesskey                        "O">
+<!ENTITY  event.menu.options.attendees.label                  "Undang Peserta…">
+<!ENTITY  event.menu.options.attendees.accesskey              "U">
+<!ENTITY  event.menu.options.timezone2.label                  "Tampilkan Zona Waktu">
+<!ENTITY  event.menu.options.timezone2.accesskey              "Z">
+<!ENTITY  event.menu.options.priority2.label                  "Prioritas">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Tidak Ditentukan">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "T">
+<!ENTITY  event.menu.options.priority.low.label               "Rendah">
+<!ENTITY  event.menu.options.priority.low.accesskey           "R">
+<!ENTITY  event.menu.options.priority.normal.label            "Normal">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Tinggi">
+<!ENTITY  event.menu.options.priority.high.accesskey          "T">
+<!ENTITY  event.menu.options.privacy.label                    "Privasi">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "Acara untuk Umum">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "u">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Tampilkan Waktu dan Tanggal Saja">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "S">
+<!ENTITY  event.menu.options.privacy.private.label            "Acara Pribadi">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "P">
+<!ENTITY  event.menu.options.show.time.label                  "Tampilkan Waktu sebagai">
+<!ENTITY  event.menu.options.show.time.accesskey              "T">
+<!ENTITY  event.menu.options.show.time.busy.label             "Sibuk">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "S">
+<!ENTITY  event.menu.options.show.time.free.label             "Bebas">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "B">
+
+<!ENTITY event.invite.attendees.label                     "Undang Peserta…">
+<!ENTITY event.invite.attendees.accesskey                 "U">
+<!ENTITY event.email.attendees.label                      "Buat Surel untuk Semua Peserta…">
+<!ENTITY event.email.attendees.accesskey                  "S">
+<!ENTITY event.email.tentative.attendees.label            "Buat Surel untuk Peserta yang Belum Pasti…">
+<!ENTITY event.email.tentative.attendees.accesskey        "P">
+<!ENTITY event.remove.attendees.label2                    "Hapus semua peserta">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Hapus peserta">
+<!ENTITY event.remove.attendee.accesskey                  "a">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Simpan">
+<!ENTITY  event.toolbar.saveandclose.label                "Simpan dan Tutup">
+<!ENTITY  event.toolbar.delete.label                      "Hapus">
+<!ENTITY  event.toolbar.attendees.label                   "Undang Peserta">
+<!ENTITY  event.toolbar.privacy.label                     "Privasi">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Simpan">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Simpan dan Tutup">
+<!ENTITY  event.toolbar.delete.tooltip                    "Hapus">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Undang Peserta">
+<!ENTITY  event.toolbar.attachments.tooltip               "Tambahkan Lampiran">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Ubah Privasi">
+<!ENTITY  event.toolbar.priority.tooltip                  "Ubah Prioritas">
+<!ENTITY  event.toolbar.status.tooltip                    "Ubah Status">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Ubah waktu Bebas/Sibuk ">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Terapkan proposal">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Kolom acara akan diisi menggunakan nilai dari proposal bandingan, hanya menyimpan dengan atau tanpa perubahan tambahan akan memberi tahu semua peserta terkait">
+<!ENTITY counter.button.original.label                    "Terapkan data asli">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Kolom akan diatur ke nilai dari acara asal, sebelum proposal tandingan dibuat.">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Judul:" >
+<!ENTITY event.title.textbox.accesskey                    "J">
+<!ENTITY event.location.label                             "Lokasi:" >
+<!ENTITY event.location.accesskey                         "L">
+<!ENTITY event.categories.label                           "Kategori:">
+<!ENTITY event.categories.accesskey                       "K">
+<!ENTITY event.categories.textbox.label                   "Tambah kategori baru" >
+<!ENTITY event.calendar.label                             "Kalender:" >
+<!ENTITY event.calendar.accesskey                         "K">
+<!ENTITY event.attendees.label                            "Peserta:" >
+<!ENTITY event.attendees.accesskey                        "n">
+<!ENTITY event.alldayevent.label                          "Acara Seharian" >
+<!ENTITY event.alldayevent.accesskey                      "S">
+<!ENTITY event.from.label                                 "Mulai:" >
+<!ENTITY event.from.accesskey                             "M">
+<!ENTITY task.from.label                                  "Mulai:" >
+<!ENTITY task.from.accesskey                              "M">
+<!ENTITY event.to.label                                   "Akhir:" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "Jatuh Tempo:" >
+<!ENTITY task.to.accesskey                                "o">
+<!ENTITY task.status.label                                "Status:" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "Perulangan:" >
+<!ENTITY event.repeat.accesskey                           "r">
+<!ENTITY event.until.label                                "Sampai:">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "Alarm:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Deskripsi:" >
+<!ENTITY event.description.accesskey                      "p">
+<!ENTITY event.attachments.label                          "Lampiran:" >
+<!ENTITY event.attachments.accesskey                      "L" >
+<!ENTITY event.attachments.menubutton.label               "Lampirkan">
+<!ENTITY event.attachments.menubutton.accesskey           "a">
+<!ENTITY event.attachments.url.label                      "Halaman Web...">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "Hapus" >
+<!ENTITY event.attachments.popup.remove.accesskey         "H" >
+<!ENTITY event.attachments.popup.open.label               "Buka" >
+<!ENTITY event.attachments.popup.open.accesskey           "B" >
+<!ENTITY event.attachments.popup.removeAll.label          "Hapus Semua" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "a" >
+<!ENTITY event.attachments.popup.attachPage.label         "Lampirkan Laman Web…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "g" >
+<!ENTITY event.url.label                                  "Tautan Terkait:" >
+<!ENTITY event.priority2.label                            "Prioritas:">
+
+<!ENTITY event.reminder.none.label                        "Tidak ada pengingat " >
+<!ENTITY event.reminder.0minutes.before.label             "0 menit sebelumnya" >
+<!ENTITY event.reminder.5minutes.before.label             "5 menit sebelumnya" >
+<!ENTITY event.reminder.15minutes.before.label            "15 menit sebelumnya" >
+<!ENTITY event.reminder.30minutes.before.label            "30 menit sebelumnya" >
+<!ENTITY event.reminder.1hour.before.label                "1 jam sebelumnya" >
+<!ENTITY event.reminder.2hours.before.label               "2 jam sebelumnya" >
+<!ENTITY event.reminder.12hours.before.label              "12 jam sebelumnya" >
+<!ENTITY event.reminder.1day.before.label                 "1 hari sebelumnya" >
+<!ENTITY event.reminder.2days.before.label                "2 hari sebelumnya" >
+<!ENTITY event.reminder.1week.before.label                "1 minggu sebelumnya" >
+<!ENTITY event.reminder.custom.label                      "Ubahsuai…" >
+
+<!ENTITY event.reminder.multiple.label                    "Pengingat Berganda…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Waktu sebagai:">
+<!ENTITY event.statusbarpanel.privacy.label               "Privasi:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Ubah Perulangan">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Jangan diulangi">
+<!ENTITY event.repeat.daily.label                       "Harian">
+<!ENTITY event.repeat.weekly.label                      "Mingguan">
+<!ENTITY event.repeat.every.weekday.label               "Tiap Hari Kerja">
+<!ENTITY event.repeat.bi.weekly.label                   "2-Mingguan">
+<!ENTITY event.repeat.monthly.label                     "Bulanan">
+<!ENTITY event.repeat.yearly.label                      "Tahunan">
+<!ENTITY event.repeat.custom.label                      "Ubahsuai…">
+
+<!ENTITY event.recurrence.pattern.label                 "Pola perulangan">
+<!ENTITY event.recurrence.occurs.label                  "Ulang" >
+<!ENTITY event.recurrence.day.label                     "harian" >
+<!ENTITY event.recurrence.week.label                    "mingguan" >
+<!ENTITY event.recurrence.month.label                   "bulanan" >
+<!ENTITY event.recurrence.year.label                    "tahunan" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Tiap" >
+<!ENTITY repeat.units.days.both                         "Hari" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Tiap hari kerja" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Tiap" >
+<!ENTITY repeat.units.weeks.both                        "Minggu" >
+<!ENTITY event.recurrence.on.label                      "Pada:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Tiap" >
+<!ENTITY repeat.units.months.both                       "Bulan" >
+<!ENTITY event.recurrence.monthly.every.label           "Tiap" >
+<!ENTITY event.recurrence.monthly.first.label           "Pertama">
+<!ENTITY event.recurrence.monthly.second.label          "Kedua">
+<!ENTITY event.recurrence.monthly.third.label           "Ketiga">
+<!ENTITY event.recurrence.monthly.fourth.label          "Keempat">
+<!ENTITY event.recurrence.monthly.fifth.label           "Kelima">
+<!ENTITY event.recurrence.monthly.last.label            "Terakhir">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Minggu" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Senin" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Selasa" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Rabu" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Kamis" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Jumat" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Sabtu" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Hari dalam sebulan">
+<!ENTITY event.recurrence.repeat.recur.label            "Berulang pada hari">
+
+<!ENTITY event.recurrence.every.label                        "Tiap:" >
+<!ENTITY repeat.units.years.both                             "Tahun" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Tiap" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Januari" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Februari" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Maret" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "April" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Mei" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Juni" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Juli" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Agustus" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "September" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Oktober" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "November" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Desember" >
+<!ENTITY event.recurrence.yearly.every.label                 "Tiap">
+<!ENTITY event.recurrence.yearly.first.label                 "Pertama">
+<!ENTITY event.recurrence.yearly.second.label                "Kedua">
+<!ENTITY event.recurrence.yearly.third.label                 "Ketiga">
+<!ENTITY event.recurrence.yearly.fourth.label                "Keempat">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Kelima">
+<!ENTITY event.recurrence.yearly.last.label                  "Terakhir">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Minggu" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Senin" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Selasa" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Rabu" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Kamis" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Jumat" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Sabtu" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "hari" >
+<!ENTITY event.recurrence.of.label                           "dari" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Januari" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Februari" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Maret" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "April" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Mei" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Juni" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Juli" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Agustus" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "September" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Oktober" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "November" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Desember" >
+
+<!ENTITY event.recurrence.range.label                   "Jangka waktu perulangan">
+<!ENTITY event.recurrence.forever.label                 "Tidak berakhir" >
+<!ENTITY event.recurrence.repeat.for.label              "Buat" >
+<!ENTITY event.recurrence.appointments.label            "Janji" >
+<!ENTITY event.repeat.until.label                       "Ulang hingga" >
+<!ENTITY event.recurrence.preview.label                 "Pratinjau">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Undang Peserta">
+<!ENTITY event.organizer.label                  "Penyelenggara">
+<!ENTITY event.freebusy.suggest.slot            "Sarankan rentang waktu:">
+<!ENTITY event.freebusy.button.next.slot        "Slot selanjutnya">
+<!ENTITY event.freebusy.button.previous.slot    "Slot sebelumnya">
+<!ENTITY event.freebusy.zoom                    "Perbesaran:">
+<!ENTITY event.freebusy.legend.free             "Bebas" >
+<!ENTITY event.freebusy.legend.busy             "Sibuk" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Tentatif" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Tidak di Kantor" >
+<!ENTITY event.freebusy.legend.unknown          "Tidak ada keterangan" >
+<!ENTITY event.attendee.role.required           "Undangan Wajib">
+<!ENTITY event.attendee.role.optional           "Undangan Opsional">
+<!ENTITY event.attendee.role.chair              "Pimpinan">
+<!ENTITY event.attendee.role.nonparticipant     "Bukan Peserta">
+<!ENTITY event.attendee.usertype.individual     "Pribadi">
+<!ENTITY event.attendee.usertype.group          "Grup">
+<!ENTITY event.attendee.usertype.resource       "Sumber Daya">
+<!ENTITY event.attendee.usertype.room           "Ruangan">
+<!ENTITY event.attendee.usertype.unknown        "Tidak diketahui">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Tentukan Zona Waktu">
+<!ENTITY event.timezone.custom.label     "Zona Waktu Lainnya…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Umum">
+<!ENTITY read.only.title.label           "Judul:">
+<!ENTITY read.only.calendar.label        "Kalender:">
+<!ENTITY read.only.event.start.label     "Tanggal Mulai:">
+<!ENTITY read.only.task.start.label      "Tanggal Mulai:">
+<!ENTITY read.only.event.end.label       "Tanggal Selesai:">
+<!ENTITY read.only.task.due.label        "Tanggal Berakhir:">
+<!ENTITY read.only.repeat.label          "Perulangan:">
+<!ENTITY read.only.location.label        "Lokasi:">
+<!ENTITY read.only.category.label        "Kategori:">
+<!ENTITY read.only.organizer.label       "Penyelenggara:">
+<!ENTITY read.only.reminder.label        "Pengingat:">
+<!ENTITY read.only.attachments.label     "Lampiran:">
+<!ENTITY read.only.attendees.label       "Undangan">
+<!ENTITY read.only.description.label     "Keterangan">
+<!ENTITY read.only.link.label            "Tautan terkait">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Simpan dan Tutup">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Simpan perubahan dan tutup jendela tanpa mengubah status keikutsertaan dan mengirim tanggapan">
+<!ENTITY summary.dialog.accept.label            "Terima">
+<!ENTITY summary.dialog.accept.tooltiptext      "Menerima undangan">
+<!ENTITY summary.dialog.tentative.label         "Tentatif">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Menerima undangan secara tentatif">
+<!ENTITY summary.dialog.decline.label           "Tolak">
+<!ENTITY summary.dialog.decline.tooltiptext     "Menolak undangan">
+<!ENTITY summary.dialog.dontsend.label          "Jangan kirim tanggapan">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Ubah status keikutsertaan tanpa mengirim balasan kepada penyelenggara dan tutup jendela">
+<!ENTITY summary.dialog.send.label              "Kirim tanggapan sekarang">
+<!ENTITY summary.dialog.send.tooltiptext        "Kirimkan tanggapan pada penyelenggara  dan tutup jendela">

@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+    - License, v. 2.0. If a copy of the MPL was not distributed with this
+    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > %brandDTD;]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Praca z książkami adresowymi</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="using_address_books">Praca z książkami adresowymi</h1>
+
+<div class="contentsBox">W tym rozdziale opisano:
+  <ul>
+    <li><a href="#about_address_books">Książki adresowe &mdash; wprowadzenie</a></li>
+    <li><a href="#adding_entries_to_your_address_books">Dodawanie wpisów do Książki adresowej</a></li>
+    <li><a href="#creating_a_new_address_book">Tworzenie nowej książki adresowej</a></li>
+    <li><a href="#creating_a_new_address_book_card">Tworzenie nowej wizytówki w książce adresowej</a></li>
+    <li><a href="#creating_a_mailing_list">Tworzenie listy dystrybucyjnej</a></li>
+    <li><a href="#editing_a_mailing_list">Edycja listy dystrybucyjnej</a></li>
+    <li><a href="#searching_address_books_and_directories">Przeszukiwanie książek adresowych i katalogów</a></li>
+    <li><a href="#importing_address_books">Importowanie książek adresowych</a></li>
+    <li><a href="#exporting_address_books">Eksportowanie książek adresowych</a></li>
+    <li><a href="#adding_and_removing_ldap_directories">Dodawanie i usuwanie katalogów LDAP</a></li>
+  </ul>
+</div>
+
+<h2 id="about_address_books">Książki adresowe &mdash; wprowadzenie</h2>
+
+<p>W książkach adresowych przechowywane są informacje takie jak adresy e-mail, dane osobowe, numery telefonów itp. dotyczące osób, do których często wysyłane są wiadomości. Kurier Poczty posiada wbudowane dwie książki adresowe: Osobistą książkę adresową oraz Zebrane adresy. Ponadto można utworzyć dowolną ilość własnych książek adresowych. Zawartość wszystkich książek przechowywana jest lokalnie na dysku komputera.</p>
+
+<p>Książka adresowa może również zawierać adresy z serwera usług katalogowych LDAP. Serwer katalogowy przechowuje adresy osób, których nie ma w lokalnych książkach adresowych. Protokół LDAP (Lightweight Directory Access Protocol) służy do dostępu do usług katalogowych (takich jak firmowe książki adresowe) poprzez sieć lokalną lub Internet.</p>
+
+<h4>Osobista książka adresowa</h4>
+
+<p>W Osobistej książce adresowej można zapisywać dane adresatów lub importować dane z książek adresowych w innych programach. Możliwe jest tworzenie list wysyłkowych oraz edycja danych poszczególnych odbiorców.</p>
+
+<h4>Zebrane adresy</h4>
+
+<p>Do książki adresowej Zebrane adresy automatycznie dodawane są adresy zawarte w wysyłanych wiadomościach. Adresy z wiadomości wysyłanych dodawane są zaraz po naciśnięciu przycisku Wyślij.</p>
+
+<h4>Usługi katalogowe LDAP (jeżeli dostępne)</h4>
+
+<p>Usługa katalogowa LDAP (nazywana często usługą wyszukiwania adresów) umożliwia dostęp do adresów odbiorców, których dane nie są przechowywane w lokalnych    książkach adresowych. Usługa katalogowa LDAP udostępnia duże, centralnie zarządzane bazy danych adresowych, które są szczególnie przydatne przy wykorzystywaniu funkcji 
+<a href="#address_autocompletion">autouzupełniania adresów</a>.</p>
+
+<p>Automatyczne zbieranie adresów jest domyślnie włączone. Aby zmienić ustawienia dla zbierania adresów, należy:</p>
+
+<ol>
+	<li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Adresowanie. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+  <li>W polu Zbieranie adresów e-mail należy odznaczyć opcję <q>Dodawaj adresy do książki adresowej</q> i wybrać książkę adresową, w której zebrane adresy będą zachowywane:
+    <ul>
+      <li>Osobista książka adresowa.</li>
+      <li>Zebrane adresy.</li>
+    </ul>
+  </li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<h4>Otwieranie Książki adresowej</h4>
+
+<p>Aby otworzyć Książkę adresową, należy:</p>
+
+<ul>
+  <li>Z menu Okno wybrać Książka adresowa lub nacisnąć ikonkę Książki adresowej na pasku komponentów w lewym dolnym rogu okna &brandShortName;.
+
+    <table>
+      <tr>
+        <td colspan="2"><img src="images/taskbar-ab.png" alt=""/></td>
+      </tr>
+      <tr>
+        <td style="width: 80px;"></td>
+        <td><strong>Ikona Książki adresowej</strong></td>
+      </tr>
+    </table>
+  </li>
+</ul>
+
+<h4>Zmiana wyglądu głównego okna Książki adresowej</h4>
+
+<p>Aby dostosować wygląd okna Książki adresowej oraz wizytówek, należy:</p>
+
+<ol>
+  <li>Z menu Okno wybrać Książka adresowa. Zostanie wyświetlone okno Książki adresowej.</li>
+  <li>Z menu Widok okna Książka adresowa wybrać jedną z poniższych opcji:
+    <ul>
+      <li>Wybrać Pokaż/Ukryj, aby włączyć lub wyłączyć wyświetlanie elementów okna Książka adresowa.</li>
+      <li>Wybrać Pokaż nazwę jako, aby określić sposób wyświetlania danych z książek adresowych (Imię Nazwisko, Nazwisko, Imię lub zawartość pola wizytówki Pokazuj jako).</li>
+      <li>Wybrać Sortuj według, aby określić klucz sortowania wpisów w książkach.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="adding_entries_to_your_address_books">Dodawanie wpisów do Książki adresowej</h2>
+
+<p>Aby dodać nowy wpis do wybranej książki adresowej, można skorzystać z następujących sposobów:</p>
+
+<ul>
+  <li>Kliknąć na dowolnym polu zawierającym adres e-mail w nagłówku otrzymanej wiadomości i wybrać pozycję <q>Dodaj adres do książki adresowej</q>.</li>
+  <li>Skorzystać z przycisku <q>Nowa wizytówka</q> na pasku narzędzi okna Książki adresowej.</li>
+  <li>Wysłać wiadomość, co spowoduje automatyczne dodanie adresu nadawcy do książki adresowej Zebrane adresy.</li>
+ <li>Kopiować i przenosić adresy za pomocą przeciągania myszą w oknie Książka adresowa.</li>
+</ul>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="creating_a_new_address_book">Tworzenie nowej książki adresowej</h2>
+
+<p>Kurier Poczty posiada wbudowaną Osobistą książkę adresową, jednakże możliwe jest tworzenie własnych książek adresowych.</p>
+
+<p>Aby utworzyć nową książkę adresową, należy:</p>
+
+<ol>
+  <li>Nacisnąć ikonkę Książki adresowej na pasku komponentów w lewym dolnym rogu okna &brandShortName; lub z menu Okno wybrać Książka adresowa. Wyświetlone zostanie okno Książka adresowa.
+
+    <table>
+      <tr>
+        <td colspan="2"><img src="images/taskbar-ab.png" alt=""/></td>
+      </tr>
+      <tr>
+        <td style="width: 80px;"></td>
+        <td><strong>Ikona Książki adresowej</strong></td>
+      </tr>
+    </table>
+  </li>
+  <li>W oknie książki adresowej z menu Plik wybrać Nowy i wskazać Książka adresowa.</li>
+  <li>Wpisać nazwę książki adresowej i nacisnąć przycisk OK.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="creating_a_new_address_book_card">Tworzenie nowej wizytówki w książce adresowej</h2>
+
+<p>Wszystkie informacje o adresatach, takie jak nazwy, adresy pocztowe, adresy e-mail, numery telefonów itp. oraz preferencje dotyczące formatu otrzymywanych wiadomości są przechowywane w postaci wizytówek.</p>
+
+<p>Aby utworzyć nową wizytówkę w książce adresowej, należy:</p>
+
+<ol>
+  <li>W oknie książki adresowej z menu Plik wybrać Nowy i wskazać Książka adresowa.</li>
+	<li>Nacisnąć przycisk Nowa wizytówka na pasku narzędzi. W przypadku, gdy użytkownik posiada więcej książek adresowych, należy uprzednio wybrać jedną z nich.</li>
+  <li>Okno tworzenia wizytówki ma trzy karty:
+    <ul>
+      <li><strong>Kontakt</strong> służy do wprowadzenia następujących danych:
+        <ul>
+          <li>Imię i Nazwisko - imię i nazwisko adresata, jakie zostanie wyświetlone w książce adresowej.</li>
+          <li>Pokazuj jako - wprowadzona nazwa będzie wyświetlana w polu Do: wysyłanych wiadomości.</li>
+          <li>Pseudonim - skrócona nazwa lub alias prawdziwego imienia.</li>
+          <li>Adresy e-mail - podstawowy i dodatkowy adres e-mail.</li>
+          <li>Preferowany format otrzymywanych wiadomości - jeżeli wiadomo, że adresat może otrzymywać wiadomości HTML (zawierające sformatowany tekst,  odnośniki, obrazki, tabele itp.), należy zaznaczyć format HTML. Jeżeli adresat może odczytywać wyłącznie wiadomości nie zawierające formatowania lub wysyłanie wiadomości HTML nie jest pożądane, należy zaznaczyć format Tekstowy. Jeżeli preferencje adresata dotyczące  otrzymywanych wiadomości nie są znane, należy pozostawić format Nieznany. W takim  przypadku Kurier Poczty dokona wyboru formatu wysyłanej wiadomości na podstawie ustawień w kategorii Format wiadomości okna Preferencji. Jeżeli  mimo to ustalenie pożądanego formatu nie powiedzie się, Kurier Poczty wyświetli okno dialogowe, w którym będzie możliwy wybór formatu wysyłanej wiadomości.</li>
+          <li>Zezwalaj na zdalne obrazki w wiadomościach HTML - użytkownik może zezwolić na to, aby treść wiadomości przechowywana na zdalnych serwerach była wyświetlana w oknie wiadomości.</li>
+          <li>Komunikator - nazwa kontaktu w komunikatorze.</li>
+          <li>Numery telefonów - można wprowadzić numery telefonów adresata.</li>
+        </ul>
+      </li>
+      <li><strong>Adres</strong> służy do wprowadzenia dodatkowych informacji, takich jak adres domowy i służbowy lub adres strony WWW.
+        <p><strong>Wskazówka</strong>: w przypadku podania adresu, Kurier Poczty pokazuje w polu podglądu zawartości wizytówki przycisk Pokaż mapę, którego naciśnięcie wyświetla w przeglądarce mapę z zaznaczonym adresem. Pokazywane są tylko adresy z USA.</p>
+      </li>
+      <li><strong>Inne</strong>: służy do wprowadzenia dowolnych dodatkowych informacji.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Wskazówka</strong>: aby szybko wprowadzić adresy e-mail do książki adresowej, należy nacisnąć prawym przyciskiem myszy na adresie lub nazwie nadawcy w nagłówku wiadomości, a następnie wybrać Dodaj do książki adresowej z menu kontekstowego. Zostanie wyświetlone okno Dodaj nową wizytówkę, gdzie można wprowadzić wszystkie  dodatkowe informacje.</p>
+
+<h3 id="viewing_or_editing_card_properties">Podgląd i edycja wizytówek</h3>
+
+<p>Aby wyświetlić lub zmienić dane na wizytówce, należy:</p>
+<ol>
+  <li>Zaznaczyć wpis na liście w oknie głównym Książki adresowej.</li>
+  <li>Nacisnąć przycisk Właściwości na pasku narzędzi lub kliknąć dwukrotnie na wpisie.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="creating_a_mailing_list">Tworzenie listy dystrybucyjnej</h2>
+
+<p>Jeżeli regularnie wysyłasz wiadomości do pewnej grupy adresatów, możesz szybko adresować wiadomości używając listy dystrybucyjnej.</p>
+
+<p>Aby stworzyć listę dystrybucyjną i dodać ją do książki adresowej, należy:</p>
+
+<ol>
+  <li>W oknie książki adresowej nacisnąć przycisk Nowa lista dystrybucyjna na pasku narzędzi.</li>
+  <li>Podać następujące informacje w oknie tworzenia listy dystrybucyjnej:
+    <ul>
+      <li>Korzystając z rozwijanej listy <q>Dodaj do</q>, określić, w której książce adresowej ma być przechowywana tworzona lista dystrybucyjna.</li>
+      <li>Nazwa listy dystrybucyjnej. Kiedy w polu <q>Do</q> wiadomości zostanie wpisana nazwa listy, wiadomość zostanie zaadresowana do wszystkich osób znajdujących się na liście.</li>
+      <li>Pseudonim listy dystrybucyjnej: alias (lub skrót) nazwy listy dystrybucyjnej.</li>
+      <li>Opis: pojawia się za nazwą listy w linii adresu okna komponowania wiadomości.</li>
+    </ul>
+  </li>
+  <li>Podać adresy e-mail osób, które mają zostać dodane do listy dystrybucyjnej.</li>
+  <li>Potwierdzić, naciskając klawisz OK.</li>
+</ol>
+
+<p>Lista dystrybucyjna pojawia w lewej części okna książki adresowej, poniżej książki adresowej, do której została przypisana.</p>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="editing_a_mailing_list">Edycja listy dystrybucyjnej</h2>
+
+<p>Listy dystrybucyjne są przechowywane w książce adresowej, w której zostały utworzone.</p>
+
+<p>Aby usunąć adresata z listy, należy:</p>
+
+<ol>
+  <li>Z menu Okno wybrać Książka adresowa.</li>
+  <li>Rozwinąć zawartość książki adresowej zawierającej listę dystrybucyjną, klikając na ikonkę trójkąta po lewej stronie nazwy tej książki.</li>
+  <li>Wybrać listę dystrybucyjną, klikając jej nazwę. W panelu po prawej stronie zostanie wyświetlona lista wszystkich adresatów dołączonych do listy.</li>
+  <li>Wybrać nazwę adresata do usunięcia, klikając na nim.</li>
+  <li>Nacisnąć przycisk Usuń.</li>
+</ol>
+
+<p>Aby dodać adresata do listy dystrybucyjnej, należy:</p>
+
+<ol>
+  <li>Z menu Okno wybrać Książka adresowa.</li>
+  <li>Rozwinąć zawartość książki adresowej zawierającej listę dystrybucyjną, klikając na ikonkę trójkąta po lewej stronie nazwy tej książki.</li>
+  <li>Wybrać listę dystrybucyjną, klikając jej nazwę.</li>
+  <li>Wybrać Właściwości.</li>
+  <li>Dodać lub usunąć adresy w zależności od potrzeb.</li>
+  <li>Nacisnąć przycisk OK, aby zachować wprowadzone zmiany.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="searching_address_books_and_directories">Przeszukiwanie książek adresowych i katalogów</h2>
+
+<p>Kurier poczty &brandShortName; pozwala na szybkie wyszukiwanie w książkach adresowych lub katalogach według imienia, nazwiska, adresu e-mail lub kombinacji kryteriów.</p>
+
+<p>W celu szybkiego przeszukania książki adresowej lub katalogu, należy:</p>
+
+<ol>
+  <li>W oknie książki adresowej wybrać z listy książkę adresową lub katalog do przeszukania.</li>
+  <li>W polu <q>Imię, nazwisko lub e-mail zawiera</q> wprowadzić imię, nazwisko lub e-mail wyszukiwanego adresata. Można podać część imienia bądź adresu lub też dokładny tekst do wyszukania.
+
+    <p>Gdy zostanie zakończone wprowadzanie zapytania do paska wyszukiwania, Kurier Poczty wyświetli tylko pozycje zawierające zadaną do wyszukiwania frazę.</p>
+  </li>
+  <li>Aby wyczyścić wyszukiwany tekst i wyświetlić ponownie wszystkie pozycje, należy wybrać Wyczyść.</li>
+</ol>
+
+<h3 id="searching_for_specific_entries">Wyszukiwanie zaawansowane</h3>
+
+<p>Możliwe jest przeszukiwanie książek adresowych oraz katalogów w sposób bardziej złożony. W tym celu w oknie Książka adresowa należy:</p>
+
+<ol>
+  <li>Z menu narzędzia wybrać Wyszukaj adresy &mdash; powinno wyświetlić się okno zaawansowanego wyszukiwania.</li>
+  <li>Z rozwijanej listy przy <q>Szukaj w</q>, wybrać książkę adresową lub katalog do przeszukania.</li>
+  <li>Wybrać sposób, według którego Kurier Poczty będzie wyszukiwał zadane kryterium lub kryteria (może dopasowywać wszystkie lub dowolne z zadanej listy).</li>
+  <li>Nacisnąć przycisk z plusem, aby dodać nową regułę lub z minusem, aby usunąć.</li>
+  <li>Nacisnąć przycisk Szukaj, aby rozpocząć lub Wyczyść, aby zresetować wyszukiwanie.</li>
+  <li>Aby posortować wyniki w innym niż domyślny porządku, należy nacisnąć na nagłówek kolumny, według której ma zostać posortowana zawartość.</li>
+  <li>Aby wyświetlić wyszukaną wizytówkę, należy ją zaznaczyć i wybrać Właściwości.</li>
+  <li>Aby zredagować wiadomość do wybranych odbiorców, należy zaznaczyć ich wizytówki i nacisnąć przycisk Komponuj.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="importing_address_books">Importowanie książek adresowych</h2>
+
+<p>Kurier Poczty umożliwia importowanie książek adresowych z innych profili programu, wcześniejszych wersji Mozilli oraz Netscape, jak również innych programów pocztowych. Podczas importowania książek adresowych Kurier Poczty utworzy nową książkę adresową w celu przechowywania importowanych adresów. Podczas uaktualniania profilu &brandShortName; (np. poprzez instalację nowszej wersji programu) książka adresowa zostanie automatycznie dołączona i nie ma potrzeby jej importować.</p>
+
+<p>Możliwe jest importowanie książek adresowych z następujących programów pocztowych: Communicator, Netscape 6, Eudora, Outlook oraz Outlook Express. Ponadto możliwe jest importowanie książek adresowych w następujących formatach: pliki tekstowe z danymi oddzielonymi przecinkami lub znakami tabulacji oraz LDIF (format używany przez program Netscape Communicator). Podczas importu Kurier poczty tworzy nową książkę adresową z zaimportowanymi danymi.</p>
+
+<p>Możliwe jest także <a href="mailnews_getting_started.xhtml#importing_mail_from_other_programs">importowanie wiadomości pocztowych i ustawień</a> z programów: Communicator, Eudora, Outlook oraz Outlook Express.</p>
+
+<p>Aby zaimportować książkę adresową, należy w oknie Kuriera poczty:</p>
+
+<ol>
+  <li>Wybrać z menu Narzędzia Importuj. Zostanie otworzone okno Kreatora importu.</li>
+  <li>Następnie należy podążać za instrukcjami Kreatora importu.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="exporting_address_books">Eksportowanie książki adresowej</h2>
+
+<p>Możliwe jest wyeksportowanie książki adresowej &brandShortName; w celu późniejszego wykorzystania w innym profilu użytkownika, przeniesienia na inny komputer, czy wykorzystania w innym programie posiadającym możliwość importu książek adresowych. Eksport możliwy jest do następujących formatów: &brandShortName; (.ldif), pliki tekstowe, pliki z danymi oddzielonymi przecinkami (.csv) lub znakami tabulacji (.tab).</p>
+
+<p>Aby wyeksportować książkę adresową, należy przejść do okna Książki adresowej, a następnie:</p>
+
+<ol>
+  <li>Wybrać książkę adresową przeznaczoną do eksportu.</li>
+  <li>Z menu Narzędzia wybrać Eksportuj.</li>
+  <li>W oknie eksportu książki wskazać lokalizację dla tworzonych plików.</li>
+  <li>Wybrać format, w jakim ma zostać wyeksportowana książka (.ldif, dane rozdzielane przecinkami lub tabulatorami).</li>
+  <li>Podać nazwę dla książki adresowej. Należy pamiętać, aby podać poprawne rozszerzenie pliku (.ldif, .csv, .tab lub .txt).</li>
+  <li>Nacisnąć przycisk Zapisz.</li>
+</ol>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+<h2 id="adding_and_removing_ldap_directories">Dodawanie i usuwanie katalogów LDAP</h2>
+
+<p>Dodanie katalogu LDAP do książki adresowej daje możliwość wyszukiwania adresów e-mail i innych danych kontaktowych w nim zawartych. Umożliwia także autouzupełnianie adresów e-mail podczas adresowania wiadomości.</p>
+
+<p>Zazwyczaj dodawanie i usuwanie serwerów usług katalogowych powinno odbywać się zgodnie z instrukcjami administratora systemu, od którego należy uzyskać niezbędne dane serwera.</p>
+
+<p>Aby dodać nowy serwer usług katalogowych LDAP, należy w oknie Książka adresowa:</p>
+
+<ol>
+  <li>Z menu Plik wybrać Nowy, a następnie Katalog LDAP. Wyświetli się okno Właściwości serwera usług katalogowych.</li>
+  <li>W karcie Ogólne wprowadzić następujące informacje:
+    <ul>
+      <li><strong>Nazwa</strong> – nazwa serwisu usługi katalogowej (np. InfoSpace Directory).</li>
+      <li><strong>Nazwa Hosta</strong> – nazwa lub adres serwera udostępniającego usługę, np. ldap.infospace.com.</li>
+      <li><strong>Bazowy DN</strong> – kod kraju lub organizacji, ograniczający zakres wyszukiwania, np. c=PL ograniczy wyszukiwanie do danych z Polski. Za pomocą bazowego DN możliwe jest ograniczenie wyszukiwania do obrębu danej organizacji (np. o=Netscape Communications Corporation, c=US spowoduje, że wyszukiwane będą wyłącznie adresy firmy Netscape w Stanach Zjednoczonych). Aby pobrać z serwera informacje o Bazowym DN oraz wyświetlić listę dostępnych kodów, należy nacisnąć przycisk Znajdź.</li>
+      <li><strong>Numer Portu</strong> – numer portu, na którym udostępniony jest serwer usług katalogowych LDAP. Domyślnie jest to port numer 389.</li>
+      <li><strong>Serwer Bind DN</strong> – identyfikator używany w celu uwierzytelnienia (zalogowania) na serwerze LDAP. Jeżeli pole pozostanie puste, program spróbuje uwierzytelnić się anonimowo.</li>
+      <li><strong>Użyj szyfrowanego połączenia (SSL)</strong> – należy wybrać, jeżeli serwer LDAP obsługuje bezpieczne (szyfrowane) połączenia. W razie wątpliwości należy skontaktować się z administratorem systemu.</li>
+    </ul>
+  </li>
+  <li>Wybrać kartę Zaawansowane, aby ustawić dodatkowe opcje.</li>
+  <li>Należy wprowadzić następujące informacje:
+    <ul>
+      <li><strong>Nie zwracaj więcej niż _ wyników</strong>: to ustawienie pozwala na ograniczenie liczby adresów zwracanych podczas autouzupełniania adresu przez serwer usług katalogowych. Należy wprowadzić maksymalną ilość adresów e-mail do wyświetlenia podczas autouzupełniania.</li>
+      <li><strong>Obszar wyszukiwania</strong>: definiuje limity wyszukiwania. Należy wybrać jedną z poniższych opcji:
+        <ul>
+	      <li><strong>Jeden poziom</strong>: zwraca wyniki dopasowania pochodzące z wyszukiwania bazowego DN oraz jednego poziomu poniżej bazowego DN.</li>
+          <li><strong>Wszystkie poziomy</strong>: zwraca wyniki dopasowania pochodzące z wyszukiwania bazowego DN oraz wszystkich poziomów poniżej bazowego DN. Ten rodzaj wyszukiwania jest najmniej restrykcyjny.</li>
+        </ul>
+      </li>
+    <li><strong>Filtr wyszukiwania</strong>: w to pole można wprowadzić dodatkowy filtr, który zostanie zastosowany do wyników po uwzględnieniu maksymalnej liczby dopasowań.</li>
+    </ul>
+  </li>
+  <li>Nacisnąć przycisk OK, aby zamknąć okno Właściwości serwera usług katalogowych.</li>
+  <li>Nacisnąć przycisk OK, aby zamknąć okno Serwera usług katalogowych.</li>
+  <li>Nacisnąć przycisk OK, aby zamknąć okno ustawień.</li>
+</ol>
+
+<p>Dodany katalog pojawi się na liście książek adresowych w oknie książki adresowej.</p>
+
+<p>Aby usunąć katalog, należy:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="noMac">Edycja</span> <span class="mac">&brandShortName;</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Kurier Poczty wybrać Adresowanie. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty.</li>
+  <li>W polu autouzupełnianie adresu należy wybrać Edytuj katalogi.</li>
+  <li>W oknie dialogowym Serwery usług katalogowych LDAP wybrać serwer usług katalogowych, który ma zostać usunięty, a następnie nacisnąć przycisk Usuń.</li>
+  <li>Nacisnąć przycisk OK, aby zamknąć okno dialogowe właściwości serwera usług katalogowych.</li>
+</ol>
+
+<p>Informacje dotyczące pobierania lub synchronizowania katalogów w celu używania danych z nich w trybie offline tak, aby było możliwe wyszukiwanie czy autouzupełnianie adresów podczas gdy nie ma dostępu do sieci, są opisane w rozdziale <a href="mailnews_offline.xhtml#downloading_directory_entries_for_offline_use">Pobieranie wpisów katalogowych w celu użytkowania offline</a>.</p>
+
+<h3 id="directory_server_settings">Ustawienia serwera katalogów</h3>
+
+<p>W celu wyświetlenia okna ustawień serwera katalogów, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Okno wybrać Książka adresowa.</li>
+  <li>Z listy książek adresowych wybrać katalog.</li>
+  <li>Nacisnąć przycisk Właściwości.</li>
+</ol>
+
+<p><strong>Karta Ogólne</strong></p>
+
+<ul>
+  <li><strong>Nazwa</strong> – nazwa serwisu usługi katalogowej (np. InfoSpace Directory).</li>
+  <li><strong>Nazwa Hosta</strong> – nazwa lub adres serwera udostępniającego usługę, np. ldap.infospace.com.</li>
+  <li><strong>Bazowy DN</strong> – kod kraju lub organizacji, ograniczający zakres wyszukiwania, np. c=PL ograniczy wyszukiwanie do danych z Polski. Za pomocą bazowego DN możliwe jest ograniczenie wyszukiwania do obrębu danej organizacji (np. o=Netscape Communications Corporation, c=US spowoduje, że wyszukiwane będą wyłącznie adresy firmy Netscape w Stanach Zjednoczonych). Aby pobrać z serwera informacje o Bazowym DN oraz wyświetlić listę dostępnych kodów, należy nacisnąć przycisk Znajdź.</li>
+  <li><strong>Numer Portu</strong> – numer portu, na którym udostępniony jest serwer usług katalogowych LDAP. Domyślnie jest to port numer 389.</li>
+  <li><strong>Serwer Bind DN</strong> – identyfikator używany w celu uwierzytelnienia (zalogowania) na serwerze LDAP. Jeżeli pole pozostanie puste, program spróbuje uwierzytelnić się anonimowo.</li>
+  <li><strong>Użyj szyfrowanego połączenia (SSL)</strong> – należy wybrać, jeżeli serwer LDAP obsługuje bezpieczne (szyfrowane) połączenia. W razie wątpliwości należy skontaktować się z administratorem systemu.</li>
+</ul>
+
+<p><strong>Karta Zaawansowane</strong></p>
+
+<ul>
+  <li><strong>Nie zwracaj więcej niż _ wyników</strong>: to ustawienie pozwala na ograniczenie liczby adresów zwracanych podczas autouzupełniania adresu przez serwer usług katalogowych. Należy wprowadzić maksymalną ilość adresów e-mail do wyświetlenia podczas autouzupełniania.</li>
+  <li><strong>Obszar wyszukiwania</strong>: definiuje limity wyszukiwania. Należy wybrać jedną z poniższych opcji:
+    <ul>
+      <li><strong>Jeden poziom</strong>: zwraca wyniki dopasowania pochodzące z wyszukiwania bazowego DN oraz jednego poziomu poniżej bazowego DN.</li>
+      <li><strong>Wszystkie poziomy</strong>: zwraca wyniki dopasowania pochodzące z wyszukiwania bazowego DN oraz wszystkich poziomów poniżej bazowego DN. Ten rodzaj wyszukiwania jest najmniej restrykcyjny.</li>
+    </ul>
+  </li>
+  <li><strong>Filtr wyszukiwania</strong>: w to pole można wprowadzić dodatkowy filtr, który zostanie zastosowany do wyników po uwzględnieniu maksymalnej liczby dopasowań.</li>	
+</ul>
+
+<p>[<a href="#using_address_books">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label	"このサイトのポップアップウィンドウを自動的に閉じる">
+<!ENTITY popupWindowRejectCmd.accesskey	"o">
+<!ENTITY popupWindowAllowCmd.label	"このサイトのポップアップウィンドウを許可する">
+<!ENTITY popupWindowAllowCmd.accesskey	"o">
+<!ENTITY openLinkCmdInTab.label		"リンクを新しいタブで開く">
+<!ENTITY openLinkCmdInTab.accesskey	"T">
+<!ENTITY openLinkCmd.label		"リンクを新しいウィンドウで開く">
+<!ENTITY openLinkCmd.accesskey		"W">
+<!ENTITY openLinkCmdInPrivateWindow.label	"リンクをプライベートウィンドウで開く">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey	"d">
+<!ENTITY openLinkInWindowCmd.label	"開く">
+<!ENTITY openLinkInWindowCmd.accesskey	"p">
+<!ENTITY openFrameCmd.label		"フレームを新しいウィンドウで開く">
+<!ENTITY openFrameCmd.accesskey		"W">
+<!ENTITY openFrameCmdInTab.label	"フレームを新しいタブで開く">
+<!ENTITY openFrameCmdInTab.accesskey	"T">
+<!ENTITY keywordfield.label		"このキーワードを検索...">
+<!ENTITY keywordfield.accesskey		"K">
+<!ENTITY showOnlyThisFrameCmd.label	"このフレームだけを表示">
+<!ENTITY showOnlyThisFrameCmd.accesskey	"S">
+<!ENTITY goBackCmd.label		"戻る">
+<!ENTITY goBackCmd.accesskey		"B">
+<!ENTITY goForwardCmd.label		"進む">
+<!ENTITY goForwardCmd.accesskey		"F">
+<!ENTITY goUpCmd.label			"上へ">
+<!ENTITY goUpCmd.accesskey		"U">
+<!ENTITY reloadCmd.label		"再読み込み">
+<!ENTITY reloadCmd.accesskey		"R">
+<!ENTITY reloadCmd.commandkey		"r">
+<!ENTITY stopCmd.label			"中止">
+<!ENTITY stopCmd.accesskey		"S">
+<!ENTITY reloadFrameCmd.label		"フレームを再読み込み">
+<!ENTITY reloadFrameCmd.accesskey	"R">
+<!ENTITY viewPartialSourceForSelectionCmd.label	"選択した部分のソースを表示">
+<!ENTITY viewPartialSourceForMathMLCmd.label	"MathML ソースを表示">
+<!ENTITY viewPartialSourceCmd.accesskey	"u">
+<!ENTITY viewPageSourceCmd.label	"ページのソースを表示">
+<!ENTITY viewPageSourceCmd.accesskey	"V">
+<!ENTITY viewFrameSourceCmd.label	"フレームのソースを表示">
+<!ENTITY viewFrameSourceCmd.accesskey	"V">
+<!ENTITY viewPageInfoCmd.label		"ページの情報を表示">
+<!ENTITY viewPageInfoCmd.accesskey	"I">
+<!ENTITY viewFrameInfoCmd.label		"フレームの情報を表示">
+<!ENTITY viewFrameInfoCmd.accesskey	"I">
+<!ENTITY fitImageCmd.label		"画像サイズをウィンドウに合わせる">
+<!ENTITY fitImageCmd.accesskey		"F">
+<!ENTITY reloadImageCmd.label		"画像を再読み込み">
+<!ENTITY reloadImageCmd.accesskey	"R">
+<!ENTITY viewImageCmd.label		"画像を表示">
+<!ENTITY viewImageCmd.accesskey		"I">
+<!ENTITY viewImageInfoCmd.label		"画像の情報を表示">
+<!ENTITY viewImageInfoCmd.accesskey	"f">
+<!ENTITY viewVideoCmd.label		"動画を表示">
+<!ENTITY viewVideoCmd.accesskey		"i">
+<!ENTITY viewBGImageCmd.label		"背景画像を表示">
+<!ENTITY viewBGImageCmd.accesskey	"w">
+<!ENTITY setDesktopBackgroundCmd.label		"デスクトップの背景に設定...">
+<!ENTITY setDesktopBackgroundCmd.accesskey	"a">
+<!ENTITY bookmarkPageCmd.label		"ページをブックマーク">
+<!ENTITY bookmarkPageCmd.accesskey	"m">
+<!ENTITY bookmarkLinkCmd.label		"リンクをブックマーク">
+<!ENTITY bookmarkLinkCmd.accesskey	"B">
+<!ENTITY bookmarkFrameCmd.label		"フレームをブックマーク">
+<!ENTITY bookmarkFrameCmd.accesskey	"m">
+<!ENTITY savePageAsCmd.label		"名前を付けてページを保存...">
+<!ENTITY savePageCmd.label		"ページを保存">
+<!ENTITY savePageCmd.accesskey		"e">
+<!ENTITY savePageCmd.commandkey		"s">
+<!ENTITY saveFrameAsCmd.label		"名前を付けてフレームを保存...">
+<!ENTITY saveFrameCmd.label		"フレームを保存">
+<!ENTITY saveFrameCmd.accesskey		"a">
+<!ENTITY printFrameCmd.label		"フレームを印刷...">
+<!ENTITY printFrameCmd.accesskey	"P">
+<!ENTITY saveLinkAsCmd.label		"名前を付けてリンク先を保存...">
+<!ENTITY saveLinkCmd.label		"リンク先を保存">
+<!ENTITY saveLinkCmd.accesskey		"S">
+<!ENTITY saveImageAsCmd.label		"名前を付けて画像を保存...">
+<!ENTITY saveImageCmd.label		"画像を保存">
+<!ENTITY saveImageCmd.accesskey		"v">
+<!ENTITY saveVideoCmd.label		"名前を付けて動画を保存...">
+<!ENTITY saveVideoCmd.accesskey		"v">
+<!ENTITY saveAudioCmd.label		"名前を付けて音声を保存...">
+<!ENTITY saveAudioCmd.accesskey		"v">
+<!ENTITY copyLinkCmd.label		"リンクの URL をコピー">
+<!ENTITY copyLinkCmd.accesskey		"L">
+<!ENTITY copyImageCmd.label		"画像をコピー">
+<!ENTITY copyImageCmd.accesskey		"y">
+<!ENTITY copyVideoURLCmd.label		"動画の URL をコピー">
+<!ENTITY copyVideoURLCmd.accesskey	"L">
+<!ENTITY copyAudioURLCmd.label		"音声の URL をコピー">
+<!ENTITY copyAudioURLCmd.accesskey	"L">
+<!ENTITY metadataCmd.label		"プロパティ">
+<!ENTITY metadataCmd.accesskey		"P">
+<!ENTITY copyEmailCmd.label		"メールアドレスをコピー">
+<!ENTITY copyEmailCmd.accesskey		"s">
+<!ENTITY thisFrameMenu.label		"このフレーム">
+<!ENTITY thisFrameMenu.accesskey	"h">
+<!ENTITY mediaPlay.label		"再生">
+<!ENTITY mediaPlay.accesskey		"P">
+<!ENTITY mediaPause.label		"一時停止">
+<!ENTITY mediaPause.accesskey		"P">
+<!ENTITY mediaMute.label		"ミュート">
+<!ENTITY mediaMute.accesskey		"M">
+<!ENTITY mediaUnmute.label		"ミュート解除">
+<!ENTITY mediaUnmute.accesskey		"m">
+<!ENTITY mediaPlaybackRate.label	"再生スピード">
+<!ENTITY mediaPlaybackRate.accesskey	"b">
+<!ENTITY mediaPlaybackRate050.label	"スローモーション (0.5 倍)">
+<!ENTITY mediaPlaybackRate050.accesskey	"S">
+<!ENTITY mediaPlaybackRate100.label	"通常">
+<!ENTITY mediaPlaybackRate100.accesskey	"N">
+<!ENTITY mediaPlaybackRate125.label	"少し早く (1.25 倍)">
+<!ENTITY mediaPlaybackRate125.accesskey	"F">
+<!ENTITY mediaPlaybackRate150.label	"早送り (1.5 倍)">
+<!ENTITY mediaPlaybackRate150.accesskey	"H">
+<!ENTITY mediaPlaybackRate200.label	"2 倍速">
+<!ENTITY mediaPlaybackRate200.accesskey	"D">
+<!ENTITY mediaLoop.label		"連続再生">
+<!ENTITY mediaLoop.accesskey		"o">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label	"メディアコントロールを表示">
+<!ENTITY mediaShowControls.accesskey	"a">
+<!ENTITY mediaHideControls.label	"メディアコントロールを隠す">
+<!ENTITY mediaHideControls.accesskey	"a">
+<!ENTITY videoFullScreen.label		"全画面表示">
+<!ENTITY videoFullScreen.accesskey	"F">
+<!ENTITY videoSaveImage.label		"名前を付けてスナップショットを保存...">
+<!ENTITY videoSaveImage.accesskey	"S">
+<!ENTITY videoShowStats.label		"統計情報を表示">
+<!ENTITY videoShowStats.accesskey	"t">
+<!ENTITY videoHideStats.label		"統計情報を隠す">
+<!ENTITY videoHideStats.accesskey	"t">
+<!ENTITY search.accesskey		"W">
+<!ENTITY bidiSwitchPageDirectionItem.label	"ページの記述方向を切り換える">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey	"g">
+<!ENTITY bidiSwitchTextDirectionItem.label	"テキストの記述方向を切り換える">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey	"x">
+<!ENTITY spellAddToDictionary.label	"辞書に追加">
+<!ENTITY spellAddToDictionary.accesskey	"n">
+<!ENTITY spellUndoAddToDictionary.label	"辞書への追加を元に戻す">
+<!ENTITY spellUndoAddToDictionary.accesskey	"i">
+<!ENTITY spellIgnoreWord.label		"単語を無視">
+<!ENTITY spellIgnoreWord.accesskey	"W">
+<!ENTITY spellCheckEnable.label		"スペルチェックする">
+<!ENTITY spellCheckEnable.accesskey	"S">
+<!ENTITY spellNoSuggestions.label	"(候補はありません)">
+<!ENTITY spellDictionaries.label	"言語">
+<!ENTITY spellDictionaries.accesskey	"L">
+<!ENTITY spellAddDictionaries.label	"他の辞書をダウンロード...">
+<!ENTITY spellAddDictionaries.accesskey	"D">
+
+<!ENTITY fillLoginMenu.label		"ログイン情報を入力">
+<!ENTITY fillLoginMenu.accesskey	"F">
+<!ENTITY fillPasswordMenu.label		"パスワードを入力">
+<!ENTITY fillPasswordMenu.accesskey	"F">
+<!ENTITY fillUsernameMenu.label		"ユーザー名を入力">
+<!ENTITY fillUsernameMenu.accesskey	"F">
+<!ENTITY noLoginSuggestions.label	"(ログイン情報の候補なし)">
+<!ENTITY viewSavedLogins.label		"保存されたログイン情報を表示">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label		"要素を調査">
+<!ENTITY devtoolsInspect.accesskey	"n">

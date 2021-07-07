@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from ./customize.xul -->
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+
+
+<!ENTITY sidebar.customize.title.label          "Parankinės tvarkymas">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Esamos kortelės:">
+<!ENTITY sidebar.customize.current.accesskey    "E">
+<!ENTITY sidebar.customize.customize.label      "Tvarkyti kortelę…">
+<!ENTITY sidebar.customize.customize.accesskey  "T">
+<!ENTITY sidebar.customize.remove.label         "Pašalinti">
+<!ENTITY sidebar.customize.remove.accesskey     "P">
+<!ENTITY sidebar.customize.additional.label     "Galimos kortelės:">
+<!ENTITY sidebar.customize.additional.accesskey "G">
+<!ENTITY sidebar.customize.add.label            "Pridėti">
+<!ENTITY sidebar.customize.add.accesskey        "P">
+<!ENTITY sidebar.customize.preview.label        "Peržiūra…">
+<!ENTITY sidebar.customize.preview.accesskey    "P">
+<!ENTITY sidebar.customize.up.label             "Pakelti">
+<!ENTITY sidebar.customize.up.accesskey         "P">
+<!ENTITY sidebar.customize.down.label           "Nuleisti">
+<!ENTITY sidebar.customize.down.accesskey       "N">
+<!ENTITY sidebar.more.label                     "Atsiųsti kitas korteles…">
+<!ENTITY sidebar.more.accesskey                 "A">

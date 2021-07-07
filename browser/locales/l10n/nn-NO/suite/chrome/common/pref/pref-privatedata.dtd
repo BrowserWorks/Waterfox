@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
+    These entities go on top of the sanitize.dtd definitions
+-->
+<!ENTITY pref.privatedata.title           "Private data">
+
+
+<!ENTITY clearPrivateData.label           "Slett private data">
+
+<!ENTITY alwaysClear.label                "Alltid slett private data når eg lèt att &brandShortName;">
+<!ENTITY alwaysClear.accesskey            "d">
+
+<!ENTITY askBeforeClear.label             "Spør meg før private data vert sletta">
+<!ENTITY askBeforeClear.accesskey         "r">
+
+<!ENTITY clearDataSettings.label          "Når eg ber &brandShortName; om å slette private data, skal han slette:">
+
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+<!ENTITY clearDataDialog.label            "Slett no…">
+<!ENTITY clearDataSilent.label            "Slett no">
+<!ENTITY clearDataDialog.accesskey        "n">

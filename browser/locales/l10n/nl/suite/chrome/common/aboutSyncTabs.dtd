@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label               "Tabbladen van andere computers">
+
+<!ENTITY tabs.searchText.label                   "Typ hier om tabbladen te zoeken…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label                   "Dit tabblad openen">
+<!ENTITY tabs.context.openTab.accesskey               "o">
+<!ENTITY tabs.context.openMultipleTabs.label          "Geselecteerde tabbladen openen">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "o">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "Bladwijzer voor dit tabblad maken…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "B">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "Bladwijzer voor geselecteerde tabbladen maken…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "B">
+<!ENTITY tabs.context.refreshList.label               "Lijst verversen">
+<!ENTITY tabs.context.refreshList.accesskey           "L">

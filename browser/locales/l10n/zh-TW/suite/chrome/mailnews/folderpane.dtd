@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY nameColumn.label   "名稱"> 
+<!ENTITY unreadColumn.label "未讀"> 
+<!ENTITY totalColumn.label "全部"> 
+<!ENTITY folderSizeColumn.label "大小"> 
+<!ENTITY folderLocationToolbarItem.title "資料夾位置">
+<!ENTITY mailViewsToolbarItem.title "郵件檢視">
+<!ENTITY searchToolbarItem.title "搜尋">
+<!ENTITY searchSubjectOrAddress.placeholder "搜尋主旨或地址">
+

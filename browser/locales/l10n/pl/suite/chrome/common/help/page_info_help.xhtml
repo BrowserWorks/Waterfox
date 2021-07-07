@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Informacje o&nbsp;stronie</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="viewing_page_info">Informacje o&nbsp;stronie</h1>
+
+<p>Okno Informacje o&nbsp;stronie zawiera karty pokazujące różne informacje o&nbsp;aktualnie oglądanej stronie WWW. Ten rozdział opisuje w&nbsp;skrócie zawartość każdej karty.</p>
+
+<p>Aby wywołać okno Informacji o&nbsp;stronie, należy z&nbsp;menu Widok wybrać Informacje o&nbsp;stronie (lub nacisnąć kombinację klawiszy <kbd>Ctrl</kbd>+<kbd>I</kbd>).</p>
+
+<p>Większość informacji wyświetlanych w&nbsp;kartach: Ogólne, Formularze, Odnośniki i&nbsp;Media jest pobierana z&nbsp;kodu źródłowego strony. Te informacje są z&nbsp;reguły użyteczne dla osób projektujących strony WWW&nbsp;i&nbsp;innych specjalistów z&nbsp;dziedziny Internetu.</p>
+
+<p>Szczegółowe informacje o&nbsp;języku HTML, z&nbsp;uwzględnieniem opisu znaczników pokazywanych przez okno Informacji o&nbsp;stronie, są dostępne na stronie internetowej <a href="http://www.w3.org/TR/REC-html40/">HTML 4.01 Specification</a> (strona w&nbsp;języku angielskim).</p>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#general_tab">Karta Ogólne</a></li>
+    <li><a href="#forms_tab">Karta Formularze</a></li>
+    <li><a href="#links_tab">Karta Odnośniki</a></li>
+    <li><a href="#media_tab">Karta Media</a></li>
+    <li><a href="#security_tab">Karta Zabezpieczenia</a></li>
+	<li><a href="#privacy_tab">Karta Prywatność</a></li>
+  </ul>
+</div>
+
+<h2 id="general_tab">Karta Ogólne</h2>
+
+<p>Domyślną kartą pokazywaną po wybraniu polecenia Informacje o&nbsp;stronie jest karta Ogólne. Pokazuje ona podstawowe informacje o&nbsp;aktualnie oglądanej stronie WWW.</p>
+
+<p>Górna część okna pokazuje tytuł strony (jeżeli strona go posiada), oraz następujące informacje:</p>
+
+<ul>
+  <li><strong>URL</strong>: (ang. <a href="glossary.xhtml#url">Uniform Resource Locator</a>) &mdash; ustandaryzowany adres strony pojawiający się w&nbsp;Polu Lokalizacji.</li>
+  <li><strong>Tryb wyświetlania</strong>: Informacja, czy przeglądarka używa <strong>trybu wstecznej zgodności</strong> czy <strong>trybu ścisłej zgodności</strong> do wyświetlania zawartości strony. Tryb zgodności bierze pod uwagę niestandardowe zachowanie starszych stron WWW, które mogą być stworzone dla starszych wersji przeglądarek (nie w&nbsp;pełni zgodnych z&nbsp;obecnymi standardami). Tryb ścisłej zgodności jest w&nbsp;ścisłej zgodzie ze specyfikacją standardów (X)HTML. Przeglądarka automatycznie wybiera tryb wyświetlania stosownie do odpowiednich informacji zawartych w&nbsp;kodzie strony.</li>
+  <li><strong>Źródło</strong>: Informacja, czy kod źródłowy strony został wczytany z&nbsp;pamięci podręcznej przeglądarki, czy został pobrany bezpośrednio z&nbsp;Internetu.</li>
+  <li><strong>Kodowanie</strong>: Informacja o&nbsp;użytym standardzie kodowania znaków.</li>
+  <li><strong>Rozmiar</strong>: Informacja o&nbsp;wielkości pliku (jeżeli taka informacja jest dostępna).</li>
+  <li><strong>Zmodyfikowany</strong>: Informacja o&nbsp;dacie ostatniej modyfikacji pliku (jeżeli taka informacja jest dostępna).</li>
+  <li><strong>Wygasa</strong>: Informacja o&nbsp;dacie wygaśnięcia informacji zawartych na stronie.</li>
+</ul>
+
+<p>Dolna część okna pokazuje znaczniki META&nbsp;wyszczególnione przez stronę. Znaczniki META&nbsp;zawierają dodatkowe informacje o&nbsp;typie zawartości strony (ang. Content-Type): ogólny opis strony, słowa kluczowe dla serwisów wyszukiwarek, informacje o&nbsp;prawach autorskich i&nbsp;tym podobne.</p>
+
+<h2 id="forms_tab">Karta Formularze</h2>
+
+<p>Po wybraniu polecenia Informacje o&nbsp;stronie z&nbsp;menu Widok, a&nbsp;następnie wybraniu karty Formularze, w&nbsp;oknie pojawią się informacje o&nbsp;wszystkich formularzach pokazywanych przez aktualnie oglądaną stronę WWW.</p>
+
+<p>Górna część okna pokazuje podstawowe informacje o&nbsp;sposobie, w&nbsp;jaki każdy formularz ze strony jest wyszczególniony w&nbsp;kodzie HTML tej strony:</p>
+
+<ul>
+  <li><strong>Nazwa</strong>:  Nazwa formularza (jeśli formularz ją posiada).</li>
+  <li><strong>Metoda</strong>: Metoda języka HTML użyta do wysłania informacji pobranych z&nbsp;formularza do serwera. Metoda <tt>GET</tt> dodaje wypełnione pola formularza do adresu strony WWW, z&nbsp;której formularz pochodzi. <tt>POST</tt> wysyła wartości pobrane z&nbsp;formularza do serwera jako parametry mogące być odczytane przez odpowiedni program działający po stronie serwera.</li>
+  <li><strong>Czynność formularza</strong>: Adres URL programu uruchamianego przy przesyłaniu zawartości formularza na serwer.</li>
+</ul>
+
+<p>Po zaznaczeniu formularza w&nbsp;górnej części okna, w&nbsp;dolnej jego części pokażą się szczegółowe informacje o&nbsp;sposobie, w&nbsp;jaki każdy z&nbsp;elementów formularza jest wyszczególniony w&nbsp;kodzie HTML strony:</p>
+
+<ul>
+  <li><strong>Etykieta</strong>: Etykieta elementu (jeżeli jest zawarta w&nbsp;kodzie HTML strony).</li>
+  <li><strong>Nazwa pola</strong>: Nazwa elementu.</li>
+  <li><strong>Typ</strong>: Typ elementu: <tt>TEXT</tt> (wprowadzanie tekstu), <tt>RADIO</tt> (przycisk opcji), lub <tt>HIDDEN</tt> (przechowywanie informacji, które zostaną wysłane, ale nie są pokazane na ekranie).</li>
+  <li><strong>Bieżąca wartość</strong>: Bieżąca wartość elementu. Przykładowo, bieżącą wartością elementu tekstowego jest tekst, zawarty w&nbsp;tym elemencie.</li>
+</ul>
+
+<h2 id="links_tab">Karta Odnośniki</h2>
+
+<p>Po wybraniu polecenia Informacje o&nbsp;stronie z&nbsp;menu Widok, a&nbsp;następnie wybraniu karty Odnośniki, w&nbsp;oknie pojawią się informacje o&nbsp;wszystkich odnośnikach zdefiniowanych na tej stronie. Dla każdego z&nbsp;odnośników są pokazywane następujące informacje:</p>
+
+<ul>
+  <li><strong>Nazwa</strong>: Tekst pokazywany w&nbsp;przeglądarce jako odnośnik.</li>
+  <li><strong>Adres</strong>: Adres <a href="glossary.xhtml#url">URL</a> strony, do której prowadzi dany odnośnik.</li>
+  <li><strong>Typ</strong>: Typ odnośnika, np. Kotwica (dla odnośnika do specyficznego miejsca w&nbsp;dokumencie HTML), lub Formularz.</li>
+</ul>
+
+<h2 id="media_tab">Karta Media</h2>
+
+<p>Po wybraniu polecenia Informacje o&nbsp;stronie z&nbsp;menu Widok, a&nbsp;następnie wybraniu karty Media, w&nbsp;oknie pojawią się informacje o&nbsp;wszystkich obrazkach i&nbsp;innych elementach multimedialnych pokazywanych przez aktualnie oglądaną stronę WWW.</p>
+
+<p>Górna część okna pokazuje podstawowe informacje o&nbsp;każdym elemencie, włączając w&nbsp;to adres <a href="glossary.xhtml#url">URL</a> tego elementu i&nbsp;jego typ.</p>
+
+<p>Po zaznaczeniu elementu w&nbsp;górnej części okna, w&nbsp;dolnej jego części pokażą się dostępne informacje o&nbsp;tym elemencie, jak: opis, wielkość, czy wymiary.</p>
+
+<p>Użytkownik może również zobaczyć zaznaczony element na dole okna Informacje o&nbsp;stronie. Aby zobaczyć powiększony obrazek, należy kliknąć i&nbsp;przeciągnąć dolny prawy róg tego okna dialogowego.</p>
+
+<p>Aby zapisać element w&nbsp;oddzielnym pliku:</p>
+
+<ul>
+  <li><strong>Zapisz jako</strong>: Po zaznaczeniu elementu należy nacisnąć przycisk Zapisz jako i&nbsp;wybrać miejsce zapisania pliku.</li>
+</ul>
+
+<h2 id="security_tab">Karta Zabezpieczenia</h2>
+
+<p>Po wybraniu polecenia Informacje o&nbsp;stronie z&nbsp;menu Widok, a&nbsp;następnie wybraniu karty Zabezpieczenia, w&nbsp;oknie pojawią się informacje o&nbsp;<a href="glossary.xhtml#authentication">autoryzacji</a> i&nbsp;<a href="glossary.xhtml#encryption">szyfrowaniu</a> zastosowanych dla aktualnie oglądanej strony WWW. Górna część okna pokazuje informację o&nbsp;fakcie weryfikacji tożsamości witryny, dolna część pokazuje informacje o&nbsp;fakcie szyfrowania zawartości strony podczas jej pobierania przez przeglądarkę.</p>
+
+<p>Kartę Zabezpieczenia można również otworzyć poprzez kliknięcie na ikonkę kłódki umieszczoną w&nbsp;dolnym prawym rogu okna przeglądarki.</p>
+
+<p>Górna część okna może zawierać jedną z&nbsp;poniższych informacji:</p>
+
+<ul>
+  <li><strong>Tożsamość witryny nie została sprawdzona</strong>: Oglądana strona WWW&nbsp;nie przedstawiła swojego certyfikatu i&nbsp;w&nbsp;związku z&nbsp;tym Menedżer Certyfikatów nie jest w&nbsp;stanie zweryfikować jej tożsamości. Istnieje możliwość (choć nikła), że strona nie jest tą stroną, za którą się podaje.</li>
+  <li><strong>Tożsamość witryny zweryfikowana</strong>: Certyfikat strony użyty przez Menedżera Certyfikatów do weryfikacji jej tożsamości został wydany przez organ certyfikacji, który został uznany za zaufany. Z&nbsp;bardzo dużym prawdopodobieństwem można założyć, że strona faktycznie jest tą stroną, za którą się podaje</li>
+</ul>
+
+<p>Dolna część okna może pokazywać jeden z&nbsp;poniższych komunikatów:</p>
+
+<ul>
+  <li><strong>Połączenie nie jest zaszyfrowane</strong>: Istnieje możliwość, że osoby trzecie będą w&nbsp;stanie podglądać informacje przesyłane w&nbsp;trakcie komunikacji pomiędzy stroną WWW&nbsp;a&nbsp;komputerem. Jednak szansa na to, że faktycznie ktoś wykonuje podobne czynności jest nikła.</li>
+  <li><strong>Połączenie zaszyfrowane.</strong> Generalnie, poziom szyfrowania połączenia pomiędzy stroną WWW&nbsp;a&nbsp;komputerem zależy od długości kluczy użytych do szyfrowania. Długość kluczy podawana jest w&nbsp;bitach. Im klucz jest dłuższy, tym szyfrowanie jest silniejsze, czyli osobom trzecim trudniej jest przechwycić i&nbsp;odszyfrować informacje przesyłane podczas komunikacji pomiędzy stroną WWW&nbsp;a&nbsp;komputerem.</li>
+</ul>
+
+<p>Brak jakiegokolwiek szyfrowania lub brak szyfrowania o&nbsp;wysokim poziomie powinien stanowić ostrzeżenie przy wysyłaniu lub oglądaniu informacji poufnych (jak numer i&nbsp;data ważności karty kredytowej).</p>
+
+<p>Stan poziomu szyfrowania danych można szybko sprawdzić, zerkając na stan ikony kłódki w&nbsp;prawym dolnym rogu okna przeglądarki. Więcej informacji na temat sprawdzania poziomu szyfrowania danych zawarto w&nbsp;rozdziale <a href="using_certs_help.xhtml#checking_security_for_a_web_page">Sprawdzanie poziomu bezpieczeństwa strony WWW</a>.</p>
+
+<h2 id="privacy_tab">Karta Prywatność</h2>
+
+<p>Po wybraniu polecenia Informacje o&nbsp;stronie z&nbsp;menu Widok, a&nbsp;następnie wybraniu karty Prywatność, w&nbsp;oknie pojawi się lista wszystkich specjalnych elementów będących częścią strony.</p>
+
+<ul>
+  <li><strong>Elementy witryny</strong>: Pod adresem URL strony jest wiele kategorii, aby obejrzeć ich zawartość należy podwójnie kliknąć na nazwie kategorii:
+    <ul>
+      <li><strong>Odnośniki</strong>: Wyświetla wszystkie odnośniki.</li>
+      <li><strong>Aplety Java</strong>: Wyświetla listę apletów Javy (jeżeli występują).</li>
+      <li><strong>Mapy obrazków</strong>: Wyświetla wszystkie mapy obrazków.</li>
+      <li><strong>Formularze</strong>: Wyświetla listę skryptów pobierających dane z&nbsp;formularzy na stronie.</li>
+      <li><strong>Ramki</strong>: Wyświetla adresy stron widocznych w&nbsp;ramkach tworzących stronę.</li>
+      <li><strong>obrazki</strong>: Wyświetla listę obrazków użytych na tej stronie.</li>
+      <li><strong>Dokumenty wczytywane zewnętrznie</strong>: Wyświetla listę dokumentów wczytywanych dodatkowo (takich jak pliki CSS lub obrazki).</li>
+      <li><strong>Podstawowe obiekty</strong>: Wyświetla listę podstawowych obiektów.</li>
+      <li><strong>Skrypty</strong>: Wyświetla listę wszystkich skryptów na stronie.</li>
+    </ul>
+  </li>
+  <li><strong>Polityka</strong>: Naciśnięcie tego przycisku spowoduje próbę otwarcia pliku z&nbsp;polityką prywatności dla aktualnej strony.</li>
+  <li><strong>Podsumowanie</strong>: Naciśnięcie tego przycisku wyświetla okno Polityka ochrony prywatności zawierające zwięzłe informacje o&nbsp;polityce prywatności przeglądanej witryny.</li>
+  <li><strong>Opcje</strong>: Naciśnięcie tego przycisku spowoduje próbę otwarcia strony na witrynie, która umożliwi użytkownikowi modyfikację danych osobistych przechowywanych na serwerze witryny.</li>
+</ul>
+
+</body>
+</html>

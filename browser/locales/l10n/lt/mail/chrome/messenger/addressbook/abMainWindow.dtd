@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Adresų knyga">
+<!ENTITY blankResultsPaneMessage.label                  "Adresatai iš šios adresų knygos rodomi tik po paieškos">
+<!ENTITY localResultsOnlyMessage.label                  "Adresatai iš nutolusių adresų knygų rodomi tik po paieškos">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Failas">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "Naujas">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "Adresatas…">
+<!ENTITY newContact.accesskey                           "A">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Adresatų sąrašas…">
+<!ENTITY newListCmd.accesskey                           "s">
+<!ENTITY newAddressBookCmd.label                        "Adresų knyga…">
+<!ENTITY newAddressBookCmd.accesskey                    "k">
+<!ENTITY newCardDAVBookCmd.label                        "„CardDAV“ adresų knyga …">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP katalogas…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "t">
+<!ENTITY newMessageCmd.label                            "Rašyti">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "R">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Naudoti „Mac OS X“ adresų knygą">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Užverti">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "U">
+<!ENTITY printSetupCmd.label                            "Puslapio nuostatos…">
+<!ENTITY printSetupCmd.accesskey                        "P">
+<!ENTITY printPreviewContactCmd.label                   "Spausdinsimos adresato kortelės peržiūra">
+<!ENTITY printPreviewContactCmd.accesskey               "o">
+<!ENTITY printPreviewAddressBook.label                  "Spausdinsimos adresų knygos peržiūra">
+<!ENTITY printPreviewAddressBook.accesskey              "d">
+<!ENTITY printContactCmd.label                          "Spausdinti adresato kortelę…">
+<!ENTITY printContactCmd.accesskey                      "S">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Spausdinti adresų knygą…">
+<!ENTITY printAddressBook.accesskey                     "a">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Taisa">
+<!ENTITY editMenu.accesskey                             "T">
+<!ENTITY deleteCmd.label                                "Pašalinti">
+<!ENTITY deleteAbCmd.label                              "Pašalinti adresų knygą">
+<!ENTITY deleteContactCmd.label                         "Pašalinti adresatą">
+<!ENTITY deleteContactsCmd.label                        "Pašalinti adresatus">
+<!ENTITY deleteListCmd.label                            "Pašalinti sąrašą">
+<!ENTITY deleteListsCmd.label                           "Pašalinti sąrašus">
+<!ENTITY deleteItemsCmd.label                           "Pašalinti elementus">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Savybės">
+<!ENTITY propertiesMenu.accesskey                       "S">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Adresų knygos savybės">
+<!ENTITY abPropertiesMenu.accesskey                     "s">
+<!ENTITY contactPropertiesMenu.label                    "Adresato savybės">
+<!ENTITY contactPropertiesMenu.accesskey                "s">
+<!ENTITY mailingListPropertiesMenu.label                "Adresatų sąrašo savybės">
+<!ENTITY mailingListPropertiesMenu.accesskey            "s">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Rodymas">
+<!ENTITY viewMenu.accesskey                             "R">
+<!ENTITY viewToolbarsMenu.label                         "Priemonių juostos">
+<!ENTITY viewToolbarsMenu.accesskey                     "j">
+<!ENTITY menubarCmd.label                               "Meniu juosta">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Adresų knygos">
+<!ENTITY showAbToolbarCmd.accesskey                     "A">
+<!ENTITY showTaskbarCmd.label                           "Būsenos">
+<!ENTITY showTaskbarCmd.accesskey                       "B">
+<!ENTITY customizeToolbar.label                         "Tvarkyti…">
+<!ENTITY customizeToolbar.accesskey                     "T">
+<!ENTITY layoutMenu.label                               "Polangiai">
+<!ENTITY layoutMenu.accesskey                           "P">
+<!ENTITY showDirectoryPane.label                        "Adresų knygų sąrašas">
+<!ENTITY showDirectoryPane.accesskey                    "k">
+<!ENTITY showContactPane2.label                         "Adresato polangis">
+<!ENTITY showContactPane2.accesskey                     "A">
+<!ENTITY menu_ShowNameAs.label                          "Asmenvardžio rodymas">
+<!ENTITY menu_ShowNameAs.accesskey                      "m">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Vardas pavardė">
+<!ENTITY firstLastCmd2.accesskey                        "V">
+<!ENTITY lastFirstCmd.label                             "Pavardė, vardas">
+<!ENTITY lastFirstCmd.accesskey                         "P">
+<!ENTITY displayNameCmd.label                           "Kaip nurodyta kortelėje">
+<!ENTITY displayNameCmd.accesskey                       "K">
+<!ENTITY sortMenu.label                                 "Rikiuoti pagal stulpelį">
+<!ENTITY sortMenu.accesskey                             "R">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Priemonės">
+<!ENTITY tasksMenu.accesskey                            "P">
+<!ENTITY messengerCmd.label                             "Paštas ir naujienų grupės">
+<!ENTITY messengerCmd.accesskey                         "P">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Paieška…">
+<!ENTITY searchAddressesCmd.accesskey                   "P">
+<!ENTITY importCmd.label                                "Importas…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksportas…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Nuostatos">
+<!ENTITY preferencesCmd2.accesskey                      "N">
+<!ENTITY preferencesCmdUnix.label                       "Nuostatos">
+<!ENTITY preferencesCmdUnix.accesskey                   "N">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Naujas adresatas">
+<!ENTITY newContactButton.accesskey                     "a">
+<!ENTITY newlistButton.label                            "Naujas sąrašas">
+<!ENTITY newlistButton.accesskey                        "r">
+<!ENTITY showAsDefault.label                            "Numatytasis pradinis katalogas">
+<!ENTITY showAsDefault.accesskey                        "S">
+<!ENTITY editPropertiesButton.label                     "Keisti">
+<!ENTITY propertiesContext.label                        "Savybės">
+<!ENTITY propertiesContext.accesskey                    "S">
+<!ENTITY abPropertiesContext.label                      "Savybės">
+<!ENTITY abPropertiesContext.accesskey                  "S">
+<!ENTITY syncContext.label                              "Sinchronizuoti">
+<!ENTITY syncContext.accesskey                          "y">
+<!ENTITY editContactContext.label                       "Keisti adresatą">
+<!ENTITY editContactContext.accesskey                   "K">
+<!ENTITY editMailingListContext.label                   "Keisti sąrašą">
+<!ENTITY editMailingListContext.accesskey               "K">
+<!ENTITY newmsgButton.label                             "Laiškas">
+<!ENTITY newmsgButton.accesskey                         "L">
+<!ENTITY newIM.label                                    "Žinutė">
+<!ENTITY newIM.accesskey                                "Ž">
+<!ENTITY printButton.label                              "Spausdinti…">
+<!ENTITY printButton.accesskey                          "p">
+<!ENTITY deleteButton2.label                            "Pašalinti">
+<!ENTITY deleteButton2.accesskey                        "š">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Rinktis rodomus stulpelius">
+<!ENTITY newContactButton.tooltip                       "Sukurti naują adresatą">
+<!ENTITY newlistButton.tooltip                          "Sukurti naują adresatų sąrašą">
+<!ENTITY editPropertiesButton.tooltip                   "Taisyti pažymėtą elementą">
+<!ENTITY editAbPropertiesButton.tooltip                 "Keisti pažymėtos adresų knygos savybes">
+<!ENTITY editContactPropertiesButton.tooltip            "Keisti pažymėto adresato duomenis">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Keisti pažymėtą adresatų sąrašą">
+<!ENTITY newmsgButton.tooltip                           "Rašyti elektroninį laišką">
+<!ENTITY newIM.tooltip                                  "Siųsti žinutę arba pradėti pokalbį">
+<!ENTITY deleteButton2.tooltip                          "Pašalinti pažymėtą elementą">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Asmenvardis arba el. pašto adresas">
+<!ENTITY SearchNameOrEmail.accesskey                    "A">
+<!ENTITY advancedButton.tooltip                         "Adresų paieška, naudojant papildomas sąlygas">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Sparčioji paieška">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Adresų knyga…">
+<!ENTITY Addrbook.accesskey                             "k">
+<!ENTITY GeneratedName.label                            "Asmenvardis">
+<!ENTITY GeneratedName.accesskey                        "v">
+<!ENTITY PrimaryEmail.label                             "El. pašto adresas">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Vardas tikralaikiuose pokalbiuose">
+<!ENTITY ChatName.accesskey                             "t">
+<!ENTITY Company.label                                  "Organizacija">
+<!ENTITY Company.accesskey                              "O">
+<!ENTITY NickName.label                                 "Slapyvardis">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "Antras el. pašto adresas">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "Padalinys">
+<!ENTITY Department.accesskey                           "P">
+<!ENTITY JobTitle.label                                 "Pareigos">
+<!ENTITY JobTitle.accesskey                             "r">
+<!ENTITY CellularNumber.label                           "Mob. telefonas">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Ieškas">
+<!ENTITY PagerNumber.accesskey                          "š">
+<!ENTITY FaxNumber.label                                "Fakso nr.">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Namų telefonas">
+<!ENTITY HomePhone.accesskey                            "N">
+<!ENTITY WorkPhone.label                                "Darbo telefonas">
+<!ENTITY WorkPhone.accesskey                            "D">
+<!ENTITY sortAscending.label                            "Pagal abėcėlę">
+<!ENTITY sortAscending.accesskey                        "b">
+<!ENTITY sortDescending.label                           "Atvirkščiai">
+<!ENTITY sortDescending.accesskey                       "k">
+<!ENTITY _PhoneticName.label                            "Sulietuvintas užsieniečio vardas">
+<!ENTITY _PhoneticName.accesskey                        "ž">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Adresatas">
+<!ENTITY home.heading                                   "Adresai">
+<!ENTITY other.heading                                  "Kitkas">
+<!ENTITY chat.heading                                   "Tikralaikiai pokalbiai">
+<!ENTITY phone.heading                                  "Telefonai">
+<!ENTITY work.heading                                   "Darbovietė">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Aprašas">
+<!ENTITY addresses.heading                              "Adresatai">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Rodyti žemėlapį">
+<!ENTITY mapIt.tooltip                                  "Rodyti šį adresą saityno žemėlapyje">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Langas">
+<!ENTITY minimizeWindow.label                           "Suskleisti">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Perkelti visus į priekį">
+<!ENTITY zoomWindow.label                               "Pakeisti dydį">

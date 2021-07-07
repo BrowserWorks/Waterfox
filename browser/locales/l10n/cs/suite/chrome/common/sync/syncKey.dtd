@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Klíč služby &syncBrand.fullName.label;">
+<!ENTITY syncKey.page.description         "Tento klíč se používá pro šifrování dat ve vašem účtu &syncBrand.fullName.label;. Klíč bude potřeba zadat vždy, když budete chtít použít &syncBrand.fullName.label; na novém zařízení.">
+<!ENTITY syncKey.keepItSecret.heading     "Uchovejte ho v tajnosti">
+<!ENTITY syncKey.keepItSecret.description "Všechna data účtu &syncBrand.fullName.label; jsou kvůli ochraně vašeho soukromí zašifrována. Bez tohoto klíče by jejich rozšifrování trvalo roky. Jste jedinou osobou, která zná tento klíč, což znamená, že pouze vy máte možnost přistupovat k datům vašeho účtu &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading       "Uchovejte ho v bezpečí">
+<!ENTITY syncKey.keepItSafe1.description  "Tento klíč neztraťte.">
+<!ENTITY syncKey.keepItSafe2.description  " Kopie klíče není uchovávána (mohlo by dojít k jeho vyzrazení), ">
+<!ENTITY syncKey.keepItSafe3.description  "a proto klíč není možné obnovit,">
+<!ENTITY syncKey.keepItSafe4.description  " pokud je ztracen. Klíč bude potřeba použít kdykoliv ke službě &syncBrand.fullName.label; připojíte nový počítač nebo zařízení.">
+<!ENTITY syncKey.findOutMore1.label       "Zjistěte více o službě &syncBrand.fullName.label; a ochraně soukromí na ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Podmínky poskytování služby &syncBrand.fullName.label; jsou dostupné na">
+<!ENTITY syncKey.footer2.label            ". Zásady ochrany osobních údajů jsou dostupné na ">
+<!ENTITY syncKey.footer3.label            ".">

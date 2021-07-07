@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "Ρύθμιση του &syncBrand.fullName.label;">
+
+<!-- First page of the wizard -->
+
+<!ENTITY setup.pickSetupType.description "Καλώς ήλθατε! Αν δεν έχετε χρησιμοποιήσει ποτέ το &syncBrand.fullName.label;, θα χρειαστεί να δημιουργήσετε έναν νέο λογαριασμό.">
+<!ENTITY button.createNewAccount.label "Δημιουργία νέου λογαριασμού">
+<!ENTITY setup.haveAccount.label "Έχω ήδη λογαριασμό &syncBrand.fullName.label;.">
+<!ENTITY button.connect.label "Σύνδεση">
+
+<!ENTITY setup.choicePage.title.label     "Έχετε χρησιμοποιήσει το &syncBrand.fullName.label; στο παρελθόν;">
+<!ENTITY setup.choicePage.new.label       "Δεν έχω χρησιμοποιήσει το &syncBrand.shortName.label; στο παρελθόν">
+<!ENTITY setup.choicePage.existing.label  "Χρησιμοποιώ ήδη το &syncBrand.shortName.label; σε άλλο υπολογιστή">
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "Διακομιστής">
+<!ENTITY server.accesskey           "Δ">
+<!ENTITY serverType.main.label      "Διακομιστής &syncBrand.fullName.label;">
+<!ENTITY serverType.custom2.label   "Χρήση προσαρμοσμένου διακομιστή…">
+<!ENTITY signIn.account2.label      "Λογαριασμός">
+<!ENTITY signIn.account2.accesskey  "Λ">
+<!ENTITY signIn.password.label      "Κωδικός πρόσβασης">
+<!ENTITY signIn.password.accesskey  "Κ">
+<!ENTITY signIn.recoveryKey.label     "Κλειδί ανάκτησης">
+<!ENTITY signIn.recoveryKey.accesskey "Κ">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "Λεπτομέρειες λογαριασμού">
+<!ENTITY setup.confirmPassword.label             "Επιβεβαίωση κωδικού πρόσβασης">
+<!ENTITY setup.confirmPassword.accesskey         "Ε">
+<!ENTITY setup.emailAddress.label                "Διεύθυνση email">
+<!ENTITY setup.emailAddress.accesskey            "e">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "Συμφωνώ με τους">
+<!ENTITY setup.tosAgree1.accesskey  "μ">
+<!ENTITY setup.tosLink.label        "Όρους υπηρεσίας">
+<!ENTITY setup.tosAgree2.label      "και την">
+<!ENTITY setup.ppLink.label         "Πολιτική απορρήτου">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "Το &brandShortName; νοιάζεται για το απόρρητό σας">
+<!ENTITY setup.newRecoveryKeyPage.description.label "Για την εξασφάλιση του απορρήτου σας, όλα τα δεδομένα σας κρυπτογραφούνται πριν τη μεταφόρτωση. Δεν μεταφορτώνεται το κλειδί ανάκτησής σας, το οποίο είναι απαραίτητο για την αποκρυπτογράφηση των δεδομένων σας.">
+<!ENTITY recoveryKeyEntry.label        "Το κλειδί ανάκτησής σας">
+<!ENTITY recoveryKeyEntry.accesskey    "κ">
+<!ENTITY recoveryGenerateNewKey.label  "Δημιουργία νέου κλειδιού">
+<!ENTITY recoveryKeyBackup.description "Το κλειδί ανάκτησής σας απαιτείται για την πρόσβαση στο &syncBrand.fullName.label; από άλλες συσκευές. Παρακαλώ δημιουργήστε ένα αντίγραφο ασφαλείας. Δεν μπορούμε να σας βοηθήσουμε να ανακτήσετε το κλειδί ανάκτησής σας.">
+
+<!ENTITY button.syncKeyBackup.print.label     "Εκτύπωση…">
+<!ENTITY button.syncKeyBackup.print.accesskey "Ε">
+<!ENTITY button.syncKeyBackup.save.label      "Αποθήκευση…">
+<!ENTITY button.syncKeyBackup.save.accesskey  "Α">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "Παρακαλώ επιβεβαιώστε ότι δεν είστε ρομπότ">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "Προσθήκη συσκευής">
+<!ENTITY addDevice.showMeHow.label          "Εμφάνιση οδηγιών.">
+<!ENTITY addDevice.dontHaveDevice.label     "Δεν έχω τη συσκευή μαζί μου">
+<!ENTITY addDevice.setup.description.label  "Για ενεργοποίηση, μεταβείτε στις Επιλογές/Προτιμήσεις του &syncBrand.shortName.label; στην άλλη σας συσκευή και επιλέξτε &#x0022;Προσθήκη συσκευής&#x0022;.">
+<!ENTITY addDevice.setup.enterCode.label    "Έπειτα, εισάγετε αυτό τον κωδικό:">
+<!ENTITY addDevice.dialog.description.label "Για ενεργοποίηση της νέας σας συσκευής, μεταβείτε στις Επιλογές/Προτιμήσεις του &syncBrand.shortName.label; της και επιλέξτε &#x0022;Σύνδεση&#x0022;.">
+<!ENTITY addDevice.dialog.enterCode.label   "Εισάγετε τον κωδικό που παρέχει η συσκευή:">
+<!ENTITY addDevice.dialog.tryAgain.label    "Παρακαλούμε προσπαθήστε ξανά.">
+<!ENTITY addDevice.dialog.successful.label  "Η συσκευή προστέθηκε με επιτυχία. Ο αρχικός συγχρονισμός μπορεί να διαρκέσει μερικά λεπτά και θα ολοκληρωθεί στο παρασκήνιο.">
+<!ENTITY addDevice.dialog.recoveryKey.label "Για να ενεργοποιήσετε τη συσκευή σας, θα πρέπει να εισάγετε το κλειδί ανάκτησης σας. Παρακαλώ εκτυπώστε ή αποθηκεύστε αυτό το κλειδί και έχετέ το μαζί σας.">
+<!ENTITY addDevice.dialog.connected.label   "Η συσκευή συνδέθηκε">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "Σύνδεση">
+<!ENTITY existingRecoveryKey.description "Μπορείτε να λάβετε ένα αντίγραφο του κλειδιού ανάκτησης, μεταβαίνοντας στις Επιλογές/Προτιμήσεις του &syncBrand.shortName.label; στην άλλη σας συσκευή και επιλέγοντας &#x0022;Το κλειδί ανάκτησής μου&#x0022; στην ενότητα &#x0022;Διαχείριση λογαριασμού&#x0022;.">
+<!ENTITY verifying.label              "Επαλήθευση…">
+<!ENTITY resetPassword.label          "Επαναφορά κωδικού πρόσβασης">
+<!ENTITY resetSyncKey.label           "Έχω χάσει την άλλη μου συσκευή.">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "Επιλογές συγχρονισμού">
+<!ENTITY syncComputerName.label       "Όνομα υπολογιστή:">
+<!ENTITY syncComputerName.accesskey   "υ">
+
+<!ENTITY syncMy.label               "Συγχρονισμός">
+<!ENTITY engine.addons.label        "Πρόσθετα">
+<!ENTITY engine.addons.accesskey    "Π">
+<!ENTITY engine.bookmarks.label     "Σελιδοδείκτες">
+<!ENTITY engine.bookmarks.accesskey "Σ">
+<!ENTITY engine.tabs.label          "Καρτέλες">
+<!ENTITY engine.tabs.accesskey      "Κ">
+<!ENTITY engine.history.label       "Ιστορικό">
+<!ENTITY engine.history.accesskey   "ρ">
+<!ENTITY engine.passwords.label     "Κωδικοί πρόσβασης">
+<!ENTITY engine.passwords.accesskey "Κ">
+<!ENTITY engine.prefs.label         "Προτιμήσεις">
+<!ENTITY engine.prefs.accesskey     "μ">
+
+<!ENTITY choice2.merge.main.label      "Συγχώνευση δεδομένων υπολογιστή με τα δεδομένα του &syncBrand.shortName.label;">
+<!ENTITY choice2.merge.recommended.label "(προτείνεται)">
+<!ENTITY choice2.client.main.label     "Αντικατάσταση όλων των δεδομένων υπολογιστή με τα δεδομένα του &syncBrand.shortName.label;">
+<!ENTITY choice2.server.main.label     "Αντικατάσταση δεδομένων άλλων συσκευών με αυτού του υπολογιστή">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title "Επιβεβαίωση">
+<!ENTITY confirm.merge.label    "Το &syncBrand.fullName.label; θα συγχωνεύσει τώρα όλα τα δεδομένα περιήγησης αυτής της συσκευής με τον λογαριασμό Sync σας.">
+<!ENTITY confirm.client2.label         "Προειδοποίηση: Θα διαγραφούν τα εξής δεδομένα του &brandShortName; σε αυτό τον υπολογιστή:">
+<!ENTITY confirm.client.moreinfo.label "Το &brandShortName; θα αντιγράψει τα δεδομένα του &syncBrand.fullName.label; σας σε αυτό τον υπολογιστή.">
+<!ENTITY confirm.server2.label         "Προειδοποίηση: Οι εξής συσκευές θα αντικατασταθούν με τα τοπικά σας δεδομένα:">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "Η ρύθμιση ολοκληρώθηκε">
+<!ENTITY changeOptions.label "Μπορείτε να αλλάξετε αυτή την προτίμηση από τις επιλογές συγχρονισμού παρακάτω.">
+<!ENTITY continueUsing.label "Μπορείτε να συνεχίσετε τη χρήση του &brandShortName;.">

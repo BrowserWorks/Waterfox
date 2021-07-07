@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Parancsfájlok és bővítmények">
+
+<!ENTITY navigator.label                 "Böngésző">
+<!ENTITY navigator.accesskey             "B">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "JavaScript engedélyezése">
+<!ENTITY allowScripts.label              "A parancsfájlok számára engedélyezett:">
+<!ENTITY allowScripts.accesskey          "p">
+<!ENTITY allowWindowMoveResize.label     "Létező ablakok áthelyezése vagy átméretezése">
+<!ENTITY allowWindowFlip.label           "Ablakok előtérbe vagy háttérbe helyezése">
+<!ENTITY allowWindowStatusChange.label   "Állapotsor szövegének megváltoztatása">
+<!ENTITY allowContextmenuDisable.label   "Előugró menük letiltása vagy cseréje">
+<!ENTITY allowHideStatusBar.label        "Állapotsor elrejtése">
+
+<!ENTITY debugging.label                  "JavaScript hibakeresés">
+<!ENTITY debugEnableDump.label            "A JavaScript dump() kimenet engedélyezése">
+<!ENTITY debugEnableDump.accesskey        "e">
+<!ENTITY debugStrictJavascript.label      "Szigorú JavaScript figyelmeztetések megjelenítése">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "A felület JavaScript hibáinak és figyelmeztetéseinek megjelenítése">
+<!ENTITY debugConsoleJavascript.accesskey "f">
+
+<!ENTITY enablePlugins.label             "Bővítmények engedélyezése a következőhöz:">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Ha egy weboldal bővítményeket használ">
+<!ENTITY activateAllPlugins.label        "Minden bővítmény engedélyezése">
+<!ENTITY activateAllPlugins.accesskey    "M">
+<!ENTITY warnPluginsRequired.label       "Figyelmeztetés, ha további bővítmények telepítése szükséges">
+<!ENTITY warnPluginsRequired.accesskey   "F">

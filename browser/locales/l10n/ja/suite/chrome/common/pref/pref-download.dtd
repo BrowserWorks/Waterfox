@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title		"ダウンロード">
+
+<!ENTITY downloadBehavior.label		"ダウンロードの開始時">
+<!ENTITY doNothing.label		"何も開かない">
+<!ENTITY doNothing.accesskey		"D">
+<!ENTITY openProgressDialog.label	"進行状況ダイアログを開く">
+<!ENTITY openProgressDialog.accesskey	"O">
+<!ENTITY openDM.label			"ダウンロードマネージャーを開く">
+<!ENTITY openDM.accesskey		"m">
+<!ENTITY flashWhenOpen.label		"ダウンロードマネージャーがすでに開いている場合は点滅させる">
+<!ENTITY flashWhenOpen.accesskey	"f">
+
+<!ENTITY downloadLocation.label		"ファイルの保存時">
+<!ENTITY saveTo.label			"次のフォルダーに保存">
+<!ENTITY saveTo.accesskey		"v">
+<!ENTITY chooseDownloadFolder.label	"フォルダーを選択...">
+<!ENTITY chooseDownloadFolder.accesskey	"C">
+<!ENTITY alwaysAsk.label		"ファイルごとに保存先を指定する">
+<!ENTITY alwaysAsk.accesskey		"A">
+
+<!ENTITY finishedBehavior.label		"ダウンロードの完了時">
+<!ENTITY playSound.label		"音を鳴らす">
+<!ENTITY playSound.accesskey		"P">
+<!ENTITY browse.label			"参照...">
+<!ENTITY browse.accesskey		"B">
+<!ENTITY playButton.label		"再生">
+<!ENTITY playButton.accesskey		"l">

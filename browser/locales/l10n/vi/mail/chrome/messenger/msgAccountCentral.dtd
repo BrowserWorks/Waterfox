@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Email">
+<!ENTITY readMsgsLink.label           "Thư đã đọc">
+<!ENTITY composeMsgLink.label         "Viết thư mới">
+
+<!ENTITY newsSectionHdr.label         "Nhóm tin">
+<!ENTITY subscribeNewsLink.label      "Quản lí phần đăng kí nhóm tin">
+
+<!ENTITY feedsSectionHdr.label        "Nguồn cấp">
+<!ENTITY subscribeFeeds.label         "Quản lí đăng kí">
+
+<!ENTITY chat.label                   "Trò chuyện">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Tài khoản">
+<!ENTITY subscribeImapFolders.label   "Quản lí phần đăng kí thư mục">
+<!ENTITY settingsLink.label           "Xem cài đặt cho tài khoản này">
+<!ENTITY setupNewAcct.label           "Thiết lập một tài khoản:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Tính năng nâng cao">
+<!ENTITY searchMsgsLink.label         "Tìm kiếm thư">
+<!ENTITY filtersLink.label            "Quản lí bộ lọc thư">
+<!ENTITY junkSettings.label           "Cài đặt thư rác">
+<!ENTITY offlineLink.label            "Thiết lập ngoại tuyến">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Excluir">
+<!ENTITY editContactPanelDeleteContact.accesskey "x">
+
+<!ENTITY editContactName.label "Nome:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Email:">
+<!ENTITY editContactEmail.accesskey "m">
+
+<!ENTITY editContactAddressBook.label "Catálogo de endereços:">
+<!ENTITY editContactAddressBook.accesskey "t">
+
+<!ENTITY editContactPanelDone.label "Concluído">
+<!ENTITY editContactPanelDone.accesskey "C">
+
+<!ENTITY contactMoveDisabledWarning.description "Você não pode alterar o catálogo de endereços porque o contato está em uma lista de emails.">

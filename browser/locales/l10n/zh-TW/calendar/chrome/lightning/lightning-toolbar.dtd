@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "行事曆工具列">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "工作工具列">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "同步">
+<!ENTITY lightning.toolbar.sync.tooltip "重新載入行事曆並同步變更">
+<!ENTITY lightning.toolbar.delete.label "刪除">
+<!ENTITY lightning.toolbar.delete.tooltip "刪除選擇的事件或工作">
+<!ENTITY lightning.toolbar.edit.label "編輯">
+<!ENTITY lightning.toolbar.edit.tooltip "編輯選擇的事件或工作">
+<!ENTITY lightning.toolbar.gototoday.label "前往今日">
+<!ENTITY lightning.toolbar.gototoday.tooltip "前往今日">
+<!ENTITY lightning.toolbar.print.label "列印">
+<!ENTITY lightning.toolbar.print.tooltip "列印事件或工作">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "行事曆">
+<!ENTITY lightning.toolbar.calendar.tooltip   "切換到行事曆分頁">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label         "工作">
+<!ENTITY lightning.toolbar.task.tooltip       "切換到工作分頁">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "事件">
+<!ENTITY lightning.toolbar.newevent.tooltip   "建立新事件">
+<!ENTITY lightning.toolbar.newtask.label      "工作">
+<!ENTITY lightning.toolbar.newtask.tooltip    "建立新工作">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "日">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "週">
+<!ENTITY lightning.toolbar.week.accesskey            "W">
+<!ENTITY lightning.toolbar.multiweek.label           "多週">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "u">
+<!ENTITY lightning.toolbar.month.label               "月">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "應用程式選單">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "顯示 &brandShortName; 選單">
+<!ENTITY lightning.toolbar.calendarmenu.label        "行事曆窗格">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "顯示行事曆窗格">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">
+

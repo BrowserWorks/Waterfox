@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Составление сообщения: (без темы)">
+
+<!ENTITY fromAddr.label "От:">
+<!ENTITY fromAddr.accesskey "т">
+<!ENTITY toAddr.label "Кому:">
+<!ENTITY ccAddr.label "Копия:">
+<!ENTITY bccAddr.label "Скрытая копия:">
+<!ENTITY replyAddr.label "Обратный адрес:">
+<!ENTITY newsgroupsAddr.label "Группа новостей:">
+<!ENTITY followupAddr.label "Ответ в группу новостей:">
+<!ENTITY subject.label "Тема:">
+<!ENTITY subject.accesskey "м">
+<!ENTITY attachments.label "Вложения:">
+<!ENTITY attachments.accesskey "л">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Сохранить">
+<!ENTITY saveCmd.accesskey "х">
+<!ENTITY saveAsCmd.label "Сохранить как">
+<!ENTITY saveAsCmd.accesskey "к">
+<!ENTITY saveAsFileCmd.label "Файл…">
+<!ENTITY saveAsFileCmd.accesskey "а">
+<!ENTITY saveAsDraftCmd.label "Черновик">
+<!ENTITY saveAsDraftCmd.accesskey "н">
+<!ENTITY saveAsTemplateCmd.label "Шаблон">
+<!ENTITY saveAsTemplateCmd.accesskey "б">
+<!ENTITY attachMenu.label "Вложить">
+<!ENTITY attachMenu.accesskey "ж">
+<!ENTITY attachFileCmd.label "Файл(ы)…">
+<!ENTITY attachFileCmd.accesskey "а">
+<!ENTITY attachPageCmd.label "Веб-страницу…">
+<!ENTITY attachPageCmd.accesskey "е">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Визитную карточку (vCard)">
+<!ENTITY attachVCardCmd.accesskey "з">
+<!ENTITY sendNowCmd.label "Отправить">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "п">
+<!ENTITY sendLaterCmd.label "Отправить позже">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "а">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Переформатировать">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "е">
+<!ENTITY accountManagerCmd.label "Параметры учётной записи…">
+<!ENTITY accountManagerCmd.accesskey "м">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Панель инструментов почты">
+<!ENTITY showComposeToolbarCmd.accesskey "н">
+<!ENTITY showFormatToolbarCmd.label "Панель форматирования">
+<!ENTITY showFormatToolbarCmd.accesskey "ф">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Формат">
+<!ENTITY formatMenu.accesskey "м">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Настройки">
+<!ENTITY optionsMenu.accesskey "о">
+
+<!ENTITY quoteCmd.label "Цитировать сообщение">
+<!ENTITY quoteCmd.accesskey "и">
+<!ENTITY selectAddressCmd.label "Выбрать адреса…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "в">
+
+<!ENTITY priorityMenu.label "Важность">
+<!ENTITY priorityMenu.accesskey "ж">
+<!ENTITY lowestPriorityCmd.label "Самая низкая">
+<!ENTITY lowestPriorityCmd.accesskey "с">
+<!ENTITY lowPriorityCmd.label "Низкая">
+<!ENTITY lowPriorityCmd.accesskey "н">
+<!ENTITY normalPriorityCmd.label "Обычная">
+<!ENTITY normalPriorityCmd.accesskey "ч">
+<!ENTITY highPriorityCmd.label "Высокая">
+<!ENTITY highPriorityCmd.accesskey "ы">
+<!ENTITY highestPriorityCmd.label "Самая высокая">
+<!ENTITY highestPriorityCmd.accesskey "а">
+
+<!ENTITY returnReceiptMenu.label "Уведомление о прочтении">
+<!ENTITY returnReceiptMenu.accesskey "е">
+<!ENTITY dsnMenu.label "Уведомление о доставке">
+<!ENTITY dsnMenu.accesskey "с">
+
+<!ENTITY outputFormatMenu.label "Формат">
+<!ENTITY outputFormatMenu.accesskey  "м">
+<!ENTITY autoFormatCmd.label "Автоопределение">
+<!ENTITY autoFormatCmd.accesskey "п">
+<!ENTITY plainTextFormatCmd.label "Только простой текст">
+<!ENTITY plainTextFormatCmd.accesskey "л">
+<!ENTITY htmlFormatCmd.label "Форматированный текст (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "т">
+<!ENTITY bothFormatCmd.label "Обычный текст и HTML">
+<!ENTITY bothFormatCmd.accesskey "б">
+
+<!ENTITY fileCarbonCopyCmd.label "Поместить копию в папку">
+<!ENTITY fileCarbonCopyCmd.accesskey "к">
+<!ENTITY fileHereMenu.label "Поместить сюда">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Отправить">
+<!ENTITY addressButton.label "Адрес">
+<!ENTITY attachButton.label "Вложить">
+<!ENTITY spellingButton.label "Орфография">
+<!ENTITY saveButton.label "Сохранить">
+<!ENTITY stopButton.label "Остановить">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Панель адреса">
+<!ENTITY formatToolbar.tooltip "Панель форматирования">
+<!ENTITY sendButton.tooltip "Отправить это сообщение сейчас"> 
+<!ENTITY sendlaterButton.tooltip "Отправить это сообщение позже"> 
+<!ENTITY addressButton.tooltip "Выбрать адресата из адресной книги"> 
+<!ENTITY attachButton.tooltip "Вложить файл в это сообщение"> 
+<!ENTITY saveButton.tooltip "Сохранить это сообщение"> 
+<!ENTITY stopButton.tooltip "Остановить текущую передачу данных"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Открыть">
+<!ENTITY openAttachment.accesskey "т">
+<!ENTITY renameAttachment.label "Переименовать…">
+<!ENTITY renameAttachment.accesskey "м">
+<!ENTITY deleteAttachment.accesskey "д">
+<!ENTITY selectAllAttachments.accesskey "ы">
+<!ENTITY attachFile.label "Вложить файл(ы)…">
+<!ENTITY attachFile.accesskey "ф">
+<!ENTITY attachPage.label "Вложить веб-страницу…">
+<!ENTITY attachPage.accesskey "е">

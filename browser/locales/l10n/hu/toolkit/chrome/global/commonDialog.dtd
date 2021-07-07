@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editfield0.label "Felhasználói név:"> 
+<!ENTITY editfield1.label "Jelszó:"> 
+<!ENTITY copyCmd.label    "Másolás">
+<!ENTITY copyCmd.accesskey "M">
+<!ENTITY selectAllCmd.label "Minden kijelölése">
+<!ENTITY selectAllCmd.accesskey "i">

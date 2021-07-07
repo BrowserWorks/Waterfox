@@ -1,0 +1,216 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem med indlæsning af webside">
+<!ENTITY retry.label "Prøv igen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Ude af stand til at oprette forbindelse">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Adgang til denne adresse er underlagt begrænsninger">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serveren blev ikke fundet">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+    <ul>
+    <li>Kontrollér, om adressen indeholder tastefejl, fx 
+    <strong>ww</strong>.eksempel.dk i stedet for 
+    <strong>www</strong>.eksempel.dk</li> 
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Søg</button>
+    </div>
+  <li>Hvis du ikke kan indlæse nogen websider overhovedet, kontrollér da din enheds
+  data- eller wi-fi-forbindelse. <button id='wifi'>Aktiver wi-fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Fil ikke fundet">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Undersøg filnavnet for store bogstaver eller andre tastefejl.</li>
+  <li>Undersøg om filen er blevet flyttet, omdøbt eller slettet</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Filen kunne ikke tilgås">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Den kan være blevet slettet, flyttet eller tilladelserne for filen kan forhindre adgang.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Hovsa.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; kan ikke indlæse denne side af en eller anden grund.</p>
+">
+
+<!ENTITY malformedURI.title "Adressen er ikke gyldig">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Webadresser skrives normalt som
+    <strong>http://www.eksempel.dk/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Søg</button>
+    </div>
+  <li>Kontrollér at du ikke benytter divisionstegn (dvs.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Forbindelsen blev afbrudt">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Siden er udløbet">
+<!ENTITY notCached.longDesc "<p>Den forespurgte webside er ikke tilgængelig i cachen.</p><ul><li>Af sikkerhedshensyn henter &brandShortName; ikke automatisk følsomme sider igen.</li><li>Klik for at prøve at hente siden igen fra webstedet.</li></ul>">
+
+<!ENTITY netOffline.title "Offline-tilstand">
+
+<!ENTITY contentEncodingError.title "Indholdskodningsfejl">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Kontakt ejerne af webstedet omkring dette problem.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Usikker filtype">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Kontakt ejerne af webstedet omkring dette problem.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Forbindelsen blev nulstillet">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Forbindelsens tidsfrist udløb">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Adressen kunne ikke forstås">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Du er måske nødt til at installere andet software for at åbne denne adresse.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Proxyserveren afviser forbindelser">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrollér proxy-indstillingerne, og vær sikker på, at de er korrekte.</li>
+  <li>Kontakt din netværks-administrator for at sikre dig, at proxyserveren
+    fungerer.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Kunne ikke finde proxyserveren">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Kontrollér proxy-indstillingerne, og vær sikker på, at de er korrekte.</li>
+  <li>Kontrollér om din computer har en fungerende netværksforbindelse.
+  <button id='wifi'>Aktiver wi-fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Denne webside viderestiller ikke forespørgslen korrekt">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dette problem kan nogle gange skyldes, at cookies er slået fra, eller modtagelse
+    af cookies er blevet nægtet.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Uventet svar fra server">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Undersøg om dit system har Personal Security Manager
+    installeret.</li>
+  <li>Dette kan skyldes en ikke-standardopsætning af serveren.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Sikker forbindelse mislykkedes">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Siden kunne ikke vises, da autenticiteten af de modtagne data ikke kunne bekræftes.</li>
+  <li>Kontakt ejerne af webstedet omkring dette problem.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Sikker forbindelse mislykkedes">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Dette kan være et problem med serverens konfiguration, eller det kan betyde,
+at nogen forsøger at give sig ud for at være serveren.</li>
+  <li>Hvis du har kunnet tilgå serveren tidligere kan dette problem være midlertidligt
+og du anbefales at prøve igen senere.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Websiden kan være midlertidigt utilgængelig eller travlt optaget. Prøv igen om et øjeblik.</li>
+  <li>Hvis du er ude af stand til at indlæse nogen websider overhovedet, så kontrollér din computers netværksforbindelse.
+  <button id='wifi'>Aktiver wi-fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blokeret grundet indholdssikkerhedspolitik">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; forhindrede denne webside i at blive indlæst på denne måde da den har en indholdssikkerhedspolitik, der forbyder dette.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fejlbehæftet indhold">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Websiden kan ikke vises, da der er fundet en fejl i overførslen af data.</p><ul><li>Kontakt ejerne af webstedet omkring dette problem.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Eller du kan tilføje en undtagelse…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Få mig væk herfra!">
+<!ENTITY securityOverride.exceptionButtonLabel "Tilføj undtagelse…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Du bør ikke tilføje en undtagelse, hvis du ikke bruger en internetforbindelse du stoler fuldt og fast på, eller hvis du ikke er vant til at se advarsler fra denne server.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Ekstern XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakt ejerne af webstedet omkring dette problem.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Kan ikke oprette sikker forbindelse">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Avanceret info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Usikker forbindelse">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Avanceret info: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Usikker forbindelse">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> bruger forældet sikkerheds-teknologi, der er sårbar overfor angreb. En angriber kan derfor nemt få adgang til information, som du troede var sikker. Webstedets administrator er nødt til at løse problemerne på serveren, før du kan besøge webstedet.</p><p>Fejlkode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Fejl i netværksprotokol">
+<!ENTITY networkProtocolError.longDesc "<p>Websiden kan ikke vises, da der er en fejl i netværksprotokollen.</p><ul><li>Informer gerne sidens ejer om problemet.</li></ul>">

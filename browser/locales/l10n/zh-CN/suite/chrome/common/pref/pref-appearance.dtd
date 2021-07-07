@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "外观">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "当 &brandShortName; 启动时，打开">
+<!ENTITY navCheck.label                         "浏览器">
+<!ENTITY navCheck.accesskey                     "B">
+<!ENTITY showToolsLegend.label                  "将工具栏显示为">
+<!ENTITY picsNtextRadio.label                   "图片和文本">
+<!ENTITY picsNtextRadio.accesskey               "P">
+<!ENTITY picsOnlyRadio.label                    "仅仅图片">
+<!ENTITY picsOnlyRadio.accesskey                "o">
+<!ENTITY textonlyRadio.label                    "仅仅文本">
+<!ENTITY textonlyRadio.accesskey                "x">
+<!ENTITY showHideTooltips.label                 "显示工具提示">
+<!ENTITY showHideTooltips.accesskey             "T">
+
+<!ENTITY showHideGrippies.label                 "隐藏工具栏折叠条">
+<!ENTITY showHideGrippies.accesskey             "G">
+
+<!ENTITY pref.locales.title                     "用户界面语言">
+<!ENTITY selectLocale.label                     "为对话框，菜单，工具栏和按钮标签中出现的文字选择语言:">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "日期和时间格式">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "语言和格式化首选项将在您重启 &brandShortName; 后生效。">

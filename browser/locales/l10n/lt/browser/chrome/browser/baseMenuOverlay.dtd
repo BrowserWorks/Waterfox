@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Apie „&brandShorterName;“">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "Nuostatos…">
+
+<!ENTITY servicesMenuMac.label          "Paslaugos">
+
+<!ENTITY hideThisAppCmdMac2.label       "Nerodyti „&brandShorterName;“">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Nerodyti kitų">
+
+<!ENTITY showAllAppsCmdMac.label        "Rodyti viską">
+
+<!ENTITY touchBarCmdMac.label           "Tvarkyti lietimo juostą…">

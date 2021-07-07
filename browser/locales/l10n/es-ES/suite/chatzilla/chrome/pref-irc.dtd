@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref-irc.window.title "ChatZilla">
+<!ENTITY pref-irc.open.title "Preferencias de ChatZilla">
+<!ENTITY pref-irc.open.desc "Las preferencias de ChatZilla son demasiado largas para caber en esta ventana de preferencias, así que se puede abrir su ventana de preferencias desde aquí.">
+<!ENTITY pref-irc.open.label "Abrir preferencias de ChatZilla">
+<!ENTITY pref-irc.open.accesskey "A">
+<!ENTITY startup.chat.label "ChatZilla">
+<!ENTITY startup.chat.accesskey "Z">

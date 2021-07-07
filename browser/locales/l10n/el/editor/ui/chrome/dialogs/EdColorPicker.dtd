@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Χρώμα">
+<!ENTITY lastPickedColor.label "Τελευταίο επιλεγμένο χρώμα">
+<!ENTITY lastPickedColor.accessKey "λ">
+<!ENTITY chooseColor1.label "Επιλογή χρώματος:">
+<!ENTITY chooseColor2.label "Εισαγάγετε μια τιμή χρώματος HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(π.χ.: &quot;#0000ff&quot; ή &quot;blue&quot;):">
+<!ENTITY default.label "Προεπιλογή">
+<!ENTITY default.accessKey "λ">
+<!ENTITY palette.label "Παλέτα:">
+<!ENTITY standardPalette.label "Κανονική">
+<!ENTITY webPalette.label "Όλα τα χρώματα web">
+<!ENTITY background.label "Φόντο για:">
+<!ENTITY background.accessKey "Φ">
+<!ENTITY table.label "Πίνακας">
+<!ENTITY table.accessKey "π">
+<!ENTITY cell.label "Κελιά">
+<!ENTITY cell.accessKey "Κ">

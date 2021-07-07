@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Đưa tôi ra khỏi đây!">
+<!ENTITY safeb.palm.decline.label "Bỏ qua cảnh báo này">
+<!ENTITY safeb.palm.reportPage.label "Tại sao trang này bị chặn?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Tư vấn được cung cấp bởi <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Trang web Ác ý Đã biết!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Trang web tại <span id='malware_sitename'/> được báo cáo là trang web ác ý và đã bị chặn dựa trên tùy chỉnh bảo mật của bạn.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Trang ác ý cố gắng cài đặt các chương trình để ăn cắp thông tin cá nhân, dùng máy của bạn để tấn công máy khác, hoặc làm hư hệ thống của bạn.</p><p>Một số trang ác ý cố tình phân phối phần mềm độc hại, nhưng đa số đã bị sửa đổi mà không được phép hoặc người sở hữu không được biết.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Trang web lừa đảo!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Trang web tại <span id='phishing_sitename'/> được báo cáo là trang web ác ý và đã bị chặn dựa trên tùy chỉnh bảo mật của bạn.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Trang web lừa đảo là trang được thiết kế để lừa bạn làm điều gì đó nguy hiểm như cài đặt phần mềm độc hại, tiết lộ thông tin cá nhân như mật khẩu, số điện thoại hay số thẻ tín dụng.</p><p>Cung cấp bất kỳ thông tin gì cho các trang web này có thể dẫn đến trộm cắp hay sự lừa đảo khác.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Trang này có nghi ngờ cài đặt phần mềm không mong muốn!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Trang web tại <span id='unwanted_sitename'/> được báo cáo là có chứa phần mềm không mong muốn và đã bị chặn dựa trên tùy chỉnh bảo mật của bạn.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Phần mềm không mong muốn mà trang này cố gắng cài đặt có thể là lừa đảo và ảnh hưởng nghiêm trọng đến hoạt động của thiết bị.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Trang bạn đang truy cập có thể chứa phần mềm gây hại">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; đã chặn trang này vì có thể nó thử cài đặt các ứng dụng nguy hiểm mà nó có thể ăn cắp hoặc xóa thông tin của bạn (ví dụ, hình ảnh, mật khẩu, tin nhắn và thẻ tín dụng).">

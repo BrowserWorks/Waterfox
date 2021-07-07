@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Eszköztár testreszabása">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Az eszköztár elemeit az egérrel lehet a helyükre húzni, illetve eltávolítani.">
+<!ENTITY show.label               "Megjelenítés:">
+<!ENTITY iconsAndText.label       "Ikonok és szöveg">
+<!ENTITY icons.label              "Ikonok">
+<!ENTITY text.label               "Szöveg">
+<!ENTITY iconsBesideText.label    "Ikonok a szöveg mellett">
+<!ENTITY useSmallIcons.label      "Kis ikonok használata">
+<!ENTITY restoreDefaultSet.label  "Alapértelmezett készlet visszaállítása">
+<!ENTITY showTitlebar2.label      "Címsor">
+<!ENTITY extraDragSpace2.label    "Húzási terület">
+<!ENTITY saveChanges.label        "Kész">
+<!ENTITY undoChanges.label        "Visszavonás">

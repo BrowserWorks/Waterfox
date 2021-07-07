@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Contas - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Estado das mensagens instantâneas">
+<!ENTITY accountsWindow2.style               "width: 45em; height: 29em;">
+
+<!ENTITY accountManager.newAccount.label     "Nova conta">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Fechar">
+<!ENTITY accountManager.close.accesskey      "c">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Nenhuma conta configurada ainda">
+<!ENTITY accountManager.noAccount.description "Clique no botão &accountManager.newAccount.label; para deixar o &brandShortName; guiar-lhe através do processo de configuração.">
+<!ENTITY account.autoSignOn.label     "Iniciar sessão ao arrancar">
+<!ENTITY account.autoSignOn.accesskey "s">
+<!ENTITY account.connect.label        "Ligar">
+<!ENTITY account.connect.accesskey    "L">
+<!ENTITY account.disconnect.label     "Desligar">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Apagar">
+<!ENTITY account.delete.accesskey     "A">
+<!ENTITY account.edit.label           "Propriedades">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Mover para cima">
+<!ENTITY account.movedown.label       "Mover para baixo">
+<!ENTITY account.cancelReconnection.label         "Cancelar ligação">
+<!ENTITY account.cancelReconnection.accesskey     "a">
+<!ENTITY account.copyDebugLog.label     "Copiar registo de depuração">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "Mostrar registo de depuração">
+<!ENTITY account.showDebugLog.accesskey "o">
+<!ENTITY account.connecting           "A ligar…">
+<!ENTITY account.disconnecting        "A desassociar…">
+<!ENTITY account.disconnected         "Não ligado">

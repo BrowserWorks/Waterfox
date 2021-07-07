@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!ENTITY MsgSynchronize.label "Λήψη και συγχρονισμός μηνυμάτων">
+<!ENTITY MsgSelect.label "Στοιχεία για χρήση εκτός σύνδεσης">
+<!ENTITY MsgSyncDesc.label "Αν έχετε ήδη επιλέξει φακέλους email ή ομάδες συζήτησης για χρήση εκτός σύνδεσης, μπορείτε να κάνετε λήψη και/ή συγχρονισμό τώρα. Διαφορετικά, κάντε κλικ στο κουμπί &quot;Επιλογή&quot; για να επιλέξετε τους φακέλους email και τις ομάδες συζήτησης για χρήση εκτός σύνδεσης.">
+<!ENTITY MsgSyncDirections.label "Λήψη ή/και συγχρονισμός των εξής:">
+<!ENTITY syncTypeMail.label "Μηνύματα email">
+<!ENTITY syncTypeMail.accesskey "Μ">
+<!ENTITY syncTypeNews.label "Μηνύματα ομάδων συζήτησης">
+<!ENTITY syncTypeNews.accesskey "ο">
+<!ENTITY sendMessage.label "Αποστολή μη απεσταλμένων μηνυμάτων">
+<!ENTITY sendMessage.accesskey "Α">
+<!ENTITY workOffline.label "Εργασία εκτός σύνδεσης όταν ολοκληρωθεί η λήψη ή/και ο συγχρονισμός">
+<!ENTITY workOffline.accesskey "Ε">
+<!ENTITY selectButton.label "Επιλογή…">
+<!ENTITY selectButton.accesskey "Ε">
+<!ENTITY MsgSelectDesc.label "Επιλέξτε φακέλους email και συζητήσεων για χρήση εκτός σύνδεσης.">
+<!ENTITY MsgSelectInd.label "Λήψη">
+<!ENTITY MsgSelectItems.label "Φάκελοι και ομάδες συζήτησης">

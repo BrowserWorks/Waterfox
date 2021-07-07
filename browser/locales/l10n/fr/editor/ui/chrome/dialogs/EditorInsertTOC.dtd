@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Table des matières">
+<!ENTITY buildToc.label      "Créer la table des matières à partir de :">
+<!ENTITY tag.label           "Balise :">
+<!ENTITY class.label         "Classe :">
+<!ENTITY header1.label       "Niveau 1">
+<!ENTITY header2.label       "Niveau 2">
+<!ENTITY header3.label       "Niveau 3">
+<!ENTITY header4.label       "Niveau 4">
+<!ENTITY header5.label       "Niveau 5">
+<!ENTITY header6.label       "Niveau 6">
+<!ENTITY makeReadOnly.label  "Placer la table des matières en lecture seulement">
+<!ENTITY orderedList.label   "Numéroter les entrées de la table des matières">

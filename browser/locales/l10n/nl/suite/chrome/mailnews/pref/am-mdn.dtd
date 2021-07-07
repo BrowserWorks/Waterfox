@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Leesbevestigingen">
+<!ENTITY useGlobalPrefs.label         "Mijn algemene leesbevestigingsinstellingen gebruiken voor deze account">
+<!ENTITY useGlobalPrefs.accesskey     "M">
+<!ENTITY globalReceipts.label         "Algemene instellingen…">
+<!ENTITY globalReceipts.accesskey     "g">
+<!ENTITY useCustomPrefs.label         "Leesbevestigingen voor deze account aanpassen">
+<!ENTITY useCustomPrefs.accesskey     "L">
+<!ENTITY requestReceipt.label         "Altijd een leesbevestiging vragen bij het verzenden van berichten">
+<!ENTITY requestReceipt.accesskey     "A">
+<!ENTITY receiptArrive.label          "Als een leesbevestiging binnenkomt:">
+<!ENTITY leaveIt.label                "Deze in mijn Postvak IN laten staan">
+<!ENTITY leaveIt.accesskey            "P">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Deze naar mijn map ‘Verzonden’ verplaatsen">
+<!ENTITY moveToSent.accesskey         "D">
+<!ENTITY requestMDN.label             "Als ik een verzoek voor een leesbevestiging ontvang:">
+<!ENTITY returnSome.label             "Leesbevestigingen bij sommige berichten toestaan">
+<!ENTITY returnSome.accesskey         "o">
+<!ENTITY never.label                  "Nooit een leesbevestiging sturen">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Als ik niet in de Aan of Cc van het bericht sta:">
+<!ENTITY notInToCc.accesskey          "e">
+<!ENTITY outsideDomain.label          "Als de afzender zich buiten mijn domein bevindt:">
+<!ENTITY outsideDomain.accesskey      "b">
+<!ENTITY otherCases.label             "In alle andere gevallen:">
+<!ENTITY otherCases.accesskey         "r">
+<!ENTITY askMe.label                  "Mij vragen">
+<!ENTITY alwaysSend.label             "Altijd verzenden">
+<!ENTITY neverSend.label              "Nooit verzenden">

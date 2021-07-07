@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Default Client">
+<!ENTITY defaultClient.intro  "Use &brandShortName; as the default client for:">
+
+<!ENTITY browser.label "Browser">
+<!ENTITY email.label "Email">
+<!ENTITY newsgroups.label "Newsgroups">
+<!ENTITY feeds.label "Feeds">
+
+<!ENTITY checkOnStartup.label "Always perform this check when starting &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "A">

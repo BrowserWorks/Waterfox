@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Ορισμός υπενθυμίσεων">
+<!ENTITY reminder.add.label                                "Προσθήκη">
+<!ENTITY reminder.add.accesskey                            "Π">
+<!ENTITY reminder.remove.label                             "Αφαίρεση">
+<!ENTITY reminder.remove.accesskey                         "Α">
+
+<!ENTITY reminder.reminderDetails.label                    "Λεπτομέρειες υπενθύμισης">
+<!ENTITY reminder.action.label                             "Επιλογή ενέργειας υπενθύμισης">
+
+<!ENTITY reminder.action.alert.label                       "Εμφάνιση αναδυόμενης ειδοποίησης">
+<!ENTITY reminder.action.email.label                       "Αποστολή email">
+
+<!ENTITY alarm.units.minutes                               "λεπτά" >
+<!ENTITY alarm.units.hours                                 "ώρες" >
+<!ENTITY alarm.units.days                                  "ημέρες" >

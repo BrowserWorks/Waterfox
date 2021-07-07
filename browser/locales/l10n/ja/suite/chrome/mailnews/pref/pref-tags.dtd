@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "タグ">
+<!ENTITY pref.tags.caption          "タグのカスタマイズ">
+<!ENTITY pref.tags.description      "タグは、メッセージを分類して優先順位をつけるために使用されます。以下でタグの色と重要度を設定してください。上に位置するものほど重要度が高いタグです。">
+<!ENTITY tagColumn.label            "タグ">
+<!ENTITY colorColumn.label          "色">
+<!ENTITY defaultTagName.label       "無名のタグ">
+<!ENTITY addTagButton.label         "追加">
+<!ENTITY addTagButton.accesskey     "A">
+<!ENTITY deleteTagButton.label      "削除">
+<!ENTITY deleteTagButton.accesskey  "D">
+<!ENTITY raiseTagButton.label       "重要度を上げる">
+<!ENTITY raiseTagButton.accesskey   "R">
+<!ENTITY lowerTagButton.label       "重要度を下げる">
+<!ENTITY lowerTagButton.accesskey   "L">
+<!ENTITY restoreButton.label        "既定に戻す">
+<!ENTITY restoreButton.accesskey    "s">

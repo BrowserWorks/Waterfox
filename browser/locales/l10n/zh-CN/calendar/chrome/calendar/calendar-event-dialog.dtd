@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "编辑项目" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "更改截止时间时保持连续性">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "从" >
+<!ENTITY newevent.to.label                  "到" >
+
+<!ENTITY newevent.status.label                    "状态" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "未指定" >
+<!ENTITY newevent.eventStatus.none.accesskey      "o" >
+<!ENTITY newevent.todoStatus.none.label           "未指定" >
+<!ENTITY newevent.eventStatus.cancelled.label     "已取消" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "已取消" >
+<!ENTITY newevent.status.tentative.label          "暂定" >
+<!ENTITY newevent.status.tentative.accesskey      "T" >
+<!ENTITY newevent.status.confirmed.label          "已确认" >
+<!ENTITY newevent.status.confirmed.accesskey      "C" >
+<!ENTITY newevent.status.needsaction.label        "将处理" >
+<!ENTITY newevent.status.inprogress.label         "处理中" >
+<!ENTITY newevent.status.completed.label          "已完成" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; 完成">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "通知参与者">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "分别邀请各参与者">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "此选项将分别为每个参与者发送一封邀请信。每封邀请信只包含收件方，而不会披露其他参与者。">
+<!ENTITY event.attendees.disallowcounter.label       "不允许计数">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "表示您不接受计数提案">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "新建">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "事件">
+<!ENTITY  event.menu.item.new.event.accesskey             "E">
+<!ENTITY  event.menu.item.new.task.label                  "任务">
+<!ENTITY  event.menu.item.new.task.accesskey              "T">
+<!ENTITY  event.menu.item.new.message.label               "消息">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "通讯录联系人">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "关闭">
+<!ENTITY  event.menu.item.close.accesskey                 "C">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "保存">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "保存并关闭">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "l">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "删除…">
+<!ENTITY  event.menu.item.delete.accesskey                "D">
+<!ENTITY  event.menu.item.page.setup.label                "页面设置">
+<!ENTITY  event.menu.item.page.setup.accesskey            "u">
+<!ENTITY  event.menu.item.print.label                     "打印">
+<!ENTITY  event.menu.item.print.accesskey                 "P">
+
+<!ENTITY  event.menu.edit.label                           "编辑">
+<!ENTITY  event.menu.edit.accesskey                       "E">
+<!ENTITY  event.menu.edit.undo.label                      "撤消">
+<!ENTITY  event.menu.edit.undo.accesskey                  "U">
+<!ENTITY  event.menu.edit.redo.label                      "重做">
+<!ENTITY  event.menu.edit.redo.accesskey                  "R">
+<!ENTITY  event.menu.edit.cut.label                       "剪切">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "复制">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "粘贴">
+<!ENTITY  event.menu.edit.paste.accesskey                 "P">
+<!ENTITY  event.menu.edit.select.all.label                "全选">
+<!ENTITY  event.menu.edit.select.all.accesskey            "A">
+
+<!ENTITY  event.menu.view.label                           "视图">
+<!ENTITY  event.menu.view.accesskey                       "V">
+<!ENTITY  event.menu.view.toolbars.label                  "工具栏">
+<!ENTITY  event.menu.view.toolbars.accesskey              "T">
+<!ENTITY  event.menu.view.toolbars.event.label            "事件工具栏">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "E">
+<!ENTITY  event.menu.view.toolbars.customize.label        "定制">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "C">
+<!ENTITY  event.menu.view.showlink.label                  "显示相关链接">
+<!ENTITY  event.menu.view.showlink.accesskey              "R">
+
+<!ENTITY  event.menu.options.label                            "选项">
+<!ENTITY  event.menu.options.accesskey                        "O">
+<!ENTITY  event.menu.options.attendees.label                  "邀请参与者…">
+<!ENTITY  event.menu.options.attendees.accesskey              "I">
+<!ENTITY  event.menu.options.timezone2.label                  "显示时区">
+<!ENTITY  event.menu.options.timezone2.accesskey              "z">
+<!ENTITY  event.menu.options.priority2.label                  "优先级">
+<!ENTITY  event.menu.options.priority2.accesskey              "y">
+<!ENTITY  event.menu.options.priority.notspecified.label      "未指定">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "o">
+<!ENTITY  event.menu.options.priority.low.label               "低">
+<!ENTITY  event.menu.options.priority.low.accesskey           "L">
+<!ENTITY  event.menu.options.priority.normal.label            "普通">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "高">
+<!ENTITY  event.menu.options.priority.high.accesskey          "H">
+<!ENTITY  event.menu.options.privacy.label                    "隐私">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "公开事件">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "u">
+<!ENTITY  event.menu.options.privacy.confidential.label       "只显示时间和日期">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "S">
+<!ENTITY  event.menu.options.privacy.private.label            "私人事件">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "把时间段显示为">
+<!ENTITY  event.menu.options.show.time.accesskey              "T">
+<!ENTITY  event.menu.options.show.time.busy.label             "繁忙">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "B">
+<!ENTITY  event.menu.options.show.time.free.label             "空闲">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "F">
+
+<!ENTITY event.invite.attendees.label                     "邀请参与者…">
+<!ENTITY event.invite.attendees.accesskey                 "I">
+<!ENTITY event.email.attendees.label                      "编写邮件给所有的参与者…">
+<!ENTITY event.email.attendees.accesskey                  "A">
+<!ENTITY event.email.tentative.attendees.label            "编写邮件给待定的参与者…">
+<!ENTITY event.email.tentative.attendees.accesskey        "U">
+<!ENTITY event.remove.attendees.label2                    "移除所有参与者">
+<!ENTITY event.remove.attendees.accesskey                 "q">
+<!ENTITY event.remove.attendee.label                      "移除参与者">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "保存">
+<!ENTITY  event.toolbar.saveandclose.label                "保存并关闭">
+<!ENTITY  event.toolbar.delete.label                      "删除">
+<!ENTITY  event.toolbar.attendees.label                   "邀请参与者">
+<!ENTITY  event.toolbar.privacy.label                     "隐私">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "保存">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "保存并关闭">
+<!ENTITY  event.toolbar.delete.tooltip                    "删除">
+<!ENTITY  event.toolbar.attendees.tooltip                 "邀请参与者">
+<!ENTITY  event.toolbar.attachments.tooltip               "添加附件">
+<!ENTITY  event.toolbar.privacy.tooltip                   "更改隐私设定">
+<!ENTITY  event.toolbar.priority.tooltip                  "更改优先级">
+<!ENTITY  event.toolbar.status.tooltip                    "更改状态">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "更改忙/闲时间">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "应用提案">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "事件字段将会填入反对意见，不论是否有附加更改，保存后才会通知所有参与者">
+<!ENTITY counter.button.original.label                    "应用原始数据">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "此字段将填入提出反对意见前原始事件的内容">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "标题：" >
+<!ENTITY event.title.textbox.accesskey                    "i">
+<!ENTITY event.location.label                             "位置：" >
+<!ENTITY event.location.accesskey                         "L">
+<!ENTITY event.categories.label                           "分类：">
+<!ENTITY event.categories.accesskey                       "y">
+<!ENTITY event.categories.textbox.label                   "添加新分类" >
+<!ENTITY event.calendar.label                             "日历：" >
+<!ENTITY event.calendar.accesskey                         "C">
+<!ENTITY event.attendees.label                            "参与者：" >
+<!ENTITY event.attendees.accesskey                        "I">
+<!ENTITY event.alldayevent.label                          "全天事件" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "开始：" >
+<!ENTITY event.from.accesskey                             "S">
+<!ENTITY task.from.label                                  "开始：" >
+<!ENTITY task.from.accesskey                              "B">
+<!ENTITY event.to.label                                   "结束：" >
+<!ENTITY event.to.accesskey                               "n">
+<!ENTITY task.to.label                                    "截止时间：" >
+<!ENTITY task.to.accesskey                                "u">
+<!ENTITY task.status.label                                "状态：" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "重复：" >
+<!ENTITY event.repeat.accesskey                           "R">
+<!ENTITY event.until.label                                "直到：">
+<!ENTITY event.until.accesskey                            "i">
+<!ENTITY event.reminder.label                             "提醒：" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "描述：" >
+<!ENTITY event.description.accesskey                      "p">
+<!ENTITY event.attachments.label                          "附件：" >
+<!ENTITY event.attachments.accesskey                      "h" >
+<!ENTITY event.attachments.menubutton.label               "附加">
+<!ENTITY event.attachments.menubutton.accesskey           "A">
+<!ENTITY event.attachments.url.label                      "网页 (W)...">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "移除" >
+<!ENTITY event.attachments.popup.remove.accesskey         "R" >
+<!ENTITY event.attachments.popup.open.label               "打开" >
+<!ENTITY event.attachments.popup.open.accesskey           "O" >
+<!ENTITY event.attachments.popup.removeAll.label          "全部移除" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "A" >
+<!ENTITY event.attachments.popup.attachPage.label         "附加网页…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "W" >
+<!ENTITY event.url.label                                  "相关链接：" >
+<!ENTITY event.priority2.label                            "优先级：">
+
+<!ENTITY event.reminder.none.label                        "无提醒" >
+<!ENTITY event.reminder.0minutes.before.label             "0 分钟前" >
+<!ENTITY event.reminder.5minutes.before.label             "5 分钟之前" >
+<!ENTITY event.reminder.15minutes.before.label            "15 分钟之前" >
+<!ENTITY event.reminder.30minutes.before.label            "30 分钟之前" >
+<!ENTITY event.reminder.1hour.before.label                "1 小时之前" >
+<!ENTITY event.reminder.2hours.before.label               "2 小时之前" >
+<!ENTITY event.reminder.12hours.before.label              "12小时之前" >
+<!ENTITY event.reminder.1day.before.label                 "1 天前" >
+<!ENTITY event.reminder.2days.before.label                "2 天之前" >
+<!ENTITY event.reminder.1week.before.label                "1 周之前" >
+<!ENTITY event.reminder.custom.label                      "定制…" >
+
+<!ENTITY event.reminder.multiple.label                    "多重提醒器…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "标记时间为：">
+<!ENTITY event.statusbarpanel.privacy.label               "隐私政策：">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "编辑重复事件">
+
+<!ENTITY event.repeat.does.not.repeat.label             "不重复">
+<!ENTITY event.repeat.daily.label                       "每天">
+<!ENTITY event.repeat.weekly.label                      "每周">
+<!ENTITY event.repeat.every.weekday.label               "每个周末">
+<!ENTITY event.repeat.bi.weekly.label                   "每两周">
+<!ENTITY event.repeat.monthly.label                     "每月">
+<!ENTITY event.repeat.yearly.label                      "每年">
+<!ENTITY event.repeat.custom.label                      "定制…">
+
+<!ENTITY event.recurrence.pattern.label                 "重复模式">
+<!ENTITY event.recurrence.occurs.label                  "重复" >
+<!ENTITY event.recurrence.day.label                     "每日" >
+<!ENTITY event.recurrence.week.label                    "每周" >
+<!ENTITY event.recurrence.month.label                   "每月" >
+<!ENTITY event.recurrence.year.label                    "每年" >
+
+<!ENTITY event.recurrence.pattern.every.label           "每" >
+<!ENTITY repeat.units.days.both                         "天" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "每个工作周" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "每" >
+<!ENTITY repeat.units.weeks.both                        "周" >
+<!ENTITY event.recurrence.on.label                      "在：" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "每" >
+<!ENTITY repeat.units.months.both                       "月" >
+<!ENTITY event.recurrence.monthly.every.label           "每" >
+<!ENTITY event.recurrence.monthly.first.label           "第一">
+<!ENTITY event.recurrence.monthly.second.label          "第二">
+<!ENTITY event.recurrence.monthly.third.label           "第三">
+<!ENTITY event.recurrence.monthly.fourth.label          "第四">
+<!ENTITY event.recurrence.monthly.fifth.label           "第五">
+<!ENTITY event.recurrence.monthly.last.label            "最后">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "星期天" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "星期一" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "星期二" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "星期三" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "星期四" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "星期五" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "星期六" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "天/月">
+<!ENTITY event.recurrence.repeat.recur.label            "重复间隔天数">
+
+<!ENTITY event.recurrence.every.label                        "每：" >
+<!ENTITY repeat.units.years.both                             "年" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "每" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "一月" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "二月" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "三月" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "四月" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "五月" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "六月" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "七月" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "八月" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "九月" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "十月" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "十一月" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "十二月" >
+<!ENTITY event.recurrence.yearly.every.label                 "每">
+<!ENTITY event.recurrence.yearly.first.label                 "第一">
+<!ENTITY event.recurrence.yearly.second.label                "第二">
+<!ENTITY event.recurrence.yearly.third.label                 "第三">
+<!ENTITY event.recurrence.yearly.fourth.label                "第四">
+<!ENTITY event.recurrence.yearly.fifth.label                 "第五">
+<!ENTITY event.recurrence.yearly.last.label                  "最后">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "星期天" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "星期一" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "星期二" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "星期三" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "星期四" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "星期五" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "星期六" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "日" >
+<!ENTITY event.recurrence.of.label                           "之" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "一月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "二月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "三月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "四月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "五月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "六月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "七月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "八月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "九月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "十月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "十一月" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "十二月" >
+
+<!ENTITY event.recurrence.range.label                   "重复发生的范围">
+<!ENTITY event.recurrence.forever.label                 "无结束日期" >
+<!ENTITY event.recurrence.repeat.for.label              "创建" >
+<!ENTITY event.recurrence.appointments.label            "指派" >
+<!ENTITY event.repeat.until.label                       "重复直到" >
+<!ENTITY event.recurrence.preview.label                 "预览">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "邀请参与者">
+<!ENTITY event.organizer.label                  "组织者">
+<!ENTITY event.freebusy.suggest.slot            "建议时间间距：">
+<!ENTITY event.freebusy.button.next.slot        "下一段空闲">
+<!ENTITY event.freebusy.button.previous.slot    "上一段空闲">
+<!ENTITY event.freebusy.zoom                    "缩放：">
+<!ENTITY event.freebusy.legend.free             "空闲" >
+<!ENTITY event.freebusy.legend.busy             "繁忙" >
+<!ENTITY event.freebusy.legend.busy_tentative   "暂定" >
+<!ENTITY event.freebusy.legend.busy_unavailable "不在办公室" >
+<!ENTITY event.freebusy.legend.unknown          "无信息" >
+<!ENTITY event.attendee.role.required           "必须参与者">
+<!ENTITY event.attendee.role.optional           "可选参与者">
+<!ENTITY event.attendee.role.chair              "主席">
+<!ENTITY event.attendee.role.nonparticipant     "非参与者">
+<!ENTITY event.attendee.usertype.individual     "个人">
+<!ENTITY event.attendee.usertype.group          "群组">
+<!ENTITY event.attendee.usertype.resource       "资源">
+<!ENTITY event.attendee.usertype.room           "房间">
+<!ENTITY event.attendee.usertype.unknown        "未知的">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "请指定时区">
+<!ENTITY event.timezone.custom.label     "更多时区…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "常规">
+<!ENTITY read.only.title.label           "标题：">
+<!ENTITY read.only.calendar.label        "日历：">
+<!ENTITY read.only.event.start.label     "开始日期：">
+<!ENTITY read.only.task.start.label      "开始日期：">
+<!ENTITY read.only.event.end.label       "截止日期：">
+<!ENTITY read.only.task.due.label        "截止时间：">
+<!ENTITY read.only.repeat.label          "重复：">
+<!ENTITY read.only.location.label        "位置：">
+<!ENTITY read.only.category.label        "分类：">
+<!ENTITY read.only.organizer.label       "组织：">
+<!ENTITY read.only.reminder.label        "提醒：">
+<!ENTITY read.only.attachments.label     "附件：">
+<!ENTITY read.only.attendees.label       "参与者">
+<!ENTITY read.only.description.label     "描述">
+<!ENTITY read.only.link.label            "相关链接">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "保存并关闭">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "保存更改并关闭窗口，但不更改参与状态、不发送回复">
+<!ENTITY summary.dialog.accept.label            "接受">
+<!ENTITY summary.dialog.accept.tooltiptext      "接受邀请">
+<!ENTITY summary.dialog.tentative.label         "暂定">
+<!ENTITY summary.dialog.tentative.tooltiptext   "暂时接受邀请">
+<!ENTITY summary.dialog.decline.label           "拒绝">
+<!ENTITY summary.dialog.decline.tooltiptext     "拒绝邀请">
+<!ENTITY summary.dialog.dontsend.label          "不要发送回复">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "变更您的参与状态而不发送回复给组织者，并关闭窗口">
+<!ENTITY summary.dialog.send.label              "立刻发送回复">
+<!ENTITY summary.dialog.send.tooltiptext        "发送回复给组织者，并关闭窗口">

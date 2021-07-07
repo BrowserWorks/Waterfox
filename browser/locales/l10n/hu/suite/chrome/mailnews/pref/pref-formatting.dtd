@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Küldés formátuma">
+<!ENTITY sendMaildesc.label           "Ha HTML-üzenetet küldése esetén egy vagy több címzettről nem ismert, hogy képes-e HTML-t fogadni:">
+<!ENTITY askMe.label                  "Kérdezzen rá, hogy mi a teendő (A levelező kéri majd a formátum kiválasztását)">
+<!ENTITY askMe.accesskey              "K">
+<!ENTITY convertPlain2.label          "Az üzenet átalakítása egyszerű szöveggé (formázásai elveszhetnek)">
+<!ENTITY convertPlain2.accesskey      "a">
+<!ENTITY sendHTML2.label              "Üzenet küldése csak HTML-ként (megjelenítési problémákat okozhat)">
+<!ENTITY sendHTML2.accesskey          "H">
+<!ENTITY sendBoth2.label              "Üzenet küldése egyszerű szövegként és HTML-ként (nagyobb méret)">
+<!ENTITY sendBoth2.accesskey          "k">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML és egyszerű szöveges tartományok">
+<!ENTITY domaindesc.label             "Ha üzenetét az alábbi tartományokhoz tartozó címre küldi, a Levelező automatikusan a helyes formátumban fogja elküldeni (formázott szöveg vagy egyszerű szöveg).">
+<!ENTITY HTMLdomaintitle.label        "HTML-t kérő tartományok">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Egyszerű szöveget kérő tartományok">
+<!ENTITY PlainTexttitle.accesskey     "e">
+<!ENTITY AddButton.label              "Hozzáadás…">
+<!ENTITY AddHtmlDomain.accesskey      "H">
+<!ENTITY AddPlainText.accesskey       "o">
+<!ENTITY DeleteButton.label           "Törlés">
+<!ENTITY DeleteHtmlDomain.accesskey   "T">
+<!ENTITY DeletePlainText.accesskey    "r">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "HTML-levelet fogadni képes tartomány felvétele">
+<!ENTITY add.htmldomain               "HTML-levelet fogadni képes tartományok:">
+<!ENTITY add.plaintexttitle           "Normál szöveget kérő tartomány felvétele">
+<!ENTITY add.plaintextdomain          "Normál szöveget kérő tartományok:">
+
+<!ENTITY domainnameError.title        "Hibás tartománynév">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "@string@ tartománynév érvénytelen és figyelmen kívül lesz hagyva. Az érvényes tartománynevek legalább egy pontot (.) tartalmaznak amely karakterekkel vannak körülvéve.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Automatikusan elküldi az üzenetet egyszerű szövegként, ha nincs jelentős mértékű formázás (felülbírálja a többi beállítást)">
+<!ENTITY autoDowngrade.accesskey      "n">

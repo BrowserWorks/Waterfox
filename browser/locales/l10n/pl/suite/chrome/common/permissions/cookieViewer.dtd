@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tab.cookiesonsystem.label "Zachowane ciasteczka">
+<!ENTITY tab.bannedservers.label "Ustawienia akceptacji ciasteczek">
+<!ENTITY div.bannedservers.label "Zarządzaj polityką akceptacji ciasteczek.">
+<!ENTITY div.cookiesonsystem.label "Lista ciasteczek przechowywanych w komputerze użytkownika.">
+<!ENTITY treehead.cookiename.label "Nazwa ciasteczka">
+<!ENTITY treehead.cookiedomain.label "Witryna">
+<!ENTITY treehead.cookieexpires.label "Wygasa">
+<!ENTITY treehead.infoselected.label "Informacje o wybranym ciasteczku">
+<!ENTITY button.removecookie.label "Usuń ciasteczko">
+<!ENTITY button.removecookie.accesskey "U">
+<!ENTITY button.removeallcookies.label "Usuń wszystkie ciasteczka">
+<!ENTITY button.removeallcookies.accesskey "w">
+
+<!ENTITY search.placeholder "Szukaj w ciasteczkach">
+<!ENTITY focusSearch.key "f">
+<!ENTITY selectAll.key "a">
+
+<!ENTITY props.name.label "Nazwa:">
+<!ENTITY props.value.label "Zawartość:">
+<!ENTITY props.domain.label "Host:">
+<!ENTITY props.path.label "Ścieżka:">
+<!ENTITY props.secure.label "Wysyłaj:">
+<!ENTITY props.expires.label "Wygasa:">
+
+<!ENTITY treehead.sitename.label "Witryna">
+<!ENTITY treehead.scheme.label "Schemat">
+<!ENTITY treehead.status.label "Status">
+<!ENTITY windowtitle.label "Menedżer ciasteczek">
+
+<!ENTITY blockSite.label "Blokuj">
+<!ENTITY blockSite.accesskey "B">
+<!ENTITY allowSite.label "Zezwól">
+<!ENTITY allowSite.accesskey "Z">
+<!ENTITY allowSiteSession.label "Sesja">
+<!ENTITY allowSiteSession.accesskey "S">
+<!ENTITY removepermission.label "Usuń witrynę">
+<!ENTITY removepermission.accesskey "U">
+<!ENTITY removeallpermissions.label "Usuń wszystkie witryny">
+<!ENTITY removeallpermissions.accesskey "w">
+
+<!ENTITY futureCookies.label "Nie pozwól, aby usunięte ciasteczka były później ponownie zaakceptowane">
+<!ENTITY futureCookies.accesskey "N">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Кодировка текста">
+<!ENTITY messageDisplay.caption          "Отображение сообщений">
+<!ENTITY viewFallbackCharset2.label      "Резервная кодировка текста:">
+<!ENTITY viewFallbackCharset2.accesskey  "е">
+<!ENTITY viewFallbackCharset.desc        "(Используется для старых веб-страниц, которые не указали свою кодировку)">
+
+<!ENTITY composingMessages.caption       "Составление сообщений">
+<!ENTITY useMIME.label                   "Для сообщений, содержащих 8-битные символы, использовать MIME-кодирование «quoted printable» (не отмечайте опцию, чтобы письмо отправлялось без кодирования)">
+<!ENTITY useMIME.accesskey               "я">
+<!ENTITY sendDefaultCharset2.label       "Кодировка текста по умолчанию:">
+<!ENTITY sendDefaultCharset2.accesskey   "о">
+<!ENTITY replyInDefaultCharset3.label    "По возможности использовать кодировку текста по умолчанию при ответе (если флажок снят, только новые сообщения будут использовать кодировку текста по умолчанию).">
+<!ENTITY replyInDefaultCharset3.accesskey "в">

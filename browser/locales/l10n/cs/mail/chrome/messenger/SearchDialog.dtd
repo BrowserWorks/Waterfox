@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Hledat zprávy ve složce:">
+<!ENTITY searchHeading.accesskey     "z">
+<!ENTITY searchSubfolders.label      "Hledat v podsložkách">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnServer.label        "Spustit hledání na serveru">
+<!ENTITY searchOnServer.accesskey    "S">
+<!ENTITY resetButton.label           "Vymazat">
+<!ENTITY resetButton.accesskey       "y">
+<!ENTITY openButton.label            "Otevřít">
+<!ENTITY openButton.accesskey        "t">
+<!ENTITY deleteButton.label          "Smazat">
+<!ENTITY deleteButton.accesskey      "m">
+<!ENTITY searchDialogTitle.label     "Hledat ve zprávách">
+<!ENTITY results.label               "Nalezené položky:">
+<!ENTITY moveButton.label            "Přesunout do">
+<!ENTITY moveButton.accesskey        "p">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Otevřít ve složce">
+<!ENTITY openInFolder.accesskey      "v">
+<!ENTITY saveAsVFButton.label        "Uložit hledání jako složku…">
+<!ENTITY saveAsVFButton.accesskey    "a">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Hledat v:">
+<!ENTITY abSearchHeading.accesskey   "H">
+<!ENTITY propertiesButton.label      "Vlastnosti">
+<!ENTITY propertiesButton.accesskey  "V">
+<!ENTITY composeButton.label         "Napsat zprávu">
+<!ENTITY composeButton.accesskey     "z">
+<!ENTITY deleteCardButton.label      "Smazat">
+<!ENTITY deleteCardButton.accesskey  "S">
+<!ENTITY abSearchDialogTitle.label   "Rozšířené hledání v kontaktech">
+

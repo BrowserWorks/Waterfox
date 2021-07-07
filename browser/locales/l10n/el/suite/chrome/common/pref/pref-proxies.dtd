@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Διακομιστές μεσολάβησης">
+<!ENTITY  pref.proxies.desc             "Ο διακομιστής μεσολάβησης είναι μια υπηρεσία δικτύου που μπορεί να φιλτράρει και να επιταχύνει τη σύνδεση διαδικτύου σας.">
+<!ENTITY  proxyTitle.label              "Ρύθμιση διακομιστών μεσολάβησης για πρόσβαση στο διαδίκτυο">
+<!ENTITY  directTypeRadio.label         "Άμεση σύνδεση στο Διαδίκτυο">
+<!ENTITY  directTypeRadio.accesskey     "Δ">
+<!ENTITY  systemTypeRadio.label         "Χρήση ρυθμίσεων διαμεσολαβητή συστήματος">
+<!ENTITY  systemTypeRadio.accesskey     "Χ">
+<!ENTITY  manualTypeRadio.label         "Χειροκίνητη ρύθμιση διακομιστή μεσολάβησης:">
+<!ENTITY  manualTypeRadio.accesskey     "ε">
+<!ENTITY  wpadTypeRadio.label           "Αυτόματη ανίχνευση ρυθμίσεων διακομιστή μεσολάβησης">
+<!ENTITY  wpadTypeRadio.accesskey       "Α">
+<!ENTITY  autoTypeRadio.label           "URL αυτόματης ρύθμισης διακομιστή μεσολάβησης:">
+<!ENTITY  autoTypeRadio.accesskey       "ρ">
+<!ENTITY  reload.label                  "Ανανέωση">
+<!ENTITY  reload.accesskey              "Α">
+<!ENTITY  http.label                    "Διακομιστής μεσολάβησης:">
+<!ENTITY  http.accesskey                "Δ">
+<!ENTITY  port.label                    "Θύρα:">
+<!ENTITY  HTTPPort.accesskey            "ρ">
+<!ENTITY  advanced.label                "Για προχωρημένους…">
+<!ENTITY  advanced.accesskey            "ω">
+<!ENTITY  noproxy.label                 "Χωρίς διακομιστή μεσολάβησης για:">
+<!ENTITY  noproxy.accesskey             "Χ">
+<!ENTITY  noproxyExplain.label          "Παράδειγμα: .mozilla.org, .net.nz, 192.168.1.0/24">

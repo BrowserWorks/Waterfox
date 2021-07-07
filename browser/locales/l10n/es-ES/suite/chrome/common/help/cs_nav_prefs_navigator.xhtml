@@ -1,0 +1,785 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Ayuda para las preferencias del navegador de &brandShortName;</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+
+<body>
+<h1 id="navigator_preferences">Preferencias del navegador</h1>
+
+<p>Esta sección describe cómo usar el panel de preferencias del navegador.
+  Si todavía no lo está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+  <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>Elija Navegador.</li>
+</ol>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#navigator">Navegador</a></li>
+    <li><a href="#history">Historial</a></li>
+    <li><a href="#languages">Idiomas</a></li>
+    <li><a href="#helper_applications">Aplicaciones auxiliares</a></li>
+    <li><a href="#location_bar">Barra de direcciones</a></li>
+    <li><a href="#internet_search">Búsqueda por Internet</a></li>
+    <li><a href="#tabbed_browsing">Navegación con pestañas</a></li>
+    <li><a href="#link_behavior">Comportamiento de los enlaces</a></li>
+    <li><a href="#downloads">Descargas</a></li>
+  </ul>
+</div>
+
+<h2 id="navigator">Preferencias del navegador - Navegador</h2>
+
+<p>Esta sección describe cómo usar el panel principal de preferencias del
+  navegador. Si todavía no lo está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>Elija la categoría Navegador.</li>
+</ol>
+
+<p>El panel de preferencias del navegador le permite personalizar ciertos
+  aspectos del navegador.</p>
+
+<ul>
+  <li><strong>Mostrar en el</strong>: use la lista desplegable en combinación
+    con las casillas seleccionables para controlar qué será mostrado al inicio
+    o cuando se abra una nueva ventana o pestaña:
+    <ol>
+      <li>
+        <ul>
+          <li>Seleccione <strong>Inicio del navegador</strong> para configurar
+            qué mostrará el navegador al iniciarse.</li>
+          <li>Seleccione <strong>Nueva ventana</strong> para configurar qué se
+            mostrará al abrir una nueva ventana del navegador.</li>
+          <li>Seleccione <strong>Nueva pestaña</strong> para configurar qué se
+            mostrará al abrir una nueva pestaña.</li>
+          <li><strong>Restaurar sesión anterior</strong>: hace que el navegador
+            restaure las ventanas y pestañas que estaba viendo justo antes de
+            salir por última vez de &brandShortName;, incluyendo el historial
+            de datos de formularios y de navegación. Esta opción sólo está
+            disponible en conexión con <strong>Mostrar en el inicio del
+            navegador</strong>.</li>
+        </ul>
+      </li>
+      <li>Seleccione una de las siguientes casillas:
+        <ul>
+          <li><strong>Página en blanco</strong>: hace que el navegador muestre
+            una página en blanco.</li>
+          <li><strong>Página de inicio</strong>: hace que el navegador cargue
+            su página de inicio (especificada debajo).</li>
+          <li><strong>Última página visitada</strong>: hace que el navegador
+            cargue la página que estaba viendo justo antes de salir de
+            &brandShortName;.</li>
+        </ul>
+      </li>
+    </ol>
+  </li>
+  <li class="win"><strong>Navegador predeterminado</strong>: le permite
+    establecer &brandShortName; como navegador predeterminado o bien le muestra
+    que ya lo es.
+    <ul>
+      <li><strong>Establecer como navegador predeterminado</strong>: a menos
+        que esté deshabilitado, puede pulsar aquí para hacer que
+        &brandShortName; sea su navegador predeterminado.</li>
+    </ul>
+  </li>
+  <li><strong>Al restaurar sesiones y ventanas</strong>: elija cómo deben
+    restaurarse (en su caso) múltiples pestañas del navegador a la vez durante
+    el arranque.
+    <ul>
+      <li><strong>Restaurar todas las pestañas inmediatamente</strong>: todas
+        las pestañas que estuvieran abiertas la última vez serán restauradas y
+        cargadas de una vez. Esto puede afectar negativamente al rendimiento
+        durante el arranque si hace falta restaurar en paralelo una gran
+        cantidad de pestañas.</li>
+      <li><strong>Restaurar [__] pestañas a la vez</strong>: si elige esta
+        opción, sólo se restaurará a la vez el número de pestañas especificado.
+        Si tenía más pestañas abiertas de las especificadas aquí, las pestañas
+        adicionales sólo se cargarán una vez haya terminado de cargarse una de
+        las demás pestañas.</li>
+      <li><strong>Restaurar sólo las pestañas cuando las necesite</strong>:
+        esto desactiva la restauración automática de pestañas, es decir, las
+        pestañas sólo se cargarán si se pasa a ellas o se pide su recarga.</li>
+    </ul>
+  </li>
+  <li>Preferencias del botón de inicio: en el campo, escriba la pagina web que
+    desee como su página de inicio, o haga una de las siguientes cosas:
+    <ul>
+      <li><strong>Elegir archivo</strong>: pulse este botón para localizar un
+        archivo en el disco que desee cargar como su página de inicio.</li>
+      <li><strong>Usar página actual</strong>: haga clic aquí para usar la
+        página web mostrada actualmente en el navegador como su página de
+        inicio.</li>
+      <li><strong>Usar grupo actual</strong>: si tiene dos o más pestañas
+        abiertas en el navegador, pulse aquí para establecerlas como su página
+        de inicio (un grupo de pestañas que se abren como su página de inicio).
+        Tras pulsar este botón, el mensaje <q>Grupo de páginas de inicio
+        establecido</q> aparece en el campo de dirección.
+      
+        <p><strong>Precaución</strong>: si edita el campo después de pulsar el
+          botón Usar grupo actual, su grupo de páginas de inicio se
+          perderá.</p>
+      </li>
+      <li><strong>Restaurar predeterminado</strong>: pulse esta opción para
+        restaurar la página de inicio predeterminada.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="history">Preferencias del navegador - Historial</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias del historial. Si
+  todavía no lo está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>En la categoría Navegador, elija Historial (si no hay subcategorías
+    visibles, haga doble clic en Navegador para expandir la lista).</li>
+</ol>
+
+<p>El panel de preferencias del historial permite configurar las opciones del
+  navegador.</p>
+
+<ul>
+  <li>
+    <strong>Historial de navegación</strong>:
+    <ul>
+      <li><strong>Vaciar historial</strong>: pulse este botón para eliminar la
+        lista de sitios web visitados.</li>
+      <li><strong>Recordar páginas visitadas</strong>: marque esta casilla para
+        que &brandShortName; recuerde las páginas que visita en el historial de
+        navegación. Por ejemplo, necesita esta función para poder buscar
+        páginas que ya ha visitado desde la barra de direcciones o la ventana
+        del historial.</li>
+    </ul>
+  </li>
+  <li><strong>Historial de la barra de direcciones</strong>:
+    <ul>
+      <li><strong>Activar historial de la barra de direcciones</strong>: marque
+        esta opción para permitir que &brandShortName; conservar el historial
+        de la barra de direcciones.</li>
+      <li><strong>Vaciar barra de direcciones</strong>: pulse este botón para
+        vaciar la lista de sitios web en la barra de direcciones.</li>
+    </ul>
+  </li>
+  <li><strong>Historial de formularios y búsquedas</strong>:
+    <ul>
+      <li><strong>Activar historial de formularios y búsquedas</strong>:
+        seleccione esta opción para permitir a &brandShortName; conservar un
+        historial de los formularios que rellene y las búsquedas que haga.</li>
+      <li><strong>Recordar historial de formularios y búsquedas hasta [__]
+        días</strong>: escriba el número máximo de días que quiere que
+        &brandShortName; conserve un registro de formularios que rellena y las
+        búsquedas que realiza. Por ejemplo, si fija este valor a 180 días, se
+        conservarán los formularios y búsquedas realizados hace 180 días o
+        menos.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Para más información sobre el historial en &brandShortName;, vea
+  <a href="nav_help.xhtml#retracing_your_steps">Retroceder nuestros
+  pasos</a>.</p>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="languages">Preferencias del navegador - Idiomas</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de idiomas. Si
+  todavía no lo está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>En la categoría Navegador, elija Idiomas (si no hay subcategorías
+    visibles, haga doble clic en Navegador para expandir la lista).</li>
+</ol>
+
+<p>El panel de preferencias de idiomas permite escoger los idiomas y la
+  codificación de texto para ver las páginas web:</p>
+
+<ul>
+  <li><strong>Idiomas para páginas web</strong>:
+    <ul>
+      <li><strong>Arriba / Abajo</strong>: pulse uno de estos botones para
+        mover el idioma seleccionado arriba o abajo, indicando así el orden de
+        preferencia de los idiomas de la lista.</li>
+      <li><strong>Añadir</strong>: pulse aquí para añadir idiomas adicionales
+        para ver páginas web. En el diálogo, seleccione un idioma de la lista.
+        Si quiere añadir un idioma que no está en la lista, escriba un código
+        de idioma (pueden usarse códigos de dos y tres letras) en el campo bajo
+        la lista. Vea el documento en línea
+        <a href="http://www.loc.gov/standards/iso639-2/php/code_list.php">Códigos
+        para la representación de nombres de idiomas (en inglés)</a> para una
+        lista completa de códigos de idioma. Pulse Aceptar para cerrar el
+        diálogo y guardar sus cambios.</li>
+      <li><strong>Quitar</strong>: pulse este botón para quitar de la lista el
+        idioma seleccionado.</li>
+    </ul>
+  </li>
+  <li>
+    <strong>Codificación de texto para contenido antiguo</strong>:
+    <ul>
+      <li><strong>Codificación de texto por defecto</strong>: las páginas
+        web deberían declarar la codificación de texto en la que se deben
+        mostrar, pero cierto contenido antiguo podría no hacerlo. Utilice la
+        lista desplegable para seleccionar la codificación de texto
+        predeterminada que debe usarse con esas páginas. Esta configuración
+        no afecta a ninguna página web que declare correctamente su
+        codificación.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="helper_applications">Preferencias del navegador - Aplicaciones
+  auxiliares</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de aplicaciones
+  auxiliares. Si todavía no lo está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>En la categoría Navegador, elija Aplicaciones auxiliares (si
+    no hay subcategorías visibles, haga doble clic en Navegador para
+    expandir la lista).</li>
+</ol>
+
+<p>El panel de preferencias de aplicaciones auxiliares permite controlar
+  cómo se abrirán distintos tipos de archivos por otras aplicaciones en
+  &brandShortName;:</p>
+<p>El panel de preferencias de aplicaciones auxiliares permite configurar
+  aplicaciones y otros manejadores para gestionar diferentes tipos de
+  contenido (p.e.: documentos PDF). Muestra una lista de tipos de contenido
+  y permite seleccionar un manejador para cada tipo. Para filtrar la lista
+  se puede usar el campo de búsqueda. El texto introducido aquí reducirá la
+  lista a entradas que contengan ese texto ya sea en la descripción del tipo
+  o en la acción seleccionada actualmente.</p>
+<p>Puede elegirse una aplicación local para gestionar cualquier tipo. Para
+  algunos tipos, también se puede escoger una
+  <a href="glossary.xhtml#web_application">aplicación web</a> que gestione
+  esos tipos; elija un <a href="glossary.xhtml#plugin">plugin</a> en
+  &brandShortName; para manejar el tipo, o guarde el tipo en su ordenador.</p>
+
+<p>Para elegir un manejador para un tipo, seleccione el tipo de la lista.
+  Entonces el manejador para el tipo se convertirá en un menú desplegable. Abra
+  el menú y seleccione el manejador que quiere que gestione el tipo. Dependiendo
+  del tipo actual, puede:</p>
+
+<ul>
+  <li>Elegir una aplicación seleccionándola del menú. Si quiere una aplicación
+    local que no está en el menú para gestionar el tipo, seleccione
+    <strong>Usar otra…</strong> del menú y navegue hasta su ubicación en el
+    disco <span class="unix">o usar el selector nativo de aplicaciones, si
+    está disponible y activada</span>.</li>
+  <li>Elegir <!-- funcionalidad o --> plugin seleccionándolo del menú.</li>
+  <li>Guardar archivos de este tipo en su ordenador seleccionando
+    <strong>Guardar archivo</strong> del menú. Si ha seleccionado la
+    preferencia <strong>Descargar automát. archivos a la carpeta
+    especificada</strong> en el panel <strong>Descargas</strong>,
+    &brandShortName; guardará el contenido de este tipo en su ordenador
+    automáticamente. En caso contrario, cuando encuentre este tipo,
+    &brandShortName; le pedirá una ubicación en su ordenador donde guardar
+    el archivo.</li>
+  <li>Pedirle a &brandShortName; que <strong>pregunte siempre</strong> qué
+    hacer cuando encuentre este tipo. Cuando elige esta opción, se muestra
+    siempre un diálogo al acceder a archivos de este tipo, y puede elegir
+    cómo gestionar ese archivo específico desde ahí.</li>
+</ul>
+<span class="unix">
+<p>Algunos sistemas tienen un selector de aplicaciones nativo, que puede
+  ayudarle a seleccionar aplicaciones apropiadas para manejar diferentes
+  tipos de contenido:</p>
+
+<ul>
+  <li><strong>Usar selector de aplicaciones nativo si está
+    disponible</strong>: marque esta opción para activar el selector de
+    aplicaciones nativo cuando esté disponible.</li>
+</ul>
+</span>
+
+<p><strong>Nota:</strong> cuando hay disponible un plugin para manejar un
+  tipo, y se escoge otro manejador para ese tipo, &brandShortName; sólo usará
+  el manejador elegido cuando acceda al tipo directamente. Cuando el tipo
+  esté incrustado dentro de una página web, &brandShortName; continuará
+  usando el plugin para manejarlo. Vea también <a
+  href="nav_help.xhtml#plugins_and_downloads">Plugins y descargas</a>.</p>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="location_bar">Preferencias del navegador - Barra de direcciones</h2>
+
+<p>Esta sección describe cómo usar el panel de configuración de la barra de
+  direcciones. Si todavía no lo está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>En la categoría Navegador, elija Barra de direcciones (si no hay
+    subcategorías visibles, haga doble clic en Navegador para expandir la
+    lista).</li>
+</ol>
+
+<p>El panel de configuración Barra de direcciones permite ajustar con precisión
+  el comportamiento de la barra de direcciones.</p>
+
+<ul>
+  <li id="location_bar_autocomplete"><strong>Autocompletado</strong>:
+    <ul>
+      <li><strong>Autocompletar desde su historial de navegación según
+        escribe</strong>: seleccione esta opción para permitir a
+        &brandShortName; mostrar sugerencias automáticamente de su historial de
+        navegación a medida que se va escribiendo en la barra de direcciones.
+        <ul>
+          <li><strong>Hacer coincidir sólo sitios web que haya escrito
+            previamente</strong>: muestra únicamente sitios web que se han
+            escrito en la barra de direcciones y no sitios web que se han
+            abierto de otra manera, como por ejemplo haciendo clic en un enlace
+            de una página web.</li>
+          <li><strong>Buscar coincidencias</strong>:
+            <ul>
+              <li><strong>en cualquier parte de la dirección y el
+                título</strong>: las sugerencias de autocompletado incluirán
+                todos los sitios web donde lo que haya escrito coincida con
+                cualquier parte de la dirección o título del sitio web.</li>
+              <li><strong>en cualquier parte, mejor al comienzo de
+                palabras</strong>: las sugerencias de autocompletado incluirán
+                todos los sitios web donde lo que haya escrito coincida con
+                cualquier parte de la dirección o título del sitio web, si
+                bien se prefieren los límites de palabras (véase el siguiente
+                punto). Ésta es la opción por defecto.</li>
+              <li><strong>Sólo en el comienzo de palabras</strong>: las
+                sugerencias de autocompletado incluirán todos los sitios web
+                donde lo que haya escrito coincida con el comienzo de cualquier
+                palabra contenida en la dirección o título del sitio web. Las
+                coincidencias también se pueden encontrar dentro de una palabra
+                si contiene letras mayúsculas intercaladas (como en
+                AlgunosCasos) ya que todos los caracteres no-minúsculos se
+                tratan como límites de palabras.</li>
+              <li><strong>sólo al principio de la dirección o el
+                título</strong>: las sugerencias de autocompletado incluirán
+                todos los sitios web donde lo que haya escrito coincida con el
+                comienzo del título o dirección del sitio web.</li>
+            </ul></li>
+        <li><strong>Precumplimentar automáticamente la mejor
+          coincidencia</strong>: a medida que escribe en la barra de
+          direcciones, &brandShortName; completará automáticamente su
+          dirección web usando el sitio web visitado que mejor coincida.
+          <span class="unix"><strong>Nota</strong>: activar esta opción
+          rellenará las direcciones locales (como rutas a archivos en su disco
+          duro) incluso si ha desactivado <q>Autocompletar de su historial de
+          navegación según escribe</q>.</span></li>
+        <li><strong>Mostrar una lista de resultados coincidentes</strong>:
+          según escribe en la barra de direcciones, &brandShortName; mostrará
+          una lista desplegable de direcciones web visitadas coincidentes.
+          <span class="unix"><strong>Nota</strong>: si ha desactivado
+          <q>Autocompletar de su historial de navegación según escribe</q>
+          los resultados coincidentes de ubicaciones en su disco duro seguirán
+          mostrándose en la lista desplegable.</span></li>
+      </ul></li>
+    <li><strong>Mostrar buscador predeterminado de Internet</strong>: muestra
+      un elemento de lista desplegable, permitiéndole buscar con el buscador
+      predeterminado con las palabras que introduzca.</li>
+  </ul>
+</li>
+<li><strong>Formato</strong>:
+  <ul>
+    <li><strong>Resaltar el dominio efectivo en sitios web y servidores
+      FTP</strong>: difumina en gris toda la URL excepto el dominio efecto,
+      para que quede claro el sitio que se está visitando.</li>
+    <li><strong>Destacar las páginas web con un nivel alto de seguridad en la
+      conexión</strong>: colorea la barra de direcciones de la siguiente
+      página que se va a cargar si todos sus componentes están totalmente
+      cifrados.</li>
+  </ul>
+</li>
+<li><strong>Direcciones desconocidas</strong>
+  <ul>
+    <li><strong>Añadir <q>www.</q> y <q>.com</q> a la dirección si no se
+      encuentra una página web</strong>: seleccione esta opción si quiere
+      que &brandShortName; añada automáticamente <tt>www.</tt> al comienzo
+      y <tt>.com</tt> al final de una dirección de página web que no
+      puede encontrarse. Para más información en detalle sobre esta
+      característica vea el documento en línea
+      <a href="http://www.mozilla.org/docs/end-user/domain-guessing.html">
+      Suposición de dominios (en inglés)</a>.</li>
+    <li><strong>Realizar una búsqueda web cuando el texto introducido no sea
+      una dirección web</strong>: seleccione esta opción para permitir a
+      &brandShortName; buscar automáticamente la web el texto introducido en
+      la barra de direcciones. Si el texto que ha escrito no es una dirección
+      web, &brandShortName; hará una búsqueda web cuando pulse
+      <kbd class="noMac">Enter</kbd> <kbd class="mac">Return</kbd> en la barra
+      de direcciones.</li>
+  </ul>
+</li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="internet_search">Preferencias del navegador - Búsqueda en
+Internet</h2>
+
+<p>Esta sección describe cómo usar el panel de
+configuración de Búsqueda en Internet. Si todavía no lo
+está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>En la categoría Navegador, elija Búsqueda en Internet (si no hay
+    subcategorías visibles, haga doble clic en Navegador para expandir
+    la lista).</li>
+</ol>
+
+<p>El panel de configuración de Búsqueda en Internet permite
+  configurar cómo buscar usando &brandShortName;:</p>
+
+<ul>
+  <li>
+    <strong>Buscador predeterminado</strong>:
+    <ul>
+      <li><strong>Buscar con</strong>: use la lista desplegable para
+        seleccionar el buscador que quiera usar para realizar búsquedas
+        en la web.</li>
+      <li><strong>Administrar buscadores</strong>: marque esta casilla
+        para abrir un diálogo donde podrá administrar la lista de buscadores.
+        En este diálogo puede seleccionar también <strong>Mostrar sugerencias
+        de búsqueda</strong> para que &brandShortName; muestre sugerencias
+        del buscador a medida que escribe una cadena de búsqueda en la
+        pestaña de búsqueda del panel lateral o en la barra de búsqueda.</li>
+    </ul>
+  </li>
+  <li>
+    <strong>Resultados de la búsqueda</strong>:
+    <ul>
+      <li><strong>Abrir pestañas nuevas con los resultados de búsquedas en el
+        panel lateral</strong>: marque esta casilla para que &brandShortName;
+        muestre sus resultados de búsqueda en una pestaña nueva en lugar de en
+        la actual cuando busca usando el panel lateral.</li>
+      <li><strong>Abrir una pestaña en lugar de una ventana al hacer
+        búsquedas web mediante el menú contextual</strong>:
+        seleccione esta opción para que &brandShortName; muestre sus
+        resultados de búsqueda en una nueva pestaña en lugar de
+        en una nueva ventana cuando busque las palabras seleccionadas en una
+        página web.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="tabbed_browsing">Preferencias del navegador - Navegación con
+pestañas</h2>
+
+<p>Esta sección describe cómo usar el panel de configuración Navegación con
+  pestañas. Si todavía no lo está viendo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>En la categoría Navegador, elija Navegación con pestañas (si no hay
+    subcategorías visibles, haga doble clic en Navegador para expandir la
+    lista).</li>
+</ol>
+
+<p>El panel de configuración Navegación con pestañas permite indicar las
+  opciones para la navegación usando pestañas:</p>
+
+<ul>
+  <li>
+    <strong>Mostrar pestañas</strong>:
+    <ul>
+      <li><strong>Esconder la barra de pestañas cuando haya
+        sólo una pestaña abierta</strong>: seleccione esta
+        opción para mostrar la barra de navegación con
+        pestañas sólo cuando haya más de una pestaña abierta.</li>
+      <li><strong>Cambiar a las nuevas pestañas abiertas a partir de
+        enlaces</strong>: seleccione esta opción para hacer que
+        &brandShortName; cambie a una nueva pestaña cuando se use
+        <q>Abrir en una pestaña nueva</q> para abrir un enlace.</li>
+      <li><strong>Advertirme al cerrar una ventana con múltiples
+        pestañas</strong>: seleccione esta opción para hacer que
+        &brandShortName; le avise cuando intente cerrar una ventana del
+        navegador que tiene múltiples pestañas en él.</li>
+      <li><strong>Abrir pestañas relacionadas tras la pestaña actual</strong>:
+        seleccione esta opción para hacer que las pestañas nuevas se abran
+        junto a la pestaña desde la cual han sido abiertas. Si no está
+        marcada, las pestañas nuevas se abren tras la última pestaña en la
+        barra de pestañas.</li>
+    </ul>
+  </li>
+  <li>
+    <strong>Abrir pestañas en vez de ventanas cuando</strong>:
+    <ul>
+      <li><strong>se haga
+      <span class="mac"><kbd>Cmd</kbd>+clic o
+      <kbd>Cmd</kbd>+<kbd>Return</kbd></span>
+      <span class="noMac">clic con el botón central,
+      <kbd>Ctrl</kbd>+clic o <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span> en
+      enlaces de una página web</strong>: seleccione esta
+      opción para abrir enlaces de páginas web en una
+      pestaña nueva cuando pulse en un enlace
+      <span class="mac">manteniendo pulsada la tecla
+      <kbd>Command</kbd> o manteniendo pulsada la tecla <kbd>Command</kbd>
+      mientras pulsa <kbd>Return</kbd></span>
+      <span class="noMac">con el botón central del ratón,
+      o mientras pulsa <kbd>Ctrl</kbd>, o mientras pulsa
+      <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>.
+      
+      <p><strong>Truco</strong>: use Encontrar enlaces mientras escribe
+      para navegar al enlace que quiere abrir con las órdenes de teclado
+      anteriores.</p>
+      </li>
+      <li><strong>Se pulse
+      <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd>+<kbd
+      class="mac">Return</kbd><kbd class="noMac">Enter</kbd>
+      en la barra de direcciones</strong>:
+      seleccione esta opción para abrir el enlace de una
+      página web en una pestaña nueva cuando escriba la URL en
+      la barra de direcciones y pulse <kbd
+      class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd>+<kbd
+      class="mac">Return</kbd><kbd class="noMac">Enter</kbd>.</li>
+    </ul>
+  </li>
+  <li><strong>Abrir en una pestaña nueva en lugar de en una ventana
+    independiente</strong>:
+    <ul>
+      <!-- link to Data Manager description once bug 599097 is fixed -->
+      <li><strong>Administrador de datos</strong>: seleccione esta opción
+        para abrir el administrador de datos en una pestaña del navegador.
+        Si se deja desmarcada, se abrirá en una ventana de diálogo
+        separada.</li>
+      <li><strong>Administrador de complementos</strong>: seleccione esta
+        opción para abrir el
+        <a href="customize_help.xhtml#using_the_add-ons_manager">Administrador
+        de complementos</a> en una pestaña del navegador. Si se desmarca,
+        se abrirá en una ventana de diálogo independiente.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="link_behavior">Preferencias del navegador - Comportamiento de los
+  enlaces</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de comportamiento
+  de los enlaces. Si no está ya viéndolo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija Preferencias.</li>
+  <li>Bajo la categoría Navegador, pulse Comportamiento de los enlaces (si no
+    hay visibles subcategorías, haga doble clic en Navegador para expandir la
+    lista).</li>
+</ol>
+
+<p>El panel de preferencias de comportamiento de los enlaces le permite
+  configurar cómo se abren los enlaces en &brandShortName;:</p>
+
+<ul>
+  <li><strong>Apertura de enlaces</strong>: si una página web está diseñada
+    para que ciertos enlaces se abran en una nueva ventana por omisión, puede
+    que desee cambiar esto. Puede definir el comportamiento de manera separada
+    para los enlaces con un atributo target y las ventanas abiertas usando
+    JavaScript:
+    <ul>
+      <li><strong>Abrir enlaces que intentan abrir una ventana nueva
+        en</strong>:
+        <ul>
+          <li><strong>La pestaña/ventana actual</strong>: abrir la
+            página enlazada en la pestaña actual de la ventana
+            activa.</li>
+          <li><strong>Una nueva pestaña en la ventana actual</strong>:
+            abrir la página enlazada en una nueva pestaña en lugar
+            de en una nueva ventana.</li>
+          <li><strong>Una nueva ventana</strong>: abrir la página enlazada
+            en una nueva ventana (esto no prevalece sobre el diseño de la
+            página web y desactiva las siguientes opciones para páginas
+            abiertas desde scripts).</li>
+        </ul>
+      </li>
+      <li><strong>Cuando los scripts quieran abrir una ventana nueva</strong>:
+        <ul>
+          <li><strong>Convertir siempre ventanas en pestañas</strong>: abrir la
+            página que se va a cargar en una pestaña de acuerdo a las opciones
+            anteriores.</li>
+          <li><strong>No convertir ventanas personalizadas en pestañas</strong>:
+            abrir la página que se va a cargar en una ventana emergente si el
+            script especifica explícitamente características de la nueva
+            ventana (tales como tamaño o posición), si no, abrir la página en
+            una pestaña de acuerdo a las opciones anteriores.</li>
+          <li><strong>Abrir siempre ventanas nuevas</strong>: abrir la página
+            que se va a cargar en una ventana nueva (esto no prevalece sobre el
+            diseño de la página web).</li>
+        </ul>
+      </li>
+    </ul>
+  </li>      
+  <li><strong>Enlaces de otras aplicaciones</strong>: si se llama a
+    &brandShortName; desde otra aplicación con la dirección de una
+    página web como argumento (como un clic en un enlace en un programa
+    externo de correo electrónico), puede controlar dónde se cargará
+    la página:
+    <ul>
+      <li><strong>La pestaña/ventana actual</strong>: abrir la
+        página enlazada en la pestaña actual de la ventana
+        activa.</li>
+      <li><strong>Una nueva pestaña en la ventana actual</strong>:
+        abrir la página enlazada en una nueva pestaña en lugar
+        de en una nueva ventana.</li>
+      <li><strong>Una nueva ventana</strong>: abrir la página enlazada
+        en una nueva ventana.</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="win">
+  <p>Para asegurar que &brandShortName; abre una nueva ventana, seleccione la
+    opción Navegador en
+    <a href="cs_nav_prefs_appearance.xhtml#appearance">Preferencias de
+    apariencia - Apariencia</a>.</p>
+
+  <p>Si quiere que &brandShortName; abra una nueva pestaña en lugar de una
+    nueva ventana cuando lo inicia y ya está ejecutándose, asegúrese de lo
+    siguiente:</p>
+
+  <ul>
+    <li>Si se inicia &brandShortName; desde la línea de órdenes, no se usan
+      parámetros en la línea de órdenes que abran ventanas (como
+      <kbd>-new-window</kbd>).</li>
+    <li>No está marcada ninguna de las opciones <q>Cuando se inicia
+      &brandShortName;, abrir</q> en las
+      <a href="cs_nav_prefs_appearance.xhtml#appearance">Preferencias de
+      apariencia - Apariencia</a>.</li>
+    <li>Se ha establecido la preferencia <q>Enlaces de otras aplicaciones</q>
+      en <q>Una nueva pestaña en la ventana actual</q>.</li>
+  </ul>
+</div>
+
+<p>[<a href="#navigator_preferences">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="downloads">Preferencias del navegador - Descargas</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de
+  descargas. Si aún no está viéndolo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y seleccione Preferencias.</li>
+  <li>Bajo la categoría Navegador, haga clic en Descargas (si no hay
+    subcategorías visibles, haga doble clic en Navegador para expandir
+    la lista).</li>
+</ol>
+
+<p>El panel de preferencias de descargas le permite configurar cómo gestiona
+  &brandShortName; los archivos que descarga de páginas web:</p>
+
+<ul>
+  <li>
+    <strong>Cuando se inicia una descarga</strong>:
+    <ul>
+      <li><strong>Hacer parpadear el administrador de descargas si ya está
+        abierto</strong>: seleccione esta opción para cambiar el foco al
+        administrador de descargas si ya está abierto. Muestra el estado de
+        las descargas actuales y previas en una única ventana. Esta opción sólo
+        tiene efecto si el administrador ya está abierto y prevalece sobre las
+        otras opciones.</li>
+      <li><strong>Abrir el administrador de descargas</strong>: seleccione
+        esta opción para mostrar el administrador de descargas al comenzar una
+        nueva descarga. Se abrirá si no se está mostrando ya la ventana.</li>
+      <li><strong>Abrir una ventana de progreso</strong>: seleccione esta
+        opción para mostrar una ventana de progreso que muestra el estado de su
+        descarga en curso. El estado de cada descarga se presenta en ventanas
+        separadas.</li>
+      <li><strong>No abrir nada</strong>: seleccione esta opción si quiere
+        descargar archivos sin información visible. No se indicará ningún
+        estado de sus descargas.</li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li><strong>Cuando se guarda un archivo</strong>:
+    <ul>
+      <li><strong>Guardar archivos en</strong>: seleccione esta opción si
+        quiere que los archivos se guarden en la carpeta especificada sin
+        que &brandShortName; le pregunte la ubicación de descargas.</li>
+      <li><strong>Preguntar siempre dónde guardar los archivos</strong>:
+        seleccione esta opción si quiere poder escoger siempre una carpeta
+        donde guardar el archivo. El valor por defecto será la carpeta donde
+        descargó el último archivo.</li>
+    </ul>
+  </li>
+</ul>
+  
+<ul>
+  <li><strong>Historial de descargas</strong>:
+    <ul>
+      <li><strong>Eliminar entradas de descargas</strong>: esta opción
+        determina cuándo se elimina una entrada completada de la lista del
+        administrador de descargas (el archivo descargado <em>no</em> se verá
+        afectado):
+        <ul>
+          <li><strong>Cuando se hayan completado</strong>: seleccione esta
+            opción para eliminar una entrada inmediatamente una vez que la
+            descarga se ha completado con éxito.</li>
+          <li><strong>Al salir de &brandShortName;</strong>: seleccione esta
+            opción para retener todas las entradas hasta que se cierre el
+            programa; la lista estará vacía de nuevo cuando vuelva a abrir
+            &brandShortName;.</li>
+          <li><strong>Nunca</strong>: seleccione esta opción para no eliminar
+            <em>ninguna</em> entrada automáticamente, incluso después de que
+            se haya reiniciado &brandShortName;. Puede eliminarlas manualmente
+            en el administrador de descargas.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li><strong>Cuando se completa una descarga</strong>:
+    <ul>
+      <li><strong>Reproducir un sonido</strong>: seleccione esta
+        opción si quiere que &brandShortName; reproduzca un
+        sonido personalizado (normalmente en formato WAV) cuando se
+        complete una descarga. Use el botón Examinar para
+        seleccionar el archivo de sonido en el explorador de archivos.
+        Para escuchar el sonido que ha elegido, pulse Reproducir.</li>
+      <li><strong>Mostrar una alerta</strong>: seleccione esta opción si
+        quiere que &brandShortName; muestre una alerta en la pantalla
+        cuando complete una descarga.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Para más información sobre la descarga de archivos desde páginas web, vea
+  <a href="nav_help.xhtml#plugins_and_downloads">Plugins y descargas</a>.</p>
+</body>
+</html>

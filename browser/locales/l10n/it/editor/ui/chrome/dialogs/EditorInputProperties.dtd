@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietà campo modulo">
+<!ENTITY windowTitleImage.label "Proprietà immagine modulo">
+<!ENTITY InputType.label "Tipo campo">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Testo">
+<!ENTITY password.value "Password">
+<!ENTITY checkbox.value "Casella da spuntare">
+<!ENTITY radio.value "Bottone radio">
+<!ENTITY submit.value "Pulsante di invio">
+<!ENTITY reset.value "Pulsante di ripristino">
+<!ENTITY file.value "Scelta file">
+<!ENTITY hidden.value "Nascosto">
+<!ENTITY image.value "Immagine">
+<!ENTITY button.value "Pulsante">
+<!ENTITY InputSettings.label "Impostazioni campo">
+<!ENTITY InputName.label "Nome campo:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nome gruppo:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valore campo:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valore iniziale:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Spuntato">
+<!ENTITY InputChecked.accesskey "S">
+<!ENTITY InputSelected.label "Selezionato">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Sola lettura">
+<!ENTITY InputReadOnly.accesskey "S">
+<!ENTITY InputDisabled.label "Disattivato">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Indice tabulazione:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Dimensioni campo:">
+<!ENTITY TextSize.accesskey "D">
+<!ENTITY TextLength.label "Lunghezza massima:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Scorciatoia tastiera:">
+<!ENTITY AccessKey.accesskey "o">
+<!ENTITY Accept.label "Tipi accettati:">
+<!ENTITY Accept.accesskey "a">
+<!ENTITY ImageProperties.label "Proprietà immagine…">
+<!ENTITY ImageProperties.accesskey "m">

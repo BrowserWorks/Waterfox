@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietà etichetta">
+<!ENTITY Settings.label "Impostazioni">
+<!ENTITY Settings.accesskey "I">
+<!ENTITY EditLabelText.label "Modifica testo:">
+<!ENTITY EditLabelText.accesskey "M">
+<!ENTITY LabelFor.label "Per il controllo:">
+<!ENTITY LabelFor.accesskey "P">
+<!ENTITY AccessKey.label "Scorciatoia tastiera:">
+<!ENTITY AccessKey.accesskey "o">
+<!ENTITY RemoveLabel.label "Rimuovi etichetta">
+<!ENTITY RemoveLabel.accesskey "R">

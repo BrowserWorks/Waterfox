@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Archyvavimo nuostatos">
+<!ENTITY archiveGranularityPrefix.label "Archyvuojamus laiškus dėti į:">
+<!ENTITY archiveFlat.label "vieną archyvo aplanką">
+<!ENTITY archiveFlat.accesskey "v">
+<!ENTITY archiveYearly.label "metinius archyvo aplankus">
+<!ENTITY archiveYearly.accesskey "m">
+<!ENTITY archiveMonthly.label "mėnesinius archyvo aplankus">
+<!ENTITY archiveMonthly.accesskey "ė">
+<!ENTITY keepFolderStructure.label "išlaikyti archyvuojamų laiškų aplankų hierarchiją">
+<!ENTITY keepFolderStructure.accesskey "l">
+<!ENTITY archiveExample.label "Pavyzdys">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Archyvas">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Gauti laiškai">

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Fontes">
+
+<!ENTITY  language.label                          "Fontes padrão para:">
+<!ENTITY  language.accesskey                      "F">
+
+<!ENTITY  typefaces.label                         "Nome:">
+<!ENTITY  sizes.label                             "Tamanho:">
+
+<!ENTITY  proportional.label                      "Proporcional:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Com serifa:">
+<!ENTITY  serif.accesskey                         "C">
+<!ENTITY  sans-serif.label                        "Sem serifa:">
+<!ENTITY  sans-serif.accesskey                    "s">
+<!ENTITY  monospace.label                         "Monoespaçada:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasia:">
+<!ENTITY  fantasy.accesskey                       "a">
+<!ENTITY  cursive.label                           "Cursiva:">
+<!ENTITY  cursive.accesskey                       "v">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latim">
+<!ENTITY  font.langGroup.japanese                 "Japonês">
+<!ENTITY  font.langGroup.trad-chinese             "Chinês tradicional (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Chinês simplificado">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Traditional Chinese (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Coreano">
+<!ENTITY  font.langGroup.cyrillic                 "Cirílico">
+<!ENTITY  font.langGroup.el                       "Grego">
+<!ENTITY  font.langGroup.thai                     "Tailandês">
+<!ENTITY  font.langGroup.hebrew                   "Hebraico">
+<!ENTITY  font.langGroup.arabic                   "Árabe">
+<!ENTITY  font.langGroup.devanagari               "Devanágari">
+<!ENTITY  font.langGroup.tamil                    "Tâmil">
+<!ENTITY  font.langGroup.armenian                 "Armênio">
+<!ENTITY  font.langGroup.bengali                  "Bengali">
+<!ENTITY  font.langGroup.canadian                 "Silabário unificado canadense">
+<!ENTITY  font.langGroup.ethiopic                 "Etíope">
+<!ENTITY  font.langGroup.georgian                 "Georgiano">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Cambojano">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Matemáticas">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Cingalês">
+<!ENTITY  font.langGroup.tibetan                  "Tibetano">
+<!ENTITY  font.langGroup.other                    "Outros sistemas de escrita">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Tamanho mínimo:">
+<!ENTITY minSize.accesskey                        "a">
+<!ENTITY minSize.none                             "Nenhum">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Com serifa">
+<!ENTITY  useDefaultFontSansSerif.label           "Sem serifa">
+
+<!ENTITY  useDocumentFonts.label                  "Permitir que os documentos usem outras fontes">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Quando uma página especificar as próprias fontes">
+<!ENTITY  useDefaultFont.label                    "Usar as fontes padrão e ignorar as fontes especificadas pela página">
+<!ENTITY  useDefaultFont.accesskey                "U">

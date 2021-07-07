@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Savybės">
+
+<!ENTITY generalInfo.label                       "Bendroji informacija">
+
+
+
+
+<!ENTITY folderRebuildSummaryFileTip2.label      "Perindeksuoti aplanke esančius laiškus">
+<!ENTITY folderRebuildSummaryFile2.label         "Perindeksuoti aplanką">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "r">
+<!ENTITY folderRebuildSummaryFile.explanation    "Kartais aplanko laiškų indeksas (.msf failas) sugenda, ir gali atrodyti, kad iš aplanko dingo kai kurie laiškai (arba rodomi laiškai, kuriuos pašalinote). Galite pabandyti pašalinti šias problemas, perindeksuodami aplanką.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Į globalios paieškos rezultatus įtraukti šiame aplanke esančius laiškus">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Laiškų šalinimas">
+<!ENTITY retentionUseAccount.label "Laikytis paskyros nuostatų">
+<!ENTITY retentionUseAccount.accesskey "n">
+<!ENTITY daysOld.label "d.">
+<!ENTITY message.label "laiškų">
+<!ENTITY retentionCleanup.label "Palikti laiškus:">
+<!ENTITY retentionCleanupImap.label "Palikti laiškus (tiek vietines kopijas, tiek originalus serveryje):">
+<!ENTITY retentionCleanupPop.label "Palikti laiškus (taip pat ir originalus serveryje):">
+<!ENTITY retentionDeleteMsg.label "ne senesnius nei">
+<!ENTITY retentionDeleteMsg.accesskey "s">
+<!ENTITY retentionKeepAll.label "visus laiškus">
+<!ENTITY retentionKeepAll.accesskey "v">
+<!ENTITY retentionKeepRecent.label "paskiausius">
+<!ENTITY retentionKeepRecent.accesskey "p">
+<!ENTITY retentionApplyToFlagged.label "visada palikti žvaigždute pažymėtus laiškus">
+<!ENTITY retentionApplyToFlagged.accesskey "ž">
+
+<!ENTITY folderSynchronizationTab.label          "Sinchronizavimas">
+<!ENTITY folderCheckForNewMessages2.label        "Tikrinant, ar šioje paskyroje yra naujų laiškų, visada patikrinti ir šį aplanką">
+<!ENTITY folderCheckForNewMessages2.accesskey    "T">
+
+<!ENTITY offlineFolder.check.label               "Šio aplanko laiškus skaityti neprisijungus prie tinklo">
+<!ENTITY offlineFolder.check.accesskey           "i">
+<!ENTITY offlineFolder.button.label              "Parsisiųsti">
+<!ENTITY offlineFolder.button.accesskey          "P">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Šios naujienų grupės laiškus skaityti neprisijungus prie tinklo">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "i">
+<!ENTITY offlineNewsgroup.button.label           "Parsisiųsti">
+<!ENTITY offlineNewsgroup.button.accesskey       "P">
+
+<!ENTITY folderProps.name.label                  "Vardas:">
+<!ENTITY folderProps.name.accesskey              "V">
+<!ENTITY folderProps.location.label              "Vieta:">
+<!ENTITY folderProps.location.accesskey          "t">
+
+<!ENTITY folderSharingTab.label                  "Bendras naudojimas">
+<!ENTITY privileges.button.label                 "Teisės">
+<!ENTITY privileges.button.accesskey             "T">
+<!ENTITY permissionsDesc.label                   "Jums leidžiama:">
+<!ENTITY folderType.label                        "Aplanko tipas:">
+
+<!ENTITY folderQuotaTab.label                    "Kvota">
+<!ENTITY folderQuotaRoot.label                   "Kvotos šaknis:">
+<!ENTITY folderQuotaUsage.label                  "Naudojimas:">
+<!ENTITY folderQuotaStatus.label                 "Būsena:">
+
+<!ENTITY numberOfMessages.label                  "Laiškų kiekis:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "nežinomas">
+<!ENTITY sizeOnDisk.label                        "Dydis diske:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "nežinomas">

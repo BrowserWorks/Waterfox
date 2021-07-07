@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Gerenciador de atividade">
+
+<!ENTITY cmd.pause.label                  "Pausar">
+<!ENTITY cmd.pause.accesskey              "P">
+<!ENTITY cmd.resume.label                 "Continuar">
+<!ENTITY cmd.resume.accesskey             "o">
+<!ENTITY cmd.cancel.label                 "Cancelar">
+<!ENTITY cmd.cancel.accesskey             "C">
+<!ENTITY cmd.undo.label                   "Desfazer">
+<!ENTITY cmd.undo.accesskey               "D">
+<!ENTITY cmd.recover.label                "Recuperar">
+<!ENTITY cmd.recover.accesskey            "R">
+<!ENTITY cmd.retry.label                  "Tentar novamente">
+<!ENTITY cmd.retry.accesskey              "T">
+<!ENTITY cmd.removeFromList.label         "Remover da lista">
+<!ENTITY cmd.removeFromList.accesskey     "x">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Limpar lista">
+<!ENTITY cmd.clearList.tooltip            "Remover os itens completos, cancelados e falhados da lista">
+<!ENTITY cmd.clearList.accesskey          "L">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Pesquisar…">

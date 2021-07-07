@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Accounts - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Instant-messagingstatus">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Nieuwe account">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Sluiten">
+<!ENTITY accountManager.close.accesskey      "S">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Nog geen account geconfigureerd">
+<!ENTITY accountManager.noAccount.description "Klik op de knop &accountManager.newAccount.label; om &brandShortName; u door het accountconfiguratieproces te laten leiden.">
+<!ENTITY account.autoSignOn.label     "Aanmelden bij opstarten">
+<!ENTITY account.autoSignOn.accesskey "A">
+<!ENTITY account.connect.label        "Verbinden">
+<!ENTITY account.connect.accesskey    "V">
+<!ENTITY account.disconnect.label     "Verbinding verbreken">
+<!ENTITY account.disconnect.accesskey "V">
+<!ENTITY account.delete.label         "Verwijderen">
+<!ENTITY account.delete.accesskey     "w">
+<!ENTITY account.edit.label           "Eigenschappen">
+<!ENTITY account.edit.accesskey       "E">
+<!ENTITY account.moveup.label         "Omhoog verplaatsen">
+<!ENTITY account.movedown.label       "Omlaag verplaatsen">
+<!ENTITY account.cancelReconnection.label         "Opnieuw verbinden annuleren">
+<!ENTITY account.cancelReconnection.accesskey     "a">
+<!ENTITY account.copyDebugLog.label     "Debuglogboek kopiëren">
+<!ENTITY account.copyDebugLog.accesskey "D">
+<!ENTITY account.showDebugLog.label     "Debuglogboek tonen">
+<!ENTITY account.showDebugLog.accesskey "t">
+<!ENTITY account.connecting           "Verbinden…">
+<!ENTITY account.disconnecting        "Verbinding verbreken…">
+<!ENTITY account.disconnected         "Niet verbonden">

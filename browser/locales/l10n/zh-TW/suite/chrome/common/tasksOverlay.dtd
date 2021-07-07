@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "縮到最小">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "縮放">
+<!ENTITY navigatorCmd.label "網頁瀏覽器">
+<!ENTITY navigatorCmd.accesskey "B">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "c">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "錯誤主控台">
+<!ENTITY errorConsoleCmd.accesskey "C">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "網頁瀏覽器">
+<!ENTITY taskComposer.tooltip "設計師">
+
+<!ENTITY webDevelopment.label "網頁開發">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "視窗">
+<!ENTITY windowMenu.accesskey "W">
+
+<!ENTITY tasksMenu.label "工具">
+<!ENTITY tasksMenu.accesskey "T">
+
+<!ENTITY datamanCmd.label "資料管理員">
+<!ENTITY datamanCmd.accesskey "D">
+
+<!ENTITY passwordManagerCmd.label "密碼管理員">
+<!ENTITY passwordManagerCmd.accesskey "P">
+
+<!ENTITY passwordDisplayCmd.label "管理已存密碼">
+<!ENTITY passwordDisplayCmd.accesskey "M">
+
+<!ENTITY passwordExpireCmd.label "登出">
+<!ENTITY passwordExpireCmd.accesskey "L">
+
+<!ENTITY downloadManagerCmd.label "下載管理員">
+<!ENTITY downloadManagerCmd.accesskey "n">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "附加元件管理員">
+<!ENTITY addOnsManagerCmd.accesskey "A">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "切換設定檔…">
+<!ENTITY switchProfileCmd.accesskey "h">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "設定 Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "立刻同步">
+<!ENTITY syncSyncNowItem.accesskey "S">

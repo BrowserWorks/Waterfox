@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox-konton">
+<!ENTITY aboutAccounts.connected.description "Du är ansluten som">
+<!ENTITY aboutAccounts.syncPreferences.label "Tryck här för att kolla vad du har för Sync inställningar">
+
+<!ENTITY aboutAccounts.noConnection.title "Ingen Internetanslutning">
+<!ENTITY aboutAccounts.retry.label "Försök igen">
+
+<!ENTITY aboutAccounts.restrictedError.title "Begränsade">
+<!ENTITY aboutAccounts.restrictedError.description "Du kan inte hantera Firefox-Konton från denna profil.">

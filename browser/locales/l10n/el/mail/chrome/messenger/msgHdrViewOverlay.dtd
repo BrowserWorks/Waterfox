@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Προς">
+<!ENTITY fromField4.label "Από">
+<!ENTITY senderField4.label "Αποστολέας">
+<!ENTITY author.label "Συντάκτης">
+<!ENTITY organizationField4.label "Εταιρεία">
+<!ENTITY replyToField4.label "Απάντηση σε">
+
+<!ENTITY subjectField4.label "Θέμα">
+<!ENTITY ccField4.label "Κοιν.">
+<!ENTITY bccField4.label "Κρυφή κοιν.">
+<!ENTITY newsgroupsField4.label "Ομάδες συζήτησης">
+<!ENTITY followupToField4.label "Σε συνέχεια του">
+<!ENTITY tagsHdr4.label "Ετικέτες">
+<!ENTITY dateField4.label "Ημερομηνία">
+<!ENTITY userAgentField4.label "User agent ">
+<!ENTITY referencesField4.label "Αναφορές">
+<!ENTITY messageIdField4.label "ID μηνύματος ">
+<!ENTITY inReplyToField4.label "Σε απάντηση στο">
+<!ENTITY originalWebsite4.label "Ιστοσελίδα">
+
+<!ENTITY hdrArchiveButton1.label "Αρχειοθέτηση">
+<!ENTITY hdrArchiveButton1.tooltip "Αρχειοθέτηση μηνύματος">
+<!ENTITY hdrSmartReplyButton1.label "Έξυπνη απάντηση">
+<!ENTITY hdrReplyButton1.label "Απάντηση">
+<!ENTITY hdrReplyButton2.tooltip "Απάντηση στον αποστολέα αυτού του μηνύματος">
+<!ENTITY hdrReplyAllButton1.label "Απάντηση σε όλους">
+<!ENTITY hdrReplyAllButton1.tooltip "Απάντηση στον αποστολέα και σε όλους τους παραλήπτες">
+<!ENTITY hdrReplyListButton1.label "Απάντηση στη λίστα">
+<!ENTITY hdrReplyListButton1.tooltip "Απάντηση στη λίστα αλληλογραφίας">
+<!ENTITY hdrFollowupButton1.label "Σε συνέχεια">
+<!ENTITY hdrFollowupButton1.tooltip "Σύνταξη μηνύματος ως συνέχεια κάποιου στην ομάδα συζητήσεων">
+<!ENTITY hdrForwardButton1.label "Προώθηση">
+<!ENTITY hdrForwardButton1.tooltip "Προώθηση μηνύματος">
+<!ENTITY hdrJunkButton1.label "Ανεπιθύμητα">
+<!ENTITY hdrJunkButton1.tooltip "Επισήμανση μηνύματος ως ανεπιθύμητου">
+<!ENTITY hdrTrashButton1.label "Διαγραφή">
+<!ENTITY hdrTrashButton1.tooltip "Διαγραφή μηνύματος">
+
+<!ENTITY hdrViewToolbarShowFull.label "Προβολή εικονιδίων και κειμένου">
+<!ENTITY hdrViewToolbarShowFull.accesskey "δ">
+<!ENTITY hdrViewToolbarShowIcons.label "Προβολή μόνο εικονιδίων">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "ι">
+<!ENTITY hdrViewToolbarShowText.label "Προβολή μόνο κειμένου">
+<!ENTITY hdrViewToolbarShowText.accesskey "κ">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Πάντα προβολή του Απάντηση στον αποστολέα">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "β">
+
+<!ENTITY otherActionsButton2.label "Περισσότερα">
+<!ENTITY otherActionsButton.tooltip "Περισσότερες ενέργειες">
+<!ENTITY otherActionsOpenConversation1.label "Άνοιγμα σε λειτουργία συζήτησης">
+<!ENTITY otherActionsOpenConversation1.accesskey "ζ">
+<!ENTITY otherActionsOpenInNewWindow1.label "Άνοιγμα σε νέο παράθυρο">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "θ">
+<!ENTITY otherActionsOpenInNewTab1.label "Άνοιγμα σε νέα καρτέλα">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "τ">
+<!ENTITY markAsReadMenuItem1.label "Επισήμανση ως αναγνωσμένο">
+<!ENTITY markAsReadMenuItem1.accesskey "γ">
+<!ENTITY markAsUnreadMenuItem1.label "Επισήμανση ως μη αναγνωσμένο">
+<!ENTITY markAsUnreadMenuItem1.accesskey "μ">
+<!ENTITY saveAsMenuItem1.label "Αποθήκευση ως…">
+<!ENTITY saveAsMenuItem1.accesskey "ς">
+<!ENTITY viewSourceMenuItem1.label "Προβολή κώδικα">
+<!ENTITY viewSourceMenuItem1.accesskey "δ">
+<!ENTITY otherActionsPrint1.label "Εκτύπωση…">
+<!ENTITY otherActionsPrint1.accesskey "π">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Εμφάνιση από την αρχή του πίνακα με τα συνημμένα">
+<!ENTITY startExpandedCmd.accesskey    "ε">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Άνοιγμα">
+<!ENTITY openAttachmentCmd.accesskey    "ο">
+<!ENTITY saveAsAttachmentCmd.label    "Αποθήκευση ως…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "ς">
+<!ENTITY detachAttachmentCmd.label    "Απόσπαση…">
+<!ENTITY detachAttachmentCmd.accesskey    "π">
+<!ENTITY deleteAttachmentCmd.label    "Διαγραφή">
+<!ENTITY deleteAttachmentCmd.accesskey    "Δ">
+<!ENTITY openAllAttachmentsCmd.label    "Άνοιγμα όλων…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "λ">
+<!ENTITY saveAllAttachmentsCmd.label    "Αποθήκευση όλων…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "θ">
+<!ENTITY detachAllAttachmentsCmd.label    "Απόσπαση όλων…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "σ">
+<!ENTITY deleteAllAttachmentsCmd.label    "Διαγραφή όλων…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "φ">
+
+<!ENTITY openAttachment.tooltip "Άνοιγμα του επισυναπτόμενου αρχείου">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Άνοιγμα φακέλου αποθήκευσης">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "φ">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Εμφάνιση στο Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Αποθήκευση">
+<!ENTITY saveAttachmentButton1.tooltip     "Αποθήκευση του συνημμένου αρχείου">
+<!ENTITY saveAllAttachmentsButton1.label   "Αποθήκευση όλων">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Αποθήκευση όλων των συνημμένων αρχείων">
+
+<!ENTITY copyLinkCmd.label        "Αντιγραφή τοποθεσίας συνδέσμου">
+<!ENTITY copyLinkCmd.accesskey    "τ">
+
+<!ENTITY CopyMessageId.label "Αντιγραφή Message-ID">
+<!ENTITY CopyMessageId.accesskey "γ">
+<!ENTITY OpenMessageForMsgId.label "Άνοιγμα μηνύματος για ID">
+<!ENTITY OpenMessageForMsgId.accesskey "ο">
+<!ENTITY OpenBrowserWithMsgId.label "Άνοιγμα προγράμματος περιήγησης με Message-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "π">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label				"ヘルプ">
+<!ENTITY helpMenu.accesskey			"H">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label			"ヘルプ">
+<!ENTITY helpMenuWin.accesskey			"H">
+<!ENTITY aboutProduct2.label			"&brandShorterName; について">
+<!ENTITY aboutProduct2.accesskey		"A">
+<!ENTITY helpTroubleshootingInfo.label		"トラブルシューティング情報">
+<!ENTITY helpTroubleshootingInfo.accesskey	"T">
+<!ENTITY helpSafeMode.label			"アドオンを無効にして再起動...">
+<!ENTITY helpSafeMode.accesskey			"R">
+<!ENTITY helpSafeMode.stop.label		"アドオンを有効にして再起動">
+<!ENTITY helpSafeMode.stop.accesskey		"R">
+<!ENTITY productHelp.label			"&brandShortName; ヘルプ">
+<!ENTITY productHelp.accesskey			"H">
+<!ENTITY productHelp.commandkey			"VK_F1">
+<!ENTITY productHelpMac.commandkey		"?">
+<!ENTITY productHelpMac.modifiers		"accel">
+
+<!ENTITY helpKeyboardShortcuts.label		"キーボードショートカット">
+<!ENTITY helpKeyboardShortcuts.accesskey	"K">
+
+<!ENTITY helpFeedbackPage.label			"フィードバックを送信...">
+<!ENTITY helpFeedbackPage.accesskey		"S">
+
+<!ENTITY helpShowTour2.label			"&brandShorterName; ツアー">
+<!ENTITY helpShowTour2.accesskey		"o">
+
+<!ENTITY helpGetInvolvedPage.label		"コミュニティに参加">
+<!ENTITY helpGetInvolvedPage.accesskey		"I">
+
+<!ENTITY helpDonationsPage.label		"開発支援の寄付">
+<!ENTITY helpDonationsPage.accesskey		"D">

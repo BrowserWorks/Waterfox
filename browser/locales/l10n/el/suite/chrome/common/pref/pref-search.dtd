@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Διαδικτυακή αναζήτηση">
+<!ENTITY legendHeader                     "Προεπιλεγμένη μηχανή αναζήτησης">
+<!ENTITY defaultSearchEngine.label        "Αναζήτηση με:">
+<!ENTITY defaultSearchEngine.accesskey    "Α">
+
+<!ENTITY engineManager.label              "Διαχείριση μηχανών αναζήτησης…">
+
+<!ENTITY searchResults.label              "Αποτελέσματα αναζήτησης">
+
+<!ENTITY openInTab.label                  "Άνοιγμα νέων καρτελών για αποτελέσματα αναζήτησης πλευρικής στήλης">
+<!ENTITY openInTab.accesskey              "ν">
+<!ENTITY openContextSearchTab.label       "Άνοιγμα καρτέλας αντί παραθύρου για αναζήτηση ιστού από το μενού επιλογών">
+<!ENTITY openContextSearchTab.accesskey   "κ">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title		"チャンネルに参加">
+
+<!ENTITY network.label		"ネットワーク:">
+<!ENTITY network.accesskey	"N">
+
+<!ENTITY channel.label		"チャンネル:">
+<!ENTITY channel.accesskey	"C">
+
+<!ENTITY topics.label		"チャンネル名だけでなくトピックも検索">
+<!ENTITY topics.accesskey	"t">
+
+<!ENTITY join.label		"参加する">
+<!ENTITY join.accesskey		"J">
+
+<!ENTITY minusers.label		"最少ユーザー数:">
+<!ENTITY minusers.accesskey	"M">
+
+<!ENTITY maxusers.label		"最多ユーザー数:">
+<!ENTITY maxusers.accesskey	"x">
+
+<!ENTITY refresh.label		"今すぐ更新">
+<!ENTITY refresh.accesskey	"">
+
+<!ENTITY network.hint.label	"ネットワーク名またはサーバー名 (ポート番号も含む) と参加するチャンネルを入力してください。">
+
+<!ENTITY col.network		"ネットワーク">
+<!ENTITY col.name		"名前">
+<!ENTITY col.users		"人数">
+<!ENTITY col.topic		"トピック">

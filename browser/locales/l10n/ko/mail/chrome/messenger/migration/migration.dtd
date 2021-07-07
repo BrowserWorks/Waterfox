@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "가져오기 마법사">
+
+<!ENTITY importFromWin.label            "가져올 메일 설정, 계정 설정, 주소록, 필터등의 데이터:">
+<!ENTITY importFromNonWin.label         "가져오기올 메일 환경 설정, 계정 설정, 주소록, 필터 등의 데이터:">
+<!ENTITY importSourceNotFound.label     "데이터를 가져올 어플리케이션을 찾지 못했습니다.">
+
+<!ENTITY importFromNothing.label        "아무것도 가져오지 않음">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 이상">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "아웃룩">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "가져오기 설정과 메일 폴더 위치">
+<!ENTITY importItems.title              "가져오기를 위한 항목">
+<!ENTITY importItems.label              "가져오기 할 항목 선택:">
+
+<!ENTITY migrating.title                "가져오기 중…">
+<!ENTITY migrating.label                "다음 항목을 가져오는 중입니다….">
+
+<!ENTITY selectProfile.title            "프로필 선택">
+<!ENTITY selectProfile.label            "다음 프로필을 위치에서 가져올 수 있음:">
+
+<!ENTITY done.title                     "가져오기 완료">
+<!ENTITY done.label                     "다음 항목들에 대한 가져오기 작업을 완료했습니다:">

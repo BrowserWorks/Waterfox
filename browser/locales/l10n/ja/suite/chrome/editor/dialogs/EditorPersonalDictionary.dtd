@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label		"ユーザー辞書">
+
+<!ENTITY wordEditField.label		"新しい単語:">
+<!ENTITY wordEditField.accessKey	"N">
+<!ENTITY AddButton.label		"追加">
+<!ENTITY AddButton.accessKey		"A">
+<!ENTITY DictionaryList.label		"登録されている単語:">
+<!ENTITY DictionaryList.accessKey	"W">
+<!ENTITY ReplaceButton.label		"置き換え">
+<!ENTITY ReplaceButton.accessKey	"R">
+<!ENTITY RemoveButton.label		"削除">
+<!ENTITY RemoveButton.accessKey		"e">
+
+<!ENTITY CloseButton.label		"閉じる">
+<!ENTITY CloseButton.accessKey		"C">

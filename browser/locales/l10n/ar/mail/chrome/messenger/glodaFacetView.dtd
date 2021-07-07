@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (glodaFacetView.filters.label): Label at the top of the
+     faceting sidebar.  Serves as a header both for the checkboxes under it as
+     well for labeled facets with multiple options. -->
+
+<!ENTITY glodaFacetView.filters.label "المرشحات">
+<!-- LOCALIZATION NOTE (glodaFacetView.loading.label): Label that appears when
+     the search results take a long time to appear. -->
+
+<!ENTITY glodaFacetView.loading.label "يبحث&#8230;">
+<!-- LOCALIZATION NOTE (glodaFacetView.empty.label): Label that appears when
+     there are no results that match the search query. -->
+
+<!ENTITY glodaFacetView.empty.label "لا توجد رسائل تتطابق مع بحثك">
+<!-- LOCALIZATION NOTE (glodaFacetView.pageMore.label): Label at the bottom
+     of the results list to show more hits. -->
+
+<!ENTITY glodaFacetView.pageMore.label "المزيد ◂">
+

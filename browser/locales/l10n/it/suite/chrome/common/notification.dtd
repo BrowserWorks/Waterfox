@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "Chiudi questo messaggio">
+<!ENTITY closeNotificationItem.label "Chiudi notifica">
+<!ENTITY checkForUpdates "Controlla gli aggiornamenti…">
+<!ENTITY learnMore "Ulteriori informazioni…">

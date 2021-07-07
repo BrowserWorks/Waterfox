@@ -1,0 +1,128 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "Kopier">
+<!ENTITY  copy.accesskey         "K">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Merk alt">
+<!ENTITY  selectall.accesskey    "M">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Kopier lenkje(r)">
+<!ENTITY  copyLinks.accesskey       "l">
+<!ENTITY  openInNewTab.label        "Opne i ny fane">
+<!ENTITY  openInNewTab.accesskey    "f">
+<!ENTITY  openInNewWindow.label     "Opne i nytt vindauge">
+<!ENTITY  openInNewWindow.accesskey "v">
+
+<!ENTITY  generalTab            "Generelt">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "Tittel:">
+<!ENTITY  generalURL            "Adresse:">
+<!ENTITY  generalType           "Type:">
+<!ENTITY  generalMode           "Attgjevingsmodus:">
+<!ENTITY  generalSize           "Storleik:">
+<!ENTITY  generalReferrer       "Refererande URL:">
+<!ENTITY  generalSource         "Snøgglagerkjelde:">
+<!ENTITY  generalModified       "Sist endra:">
+<!ENTITY  generalEncoding2      "Tekstkoding:">
+<!ENTITY  generalMetaName       "Namn">
+<!ENTITY  generalMetaContent    "Innhald">
+<!ENTITY  generalSecurityDetails           "Detaljar">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "Skjema">
+<!ENTITY  formsTab.accesskey    "S">
+<!ENTITY  formAction            "Skjemahandling">
+<!ENTITY  formMethod            "Metode">
+<!ENTITY  formName              "Namn">
+<!ENTITY  formEncoding          "Koding:">
+<!ENTITY  formTarget            "Mål">
+<!ENTITY  formFields            "Felt:">
+<!ENTITY  formLabel             "Etikett">
+<!ENTITY  formFName             "Feltnamn">
+<!ENTITY  formType              "Type">
+<!ENTITY  formCValue            "Gjeldande verdi">
+
+<!ENTITY  linksTab              "Lenkjer">
+<!ENTITY  linksTab.accesskey    "L">
+<!ENTITY  linkName              "Namn">
+<!ENTITY  linkAddress           "Adresse">
+<!ENTITY  linkType              "Type">
+<!ENTITY  linkTarget            "Mål">
+<!ENTITY  linkAccessKey         "Tilgangstast">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Addresse:">
+<!ENTITY  mediaAlt              "Alternativ tekst:">
+<!ENTITY  mediaLocation         "Adresse:">
+<!ENTITY  mediaText             "Tilknytt tekst:">
+<!ENTITY  mediaAltHeader        "Alternativ tekst">
+<!ENTITY  mediaAddress          "Adresse">
+<!ENTITY  mediaType             "Type">
+<!ENTITY  mediaSize             "Storleik">
+<!ENTITY  mediaCount            "Tal på">
+<!ENTITY  mediaDimensions       "Dimensjonar:">
+<!ENTITY  mediaPhysDimensions   "Eigentleg storleik:">
+<!ENTITY  mediaTitle            "Tittel:">
+<!ENTITY  mediaDimension        "Dimensjonar:">
+<!ENTITY  mediaLongdesc         "Lang skildring:">
+<!ENTITY  mediaBlockImage.accesskey "L">
+<!ENTITY  mediaSaveAs           "Lagre som…">
+<!ENTITY  mediaSaveAs.accesskey "s">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Førehandsvising:">
+
+<!ENTITY  feedTab               "Nyheitskjelder">
+<!ENTITY  feedTab.accesskey     "N">
+<!ENTITY  feedSubscribe         "Abonner">
+<!ENTITY  feedSubscribe.accesskey "A">
+
+<!ENTITY  permTab               "Løyve">
+<!ENTITY  permTab.accesskey     "L">
+<!ENTITY  permUseDefault        "Bruk standard">
+<!ENTITY  permAskAlways         "Spør alltid">
+<!ENTITY  permAllow             "Tillat">
+<!ENTITY  permAllowSession      "Tillat for programøkta">
+<!ENTITY  permBlock             "Blokker">
+<!ENTITY  permissionsFor        "Løyve for:">
+<!ENTITY  permImage             "Laste inn bilde">
+<!ENTITY  permPopup             "Opne sprettoppvindauge">
+<!ENTITY  permCookie            "Vel infokapslar">
+<!ENTITY  permNotifications     "Vis varsel">
+<!ENTITY  permInstall           "Installere utvidingar og tema">
+<!ENTITY  permGeo               "Del plassering">
+
+<!ENTITY  securityTab           "Sikkerheit">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityHeader        "Tryggingsinfo for denne sida">
+<!ENTITY  securityView.certView "Vis sertifikat">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "Ukjent">
+
+
+<!ENTITY  securityView.identity.header   "Nettstadsidentitet">
+<!ENTITY  securityView.identity.owner    "Eigar:">
+<!ENTITY  securityView.identity.domain   "Nettstad:">
+<!ENTITY  securityView.identity.verifier "Stadfesta av:">
+
+<!ENTITY  securityView.identity.validity "Går ut:">
+
+<!ENTITY  securityView.privacy.header                   "Personvern og historikk">
+<!ENTITY  securityView.privacy.history                  "Har eg besøkt denne nettstaden tidlegare i dag?">
+<!ENTITY  securityView.privacy.cookies                  "Lagrar nettstaden informasjon (infokapslar) på datamaskina mi?">
+<!ENTITY  securityView.privacy.viewCookies              "Vis infokapslar">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "V">
+<!ENTITY  securityView.privacy.passwords                "Har eg lagra passord for denne nettstaden?">
+<!ENTITY  securityView.privacy.viewPasswords            "Vis lagra passord">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "s">
+
+<!ENTITY  securityView.technical.header                 "Tekniske detaljar">

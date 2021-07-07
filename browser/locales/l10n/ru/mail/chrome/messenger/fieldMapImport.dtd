@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Импорт адресной книги">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Запись:">
+<!ENTITY fieldMapImport.next.label "Следующая">
+<!ENTITY fieldMapImport.next.accesskey "С">
+<!ENTITY fieldMapImport.previous.label "Предыдущая">
+<!ENTITY fieldMapImport.previous.accesskey "П">
+<!ENTITY fieldMapImport.text "Используйте кнопки «Вверх» и «Вниз», чтобы установить соответствие между полями адресной книги (слева) и данными импорта (справа). Уберите флажки с компонентов, которые не хотите импортировать.">
+<!ENTITY fieldMapImport.up.label "Вверх">
+<!ENTITY fieldMapImport.up.accesskey "В">
+<!ENTITY fieldMapImport.down.label "Вниз">
+<!ENTITY fieldMapImport.down.accesskey "н">
+<!ENTITY fieldMapImport.fieldListTitle "Поля адресной книги">
+<!ENTITY fieldMapImport.dataTitle "Данные записей для импорта">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Первая запись содержит заголовки полей">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "П">

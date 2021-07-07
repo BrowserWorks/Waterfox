@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+
+<!ENTITY privatebrowsingpage.title.private       "Ez egy privát böngészés ablak">
+<!ENTITY privatebrowsingpage.title.normal        "El kívánja indítani a privát böngészést?">
+
+<!ENTITY privatebrowsingpage.status.private      "A &brandShortName; semmit nem fog megjegyezni ebből az ablakból.">
+<!ENTITY privatebrowsingpage.status.normal       "Jelenleg nincs privát ablakban.">
+
+<!ENTITY privatebrowsingpage.common.description  "A privát böngészési ablakban a &brandShortName; nem tartja meg a böngészés előzményeit, a keresés előzményeit, a letöltés előzményeit, az űrlapok előzményeit, a sütiket, illetve az ideiglenes internetfájlokat. A letöltött fájlok és a könyvjelzők viszont megmaradnak.">
+<!ENTITY privatebrowsingpage.track.warn          "Bár ezen a számítógépen nem lesznek tárolva a böngészési előzmények, az internetszolgáltatója vagy a munkáltatója ettől függetlenül is ellenőrizheti, hogy milyen oldalakat látogat meg.">
+<!ENTITY privatebrowsingpage.learnmore.label     "További tudnivalók">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "T">
+
+<!ENTITY privatebrowsingpage.close.info          "A privát böngészés befejezéséhez zárja be ezt az ablakot.">
+<!ENTITY privatebrowsingpage.close.label         "Ablak azonnali bezárása ">
+<!ENTITY privatebrowsingpage.close.accesskey     "b">
+
+<!ENTITY privatebrowsingpage.start.info          "A privát böngészés indításához választhatja az Fájl ▶ Új ▶ Privát ablak menüparancsot is.">
+<!ENTITY privatebrowsingpage.private.label       "Privát ablak megnyitása">
+<!ENTITY privatebrowsingpage.private.accesskey   "P">

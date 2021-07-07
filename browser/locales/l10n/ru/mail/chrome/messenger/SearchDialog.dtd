@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Искать в папке:">
+<!ENTITY searchHeading.accesskey     "с">
+<!ENTITY searchSubfolders.label      "Включая вложенные папки">
+<!ENTITY searchSubfolders.accesskey  "ю">
+<!ENTITY searchOnServer.label        "Запустить поиск на сервере">
+<!ENTITY searchOnServer.accesskey    "п">
+<!ENTITY resetButton.label           "Очистить">
+<!ENTITY resetButton.accesskey       "и">
+<!ENTITY openButton.label            "Открыть">
+<!ENTITY openButton.accesskey        "т">
+<!ENTITY deleteButton.label          "Удалить">
+<!ENTITY deleteButton.accesskey      "д">
+<!ENTITY searchDialogTitle.label     "Поиск сообщений…">
+<!ENTITY results.label               "Результаты">
+<!ENTITY moveButton.label            "Переместить в">
+<!ENTITY moveButton.accesskey        "м">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Открыть в папке">
+<!ENTITY openInFolder.accesskey      "ы">
+<!ENTITY saveAsVFButton.label        "Сохранить как виртуальную папку">
+<!ENTITY saveAsVFButton.accesskey    "х">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Место поиска:">
+<!ENTITY abSearchHeading.accesskey   "с">
+<!ENTITY propertiesButton.label      "Свойства">
+<!ENTITY propertiesButton.accesskey  "о">
+<!ENTITY composeButton.label         "Создать">
+<!ENTITY composeButton.accesskey     "з">
+<!ENTITY deleteCardButton.label      "Удалить">
+<!ENTITY deleteCardButton.accesskey  "а">
+<!ENTITY abSearchDialogTitle.label   "Расширенный режим поиска в адресной книге">
+

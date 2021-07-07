@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Kakor (cookies)">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Principer för att acceptera kakor">
+
+<!ENTITY disableCookies.label           "Tillåt inte kakor">
+<!ENTITY disableCookies.accesskey       "i">
+
+<!ENTITY accNo3rdPartyCookies.label     "Tillåt kakor från ursprungsplatsen enbart (inga tredje-partskakor)">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "Tillåt tredje-partskakor enbart från tidigare besökta webbplatser">
+<!ENTITY acc3rdPartyVisited.accesskey   "b">
+
+<!ENTITY accAllCookies.label            "Tillåt alla kakor">
+<!ENTITY accAllCookies.accesskey        "a">
+
+<!ENTITY cookieRetentionPolicy.label    "Principer för kakors lagringstid">
+
+<!ENTITY acceptNormally.label           "Tillåt att kakor lagras på normalt sätt">
+<!ENTITY acceptNormally.accesskey       "T">
+
+<!ENTITY acceptForSession.label         "Tillåt att kakor lagras endast under aktuell session">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "Tillåt att kakor lagras under">
+<!ENTITY acceptforNDays.accesskey       "u">
+<!ENTITY days.label                     "dagar">
+
+<!ENTITY manageCookies.label            "Hantera kakor och webbplatser">
+<!ENTITY manageCookiesDescription.label "Låter dig visa och hantera lagrade kakor och inställningar för accepterande och blockerande av kakor för olika platser. Inställningar för en plats kommer att åsidosätta ovanstående inställningar.">
+
+<!ENTITY viewCookies.label              "Kakhanteraren">
+<!ENTITY viewCookies.accesskey          "n">

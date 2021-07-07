@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title "Redacción">
+<!ENTITY generalComposing.label "General">
+<!ENTITY forwardMsg.label "Reenviar mensajes:">
+<!ENTITY inline.label "Incorporado">
+<!ENTITY inline.accesskey "n">
+<!ENTITY asAttachment.label "Como adjunto">
+<!ENTITY asAttachment.accesskey "A">
+<!ENTITY replyQuoteInline.label "Citar adjuntos visibles en línea en las respuestas">
+<!ENTITY replyQuoteInline.accesskey "C">
+<!ENTITY warnOnSendAccelKey.label "Confirmar al usar el atajo de teclado para enviar un mensaje">
+<!ENTITY warnOnSendAccelKey.accesskey "j">
+<!ENTITY autoSave.label "Guardar el mensaje automáticamente cada">
+<!ENTITY autoSave.accesskey "u">
+<!ENTITY autoSaveEnd.label "minutos">
+<!ENTITY wrapOutMsg.label "Ajuste de línea en mens. texto sin formato en">
+<!ENTITY wrapOutMsg.accesskey "u">
+<!ENTITY char.label "caracteres">
+<!ENTITY defaultMessagesHeader.label "Valores predeterminados para mensajes HTML">
+<!ENTITY font.label "Tipo de letra:">
+<!ENTITY font.accesskey "l">
+<!ENTITY size.label "Tamaño:">
+<!ENTITY size.accesskey "m">
+<!ENTITY fontColor.label "Texto:">
+<!ENTITY fontColor.accesskey "T">
+<!ENTITY bgColor.label "Fondo:">
+<!ENTITY bgColor.accesskey "F">
+<!ENTITY defaultCompose.label "Formato de redacción predeterminado:">
+<!ENTITY defaultBodyText.label "Cuerpo del texto (Enter crea una nueva línea)">
+<!ENTITY defaultBodyText.accesskey "E">
+<!ENTITY defaultParagraph.label "Párrafo (Enter crea un nuevo párrafo)">
+<!ENTITY defaultParagraph.accesskey "P">
+<!ENTITY selectHeaderType.label "Seleccione el tipo de cabecera de respuesta:">
+<!ENTITY selectHeaderType.accesskey "S">
+<!ENTITY noReplyOption.label "Sin cabecera de respuesta">
+<!ENTITY authorWroteOption.label "[Autor] escribió:">
+<!ENTITY onDateAuthorWroteOption.label "El [fecha], [autor] escribió:">
+<!ENTITY authorWroteOnDateOption.label "[Autor] escribió el [fecha]:">

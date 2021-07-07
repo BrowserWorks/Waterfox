@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "ไฟล์">
+<!ENTITY fileMenu.accesskey        "ฟ">
+<!ENTITY newMenu.label            "ใหม่">
+<!ENTITY newMenu.accesskey          "ห">
+
+<!ENTITY editMenu.label          "แก้ไข">
+<!ENTITY editMenu.accesskey        "ก">
+<!ENTITY undoCmd.label            "เลิกทำ">
+<!ENTITY undoCmd.accesskey          "ล">
+<!ENTITY redoCmd.label            "ทำซ้ำ">
+<!ENTITY redoCmd.accesskey          "ท">
+<!ENTITY deleteCmd.label          "ลบ">
+<!ENTITY deleteCmd.accesskey        "บ">
+<!ENTITY preferencesCmd2.label "ตัวเลือก">
+<!ENTITY preferencesCmd2.accesskey "ก">
+<!ENTITY preferencesCmdUnix.label       "ค่ากำหนด">
+<!ENTITY preferencesCmdUnix.accesskey     "ก">
+
+<!ENTITY customizeCmd.label "ปรับแต่ง">
+<!ENTITY customizeCmd.accesskey "ป">
+
+<!ENTITY viewMenu.label          "มุมมอง">
+<!ENTITY viewMenu.accesskey        "ม">
+<!ENTITY viewToolbarsMenu.label        "แถบเครื่องมือ">
+<!ENTITY viewToolbarsMenu.accesskey      "ถ">
+<!ENTITY showTaskbarCmd.label          "แถบสถานะ">
+<!ENTITY showTaskbarCmd.accesskey        "บ">
+
+<!ENTITY closeCmd.label      "ปิด">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "ป">
+
+<!ENTITY quitApplicationCmd.label  "ออก">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "อ">
+
+<!ENTITY quitApplicationCmdUnix.label  "ออก">
+<!ENTITY quitApplicationCmdUnix.accesskey  "อ">
+
+<!ENTITY quitApplicationCmdMac.label  "ออกจาก &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "อ">

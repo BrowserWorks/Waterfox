@@ -1,0 +1,744 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Ayuda de las preferencias avanzadas de &brandShortName;</title>
+  <link rel="stylesheet" href="helpFileLayout.css"
+    type="text/css"/>
+</head>
+
+<body>
+<h1 id="advanced_preferences">Preferencias avanzadas</h1>
+
+<p>Esta sección describe cómo usar el panel de preferencias avanzadas. Si
+  todavía no está visualizando el panel, siga estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+   <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Pulse en la categoría Avanzadas.</li>
+</ol>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#advanced">Avanzadas</a></li>
+    <li><a href="#scripts">Scripts y plugins</a></li>
+    <li><a href="#keyboard_navigation">Navegación con el teclado</a></li>
+    <li><a href="#fayt">Encontrar a medida que escribe</a></li>
+    <li><a href="#cache">Caché</a></li>
+    <li><a href="#offline_apps">Aplicaciones sin conexión</a></li>
+    <li><a href="#proxies">Proxies</a></li>
+    <li><a href="#http_networking">Protocolo HTTP</a></li>
+    <li><a href="#software_installation">Instalación de software</a></li>
+    <li><a href="#mouse_wheel">Rueda del ratón</a></li>
+  </ul>
+</div>
+
+<h2 id="advanced">Preferencias avanzadas - Avanzadas</h2>
+
+<p>Esta sección describe cómo usar el panel principal de las preferencias
+  avanzadas. Si todavía no lo está viendo, intente seguir estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+   <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Pulse en la categoría Avanzadas.</li>
+</ol>
+
+<p>El panel principal de preferencias avanzadas le permite:</p>
+
+<ul>
+  <li class="unix"><strong>Usar las preferencias del sistema</strong>:
+    seleccione esta opción para utilizar las preferencias del sistema ya
+    establecidas, descartando las de &brandShortName;.</li>
+  <li class="win"><strong>Comprobar la condición de aplicación predeterminada
+    al iniciar</strong>: seleccione esta opción para que &brandShortName;
+    compruebe si es la aplicación predeterminada para tareas como navegar y
+    manejar el correo. Si &brandShortName; detecta al iniciarse que no es la
+    aplicación predeterminada para cualquiera de estas tareas, aparecerá un
+    diálogo que le permite elegir qué tareas debe manejar &brandShortName;
+    de manera predeterminada.</li>
+  <li><strong>Enviar informes de fallo</strong>: seleccione esta opción para
+    activar el agente de informes de fallos de Mozilla. Si &brandShortName; se
+    sierra, se le preguntará caso por caso si quiere informar del problema.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="scripts_and_plugins">Preferencias avanzadas - Scripts y plugins</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de scripts y
+  plugins. Si todavía no lo está viendo, intente seguir estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+   <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría de Avanzadas, pulse Scripts y plugins (si no hay
+    subcategorías visibles, haga doble clic en Avanzadas para expandir la
+    lista).</li>
+</ol>
+
+<p>El panel de preferencias de scripts y plugins le permite controlar cómo se
+  usan JavaScript y los plugins:</p>
+
+<ul>
+  <li><strong>Activar JavaScript para</strong>:
+    <ul>
+      <li><strong>Navegador</strong>: seleccione esta opción para activar
+        JavaScript en para las página web abiertas por el navegador.</li>
+    </ul>
+  </li>
+  <li><strong>Permitir a los scripts</strong>: marque estos recuadros de
+    selección para controlar cómo puede ser usado JavaScript:
+    <ul>
+      <li><strong>Mover o cambiar el tamaño de ventanas existentes</strong>:
+        permite mover o redimensionar las ventanas abiertas.</li>
+      <li><strong>Cambiar el plano de profundidad de las ventanas</strong>:
+        permite poner ventanas por delante o por detrás de otras ventanas.</li>
+      <li><strong>Esconder la barra de estado</strong>: permite que se oculte
+        la barra de estado.</li>
+      <li><strong>Cambiar el texto de la barra de estado</strong>: permite
+        cambiar el texto de la barra de estado, como texto animado en la barra
+        de estado.</li>
+      <li><strong>Cambiar imágenes</strong>: permite que se cambien imágenes o
+        animarlas, como en los carruseles de imágenes (imágenes que cambian
+        cuando el cursor del ratón se encuentra sobre ellas).</li>
+      <li><strong>Desactivar o reemplazar menús contextuales</strong>:
+        permite que los menús que aparecen al pulsar el botón derecho<span
+        class="mac">o, si se está usando un ratón con un solo botón,
+        <kbd>Ctrl</kbd> y el botón del ratón</span> sean reemplazados o
+        desactivados por las páginas web.</li>
+    </ul>
+  </li>
+  <li><strong>Activar plugins para</strong>: use estas casillas de
+    selección para controlar cómo se usan los plugins:
+    <ul>
+      <li><strong>Suite</strong>: activa o desactiva los plugins en toda la
+        aplicación.</li>
+      <li><strong>Correo y noticias</strong>: permite que se activen los
+        plugins en Correo y noticias.</li>
+    </ul>
+  </li>
+  <li><strong>Cuando una página necesita plugins</strong>: seleccione estas
+    casillas para controlar qué debe hacer &brandShortName; si una página web
+    requiere plugins:
+    <ul>
+      <li><strong>Activar todos los plugins de modo predeterminado</strong>:
+        si selecciona esta opción, &brandShortName; cargará y ejecutará todos
+        los plugins encontrados en la página web. En caso contrario, si la
+        página necesita plugins, &brandShortName; mostrará una notificación
+        (icono de plugin en la barra de direcciones o una barra de
+        notificaciones), más un indicador del espacio ocupado por cada instancia
+        del plugin encontrada en la página (a menos que el sitio web está en la
+        lista blanca, véase más abajo).
+        Puede activar individualmente las instancias de los plugins visibles
+        con un clic del botón izquierdo del ratón o usar la notificación para
+        activar todos los plugins de la página. Desde la notificación tiene la
+        opción de activar temporalmente los plugins o recordar la elección hecha
+        para el sitio actual. Las elecciones recordadas pueden modificarse usando
+        el administrador de datos (pestaña Permisos).</li>
+      <li><strong>Advertirme si hace falta instalar plugins adicionales</strong>:
+        cuando un sitio web necesita un plugin que no está instalado, se
+        mostrará una barra de notificación encima del área de contenido del
+        sitio web. Desde la barra podrá descargar e instalar el plugin que falta.</li>
+  </ul>
+</li>
+</ul>
+
+<p>Para más información sobre los plugins, vea <a href=
+  "nav_help.xhtml#plugins_and_downloads">Plugins y descargas</a>.</p>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="keyboard_navigation">Preferencias avanzadas - Navegación con
+  el teclado</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de navegación con
+  teclado. Si no lo está viendo ya, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría Avanzadas, pulse Navegación con teclado (si no hay
+    subcategorías visibles, haga doble clic en Avanzadas para expandir la
+    lista).</li>
+</ol>
+
+<p>El panel de preferencias de navegación con teclado le permite controlar
+  cómo usar el teclado para navegar en las páginas web:</p>
+
+<ul>
+  <li class="noMac"><strong>Navegación con el tabulador</strong>: seleccione
+    qué elementos deberían ser tomados en consideración al usar la tecla Tab
+    en una página:
+    <ul>
+      <li><strong>Enlaces</strong>: si está seleccionado, pulsar <kbd>Tab</kbd>
+        o <kbd>Mays</kbd>+<kbd>Tab</kbd> permite moverse por los enlaces.</li>
+      <li><strong>Botones, botones de radio, casillas de verificación y
+        listas</strong>: si está seleccionado, pulsar <kbd>Tab</kbd> o
+        <kbd>Mays</kbd>+<kbd>Tab</kbd> permite moverse entre los botones,
+        listas de selecci&oacute;n, casillas seleccionables y listas.</li>
+    </ul>
+  </li>
+  <li><strong>Navegar con cursor</strong>: seleccione si, y cómo, se debe usar
+    la <a href="glossary.xhtml#caret_browsing">navegación con cursor</a>:
+    <ul>
+      <li><strong>Usar navegación con cursor</strong>: si está marcado, la
+        navegación con cursor estará activada por defecto cuando cargue una
+        página web.</li>
+      <li><strong>Usar el atajo de teclado F7 para alternar la navegación con
+        cursor</strong>: si está marcado, el atajo de teclado F7 activará y
+        desactivará la navegación con cursor. En caso contrario,
+        &brandShortName; no usará el atajo de teclado y la opción de debajo
+        no tendrá efecto.</li>
+      <li><strong>Advertirme antes de activar la navegación con
+        cursores</strong>: si está marcado, &brandShortName; mostrará un
+        diálogo de advertencia cuando se vaya a entrar en el modo de navegación
+        con cursor, permitiéndole elegir si continuar o no (no hay advertencia
+        al salir del modo de navegación con cursor).</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="fayt">Preferencias avanzadas - Encontrar a medida que escribe</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de Encontrar a
+  medida que escribe. Si no lo está viendo ya, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría Avanzadas, pulse Encontrar a medida que escribe (si no
+    hay subcategorías visibles, haga doble clic en Avanzadas para expandir la
+    lista).</li>
+</ol>
+
+<p>El panel de preferencias de Encontrar a medida que escribe le permite
+  controlar cómo usar el teclado para navegar en las páginas web:</p>
+
+<ul>
+  <li><strong>Buscar automáticamente cuando escriba dentro de una
+    página web</strong>: si está seleccionado, al escribir
+    texto en una página web automáticamente se activa Encontrar
+    según se escribe y se busca el texto que ha escrito (si existe en
+    la página). Escoja si quiere escribir para encontrar cualquier
+    texto en la página o sólo los enlaces. Si no está
+    seleccionado, deberá escoger Encontrar enlaces según
+    escribe o Encontrar texto según escribe del menú Editar
+    antes de escribir el texto que quiere encontrar.</li>
+  <li><strong>Reproducir un sonido cuando el texto escrito no se
+    encuentre</strong>: si está seleccionado, Encontrar según
+    escribe reproduce un sonido cuando el texto tecleado no se encuentra en
+    la página web.</li>
+  <li><strong>Reiniciar la búsqueda actual tras unos pocos segundos de
+    inactividad</strong>: si está seleccionado, la búsqueda se cancelará tras
+    unos pocos segundos de inactividad en el teclado.</li>
+  <li><strong>Mostrar la barra de búsqueda al encontrar a medida que
+    escribe</strong>: si está marcado, la barra de herramientas de búsqueda se
+    abrirá cuando se active Encontrar a medida que escribe y lo que escriba
+    aparecerá en el campo de búsqueda de la barra. Si no está marcado, la barra
+    de herramientas de búsqueda no se abrirá y la cadena de búsqueda se mostrará
+    en la barra de estado. Tenga en cuenta que la entrada de texto internacional
+    no funcionará en este modo.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="cache">Preferencias avanzadas - Caché</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias
+Caché. Si todavía no lo está viendo, intente seguir
+estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+   <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría de Avanzadas, pulse Caché (si no hay
+    subcategorías visibles, haga doble clic en Avanzadas para expandir
+    la lista).</li>
+</ol>
+
+<p>El panel de preferencias de caché permite ajustar las caché
+de disco y memoria de &brandShortName;:</p>
+
+<ul>
+  <li><strong>Permitir a &brandShortName; administrar el tamaño de la
+    caché</strong>: seleccione esta casilla para permitir a &brandShortName;
+    aplicar una heurística basada en el espacio disponible en su disco duro
+    para determinar el tamaño de la caché (esta es la opción por
+    defecto).</li>
+  <li><strong>Usar hasta [__] MB de espacio en disco para la caché</strong>:
+    escriba la cantidad de caché de disco que quiere reservar para
+    &brandShortName;. La caché de disco se guarda en su disco duro y puede
+    usarse de nuevo, incluso si ha reiniciado su equipo (el valor por defecto
+    es 1024 MB. Esta preferencia es ignorada si la casilla anterior está
+    marcada).</li>
+  <li><strong>Vaciar caché</strong>: pulse para borrar la caché
+    de disco.</li>
+  <li><strong>Ubicación de la carpeta de caché</strong>: muestra la
+    ubicación actual de la carpeta de caché de disco.</li>
+  <li><strong>Elegir carpeta</strong>: pulse aquí para elegir una
+    carpeta para el caché de disco.</li>
+  <li><strong>Comparar la página de la caché con la página de la
+    red</strong>:
+    <ul>
+      <li><strong>Cada vez que visite la página</strong>: seleccione
+        esta opción para que &brandShortName; compare una página
+        web con la de caché cada vez que la visite.</li>
+      <li><strong>Cuando la página ha caducado</strong>: seleccione
+        esta opción si quiere que &brandShortName; compare la
+        página web con la de la caché cuando el servidor ha
+        determinado que la página ha caducado.</li>
+      <li><strong>Una vez por sesión</strong>: use esta opción
+        para que &brandShortName; compare una página web con la de
+        caché una vez cada vez que se inicia &brandShortName;.</li>
+      <li><strong>Nunca</strong>: seleccione esta opción si no quiere
+        que &brandShortName; compare la información de la caché
+        con la existente en la red.</li>
+    </ul>
+  </li>
+  <li><strong>Precargar las páginas web cuando no se efectúe otra operación,
+    de manera que los enlaces en las páginas web diseñadas para ello se
+    carguen más rápido</strong>: seleccione esta opción para reducir el
+    tiempo que tardan en cargarse las páginas web cuando se pulsa en una
+    página web que usa precarga. Para más información sobre la precarga de
+    enlaces, vea el documento en línea (en inglés) <a
+    href="https://developer.mozilla.org/docs/Web/HTTP/Link_prefetching_FAQ"><abbr
+    title="Frequently Answered Questions, Preguntas frecuentemente contestadas">FAQ</abbr>
+    sobre precarga de enlaces</a>.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="offline_apps">Preferencias avanzadas - Aplicaciones sin conexión</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de aplicaciones
+  web sin conexión. Si no lo está viendo ya, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija Preferencias.</li>
+   <li>Bajo la categoría Avanzadas, pulse Aplicaciones sin conexión (si no hay
+     subcategorías visibles, haga doble clic en Avanzadas para expandir la
+     lista).</li>
+</ol>
+
+<p>El panel de aplicaciones web sin conexión le permite controlar y monitorizar
+  cómo usan los sitios web el almacenamiento sin conexión de &brandShortName;.
+  Los sitios web pueden proporcionar funcionalidades complejas más allá de
+  simplemente presentar contenido, implementando
+  <a href="glossary.xhtml#web_application">aplicaciones web</a>. En general,
+  tales aplicaciones web le obligan a estar conectado para poder usarlos,
+  por lo que no funcionarán si está desconectado de la red. Si se permite, los
+  sitios web pueden guardar su contenido y cualquier dato que se haya
+  introducido localmente en &brandShortName;. De esta manera, pueden ser usados
+  incluso sin una conexión de red.</p>
+
+<p>La sección <strong>Contenido web y datos del usuario sin conexión</strong>
+  proporciona las siguientes funciones:</p>
+
+<ul>
+  <li><strong>Su almacenamiento sin conexión usa actualmente [__] de espacio en
+    disco</strong>: esta entrada es informativa y le proporciona una estimación
+    de los datos sin conexión actualmente en uso por todas las aplicaciones web
+    combinadas.</li>
+  <li><strong>Limpiar</strong>: limpia inmediatamente los datos que han sido
+    guardados por todos los sitios web para su uso sin conexión.</li>
+  <li><strong>Permitir a todos los sitios web guardar datos para su uso sin
+    conexión</strong>: marque esta opción si quiere permitir por defecto que
+    los sitios web guarden contenido web y datos de usuario de modo local en el
+    disco de su equipo.</li>
+  <li><strong>Permitir sólo a los sitios web con permiso expreso</strong>:
+    marque esta opción si quiere controlar si un sitio web puede guardar
+    contenido web para de modo local para su uso sin conexión. A menos que se
+    haya concedido permiso expreso, la petición del sitio web para acceder al
+    almacenamiento sin conexión será bloqueada o se le mostrará una notificación
+    para darle la opción de permitirlo.</li>
+  <li><strong>Avisarme cuando un sitio web quiere guardar datos para su uso sin
+    conexión</strong>: marque esta casilla si quiere ser notificado cuando un
+    sitio web solicite guardar contenido o datos en el almacenamiento sin
+    conexión pero no se haya indicado hasta ahora si se le permite hacerlo o
+    no. Aparecerá una barra de información para este sitio con las siguientes
+    opciones:
+    <ul>
+      <li><strong>Permitir siempre</strong>: permitir permanentemente a este
+        sitio el uso del almacenamiento sin conexión para éste y los futuros
+        accesos.</li>
+      <li><strong>Nunca para este sitio</strong>: denegar permanentemente a
+        este sitio el uso del almacenamiento sin conexión para éste y los
+        futuros accesos.</li>
+      <li><strong>Ahora no</strong>: denegar a este sitio el uso del
+        almacenamiento sin conexión para esta petición, pero preguntar de
+        nuevo en futuros accesos.</li>
+    </ul>
+    <p><strong>Nota</strong>: el almacenamiento sin conexión <em>no</em>
+      está disponible en una
+      <a href="using_priv_help.xhtml#browsing_in_a_private_window">ventana
+      privada</a>. Recibirá una notificación si esta opción está marcada, pero
+      todas las peticiones serán bloqueadas.</p>  </li>
+  <!-- NOTE: link "Data Manager" below once bug 599097 has been fixed -->
+  <li><strong>Administrar permisos</strong>: abre el administrador de datos
+    en una nueva pestaña o ventana en la que se puede modificar los permisos
+    de las aplicaciones web sin conexión para cada dominio:
+    <ul>
+      <li><strong>Usar valores predeterminados</strong>: marque esta casilla
+        para volver al comportamiento por defecto, es decir, presentar la
+        barra de información con la siguiente petición de un sitio de cada
+        dominio si se ha elegido la opción de notificación (en la práctica,
+        elimina la entrada de esta lista).</li>
+      <li><strong>Permitir</strong>: seleccione esta opción para permitir a
+        este sitio el uso del almacenamiento sin conexión para todos los
+        accesos.</li>
+      <li><strong>Bloquear</strong>: seleccione esta opción para denegar a
+        este sitio el uso del almacenamiento sin conexión para todos los
+        accesos.</li>
+    </ul>
+  </li>
+  <li><strong>Los sitios web siguientes están usando almacenamiento sin
+    conexión</strong>: lista los dominios de todos los sitios web que han
+    guardado datos sin conexión, junto con la cantidad de datos usados
+    actualmente por este dominio.</li>
+  <li><strong>Limpiar datos</strong>: seleccione el dominio de un sitio web
+    y pulse este botón para eliminar todos los datos sin conexión del dominio
+    especificado. Pulse <q>Eliminar datos sin conexión</q> cuando se le
+    pida confirmación para ello.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="proxies">Preferencias avanzadas - Proxies</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de
+  servidores proxy.&nbsp;Si todavía no lo está viendo, intente
+  seguir estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+   <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría de Avanzadas, pulse Proxies (si no hay
+    subcategorías visibles, haga doble clic en Avanzadas para expandir
+    la lista).</li>
+</ol>
+
+<p>El panel de preferencias de servidores proxy permite ajustar
+  &brandShortName; para que use un <a href="glossary.xhtml#proxy">proxy</a>:</p>
+
+<p><strong>Antes de empezar</strong>: pregunte a su administrador de red si
+  posee un archivo de configuración de servidores proxy o los nombres y
+  números de puerto del proxy.</p>
+
+<ul>
+  <li><strong>Conexión directa a Internet</strong>: elija esta
+  opción si no quiere usar un proxy.</li>
+  <li><strong>Descubrir automáticamente la configuración del
+  proxy</strong>: elija esta opción si quiere que &brandShortName;
+  detecte y configure automáticamente los valores del proxy, usando
+  el <a href="glossary.xhtml#wpad">protocolo WPAD</a>.</li>
+  <li><strong>URL para configuración automática del
+  proxy</strong>: elija esta opción si tiene un archivo o URL para
+  autoconfiguración de proxy (PAC), y seguidamente introduzca la URL de
+  configuración.
+    <ul>
+      <li><strong>Recargar</strong>: pulse aquí para recargar el
+      archivo de configuración.
+        <p>Un archivo PAC tiene código JavaScript que elige un proxy que
+          usar dependiendo de la dirección que abra. El mismo archivo puede
+          usar más de un proxy o usar proxies solo para direcciones
+          específicas. Para más información sobre el contenido de los archivos
+          PAC, vea la
+          <a href="https://developer.mozilla.org/docs/Web/HTTP/Proxy_servers_and_tunneling/Proxy_Auto-Configuration_%28PAC%29_file">
+          documentación MDN en línea sobre archivos de autoconfiguración de
+          proxy</a>.</p>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Configuración manual del proxy</strong>: elija esta
+  opción si no tiene una dirección (URL) para el proxy, o si
+  el descubrimiento automático del proxy no fue capaz de configurar
+  los valores del proxy correctamente.
+    <ul>
+      <li><strong>Proxy</strong>: escriba el nombre o dirección IP
+      numérica del servidor proxy.</li>
+      <li><strong>Puerto</strong>: escriba el número de puerto en el
+      campo Puerto. Pulse en <q>Avanzadas</q> para establecer
+      <a href="#advanced_proxy_preferences">preferencias avanzadas de
+      proxy</a></li>
+      <li><strong>No usar proxy para</strong>: escriba los dominios y/o
+      direcciones IP para los que no desea usar proxy. Separe cada entrada
+      con una coma (ejemplo: <kbd>.suempresa.com, .suempresa.es,
+      192.168.1.0/24</kbd>).</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="advanced_proxy_preferences">Preferencias de proxy avanzadas</h3>
+
+<p>Si quiere usar proxies diferentes para diferentes protocolos o necesita
+usar un proxy SOCKS:</p>
+
+<ul>
+  <li><strong>Proxy HTTP</strong>, <strong>Proxy SSL</strong>,
+    <strong>Proxy FTP</strong>: escriba el nombre o dirección IP numérica del
+    servidor proxy. Escriba el puerto en el campo Puerto.
+    <p><strong>Nota</strong>: si usa los mismos valores para todos
+    los tipos de proxies, haga clic en <q>Usar los valores del proxy HTTP
+    para todos los protocolos</q> cuando haya rellenado los campos del proxy
+    HTTP.</p>
+  </li>
+  <li><strong>Proxy SOCKS</strong>: escriba el nombre o dirección IP
+    numérica del servidor proxy. Escriba el puerto en el campo
+    Puerto.
+    <ul>
+      <li><strong>SOCKS v4, SOCKS v5</strong>: cuando introduzca un proxy
+        SOCKS, seleccione <q>SOCKS v4</q> o <q>SOCKS v5,</q> dependiendo de
+        qué versión de <a href="glossary.xhtml#socks">SOCKS</a>
+        se use en el proxy.</li>
+      <li><strong>Usar para resolver nombres de host</strong>: seleccione esta
+        casilla para usar el Proxy Socks para resolver nombres de dominio. Se
+        recomienda para los proxies SOCKS v5.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="http_networking">Preferencias avanzadas - Protocolo HTTP</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias del
+protocolo HTTP. Si todavía no lo está viendo, intente seguir
+estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+     <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría de Avanzadas, escoja Protocolo HTTP (si no hay
+  subcategorías visibles, haga doble clic en Avanzadas para expandir
+  la lista).</li>
+</ol>
+
+<p>El panel de preferencias del protocolo HTTP se usa para configurar las
+conexiones basadas en HTTP:</p>
+
+<ul>
+  <li><strong>Opciones de conexión directa y conexión por proxy</strong>:
+    elija la versión HTTP y opciones para cada tipo de conexión.
+    <ul>
+      <li><strong>Usar HTTP 1.0</strong>: elija esta opción para utilizar la
+        versión original de HTTP, estandarizada en 1996. Esta opción está
+        pensada sobre todo por motivos de compatibilidad con los servidores
+        web y proxy más antiguos.</li>
+      <li><strong>Usar HTTP 1.1</strong>: elija esta opción para utilizar la
+        versión actual de HTTP, que ofrece mejoras de rendimiento, incluyendo
+        un uso más eficiente de las conexiones HTTP, mejor compatibilidad con
+        el uso de caché local en el lado del cliente y un control más refinado
+        sobre las políticas de caducidad y reemplazo de caché.</li>
+    </ul>
+  </li>
+  <li><strong>Cadena del agente de usuario</strong>: el identificador enviado
+    por &brandShortName; a todos los sitios web se usa para propósitos
+    estadísticos sobre el uso de sitios web, pero a veces también para
+    suministrar ciertas características únicamente a navegadores conocidos
+    (una práctica conocida como "sniffing"). En consecuencia, cambiar esta
+    opción puede tener como resultado que los sitios web no funcionen
+    correctamente. &brandShortName; puede:
+    <ul>
+      <li><strong>Identificarse como Firefox</strong>: no se menciona a
+        &brandShortName;; se envía un identificador de Firefox en su lugar.
+        Esto puede ser necesario para sitios web que rehúsan funcionar cuando
+        &brandShortName; se menciona en el identificador.</li>
+      <li><strong>Identificarse como &brandShortName;</strong>: &brandShortName;
+        se identificará a sí mismo como &brandShortName;, sin mencionar a
+        Firefox.</li>
+      <li><strong>Identificarse como &brandShortName; y anunciar compatibilidad
+        con Firefox</strong>: &brandShortName; se identificará a sí mismo como
+        &brandShortName; y también como compatible con Firefox. Esto permite
+        a los sitios web que buscan ciertos navegadores en lugar de cierta
+        funcionalidad que funcionen con &brandShortName;, a la vez que aún
+        aparecen como &brandShortName; en las estadísticas de los sitios
+        web.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="software_installation">Preferencias avanzadas -
+Instalación de software</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de
+Instalación de software. Si todavía no lo está viendo,
+intente seguir estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+   <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría de Avanzadas, pulse Instalación de
+    software (si no hay subcategorías visibles, haga doble clic en
+    Avanzadas para expandir la lista).</li>
+</ol>
+
+<p>El panel de preferencias de instalación de software se usa para habilitar
+  la instalación y actualizaciones de complementos. El administrador de
+  complementos le permite ver y administrar todas sus extensiones y temas
+  instalados:</p>
+
+<ul>
+  <li><strong>Complementos</strong>:
+    <ul>
+      <li><strong>Permitir a los sitios web instalar complementos y
+        actualizaciones</strong>: marque esta casilla si quiere permitir a los
+        sitios web la instalación de complementos y actualizaciones para su uso
+        con &brandShortName;. Se le preguntará antes de cada instalación.
+        <ul>
+          <li><strong>Sitios web permitidos</strong>: pulse este enlace para
+            abrir la pestaña del administrador de datos, donde puede ver y
+            editar la lista de sitios web a los que quiere permitir instalar
+            software.</li>
+          <li><strong>Buscar actualizaciones automáticamente</strong>:
+            seleccione esta opción para ser notificado cuando esté disponible
+            una nueva versión de uno de sus complementos instalados. Elija si
+            quiere que &brandShortName; haga una comprobación
+            <strong>diaria</strong> o <strong>semanal</strong> en busca de
+            nuevas versiones.</li>
+          <li><strong>Descargar e instalar automáticamente la
+            actualización</strong>: seleccione esta opción si quiere que
+            &brandShortName; descargue e instale automáticamente
+            actualizaciones cuando estén disponibles. La descarga tendrá lugar
+            en segundo plano, con baja prioridad. Cuando la descarga haya
+            finalizado, la actualización del complemento se instalará la
+            próxima vez que inicie &brandShortName;.</li>
+        </ul>
+      </li>
+      <li><strong>Personalizar recomendaciones sobre complementos</strong>:
+        seleccione esta opción para que se le ofrezcan sugerencias para
+        complementos en la pestaña &quot;Obtener complementos&quot; del
+        administrador:
+        <ul>
+          <li>Observe que esta función implica enviar una lista de los
+            complementos instalados actualmente al sitio web de
+            complementos.</li>
+          <li>Desactivar esta opción también impedirá que se contacte con el
+            sitio de complementos periódicamente en busca de alguna información
+            nueva sobre los complementos instalados, pero no afectará a las
+            actualizaciones automáticas.</li>
+        </ul>
+      </li>
+      <li><strong>Administrar complementos</strong>: pulse aquí para abrir el
+        administrador de complementos en una nueva pestaña del navegador.</li>
+    </ul>
+  </li>
+  <li><strong>&brandShortName;</strong>:
+    <ul>
+      <li><strong>Buscar actualizaciones automáticamente</strong>: seleccione
+        esta casilla para que se le notifique cuando haya una versión nueva de
+        &brandShortName;. Elija si quiere que &brandShortName; haga una
+        comprobación <strong>diaria</strong> o <strong>semanal</strong> en
+        busca de nuevas versiones.
+        <ul>
+          <li><strong>Descargar e instalar automáticamente la
+            actualización</strong>: seleccione esta opción si quiere que
+            &brandShortName; descargue e instale automáticamente
+            actualizaciones cuando estén disponibles. La descarga tendrá lugar
+            en segundo plano, con baja prioridad. Cuando la descarga haya
+            finalizado, la actualización de &brandShortName; se instalará la
+            próxima vez que inicie &brandShortName;.</li>
+        </ul>
+        <p><strong>Nota</strong>: puede usar Buscar actualizaciones del menú
+          <span class="mac">&brandShortName;</span><span
+          class="noMac">Ayuda</span> para iniciar manualmente la búsqueda de
+          actualizaciones para &brandShortName;.<span class="noMac"> El texto
+          de la opción de menú cambiará cuando se esté descargando una
+          actualización o esté lista para ser aplicada.</span></p>
+      </li>
+      <li><strong>Mostrar el historial de actualizaciones</strong>: marque esta
+        casilla para abrir el cuadro de diálogo Historial de actualizaciones,
+        que muestra una lista de actualizaciones de &brandShortName; que han
+        sido instaladas, incluyendo el tipo de actualización (p.e.
+        Actualización de seguridad), la fecha y hora de la instalación y su
+        estado. El enlace Detalles junto a cada actualización le lleva a una
+        página web que contiene más información relacionada con la
+        actualización.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+<h2 id="mouse_wheel">Preferencias avanzadas - Rueda del ratón</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de Rueda del
+  ratón. Si todavía no lo está viendo, intente seguir estos pasos:</p>
+
+<ol>
+ <li>Abra el menú <span class="mac">&brandShortName;</span>
+   <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Bajo la categoría de Avanzadas, pulse Rueda del ratón
+    (si no hay subcategorías visibles, haga doble clic en Avanzadas
+    para expandir la lista).</li>
+</ol>
+
+<p>El panel de rueda del ratón le permite controlar cómo se usa en
+  &brandShortName; la rueda de su ratón (que se encuentra entre los botones
+  del mismo). Los ratones modernos pueden tener dos ruedas o un botón que
+  puede usarse para cambiar la dirección de desplazamiento de la rueda. El
+  comportamiento para la función de la rueda vertical se establece en el panel
+  superior <strong>Desplazamiento vertical</strong> mientras que el modo
+  horizontal se controla por el panel inferior <strong>Desplazamiento
+  horizontal</strong>.</p>
+
+<ul>
+  <li>Seleccione <q>Sin tecla modificadora</q> o seleccione una tecla que
+    quiera usar junto con la rueda del ratón. Use las casillas
+    seleccionables que hay debajo para configurar el comportamiento del
+    ratón:
+
+    <ul>
+      <li><strong>La misma que la del desplazamiento vertical</strong>:
+        seleccione esta opción cuando su ratón tenga un único control que
+        proporcione a la vez desplazamiento vertical y horizontal. Si su
+        ratón tiene un control separado de desplazamiento horizontal,
+        entonces puede elegir asignarle una función diferente.</li>
+      <li><strong>No hacer nada</strong>: marque esta opción para
+        desactivar la rueda del ratón cuando se use con la tecla modificadora
+        especificada.</li>
+      <li><strong>Desplazar el documento</strong>: seleccione esta opción
+        para desplazar el documento con el número de líneas o caracteres
+        predeterminado del sistema.</li>
+      <li><strong>Moverse adelante y atrás en el historial de
+        navegación</strong>: elija esta opción para navegar hacia atrás o
+        adelante por páginas que haya visitado previamente.</li>
+      <li><strong>Aumentar o reducir el tamaño de la página</strong>: marque
+        esta opción para usar la rueda del ratón para incrementar o disminuir
+        el tamaño de una página web. Esta opción puede ayudarle a leer mejor
+        una página o hacer que el texto encaje en la pantalla.</li>
+    </ul>
+
+    <p>Use la opción <strong>Velocidad de la rueda del ratón</strong> para
+      ajustar la respuesta de la rueda. Para invertir la dirección de
+      desplazamiento, use números negativos o seleccione <strong>Invertir
+      dirección</strong>.</p>
+
+    <p><strong>Nota</strong>: cada tecla modificadora puede ser asignada a
+      una función diferente.</p>
+  </li>
+  <li>Si su ratón no tiene un modo para desplazamiento horizontal, no
+    se tendrá en cuenta ningún valor en el panel inferior
+    <strong>Desplazamiento horizontal</strong>.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Volver al principio de la sección</a>]</p>
+
+</body>
+</html>

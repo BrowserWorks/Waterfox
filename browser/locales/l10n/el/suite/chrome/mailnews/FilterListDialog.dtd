@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Φίλτρα μηνυμάτων">
+<!ENTITY nameColumn.label "Όνομα φίλτρου">
+<!ENTITY activeColumn.label "Ενεργό">
+<!ENTITY newButton.label "Νέο…">
+<!ENTITY newButton.accesskey "Ν">
+<!ENTITY editButton.label "Επεξεργασία…">
+<!ENTITY editButton.accesskey "Ε">
+<!ENTITY deleteButton.label "Διαγραφή">
+<!ENTITY deleteButton.accesskey "φ">
+<!ENTITY reorderUpButton.label "Μετακίνηση πάνω">
+<!ENTITY reorderUpButton.accesskey "π">
+<!ENTITY reorderDownButton.label "Μετακίνηση κάτω">
+<!ENTITY reorderDownButton.accesskey "κ">
+<!ENTITY filterHeader.label "Τα ενεργά φίλτρα εκτελούνται αυτόματα με την παρακάτω σειρά.">
+<!ENTITY filtersForPrefix.label "Φίλτρα για:">
+<!ENTITY filtersForPrefix.accesskey "Φ">
+<!ENTITY viewLogButton.label "Αρχείο καταγραφής φίλτρου">
+<!ENTITY viewLogButton.accesskey "Α">
+<!ENTITY runFilters.label "Εκτέλεση τώρα">
+<!ENTITY runFilters.accesskey "Ε">
+<!ENTITY stopFilters.label "Διακοπή">
+<!ENTITY stopFilters.accesskey "Δ">
+<!ENTITY folderPickerPrefix.label "Εκτέλεση επιλεγμένων φίλτρων στο:">
+<!ENTITY folderPickerPrefix.accesskey "γ">
+<!ENTITY choosethis.label "επιλογή φακέλου">
+<!ENTITY choosethisnewsserver.label "επιλογή διακομιστή συζήτησης">

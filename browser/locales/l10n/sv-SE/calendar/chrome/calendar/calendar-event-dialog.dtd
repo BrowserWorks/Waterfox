@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Redigera objekt" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Behåll varaktighet vid ändring av slutdatum">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Från" >
+<!ENTITY newevent.to.label                  "Till" >
+
+<!ENTITY newevent.status.label                    "Status" >
+<!ENTITY newevent.status.accesskey                "S" >
+<!ENTITY newevent.eventStatus.none.label          "Ej angiven" >
+<!ENTITY newevent.eventStatus.none.accesskey      "a" >
+<!ENTITY newevent.todoStatus.none.label           "Ej angiven" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Avbruten" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Avbruten" >
+<!ENTITY newevent.status.tentative.label          "Preliminär" >
+<!ENTITY newevent.status.tentative.accesskey      "P" >
+<!ENTITY newevent.status.confirmed.label          "Bekräftad" >
+<!ENTITY newevent.status.confirmed.accesskey      "B" >
+<!ENTITY newevent.status.needsaction.label        "En åtgärd krävs" >
+<!ENTITY newevent.status.inprogress.label         "Pågående" >
+<!ENTITY newevent.status.completed.label          "Avslutad" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; färdigt">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Meddela deltagare">
+<!ENTITY event.attendees.notify.accesskey            "d">
+<!ENTITY event.attendees.notifyundisclosed.label     "Separat inbjudan till varje deltagare">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "p">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Detta alternativ skickar en inbjudan per deltagare. Varje inbjudan innehåller bara en mottagare så att övriga deltagares identitet inte lämnas ut.">
+<!ENTITY event.attendees.disallowcounter.label       "Tillåt inte motförslag">
+<!ENTITY event.attendees.disallowcounter.accesskey   "n">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Anger att du inte kommer att acceptera motförslag">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Ny">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Händelse">
+<!ENTITY  event.menu.item.new.event.accesskey             "H">
+<!ENTITY  event.menu.item.new.task.label                  "Uppgift">
+<!ENTITY  event.menu.item.new.task.accesskey              "U">
+<!ENTITY  event.menu.item.new.message.label               "Meddelande">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "Kontakt">
+<!ENTITY  event.menu.item.new.contact.accesskey           "K">
+<!ENTITY  event.menu.item.close.label                     "Stäng">
+<!ENTITY  event.menu.item.close.accesskey                 "S">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Spara">
+<!ENTITY  event.menu.item.save.accesskey                  "p">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Spara och stäng">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "a">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "S">
+
+<!ENTITY  event.menu.item.delete.label                    "Radera…">
+<!ENTITY  event.menu.item.delete.accesskey                "R">
+<!ENTITY  event.menu.item.page.setup.label                "Sidlayout">
+<!ENTITY  event.menu.item.page.setup.accesskey            "t">
+<!ENTITY  event.menu.item.print.label                     "Skriv ut">
+<!ENTITY  event.menu.item.print.accesskey                 "u">
+
+<!ENTITY  event.menu.edit.label                           "Redigera">
+<!ENTITY  event.menu.edit.accesskey                       "R">
+<!ENTITY  event.menu.edit.undo.label                      "Ångra">
+<!ENTITY  event.menu.edit.undo.accesskey                  "Å">
+<!ENTITY  event.menu.edit.redo.label                      "Gör om">
+<!ENTITY  event.menu.edit.redo.accesskey                  "G">
+<!ENTITY  event.menu.edit.cut.label                       "Klipp ut">
+<!ENTITY  event.menu.edit.cut.accesskey                   "u">
+<!ENTITY  event.menu.edit.copy.label                      "Kopiera">
+<!ENTITY  event.menu.edit.copy.accesskey                  "K">
+<!ENTITY  event.menu.edit.paste.label                     "Klistra in">
+<!ENTITY  event.menu.edit.paste.accesskey                 "i">
+<!ENTITY  event.menu.edit.select.all.label                "Markera allt">
+<!ENTITY  event.menu.edit.select.all.accesskey            "M">
+
+<!ENTITY  event.menu.view.label                           "Visa">
+<!ENTITY  event.menu.view.accesskey                       "V">
+<!ENTITY  event.menu.view.toolbars.label                  "Verktygsfält">
+<!ENTITY  event.menu.view.toolbars.accesskey              "e">
+<!ENTITY  event.menu.view.toolbars.event.label            "Verktygsfält händelse">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "h">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Redigera…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "R">
+<!ENTITY  event.menu.view.showlink.label                  "Visa liknande länk">
+<!ENTITY  event.menu.view.showlink.accesskey              "V">
+
+<!ENTITY  event.menu.options.label                            "Alternativ">
+<!ENTITY  event.menu.options.accesskey                        "A">
+<!ENTITY  event.menu.options.attendees.label                  "Bjud in deltagare…">
+<!ENTITY  event.menu.options.attendees.accesskey              "B">
+<!ENTITY  event.menu.options.timezone2.label                  "Visa tidszoner">
+<!ENTITY  event.menu.options.timezone2.accesskey              "z">
+<!ENTITY  event.menu.options.priority2.label                  "Prioritet">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Ej angiven">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "E">
+<!ENTITY  event.menu.options.priority.low.label               "Låg">
+<!ENTITY  event.menu.options.priority.low.accesskey           "L">
+<!ENTITY  event.menu.options.priority.normal.label            "Normal">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Hög">
+<!ENTITY  event.menu.options.priority.high.accesskey          "H">
+<!ENTITY  event.menu.options.privacy.label                    "Sekretess">
+<!ENTITY  event.menu.options.privacy.accesskey                "S">
+<!ENTITY  event.menu.options.privacy.public.label             "Publik händelse">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "u">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Visa endast tid och datum">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "V">
+<!ENTITY  event.menu.options.privacy.private.label            "Privat händelse">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Visa tid som">
+<!ENTITY  event.menu.options.show.time.accesskey              "t">
+<!ENTITY  event.menu.options.show.time.busy.label             "Upptagen">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "a">
+<!ENTITY  event.menu.options.show.time.free.label             "Ledig">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "L">
+
+<!ENTITY event.invite.attendees.label                     "Bjud in deltagare…">
+<!ENTITY event.invite.attendees.accesskey                 "B">
+<!ENTITY event.email.attendees.label                      "Skicka e-post till alla deltagare…">
+<!ENTITY event.email.attendees.accesskey                  "S">
+<!ENTITY event.email.tentative.attendees.label            "Skicka e-post till alla preliminära deltagare…">
+<!ENTITY event.email.tentative.attendees.accesskey        "e">
+<!ENTITY event.remove.attendees.label2                    "Ta bort alla deltagare">
+<!ENTITY event.remove.attendees.accesskey                 "t">
+<!ENTITY event.remove.attendee.label                      "Ta bort deltagare">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Spara">
+<!ENTITY  event.toolbar.saveandclose.label                "Spara och stäng">
+<!ENTITY  event.toolbar.delete.label                      "Radera">
+<!ENTITY  event.toolbar.attendees.label                   "Bjud in deltagare">
+<!ENTITY  event.toolbar.privacy.label                     "Sekretess">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Spara">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Spara och stäng">
+<!ENTITY  event.toolbar.delete.tooltip                    "Radera">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Bjud in deltagare">
+<!ENTITY  event.toolbar.attachments.tooltip               "Lägg till bilagor">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Ändra sekretess">
+<!ENTITY  event.toolbar.priority.tooltip                  "Ändra prioritet">
+<!ENTITY  event.toolbar.status.tooltip                    "Ändra status">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Ändra ledig/upptagen tid">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Lägg till förslag">
+<!ENTITY counter.button.proposal.accesskey                "f">
+<!ENTITY counter.button.proposal.tooltip2                 "Händelsefält kommer att fyllas i med värden från motförslag, endast spara med eller utan ytterligare ändringar kommer således att meddela alla deltagare">
+<!ENTITY counter.button.original.label                    "Lägg till originaldata">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Fälten kommer att sättas till värden från den ursprungliga händelsen, innan motförslag gjordes">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Titel:" >
+<!ENTITY event.title.textbox.accesskey                    "T">
+<!ENTITY event.location.label                             "Plats:" >
+<!ENTITY event.location.accesskey                         "P">
+<!ENTITY event.categories.label                           "Kategori:">
+<!ENTITY event.categories.accesskey                       "i">
+<!ENTITY event.categories.textbox.label                   "Lägg till ny kategori" >
+<!ENTITY event.calendar.label                             "Kalender:" >
+<!ENTITY event.calendar.accesskey                         "K">
+<!ENTITY event.attendees.label                            "Deltagare:" >
+<!ENTITY event.attendees.accesskey                        "e">
+<!ENTITY event.alldayevent.label                          "Heldagshändelse" >
+<!ENTITY event.alldayevent.accesskey                      "H">
+<!ENTITY event.from.label                                 "Start:" >
+<!ENTITY event.from.accesskey                             "S">
+<!ENTITY task.from.label                                  "Start:" >
+<!ENTITY task.from.accesskey                              "t">
+<!ENTITY event.to.label                                   "Slut:" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "Förfallodatum:" >
+<!ENTITY task.to.accesskey                                "m">
+<!ENTITY task.status.label                                "Status:" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "Upprepa:" >
+<!ENTITY event.repeat.accesskey                           "U">
+<!ENTITY event.until.label                                "Till och med:">
+<!ENTITY event.until.accesskey                            "o">
+<!ENTITY event.reminder.label                             "Påminnelse:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Beskrivning:" >
+<!ENTITY event.description.accesskey                      "s">
+<!ENTITY event.attachments.label                          "Bilagor:" >
+<!ENTITY event.attachments.accesskey                      "B" >
+<!ENTITY event.attachments.menubutton.label               "Bifoga">
+<!ENTITY event.attachments.menubutton.accesskey           "f">
+<!ENTITY event.attachments.url.label                      "Webbsida…">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "Radera" >
+<!ENTITY event.attachments.popup.remove.accesskey         "R" >
+<!ENTITY event.attachments.popup.open.label               "Öppna" >
+<!ENTITY event.attachments.popup.open.accesskey           "Ö" >
+<!ENTITY event.attachments.popup.removeAll.label          "Radera allt" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "l" >
+<!ENTITY event.attachments.popup.attachPage.label         "Bifoga webbsida…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "w" >
+<!ENTITY event.url.label                                  "Liknande länk:" >
+<!ENTITY event.priority2.label                            "Prioritet:">
+
+<!ENTITY event.reminder.none.label                        "Ingen påminnelse " >
+<!ENTITY event.reminder.0minutes.before.label             "0 minuter före" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minuter före" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minuter före" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minuter före" >
+<!ENTITY event.reminder.1hour.before.label                "1 timme före" >
+<!ENTITY event.reminder.2hours.before.label               "2 timme före" >
+<!ENTITY event.reminder.12hours.before.label              "12 timmar före" >
+<!ENTITY event.reminder.1day.before.label                 "1 dag före" >
+<!ENTITY event.reminder.2days.before.label                "2 dagar före" >
+<!ENTITY event.reminder.1week.before.label                "1 vecka före" >
+<!ENTITY event.reminder.custom.label                      "Anpassad…" >
+
+<!ENTITY event.reminder.multiple.label                    "Flera påminnelser…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Tid som:">
+<!ENTITY event.statusbarpanel.privacy.label               "Sekretess:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Redigera upprepning">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Återkommer inte">
+<!ENTITY event.repeat.daily.label                       "Daglig">
+<!ENTITY event.repeat.weekly.label                      "Veckovis">
+<!ENTITY event.repeat.every.weekday.label               "Varje dag">
+<!ENTITY event.repeat.bi.weekly.label                   "Varannan vecka">
+<!ENTITY event.repeat.monthly.label                     "Månadsvis">
+<!ENTITY event.repeat.yearly.label                      "Årlig">
+<!ENTITY event.repeat.custom.label                      "Anpassad…">
+
+<!ENTITY event.recurrence.pattern.label                 "Återkommande mönster">
+<!ENTITY event.recurrence.occurs.label                  "Upprepa" >
+<!ENTITY event.recurrence.day.label                     "daglig" >
+<!ENTITY event.recurrence.week.label                    "veckovis" >
+<!ENTITY event.recurrence.month.label                   "månadsvis" >
+<!ENTITY event.recurrence.year.label                    "årligen" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Varje" >
+<!ENTITY repeat.units.days.both                         "Dag(ar)" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Varje dag" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Varje" >
+<!ENTITY repeat.units.weeks.both                        "Vecka(or)" >
+<!ENTITY event.recurrence.on.label                      "På:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Varje" >
+<!ENTITY repeat.units.months.both                       "Månad(er)" >
+<!ENTITY event.recurrence.monthly.every.label           "Varje" >
+<!ENTITY event.recurrence.monthly.first.label           "Den första">
+<!ENTITY event.recurrence.monthly.second.label          "Den andra">
+<!ENTITY event.recurrence.monthly.third.label           "Den tredje">
+<!ENTITY event.recurrence.monthly.fourth.label          "Den fjärde">
+<!ENTITY event.recurrence.monthly.fifth.label           "Den femte">
+<!ENTITY event.recurrence.monthly.last.label            "Den sjätte">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Söndag" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Måndag" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Tisdag" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Onsdag" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Torsdag" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Fredag" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Lördag" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Dag i månad">
+<!ENTITY event.recurrence.repeat.recur.label            "Återkommer om dag(ar)">
+
+<!ENTITY event.recurrence.every.label                        "Varje:" >
+<!ENTITY repeat.units.years.both                             "År" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Varje" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Januari" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Februari" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Mars" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "April" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Maj" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Juni" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Juli" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Augusti" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "September" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Oktober" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "November" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "December" >
+<!ENTITY event.recurrence.yearly.every.label                 "Varje">
+<!ENTITY event.recurrence.yearly.first.label                 "Den första">
+<!ENTITY event.recurrence.yearly.second.label                "Den andra">
+<!ENTITY event.recurrence.yearly.third.label                 "Den tredje">
+<!ENTITY event.recurrence.yearly.fourth.label                "Den fjärde">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Den femte">
+<!ENTITY event.recurrence.yearly.last.label                  "Den sista">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Söndag" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Måndag" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Tisdag" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Onsdag" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Torsdag" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Fredag" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Lördag" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "dag" >
+<!ENTITY event.recurrence.of.label                           "på" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Januari" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Februari" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Mars" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "April" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Maj" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Juni" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Juli" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Augusti" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "September" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Oktober" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "November" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "December" >
+
+<!ENTITY event.recurrence.range.label                   "Intervall för återkommande">
+<!ENTITY event.recurrence.forever.label                 "Inget slutdatum" >
+<!ENTITY event.recurrence.repeat.for.label              "Skapa" >
+<!ENTITY event.recurrence.appointments.label            "Möte(en)" >
+<!ENTITY event.repeat.until.label                       "Upprepa tills" >
+<!ENTITY event.recurrence.preview.label                 "Förhandsgranska">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Bjud in deltagare">
+<!ENTITY event.organizer.label                  "Organisatör">
+<!ENTITY event.freebusy.suggest.slot            "Föreslå tidslucka:">
+<!ENTITY event.freebusy.button.next.slot        "Nästa lucka">
+<!ENTITY event.freebusy.button.previous.slot    "Föregående lucka">
+<!ENTITY event.freebusy.zoom                    "Zooma:">
+<!ENTITY event.freebusy.legend.free             "Ledig" >
+<!ENTITY event.freebusy.legend.busy             "Upptagen" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Preliminär" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Frånvarande" >
+<!ENTITY event.freebusy.legend.unknown          "Ingen information" >
+<!ENTITY event.attendee.role.required           "Obligatoriska deltagare">
+<!ENTITY event.attendee.role.optional           "Valfri deltagare">
+<!ENTITY event.attendee.role.chair              "Stol">
+<!ENTITY event.attendee.role.nonparticipant     "Icke-deltagare">
+<!ENTITY event.attendee.usertype.individual     "Enskild person">
+<!ENTITY event.attendee.usertype.group          "Grupp">
+<!ENTITY event.attendee.usertype.resource       "Resurs">
+<!ENTITY event.attendee.usertype.room           "Rum">
+<!ENTITY event.attendee.usertype.unknown        "Okänd">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Ange tidszon">
+<!ENTITY event.timezone.custom.label     "Fler tidszoner…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Allmänt">
+<!ENTITY read.only.title.label           "Titel:">
+<!ENTITY read.only.calendar.label        "Kalender:">
+<!ENTITY read.only.event.start.label     "Start datum:">
+<!ENTITY read.only.task.start.label      "Start datum:">
+<!ENTITY read.only.event.end.label       "Slut datum:">
+<!ENTITY read.only.task.due.label        "Förfallodatum:">
+<!ENTITY read.only.repeat.label          "Repetera:">
+<!ENTITY read.only.location.label        "Plats:">
+<!ENTITY read.only.category.label        "Kategori:">
+<!ENTITY read.only.organizer.label       "Organisatör:">
+<!ENTITY read.only.reminder.label        "Påminnelse:">
+<!ENTITY read.only.attachments.label     "Bilagor:">
+<!ENTITY read.only.attendees.label       "Deltagare">
+<!ENTITY read.only.description.label     "beskrivning">
+<!ENTITY read.only.link.label            "Liknande länk">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Spara och stäng">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Spara ändringar och stäng fönstret utan att ändra deltagandestatus och skicka ett svar">
+<!ENTITY summary.dialog.accept.label            "Acceptera">
+<!ENTITY summary.dialog.accept.tooltiptext      "Acceptera inbjudan">
+<!ENTITY summary.dialog.tentative.label         "Preliminär">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Acceptera inbjudan preliminärt">
+<!ENTITY summary.dialog.decline.label           "Avböj">
+<!ENTITY summary.dialog.decline.tooltiptext     "Avböj inbjudan">
+<!ENTITY summary.dialog.dontsend.label          "Skicka inte ett svar">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Ändra din deltagandestatus utan att skicka ett svar till arrangören och stäng fönstret">
+<!ENTITY summary.dialog.send.label              "Skicka ett svar nu">
+<!ENTITY summary.dialog.send.tooltiptext        "Skicka ut ett svar till arrangören   och stäng fönstret">

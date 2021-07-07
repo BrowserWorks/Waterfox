@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importo vediklis">
+
+<!ENTITY importFromWin.label            "Programos bei paskyrų nuostatų, adresų knygos, filtrų ir kitų duomenų importas iš:">
+<!ENTITY importFromNonWin.label         "Programos bei paskyrų nuostatų, adresų knygos, filtrų ir kitų duomenų importas iš:">
+<!ENTITY importSourceNotFound.label     "Nerasta programa iš kurios būtų galima importuoti duomenis.">
+
+<!ENTITY importFromNothing.label        "Neimportuoti">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 ar vėlesnė">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Nuostatų ir pašto aplankų importas">
+<!ENTITY importItems.title              "Importuotini elementai">
+<!ENTITY importItems.label              "Parinkite, kuriuos elementus importuoti:">
+
+<!ENTITY migrating.title                "Importuojama…">
+<!ENTITY migrating.label                "Importuojami šie elementai…">
+
+<!ENTITY selectProfile.title            "Profilio parinkimas">
+<!ENTITY selectProfile.label            "Galima importuoti iš šių profilių:">
+
+<!ENTITY done.title                     "Importas baigtas">
+<!ENTITY done.label                     "Sėkmingai importuoti:">

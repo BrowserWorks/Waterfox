@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Βιβλιοθήκη">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Οργάνωση">
+<!ENTITY organize.accesskey    "Ο">
+<!ENTITY organize.tooltip      "Οργάνωση των σελιδοδεικτών σας">
+
+<!ENTITY file.close.label               "Κλείσιμο">
+<!ENTITY file.close.accesskey           "Κ">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Προβολές">
+<!ENTITY views.accesskey                "β">
+<!ENTITY views.tooltip                  "Αλλαγή προβολής">
+<!ENTITY view.columns.label             "Εμφάνιση στηλών">
+<!ENTITY view.columns.accesskey         "φ">
+<!ENTITY view.sort.label                "Ταξινόμηση">
+<!ENTITY view.sort.accesskey            "ξ">
+<!ENTITY view.unsorted.label            "Χωρίς ταξινόμηση">
+<!ENTITY view.unsorted.accesskey        "Χ">
+<!ENTITY view.sortAscending.label       "Σειρά ταξινόμησης Α > Ω">
+<!ENTITY view.sortAscending.accesskey   "Α">
+<!ENTITY view.sortDescending.label      "Σειρά ταξινόμησης Ω > Α">
+<!ENTITY view.sortDescending.accesskey  "Ω">
+
+<!ENTITY importBookmarksFromHTML.label     "Εισαγωγή σελιδοδεικτών από HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "ι">
+<!ENTITY exportBookmarksToHTML.label       "Εξαγωγή σελιδοδεικτών σε HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "ξ">
+<!ENTITY importOtherBrowser.label          "Εισαγωγή δεδομένων από άλλο φυλλομετρητή…">
+<!ENTITY importOtherBrowser.accesskey      "λ">
+
+<!ENTITY cmd.backup.label               "Αντίγραφο ασφαλείας...">
+<!ENTITY cmd.backup.accesskey           "φ">
+<!ENTITY cmd.restore2.label             "Επαναφορά">
+<!ENTITY cmd.restore2.accesskey         "π">
+<!ENTITY cmd.restoreFromFile.label      "Επιλογή αρχείου...">
+<!ENTITY cmd.restoreFromFile.accesskey  "λ">
+
+<!ENTITY col.name.label          "Όνομα">
+<!ENTITY col.tags.label          "Ετικέτες">
+<!ENTITY col.url.label           "Διεύθυνση">
+<!ENTITY col.mostrecentvisit.label "Τελευταία επίσκεψη">
+<!ENTITY col.visitcount.label    "Αριθμός επισκέψεων">
+<!ENTITY col.dateadded.label     "Προσθήκη">
+<!ENTITY col.lastmodified.label  "Τελευταία τροποποίηση">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Εισαγωγή και αντίγραφο">
+<!ENTITY maintenance.accesskey  "ι">
+<!ENTITY maintenance.tooltip    "Εισαγωγή και αντίγραφα ασφαλείας σελιδοδεικτών">
+
+<!ENTITY backButton.tooltip  "Επιστροφή">
+
+<!ENTITY forwardButton.tooltip  "Μετάβαση μπροστά">
+
+<!ENTITY detailsPane.selectAnItemText.description "Επιλέξτε ένα στοιχείο για προβολή και επεξεργασία ιδιοτήτων">

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+<!ENTITY MsgSynchronize.label "메시지 받기 및 동기화">
+<!ENTITY MsgSelect.label "오프라인 사용을 위한 항목">
+<!ENTITY MsgSyncDesc.label "선택한 메일함과 뉴스 그룹을 오프라인으로 사용하려면 받기와 동기화 해야 합니다.">
+<!ENTITY MsgSyncDirections.label "다음을 받는 중:">
+<!ENTITY syncTypeMail.label "메일 메시지">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "뉴스 그룹 메시지">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "보낼 메시지 보내기">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "받은 후 오프라인 작업">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "선택…">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "오프라인 상태에서 사용할 메일함과 뉴스 그룹">
+<!ENTITY MsgSelectInd.label "받기">
+<!ENTITY MsgSelectItems.label "폴더와 뉴스 그룹">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "Часы">
+<!ENTITY time.minute.label "Минуты">
+<!ENTITY time.second.label "Секунды">
+<!ENTITY time.millisecond.label "Миллисекунды">
+<!ENTITY time.dayperiod.label "AM/PM">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "гггг">
+<!ENTITY date.month.placeholder "мм">
+<!ENTITY date.day.placeholder "дд">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "Год">
+<!ENTITY date.month.label "Месяц">
+<!ENTITY date.day.label "День">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "Очистить">

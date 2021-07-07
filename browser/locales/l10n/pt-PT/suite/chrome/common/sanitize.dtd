@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title             "Limpar dados privados">
+
+<!-- LOCALIZATION NOTE (sanitizeDialog.width): width of the Clear Recent
+     History dialog -->
+<!ENTITY sanitizeDialog.width             "34em">
+
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear"
+     dropdown. -->
+<!ENTITY clearTimeDuration.label          "Intervalo de tempo a limpar:">
+<!ENTITY clearTimeDuration.accesskey      "t">
+<!ENTITY clearTimeDuration.lastHour       "Última hora">
+<!ENTITY clearTimeDuration.last2Hours     "Últimas duas horas">
+<!ENTITY clearTimeDuration.last4Hours     "Últimas quatro horas">
+<!ENTITY clearTimeDuration.today          "Hoje">
+<!ENTITY clearTimeDuration.everything     "Tudo">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for
+     languages that require it. -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!--  LOCALIZATION NOTE (sanitizeSelectedWarning): Warning that appears
+      when not all items are selected in the in Clear Private data dialog. -->
+<!ENTITY sanitizeSelectedWarning          "Todos os itens selecionados serão limpos.">
+
+<!-- LOCALIZATION NOTE (sanitizeUndoWarning): Second warning
+     paragraph that always appears. -->
+<!ENTITY sanitizeUndoWarning              "Esta ação não pode ser revertida.">
+
+<!ENTITY sanitizeItems.label              "Limpar os seguintes itens agora:">
+
+<!-- LOCALIZATION NOTE : Try to make sure to not have overlapped  accesskeys
+     with pref-privatedata.dtd. These entities are also used in the private
+     data preferences dialog. -->
+<!ENTITY itemHistory.label                "Histórico de navegação">
+<!ENTITY itemHistory.accesskey            "H">
+<!ENTITY itemHistoryS.accesskey           "r">
+<!ENTITY itemUrlBar.label                 "Histórico da barra de localização">
+<!ENTITY itemUrlBar.accesskey             "l">
+<!ENTITY itemUrlBarS.accesskey            "t">
+<!ENTITY itemDownloads.label              "Histórico de transferências">
+<!ENTITY itemDownloads.accesskey          "t">
+<!ENTITY itemDownloadsS.accesskey         "y">
+<!ENTITY itemFormSearchHistory.label      "Formulários guardados e histórico de pesquisas">
+<!ENTITY itemFormSearchHistory.accesskey  "F">
+<!ENTITY itemFormSearchHistoryS.accesskey "m">
+<!ENTITY itemCache.label                  "Cache">
+<!ENTITY itemCache.accesskey              "a">
+<!ENTITY itemCacheS.accesskey             "e">
+<!ENTITY itemCookies.label                "Cookies">
+<!ENTITY itemCookies.accesskey            "C">
+<!ENTITY itemCookiesS.accesskey           "k">
+<!ENTITY itemOfflineApps.label            "Dados offline do website">
+<!ENTITY itemOfflineApps.accesskey        "o">
+<!ENTITY itemOfflineAppsS.accesskey       "i">
+<!ENTITY itemPasswords.label              "Palavras-passe guardadas">
+<!ENTITY itemPasswords.accesskey          "P">
+<!ENTITY itemPasswordsS.accesskey         "">
+<!ENTITY itemSessions.label               "Sessões autenticadas">
+<!ENTITY itemSessions.accesskey           "S">
+
+<!ENTITY itemSessionsS.accesskey          "">
+
+<!ENTITY sanitizeButton.label            "Limpar agora dados privados">
+<!ENTITY itemSitePreferences.label        "Preferências do site">
+<!ENTITY itemSitePreferences.accesskey    "P">
+<!ENTITY itemSitePreferencesS.accesskey   "t">

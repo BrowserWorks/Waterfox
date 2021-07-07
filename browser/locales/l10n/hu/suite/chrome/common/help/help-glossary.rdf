@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:nc="http://home.netscape.com/NC-rdf#">
+
+<!--  HELP Glossary SECTION -->
+  <rdf:Description about="urn:root" nc:base="chrome://help/locale/glossary.xhtml">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li> <rdf:Description nc:name="adatvédelmi eszköz" nc:link="glossary.xhtml#security_device"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="adatvédelmi token" nc:link="glossary.xhtml#security_token"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="aláíró kulcs" nc:link="glossary.xhtml#signing_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="aláíró tanúsítvány" nc:link="glossary.xhtml#signing_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="állapotsor" nc:link="glossary.xhtml#status_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="alsóbb szintű hitelesítésszolgáltató" nc:link="glossary.xhtml#subordinate_ca"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="bizalom" nc:link="glossary.xhtml#trust"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="biztonsági modul" nc:link="glossary.xhtml#security_module"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="biztonsági tanúsítvány" nc:link="glossary.xhtml#security_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Böngésző eszköztár" nc:link="glossary.xhtml#navigation_toolbar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="bővítmény" nc:link="glossary.xhtml#plug-in"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="címhamisítás" nc:link="glossary.xhtml#spoofing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="címmező" nc:link="glossary.xhtml#location_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="CRL" nc:link="glossary.xhtml#crl"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="csatoló" nc:link="glossary.xhtml#slot"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="digitális aláírás" nc:link="glossary.xhtml#digital_signature"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="digitális azonosító" nc:link="glossary.xhtml#digital_id"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="FIPS PUBS 140-1" nc:link="glossary.xhtml#fips_pubs_140-1"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="főkulcs" nc:link="glossary.xhtml#master_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="FTP" nc:link="glossary.xhtml#ftp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Gopher" nc:link="glossary.xhtml#gopher"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="gyorsítótár" nc:link="glossary.xhtml#cache"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="hallgatólagos beleegyezés" nc:link="glossary.xhtml#implicit_consent"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="hamisítás észlelése" nc:link="glossary.xhtml#tamper_detection"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="harmadik fél sütije" nc:link="glossary.xhtml#third-party_cookie"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="hitelesítés" nc:link="glossary.xhtml#authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="hitelesítésszolgáltató (CA)" nc:link="glossary.xhtml#certificate_authority"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="hitelesítésszolgáltató tanúsítványa" nc:link="glossary.xhtml#ca_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="hitelesítésszolgáltató" nc:link="glossary.xhtml#ca"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="HTML" nc:link="glossary.xhtml#html"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="HTTP" nc:link="glossary.xhtml#http"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="HTTPS" nc:link="glossary.xhtml#https"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="idegen süti" nc:link="glossary.xhtml#foreign_cookie"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="IMAP" nc:link="glossary.xhtml#imap"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="intelligens kártya" nc:link="glossary.xhtml#smart_card"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="internet" nc:link="glossary.xhtml#internet"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="IP-címek" nc:link="glossary.xhtml#ip_address"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="IRC" nc:link="glossary.xhtml#irc"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ISP" nc:link="glossary.xhtml#isp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Java" nc:link="glossary.xhtml#java"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="JavaScript" nc:link="glossary.xhtml#javascript"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="jelszó alapú hitelesítés" nc:link="glossary.xhtml#password-based_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Jelszókezelő" nc:link="glossary.xhtml#password_manager"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="keresőszolgáltatás" nc:link="glossary.xhtml#search_engine"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="keret" nc:link="glossary.xhtml#frame"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kezdőlap" nc:link="glossary.xhtml#home_page"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kiszolgáló hitelesítése" nc:link="glossary.xhtml#server_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kiszolgáló" nc:link="glossary.xhtml#server"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kiszolgálóoldali SSL-tanúsítvány" nc:link="glossary.xhtml#server_ssl_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kódoló" nc:link="glossary.xhtml#cipher"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="könyvjelző" nc:link="glossary.xhtml#bookmark"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kriptográfia" nc:link="glossary.xhtml#cryptography"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="kulcs" nc:link="glossary.xhtml#key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="LDAP" nc:link="glossary.xhtml#ldap"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="legfelső szintű hitelesítésszolgáltató" nc:link="glossary.xhtml#root_ca"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="lehallgatás" nc:link="glossary.xhtml#eavesdropping"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="letagadhatatlanság" nc:link="glossary.xhtml#nonrepudiation"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="megkülönböztető név (DN)" nc:link="glossary.xhtml#distinguished_name"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="megtévesztés" nc:link="glossary.xhtml#misrepresentation"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="mesterjelszó" nc:link="glossary.xhtml#master_password"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Mozilla-komponensek" nc:link="glossary.xhtml#component_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="nyilvános kulcs" nc:link="glossary.xhtml#public_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="nyilvános kulcsú titkosítás" nc:link="glossary.xhtml#public-key_cryptography"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="objektumaláírás" nc:link="glossary.xhtml#object_signing"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="objektumaláíró tanúsítvány" nc:link="glossary.xhtml#object-signing_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="OCSP" nc:link="glossary.xhtml#ocsp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="P3P" nc:link="glossary.xhtml#p3p"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="PKCS #11 modul" nc:link="glossary.xhtml#pkcs_11_module"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="PKCS #11" nc:link="glossary.xhtml#pkcs_11"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="PKI" nc:link="glossary.xhtml#pki"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="POP" nc:link="glossary.xhtml#pop"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="proxy" nc:link="glossary.xhtml#proxy"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="segédalkalmazás" nc:link="glossary.xhtml#helper_application"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="SMTP" nc:link="glossary.xhtml#smtp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="SOCKS" nc:link="glossary.xhtml#socks"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="SSL" nc:link="glossary.xhtml#ssl"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="süti" nc:link="glossary.xhtml#cookie"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Sütikezelő" nc:link="glossary.xhtml#cookie_manager"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Személyes eszköztár" nc:link="glossary.xhtml#personal_toolbar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="személyes kulcs" nc:link="glossary.xhtml#private_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="aszimmetrikus kulcspárok" nc:link="glossary.xhtml#dual_key_pairs"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="szimmetrikus titkosítás" nc:link="glossary.xhtml#symmetric_encryption"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="szoftveres adatvédelmi eszköz" nc:link="glossary.xhtml#software_security_device"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tanúsítvány alapú hitelesítés" nc:link="glossary.xhtml#certificate-based_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tanúsítvány biztonsági másolatának jelszava" nc:link="glossary.xhtml#certificate_backup_password"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tanúsítvány ellenőrzése" nc:link="glossary.xhtml#certificate_verification"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tanúsítvány megújítása" nc:link="glossary.xhtml#certificate_renewal"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tanúsítvány ujjlenyomata" nc:link="glossary.xhtml#certificate_fingerprint"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tanúsítvány" nc:link="glossary.xhtml#certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Tanúsítványkezelő" nc:link="glossary.xhtml#certificate_manager"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tanúsítványlánc" nc:link="glossary.xhtml#certificate_chain"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tárgy" nc:link="glossary.xhtml#subject"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="TCP" nc:link="glossary.xhtml#tcp"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="TCP/IP" nc:link="glossary.xhtml#tcp_ip"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="titkosítás" nc:link="glossary.xhtml#encryption"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="titkosító algoritmus" nc:link="glossary.xhtml#cryptographic_algorithm"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="titkosító kulcs" nc:link="glossary.xhtml#encryption_key"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="titkosító tanúsítvány" nc:link="glossary.xhtml#encryption_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="TLS" nc:link="glossary.xhtml#tls"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="token" nc:link="glossary.xhtml#token"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="tulajdonos neve" nc:link="glossary.xhtml#subject_name"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ujjlenyomat" nc:link="glossary.xhtml#fingerprint"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="URL" nc:link="glossary.xhtml#url"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ügyfél hitelesítése" nc:link="glossary.xhtml#client_authentication"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ügyfél" nc:link="glossary.xhtml#client"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="ügyféloldali SSL-tanúsítvány" nc:link="glossary.xhtml#client_ssl_certificate"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Űrlapkezelő" nc:link="glossary.xhtml#form_manager"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="vándorló profil" nc:link="glossary.xhtml#roaming_profile"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="világháló" nc:link="glossary.xhtml#world_wide_web"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="visszafejtés" nc:link="glossary.xhtml#decryption"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="webhely" nc:link="glossary.xhtml#web_site"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="weboldal" nc:link="glossary.xhtml#web_page"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="WPAD" nc:link="glossary.xhtml#wpad"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="XML" nc:link="glossary.xhtml#xml"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="XSLT" nc:link="glossary.xhtml#xslt"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="XUL" nc:link="glossary.xhtml#xul"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+
+</rdf:RDF>

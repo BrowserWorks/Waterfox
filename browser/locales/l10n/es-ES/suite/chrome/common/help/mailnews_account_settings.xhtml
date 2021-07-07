@@ -1,0 +1,1311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+    <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Configuración de cuentas de correo y noticias</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+        type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="mail_and_newsgroups_account_settings">Configuración de cuentas
+de correo y noticias</h1>
+
+<p>Esta sección describe el cuadro de diálogo de
+configuración de cuentas de correo y noticias. Al contrario que el
+cuadro de diálogo de Preferencias, que aplica la configuración
+a todas las cuentas, este cuadro de diálogo permite especificar
+opciones individualmente para cada cuenta.</p>
+
+<p>Si no está viendo el cuadro de diálogo para configurar las
+cuentas, siga estos pasos:</p>
+
+<ol>
+  <li>Vaya primero a la ventana de Correo y noticias.</li>
+  <li>Abra el menú Editar y elija Configuración de cuentas de
+  correo y noticias.</li>
+  <li>Seleccione el nombre de la cuenta cuya configuración quiera ver
+  o cambiar.</li>
+</ol>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#account_settings">Configuración de la cuenta</a></li>
+    <li><a href="#server_settings">Configuración del servidor</a></li>
+    <li><a href="#copies_and_folders">Copias y carpetas</a></li>
+    <li><a href="#addressing">Redacción y direccionamiento</a></li>
+    <li><a href="#synchronization_and_storage">Sincronización y
+      almacenamiento</a></li>
+    <li><a href="#junk_settings">Configuración de correo basura</a></li>
+    <li><a href="#return_receipts">Acuses de recibo</a></li>
+    <li><a href="#security">Seguridad</a></li>
+    <li><a href="#local_folders">Carpetas locales</a></li>
+    <li><a href="#outgoing_server">Servidor de salida (SMTP)</a></li>
+  </ul>
+</div>
+
+<h2 id="account_settings">Configuración de la cuenta - (cuentas de correo y
+  noticias)</h2>
+
+<p>Esta sección describe cómo ver o cambiar la configuración de la cuenta, como
+  el nombre de usuario, dirección de respuesta y firma. Si todavía no tiene
+  delante la configuración de las cuentas, vaya a la ventana de Correo y
+  noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de las cuentas de correo y
+    noticias. Verá un cuadro de diálogo.</li>
+  <li>Seleccione el nombre de la cuenta de la que quiera para ver el panel
+    de configuración.</li>
+</ol>
+
+<ul>
+  <li><strong>Nombre de cuenta</strong>: el nombre de la cuenta.</li>
+  <li>Para cualquier tipo de cuenta excepto canales de blogs y noticias:
+    <ul>
+      <li><strong>Identidad</strong>: aquí se guarda el nombre, la dirección de
+        correo electrónico, la dirección de respuesta (sólo si es diferente de
+        la de correo) y la organización (opcional).</li>
+      <li><strong>Texto de la firma</strong>: si quiere adjuntar una firma a
+        todos los mensajes enviados, escriba su texto en este cuadro. Marque
+        <strong>Usar HTML</strong> para activar el código HTML, p.e.
+        &lt;b&gt;negrita&lt;/b&gt; (opcional).</li>
+      <li><strong>Adjuntar la firma desde un archivo</strong>: le permite elegir
+        adjuntar la firma desde un archivo (en formato texto, HTML o imagen) en
+        lugar de escribir el texto. Marcar esta opción prevalece sobre cualquier
+        texto introducido en el cuadro de la firma. Pulse Elegir para localizar
+        el archivo de firma (opcional).
+    
+        <p>Hay más opciones de firmas en <a href="#addressing">Redacción y
+          direcciones</a>.</p>
+      </li>
+      <li><strong>Adjuntar mi vCard a los mensajes</strong>: le permite elegir
+        si su vCard debe adjuntarse a sus mensajes salientes. Pulse Editar
+        tarjeta para editar la información de la tarjeta (opcional).</li>
+    </ul>
+  </li>
+  <li>Para cuentas de canales de blogs y noticias:
+    <ul>
+      <li><strong>Comprobar si hay mensajes nuevos al iniciar</strong>:
+        seleccione esta casilla si quiere comprobar esta cuenta automáticamente
+        en busca de nuevos mensajes de blogs y noticias siempre que inicie
+        Correo y noticias.</li>
+      <li><strong>Buscar mensajes nuevos cada [__] minutos</strong>: seleccione
+        esta casilla si quiere especificar el número de minutos entre dos
+        comprobaciones de canales. También puede comprobar si hay nuevos
+        mensajes de blogs y noticias en cualquier momento pulsando Recibir
+        mensajes en la ventana de Correo.</li>
+      <li><strong>Mostrar de forma predeterminada el resumen de artículos en
+        vez de cargar la página web</strong>: seleccione esta casilla si quiere
+        que &brandShortName; muestre un breve resumen del artículo (incluido
+        dentro del canal) en lugar de cargar la página web completa. Mostrar el
+        resumen del artículo es ligeramente más rápido que la página web
+        completa, pero puede perder parte del contenido del artículo.</li>
+      <li><strong>Vaciar papelera al salir</strong>: vacía la carpeta Papelera
+        siempre que cierra Correo y noticias.</li>
+      <li><strong>Administrar suscripciones...</strong>: muestra el diálogo de
+        suscripción de canales, que le permite añadir, editar y eliminar
+        canales en esta cuenta de blogs y noticias.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="server_settings">Configuración del servidor -
+(cuentas de correo y noticias)</h2>
+
+<p>&brandShortName; puede trabajar con dos tipos de servidores de correo: IMAP
+  y POP. Si no está seguro del tipo de servidor de su proveedor de Internet,
+  pregúntele. Si admite ambos tipos, lo que viene a continuación puede ayudarle
+  a elegir qué tipo usar.</p>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#about_internet_message_access_protocol">Sobre el Internet
+      Message Access Protocol (IMAP)</a></li>
+    <li><a href="#about_post_office_protocol">Sobre el Post Office Protocol
+      (POP)</a></li>
+    <li><a href="#imap_server_settings">Configuración del servidor
+      IMAP</a></li>
+    <li><a href="#advanced_imap_server_settings">Configuración avanzada
+      de un servidor IMAP</a></li>
+    <li><a href="#pop_server_settings">Configuración de un servidor
+      POP</a></li>
+    <li><a href="#news_server_settings">Configuración de servidores de
+      noticias</a></li>
+  </ul>
+</div>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="about_internet_message_access_protocol">Sobre el Internet Message
+Access Protocol (IMAP)</h3>
+
+<p><strong>Ventajas</strong>: los mensajes así como los cambios
+realizados permanecen en el servidor, ahorrando espacio en el disco duro
+local. También, el acceso siempre está actualizado, y se pueden
+leer los mensajes desde varias ubicaciones distintas. El rendimiento en una
+conexión con modem es más rápido, ya que inicialmente
+sólo se descargan las cabeceras de los mensajes.</p>
+
+<p><strong>Desventajas</strong>: No todos los ISP soportan IMAP.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="about_post_office_protocol">Sobre Post Office Protocol
+(POP)</h3>
+
+<p><strong>Ventajas</strong>: los mensajes se descargan en el disco duro local
+al iniciar la sesión de una sola vez, pero también puede indicar
+si dejar una copia de los mensajes en el servidor y eliminarlas de éste
+cuando se borran localmente. La mayoría de los ISPs actualmente
+soportan POP.</p>
+
+<p><strong>Desventajas</strong>: Si usa más de un ordenador, los
+mensajes pueden residir en uno o en otro ordenador, pero no en ambos. POP no
+funciona tan bien como IMAP en conexiones lentas. Además, no se puede
+acceder a todas las carpetas desde varias ubicaciones.</p>
+
+<p>Observe que los servidores POP más modernos tienen
+características que permiten recibir sólo las cabeceras en lugar
+del mensaje completo, tal y como hace IMAP. Usar estas características
+permite que el rendimiento con POP sea casi tan rápido como con
+IMAP.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="imap_server_settings">Configuración del servidor IMAP</h3>
+
+<p>Si no tiene delante la configuración del servidor IMAP, vaya a
+la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de las
+  cuentas de correo y noticias. Verá un cuadro de diálogo.</li>
+  <li>Seleccione el nombre de la cuenta y elija la categoría
+  Configuración del servidor (si eligió un servidor IMAP cuando
+  configuró la cuenta, verá la configuración del servidor
+  IMAP).</li>
+</ol>
+
+<ul>
+  <li><strong>Tipo de servidor</strong>: el tipo de servidor (Servidor de
+    correo IMAP) que especificó al crear esta cuenta. Para cambiar el tipo de
+    servidor asociado con esta cuenta, debe borrarla y volver a crearla.</li>
+  <li><strong>Nombre del servidor</strong>: el nombre del servidor que
+    especificó al crear esta cuenta. Si tiene problemas al obtener el correo de
+    esta cuenta, compruebe con el proveedor o el administrador del sistema que
+    el nombre del servidor introducido es correcto.</li>
+  <li><strong>Nombre de usuario</strong>: el nombre de usuario que especificó
+    al crear esta cuenta.</li>
+  <li><strong>Puerto</strong>: a menos que su proveedor o administrador del
+    sistema le indique lo contrario, deje esta opción como está.</li>
+  <li><strong>Seguridad de la conexión</strong>: elija una de las opciones
+    disponibles para establecer una <a
+    href="glossary.xhtml#secure_connection">conexión segura</a> a su servidor
+    IMAP de entrada. Puede elegir una de las siguientes:
+    <ul>
+      <li><strong>Ninguna</strong>: &brandShortName; usará una conexión simple,
+        sin ningún tipo de cifrado. Debería escoger esta opción
+        <em>sólo</em> si su servidor de entrada permite el cifrado de la
+        contraseña o no admite ningún tipo de seguridad.</li>
+      <li><strong>STARTTLS</strong>: requiere una conexión cifrada, usa el
+        método <a href="glossary.xhtml#starttls">STARTTLS</a>. Este mecanismo
+        usará normlamente el puerto IMAP estándar 143.</li>
+      <li><strong>SSL/TLS</strong>: requiere una conexión cifrada, usa el
+        método IMAP-sobre-SSL. El puerto predeterminado para éste es 993.</li>
+    </ul>
+  </li>
+  <li><strong>Método de identificación</strong>: elija una de las opciones
+    disponibles para usar <a href="glossary.xhtml#secure_authentication">identificación
+    segura</a> con su servidor IMAP de entrada. Puede elegir una de las siguientes:
+    <ul>
+      <li><strong>Contraseña normal</strong>: &brandShortName; le enviará su
+        contraseña como texto en claro, sin ningún tipo de cifrado. Esta opción es
+        segura cuando se usa SSL/TLS o STARTTLS.</li>
+      <li><strong>Contraseña, transmitida de forma insegura</strong>: igual que
+        <q>contraseña normal</q> pero sólo está disponible cuando se selecciona
+        <q>Ninguna</q> como seguridad de la conexión y en consecuencia no es
+        segura. <em>No</em> elija esta opción a menos que su servidor de entrada
+        no admita ningún tipo de seguridad en absoluto.</li>
+      <li><strong>Contraseña cifrada</strong>: requiere el cifrado de las
+        credenciales del usuario como permita el servidor, como por ejemplo
+        <a href="glossary.xhtml#cram_md5">CRAM-MD5</a>. Esta opción es segura
+        para su uso incluso si la configuración de la seguridad de la conexión
+        es <q>Ninguna</q>, pero de esta forma sólo se asegurará la contraseña,
+        no ningún contenido.</li>
+      <li><strong>Kerberos / GSSAPI</strong>: elija esta opción si su equipo
+        está configurado para identificación segura usando
+        <a href="glossary.xhtml#kerberos">Kerberos</a>. Puede que necesite
+        obtener un tique Kerberos usando un programa separado, o puede que le
+        sea asignado al iniciar sesión en su equipo.</li>
+      <li><strong>NTLM</strong>: elija esta opción si su equipo está configurado
+        para identificación segura usando un <a href="glossary.xhtml#ntlm">NT
+        LAN Manager</a>. En general, Kerberos es preferible a NTLM ya que
+        proporciona un nivel más alto de seguridad.</li>
+      <li><strong>Certificado TLS</strong>: elija esta opción para usar
+        <a href="glossary.xhtml#certificate-based_authentication">identificación
+        basada en certificado</a> en una conexión con SSL/TLS o STARTTLS activados,
+        sin necesidad de proporcionad una contraseña para identificación.</li>
+    </ul>
+    Si no está seguro de qué opciones permite su servidor, contacte con su
+    proveedor de servicios o administrador del sistema.
+  </li>
+  <li><strong>Comprobar si hay mensajes nuevo al iniciar</strong>: elija esta
+    opción si quiere que &brandShortName; compruebe automáticamente si hay
+    mensajes nuevos para esta cuenta al iniciar el correo y noticias de
+    &brandShortName;.</li>
+  <li><strong>Comprobar si hay mensajes nuevos cada [__] minutos</strong>:
+    elija esta opción para comprobar automáticamente si hay mensajes nuevos, y
+    luego cada cuántos minutos realizar la comprobación. Si no selecciona esta
+    opción, puede comprobar si hay mensajes nuevos en cualquier momento
+    pulsando el botón Obtener mensajes en la ventana de Correo y noticias.</li>
+  <li><strong>Permitir notificaciones inmediatas del servidor cuando lleguen
+    nuevos mensajes</strong>: elija esta opción si el servidor es compatible
+    con la capacidad <q>IDLE</q> de IMAP para que notifique inmediatamente
+    a &brandShortName; cuando lleguen mensajes nuevos. Esta opción no tiene
+    ningún efecto en los servidores que no implementan esta capacidad. Puede
+    usarse junto con, o en lugar de, cualquiera de las otras opciones para
+    comprobar si hay correo nuevo.</li>    
+  <li id="when_i_delete_a_message"><strong>Cuando borre un mensaje</strong>:
+    elija qué debe hacer &brandShortName; cuando borre un mensaje. <q>Moverlo a
+    esta carpeta</q>, donde puede elegir la carpeta concreta a usar, es lo
+    recomendado a menos que se le indique lo contrario por parte de su
+    proveedor o administrador del sistema. Los mensajes marcados para borrar
+    se eliminan sólo cuando se compactan las carpetas.</li>
+  <li><strong>Limpiar la bandeja de entrada al salir</strong>: elimina los
+    mensajes marcados para borrar de la bandeja de entrada cuando sale del
+    correo de &brandShortName;. Elija esta opción si eligió marcar los mensajes
+    para su borrado posterior.</li>
+  <li><strong>Vaciar la papelera al salir</strong>: vacía la papelera al salir
+    del correo de &brandShortName;.</li>
+  <li><strong>Avanzadas</strong>: le permite escoger un servidor de salida
+    (SMTP) distinto para los mensajes salientes de esta cuenta. También puede
+    llegar a la <a href="#advanced_imap_server_settings">configuración avanzada
+    del servidor IMAP</a> a través de este botón.</li>
+  <li><strong>Directorio local</strong>: el directorio en el disco duro donde
+    se almacena el correo para esta cuenta.</li>
+</ul>
+
+<h3 id="advanced_imap_server_settings">Configuración avanzada de un
+servidor IMAP</h3>
+
+<p>En la mayoría de los casos, la configuracion avanzada de un servidor
+IMAP se suministra automáticamente por el servidor. Si no está
+seguro sobre la configuración para este cuadro de diálogo,
+consulte con su proveedor o con el administrador del sistema.</p>
+
+<p>Si no está viendo todavía la configuración avanzada
+del servidor IMAP, vaya a la ventana de Correo y noticias.</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias. Verá aparecer el cuadro de diálogo.</li>
+  <li>Seleccione el nombre de la cuenta y elija la categoría de Configuración
+    del servidor.</li>
+  <li>Si el tipo de servidor es IMAP, pulse el botón Avanzadas para acceder
+    a opciones adicionales IMAP, como:
+    <ul>
+      <li>la ruta del directorio del servidor IMAP</li>
+      <li>mostrar sólo <q>carpetas suscritas</q></li>
+      <li>capacidad de subcarpetas</li>
+      <li>el número máximo de conexiones simultáneas que se mantienen abiertas
+        con el servidor en esta cuenta</li>
+      <li>cualquier espacio de nombres personal y público (carpeta compartida)
+        para este directorio</li>
+    </ul>
+  </li>
+</ol>
+
+<p>Para más información, vea
+  <a href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Añadir
+  y eliminar directorios LDAP</a>.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="pop_server_settings">Configuración del servidor POP</h3>
+
+<p>Si no tiene delante la configuración del servidor POP, vaya a la ventana de
+  Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias. Verá aparecer un cuadro de diálogo.</li>
+  <li>Seleccione el nombre de la cuenta y elija la categoría Configuración del
+    servidor (si eligió un servidor POP cuando configuró esta cuenta, verá la
+    configuración del servidor POP).</li>
+</ol>
+
+<ul>
+  <li><strong>Tipo de servidor</strong>: el tipo de servidor (Servidor de
+    correo POP) que especificó cuando creó esta cuenta. Para cambiar el tipo de
+    servidor asociado con esta cuenta, debe borrar la cuenta y volver a
+    crearla.</li>
+  <li><strong>Nombre del servidor</strong>: el nombre del servidor que
+    especificó al crear esta cuenta. Si tiene problemas al obtener el correo de
+    esta cuenta, compruebe con el proveedor o el administrador del sistema que
+    el nombre del servidor introducido es correcto.</li>
+  <li><strong>Nombre de usuario</strong>: el nombre de usuario que especificó
+    al crear esta cuenta.</li>
+  <li><strong>Puerto</strong>: a menos que su proveedor o administrador del
+    sistema le indique lo contrario, deje esta opción como está.</li>
+  <li><strong>Seguridad de la conexión</strong>: elija una de las opciones
+    disponibles para establecer una <a
+    href="glossary.xhtml#secure_connection">conexión segura</a> a su servidor
+    POP de entrada. Puede elegir una de las siguientes:
+    <ul>
+      <li><strong>Ninguna</strong>: &brandShortName; usará una conexión simple,
+        sin ningún tipo de cifrado. Debería escoger esta opción <em>sólo</em>
+        si su servidor de entrada permite el cifrado de contraseñas o no
+        admite ningún tipo de seguridad.</li>
+      <li><strong>STARTTLS</strong>: requiere una conexión cifrada, usa el
+        método <a href="glossary.xhtml#starttls">STARTTLS</a>. Este mecanismo
+        usará normlamente el puerto POP estándar 110.</li>
+      <li><strong>SSL/TLS</strong>: requiere una conexión cifrada, usa el
+        método POP-sobre-SSL. El puerto predeterminado para éste es 995.</li>
+    </ul>
+  </li>
+  <li><strong>Método de identificación</strong>: elija una de las opciones
+    disponibles para usar <a href="glossary.xhtml#secure_authentication">identificación
+    segura</a> con su servidor POP de entrada. Puede elegir una de las siguientes:
+    <ul>
+      <li><strong>Contraseña normal</strong>: &brandShortName; le enviará su
+        contraseña como texto en claro, sin ningún tipo de cifrado. Esta opción es
+        segura cuando se usa SSL/TLS o STARTTLS.</li>
+      <li><strong>Contraseña, transmitida de forma insegura</strong>: igual que
+        <q>contraseña normal</q> pero sólo está disponible cuando se selecciona
+        <q>Ninguna</q> como seguridad de la conexión y en consecuencia no es
+        segura. <em>No</em> elija esta opción a menos que su servidor de entrada
+        no admita ningún tipo de seguridad en absoluto.</li>
+      <li><strong>Contraseña cifrada</strong>: requiere el cifrado de las
+        credenciales del usuario como permita el servidor, como por ejemplo
+        <a href="glossary.xhtml#cram_md5">CRAM-MD5</a>. Esta opción es segura
+        para su uso incluso si la configuración de la seguridad de la conexión
+        es <q>Ninguna</q>, pero de esta forma sólo se asegurará la contraseña,
+        no ningún contenido.</li>
+      <li><strong>Kerberos / GSSAPI</strong>: elija esta opción si su equipo
+        está configurado para identificación segura usando
+        <a href="glossary.xhtml#kerberos">Kerberos</a>. Puede que necesite
+        obtener un tique Kerberos usando un programa separado, o puede que le
+        sea asignado al iniciar sesión en su equipo.</li>
+      <li><strong>NTLM</strong>: elija esta opción si su equipo está configurado
+        para identificación segura usando un <a href="glossary.xhtml#ntlm">NT
+        LAN Manager</a>. En general, Kerberos es preferible a NTLM ya que
+        proporciona un nivel más alto de seguridad.</li>
+      <li><strong>Certificado TLS</strong>: elija esta opción para usar
+        <a href="glossary.xhtml#certificate-based_authentication">identificación
+        basada en certificado</a> en una conexión con SSL/TLS o STARTTLS activados,
+        sin necesidad de proporcionad una contraseña para identificación.</li>
+    </ul>
+    Si no está seguro de qué opciones permite su servidor, contacte con su
+    proveedor de servicios o administrador del sistema.
+  </li>
+  <li><strong>Comprobar si hay mensajes nuevos al iniciar</strong>: elija esta
+    opción si quiere que &brandShortName; compruebe automáticamente si hay
+    mensajes nuevos para esta cuenta al iniciar el correo y noticias de
+    &brandShortName;. En las cuentas POP, &brandShortName; no descarga los
+    mensajes nuevos hasta que se pulsa en Obtener mensajes en la barra de
+    herramientas de Correo y noticias.</li>
+  <li><strong>Comprobar si hay mensajes nuevos cada [__] minutos</strong>:
+    elija esta opción para comprobar automáticamente si hay mensajes nuevos, y
+    luego cada cuántos minutos realizar la comprobación. Si no selecciona esta
+    opción, puede comprobar si hay mensajes nuevos en cualquier momento
+    pulsando el botón Obtener mensajes en la ventana de Correo y noticias.</li>
+  <li><strong>Descargar los mensajes nuevos automáticamente</strong>:
+    elija esta opción si quiere que &brandShortName; recupere los mensajes
+    nuevos cada vez que comprueba el servidor.</li>
+  <li><strong>Descargar sólo las cabeceras</strong>: elija esta opción si
+    quiere descargar únicamente las cabeceras en lugar de los mensajes
+    completos cuando descargue correo nuevo. Esta opción requiere que su
+    servidor POP reconozca el comando <q>TOP</q>. Los servidores más modernos
+    lo admiten, pero si no está seguro sobre su servidor, contacte con su
+    proveedor de servicio o administrador de sistema.</li>
+  <li><strong>Dejar mensajes en el servidor</strong>: elija esta opción para
+    dejar una copia de los mensajes en el servidor de correo, además de la que
+    se descarga en el ordenador.
+    <ul>
+      <li><strong>Hasta [__] días</strong>: escoja esta opción para eliminar
+        los mensajes del servidor automáticamente cuando haya transcurrido el
+        número de días que introduzca aquí.</li>
+      <li><strong>Hasta que yo los borre</strong>: escoja esta opción para
+        eliminar los mensajes del servidor una vez que los borre.</li>
+    </ul>
+  </li>
+  <li><strong>Borrar mensajes en el servidor cuando se borren
+    localmente</strong>: elija esta opción para borrar los mensajes del
+    servidor una vez que los borre del ordenador.</li>
+  <li><strong>Vaciar la papelera al salir</strong>: vacía la papelera al salir
+    del correo de &brandShortName;.</li>
+  <li><strong>Avanzadas</strong>: le permite elegir dónde deben depositarse los
+    nuevos mensajes. También puede incluir el servidor entre los que se
+    consultan en busca de correo nuevo periódicamente.</li>
+  <li><strong>Directorio local</strong>: el directorio en el disco duro donde
+    se almacena el correo para esta cuenta.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="news_server_settings">Configuración del servidor de noticias</h3>
+
+<p>Esta sección describe cómo cambiar la configuración de un servidor de
+  noticias. Si no está viendo la configuración del servidor de noticias, vaya a
+  la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de las cuentas de correo y
+    noticias. Verá aparecer un cuadro de diálogo.</li>
+  <li>Seleccione el nombre de la cuenta y elija la categoría Configuración del
+    servidor (si eligió un servidor de noticias cuando configuró esta cuenta,
+    verá la configuración del servidor de noticias).</li>
+</ol>
+
+<ul>
+  <li><strong>Tipo de servidor</strong>: el tipo de servidor (Servidor de
+    noticias NNTP) que especificó cuando creó esta cuenta.</li>
+  <li><strong>Nombre del servidor</strong>: el nombre del servidor que
+    especificó al crear esta cuenta. Si tiene problemas para recibir mensajes
+    en esta cuenta, compruebe con el proveedor o el administrador del sistema
+    que el nombre del servidor introducido es correcto.</li>
+  <li><strong>Puerto</strong>: a menos que su proveedor o administrador del
+    sistema le indique lo contrario, deje esta opción como está.</li>
+  <li><strong>Seguridad de la conexión</strong>: elija <q>SSL/TLS</q> si
+    su servidor de noticias está configurado para enviar y recibir mensajes
+    cifrados, o <q>Ninguna</q> si no lo admite. Si no está seguro,
+    contacte con su proveedor de servicios o administrador del sistema.</li>
+  <li><strong>Comprobar si hay mensajes nuevos al iniciar</strong>: elija este
+    valor para comprobar automáticamente si hay nuevos mensajes al abrir el
+    componente Correo y noticias de &brandShortName;.</li>
+  <li><strong>Comprobar si hay mensajes nuevos cada [__] minutos</strong>:
+    elija esta opción para comprobar automáticamente si hay mensajes nuevos, y
+    luego cada cuántos minutos realizar la comprobación. Si no selecciona esta
+    opción, puede comprobar si hay mensajes nuevos en cualquier momento
+    pulsando el botón Recibir mensajes en la ventana de Correo y noticias.</li>
+  <li><strong>Preguntarme antes de descargar más de [__] mensajes</strong>:
+    elija esta opción para conservar espacio en disco y ahorrar tiempo de
+    descarga, configurando un límite para el número de mensajes que se pueden
+    descargar cada vez.</li>
+  <li><strong>Solicitar siempre identificación al conectar con este
+    servidor</strong>: algunos servidores le permiten conversar con ellos sin
+    iniciar sesión, pero ocultarán sin avisar todos los grupos/mensajes
+    <em>privados</em> a menos que haya iniciado sesión. Elija este valor para
+    forzar que &brandShortName; se identifique cada vez que conecta con el
+    servidor incluso cuando el servidor no lo solicita (también llamado
+    <q>identificación forzada</q>).</li>
+  <li><strong>archivo newsrc</strong>: la ruta al archivo newsrc se muestra
+    principalmente para su información. El archivo newsrc guarda información
+    acerca de los grupos a los que está suscrito y los mensajes que ha leído
+    en cada grupo.</li>
+  <li><strong>Directorio local</strong>: el directorio en el disco duro donde
+    se almacenan los mensajes de esta cuenta.</li>
+  <li><strong>Codificación de texto predeterminada</strong>: haga clic en
+    esta lista desplegable para seleccionar la codificación de texto que
+    quiere que use Correo y noticias como predeterminada para los mensajes
+    entrantes de grupos de noticias. Se recomienda esto si es probable que
+    reciba mensajes en los cuales la codificación de texto (juego de
+    caracteres MIME) no esté indicada, como cuando se leen mensajes en grupos
+    de noticias internacionales.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="copies_and_folders">Configuración de copias y carpetas - (cuentas de
+  correo y noticias)</h2>
+
+<p>Esta sección describe la configuración para el envío automático de copias,
+  el almacenamiento de copias de los mensajes salientes, el almacenamiento de
+  borradores y plantillas de mensajes y dónde mover los mensajes archivados.</p>
+
+<p>De manera predeterminada, &brandShortName; guarda copias de los mensajes
+  enviados en la carpeta Enviados de la cuenta actual. &brandShortName; también
+  guarda los borradores de los mensajes en la carpeta Borradores, las
+  plantillas de mensajes en la carpeta Plantillas y mueve los mensajes
+  archivados en la carpeta Archivos de la cuenta actual.</p>
+
+<p>Si no está viendo aún la configuración de copias y carpetas, vaya a la
+  ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de la cuenta de correo y
+    noticias. Verá aparecer un cuadro de diálogo.</li>
+  <li>Seleccione la cuenta y elija Copias y carpetas. Verá la sección de
+    Copias y carpetas.</li>
+</ol>
+
+<ul>
+  <li><strong>Poner una copia en</strong>: seleccione esta opción para guardar
+    copias de sus mensajes de correo enviados y de grupos de noticias después
+    de enviarlos. Por defecto, las copias se ubican en la carpeta Enviados de
+    esta cuenta.
+    <ul>
+      <li><strong>Carpetas &quot;Enviados&quot; en</strong>: seleccione la
+        carpeta Enviados de una cuenta o de Carpetas locales donde colocar la
+        copia.</li>
+      <li><strong>Otra carpeta</strong>: seleccione cualquier carpeta de
+        cualquier cuenta o de Carpetas locales donde colocar la copia.</li>
+      <li><strong>Colocar respuestas en la carpeta del mensaje
+        respondido</strong>: seleccione esta opción para manejar las respuestas
+        en las cuentas de correo de una forma diferente. Si el mensaje enviado
+        es una respuesta a otro mensaje, la copia se sitúa en la carpeta del
+        mensaje original en lugar de aplicarse las selecciones realizadas
+        arriba.</li>
+    </ul>
+  </li>
+  <li><strong>CC a estas direcciones de correo</strong>: seleccione si quiere
+    enviar siempre una <em>copia calcada</em> (CC) a otro destinatario, e
+    introduzca su dirección. Si quiere enviarse siempre una copia calcada a
+    usted mismo, simplemente añada su dirección a esta lista. Separe las
+    direcciones con comas (,).</li>
+  <li><strong>BCC estas direcciones de correo</strong>: seleccione si quiere
+    enviar siempre una <em>copia oculta</em> (BCC) a otro destinatario, e
+    introduzca su dirección. Si quiere enviar siempre una copia oculta a usted
+    mismo, simplemente añada su dirección a esta lista. Separe las direcciones
+    con comas (,).</li>
+  <li><strong>Guardar los borradores de mensajes en</strong>: seleccione
+    dónde guardar los borradores de los mensajes. Si no quiere usar la carpeta
+    Borradores predeterminada de la cuenta actual, seleccione la carpeta
+    Borradores de una cuenta diferente o de Carpetas locales, o pulse en Otra
+    carpeta y luego elija una cuenta y carpeta cualquiera para guardar los
+    borradores.</li>
+  <li><strong>Guardar archivos de mensajes en</strong>: seleccione dónde
+    mover los mensajes archivados. Si no quiere usar la carpeta Archivos
+    predeterminada de la cuenta actual, seleccione la carpeta Archivos de una
+    cuenta diferente o de Carpetas locales, o pulse en Otra carpeta y luego
+    elija una cuenta y carpeta cualquiera para archivar los mensajes.</li>
+  <li><strong>Guardar las plantillas de mensajes en</strong>: seleccione dónde
+    almacenar las plantillas de los mensajes. Si no quiere usar la carpeta
+    Plantillas predeterminada de la cuenta actual, seleccione la carpeta
+    Plantillas de otra cuenta o de Carpetas locales, o pulse en Otra carpeta y
+    luego elija una cuenta y carpeta cualquiera para guardar las
+    plantillas.</li>
+  <li><strong>Mostrar diálogo de confirmación cuando se guarden los
+    mensajes</strong>: marque esta opción si quiere que &brandShortName;
+    muestre un cuadro diálogo de confirmación al guardar un borrador o una
+    plantilla. Si está marcado, un cuadro de diálogo aparecerá cuando guarde
+    un borrador o plantilla para recordarle dónde está guardando Correo y
+    noticias el borrador o plantilla.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="addressing">Configuración de redacción y direcciones - (cuentas de
+  correo y noticias)</h2>
+
+<p>Utilice los valores de configuración de Redacción para elegir cómo quiere
+  formatear el texto, gestionar las respuestas y cómo se incluye una firma
+  que haya definido.</p>
+
+<p>Si no está viendo aún la configuración de redacción, vaya a la ventana de
+  Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de la cuenta de correo y
+    noticias. Verá aparecer un cuadro de diálogo.</li>
+  <li>Seleccione la cuenta y elija la categoría Redacción y direcciones.</li>
+</ol>
+
+<ul>
+  <li><strong>Redactar mensajes en formato HTML</strong>: use el editor HTML
+    como editor predeterminado para escribir mensajes de correo y noticias.
+    Deje este elemento sin marcar para usar el editor de texto sin formato de
+    manera predeterminada. Los mensajes HTML pueden incluir texto con formato,
+    enlaces, imágenes y tablas, igual que una página web. Sin embargo, algunos
+    destinatarios quizá no puedan recibir mensajes HTML.
+
+    <p><strong>Ayuda</strong>: si sólo quiere usar un editor ocasionalmente,
+      puede mantener pulsada la tecla Mayúsculas mientras hace clic en los
+      botones Redactar o Responder para usar el editor no predeterminado cuando
+      lo necesite.</p>
+  </li>
+  <li><strong>Automáticamente citar el mensaje original al responder</strong>:
+    seleccione esta opción para incluir el texto del mensaje original en su
+    respuesta. Use la lista desplegable para seleccionar si el cursor debería
+    posicionarse debajo o encima del texto citado. También puede escoger que el
+    mensaje citado se seleccione automáticamente.
+    <ul>
+      <li><strong>y situar mi firma</strong>: esta lista desplegable le permite
+        elegir dónde quiere que se añada su firma. Sólo es aplicable si ha
+        decidido <a href="#account_settings">adjuntar una firma</a> y situar el
+        cursor sobre el texto citado.</li>
+    </ul>
+  </li>
+</ul>
+
+<ul>
+  <li><strong>Incluir firma en las respuestas</strong>: si ha creado una firma,
+    seleccione esta opción para incluirla en su respuesta a un mensaje. La
+    firma se añade de acuerdo a sus opciones de citado y ubicación de
+    firma.</li>
+  <li><strong>Incluir firma en re-envíos</strong>: si ha creado una firma,
+    seleccione esta opción para incluirla cuando re-envíe un mensaje. La firma
+    se añade de acuerdo a sus opciones de respuesta al
+    <a href="mailnews_preferences.xhtml#composition">re-enviar en línea</a>.</li>
+</ul>
+
+<p>Use las opciones de Direcciones para tener preferencia sobre la configuración
+  global del servidor LDAP especificada para todas las
+  <a href="mailnews_preferences.xhtml#addressing_preferences">libretas de
+  direcciones</a> en el cuadro de diálogo de preferencias. La configuración del
+  servidor LDAP afecta al comportamiento del <a
+  href="mailnews_preferences.xhtml#address_autocompletion">autocompletado de
+  direcciones</a>, y puede cambiar esta configuración para cada cuenta si es
+  necesario.</p>
+
+<p>El autocompletado de direcciones usa las libretas de direcciones para
+  encontrar direcciones cuando se escriban en el área de las direcciones en la
+  ventana de redacción de mensajes.</p>
+
+<p>Si todavía no está viendo la configuración de las direcciones, vaya a la
+  ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias. Verá un cuadro de diálogo.</li>
+  <li>Seleccione la cuenta y elija la categoría Redacción y Direcciones.</li>
+</ol>
+
+<ul>
+  <li><strong>Añadir automáticamente mi dominio a las direcciones</strong>:
+    seleccione esta opción si quiere que Correo y Noticias complete
+    automáticamente las direcciones que escribe con el dominio de la dirección
+    de su cuenta.</li>
+  <li><strong>Usar las preferencias globales del servidor LDAP para esta
+    cuenta</strong>: es la opción predeterminada. Selecciónela si no quiere
+    especificar otras opciones distintas para esta cuenta.</li>
+  <li><strong>Usar otro servidor LDAP</strong>: seleccione esta opción y luego
+    elija otro servidor LDAP de la lista si quiere usar un servidor LDAP
+    distinto para el autocompletado de direcciones en esta cuenta. Si es
+    necesario, elija Editar directorios para editar la configuración individual
+    de un servidor, añadir un servidor de directorio o borrarlo. Para más
+    información, vea
+    <a href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Añadir
+    y quitar directorios LDAP</a>.</li>
+</ul>
+
+<p>El directorio que seleccione también será usado para buscar certificados
+  cuando intente enviar mensajes cifrados a uno o más destinatarios de los
+  cuales no tiene el certificado en un archivo local.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de
+la sección</a>]</p>
+
+<h2 id="synchronization_and_storage">Configuración de sincronización y
+  almacenamiento - (cuentas de correo y noticias)</h2>
+
+<p>La configuración de sincronización y almacenamiento le permite ahorrar
+  espacio en disco o configurar una cuenta para que pueda usarla sin
+  conexión (desconectado de Internet). Las opciones disponibles dependen del
+  tipo de servidor (IMAP, POP o noticias) asociado con la cuenta.</p>
+
+<div class="contentsBox">
+  <ul>
+    <li><a href="#synchronization_and_storage_settings_imap">Configuración de
+      sincronización y almacenamiento (IMAP)</a></li>
+    <li><a href="#disk_space_settings_pop">Configuración de Espacio en
+      disco (POP)</a></li>
+    <li><a href="#disk_space_settings_blogs">Configuración de Espacio en
+      disco (Blogs)</a></li>
+    <li><a href="#synchronization_and_storage_settings_nntp">Configuración de
+      sincronización y almacenamiento (Noticias)</a></li>
+    <li><a href="#retention_policy">Configuración de políticas comunes de
+      retención</a></li>
+  </ul>
+</div>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="synchronization_and_storage_settings_imap">Configuración de
+  sincronización y almacenamiento (IMAP)</h3>
+
+<p>Si no está ya viendo las preferencias de sincronización y almacenamiento de
+  una cuenta IMAP, comience desde la ventana de correo:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias. Verá el cuadro de diálogo de configuración de cuentas de correo y
+    noticias.</li>
+  <li>Elija la categoría Sincronización y almacenamiento de una cuenta
+    IMAP.</li>
+</ol>
+
+<ul>
+  <li><strong>Conservar mensajes de esta cuenta en este equipo</strong>:
+    seleccione esta opción para que los mensajes de sus carpetas estén
+    disponibles cuando esté trabajando sin conexión. Esta opción también se
+    aplica a cualquier carpeta nueva que cree o a la que se suscriba.</li>
+  <li><strong>Avanzadas</strong>: pulse este botón para abrir un diálogo donde
+    podrá seleccionar las carpetas que quiere tener disponibles para usar
+    sin conexión. Vea <a
+    href="mailnews_offline.xhtml#selecting_items_for_offline_viewing">Seleccionar
+    elementos para ver sin conexión</a> para más información.
+    
+    <p><strong>Nota</strong>: aunque la configuración por defecto se puede
+      cambiar para una carpeta individual, esas configuraciones por carpeta se
+      <em>eliminan</em> siempre que se cambia el valor de la casilla
+      <q>Conservar mensajes de esta cuenta</q>.</p>
+  </li>
+  <li><strong>Sincronizar todos los mensajes localmente sin importar su
+    antigüedad</strong>: cuando está activada la sincronización de una cuenta o
+    una carpeta, se descargan <em>todos</em> los mensajes y se guardan copias
+    locales de ellos en disco, a menos que se especifique un limite de
+    tamaño.</li>
+  <li><strong>Sincronizar los [__] [días] más recientes</strong>: sólo se
+    mantienen para sincronización local las copias de mensajes más recientes
+    que el número especificado de días (o semanas, meses o años); transcurrido
+    ese plazo, se eliminan del almacenamiento sin conexión. Esto <em>no</em>
+    afecta a los originales en el servidor, sólo se eliminan las copias locales
+    si se alcanza la antigüedad dada.</li>
+  <li><strong>No descargar mensajes mayores de [__] KB</strong>: seleccione
+    esta opción para conservar espacio en disco, evitando descargar los
+    mensajes grandes. Introduzca el tamaño máximo de los mensajes descargados.
+    Cambiar esta opción <em>no</em> affecta a los mensajes que ya han sido
+    descargados.</li>
+  <li>Las <a href="#retention_policy">opciones de retención</a> se pueden usar
+    para liberar espacio eliminando mensajes antiguos. Observe que estas
+    opciones se aplican <em>tanto</em> a las copias locales <em>como</em> a sus
+    originales en el servidor.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h3 id="disk_space_settings_pop">Configuración de espacio en disco (POP)</h3>
+
+<p>Los mensajes de las cuentas POP se descargan completamente a la máquina en
+  local a menos que haya activado la opción <q>Recibir sólo cabeceras</q>. Esta
+  sección describe cómo se puede ahorrar espacio en disco para una cuenta POP.
+  Si su cuenta tiene activada la opción <q>Recibir sólo cabeceras</q>, estas
+  preferencias de espacio en disco no se tendrán en cuenta. Si todavía no
+  está viendo las preferencias de espacio en disco para una cuenta POP,
+  siga estos pasos:</p>
+
+<p>Vaya a la ventana de Correo y noticias.</p>
+
+<ol>
+  <li>Abra el menú Editar, elija Configuración de cuentas de
+    correo y noticias. Verá un cuadro de   diálogo.</li>
+  <li>Pulse en la categoría de espacio en disco para una cuenta
+    POP.</li>
+</ol>
+
+<ul>
+  <li><strong>Mensajes mayores de [__] KB</strong>: seleccione esta opción
+    para ahorrar espacio en disco evitando que se descarguen mensajes de gran
+    tamaño. Introduzca el tamaño máximo de los mensajes descargados.</li>
+  <li>Las <a href="#retention_policy">opciones de retención</a> se pueden usar
+    para liberar espacio eliminando mensajes antiguos. Observe que estas
+    opciones se aplican <em>tanto</em> a las copias locales <em>como</em> a sus
+    originales en el servidor.
+    
+    <p><strong>Nota</strong>: si su cuenta POP está configurada para usar la
+      bandeja de entrada global, los valores de periodos de retención aplicados
+      son los de la bandeja de entrada de destino.</p>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+  sección</a>]</p>
+
+<h3 id="disk_space_settings_blogs">Configuración de espacio en disco
+  (Blogs)</h3>
+
+<p>Los mensajes de cuentas de canales de blogs y noticias se guardan en su
+  máquina local únicamente en su forma corta, es decir, el resumen del
+  artículo, sin importar si su configuración indica mostrar los artículos
+  completos por defecto. No obstante, hay opciones para controlar cuánto
+  espacio en disco se usa por su cuenta de canales de blogs y canales. Si
+  no está ya viendo las preferencias de espacio en disco de una cuenta de
+  canales de blogs y noticias, siga estos pasos:</p>
+
+<p>Comience desde la ventana de Correo.</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y noticias.
+    Verá el diálogo de configuración de cuentas de correo y noticias.</li>
+  <li>Pulse la categoría Espacio en disco de una cuenta de canales de blogs y
+   noticias.</li>
+</ol>
+
+<p>Allí, puede especificar qué mensajes deben eliminarse para recuperar espacio
+  en disco:</p>
+
+<ul>
+  <li><strong>No eliminar ningún mensaje</strong>: seleccione esta opción para
+    conservar todos los mensajes para siempre. Tenga en cuenta que, si está
+    suscrito a muchos blogs con alto tráfico, esto incrementará el espacio de
+    disco ocupado constantemente y podría llegar a llenar su disco duro.</li>
+  <li><strong>Elimiar todos excepto los más recientes [____] mensajes</strong>:
+    seleccione esta opción para conservar en cada canal sólo un número máximo
+    de mensajes. Introduzca el número máximo de mensajes (por defecto,
+    1000).</li>
+  <li><strong>Eliminar mensajes con más de [__] días</strong>: seleccione esta
+    opción para conservar en cada canal únicamente los mensajes que no son más
+    antiguos que el número de días que introduzca aquí (por defecto, 30
+    días).</li>
+  <li><strong>Conservar siempre mensajes señalados</strong>: marque esta opción
+    para guardar (no eliminar) los mensajes señalados, sin importar su
+    antigüedad.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+  sección</a>]</p>
+
+<h3 id="synchronization_and_storage_settings_nntp">Configuración de
+      sincronización y almacenamiento (Noticias)</h3>
+
+<p>Si todavía no está viendo la configuración de Sin conexión y espacio en
+  disco para una cuenta de noticias, vaya a la ventana de Correo y
+  noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar, y elija Configuración de cuentas de
+    correo y noticias. Verá un cuadro de diálogo.</li>
+  <li>Elija la categoría Sincronización y almacenamiento de una cuenta de
+    noticias.</li>
+</ol>
+
+<ul>
+  <li><strong>Seleccionar grupos de noticias para su uso sin conexión</strong>:
+    pulse para seleccionar los grupos que quiere que estén disponibles para
+    usar sin conexión. Vea <a
+    href="mailnews_offline.xhtml#selecting_items_for_offline_viewing">Seleccionar
+    elementos para ver sin conexión</a> para más información.</li>
+</ul>
+
+<p>Las siguientes opciones ayudan a ahorrar espacio en disco y tiempo de
+  descarga. Especifique qué mensajes no quiere descargar localmente:</p>
+
+<ul>
+  <li><strong>Mensajes leídos</strong>: seleccione esta opción para descargar
+    únicamente los cuerpos de los mensajes que no haya leído.</li>
+  <li><strong>Mensajes mayores de [__] KB</strong>: seleccione esta opción para
+    ahorrar espacio en disco evitando que se descarguen mensajes grandes.
+    Introduzca el tamaño máximo para los mensajes descargados.</li>
+  <li><strong>Mensajes de más de [__] días de antig&uuml;edad</strong>:
+    seleccione esta opción para descargar sólo los mensajes que no sean más
+    antiguos que el número de días que introduzca aquí.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+  sección</a>]</p>
+
+<h3 id="retention_policy">Configuración de políticas comunes de retención</h3>
+
+<p>&brandShortName; puede borrar automáticamente los mensajes antiguos por
+  usted. Puede configurar este proceso con las opciones indicadas bajo
+  <strong>Para recuperar espacio en disco, los mensajes antiguos pueden
+  eliminarse permanentemente</strong>:</p>
+
+<ul>
+  <li><strong>No eliminar ningún mensaje</strong>: mantiene todos los mensajes.
+    Nunca se eliminan mensajes automáticamente debido a su antigüedad.</li>
+  <li><strong>Eliminar todos excepto los más recientes [__] mensajes</strong>:
+    introduzca el número de mensajes a conservar. Con esta opción sólo se
+    eliminan los mensajes más antiguos que los indicados.</li>
+  <li><strong>Eliminar mensajes con más de [__] días</strong>: mantener todos
+    los mensajes que hayan llegado en el número dado de días.</li>
+</ul>
+
+<p>Con las siguientes opciones puede limitar aún más las tres opciones para
+  borrar mensajes automáticamente. Esto es especialmente útil en combinación
+  con la opción para mantener todos los mensajes.</p>
+
+<ul>
+  <li><strong>Conservar siempre los mensajes señalados</strong>: use esta
+    opción para impedir que &brandShortName; elimine ningún mensaje que haya
+    señalado.</li>
+  <li><strong>Eliminar los mensajes de más de [__] días</strong>: seleccione
+    esta opción para mantener todas las cabeceras pero eliminar los cuerpos
+    de los mensajes que sean más antiguos que el número de días que especifique
+    aquí (sólo cuentas de noticias). Aún será de aplicación cualquier opción
+    para eliminar el mensaje entero basándose en su antigüedad.</li>  
+</ul>
+
+<p>Esta política puede modificarse para una carpeta individual en las
+  propiedades de la carpeta, pestaña Política de retención.</p>
+
+<p><strong>Nota:</strong> si la sincronización de mensajes está activada (para
+  IMAP), o los mensajes se dejan en el servidor (para cuentas POP), los valores
+  se aplican <em>tanto</em> a las copias locales <em>como</em> y sus originales
+  en el servidor.</p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="junk_settings">Configuración de correo basura - (cuentas de
+  correo basura)</h2>
+
+<p>Esta sección describe cómo usar la configuración de correo basura de las
+  cuentas. Si no está viendo la configuración de correo basura, siga estos
+  pasos:</p>
+
+<ol>
+  <li>Abra el menú Editar, elija Configuración de cuentas de correo y noticias.
+    Verá la ventana de diálogo de configuración de cuentas de correo y
+    noticias.</li>
+  <li>Pulse en la categoría Configuración de correo basura de su cuenta de
+    correo.</li>
+</ol>
+
+<p>Se usa el panel de configuración de correo basura para definir la
+  configuración específica de cada cuenta para el filtro de correo adaptativo.
+  La configuración global de correo basura se cambia en las <a
+  href="mailnews_preferences.xhtml#junk_and_suspect_preferences">preferencias de
+  correo y noticias - Correo basura y sospechoso</a>.</p>
+
+<ul>
+  <li><strong>Activar controles adaptativos de correo basura en esta
+    cuenta</strong>: marque/desmarque esta opción para activar o
+    desactivar la clasificación de correo basura.</li>
+  <li><strong>No marcar el correo como basura si el remitente está
+    en [la libreta de direcciones que elija de entre las disponibles en la
+    lista desplegable]</strong>: escoja esta opción para evitar que los
+    mensajes de gente que usted conoce se clasifiquen por error como correo
+    basura.</li>
+  <li><strong>Confiar en las cabeceras de correo basura enviadas por [un
+    filtro de correo basura externo como Spam Assasin o Spam Pal]</strong>:
+    escoja esta opción si quiere confiar en la clasificación
+    de correo basura de programas externos de filtrado.</li>
+  <li><strong>Mover lo nuevos mensajes de correo basura a</strong>: marque
+    esta opción para mover automáticamente los mensajes marcados
+    como correo basura a una carpeta especial.
+    <ul>
+      <li><strong>Carpeta de <q>Correo basura</q> en [cuenta]</strong>:
+        seleccione ésta para usar la carpeta de correo basura
+        predeterminada.</li>
+      <li><strong>Otro: [cuenta]</strong>: seleccione ésta para elegir
+        su propia carpeta de correo basura.</li>
+      <li><strong>Borrar automáticamente el correo basura más
+        antiguo de __ días</strong>: si confía en que los
+        mensajes antiguos clasificados como correo basura son, de hecho,
+        correo basura, marque esta opción para borrar
+        automáticamente los mensajes antiguos de correo basura tras un
+        periodo de gracia.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="return_receipts">Configuración de acuse de recibo -
+(cuentas de correo y noticias)</h2>
+
+<p>Esta sección describe cómo usar los valores de
+configuración de cuentas correspondientes a acuses de recibo. Si no
+está viendo la configuración de acuses de recibo, siga estos
+pasos:</p>
+
+<ol>
+  <li>Abra el menú Editar y escoja Configuración de cuenta de
+  correo y noticias. Verá un cuadro de diálogo.</li>
+  <li>Pulse la categoría Acuses de recibo de su cuenta de correo.</li>
+</ol>
+
+<p>La configuración de acuses de recibo se usa para definir las características
+  de solicitud de acuses de recibo en los mensajes salientes de esta cuenta.
+  También se para especiicar cómo gestionar las solicitudes que recibe de acuses
+  de recibo. Los valores establecidos aquí tienen preferencia sobre las
+  preferencias globales de acuses de recibo que haya especificado usando <a
+  href="mailnews_preferences.xhtml#return_receipts_preferences"> Preferencias de
+  Correo y noticias - Acuses de recibo</a>.</p>
+
+<ul>
+  <li><strong>Usar las preferencias globales de acuse de recibo para esta
+    cuenta</strong>: por defecto, esta cuenta usa las preferencias de acuses de
+    recibo especificadas por <a
+    href="mailnews_preferences.xhtml#return_receipts_preferences"> Preferencias
+    de Correo y noticias - Acuses de recibo</a>.</li>
+  <li><strong>Personalizar acuse de recibo para esta cuenta</strong>: le permite
+    cambiar las preferencias de acuse de recibo para esta cuenta.
+    <ul>
+      <li><strong>Al enviar mensajes, solicitar siempre un acuse de
+      recibo</strong>: activa la solicitud automática de acuses de
+      recibo para todos los mensajes enviados desde esta cuenta de
+      correo.</li>
+      <li><strong>Dejarlo en mi bandeja de entrada</strong>: los mensajes de
+      confirmación de acuses de recibo se depositarán en la
+      bandeja de entrada de esta cuenta.
+      <p><strong>Truco</strong>: escoja esta opción si quiere usar un
+      filtro que automaticamente traslade los mensajes de confirmación
+      de acuses de recibo a una carpeta que especifique. Para
+      información sobre cómo crear y usar filtros, vea <a
+      href="mailnews_organizing.xhtml#creating_message_filters">Crear filtros
+      de mensajes</a>.</p>
+      </li>
+      <li><strong>Moverlo a mi carpeta <q>Enviados</q></strong>: los mensajes
+      de confirmación de acuses de recibo serán trasladados a
+      la carpeta de correo Enviados de esta cuenta.</li>
+      <li><strong>Nunca enviar un acuse de recibo</strong>: escoja esta
+      opción si no quiere enviar un acuse de recibo en respuesta a las
+      solicitudes de acuses de recibo de otros.</li>
+      <li><strong>Permitir acuse de recibo para algunos mensajes</strong>:
+      escoja cómo quiere responder a las solicitudes que le lleguen de
+      acuses de recibo.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de
+la sección</a>]</p>
+
+<h2 id="security">Configuración de seguridad -
+(cuentas de correo y noticias)</h2>
+
+<p>Esta sección describe cómo configurar las cuentas de correo y noticias para
+  controlar la seguridad de los mensajes. Antes de hacerlo, sin embargo, debe
+  obtener uno o más certificados de correo electrónico. Para más detalles, vea
+  <a href="mailnews_security.xhtml">Firmar y cifrar mensajes</a>.</p>
+
+<p>Si no está todavía en la pantalla de configuración
+de Seguridad para la cuenta de correo, vaya a la ventana de Correo y
+noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de
+  correo y noticias.</li>
+  <li>Pulse en la categoría de Seguridad de la cuenta de correo que
+  vaya a configurar.</li>
+</ol>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#about_certificates">Sobre los certificados</a></li>
+    <li><a href="#digital_signing">Firma digital</a></li>
+    <li><a href="#encryption">Cifrado</a></li>
+  </ul>
+</div>
+
+<h3 id="about_certificates">Sobre los certificados</h3>
+
+<p>El propósito principal del panel Seguridad en la configuración de
+  cuentas de Correo y noticias es seleccionar dos certificados:</p>
+
+<ul>
+  <li>El certificado de correo electrónico que quiera usar para firmar
+  los mensajes de correo electrónico que envíe a otras
+  personas.</li>
+  <li>El certificado de correo electrónico que quiere que otras
+  personas usen cuando cifren los mensajes que le envíen a usted.</li>
+</ul>
+
+<p>Dependiendo de las políticas de la <a
+href="glossary.xhtml#certificate_authority"> Autoridad Certificadora (CA)
+</a> que emita su(s) certificado(s), puede usar un certificado para ambos
+propósitos o dos certificados distintos. Incluso si usa sólo
+uno, debe especificarlo dos veces, una vez para la firma digital y otra
+para el cifrado.</p>
+
+<p>Los certificados que seleccione aquí se incluyen con
+cada mensaje firmado que envíe. Estos certificados permiten
+a los destinatarios verificar su firma digital y cifrar los mensajes
+que le envíen.</p>
+
+<h3 id="digital_signing">Firma digital</h3>
+
+<p>Use el área Firma digital en el <a href="#security">panel
+Seguridad</a> para especificar cómo quiere firmar sus mensajes:</p>
+
+<ul>
+  <li><strong>Utilizar este certificado para firmar digitalmente los mensajes
+  que envíe</strong>: si este campo está vacío o si
+  muestra un certificado erróneo, pulse Seleccionar para elegir uno de
+  los certificados que tenga en archivo.</li>
+  <li><strong>Firmar mensajes digitalmente</strong>: marque esta casilla si
+  quiere firmar digitalmente todos los mensajes que envié (debe haber
+  un certificado personal especificado debajo antes de que pueda seleccionar
+  esta casilla).</li>
+</ul>
+
+<p>Independientemente de si selecciona o no <q>Firmar mensajes
+digitalmente</q>, puede cambiar de idea antes de enviar un mensaje
+concreto.</p>
+
+<p>Para cambiar la configuración de firma digital de un mensaje que está
+  escribiendo en la ventana Redactar, pulse la flecha bajo el icono Seguridad
+  que hay en la parte superior de la ventana y marque o desmarque <q>Firmar
+  digitalmente este mensaje</q>. Para más detalles, vea
+  <a href="mailnews_security.xhtml#signing_and_encrypting_a_new_message">Firmar
+  y cifrar un nuevo mensaje.</a></p>
+
+<h3 id="encryption">Cifrado</h3>
+
+<p>Use el área Cifrado en el <a href="#security">panel Seguridad</a>
+para especificar la forma habitual que quiere usar para cifrar sus mensajes
+al enviarlos:</p>
+
+<ul>
+  <li><strong>Usar este certificado para cifrar y descifrar mensajes enviados
+  a Vd.</strong>: si este campo está vacío o si muestra un
+  certificado erróneo, pulse Seleccionar para elegir uno de los
+  certificados que tenga en archivo.</li>
+  <li><strong>Nunca</strong>: seleccione esta opción si no quiere usar
+  cifrado, o sólo de vez en cuando.</li>
+  <li><strong>Siempre</strong>: seleccione esta opción si siempre
+  quiere usar cifrado. Si no tiene todos los certificados necesarios, el
+  mensaje no será enviado a menos que explícitamente desactive
+  el cifrado para ese mensaje.</li>
+</ul>
+
+<p>Independientemente de qué opción de cifrado escoja, puede
+cambiar de idea antes de mandar cada mensaje.</p>
+
+<p>Para cambiar la configuración de cifrado de un mensaje que está escribiendo
+  en la ventana Redactar, pulse la flecha bajo el icono Seguridad que hay en la
+  parte superior de la ventana y escoja la configuración de cifrado que desee.
+  Para más detalles, vea
+  <a href="mailnews_security.xhtml#signing_and_encrypting_a_new_message">Firmar
+  y cifrar un nuevo mensaje.</a></p>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+
+<h2 id="local_folders">Configuración de carpetas locales -
+(cuentas de correo y noticias)</h2>
+
+<p>Carpetas locales (Local Folders si creó su perfil de usuario con el idioma
+  inglés activado) es la cuenta donde &brandShortName; guarda cualquier mensaje
+  que envíe mientras trabaja sin conexión. Los mensajes que envíe mientras
+  trabaja sin conexión se guardan en la carpeta Mensajes pendientes de Carpetas
+  locales. Cualquier carpeta que se cree en la cuenta de Carpetas locales se
+  guarda en el disco duro, así que Carpetas locales es un buen sitio para
+  guardar mensajes que quiera conservar.</p>
+
+<p>Si no está viendo la configuración de Carpetas locales, vaya a la ventana
+  de Correo y noticias:</p>
+
+<ol>
+  <li>Abra el menú Editar y elija Configuración de cuentas de correo y
+    noticias. Verá un cuadro de diálogo.</li>
+  <li>Seleccione la categoría Carpetas locales.</li>
+</ol>
+
+<ul>
+  <li><strong>Nombre de la cuenta</strong>: el nombre asociado con la cuenta
+    de carpetas locales.</li>
+  <li><strong>Directorio local</strong>: la ubicación en el disco duro
+    donde se almacena el correo para esta cuenta.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="outgoing_server">Configuración de servidor de salida
+  (SMTP) - (cuentas de correo y noticias)</h2>
+
+<p>El servidor de salida enviará su correo saliente a los destinatarios
+  esperados.</p>
+
+<p>Si no está viendo aún la configuración del servidor
+  de salida (SMTP), vaya a la ventana de Correo y noticias:</p>
+
+<ol>
+  <li>Pulse en cualquier ventana de Correo y noticias.</li>
+  <li>Del menú Editar, elija Configuración de cuentas de correo
+    y noticias.</li>
+  <li>Seleccione Servidor de salida (SMTP) y o bien edite un servidor existente,
+    o añada uno nuevo. Si no está seguro de qué opción elegir, confírmelo con
+    su ISP o administrador del sistema).<br/>
+    Puede elegir cualquiera de estos servidores en la lista desplegable
+    Servidor de salida en la <a href="#account_settings">configuración de
+    identidad</a>.</li>
+</ol>
+
+<ul>
+  <li><strong>Descripción</strong>: una descripción breve de texto libre
+    de esa configuración de servidor. Se mostrará en la primera parte de
+    cada línea en la lista de servidores.</li>
+  <li><strong>Nombre del servidor</strong>: el servidor SMTP que
+    repartirá su correo saliente. Para usar un servidor SMTP distinto,
+    cambie este valor.</li>
+  <li><strong>Puerto</strong>: el puerto en el que está conectado el
+    servidor SMTP. De manera predeterminada, contiene el puerto estándar
+    para el cifrado especificado. Cámbielo si el servidor de correo
+    espera las conexiones en un puerto no estándar.</li>
+  <li><strong>Seguridad de la conexión</strong>: elija una de las opciones
+    disponibles para establecer una
+    <a href="glossary.xhtml#secure_connection">conexión segura</a> a su
+    servidor SMTP de salida. Puede elegir una de estas:
+    <ul>
+      <li><strong>Ninguna</strong>: &brandShortName; usará una conexión simple,
+        sin ningún tipo de cifrado. Debería elegir esta <em>sólo</em> si su
+        servidor saliente permite el cifrado de contraseñas, no permite ningún
+        tipo de seguridad en absoluto o si no se requiere identificación para
+        enviar mensajes.</li>
+      <li><strong>STARTTLS</strong>: requiere una conexión cifrada, y usa el
+        método <a href="glossary.xhtml#starttls">STARTTLS</a>. Este mecanismo
+        funcionará casi con toda seguridad en el puerto SMTP para envíos 587
+        o el puerto genérico 25.</li>
+      <li><strong>SSL/TLS</strong>: requiere una conexión cifrada, usa
+        el método SMTP-sobre-SSL (también conocido como SMTPS). El puerto
+        predeterminado para esta opción es 465.</li>
+    </ul>
+    Si elige una opción para la que su servidor no está configurado, obtendrá
+    un mensaje de error al enviar correo.
+  </li>
+  <li><strong>Método de identificación</strong>: elija una de las opciones
+    disponibles para usar
+    <a href="glossary.xhtml#secure_authentication">identificación segura</a>
+    con su servidor SMTP de salida. Puede elegir una de las siguientes:
+    <ul>
+      <li><strong>Sin identificación</strong>: no se enviarán usuario ni
+        contraseña al servidor. Puede elegir esta opción si el servidor SMTP
+        está en una red local o si se proporcionan otros medios para
+        identificar al usuario, como <q>POP antes de SMTP</q>.</li>
+      <li><strong>Contraseña normal</strong>: &brandShortName; le enviará su
+        contraseña como texto en claro, sin ningún tipo de cifrado. Esta opción es
+        segura cuando se usa SSL/TLS o STARTTLS.</li>
+      <li><strong>Contraseña, transmitida de forma insegura</strong>: igual que
+        <q>contraseña normal</q> pero sólo está disponible cuando se selecciona
+        <q>Ninguna</q> como seguridad de la conexión y en consecuencia no es
+        segura. <em>No</em> elija esta opción a menos que su servidor de salida
+        no admita ningún tipo de seguridad en absoluto.</li>
+      <li><strong>Contraseña cifrada</strong>: requiere el cifrado de las
+        credenciales del usuario como permita el servidor, como por ejemplo
+        <a href="glossary.xhtml#cram_md5">CRAM-MD5</a>. Esta opción es segura
+        para su uso incluso si la configuración de la seguridad de la conexión
+        es <q>Ninguna</q>, pero de esta forma sólo se asegurará la contraseña,
+        no ningún contenido.</li>
+      <li><strong>Kerberos / GSSAPI</strong>: elija esta opción si su equipo
+        está configurado para identificación segura usando
+        <a href="glossary.xhtml#kerberos">Kerberos</a>. Puede que necesite
+        obtener un tique Kerberos usando un programa separado, o puede que le
+        sea asignado al iniciar sesión en su equipo.</li>
+      <li><strong>NTLM</strong>: elija esta opción si su equipo está configurado
+        para identificación segura usando un <a href="glossary.xhtml#ntlm">NT
+        LAN Manager</a>. En general, Kerberos es preferible a NTLM ya que
+        proporciona un nivel más alto de seguridad.</li>
+    </ul>
+    Si no está seguro de qué opciones permite su servidor, contacte con su
+    proveedor de servicios o administrador del sistema.
+  </li>
+  <li><strong>Nombre de usuario</strong>: el nombre de usuario que especificó
+    cuando creó esta cuenta. No está disponible si está seleccionada <q>Sin
+    identificación</q>.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroups_account_settings">Volver al principio de la
+sección</a>]</p>
+</body>
+</html>
