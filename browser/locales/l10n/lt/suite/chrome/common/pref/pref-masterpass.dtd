@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Pagrindiniai slaptažodžiai">
+
+<!ENTITY  changepassword.caption                 "Pagrindinio slaptažodžio pakeitimas">
+<!ENTITY  changepassword.text                    "Pagrindinis slaptažodis apsaugo jūsų neskelbtiną informaciją, pavyzdžiui, svetainių slaptažodžius ir liudijimus.">
+<!ENTITY  changepassword.button                  "Pakeisti slaptažodį">
+<!ENTITY  changepassword.accesskey               "k">
+
+<!ENTITY  resetpassword.caption                  "Pagrindinio slaptažodžio atšaukimas">
+<!ENTITY  resetpassword.text                     "Jei atšauksite pagrindinį slaptažodį, prarasite visus įrašytus svetainių ir el. pašto dėžučių slaptažodžius, formų duomenis, liudijimus ir asmeninius raktus.">
+<!ENTITY  resetpassword.button                   "Atšaukti slaptažodį">
+<!ENTITY  resetpassword.accesskey                "A">
