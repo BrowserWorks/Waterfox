@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "自訂標頭">
+<!ENTITY addButton.label "新增">
+<!ENTITY addButton.accesskey "A">
+<!ENTITY removeButton.label "移除">
+<!ENTITY removeButton.accesskey "R">
+<!ENTITY newMsgHeader.label "新郵件標頭:">
+<!ENTITY newMsgHeader.accesskey "N">
+

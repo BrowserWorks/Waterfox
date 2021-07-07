@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "除錯">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "描繪">
+<!ENTITY debugXULBox.label                "對 XUL Box 除錯">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "停用 XUL 快取">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "事件">
+<!ENTITY debugPaintFlashing.label "繪圖時閃爍（Caps Lock 切換）">
+<!ENTITY debugPaintFlashing.accesskey "P">
+<!ENTITY debugPaintFlashingChrome.label "繪圖時閃爍 Chrome">
+<!ENTITY debugPaintFlashingChrome.accesskey "F">
+<!ENTITY debugPaintDumping.label "繪圖傾印">
+<!ENTITY debugPaintDumping.accesskey "a">
+<!ENTITY debugInvalidateDumping.label "無效傾印">
+<!ENTITY debugInvalidateDumping.accesskey "n">
+<!ENTITY debugEventDumping.label "事件傾印">
+<!ENTITY debugEventDumping.accesskey "E">
+<!ENTITY debugMotionEventDumping.label "動畫事件傾印">
+<!ENTITY debugMotionEventDumping.accesskey "M">
+<!ENTITY debugCrossingEventDumping.label "交疊事件傾印">
+<!ENTITY debugCrossingEventDumping.accesskey "C">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "重排事件">
+<!ENTITY debugReflowShowFrameCounts.label        "顯示畫框數">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "S">
+<!ENTITY debugReflowDumpFrameCounts.label        "傾印畫框數">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "D">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "逐畫框數量傾印">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "u">

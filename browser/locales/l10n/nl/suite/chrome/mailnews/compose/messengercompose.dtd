@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Nieuw bericht: (geen onderwerp)">
+
+<!ENTITY fromAddr.label "Van:">
+<!ENTITY fromAddr.accesskey "V">
+<!ENTITY toAddr.label "Aan:">
+<!ENTITY ccAddr.label "Cc:">
+<!ENTITY bccAddr.label "Bcc:">
+<!ENTITY replyAddr.label "Antwoord-naar:">
+<!ENTITY newsgroupsAddr.label "Nieuwsgroep:">
+<!ENTITY followupAddr.label "Opvolgen-aan:">
+<!ENTITY subject.label "Onderwerp:">
+<!ENTITY subject.accesskey "n">
+<!ENTITY attachments.label "Bijlagen:">
+<!ENTITY attachments.accesskey "a">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Opslaan">
+<!ENTITY saveCmd.accesskey "O">
+<!ENTITY saveAsCmd.label "Opslaan als">
+<!ENTITY saveAsCmd.accesskey "l">
+<!ENTITY saveAsFileCmd.label "Bestand…">
+<!ENTITY saveAsFileCmd.accesskey "B">
+<!ENTITY saveAsDraftCmd.label "Concept">
+<!ENTITY saveAsDraftCmd.accesskey "C">
+<!ENTITY saveAsTemplateCmd.label "Sjabloon">
+<!ENTITY saveAsTemplateCmd.accesskey "S">
+<!ENTITY attachMenu.label "Bijlage">
+<!ENTITY attachMenu.accesskey "B">
+<!ENTITY attachFileCmd.label "Bestand(en)…">
+<!ENTITY attachFileCmd.accesskey "B">
+<!ENTITY attachPageCmd.label "Webpagina…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Persoonlijke visitekaart (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "Nu verzenden">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "u">
+<!ENTITY sendLaterCmd.label "Later verzenden">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "z">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Opnieuw afbreken">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "f">
+<!ENTITY accountManagerCmd.label "Accountinstellingen…">
+<!ENTITY accountManagerCmd.accesskey "c">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "E-mailwerkbalk">
+<!ENTITY showComposeToolbarCmd.accesskey "E">
+<!ENTITY showFormatToolbarCmd.label "Opmaakwerkbalk">
+<!ENTITY showFormatToolbarCmd.accesskey "O">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Opmaak">
+<!ENTITY formatMenu.accesskey "m">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Opties">
+<!ENTITY optionsMenu.accesskey "O">
+
+<!ENTITY quoteCmd.label "Bericht citeren">
+<!ENTITY quoteCmd.accesskey "B">
+<!ENTITY selectAddressCmd.label "Adressen selecteren…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "A">
+
+<!ENTITY priorityMenu.label "Prioriteit">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY lowestPriorityCmd.label "Laagst">
+<!ENTITY lowestPriorityCmd.accesskey "a">
+<!ENTITY lowPriorityCmd.label "Laag">
+<!ENTITY lowPriorityCmd.accesskey "L">
+<!ENTITY normalPriorityCmd.label "Normaal">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Hoog">
+<!ENTITY highPriorityCmd.accesskey "H">
+<!ENTITY highestPriorityCmd.label "Hoogst">
+<!ENTITY highestPriorityCmd.accesskey "o">
+
+<!ENTITY returnReceiptMenu.label "Leesbevestiging">
+<!ENTITY returnReceiptMenu.accesskey "L">
+<!ENTITY dsnMenu.label "Afleverstatusnotificatie">
+<!ENTITY dsnMenu.accesskey "A">
+
+<!ENTITY outputFormatMenu.label "Opmaak">
+<!ENTITY outputFormatMenu.accesskey  "O">
+<!ENTITY autoFormatCmd.label "Automatisch herkennen">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Alleen platte tekst">
+<!ENTITY plainTextFormatCmd.accesskey "p">
+<!ENTITY htmlFormatCmd.label "Alleen HTML-tekst">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Platte en HTML-tekst">
+<!ENTITY bothFormatCmd.accesskey "e">
+
+<!ENTITY fileCarbonCopyCmd.label "Bericht kopiëren naar">
+<!ENTITY fileCarbonCopyCmd.accesskey "k">
+<!ENTITY fileHereMenu.label "Hier opslaan">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Verzenden">
+<!ENTITY addressButton.label "Adresboek">
+<!ENTITY attachButton.label "Bijlage">
+<!ENTITY spellingButton.label "Spelling">
+<!ENTITY saveButton.label "Opslaan">
+<!ENTITY stopButton.label "Stoppen">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Adresbalk">
+<!ENTITY formatToolbar.tooltip "Opmaakwerkbalk">
+<!ENTITY sendButton.tooltip "Dit bericht nu verzenden">
+<!ENTITY sendlaterButton.tooltip "Dit bericht later verzenden">
+<!ENTITY addressButton.tooltip "Een ontvanger uit een adresboek selecteren">
+<!ENTITY attachButton.tooltip "Een bijlage koppelen">
+<!ENTITY saveButton.tooltip "Dit bericht opslaan">
+<!ENTITY stopButton.tooltip "De huidige overdracht stoppen">
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Openen">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "Hernoemen…">
+<!ENTITY renameAttachment.accesskey "H">
+<!ENTITY deleteAttachment.accesskey "V">
+<!ENTITY selectAllAttachments.accesskey "A">
+<!ENTITY attachFile.label "Bestand(en) koppelen…">
+<!ENTITY attachFile.accesskey "B">
+<!ENTITY attachPage.label "Webpagina koppelen…">
+<!ENTITY attachPage.accesskey "W">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY mailViewSetupTitle.label "Üzenetnézet beállítása">
+<!ENTITY mailViewHeading.label "Üzenetnézet neve:">
+<!ENTITY mailViewHeading.accesskey "z">
+<!ENTITY searchTermCaption.label "Ebben a nézetben csak a következő tulajdonságokkal rendelkező levelek jelenjenek meg:">
+

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Barra lateral">
+<!ENTITY sidebar.reload.label           "Recarregar">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "Separadores">
+<!ENTITY sidebar.customize.label        "Personalizar barra lateral…">
+<!ENTITY sidebar.customize.accesskey    "o">
+<!ENTITY sidebar.hide.label             "Ocultar separador">
+<!ENTITY sidebar.hide.accesskey         "c">
+<!ENTITY sidebar.switch.label           "Trocar para separador">
+<!ENTITY sidebar.switch.accesskey       "T">
+<!ENTITY sidebarCmd.label               "Barra lateral">
+<!ENTITY sidebarCmd.accesskey           "B">
+<!ENTITY sidebar.loading.label          "A carregar…">
+<!ENTITY sidebar.loadstopped.label      "Carregamento parado">
+<!ENTITY sidebar.loading.stop.label     "Parar">
+<!ENTITY sidebar.loading.stop.accesskey "P">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "A barra lateral está vazia.">
+<!ENTITY sidebar.no-panels.add       'Pode adicionar separadores clicando no botão &quot;Separadores&quot; acima.'>
+<!ENTITY sidebar.no-panels.hide      'Se desejar ocultar completamente a barra lateral, clique no menu &quot;Ver&quot;, e selecione &quot;Barra lateral&quot; a partir do submenu &quot;Mostrar/Ocultar&quot;.'>
+<!ENTITY sidebar.sbDirectory.label   "Diretório da barra lateral…">
+
+<!ENTITY sidebar.pagenotfound.label  "Este separador não está disponível de momento.">
+<!ENTITY sidebar.close.tooltip       "Fechar barra lateral">
+<!ENTITY sidebar.open.tooltip        "Abrir barra lateral">
+
+<!ENTITY sidebar.search.label         "Pesquisar">
+<!ENTITY sidebar.client-bookmarks.label     "Marcadores">
+<!ENTITY sidebar.client-history.label       "Histórico">
+<!ENTITY sidebar.client-addressbook.label   "Livro de endereços">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Sicherheit">
+<!ENTITY securityTab.label "Sicherheit">
+<!ENTITY securityHeading.label "Um verschlüsselte Nachrichten zu senden und zu empfangen, sollten Sie sowohl ein Zertifikat für Verschlüsselung als auch eines für digitale Signatur angeben.">
+<!ENTITY encryptionGroupTitle.label "Verschlüsselung">
+<!ENTITY encryptionChoiceLabel.label "Standard-Verschlüsselung beim Senden von Nachrichten:">
+<!ENTITY neverEncrypt.label "Nie (keine Verschlüsselung verwenden)">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "Notwendig (kann keine Nachricht senden, wenn nicht alle Empfänger ein Zertifikat haben)">
+<!ENTITY alwaysEncryptMessage.accesskey "o">
+<!ENTITY encryptionCert.message "Persönliches Zertifikat für Ver- und Entschlüsselung ankommender Nachrichten:">
+<!ENTITY digitalSign.certificate.button "Auswählen…">
+<!ENTITY digitalSign.certificate.accesskey "A">
+<!ENTITY digitalSign.certificate_clear.button "Leeren">
+<!ENTITY digitalSign.certificate_clear.accesskey "L">
+<!ENTITY encryption.certificate.button "Auswählen…">
+<!ENTITY encryption.certificate.accesskey "w">
+<!ENTITY encryption.certificate_clear.button "Leeren">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Digitale Signatur">
+<!ENTITY signMessage.label "Nachrichten digital signieren (als Standard)">
+<!ENTITY signMessage.accesskey "d">
+<!ENTITY signingCert.message "Zertifikat für das Absenden digital signierter Nachrichten:">
+
+<!ENTITY certificates.label "Zertifikate">
+<!ENTITY manageCerts2.label "Zertifikate verwalten…">
+<!ENTITY manageCerts2.accesskey "Z">
+<!ENTITY manageDevices.label "Kryptographie-Module verwalten…">
+<!ENTITY manageDevices.accesskey "K">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Zertifikat wählen">
+<!ENTITY certPicker.info  "Zertifikat:">
+<!ENTITY certPicker.detailsLabel "Details des gewählten Zertifikats:">

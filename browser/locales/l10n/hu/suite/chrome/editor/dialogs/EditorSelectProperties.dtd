@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Választólista tulajdonságai">
+
+<!ENTITY Select.label "Választólista">
+<!ENTITY SelectName.label "Lista neve:">
+<!ENTITY SelectName.accesskey "L">
+<!ENTITY SelectSize.label "Magasság:">
+<!ENTITY SelectSize.accesskey "M">
+<!ENTITY SelectMultiple.label "Többszörös választás">
+<!ENTITY SelectMultiple.accesskey "b">
+<!ENTITY SelectDisabled.label "Tiltva">
+<!ENTITY SelectDisabled.accesskey "T">
+<!ENTITY SelectTabIndex.label "Bejárási sorrend:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Lehetőségcsoport">
+<!ENTITY OptGroupLabel.label "Címke:">
+<!ENTITY OptGroupLabel.accesskey "C">
+<!ENTITY OptGroupDisabled.label "Tiltva">
+<!ENTITY OptGroupDisabled.accesskey "T">
+
+<!ENTITY Option.label "Beállítás">
+<!ENTITY OptionText.label "Szöveg:">
+<!ENTITY OptionText.accesskey "S">
+<!ENTITY OptionValue.label "Érték:">
+<!ENTITY OptionValue.accesskey "r">
+<!ENTITY OptionSelected.label "Alapértelmezésben kiválasztva">
+<!ENTITY OptionSelected.accesskey "A">
+<!ENTITY OptionDisabled.label "Tiltva">
+<!ENTITY OptionDisabled.accesskey "T">
+
+<!ENTITY TextHeader.label "Szöveg">
+<!ENTITY ValueHeader.label "Érték">
+<!ENTITY SelectedHeader.label "Kiválasztva">
+
+<!ENTITY AddOption.label "Lehetőség hozzáadása">
+<!ENTITY AddOption.accesskey "L">
+<!ENTITY AddOptGroup.label "Csoport hozzáadása">
+<!ENTITY AddOptGroup.accesskey "C">
+<!ENTITY RemoveElement.label "Eltávolítás">
+<!ENTITY RemoveElement.accesskey "E">
+<!ENTITY MoveElementUp.label "Mozgatás felfelé">
+<!ENTITY MoveElementUp.accesskey "f">
+<!ENTITY MoveElementDown.label "Mozgatás lefelé">
+<!ENTITY MoveElementDown.accesskey "l">

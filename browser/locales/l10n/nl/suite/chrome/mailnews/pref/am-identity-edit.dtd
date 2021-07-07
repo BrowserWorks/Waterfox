@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (identityDialog.style): This value should be roughly
+     equal to the value of accountManager.size entity minus the value
+     of accountTree.width entity. -->
+<!ENTITY identityDialog.style   "min-width: 93ch;">
+<!ENTITY identityListDesc.label "Configureer de instellingen voor deze identiteit:">
+
+<!ENTITY settingsTab.label       "Instellingen">
+<!ENTITY copiesFoldersTab.label  "Kopieën &amp; mappen">
+<!ENTITY addressingTab.label     "Opstellen &amp; adressering">
+
+<!ENTITY publicData.label        "Openbare gegevens">
+<!ENTITY privateData.label       "Privégegevens">
+<!ENTITY identityAlias.label     "Label van identiteit:">
+<!ENTITY identityAlias.accesskey "a">

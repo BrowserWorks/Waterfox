@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "再生">
+<!ENTITY playButton.pauseLabel "一時停止">
+<!ENTITY muteButton.muteLabel "ミュート">
+<!ENTITY muteButton.unmuteLabel "ミュート解除">
+<!ENTITY fullscreenButton.enterfullscreenlabel "全画面表示">
+<!ENTITY fullscreenButton.exitfullscreenlabel "全画面表示を解除">
+<!ENTITY castingButton.castingLabel "画面に映す">
+<!ENTITY closedCaption.off "オフ">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "音量スライダー">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "ピクチャーインピクチャー">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "ピクチャーインピクチャーで観る">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "&brandShortName; で他の操作をしている間も動画を前面に表示して再生します。">
+
+<!ENTITY error.aborted "動画の読み込みを中止しました。">
+<!ENTITY error.network "ネットワークエラーが発生したため動画の再生を中止しました。">
+<!ENTITY error.decode "ファイルが壊れているため動画を再生できません。">
+<!ENTITY error.srcNotSupported "この動画のファイル形式または MIME タイプはサポートされていません。">
+<!ENTITY error.noSource2 "サポートされたファイル形式および MIME タイプの動画が見つかりませんでした。">
+<!ENTITY error.generic "原因不明のエラーが発生したため動画の再生を中止しました。">
+
+<!ENTITY status.pictureInPicture "この動画はピクチャーインピクチャーモードで再生されています。">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always avaiable. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and string which is surrounded by <span>
+would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">

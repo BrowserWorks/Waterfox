@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.ldap.window.title "Servidores de directorio LDAP">
+<!ENTITY directories.label "Servidor de directorio LDAP:">
+<!ENTITY directoriesText.label "Selecionar un servidor de directorio LDAP:">
+<!ENTITY directoriesText.accesskey "S">
+<!ENTITY addDirectory.label "Añadir">
+<!ENTITY addDirectory.accesskey "A">
+<!ENTITY editDirectory.label "Editar">
+<!ENTITY editDirectory.accesskey "e">
+<!ENTITY deleteDirectory.label "Eliminar">
+<!ENTITY deleteDirectory.accesskey "E">

@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "聯絡">
+<!ENTITY Contact.accesskey               "C">
+<!ENTITY Name.box                        "姓名">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "LastName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "FirstName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticLastName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticFirstName">
+
+<!ENTITY NameField1.label               "名字:">
+<!ENTITY NameField1.accesskey           "F">
+<!ENTITY NameField2.label               "姓氏:">
+<!ENTITY NameField2.accesskey           "L">
+<!ENTITY PhoneticField1.label           "注音:">
+<!ENTITY PhoneticField2.label           "注音:">
+<!ENTITY DisplayName.label              "顯示名稱:">
+<!ENTITY DisplayName.accesskey          "D">
+<!ENTITY preferDisplayName.label        "總是在郵件檔頭上方顯示姓名">
+<!ENTITY preferDisplayName.accesskey    "A">
+<!ENTITY preferDisplayName2.accesskey   "y">
+<!ENTITY NickName.label                 "暱稱:">
+<!ENTITY NickName.accesskey             "N">
+
+<!ENTITY PrimaryEmail.label             "電子郵件:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "其它 Email:">
+<!ENTITY SecondEmail.accesskey          "i">
+<!ENTITY PreferMailFormat.label         "收件格式:">
+<!ENTITY PreferMailFormat.accesskey     "v">
+<!ENTITY PlainText.label                "純文字">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "未知">
+<!ENTITY ScreenName.label               "網路代號:">
+<!ENTITY ScreenName.accesskey           "S">
+
+<!ENTITY chatName.label                 "聊天名稱:">
+
+<!ENTITY WorkPhone.label                "商務電話:">
+<!ENTITY WorkPhone.accesskey            "k">
+<!ENTITY HomePhone.label                "住家電話:">
+<!ENTITY HomePhone.accesskey            "m">
+<!ENTITY FaxNumber.label                "傳真:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "呼叫器:">
+<!ENTITY PagerNumber.accesskey          "g">
+<!ENTITY CellularNumber.label           "行動電話:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "私人">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "住址:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "鄉／鎮／市／區:">
+<!ENTITY HomeCity.accesskey             "y">
+<!ENTITY HomeState.label                "縣／市:">
+<!ENTITY HomeState.accesskey            "S">
+<!ENTITY HomeZipCode.label              "郵遞區號:">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "國家:">
+<!ENTITY HomeCountry.accesskey          "u">
+<!ENTITY HomeWebPage.label              "網站:">
+<!ENTITY HomeWebPage.accesskey          "e">
+<!ENTITY Birthday.label                 "生日:">
+<!ENTITY Birthday.accesskey             "B">
+<!ENTITY In.label                       "">
+<!ENTITY Year.placeholder               "年">
+<!ENTITY Or.value                       "或">
+<!ENTITY Age.placeholder                "年齡">
+<!ENTITY YearsOld.label                 "">
+
+<!ENTITY Work.tab                       "商務">
+<!ENTITY Work.accesskey                 "W">
+<!ENTITY JobTitle.label                 "職稱:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "部門:">
+<!ENTITY Department.accesskey           "m">
+<!ENTITY Company.label                  "服務單位:">
+<!ENTITY Company.accesskey              "n">
+<!ENTITY WorkAddress.label              "地址:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "鄉／鎮／市／區:">
+<!ENTITY WorkCity.accesskey             "y">
+<!ENTITY WorkState.label                "縣／市:">
+<!ENTITY WorkState.accesskey            "S">
+<!ENTITY WorkZipCode.label              "郵遞區號:">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "國家:">
+<!ENTITY WorkCountry.accesskey          "u">
+<!ENTITY WorkWebPage.label              "網站:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "其他">
+<!ENTITY Other.accesskey                "h">
+<!ENTITY Custom1.label                  "自訂 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "自訂 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "自訂 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "自訂 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "註記:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "聊天">
+<!ENTITY Chat.accesskey                 "a">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM.accesskey                  "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN.accesskey                  "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC 暱稱:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "相片">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY PhotoDesc.label                "從下列選一個:">
+<!ENTITY GenericPhoto.label             "一般相片">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "預設">
+<!ENTITY PhotoFile.label                "從這台電腦裡">
+<!ENTITY PhotoFile.accesskey            "n">
+<!ENTITY BrowsePhoto.label              "瀏覽">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "從網路上">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "貼上或輸入相片的網址">
+<!ENTITY UpdatePhoto.label              "更新">
+<!ENTITY UpdatePhoto.accesskey          "U">
+<!ENTITY PhotoDropTarget.label          "將新照片拖到此處">

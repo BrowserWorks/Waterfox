@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Приложения">
+
+<!ENTITY typeColumn.label        "Тип содержимого">
+<!ENTITY typeColumn.accesskey    "о">
+
+<!ENTITY actionColumn2.label     "Действие">
+<!ENTITY actionColumn2.accesskey "е">
+
+<!ENTITY search.placeholder      "Поиск типов и действий">
+
+<!ENTITY useAppChooser.label     "По возможности использовать системное диалоговое окно выбора приложения">
+<!ENTITY useAppChooser.accesskey "м">

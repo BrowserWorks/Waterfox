@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Tinklalapio publikavimas">
+<!ENTITY windowTitleSettings.label    "Publikavimo nuostatos">
+<!ENTITY publishTab.label             "Publikavimas">
+<!ENTITY settingsTab.label            "Nuostatos">
+<!ENTITY publishButton.label          "Publikuoti">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Tinklavietės pavadinimas:">
+<!ENTITY siteList.accesskey           "T">
+<!ENTITY siteList.tooltip             "Pasirinkite tinklavietę, kurioje ketinate publikuoti">
+<!ENTITY newSiteButton.label          "Aprašyti naują tinklavietę">
+<!ENTITY newSiteButton.accesskey      "a">
+<!ENTITY docDirList.label             "Tinklalapio poaplankis:">
+<!ENTITY docDirList.accesskey         "p">
+<!ENTITY docDirList.tooltip           "Parinkite arba įveskite tinklalapiui skirto serverio poaplankio vardą">
+<!ENTITY publishImgCheckbox.label     "Įtraukti grafinius ir kitus failus">
+<!ENTITY publishImgCheckbox.accesskey "k">
+<!ENTITY publishImgCheckbox.tooltip   "Publikuoti paveikslus ir kitus failus, į kuriuos eina saitai iš šio tinklalapio">
+<!ENTITY sameLocationRadio.label      "Failų vieta sutampa su tinklalapio vieta">
+<!ENTITY sameLocationRadio.accesskey  "F">
+<!ENTITY sameLocationRadio.tooltip    "Failai publikuojami toje pat tinklavietėje, kur ir tinklalapis">
+<!ENTITY useSubdirRadio.label         "Įrašyti į šį tinklavietės poaplankį:">
+<!ENTITY useSubdirRadio.accesskey     "Į">
+<!ENTITY useSubdirRadio.tooltip       "Failus publikuoti į parinktą serverio poaplankį">
+<!ENTITY otherDirList.tooltip         "Parinkite arba įveskite tinklavietės poaplankio, į kurį norite publikuoti failus, vardą">
+<!ENTITY pageTitle.label              "Tinklalapio antraštė:">
+<!ENTITY pageTitle.accesskey          "a">
+<!ENTITY pageTitle.tooltip            "Tinklalapio antraštė bus matoma naršyklės lango antraštės juostoje ir adresyne">
+<!ENTITY pageTitleExample.label       "pvz., „V. Pavardenio tinklalapis“">
+<!ENTITY filename.label               "Failo vardas:">
+<!ENTITY filename.accesskey           "v">
+<!ENTITY filename.tooltip             "Surinkite šio tinklalapio failo vardą ir prievardį „.html“">
+<!ENTITY filenameExample.label        "pvz., „Jonas.html“">
+<!ENTITY setDefaultButton.label       "Laikyti numatytąja">
+<!ENTITY setDefaultButton.accesskey   "n">
+<!ENTITY removeButton.label           "Pašalinti tinklavietės aprašą">
+<!ENTITY removeButton.accesskey       "š">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Aprašytos tinklavietės">
+<!ENTITY serverInfo.label             "Serverio informacija">
+<!ENTITY loginInfo.label              "Seanso pradžios informacija">
+<!ENTITY siteName.label               "Tinklavietės pavadinimas:">
+<!ENTITY siteName.accesskey           "p">
+<!ENTITY siteName.tooltip             "Alternatyvus (vietinis) pavadinimas tinklavietės, kurioje publikuojate (pvz., „Rašiniai“)">
+<!ENTITY siteUrl.label                "Publikavimo adresas (pvz., ftp://ftp.tiekejas.lt/abonentas):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Adresas prasideda „ftp://“ (http://). Jį galima gauti iš IPT arba prieglobos teikėjo">
+<!ENTITY browseUrl.label              "Pradžios tinklalapio adresas (pvz., http://www.tiekejas.lt/abonentas):">
+<!ENTITY browseUrl.accesskey          "t">
+<!ENTITY browseUrl.tooltip            "Jūsų svetainės pradžios tinklalapio aplanko adresas. Jis prasideda „http://“ ir baigiasi aplanko (ne failo) vardu.">
+<!ENTITY username.label               "Abonento vardas:">
+<!ENTITY username.accesskey           "A">
+<!ENTITY username.tooltip             "Abonento vardas, su kuriuo prisijungiate prie paslaugas teikiančios tarnybos">
+<!ENTITY password.label               "Slaptažodis:">
+<!ENTITY password.accesskey           "S">
+<!ENTITY password.tooltip             "Slaptažodis, naudojamas kartu su abonento vardu.">
+<!ENTITY savePassword.label           "Įrašyti slaptažodį">
+<!ENTITY savePassword.accesskey       "r">
+<!ENTITY savePassword.tooltip         "Slaptažodį galima išsaugoti slaptažodžių tvarkytuvėje, kad nereikėtų kiekvieną kartą jo rinkti.">

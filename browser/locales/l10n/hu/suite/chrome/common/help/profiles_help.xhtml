@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Profilok kezelése</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="managing_profiles">Profilok kezelése</h1>
+
+<p>Ha az internetet otthon és a munkahelyen is használjuk, bizonyára különböző könyvjelzőkre, beállításokra, címjegyzékekre, postafiókra, Oldalsáv-beállításokra stb. lesz szükségünk. Ugyanez a helyzet a családtagok között is: bár mindenki ugyanazt a böngészőt használja, de az interneten különböző felhasználónak számítanak.</p>
+
+<p>A Profilkezelő segítségével saját könyvjelzőkkel, beállításokkal, levelezési adatokkal stb. rendelkező profilokat hozhatunk létre. A böngésző első telepítésekor automatikusan létrehozunk egy alapértelmezett profilt. További profilok létrehozása után a böngésző indításakor meg kell adnunk, hogy melyik profilt szeretnénk használni.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+ <ul>
+    <li><a href="#creating_a_new_profile">Új profil létrehozása</a></li>
+    <li><a href="#deleting_or_renaming_a_profile">Profil törlése vagy átnevezése</a></li>
+    <li><a href="#roaming_profiles">Vándorló profilok</a></li>
+    <li><a href="#roaming_prefs">Vándorló profilok beállításai</a></li>
+    <li><a href="#roaming_item_selection">Vándorló profilok tulajdonságai - Elemek kiválasztása</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_new_profile">Új profil létrehozása</h2>
+
+<p>Új profil létrehozása:</p>
+
+<ol>
+  <li>Nyissuk meg a Profilkezelőt:
+    <ul>
+      <li><strong>Amennyiben a &brandShortName; jelnleg fut</strong>: Nyissuk meg az Eszközök menüt és válasszuk ki a Profilváltás… menüelemet.</li>
+      <li><strong>Ha a &brandShortName; nincsen elindítva</strong>:<span class="win"> Nyissuk meg a Start menüt és a Programok menüelemet, majd a &brandShortName; almenüből válasszuk ki a Profilkezelő programot.</span><span class="mac"> Tartsuk lenyomva az
+        <kbd>Option</kbd> billentyűt miközben elindítjuk a &brandShortName; programot a Finder ablakból vagy a Dock indítósávról.</span><span class="unix"> Írjuk be a következő parancsot a terminálba: <kbd>./mozilla -profilemanager</kbd></span></li>
+    </ul>
+  </li>
+  <li>Kattintsunk a Profil létrehozása gombra, olvassuk el a leírást, majd kattintsunk a Tovább gombra.</li>
+  <li>Írjuk be a profil nevét. Ez tetszőleges lehet, akár a valódi név, akár a profil felhasználási területe, például <q>Otthon</q>.</li>
+  <li>Fogadjuk el az új profil alapértelmezett helyét, vagy a Mappa választása gombra kattintva adjuk meg a kívánt helyet.</li>
+  <li>Ha telepítettük a Nyelvi és tartalomcsomagokat, kattintsunk a Terület választása gombra, és jelöljük ki a kívánt Nyelv/terület beállítást.</li>
+  <li>Kattintsunk a Befejezés gombra.</li>
+</ol>
+
+<p>[<a href="#managing_profiles">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="deleting_or_renaming_a_profile">Profil törlése vagy átnevezése</h2>
+
+<p>A felesleges profilokat törölhetjük. Meglévő profil törlése vagy átnevezése:</p>
+
+<ol>
+  <li>Nyissuk meg a Profilkezelőt:
+    <ul>
+      <li><strong>Amennyiben a &brandShortName; jelnleg fut</strong>: Nyissuk meg az Eszközök menüt és válasszuk ki a Profilváltás menüelemet. <strong>Megjegyzés</strong>: Az éppen használatban lévő profilt nem lehet letörölni.</li>
+      <li><strong>Ha a &brandShortName; nincsen elindítva</strong>:
+        <span class="win"> Nyissuk meg a Start menüt és a Programok menüelemet, majd a &brandShortName; almenüből válasszuk ki a Profilkezelő programot.</span><span class="mac"> Tartsuk lenyomva az<kbd>Option</kbd> billentyűt miközben elindítjuk a &brandShortName; programot a Finder ablakból vagy a Dock indítósávról.</span><span class="unix"> Írjuk be a következő parancsot a terminálba: <kbd>./mozilla -profilemanager</kbd></span></li>
+    </ul>
+  </li>
+  <li>Profil törléséhez jelöljük ki nevét, és kattintsunk a Profil törlése gombra. A jóváhagyó ablakban az alábbi lehetőségek közül válaszhatunk:
+    <ul>
+      <li><strong>Fájlok törlése</strong>: Letörli a teljes profilmappát és a benne tárolt adatokat (könyvjelzők, beállítások, postafiókok beállításai, és így tovább). <em>Bizonyosodjunk meg arról, hogy semmire sincs szükségünk a profilból mielőtt ezt a lehetőséget választjuk.</em></li>
+      <li><strong>Fájlok megtarása</strong>: Eltávolítja a profilt a az elérhető profilok listájáról, de megtarja a profilmappát. Ezt a lehetőséget választva semmilyen adat nem kerül eltávolításra a profilból.</li>
+    </ul>
+  </li>
+  <li>Profil törléséhez jelöljük ki nevét, kattintsunk a Profil átnevezése gombra, és kövessük az utasításokat.</li>
+</ol>
+
+<p>[<a href="#managing_profiles">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="roaming_profiles">Vándorló felhasználó</h2>
+
+<p>Vándorló felhasználó opció bekapcsolásával lehetőség van a felhasználói profil és a hozzá társított beállítások központi kiszolgálón vagy fájlmegosztáson történő tárolására. Ennek a beállításnak az előnye, hogy azonos beállítások lesznek elérhetőek minden gépen. Például: Ha használni kívánjuk a &brandShortName; programot mind a munkahelyi, mind az otthoni gépén úgy, hogy a könyvjelzők és egyéb beállítások szonkronban legyenek vagy egy vállalat esetén is hasznos, ahol a dolgozók használhatják a saját &brandShortName; profiljukat valamennyi számítógépen.</p>
+
+<p>A vándorló felhasználó profilja tárolható HTTP és FTP kiszolgálókon. A kiszolgáló eléréséhez megfelelő jogosultságokra, felhasználónévre és jelszóra van szükség, azaz írási jogosultság elengedhetetlenül fontos a megfelelő mappák eléréséhez, hogy a profil mentése és betöltése biztosítható legyen. Alternatívaként, a hagyományos fájlmegosztást használó számítógépek esetén, a profil tárolható a helyi gépen a fájlmásolási eljárás használatával.</p>
+
+<p>Amikor elindítjuk a &brandShortName; programot, a profilunk letöltésre kerül, a program bezárása előtt a &brandShortName; a profilt feltölti a megadott helyre.</p>
+
+<p>[<a href="#managing_profiles">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="roaming_prefs">Vándorló felhasználó beállítások</h2>
+
+<p>Ez a fejezet bemutatja, hogy hogyan állítsuk be a Vándorló felhasználó párbeszédablak beállításait. A panellap a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Válasszuk ki a Vándorló felhasználó kategóriát.</li>
+  <li>Jelöljük be a <strong>Távoli profiltárolás engedélyezése</strong> jelőlőnégyzetet a vándorló felhasználó profilhasználathoz.</li>
+  <li>Hajtsuk végre a megfelelő lépést:
+    <ul>
+      <li><strong>HTTP / FTP</strong>: Válasszuk ezt a lehetőséget, ha a profil FTP vagy HTTP kiszolgálóra kerül elhelyezésre.
+        <ul>
+          <li><strong>Alap URL</strong>: Adjuk meg a vándorló felhasználó profilmappájának URL címét ebbe a mezőbe. Az alábbi URL címek támogatottak: FTP, HTTP vagy
+            HTTPS. Az FTP hozzáférés a legegyszerűbben beállítható az otthoni hálózatban.
+            Egyéb esetekben, különösen, ha az adatok az Interneten keresztül kerülnek átvitelre, erősen ajánlott a biztonságos HTTPS eljárás alkalmazása, mert ellenkező esetben, minden mentett jelszó és könyvjelző (attól függően, hogy melyik elemeket jelöltünk ki szinkronizálásra) olvasható lesz az azonos hálózaton tartozkodó esetleg kémkedő fél számára.
+
+            <p><strong>Például</strong>:<br/>
+              <kbd>&lt;https://felhasznalo@http-kiszolgalo/mappa/&gt;</kbd><br/>
+              <kbd>&lt;ftp://felhasznalo@ftp-kiszolgalo//home/felhasznalo/mappa/&gt;</kbd><br/> 
+              <kbd>&lt;ftp://felhasznalo@ftp-kiszolgalo/mappa/&gt;</kbd></p>
+
+          </li>
+          <li><strong>Felhasználónév</strong>: Adjuk meg a felhasználónevet, amelyet az FTP vagy HTTP kiszolgáló eléréséhez használ.</li>
+          <li><strong>Jelszó mentése</strong>: Engedélyezzük ezt a lehetőséget, ha azt szeretnénk, hogy a megadott jelszó mentésre kerüljön.</li>
+          <li><strong>Jelszó</strong>: Adjuk meg a felhasználónévhez tartozó jelszót.</li>
+        </ul>
+      </li>
+      <li><strong>Fájlmásolás</strong>: Válasszuk ki ezt a lehetőséget, ha azt szeretnénk, hogy profil a helyi mappában kerüljön tárolásra.
+        <ul>
+          <li>Kattintsunk a <strong>Tallozás</strong> gombra, majd tallózzuk ki azt a mappát amelybe a profil adatait tárolni szeretnénk.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#managing_profiles">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="roaming_item_selection">Vándorló profilok tulajdonságai - Elemek kijelölése</h2>
+
+<p>Alapértelmezés szerint, csak a könyvjelzők a sütik és a személyes címjegyzék kerül a Vándorló felhasználók megosztott profiljába. Ha egyetlen elemet sem lehet kijelölni, bizonyosodjunk meg róla, hogy a vándorló felhasználó Távoli profiltárolása engedélyezésre került. Egyéb információk vándorló felhasználó profiljába történő elhelyezéséhez hajtsuk végre a következő lépéseket:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Vándorló felhasználó ketegória alatt kattintsunk az Elemek kijelölése elemre. (Amennyiben nem jelenik meg az Elemek kijelölése alkategória, kattintsunk duplán a Vándorló felhasználó elemre a lista kibontásához.)</li>
+  <li>Válasszuk ki a szinkronizálni kívánt elemeket, amelyek bele fognak kerülni a vándorló felhasználó profiljába.</li>
+</ol>
+
+<p>A helyben tárolt levelek nem rakható bele a vándorló felhasználó profiljába, mert a szinkronizálás túl sok időt venne igénybe. Használjunk inkább IMAP levélkezelést ilyen célra.</p>
+
+<p><strong>Megjegyzés</strong>: Amennyiben a lassú kapcsolatot használunk, legyünk tekintettel arra, hogy néhány fájl mérete igen nagy is lehet, amelynek komoly kihatása lehet a program indulási idejére is. A &brandShortName; letölti a helyi gépre az összes vándorló felhasználó profiljában tárolt adatot a program indulása előtt és a teljes profil információ feltöltésre kerül a kiszolgálóra, amikor kilépünk a &brandShortName; programból.</p>
+
+<p>A Vándorló felhasználók szerveroldali beállításaival kapcsolatos további tudnivalókat a következő on-line dokumentumokban találunk: <a href="http://www.klomp.org/mod_roaming/">mod_roaming - Vándorló felhasználók hozzáférése modul Apache webkiszolgálón (mod_roaming - Roaming Access
+  module for Apache)</a>,
+  <a href="http://web.archive.org/web/20020207131101/http://help.netscape.com/products/client/communicator/manual_roaming2.html">A vándorló felhasználó hozzáférés kézi megvalósítása (Manually
+  Implementing Roaming Access)</a>.</p>
+
+<p>[<a href="#managing_profiles">Vissza a fejezet elejére</a>]</p>
+
+</body>
+</html>

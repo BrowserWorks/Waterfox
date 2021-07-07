@@ -1,0 +1,142 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "作成: (件名なし)">
+
+<!ENTITY fromAddr.label "差出人:">
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY toAddr.label "To:">
+<!ENTITY ccAddr.label "Cc:">
+<!ENTITY bccAddr.label "Bcc:">
+<!ENTITY replyAddr.label "Reply-To:">
+<!ENTITY newsgroupsAddr.label "Newsgroup:">
+<!ENTITY followupAddr.label "Followup-To:">
+<!ENTITY subject.label "件名:">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachments.label "添付:">
+<!ENTITY attachments.accesskey "c">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "保存">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "選択して保存">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsFileCmd.label "ファイル...">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "下書き">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "テンプレート">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY attachMenu.label "添付">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "ファイル...">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "ウェブページ...">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "パーソナルカード (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "今すぐ送信">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "後で送信">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "再改行">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "w">
+
+<!-- Edit menu items -->
+<!ENTITY accountManagerCmd.label "メールとニュースグループのアカウント設定...">
+<!ENTITY accountManagerCmd.accesskey "m">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "メールツールバー">
+<!ENTITY showComposeToolbarCmd.accesskey "o">
+<!ENTITY showFormatToolbarCmd.label "書式ツールバー">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "書式">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "オプション">
+<!ENTITY optionsMenu.accesskey "p">
+
+<!ENTITY quoteCmd.label "メッセージを引用">
+<!ENTITY quoteCmd.accesskey "Q">
+<!ENTITY selectAddressCmd.label "メールアドレスを選択...">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "A">
+
+<!ENTITY priorityMenu.label "重要度">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY lowestPriorityCmd.label "最低">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "低">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "標準">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "高">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "最高">
+<!ENTITY highestPriorityCmd.accesskey "H">
+
+<!ENTITY returnReceiptMenu.label "開封確認の返送を求める">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "配信状態通知の返送を求める">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "送信形式">
+<!ENTITY outputFormatMenu.accesskey  "f">
+<!ENTITY autoFormatCmd.label "自動判別">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "プレーンテキスト">
+<!ENTITY plainTextFormatCmd.accesskey "p">
+<!ENTITY htmlFormatCmd.label "リッチテキスト (HTML) のみ">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "リッチテキスト (HTML) とプレーンテキスト">
+<!ENTITY bothFormatCmd.accesskey "l">
+
+<!ENTITY fileCarbonCopyCmd.label "送信メッセージをコピー">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "ここへ">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "送信">
+<!ENTITY addressButton.label "アドレス">
+<!ENTITY attachButton.label "添付">
+<!ENTITY spellingButton.label "スペル">
+<!ENTITY saveButton.label "保存">
+<!ENTITY stopButton.label "中止">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "アドレスバー">
+<!ENTITY formatToolbar.tooltip "書式ツールバー">
+<!ENTITY sendButton.tooltip "このメッセージを今すぐ送信します">
+<!ENTITY sendlaterButton.tooltip "このメッセージを後で送信します">
+<!ENTITY addressButton.tooltip "アドレス帳から宛先を選択します">
+<!ENTITY attachButton.tooltip "このメッセージにファイルを添付します">
+<!ENTITY saveButton.tooltip "このメッセージを保存します">
+<!ENTITY stopButton.tooltip "送受信を中止します">
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "開く">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "名前変更...">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY deleteAttachment.accesskey "D">
+<!ENTITY selectAllAttachments.accesskey "A">
+<!ENTITY attachFile.label "ファイルを添付...">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachPage.label "ウェブページを添付...">
+<!ENTITY attachPage.accesskey "W">

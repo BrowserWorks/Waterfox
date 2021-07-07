@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "带我离开！">
+<!ENTITY safeb.palm.decline.label "忽略此警告">
+<!ENTITY safeb.palm.reportPage.label "为什么拦截此页面？">
+
+<!ENTITY safeb.blocked.malwarePage.title "已报告的攻击页面！">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "根据报告，位于 <span id='malware_sitename'/> 的此网页为恶意网页。现已根据您的安全选项进行拦截。">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>攻击页面会尝试安装能盗取个人信息、攻击他人，或者损害您的系统的程序。</p><p>某些攻击页面是在故意散布有害软件，但更多则是在网站持有人不知情的情况下被恶意加入的。</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "此页面被举报提供垃圾软件！">
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "根据举报，位于 <span id='unwanted_sitename'/> 的此网页会提供不需要的垃圾软件。现已根据您的安全选项予以拦截。">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "<p>提供垃圾软件的网页可能会诱导您安装欺诈软件，或以其他难以预料的方式损害您的系统。</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title2 "欺诈网站！">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc2 "根据举报，位于 <span id='phishing_sitename'/> 的此网页为欺诈网站。现已根据您的安全选项予以拦截。">
+<!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>欺诈网站会欺骗您进行危险的行为，例如安装软件或者套取您的个人信息，比如密码、电话号码、信用卡信息。</p><p>在此网页上输入任何信息均可能导致身份盗用或其他欺诈行为。</p>">
+
+<!ENTITY safeb.blocked.harmfulPage.title "即将进入的网站可能含有恶意软件">
+<!-- Localization note (safeb.blocked.harmfulPage.shortDesc) - Please don't translate the contents of the <span id="harmful_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; 已拦截 <span id='harmful_sitename'/> 页面，其可能会尝试安装危险的应用，从而窃取或删除您的信息（例如照片、密码、邮件、金融权证等）。">
+<!ENTITY safeb.blocked.harmfulPage.longDesc "">
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+<!ENTITY reportDeceptiveSite.label "报告欺诈网站…">
+<!ENTITY reportDeceptiveSite.accesskey "d">
+<!ENTITY notADeceptiveSite.label "这不是欺诈网站…">
+<!ENTITY notADeceptiveSite.accesskey "d">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title "Domyślny klient">
+<!ENTITY defaultClient.intro "&brandShortName; ma być domyślnym programem dla:">
+
+<!ENTITY browser.label "stron internetowych">
+<!ENTITY email.label "poczty">
+<!ENTITY newsgroups.label "grup dyskusyjnych">
+<!ENTITY feeds.label "źródeł aktualności">
+
+<!ENTITY checkOnStartup.label "Sprawdzaj te ustawienia zawsze podczas uruchamiania programu &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "A">

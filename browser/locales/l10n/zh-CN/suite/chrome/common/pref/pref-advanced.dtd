@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "高级">
+
+<!ENTITY systemPref.caption               "系统选项">
+<!ENTITY systemPrefCheck.label            "使用系统设置">
+<!ENTITY systemPrefCheck.accesskey        "U">
+<!ENTITY systemPref.desc                  "使用这个选项，&brandShortName; 从系统中继承首选项。这些系统设置将优先覆盖 &brandShortName; 首选项。 ">
+
+<!ENTITY prefCheckDefault.caption         "系统集成">
+<!ENTITY prefCheckDefaultClient.label     "启动时检查默认应用程序设置">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY printing.label                   "打印">
+<!ENTITY useNativePrintDialog.label       "使用原生的打印对话框（若支持）">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "使用全局打印设置">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "崩溃报告程序">
+<!ENTITY submitCrashes.label              "提交崩溃报告">
+<!ENTITY submitCrashes.accesskey          "S">
+
+<!ENTITY devTools.caption                 "开发者工具">
+<!ENTITY allowDebugger.label              "允许一个调试器连接到 &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "A">
+<!ENTITY allowRemoteConnections.label     "允许来自其他计算机的连接">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "连接传入时提示">
+<!ENTITY connectionPrompt.accesskey       "P">
+<!ENTITY remoteDebuggerPort.label         "要连接的端口号:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

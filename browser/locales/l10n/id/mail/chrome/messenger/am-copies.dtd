@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Salinan &amp; Folder">
+<!ENTITY sendingPrefix.label "Saat mengirim pesan, secara otomatis: ">
+<!ENTITY fccMailFolder.label "Masukkan sebuah salinan di:">
+<!ENTITY fccMailFolder.accesskey "M">
+<!ENTITY fccReplyFollowsParent.label "Masukkan balasan pada folder yang sama dengan folder pesan yang dibalas">
+<!ENTITY fccReplyFollowsParent.accesskey "l">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Tambahkan Cc ke alamat email ini:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Pisahkan alamat email dengan tanda koma">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Tambahkan Bcc ke alamat email ini:">
+<!ENTITY bccAddress.accesskey "b">
+<!ENTITY bccAddressList.placeholder "Pisahkan alamat email dengan tanda koma">
+<!ENTITY saveMessageDlg.label "Tampilkan dialog konfirmasi ketika pesan disimpan">
+<!ENTITY saveMessageDlg.accesskey "T">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Folder &quot;Terkirim&quot; di:">
+<!ENTITY sentFolderOn.accesskey "r">
+<!ENTITY sentInOtherFolder.label "Lainnya:">
+<!ENTITY sentInOtherFolder.accesskey "L">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Arsip Pesan">
+<!ENTITY keepArchives.label "Letakkan arsip pesan di:">
+<!ENTITY keepArchives.accesskey "a">
+<!ENTITY archiveHierarchyButton.label "Opsi pengarsipan…">
+<!ENTITY archiveHierarchyButton.accesskey "a">
+<!ENTITY archivesFolderOn.label "Folder &quot;Arsip&quot; di:">
+<!ENTITY archivesFolderOn.accesskey "A">
+<!ENTITY archiveInOtherFolder.label "Lainnya:">
+<!ENTITY archiveInOtherFolder.accesskey "L">
+<!ENTITY specialFolders.label "Konsep dan Templat">
+<!ENTITY keepDrafts2.label "Simpan pesan konsep dalam:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Folder &quot;Konsep&quot; di:">
+<!ENTITY draftsFolderOn.accesskey "d">
+<!ENTITY draftInOtherFolder.label "Lainnya:">
+<!ENTITY draftInOtherFolder.accesskey "L">
+<!ENTITY keepTemplates.label "Letakkan pesan templat di:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Folder &quot;Templat&quot; di:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Lainnya:">
+<!ENTITY templateInOtherFolder.accesskey "a">

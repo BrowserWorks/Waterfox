@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Písma">
+
+<!ENTITY  language.label                          "Znaková sada:">
+<!ENTITY  language.accesskey                      "Z">
+
+<!ENTITY  typefaces.label                         "Řez písma">
+<!ENTITY  sizes.label                             "Velikost (bodů)">
+
+<!ENTITY  proportional.label                      "Proporcionální:">
+<!ENTITY  proportional.accesskey                  "c">
+
+<!ENTITY  serif.label                             "Patkové:">
+<!ENTITY  serif.accesskey                         "P">
+<!ENTITY  sans-serif.label                        "Bezpatkové:">
+<!ENTITY  sans-serif.accesskey                    "B">
+<!ENTITY  monospace.label                         "Neproporcionální:">
+<!ENTITY  monospace.accesskey                     "N">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Ozdobné:">
+<!ENTITY  fantasy.accesskey                       "o">
+<!ENTITY  cursive.label                           "Kurzíva:">
+<!ENTITY  cursive.accesskey                       "k">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latinka">
+<!ENTITY  font.langGroup.japanese                 "Japonština">
+<!ENTITY  font.langGroup.trad-chinese             "Tradiční čínština (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Zjednodušená čínština">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tradiční čínština (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Korejština">
+<!ENTITY  font.langGroup.cyrillic                 "Azbuka">
+<!ENTITY  font.langGroup.el                       "Řečtina">
+<!ENTITY  font.langGroup.thai                     "Thajština">
+<!ENTITY  font.langGroup.hebrew                   "Hebrejština">
+<!ENTITY  font.langGroup.arabic                   "Arabština">
+<!ENTITY  font.langGroup.devanagari               "Dévanágarí">
+<!ENTITY  font.langGroup.tamil                    "Tamilština">
+<!ENTITY  font.langGroup.armenian                 "Arménština">
+<!ENTITY  font.langGroup.bengali                  "Bengálština">
+<!ENTITY  font.langGroup.canadian                 "Kannadština">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopština">
+<!ENTITY  font.langGroup.georgian                 "Gruzínština">
+<!ENTITY  font.langGroup.gujarati                 "Gudžarátština">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhí">
+<!ENTITY  font.langGroup.khmer                    "Khmerština">
+<!ENTITY  font.langGroup.malayalam                "Malajálamština">
+<!ENTITY  font.langGroup.math                     "Matematika">
+<!ENTITY  font.langGroup.odia                     "Udijština">
+<!ENTITY  font.langGroup.telugu                   "Telugština">
+<!ENTITY  font.langGroup.kannada                  "Kannadština">
+<!ENTITY  font.langGroup.sinhala                  "Sinhalština">
+<!ENTITY  font.langGroup.tibetan                  "Tibetština">
+<!ENTITY  font.langGroup.other                    "Jiné typy písma">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minimální velikost písma:">
+<!ENTITY minSize.accesskey                        "M">
+<!ENTITY minSize.none                             "Žádná">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Patkové">
+<!ENTITY  useDefaultFontSansSerif.label           "Bezpatkové">
+
+<!ENTITY  useDocumentFonts.label                  "Povolit stránkám použít jiné písmo">
+<!ENTITY  useDocumentFonts.accesskey              "s">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Určuje-li si stránka vlastní písma">
+<!ENTITY  useDefaultFont.label                    "Použít zde nastavená písma, bez ohledu na písma určovaná stránkou">
+<!ENTITY  useDefaultFont.accesskey                "u">

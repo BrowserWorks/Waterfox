@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Navegação por separadores">
+
+<!ENTITY tabDisplay.label "Exibição de separadores">
+<!ENTITY autoHide.label "Ocultar a barra de separadores se apenas existir um separador">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "Mudar para novos separadores abertos a partir de ligações">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Avisar-me quando fechar uma janela com múltiplos separadores">
+<!ENTITY warnOnClose.accesskey "n">
+<!ENTITY relatedAfterCurrent.label "Abrir separadores relacionados depois do separador atual">
+<!ENTITY relatedAfterCurrent.accesskey "o">
+
+<!ENTITY loadGroup.label "Ao abrir um grupo de marcadores">
+<!ENTITY loadGroupAppend.label "Adicionar separadores">
+<!ENTITY loadGroupAppend.accesskey "A">
+<!ENTITY loadGroupReplace.label "Substituir separadores existentes">
+<!ENTITY loadGroupReplace.accesskey "r">
+
+<!ENTITY openTabs.label "Abrir separadores em vez de janelas">
+
+<!ENTITY middleClick.label "Clique no botão do meio, Ctrl+clique ou Ctrl+Enter nas ligações de uma página de Internet">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Clique no botão do meio, &#8984;+clique ou &#8984;+Enter nas ligações numa página de Internet">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "Ctrl+Enter na barra de endereço">
+<!ENTITY urlbar.accesskey "E">
+<!ENTITY urlbarMac.label "&#8984;+Enter na barra de endereço">
+<!ENTITY urlbarMac.accesskey "E">
+
+<!ENTITY openManagers.label "Abrir num novo separador em vez de nova janela">
+<!ENTITY openDataManager.label "Gestor de dados">
+<!ENTITY openDataManager.accesskey "d">
+<!ENTITY openAddOnsManager.label "Gestor de extras">
+<!ENTITY openAddOnsManager.accesskey "x">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title "구독하기">
+<!ENTITY subscribeButton.label "구독하기">
+<!ENTITY subscribeButton.accesskey "S">
+<!ENTITY unsubscribeButton.label "구독 해지">
+<!ENTITY unsubscribeButton.accesskey "U">
+<!ENTITY newGroupsTab.label "New Groups">
+<!ENTITY newGroupsTab.accesskey "N">
+<!ENTITY refreshButton.label "새로 고침">
+<!ENTITY refreshButton.accesskey "R">
+<!ENTITY stopButton.label "중지">
+<!ENTITY stopButton.accesskey "T">
+<!ENTITY server.label "계정:">
+<!ENTITY server.accesskey "A">
+<!ENTITY subscribedHeader.label "구독하기">
+<!ENTITY namefield.label "포함된 항목 표시:">
+<!ENTITY namefield.accesskey "O">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Pregunta sobre correo HTML">
+
+<!ENTITY recipient.label "Algunos destinatarios pueden no recibir correctamente correo HTML.">
+
+<!ENTITY question.label "¿Quiere convertir el mensaje a texto sin formato o enviarlo en HTML de todas formas?">
+
+<!ENTITY plainTextAndHtml.label "Enviar en ambos formatos, texto sin formato y HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Enviar como texto sin formato">
+<!ENTITY plainTextOnly.accesskey "f">
+<!ENTITY htmlOnly.label "Enviar únicamente en HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Enviar">
+<!ENTITY send.accesskey "E">

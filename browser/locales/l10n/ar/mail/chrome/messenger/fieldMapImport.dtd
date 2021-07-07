@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "استورد دفتر العناوين">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "بينات السجل المستوردة: ">
+<!ENTITY fieldMapImport.next.label "التالي">
+<!ENTITY fieldMapImport.next.accesskey "ت">
+<!ENTITY fieldMapImport.previous.label "السابق">
+<!ENTITY fieldMapImport.previous.accesskey "س">
+<!ENTITY fieldMapImport.text "استخدم انقل لأعلى ولأسفل لتقابل حقول دفتر العناوين على اليسار بالبيانات الصحيحة للاستيراد على اليمين. ارفع العلامة من العناصر التي لا تريد استيرادها.">
+<!ENTITY fieldMapImport.up.label "تحرك إلى أعلى">
+<!ENTITY fieldMapImport.up.accesskey "ع">
+<!ENTITY fieldMapImport.down.label "تحرك إلى أسفل">
+<!ENTITY fieldMapImport.down.accesskey "س">
+<!ENTITY fieldMapImport.fieldListTitle "حقول دفتر العناوين">
+<!ENTITY fieldMapImport.dataTitle "بيانات السجل التي ستستورد">
+<!ENTITY fieldMapImport.skipFirstRecord.label "أول سجلات تحتوي أسماء الحقول">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "ح">

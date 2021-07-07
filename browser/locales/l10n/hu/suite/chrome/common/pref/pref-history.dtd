@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Előzmények">
+
+<!ENTITY  pref.history.caption              "A böngészés előzményei">
+<!ENTITY  historyPages.label                "Az előzmények mappája a felkeresett lapokra mutató hivatkozásokat tartalmazza.">
+<!ENTITY  enableHistory.label               "Látogatott weboldalak megjegyzése">
+<!ENTITY  enableHistory.accesskey           "L">
+<!ENTITY  clearHistory.label                "Előzmények törlése">
+<!ENTITY  clearHistory.accesskey            "E">
+
+<!ENTITY  locationBarHistory.caption        "A címmező előzményei">
+<!ENTITY  urlBarHistoryEnabled.caption      "A címmező előzményei">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "c">
+<!ENTITY  clearLocationBar.label            "A címmezőben tárolt oldalak listájának ürítése.">
+<!ENTITY  clearLocationBarButton.label      "Előzmények törlése">
+<!ENTITY  clearLocationBarButton.accesskey  "k">
+<!ENTITY  formfillHistory.caption           "Mentett űrlapadatok és keresési előzmények">
+<!ENTITY  enableFormfill.label              "Űrlapadatok és keresési előzmények">
+<!ENTITY  enableFormfill.accesskey          "n">
+<!ENTITY  formfillExpire.label              "Űrlapadatok és keresési előzmények megőrzése">
+<!ENTITY  formfillExpire.accesskey          "r">
+<!ENTITY  formfillDays.label                "napig">

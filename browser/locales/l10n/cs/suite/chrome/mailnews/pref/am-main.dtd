@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Nastavení účtu">
+<!ENTITY accountName.label "Název účtu:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Výchozí identita">
+<!ENTITY identityDesc.label "Každý účet obsahuje identifikační informace, které ostatní lidé vidí při čtení vašich zpráv.">
+<!ENTITY name.label "Vaše jméno:">
+<!ENTITY name.accesskey "j">
+<!ENTITY email.label "E-mailová adresa:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Odpovědět z této identity, když se záhlaví dodání shoduje:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Adresa pro odpověď:">
+<!ENTITY replyTo.accesskey "d">
+<!ENTITY replyTo.placeholder "Příjemci budou odpovídat na tuto adresu">
+<!ENTITY organization.label "Společnost:">
+<!ENTITY organization.accesskey "S">
+<!ENTITY signatureText.label "Text podpisu:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "Použít HTML">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Připojit podpis ze souboru (text, HTML nebo obrázek):">
+<!ENTITY signatureFile.accesskey "P">
+<!ENTITY choose.label "Vybrat…">
+<!ENTITY choose.accesskey "V">
+<!ENTITY editVCard.label "Upravit vizitku…">
+<!ENTITY editVCard.accesskey "U">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Ke zprávám připojovat vizitku (vCard)">
+<!ENTITY attachVCard.accesskey "z">
+
+<!ENTITY manageIdentities.label "Spravovat identity…">
+<!ENTITY manageIdentities.accesskey "r">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Odchozí server (SMTP):">
+<!ENTITY smtpName.accesskey "O">
+<!ENTITY smtpDefaultServer.label "Použít výchozí server">
+
+<!ENTITY smtpServerEdit.label "Upravit SMTP server…">
+<!ENTITY smtpServerEdit.accesskey "U">

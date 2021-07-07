@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Sicurezza messaggio">
+<!ENTITY signatureCert.label "Mostra certificato della firma">
+<!ENTITY encryptionCert.label "Mostra certificato di cifratura">
+
+<!ENTITY signer.name "Firmato da:">
+<!ENTITY recipient.name "Cifrato per:">
+<!ENTITY email.address "Indirizzo email:">
+<!ENTITY issuer.name "Certificato rilasciato da:">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "匯入通訊錄">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "匯入到記錄 (Record) 的資料:">
+<!ENTITY fieldMapImport.next.label "下一步">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "上一步">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "使用上移及下移以使右列資料對應左列通訊錄欄位。不想要的項目就不要勾選。">
+<!ENTITY fieldMapImport.up.label "上移">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "下移">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "通訊錄欄位:">
+<!ENTITY fieldMapImport.dataTitle "匯入資料:">
+<!ENTITY fieldMapImport.skipFirstRecord.label "第一項為標題">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">
+

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Du är i ett privat fönster">
+<!ENTITY privatebrowsingpage.title.normal        "Vill du starta privat surfning?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; kommer inte spara någon historia för detta fönster.">
+<!ENTITY privatebrowsingpage.status.normal       "Du använder nu inte ett privat fönster.">
+
+<!ENTITY privatebrowsingpage.common.description  "I ett privat webbläsarfönster kommer &brandShortName; inte att spara någon surfhistorik, sökhistorik, nedladdningshistorik, webbformulärshistorik, kakor eller tillfälliga internetfiler.  Skapade bokmärken och nedladdade filer kommer dock att bevaras.">
+<!ENTITY privatebrowsingpage.track.warn          "Fastän denna dator inte kommer att behålla din surfhistorik, är det möjligt att din arbetsgivare eller internetleverantör fortfarande kan spåra de sidor du besöker.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Läs mer">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.info          "När du är klar, stäng fönstret för att avsluta privat surfning.">
+<!ENTITY privatebrowsingpage.close.label         "Stäng detta fönster nu">
+<!ENTITY privatebrowsingpage.close.accesskey     "S">
+
+<!ENTITY privatebrowsingpage.start.info          "För att starta privat surfning, klicka på knappen nedan eller välj Arkiv ▶ Nytt ▶ Privat fönster från menyn.">
+<!ENTITY privatebrowsingpage.private.label       "Öppna ett nytt privat fönster">
+<!ENTITY privatebrowsingpage.private.accesskey   "p">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
+    These entities go on top of the sanitize.dtd definitions
+-->
+<!ENTITY pref.privatedata.title           "Privégegevens">
+
+
+<!ENTITY clearPrivateData.label           "Privégegevens wissen">
+
+<!ENTITY alwaysClear.label                "Altijd mijn privégegevens wissen als ik &brandShortName; afsluit">
+<!ENTITY alwaysClear.accesskey            "A">
+
+<!--LOCALIZATION NOTE : The askBeforeClear label is
+    no longer used but we might bring it back later
+-->
+<!ENTITY askBeforeClear.label             "Mij vragen voordat privégegevens worden gewist">
+<!ENTITY askBeforeClear.accesskey         "M">
+
+<!ENTITY clearDataSettings.label          "Als ik &brandShortName; vraag mijn privégegevens te wissen, moet het volgende worden verwijderd:">
+
+<!ENTITY clearData.label "Deze items in uw privégegevens wissen:">
+<!ENTITY clearData.cpd.label "Handmatig">
+<!ENTITY clearData.onShutdown.label "Bij afsluiten">
+
+
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+<!ENTITY clearDataDialog.label            "Nu wissen…">
+<!ENTITY clearDataSilent.label            "Nu wissen">
+<!ENTITY clearDataDialog.accesskey        "u">

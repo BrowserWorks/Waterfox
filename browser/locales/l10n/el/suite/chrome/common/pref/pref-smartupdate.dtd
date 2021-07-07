@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Εγκατάσταση λογισμικού">
+<!ENTITY addOnsTitle.label                    "Πρόσθετα">
+<!ENTITY addOnsAllow.label                    "Να επιτρέπεται στις ιστοσελίδες η εγκατάσταση προσθέτων και ενημερώσεων">
+<!ENTITY addOnsAllow.accesskey                "π">
+<!ENTITY allowedSitesLink.label               "Επιτρεπόμενες ιστοσελίδες">
+<!ENTITY autoAddOnsUpdates.label              "Αυτόματος έλεγχος για ενημερώσεις">
+<!ENTITY autoAddOnsUpdates.accesskey          "ο">
+<!ENTITY daily.label                          "ημερησίως">
+<!ENTITY addOnsDaily.accesskey                "η">
+<!ENTITY weekly.label                         "εβδομαδιαίως">
+<!ENTITY addOnsWeekly.accesskey               "β">
+<!ENTITY addOnsModeAutomatic.label            "Αυτόματη λήψη και εγκατάσταση ενημερώσεων">
+<!ENTITY addOnsModeAutomatic.accesskey        "μ">
+<!ENTITY enablePersonalized.label             "Εξατομίκευση προτάσεων προσθέτων">
+<!ENTITY enablePersonalized.accesskey         "Ε">
+<!ENTITY addonManagerLink.label               "Διαχείριση προσθέτων">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Αυτόματος έλεγχος για ενημερώσεις">
+<!ENTITY autoAppUpdates.accesskey             "τ">
+<!ENTITY appDaily.accesskey                   "ρ">
+<!ENTITY appWeekly.accesskey                  "δ">
+<!ENTITY appModeAutomatic.label               "Αυτόματη λήψη και εγκατάσταση ενημέρωσης">
+<!ENTITY appModeAutomatic.accesskey           "λ">
+<!ENTITY updateHistoryButton.label            "Εμφάνιση ιστορικού ενημερώσεων…">
+<!ENTITY updateHistoryButton.accesskey        "Ε">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "수신 확인">
+<!ENTITY useGlobalPrefs.label         "이 계정에 수신 확인 설정 사용">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "전역 설정…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "이 계정에 수신 확인 사용자 설정">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "메시지를 보낼 때 항상 수신 확인을 요청하기">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "수신 확인 메시지를 받으면:">
+<!ENTITY leaveIt.label                "받은 편지함에 보관">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "보낸 편지함으로 이동">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "수신 확인 요청을 받으면:">
+<!ENTITY returnSome.label             "특정 메시지만 허용">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "허용하지 않음">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "보낸 사람이나 참조가 비어 있을 때:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "보낸 사람이 외부인이면:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "모든 경우:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "항상 물어 보기">
+<!ENTITY alwaysSend.label             "항상 보냄">
+<!ENTITY neverSend.label              "보내지 않음">

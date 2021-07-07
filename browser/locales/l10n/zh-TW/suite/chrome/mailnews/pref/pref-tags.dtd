@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "標籤">
+<!ENTITY pref.tags.caption          "自訂標籤">
+<!ENTITY pref.tags.description      "可以用標籤將郵件進行分類、排定優先次序。使用以下的設定可以調整標籤的呈現和重要性。排在上方的標籤，比下面的標籤有比較高的重要性。">
+<!ENTITY tagColumn.label            "標籤">
+<!ENTITY colorColumn.label          "色彩">
+<!ENTITY defaultTagName.label       "未命名標籤">
+<!ENTITY addTagButton.label         "新增">
+<!ENTITY addTagButton.accesskey     "A">
+<!ENTITY deleteTagButton.label      "刪除">
+<!ENTITY deleteTagButton.accesskey  "D">
+<!ENTITY raiseTagButton.label       "增加重要程度">
+<!ENTITY raiseTagButton.accesskey   "R">
+<!ENTITY lowerTagButton.label       "降低重要程度">
+<!ENTITY lowerTagButton.accesskey   "L">
+<!ENTITY restoreButton.label        "回復為預設值">
+<!ENTITY restoreButton.accesskey    "s">
+

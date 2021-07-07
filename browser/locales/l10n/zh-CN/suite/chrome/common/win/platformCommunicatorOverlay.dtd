@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- win -->
+<!-- LOCALIZATION NOTE : FILE Do not translate "accel" or "shift",
+                         You may want to translate the Cmd.key and accesskey --> 
+
+
+<!ENTITY closeCmd.label                 "关闭">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "C">
+
+<!ENTITY quitApplicationCmd.label       "退出"> 
+<!ENTITY quitApplicationCmd.key         "Q"> 
+<!ENTITY quitApplicationCmd.accesskey   "x">
+
+<!ENTITY redoCmd.key                    "Y">  
+<!ENTITY findReplaceCmd.key             "H">
+<!ENTITY findTypeTextCmd.key            "/">
+<!ENTITY findTypeLinksCmd.key           "'">
+
+<!ENTITY accel.emacs_conflict           "accel">
+<!-- Help viewer -->
+
+<!ENTITY openHelpCmd.label              "帮助内容">
+<!ENTITY openHelpCmd.accesskey          "H">
+<!ENTITY openHelpCmd.key                "VK_F1">
+<!ENTITY helpForIEUsers.label           "致IE浏览器用户">
+<!ENTITY helpForIEUsers.accesskey       "I">
+<!-- LOCALIZATION NOTE some localizations need to change the
+                       "Help" menu label on Windows -->
+<!ENTITY helpMenu.label                 "帮助"> 
+<!ENTITY helpMenu.accesskey             "H">
+<!-- Key labels, for mousewheel prefs -->
+
+<!ENTITY ctrlKey.label                  "Ctrl键">
+<!ENTITY altKey.label                   "Alt键">
+<!ENTITY shiftKey.label                 "Shift键">
+
+<!ENTITY menubarCmd.label               "菜单栏">
+<!ENTITY menubarCmd.accesskey           "e">

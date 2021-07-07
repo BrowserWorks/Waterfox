@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Свойства таблицы">
+<!ENTITY applyButton.label                "Применить">
+<!ENTITY applyButton.accesskey            "П">
+<!ENTITY closeButton.label                "Закрыть">
+<!ENTITY tableTab.label                   "Таблица">
+<!ENTITY cellTab.label                    "Ячейки">
+<!ENTITY tableRows.label                  "Строки:">
+<!ENTITY tableRows.accessKey              "С">
+<!ENTITY tableColumns.label               "Столбцы:">
+<!ENTITY tableColumns.accessKey           "т">
+<!ENTITY tableHeight.label                "Высота:">
+<!ENTITY tableHeight.accessKey            "В">
+<!ENTITY tableWidth.label                 "Ширина:">
+<!ENTITY tableWidth.accessKey             "Ш">
+<!ENTITY tableBorderSpacing.label         "Границы и поля">
+<!ENTITY tableBorderWidth.label           "Границы:">
+<!ENTITY tableBorderWidth.accessKey       "Г">
+<!ENTITY tableSpacing.label               "Отступы:">
+<!ENTITY tableSpacing.accessKey           "у">
+<!ENTITY tablePadding.label               "Поля:">
+<!ENTITY tablePadding.accessKey           "П">
+<!ENTITY tablePxBetwCells.label           "пикселов между ячейками">
+<!ENTITY tablePxBetwBrdrCellContent.label "пикселов между границей ячейки и её содержимым">
+<!ENTITY tableAlignment.label             "Выравнивание таблицы:">
+<!ENTITY tableAlignment.accessKey         "ы">
+<!ENTITY tableCaption.label               "Заголовок:">
+<!ENTITY tableCaption.accessKey           "З">
+<!ENTITY tableCaptionAbove.label          "Над таблицей">
+<!ENTITY tableCaptionBelow.label          "Под таблицей">
+<!ENTITY tableCaptionLeft.label           "Слева от таблицы">
+<!ENTITY tableCaptionRight.label          "Справа от таблицы">
+<!ENTITY tableCaptionNone.label           "Нет">
+<!ENTITY tableInheritColor.label           "(Будет виден фон страницы)">
+
+<!ENTITY cellSelection.label              "Выделение">
+<!ENTITY cellSelectCell.label             "Ячейка">
+<!ENTITY cellSelectRow.label              "Строка">
+<!ENTITY cellSelectColumn.label           "Столбец">
+<!ENTITY cellSelectNext.label             "Следующая">
+<!ENTITY cellSelectNext.accessKey         "С">
+<!ENTITY cellSelectPrevious.label         "Предыдущая">
+<!ENTITY cellSelectPrevious.accessKey     "П">
+<!ENTITY applyBeforeChange.label          "Перед изменением выделения будут применены текущие поправки.">
+<!ENTITY cellContentAlignment.label       "Выравнивание содержимого">
+<!ENTITY cellHorizontal.label             "Горизонтальное:">
+<!ENTITY cellHorizontal.accessKey         "з">
+<!ENTITY cellVertical.label               "Вертикальное:">
+<!ENTITY cellVertical.accessKey           "В">
+<!ENTITY cellStyle.label                  "Стиль ячейки:">
+<!ENTITY cellStyle.accessKey              "С">
+<!ENTITY cellNormal.label                 "Обычный">
+<!ENTITY cellHeader.label                 "Заголовок">
+<!ENTITY cellTextWrap.label               "Перенос текста:">
+<!ENTITY cellTextWrap.accessKey           "р">
+<!ENTITY cellWrap.label                   "Переносить">
+<!ENTITY cellNoWrap.label                 "Без переноса">
+<!ENTITY cellAlignTop.label               "Поверху">
+<!ENTITY cellAlignMiddle.label            "Посередине">
+<!ENTITY cellAlignBottom.label            "Понизу">
+<!ENTITY cellAlignJustify.label           "По ширине">
+<!ENTITY cellInheritColor.label           "(Будет виден фон таблицы)">
+<!ENTITY cellUseCheckboxHelp.label        "Установите флажки для определения свойств, применяемых ко всем выбранным ячейкам">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Размеры">
+<!ENTITY pixels.label                     "пикселов">
+<!ENTITY backgroundColor.label            "Цвет фона:">
+<!ENTITY backgroundColor.accessKey        "Ц">
+<!ENTITY AlignLeft.label                  "Влево">
+<!ENTITY AlignCenter.label                "По центру">
+<!ENTITY AlignRight.label                 "Вправо">

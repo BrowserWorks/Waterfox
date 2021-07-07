@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "屬性">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "通訊錄屬性">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "連絡人屬性">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "郵件群組屬性">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "顯示通訊錄選單">
+<!ENTITY addressbookPicker.label            "通訊錄:">
+<!ENTITY addressbookPicker.accesskey        "k">
+<!ENTITY searchContacts.label               "搜尋連絡人:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "姓名 或 Email">
+
+<!ENTITY addtoToFieldMenu.label             "加到收件者 (To) 欄位">
+<!ENTITY addtoToFieldMenu.accesskey         "A">
+<!ENTITY addtoCcFieldMenu.label             "加到副本 (Cc) 欄位">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "加到密件副本 (Bcc) 欄位">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "刪除">
+<!ENTITY deleteAddrBookCard.accesskey       "D">
+<!ENTITY propertiesContext.label            "屬性">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "屬性">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "編輯連絡人">
+<!ENTITY editContactContext.accesskey       "E">
+<!ENTITY editMailingListContext.label       "編輯清單">
+<!ENTITY editMailingListContext.accesskey   "E">
+
+<!ENTITY newContactAbContext.label          "新增連絡人">
+<!ENTITY newContactAbContext.accesskey      "C">
+<!ENTITY newListAbContext.label             "新增群組名單">
+<!ENTITY newListAbContext.accesskey         "L">
+
+<!ENTITY toButton.label                     "加到收件者 (To):">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "加到副本 (Cc):">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "加到密件副本 (Bcc):">
+<!ENTITY bccButton.accesskey                "B">

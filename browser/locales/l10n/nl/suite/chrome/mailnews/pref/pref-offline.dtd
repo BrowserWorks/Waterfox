@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Netwerk &amp; opslag">
+<!ENTITY pref.offline.caption             "Offline">
+<!ENTITY textStartUp                      "Bij het opstarten:">
+<!ENTITY textStartUp.accesskey            "B">
+<!ENTITY menuitemRememberPrevState        "Vorige onlinetoestand hanteren">
+<!ENTITY menuitemAskMe                    "Mij de onlinetoestand vragen">
+<!ENTITY menuitemAlwaysOnline             "Altijd online opstarten">
+<!ENTITY menuitemAlwaysOffline            "Altijd offline opstarten">
+<!ENTITY menuitemAutomatic                "Automatisch detecteren (mits beschikbaar)">
+<!ENTITY textGoingOnline                  "Niet-verzonden berichten verzenden bij online gaan?">
+<!ENTITY radioAutoSend                    "Ja">
+<!ENTITY radioAutoSend.accesskey          "J">
+<!ENTITY radioNotSend                     "Nee">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Mij vragen">
+<!ENTITY radioAskUnsent.accesskey         "v">
+<!ENTITY textGoingOffline                 "Berichten downloaden voor offlinegebruik bij offline gaan?">
+<!ENTITY radioAutoDownload                "Ja">
+<!ENTITY radioAutoDownload.accesskey      "a">
+<!ENTITY radioNotDownload                 "Nee">
+<!ENTITY radioNotDownload.accesskey       "e">
+<!ENTITY radioAskDownload                 "Mij vragen">
+<!ENTITY radioAskDownload.accesskey       "r">
+<!ENTITY mailConnections.caption          "E-mailverbindingen">
+<!ENTITY mailnewsTimeout.label            "Verbindingstime-out:">
+<!ENTITY mailnewsTimeout.accesskey        "t">
+<!ENTITY mailnewsTimeoutSeconds.label     "seconden">
+<!ENTITY Diskspace                        "Schijfruimte">
+<!ENTITY offlineCompactFolders.label      "Alle mappen comprimeren als dit meer bespaart dan">
+<!ENTITY offlineCompactFolders.accesskey  "m">
+<!ENTITY offlineCompactFoldersMB.label    "MB in totaal">

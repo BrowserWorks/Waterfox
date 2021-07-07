@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Meddelandeformat">
+
+<!ENTITY recipient.label "Någon av mottagarna är inte registrerad som kapabel att ta emot meddelanden i HTML-format.">
+
+<!ENTITY question.label "Vill du konvertera meddelandet till oformaterad text, eller vill du skicka det kodat som HTML ändå?">
+
+<!ENTITY plainTextAndHtml.label "Skicka både som oformaterad text och kodat som HTML">
+<!ENTITY plainTextAndHtml.accesskey "b">
+<!ENTITY plainTextOnly.label "Skicka bara som oformaterad text">
+<!ENTITY plainTextOnly.accesskey "o">
+<!ENTITY htmlOnly.label "Skicka bara kodat som HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Skicka">
+<!ENTITY send.accesskey "S">

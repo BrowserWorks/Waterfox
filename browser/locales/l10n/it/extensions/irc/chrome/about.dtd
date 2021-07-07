@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY window.title "Informazioni su &ChatZilla">
+<!ENTITY chatzilla.label "ChatZilla">
+<!ENTITY version.unknown.label "Versione sconosciuta">
+<!ENTITY version.known.label "Versione &#037;S">
+<!ENTITY description.label "Un client IRC (Internet Relay Chat) con un'interfaccia semplice, facile da usare e da espandere.">
+<!ENTITY homepage.label "Visita il sito web">
+<!ENTITY copyversion.label "Copia i dettagli della versione">
+<!ENTITY section.core.label "Team di sviluppo principale:">
+<!ENTITY section.locale.label "Localizzazione:">
+<!ENTITY section.contrib.label "Collaboratori:">

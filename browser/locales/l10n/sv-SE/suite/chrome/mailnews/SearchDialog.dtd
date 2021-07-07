@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Sök efter meddelanden i:">
+<!ENTITY searchHeading.accesskey     "e">
+<!ENTITY searchSubfolders.label      "Sök i undermappar">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnHeading.label       "Utför sökningen på:">
+<!ENTITY searchOnHeading.accesskey   "p">
+<!ENTITY searchOnRemote.label        "E-postservern">
+<!ENTITY searchOnLocal.label         "Den egna datorn">
+<!ENTITY resetButton.label           "Rensa">
+<!ENTITY resetButton.accesskey       "R">
+<!ENTITY openButton.label            "Öppna">
+<!ENTITY openButton.accesskey        "Ö">
+<!ENTITY deleteButton.label          "Ta bort">
+<!ENTITY deleteButton.accesskey      "b">
+<!ENTITY searchDialogTitle.label     "Sök efter meddelanden">
+<!ENTITY results.label               "Sökresultat">
+<!ENTITY moveHereMenu.label          "Flytta hit">
+<!ENTITY moveHereMenu.accesskey      "F">
+<!ENTITY moveButton.label            "Flytta till">
+<!ENTITY moveButton.accesskey        "t">
+<!ENTITY goToFolderButton.label      "Öppna mappen">
+<!ENTITY goToFolderButton.accesskey  "m">
+<!ENTITY saveAsVFButton.label        "Spara som sökmapp">
+<!ENTITY saveAsVFButton.accesskey    "k">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Sök i:">
+<!ENTITY abSearchHeading.accesskey   "ö">
+<!ENTITY propertiesButton.label      "Egenskaper">
+<!ENTITY propertiesButton.accesskey  "E">
+<!ENTITY composeButton.label         "Skriv">
+<!ENTITY composeButton.accesskey     "r">
+<!ENTITY abSearchDialogTitle.label   "Avancerad sökning i adressbok">
+

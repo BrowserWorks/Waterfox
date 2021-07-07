@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Ορθογραφικός έλεγχος">
+
+<!ENTITY misspelledWord.label "Λάθος λέξη:">
+<!ENTITY wordEditField.label "Αντικατάσταση με:">
+<!ENTITY wordEditField.accessKey "κ">
+<!ENTITY checkwordButton.label "Έλεγχος λέξης">
+<!ENTITY checkwordButton.accessKey "γ">
+<!ENTITY suggestions.label "Προτάσεις:">
+<!ENTITY suggestions.accessKey "τ">
+<!ENTITY ignoreButton.label "Παράβλεψη">
+<!ENTITY ignoreButton.accessKey "β">
+<!ENTITY ignoreAllButton.label "Παράβλεψη όλων">
+<!ENTITY ignoreAllButton.accessKey "λ">
+<!ENTITY replaceButton.label "Αντικατάσταση ">
+<!ENTITY replaceButton.accessKey "ν">
+<!ENTITY replaceAllButton.label "Αντικατάσταση όλων">
+<!ENTITY replaceAllButton.accessKey "ω">
+<!ENTITY stopButton.label "Διακοπή">
+<!ENTITY stopButton.accessKey "κ">
+<!ENTITY userDictionary.label "Προσωπικό λεξικό:">
+<!ENTITY moreDictionaries.label "Λήψη περισσότερων λεξικών…">
+<!ENTITY addToUserDictionaryButton.label "Προσθήκη λέξης">
+<!ENTITY addToUserDictionaryButton.accessKey "θ">
+<!ENTITY editUserDictionaryButton.label "Επεξεργασία…">
+<!ENTITY editUserDictionaryButton.accessKey "ξ">
+<!ENTITY recheckButton2.label "Επανέλεγχος κειμένου">
+<!ENTITY recheckButton2.accessKey "ε">
+<!ENTITY closeButton.label "Κλείσιμο">
+<!ENTITY closeButton.accessKey "Κ">
+<!ENTITY sendButton.label "Αποστολή">
+<!ENTITY sendButton.accessKey "σ">
+<!ENTITY languagePopup.label "Γλώσσα:">
+<!ENTITY languagePopup.accessKey "Γ">

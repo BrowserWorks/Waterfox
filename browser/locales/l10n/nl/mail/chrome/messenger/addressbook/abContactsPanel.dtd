@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Eigenschappen">
+<!ENTITY propertiesMenu.accesskey           "E">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Adresboekeigenschappen">
+<!ENTITY abPropertiesMenu.accesskey         "e">
+<!ENTITY contactPropertiesMenu.label        "Contacteigenschappen">
+<!ENTITY contactPropertiesMenu.accesskey    "e">
+<!ENTITY mailingListPropertiesMenu.label    "Mailinglijsteigenschappen">
+<!ENTITY mailingListPropertiesMenu.accesskey "e">
+
+<!ENTITY abContextMenuButton.tooltip        "Adresboekcontextmenu weergeven">
+<!ENTITY addressbookPicker.label            "Adresboek:">
+<!ENTITY addressbookPicker.accesskey        "k">
+<!ENTITY searchContacts.label               "Contacten zoeken:">
+<!ENTITY searchContacts.accesskey           "z">
+<!ENTITY SearchNameOrEmail.label            "Naam of e-mailadres">
+
+<!ENTITY addtoToFieldMenu.label             "Toevoegen aan Aan-veld">
+<!ENTITY addtoToFieldMenu.accesskey         "T">
+<!ENTITY addtoCcFieldMenu.label             "Toevoegen aan CC-veld">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Toevoegen aan Bcc-veld">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Verwijderen">
+<!ENTITY deleteAddrBookCard.accesskey       "V">
+<!ENTITY propertiesContext.label            "Eigenschappen">
+<!ENTITY propertiesContext.accesskey        "E">
+<!ENTITY abPropertiesContext.label          "Eigenschappen">
+<!ENTITY abPropertiesContext.accesskey      "E">
+<!ENTITY editContactContext.label           "Contact bewerken">
+<!ENTITY editContactContext.accesskey       "w">
+<!ENTITY editMailingListContext.label       "Lijst bewerken">
+<!ENTITY editMailingListContext.accesskey   "w">
+
+<!ENTITY newContactAbContext.label          "Nieuw contact">
+<!ENTITY newContactAbContext.accesskey      "c">
+<!ENTITY newListAbContext.label             "Nieuwe lijst">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Aan:">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Bcc:">
+<!ENTITY bccButton.accesskey                "B">

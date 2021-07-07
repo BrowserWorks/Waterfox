@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Fiók tulajdonságai">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Általános">
+<!ENTITY account.advanced              "Speciális beállítások">
+<!ENTITY account.name                  "Felhasználónév:">
+<!ENTITY account.password              "Jelszó:">
+<!ENTITY account.alias                 "Álnév:">
+<!ENTITY account.newMailNotification   "Értesítés új levélről">
+<!ENTITY account.autojoin              "Automatikus csatlakozás ezen csatornákhoz:">
+<!ENTITY account.proxySettings.caption "Proxybeállítások:">
+<!ENTITY account.proxySettings.change.label     "Módosítás…">
+<!ENTITY account.proxySettings.change.accessKey "M">

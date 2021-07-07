@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: 데이터 가져오기">
+<!ENTITY migration.welcome "환영합니다.">
+<!ENTITY migration.importing "가져오는 중">
+<!ENTITY migration.list.description "&brandShortName;는 다른 여러 응용 프로그램으로부터 캘린더 데이터를 가져올 수 있습니다. 이 컴퓨터에서 다음 응용 프로그램으로부터의 데이터를 찾았습니다. 다음으로부터 가져오고자 하는 데이터를 선택하십시오.">
+<!ENTITY migration.progress.description "선택된 데이터를 가져오는 중">

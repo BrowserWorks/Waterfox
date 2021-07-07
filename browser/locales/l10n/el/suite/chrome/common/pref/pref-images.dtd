@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Εικόνες">
+
+<!ENTITY imageBlocking.label            "Πολιτική αποδοχής εικόνων">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+    appear
+-->
+<!ENTITY imageDetails                   "Ορίστε τον τρόπο διαχείρισης εικόνων στο &brandShortName;.">
+
+<!ENTITY loadAllImagesRadio.label       "Φόρτωση όλων των εικόνων">
+<!ENTITY loadAllImagesRadio.accesskey   "Φ">
+<!ENTITY loadOrgImagesRadio.label       "Φόρτωση μόνο των εικόνων που προέρχονται από τον διακομιστή προέλευσης">
+<!ENTITY loadOrgImagesRadio.accesskey   "ρ">
+<!ENTITY loadNoImagesRadio.label        "Να μην γίνεται φόρτωση εικόνων">
+<!ENTITY loadNoImagesRadio.accesskey    "Ν">
+<!ENTITY viewPermissions.label          "Διαχείριση δικαιωμάτων">
+<!ENTITY viewPermissions.accesskey      "Δ">

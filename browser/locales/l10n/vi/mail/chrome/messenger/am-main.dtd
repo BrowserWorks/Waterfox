@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Cài đặt tài khoản">
+<!ENTITY accountName.label "Tên tài khoản:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "Định danh Mặc định">
+<!ENTITY identityDesc.label "Mỗi tài khoản có một định danh, đó là thông tin để người khác nhận ra khi họ đọc thư của bạn.">
+<!ENTITY name.label "Tên của Bạn:">
+<!ENTITY name.accesskey "B">
+<!ENTITY email.label "Địa chỉ Email:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Trả lời từ danh tính này khi tiêu đề phân phối khớp với:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Địa chỉ Trả-lời-tới:">
+<!ENTITY replyTo.accesskey "a">
+<!ENTITY replyTo.placeholder "Người nhận sẽ trả lời địa chỉ khác này">
+<!ENTITY organization.label "Tổ chức:">
+<!ENTITY organization.accesskey "h">
+<!ENTITY signatureText.label "Chữ kí:">
+<!ENTITY signatureText.accesskey "k">
+<!ENTITY signatureHtml.label "Dùng HTML (vd.: &lt;b&gt;đậm&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Kèm theo chữ kí từ một tập tin (văn bản, HTML, hoặc ảnh):">
+<!ENTITY signatureFile.accesskey "m">
+<!ENTITY edit.label "Chỉnh sửa…">
+<!ENTITY choose.label "Chọn…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "Chỉnh sửa vCard…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Đính kèm vCard của tôi vào thư">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Quản lí Định danh…">
+<!ENTITY manageIdentities.accesskey "Q">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Máy chủ Gửi thư (SMTP):">
+<!ENTITY smtpName.accesskey "M">
+<!ENTITY smtpDefaultServer.label "Sử dụng Máy chủ Mặc định">
+
+<!ENTITY smtpServerEdit.label "Chỉnh sửa máy chủ SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

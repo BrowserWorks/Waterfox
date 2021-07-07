@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "键盘导航">
+<!ENTITY tabNavigationBehavior.label "标栏键导航">
+<!ENTITY tabNavigationLinks.label "链接">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "按钮，选项按钮，多选按钮，选项列表">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "注意：文本框以及滚动条均在 Tab 切换选取范围内。">
+<!ENTITY tabNavigationDesc.label "按下 Tab 键或 Shift+Tab 键时的切换顺序:">
+<!ENTITY accessibilityBrowseWithCaret.label "光标浏览">
+<!ENTITY browseWithCaretDesc.label "光标浏览让您可以使用光标键，在页面里移动可见光标以导航和选择。">
+<!ENTITY browseWithCaretUse.label "使用光标浏览">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "使用快捷键 F7，切换到光标浏览">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "启用光标浏览前警告我">
+<!ENTITY browseWithCaretWarn.accesskey "W">
+
+<!ENTITY modifiers.label "组合键">
+<!ENTITY acceleratorKey.label "加速键：">
+<!ENTITY acceleratorKey.accesskey "A">
+<!ENTITY menuAccessKey.label "菜单快捷键：">
+<!ENTITY menuAccessKey.accesskey "M">
+<!ENTITY modifiersDesc.label "注意：值为 0 时将禁用组合键。">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(タイトル無し)">
+<!ENTITY  newTab.label           "新しいタブ">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "タブを閉じる">
+<!ENTITY  closeTab.accesskey         "C">
+<!ENTITY  closeOtherTabs.label   "他のタブを閉じる">
+<!ENTITY  closeOtherTabs.accesskey         "O">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "右側のタブを閉じる">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "すべてのタブを再読み込み">
+<!ENTITY  reloadAllTabs.accesskey         "A">
+<!ENTITY  reloadTab.label        "このタブを再読み込み">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "このタブグループをブックマークする">
+<!ENTITY  bookmarkGroup.accesskey  "B">
+<!ENTITY  closeTabButton.tooltip   "このタブを閉じる">
+<!ENTITY  newTabButton.tooltip   "新しいタブを開く">
+<!ENTITY  listAllTabs.tooltip    "すべてのタブをリスト表示">
+<!ENTITY  undoCloseTab.label    "閉じたタブを元に戻す">
+<!ENTITY  undoCloseTab.accesskey  "U">

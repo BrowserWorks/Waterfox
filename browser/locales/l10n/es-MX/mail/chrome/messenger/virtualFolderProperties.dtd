@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nueva carpeta de búsquedas guardadas">
+<!ENTITY name.label                 "Nombre:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crear como subcarpeta de:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Configurar el criterio de búsqueda usado para esta carpeta virtual:">
+
+<!ENTITY folderSelectionCaption.label "Seleccionar las carpetas en las que buscar:">
+<!ENTITY chooseFoldersButton.label "Elegir…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "Buscar en línea (da resultados actualizados de carpetas IMAP y de noticias, pero aumenta el tiempo de apertura de la carpeta)">
+<!ENTITY searchOnline.accesskey "S">
+<!ENTITY newFolderButton.label       "Crear">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Actualizar">
+<!ENTITY editFolderButton.accesskey  "U">

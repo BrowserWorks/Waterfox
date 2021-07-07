@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "إعداد التذكيرات">
+<!ENTITY reminder.add.label                                "أضف">
+<!ENTITY reminder.add.accesskey                            "ض">
+<!ENTITY reminder.remove.label                             "أزل">
+<!ENTITY reminder.remove.accesskey                         "ز">
+
+<!ENTITY reminder.reminderDetails.label                    "تفاصيل التذكير">
+<!ENTITY reminder.action.label                             "اختر إجراء التذكير">
+
+<!ENTITY reminder.action.alert.label                       "اعرض تنبيهًا">
+<!ENTITY reminder.action.email.label                       "أرسل بريدًا إلكترونيًا">
+
+<!ENTITY alarm.units.minutes                               "دقائق" >
+<!ENTITY alarm.units.hours                                 "ساعات" >
+<!ENTITY alarm.units.days                                  "أيام" >

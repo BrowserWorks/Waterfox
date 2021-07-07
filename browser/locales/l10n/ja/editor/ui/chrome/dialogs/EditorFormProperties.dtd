@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label	"フォームのプロパティ">
+
+<!ENTITY Settings.label		"設定">
+
+<!ENTITY FormName.label		"フォーム名:">
+<!ENTITY FormName.accesskey	"N">
+<!ENTITY FormAction.label	"送信先 URL:">
+<!ENTITY FormAction.accesskey	"A">
+<!ENTITY FormMethod.label	"送信方法:">
+<!ENTITY FormMethod.accesskey	"M">
+<!ENTITY FormEncType.label	"エンコーディング:">
+<!ENTITY FormEncType.accesskey	"c">
+<!ENTITY FormTarget.label	"ターゲットフレーム:">
+<!ENTITY FormTarget.accesskey	"T">
+
+<!ENTITY RemoveForm.label	"フォームを削除">
+<!ENTITY RemoveForm.accesskey	"R">

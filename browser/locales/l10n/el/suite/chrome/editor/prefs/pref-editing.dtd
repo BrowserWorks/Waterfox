@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Ρυθμίσεις νέας σελίδας">
+
+<!ENTITY  authorName.label          "Συγγραφέας">
+<!ENTITY  authorName.accesskey      "υ">
+<!ENTITY  pageColorHeader           "Εμφάνιση προεπιλεγμένης σελίδας">
+
+<!ENTITY defaultColors.label        "Προεπιλεγμένα χρώματα παραλήπτη (Δεν ορίζονται χρώματα στη σελίδα)">
+<!ENTITY defaultColors.accesskey    "γ">
+<!ENTITY customColors.label         "Χρήση προσαρμοσμένων χρωμάτων:">
+<!ENTITY customColors.accesskey     "σ">
+
+<!ENTITY normalText.label           "Κανονικό κείμενο">
+<!ENTITY normalText.accesskey       "ν">
+<!ENTITY linkText.label             "Κείμενο διασύνδεσης">
+<!ENTITY linkText.accesskey         "μ">
+<!ENTITY activeLinkText.label       "Χρώμα ενεργής διασύνδεσης">
+<!ENTITY activeLinkText.accesskey   "ν">
+<!ENTITY visitedLinkText.label      "Χρώμα αναγνωσμένης διασύνδεσης">
+<!ENTITY visitedLinkText.accesskey  "γ">
+<!ENTITY background.label           "Φόντο:">
+<!ENTITY background.accesskey       "Φ">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Εικόνα φόντου:">
+<!ENTITY backgroundImage.accesskey  "κ">
+<!ENTITY chooseFile.label           "Επιλογή αρχείου…">
+<!ENTITY chooseFile.accesskey       "λ">

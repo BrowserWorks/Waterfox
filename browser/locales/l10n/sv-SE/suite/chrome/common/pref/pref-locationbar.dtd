@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Adressfält">
+
+<!ENTITY autoComplete.label                    "Automatisk komplettering">
+<!ENTITY autoCompleteMatchHistory.label        "Föreslå automatiskt webplatser från historiken">
+<!ENTITY autoCompleteMatchHistory.accesskey    "h">
+<!ENTITY autoCompleteMatchBookmarks.label      "Föreslå automatiskt webplater från bokmärken">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "b">
+<!ENTITY autoCompleteAutoFill.label            "Komplettera automatiskt med den bästa matchningen">
+<!ENTITY autoCompleteAutoFill.accesskey        "m">
+<!ENTITY autoCompleteShowPopup.label           "Visa en lista med matchande resultat">
+<!ENTITY autoCompleteShowPopup.accesskey       "s">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Matcha endast adresser som du skrivit in tidigare">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "c">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Matcha">
+<!ENTITY autoCompleteMatch.accesskey           "M">
+<!ENTITY autoCompleteMatchAnywhere             "Var som helst i adressen eller titeln">
+<!ENTITY autoCompleteMatchWordsFirst           "Var som helst men hela ord sorteras först">
+<!ENTITY autoCompleteMatchWords                "Bara i hela ord">
+<!ENTITY autoCompleteMatchStart                "Bara i början av adressen eller titeln">
+<!ENTITY showInternetSearch.label              "Visa förinställd Internetsöktjänst">
+<!ENTITY showInternetSearch.accesskey          "f">
+
+<!ENTITY formatting.label                      "Markera">
+<!ENTITY domainFormatting.label                "Markera den verkliga domänen för webbplatser och FTP-servrar">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Markera webbsidor med en hög anslutningssäkerhet">
+<!ENTITY highlightSecure.accesskey             "w">
+
+<!ENTITY unknownLocations.label                "Okända adresser">
+<!ENTITY domainGuessing.label                  "Lägg till &quot;www.&quot; och &quot;.com&quot; till adressen om en webbplats inte hittas">
+<!ENTITY domainGuessing.accesskey              "ä">
+<!ENTITY keywords.label                        "Utför en sökning på webben när angiven text inte är en webbadress">
+<!ENTITY keywords.accesskey                    "U">

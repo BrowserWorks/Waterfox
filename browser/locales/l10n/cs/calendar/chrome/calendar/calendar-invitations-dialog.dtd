@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text "Pozvání">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text "Aktualizace seznamu pozvání.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text "Nepotvrzené pozvání nenalezeno.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label "Přijmout">
+<!ENTITY calendar.invitations.list.decline.button.label "Odmítnout">
+<!ENTITY calendar.invitations.list.recurrentevent.text "Opakovaná událost">
+<!ENTITY calendar.invitations.list.alldayevent.text "Celodenní událost">
+<!ENTITY calendar.invitations.list.location.text "Místo: ">
+<!ENTITY calendar.invitations.list.organizer.text "Organizátor: ">
+<!ENTITY calendar.invitations.list.attendee.text "Účastníci: ">
+<!ENTITY calendar.invitations.list.none.text "Žádný">

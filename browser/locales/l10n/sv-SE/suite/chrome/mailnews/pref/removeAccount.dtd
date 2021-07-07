@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Ta bort konto och data">
+<!ENTITY removeButton.label           "Ta bort">
+<!ENTITY removeButton.accesskey       "T">
+<!ENTITY removeAccount.label          "Ta bort kontoinformation">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Tar bara bort &brandShortName;s kännedom om kontot. Påverkar inte kontot i sig på servern.">
+<!ENTITY removeData.label             "Ta bort meddelanden och data">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Ta bort konversationer">
+<!ENTITY removeDataChat.accesskey     "T">
+<!ENTITY removeDataLocalAccount.desc  "Tar bort alla meddelanden, mappar och filter kopplade till detta konto från din lokala disk. Detta påverkar inte vissa meddelande som fortfarande kan vara kvar på servern. Välj inte detta om du planerar att arkivera de lokala mapparna eller återanvända dem i &brandShortName; senare.">
+<!ENTITY removeDataServerAccount.desc "Tar bort alla meddelanden, mappar och filter kopplade till detta konto från din lokala disk. Dina meddelanden och mappar är fortfarande kvar på servern.">
+<!ENTITY removeDataChatAccount.desc   "Tar bort alla loggar av konversationer för detta konto lagrade på din lokala disk.">
+<!ENTITY showData.label               "Visa lagringsplats">
+<!ENTITY showData.accesskey           "s">
+<!ENTITY progressPending              "Tar bort valda data…">
+<!ENTITY progressSuccess              "Borttagning lyckades.">
+<!ENTITY progressFailure              "Borttagning misslyckades.">

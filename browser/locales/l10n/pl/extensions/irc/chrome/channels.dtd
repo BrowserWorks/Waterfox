@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Wejdź na kanał">
+
+<!ENTITY network.label "Sieć:">
+<!ENTITY network.accesskey "S">
+
+<!ENTITY channel.label "Kanał:">
+<!ENTITY channel.accesskey "K">
+
+<!ENTITY topics.label "Przeszukuj tematy i nazwy kanałów">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label "Wejdź">
+<!ENTITY join.accesskey "j">
+
+<!ENTITY minusers.label "Minimalna liczba użytkowników:">
+<!ENTITY minusers.accesskey "n">
+
+<!ENTITY maxusers.label "Maksymalna liczba użytkowników:">
+<!ENTITY maxusers.accesskey "M">
+
+<!ENTITY refresh.label "Odśwież teraz">
+<!ENTITY refresh.accesskey "">
+
+<!ENTITY network.hint.label "Wprowadź nazwę sieci lub serwera (można dołączyć numer portu) i kanał, do którego chcesz się przyłączyć.">
+
+<!ENTITY col.network "Sieć">
+<!ENTITY col.name "Nazwa">
+<!ENTITY col.users "Użytkownicy">
+<!ENTITY col.topic "Temat">

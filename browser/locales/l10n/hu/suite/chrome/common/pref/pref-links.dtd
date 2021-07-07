@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Hivatkozások viselkedése">
+<!ENTITY newWindow.label "Hivatkozások megnyitása">
+<!ENTITY newWindowDescription.label "Hivatkozások megnyitás új ablakban:">
+<!ENTITY newWindowRestriction.label "Ha egy parancsfájl új abalakot nyitna:">
+<!ENTITY external.label "Hivatkozások más alkalmazásokból">
+<!ENTITY externalDescription.label "Más alkalmazás által átadott hivatkozások megnyitása:">
+
+<!ENTITY openCurrent.label "Aktuális lapon/ablakban">
+<!ENTITY newWindowGroupCurrent.accesskey "k">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "Új lapon az aktuális ablakban">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "Új ablakban">
+<!ENTITY newWindowGroupWindow.accesskey "b">
+<!ENTITY externalGroupWindow.accesskey "j">
+
+<!ENTITY divertAll.label "Az ablakokat mindig lapokon nyissa meg">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "Az egyedi ablakokat ne nyissa meg lapokon">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "Mindig nyisson új ablakot">
+<!ENTITY dontDivert.accesskey "n">

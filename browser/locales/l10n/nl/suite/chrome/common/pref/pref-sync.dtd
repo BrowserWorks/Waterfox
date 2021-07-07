@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "&syncBrand.fullName.label; instellen">
+<!ENTITY setupButton.accesskey      "S">
+<!ENTITY weaveDesc.label            "Met &syncBrand.fullName.label; kunt u uw geschiedenis, bladwijzers, wachtwoorden en open tabbladen vanaf al uw apparaten benaderen.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label;-account">
+<!ENTITY accountName.label            "Accountnaam:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Bijwerken">
+<!ENTITY updatePass.accesskey         "B">
+<!ENTITY resetPass.label              "Herinitialiseren">
+<!ENTITY resetPass.accesskey          "H">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Account beheren">
+<!ENTITY manageAccount.accesskey      "b">
+<!ENTITY viewQuota.label              "Quota bekijken">
+<!ENTITY viewQuota.accesskey          "Q">
+<!ENTITY changePassword.label         "Wachtwoord wijzigen">
+<!ENTITY changePassword.accesskey     "W">
+<!ENTITY myRecoveryKey.label          "Mijn herstelsleutel">
+<!ENTITY myRecoveryKey.accesskey      "M">
+<!ENTITY resetSync.label              "Sync herinitialiseren">
+<!ENTITY resetSync.accesskey          "h">
+<!ENTITY unlinkDevice.label           "Dit apparaat ontkoppelen">
+<!ENTITY unlinkDevice.accesskey       "D">
+<!ENTITY addDevice.label              "Een apparaat toevoegen">
+<!ENTITY addDevice.accesskey          "a">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Computernaam:">
+<!ENTITY syncComputerName.accesskey   "C">
+
+<!ENTITY syncMy2.label              "Synchroniseren:">
+<!ENTITY engine.addons.label        "Add-ons">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "Bladwijzers">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label          "Tabbladen">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Geschiedenis">
+<!ENTITY engine.history.accesskey   "G">
+<!ENTITY engine.passwords.label     "Wachtwoorden">
+<!ENTITY engine.passwords.accesskey "W">
+<!ENTITY engine.prefs.label         "Voorkeuren">
+<!ENTITY engine.prefs.accesskey     "V">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Servicevoorwaarden">
+<!ENTITY prefs.ppLink.label         "Privacybeleid">

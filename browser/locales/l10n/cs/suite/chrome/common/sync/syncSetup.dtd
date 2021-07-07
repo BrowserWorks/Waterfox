@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "Nastavení &syncBrand.fullName.label;">
+
+<!-- First page of the wizard -->
+
+<!ENTITY setup.pickSetupType.description "Vítejte! Jestliže jste nikdy &syncBrand.fullName.label; nepoužili, budete si muset vytvořit nový účet.">
+<!ENTITY button.createNewAccount.label "Vytvořit nový účet">
+<!ENTITY setup.haveAccount.label "Účet &syncBrand.fullName.label; už mám">
+<!ENTITY button.connect.label "Připojit">
+
+<!ENTITY setup.choicePage.title.label     "Znáte a požíváte &syncBrand.fullName.label;?">
+<!ENTITY setup.choicePage.new.label       "&syncBrand.shortName.label; neznám a nepoužívám">
+<!ENTITY setup.choicePage.existing.label  "&syncBrand.shortName.label; už používám na jiném počítači">
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "Server">
+<!ENTITY server.accesskey           "S">
+<!ENTITY serverType.main.label      "Server &syncBrand.fullName.label;">
+<!ENTITY serverType.custom2.label   "Použít vlastní server…">
+<!ENTITY signIn.account2.label      "Účet">
+<!ENTITY signIn.account2.accesskey  "e">
+<!ENTITY signIn.password.label      "Heslo">
+<!ENTITY signIn.password.accesskey  "H">
+<!ENTITY signIn.recoveryKey.label     "Obnovovací klíč">
+<!ENTITY signIn.recoveryKey.accesskey "K">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "Podrobnosti účtu">
+<!ENTITY setup.confirmPassword.label             "Kontrola hesla">
+<!ENTITY setup.confirmPassword.accesskey         "K">
+<!ENTITY setup.emailAddress.label                "E-mailová adresa">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "Souhlasím s">
+<!ENTITY setup.tosAgree1.accesskey  "S">
+<!ENTITY setup.tosLink.label        "podmínkami poskytování služby">
+<!ENTITY setup.tosAgree2.label      "a">
+<!ENTITY setup.ppLink.label         "zásadami ochrany osobních údajů">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; chrání vaše soukromí">
+<!ENTITY setup.newRecoveryKeyPage.description.label "Z důvodu zajištění vašeho soukromí jsou všechna vaše data před nahráním na server zašifrována. Obnovovací klíč potřebný k rozšifrování vašich dat nahrán není.">
+<!ENTITY recoveryKeyEntry.label        "Obnovovací klíč">
+<!ENTITY recoveryKeyEntry.accesskey    "K">
+<!ENTITY recoveryGenerateNewKey.label  "Vygenerovat nový klíč">
+<!ENTITY recoveryKeyBackup.description "Obnovovací klíč je vyžadován k přístupu k &syncBrand.fullName.label; z ostatních zařízení. Vytvořte si prosím jeho zálohu, protože obnovovací klíč není možné obnovit.">
+
+<!ENTITY button.syncKeyBackup.print.label     "Tisk…">
+<!ENTITY button.syncKeyBackup.print.accesskey "T">
+<!ENTITY button.syncKeyBackup.save.label      "Uložit…">
+<!ENTITY button.syncKeyBackup.save.accesskey  "U">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "Potvrďte prosím, že nejste robot">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "Přidat zařízení">
+<!ENTITY addDevice.showMeHow.label          "Zobrazit nápovědu.">
+<!ENTITY addDevice.dontHaveDevice.label     "Nemám zařízení u sebe">
+<!ENTITY addDevice.setup.description.label  "Pro aktivaci přejděte do dialogu možností &syncBrand.shortName.label; na připojeném zařízení a zvolte „Přidat zařízení“.">
+<!ENTITY addDevice.setup.enterCode.label    "A pak vložte tento kód:">
+<!ENTITY addDevice.dialog.description.label "Pro aktivaci přejděte do dialogu možností &syncBrand.shortName.label; na připojovaném zařízení a zvolte „Připojit“.">
+<!ENTITY addDevice.dialog.enterCode.label   "A pak vložte kód získaný z druhého zařízení:">
+<!ENTITY addDevice.dialog.tryAgain.label    "Prosím zkuste to znovu.">
+<!ENTITY addDevice.dialog.successful.label  "Zařízení bylo úspěšně přidáno. Počáteční synchronizace může trvat několik minut a bude probíhat na pozadí.">
+<!ENTITY addDevice.dialog.recoveryKey.label "Pro aktivaci vzdáleného zařízení budete potřebovat obnovovací klíč. Níže uvedený obnovovací klíč si prosím vytiskněte nebo uložte a vezměte si ho sebou.">
+<!ENTITY addDevice.dialog.connected.label   "Zařízení připojeno">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "Přihlásit se">
+<!ENTITY existingRecoveryKey.description "Svůj obnovovací klíč můžete nalézt v připojeném zařízení v dialogu možností &syncBrand.shortName.label;, pokud klepnete na „Obnovovací klíč“ pod tlačítkem „Správa účtu“.">
+<!ENTITY verifying.label              "Ověřování…">
+<!ENTITY resetPassword.label          "Obnovit heslo">
+<!ENTITY resetSyncKey.label           "Ztratil(a) jsem své další zařízení.">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "Možnosti synchronizace">
+<!ENTITY syncComputerName.label       "Název počítače:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy.label               "Synchronizovat">
+<!ENTITY engine.addons.label        "Doplňky">
+<!ENTITY engine.addons.accesskey    "D">
+<!ENTITY engine.bookmarks.label     "Záložky">
+<!ENTITY engine.bookmarks.accesskey "Z">
+<!ENTITY engine.tabs.label          "Panely">
+<!ENTITY engine.tabs.accesskey      "P">
+<!ENTITY engine.history.label       "Historie">
+<!ENTITY engine.history.accesskey   "H">
+<!ENTITY engine.passwords.label     "Hesla">
+<!ENTITY engine.passwords.accesskey "e">
+<!ENTITY engine.prefs.label         "Předvolby">
+<!ENTITY engine.prefs.accesskey     "v">
+
+<!ENTITY choice2.merge.main.label      "Sloučit data na tomto počítači s daty &syncBrand.shortName.label;">
+<!ENTITY choice2.merge.recommended.label "(doporučeno)">
+<!ENTITY choice2.client.main.label     "Nahradit všechna data na tomto počítači daty z vašeho &syncBrand.shortName.label;">
+<!ENTITY choice2.server.main.label     "Nahradit data na ostatních zařízeních daty na tomto počítači">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title "Potvrzení">
+<!ENTITY confirm.merge.label    "Zvolili jste sloučení dat na tomto počítači s daty na ostatních zařízeních, kde běží &syncBrand.fullName.label;.">
+<!ENTITY confirm.client2.label         "Upozornění: Následující data aplikace &brandShortName; na tomto počítači budou smazána:">
+<!ENTITY confirm.client.moreinfo.label "&brandShortName; poté nakopíruje data &syncBrand.fullName.label; na tento počítač.">
+<!ENTITY confirm.server2.label         "Upozornění: Data na následujících zařízení budou přepsána místními daty:">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "Nastavení dokončeno">
+<!ENTITY changeOptions.label "Vaše nastavení lze změnit v dialogu možnosti Sync níže.">
+<!ENTITY continueUsing.label "Teď můžete pokračovat v používání aplikace &brandShortName;.">

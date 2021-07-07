@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when not logged in... -->
+
+<!ENTITY setupButton.label          "A &syncBrand.fullName.label; beállítása">
+<!ENTITY setupButton.accesskey      "A">
+<!ENTITY weaveDesc.label            "A &syncBrand.fullName.label; lehetővé teszi az előzmények, könyvjelzők, jelszavak és megnyitott lapok elérését minden eszközön.">
+<!-- The page shown when logged in... -->
+
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label; fiók">
+<!ENTITY accountName.label            "Fiók neve:">
+<!-- Login error feedback -->
+
+<!ENTITY updatePass.label             "Frissítés">
+<!ENTITY updatePass.accesskey         "F">
+<!ENTITY resetPass.label              "Visszaállítás">
+<!ENTITY resetPass.accesskey          "V">
+<!-- Manage Account -->
+
+<!ENTITY manageAccount.label          "Fiók kezelése">
+<!ENTITY manageAccount.accesskey      "F">
+<!ENTITY viewQuota.label              "Kvóta megtekintése">
+<!ENTITY viewQuota.accesskey          "K">
+<!ENTITY changePassword.label         "Jelszó megváltoztatása">
+<!ENTITY changePassword.accesskey     "l">
+<!ENTITY myRecoveryKey.label          "Saját helyreállítókulcs">
+<!ENTITY myRecoveryKey.accesskey      "a">
+<!ENTITY resetSync.label              "Sync alaphelyzetbe">
+<!ENTITY resetSync.accesskey          "a">
+<!ENTITY unlinkDevice.label           "Eszköz deaktiválása">
+<!ENTITY unlinkDevice.accesskey       "d">
+<!ENTITY addDevice.label              "Eszköz hozzáadása">
+<!ENTITY addDevice.accesskey          "h">
+<!-- Sync Settings -->
+
+<!ENTITY syncComputerName.label       "Számítógép neve:">
+<!ENTITY syncComputerName.accesskey   "S">
+
+<!ENTITY syncMy2.label              "Szinkronizálandó:">
+<!ENTITY engine.addons.label        "Kiegészítők">
+<!ENTITY engine.addons.accesskey    "K">
+<!ENTITY engine.bookmarks.label     "Könyvjelzők">
+<!ENTITY engine.bookmarks.accesskey "K">
+<!ENTITY engine.tabs.label          "Lapok">
+<!ENTITY engine.tabs.accesskey      "L">
+<!ENTITY engine.history.label       "Előzmények">
+<!ENTITY engine.history.accesskey   "E">
+<!ENTITY engine.passwords.label     "Jelszavak">
+<!ENTITY engine.passwords.accesskey "J">
+<!ENTITY engine.prefs.label         "Beállítások">
+<!ENTITY engine.prefs.accesskey     "B">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "A szolgáltatás feltételei">
+<!ENTITY prefs.ppLink.label         "Adatvédelmi irányelvek">

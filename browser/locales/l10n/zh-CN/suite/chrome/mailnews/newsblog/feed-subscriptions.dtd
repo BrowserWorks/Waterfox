@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "订阅收取点">
+<!ENTITY learnMore.label             "了解更多关于收取点的信息">
+
+<!ENTITY feedTitle.label             "标题:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "收取点网址：">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation.placeholder    "输入要添加的有效的收取点网址">
+<!ENTITY feedLocation2.placeholder   "请输入一个有效的收取点网址">
+<!ENTITY locationValidate.label      "确认有效">
+<!ENTITY validateText.label          "检查验证并获取一个有效的网址。">
+
+<!ENTITY feedFolder.label            "文章存储在：">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "检查新文章，每隔 ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "分钟">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "天">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "发布者推荐：">
+
+<!ENTITY quickMode.label             "显示文章概述而不载入全部网页。">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "根据收取点的分类名自动创建标签">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "标签前缀：">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "请输入一个标签前缀">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "添加">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "验证">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "更新">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "删除">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "导入">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "导出">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "按目录结构导出收取点；ctrl 单击 或者 ctrl 回车 即可导出收取点列表">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "关闭">

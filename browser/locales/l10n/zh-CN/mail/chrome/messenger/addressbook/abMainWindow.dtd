@@ -1,0 +1,227 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "通讯录">
+<!ENTITY blankResultsPaneMessage.label                  "进行搜索后才会显示此通讯录的联系人">
+<!ENTITY localResultsOnlyMessage.label                  "在进行搜索之前将不会显示远程通讯录中的联系人">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "文件">
+<!ENTITY fileMenu.accesskey                             "f">
+<!ENTITY newMenu.label                                  "新建">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "通讯录联系人…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "邮递列表…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "通讯录…">
+<!ENTITY newAddressBookCmd.accesskey                    "B">
+<!ENTITY newCardDAVBookCmd.label                        "CardDAV 通讯录…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP目录…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "新建消息">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "M">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "使用 Mac OS X 通讯录">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "关闭">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "C">
+<!ENTITY printSetupCmd.label                            "页面设置…">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "联系人打印预览">
+<!ENTITY printPreviewContactCmd.accesskey               "v">
+<!ENTITY printPreviewAddressBook.label                  "通讯录打印预览">
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+<!ENTITY printContactCmd.label                          "打印联系人…">
+<!ENTITY printContactCmd.accesskey                      "P">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "打印通讯录…">
+<!ENTITY printAddressBook.accesskey                     "A">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "编辑">
+<!ENTITY editMenu.accesskey                             "E">
+<!ENTITY deleteCmd.label                                "删除">
+<!ENTITY deleteAbCmd.label                              "删除通讯录">
+<!ENTITY removeAbCmd.label                              "移除通讯录">
+<!ENTITY deleteContactCmd.label                         "删除联系人">
+<!ENTITY deleteContactsCmd.label                        "删除联系人">
+<!ENTITY deleteListCmd.label                            "删除列表">
+<!ENTITY deleteListsCmd.label                           "删除列表">
+<!ENTITY deleteItemsCmd.label                           "删除项">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "属性">
+<!ENTITY propertiesMenu.accesskey                       "i">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "通讯录属性">
+<!ENTITY abPropertiesMenu.accesskey                     "i">
+<!ENTITY contactPropertiesMenu.label                    "联系人属性">
+<!ENTITY contactPropertiesMenu.accesskey                "i">
+<!ENTITY mailingListPropertiesMenu.label                "邮件列表属性">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "查看">
+<!ENTITY viewMenu.accesskey                             "V">
+<!ENTITY viewToolbarsMenu.label                         "工具栏">
+<!ENTITY viewToolbarsMenu.accesskey                     "T">
+<!ENTITY menubarCmd.label                               "菜单栏">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "通讯录工具栏">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "状态栏">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "自定义…">
+<!ENTITY customizeToolbar.accesskey                     "C">
+<!ENTITY layoutMenu.label                               "布局">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "文件夹窗格">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "联系人窗格">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "名称显示方式">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "姓名">
+<!ENTITY firstLastCmd2.accesskey                        "F">
+<!ENTITY lastFirstCmd.label                             "姓氏，名字">
+<!ENTITY lastFirstCmd.accesskey                         "L">
+<!ENTITY displayNameCmd.label                           "显示名称">
+<!ENTITY displayNameCmd.accesskey                       "D">
+<!ENTITY sortMenu.label                                 "排序">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "工具">
+<!ENTITY tasksMenu.accesskey                            "T">
+<!ENTITY messengerCmd.label                             "邮件与新闻组">
+<!ENTITY messengerCmd.accesskey                         "M">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "搜索地址…">
+<!ENTITY searchAddressesCmd.accesskey                   "S">
+<!ENTITY importCmd.label                                "导入…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "导出…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "选项">
+<!ENTITY preferencesCmd2.accesskey                      "O">
+<!ENTITY preferencesCmdUnix.label                       "首选项">
+<!ENTITY preferencesCmdUnix.accesskey                   "n">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "新建联系人">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "新建列表">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY showAsDefault.label                            "默认启动目录">
+<!ENTITY showAsDefault.accesskey                        "S">
+<!ENTITY editPropertiesButton.label                     "编辑">
+<!ENTITY propertiesContext.label                        "属性">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "属性">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY syncContext.label                              "同步">
+<!ENTITY syncContext.accesskey                          "y">
+<!ENTITY editContactContext.label                       "编辑联系人">
+<!ENTITY editContactContext.accesskey                   "E">
+<!ENTITY editMailingListContext.label                   "编辑列表">
+<!ENTITY editMailingListContext.accesskey               "E">
+<!ENTITY newmsgButton.label                             "新建消息">
+<!ENTITY newmsgButton.accesskey                         "W">
+<!ENTITY newIM.label                                    "实时消息">
+<!ENTITY newIM.accesskey                                "I">
+<!ENTITY printButton.label                              "打印…">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY deleteButton2.label                            "删除">
+<!ENTITY deleteButton2.accesskey                        "D">
+
+<!ENTITY removeButton.label                             "移除">
+<!ENTITY removeButton.accesskey                         "R">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "选择要显示的列">
+<!ENTITY newContactButton.tooltip                       "创建新的通讯录联系人">
+<!ENTITY newlistButton.tooltip                          "创建新列表">
+<!ENTITY editPropertiesButton.tooltip                   "编辑选中项">
+<!ENTITY editAbPropertiesButton.tooltip                 "编辑选中通讯录的属性">
+<!ENTITY editContactPropertiesButton.tooltip            "编辑选中联系人">
+<!ENTITY editMailingListPropertiesButton.tooltip        "编辑选中邮件列表">
+<!ENTITY newmsgButton.tooltip                           "发送一个邮件消息">
+<!ENTITY newIM.tooltip                                  "发送一条即时消息或聊天">
+<!ENTITY deleteButton2.tooltip                          "删除选中项">
+
+<!ENTITY removeButton.tooltip                           "删除选择的通讯录">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "名称或者电子邮件">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "高级地址搜索">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "快速搜索">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "通讯录">
+<!ENTITY Addrbook.accesskey                             "B">
+<!ENTITY GeneratedName.label                            "名称">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "电子邮件">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "聊天名称">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "公司">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "昵称">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "其他电子邮件">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "部门">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "职位">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "移动电话">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "传呼机号码">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "传真">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "家庭电话">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "工作电话">
+<!ENTITY WorkPhone.accesskey                            "W">
+<!ENTITY sortAscending.label                            "升序">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "降序">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "小名">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "联系">
+<!ENTITY home.heading                                   "家庭">
+<!ENTITY other.heading                                  "其它">
+<!ENTITY chat.heading                                   "聊天">
+<!ENTITY phone.heading                                  "电话">
+<!ENTITY work.heading                                   "工作地址">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "描述">
+<!ENTITY addresses.heading                              "地址">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "获取地图">
+<!ENTITY mapIt.tooltip                                  "从网站显示一幅此地址的地图">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "窗口">
+<!ENTITY minimizeWindow.label                           "最小化">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "全部置前">
+<!ENTITY zoomWindow.label                               "缩放">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Unduh dan Sinkronkan Pesan">
+<!ENTITY MsgSelect.label "Item untuk Penggunaan Luring">
+<!ENTITY MsgSyncDesc.label "Jika Anda telah memilih folder email atau newsgroup untuk penggunaan luring, Anda dapat mengunduh dan/atau mensinkronkannya sekarang. Jika tidak, gunakan tombol &quot;Pilih&quot; untuk memilih folder dan newsgroup untuk penggunaan luring.">
+<!ENTITY MsgSyncDirections.label "Unduh dan/atau sinkronkan item berikut:">
+<!ENTITY syncTypeMail.label "Pesan email">
+<!ENTITY syncTypeMail.accesskey "m">
+<!ENTITY syncTypeNews.label "Pesan newsgroup">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Kirim pesan yang belum terkirim">
+<!ENTITY sendMessage.accesskey "s">
+<!ENTITY workOffline.label "Aktifkan mode luring setelah proses mengunduh dan/atau sinkronisasi selesai.">
+<!ENTITY workOffline.accesskey "A">
+<!ENTITY selectButton.label "Pilih…">
+<!ENTITY selectButton.accesskey "P">
+<!ENTITY MsgSelectDesc.label "Pilih folder email dan newsgroup untuk penggunaan luring.">
+<!ENTITY MsgSelectInd.label "Unduh">
+<!ENTITY MsgSelectItems.label "Folder dan Newsgroup">

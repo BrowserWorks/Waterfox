@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Zoeken terwijl u typt">
+<!ENTITY findAsYouTypeBehavior.label "Zoeken terwijl u typt">
+<!ENTITY findAsYouTypeTip.label "Tip: handmatig Zoeken terwijl u typt kunt u starten door / om tekst te zoeken of door ' om koppelingen te zoeken, gevolgd door de tekst die u wilt zoeken.">
+<!ENTITY findAsYouTypeTimeout.label "De huidige zoekopdracht na enkele seconden van inactiviteit wissen">
+<!ENTITY findAsYouTypeTimeout.accesskey "z">
+<!ENTITY findAsYouTypeSound.label "Een geluid afspelen wanneer getypte tekst niet is gevonden">
+<!ENTITY findAsYouTypeSound.accesskey "u">
+<!ENTITY findAsYouTypeEnableAuto.label "Tijdens het typen in een webpagina automatisch zoeken naar:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "T">
+<!ENTITY findAsYouTypeAutoText.label "Willekeurige tekst in de pagina">
+<!ENTITY findAsYouTypeAutoText.accesskey "W">
+<!ENTITY findAsYouTypeAutoLinks.label "Alleen koppelingen">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "k">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "De zoekbalk tonen tijdens ‘Zoeken terwijl u typt’">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "D">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Noot: bij ‘Zoeken terwijl u typt’ zonder de zoekbalk zijn diakritische tekens niet mogelijk.">

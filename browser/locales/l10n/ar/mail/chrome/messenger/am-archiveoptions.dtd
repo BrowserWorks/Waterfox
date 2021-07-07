@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "خيارات الأرشفة">
+<!ENTITY archiveGranularityPrefix.label "عند أرشفة الرسائل، ضعها في:">
+<!ENTITY archiveFlat.label "مجلد واحد">
+<!ENTITY archiveFlat.accesskey "و">
+<!ENTITY archiveYearly.label "مجلدات للأرشفة السنوية">
+<!ENTITY archiveYearly.accesskey "س">
+<!ENTITY archiveMonthly.label "مجلدات للأرشفة الشهرية">
+<!ENTITY archiveMonthly.accesskey "ش">
+<!ENTITY keepFolderStructure.label "حافظ على بنية المجلدات للرسائل المؤرشفة">
+<!ENTITY keepFolderStructure.accesskey "ظ">
+<!ENTITY archiveExample.label "مثال">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "الأرشيف">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "صندوق الوارد">

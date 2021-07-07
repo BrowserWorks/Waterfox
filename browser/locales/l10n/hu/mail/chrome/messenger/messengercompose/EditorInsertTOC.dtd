@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Tartalomjegyzék">
+<!ENTITY buildToc.label      "Tartalomjegyzék készítése:">
+<!ENTITY tag.label           "Elem:">
+<!ENTITY class.label         "Osztály:">
+<!ENTITY header1.label       "1. szint">
+<!ENTITY header2.label       "2. szint">
+<!ENTITY header3.label       "3. szint">
+<!ENTITY header4.label       "4. szint">
+<!ENTITY header5.label       "5. szint">
+<!ENTITY header6.label       "6. szint">
+<!ENTITY makeReadOnly.label  "Írásvédett tartalomjegyzék">
+<!ENTITY orderedList.label   "A tartalomjegyzék elemeinek számozása">

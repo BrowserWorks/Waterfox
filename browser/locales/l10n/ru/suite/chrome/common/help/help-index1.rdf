@@ -1,0 +1,2434 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:nc="http://home.netscape.com/NC-rdf#">
+
+<rdf:Description about="help-indexAZ.rdf#c">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="cookies"
+         nc:name="cookies"
+	 nc:link="using_priv_help.xhtml#using_the_cookie_manager"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="CRLs"
+         nc:name="CRL"
+	 nc:link="using_certs_help.xhtml#how_validation_works"/>
+     </rdf:li>
+</rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#cookies">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="cookies:about"
+         nc:name="что такое cookies"
+	 nc:link="using_priv_help.xhtml#using_the_cookie_manager"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:email_and"
+         nc:name="почта и cookies"
+	 nc:link="privacy_help.xhtml#how_can_i_control_web_pages_in_email_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:foreign"
+         nc:name="внешние cookies"
+	 nc:link="privacy_help.xhtml#what_are_third-party_cookies"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:managing_per_site"
+         nc:name="управление cookies отдельных сайтов"
+	 nc:link="using_priv_help.xhtml#managing_cookies_site-by-site"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:notification_icon"
+         nc:name="значок уведомления"
+	 nc:link="using_priv_help.xhtml#cookie_notification"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:preferences"
+         nc:name="настройки cookies"
+	 nc:link="using_priv_help.xhtml#cookies"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:privacy_levels_for"
+         nc:name="уровни приватности"
+	 nc:link="using_priv_help.xhtml#setting_privacy_levels"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:removing"
+         nc:name="удаление cookies"
+	 nc:link="using_priv_help.xhtml#removing_cookies"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cookies:viewing"
+         nc:name="просмотр cookies"
+	 nc:link="using_priv_help.xhtml#viewing_cookies"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#CRLs">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="CRLs:about"
+         nc:name="что такое CRL"
+	 nc:link="using_certs_help.xhtml#how_validation_works"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="CRLs:auto_upates_for"
+         nc:name="автоматическое обновление CRL"
+	 nc:link="validation_help.xhtml#automatic_crl_update_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="CRLs:managing"
+         nc:name="упорядочение CRL"
+	 nc:link="validation_help.xhtml#manage_crls"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="CRLs:Next_Update_date"
+         nc:name="дата следующего обновления"
+	 nc:link="using_certs_help.xhtml#about_the_next_update_date"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="CRLs:preferences"
+         nc:name="настройки CRL"
+	 nc:link="validation_help.xhtml#privacy_and_security_preferences_validation"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#h">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="HTML"
+         nc:name="HTML"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#HTML">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="HTML:editing_in_mail_messages"
+         nc:name="редактирование элементов HTML в почтовых сообщениях"
+         nc:link="mailnews_using_mail.xhtml#editing_or_inserting_html_elements"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="HTML:using_in_Composer"
+         nc:name="вставка элементов HTML в Компоновщике"
+	 nc:link="composer_help.xhtml#inserting_html_elements_and_attributes"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="HTML:using_in_mail_messages"
+         nc:name="использование HTML в почтовых сообщениях"
+         nc:link="mailnews_using_mail.xhtml#using_html_in_your_messages"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#i">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="IMAP"
+         nc:name="IMAP"
+         nc:link="mailnews_account_settings.xhtml#about_internet_message_access_protocol"/>
+     </rdf:li>
+</rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#IMAP">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="IMAP:about"
+         nc:name="что такое IMAP"
+         nc:link="mailnews_account_settings.xhtml#about_internet_message_access_protocol"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="IMAP:advanced_mail_settings"
+         nc:name="дополнительные параметры сервера IMAP"
+         nc:link="mailnews_account_settings.xhtml#advanced_imap_server_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="IMAP:server_settings"
+         nc:name="параметры сервера IMAP"
+         nc:link="mailnews_account_settings.xhtml#imap_server_settings"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#j">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="java"
+         nc:name="Java"
+         nc:link="nav_help.xhtml#plugins_and_downloads"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="JavaScript"
+         nc:name="JavaScript"/>
+     </rdf:li>
+</rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#JavaScript">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="JavaScript:preferences"
+         nc:name="Настройки JavaScript"
+	 nc:link="cs_nav_prefs_advanced.xhtml#scripts_and_plug-ins"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#l">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="LDAP"
+         nc:name="LDAP"
+         nc:link="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories"/>
+     </rdf:li>
+</rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#LDAP">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="LDAP:adding_to_address_book"
+         nc:name="добавление каталогов в адресную книгу"
+         nc:link="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="LDAP:directory_server_settings"
+         nc:name="параметры сервера каталогов"
+         nc:link="mailnews_addressbooks.xhtml#directory_server_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="LDAP:global_settings"
+         nc:name="настройки LDAP"
+         nc:link="mailnews_preferences.xhtml#addressing_preferences"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#o">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="OSCP"
+         nc:name="OSCP"
+	 nc:link="using_certs_help.xhtml#how_validation_works"/>
+     </rdf:li>
+</rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#p">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="POP"
+         nc:name="POP"
+         nc:link="mailnews_account_settings.xhtml#about_post_office_protocol"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#POP">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="POP:server_settings"
+         nc:name="Параметры сервера POP"
+         nc:link="mailnews_account_settings.xhtml#pop_server_settings"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#s">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="SSL"
+         nc:name="SSL"
+	 nc:link="ssl_help.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="SMTP"
+         nc:name="SMTP"/>     
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#SMTP">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="SMTP:choosing_a_different"
+         nc:name="выбор другого SMTP сервера"
+         nc:link="mailnews_account_settings.xhtml#account_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="SMTP:server_settings"
+         nc:name="настройки SMTP сервера"
+         nc:link="mailnews_account_settings.xhtml#outgoing_server"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#SSL">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="SSL:ciphers"
+         nc:name="редактирование шифров"
+	 nc:link="ssl_help.xhtml#edit_ciphers"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="SSL:preferences"
+         nc:name="настройки SSL"
+	 nc:link="ssl_help.xhtml#privacy_and_security_preferences_ssl"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="SSL:protocols"
+         nc:name="протоколы SSL"
+         nc:link="ssl_help.xhtml#ssl_protocol_versions"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#1">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="Offline"
+         nc:name="автономная работа"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="email_addresses"
+         nc:name="адреса электронной почты"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="address_books"
+         nc:name="адресные книги"
+         nc:link="mailnews_addressbooks.xhtml#about_address_books"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="browsing_anonymously"
+         nc:name="анонимный браузинг"
+	     nc:link="privacy_help.xhtml#how_can_i_make_sure_unauthorized_people_dont_use_information_about_me"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#address_books">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="address_books:adding_entries"
+         nc:name="добавление записей в адресную книгу"
+         nc:link="mailnews_addressbooks.xhtml#adding_entries_to_your_address_books"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="address_books:creating"
+         nc:name="создание новой адресной книги"
+         nc:link="mailnews_addressbooks.xhtml#creating_a_new_address_book"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="address_books:creating_mailing_lists"
+         nc:name="создание списков рассылки"
+         nc:link="mailnews_addressbooks.xhtml#creating_a_mailing_list"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="address_books:exporting"
+         nc:name="экспорт адресных книг"
+         nc:link="mailnews_addressbooks.xhtml#exporting_address_books"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="address_books:importing"
+         nc:name="импорт адресных книг"
+         nc:link="mailnews_addressbooks.xhtml#importing_address_books"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="address_books:LDAP_directories"
+         nc:name="каталоги LDAP"
+         nc:link="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="address_books:searching"
+         nc:name="поиск в адресных книгах"
+         nc:link="mailnews_addressbooks.xhtml#searching_address_books_and_directories"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#email_addresses">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="email_addresses:address_books_and"
+         nc:name="добавление записей в адресные книги"
+         nc:link="mailnews_addressbooks.xhtml#adding_entries_to_your_address_books"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="email_addresses:in_mail_messages"
+         nc:name="адресация сообщений"
+         nc:link="mailnews_using_mail.xhtml#addressing_a_message"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Offline">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Offline:general_preferences"
+         nc:name="параметры автономной работы"
+         nc:link="mailnews_preferences.xhtml#offline_and_disk_space_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Offline:Mail_and_Newsgroups"
+         nc:name="настройка почтового клиента для автономной работы"
+         nc:link="mailnews_offline.xhtml#working_offline"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#2">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="Sidebar"
+         nc:name="Боковая панель"
+	 nc:link="customize_help.xhtml#what_is_sidebar"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="browser"
+         nc:name="браузер"
+	 nc:link="nav_help.xhtml"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#browser">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="browser:changing_your_home_page"
+         nc:name="изменение начальной страницы"
+	 nc:link="customize_help.xhtml#changing_your_home_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="browser:start_up_components"
+         nc:name="компоненты открываемые при запуске"
+	 nc:link="customize_help.xhtml#specifying_which_components_open_at_launch"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Sidebar">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Sidebar:adding_tabs"
+         nc:name="добавление разделов к Боковой панели"
+	 nc:link="customize_help.xhtml#adding_sidebar_tabs"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:customizing_tabs"
+         nc:name="настройка разделов Боковой панели"
+	 nc:link="customize_help.xhtml#customizing_individual_sidebar_tabs"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:description"
+         nc:name="что такое Боковая панель?"
+	 nc:link="customize_help.xhtml#what_is_sidebar"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:opening_closing_resizing"
+         nc:name="открытие, закрытие и изменение размера боковой панели"
+     nc:link="customize_help.xhtml#opening_closing_and_resizing_sidebar"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:removing_tabs"
+         nc:name="удаление разделов Боковой панели"
+	 nc:link="customize_help.xhtml#removing_sidebar_tabs"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:reorganizing_tabs"
+         nc:name="изменение порядка разделов Боковой панели"
+	 nc:link="customize_help.xhtml#reorganizing_sidebar_tabs"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:search_categories"
+         nc:name="категории поиска"
+	 nc:link="nav_help.xhtml#customizing_search_categories"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:searching_from"
+         nc:name="поиск с помощью Боковой панели"
+	 nc:link="nav_help.xhtml#searching_from_sidebar"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Sidebar:viewing_tabs"
+         nc:name="просмотр вкладок Боковой панели"
+	 nc:link="customize_help.xhtml#viewing_sidebar_tabs"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#3">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="web_pages"
+         nc:name="веб-страницы"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="validation"
+         nc:name="верификация сертификатов"
+	 nc:link="using_certs_help.xhtml#how_validation_works"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="attaching_files_to_messages"
+         nc:name="вложение файлов в сообщения"
+         nc:link="mailnews_using_mail.xhtml#attaching_a_file_or_web_page"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="popup_windows"
+         nc:name="всплывающие окна"
+	 nc:link="cs_priv_prefs_popup.xhtml#controlling_popups"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="helper_applications"
+         nc:name="вспомогательные приложения"
+         nc:link="nav_help.xhtml#plugins_and_downloads"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="GIF"
+         nc:name="вставка изображений"
+	 nc:link="composer_help.xhtml#inserting_an_image_into_your_page"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#popup_windows">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="popup_windows:preferences"
+         nc:name="настройки всплывающих окон"
+	 nc:link="cs_priv_prefs_popup.xhtml#privacy_and_security_preferences_popup_windows"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#validation">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="validation:about"
+         nc:name="о верификации сертификатов"
+	 nc:link="using_certs_help.xhtml#how_validation_works"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="validation:auto_updating_CRLs"
+         nc:name="автоматическое обновление CRL"
+	 nc:link="validation_help.xhtml#automatic_crl_update_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="validation:CRLs"
+         nc:name="CRL"
+	 nc:link="validation_help.xhtml#privacy_and_security_preferences_validation"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="validation:managing_CRLs"
+         nc:name="упорядочение CRL"
+	 nc:link="validation_help.xhtml#manage_crls"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="validation:OCSP"
+         nc:name="OCSP"
+	 nc:link="validation_help.xhtml#privacy_and_security_preferences_validation"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="validation:settings"
+         nc:name="настройки верификации"
+	 nc:link="validation_help.xhtml#validation_settings"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#web_pages">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="web_pages:copying"
+         nc:name="копирование веб-страниц"
+	 nc:link="nav_help.xhtml#copying_saving_and_printing_pages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="web_pages:customizing_fonts"
+         nc:name="настройка шрифтов"
+	 nc:link="customize_help.xhtml#changing_fonts_colors_and_themes"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="web_pages:finding_within"
+         nc:name="поиск текста на веб-странице"
+	 nc:link="nav_help.xhtml#searching_within_a_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="web_pages:history"
+         nc:name="списки просмотренных веб-страниц"
+	 nc:link="nav_help.xhtml#about_history_lists"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="web_pages:navigating"
+         nc:name="работа с веб-сайтами"
+	 nc:link="nav_help.xhtml#browsing_the_web"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="web_pages:searching"
+         nc:name="поиск в Интернете"
+	 nc:link="nav_help.xhtml#searching_the_web"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="web_pages:stopping"
+         nc:name="прекращение загрузки страницы"
+	 nc:link="nav_help.xhtml#stopping_and_reloading"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#4">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="Newsgroups"
+         nc:name="группы новостей"
+         nc:link="mailnews_newsgroups.xhtml#getting_started_with_newsgroups"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Newsgroups">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Newsgroups:getting_started"
+         nc:name="начало работы с группами новостей"
+         nc:link="mailnews_newsgroups.xhtml#getting_started_with_newsgroups"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Newsgroups:server_settings"
+         nc:name="параметры сервера групп новостей"
+         nc:link="mailnews_account_settings.xhtml#server_settings"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#5">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="adding"
+         nc:name="добавление"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#adding">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="adding:images_to_web_pages"
+         nc:name="вставка изображений в веб-страницы"
+	 nc:link="composer_help.xhtml#inserting_an_image_into_your_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="adding:mail_account"
+         nc:name="создание новой учетной записи почты"
+         nc:link="mailnews_getting_started.xhtml#setting_up_additional_mail_and_news_accounts"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="adding:newsgroup_account"
+         nc:name="создание новой учетной записи групп новостей"
+         nc:link="mailnews_getting_started.xhtml#setting_up_additional_mail_and_news_accounts"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="adding:table_elements"
+         nc:name="вставка элементов таблицы"
+	 nc:link="composer_help.xhtml#adding_and_deleting_rows_columns_and_cells"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#6">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#7">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#8">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="bookmarks"
+         nc:name="закладки"
+	 nc:link="nav_help.xhtml#visiting_bookmarked_pages"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="security"
+         nc:name="защита"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="lock_icon"
+         nc:name="значок с изображением замка"
+	 nc:link="using_certs_help.xhtml#checking_security_for_a_web_page"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#bookmarks">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="bookmarks:changing_bookmarks"
+         nc:name="изменение закладок"
+	 nc:link="customize_help.xhtml#changing_individual_bookmarks"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="bookmarks:creating_bookmarks"
+         nc:name="создание закладок"
+	 nc:link="customize_help.xhtml#creating_new_bookmarks"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="bookmarks:exporting_bookmarks"
+         nc:name="экспорт закладок"
+	 nc:link="customize_help.xhtml#exporting_or_importing_a_bookmark_list"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="bookmarks:organizing_bookmarks"
+         nc:name="организация закладок"
+	 nc:link="customize_help.xhtml#organizing_your_bookmarks"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="bookmarks:searching_bookmarks"
+         nc:name="поиск закладок"
+	 nc:link="customize_help.xhtml#searching_your_bookmarks"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="bookmarks:using_bookmarks"
+         nc:name="использование закладок"
+	 nc:link="customize_help.xhtml#using_bookmarks"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="bookmarks:visiting"
+         nc:name="посещение страниц, отмеченных закладками"
+	 nc:link="nav_help.xhtml#visiting_bookmarked_pages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="bookmarks:what_are_bookmarks"
+         nc:name="что такое закладки"
+	 nc:link="customize_help.xhtml#what_are_bookmarks"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#security">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="security:checking_before_sending_message"
+         nc:name="проверка безопасности сообщений перед его отправкой"
+	 nc:link="mailnews_security.xhtml#message_security_compose_window"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="security:checking_for_a_web_page"
+         nc:name="проверка безопасности веб-страницы"
+	 nc:link="using_certs_help.xhtml#checking_security_for_a_web_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="security:checking_for_received_messages"
+         nc:name="проверка безопасности полученных сообщений"
+	 nc:link="mailnews_security.xhtml#reading_signed_and_encrypted_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="security:preferences"
+         nc:name="настройки безопасности"
+	 nc:link="privsec_help.xhtml"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#9">
+   <nc:subheadings>
+     <rdf:Seq>
+       <rdf:li>
+       <rdf:Description ID="Customizing"
+         nc:name="изменение шрифтов и цветов веб-страниц"
+	 nc:link="customize_help.xhtml#changing_fonts_colors_and_themes"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="font_changing_in_composer"
+         nc:name="изменение шрифтов в Компоновщике"
+	 nc:link="composer_help.xhtml#changing_text_color_style_and_font"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="images"
+         nc:name="изображения"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="import"
+         nc:name="импорт"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="DOM_Inspector"
+         nc:name="Инспектор DOM"
+	 nc:link="developer_tools.xhtml#inspector"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="page_info"
+         nc:name="информация о странице"
+	 nc:link="page_info_help.xhtml#viewing_page_info"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="Tabbed_Browsing"
+         nc:name="использование вкладок"
+	 nc:link="customize_help.xhtml#tabbed_browsing"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Tabbed_Browsing">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Tabbed_Browsing:bookmarking_tabs"
+         nc:name="добавление вкладок в закладки"
+	 nc:link="customize_help.xhtml#bookmarking_tabs"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Tabbed_Browsing:closing_tabs"
+         nc:name="закрытие вкладок"
+	 nc:link="customize_help.xhtml#closing_tabs"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Tabbed_Browsing:introduction"
+         nc:name="использование вкладок"
+	 nc:link="nav_help.xhtml#using_tabbed_browsing"/>
+	 </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Tabbed_Browsing:opening_tabs"
+         nc:name="открытие вкладок"
+	 nc:link="customize_help.xhtml#opening_tabs"/>
+     </rdf:li>
+	 <rdf:li>
+       <rdf:Description ID="Tabbed_Browsing:moving_tabs"
+         nc:name="перемещение вкладок"
+         nc:link="customize_help.xhtml#moving_tabs"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Tabbed_Browsing:what_is"
+         nc:name="что такое вкладки"
+	 nc:link="customize_help.xhtml#what_is_tabbed_browsing"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="Tabbed_Browsing:setting_up"
+         nc:name="установка параметров вкладок"
+	 nc:link="customize_help.xhtml#setting_up_tabbed_browsing"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#images">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="images:email_and"
+         nc:name="почта и изображения"
+	 nc:link="privacy_help.xhtml#how_can_i_control_web_pages_in_email_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="images:managing"
+         nc:name="управление изображениями"
+	 nc:link="using_priv_help.xhtml#managing_images"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="images:preferences"
+         nc:name="настройки изображений"
+	 nc:link="using_priv_help.xhtml#images"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="images:set_as_wallpaper"
+         nc:name="установка изображения как обоев рабочего стола"
+	 nc:link="nav_help.xhtml#setting_image_as_wallpaper"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#import">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="import:address_book"
+         nc:name="импорт адресных книг"
+         nc:link="mailnews_addressbooks.xhtml#importing_address_books"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="import:bookmark_list"
+         nc:name="импорт закладок"
+         nc:link="customize_help.xhtml#exporting_or_importing_a_bookmark_list"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="import:certificates"
+         nc:name="импорт сертификатов"
+         nc:link="certs_help.xhtml#your_certificates"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="import:crls"
+         nc:name="импорт CRL"
+         nc:link="using_certs_help.xhtml#importing_crls"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="import:mail"
+         nc:name="импорт почты и настроек почты"
+         nc:link="mailnews_getting_started.xhtml#importing_mail_from_other_programs"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#10">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="keyboard_shortcuts"
+         nc:name="клавиатурные сокращения"
+         nc:link="shortcuts.xhtml"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="Internet_Keywords"
+         nc:name="ключевые слова Интернета"
+	 nc:link="nav_help.xhtml#using_internet_keywords"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="Composer"
+         nc:name="Компоновщик"
+	 nc:link="composer_help.xhtml"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="JSConsole"
+         nc:name="Консоль JavaScript"
+	 nc:link="developer_tools.xhtml#js_console"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="copy web pages"
+         nc:name="копирование"
+	 nc:link="nav_help.xhtml#copying_saving_and_printing_pages"/>
+	      </rdf:li> 
+	 <rdf:li>
+	    <rdf:Description ID="keywords"
+	     nc:name="краткое имя"
+	 nc:link="nav_help.xhtml#custom_keywords"/>                             
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cache"
+         nc:name="кэш"
+	 nc:link="nav_help.xhtml#changing_cache_settings"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#keyboard_shortcuts">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="keyboard_shortcuts:Composer"
+         nc:name="Для Компоновщика"
+         nc:link="shortcuts_composer.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="keyboard_shortcuts:general"
+         nc:name="Общие"
+         nc:link="shortcuts.xhtml#general_mozilla_shortcuts"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="keyboard_shortcuts:help"
+         nc:name="использование"
+         nc:link="shortcuts.xhtml#using_shortcuts"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="keyboard_shortcuts:Mail_and_Newsgroups"
+         nc:name="Для клиента почты и новостей"
+         nc:link="shortcuts_mailnews.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="keyboard_shortcuts:Navigator"
+         nc:name="Для Навигатора"
+         nc:link="shortcuts_navigator.xhtml"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#cache">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="cache:changing_settings"
+         nc:name="изменение параметров кэша"
+	 nc:link="nav_help.xhtml#changing_cache_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="cache:preferences"
+         nc:name="настройки кэша"
+	 nc:link="cs_nav_prefs_advanced.xhtml#cache"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Composer">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Composer:adding_tables"
+         nc:name="вставка таблиц"
+	 nc:link="composer_help.xhtml#adding_tables_to_your_web_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:Advanced_Property_Editor"
+         nc:name="редактор дополнительных свойств"
+	 nc:link="composer_help.xhtml#using_the_advanced_property_editor"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:changing_text_color"
+         nc:name="изменение цвета текста"
+	 nc:link="composer_help.xhtml#changing_text_color_style_and_font"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:changing_text_font"
+         nc:name="изменение шрифта текста"
+	 nc:link="composer_help.xhtml#changing_text_color_style_and_font"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:checking_html"
+         nc:name="проверка правильности html"
+	 nc:link="composer_help.xhtml#validating_the_html"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:creating_links"
+         nc:name="создание ссылок"
+	 nc:link="composer_help.xhtml#creating_links_in_composer"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:creating_new_pages"
+         nc:name="создание новых страниц"
+	 nc:link="composer_help.xhtml#creating_a_new_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:editing_image_properties"
+         nc:name="изменение свойств изображения"
+	 nc:link="composer_help.xhtml#editing_image_properties"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:editing_modes"
+         nc:name="режимы редактирования"
+	 nc:link="composer_help.xhtml#choosing_the_right_editing_mode"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:finding_replacing_text"
+         nc:name="поиск и замена текста"
+	 nc:link="composer_help.xhtml#finding_and_replacing_text"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:formatting_lists"
+         nc:name="форматирование списков"
+	 nc:link="composer_help.xhtml#formatting_paragraphs_headings_and_lists"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:formatting_paragraphs"
+         nc:name="форматирование абзацев"
+	 nc:link="composer_help.xhtml#formatting_paragraphs_headings_and_lists"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:general_preferences"
+         nc:name="общие настройки"
+	 nc:link="composer_help.xhtml#composer_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:inserting_horizontal_lines"
+         nc:name="вставка горизонтальных разделителей"
+	 nc:link="composer_help.xhtml#inserting_horizontal_lines"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:inserting_images"
+         nc:name="вставка изображений"
+	 nc:link="composer_help.xhtml#inserting_an_image_into_your_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:keyboard_shortcuts"
+         nc:name="клавиатурные сокращения"
+         nc:link="shortcuts_composer.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:removing_text_styles"
+         nc:name="удаление стилей текста"
+	 nc:link="composer_help.xhtml#removing_or_discontinuing_text_styles"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:saving_pages"
+         nc:name="сохранение страниц в компоновщике"
+	 nc:link="composer_help.xhtml#saving_and_browsing_your_new_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:setting_page_colors"
+         nc:name="указание цвета страницы"
+	 nc:link="composer_help.xhtml#setting_page_colors_and_backgrounds"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:setting_page_properties"
+         nc:name="указание фона страницы"
+	 nc:link="composer_help.xhtml#setting_page_colors_and_backgrounds"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:special_characters"
+         nc:name="специальные символы"
+	 nc:link="composer_help.xhtml#inserting_special_characters"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Composer:working_with_lists"
+         nc:name="работа со списками"
+	 nc:link="composer_help.xhtml#working_with_lists"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#11">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#12">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="master_password"
+         nc:name="мастер-пароль"
+	 nc:link="passwords_help.xhtml#change_master_password"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="Cookie_Manager"
+         nc:name="менеджер Cookies"
+	 nc:link="using_priv_help.xhtml#using_the_cookie_manager"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Download_Manager"
+         nc:name="менеджер загрузок"
+	 nc:link="nav_help.xhtml#plugins_and_downloads"/>
+     </rdf:li>     
+          <rdf:li>
+       <rdf:Description ID="password_manager"
+         nc:name="менеджер паролей"
+	 nc:link="using_priv_help.xhtml#using_the_password_manager"/>
+     </rdf:li>
+
+      <rdf:li>
+       <rdf:Description ID="device_manager"
+         nc:name="менеджер устройств"
+	 nc:link="using_certs_help.xhtml#about_security_devices_and_modules"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Form_Manager"
+         nc:name="менеджер форм"
+	 nc:link="using_priv_help.xhtml#using_the_form_manager"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Labels"
+         nc:name="метки"
+         nc:link="mailnews_getting_started.xhtml#labeling_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="security_modules"
+         nc:name="модули защиты"
+	 nc:link="using_certs_help.xhtml#about_security_devices_and_modules"/>
+     </rdf:li>     
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Cookie_Manager">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Cookie_Manager:cookies_stored_by"
+         nc:name="сохраненные cookies"
+	 nc:link="using_priv_help.xhtml#stored_cookies"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Cookie_Manager:using"
+         nc:name="использование cookies"
+	 nc:link="using_priv_help.xhtml#using_the_cookie_manager"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Download_Manager">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Download_Manager:preferences"
+         nc:name="настройки менеджера загрузок"
+	 nc:link="cs_nav_prefs_navigator.xhtml#downloads"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Form_Manager">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Form_Manager:encrypting_stored_information"
+         nc:name="шифрование хранимой информации"
+	 nc:link="using_priv_help.xhtml#encrypting_stored_sensitive_information"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Form_Manager:preferences"
+         nc:name="настройки менеджера форм"
+	 nc:link="using_priv_help.xhtml#forms"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Form_Manager:settings"
+         nc:name="параметры менеджера форм"
+	 nc:link="using_priv_help.xhtml#form_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Form_Manager:using"
+         nc:name="использование менеджера форм"
+	 nc:link="using_priv_help.xhtml#using_the_form_manager"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="forms"
+         nc:name="формы"
+	 nc:link="using_priv_help.xhtml#encrypting_stored_sensitive_information"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#forms">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="forms:encrypting_stored_information"
+         nc:name="шифрование хранимой информации"
+	 nc:link="using_priv_help.xhtml#encrypting_stored_sensitive_information"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="forms:filling_out_automatically"
+         nc:name="автоматическое заполнение"
+	 nc:link="using_priv_help.xhtml#filling_out_forms_automatically"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="forms:preferences"
+         nc:name="настройки форм"
+	 nc:link="using_priv_help.xhtml#forms"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="forms:saving_data"
+         nc:name="сохранение данных форм"
+	 nc:link="using_priv_help.xhtml#saving_form_data"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="forms:storing_data_from"
+         nc:name="управление сохраненными данными форм"
+	 nc:link="using_priv_help.xhtml#managing_stored_form_data"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Labels">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Labels:general_preferences"
+         nc:name="настройки меток"
+         nc:link="mailnews_preferences.xhtml#labels"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#master_password">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="master_password:changing"
+         nc:name="смена мастер-пароля"
+	 nc:link="passwords_help.xhtml#change_master_password"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="master_password:forgetting"
+         nc:name="если вы забыли ваш мастер-пароль"
+	 nc:link="using_priv_help.xhtml#what_to_do_if_you_forget_your_master_password"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="master_password:preferences"
+         nc:name="настройки мастер-пароля"
+	 nc:link="passwords_help.xhtml#master_passwords"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="master_password:timeout"
+         nc:name="временной лимит мастер-пароля"
+	 nc:link="passwords_help.xhtml#master_password_timeout"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#password_manager">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="password_manager:encrypting_stored_passwords"
+         nc:name="шифрование сохраненных паролей"
+	 nc:link="using_priv_help.xhtml#encrypting_stored_sensitive_information"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="password_manager:master_password"
+         nc:name="мастер-пароль"
+	 nc:link="using_priv_help.xhtml#setting_a_master_password"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="password_manager:preferences"
+         nc:name="настройки паролей"
+	 nc:link="passwords_help.xhtml#password_manager"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#security_modules">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="security_modules:managing"
+         nc:name="управление модулями защиты"
+	 nc:link="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#13">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="Navigator"
+         nc:name="Навигатор"
+	 nc:link="nav_help.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Tab_Key_Navigation"
+         nc:name="навигация при помощи клавиши Tab"
+	 nc:link="cs_nav_prefs_advanced.xhtml#keyboard_navigation"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="keyboard_preferences"
+         nc:name="настройка навигации при помощи клавиатуры"
+	 nc:link="cs_nav_prefs_advanced.xhtml#keyboard_navigation"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="preferences"
+         nc:name="настройки"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="home_page"
+         nc:name="начальная страница"
+	 nc:link="cs_nav_prefs_navigator.xhtml#navigator"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Navigator">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Navigator:changing_your_home_page"
+         nc:name="изменение начальной страницы"
+	 nc:link="customize_help.xhtml#changing_your_home_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:controlling_popups"
+         nc:name="контроль за всплывающими окнами"
+	 nc:link="cs_priv_prefs_popup.xhtml#controlling_popups"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:Download_Manager"
+         nc:name="менеджер загрузок"
+	 nc:link="nav_help.xhtml#plugins_and_downloads"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:full_screen_mode"
+         nc:name="полноэкранный режим"
+         nc:link="nav_help.xhtml#full_screen_mode"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:helper_applications"
+         nc:name="вспомогательные приложения"
+	 nc:link="cs_nav_prefs_navigator.xhtml#helper_applications"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:home_page"
+         nc:name="начальная страница"
+	 nc:link="nav_help.xhtml#viewing_your_home_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:keyboard_shortcuts"
+         nc:name="клавиатурные сокращения"
+	 nc:link="shortcuts_navigator.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:opening_pages"
+         nc:name="открытие страниц"
+	 nc:link="nav_help.xhtml#moving_to_another_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:preferences"
+         nc:name="настройки Навигатора"
+	 nc:link="cs_nav_prefs_navigator.xhtml#navigator_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:set_as_wallpaper"
+         nc:name="установка изображения в качестве обоев рабочего стола"
+     nc:link="nav_help.xhtml#setting_image_as_wallpaper"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Navigator:start_page"
+         nc:name="стартовая страница"
+	 nc:link="customize_help.xhtml#specifying_a_starting_page"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#preferences">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="preferences:advanced"
+         nc:name="дополнительные настройки"
+	 nc:link="cs_nav_prefs_advanced.xhtml#advanced_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:appearance"
+         nc:name="внешний вид"
+	 nc:link="cs_nav_prefs_appearance.xhtml#appearance"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:cache"
+         nc:name="кэш"
+	 nc:link="cs_nav_prefs_advanced.xhtml#cache"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:certificates"
+         nc:name="сертификаты"
+         nc:link="certs_prefs_help.xhtml#privacy_and_security_preferences_certificates"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:colors"
+         nc:name="цвета"
+	 nc:link="cs_nav_prefs_appearance.xhtml#colors"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:locales"
+         nc:name="User Interface languages preferences"
+	 nc:link="cs_nav_prefs_appearance.xhtml#locales"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:cookies"
+         nc:name="cookies"
+	 nc:link="using_priv_help.xhtml#cookies"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:Downloads"
+         nc:name="загрузки"
+	 nc:link="cs_nav_prefs_navigator.xhtml#downloads"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:fonts"
+         nc:name="шрифты"
+	 nc:link="cs_nav_prefs_appearance.xhtml#fonts"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:forms"
+         nc:name="формы"
+	 nc:link="using_priv_help.xhtml#forms"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:helper_applications"
+         nc:name="вспомогательные приложения"
+	 nc:link="cs_nav_prefs_navigator.xhtml#helper_applications"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:history"
+         nc:name="журнал посещений"
+	 nc:link="cs_nav_prefs_navigator.xhtml#history"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:images"
+         nc:name="изображения"
+	 nc:link="using_priv_help.xhtml#images"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:internet_search"
+         nc:name="поиск в Интернете"
+	 nc:link="cs_nav_prefs_navigator.xhtml#internet_search"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:JavaScript"
+         nc:name="сценарии JavaScript"
+	 nc:link="cs_nav_prefs_advanced.xhtml#scripts_and_plug-ins"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:keyboard"
+         nc:name="навигация при помощи клавиатуры"
+	 nc:link="cs_nav_prefs_advanced.xhtml#keyboard_navigation"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:languages"
+         nc:name="языки"
+	 nc:link="cs_nav_prefs_navigator.xhtml#languages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:Navigator"
+         nc:name="настройки Навигатора"
+	 nc:link="cs_nav_prefs_navigator.xhtml#navigator_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:passwords"
+         nc:name="пароли"
+	 nc:link="passwords_help.xhtml#passwords"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:popup_windows"
+         nc:name="всплывающие окна"
+	 nc:link="cs_priv_prefs_popup.xhtml#privacy_and_security_preferences_popup_windows"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:privacy"
+         nc:name="настройки приватности"
+	 nc:link="privsec_help.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:proxies"
+         nc:name="прокси-серверы"
+	 nc:link="cs_nav_prefs_advanced.xhtml#proxies"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:security"
+         nc:name="настройки защиты"
+	 nc:link="privsec_help.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:smart_browsing"
+         nc:name="умный серфинг"
+	 nc:link="cs_nav_prefs_navigator.xhtml#smart_browsing"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:SSL"
+         nc:name="настройки SSL"
+	 nc:link="ssl_help.xhtml#privacy_and_security_preferences_ssl"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:Tabbed_Browsing"
+         nc:name="работа со вкладками"
+	 nc:link="cs_nav_prefs_navigator.xhtml#tabbed_browsing"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:themes"
+         nc:name="темы"
+	 nc:link="cs_nav_prefs_appearance.xhtml#themes"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="preferences:validation"
+         nc:name="подтверждение"
+	 nc:link="validation_help.xhtml#privacy_and_security_preferences_validation"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#14">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="Venkman"
+         nc:name="Отладчик JavaScript"
+	 nc:link="developer_tools.xhtml#venkman"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#15">
+   <nc:subheadings>
+     <rdf:Seq>
+    <rdf:li>
+       <rdf:Description ID="toolbar"
+         nc:name="панель инструментов"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="mail"
+         nc:name="параметры безопасности почты"
+         nc:link="mailnews_account_settings.xhtml#security"/>
+     </rdf:li>     
+     <rdf:li>
+       <rdf:Description ID="Account_Settings"
+         nc:name="параметры учетной записи"
+         nc:link="mailnews_getting_started.xhtml#changing_the_settings_for_an_account"/>
+     </rdf:li>
+               <rdf:li>
+       <rdf:Description ID="passwords"
+         nc:name="пароли"
+	 nc:link="passwords_help.xhtml#passwords"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="Filing_messages"
+         nc:name="перемещение сообщений"
+         nc:link="mailnews_organizing.xhtml#filing_messages_in_folders"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="print"
+         nc:name="печать"
+	 nc:link="nav_help.xhtml#copying_saving_and_printing_pages"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="plugins"
+         nc:name="плагины"
+     nc:link="nav_help.xhtml#plugins_and_downloads"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="signing_email_messages"
+         nc:name="подписывание почтовых сообщений"
+	 nc:link="mailnews_security.xhtml#signing_and_encrypting_messages"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="search"
+         nc:name="поиск"
+	 nc:link="nav_help.xhtml#searching_the_web"/>
+     </rdf:li>
+
+     <rdf:li>
+       <rdf:Description ID="navigation"
+         nc:name="поиск нужной вам информации"
+	 nc:link="help_help.xhtml#finding_the_topic_you_want"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="Find_Links_As_You_Type"
+         nc:name="поиск ссылок по мере набора"
+	 nc:link="cs_nav_prefs_advanced.xhtml#keyboard_navigation"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Find_Text_As_You_Type"
+         nc:name="поиск текста по мере набора"
+	 nc:link="cs_nav_prefs_advanced.xhtml#keyboard_navigation"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups"
+         nc:name="почта и группы новостей"
+         nc:link="mailnews_getting_started.xhtml"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="privacy"
+         nc:name="приватность"
+	 nc:link="privacy_help.xhtml#privacy_on_the_internet"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="server_certificate_problems"
+         nc:name="проблемы с сертификатом сервера"
+	 nc:link="cert_dialog_help.xhtml#web_site_certified_by_an_unknown_authority"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="proxies"
+         nc:name="прокси"
+	 nc:link="cs_nav_prefs_advanced.xhtml#proxies"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="profiles"
+         nc:name="профили"
+	 nc:link="profiles_help.xhtml"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="intermediate_server_CA_certificates"
+         nc:name="промежуточные сертификаты сервера CA"
+	 nc:link="cert_dialog_help.xhtml#web_site_certified_by_an_unknown_authority"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="uploading_pages"
+         nc:name="публикация страниц в Интернете"
+	 nc:link="composer_help.xhtml#publishing_your_pages_on_the_web"/>
+     </rdf:li>
+     
+     <rdf:li>
+       <rdf:Description ID="publishing_pages"
+         nc:name="публикация страниц"
+	 nc:link="composer_help.xhtml#publishing_your_pages_on_the_web"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#toolbar">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="toolbar:hiding_a_toolbar"
+         nc:name="скрытие панели инструментов"
+	 nc:link="customize_help.xhtml#hiding_a_toolbar"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="toolbar:navigation_toolbar"
+         nc:name="панель навигации"
+	 nc:link="customize_help.xhtml#navigation_toolbar"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="toolbar:personal_toolbar"
+         nc:name="личная панель"
+	 nc:link="customize_help.xhtml#personal_toolbar"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Mail_and_Newsgroups">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:Account_Setup_Wizard"
+         nc:name="мастер учетных записей"
+         nc:link="mailnews_getting_started.xhtml#using_the_mail_account_setup_wizard"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:adding_accounts"
+         nc:name="добавление учетных записей"
+         nc:link="mailnews_getting_started.xhtml#setting_up_additional_mail_and_news_accounts"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:address_autocompletion"
+         nc:name="автодополнение адреса"
+         nc:link="mailnews_preferences.xhtml#address_autocompletion"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:addressing_messages"
+         nc:name="адресация сообщений"
+         nc:link="mailnews_using_mail.xhtml#addressing_a_message"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:addressing_preferences"
+         nc:name="настройки адресации"
+         nc:link="mailnews_preferences.xhtml#addressing_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:Advanced_IMAP_settings"
+         nc:name="дополнительные параметры сервера IMAP"
+         nc:link="mailnews_account_settings.xhtml#advanced_imap_server_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:attaching_files"
+         nc:name="вложение файлов"
+         nc:link="mailnews_using_mail.xhtml#attaching_a_file_or_web_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:changing_account_settings"
+         nc:name="изменение параметров учетной записи"
+         nc:link="mailnews_getting_started.xhtml#changing_the_settings_for_an_account"/>
+     </rdf:li>
+     <rdf:li>
+        <rdf:Description ID="Mail_and_Newsgroups:Character_Encoding"
+         nc:name="Кодировка"
+         nc:link="mailnews_preferences.xhtml#character_encoding"/>
+     </rdf:li>
+     <rdf:li>                                                                   
+       <rdf:Description ID="Mail_and_Newsgroups:Compose_window"
+         nc:name="окно составления сообщений"
+         nc:link="mailnews_using_mail.xhtml#using_the_message_composition_window"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:composing_messages"
+         nc:name="составление сообщений"
+         nc:link="mailnews_using_mail.xhtml#composing_mail_and_newsgroup_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:copies_and_folder_settings"
+         nc:name="копии и папки"
+         nc:link="mailnews_account_settings.xhtml#copies_and_folders"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:copying_folders"
+         nc:name="копирование папок"
+         nc:link="mailnews_organizing.xhtml#moving_or_copying_a_folder"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:creating_filters"
+         nc:name="создание фильтров"
+         nc:link="mailnews_organizing.xhtml#creating_message_filters"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:creating_folders"
+         nc:name="создание папок"
+         nc:link="mailnews_organizing.xhtml#creating_a_folder"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:creating_HTML_mail_messages"
+         nc:name="составление сообщений в формате HTML"
+         nc:link="mailnews_using_mail.xhtml#creating_html_mail_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:Disk_Space_settings"
+         nc:name="настройки дискового пространства"
+         nc:link="mailnews_getting_started.xhtml#offline_and_disk_space"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:filing_messages"
+         nc:name="перемещение сообщений"
+         nc:link="mailnews_organizing.xhtml#filing_messages_in_folders"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:forwarding_messages"
+         nc:name="пересылка сообщений"
+         nc:link="mailnews_using_mail.xhtml#forwarding_a_message"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:general_preferences"
+         nc:name="общие настройки почты"
+         nc:link="mailnews_preferences.xhtml#mail_and_newsgroup_preferences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:getting_new_messages"
+         nc:name="получение новых сообщений"
+         nc:link="mailnews_using_mail.xhtml#getting_new_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:HTML_mail_recipients"
+         nc:name="указание адресатов сообщений в формате HTML"
+         nc:link="mailnews_using_mail.xhtml#specifying_recipients_for_html_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:HTML_mail_sending_options"
+         nc:name="параметры отправки сообщений в формате HTML"
+         nc:link="mailnews_using_mail.xhtml#choosing_html_mail_sending_options"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:HTML_Message_Source"
+         nc:name="просмотр исходного текста сообщений в формате HTML"
+         nc:link="mailnews_using_mail.xhtml#viewing_the_message_source_for_html_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:identity_settings"
+         nc:name="параметры учетной записи"
+         nc:link="mailnews_account_settings.xhtml#account_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:mail_window_layout"
+         nc:name="настройка вида почтового клиента"
+         nc:link="mailnews_using_mail.xhtml#choosing_how_you_view_the_mail_window"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:message_searching"
+         nc:name="поиск в сообщениях"
+         nc:link="mailnews_organizing.xhtml#searching_through_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:POP_settings"
+         nc:name="параметры сервера POP"
+         nc:link="mailnews_account_settings.xhtml#pop_server_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:renaming_folders"
+         nc:name="переименование папок"
+         nc:link="mailnews_organizing.xhtml#renaming_a_folder"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:replying_to_messages"
+         nc:name="ответ на сообщение"
+         nc:link="mailnews_using_mail.xhtml#replying_to_a_message"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:saving_and_printing_messages"
+         nc:name="сохранение и печать сообщений"
+         nc:link="mailnews_using_mail.xhtml#saving_and_printing_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:saving_attachments"
+         nc:name="сохранение вложений"
+         nc:link="mailnews_using_mail.xhtml#saving_attachments"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:saving_messages_drafts"
+         nc:name="сохранение неоконченных сообщений"
+         nc:link="mailnews_using_mail.xhtml#saving_and_editing_a_message_draft"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:sending_messages"
+         nc:name="отправка сообщений"
+         nc:link="mailnews_using_mail.xhtml#sending_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:sending_options"
+         nc:name="настройки отправки сообщений"
+         nc:link="mailnews_using_mail.xhtml#selecting_message_sending_options"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:SMTP_settings"
+         nc:name="настройки SMTP"
+         nc:link="mailnews_account_settings.xhtml#outgoing_server"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:sorting_and_threading_messages"
+         nc:name="сортировка сообщений и группировка по обсуждениям"
+         nc:link="mailnews_using_mail.xhtml#sorting_and_threading_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:using_address_books"
+         nc:name="использование адресных книг"
+         nc:link="mailnews_addressbooks.xhtml#using_address_books"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:using_attachments"
+         nc:name="использование вложений"
+         nc:link="mailnews_using_mail.xhtml#using_attachments"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:using_HTML_in_messages"
+         nc:name="использование HTML в сообщениях"
+         nc:link="mailnews_using_mail.xhtml#using_html_in_your_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:viewing_attachments"
+         nc:name="просмотр вложений"
+         nc:link="mailnews_using_mail.xhtml#viewing_and_opening_attachments"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Mail_and_Newsgroups:working_offline"
+         nc:name="режим автономной работы"
+         nc:link="mailnews_offline.xhtml#working_offline"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#passwords">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="passwords:preferences"
+         nc:name="настройки паролей"
+	 nc:link="passwords_help.xhtml#passwords"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="passwords:remembering_automatically"
+         nc:name="автоматическое запоминание"
+	 nc:link="using_priv_help.xhtml#using_the_password_manager"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="passwords:timeout_for_master_password"
+         nc:name="временной лимит мастер-пароля"
+	 nc:link="passwords_help.xhtml#master_password_timeout"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#privacy">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="privacy:about"
+         nc:name="что такое приватность"
+	 nc:link="privacy_help.xhtml#privacy_on_the_internet"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:cookies_and"
+         nc:name="cookies и приватность"
+	 nc:link="privacy_help.xhtml#what_are_cookies_and_how_do_they_work"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:IP_address"
+         nc:name="интернет-адрес"
+	 nc:link="privacy_help.xhtml#internet_address"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:P3P_levels"
+         nc:name="уровни приватности"
+	 nc:link="using_priv_help.xhtml#setting_privacy_levels"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:P3P_standard_and"
+         nc:name="стандарт P3P"
+	 nc:link="page_info_help.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:preferences"
+         nc:name="настройки приватности"
+	 nc:link="privsec_help.xhtml"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:protecting"
+         nc:name="защита вашей приватности"
+	 nc:link="privacy_help.xhtml#using_privacy_features"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:settings"
+         nc:name="установки приватности"
+	 nc:link="using_priv_help.xhtml#privacy_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="privacy:viewing_site_policy"
+         nc:name="просмотр политики приватности сайта"
+	 nc:link="page_info_help.xhtml"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#profiles">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="profiles:creating"
+         nc:name="создание профиля"
+	 nc:link="profiles_help.xhtml#creating_a_new_profile"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="profiles:deleting"
+         nc:name="удаление профиля"
+	 nc:link="profiles_help.xhtml#deleting_or_renaming_a_profile"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="profiles:managing"
+         nc:name="управление профилями"
+	 nc:link="profiles_help.xhtml#managing_profiles"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="profiles:renaming"
+         nc:name="переименование профиля"
+	 nc:link="profiles_help.xhtml#deleting_or_renaming_a_profile"/>
+	 </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="profiles:roaming"
+         nc:name="перемещаемые профили"
+     nc:link="profiles_help.xhtml#roaming_profiles"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#proxies">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="proxies:advanced"
+         nc:name="дополнительные настройки прокси"
+     nc:link="cs_nav_prefs_advanced.xhtml#advanced_proxy_preferences"/>
+     </rdf:li>
+     <rdf:li>                                                                   
+       <rdf:Description ID="proxies:preferences"
+         nc:name="настройки прокси"
+	 nc:link="cs_nav_prefs_advanced.xhtml#proxies"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="proxies:setting"
+         nc:name="установка параметров прокси"
+	 nc:link="nav_help.xhtml#proxies"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#publishing_pages">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="publishing_pages:settings"
+         nc:name="настройки публикации страницы"
+	 nc:link="composer_help.xhtml#publishing_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="publishing_pages:tips"
+         nc:name="полезные советы"
+	 nc:link="composer_help.xhtml#tips_for_avoiding_broken_links_or_missing_images"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#search">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="search:Advanced_mode"
+         nc:name="режим расширенного поиска боковой панели"
+	 nc:link="nav_help.xhtml#sidebar_advanced_search_mode"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="search:bookmarks"
+         nc:name="поиск закладок"
+	 nc:link="nav_help.xhtml#searching_the_bookmarks_or_history_list"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="search:setting_preferences"
+         nc:name="настройки поиска"
+	 nc:link="nav_help.xhtml#setting_search_preferences"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#16">
+   <nc:subheadings>
+     <rdf:Seq>
+          <rdf:li>
+       <rdf:Description ID="Working_Offline"
+         nc:name="работа в автономном режиме"
+         nc:link="mailnews_offline.xhtml#working_offline"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="HTTP_Networking"
+         nc:name="работа с HTTP"
+	 nc:link="cs_nav_prefs_advanced.xhtml#http_networking"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="FIPS_mode"
+         nc:name="режим использования FIPS"
+	 nc:link="using_certs_help.xhtml#enable_fips_mode"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="mouse_wheel"
+         nc:name="ролик мыши"
+	 nc:link="nav_help.xhtml#using_a_mouse_wheel"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#17">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="resetting_master_password"
+         nc:name="сброс мастер-пароля"
+	 nc:link="passwords_help.xhtml#reset_master_password"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="Certificates"
+         nc:name="сертификаты"
+	 nc:link="using_certs_help.xhtml#using_certificates"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="smart_cards"
+         nc:name="смарт-карты"
+	 nc:link="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="backing_up_certificates"
+         nc:name="создание резервных копий сертификатов"
+	 nc:link="certs_help.xhtml#your_certificates"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="save"
+         nc:name="сохранение"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="ieusers"
+         nc:name="справка для пользователей Internet Explorer"
+	 nc:link="forieusers.xhtml"/>
+     </rdf:li>     
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#Certificates">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="Certificates:certificate_authority"
+         nc:name="центр сертификации"
+	 nc:link="using_certs_help.xhtml#managing_certificates_that_identify_certificate_authorities"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:getting"
+         nc:name="получение сертификатов"
+	 nc:link="using_certs_help.xhtml#getting_your_own_certificate"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:managing"
+         nc:name="управление сертификатами"
+	 nc:link="using_certs_help.xhtml#managing_certificates"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:preferences"
+         nc:name="настройки сертификатов"
+         nc:link="certs_prefs_help.xhtml#privacy_and_security_preferences_certificates"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:selecting_for_client_authentication"
+         nc:name="выбор сертификата клиента"
+         nc:link="certs_prefs_help.xhtml#client_certificate_selection"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:using"
+         nc:name="использование сертификатов"
+	 nc:link="using_certs_help.xhtml#using_certificates"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:validation"
+         nc:name="верификация сертификатов"
+	 nc:link="using_certs_help.xhtml#controlling_validation"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:web_site"
+         nc:name="подлинность веб-сайта"
+	 nc:link="using_certs_help.xhtml#managing_certificates_that_identify_websites"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="Certificates:your_own"
+         nc:name="ваши сертификаты"
+	 nc:link="using_certs_help.xhtml#managing_certificates_that_identify_you"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#ieusers">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="ieusers:terminology-differences"
+         nc:name="различия в терминологии"
+	 nc:link="forieusers.xhtml#mozilla_and_internet_explorer_terminology_differences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="ieusers:your-favorites"
+         nc:name="об Избранном в IE"
+	 nc:link="forieusers.xhtml#about_your_ie_favorites"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="ieusers:additional-software"
+         nc:name="другие функции"
+	 nc:link="forieusers.xhtml#other_features"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="ieusers:keyboard-shortcuts"
+         nc:name="клавиатурные сокращения"
+	 nc:link="forieusers.xhtml#keyboard_shortcuts"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#save">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="save:web_pages"
+         nc:name="сохранение и печать веб-страниц"
+	 nc:link="nav_help.xhtml#copying_saving_and_printing_pages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="save:messages"
+         nc:name="сохранение и печать сообщений"
+         nc:link="mailnews_using_mail.xhtml#saving_and_printing_messages"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#18">
+   <nc:subheadings>
+     <rdf:Seq>
+          <rdf:li>
+       <rdf:Description ID="themes"
+         nc:name="темы"
+	 nc:link="customize_help.xhtml#changing_the_theme"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="file_types"
+         nc:name="типы файлов"
+	 nc:link="nav_help.xhtml#plugins_and_downloads"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#19">
+   <nc:subheadings>
+     <rdf:Seq>
+      <rdf:li>
+       <rdf:Description ID="return_receipts"
+         nc:name="уведомления о доставке"
+         nc:link="mailnews_account_settings.xhtml#return_receipts"/>
+     </rdf:li>
+      <rdf:li>
+       <rdf:Description ID="software_installation"
+         nc:name="установка ПО"
+	 nc:link="cs_nav_prefs_advanced.xhtml#software_installation"/>
+     </rdf:li>
+          <rdf:li>
+       <rdf:Description ID="settings"
+         nc:name="установки"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="security_devices"
+         nc:name="устройства защиты"
+	 nc:link="using_certs_help.xhtml#about_security_devices_and_modules"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#return_receipts">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="return_receipts:general_preferences"
+         nc:name="настройки уведомлений о доставке"
+         nc:link="mailnews_preferences.xhtml#return_receipts_preferences"/>
+     </rdf:li><rdf:li>
+       <rdf:Description ID="return_receipts:using"
+         nc:name="использование уведомлений о доставке"
+         nc:link="mailnews_using_mail.xhtml#confirming_that_your_message_was_opened"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#security_devices">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="security_devices:managing"
+         nc:name="управление устройствами защиты"
+	 nc:link="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#settings">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="settings:certificate"
+         nc:name="настройки сертификатов"
+         nc:link="certs_prefs_help.xhtml#certificate_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="settings:signed_and_encrypted mail"
+         nc:name="настройки подписи и шифрования почтовых сообщений"
+         nc:link="mailnews_account_settings.xhtml#security"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="settings:SSL"
+         nc:name="настройки SSL"
+	 nc:link="ssl_help.xhtml#ssl_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="settings:validation"
+         nc:name="настройки подтверждения действительности"
+	 nc:link="validation_help.xhtml#validation_settings"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#20">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#21">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#22">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#23">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#24">
+   <nc:subheadings>
+     <rdf:Seq>
+     <rdf:li>
+       <rdf:Description ID="encryption"
+         nc:name="шифрование"
+	 nc:link="mailnews_security.xhtml#signing_and_encrypting_messages"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#encryption">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="encryption:about"
+         nc:name="о шифровании и цифровой подписи"
+     nc:link="mailnews_security.xhtml#about_digital_signatures_and_encryption"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="encryption:of_email_messages"
+         nc:name="шифрование почтовых сообщений"
+	 nc:link="mailnews_security.xhtml#signing_and_encrypting_messages"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="encryption:of_stored_sensitive_information"
+         nc:name="хранение важной информации"
+	 nc:link="using_priv_help.xhtml#encrypting_stored_sensitive_information"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="encryption:settings_for_email"
+         nc:name="настройка параметров шифрования"
+	 nc:link="mailnews_security.xhtml#configuring_security_settings"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="encryption:status_of_web_page"
+         nc:name="защищенность веб-страницы"
+	 nc:link="using_certs_help.xhtml#checking_security_for_a_web_page"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="encryption:technologies"
+         nc:name="изменение шифров"
+	 nc:link="ssl_help.xhtml#edit_ciphers"/>
+     </rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#25">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#26">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#27">
+   <nc:subheadings>
+     <rdf:Seq>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#28">
+   <nc:subheadings>
+     <rdf:Seq>
+          <rdf:li>
+       <rdf:Description ID="languages"
+         nc:name="языки"
+	 nc:link="nav_help.xhtml#using_languages_and_international_content"/>
+     </rdf:li>
+     <rdf:li>
+     </rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#languages">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="languages:and_international_content"
+         nc:name="выбор кодировок и шрифтов"
+	 nc:link="nav_help.xhtml#using_languages_and_international_content"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="languages:Appearance_preferences"
+         nc:name="настройки внешнего вида"
+	 nc:link="cs_nav_prefs_appearance.xhtml#locales"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+</rdf:RDF>

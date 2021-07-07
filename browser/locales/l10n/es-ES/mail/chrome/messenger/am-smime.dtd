@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Cifrado extremo a extremo">
+<!ENTITY e2eLearnMore.label "Saber más">
+
+<!ENTITY e2eEnc.description "Sin cifrado de extremo a extremo los contenidos del mensaje quedan expuestos fácilmente a su proveedor de correo y a la vigilancia masiva.">
+<!ENTITY e2eeReqWarning.description "Si necesita cifrado, para enviar un mensaje debe tener la clave pública o certificado de cada destinatario.">
+
+<!ENTITY e2eSigning.description "Una firma digital permite a los destinatarios verificar que el mensaje fue enviado por usted y que el contenido no ha sido modificado.">
+<!ENTITY e2eTechPref.description "Tecnología de cifrado preferida:">
+
+<!ENTITY doNotEncrypt.label "No activar cifrado por defecto">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Requerir cifrado por defecto">
+<!ENTITY requireEncryptMessage.accesskey "R">
+<!ENTITY encryptionCert2.message "Certificado personal para cifrado:">
+<!ENTITY digitalSign.certificate.button "Seleccionar…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Limpiar">
+<!ENTITY digitalSign.certificate_clear.accesskey "L">
+<!ENTITY encryption.certificate.button "Seleccionar…">
+<!ENTITY encryption.certificate.accesskey "c">
+<!ENTITY encryption.certificate_clear.button "Limpiar">
+<!ENTITY encryption.certificate_clear.accesskey "m">
+<!ENTITY signingGroupTitle.label "Firmado digital">
+<!ENTITY signMessage2.label "Añadir mi firma digital de forma predeterminada">
+<!ENTITY signMessage.accesskey "D">
+
+<!ENTITY signingCert2.message "Certificado personal para la firma digital:">
+
+<!ENTITY sendingDefaults.label "Configuración predeterminada para el envío de mensajes">
+
+<!ENTITY technologyAutomatic.label "Seleccionar automáticamente basándose en las claves o certificados disponibles">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Administrar certificados S/MIME">
+<!ENTITY manageCerts3.accesskey "E">
+<!ENTITY manageDevices2.label "Dispositivos de seguridad S/MIME">
+<!ENTITY manageDevices2.accesskey "D">
+
+<!ENTITY technologySMIME.label "Preferir S/MIME">
+<!ENTITY technologyOpenPGP.label "Preferir OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!ENTITY certPicker.title "Seleccione certificado">
+<!ENTITY certPicker.info "Certificado:">
+<!ENTITY certPicker.detailsLabel "Detalles del certificado seleccionado:">
+
+<!ENTITY openpgpKey.message "Clave personal para firma digital y cifrado:">
+<!ENTITY openpgpKey.button "Configurar clave personal…">
+<!ENTITY openpgpKey.accesskey "C">

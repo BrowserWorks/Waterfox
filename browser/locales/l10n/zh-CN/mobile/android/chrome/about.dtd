@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY aboutPage.title                        "关于 &brandShortName;">
+<!ENTITY aboutPage.warningVersion               "&brandShortName; 是实验性的测试版本，可能不稳定。">
+<!ENTITY aboutPage.checkForUpdates.link         "检查更新»">
+<!ENTITY aboutPage.checkForUpdates.checking     "查找更新…">
+<!ENTITY aboutPage.checkForUpdates.none         "没有可用的更新">
+<!ENTITY aboutPage.checkForUpdates.available2   "下载更新">
+<!ENTITY aboutPage.checkForUpdates.downloading  "正在下载更新…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2  "安装更新">
+<!ENTITY aboutPage.faq.label                    "常见问题">
+<!ENTITY aboutPage.support.label                "支持">
+<!ENTITY aboutPage.privacyPolicy.label          "隐私政策">
+<!ENTITY aboutPage.rights.label                 "了解您的权利">
+<!ENTITY aboutPage.relNotes.label               "发行说明">
+<!ENTITY aboutPage.credits.label                "贡献者">
+<!ENTITY aboutPage.license.label                "授权信息">
+
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox 以及 Firefox 标志均为 Mozilla 基金会所有的商标。">

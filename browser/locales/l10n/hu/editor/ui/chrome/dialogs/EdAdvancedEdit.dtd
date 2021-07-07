@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Speciális tulajdonságok szerkesztése">
+<!ENTITY AttName.label                  "Attribútum: ">
+<!ENTITY AttValue.label                 "Érték: ">
+<!ENTITY PropertyName.label             "Tulajdonság: ">
+<!ENTITY currentattributesfor.label     "Jelenlegi attribútumok: ">
+<!ENTITY tree.attributeHeader.label     "Attribútum">
+<!ENTITY tree.propertyHeader.label      "Tulajdonság">
+<!ENTITY tree.valueHeader.label         "Érték">
+<!ENTITY tabHTML.label                  "HTML-attribútumok">
+<!ENTITY tabCSS.label                   "Beágyazott stílus">
+<!ENTITY tabJSE.label                   "JavaScript-események">
+
+<!ENTITY editAttribute.label    "Kattintson az elemre, ha módosítani kívánja az értékét">
+<!ENTITY removeAttribute.label  "Eltávolítás">

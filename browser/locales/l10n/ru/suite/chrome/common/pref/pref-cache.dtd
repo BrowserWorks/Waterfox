@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Кэш">
+<!ENTITY pref.cache.caption              "Установите настройки кэширования">
+<!ENTITY cachePara                       "В кэше хранятся копии часто посещаемых веб-страниц, что сокращает время их загрузки. (Нажатие кнопки «Обновить» всегда приводит к загрузке самой последней версии веб-страницы.)">
+<!ENTITY cacheCheck.label                "Позволить &brandShortName; управлять размером моего кэша">
+<!ENTITY cacheCheck.accesskey            "в">
+<!ENTITY diskCacheUpTo.label             "Использовать под кэш не более">
+<!ENTITY diskCacheUpTo.accesskey         "п">
+<!ENTITY spaceMbytes                     "МБ на диске">
+<!ENTITY diskCacheFolder.label           "Расположение папки кэша:">
+<!ENTITY clearDiskCache.label            "Очистить кэш">
+<!ENTITY clearDiskCache.accesskey        "ч">
+<!ENTITY chooseDiskCacheFolder.label     "Выбрать папку…">
+<!ENTITY chooseDiskCacheFolder.accesskey "б">
+<!ENTITY diskCacheFolderExplanation      "Файлы кэша будут храниться в подпапке «Cache» указанной вами папки. Для вступления изменений в силу перезапустите &brandShortName;.">
+<!ENTITY docCache.label                  "Сравнивать страницу в кэше со страницей в сети:">
+<!ENTITY docCache.accesskey              "а">
+<!ENTITY checkOncePerSession.label       "Один раз за сеанс">
+<!ENTITY checkEveryTime.label            "Каждый раз, когда я посещаю эту страницу">
+<!ENTITY checkNever.label                "Никогда">
+<!ENTITY checkAutomatically.label        "Когда страница устареет">
+
+<!ENTITY prefetchTitle.label             "Предварительная загрузка">
+<!ENTITY enablePrefetch.label            "Во время бездействия предварительно загружать веб-страницы, чтобы ссылки на веб-страницах, разработанных для предварительной загрузки, загружались быстрее.">
+<!ENTITY enablePrefetch.accesskey        "з">
+
+<!ENTITY debugCache.label                "Отладка">
+<!ENTITY debugEnableMemCache.label       "Включить кэш памяти">
+<!ENTITY debugEnableMemCache.accesskey   "к">
+<!ENTITY debugEnableDiskCache.label      "Включить дисковый кэш">
+<!ENTITY debugEnableDiskCache.accesskey  "л">

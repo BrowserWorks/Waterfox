@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label     "Alle folgenden Bedingungen erfüllen">
+<!ENTITY matchAll.accesskey "A">
+<!ENTITY matchAny.label     "Mindestens eine der folgenden Bedingungen erfüllen">
+<!ENTITY matchAny.accesskey "d">
+<!ENTITY matchAllMsgs.label     "Mit allen Nachrichten übereinstimmen">
+<!ENTITY matchAllMsgs.accesskey "M">
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the search widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+<!ENTITY searchTermListAttributesFlexValue "1">
+<!ENTITY searchTermListOperatorsFlexValue "1">
+<!ENTITY searchTermListValueFlexValue "3">

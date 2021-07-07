@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY matchAll.label "모든 조건 검색">
+<!ENTITY matchAll.accesskey "a">
+<!ENTITY matchAny.label "모든 조건 중 하나라도 일치">
+<!ENTITY matchAny.accesskey "o">
+<!ENTITY matchAllMsgs.label "모든 메시지에서 찾기">
+<!ENTITY matchAllMsgs.accesskey "m">
+
+<!ENTITY searchTermListAttributesFlexValue "5">
+<!ENTITY searchTermListOperatorsFlexValue "5">
+<!ENTITY searchTermListValueFlexValue "5">

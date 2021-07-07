@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Képek">
+
+<!ENTITY imageBlocking.label            "Képek letiltása">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+
+<!ENTITY imageDetails                   "Adja meg, hogy kezelje a &brandShortName; a képeket.">
+
+<!ENTITY loadAllImagesRadio.label       "Összes kép betöltése">
+<!ENTITY loadAllImagesRadio.accesskey   "b">
+<!ENTITY loadOrgImagesRadio.label       "Csak a webhely kiszolgálójáról származó képek betöltése">
+<!ENTITY loadOrgImagesRadio.accesskey   "C">
+<!ENTITY loadNoImagesRadio.label        "Képek betöltésének tiltása">
+<!ENTITY loadNoImagesRadio.accesskey    "t">
+<!ENTITY viewPermissions.label          "Engedélyek kezelése">
+<!ENTITY viewPermissions.accesskey      "E">
+<!ENTITY animLoopingTitle.label         "Az animált képek lejátszhatóak">
+<!ENTITY animLoopAsSpecified.label      "Ahányszor a képben meg van határozva">
+<!ENTITY animLoopAsSpecified.accesskey  "A">
+<!ENTITY animLoopOnce.label             "Egyszer">
+<!ENTITY animLoopOnce.accesskey         "E">
+<!ENTITY animLoopNever.label            "Soha">
+<!ENTITY animLoopNever.accesskey        "S">

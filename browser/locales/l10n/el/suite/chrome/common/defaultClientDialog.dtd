@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Προεπιλεγμένο πρόγραμμα">
+<!ENTITY defaultClient.intro  "Χρήση του &brandShortName; ως προεπιλεγμένη εφαρμογή για:">
+
+<!ENTITY browser.label "Πρόγραμμα περιήγησης">
+<!ENTITY email.label "Email">
+<!ENTITY newsgroups.label "Ομάδες συζήτησης">
+<!ENTITY feeds.label "Ροές">
+
+<!ENTITY checkOnStartup.label "Πάντα έλεγχος κατά την εκκίνηση του &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "Π">

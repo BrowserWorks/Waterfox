@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle "about:rights">
+<!ENTITY rights.intro-header "Acerca de sus derechos">
+<!ENTITY rights.intro "&brandFullName; es software libre y de código abierto, realizado por una comunidad de miles de personas de todo el mundo. Hay algunas cosas que debe saber:">
+<!ENTITY rights.intro-point1a "&brandShortName; está disponible para usted bajo los términos de la ">
+<!ENTITY rights.intro-point1b "Licencia Pública de Mozilla">
+<!ENTITY rights.intro-point1c ". Esto significa que puede usar, copiar y distribuir &brandShortName; a otros. También es libre de modificar el código fuente de &brandShortName; como desee para adaptarlo a sus necesidades. La Licencia Pública Mozilla también le otorga el derecho a distribuir sus versiones modificadas.">
+<!ENTITY rights.intro-point2aa "&vendorShortName; no le otorga ningún derecho sobre las marcas y logos registrados de &quot;&brandFullName;&quot;. Se puede encontrar información adicional en ">
+<!ENTITY rights.intro-point2b "aquí">
+<!ENTITY rights.intro-point2c ".">
+<!ENTITY rights.intro-point2da "Algunas características en &brandShortName;, tales como el Agente de informe de fallos, le dan la opción de proporcionar comentarios a &vendorShortName;. Al elegir enviar comentarios, da permiso a &vendorShortName; para usar la información para mejorar sus aplicaciones, publicar los comentarios en sus sitios web y distribuir los comentarios.">
+<!ENTITY rights.intro-point3a "Las políticas de privacidad de los productos de &vendorShortName; se pueden encontrar ">
+<!ENTITY rights.intro-point3b "aquí">
+<!ENTITY rights.intro-point3c ".">
+<!ENTITY rights2.intro-point4a "&brandShortName; ofrece servicios opcionales de información sobre sitios web, tales como los servicios de complementos o el de navegación segura; sin embargo, no podemos garantizar que sean 100 &#037; precisos ni libres de errores. Pueden encontrarse más detalles, incluyendo información sobre cómo desactivar los servicios, en los ">
+<!ENTITY rights.intro-point4b "términos del servicio">
+<!ENTITY rights.intro-point4c ".">
+<!ENTITY rights.webservices-header "Servicios de sitios web de &brandFullName;">
+<!ENTITY rights3.webservices-aa "&vendorShortName; ofrece servicios web opcionales (&quot;Servicios&quot;) que están disponibles para su uso con esta versión binaria de &brandShortName;, como se describe más abajo. Algunos de estos servicios (tales como los servicios de recomendación y actualización de complementos, el servicio de navegación segura o la característica de notificación de navegación basada en ubicación) están activados por defecto. Si no quiere usar alguno de estos servicios o los términos de debajo no le resultan aceptables, puede encontrar instrucciones sobre cómo desactivar una característica o servicio en particular ">
+<!ENTITY rights3.webservices-b "aquí">
+<!ENTITY rights3.webservices-c ". Otras características y servicios pueden activarse o desactivarse en las preferencias de la aplicación.">
+<!ENTITY rights.addons-a "Servicios de complementos: ">
+<!ENTITY rights.addons-b "Por omisión, &brandShortName; sugerirá complementos en la página &view.discover.label; y buscará actualizaciones a intervalos regulares. Si desea desactivar estas características para evitar la comunicación al servidor de información sobre complementos instalados, siga estos pasos:">
+<!ENTITY rights.addons-term1 "Abra las preferencias de la aplicación">
+<!ENTITY rights.addons-term2 "Seleccione el panel &smart.label; en la categoría &advance.label;">
+<!ENTITY rights.addons-term3 "Desmarque las opciones &quot;&autoAddOnsUpdates.label;&quot; y &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "Los servicios de complementos están ahora desactivados">
+<!ENTITY rights.safebrowsing-a "Navegación segura: ">
+<!ENTITY rights.safebrowsing-b "No se recomienda desactivar la característica de navegación segura ya que puede suponer que visite sitios inseguros. Si desea desactivar la característica por completo, siga estos pasos:">
+<!ENTITY rights.safebrowsing-term1 "Abra las preferencias de la aplicación">
+<!ENTITY rights.safebrowsing-term2 "Seleccione el panel principal &security.label;">
+<!ENTITY rights.safebrowsing-term3 "Desmarque las opciones &quot;&blockAttackSites.label;&quot; y &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "La navegación segura está ahora desactivada">
+<!ENTITY rights.locationawarebrowsing-a "Navegación basada en ubicación: ">
+<!ENTITY rights.locationawarebrowsing-b "siempre es opcional. Nunca se envía información de localización sin su permiso. Si desea desactivar la característica por completo, siga estos pasos:">
+<!ENTITY rights.locationawarebrowsing-term1 "Abra las preferencias de la aplicación">
+<!ENTITY rights.locationawarebrowsing-term2 "Seleccione el panel principal &security.label;">
+<!ENTITY rights.locationawarebrowsing-term3 "Seleccione la opción de &quot;&geoDisabled.label;&quot;">
+<!ENTITY rights.locationawarebrowsing-term4 "La navegación basada en ubicación está desactivada">
+<!ENTITY rights.webservices-term0a "&vendorShortName;, junto con sus colaboradores, licenciatarios y empresas colaboradoras, trabajan para proporcionar los servicios más precisos y actualizados. Sin embargo, no podemos garantizar que esta información sea completa y libre de errores. Por ejemplo, el servicio de navegación segura puede no identificar algunos sitios arriesgados y puede identificar algunos sitios seguros por error y en el servicio de navegación basada en la ubicación, todas las ubicaciones devueltas por nuestros proveedores de servicios son solo estimadas. Ni nosotros ni nuestros proveedores de servicio garantizan la precisión de las ubicaciones proporcionadas.">
+<!ENTITY rights.webservices-term1 "&vendorShortName; puede abandonar o cambiar los servicios a su discreción.">
+<!ENTITY rights.webservices-term2a "Está invitado a usar estos servicios con la versión correspondiente de &brandShortName;, y dispone de los derechos necesarios para hacerlo. &vendorShortName; y sus licenciatarios se reservan todos los demás derechos en los servicios. Estos términos no están orientados a limitar ningún derecho otorgado bajo las licencias de código abierto aplicables a &brandShortName; y a las versiones de código abierto correspondientes de &brandShortName;.">
+<!ENTITY rights.webservices-term3 "Los servicios se proporcionan &quot;tal cual&quot;. &vendorShortName;, sus colaboradores, licenciatarios y distribuidores rechazan toda garantía, ya sea expresa o implícita, incluyendo sin limitarse, garantías de que el servicio es comercializable y que cumple con su necesidad particular. Usted asume todo el riesgo al seleccionar este servicio sobre su propósito así como sobre la calidad y rendimiento del servicio. Algunas jurisdicciones no permiten la exclusión o limitación de las garantías implícitas, así que esta denegación puede no aplicarse en su caso.">
+<!ENTITY rights.webservices-term4 "Excepto donde sea requerido por la ley, &vendorShortName;, sus colaboradores, licenciatarios y distribuidores no podrán ser responsables de ningún daño indirecto, especial, imprevisto, resultante, punitivo o ejemplar derivado de, o relacionado con, el uso de &brandShortName; y los servicios. La responsabilidad colectiva bajo estos términos no podrá exceder los US$500 (quinientos dólares americanos). Algunas jurisdicciones no permiten la exclusión o limitación de ciertos daños, así que esta exclusión y limitación puede no ser aplicables a usted.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; puede actualizar estos términos según sea necesario de vez en cuando. Estos términos no pueden ser modificados o cancelados sin el acuerdo escrito de &vendorShortName;.">
+<!ENTITY rights.webservices-term6a "Estos términos están gobernados y escritos de acuerdo a las leyes de Alemania y todas las disputas relacionadas con estos términos deberán enviarse a la exclusiva jurisdicción de la corte competente en Alemania. Si cualquier parte de estos términos resulta ser inválida o inexigible, las porciones restantes continuarán teniendo pleno efecto. En el caso de haber un conflicto entre una versión traducida de estos términos y la versión en idioma inglés, prevalecerá la versión en inglés.">

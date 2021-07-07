@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "ค้นหา">
+
+<!ENTITY newPref.namePlaceholder       "ชื่อ">
+
+<!ENTITY newPref.valueBoolean          "ค่าตรรกะ">
+<!ENTITY newPref.valueString           "สตริง">
+<!ENTITY newPref.valueInteger          "จำนวนเต็ม">
+
+<!ENTITY newPref.stringPlaceholder     "ป้อนสตริง">
+<!ENTITY newPref.numberPlaceholder     "ป้อนตัวเลข">
+
+<!ENTITY newPref.toggleButton          "เปิด/ปิด">
+<!ENTITY newPref.cancelButton          "ยกเลิก">
+
+<!ENTITY contextMenu.copyPrefName      "คัดลอกชื่อ">
+<!ENTITY contextMenu.copyPrefValue     "คัดลอกค่า">

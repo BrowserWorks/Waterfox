@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "필터 로그 설정">
+<!ENTITY viewLogInfo.text "필터 로그는 필터링 수행 시의 기록입니다. 로그를 기록하려면 선택하십시오.">
+<!ENTITY clearLog.label "로그 삭제">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "필터 로그 사용">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "닫기">
+<!ENTITY closeLog.accesskey "o">

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Γραμματοσειρές">
+
+<!ENTITY  language.label                          "Γραμματοσειρές για:">
+<!ENTITY  language.accesskey                      "ρ">
+
+<!ENTITY  typefaces.label                         "Οικογένεια γραμματοσειρών">
+<!ENTITY  sizes.label                             "Μέγεθος (pixels)">
+
+<!ENTITY  proportional.label                      "Μεταβλητού πλάτους:">
+<!ENTITY  proportional.accesskey                  "Μ">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Σταθερού πλάτους:">
+<!ENTITY  monospace.accesskey                     "Σ">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Διακόσμησης:">
+<!ENTITY  fantasy.accesskey                       "Δ">
+<!ENTITY  cursive.label                           "Καλλιγραφίας:">
+<!ENTITY  cursive.accesskey                       "Κ">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Λατινικά">
+<!ENTITY  font.langGroup.japanese                 "Ιαπωνικά">
+<!ENTITY  font.langGroup.trad-chinese             "Παραδοσιακά Κινεζικά (Ταϊβάν)">
+<!ENTITY  font.langGroup.simpl-chinese            "Απλοποιημένα Κινεζικά">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Παραδοσιακά Κινεζικά (Χονγκ Κονγκ)">
+<!ENTITY  font.langGroup.korean                   "Κορεατικά">
+<!ENTITY  font.langGroup.cyrillic                 "Κυριλλικά">
+<!ENTITY  font.langGroup.el                       "Ελληνικά">
+<!ENTITY  font.langGroup.thai                     "Ταϊλανδικά">
+<!ENTITY  font.langGroup.hebrew                   "Εβραϊκά">
+<!ENTITY  font.langGroup.arabic                   "Αραβικά">
+<!ENTITY  font.langGroup.devanagari               "Ντεβανγκάρι">
+<!ENTITY  font.langGroup.tamil                    "Ταμίλ">
+<!ENTITY  font.langGroup.armenian                 "Αρμενικά">
+<!ENTITY  font.langGroup.bengali                  "Μπενγκάλι">
+<!ENTITY  font.langGroup.canadian                 "Ενοποιημένο καναδικό συλλαβάριο">
+<!ENTITY  font.langGroup.ethiopic                 "Αιθιοπικά">
+<!ENTITY  font.langGroup.georgian                 "Γεωργιανά">
+<!ENTITY  font.langGroup.gujarati                 "Γκουτζαράτι">
+<!ENTITY  font.langGroup.gurmukhi                 "Γκουρμούκι">
+<!ENTITY  font.langGroup.khmer                    "Χμερ">
+<!ENTITY  font.langGroup.malayalam                "Μαλαισιανά">
+<!ENTITY  font.langGroup.math                     "Μαθηματικά">
+<!ENTITY  font.langGroup.odia                     "Οντία">
+<!ENTITY  font.langGroup.telugu                   "Τελούγκου">
+<!ENTITY  font.langGroup.kannada                  "Κανάντα">
+<!ENTITY  font.langGroup.sinhala                  "Σινχάλα">
+<!ENTITY  font.langGroup.tibetan                  "Θιβετανικά">
+<!ENTITY  font.langGroup.other                    "Άλλα συστήματα γραφής">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Ελάχιστο μέγεθος γραμματοσειράς:">
+<!ENTITY minSize.accesskey                        "χ">
+<!ENTITY minSize.none                             "Κανένα">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  useDocumentFonts.label                  "Να επιτρέπεται στα έγγραφα να χρησιμοποιούν άλλες γραμματοσειρές">
+<!ENTITY  useDocumentFonts.accesskey              "ι">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Όταν μια ιστοσελίδα επιλέγει τις δικές της γραμματοσειρές">
+<!ENTITY  useDefaultFont.label                    "Χρήση προεπιλεγμένων γραμματοσειρών, αγνοώντας τις γραμματοσειρές της σελίδας">
+<!ENTITY  useDefaultFont.accesskey                "Χ">

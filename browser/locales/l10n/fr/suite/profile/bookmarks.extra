@@ -1,0 +1,23 @@
+#filter emptyLines
+
+# LOCALIZATION NOTE: You can additional bookmark entries here for inclusion
+# in your language's default profiles.
+# Please do not add many entries here, only things that many users in your
+# country will actually need.
+# For most localizations, it's enough to localize the descriptions and domain
+# names of the Google bookmarks below.
+
+    <DT><H3>Recherches sur le Web</H3>
+    <DL><p>
+        <DT><A HREF="https://www.google.com/">Google</A>
+        <DT><A HREF="https://groups.google.com/">Les groupes Google</A>
+        <DT><A HREF="https://news.google.com/">L’actualité sur Google</A>
+    </DL><p>
+
+    <DT><H3>Sites communautaires</H3>
+    <DL><p>
+        <DT><A HREF="https://forums.mozfr.org">Geckozone, site d’assistance francophone des logiciels basés sur Gecko</A>
+        <DT><A HREF="https://mozfr.org">mozfr.org, site de la communauté Mozilla francophone</A>
+    </DL><p>
+
+#unfilter emptyLines

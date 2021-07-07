@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "搜尋訊息於:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "搜尋子資料夾">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnServer.label        "在伺服器上執行搜尋">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "清除">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "開啟">
+<!ENTITY openButton.accesskey        "n">
+<!ENTITY deleteButton.label          "刪除">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "搜尋訊息">
+<!ENTITY results.label               "結果">
+<!ENTITY moveButton.label            "移至">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "在資料夾開啟">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "存為即時搜尋資料夾">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "尋找:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "屬性">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "寫信">
+<!ENTITY composeButton.accesskey     "W">
+<!ENTITY deleteCardButton.label      "刪除">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "進階通訊錄搜尋">
+

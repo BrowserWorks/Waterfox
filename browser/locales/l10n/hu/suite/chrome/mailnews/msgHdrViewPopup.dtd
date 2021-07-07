@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Felvétel a címjegyzékbe…">
+<!ENTITY AddToAddressBook.accesskey        "F">
+<!ENTITY EditContact.label                 "Névjegy szerkesztése…">
+<!ENTITY EditContact.accesskey             "s">
+<!ENTITY ViewContact.label                 "Névjegy megtekintése">
+<!ENTITY ViewContact.accesskey             "v">
+<!ENTITY SendMailTo.label                  "Levél írása…">
+<!ENTITY SendMailTo.accesskey              "L">
+<!ENTITY CopyEmailAddress.label            "E-mail cím másolása">
+<!ENTITY CopyEmailAddress.accesskey        "E">
+<!ENTITY CopyNameAndEmailAddress.label     "Név és e-mail cím másolása">
+<!ENTITY CopyNameAndEmailAddress.accesskey "N">
+<!ENTITY CreateFilterFrom.label            "Szűrő létrehozása…">
+<!ENTITY CreateFilterFrom.accesskey        "S">
+<!ENTITY openInBrowser.label               "Megnyitás a böngészőben">
+<!ENTITY openInBrowser.accesskey           "M">
+<!ENTITY bookmarkLinkCmd.label             "Hivatkozás könyvjelzőzése…">
+<!ENTITY bookmarkLinkCmd.accesskey         "k">
+<!ENTITY copyLinkCmd.label                 "Hivatkozás címének másolása">
+<!ENTITY copyLinkCmd.accesskey             "v">
+<!ENTITY CopyMessageId.label               "Üzenetazonosító másolása">
+<!ENTITY CopyMessageId.accesskey           "m">
+<!ENTITY OpenMessageForMsgId.label         "Üzenetazonosítóhoz tartozó üzenet megnyitása">
+<!ENTITY OpenMessageForMsgId.accesskey     "t">
+<!ENTITY OpenBrowserWithMsgId.label        "Üzenetazonosítóhoz tartozó üzenet böngészése">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "b">

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "الحسابات - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "حالة التراسل الفوري">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "حساب جديد">
+<!ENTITY accountManager.newAccount.accesskey "ح">
+<!ENTITY accountManager.close.label          "أغلق">
+<!ENTITY accountManager.close.accesskey      "ل">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "لم يُعدّ أي حساب بعد">
+<!ENTITY accountManager.noAccount.description "انقر على زر &accountManager.newAccount.label; وسيُرشدك &brandShortName; خلال عملية إعداد الحساب.">
+<!ENTITY account.autoSignOn.label     "لِج عند بدأ التشغيل">
+<!ENTITY account.autoSignOn.accesskey "د">
+<!ENTITY account.connect.label        "اتّصل">
+<!ENTITY account.connect.accesskey    "ت">
+<!ENTITY account.disconnect.label     "اقطع الاتصال">
+<!ENTITY account.disconnect.accesskey "ق">
+<!ENTITY account.delete.label         "احذف">
+<!ENTITY account.delete.accesskey     "ذ">
+<!ENTITY account.edit.label           "الخصائص">
+<!ENTITY account.edit.accesskey       "خ">
+<!ENTITY account.moveup.label         "حرّك لأعلى">
+<!ENTITY account.movedown.label       "حرّك لأسفل">
+<!ENTITY account.cancelReconnection.label         "ألغِ إعادة الاتصال">
+<!ENTITY account.cancelReconnection.accesskey     "ل">
+<!ENTITY account.copyDebugLog.label     "انسخ سجل التنقيح">
+<!ENTITY account.copyDebugLog.accesskey "ن">
+<!ENTITY account.showDebugLog.label     "اعرض سجل التنقيح">
+<!ENTITY account.showDebugLog.accesskey "ع">
+<!ENTITY account.connecting           "يتّصل…">
+<!ENTITY account.disconnecting        "يقطع الاتصال…">
+<!ENTITY account.disconnected         "غير متصل">

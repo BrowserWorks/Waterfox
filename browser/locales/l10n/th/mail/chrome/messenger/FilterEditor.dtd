@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "กฎตัวกรอง">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "ชื่อตัวกรอง:">
+<!ENTITY filterName.accesskey "ช">
+
+<!ENTITY junk.label "ขยะ">
+<!ENTITY notJunk.label "ไม่ใช่ขยะ">
+
+<!ENTITY lowestPriorityCmd.label "ต่ำสุด">
+<!ENTITY lowPriorityCmd.label "ต่ำ">
+<!ENTITY normalPriorityCmd.label "ปกติ">
+<!ENTITY highPriorityCmd.label "สูง">
+<!ENTITY highestPriorityCmd.label "สูงสุด">
+
+<!ENTITY contextDesc.label "ใช้ตัวกรองเมื่อ:">
+<!ENTITY contextIncomingMail.label "เมื่อรับจดหมายใหม่:">
+<!ENTITY contextIncomingMail.accesskey "ร">
+<!ENTITY contextManual.label "เรียกใช้ด้วยตนเอง">
+<!ENTITY contextManual.accesskey "เ">
+<!ENTITY contextBeforeCls.label "กรองก่อนจำแนกขยะ">
+<!ENTITY contextAfterCls.label "กรองหลังจากจำแนกขยะ">
+<!ENTITY contextOutgoing.label "หลังจากที่ส่งแล้ว">
+<!ENTITY contextOutgoing.accesskey "ห">
+<!ENTITY contextArchive.label "เก็บถาวร">
+<!ENTITY contextArchive.accesskey "ก">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "ดำเนินการการกระทำเหล่านี้:">
+<!ENTITY filterActionDesc.accesskey "ด">
+
+<!ENTITY filterActionOrderWarning.label "หมายเหตุ: การกระทำตัวกรองจะทำงานในลำดับที่แตกต่างกัน">
+<!ENTITY filterActionOrder.label "ดูลำดับการทำงาน">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "ย้ายข้อความไปยัง">
+<!ENTITY copyMessage.label "คัดลอกข้อความไปยัง">
+<!ENTITY forwardTo.label "ส่งต่อข้อความไปยัง">
+<!ENTITY replyWithTemplate.label "ตอบกลับด้วยแม่แบบ">
+<!ENTITY markMessageRead.label "ทำเครื่องหมายว่าอ่านแล้ว">
+<!ENTITY markMessageUnread.label "ทำเครื่องหมายว่ายังไม่ได้อ่าน">
+<!ENTITY markMessageStarred.label "เพิ่มดาว">
+<!ENTITY setPriority.label "ตั้งค่าลำดับความสำคัญเป็น">
+<!ENTITY addTag.label "ติดป้ายกำกับข้อความ">
+<!ENTITY setJunkScore.label "ตั้งค่าสถานะขยะเป็น">
+<!ENTITY deleteMessage.label "ลบข้อความ">
+<!ENTITY deleteFromPOP.label "ลบจากเซิร์ฟเวอร์ POP">
+<!ENTITY fetchFromPOP.label "ดึงจากเซิร์ฟเวอร์ POP">
+<!ENTITY ignoreThread.label "เพิกเฉยเธรด">
+<!ENTITY ignoreSubthread.label "เพิกเฉยเธรดย่อย">
+<!ENTITY watchThread.label "เฝ้าดูเธรด">
+<!ENTITY stopExecution.label "หยุดการทำงานของตัวกรอง">
+
+<!ENTITY addAction.tooltip "เพิ่มการกระทำใหม่">
+<!ENTITY removeAction.tooltip "เอาการกระทำนี้ออก">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

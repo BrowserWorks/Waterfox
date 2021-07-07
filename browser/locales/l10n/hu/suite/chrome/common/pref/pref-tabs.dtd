@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Böngészőlapok">
+
+<!ENTITY tabDisplay.label "Fülek megjelenítése">
+<!ENTITY autoHide.label "A lapsáv elrejtése, ha csak egy lap van nyitva">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "Új lap aktiválása a hivatkozások megnyitásakor">
+<!ENTITY background.accesskey "h">
+<!ENTITY warnOnClose.label "Figyelmeztetés több lap bezárása előtt">
+<!ENTITY warnOnClose.accesskey "t">
+<!ENTITY relatedAfterCurrent.label "Kapcsolodó lapok megnyitása az aktuális lap után">
+<!ENTITY relatedAfterCurrent.accesskey "o">
+
+<!ENTITY loadGroup.label "Könyvjelzőcsoport megnyitásakor">
+<!ENTITY loadGroupAppend.label "Új lapok hozzáadása">
+<!ENTITY loadGroupAppend.accesskey "h">
+<!ENTITY loadGroupReplace.label "Meglévő lapok lecserélése">
+<!ENTITY loadGroupReplace.accesskey "M">
+
+<!ENTITY openTabs.label "Megnyitás új ablak helyett új lapon, ha a felhasználó">
+
+<!ENTITY middleClick.label "Középső kattintás, Ctrl+kattintás vagy Ctrl+Enter a linkeken a weboldalon">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Középső kattintás, &#8984;+kattintás vagy &#8984;+Return a linkeken a weboldalon">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "Ctrl+Enter a Címmezőben">
+<!ENTITY urlbar.accesskey "L">
+<!ENTITY urlbarMac.label "&#8984;+Return a Címmezőben">
+<!ENTITY urlbarMac.accesskey "L">
+
+<!ENTITY openManagers.label "Megnyitás új lapon, különálló ablak helyett">
+<!ENTITY openDataManager.label "Adatkezelő">
+<!ENTITY openDataManager.accesskey "A">
+<!ENTITY openAddOnsManager.label "Kiegészítőkezelő">
+<!ENTITY openAddOnsManager.accesskey "K">

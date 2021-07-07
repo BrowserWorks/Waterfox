@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Полночь" >
+<!ENTITY time.noon "Полдень" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Вс" >
+<!ENTITY day.1.Ddd.accesskey "В">
+<!ENTITY day.2.Ddd "Пн" >
+<!ENTITY day.2.Ddd.accesskey "н">
+<!ENTITY day.3.Ddd "Вт" >
+<!ENTITY day.3.Ddd.accesskey "т">
+<!ENTITY day.4.Ddd "Ср" >
+<!ENTITY day.4.Ddd.accesskey "р">
+<!ENTITY day.5.Ddd "Чт" >
+<!ENTITY day.5.Ddd.accesskey "Ч">
+<!ENTITY day.6.Ddd "Пт" >
+<!ENTITY day.6.Ddd.accesskey "П">
+<!ENTITY day.7.Ddd "Сб" >
+<!ENTITY day.7.Ddd.accesskey "С">
+
+<!ENTITY day.1.name "Воскресенье" >
+<!ENTITY day.2.name "Понедельник" >
+<!ENTITY day.3.name "Вторник" >
+<!ENTITY day.4.name "Среда" >
+<!ENTITY day.5.name "Четверг" >
+<!ENTITY day.6.name "Пятница" >
+<!ENTITY day.7.name "Суббота" >
+
+<!ENTITY month.1.name "Января" >
+<!ENTITY month.2.name "Февраля" >
+<!ENTITY month.3.name "Марта" >
+<!ENTITY month.4.name "Апреля" >
+<!ENTITY month.5.name "Мая" >
+<!ENTITY month.6.name "Июня" >
+<!ENTITY month.7.name "Июля" >
+<!ENTITY month.8.name "Августа" >
+<!ENTITY month.9.name "Сентября" >
+<!ENTITY month.10.name "Октября" >
+<!ENTITY month.11.name "Ноября" >
+<!ENTITY month.12.name "Декабря" >
+
+<!ENTITY onemonthbackward.tooltip "Один месяц назад" >
+<!ENTITY onemonthforward.tooltip "Один месяц вперёд" >
+<!ENTITY oneyearbackward.tooltip "Один год назад" >
+<!ENTITY oneyearforward.tooltip "Один год вперёд" >
+<!ENTITY showToday.tooltip "Перейти на сегодня">
+<!ENTITY onedayforward.tooltip "Один день вперёд">
+<!ENTITY onedaybackward.tooltip "Один день назад">
+<!ENTITY showselectedday.tooltip "Показать события на выбранный день">

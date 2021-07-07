@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "รายการบันทึกตัวกรอง">
+<!ENTITY viewLogInfo.text "รายการบันทึกตัวกรองจะแสดงตัวกรองที่ได้ถูกเรียกใช้สำหรับบัญชีนี้ ใช้กล่องกาเครื่องหมายด้านล่างเพื่อเปิดใช้งานการบันทึก">
+<!ENTITY clearLog.label "ล้างรายการบันทึก">
+<!ENTITY clearLog.accesskey "ล">
+<!ENTITY enableLog.label "เปิดใช้งานรายการบันทึกตัวกรอง">
+<!ENTITY enableLog.accesskey "ป">
+<!ENTITY closeLog.label "ปิด">
+<!ENTITY closeLog.accesskey "ด">

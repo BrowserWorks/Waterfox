@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Κωδικοποίηση κειμένου">
+<!ENTITY messageDisplay.caption          "Προβολή μηνύματος">
+<!ENTITY viewFallbackCharset2.label      "Εφεδρική κωδικοποίηση κειμένου:">
+<!ENTITY viewFallbackCharset2.accesskey  "Ε">
+<!ENTITY viewFallbackCharset.desc        "(Για παλαιό περιεχόμενο που δεν δηλώνει την κωδικοποίησή του.)">
+
+<!ENTITY composingMessages.caption       "Σύνθεση μηνυμάτων">
+<!ENTITY useMIME.label                   "Για μηνύματα με χαρακτήρες 8-bit, χρησιμοποιήστε την κωδικοποίηση MIME 'quoted printable'. Αν δεν το επιλέξετε, τα μηνύματα θα αποστέλλονται ως έχουν.">
+<!ENTITY useMIME.accesskey               "Γ">
+<!ENTITY sendDefaultCharset2.label       "Προεπιλεγμένη κωδικοποίηση κειμένου:">
+<!ENTITY sendDefaultCharset2.accesskey   "κ">
+<!ENTITY replyInDefaultCharset3.label    "Όταν είναι δυνατό, να χρησιμοποιείται αυτή η προεπιλεγμένη κωδικοποίηση κειμένου στις απαντήσεις. (Αν δεν το επιλέξετε, μόνο τα νέα μηνύματα θα χρησιμοποιούν αυτή την προεπιλογή.)">
+<!ENTITY replyInDefaultCharset3.accesskey "Ό">

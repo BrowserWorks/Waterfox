@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importeren">
+<!ENTITY importAll.label          "Alles importeren">
+<!ENTITY importAll.accesskey      "s">
+<!ENTITY importMail.label         "E-mail">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "Feedabonnementen">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Adresboeken">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Instellingen">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Filters">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName;-importeerwizard">
+<!ENTITY importShortDesc.label    "E-mail, adresboeken, instellingen en filters van andere programma’s importeren">
+
+<!ENTITY importDescription1.label "Deze wizard zal e-mailberichten, adresboekvermeldingen, feedabonnementen, voorkeuren en/of filters van andere e-mailprogramma’s en bekende adresboekindelingen in &brandShortName; importeren.">
+<!ENTITY importDescription2.label "Als deze eenmaal zijn geïmporteerd, kunt u ze vanuit &brandShortName; benaderen.">
+
+<!ENTITY selectDescription.label  "Selecteer het type bestand dat u wilt importeren:">
+<!ENTITY selectDescriptionB.label "Selecteer een bestaande account of maak een nieuwe account aan:">
+<!ENTITY selectDescription.accesskey "S">
+<!ENTITY acctName.label           "Naam:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Er is geen toepassing of bestand gevonden om gegevens uit te importeren.">
+
+<!ENTITY back.label               "&lt; Vorige">
+<!ENTITY forward.label            "Volgende &gt;">
+<!ENTITY finish.label             "Voltooien">
+<!ENTITY cancel.label             "Annuleren">
+
+<!ENTITY select.label             "of selecteer het type gegevens om te importeren:">
+
+<!ENTITY title.label              "Titel">
+<!ENTITY processing.label         "Importeren…">

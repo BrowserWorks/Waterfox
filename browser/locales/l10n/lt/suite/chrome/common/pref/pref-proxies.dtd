@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-proxies.xul -->
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+
+
+<!ENTITY  pref.proxies.title            "Įgaliotieji serveriai">
+<!ENTITY  pref.proxies.desc             "Įgaliotasis serveris atlieka filtravimo ir (arba) ryšio su internetu paspasrtinimo funkciją.">
+<!ENTITY  proxyTitle.label              "Įgaliotųjų serverių sąranka">
+<!ENTITY  directTypeRadio.label         "Nenaudoti įgaliotojo serverio">
+<!ENTITY  directTypeRadio.accesskey     "N">
+<!ENTITY  systemTypeRadio.label         "Taikyti šios sistemos įgaliotojo serverio nuostatas">
+<!ENTITY  systemTypeRadio.accesskey     "T">
+<!ENTITY  manualTypeRadio.label         "Rankinė įgaliotojo serverio sąranka">
+<!ENTITY  manualTypeRadio.accesskey     "R">
+<!ENTITY  wpadTypeRadio.label           "Savarankiškai aptikti įgaliotuosius serverius">
+<!ENTITY  wpadTypeRadio.accesskey       "S">
+<!ENTITY  autoTypeRadio.label           "Automatinė įgaliotojo serverio sąranka. Failą imti iš URL:">
+<!ENTITY  autoTypeRadio.accesskey       "A">
+<!ENTITY  reload.label                  "Atsiųsti iš naujo">
+<!ENTITY  reload.accesskey              "u">
+<!ENTITY  http.label                    "Įgaliotasis serveris:">
+<!ENTITY  http.accesskey                "g">
+<!ENTITY  port.label                    "Prievadas:">
+<!ENTITY  HTTPPort.accesskey            "P">
+<!ENTITY  advanced.label                "Papildomai…">
+<!ENTITY  advanced.accesskey            "d">
+<!ENTITY  noproxy.label                 "Tiesiogiai jungtis prie šių sričių:">
+<!ENTITY  noproxy.accesskey             "š">
+<!ENTITY  noproxyExplain.label          "Pavyzdys: .mozilla.org, .lrs.lt, 192.168.1.0/24">

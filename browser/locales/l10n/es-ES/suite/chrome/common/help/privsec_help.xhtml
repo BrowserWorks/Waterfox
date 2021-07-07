@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Preferencias de privacidad y seguridad</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="privsec_preferences">Preferencias de privacidad y seguridad</h1>
+
+<p>Las secciones mostradas a continuación describen las preferencias de
+privacidad y seguridad. Para ver los paneles de preferencias, siga estos
+pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+  <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Haga clic en la categoría Seguridad y privacidad. Si no hay
+  ninguna subcategoría visible, haga doble clic en Privacidad y
+  seguridad para expandir la lista, y luego haga clic en el nombre de las
+  preferencias que desee ver o cambiar.</li>
+</ol>
+
+<p>Para más ayuda con las configuraciones disponibles en cada panel,
+haga clic en el enlace correspondiente de entre los siguientes:</p>
+
+<div class="contentsBox">Secciones relacionadas:
+  <ul>
+    <li><a href="#privacy_and_security">Privacidad y seguridad</a></li>
+    <li><a href="using_priv_help.xhtml#cookie">Cookies</a></li>
+    <li><a href="using_priv_help.xhtml#images">Imágenes</a></li>
+    <li><a href="cs_priv_prefs_popup.xhtml#privacy_and_security_preferences_popup_windows">Ventanas emergentes</a></li>
+    <li><a href="passwords_help.xhtml#passwords">Contraseñas</a></li>
+    <li><a href="passwords_help.xhtml#master_passwords">Contraseñas
+    maestras</a></li>
+    <li><a href="ssl_help.xhtml#privacy_and_security_preferences_ssltls">SSL/TLS</a></li>
+    <li><a href="certs_prefs_help.xhtml#privacy_and_security_preferences_certificates">Certificados</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security">Preferencias de privacidad y seguridad -
+  Privacidad y seguridad</h2>
+
+<p>Esta sección describe cómo usar el panel principal de preferencias de
+  privacidad y seguridad. Si no está viéndolo, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija Preferencias.</li>
+  <li>Haga clic en la categoría Privacidad y seguridad.</li>
+</ol>
+
+<h3>Rastreo de usuarios</h3>
+
+<p>Estas opciones le permiten comunicar sus preferencias de rastreo a los
+  sitios web y para bloquear activamente las solicitudes de rastreo de sitios
+  conocidos por rastrear. El <a href="glossary.xhtml#user_tracking">rastreo</a>
+  se refiere a que los sitios web (incluyendo anunciantes, proveedores de
+  analíticas y sitios sociales) recogen y analizan datos comprensivos sobre
+  sus patrones de navegación web, afectando por tanto a su privacidad. Para
+  más información sobre este tema, vea
+  <a href="privacy_help.xhtml#why_and_how_are_websites_tracking_me">¿Por qué
+  y cómo me rastrean los sitios web?</a> En esta sección están disponibles las
+  siguientes opciones:</p>  
+
+<ul>
+  <li><strong>Indicar a los sitios web que no quiero ser rastreado</strong>:
+    marque esta casilla para indicar a &brandShortName; que informe a cada
+    sitio web que visite explícitamente (junto con cualquier proveedor de
+    contenido de terceros incrustado en sus páginas) que no quiere que se
+    rastree sus hábitos de navegación. Si está marcada, se envía una
+    solicitud de <a href="glossary.xhtml#do_not_track">No rastreo</a> a
+    cada sitio web visitado.</li>
+  <li><strong>Impedir actividades de rastreo de sitios conocidos</strong>:
+    marque esta casilla para indicar a &brandShortName; que bloquee
+    activamente las conexiones a sitios web que son conocidos por proporcionar
+    servicios de rastreo. Puede que no vea ningún contenido procedente de
+    estos sitios en la página web visitada.</li>   
+  <li><strong>Avisarme cuando se detecten actividades de rastreo</strong>:
+    marque esta casilla para que se le muestre una barra de notificación cuando
+    se bloquee contenido que puede utilizarse para rastrear. Esta barra
+    contiene los botones siguientes:
+      <ul>
+        <li><strong>Seguir bloqueando</strong>: ocultar la barra de notificación
+          sin cargar el contenido desde un sitio de rastreo identificado.</li>
+        <li><strong>Desbloquear</strong>: permitir que se cargue el contenido
+          ahora y automáticamente cuando se visite esta página de nuevo en el
+          futuro.</li>
+        <li><strong>Preferencias</strong>: abre el panel de preferencias de
+          privacidad y seguridad.</li>
+      </ul>
+    </li>
+</ul>
+
+<p><strong>Notas</strong>:</p>
+
+<ul>
+  <li>Respetar una solicitud Do not track es voluntario, por lo que los sitios
+    web <em>no están obligados</em> a obedecerla. Los sitios y servicios web
+    que siguen la política deberían dejar de recopilar y usar información
+    sobre su patrón de navegación web para toda la actividad para la cual se
+    selecciona Do Not Track.</li>
+  <li>Solicitar Do not track de un sitio web no debería afectar a su capacidad
+    de usar el sitio web correctamente (p.e., al usar una
+    <a href="glossary.xhtml#web_application">aplicación web</a> o al añadir
+    elementos en un carrito mientras compra).</li>
+  <li>Observe que Do Not Track no <em>impide</em> que se le muestren anuncios
+    mientras navega. Puesto que el sitio web no tiene permitido recopilar y
+    utilizar información sobre usted, el contenido de los anuncios serán menos
+    específicos si no tiene la opción Do Not Track seleccionada.</li>
+  <li>La prevención de rastreo bloquea activamente contenido conocido por ser
+    usado para el rastreo de una página web. Por tanto, la página puede aparecer
+    de manera incompleta. Tales sitios son identificados descargando
+    periódicamente una lista de sitios de rastreo conocidos que serán bloqueados
+    si se activa. Se continuarán cargando los sitios de rastreo que <em>no</em>
+    estén en esa lista hasta que sean incorporados a la misma.</li>
+  <li>La selección <q>Desbloquear</q> en la barra de notificación para un sitio
+    específico puede revocarse en la pestaña Permisos del administrador de
+    datos. Cuando se encuentra en una
+    <a href="using_priv_help.xhtml#browsing_in_a_private_window">ventana
+    privada</a>, estas opciones no están disponibles en la barra de
+    notificaciones.</li>
+</ul>
+
+<h3 id="location_aware_browsing">Navegación basada en ubicación</h3>
+
+<p>Los sitios web pueden querer obtener información más detallada sobre la
+  ubicación del usuario, p.e., para ofrecer servicios específicos cercanos a la
+  posición actual. Para ese propósito, pueden solicitar la longitud y latitud
+  (junto con otra información como altitud y dirección, si está disponible)
+  del navegador. &brandShortName; nunca proporcionará esa información sin el
+  consentimiento del usuario. Sin embargo, se mostrará una notificación por la
+  página que solicita la ubicación al menos la primera vez que se visita este
+  sitio. Las preferencias situadas en la sección central del
+  <a href="#privacy_and_security">panel de privacidad y seguridad</a> le
+  permiten desactviar por completo esta característica:</p>
+
+<ul>
+  <li><strong>Solicitarme permiso si se hace una petición</strong>: seleccione
+    esta opción si quiere que &brandShortName; le pregunte si el sitio web que
+    está visitando solicita información de geolocalización. La notificación
+    proporciona las siguientes opciones:
+    <ul>
+      <li><strong>Compartir ubicación</strong>: seleccione esta opción si
+        quiere que se determine la ubicación actual y se le tranmista al sitio
+        solicitante, solo para <em>esta</em> solicitud.</li>
+      <li><strong>No para esta solicitud</strong>: seleccione esta opción si
+        <em>no</em> quiere que se determine la ubicación actual ni se le
+        transmita al sitio solicitante, pero que se vuelva a preguntar en
+        la próxima solicitud.</li>
+      <li><strong>Siempre para este sitio</strong>: seleccione esta opción si
+        quiere que se determine la ubicación actual y se le transmita al sitio
+        solicitante, también para todas las solicitudes <em>futuras</em>.</li>
+      <li><strong>Nunca para este sitio</strong>: seleccione esta opción si
+      <em>no</em> quiere que se determine la ubicación actual ni se le
+      transmita al sitio solicitante, tampoco en todas las solicitudes
+      <em>futuras</em>.</li>
+    </ul>
+    Cerrar u ocultar las notificaciones no dará ninguna respuesta a la página
+    solicitante.</li>
+  <li><strong>Desactivar esta característica y denegar todas las
+    solicitudes</strong>: seleccione esta opción para que no se le vuelva a
+    preguntar por solicitudes de geolocalización. &brandShortName; aparecerá
+    ante el sitio web como si no admitiera esta característica.</li>
+</ul>
+
+<p><strong>Notas</strong>:</p>
+
+<ul>
+  <li>La geolocalización es un servicio web de terceros. &brandShortName;
+    recopila cierta información sobre su acceseo a internet (p.e., puntos de
+    acceso inalámbrico) y los envía a este servicio.</li>
+  <li>La precisión de la respuesta varía y puede oscilar desde el nivel de
+    ciudad hasta unos pocos metros de su ubicación real.</li>
+  <li>No se proporciona información sobre el sitio solicitante al servicio de
+    geolocalización. La información devuelta por ese servicio se proporciona
+    al sitio web por &brandShortName; en respuesta a su solicitud.</li>
+  <li>El sitio solicitante recibe un token de identificación que le permite
+    rastrear su movimiento durante un tiempo limitado usando el servicio de
+    geolocalización.</li>
+</ul>
+
+<h3 id="safe_browsing">Navegación segura</h3>
+
+<p>Algunos sitios web incluyen contenido potencialmente peligroso y pueden
+  haber sido identificados como maliciosos. Las preferencias localizadas en
+  la parte inferior del panel <a href="#privacy_and_security">Privacidad y
+  seguridad</a> le permiten seleccionar qué tipos de sitios identificados
+  de esta forma serán bloqueados. Si se activan &brandShortName; compara
+  la dirección de cada sitio web que vaya a visitar contra listas actualizadas
+  periódicamente. Se emite una advertencia previa a la carga real del sitio
+  identificado, dándole de esta manera la oportunidad de cancelar el proceso
+  de carga. En esta sección están disponibles las siguientes opciones:</p>
+
+<ul>
+  <li><strong>Bloquear los sitios señalados como atacantes</strong>:
+    marque esta casilla si quiere que &brandShortName; le avise si el sitio web
+    que está a punto de visitar ha sido identificado como uno que intenta
+    infectar su equipo con software malicioso. Este tipo de
+    <q><a href="glossary.xhtml#malware">malware</a></q> puede interferir con
+    las funciones de su equipo o robar su información personal. También es
+    usado frecuentemente para enviar correo spam o para distribuir más
+    malware.</li>
+  <li><strong>Bloquear los sitios señalados como falsificaciones web</strong>:
+    marque esta casilla si quiere que &brandShortName; le avise si el sitio web
+    que está a punto de visitar ha sido identificado como un sitio que finge
+    ser un sitio web legítimo de alguna organización o servicio conocidos. Los
+    sitios web como este se crean a menudo para engañarle para que proporcione
+    un nombre de usuario y una contraseña u otra información personal
+    confidencial (conocido normalmente como
+    <q><a href="glossary.xhtml#phishing">phishing</a></q>).</li>
+</ul>
+
+<p>Cuando intenta visitar un sitio web que ha sido identificado como malicioso
+  (y esta característica está activada), verá una de las siguientes
+  advertencias:</p>
+
+<ul>
+  <li><strong>¡Página identificada como ataque!</strong> Este sitio web ha sido
+    identificado como un sitio web que intenta infectar su equipo con
+    malware.</li>
+  <li><strong>¡Falsificación web identificada!</strong> Este sitio web ha sido
+    identificado como un sitio web que intenta robar tu información
+    personal.</li>
+</ul>
+
+<p>En este punto no se ha producido ningún daño. Seleccione una de las opciones
+  siguientes:</p>
+
+<ul>
+  <li><strong>¡Sácame de aquí!</strong> <em>No</em> cargar este sitio web. En
+    su lugar, dirigirse a la página de inicio por defecto de
+    &brandShortName;.</li>
+  <li><strong>¿Por qué se ha bloqueado esta página?</strong> Abre una página
+    web que le muestra la información enviada sobre este sitio web concreto
+    (ésta es una página web ubicada en el proveedor de este servicio). Si no
+    existen estos datos del informe, se muestra una página con información
+    general.</li>
+  <li><strong>Ignorar esta advertencia</strong>: continuar con la carga de la
+    página. Use esta opción sólo cuando esté <em>seguro</em> de que la página
+    seleccionada es auténtica y visitarla sea seguro. Aparecerá una barra de
+    notificación en la parte superior de la página, dándole la opción de
+    informar al proveedor de este servicio en caso de que se trate de un error:
+    <ul>
+      <li><strong>Éste no es un sitio atacante…</strong> o <strong>Ésta no es
+        una falsificación web…</strong>: pulse este botón para abrir una nueva
+        pestaña que le permita informar de advertencias erróneas (ésta es una
+        página externa).</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Importante</strong>: la característica de navegación segura está
+  activada por defecto. <em>No</em> se recomienda desactivar ninguna de las dos
+  funciones ya que puede dar lugar a visitar sitios no seguros.</p>
+
+<p><strong>Nota</strong>: si no se muestra una advertencia para un sitio web,
+  esto no <em>garantiza</em> que un sitio sea confiable; sólo quiere decir que
+  no se ha informado de él. Los sitios web maliciosos pueden <em>parecer</em>
+  seguros pero estar intentando atacarle o robar su información personal en
+  secreto. El propietario del sitio web o su proveedor pueden no saber que
+  el sitio ha sido comprometido.</p>
+
+<p>[<a href="#privsec_preferences">Volver al principio de al sección</a>]</p>
+</body>
+</html>

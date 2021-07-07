@@ -1,0 +1,72 @@
+<!ENTITY aboutDialog.title "Acerca de &brandFullName;">
+
+<!-- LOCALIZATION NOTE (update.*):
+# These strings are also used in the update pane of preferences.
+# See about:preferences#advanced.
+-->
+<!-- LOCALIZATION NOTE (update.*):
+# These strings are also used in the update pane of preferences.
+# See about:preferences#advanced.
+-->
+<!ENTITY update.checkForUpdatesButton.label "Buscar actualizaciones">
+<!ENTITY update.checkForUpdatesButton.accesskey "B">
+<!ENTITY update.updateButton.label3 "Reinicie para actualizar &brandShorterName;">
+<!ENTITY update.updateButton.accesskey "R">
+
+
+<!ENTITY warningDesc.version "&brandShortName; es experimental y puede ser inestable.">
+<!ENTITY warningDesc.telemetryDesc "Envía información automáticamente sobre el rendimiento, hardware, uso y personalizaciones a &vendorShortName; para ayudar a mejorar &brandShortName;.">
+
+<!ENTITY community.exp.start "">
+<!ENTITY community.exp.mozillaLink "&vendorShortName;">
+<!ENTITY community.exp.middle " es una ">
+<!ENTITY community.exp.creditsLink "comunidad global">
+<!ENTITY community.exp.end " que trabaja unida para mantener la Web abierta, pública y accesible a todos.">
+
+<!ENTITY community.start2 "&brandShortName; está diseñado por ">
+<!ENTITY community.mozillaLink "&vendorShortName;">
+<!ENTITY community.middle2 ", una ">
+<!ENTITY community.creditsLink "comunidad global">
+<!ENTITY community.end3 " que trabaja unida para mantener la Web abierta, pública y accesible a todos.">
+
+<!ENTITY helpus.start "¿Quiere ayudar? ">
+<!ENTITY helpus.donateLink "¡Haga una donación">
+<!ENTITY helpus.middle " o ">
+<!ENTITY helpus.getInvolvedLink "involúcrese!">
+<!ENTITY helpus.end "">
+
+<!ENTITY releaseNotes.link "Notas de versión">
+
+<!ENTITY bottomLinks.license "Información de licencia">
+
+<!ENTITY bottomLinks.rights "Derechos del usuario final">
+
+<!ENTITY bottomLinks.privacy "Política de privacidad">
+
+<!ENTITY update.checkingForUpdates "Buscando actualizaciones…">
+<!ENTITY update.noUpdatesFound "&brandShortName; está actualizado">
+<!ENTITY update.adminDisabled "Actualizaciones desactivada por el administrador de su sistema">
+<!ENTITY update.otherInstanceHandlingUpdates "&brandShortName; está siendo actualizado por otra instancia">
+
+<!ENTITY update.failed.start "Actualización fallida. ">
+<!ENTITY update.failed.linkText "Descargar la última versión">
+<!ENTITY update.failed.end "">
+
+<!ENTITY update.manual.start "Descargar la ">
+<!ENTITY update.manual.linkText "última versión">
+<!ENTITY update.manual.end "">
+
+<!ENTITY update.unsupported.start "No puede efectuar más actualizaciones en este sistema. ">
+<!ENTITY update.unsupported.linkText "Saber más">
+<!ENTITY update.unsupported.end "">
+
+<!ENTITY update.downloading.start "Descargando actualización — ">
+<!ENTITY update.downloading.end "">
+
+<!ENTITY update.applying "Aplicando actualización…">
+<!ENTITY update.restarting "Reiniciando…">
+
+<!ENTITY channel.description.start "Está actualmente en el canal de actualizaciones ">
+<!ENTITY channel.description.end ". ">
+
+<!ENTITY cmdCloseMac.commandKey "w">

@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- browser/chrome/overrides/netError.dtd との整合性に注意 -->
+<!ENTITY loadError.label		"ページ読み込みエラー">
+<!ENTITY retry.label			"再試行">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title	"正常に接続できませんでした">
+<!ENTITY connectionFailure.longDesc	"<p>サイトアドレスは有効なようですが、接続を確立できませんでした。</p><ul><li>サイトが一時的に利用できなくなっている場合、再度後で試してください。</li><li>他のサイトも表示できない場合、コンピューターのネットワーク接続を確認してください。</li><li>ファイアウォールやプロキシーでネットワークが保護されている場合、その設定に問題があると正常に表示できなくなることがあります。</li></ul>">
+
+<!ENTITY deniedPortAccess.title		"セキュリティ上の理由によりポートの使用が制限されています">
+<!ENTITY deniedPortAccess.longDesc	"<p>リクエストされたアドレスのポート (例えば mozilla.jp のポート80であれば<q>mozilla.jp:80</q>) は普通ウェブサイトの表示<em>以外の</em>目的で使用されます。ユーザーの保護とセキュリティのため、リクエストは中止されました。</p>">
+
+<!ENTITY dnsNotFound.title		"アドレスが見つかりません">
+<!ENTITY dnsNotFound.longDesc		"<p>指定されたアドレスのホストサーバーが見つかりませんでした。</p><ul><li>ドメイン名の入力を間違っていないか確認してください。(例えば <q><strong>www</strong>.mozilla-japan.org</q> を間違えて <q><strong>ww</strong>.mozilla-japan.org</q> などと入力していないか)</li><li>指定されたアドレスのドメインが存在しないかもしれません。すでに有効期限が切れて廃止されている可能性もあります。</li><li>他のサイトも表示できない場合、コンピューターのネットワーク接続を確認してください。</li><li>ファイアウォールやプロキシーでネットワークが保護されている場合、その設定に問題があると正常に表示できなくなることがあります。</li></ul>">
+
+<!ENTITY fileNotFound.title		"ファイルが見つかりませんでした">
+<!ENTITY fileNotFound.longDesc		"<ul><li>ファイルの名前が変更、削除、または移動されている可能性があります。</li><li>アドレスに入力ミス、大文字/小文字の違い、その他の間違いがないか確認してください。</li><li>リソースへのアクセス権限があるか確認してください。</li></ul>">
+
+<!ENTITY fileAccessDenied.title		"ファイルへのアクセスが拒否されました">
+<!ENTITY fileAccessDenied.longDesc	"<ul><li>ファイルが削除または移動されているかファイルの許可属性によりアクセスが拒否された可能性があります。</li></ul>">
+
+<!ENTITY generic.title			"リクエストを正常に完了できませんでした">
+<!ENTITY generic.longDesc		"<p>現在のところこの問題やエラーについての詳細情報はありません。</p>">
+
+<!ENTITY malformedURI.title		"アドレスが無効です">
+<!ENTITY malformedURI.longDesc		"<p>指定されたアドレスの書式が正しくありません。ミスがないかロケーションバーを確認してください。</p>">
+
+<!ENTITY netInterrupt.title		"データの転送が中断されました">
+<!ENTITY netInterrupt.longDesc		"<p>サイトに正常に接続できましたが、データの転送中にネットワーク接続が切断されました。再度試してください。</p><ul><li>他のサイトも表示できない場合、コンピューターのネットワーク接続を確認してください。</li><li>問題が繰り返される場合、ネットワーク管理者またはインターネットプロバイダーに問い合わせてください。</li></ul>">
+
+<!ENTITY notCached.title		"ドキュメントが有効期限切れです">
+<!ENTITY notCached.longDesc		"<p>リクエストされたブラウザーキャッシュ内のドキュメントは利用できません。</p><ul><li>安全対策のため、ブラウザーは注意を要するドキュメントを自動的に再リクエストしません。</li><li>&quot;再試行&quot; ボタンをクリックしてドキュメントをウェブサイトから読み込んでください。</li></ul>">
+
+<!ENTITY netOffline.title		"オフラインモードです">
+<!ENTITY netOffline.longDesc2		"<p>ブラウザーは現在オフラインモードで動作しており、リクエスト対象に接続できません。</p><ul><li>コンピューターが有効なネットワークに接続されているか確認してください。</li><li>&quot;再試行&quot; ボタンを押してブラウザーをオンラインモードに切り替え、ページを再読み込みしてください。</li></ul>">
+
+<!ENTITY contentEncodingError.title	"内容符号化 (Content-Encoding) に問題があります">
+<!ENTITY contentEncodingError.longDesc	"<p>不正または不明な形式で圧縮されているため、ページを表示できません。</p><ul><li>この問題についてはウェブサイトの管理者に問い合わせてください。</li></ul>">
+
+<!ENTITY unsafeContentType.title	"安全でないファイルタイプ">
+<!ENTITY unsafeContentType.longDesc	"<ul><li>この問題をウェブサイトの管理者に報告してください。</li></ul>">
+
+<!ENTITY netReset.title			"接続が中断されました">
+<!ENTITY netReset.longDesc		"<p>ネットワーク接続の確立中にリンクが切れました。再度試してください。</p>">
+
+<!ENTITY netTimeout.title		"ネットワークがタイムアウトしました">
+<!ENTITY netTimeout.longDesc		"<p>接続リクエストに対してリクエスト先サーバーが応答を返さなかったため、接続を中止しました。</p><ul><li>サーバーに負荷が集中したり、一時的に停止している可能性があります。しばらく後で再度試してください。</li><li>他のサイトも表示できない場合、コンピューターのネットワーク接続を確認してください。</li><li>ファイアウォールやプロキシーでネットワークが保護されている場合、その設定に問題があると正常に表示できなくなることがあります。</li><li>問題が繰り返される場合、ネットワーク管理者またはインターネットプロバイダーに問い合わせてください。</li></ul>">
+
+<!ENTITY unknownProtocolFound.title	"プロトコルが不明です">
+<!ENTITY unknownProtocolFound.longDesc	"<p>指定されたプロトコル (例えば <q>wxyz://</q>) を認識できないため、サイトに正常に接続できませんでした。</p><ul><li>マルチメディアファイルなど非テキストデータにアクセスしようとしている場合、サイトによる特別な動作要件がないか確認してください。</li><li>一部のプロトコルを使用するにはサードパーティのソフトウェアやプラグインが必要になります。</li></ul>">
+
+<!ENTITY proxyConnectFailure.title	"プロキシーサーバーが接続を拒否しました">
+<!ENTITY proxyConnectFailure.longDesc	"<p>プロキシーサーバーを使用する設定になっていますが、プロキシーサーバーは接続を拒否しました。</p><ul><li>ブラウザーのプロキシー設定が正しいか確認してください。</li><li>このネットワークからプロキシーサービスへの接続が許可されているか確認してください。</li><li>問題が繰り返される場合、ネットワーク管理者またはインターネットプロバイダーに問い合わせてください。</li></ul>">
+
+<!ENTITY proxyResolveFailure.title	"プロキシーサーバーが見つかりませんでした">
+<!ENTITY proxyResolveFailure.longDesc	"<p>プロキシーサーバーを使用する設定になっていますが、プロキシーサーバーが見つかりませんでした。</p><ul><li>ブラウザーのプロキシー設定が正しいか確認してください。</li><li>コンピューターが有効なネットワークに接続されているか確認してください。</li><li>問題が繰り返される場合、ネットワーク管理者またはインターネットプロバイダーに問い合わせてください。</li></ul>">
+
+<!ENTITY redirectLoop.title		"自動転送がループしています">
+<!ENTITY redirectLoop.longDesc		"<p>リクエストされたリソースの取得を中止しました。このサイトではリクエストの自動転送がループしています。</p><ul><li>このサイトで要求されている Cookie を無効化またはブロックしていないか確認してください。</li><li><em>注意</em>: サイトによる Cookie の使用を許可しても解決しない場合、これはご利用のコンピューターではなくサーバーの設定に問題があると思われます。</li></ul>">
+
+<!ENTITY unknownSocketType.title	"サーバーの応答が不正です">
+<!ENTITY unknownSocketType.longDesc	"<p>ネットワークリクエストに対するサイトの応答が正しくなかったため、接続を中断しました。</p>">
+
+<!ENTITY nssFailure2.title		"安全な接続ができませんでした">
+<!ENTITY nssFailure2.longDesc2		"<p>受信したデータの真正性を検証できなかったため、このページは表示できません。</p><ul><li>この問題についてはウェブサイトの管理者に問い合わせてください。</li></ul>">
+
+<!ENTITY nssBadCert.title		"安全な接続ができませんでした">
+<!ENTITY nssBadCert.longDesc2		"<ul>
+<li>サーバーの設定に問題があるか、誰かが正規のサーバーになりすましている可能性があります。</li>
+<li>以前は正常に接続できていた場合、この問題は恐らく一時的なものですので、後で再度試してみてください。</li>
+</ul>
+">
+
+<!ENTITY securityOverride.linkText	"例外として扱うこともできます...">
+<!ENTITY securityOverride.warningContent "
+<p>インターネット接続環境を完全には信頼できない場合や、これまでこのサーバーではこの警告が表示されなかった場合は、このサイトを例外として追加しないでください。</p>
+<p>どうしてもこのサイトを例外として追加したい場合は、暗号化の高度な設定で追加してください。</p>
+">
+
+<!ENTITY cspBlocked.title		"コンテンツセキュリティポリシーによりブロックされました">
+<!ENTITY cspBlocked.longDesc		"<p>セキュリティポリシーにより読み込みが禁止されたコンテンツが含まれているため、このページの読み込みを中止しました。</p>">
+
+<!ENTITY xfoBlocked.title		"X-Frame-Options ポリシーによりブロックされました">
+<!ENTITY xfoBlocked.longDesc		"<p>このコンテキストへの読み込みを禁止する X-Frame-Options が設定されているため、このページの読み込みを中止しました。</p>">
+
+<!ENTITY corruptedContentErrorv2.title	"コンテンツデータ破損エラー">
+<!ENTITY corruptedContentErrorv2.longDesc	"<p>このページは、データの伝送中にエラーが検出されたため表示できません。</p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul>">
+
+<!ENTITY remoteXUL.title		"リモート XUL">
+<!ENTITY remoteXUL.longDesc		"<p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title	"接続が安全ではありません">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc	"<p><span class='hostname'></span> は攻撃に対して脆弱な古いセキュリティ技術を使用しています。攻撃者は保護された情報を簡単に暴露できます。サイトを安全に訪れるには、このウェブサイトの管理者にサーバーの問題を修正してもらう必要があります。</p><p>エラーコード: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title		"ブロックされたページ">
+
+<!ENTITY networkProtocolError.title	"ネットワークプロトコルエラー">
+<!ENTITY networkProtocolError.longDesc	"<p>表示しようとしているページは、ネットワークプロトコルにエラーが検出されたため表示できません。</p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul>">

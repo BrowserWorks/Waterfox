@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "預設用戶端">
+<!ENTITY defaultClient.intro  "使用 &brandShortName; 作為預設用戶端:">
+
+<!ENTITY browser.label "網頁瀏覽器">
+<!ENTITY email.label "電子郵件">
+<!ENTITY newsgroups.label "新聞群組">
+<!ENTITY feeds.label "消息來源">
+
+<!ENTITY checkOnStartup.label "每次啟動 &brandShortName; 時都重新檢查">
+<!ENTITY checkOnStartup.accesskey "a">
+

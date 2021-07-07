@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle "Restaurar sesión">
+<!ENTITY restorepage.pagetitle "¿Le gustaría restaurar su sesión?">
+<!ENTITY restorepage.issueDesc "Su sesión anterior de &brandShortName; se cerró inesperadamente. Sentimos profundamente las molestias causadas. Puede restaurar las pestañas y ventanas de su sesión anterior, o iniciar una nueva sesión si ya no son necesarias.">
+<!ENTITY restorepage.remedies "Si &brandShortName; se cierra constantemente:">
+<!ENTITY restorepage.dueToChrome "Intente desactivar las extensiones añadidas recientemente en el administrador de complementos.">
+<!ENTITY restorepage.dueToContent "Intente restaurar su sesión sin ninguna página web que sospeche que pueda estar causando el problema:">
+<!ENTITY restorepage.restoreButton "Restaurar sesión anterior">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton "Iniciar sesión nueva">
+<!ENTITY restorepage.cancel.access "S">
+<!ENTITY restorepage.restoreHeader "Restaurar">
+<!ENTITY restorepage.listHeader "Ventanas y pestañas">
+<!ENTITY restorepage.windowLabel "Ventana &#037;S">

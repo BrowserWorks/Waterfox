@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Laiškų rašymas ir adresavimas">
+<!ENTITY addressingGroupTitle.label "Laiškų adresavimas">
+<!ENTITY addressingText.label      "Parenkant adresus:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "naudoti globaliąsias LDAP serverio nuostatas">
+<!ENTITY useGlobal.accesskey       "L">
+<!ENTITY editDirectories.label     "Taisyti katalogus…">
+<!ENTITY editDirectories.accesskey "T">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "naudoti kitą LDAP serverį:">
+<!ENTITY directories.accesskey     "k">
+<!ENTITY directoriesNone.label     "Nėra">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Laiškų rašymas">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Laiškus rašyti raiškiuoju (HTML) tekstu">
+<!ENTITY useHtml.accesskey                    "r">
+<!ENTITY autoQuote.label                      "Atsakant cituoti originalų laišką">
+<!ENTITY autoQuote.accesskey                  "A">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Cituojant,">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "pradėti rašyti atsakymą virš cituojamo teksto">
+<!ENTITY belowQuote.label                     "pradėti rašyti atsakymą po pacituotu tekstu">
+<!ENTITY selectAndQuote.label                 "pažymėti pacituotą tekstą">
+<!ENTITY place.label                          "ir įdėti prierašą">
+<!ENTITY place.accesskey                      "d">
+<!ENTITY belowText.label                      "po pacituotu tekstu (rekomenduotina)">
+<!ENTITY aboveText.label                      "po atsakymo tekstu (virš pacituoto teksto)">
+<!ENTITY includeSigOnReply.label              "įdėti prierašą į atsakymus">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "įdėti prierašą į persiunčiamus laiškus">
+<!ENTITY includeSigOnForward.accesskey        "p">
+
+<!ENTITY globalComposingPrefs.label           "Globaliosios rašymo nuostatos…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globaliosios adresavimo nuostatos…">
+<!ENTITY globalAddressingPrefs.accesskey      "n">

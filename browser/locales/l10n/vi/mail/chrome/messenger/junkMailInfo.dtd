@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Về Thư Rác">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; tự động nhận dạng các thư có vẻ là thư rác (còn gọi là spam). Thư mà &brandShortName; nghĩ là thư rác sẽ hiển thị một biểu tượng thư rác">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Đầu tiên, bạn phải luyện cho &brandShortName; nhận diện thư rác, bằng cách dùng nút trên Thanh công cụ Thư rác để đánh dấu các thư có phải là rác hay không.">
+<!ENTITY info3.label   "Khi &brandShortName; đã nhận diện đúng thư rác, bạn có thể dùng Bộ kiểm soát Thư Rác để tự động di chuyển chúng vào thư mục Thư rác.">
+<!ENTITY info4.label   "Để biết thêm thông tin, hãy nhấn Trợ giúp.">
+

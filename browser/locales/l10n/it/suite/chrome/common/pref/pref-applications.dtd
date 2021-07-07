@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Applicazioni esterne">
+
+<!ENTITY typeColumn.label        "Tipo file">
+<!ENTITY typeColumn.accesskey    "T">
+
+<!ENTITY actionColumn2.label     "Azione">
+<!ENTITY actionColumn2.accesskey "A">
+
+<!ENTITY search.placeholder      "Cerca nei tipi e nelle azioni">
+
+<!ENTITY useAppChooser.label     "Usare il selettore di applicazioni nativo se disponibile">
+<!ENTITY useAppChooser.accesskey "U">

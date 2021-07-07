@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Σχετικά με την ανεπιθύμητη αλληλογραφία">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "Το &brandShortName; εντοπίζει αυτόματα τα εισερχόμενα μηνύματα που φαίνεται να είναι ανεπιθύμητα (spam). Τα μηνύματα που θεωρούνται ανεπιθύμητα από το &brandShortName; θα εμφανίζουν το αντίστοιχο εικονίδιο">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Αρχικά, θα πρέπει να εκπαιδεύσετε το &brandShortName; ώστε να αναγνωρίζει τα ανεπιθύμητα email, επισημαίνοντας τα μηνύματα ως ανεπιθύμητα ή μη, με το κουμπί ανεπιθύμητων στη γραμμή εργαλείων.">
+<!ENTITY info3.label   "Όταν το &brandShortName; αναγνωρίζει σωστά τα ανεπιθύμητα email, μπορείτε να χρησιμοποιήσετε τον έλεγχο ανεπιθύμητης αλληλογραφίας για αυτόματη μετακίνηση ανεπιθύμητων email στον φάκελο ανεπιθύμητων.">
+<!ENTITY info4.label   "Για περισσότερες πληροφορίες, πατήστε Βοήθεια">

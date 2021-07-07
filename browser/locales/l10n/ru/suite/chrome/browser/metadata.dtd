@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Свойства не указаны.">
+
+<!ENTITY caption.label         "Свойства элемента">
+<!ENTITY image-sec.label       "Свойства изображения">
+<!ENTITY image-url.label       "Адрес:">
+<!ENTITY image-desc.label      "Описание:">
+<!ENTITY image-alt.label       "Альтернативный текст:">
+<!ENTITY image-width.label     "Ширина:">
+<!ENTITY image-height.label    "Высота:">
+<!ENTITY image-filesize.label  "Размер файла:">
+<!ENTITY image-filesize.value  "Неизвестен">
+<!ENTITY insdel-sec.label      "Добавить/удалить свойства">
+<!ENTITY insdel-cite.label     "Информация:">
+<!ENTITY insdel-date.label     "Дата:">
+<!ENTITY link-sec.label        "Свойства ссылки">
+<!ENTITY link-url.label        "Адрес:">
+<!ENTITY link-target.label     "Будет открыта в:">
+<!ENTITY link-type.label       "Тип целевого объекта:">
+<!ENTITY link-lang.label       "Целевой язык:">
+<!ENTITY link-rel.label        "Отношение:">
+<!ENTITY link-rev.label        "Обратное отношение:">
+<!ENTITY misc-sec.label        "Разные свойства">
+<!ENTITY misc-lang.label       "Язык текста:">
+<!ENTITY misc-title.label      "Заголовок:">
+<!ENTITY misc-tblsummary.label "Сводка таблицы:">
+<!ENTITY quote-sec.label       "Свойства цитаты">
+<!ENTITY quote-cite.label      "Информация:">

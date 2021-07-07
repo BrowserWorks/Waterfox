@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-cache.xul -->
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+
+
+<!ENTITY pref.cache.title                "Podėlis">
+<!ENTITY pref.cache.caption              "Podėlio parinktys">
+<!ENTITY cachePara                       "Podėlyje laikomos dažniausiai lankomų tinklalapių kopijos. Spustelėjus naršyklės mygtukų juostoje „Iš naujo“, visada bus atsiųsta vėliausia tinklalapio versija.">
+<!ENTITY cacheCheck.label                "Automatiškai valdyti podėlio dydį.">
+<!ENTITY cacheCheck.accesskey            "A">
+<!ENTITY diskCacheUpTo.label             "Podėliui skirti iki">
+<!ENTITY diskCacheUpTo.accesskey         "P">
+<!ENTITY spaceMbytes                     "MB disko atminties.">
+<!ENTITY diskCacheFolder.label           "Podėlio aplankas:">
+<!ENTITY clearDiskCache.label            "Išvalyti">
+<!ENTITY clearDiskCache.accesskey        "v">
+<!ENTITY chooseDiskCacheFolder.label     "Parinkti aplanką…">
+<!ENTITY chooseDiskCacheFolder.accesskey "P">
+<!ENTITY diskCacheFolderExplanation      "Podėlio failai laikomi pasirinkto aplanko poaplankyje „Cache“. Kad pakeitimai pradėtų veikti, reikia paleisti „&brandShortName;“ iš naujo.">
+<!ENTITY docCache.label                  "Palyginti podėlyje esantį tinklalapį su jo originalu tinkle:">
+<!ENTITY docCache.accesskey              "l">
+<!ENTITY checkOncePerSession.label       "kartą per seansą">
+<!ENTITY checkEveryTime.label            "kaskart atveriant tinklalapį">
+
+<!ENTITY checkAutomatically.label        "pasibaigus tinklalapio galiojimo laikui">
+
+<!ENTITY prefetchTitle.label             "Parengtinis saitų įkėlimas">
+<!ENTITY enablePrefetch.label            "Kai siuntimas vyksta lėtai, naudoti tinklalapio parengtinio saitų įkėlimo galimybę (jei tinklalapis ją turi).">
+<!ENTITY enablePrefetch.accesskey        "s">

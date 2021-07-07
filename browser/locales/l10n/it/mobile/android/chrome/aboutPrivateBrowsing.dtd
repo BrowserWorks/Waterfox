@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Navigazione anonima">
+
+<!ENTITY privatebrowsingpage.title.private "Con protezione antitracciamento">
+<!ENTITY privatebrowsingpage.title.normal1 "Navigazione anonima non attiva">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; bloccherà gli elementi della pagina in grado di tracciare la navigazione.">
+<!ENTITY privatebrowsingpage.description.privateDetails "La cronologia non verrà salvata, mentre i segnalibri aggiunti e i download verranno conservati sul dispositivo.">
+
+<!ENTITY privatebrowsingpage.description.normal2 "In modalità Navigazione anonima non verranno salvati cronologia di navigazione o cookie. I segnalibri aggiunti e i download verranno comunque conservati sul dispositivo.">
+
+<!ENTITY privatebrowsingpage.link.private "Ulteriori informazioni">
+<!ENTITY privatebrowsingpage.link.normal "Apri una nuova scheda anonima">

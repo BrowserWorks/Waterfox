@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Sottoscrizioni ai feed">
+<!ENTITY learnMore.label             "Ulteriori informazioni sui feed">
+
+<!ENTITY feedTitle.label             "Titolo:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Indirizzo feed:">
+<!ENTITY feedLocation.accesskey      "f">
+<!ENTITY feedLocation.placeholder    "Inserire un indirizzo feed valido da aggiungere.">
+<!ENTITY feedLocation2.placeholder   "Scrivere un indirizzo di feed valido">
+<!ENTITY locationValidate.label      "Convalida">
+<!ENTITY validateText.label          "Controllare la validazione e recuperare un indirizzo valido.">
+
+<!ENTITY feedFolder.label            "Memorizza gli articoli in:">
+<!ENTITY feedFolder.accesskey        "M">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Cerca aggiornamenti per nuovi articoli ogni">
+<!ENTITY biffStart.accesskey         "C">
+<!ENTITY biffMinutes.label           "minuti">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "giorni">
+<!ENTITY biffDays.accesskey          "o">
+<!ENTITY recommendedUnits.label      "Raccomandati dall'editore:">
+
+<!ENTITY quickMode.label             "Mostra il sommario degli articoli invece di caricare tutta la pagina">
+<!ENTITY quickMode.accesskey         "r">
+
+<!ENTITY autotagEnable.label         "Crea automaticamente le etichette coi nomi delle categorie dal feed">
+<!ENTITY autotagEnable.accesskey     "C">
+<!ENTITY autotagUsePrefix.label      "Aggiungi un prefisso alle etichette con:">
+<!ENTITY autotagUsePrefix.accesskey  "u">
+<!ENTITY autoTagPrefix.placeholder   "Inserire un prefisso per l'etichetta">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Aggiungi">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Verifica">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Aggiorna">
+<!ENTITY button.updateFeed.accesskey "o">
+<!ENTITY button.removeFeed.label     "Elimina">
+<!ENTITY button.removeFeed.accesskey "E">
+<!ENTITY button.importOPML.label     "Importa">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Esporta">
+<!ENTITY button.exportOPML.accesskey "s">
+<!ENTITY button.exportOPML.tooltip   "Esporta i feed mantenendo la struttura delle cartelle; ctrl+clic o ctrl+invio per esportare i feed come una lista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Chiudi">

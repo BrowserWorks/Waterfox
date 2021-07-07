@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "サイトナビゲーションバー">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "サイトナビゲーションバー">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "常に表示">
+<!ENTITY linkToolbarAlways.accesskey "S">
+<!ENTITY linkToolbarAsNeeded.label "必要なときだけ表示">
+<!ENTITY linkToolbarAsNeeded.accesskey "O">
+<!ENTITY linkToolbarNever.label "常に隠す">
+<!ENTITY linkToolbarNever.accesskey "H">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "トップ">
+<!ENTITY upButton.label "上へ">
+<!ENTITY firstButton.label "最初">
+<!ENTITY prevButton.label "前へ">
+<!ENTITY nextButton.label "次へ">
+<!ENTITY lastButton.label "最後">
+
+<!ENTITY documentButton.label "文書">
+
+<!ENTITY tocButton.label "目次">
+<!ENTITY chapterButton.label "章">
+<!ENTITY sectionButton.label "節">
+<!ENTITY subSectionButton.label "小節">
+<!ENTITY appendixButton.label "付属書">
+<!ENTITY glossaryButton.label "用語集">
+<!ENTITY indexButton.label "索引">
+
+<!ENTITY moreButton.label "その他">
+
+<!ENTITY helpButton.label "ヘルプ">
+<!ENTITY searchButton.label "検索">
+
+<!ENTITY authorButton.label "著者">
+<!ENTITY copyrightButton.label "著作表示">
+
+<!ENTITY bookmarkButton.label "ブックマーク">
+
+<!ENTITY alternateButton.label "他のバージョン">
+
+<!ENTITY feedButton.label "購読">

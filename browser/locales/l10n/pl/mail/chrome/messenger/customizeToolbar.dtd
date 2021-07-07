@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Dostosowanie paska narzędzi">
+<!ENTITY dialog.dimensions        "width: 97ch; height: 36em;">
+<!ENTITY instructions.description "Można dodawać lub usuwać elementy przeciągając je na paski narzędzi lub z pasków do zasobnika.">
+<!ENTITY show.label               "Wyświetlaj:">
+<!ENTITY iconsAndText.label       "Ikony i tekst">
+<!ENTITY icons.label              "Ikony">
+<!ENTITY text.label               "Tekst">
+<!ENTITY iconsBesideText.label    "Ikony obok tekstu">
+<!ENTITY useSmallIcons.label      "Małe ikony">
+<!ENTITY restoreDefaultSet.label  "Domyślny układ">
+<!ENTITY showTitlebar2.label      "Pasek tytułu">
+<!ENTITY extraDragSpace2.label    "Pasek przeciągania okna">
+<!ENTITY saveChanges.label        "Gotowe">
+<!ENTITY undoChanges.label        "Cofnij zmiany">

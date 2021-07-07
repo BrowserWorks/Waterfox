@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY  columnLabel.name          "Namn">
+<!ENTITY  columnLabel.keyword       "Nykelord">
+
+<!-- Buttons -->
+<!ENTITY  up.label                  "Flytt opp">
+<!ENTITY  up.accesskey              "o">
+<!ENTITY  dn.label                  "Flytt ned">
+<!ENTITY  dn.accesskey              "n">
+<!ENTITY  remove.label              "Slett">
+<!ENTITY  remove.accesskey          "S">
+<!ENTITY  edit.label                "Rediger nykelord…">
+<!ENTITY  edit.accesskey            "R">
+
+<!ENTITY  addEngine.label           "Installer fleire søkjemotorar…">
+<!ENTITY  addEngine.accesskey       "I">
+
+<!ENTITY  enableSuggest.label       "Vis søkjeforslag">
+<!ENTITY  enableSuggest.accesskey   "V">
+
+<!ENTITY  restoreDefaults.label     "Bygg oppatt standard">
+<!ENTITY  restoreDefaults.accesskey "B">

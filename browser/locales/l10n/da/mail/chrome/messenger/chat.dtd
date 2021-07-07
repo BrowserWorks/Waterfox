@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Online-kontakter">
+<!ENTITY offlineContactsHeader.label   "Offline-kontakter">
+<!ENTITY conversationsHeader.label     "Samtaler">
+<!ENTITY searchResultConversation.label "Søgeresultat">
+<!ENTITY chat.noConv.title             "Samtaler vil blive vist her.">
+<!ENTITY chat.noConv.description       "Brug kontaktlisten i venstre panel for at starte en samtale.">
+<!ENTITY chat.noPreviousConv.description       "I øjeblikket har &brandShortName; ingen tidligere samtaler gemt for denne kontakt.">
+<!ENTITY chat.noAccount.title             "Du har endnu ikke opsat en chat-konto.">
+<!ENTITY chat.noAccount.description       "Lad &brandShortName; guide dig gennem opsætningen af din chat-konto.">
+<!ENTITY chat.accountWizard.button       "Start">
+<!ENTITY chat.noConnectedAccount.title             "Dine chat-konti er ikke tilsluttet.">
+<!ENTITY chat.noConnectedAccount.description       "Du kan tilslutte dem fra vinduet 'Chat-status':">
+<!ENTITY chat.showAccountManager.button       "Vis chat-status">
+
+<!ENTITY chat.participants             "Deltagere:">
+<!ENTITY chat.previousConversations    "Tidligere samtaler:">
+<!ENTITY chat.ongoingConversation      "Igangværende samtaler">
+
+<!ENTITY openConversationCmd.label     "Start en samtale">
+<!ENTITY openConversationCmd.accesskey "t">
+<!ENTITY closeConversationCmd.label    "Luk samtale">
+<!ENTITY closeConversationCmd.accesskey "L">
+<!ENTITY aliasCmd.label                "Omdøb">
+<!ENTITY aliasCmd.accesskey            "O">
+<!ENTITY deleteCmd.label               "Fjern kontakt">
+<!ENTITY deleteCmd.accesskey           "F">
+
+<!ENTITY openConversationButton.tooltip  "Start en samtale">
+<!ENTITY closeConversationButton.tooltip "Luk samtalen">
+
+<!ENTITY addBuddyButton.label          "Tilføj kontakt">
+<!ENTITY joinChatButton.label          "Deltag i chat">
+<!ENTITY chatAccountsButton.label      "Vis konti">
+
+<!ENTITY status.available          "Til stede">
+<!ENTITY status.unavailable        "Ikke til stede">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Åbn link…">
+<!ENTITY openLinkCmd.accesskey        "Å">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!ENTITY MsgSynchronize.label "メッセージのダウンロードと同期">
+<!ENTITY MsgSelect.label "オフラインで使用する項目">
+<!ENTITY MsgSyncDesc.label "オフラインで使用するように設定されているメールフォルダーとニュースグループについて、今すぐメッセージのダウンロードと同期をします。[選択] ボタンを押すとオフラインで使用する項目の設定を変更できます。">
+<!ENTITY MsgSyncDirections.label "次のメッセージのダウンロードと同期をする:">
+<!ENTITY syncTypeMail.label "メールメッセージ">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "ニュースグループメッセージ">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "未送信のメッセージを送信する">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "ダウンロードと同期が完了したらオフラインにする">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "選択...">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "オフラインで使用するメールフォルダーとニュースグループを選択してください。">
+<!ENTITY MsgSelectInd.label "ダウンロード">
+<!ENTITY MsgSelectItems.label "フォルダーとニュースグループ">

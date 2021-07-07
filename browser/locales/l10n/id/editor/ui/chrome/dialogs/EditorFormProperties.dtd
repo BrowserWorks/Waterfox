@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Properti Form">
+
+<!ENTITY Settings.label "Pengaturan">
+
+<!ENTITY FormName.label "Nama Form:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL Aksi:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Metode:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Pengodean:">
+<!ENTITY FormEncType.accesskey "P">
+<!ENTITY FormTarget.label "Bingkai Target:">
+<!ENTITY FormTarget.accesskey "B">
+
+<!ENTITY RemoveForm.label "Hapus Form">
+<!ENTITY RemoveForm.accesskey "H">

@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Pop-upvensters van deze website weigeren">
+<!ENTITY popupWindowRejectCmd.accesskey "u">
+<!ENTITY popupWindowAllowCmd.label      "Pop-upvensters van deze website toestaan">
+<!ENTITY popupWindowAllowCmd.accesskey  "u">
+<!ENTITY openLinkCmdInTab.label       "Koppeling openen in nieuw tabblad ">
+<!ENTITY openLinkCmdInTab.accesskey   "t">
+<!ENTITY openLinkCmd.label            "Koppeling openen in nieuw venster">
+<!ENTITY openLinkCmd.accesskey        "v">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Koppeling openen in nieuw privévenster">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "r">
+<!ENTITY openLinkInWindowCmd.label    "Openen">
+<!ENTITY openLinkInWindowCmd.accesskey "O">
+<!ENTITY openFrameCmd.label           "Deelvenster openen in nieuw venster">
+<!ENTITY openFrameCmd.accesskey       "v">
+<!ENTITY openFrameCmdInTab.label      "Deelvenster openen in nieuw tabblad">
+<!ENTITY openFrameCmdInTab.accesskey  "t">
+<!ENTITY keywordfield.label           "Sleutelwoord voor deze zoekopdracht toevoegen…">
+<!ENTITY keywordfield.accesskey       "S">
+<!ENTITY showOnlyThisFrameCmd.label     "Alleen dit deelvenster tonen">
+<!ENTITY showOnlyThisFrameCmd.accesskey "d">
+<!ENTITY goBackCmd.label              "Terug">
+<!ENTITY goBackCmd.accesskey          "T">
+<!ENTITY goForwardCmd.label           "Vooruit">
+<!ENTITY goForwardCmd.accesskey       "V">
+<!ENTITY goUpCmd.label                "Omhoog">
+<!ENTITY goUpCmd.accesskey            "O">
+<!ENTITY reloadCmd.label              "Vernieuwen">
+<!ENTITY reloadCmd.accesskey          "n">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Stoppen">
+<!ENTITY stopCmd.accesskey            "S">
+<!ENTITY reloadFrameCmd.label         "Deelvenster vernieuwen">
+<!ENTITY reloadFrameCmd.accesskey     "n">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Bron van selectie bekijken">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "MathML-bron bekijken">
+<!ENTITY viewPartialSourceCmd.accesskey "B">
+<!ENTITY viewPageSourceCmd.label      "Paginabron bekijken">
+<!ENTITY viewPageSourceCmd.accesskey  "b">
+<!ENTITY viewFrameSourceCmd.label     "Deelvensterbron bekijken">
+<!ENTITY viewFrameSourceCmd.accesskey "b">
+<!ENTITY viewPageInfoCmd.label        "Pagina-info bekijken">
+<!ENTITY viewPageInfoCmd.accesskey    "i">
+<!ENTITY viewFrameInfoCmd.label       "Deelvensterinfo bekijken">
+<!ENTITY viewFrameInfoCmd.accesskey   "i">
+<!ENTITY fitImageCmd.label            "Afbeelding aanpassen aan venster">
+<!ENTITY fitImageCmd.accesskey        "a">
+<!ENTITY reloadImageCmd.label         "Afbeelding vernieuwen">
+<!ENTITY reloadImageCmd.accesskey     "r">
+<!ENTITY viewImageCmd.label           "Afbeelding bekijken">
+<!ENTITY viewImageCmd.accesskey       "f">
+<!ENTITY viewImageInfoCmd.label       "Afbeeldingsinfo bekijken">
+<!ENTITY viewImageInfoCmd.accesskey   "i">
+<!ENTITY viewVideoCmd.label           "Video bekijken">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Achtergrondafbeelding bekijken">
+<!ENTITY viewBGImageCmd.accesskey     "h">
+<!ENTITY setDesktopBackgroundCmd.label     "Als bureaubladachtergrond instellen…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "c">
+<!ENTITY bookmarkPageCmd.label        "Bladwijzer voor deze pagina maken…">
+<!ENTITY bookmarkPageCmd.accesskey    "a">
+<!ENTITY bookmarkLinkCmd.label        "Bladwijzer voor deze koppeling maken…">
+<!ENTITY bookmarkLinkCmd.accesskey    "l">
+<!ENTITY bookmarkFrameCmd.label       "Bladwijzer voor dit deelvenster maken…">
+<!ENTITY bookmarkFrameCmd.accesskey   "m">
+<!ENTITY savePageAsCmd.label          "Pagina opslaan als…">
+<!ENTITY savePageCmd.label            "Pagina opslaan">
+<!ENTITY savePageCmd.accesskey        "P">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Deelvenster opslaan als…">
+<!ENTITY saveFrameCmd.label           "Deelvenster opslaan">
+<!ENTITY saveFrameCmd.accesskey       "r">
+<!ENTITY printFrameCmd.label          "Deelvenster afdrukken…">
+<!ENTITY printFrameCmd.accesskey      "a">
+<!ENTITY saveLinkAsCmd.label          "Koppeling opslaan als…">
+<!ENTITY saveLinkCmd.label            "Koppeling opslaan">
+<!ENTITY saveLinkCmd.accesskey        "l">
+<!ENTITY saveImageAsCmd.label         "Afbeelding opslaan als…">
+<!ENTITY saveImageCmd.label           "Afbeelding opslaan">
+<!ENTITY saveImageCmd.accesskey       "n">
+<!ENTITY saveVideoCmd.label           "Video opslaan als…">
+<!ENTITY saveVideoCmd.accesskey       "n">
+<!ENTITY saveAudioCmd.label           "Audio opslaan als…">
+<!ENTITY saveAudioCmd.accesskey       "n">
+<!ENTITY copyLinkCmd.label            "Koppelingslocatie kopiëren">
+<!ENTITY copyLinkCmd.accesskey        "p">
+<!ENTITY copyImageCmd.label           "Afbeelding kopiëren">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyVideoURLCmd.label        "Videolocatie kopiëren">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Audiolocatie kopiëren">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY metadataCmd.label            "Eigenschappen">
+<!ENTITY metadataCmd.accesskey        "E">
+<!ENTITY copyEmailCmd.label           "E-mailadres kopiëren">
+<!ENTITY copyEmailCmd.accesskey       "m">
+<!ENTITY thisFrameMenu.label          "Dit deelvenster">
+<!ENTITY thisFrameMenu.accesskey      "D">
+<!ENTITY mediaPlay.label              "Afspelen">
+<!ENTITY mediaPlay.accesskey          "A">
+<!ENTITY mediaPause.label             "Pauzeren">
+<!ENTITY mediaPause.accesskey         "a">
+<!ENTITY mediaMute.label              "Dempen">
+<!ENTITY mediaMute.accesskey          "D">
+<!ENTITY mediaUnmute.label            "Dempen opheffen">
+<!ENTITY mediaUnmute.accesskey        "D">
+<!ENTITY mediaPlaybackRate.label        "Afspeelsnelheid">
+<!ENTITY mediaPlaybackRate.accesskey    "s">
+<!ENTITY mediaPlaybackRate050.label     "Slow Motion (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "S">
+<!ENTITY mediaPlaybackRate100.label     "Normale snelheid">
+<!ENTITY mediaPlaybackRate100.accesskey "N">
+<!ENTITY mediaPlaybackRate125.label     "Hoge snelheid (1¼×)">
+<!ENTITY mediaPlaybackRate125.accesskey "H">
+<!ENTITY mediaPlaybackRate150.label     "Hogere snelheid (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "r">
+<!ENTITY mediaPlaybackRate200.label     "Dubbele snelheid">
+<!ENTITY mediaPlaybackRate200.accesskey "D">
+<!ENTITY mediaLoop.label              "Herhalen">
+<!ENTITY mediaLoop.accesskey          "H">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Bedieningsknoppen tonen">
+<!ENTITY mediaShowControls.accesskey  "B">
+<!ENTITY mediaHideControls.label      "Bedieningsknoppen verbergen">
+<!ENTITY mediaHideControls.accesskey  "B">
+<!ENTITY videoFullScreen.label        "Volledig scherm">
+<!ENTITY videoFullScreen.accesskey    "V">
+<!ENTITY videoSaveImage.label         "Momentopname opslaan als…">
+<!ENTITY videoSaveImage.accesskey     "M">
+<!ENTITY videoShowStats.label         "Statistieken tonen">
+<!ENTITY videoShowStats.accesskey     "t">
+<!ENTITY videoHideStats.label         "Statistieken verbergen">
+<!ENTITY videoHideStats.accesskey     "t">
+<!ENTITY search.accesskey             "W">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Paginarichting omkeren">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "a">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Tekstrichting omkeren">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "s">
+<!ENTITY spellAddToDictionary.label     "Toevoegen aan woordenboek">
+<!ENTITY spellAddToDictionary.accesskey "T">
+<!ENTITY spellUndoAddToDictionary.label      "Toevoegen aan woordenboek ongedaan maken">
+<!ENTITY spellUndoAddToDictionary.accesskey  "r">
+<!ENTITY spellIgnoreWord.label          "Woord negeren">
+<!ENTITY spellIgnoreWord.accesskey      "W">
+<!ENTITY spellCheckEnable.label         "Spelling controleren">
+<!ENTITY spellCheckEnable.accesskey     "S">
+<!ENTITY spellNoSuggestions.label       "(Geen spellingsuggesties)">
+<!ENTITY spellDictionaries.label        "Talen">
+<!ENTITY spellDictionaries.accesskey    "l">
+<!ENTITY spellAddDictionaries.label     "Meer woordenboeken downloaden">
+<!ENTITY spellAddDictionaries.accesskey "M">
+
+<!ENTITY fillLoginMenu.label          "Aanmelding invullen">
+<!ENTITY fillLoginMenu.accesskey      "u">
+<!ENTITY fillPasswordMenu.label       "Wachtwoord invullen">
+<!ENTITY fillPasswordMenu.accesskey   "u">
+<!ENTITY fillUsernameMenu.label       "Gebruikersnaam invullen">
+<!ENTITY fillUsernameMenu.accesskey   "u">
+<!ENTITY noLoginSuggestions.label     "(Geen aanmeldingssuggesties)">
+<!ENTITY viewSavedLogins.label        "Opgeslagen aanmeldingen weergeven">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "Element inspecteren">
+<!ENTITY devtoolsInspect.accesskey      "m">

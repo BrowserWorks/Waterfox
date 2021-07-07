@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messengerCmd.label "Posta e gruppi di discussione">
+<!ENTITY messengerCmd.accesskey "P">
+<!ENTITY messengerCmd.commandkey "2">
+<!ENTITY addressBookCmd.label "Rubrica">
+<!ENTITY addressBookCmd.accesskey "R">
+<!ENTITY addressBookCmd.commandkey "5">
+<!ENTITY taskMessenger.tooltip "Posta e gruppi di discussione">
+<!ENTITY taskAddressBook.tooltip "Rubrica">
+<!ENTITY searchAddressesCmd.label "Cerca indirizzi…">
+<!ENTITY searchAddressesCmd.accesskey "i">
+<!ENTITY searchMailCmd.label "Cerca messaggi…">
+<!ENTITY searchMailCmd.accesskey "m">
+<!ENTITY searchMailCmd.key "f">

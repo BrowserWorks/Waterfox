@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Link-Verhalten">
+<!ENTITY newWindow.label "Verhalten beim Öffnen von Links">
+<!ENTITY newWindowDescription.label "Links, die neue Fenster öffnen sollten, öffnen in">
+<!ENTITY newWindowRestriction.label "Wenn durch Skripte neue Fenster geöffnet werden sollen:">
+<!ENTITY external.label "Links aus anderen Anwendungen">
+<!ENTITY externalDescription.label "Links aus anderen Anwendungen öffnen in">
+
+<!ENTITY openCurrent.label "Aktuellem Tab/Fenster">
+<!ENTITY newWindowGroupCurrent.accesskey "A">
+<!ENTITY externalGroupCurrent.accesskey "k">
+
+<!ENTITY openTab.label "Neuem Tab im aktuellen Fenster">
+<!ENTITY newWindowGroupTab.accesskey "N">
+<!ENTITY externalGroupTab.accesskey "T">
+
+<!ENTITY openWindow.label "Neuem Fenster">
+<!ENTITY newWindowGroupWindow.accesskey "F">
+<!ENTITY externalGroupWindow.accesskey "e">
+
+<!ENTITY divertAll.label "Fenster immer in Tabs umlenken">
+<!ENTITY divertAll.accesskey "F">
+<!ENTITY divertNoFeatures.label "Benutzerdefinierte Fenster nicht in Tabs umlenken">
+<!ENTITY divertNoFeatures.accesskey "B">
+<!ENTITY dontDivert.label "Immer neue Fenster öffnen">
+<!ENTITY dontDivert.accesskey "m">

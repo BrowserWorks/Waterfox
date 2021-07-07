@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "บอกรับ">
+<!ENTITY subscribeButton.label        "บอกรับ">
+<!ENTITY subscribeButton.accesskey    "บ">
+<!ENTITY unsubscribeButton.label      "เลิกบอกรับ">
+<!ENTITY unsubscribeButton.accesskey  "ล">
+<!ENTITY newGroupsTab.label           "กลุ่มใหม่">
+<!ENTITY newGroupsTab.accesskey       "ก">
+<!ENTITY refreshButton.label          "เรียกใหม่">
+<!ENTITY refreshButton.accesskey      "ร">
+<!ENTITY stopButton.label             "หยุด">
+<!ENTITY stopButton.accesskey         "ห">
+<!ENTITY server.label                 "บัญชี:">
+<!ENTITY server.accesskey             "ช">
+<!ENTITY subscribedHeader.label       "บอกรับ">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "แสดงรายการที่มี:">
+<!ENTITY namefield.accesskey          "ส">

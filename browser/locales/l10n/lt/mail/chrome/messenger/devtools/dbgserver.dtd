@@ -1,0 +1,4 @@
+<!ENTITY options.title "Programuotojų priemonių nuostatos">
+<!ENTITY options.status.label "Būsena:">
+<!ENTITY options.port.label "Prievadas:">
+<!ENTITY options.forcelocal.label "Leisti prisijungimus iš kitų kompiuterių">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "맞춤법 검사">
+
+<!ENTITY misspelledWord.label "맞춤법이 틀린 단어:">
+<!ENTITY wordEditField.label "바꿀 단어:">
+<!ENTITY wordEditField.accessKey "w">
+<!ENTITY checkwordButton.label "단어 검사">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "추천 단어">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "무시">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "모두 무시">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "바꾸기">
+<!ENTITY replaceButton.accessKey "R">
+<!ENTITY replaceAllButton.label "모두 바꾸기">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "중지">
+<!ENTITY stopButton.accessKey "t">
+<!ENTITY userDictionary.label "개인 사전:">
+<!ENTITY moreDictionaries.label "사전 다운로드…">
+<!ENTITY addToUserDictionaryButton.label "단어 추가">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "편집…">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton2.label "다시 검사">
+<!ENTITY recheckButton2.accessKey "P">
+<!ENTITY closeButton.label "닫기">
+<!ENTITY closeButton.accessKey "C">
+<!ENTITY sendButton.label "보내기">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "언어:">
+<!ENTITY languagePopup.accessKey "L">

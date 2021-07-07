@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Courrier et Groupes de discussion">
+<!ENTITY generalSettings.caption          "Paramètres généraux">
+<!ENTITY confirmMove.label                "Demander une confirmation lors du déplacement d’un dossier dans la corbeille.">
+<!ENTITY confirmMove.accesskey            "D">
+<!ENTITY preserveThreading.label          "Préserver les discussions lors du tri des messages">
+<!ENTITY preserveThreading.accesskey      "P">
+<!ENTITY loadInBackground.label           "Basculer vers les nouveaux onglets à leur ouverture">
+<!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailBiffOnNewWindow.label        "Ne vérifier que les nouveaux courriels lors de l’ouverture de Courrier et Groupes de discussion">
+<!ENTITY mailBiffOnNewWindow.accesskey    "N">
+
+<!ENTITY defaultMailSettings.description  "Utiliser &brandShortName; Courrier et Groupes comme application par défaut pour :">
+<!ENTITY setDefaultMail.label             "le courrier">
+<!ENTITY setDefaultMail.accesskey         "e">
+<!ENTITY setDefaultNews.label             "les groupes">
+<!ENTITY setDefaultNews.accesskey         "s">
+<!ENTITY setDefaultFeed.label             "les flux">
+<!ENTITY setDefaultFeed.accesskey         "x">
+
+<!ENTITY useInternalSettings.description  "Utiliser le courrier et les groupes de &brandShortName; lorsque ces liens sont ouverts via le navigateur :">
+<!ENTITY useInternalMail.label            "Courrier (mailto:)">
+<!ENTITY useInternalMail.accesskey        "o">
+<!ENTITY useInternalNews.label            "Groupes (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "g">
+
+<!ENTITY messengerStartPage.caption       "Page de démarrage du Courrier">
+<!ENTITY enableStartPage.label            "Afficher la page de démarrage au lancement du Courrier">
+<!ENTITY enableStartPage.accesskey        "c">
+<!ENTITY location.label                   "Adresse :">
+<!ENTITY location.accesskey               "e">
+<!ENTITY useDefault.label                 "Réinitialiser">
+<!ENTITY useDefault.accesskey             "R">
+<!ENTITY rememberLastMsg.label            "Se souvenir du dernier message sélectionné">
+<!ENTITY rememberLastMsg.accesskey        "S">

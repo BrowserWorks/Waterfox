@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY intro2.label "È stato scelto di aprire:">
+<!ENTITY from.label "da:">
+<!ENTITY actionQuestion.label "Che cosa deve fare &brandShortName; con questo file?">
+
+<!ENTITY openWith.label "Apri con">
+<!ENTITY openWith.accesskey "A">
+<!ENTITY other.label "Altro…">
+
+<!ENTITY saveFile.label "Salva file">
+<!ENTITY saveFile.accesskey "s">
+
+<!ENTITY rememberChoice.label "D’ora in poi esegui questa azione per tutti i file di questo tipo.">
+<!ENTITY rememberChoice.accesskey "f">
+
+<!ENTITY whichIs.label "tipo:">
+
+<!ENTITY chooseHandlerMac.label "Scegli…">
+<!ENTITY chooseHandlerMac.accesskey "c">
+<!ENTITY chooseHandler.label "Sfoglia…">
+<!ENTITY chooseHandler.accesskey "f">
+
+<!ENTITY unknownPromptText.label "Salvare questo file?">

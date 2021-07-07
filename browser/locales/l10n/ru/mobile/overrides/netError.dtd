@@ -1,0 +1,204 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Проблема при загрузке страницы">
+<!ENTITY retry.label "Попробовать снова">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Попытка соединения не удалась">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Обращение к данному адресу заблокировано">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Сервер не найден">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+   <li>Проверьте, не допущена ли ошибка при наборе адреса, например,
+        <strong>ww</strong>.example.com вместо
+        <strong>www</strong>.example.com</li>
+        <div id='searchbox'>
+          <input id='searchtext' type='search'></input>
+          <button id='searchbutton'>Поиск</button>
+     </div>
+   <li>Если вы не можете загрузить ни одну страницу – проверьте соединение вашего устройства с мобильной или Wi-Fi сетью.
+     <button id='wifi'>Включить Wi-Fi</button>
+   </li>
+</ul> ">
+
+<!ENTITY fileNotFound.title "Файл не найден">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Проверьте правильность введённого имени файла, соответствие регистра и отсутствие других ошибок в имени файла.</li>
+  <li>Проверьте, не был ли файл переименован, удален или перемещён.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "В доступе к файлу отказано">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Возможно, что он был удалён или перемещён, или разрешения на файл не дают получить к нему доступ.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Ой.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; не может загрузить эту страницу по неопределённой причине.</p>">
+
+<!ENTITY malformedURI.title "Формат адреса неверен">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Адреса веб-сайтов обычно записываются в формате
+     <strong>http://www.example.com/</strong></li>
+     <div id='searchbox'>
+       <input id='searchtext' type='search'></input>
+       <button id='searchbutton'>Поиск</button>
+     </div>
+   <li>Убедитесь, что вы используете в качестве разделителя прямую косую черту (т.е.
+     <strong>/</strong>).</li>
+</ul> ">
+
+<!ENTITY netInterrupt.title "Соединение было прервано">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Документ просрочен">
+<!ENTITY notCached.longDesc "<p>Запрошенный документ недоступен в кэше &brandShortName;.</p><ul><li>В целях безопасности &brandShortName; не производит автоматический повторный запрос важных документов.</li><li>Нажмите «Попробовать снова», чтобы повторно запросить документ с веб-сайта.</li></ul>">
+
+<!ENTITY netOffline.title "Автономный режим">
+
+<!ENTITY contentEncodingError.title "Ошибка в типе содержимого">
+<!ENTITY contentEncodingError.longDesc "
+
+<ul>
+   <li>Пожалуйста, свяжитесь с владельцами веб-сайта и проинформируйте их об этой проблеме.</li>
+ </ul> ">
+
+<!ENTITY unsafeContentType.title "Небезопасный тип файла">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+   <li>Пожалуйста, свяжитесь с владельцами веб-сайта и проинформируйте их об этой проблеме.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Соединение было сброшено">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Время ожидания соединения истекло">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Неизвестный тип адреса">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Для открытия данного адреса вам, возможно, понадобится установить стороннее программное обеспечение.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Прокси-сервер отказывается принимать соединения">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Проверьте настройки прокси-сервера и убедитесь, что они верны.</li>
+  <li>Свяжитесь с вашим системным администратором и убедитесь, что прокси-сервер работает.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Не удалось найти прокси-сервер">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Проверьте правильность установленных настроек прокси-сервера.</li>
+  <li>Убедитесь, что ваше устройство соединено с мобильной или Wi-Fi сетью.
+    <button id='wifi'>Включить Wi-Fi</button>
+  </li>
+</ul>">
+
+<!ENTITY redirectLoop.title "Циклическое перенаправление на странице">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Эта проблема может возникать при отключении или запрещении принятия кук.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Неизвестный/неопознанный ответ сервера">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Убедитесь, что в вашей системе установлен «Менеджер личной защиты (PSM)».</li>
+  <li>Возможно, это произошло из-за нестандартной конфигурации сервера.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Ошибка при установлении защищённого соединения">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Страница, которую вы пытаетесь просмотреть, не может быть отображена, так как достоверность полученных данных не может быть проверена.</li>
+  <li>Пожалуйста, свяжитесь с владельцами веб-сайта и проинформируйте их об этой проблеме.</li>
+</ul>">
+
+<!ENTITY nssBadCert.title "Ошибка при установлении защищённого соединения">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Это может быть вызвано неправильной настройкой сервера или же кто-то пытается подменить нужный вам сервер другим.</li>
+  <li>Если в прошлом вы успешно соединялись с этим сервером, то, возможно, эта ошибка является временной. Попробуйте зайти позже.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Возможно, сайт временно недоступен или перегружен запросами. Подождите некоторое время и попробуйте снова.</li>
+  <li>Если вы не можете загрузить ни одну страницу – проверьте соединение вашего устройства с мобильной или Wi-Fi сетью.
+    <button id='wifi'>Включить Wi-Fi</button>
+  </li>
+</ul>">
+
+<!ENTITY cspBlocked.title "Заблокировано политикой защиты содержимого">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; заблокировал данный способ загрузки этой страницы, так как страница имеет политику защиты содержимого, которая это запрещает.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Ошибка искажения содержимого">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Страница, которую вы пытаетесь просмотреть, не может быть показана, так как была обнаружена ошибка при передаче данных.</p><ul><li>Пожалуйста, свяжитесь с владельцами веб-сайта и проинформируйте их об этой проблеме.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Или же вы можете добавить исключение…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Уходим отсюда!">
+<!ENTITY securityOverride.exceptionButtonLabel "Добавить исключение…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Вам не следует добавлять исключение, если вы используете соединение с Интернетом, которому не полностью доверяете, или если вы обычно не видите предупреждения при соединении с этим сервером.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button> ">
+
+<!ENTITY remoteXUL.title "Удалённый XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Пожалуйста, свяжитесь с владельцами веб-сайта, чтобы проинформировать их об этой проблеме.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Установка защищённого соединения не удалась">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Дополнительная информация: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Ваше соединение не защищено">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Дополнительная информация: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Ваше соединение не защищено">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> использует защитную технологию, которая является устаревшей и уязвимой для атаки. Злоумышленник может легко выявить информацию, которая, как вы думали, находится в безопасности. Для того, чтобы вы смогли посетить веб-сайт, администратор веб-сайта должен сначала исправить его сервер.</p><p>Код ошибки: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Ошибка сетевого протокола">
+<!ENTITY networkProtocolError.longDesc "<p>Страница, которую вы пытаетесь просмотреть, не может быть показана, так как была обнаружена ошибка в сетевом протоколе.</p><ul><li>Пожалуйста, свяжитесь с владельцами веб-сайта и проинформируйте их об этой проблеме.</li></ul>">

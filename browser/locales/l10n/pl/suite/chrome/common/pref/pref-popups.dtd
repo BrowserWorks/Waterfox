@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title "Wyskakujące okna">
+
+<!ENTITY pref.popups.caption "Wyskakujące okna">
+
+<!ENTITY popupBlock.label "Blokuj niepożądane wyskakujące okna">
+<!ENTITY popupBlock.accesskey "B">
+
+<!ENTITY viewPermissions.label "Zarządzaj uprawnieniami">
+<!ENTITY viewPermissions.accesskey "Z">
+
+<!ENTITY whenBlock.description "Wykonaj poniższe czynności, gdy zostanie zablokowane wyskakujące okno:">
+<!ENTITY playSound.label "Odtwórz dźwięk:">
+<!ENTITY playSound.accesskey "t">
+<!ENTITY systemSound.label "Dźwięk systemowy">
+<!ENTITY systemSound.accesskey "s">
+<!ENTITY customSound.label "Plik dźwiękowy użytkownika">
+<!ENTITY customSound.accesskey "d">
+
+<!ENTITY selectSound.label "Przeglądaj…">
+<!ENTITY selectSound.accesskey "e">
+<!ENTITY playSoundButton.label "Odtwórz">
+<!ENTITY playSoundButton.accesskey "O">
+
+<!ENTITY displayIcon.label "Wyświetl ikonę na pasku stanu przeglądarki">
+<!ENTITY displayIcon.accesskey "y">
+
+<!ENTITY displayNotification.label "Wyświetlaj pasek powiadomień powyżej wyświetlanej strony">
+<!ENTITY displayNotification.accesskey "p">
+
+<!ENTITY popupNote.description "Uwaga: Blokowanie wszystkich wyskakujących okien może zakłócić pracę niektórych witryn (np. okna logowania w bankach i sklepach). Naciśnij przycisk Pomoc, aby dowiedzieć się, jak pozwolić niektórym witrynom na wyświetlanie wyskakujących okien.">
+

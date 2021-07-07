@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Настройка «&sidebarName;»">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Разделы в «&sidebarName;»:">
+<!ENTITY sidebar.customize.current.accesskey    "з">
+
+<!ENTITY sidebar.customize.title                "Настроить боковую панель">
+<!ENTITY sidebar.customize.current2.label       "Разделы на боковой панели:">
+<!ENTITY sidebar.customize.current2.accesskey   "ы">
+<!ENTITY sidebar.customize.customize.label      "Настроить раздел…">
+<!ENTITY sidebar.customize.customize.accesskey  "Н">
+<!ENTITY sidebar.customize.remove.label         "Удалить">
+<!ENTITY sidebar.customize.remove.accesskey     "У">
+<!ENTITY sidebar.customize.additional.label     "Доступные разделы:">
+<!ENTITY sidebar.customize.additional.accesskey "р">
+<!ENTITY sidebar.customize.add.label            "Добавить">
+<!ENTITY sidebar.customize.add.accesskey        "Д">
+<!ENTITY sidebar.customize.preview.label        "Просмотр…">
+<!ENTITY sidebar.customize.preview.accesskey    "П">
+<!ENTITY sidebar.customize.up.label             "Вверх">
+<!ENTITY sidebar.customize.up.accesskey         "в">
+<!ENTITY sidebar.customize.down.label           "Вниз">
+<!ENTITY sidebar.customize.down.accesskey       "н">
+<!ENTITY sidebar.more.label                     "Найти другие разделы…">
+<!ENTITY sidebar.more.accesskey                 "д">

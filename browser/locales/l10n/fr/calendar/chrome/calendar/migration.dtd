@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName; : Importation des données">
+<!ENTITY migration.welcome "Bienvenue">
+<!ENTITY migration.importing "Importation">
+<!ENTITY migration.list.description "&brandShortName; peut importer des données provenant de plusieurs applications d’agenda. Des données provenant des applications suivantes ont été découvertes sur votre ordinateur. Veuillez sélectionner celles dont vous voulez importer les données.">
+<!ENTITY migration.progress.description "Importation des données sélectionnées en cours">

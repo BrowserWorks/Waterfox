@@ -1,0 +1,51 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ *  Modificare questo file e copiarlo come userChrome.css nel proprio
+ *  profilo-directory/chrome/
+ */
+
+/*
+ *  Questo file può essere utilizzato per personalizzare l'aspetto dell'interfaccia di Mozilla
+ *  Si suggerisce di utilizzare !important sulle regole in cui si desidera
+ *  sovrascrivere le impostazioni predefinite.
+ */
+
+/*
+ * Non rimuovere la riga @namespace -- E' necessaria per il corretto funzionamento
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* imposta il  namespace predefinito per XUL */
+
+
+/*
+ * Alcuni miglioramenti possibili per l'accessibilità:
+ */
+
+/*
+ *  Imposta le dimensioni predefinite dei caratteri a 20 pt:
+ *
+ * * {
+ *   font-size: 20pt !important
+ * }
+ */
+/*
+ * Imposta in particolare alcune voci di menu a 15 pt invece della dimensione predefinita:
+ *
+ * menupopup > * {
+ *   font-size: 15pt !important
+ * }
+ */
+/*
+ * Imposta un carattere a spaziatura fissa per la barra degli indirizzi (URL)
+ *
+ * #urlbar {
+ *    font-family: monospace !important;
+ * }
+ */
+
+/*
+ * Per altri esempi consultare http://www.mozilla.org/unix/customizing.html
+ */
+ 

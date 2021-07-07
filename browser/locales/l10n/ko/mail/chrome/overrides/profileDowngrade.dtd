@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "&brandProductName; 이전 버전을 사용 중입니다.">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "새 버전의 &brandProductName;는 이전 버전과 호환되지 않는 프로필 형식을 사용할 수 있습니다. 이 프로필을 새 버전에서만 사용하거나 이 &brandShortName; 설치본과 호환되는 새 프로필을 생성하세요. 새 프로필을 생성하려면 계정과 달력, 부가 기능을 다시 설정해야 합니다.">
+
+<!ENTITY window.moreinfo "자세한 정보…">
+<!ENTITY window.create "새 프로필 생성">
+<!ENTITY window.quit-win "종료">
+<!ENTITY window.quit-nonwin "종료">

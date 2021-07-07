@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "นำเข้าสมุดรายชื่อ">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "ข้อมูลที่นำเข้าสำหรับอัดบันทึก: ">
+<!ENTITY fieldMapImport.next.label "ถัดไป">
+<!ENTITY fieldMapImport.next.accesskey "ถ">
+<!ENTITY fieldMapImport.previous.label "ก่อนหน้า">
+<!ENTITY fieldMapImport.previous.accesskey "ก">
+<!ENTITY fieldMapImport.text "กดปุ่ม ย้ายขึ้น และ ย้ายลง เพื่อจับคู่ช่องกรอกในสมุดรายชื่อที่อยู่ด้านซ้ายกับข้อมูลที่ถูกต้องสำหรับนำเข้าที่อยู่ด้านขวา ยกเลิกการกาเครื่องหมายรายการที่คุณไม่ต้องการนำเข้า">
+<!ENTITY fieldMapImport.up.label "ย้ายขึ้น">
+<!ENTITY fieldMapImport.up.accesskey "ย">
+<!ENTITY fieldMapImport.down.label "ย้ายลง">
+<!ENTITY fieldMapImport.down.accesskey "ล">
+<!ENTITY fieldMapImport.fieldListTitle "ช่องกรอกในสมุดรายชื่อ">
+<!ENTITY fieldMapImport.dataTitle "อัดบันทึกข้อมูลที่จะนำเข้า">
+<!ENTITY fieldMapImport.skipFirstRecord.label "เรกคอร์ดแรกประกอบด้วยชื่อช่องกรอก">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "ร">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Informacje o filtrze niechcianej poczty">
+<!ENTITY window.width "500">
+<!ENTITY info1a.label "Kurier Poczty automatycznie rozpoznaje przychodzące wiadomości, które najprawdopodobniej są niepożądane (takie jak niezamówione reklamy). Każda wiadomość, która zostanie rozpoznana jako niechciana, zostanie oznaczona za pomocą ikony niechcianej poczty">
+<!ENTITY info1b.label "">
+<!ENTITY info2.label "Po pierwszym uruchomieniu filtru niechcianej poczty należy rozpocząć sesję treningową, wskazując za pomocą przycisku Niechciana poczta na pasku narzędzi wiadomości, które są niechciane. Wszystkie inne wiadomości należy oznaczać jako pożądane. W początkowym okresie nauki istotne jest poprawianie błędnie rozpoznanych wiadomości.">
+<!ENTITY info3.label "Po zakończeniu procesu treningu programu, można włączyć automatyczne przenoszenie wiadomości rozpoznanych jako niechciane do folderu Niechciane lub dowolnie innego folderu.">
+<!ENTITY info4.label "W celu uzyskania bliższych informacji należy zapoznać się z Pomocą.">

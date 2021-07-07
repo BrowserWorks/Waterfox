@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Brukalo nuostatos">
+<!ENTITY trainingDescription.label "Įjungus adaptyvųjį brukalo filtrą, programą „&brandShortName;“ reikės apmokyti, jai parodant, kurie laiškai laikomi brukalu, o kurie – ne. Tam naudokite mygtuką „Brukalas“ priemonių juostoje. Šitaip apmokius programą, brukalą ji mokės atskirti pati.">
+<!ENTITY level.label "Įjungti šios paskyros adaptyvųjį brukalo filtrą">
+<!ENTITY level.accesskey "u">
+
+<!ENTITY move.label "Naują brukalą perkelti į:">
+<!ENTITY move.accesskey "p">
+<!ENTITY junkFolderOn.label "aplanką „Brukalas“:">
+<!ENTITY junkFolderOn.accesskey "B">
+<!ENTITY otherFolder.label "kitą aplanką:">
+<!ENTITY otherFolder.accesskey "k">
+<!ENTITY purge1.label "Automatiškai šalinti brukalą praėjus">
+<!ENTITY purge1.accesskey "A">
+<!ENTITY purge2.label "d.">
+
+<!ENTITY whitelistHeader.label "Laiško nelaikyti brukalu, jei jo siuntėjas įrašytas į šią adresų knygą: ">
+<!ENTITY whitelistHeader.accesskey "n">
+
+<!ENTITY ispHeadersWarning.label "Įgalinus šią nuostatą, programa „&brandShortName;“ automatiškai laikys brukalu laiškus, kuriuos atitinkamai pažymėjo šis trečiųjų šalių produktas.">
+<!ENTITY ispHeaders.label "Pasitikėti laiškų brukalo antraštėmis, kurias priskyrė: ">
+<!ENTITY ispHeaders.accesskey "t">
+
+<!ENTITY junkClassification.label "Atranka">
+<!ENTITY junkActions.label "Paskirtis ir saugojimas">
+
+<!ENTITY globalJunkPrefs.label "Globaliosios brukalo nuostatos…">
+<!ENTITY globalJunkPrefs.accesskey "G">

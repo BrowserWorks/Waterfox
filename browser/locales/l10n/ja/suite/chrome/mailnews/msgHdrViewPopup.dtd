@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "アドレス帳に追加...">
+<!ENTITY AddToAddressBook.accesskey        "B">
+<!ENTITY EditContact.label                 "連絡先を編集...">
+<!ENTITY EditContact.accesskey             "E">
+<!ENTITY ViewContact.label                 "連絡先を表示">
+<!ENTITY ViewContact.accesskey             "V">
+<!ENTITY SendMailTo.label                  "メッセージを作成...">
+<!ENTITY SendMailTo.accesskey              "s">
+<!ENTITY CopyEmailAddress.label            "メールアドレスをコピー">
+<!ENTITY CopyEmailAddress.accesskey        "C">
+<!ENTITY CopyNameAndEmailAddress.label     "名前とメールアドレスをコピー">
+<!ENTITY CopyNameAndEmailAddress.accesskey "N">
+<!ENTITY CreateFilterFrom.label            "フィルターを作成...">
+<!ENTITY CreateFilterFrom.accesskey        "F">
+<!ENTITY openInBrowser.label               "ブラウザーで開く">
+<!ENTITY openInBrowser.accesskey           "O">
+<!ENTITY bookmarkLinkCmd.label             "リンクをブックマークに追加...">
+<!ENTITY bookmarkLinkCmd.accesskey         "B">
+<!ENTITY copyLinkCmd.label                 "リンクの URL をコピー">
+<!ENTITY copyLinkCmd.accesskey             "C">
+<!ENTITY CopyMessageId.label               "メッセージ ID をコピー">
+<!ENTITY CopyMessageId.accesskey           "C">
+<!ENTITY OpenMessageForMsgId.label         "次の ID のメッセージを開く">
+<!ENTITY OpenMessageForMsgId.accesskey     "O">
+<!ENTITY OpenBrowserWithMsgId.label        "次のメッセージ ID をブラウザーで開く">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "B">

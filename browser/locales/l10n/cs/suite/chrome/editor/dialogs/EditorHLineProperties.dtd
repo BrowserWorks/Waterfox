@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vlastnosti vodorovné linky">
+
+<!ENTITY dimensionsBox.label "Rozměry">
+<!ENTITY heightEditField.label "Výška:">
+<!ENTITY heightEditField.accessKey "V">
+<!ENTITY widthEditField.label "Šířka:">
+<!ENTITY widthEditField.accessKey "k">
+<!ENTITY pixelsPopup.value "bodů">
+<!ENTITY alignmentBox.label "Zarovnání">
+<!ENTITY leftRadio.label "Doleva">
+<!ENTITY leftRadio.accessKey "l">
+<!ENTITY centerRadio.label "Na střed">
+<!ENTITY centerRadio.accessKey "s">
+<!ENTITY rightRadio.label "Doprava">
+<!ENTITY rightRadio.accessKey "r">
+
+<!ENTITY threeDShading.label "Stínování">
+<!ENTITY threeDShading.accessKey "t">
+<!ENTITY saveSettings.label "Uložit jako výchozí">
+<!ENTITY saveSettings.accessKey "U">
+<!ENTITY saveSettings.tooltip "Uloží toto nastavení pro nově vložené vodorovné linky">

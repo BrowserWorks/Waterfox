@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Rédaction du message">
+
+<!ENTITY fromAddr.label "Expéditeur :">
+<!ENTITY fromAddr.accesskey "x">
+<!ENTITY toAddr.label "Pour :">
+<!ENTITY ccAddr.label "Copie à :">
+<!ENTITY bccAddr.label "Copie cachée à :">
+<!ENTITY replyAddr.label "Répondre à :">
+<!ENTITY newsgroupsAddr.label "Groupe :">
+<!ENTITY followupAddr.label "Faire suivre à :">
+<!ENTITY subject.label "Sujet :">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachments.label "Pièces jointes :">
+<!ENTITY attachments.accesskey "j">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Enregistrer">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "Enregistrer comme">
+<!ENTITY saveAsCmd.accesskey "c">
+<!ENTITY saveAsFileCmd.label "Fichier…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Brouillon">
+<!ENTITY saveAsDraftCmd.accesskey "B">
+<!ENTITY saveAsTemplateCmd.label "Modèle">
+<!ENTITY saveAsTemplateCmd.accesskey "o">
+<!ENTITY attachMenu.label "Joindre">
+<!ENTITY attachMenu.accesskey "J">
+<!ENTITY attachFileCmd.label "Fichier(s)…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "Page web…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Carte de visite (vCard)">
+<!ENTITY attachVCardCmd.accesskey "C">
+<!ENTITY sendNowCmd.label "Envoyer">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "v">
+<!ENTITY sendLaterCmd.label "Envoyer plus tard">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "l">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Reformater">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "o">
+<!ENTITY accountManagerCmd.label "Paramètres des comptes…">
+<!ENTITY accountManagerCmd.accesskey "m">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Barre d’outils courrier">
+<!ENTITY showComposeToolbarCmd.accesskey "t">
+<!ENTITY showFormatToolbarCmd.label "Barre d’outils de formatage">
+<!ENTITY showFormatToolbarCmd.accesskey "f">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Options">
+<!ENTITY optionsMenu.accesskey "p">
+
+<!ENTITY quoteCmd.label "Citer le message">
+<!ENTITY quoteCmd.accesskey "m">
+<!ENTITY selectAddressCmd.label "Sélectionner des adresses…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "S">
+
+<!ENTITY priorityMenu.label "Priorité">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY lowestPriorityCmd.label "Minimale">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "Basse">
+<!ENTITY lowPriorityCmd.accesskey "B">
+<!ENTITY normalPriorityCmd.label "Normale">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Haute">
+<!ENTITY highPriorityCmd.accesskey "H">
+<!ENTITY highestPriorityCmd.label "Maximale">
+<!ENTITY highestPriorityCmd.accesskey "M">
+
+<!ENTITY returnReceiptMenu.label "Demander un accusé de réception">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Notification de l’état de la distribution">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "Format">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "Détection automatique">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Texte seulement">
+<!ENTITY plainTextFormatCmd.accesskey "T">
+<!ENTITY htmlFormatCmd.label "HTML seulement">
+<!ENTITY htmlFormatCmd.accesskey "s">
+<!ENTITY bothFormatCmd.label "Texte et HTML">
+<!ENTITY bothFormatCmd.accesskey "L">
+
+<!ENTITY fileCarbonCopyCmd.label "Archiver une copie">
+<!ENTITY fileCarbonCopyCmd.accesskey "i">
+<!ENTITY fileHereMenu.label "Classer ici">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Envoyer">
+<!ENTITY addressButton.label "Adresse">
+<!ENTITY attachButton.label "Joindre">
+<!ENTITY spellingButton.label "Orthographe">
+<!ENTITY saveButton.label "Enregistrer">
+<!ENTITY stopButton.label "Arrêter">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Barre d’adresse">
+<!ENTITY formatToolbar.tooltip "Barre d’outils de mise en forme">
+<!ENTITY sendButton.tooltip "Envoyer le message maintenant"> 
+<!ENTITY sendlaterButton.tooltip "Envoyer ce message plus tard"> 
+<!ENTITY addressButton.tooltip "Sélectionner un destinataire du carnet d’adresses"> 
+<!ENTITY attachButton.tooltip "Joindre un fichier au message"> 
+<!ENTITY saveButton.tooltip "Enregistrer ce message"> 
+<!ENTITY stopButton.tooltip "Arrêter le transfert en cours"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Ouvrir">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "Renommer…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY deleteAttachment.accesskey "S">
+<!ENTITY selectAllAttachments.accesskey "T">
+<!ENTITY attachFile.label "Joindre fichier(s)…">
+<!ENTITY attachFile.accesskey "f">
+<!ENTITY attachPage.label "Joindre une page web…">
+<!ENTITY attachPage.accesskey "W">

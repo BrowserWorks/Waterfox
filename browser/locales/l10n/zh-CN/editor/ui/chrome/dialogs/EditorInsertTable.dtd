@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "插入表格">
+
+<!ENTITY size.label "大小">
+<!ENTITY numRowsEditField.label "行数：">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "列数：">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "宽度：">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY borderEditField.label "边界：">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "输入表格边界值，或输入零表示不设边界。">
+<!ENTITY pixels.label "像素">

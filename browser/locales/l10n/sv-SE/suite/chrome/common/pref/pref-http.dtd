@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP-anslutning">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Direktanslutningsalternativ">
+<!ENTITY prefProxy.label                     "Proxyserveranslutningsalternativ">
+<!ENTITY prefEnableHTTP10.label              "Använd HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "A">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "n">
+<!ENTITY prefEnableHTTP11.label              "Använd HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "v">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "d">
+<!ENTITY prefPara                            "HTTP-anslutningar kan finjusteras med dessa inställningar för att förbättra antingen prestanda eller kompatibilitet. Till exempel fungerar inte en del proxyservrar utan HTTP/1.0 (se dokumentationen för mer information).">
+<!ENTITY prefUseragent.label                 "Användaragentsträng">
+<!ENTITY prefFirefoxCompat.label             "Uppträd som Firefox-kompatibel">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Visa Lightning-installationen">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "VARNING: att stänga av dessa inställningar kan leda till att webbplatser eller tjänster inte fungerar korrekt.">
+<!ENTITY prefFirefoxStrict.label             "Identifiera som Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "Identifiera som SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Identifiera som SeaMonkey och annonsera Firefox kompatibilitet">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "VARNING: att ändra dessa inställningar kan leda till att webbplatser eller tjänster inte fungerar korrekt.">

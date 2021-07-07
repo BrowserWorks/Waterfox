@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "页面颜色和背景">
+<!ENTITY pageColors.label "页面颜色">
+<!ENTITY defaultColorsRadio.label "阅读器的默认颜色 （不使用页面中的颜色）">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "只使用查看器（阅读器）中的颜色设置">
+<!ENTITY customColorsRadio.label "使用定制颜色：">
+<!ENTITY customColorsRadio.accessKey "c">
+<!ENTITY customColorsRadio.tooltip "这些颜色设置覆盖了浏览器的设置">
+
+<!ENTITY normalText.label "常规文本">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "链接文本">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "活动链接文本">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "已访问链接文本">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "背景：">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "背景图像：">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "使用图像文件作为页面背景">
+<!ENTITY backgroundImage.shortenedDataURI "缩短 data URI（复制将复制完整 URI 到剪贴板）">

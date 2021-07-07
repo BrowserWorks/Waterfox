@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.locationBar.title "Pasek adresu">
+
+<!ENTITY autoComplete.label "Automatyczne uzupełnianie">
+<!ENTITY autoCompleteMatchHistory.label "Automatycznie proponuj wyniki na podstawie historii przeglądania">
+<!ENTITY autoCompleteMatchHistory.accesskey "h">
+<!ENTITY autoCompleteMatchBookmarks.label "Automatycznie proponuj wyniki na podstawie zakładek">
+<!ENTITY autoCompleteMatchBookmarks.accesskey "z">
+<!ENTITY autoCompleteAutoFill.label "Automatycznie uzupełniaj najodpowiedniejszą propozycją">
+<!ENTITY autoCompleteAutoFill.accesskey "u">
+<!ENTITY autoCompleteShowPopup.label "Pokazuj listę pasujących wyników">
+<!ENTITY autoCompleteShowPopup.accesskey "o">
+<!ENTITY autoCompleteMatchOnlyTyped.label "Uwzględniaj tylko adresy, które zostały wpisane ręcznie">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey "r">
+<!ENTITY autoCompleteMatch.label "Szukaj">
+<!ENTITY autoCompleteMatch.accesskey "S">
+<!ENTITY autoCompleteMatchAnywhere "Gdziekolwiek w adresie bądź tytule">
+<!ENTITY autoCompleteMatchWordsFirst "Gdziekolwiek, ale preferuj granice słów">
+<!ENTITY autoCompleteMatchWords "Wyłącznie na granicach słów">
+<!ENTITY autoCompleteMatchStart "Wyłącznie na początku adresu bądź tytułu">
+<!ENTITY showInternetSearch.label "Wyświetlaj domyślną wyszukiwarkę internetową">
+<!ENTITY showInternetSearch.accesskey "e">
+
+<!ENTITY formatting.label "Formatowanie">
+<!ENTITY domainFormatting.label "Wyróżniaj domeny witryn i serwerów FTP">
+<!ENTITY domainFormatting.accesskey "W">
+<!ENTITY highlightSecure.label "Wyróżniaj strony z wysokim poziomem bezpieczeństwa połączenia">
+<!ENTITY highlightSecure.accesskey "n">
+
+<!ENTITY unknownLocations.label "Nieznane adresy">
+<!ENTITY domainGuessing.label "Automatycznie dodawaj „www.” oraz „.com” do wprowadzonego adresu, jeżeli odnalezienie witryny nie jest możliwe">
+<!ENTITY domainGuessing.accesskey "d">
+<!ENTITY keywords.label "Wykonuj wyszukiwanie w sieci, gdy wpisany tekst nie jest adresem internetowym">
+<!ENTITY keywords.accesskey "y">

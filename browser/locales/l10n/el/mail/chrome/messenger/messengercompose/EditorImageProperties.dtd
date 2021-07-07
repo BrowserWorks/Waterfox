@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Ιδιότητες εικόνας">
+
+<!ENTITY pixelsPopup.value "εικονοστοιχεία">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Τοποθεσία εικόνας:">
+<!ENTITY locationEditField.accessKey "Τ">
+<!ENTITY locationEditField.tooltip "Πληκτρολογήστε το όνομα αρχείου ή τη διεύθυνση της εικόνας">
+<!ENTITY locationEditField.shortenedDataURI "Τα δεδομένα URI περικόπηκαν (η αντιγραφή θα αντιγράψει το πλήρες URI στο Πρόχειρο)">
+<!ENTITY title.label "Υπόδειξη:">
+<!ENTITY title.accessKey "Υ">
+<!ENTITY title.tooltip "Η html ιδιότητα 'title' που προβάλλεται ως υπόδειξη">
+<!ENTITY altText.label "Εναλλακτικό κείμενο:">
+<!ENTITY altText.accessKey "λ">
+<!ENTITY altTextEditField.tooltip "Εισάγετε κείμενο για εμφάνιση στη θέση της εικόνας">
+<!ENTITY noAltText.label "Να μην γίνεται χρήση εναλλακτικού κειμένου">
+<!ENTITY noAltText.accessKey "Ν">
+
+<!ENTITY previewBox.label "Προεπισκόπηση εικόνας">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Πραγματικό μέγεθος:">
+<!ENTITY actualSizeRadio.label "Πραγματικό μέγεθος">
+<!ENTITY actualSizeRadio.accessKey "γ">
+<!ENTITY actualSizeRadio.tooltip "Επιστροφή στο πραγματικό μέγεθος της εικόνας.">
+<!ENTITY customSizeRadio.label "Προσαρμοσμένο μέγεθος">
+<!ENTITY customSizeRadio.accessKey "σ">
+<!ENTITY customSizeRadio.tooltip "Αλλαγή του μεγέθους της εικόνας όπως φαίνεται στη σελίδα">
+<!ENTITY heightEditField.label "Ύψος:">
+<!ENTITY heightEditField.accessKey "ψ">
+<!ENTITY widthEditField.label "Πλάτος:">
+<!ENTITY widthEditField.accessKey "Π">
+<!ENTITY constrainCheckbox.label "Περιορισμός">
+<!ENTITY constrainCheckbox.accessKey "ε">
+<!ENTITY constrainCheckbox.tooltip "Διατήρηση αναλογιών εικόνας">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Χάρτης εικόνας">
+<!ENTITY removeImageMapButton.label "Αφαίρεση">
+<!ENTITY removeImageMapButton.accessKey "φ">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Στοίχιση κειμένου στην εικόνα">
+<!ENTITY bottomPopup.value "Στο κάτω μέρος">
+<!ENTITY topPopup.value "Στο πάνω μέρος">
+<!ENTITY centerPopup.value "Στο κέντρο">
+<!ENTITY wrapRightPopup.value "Αναδίπλωση στα δεξιά">
+<!ENTITY wrapLeftPopup.value "Αναδίπλωση στα αριστερά">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Διάταξη">
+<!ENTITY leftRightEditField.label "Αριστερά και δεξιά:">
+<!ENTITY leftRightEditField.accessKey "ρ">
+<!ENTITY topBottomEditField.label "Πάνω και κάτω:">
+<!ENTITY topBottomEditField.accessKey "ω">
+<!ENTITY borderEditField.label "Μαύρο πλαίσιο:">
+<!ENTITY borderEditField.accessKey "Μ">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Εμφάνιση πλαισίου γύρω από εικόνα με σύνδεσμο">
+<!ENTITY showImageLinkBorder.accessKey "π">
+<!ENTITY LinkAdvancedEditButton.label "Σύνθετη επεξεργασία συνδέσμου…">
+<!ENTITY LinkAdvancedEditButton.accessKey "δ">
+<!ENTITY LinkAdvancedEditButton.tooltip "Προσθήκη ή τροποποίηση ιδιοτήτων στυλ, HTML και JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Φόρμα">
+<!ENTITY imageLocationTab.label "Τοποθεσία">
+<!ENTITY imageDimensionsTab.label "Διαστάσεις">
+<!ENTITY imageAppearanceTab.label "Εμφάνιση">
+<!ENTITY imageLinkTab.label "Σύνδεσμος">

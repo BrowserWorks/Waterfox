@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This file exists to allow applications to override one or more messages
+     from netError.dtd; Applications which want to do this should override
+     this file with their own version of netErrorApp.dtd -->
+
+<!-- An example (from Firefox):
+
+<!ENTITY securityOverride.linkText		"例外として扱うこともできます...">
+<!ENTITY securityOverride.getMeOutOfHereButton	"スタートページに戻る">
+<!ENTITY securityOverride.exceptionButtonLabel	"例外を追加...">
+
+<!ENTITY securityOverride.warningContent	"
+<p>インターネット接続環境を完全には信頼できない場合や、これまでこのサーバーではこの警告が表示されなかった場合は、このサイトを例外として追加しないでください。</p>
+<p>どうしてもこのサイトを例外として追加したい場合は、暗号化の高度な設定で追加してください。</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+-->

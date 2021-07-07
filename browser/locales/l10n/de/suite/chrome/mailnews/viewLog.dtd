@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filter-Log">
+<!ENTITY viewLogInfo.text "Das Filter-Log dokumentiert welche Filter für diesen Account ausgeführt wurden. Verwenden Sie das Kästchen unten, um die Aufzeichnung zu aktivieren.">
+<!ENTITY clearLog.label "Log leeren">
+<!ENTITY clearLog.accesskey "L">
+<!ENTITY enableLog.label "Filter-Log aktivieren">
+<!ENTITY enableLog.accesskey "F">
+<!ENTITY closeLog.label "Schließen">
+<!ENTITY closeLog.accesskey "S">

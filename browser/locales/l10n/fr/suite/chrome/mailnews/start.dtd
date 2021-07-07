@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Bienvenue dans &brandShortName; Courrier et Groupes">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Bienvenue dans <a id="vendorURL" href="">&brandShortName;</a> courrier et groupes !'>
+<!ENTITY description.label
+"&brandShortName; Courrier et Groupes est un client de messagerie puissant et ouvert, offrant une détection avancée du courrier indésirable et plusieurs autres fonctions utiles.">
+<!ENTITY features.title "Fonctions">
+<!ENTITY feat_multiacc.label "Support de comptes multiples">
+<!ENTITY feat_junk.label "Détection des messages indésirables">
+<!ENTITY feat_feeds.label "Lecteur de flux">
+<!ENTITY feat_filters.label "Filtres des messages">
+<!ENTITY feat_htmlmsg.label "Gestion des messages au format HTML">
+<!ENTITY feat_abook.label "Carnet d’adresses">
+<!ENTITY feat_tags.label "Personnalisation des étiquettes des messages et de l’affichage">
+<!ENTITY feat_integration.label
+"Étroite intégration à la suite applicative &brandShortName;">
+<!ENTITY dict.title "Dictionnaires">
+<!ENTITY dict_intro.label "Les dictionnaires sont utilisés pour vérifier l’orthographe de vos messages.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'D’autres dictionnaires peuvent être installés depuis la section
+<a id="dictURL" href="">Dictionnaires</a> sur <a href="http://addons.mozilla.org/">&brandShortName; Add-ons</a>.'>
+<!ENTITY dict_info.label2
+'Il est possible d’installer un grand nombre de langues supplémentaires depuis la section
+<a id="dictURL" href="">dictionnaires</a> des
+<a href="https://addons.thunderbird.net/seamonkey/">modules pour SeaMonkey et Thunderbird</a>.'>
+<!ENTITY info.title "Plus d’informations">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">Nous</a> acceptons volontiers les rapports de bogues ainsi que les demandes
+d’améliorations, mais veuillez d’abord lire les <a id="releaseNotesURL" href="">notes de version</a> et faire une recherche dans <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

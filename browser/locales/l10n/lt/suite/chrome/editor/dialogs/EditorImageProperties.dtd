@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Paveikslo savybės">
+
+<!ENTITY pixelsPopup.value "taškų">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Paveikslo URL:">
+<!ENTITY locationEditField.accessKey "U">
+<!ENTITY locationEditField.tooltip "Surinkite paveikslo vardą arba nurodykite jo vietą">
+<!ENTITY locationEditField.shortenedDataURI "URI - bendras resurso identifikatorius (nukopijuosite pilną URI kodą į iškarpinę)">
+<!ENTITY title.label "Paaiškinančioji etiketė:">
+<!ENTITY title.accessKey "e">
+<!ENTITY title.tooltip "Į HTML požymį „title“ įrašytas tekstas vaizduojamas kaip paveikslą paaiškinanti etiketė">
+<!ENTITY altText.label "Alternatyvusis tekstas:">
+<!ENTITY altText.accessKey "t">
+<!ENTITY altTextEditField.tooltip "Surinkite tekstą, kuris bus rodomas vietoj paveikslo">
+<!ENTITY noAltText.label "Alternatyvaus teksto paveikslui nepriskirti">
+<!ENTITY noAltText.accessKey "n">
+
+<!ENTITY previewBox.label "Paveikslo peržiūra">
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Originalus dydis:">
+<!ENTITY actualSizeRadio.label "Originalus dydis">
+<!ENTITY actualSizeRadio.accessKey "O">
+<!ENTITY actualSizeRadio.tooltip "Atstatyti originalų paveikslo dydį">
+<!ENTITY customSizeRadio.label "Kitoks dydis">
+<!ENTITY customSizeRadio.accessKey "k">
+<!ENTITY customSizeRadio.tooltip "Pakeisti paveikslo dydį tinkamu tinklalapiui">
+<!ENTITY heightEditField.label "Aukštis:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Plotis:">
+<!ENTITY widthEditField.accessKey "P">
+<!ENTITY constrainCheckbox.label "Išlaikyti proporcijas">
+<!ENTITY constrainCheckbox.accessKey "c">
+<!ENTITY constrainCheckbox.tooltip "Išlaikyti paveikslo matmenų proporcijas">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Paveikslo planas">
+<!ENTITY removeImageMapButton.label "Pašalinti">
+<!ENTITY removeImageMapButton.accessKey "š">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Teksto išdėstymas paveikslo atžvilgiu">
+<!ENTITY bottomPopup.value "Apačioje">
+<!ENTITY topPopup.value "Viršuje">
+<!ENTITY centerPopup.value "Centre">
+<!ENTITY wrapRightPopup.value "Apeiti iš dešinės">
+<!ENTITY wrapLeftPopup.value "Apeiti iš kairės">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Protarpiai">
+<!ENTITY leftRightEditField.label "Iš kairės ir iš dešinės:">
+<!ENTITY leftRightEditField.accessKey "k">
+<!ENTITY topBottomEditField.label "Iš viršaus ir iš apačios:">
+<!ENTITY topBottomEditField.accessKey "v">
+<!ENTITY borderEditField.label "Rėmelis:">
+<!ENTITY borderEditField.accessKey "R">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Aplink paveikslą su saitu rodyti rėmelį">
+<!ENTITY showImageLinkBorder.accessKey "ė">
+<!ENTITY LinkAdvancedEditButton.label "Saito papildoma taisa…">
+<!ENTITY LinkAdvancedEditButton.accessKey "p">
+<!ENTITY LinkAdvancedEditButton.tooltip "Pridėti ar keisti HTML požymius, stilių ir „JavaScript“ įvykius">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Forma">
+<!ENTITY imageLocationTab.label "Paveikslas">
+<!ENTITY imageDimensionsTab.label "Matmenys">
+<!ENTITY imageAppearanceTab.label "Išvaizda">
+<!ENTITY imageLinkTab.label "Saitas">

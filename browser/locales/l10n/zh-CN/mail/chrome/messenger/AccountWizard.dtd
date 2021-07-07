@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "账户向导">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "为了接收消息，您必须先建立一个账户。">
+<!ENTITY accountTypeTitle.label "新建账户设置">
+<!ENTITY accountTypeDesc2.label "这个向导会收集必要的信息用来创建一个账户。如果您不知道其中必要的信息，请联系系统管理员或者电信运营商。">
+<!ENTITY accountTypeDirections.label "选择您要设置的账户类型：">
+<!ENTITY accountTypeMail.label "电子邮件账户">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "新闻组账户">
+<!ENTITY accountTypeNews.accesskey "w">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "身份">
+<!ENTITY identityDesc.label "每个账户可以有一个身份，当其他人接收到您的消息时此身份可以让他们知道这是您发的消息。">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "请输入您希望在发送的消息中出现在 &quot;发件人&quot; 字段中的姓名。">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "（例如，&quot;张兵&quot;）">
+<!ENTITY fullnameLabel.label "您的姓名:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "电子邮件：">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "接收服务器信息">
+<!ENTITY incomingServerTypeDesc.label "选择您使用的接收服务器类型。">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "把消息留在服务器上">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "端口：">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "默认：">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "输入接收服务器名。（例如，&quot;pop.netscape.net&quot;）">
+<!ENTITY incomingServer.label "接收服务器:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "输入邮件服务商给你的收信用户名（例如, &quot;jsmith&quot;）。">
+<!ENTITY incomingUsername.label "用户名：">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "输入新闻 (NNTP) 服务器名。（例如，&quot;news.netscape.net&quot;。）">
+<!ENTITY newsServerLabel.label "新闻组服务器:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "发信服务器信息">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "输入发送服务器 (SMTP) 名。（例如，&quot;smtp.netscape.net&quot;）">
+<!ENTITY outgoingServer.label "外发服务器:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "请输入您的电子邮件服务提供者提供给您的外发用户名 （通常即为您的接收用户名）。">
+<!ENTITY outgoingUsername.label "外发用户名：">
+<!ENTITY outgoingUsername.accesskey "U">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "你可以在账户设置中更改外发服务器。">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "将使用您当前的外发服务器(SMTP)， &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot; ，将会被使用。">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "将使用您当前的外发(SMTP)用户名，&quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot; ，将会被使用。">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "您的外发(SMTP)服务器 , &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot; ，与你的接收服务器相同，将使用你的接收用户名访问他。">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "账户名称">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "输入您想要此账户使用的名称。（例如，&quot;工作账户&quot;、&quot;家庭账户&quot; 或 &quot;新闻账户&quot;）">
+<!ENTITY accnameLabel.label "账户名称:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "恭喜您！">
+<!ENTITY completionText.label "您已输入设置此账户所有必需的信息。">
+<!ENTITY serverTypePrefix.label "接收消息服务器类型：">
+<!ENTITY serverNamePrefix.label "接收消息服务器名称：">
+<!ENTITY smtpServerNamePrefix.label "SMTP服务器名称：">
+<!ENTITY newsServerNamePrefix.label "新闻服务器名(NNTP)：">
+<!ENTITY downloadOnLogin.label "立即下载消息">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "若取消勾选此项，此账户的邮件将存放在本身的目录内。此账户将显示为顶层账户。否则它会从属于本地的全局收件箱。">
+<!ENTITY deferStorage.label "使用全局收件箱（将邮件保存至本地文件夹中）">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "单击“完成”保存设置并退出账户向导。">
+<!ENTITY clickFinish.labelMac "点击 完成 已保存这些设置并退出账户向导。">

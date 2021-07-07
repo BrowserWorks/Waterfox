@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Assistente de importação">
+<!ENTITY importAll.label          "Importar tudo">
+<!ENTITY importAll.accesskey      "I">
+<!ENTITY importMail.label         "Mensagens">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "Inscrições RSS">
+<!ENTITY importFeeds.accesskey    "R">
+<!ENTITY importAddressbook.label  "Catálogos de endereços">
+<!ENTITY importAddressbook.accesskey "a">
+<!ENTITY importSettings.label     "Configurações">
+<!ENTITY importSettings.accesskey "C">
+<!ENTITY importFilters.label      "Filtros">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Assistente de importação do &brandShortName;">
+<!ENTITY importShortDesc.label    "Importar mensagens, catálogos de endereços, configurações e filtros de outros aplicativos">
+
+<!ENTITY importDescription1.label "Este assistente importará para o &brandShortName; mensagens, nomes do catálogo de endereços, filtros e/ou opções de outros aplicativos e formatos mais comuns de catálogo de endereços.">
+<!ENTITY importDescription2.label "Uma vez importados, você poderá acessá-los pelo &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Selecione o tipo de arquivo que você deseja importar:">
+<!ENTITY selectDescriptionB.label "Selecione uma conta existente ou crie uma nova:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Nome:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Não foi encontrado nenhum aplicativo ou arquivo de onde importar dados.">
+
+<!ENTITY back.label               "&lt; Voltar">
+<!ENTITY forward.label            "Avançar &gt;">
+<!ENTITY finish.label             "Concluir">
+<!ENTITY cancel.label             "Cancelar">
+
+<!ENTITY select.label             "ou selecione o tipo de material a importar:">
+
+<!ENTITY title.label              "Título">
+<!ENTITY processing.label         "Importando…">

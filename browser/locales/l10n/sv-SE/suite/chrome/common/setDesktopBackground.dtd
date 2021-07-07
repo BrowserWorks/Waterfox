@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Används som skrivbordsbakgrund">
+
+<!ENTITY position.label             "Placering:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Sida vid sida">
+<!ENTITY position.stretch.label     "Förstora">
+<!ENTITY position.center.label      "Centrera">
+<!ENTITY position.fill.label        "Fyll">
+<!ENTITY position.fit.label         "Passa">
+<!ENTITY picker.label               "Färg:">
+<!ENTITY picker.accesskey           "F">
+<!ENTITY preview.caption            "Förhandsgranska">
+<!ENTITY apply.label                "Verkställ">
+<!ENTITY apply.accesskey            "V">
+<!ENTITY close.label                "Stäng">

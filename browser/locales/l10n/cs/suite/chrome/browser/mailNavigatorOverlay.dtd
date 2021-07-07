@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label "Zpráva">
+<!ENTITY newMessageCmd.accesskey "Z">
+<!ENTITY newMessageCmd.key "M">
+
+<!ENTITY newContactCmd.label "Kontakt…">
+<!ENTITY newContactCmd.accesskey "K">
+
+<!ENTITY sendPage.label "Odeslat stránku…">
+<!ENTITY sendPage.accesskey "L">
+
+<!ENTITY contextSendThisPage.label "Odeslat tuto stránku…">
+<!ENTITY contextSendThisPage.accesskey "e">
+<!ENTITY contextSendThisLink.label "Odeslat tento odkaz…">
+<!ENTITY contextSendThisLink.accesskey "o">
+<!ENTITY contextSendImage.label "Odeslat obrázek…">
+<!ENTITY contextSendImage.accesskey "b">
+<!ENTITY contextSendVideo.label "Odeslat video…">
+<!ENTITY contextSendVideo.accesskey "v">
+<!ENTITY contextSendAudio.label "Odeslat audio…">
+<!ENTITY contextSendAudio.accesskey "a">
+<!ENTITY contextSendFrame.label "Odeslat rámec…">
+<!ENTITY contextSendFrame.accesskey "r">
+
+<!ENTITY sendLinkCmd.label "Odeslat odkaz…">
+<!ENTITY sendLinkCmd.accesskey "o">
+

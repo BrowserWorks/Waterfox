@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Helyesírás-ellenőrzés">
+<!ENTITY generalSpelling.label                "Általános">
+<!ENTITY checkSpellingWhenTyping.label        "Helyesírás-ellenőrzés beírás közben:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "k">
+<!ENTITY dontCheckSpelling.label              "Soha">
+<!ENTITY multilineCheckSpelling.label         "Többsoros szövegbeviteli mezőkben">
+<!ENTITY alwaysCheckSpelling.label            "Minden szövegbeviteli mezőben">
+<!ENTITY spellForMailAndNews.label            "Levelező és hírolvasó">
+<!ENTITY checkSpellingBeforeSend.label        "Helyesírás ellenőrzése küldés előtt">
+<!ENTITY checkSpellingBeforeSend.accesskey    "H">
+<!ENTITY spellCheckInline.label               "Helyesírás-ellenőrzés beírás közben">
+<!ENTITY spellCheckInline.accesskey           "b">
+<!ENTITY languagePopup.label                  "Nyelv:">
+<!ENTITY languagePopup.accessKey              "N">
+<!ENTITY moreDictionaries.label               "&amp;További szótárak letöltése…">
+<!ENTITY noSpellCheckAvailable.label          "Nincsenek szótárak telepítve">

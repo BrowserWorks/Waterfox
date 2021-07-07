@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "设为桌面背景">
+
+<!ENTITY position.label             "位置：">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "平铺">
+<!ENTITY position.stretch.label     "拉伸">
+<!ENTITY position.center.label      "居中">
+<!ENTITY position.fill.label        "填充">
+<!ENTITY position.fit.label         "适应">
+<!ENTITY picker.label               "颜色：">
+<!ENTITY picker.accesskey           "C">
+<!ENTITY preview.caption            "预览">
+<!ENTITY apply.label                "应用">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "关闭">

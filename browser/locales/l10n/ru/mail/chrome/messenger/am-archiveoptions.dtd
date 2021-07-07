@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Настройки архивации">
+<!ENTITY archiveGranularityPrefix.label "При архивации сообщений, помещать их в:">
+<!ENTITY archiveFlat.label "Единую папку">
+<!ENTITY archiveFlat.accesskey "и">
+<!ENTITY archiveYearly.label "Папки архивов по годам">
+<!ENTITY archiveYearly.accesskey "о">
+<!ENTITY archiveMonthly.label "Папки архивов по месяцам">
+<!ENTITY archiveMonthly.accesskey "е">
+<!ENTITY keepFolderStructure.label "Сохранять существующую структуру папок для архивированных сообщений">
+<!ENTITY keepFolderStructure.accesskey "р">
+<!ENTITY archiveExample.label "Пример">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Архивы">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Входящие">

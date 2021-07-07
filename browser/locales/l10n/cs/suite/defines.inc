@@ -1,0 +1,9 @@
+#filter emptyLines
+
+#define MOZ_LANGPACK_CREATOR Mozilla.cz
+
+# If non-English locales wish to credit multiple contributors, uncomment this
+# variable definition and use the format specified.
+#define MOZ_LANGPACK_CONTRIBUTORS <em:contributor>Pavel Cvrček</em:contributor> <em:contributor>Pavel Franc</em:contributor> <em:contributor>Michal Kec</em:contributor> <em:contributor>Michal Stanke</em:contributor> <em:contributor>Michal Vašíček</em:contributor> <em:contributor>Miroslav Geisselreiter</em:contributor> <em:contributor>Jiří Soukeník</em:contributor>
+
+#unfilter emptyLines

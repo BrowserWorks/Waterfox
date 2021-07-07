@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY openFileCmd.label "Abrir archivo…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Abrir dirección web…">
+<!ENTITY openRemoteCmd.accesskey "d">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Páginas recientes">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "Guardar">
+<!ENTITY saveCmd.accesskey "G">
+<!ENTITY saveAsCmd.label "Guardar como…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "Guardar y cambiar la codificación de texto">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "c">
+<!ENTITY publishCmd.label "Publicar">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publicar como…">
+<!ENTITY publishAsCmd.accesskey "m">
+<!ENTITY fileRevert.label "Revertir">
+<!ENTITY fileRevert.accesskey "t">
+<!ENTITY publishSettings.label "Configuración de sitio de publicación…">
+<!ENTITY publishSettings.accesskey "b">
+<!ENTITY insertFormMenu.label "Formulario">
+<!ENTITY insertFormMenu.accesskey "">
+<!ENTITY insertFormCmd.label "Definir formulario…">
+<!ENTITY insertFormCmd.accesskey "">
+<!ENTITY insertInputTagCmd.label "Campo de formulario…">
+<!ENTITY insertInputTagCmd.accesskey "u">
+<!ENTITY insertInputImageCmd.label "Imagen de formulario…">
+<!ENTITY insertInputImageCmd.accesskey "">
+<!ENTITY insertTextAreaCmd.label "Área de texto…">
+<!ENTITY insertTextAreaCmd.accesskey "x">
+<!ENTITY insertSelectCmd.label "Lista de opciones…">
+<!ENTITY insertSelectCmd.accesskey "L">
+<!ENTITY insertButtonCmd.label "Definir botón…">
+<!ENTITY insertButtonCmd.accesskey "e">
+<!ENTITY insertLabelCmd.label "Definir etiqueta">
+<!ENTITY insertLabelCmd.accesskey "n">
+<!ENTITY insertFieldSetCmd.label "Definir conjunto de campos…">
+<!ENTITY insertFieldSetCmd.accesskey "f">
+<!ENTITY newToolbarCmd.label "Nuevo">
+<!ENTITY newToolbarCmd.tooltip "Crear una página nueva en Composer">
+<!ENTITY openToolbarCmd.label "Abrir">
+<!ENTITY openToolbarCmd.tooltip "Abrir un archivo local">
+<!ENTITY saveToolbarCmd.tooltip "Guardar archivo en una ubicación local">
+<!ENTITY publishToolbarCmd.tooltip "Subir un archivo a una ubicación remota">
+<!ENTITY printToolbarCmd.label "Imprimir">
+<!ENTITY printToolbarCmd.tooltip "Imprimir esta página">
+<!ENTITY formToolbarCmd.label "Formulario">
+<!ENTITY formToolbarCmd.tooltip "Insertar un nuevo formulario o editar las propiedades del enlace seleccionado">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "電子郵件">
+<!ENTITY readMsgsLink.label           "讀取郵件">
+<!ENTITY composeMsgLink.label         "發新郵件">
+
+<!ENTITY newsSectionHdr.label         "新聞群組">
+<!ENTITY subscribeNewsLink.label      "管理新聞群組訂閱狀況">
+
+<!ENTITY feedsSectionHdr.label        "消息來源">
+<!ENTITY subscribeFeeds.label         "管理訂閱">
+
+<!ENTITY chat.label                   "聊天">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "帳號">
+<!ENTITY subscribeImapFolders.label   "管理訂閱目錄">
+<!ENTITY settingsLink.label           "檢視設定">
+<!ENTITY setupNewAcct.label           "設定帳號:">
+
+<!ENTITY advFeaturesSectionHdr.label  "進階功能">
+<!ENTITY searchMsgsLink.label         "搜尋訊息">
+<!ENTITY filtersLink.label            "管理篩選條件">
+<!ENTITY junkSettings.label           "垃圾郵件設定">
+<!ENTITY offlineLink.label            "離線模式設定">

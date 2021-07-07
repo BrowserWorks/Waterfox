@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (newsError.title): The title of the news error page.
+     Not generally visible. -->
+<!ENTITY newsError.title "載入文章時發生問題">
+
+<!-- LOCALIZATION NOTE (articleNotFound.title): The main heading for the news
+     error page. -->
+<!ENTITY articleNotFound.title "找不到文章">
+
+<!-- LOCALIZATION NOTE (articleNotFound.desc): A longer description for the news
+     error page. -->
+<!ENTITY articleNotFound.desc "新聞群組伺服器回報找不到文章。">
+
+<!-- LOCALIZATION NOTE (serverResponded.title): A string preceding the text
+     response from the newsgroup server describing the error. -->
+<!ENTITY serverResponded.title "新聞群組伺服器回應:">
+
+<!-- LOCALIZATION NOTE (articleExpired.title): A string explaining that the
+     article may have expired. -->
+<!ENTITY articleExpired.title "或許是文章過期了？">
+
+<!-- LOCALIZATION NOTE (trySearching.title): A string preceding the message's
+     ID. -->
+<!ENTITY trySearching.title "請試著搜尋文章:">
+
+<!-- LOCALIZATION NOTE (removeExpiredArticles.title): The label for the button
+     to remove all expired articles from the newsgroup. -->
+<!ENTITY removeExpiredArticles.title "移除所有已過期的文章">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Настройка панелей инструментов">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Вы можете добавлять или удалять элементы на панелях инструментов, перетаскивая их мышью.">
+<!ENTITY show.label               "Отображать:">
+<!ENTITY iconsAndText.label       "Значки и текст">
+<!ENTITY icons.label              "Значки">
+<!ENTITY text.label               "Текст">
+<!ENTITY iconsBesideText.label    "Значки рядом с текстом">
+<!ENTITY useSmallIcons.label      "Маленькие значки">
+<!ENTITY restoreDefaultSet.label  "Восстановить по умолчанию">
+<!ENTITY showTitlebar2.label      "Заголовок">
+<!ENTITY extraDragSpace2.label    "Место для перетаскивания">
+<!ENTITY saveChanges.label        "Готово">
+<!ENTITY undoChanges.label        "Отменить изменения">

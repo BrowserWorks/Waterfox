@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+
+<!ENTITY menu_securityEncryptRequire.label "加密此消息">
+<!ENTITY menu_securityEncryptRequire.accesskey "E">
+
+<!ENTITY menu_securitySign.label "对此消息数字签名">
+<!ENTITY menu_securitySign.accesskey "M">
+
+<!ENTITY menu_securityStatus.label "查看安全信息">
+<!ENTITY menu_securityStatus.accesskey "I">
+
+<!ENTITY securityButton.label "安全">
+<!ENTITY securityButton.tooltip "查看或修改安全设置">
+
+<!ENTITY menu_viewSecurityStatus.label "消息安全信息">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

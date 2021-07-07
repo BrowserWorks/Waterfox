@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Για προχωρημένους">
+
+<!ENTITY systemPref.caption               "Προτιμήσεις συστήματος">
+<!ENTITY systemPrefCheck.label            "Χρήση προτιμήσεων από το σύστημα">
+<!ENTITY systemPrefCheck.accesskey        "Χ">
+<!ENTITY systemPref.desc                  "Με αυτή την επιλογή, το &brandShortName; κληρονομεί προτιμήσεις από το σύστημα. Αυτές οι ρυθμίσεις συστήματος θα αντικαταστήσουν τις προτιμήσεις του &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption         "Ενσωμάτωση συστήματος">
+<!ENTITY prefCheckDefaultClient.label     "Έλεγχος ρυθμίσεων προεπιλεγμένης εφαρμογής κατά την εκκίνησης">
+<!ENTITY prefCheckDefaultClient.accesskey "Έ">
+
+<!ENTITY printing.label                   "Εκτύπωση">
+<!ENTITY useNativePrintDialog.label       "Χρήση εγγενούς διαλόγου εκτύπωσης (όπου υποστηρίζεται)">
+<!ENTITY useNativePrintDialog.accesskey   "Χ">
+<!ENTITY useGlobalPrintSettings.label     "Χρήση γενικών ρυθμίσεων εκτύπωσης">
+<!ENTITY useGlobalPrintSettings.accesskey "γ">
+
+<!ENTITY crashReports.caption             "Αναφορά καταρρεύσεων">
+<!ENTITY submitCrashes.label              "Υποβολή αναφορών κατάρρευσης">
+<!ENTITY submitCrashes.accesskey          "Υ">
+
+<!ENTITY devTools.caption                 "Εργαλεία ανάπτυξης">
+<!ENTITY allowDebugger.label              "Να επιτρέπεται η σύνδεση με το &brandShortName; για έλεγχο σφαλμάτων">
+<!ENTITY allowDebugger.accesskey          "Ν">
+<!ENTITY allowRemoteConnections.label     "Αποδοχή συνδέσεων από άλλους υπολογιστές">
+<!ENTITY allowRemoteConnections.accesskey "ο">
+<!ENTITY connectionPrompt.label           "Ερώτηση για εισερχόμενες συνδέσεις">
+<!ENTITY connectionPrompt.accesskey       "ώ">
+<!ENTITY remoteDebuggerPort.label         "Αριθμός θύρας για σύνδεση:">
+<!ENTITY remoteDebuggerPort.accesskey     "θ">

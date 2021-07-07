@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Подключённые контакты">
+<!ENTITY offlineContactsHeader.label   "Отключённые контакты">
+<!ENTITY conversationsHeader.label     "Разговоры">
+<!ENTITY searchResultConversation.label "Результат поиска">
+<!ENTITY chat.noConv.title             "Разговоры будут показаны здесь.">
+<!ENTITY chat.noConv.description       "Для начала разговора используйте список контактов в левой панели.">
+<!ENTITY chat.noPreviousConv.description       "В данный момент &brandShortName; не хранит никаких предыдущих разговоров с этим контактом.">
+<!ENTITY chat.noAccount.title             "Учетные записи чата отсутствуют.">
+<!ENTITY chat.noAccount.description       "Позвольте &brandShortName; провести вас через процесс создания учётной записи чата.">
+<!ENTITY chat.accountWizard.button       "Начать">
+<!ENTITY chat.noConnectedAccount.title             "Ваши учётные записи чата не подключены.">
+<!ENTITY chat.noConnectedAccount.description       "Вы можете подключить их из диалога 'Статус чата':">
+<!ENTITY chat.showAccountManager.button       "Показать статус чата">
+
+<!ENTITY chat.participants             "Участники:">
+<!ENTITY chat.previousConversations    "Предыдущие разговоры:">
+<!ENTITY chat.ongoingConversation      "Текущий разговор">
+
+<!ENTITY openConversationCmd.label     "Начать разговор">
+<!ENTITY openConversationCmd.accesskey "ч">
+<!ENTITY closeConversationCmd.label    "Закрыть разговор">
+<!ENTITY closeConversationCmd.accesskey "а">
+<!ENTITY aliasCmd.label                "Переименовать">
+<!ENTITY aliasCmd.accesskey            "м">
+<!ENTITY deleteCmd.label               "Удалить">
+<!ENTITY deleteCmd.accesskey           "д">
+
+<!ENTITY openConversationButton.tooltip  "Начать разговор">
+<!ENTITY closeConversationButton.tooltip "Закрыть разговор">
+
+<!ENTITY addBuddyButton.label          "Добавить собеседника">
+<!ENTITY joinChatButton.label          "Присоединиться к чату">
+<!ENTITY chatAccountsButton.label      "Показать учётные записи">
+
+<!ENTITY status.available          "Доступен">
+<!ENTITY status.unavailable        "Занят">
+<!ENTITY status.offline            "Отключён">
+
+<!ENTITY openLinkCmd.label            "Открыть ссылку…">
+<!ENTITY openLinkCmd.accesskey        "к">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Error al cargar la página">
+<!ENTITY gopherAddon.title "Protocolo Gopher">
+<!ENTITY gopherAddon.shortDesc "gopher no es un protocolo registrado.">
+<!ENTITY gopherAddon.longDesc "La dirección especifica el protocolo gopher que ya no está implementado, por lo que el navegador no puede conectar al sitio. Puede conseguir un complemento compatible para acceder a este servidor desde Mozilla Add-ons.">
+<!ENTITY goToAddOn.label "Ir a la página de complementos">

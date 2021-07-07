@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Handter sertifikat">
+<!ENTITY  managecerts.button       "Handter sertifikat…">
+<!ENTITY  managedevices.caption    "Handter tryggingseiningar">
+<!ENTITY  managedevices.button     "Handsam tryggingseiningar…">
+<!ENTITY  managedevices.accesskey  "H">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Sertifikat">
+<!ENTITY  certs.label              "Sertifikat">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">

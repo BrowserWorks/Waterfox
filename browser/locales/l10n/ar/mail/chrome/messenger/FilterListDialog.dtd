@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "مرشِّحات الرسائِل">
+<!ENTITY nameColumn.label "اسم المرشِّح">
+<!ENTITY activeColumn.label "مُفعّل">
+<!ENTITY newButton.label "جديد…">
+<!ENTITY newButton.accesskey "ج">
+<!ENTITY newButton.popupCopy.label "انسخ…">
+<!ENTITY newButton.popupCopy.accesskey "س">
+<!ENTITY editButton.label "حرّر…">
+<!ENTITY editButton.accesskey "ح">
+<!ENTITY deleteButton.label "احذف">
+<!ENTITY deleteButton.accesskey "ح">
+<!ENTITY reorderTopButton "انقل إلى البداية">
+<!ENTITY reorderTopButton.accessKey "ن">
+<!ENTITY reorderTopButton.toolTip "غيّر ترتيب المُرشَّح لينفّذ قبل الآخرين">
+<!ENTITY reorderUpButton.label "انقل لأعلى">
+<!ENTITY reorderUpButton.accesskey "ع">
+<!ENTITY reorderDownButton.label "انقل لأسفل">
+<!ENTITY reorderDownButton.accesskey "س">
+<!ENTITY reorderBottomButton "انقل إلى النهاية">
+<!ENTITY reorderBottomButton.accessKey "ق">
+<!ENTITY reorderBottomButton.toolTip "غيّر ترتيب المُرشَّح لينفّذ بعد الآخرين">
+<!ENTITY filterHeader.label "تُشغّل المرشحات تلقائيًّا حسب التّرتيب الظّاهر أدناه.">
+<!ENTITY filtersForPrefix.label "مرشّحات لأجل:">
+<!ENTITY filtersForPrefix.accesskey "م">
+<!ENTITY viewLogButton.label "سجل المرشّح">
+<!ENTITY viewLogButton.accesskey "س">
+<!ENTITY runFilters.label "شغّل الآن">
+<!ENTITY runFilters.accesskey "ش">
+<!ENTITY stopFilters.label "قف">
+<!ENTITY stopFilters.accesskey "ق">
+<!ENTITY folderPickerPrefix.label "شغّل المرشّحات المختارة على:">
+<!ENTITY folderPickerPrefix.accesskey "م">
+<!ENTITY helpButton.label "مساعدة">
+<!ENTITY helpButton.accesskey "م">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "ابحث في المُرشّحات بالاسم…">
+
+
+

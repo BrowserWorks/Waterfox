@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Schriftarten">
+
+<!ENTITY  language.label                          "Schriftarten für:">
+<!ENTITY  language.accesskey                      "S">
+
+<!ENTITY  typefaces.label                         "Schriftart">
+<!ENTITY  sizes.label                             "Größe (Pixel)">
+
+<!ENTITY  proportional.label                      "Proportional:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "e">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Feste Breite:">
+<!ENTITY  monospace.accesskey                     "B">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasy:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "Schreibschrift:">
+<!ENTITY  cursive.accesskey                       "c">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Lateinisch">
+<!ENTITY  font.langGroup.japanese                 "Japanisch">
+<!ENTITY  font.langGroup.trad-chinese             "Chinesisch traditionell (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Chinesisch vereinfacht">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Chinesisch traditionell (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreanisch">
+<!ENTITY  font.langGroup.cyrillic                 "Kyrillisch">
+<!ENTITY  font.langGroup.el                       "Griechisch">
+<!ENTITY  font.langGroup.thai                     "Thai">
+<!ENTITY  font.langGroup.hebrew                   "Hebräisch">
+<!ENTITY  font.langGroup.arabic                   "Arabisch">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamilisch">
+<!ENTITY  font.langGroup.armenian                 "Armenisch">
+<!ENTITY  font.langGroup.bengali                  "Bengali">
+<!ENTITY  font.langGroup.canadian                 "Vereinte Kanadische Silbentabelle">
+<!ENTITY  font.langGroup.ethiopic                 "Äthiopisch">
+<!ENTITY  font.langGroup.georgian                 "Georgisch">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Mathematik">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibetisch">
+<!ENTITY  font.langGroup.other                    "Andere Schreibsysteme">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minimale Schriftgröße:">
+<!ENTITY minSize.accesskey                        "M">
+<!ENTITY minSize.none                             "Keine">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  useDocumentFonts.label                  "Dokumenten erlauben, andere Schriftarten zu verwenden">
+<!ENTITY  useDocumentFonts.accesskey              "D">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Bei Dokumenten mit vorgegebener Schriftart">
+<!ENTITY  useDefaultFont.label                    "Standard-Schriftarten verwenden, die Schriftarten-Auswahl der Seite ignorieren">
+<!ENTITY  useDefaultFont.accesskey                "a">

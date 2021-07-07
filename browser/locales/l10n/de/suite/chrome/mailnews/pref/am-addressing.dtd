@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "Verfassen &amp; Adressieren">
+<!ENTITY addressingGroupTitle.label "Adressieren">
+<!ENTITY autocompleteToMyDomain.label     "Eigene Domain automatisch an Adressen anhängen">
+<!ENTITY autocompleteToMyDomain.accesskey "E">
+<!ENTITY addressingText.label      "Beim Suchen von Nachrichten:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Globale LDAP-Server-Einstellungen für diesen Account verwenden">
+<!ENTITY useGlobal.accesskey       "G">
+<!ENTITY editDirectories.label     "Verzeichnisse bearbeiten…">
+<!ENTITY editDirectories.accesskey "V">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Einen anderen LDAP-Server verwenden:">
+<!ENTITY directories.accesskey     "L">
+<!ENTITY directoriesNone.label     "Keines">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label          "Verfassen">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Nachrichten im HTML-Format verfassen">
+<!ENTITY useHtml.accesskey                    "N">
+<!ENTITY autoQuote.label                      "Originalnachricht beim Antworten automatisch zitieren">
+<!ENTITY autoQuote.accesskey                  "O">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label                           "Dann">
+<!ENTITY then.accesskey                       "D">
+<!ENTITY aboveQuote.label                     "Antwort über zitiertem Text beginnen">
+<!ENTITY belowQuote.label                     "Antwort unter zitiertem Text beginnen">
+<!ENTITY selectAndQuote.label                 "zitierten Text markieren">
+<!ENTITY place.label                          "und die Signatur">
+<!ENTITY place.accesskey                      "u">
+<!ENTITY belowText.label                      "unter zitierten Text setzen (empfohlen)">
+<!ENTITY aboveText.label                      "unter Antwort (über zitierten Text) setzen">
+<!ENTITY includeSigOnReply.label              "Signatur für Antworten inkludieren">
+<!ENTITY includeSigOnReply.accesskey          "A">
+<!ENTITY includeSigOnForward.label            "Signatur für Weiterleitungen inkludieren">
+<!ENTITY includeSigOnForward.accesskey        "W">
+
+<!ENTITY globalComposingPrefs.label           "Globale Verfassen-Einstellungen…">
+<!ENTITY globalComposingPrefs.accesskey       "s">
+
+<!ENTITY globalAddressingPrefs.label          "Globale Adressierungseinstellungen…">
+<!ENTITY globalAddressingPrefs.accesskey      "b">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Geavanceerde eigenschappen">
+<!ENTITY AttName.label                  "Attribuut: ">
+<!ENTITY AttValue.label                 "Waarde: ">
+<!ENTITY PropertyName.label             "Eigenschap: ">
+<!ENTITY currentattributesfor.label     "Huidige attributen voor: ">
+<!ENTITY tree.attributeHeader.label     "Attribuut">
+<!ENTITY tree.propertyHeader.label      "Eigenschap">
+<!ENTITY tree.valueHeader.label         "Waarde">
+<!ENTITY tabHTML.label                  "HTML-attributen">
+<!ENTITY tabCSS.label                   "Inline stijl">
+<!ENTITY tabJSE.label                   "JavaScript-acties">
+
+<!ENTITY editAttribute.label    "Klik op een item hierboven om de waarde ervan te bewerken">
+<!ENTITY removeAttribute.label  "Verwijderen">

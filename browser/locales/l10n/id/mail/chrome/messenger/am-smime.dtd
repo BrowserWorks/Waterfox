@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Enkripsi Ujung-ke-Ujung">
+<!ENTITY e2eLearnMore.label "Pelajari lebih lanjut">
+
+<!ENTITY e2eEnc.description "Tanpa enkripsi ujung-ke-ujung, isi pesan mudah terpapar ke penyedia surel Anda dan pelacakan massal.">
+<!ENTITY e2eeReqWarning.description "Jika Anda memerlukan enkripsi, untuk mengirim pesan Anda harus memiliki kunci publik atau sertifikat dari setiap penerima.">
+
+<!ENTITY e2eSigning.description "Tanda tangan digital memungkinkan penerima untuk memverifikasi bahwa pesan telah dikirim oleh Anda, dan bahwa kontennya belum diubah.">
+<!ENTITY e2eTechPref.description "Teknologi enkripsi yang dipilih:">
+
+<!ENTITY doNotEncrypt.label "Jangan aktifkan enkripsi secara tetap">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Membutuhkan enkripsi secara tetap">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "Sertifikat pribadi untuk enkripsi:">
+<!ENTITY digitalSign.certificate.button "Pilih…">
+<!ENTITY digitalSign.certificate.accesskey "P">
+<!ENTITY digitalSign.certificate_clear.button "Bersihkan">
+<!ENTITY digitalSign.certificate_clear.accesskey "B">
+<!ENTITY encryption.certificate.button "Pilih…">
+<!ENTITY encryption.certificate.accesskey "i">
+<!ENTITY encryption.certificate_clear.button "Bersihkan">
+<!ENTITY encryption.certificate_clear.accesskey "h">
+<!ENTITY signingGroupTitle.label "Tandatangan Dijital">
+<!ENTITY signMessage2.label "Tambahkan tanda tangan digital saya secara tetap">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Sertifikat pribadi untuk penandatanganan digital:">
+
+<!ENTITY sendingDefaults.label "Pengaturan tetap untuk mengirim pesan">
+
+<!ENTITY technologyAutomatic.label "Pilih secara otomatis berdasarkan kunci atau sertifikat yang tersedia">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Kelola Sertifikat S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Perangkat Keamanan S/MIME">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "Memilih S/MIME">
+<!ENTITY technologyOpenPGP.label "Memilih OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Pilih Sertifikat">
+<!ENTITY certPicker.info  "Sertifikat:">
+<!ENTITY certPicker.detailsLabel "Detail sertifikat yang dipilih:">
+
+<!ENTITY openpgpKey.message "Kunci pribadi untuk enkripsi dan penandatanganan digital:">
+<!ENTITY openpgpKey.button "Tetapkan Kunci Pribadi ...">
+<!ENTITY openpgpKey.accesskey "o">

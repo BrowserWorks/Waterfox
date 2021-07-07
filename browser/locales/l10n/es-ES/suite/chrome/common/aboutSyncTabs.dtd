@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabs.otherComputers.label "Pestañas de otros dispositivos">
+<!ENTITY tabs.searchText.label "Escriba aquí para buscar pestañas…">
+<!ENTITY tabs.context.openTab.label "Abrir esta pestaña">
+<!ENTITY tabs.context.openTab.accesskey "p">
+<!ENTITY tabs.context.openMultipleTabs.label "Abrir las pestañas seleccionadas">
+<!ENTITY tabs.context.openMultipleTabs.accesskey "A">
+<!ENTITY tabs.context.bookmarkSingleTab.label "Añadir a marcadores esta pestaña…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey "ñ">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label "Agregar a marcadores las pestañas seleccionadas…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey "g">
+<!ENTITY tabs.context.refreshList.label "Recargar lista">
+<!ENTITY tabs.context.refreshList.accesskey "R">

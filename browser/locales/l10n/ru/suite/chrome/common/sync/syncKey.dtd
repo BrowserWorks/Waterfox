@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Ваш ключ &syncBrand.fullName.label;">
+<!ENTITY syncKey.page.description         "Этот ключ используется для расшифровывания данных вашей учётной записи &syncBrand.fullName.label;. Вам нужно будет вводить ключ всякий раз, когда вы настраиваете &syncBrand.fullName.label; на новом компьютере или устройстве.">
+<!ENTITY syncKey.keepItSecret.heading     "Храните его в тайне">
+<!ENTITY syncKey.keepItSecret.description "Для защиты вашей приватности ваша учётная запись &syncBrand.fullName.label; была зашифрована. Без этого ключа расшифровывание кем бы то ни было вашей персональной информации займёт годы. Вы являетесь единственным лицом, у кого имеется этот ключ. Это значит, что вы единственный, кто может получить доступ к данным вашего &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading       "Берегите его">
+<!ENTITY syncKey.keepItSafe1.description  "Не потеряйте этот ключ.">
+<!ENTITY syncKey.keepItSafe2.description  " Мы не храним копию вашего ключа (так как это не сохранит его в тайне!), так что ">
+<!ENTITY syncKey.keepItSafe3.description  "мы не можем помочь вам его восстановить">
+<!ENTITY syncKey.keepItSafe4.description  " если он будет утерян. Вам будет необходимо использовать этот ключ всякий раз, когда вы соединяете новый компьютер или устройство с &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Узнайте больше о &syncBrand.fullName.label; и вашей приватности на сайте ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Условия службы &syncBrand.fullName.label; доступны по адресу ">
+<!ENTITY syncKey.footer2.label            ". Политика приватности доступна по адресу ">
+<!ENTITY syncKey.footer3.label            ".">

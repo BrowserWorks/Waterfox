@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Voer de weblocatie (URL) in of specificeer het lokale bestand dat u wilt openen:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "V">
+<!ENTITY chooseFile.label "Bestand kiezen…">
+<!ENTITY chooseFile.accesskey "B">
+<!ENTITY newPrivate.label "Nieuw privévenster">
+<!ENTITY newWindow.label "Nieuw browservenster">
+<!ENTITY newTab.label "Nieuw browsertabblad">
+<!ENTITY currentTab.label "Huidige browsertabblad">
+<!ENTITY editNewWindow.label "Nieuw Composer-venster">
+<!ENTITY open.label "Openen">
+<!ENTITY caption.label "Weblocatie openen">
+<!ENTITY openWhere.label "Openen in:">
+<!ENTITY openWhere.accesskey "O">

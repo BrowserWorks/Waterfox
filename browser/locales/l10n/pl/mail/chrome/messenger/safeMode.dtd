@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title "&brandShortName; – tryb awaryjny">
+<!ENTITY window.width "37em">
+
+<!ENTITY safeModeDescription.label "&brandShortName; działa teraz w trybie awaryjnym; ustawienia, motywy i rozszerzenia użytkownika zostały tymczasowo wyłączone.">
+<!ENTITY safeModeDescription2.label "Wszystkie lub niektóre z poniższych zmian można wprowadzić na stałe:">
+
+<!ENTITY disableAddons.label "Wyłącz wszystkie dodatki">
+<!ENTITY disableAddons.accesskey "W">
+
+<!ENTITY resetToolbars.label "Przywróć domyślne paski narzędzi i przyciski">
+<!ENTITY resetToolbars.accesskey "P">
+
+<!ENTITY changeAndRestartButton.label "Wprowadź zmiany i uruchom ponownie">
+<!ENTITY changeAndRestartButton.accesskey "z">
+
+<!ENTITY continueButton.label "Kontynuuj w trybie awaryjnym">
+<!ENTITY continueButton.accesskey "K">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "按钮属性">
+
+<!ENTITY Settings.label "设置">
+
+<!ENTITY ButtonType.label "类型">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "提交">
+<!ENTITY reset.value "重置">
+<!ENTITY button.value "按钮">
+
+<!ENTITY ButtonName.label "名称：">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "值:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Tab 序列:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "已禁用">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "快捷键:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "移除按钮">
+<!ENTITY RemoveButton.accesskey "R">

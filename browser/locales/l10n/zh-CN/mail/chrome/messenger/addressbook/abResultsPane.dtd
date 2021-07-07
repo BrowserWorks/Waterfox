@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "通讯录">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "名称">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "邮箱">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "公司">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "姓名拼音">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "昵称">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "其他邮箱">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "部门">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "职位">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "手机">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "传呼">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "传真">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "住宅电话">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "单位电话">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ChatName.label                        "聊天名称">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "由小到大">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "由大到小">
+<!ENTITY sortDescending.accesskey              "D">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "プライバシー情報の消去">
+<!ENTITY sanitizeItems.label             "今すぐ消去する項目を選択してください:">
+
+<!ENTITY itemHistory.label               "閲覧の履歴">
+<!ENTITY itemHistory.accesskey           "B">
+<!ENTITY itemUrlBar.label                "アドレスバーの履歴">
+<!ENTITY itemUrlBar.accesskey            "L">
+<!ENTITY itemDownloads.label             "ダウンロードの履歴">
+<!ENTITY itemDownloads.accesskey         "D">
+<!ENTITY itemFormSearchHistory.label     "保存されているフォームと検索の履歴">
+<!ENTITY itemFormSearchHistory.accesskey "F">
+<!ENTITY itemCache.label                 "キャッシュ">
+<!ENTITY itemCache.accesskey             "a">
+<!ENTITY itemCookies.label               "Cookie">
+<!ENTITY itemCookies.accesskey           "C">
+<!ENTITY itemOfflineApps.label           "ウェブサイトのオフライン用データ">
+<!ENTITY itemOfflineApps.accesskey       "O">
+<!ENTITY itemPasswords.label             "保存されているパスワード">
+<!ENTITY itemPasswords.accesskey         "P">
+<!ENTITY itemSessions.label              "認証セッションのログイン情報">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "今すぐプライバシー情報を消去">

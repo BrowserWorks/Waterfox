@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "已保存 Cookie">
+<!ENTITY     tab.bannedservers.label        "Cookie 网站">
+<!ENTITY     div.bannedservers.label        "管理站点并设置是否允许他们在您的计算机中存储 Cookie。">
+<!ENTITY     div.cookiesonsystem.label      "查看或删除存储在你的计算机中的 Cookie。">
+<!ENTITY     treehead.cookiename.label      "Cookie 名称">
+<!ENTITY     treehead.cookiedomain.label    "报告站点">
+<!ENTITY     treehead.cookieexpires.label   "过期">
+<!ENTITY     treehead.infoselected.label    "已选定 Cookie 的信息">
+<!ENTITY     button.removecookie.label      "移除 Cookie">
+<!ENTITY     button.removecookie.accesskey  "R">
+<!ENTITY     button.removeallcookies.label  "移除所有 Cookie">
+<!ENTITY     button.removeallcookies.accesskey "e">
+
+<!ENTITY     search.placeholder             "搜索 Cookie">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "名称:">
+<!ENTITY     props.value.label              "内容：">
+<!ENTITY     props.domain.label             "主计算机:">
+<!ENTITY     props.path.label               "路径：">
+<!ENTITY     props.secure.label             "发送条件：">
+<!ENTITY     props.expires.label            "过期时间：">
+
+<!ENTITY     treehead.sitename.label        "报告站点">
+<!ENTITY     treehead.scheme.label          "方案">
+<!ENTITY     treehead.status.label          "状态">
+<!ENTITY     windowtitle.label              "Cookie 管理器">
+
+<!ENTITY     blockSite.label                "阻止">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "是">
+<!ENTITY     allowSite.accesskey            "A">
+<!ENTITY     allowSiteSession.label         "会话">
+<!ENTITY     allowSiteSession.accesskey     "S">
+<!ENTITY     removepermission.label         "删除站点">
+<!ENTITY     removepermission.accesskey     "R">
+<!ENTITY     removeallpermissions.label     "删除全部站点">
+<!ENTITY     removeallpermissions.accesskey "e">
+
+<!ENTITY     futureCookies.label            "不允许设置已移除 Cookie 的站点将来设置 Cookie">
+<!ENTITY     futureCookies.accesskey        "D">

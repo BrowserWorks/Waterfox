@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Управление сертификатами">
+<!ENTITY  managecerts.text         "Используйте систему управления сертификатами для управления личными сертификатами, сертификатами других пользователей и центрами сертификации.">
+<!ENTITY  managecerts.button       "Управление сертификатами…">
+<!ENTITY  managecerts.accesskey    "а">
+<!ENTITY  managedevices.caption    "Управление устройствами защиты">
+<!ENTITY  managedevices.text       "Нажав на эту кнопку, вы сможете управлять вашими устройствами защиты (например, смарт-картами).">
+<!ENTITY  managedevices.button     "Управление устройствами…">
+<!ENTITY  managedevices.accesskey  "п">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Сертификаты">
+<!ENTITY  certs.label              "Сертификаты">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Использовать протокол получения статуса сертификатов (OCSP) для проверки текущего статуса сертификатов">
+<!ENTITY enableOCSP.accesskey                     "о">
+<!ENTITY validation.requireOCSP.description       "При ошибке соединения с сервером OCSP рассматривать сертификат как недействительный">
+<!ENTITY validation.requireOCSP.accesskey         "ш">

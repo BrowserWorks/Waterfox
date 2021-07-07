@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.content.title "Contenido">
+<!ENTITY pref.content.description "Estas opciones influyen en cómo se muestra el contenido de sitios web y mensajes en &brandShortName;.">
+<!ENTITY siteIcons.label "Iconos de sitios web">
+<!ENTITY useSiteIcons.label "Mostrar iconos de sitios web">
+<!ENTITY useSiteIcons.accesskey "M">
+<!ENTITY useFavIcons2.label "Intentar usar el icono web del servidor cuando la página no defina uno propio">
+<!ENTITY useFavIcons2.accesskey "f">
+<!ENTITY scrolling.label "Desplazamiento">
+<!ENTITY useAutoScroll.label "Usar desplazamiento automático">
+<!ENTITY useAutoScroll.accesskey "e">
+<!ENTITY useSmoothScroll.label "Usar desplazamiento suave">
+<!ENTITY useSmoothScroll.accesskey "U">
+<!ENTITY zoomPrefs.label "Opciones de tamaño">
+<!ENTITY minZoom.label "Intervalo de">
+<!ENTITY minZoom.accesskey "I">
+<!ENTITY maxZoom.label "a">
+<!ENTITY maxZoom.accesskey "a">
+<!ENTITY percent.label "&#037;">
+<!ENTITY defaultZoom.label "Ampliación por defecto">
+<!ENTITY defaultZoom.accesskey "d">
+<!ENTITY siteSpecific.label "Recordar los niveles de ampliación para cada sitio">
+<!ENTITY siteSpecific.accesskey "d">
+<!ENTITY textZoomOnly.label "Escalar sólo el texto en lugar de la página completa">
+<!ENTITY textZoomOnly.accesskey "s">
+<!ENTITY enableAutomaticImageResizing.label "Reajustar imágenes grandes a la ventana del navegador">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+<!ENTITY allowHWAccel.label "Usar aceleración hardware cuando esté disponible">
+<!ENTITY allowHWAccel.accesskey "c">
+<!ENTITY blockAutoRefresh.label "Advertirme cuando los sitios web intenten redirigir o recargar la página">
+<!ENTITY blockAutoRefresh.accesskey "A">
+<!ENTITY showZoomStatusPanel.label "Mostrar controles de tamaño en la barra de estado">

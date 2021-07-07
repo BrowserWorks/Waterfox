@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+
+<!ENTITY newFolderDialog.title      "Nova pasta">
+<!ENTITY name.label                 "Nome:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Criar como subpasta de:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "Este servidor tem restrições a pastas de dois tipos especiais.">
+<!ENTITY folderRestriction2.label   "Permitir que sua nova pasta contenha:">
+<!ENTITY foldersOnly.label          "Apenas pastas">
+<!ENTITY messagesOnly.label         "Apenas mensagens">
+<!ENTITY accept.label               "Criar pasta">
+<!ENTITY accept.accesskey           "r">

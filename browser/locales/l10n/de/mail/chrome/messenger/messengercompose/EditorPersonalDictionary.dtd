@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Benutzerwörterbuch">
+
+<!ENTITY wordEditField.label "Neues Wort:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "Hinzufügen">
+<!ENTITY AddButton.accessKey "H">
+<!ENTITY DictionaryList.label "Wörter im Wörterbuch:">
+<!ENTITY DictionaryList.accessKey "W">
+<!ENTITY RemoveButton.label "Entfernen">
+<!ENTITY RemoveButton.accessKey "E">
+
+<!ENTITY CloseButton.label "Schließen">
+<!ENTITY CloseButton.accessKey "c">

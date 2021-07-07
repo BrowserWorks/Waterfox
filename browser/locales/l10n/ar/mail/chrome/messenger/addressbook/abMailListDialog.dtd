@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "قائمة بريدية جديدة">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "أضِف إلى: ">
+<!ENTITY addToAddressBook.accesskey     "ض">
+<!ENTITY ListName.label                 "اسم القائمة: ">
+<!ENTITY ListName.accesskey             "ق">
+<!ENTITY ListNickName.label             "كُنية القائمة: ">
+<!ENTITY ListNickName.accesskey         "ك">
+<!ENTITY ListDescription.label          "الوصف: ">
+<!ENTITY ListDescription.accesskey      "ص">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "اكتب عناوين بريد لإضافتها إلى القائمة البريدية:">
+<!ENTITY AddressTitle.accesskey         "ع">
+<!ENTITY UpButton.label                 "لأعلى">
+<!ENTITY DownButton.label               "لأسفل">
+

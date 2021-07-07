@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "&syncBrand.fullName.label; einrichten">
+<!ENTITY setupButton.accesskey      "e">
+<!ENTITY weaveDesc.label            "Mit &syncBrand.fullName.label; haben Sie auf all Ihren Geräten Zugriff auf Ihre Surf-Chronik, Passwörter, Tabs und Lesezeichen.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label;-Account">
+<!ENTITY accountName.label            "Account-Name:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Aktualisieren">
+<!ENTITY updatePass.accesskey         "A">
+<!ENTITY resetPass.label              "Zurücksetzen">
+<!ENTITY resetPass.accesskey          "Z">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Account verwalten">
+<!ENTITY manageAccount.accesskey      "A">
+<!ENTITY viewQuota.label              "Kontingent anzeigen">
+<!ENTITY viewQuota.accesskey          "Q">
+<!ENTITY changePassword.label         "Passwort ändern">
+<!ENTITY changePassword.accesskey     "P">
+<!ENTITY myRecoveryKey.label          "Mein Wiederherstellungs-Schlüssel">
+<!ENTITY myRecoveryKey.accesskey      "M">
+<!ENTITY resetSync.label              "Sync zurücksetzen">
+<!ENTITY resetSync.accesskey          "k">
+<!ENTITY unlinkDevice.label           "Verbindung mit diesem Gerät aufheben">
+<!ENTITY unlinkDevice.accesskey       "V">
+<!ENTITY addDevice.label              "Gerät hinzufügen">
+<!ENTITY addDevice.accesskey          "h">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Computername:">
+<!ENTITY syncComputerName.accesskey   "C">
+
+<!ENTITY syncMy2.label              "Synchronisieren:">
+<!ENTITY engine.addons.label        "Add-ons">
+<!ENTITY engine.addons.accesskey    "A">
+<!ENTITY engine.bookmarks.label     "Lesezeichen">
+<!ENTITY engine.bookmarks.accesskey "L">
+<!ENTITY engine.tabs.label          "Tabs">
+<!ENTITY engine.tabs.accesskey      "T">
+<!ENTITY engine.history.label       "Chronik">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "Passwörter">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label         "Einstellungen">
+<!ENTITY engine.prefs.accesskey     "E">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Nutzungsbedingungen">
+<!ENTITY prefs.ppLink.label         "Datenschutzrichtlinie">

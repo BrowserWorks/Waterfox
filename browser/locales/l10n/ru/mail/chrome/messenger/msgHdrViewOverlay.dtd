@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Кому">
+<!ENTITY fromField4.label "От">
+<!ENTITY senderField4.label "Отправитель">
+<!ENTITY author.label "Автор">
+<!ENTITY organizationField4.label "Организация">
+<!ENTITY replyToField4.label "Обратный адрес">
+
+<!ENTITY subjectField4.label "Тема">
+<!ENTITY ccField4.label "Копия">
+<!ENTITY bccField4.label "Скрытая копия">
+<!ENTITY newsgroupsField4.label "Группы новостей">
+<!ENTITY followupToField4.label "Ответ в группу новостей">
+<!ENTITY tagsHdr4.label "Метки">
+<!ENTITY dateField4.label "Дата">
+<!ENTITY userAgentField4.label "Программа">
+<!ENTITY referencesField4.label "Ссылки">
+<!ENTITY messageIdField4.label "Идентификатор">
+<!ENTITY inReplyToField4.label "В ответ на">
+<!ENTITY originalWebsite4.label "Веб-сайт">
+
+<!ENTITY hdrArchiveButton1.label "Архивировать">
+<!ENTITY hdrArchiveButton1.tooltip "Архивировать это сообщение">
+<!ENTITY hdrSmartReplyButton1.label "Умный ответ">
+<!ENTITY hdrReplyButton1.label "Ответить">
+<!ENTITY hdrReplyButton2.tooltip "Ответить отправителю этого сообщения">
+<!ENTITY hdrReplyAllButton1.label "Ответить всем">
+<!ENTITY hdrReplyAllButton1.tooltip "Ответить отправителю и всем получателям">
+<!ENTITY hdrReplyListButton1.label "Ответить в рассылку">
+<!ENTITY hdrReplyListButton1.tooltip "Ответить в список рассылки">
+<!ENTITY hdrFollowupButton1.label "Ответить в группу">
+<!ENTITY hdrFollowupButton1.tooltip "Отправить ответ в эту группу новостей">
+<!ENTITY hdrForwardButton1.label "Переслать">
+<!ENTITY hdrForwardButton1.tooltip "Переслать это сообщение">
+<!ENTITY hdrJunkButton1.label "Спам">
+<!ENTITY hdrJunkButton1.tooltip "Отметить это сообщение как спам">
+<!ENTITY hdrTrashButton1.label "Удалить">
+<!ENTITY hdrTrashButton1.tooltip "Удалить это сообщение">
+
+<!ENTITY hdrViewToolbarShowFull.label "Показывать значки и текст">
+<!ENTITY hdrViewToolbarShowFull.accesskey "и">
+<!ENTITY hdrViewToolbarShowIcons.label "Показывать только значки">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "ч">
+<!ENTITY hdrViewToolbarShowText.label "Показывать только текст">
+<!ENTITY hdrViewToolbarShowText.accesskey "т">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Всегда показывать ответ отправителю">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "с">
+
+<!ENTITY otherActionsButton2.label "Больше">
+<!ENTITY otherActionsButton.tooltip "Больше действий">
+<!ENTITY otherActionsOpenConversation1.label "Открыть в разговоре">
+<!ENTITY otherActionsOpenConversation1.accesskey "р">
+<!ENTITY otherActionsOpenInNewWindow1.label "Открыть в новом окне">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "н">
+<!ENTITY otherActionsOpenInNewTab1.label "Открыть в новой вкладке">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "ы">
+<!ENTITY markAsReadMenuItem1.label "Отметить как прочитанное">
+<!ENTITY markAsReadMenuItem1.accesskey "и">
+<!ENTITY markAsUnreadMenuItem1.label "Отметить как непрочитанное">
+<!ENTITY markAsUnreadMenuItem1.accesskey "ч">
+<!ENTITY saveAsMenuItem1.label "Сохранить как…">
+<!ENTITY saveAsMenuItem1.accesskey "х">
+<!ENTITY viewSourceMenuItem1.label "Показать исходник">
+<!ENTITY viewSourceMenuItem1.accesskey "а">
+<!ENTITY otherActionsPrint1.label "Распечатать…">
+<!ENTITY otherActionsPrint1.accesskey "п">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Сначала показать панель вложений">
+<!ENTITY startExpandedCmd.accesskey    "л">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Открыть">
+<!ENTITY openAttachmentCmd.accesskey    "ь">
+<!ENTITY saveAsAttachmentCmd.label    "Сохранить как…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "х">
+<!ENTITY detachAttachmentCmd.label    "Отделить…">
+<!ENTITY detachAttachmentCmd.accesskey    "т">
+<!ENTITY deleteAttachmentCmd.label    "Удалить">
+<!ENTITY deleteAttachmentCmd.accesskey    "и">
+<!ENTITY openAllAttachmentsCmd.label    "Открыть все…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "р">
+<!ENTITY saveAllAttachmentsCmd.label    "Сохранить все…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "а">
+<!ENTITY detachAllAttachmentsCmd.label    "Отделить все…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "д">
+<!ENTITY deleteAllAttachmentsCmd.label    "Удалить все…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "е">
+
+<!ENTITY openAttachment.tooltip "Открыть вложенный файл">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Открыть папку с файлом">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "к">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Показать в Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "к">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Сохранить">
+<!ENTITY saveAttachmentButton1.tooltip     "Сохранить вложенный файл">
+<!ENTITY saveAllAttachmentsButton1.label   "Сохранить все">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Сохранить все вложенные файлы">
+
+<!ENTITY copyLinkCmd.label        "Копировать ссылку">
+<!ENTITY copyLinkCmd.accesskey    "и">
+
+<!ENTITY CopyMessageId.label "Копировать идентификатор">
+<!ENTITY CopyMessageId.accesskey "п">
+<!ENTITY OpenMessageForMsgId.label "Открыть сообщение по идентификатору">
+<!ENTITY OpenMessageForMsgId.accesskey "ы">
+<!ENTITY OpenBrowserWithMsgId.label "Открыть сообщение с идентификатором в браузере">
+<!ENTITY OpenBrowserWithMsgId.accesskey "к">

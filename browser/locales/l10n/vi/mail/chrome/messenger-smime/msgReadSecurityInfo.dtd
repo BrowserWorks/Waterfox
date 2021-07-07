@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Bảo mật thư">
+<!ENTITY signatureCert.label "Xem chứng chỉ chữ ký">
+<!ENTITY encryptionCert.label "Xem chứng chỉ mã hóa">
+
+<!ENTITY signer.name "Kí bởi:">
+<!ENTITY recipient.name "Mã hóa cho:">
+<!ENTITY email.address "Địa chỉ email:">
+<!ENTITY issuer.name "Chứng chỉ được cấp bởi:">
+
+<!-- LOCALIZATION NOTE(SMIME.label): This a name for a technical standard. You should not translate it, but if applicable, you may write it using localized characters. -->
+<!ENTITY SMIME.label "S/MIME">

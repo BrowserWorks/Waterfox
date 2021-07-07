@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "絞り込み:">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "すべて">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "未読">
+<!ENTITY viewUnread.accesskey "U">
+<!ENTITY viewNotDeleted.label "未削除">
+<!ENTITY viewNotDeleted.accesskey "D">
+<!ENTITY viewTags.label "タグ">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "ユーザー設定">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "検索フォルダーとして保存...">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "カスタマイズ...">
+<!ENTITY viewCustomizeView.accesskey "C">

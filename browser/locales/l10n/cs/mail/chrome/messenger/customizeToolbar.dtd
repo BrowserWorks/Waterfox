@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Úprava nástrojových lišt">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Pro přidání nebo odebrání přetáhněte položku do nebo z nástrojové lišty.">
+<!ENTITY show.label               "Zobrazit:">
+<!ENTITY iconsAndText.label       "Ikony a text">
+<!ENTITY icons.label              "Ikony">
+<!ENTITY text.label               "Text">
+<!ENTITY iconsBesideText.label    "Ikony vedle textu">
+<!ENTITY useSmallIcons.label      "Použít malé ikony">
+<!ENTITY restoreDefaultSet.label  "Obnovit výchozí sadu">
+<!ENTITY showTitlebar2.label      "Záhlaví okna">
+<!ENTITY extraDragSpace2.label    "Prostor pro chycení okna">
+<!ENTITY saveChanges.label        "Hotovo">
+<!ENTITY undoChanges.label        "Zrušit změny">

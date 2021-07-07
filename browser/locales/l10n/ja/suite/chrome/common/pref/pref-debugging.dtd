@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "デバッグ">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "レンダリング">
+<!ENTITY debugXULBox.label                "XUL ボックスをデバッグ">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "XUL キャッシュを無効化">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "イベント">
+<!ENTITY debugPaintFlashing.label "ペイントフラッシュ (Caps-Lock で切り替え)">
+<!ENTITY debugPaintFlashing.accesskey "P">
+<!ENTITY debugPaintFlashingChrome.label "chrome 要素のペイントフラッシュ">
+<!ENTITY debugPaintFlashingChrome.accesskey "F">
+<!ENTITY debugPaintDumping.label "ペイントダンプ">
+<!ENTITY debugPaintDumping.accesskey "a">
+<!ENTITY debugInvalidateDumping.label "無効化ダンプ">
+<!ENTITY debugInvalidateDumping.accesskey "n">
+<!ENTITY debugEventDumping.label "イベントダンプ">
+<!ENTITY debugEventDumping.accesskey "E">
+<!ENTITY debugMotionEventDumping.label "モーションイベントダンプ">
+<!ENTITY debugMotionEventDumping.accesskey "M">
+<!ENTITY debugCrossingEventDumping.label "クロスイベントダンプ">
+<!ENTITY debugCrossingEventDumping.accesskey "C">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "リフローイベント">
+<!ENTITY debugReflowShowFrameCounts.label        "フレーム数を表示">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "S">
+<!ENTITY debugReflowDumpFrameCounts.label        "フレーム数をダンプ">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "D">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "フレームごとのフレーム数ダンプ">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "u">

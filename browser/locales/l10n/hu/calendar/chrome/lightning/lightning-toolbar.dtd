@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Naptár eszköztár">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "N">
+<!ENTITY lightning.toolbar.task.name "Feladat eszköztár">
+<!ENTITY lightning.toolbar.task.name.accesskey "F">
+
+<!ENTITY lightning.toolbar.sync.label "Szinkronizálás">
+<!ENTITY lightning.toolbar.sync.tooltip "Naptárak újratöltése és módosítások szinkronizálása">
+<!ENTITY lightning.toolbar.delete.label "Törlés">
+<!ENTITY lightning.toolbar.delete.tooltip "Kijelölt események vagy feladatok törlése">
+<!ENTITY lightning.toolbar.edit.label "Szerkesztés">
+<!ENTITY lightning.toolbar.edit.tooltip "Kijelölt esemény vagy feladat szerkesztése">
+<!ENTITY lightning.toolbar.gototoday.label "Ugrás a mai napra">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Ugrás a mai napra">
+<!ENTITY lightning.toolbar.print.label "Nyomtatás">
+<!ENTITY lightning.toolbar.print.tooltip "Események vagy feladatok nyomtatása">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Naptár">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Átváltás a naptár lapra">
+<!ENTITY lightning.toolbar.calendar.accesskey "N">
+<!ENTITY lightning.toolbar.task.label         "Feladatok">
+<!ENTITY lightning.toolbar.task.tooltip       "Átváltás a feladatok lapra">
+<!ENTITY lightning.toolbar.task.accesskey     "F">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Esemény">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Új elem létrehozása">
+<!ENTITY lightning.toolbar.newtask.label      "Feladat">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Új feladat létrehozása">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Nap">
+<!ENTITY lightning.toolbar.day.accesskey             "N">
+<!ENTITY lightning.toolbar.week.label                "Hét">
+<!ENTITY lightning.toolbar.week.accesskey            "H">
+<!ENTITY lightning.toolbar.multiweek.label           "Több hét">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "T">
+<!ENTITY lightning.toolbar.month.label               "Hónap">
+<!ENTITY lightning.toolbar.month.accesskey           "p">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Alkalmazásmenü">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "A &brandShortName; menü megjelenítése">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Naptár ablaktábla">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "N">
+<!ENTITY lightning.toolbar.calendarpane.label        "A naptár ablaktábla megjelenítése">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "n">

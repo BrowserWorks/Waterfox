@@ -1,0 +1,157 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Καρτέλα προγράμματος περιήγησης">
+<!ENTITY tabCmd.accesskey "Κ">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Άνοιγμα διαδικτυακής τοποθεσίας…">
+<!ENTITY openCmd.accesskey "τ">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Άνοιγμα αρχείου…">
+<!ENTITY openFileCmd.accesskey "Ά">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Κλείσιμο άλλων καρτελών">
+<!ENTITY closeOtherTabs.accesskey "κ">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Κλείσιμο καρτελών στα δεξιά">
+<!ENTITY  closeTabsToTheEnd.accesskey "δ">
+
+<!ENTITY uploadFile.label "Μεταφόρτωση αρχείου…">
+<!ENTITY uploadFile.accesskey "Μ">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Εύρεση στη σελίδα…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Εμφάνιση/Απόκρυψη">
+<!ENTITY toolbarsCmd.accesskey "σ">
+<!ENTITY tabbarCmd.label "Γραμμή καρτελών">
+<!ENTITY tabbarCmd.accesskey "κ">
+<!ENTITY taskbarCmd.label "Γραμμή κατάστασης">
+<!ENTITY taskbarCmd.accesskey "σ">
+<!ENTITY componentbarCmd.label "Γραμμή στοιχείων">
+<!ENTITY componentbarCmd.accesskey "σ">
+
+<!ENTITY fullScreenCmd.label "Πλήρης οθόνη">
+<!ENTITY fullScreenCmd.accesskey "Π">
+
+<!ENTITY useStyleSheetMenu.label "Χρήση στυλ">
+<!ENTITY useStyleSheetMenu.accesskey "Χ">
+<!ENTITY useStyleSheetNone.label "Κανένα">
+<!ENTITY useStyleSheetNone.accesskey "Κ">
+<!ENTITY useStyleSheetPersistentOnly.label "Προεπιλεγμένο στυλ">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "Π">
+<!ENTITY bidiSwitchPageDirectionItem.label "Αλλαγή κατεύθυνσης σελίδας">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "κ">
+<!ENTITY pageSourceCmd.label "Κώδικας σελίδας">
+<!ENTITY pageSourceCmd.accesskey "δ">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Πληροφορίες σελίδας">
+<!ENTITY pageInfoCmd.accesskey "Π">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Μετάβαση">
+<!ENTITY goMenu.accesskey "Μ">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Αρχική">
+<!ENTITY goHomeCmd.accesskey "Α">
+<!ENTITY historyCmd.label "Ιστορικό">
+<!ENTITY historyCmd.accesskey "σ">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Πρόσφατα κλεισμένες καρτέλες">
+<!ENTITY recentTabs.accesskey "κ">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Πρόσφατα κλεισμένα παράθυρα">
+<!ENTITY recentWindows.accesskey "π">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Επαναφορά προηγούμενης συνεδρίας">
+<!ENTITY historyRestoreLastSession.accesskey "Ε">
+<!ENTITY syncTabsMenu.label "Καρτέλες από άλλους υπολογιστές">
+<!ENTITY syncTabsMenu.accesskey "υ">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Σελιδοδείκτες">
+<!ENTITY bookmarksMenu.accesskey "Σ">
+<!ENTITY addCurPageCmd.label "Προσθήκη σελιδοδείκτη σελίδας">
+<!ENTITY addCurPageCmd.accesskey "σ">
+<!ENTITY addCurPageAsCmd.label "Σελιδοδείκτης αρχείου…">
+<!ENTITY addCurPageAsCmd.accesskey "α">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Προσθήκη σελιδοδείκτη για την ομάδα καρτελών…">
+<!ENTITY addCurTabsAsCmd.accesskey "ο">
+<!ENTITY manBookmarksCmd.label "Διαχείριση σελιδοδεικτών…">
+<!ENTITY manBookmarksCmd.accesskey "Δ">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Αναζήτηση στο διαδίκτυο">
+<!ENTITY searchInternetCmd.accesskey "ζ">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Μετάφραση σελίδας">
+<!ENTITY translateMenu.accesskey "Μ">
+
+<!ENTITY cookieMessageTitle.label "Τα δικαιώματα cookies άλλαξαν">
+<!ENTITY cookieDisplayCookiesCmd.label "Διαχείριση αποθηκευμένων cookies">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "Δ">
+<!ENTITY cookieAllowCookiesCmd.label "Αποδοχή cookies από την ιστοσελίδα">
+<!ENTITY cookieAllowCookiesCmd.accesskey "Α">
+<!ENTITY cookieAllowCookiesMsg.label "Τα cookies από αυτή την ιστοσελίδα θα επιτρέπονται πάντα.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Αποδοχή cookies συνεδρίας από αυτή την ιστοσελίδα">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "σ">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Αυτή η ιστοσελίδα θα μπορεί να τοποθετεί cookies μόνο στην τρέχουσα συνεδρία.">
+<!ENTITY cookieCookiesDefaultCmd.label "Χρήση προεπιλεγμένων δικαιωμάτων cookie">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "Χ">
+<!ENTITY cookieCookiesDefaultMsg.label "Τα cookies της ιστοσελίδας θα επιτρέπονται ή θα απορρίπτονται σύμφωνα με τις προεπιλεγμένες ρυθμίσεις.">
+<!ENTITY cookieBlockCookiesCmd.label "Φραγή cookies από την ιστοσελίδα">
+<!ENTITY cookieBlockCookiesCmd.accesskey "Φ">
+<!ENTITY cookieBlockCookiesMsg.label "Τα cookies από αυτή την ιστοσελίδα θα απορρίπτονται πάντα.">
+
+<!ENTITY cookieImageMessageTitle.label "Τα δικαιώματα εικόνων άλλαξαν">
+<!ENTITY cookieDisplayImagesCmd.label "Διαχείριση δικαιωμάτων εικόνων">
+<!ENTITY cookieDisplayImagesCmd.accesskey "Δ">
+<!ENTITY cookieAllowImagesCmd.label "Αποδοχή εικόνων από την ιστοσελίδα">
+<!ENTITY cookieAllowImagesCmd.accesskey "Α">
+<!ENTITY cookieAllowImagesMsg.label "Θα γίνεται πάντα λήψη εικόνων από αυτή την ιστοσελίδα.">
+<!ENTITY cookieImagesDefaultCmd.label "Χρήση προεπιλεγμένων δικαιωμάτων εικόνων">
+<!ENTITY cookieImagesDefaultCmd.accesskey "Χ">
+<!ENTITY cookieImagesDefaultMsg.label "Οι εικόνες από αυτή την ιστοσελίδα θα ληφθούν βάσει των προεπιλεγμένων ρυθμίσεων.">
+<!ENTITY cookieBlockImagesCmd.label "Φραγή εικόνων από την ιστοσελίδα">
+<!ENTITY cookieBlockImagesCmd.accesskey "Φ">
+<!ENTITY cookieBlockImagesMsg.label "Δεν θα γίνεται ποτέ λήψη εικόνων από αυτή την ιστοσελίδα.">
+
+<!ENTITY popupsMessageChangeTitle.label "Τα δικαιώματα αναδυόμενων παραθύρων άλλαξαν">
+<!ENTITY popupAllowCmd.label "Αποδοχή αναδυόμενων από την ιστοσελίδα">
+<!ENTITY popupAllowCmd.accesskey "Α">
+<!ENTITY popupAllowMsg.label "Τα αναδυόμενα από αυτή την ιστοσελίδα θα εμφανίζονται πάντα.">
+<!ENTITY popupDefaultCmd.label "Χρήση προεπιλεγμένων δικαιωμάτων αναδυόμενων">
+<!ENTITY popupDefaultCmd.accesskey "Χ">
+<!ENTITY popupDefaultMsg.label "Τα αναδυόμενα παράθυρα από αυτή την ιστοσελίδα θα εμφανίζονται βάσει των προεπιλεγμένων ρυθμίσεων.">
+<!ENTITY popupBlockCmd.label "Φραγή αναδυόμενων από την ιστοσελίδα">
+<!ENTITY popupBlockCmd.accesskey "Φ">
+<!ENTITY popupBlockMsg.label "Δεν θα εμφανίζονται αναδυόμενα από αυτή την ιστοσελίδα.">
+<!ENTITY popupsManage.label "Διαχείριση αναδυόμενων παραθύρων">
+<!ENTITY popupsManage.accesskey "Δ">
+
+<!ENTITY cookieCookieManager.label "Διαχείριση cookies">
+<!ENTITY cookieCookieManager.accesskey "c">
+<!ENTITY cookieImageManager.label "Διαχείριση εικόνων">
+<!ENTITY cookieImageManager.accesskey "ε">
+<!ENTITY popupsManager.label "Διαχείριση αναδυόμενων παραθύρων">
+<!ENTITY popupsManager.accesskey "χ">
+
+<!ENTITY clearPrivateDataCmd.label "Εκκαθάριση ιδιωτικών δεδομένων…">
+<!ENTITY clearPrivateDataCmd.accesskey "κ">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

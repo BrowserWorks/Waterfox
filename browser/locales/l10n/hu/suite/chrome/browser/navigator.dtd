@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Privát böngészés">
+
+<!ENTITY editPageCmd.label "Oldal szerkesztése">
+<!ENTITY editPageCmd.accesskey "l">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Böngésző eszköztár">
+<!ENTITY navbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarCmd.label     "Könyvjelző eszköztár">
+<!ENTITY bookmarksToolbarCmd.accesskey "K">
+
+<!ENTITY closeWindow.label "Ablak bezárása">
+<!ENTITY closeWindow.accesskey "A">
+
+<!ENTITY minimizeButton.tooltip       "Kis méret">
+<!ENTITY restoreButton.tooltip        "Visszaállítás">
+
+<!ENTITY feedsMenu.label "Feliratkozás erre az oldalra">
+<!ENTITY feedsMenu.accesskey "F">
+
+<!ENTITY menuBar.tooltip                  "Menüsor">
+<!ENTITY bookmarksToolbar.tooltip         "Könyvjelző eszköztár">
+<!ENTITY navigationToolbar.tooltip        "Böngésző eszköztár">
+
+<!ENTITY editBookmark.done.label "Kész">
+<!ENTITY editBookmark.cancel.label "Mégse">
+<!ENTITY editBookmark.removeBookmark.accessKey "e">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Vissza">
+<!ENTITY backButton.tooltip           "Ugrás az előző oldalra">
+<!ENTITY forwardButton.label          "Előre">
+<!ENTITY forwardButton.tooltip        "Ugrás a következő oldalra">
+<!ENTITY reloadButton.label           "Frissítés">
+<!ENTITY reloadButton.tooltip         "Aktuális oldal újratöltése">
+<!ENTITY stopButton.label             "Leállítás">
+<!ENTITY stopButton.tooltip           "Oldal letöltésének megszakítása">
+<!ENTITY searchButton.label           "Keresés">
+<!ENTITY searchButton.tooltip         "Írja be a keresendő szót a mezőbe, majd kattintson a Keresés gombra">
+<!ENTITY goButton.label               "Ugrás">
+<!ENTITY goButton.tooltip             "Írja be a weboldal címét a mezőbe, majd kattintson az Ugrás gombra">
+<!ENTITY printButton.label            "Nyomtatás">
+<!ENTITY printButton.tooltip          "Oldal kinyomtatása">
+
+<!ENTITY throbber.tooltip             "Ugrás a &vendorShortName; honlapjára">
+
+<!ENTITY throbber.tooltip2            "Ugrás a &brandShortName; honlapjára">
+
+<!ENTITY locationBar.tooltip          "Írja be a keresendő szót, a kulcsszót vagy a webcímet">
+<!ENTITY locationBar.accesskey        "e">
+<!ENTITY locationBar.title            "Hely">
+<!ENTITY proxyIcon.tooltip            "Az ikon áthúzásával hivatkozást hozhat létre erre az oldalra">
+
+<!ENTITY searchItem.title             "Keresés">
+
+<!ENTITY bookmarksButton.label        "Könyvjelzők">
+<!ENTITY bookmarksButton.tooltip      "Könyvjelzők listája">
+<!ENTITY homeButton.label             "Kezdőlap">
+<!ENTITY bookmarksToolbarItem.label   "Könyvjelző eszköztár elemei">
+<!ENTITY bookmarksToolbarChevron.tooltip "További könyvjelzők megjelenítése">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Kész">
+
+<!ENTITY popupIcon.tooltiptext      "A webhely felugró ablakainak engedélyezése">
+
+<!ENTITY viewSecurityInfo.label      "Biztonsági adatok megtekintése">
+<!ENTITY viewSecurityInfo.accesskey  "B">
+<!ENTITY viewCertificate.label       "Tanúsítvány megtekintése">
+<!ENTITY viewCertificate.accesskey   "T">
+<!ENTITY viewCertManager.label       "Tanúsítványkezelő megnyitása">
+<!ENTITY viewCertManager.accesskey   "k">
+
+<!ENTITY zoomIn.tooltiptext          "Nagyobb">
+<!ENTITY zoomOut.tooltiptext         "Kisebb">

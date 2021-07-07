@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title "Egenskaber for tabel">
+<!ENTITY applyButton.label "Anvend">
+<!ENTITY applyButton.accesskey "A">
+<!ENTITY closeButton.label "Luk">
+<!ENTITY tableTab.label "Tabel">
+<!ENTITY cellTab.label "Celler">
+<!ENTITY tableRows.label "Rækker:">
+<!ENTITY tableRows.accessKey "R">
+<!ENTITY tableColumns.label "Kolonner:">
+<!ENTITY tableColumns.accessKey "K">
+<!ENTITY tableHeight.label "Højde:">
+<!ENTITY tableHeight.accessKey "H">
+<!ENTITY tableWidth.label "Bredde:">
+<!ENTITY tableWidth.accessKey "B">
+<!ENTITY tableBorderSpacing.label "Rammer og afstand">
+<!ENTITY tableBorderWidth.label "Ramme:">
+<!ENTITY tableBorderWidth.accessKey "m">
+<!ENTITY tableSpacing.label "Afstand:">
+<!ENTITY tableSpacing.accessKey "S">
+<!ENTITY tablePadding.label "Indryk:">
+<!ENTITY tablePadding.accessKey "I">
+<!ENTITY tablePxBetwCells.label "pixler mellem cellerne">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixler mellem cellens ramme og indholdet">
+<!ENTITY tableAlignment.label "Tabeljustering:">
+<!ENTITY tableAlignment.accessKey "T">
+<!ENTITY tableCaption.label "Overskrift:">
+<!ENTITY tableCaption.accessKey "O">
+<!ENTITY tableCaptionAbove.label "Over tabellen">
+<!ENTITY tableCaptionBelow.label "Under tabellen">
+<!ENTITY tableCaptionLeft.label "Til venstre for tabellen">
+<!ENTITY tableCaptionRight.label "Til højre for tabellen">
+<!ENTITY tableCaptionNone.label "Ingen">
+<!ENTITY tableInheritColor.label "(Dæk ikke sidens baggrundsfarve)">
+
+<!ENTITY cellSelection.label "Det valgte">
+<!ENTITY cellSelectCell.label "Celle">
+<!ENTITY cellSelectRow.label "Række">
+<!ENTITY cellSelectColumn.label "Kolonne">
+<!ENTITY cellSelectNext.label "Næste">
+<!ENTITY cellSelectNext.accessKey "N">
+<!ENTITY cellSelectPrevious.label "Forrige">
+<!ENTITY cellSelectPrevious.accessKey "F">
+<!ENTITY applyBeforeChange.label "Nuværende ændringer bliver gemt før ændring af markeringen.">
+<!ENTITY cellContentAlignment.label "Justering af indholdet">
+<!ENTITY cellHorizontal.label "Vandret:">
+<!ENTITY cellHorizontal.accessKey "V">
+<!ENTITY cellVertical.label "Lodret:">
+<!ENTITY cellVertical.accessKey "o">
+<!ENTITY cellStyle.label "Cellestil:">
+<!ENTITY cellStyle.accessKey "C">
+<!ENTITY cellNormal.label "Normal">
+<!ENTITY cellHeader.label "Hovede">
+<!ENTITY cellTextWrap.label "Ombryd tekst:">
+<!ENTITY cellTextWrap.accessKey "T">
+<!ENTITY cellWrap.label "Ombryd">
+<!ENTITY cellNoWrap.label "Ombryd ikke">
+<!ENTITY cellAlignTop.label "Top">
+<!ENTITY cellAlignMiddle.label "Midten">
+<!ENTITY cellAlignBottom.label "Bunden">
+<!ENTITY cellAlignJustify.label "Lige margen">
+<!ENTITY cellInheritColor.label "(Dæk ikke tabellens baggrundsfarve)">
+<!ENTITY cellUseCheckboxHelp.label "Brug afkrydsningsfelter til at bestemme hvilke egenskaber der gælder alle markerede celler">
+
+<!ENTITY size.label "Størrelse:">
+<!ENTITY pixels.label "pixler">
+<!ENTITY backgroundColor.label "Baggrundsfarve">
+<!ENTITY backgroundColor.accessKey "r">
+<!ENTITY AlignLeft.label "Venstre">
+<!ENTITY AlignCenter.label "Centrer">
+<!ENTITY AlignRight.label "Højre">

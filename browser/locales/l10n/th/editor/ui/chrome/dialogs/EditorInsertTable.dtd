@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "แทรกตาราง">
+
+<!ENTITY size.label "ขนาด">
+<!ENTITY numRowsEditField.label "แถว:">
+<!ENTITY numRowsEditField.accessKey "ถ">
+<!ENTITY numColumnsEditField.label "คอลัมน์:">
+<!ENTITY numColumnsEditField.accessKey "ค">
+<!ENTITY widthEditField.label "ความกว้าง:">
+<!ENTITY widthEditField.accessKey "ก">
+<!ENTITY borderEditField.label "เส้นขอบ:">
+<!ENTITY borderEditField.accessKey "ข">
+<!ENTITY borderEditField.tooltip "พิมพ์จำนวนเส้นขอบของตาราง หรือพิมพ์เลขศูนย์ (0) หากไม่ต้องการเส้นขอบ">
+<!ENTITY pixels.label "พิกเซล">

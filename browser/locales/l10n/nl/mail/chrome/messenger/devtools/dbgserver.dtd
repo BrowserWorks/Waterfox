@@ -1,0 +1,4 @@
+<!ENTITY options.title "Ontwikkelaarshulpmiddelen-opties">
+<!ENTITY options.status.label "Status:">
+<!ENTITY options.port.label "Poort:">
+<!ENTITY options.forcelocal.label "Verbindingen vanaf andere computers toestaan">

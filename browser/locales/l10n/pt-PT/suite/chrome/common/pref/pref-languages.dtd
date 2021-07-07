@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Algumas páginas web estão disponíveis em diversos idiomas. Escolha os idiomas para as páginas web, por ordem de preferência.">
+<!ENTITY languages.customize.title                      "Idiomas">
+<!ENTITY langtitle.label                                "Idiomas para páginas Web">
+<!ENTITY languages.customize.prefAddLangDescript        "Selecione o(s) idioma(s) que deseja adicionar.">
+<!ENTITY languages.customize.addButton.label            "Adicionar…">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+<!ENTITY languages.customize.deleteButton.label         "Remover">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.add.title.label            "Adicionar idiomas">
+<!ENTITY languages.customize.available.label            "Idiomas:">
+<!ENTITY languages.customize.active.label               "Idiomas por ordem de preferência:">
+<!ENTITY languages.customize.active.accesskey           "I">
+<!ENTITY languages.customize.others.label               "Outros:">
+<!ENTITY languages.customize.others.accesskey           "O">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Codificação de texto para conteúdo de legado">
+<!ENTITY languages.customize.Fallback2.label            "Codificação de texto de recurso:">
+<!ENTITY languages.customize.Fallback2.accesskey        "t">
+<!ENTITY languages.customize.Fallback2.desc             "Utilizado em conteúdo antigo que falha na especificação da codificação.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "ex: pt-PT, pt-BR">
+<!ENTITY languages.customize.moveUp.label               "Mover para cima">
+<!ENTITY languages.customize.moveUp.accesskey           "c">
+<!ENTITY languages.customize.moveDown.label             "Mover para baixo">
+<!ENTITY languages.customize.moveDown.accesskey         "b">

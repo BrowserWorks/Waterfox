@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Selecionar perfil de usuário">
+<!ENTITY            profileManager.title "&brandShortName; Gerenciador de perfis">
+
+<!ENTITY            manage.label     "Organizar">
+<!ENTITY            manage.accesskey "z">
+<!ENTITY            select.label     "Usar perfil">
+
+<!ENTITY            availableProfiles.label "Perfis disponíveis">
+
+<!ENTITY            introStart.label         "Para acessar teu perfil, que contém tuas mensagens armazenadas, configurações e outras informações personalizadas, escolha um perfil da lista e clique &start.label; para iniciar tua sessão.">
+<!ENTITY            introSwitch.label        "Para mudar para outro perfil, que contém mensagens armazenadas, configurações e outras informações personalizadas, escolha um perfil da lista e clique &select.label; para começar a usá-lo.">
+<!ENTITY            profileManagerText.label "&brandShortName; armazena informação acerca de tuas configurações, preferências, marcadores, mensagens armazena e outros items de usuário no teu perfil.">
+
+<!ENTITY            autoSelect.label         "Padrão para este perfil">
+<!ENTITY            autoSelect.accesskey     "s">
+
+<!ENTITY            start.label              "Iniciar o &brandShortName;">
+<!ENTITY            exit.label               "Sair">
+
+<!ENTITY            newButton.label          "Criar perfil…">
+<!ENTITY            newButton.accesskey      "C">
+<!ENTITY            renameButton.label       "Renomear perfil…">
+<!ENTITY            renameButton.accesskey   "R">
+<!ENTITY            deleteButton.label       "Excluir perfil…">
+<!ENTITY            deleteButton.accesskey   "E">
+
+<!ENTITY            offlineState.label       "Trabalhar offline">
+<!ENTITY            offlineState.accesskey   "o">

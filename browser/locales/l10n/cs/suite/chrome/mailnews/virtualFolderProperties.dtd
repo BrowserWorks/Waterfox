@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nová složka uloženého hledání">
+<!ENTITY name.label "Název:">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "Vytvořit jako podsložku v:">
+<!ENTITY description.accesskey "p">
+
+<!ENTITY searchTermCaption.label "Upravit vyhledávací kritéria používaná pro tuto virtuální složku:">
+
+<!ENTITY folderSelectionCaption.label "Zvolte složky k prohledávání:">
+<!ENTITY chooseFoldersButton.label "Vybrat…">
+<!ENTITY chooseFoldersButton.accesskey "b">
+
+<!ENTITY searchOnline.label "Hledat online (Vrací vždy aktuální výsledky u složek typu IMAP nebo Diskusní skupiny, ale zvyšuje čas potřebný k otevření složky)">
+<!ENTITY searchOnline.accesskey "H">
+<!ENTITY newFolderButton.label "Vytvořit">
+<!ENTITY newFolderButton.accesskey "t">
+<!ENTITY editFolderButton.label "Aktualizovat">
+<!ENTITY editFolderButton.accesskey "A">

@@ -1,0 +1,111 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "기존 이메일 주소 설정">
+<!ENTITY emailWizard.caption             "현재 이메일 주소를 사용하십시오">
+<!ENTITY name.label                      "이름:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "이름">
+<!ENTITY name.text                       "다른 사람에게 보여줄 이름">
+<!ENTITY name.error                      "이름을 입력하세요">
+<!ENTITY email.label                     "메일 주소:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "이메일 주소">
+<!ENTITY email.text                      "기존 이메일 주소">
+<!ENTITY email.error                     "잘못된 이메일 주소">
+<!ENTITY password.label                  "비밀번호:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "비밀번호">
+<!ENTITY password.text                   "선택 사항: 사용자 이름 확인 용도로만 사용">
+<!ENTITY password.toggle                 "비밀번호 표시/숨기기">
+<!ENTITY rememberPassword.label          "비밀번호 저장">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "사용자 로그인:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "도메인 로그인">
+
+<!ENTITY protocol.label                  "프로토콜:">
+<!ENTITY imapLong.label                  "IMAP (원격)">
+<!ENTITY pop3Long.label                  "POP3 (메일을 컴퓨터에 저장)">
+
+<!ENTITY manualConfigTable.summary       "서버 설정">
+<!ENTITY incoming.label                  "송신 서버:">
+<!ENTITY incomingColumn.label            "수신">
+<!ENTITY outgoing.label                  "발신 서버:">
+<!ENTITY outgoingColumn.label            "발신">
+<!ENTITY username.label                  "아이디:">
+<!ENTITY serverRow.label                 "서버:">
+<!ENTITY portRow.label                   "포트:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "인증 방법">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "자동 검색">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "암호화 안함">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange 서버:">
+
+<!ENTITY advancedSetup.label             "고급">
+<!ENTITY advancedSetup.accesskey         "A">
+<!ENTITY cancel.label                    "취소">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "계속">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "중지">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "다시 테스트">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY manual-config.label             "수동으로 구성…">
+<!ENTITY manual-config.accesskey         "M">
+<!ENTITY open-provisioner.label          "새 메일 주소 만들기…">
+<!ENTITY open-provisioner.accesskey      "g">
+<!ENTITY get-help.label                  "도움말">
+<!ENTITY get-help.accesskey              "H">
+
+
+<!ENTITY warning.label                   "주의!">
+<!ENTITY incomingSettings.label          "받기 설정:">
+<!ENTITY outgoingSettings.label          "보내기 설정:">
+<!ENTITY technicaldetails.label          "기술 상세 정보">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "위험성을 잘 알고 있습니다.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "완료">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "설정 변경">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName;는 제공된 설정을 이용하여 메일을 가져올 수 있습니다만, 이 부적절한 연결에 대하여 관리자나 이메일 제공자에게 문의를 해야 합니다. 이에 대해서 Thunderbird FAQ에서 더 많은 정보를 보실 수 있습니다.">
+
+<!ENTITY insecureServer.tooltip.title    "경고! 이 서버는 보안 서버가 아닙니다.">
+<!ENTITY insecureServer.tooltip.details  "circle을 클릭하면 상세 사항을 보실 수 있습니다.">
+
+<!ENTITY insecureUnencrypted.description "메일과 인증이 암호화되지 않은 채 전송이 되므로, 다른 사람이 당신의 암호(와 메시지)를 읽을 수도 있습니다. &brandShortName;로 메일을 가져올 수 있지만, 보안 연결을 지원하는 이메일 제공자를 이용
+하는 것을 권장 합니다.">
+<!ENTITY insecureSelfSigned.description  "서버가 신뢰할 수 없는 인증서를 사용 하고 있으므로, 누군가 &brandShortName;와 서버 사이의 전송 내용을 가로챌 소지가 있습니다. &brandShortName;로 메일을 받을 수는 있지만, 신뢰할 수 있는 인증서를 사용한 서버를 설정하기 위하여 관리자나 메일 제공자에게 문의해야 합니다.">
+<!ENTITY secureServer.description        "축하 합니다.! 이 서버는 보안 연결을 지원 합니다.">

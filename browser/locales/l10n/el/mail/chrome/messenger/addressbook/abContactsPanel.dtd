@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Ιδιότητες">
+<!ENTITY propertiesMenu.accesskey           "ι">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Ιδιότητες ευρετηρίου">
+<!ENTITY abPropertiesMenu.accesskey         "ι">
+<!ENTITY contactPropertiesMenu.label        "Ιδιότητες επαφής">
+<!ENTITY contactPropertiesMenu.accesskey    "ι">
+<!ENTITY mailingListPropertiesMenu.label    "Ιδιότητες λίστας αλληλογραφίας">
+<!ENTITY mailingListPropertiesMenu.accesskey "ι">
+
+<!ENTITY abContextMenuButton.tooltip        "Προβολή μενού επιλογών ευρετηρίου διευθύνσεων">
+<!ENTITY addressbookPicker.label            "Ευρετήριο:">
+<!ENTITY addressbookPicker.accesskey        "υ">
+<!ENTITY searchContacts.label               "Αναζήτηση επαφών:">
+<!ENTITY searchContacts.accesskey           "ν">
+<!ENTITY SearchNameOrEmail.label            "Όνομα ή email">
+
+<!ENTITY addtoToFieldMenu.label             "Προσθήκη στο πεδίο Προς">
+<!ENTITY addtoToFieldMenu.accesskey         "Π">
+<!ENTITY addtoCcFieldMenu.label             'Προσθήκη στο πεδίο "Κοιν."'>
+<!ENTITY addtoCcFieldMenu.accesskey         "Κ">
+<!ENTITY addtoBccFieldMenu.label            'Προσθήκη στο πεδίο "Κρυφή κοιν."'>
+<!ENTITY addtoBccFieldMenu.accesskey        "φ">
+<!ENTITY deleteAddrBookCard.label           "Διαγραφή">
+<!ENTITY deleteAddrBookCard.accesskey       "Δ">
+<!ENTITY propertiesContext.label            "Ιδιότητες">
+<!ENTITY propertiesContext.accesskey        "ι">
+<!ENTITY abPropertiesContext.label          "Ιδιότητες">
+<!ENTITY abPropertiesContext.accesskey      "ι">
+<!ENTITY editContactContext.label           "Επεξεργασία επαφής">
+<!ENTITY editContactContext.accesskey       "Ε">
+<!ENTITY editMailingListContext.label       "Επεξεργασία λίστας">
+<!ENTITY editMailingListContext.accesskey   "Ε">
+
+<!ENTITY newContactAbContext.label          "Νέα επαφή">
+<!ENTITY newContactAbContext.accesskey      "Ε">
+<!ENTITY newListAbContext.label             "Νέα λίστα">
+<!ENTITY newListAbContext.accesskey         "Λ">
+
+<!ENTITY toButton.label                     "Προσθήκη στο Πρός:">
+<!ENTITY toButton.accesskey                 "Π">
+<!ENTITY ccButton.label                     'Προσθήκη στο "Κοιν.":'>
+<!ENTITY ccButton.accesskey                 "θ">
+<!ENTITY bccButton.label                    'Προσθήκη στο "Κρυφή κοιν.":'>
+<!ENTITY bccButton.accesskey                "φ">

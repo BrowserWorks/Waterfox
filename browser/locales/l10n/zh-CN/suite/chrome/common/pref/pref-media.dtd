@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "媒体">
+<!ENTITY mediaHTML5Preferences.label    "音频/视频">
+<!ENTITY allowMediaAutoplay.label       "启用 HTML5 媒体内容的自动播放">
+<!ENTITY allowMediaAutoplay.accesskey   "A">
+
+<!ENTITY enableDrmMedia.label           "启用数字版权管理（DRM）对">
+<!ENTITY enableEmeForSuite.label        "第三方内容解密模块">
+<!ENTITY enableEmeForSuite.accesskey    "C">
+
+<!ENTITY animLoopingTitle.label         "循环播放动态图片">
+<!ENTITY animLoopAsSpecified.label      "图片指定的次数">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "一次">
+<!ENTITY animLoopOnce.accesskey         "O">
+<!ENTITY animLoopNever.label            "不循环">
+<!ENTITY animLoopNever.accesskey        "v">

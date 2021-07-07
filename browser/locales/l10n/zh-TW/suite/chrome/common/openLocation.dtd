@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "請輸入網址 (URL) 或指定您想開啟的檔案:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "E">
+<!ENTITY chooseFile.label "選擇檔案…">
+<!ENTITY chooseFile.accesskey "C">
+<!ENTITY newPrivate.label "開新隱私視窗">
+<!ENTITY newWindow.label "新瀏覽器視窗">
+<!ENTITY newTab.label "新瀏覽器分頁">
+<!ENTITY currentTab.label "目前的瀏覽器分頁">
+<!ENTITY editNewWindow.label "新設計師視窗">
+<!ENTITY open.label "開啟">
+<!ENTITY caption.label "開啟網頁位置">
+<!ENTITY openWhere.label "開啟到:">
+<!ENTITY openWhere.accesskey "O">

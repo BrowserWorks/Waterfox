@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Gija">
+<!ENTITY fromColumn.label "Autorius">
+<!ENTITY recipientColumn.label "Gavėjas">
+<!ENTITY attachmentColumn.label "Priedai">
+<!ENTITY subjectColumn.label "Tema">
+<!ENTITY dateColumn.label "Data ir laikas">
+<!ENTITY priorityColumn.label "Prioritetas">
+<!ENTITY tagsColumn.label "Gairės">
+<!ENTITY accountColumn.label "Paskyra">
+<!ENTITY statusColumn.label "Būsena">
+<!ENTITY sizeColumn.label "Dydis">
+<!ENTITY junkStatusColumn.label "Brukalo statusas">
+<!ENTITY unreadColumn.label "Neskaitytas">
+<!ENTITY totalColumn.label "Iš viso">
+<!ENTITY readColumn.label "Skaitytas">
+<!ENTITY receivedColumn.label "Gautas">
+<!ENTITY flagColumn.label "Gairelė">
+<!ENTITY locationColumn.label "Vieta">
+<!ENTITY idColumn.label "Atsiuntimo eilė">
+<!--Tooltips-->
+
+<!ENTITY columnChooser2.tooltip "Rinktis rodomus stulpelius">
+<!ENTITY threadColumn2.tooltip "Rodyti laiškų gijas">
+<!ENTITY fromColumn2.tooltip "Rikiuoti pagal siuntėją">
+<!ENTITY recipientColumn2.tooltip "Rikiuoti pagal gavėją">
+<!ENTITY attachmentColumn2.tooltip "Rikiuoti pagal priedus">
+<!ENTITY subjectColumn2.tooltip "Rikiuoti pagal temą">
+<!ENTITY dateColumn2.tooltip "Rikiuoti pagal datą">
+<!ENTITY priorityColumn2.tooltip "Rikiuoti pagal prioritetą">
+<!ENTITY tagsColumn2.tooltip "Rikiuoti pagal gaires">
+<!ENTITY accountColumn2.tooltip "Rikiuoti pagal paskyrą">
+<!ENTITY statusColumn2.tooltip "Rikiuoti pagal būseną">
+<!ENTITY sizeColumn2.tooltip "Rikiuoti pagal dydį">
+<!ENTITY junkStatusColumn2.tooltip "Rikiuoti pagal brukalo požymį">
+<!ENTITY unreadColumn2.tooltip "Neskaitytų laiškų šioje gijoje skaičius">
+<!ENTITY totalColumn2.tooltip "Bendras laiškų šioje gijoje skaičius">
+<!ENTITY readColumn2.tooltip "Rikiuoti pagal perskaitymo požymį">
+<!ENTITY receivedColumn2.tooltip "Rikiuoti pagal gavimo datą">
+<!ENTITY flagColumn2.tooltip "Rikiuoti pagal gairelę">
+<!ENTITY locationColumn2.tooltip "Rikiuoti pagal vietą">
+<!ENTITY idColumn2.tooltip "Rikiuoti pagal gavimo eilę">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS protokoll verziók">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS figyelmeztetések">
+<!ENTITY SSLMixedContent.caption            "Vegyes tartalom">
+<!ENTITY SSLClientAuthMethod.caption        "Ügyféloldali tanúsítvány kiválasztása">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "Beállíthatja, hogy melyik titkosítási protokollokat használja a biztonságos kapcsolatokhoz. Választhat egy verziót, vagy a verziók összefüggő tartományát.">
+<!ENTITY limit.enable.label                 "Engedélyezés:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "A &brandShortName; figyelmeztethet az aktuális weboldal titkosítási fokozatára. A &brandShortName; figyelmeztessen és kérdezzen rá, mielőtt">
+<!ENTITY warn.enteringsecure                "Betöltene egy titkosított oldalt">
+<!ENTITY warn.enteringsecure.accesskey      "t">
+<!ENTITY warn.insecurepost                  "Űrlapadatot küldene egy titkosítatlan oldalról egy titkosítatlan oldalra">
+<!ENTITY warn.insecurepost.accesskey        "r">
+<!ENTITY warn.leavingsecure                 "Elhagyna egy titkosított oldalt">
+<!ENTITY warn.leavingsecure.accesskey       "l">
+
+<!ENTITY mixed.description                  "A titkosított oldalak tartalmazhatnak tikosítatlan tartalmakat, amelyek ki vannak téve lehallgatásnak vagy visszaéléseknek. A &brandShortName; képes ezt érzékelni és blokkolni:">
+<!ENTITY warn.mixedactivecontent            "Figyelmeztetés, ha a titkosított oldalak nem biztonságos elemeket tartalmaznak">
+<!ENTITY warn.mixedactivecontent.accesskey  "F">
+<!ENTITY block.activecontent                "Ne töltse be a nem biztonságos leemeket a titkosított oldalakon">
+<!ENTITY block.activecontent.accesskey      "N">
+<!ENTITY warn.mixeddisplaycontent           "Figyelmeztetés, ha a titkosított oldalak más típusú kevert tartalmat tartalmaznak">
+<!ENTITY warn.mixeddisplaycontent.accesskey "g">
+<!ENTITY block.displaycontent               "Ne töltse be a más típusú kevert tartalmakat">
+<!ENTITY block.displaycontent.accesskey     "t">
+
+<!ENTITY certselect.description             "Ha egy webhely tanúsítványt igényel, a &brandShortName; hogyan válassza ki a megfelelőt:">
+<!ENTITY certselect.auto                    "Automatikusan">
+<!ENTITY certselect.auto.accesskey          "A">
+<!ENTITY certselect.ask                     "Kérdezzen rá minden alkalommal">
+<!ENTITY certselect.ask.accesskey           "K">

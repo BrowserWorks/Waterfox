@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Katalogo vardas: ">
+<!ENTITY directoryName.accesskey           "K">
+<!ENTITY directoryHostname.label           "Serverio vardas: ">
+<!ENTITY directoryHostname.accesskey       "S">
+<!ENTITY directoryBaseDN.label             "Unikalus vardas: ">
+<!ENTITY directoryBaseDN.accesskey         "k">
+<!ENTITY findButton.label                  "Ieškoti">
+<!ENTITY findButton.accesskey              "I">
+<!ENTITY directorySecure.label             "Saugus ryšys (SSL)">
+<!ENTITY directorySecure.accesskey         "a">
+<!ENTITY directoryLogin.label              "Prisijungimo vardas:">
+<!ENTITY directoryLogin.accesskey          "P">
+<!ENTITY General.tab                       "Bendrosios">
+<!ENTITY Offline.tab                       "Neprisijungus prie tinklo">
+<!ENTITY Advanced.tab                      "Papildomos">
+<!ENTITY portNumber.label                  "Prievado numeris: ">
+<!ENTITY portNumber.accesskey              "r">
+<!ENTITY searchFilter.label                "Paieškos filtras: ">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "Hierarchijos lygiai: ">
+<!ENTITY scope.accesskey                   "H">
+<!ENTITY scopeOneLevel.label               "vienas">
+<!ENTITY scopeOneLevel.accesskey           "e">
+<!ENTITY scopeSubtree.label                "daug">
+<!ENTITY scopeSubtree.accesskey            "d">
+<!ENTITY return.label                      "Pateikti ne daugiau, kaip">
+<!ENTITY return.accesskey                  "n">
+<!ENTITY results.label                     "rezultatų">
+<!ENTITY offlineText.label                 "Šio katalogo kopiją galima parsisiųsdinti į kompiuterį. Tuomet katalogu bus galima naudotis ir neprisijungus prie tinklo.">
+<!ENTITY saslMechanism.label               "Prisijungimo būdas: ">
+<!ENTITY saslMechanism.accesskey           "b">
+<!ENTITY saslOff.label                     "Paprastas">
+<!ENTITY saslOff.accesskey     "P">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey     "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

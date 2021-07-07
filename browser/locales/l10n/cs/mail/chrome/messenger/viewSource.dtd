@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Zdrojový kód: ">
+
+<!ENTITY editMenu.label "Upravit">
+<!ENTITY editMenu.accesskey "U">
+<!ENTITY fileMenu.label "Soubor">
+<!ENTITY fileMenu.accesskey "S">
+<!ENTITY savePageCmd.label "Uložit stránku jako…">
+<!ENTITY savePageCmd.accesskey "j">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Vzhled stránky…">
+<!ENTITY pageSetupCmd.accesskey "V">
+<!ENTITY printPreviewCmd.label "Náhled tisku">
+<!ENTITY printPreviewCmd.accesskey "h">
+<!ENTITY printCmd.label "Tisk…">
+<!ENTITY printCmd.accesskey "T">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Zavřít">
+<!ENTITY closeCmd.accesskey "Z">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Přejít na řádek…">
+<!ENTITY goToLineCmd.accesskey "n">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Zobrazení">
+<!ENTITY viewMenu.accesskey       "Z">
+<!ENTITY reloadCmd.label "Obnovit">
+<!ENTITY reloadCmd.accesskey "O">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Zalamovat dlouhé řádky">
+<!ENTITY menu_wrapLongLines.accesskey "l">
+<!ENTITY menu_highlightSyntax.label "Zvýrazňovat syntaxi">
+<!ENTITY menu_highlightSyntax.accesskey "s">
+<!ENTITY menu_textSize.label "Velikost textu">
+<!ENTITY menu_textSize.accesskey "V">
+<!ENTITY menu_textEnlarge.label "Zvětšit">
+<!ENTITY menu_textEnlarge.accesskey "v">
+<!ENTITY menu_textReduce.label "Zmenšit">
+<!ENTITY menu_textReduce.accesskey "m">
+<!ENTITY menu_textReset.label "Normální">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Najít na této stránce…">
+<!ENTITY findOnCmd.accesskey "N">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Najít další">
+<!ENTITY findAgainCmd.accesskey "t">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Zpět">
+<!ENTITY backCmd.accesskey "Z">
+<!ENTITY forwardCmd.label "Vpřed">
+<!ENTITY forwardCmd.accesskey "V">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Kopírovat adresu odkazu">
+<!ENTITY copyLinkCmd.accesskey "s">
+<!ENTITY copyEmailCmd.label "Kopírovat e-mailovou adresu">
+<!ENTITY copyEmailCmd.accesskey "e">

@@ -1,0 +1,32 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Profilio pasirinkimas">
+<!ENTITY            profileManager.title "„&brandShortName;“ profilių tvarkytuvė">
+
+<!ENTITY            manage.label     "Tvarkyti profilius…">
+<!ENTITY            manage.accesskey "T">
+<!ENTITY            select.label     "Naudoti profilį">
+
+<!ENTITY            availableProfiles.label "Esami profiliai">
+
+<!ENTITY            introStart.label         "Jei norite pradėti seansą su asmeninio profilio duomenimis (jūsų elektroniniais laiškais, nuostatomis ir kita individualia informacija), prašom pasirinkti iš sąrašo jūsų profilio pavadinimą ir spustelėti „&start.label;“.">
+<!ENTITY            introSwitch.label        "Jei norite pradėti dirbti su kitu profiliu (jame yra elektroniniai laiškai, nuostatos ir kita individuali informacija), prašom pasirinkti iš sąrašo profilio pavadinimą ir spustelėti „&select.label;“.">
+<!ENTITY            profileManagerText.label "„&brandShortName;“ nuostatos, tinklaviečių adresynas, laiškai ir kt. informacija laikoma naudotojo profilyje.">
+
+<!ENTITY            autoSelect.label         "Visada naudoti šį profilį">
+<!ENTITY            autoSelect.accesskey     "V">
+
+
+
+
+
+
+
+
+
+

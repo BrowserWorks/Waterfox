@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Adresboek">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!ENTITY blankResultsPaneMessage.label                  "Dit adresboek toont alleen contacten na een zoekopdracht">
+<!ENTITY localResultsOnlyMessage.label                  "Contacten uit externe adresboeken worden pas na een zoekopdracht getoond">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Contact…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Mailinglijst…">
+<!ENTITY newListCmd.accesskey                           "M">
+<!ENTITY newAddressBookCmd.label                        "Adresboek…">
+<!ENTITY newAddressBookCmd.accesskey                    "r">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-directory…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Contact afdrukken…">
+<!ENTITY printContactViewCmd.accesskey                  "d">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Afdrukvoorbeeld van contact">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printAddressBook.label                         "Adresboek afdrukken…">
+<!ENTITY printAddressBook.accesskey                     "f">
+<!ENTITY printPreviewAddressBook.label                  "Afdrukvoorbeeld van adresboek">
+<!ENTITY printPreviewAddressBook.accesskey              "b">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Adresboek verwijderen">
+<!ENTITY deleteContactCmd.label                         "Contact verwijderen">
+<!ENTITY deleteContactsCmd.label                        "Geselecteerde contacten verwijderen">
+<!ENTITY deleteListCmd.label                            "Lijst verwijderen">
+<!ENTITY deleteListsCmd.label                           "Geselecteerde lijsten verwijderen">
+<!ENTITY deleteItemsCmd.label                           "Geselecteerde items verwijderen">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Voor-/achternaam wisselen">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "w">
+<!ENTITY propertiesCmd.label                            "Eigenschappen…">
+<!ENTITY propertiesCmd.accesskey                        "E">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Adresboekwerkbalk">
+<!ENTITY showAbToolbarCmd.accesskey                     "d">
+<!ENTITY layoutMenu.label                               "Vormgeving">
+<!ENTITY layoutMenu.accesskey                           "V">
+<!ENTITY showDirectoryPane.label                        "Directoryvenster">
+<!ENTITY showDirectoryPane.accesskey                    "r">
+<!ENTITY showContactPane2.label                         "Contactvenster">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "Naam tonen als">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!ENTITY firstLastCmd.label                             "Voornaam Achternaam">
+<!ENTITY firstLastCmd.accesskey                         "V">
+<!ENTITY lastFirstCmd.label                             "Achternaam, Voornaam">
+<!ENTITY lastFirstCmd.accesskey                         "A">
+<!ENTITY displayNameCmd.label                           "Weergavenaam">
+<!ENTITY displayNameCmd.accesskey                       "W">
+
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importeren…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Exporteren…">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Nieuw contact">
+<!ENTITY newContactButton.accesskey                     "c">
+<!ENTITY newlistButton.label                            "Nieuwe lijst">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY editItemButton.label                           "Eigenschappen">
+<!ENTITY editItemButton.accesskey                       "E">
+<!ENTITY newmsgButton.label                             "Opstellen">
+<!ENTITY newmsgButton.accesskey                         "O">
+<!ENTITY deleteItemButton.label                         "Verwijderen">
+<!ENTITY deleteItemButton.accesskey                     "V">
+<!ENTITY newimButton.label                              "Instant-bericht">
+<!ENTITY newimButton.accesskey                          "I">
+<!ENTITY printButton.label                              "Afdrukken">
+<!ENTITY printButton.accesskey                          "A">
+<!ENTITY searchNameAndEmail.placeholder                 "Naam en e-mailadres doorzoeken">
+<!ENTITY searchBox.title                                "Zoeken">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Adresboekwerkbalk">
+<!ENTITY newContactButton.tooltip                       "Een nieuw adresboekcontact aanmaken">
+<!ENTITY newlistButton.tooltip                          "Een nieuwe lijst aanmaken">
+<!ENTITY editItemButton.tooltip                         "Het geselecteerde item bewerken">
+<!ENTITY newmsgButton.tooltip                           "Een e-mailbericht sturen">
+<!ENTITY newIM.tooltip                                  "Een instant-bericht sturen of chatten">
+<!ENTITY printButton.tooltip                            "Geselecteerde item afdrukken">
+<!ENTITY deleteItemButton.tooltip                       "Geselecteerde item verwijderen">
+<!ENTITY throbber.tooltip                               "Naar de &vendorShortName;-startpagina gaan">
+<!ENTITY throbber.tooltip2                              "Naar de &brandShortName;-startpagina gaan">
+<!ENTITY advancedButton.tooltip                         "Uitgebreid adres zoeken">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Adresboeken">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Contact">
+<!ENTITY home.heading                                   "Thuis">
+<!ENTITY other.heading                                  "Overig">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Telefoon">
+<!ENTITY work.heading                                   "Werk">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Beschrijving">
+<!ENTITY addresses.heading                              "Adressen">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Plattegrond">
+<!ENTITY mapIt.tooltip                                  "Een kaart met dit adres weergeven op het internet">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

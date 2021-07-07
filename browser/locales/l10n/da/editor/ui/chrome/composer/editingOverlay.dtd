@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Åbn fil…">
+<!ENTITY openFileCmd.accesskey "b">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Åbn websted…">
+<!ENTITY openRemoteCmd.accesskey "w">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Senest åbnede">
+<!ENTITY fileRecentMenu.accesskey "b">
+<!ENTITY saveCmd.label "Gem">
+<!ENTITY saveCmd.accesskey "G">
+<!ENTITY saveAsCmd.label "Gem som…">
+<!ENTITY saveAsCmd.accesskey "m">
+<!ENTITY saveAsChangeEncodingCmd2.label "Gem og udskift tegnkodning">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "U">
+<!ENTITY publishCmd.label "Overfør">
+<!ENTITY publishCmd.accesskey "o">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Overfør som…">
+<!ENTITY publishAsCmd.accesskey "v">
+<!ENTITY fileRevert.label "Vend tilbage til det sidst gemte">
+<!ENTITY fileRevert.accesskey "d">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Indstillinger til overførsel…">
+<!ENTITY publishSettings.accesskey "n">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Ny">
+<!ENTITY newToolbarCmd.tooltip "Opret en ny Composer-side">
+<!ENTITY openToolbarCmd.label "Åbn">
+<!ENTITY openToolbarCmd.tooltip "Åbn en lokal fil">
+<!ENTITY saveToolbarCmd.tooltip "Gem filen lokalt">
+<!ENTITY publishToolbarCmd.tooltip "Overfør filen til en anden maskine">
+<!ENTITY printToolbarCmd.label "Udskriv">
+<!ENTITY printToolbarCmd.tooltip "Udskriv denne side">

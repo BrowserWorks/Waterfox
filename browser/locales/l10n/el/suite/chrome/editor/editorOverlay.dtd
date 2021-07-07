@@ -1,0 +1,368 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.key "S">
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Επικόλληση χωρίς μορφοποίηση">
+<!ENTITY pasteNoFormatting.accesskey "κ">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Επικόλληση ως παράθεση">
+<!ENTITY pasteAsQuotationCmd.accesskey "ρ">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.label "Aναδίπλωση">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey "δ">
+<!ENTITY findBarCmd.label "Εύρεση…">
+<!ENTITY findReplaceCmd.label "Εύρεση και αντικατάσταση…">
+<!ENTITY enableInlineSpellChecker.label "Ορθογραφικός έλεγχος κατά την πληκτρολόγηση">
+<!ENTITY enableInlineSpellChecker.accesskey "θ">
+<!ENTITY checkSpellingCmd2.label "Ορθογραφικός έλεγχος…">
+<!ENTITY checkSpellingCmd2.accesskey "χ">
+<!ENTITY checkSpellingCmd2.key "p">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Εισαγωγή">
+<!ENTITY insertMenu.accesskey "ι">
+<!ENTITY insertLinkCmd2.label "Σύνδεσμος…">
+<!ENTITY insertLinkCmd2.accesskey "Σ">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Άγκυρα με όνομα…">
+<!ENTITY insertAnchorCmd.accesskey "α">
+<!ENTITY insertImageCmd.label "Εικόνα…">
+<!ENTITY insertImageCmd.accesskey "Ε">
+<!ENTITY insertHLineCmd.label "Οριζόντια γραμμή">
+<!ENTITY insertHLineCmd.accesskey "ζ">
+<!ENTITY insertTableCmd.label "Πίνακας…">
+<!ENTITY insertTableCmd.accesskey "κ">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Μαθηματικά…">
+<!ENTITY insertMathCmd.accesskey "Μ">
+<!ENTITY insertCharsCmd.label "Χαρακτήρες και σύμβολα…">
+<!ENTITY insertCharsCmd.accesskey "Χ">
+<!ENTITY insertBreakAllCmd.label "Αλλαγή γραμμής κάτω από εικόνες">
+<!ENTITY insertBreakAllCmd.accesskey "κ">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Δημιουργία συνδέσμου…">
+<!ENTITY createLinkCmd.accesskey "Δ">
+<!ENTITY editLinkCmd.label "Επεξεργασία συνδέσμου σε νέα σύνταξη">
+<!ENTITY editLinkCmd.accesskey "μ">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.title "Γραμματοσειρά">
+<!ENTITY FontFaceSelect.tooltip "Επιλογή γραμματοσειράς">
+<!ENTITY fontfaceMenu.label "Γραμματοσειρά">
+<!ENTITY fontfaceMenu.accesskey "Γ">
+<!ENTITY fontVarWidth.label "Μεταβλητού πλάτους">
+<!ENTITY fontVarWidth.accesskey "β">
+<!ENTITY fontFixedWidth.label "Σταθερού πλάτους">
+<!ENTITY fontFixedWidth.accesskey "θ">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.title "Μέγεθος γραμματοσειράς">
+<!ENTITY FontSizeSelect.tooltip "Επιλογή μεγέθους γραμματοσειράς">
+<!ENTITY decreaseFontSize.label "Μικρότερα">
+<!ENTITY decreaseFontSize.accesskey "ρ">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Μεγαλύτερα">
+<!ENTITY increaseFontSize.accesskey "γ">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Μέγεθος">
+<!ENTITY fontSizeMenu.accesskey "θ">
+<!ENTITY size-tinyCmd.label "Μικροσκοπικά">
+<!ENTITY size-tinyCmd.accesskey "ι">
+<!ENTITY size-smallCmd.label "Μικρά">
+<!ENTITY size-smallCmd.accesskey "μ">
+<!ENTITY size-mediumCmd.label "Μεσαία">
+<!ENTITY size-mediumCmd.accesskey "σ">
+<!ENTITY size-largeCmd.label "Μεγάλα">
+<!ENTITY size-largeCmd.accesskey "λ">
+<!ENTITY size-extraLargeCmd.label "Πολύ μεγάλα">
+<!ENTITY size-extraLargeCmd.accesskey "π">
+<!ENTITY size-hugeCmd.label "Τεράστια">
+<!ENTITY size-hugeCmd.accesskey "ρ">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Στυλ κειμένου">
+<!ENTITY fontStyleMenu.accesskey "Σ">
+<!ENTITY styleBoldCmd.label "Έντονα">
+<!ENTITY styleBoldCmd.accesskey "ν">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Πλάγια">
+<!ENTITY styleItalicCmd.accesskey "λ">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Υπογράμμιση">
+<!ENTITY styleUnderlineCmd.accesskey "Υ">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Διαγράμμιση">
+<!ENTITY styleStrikeThruCmd.accesskey "Δ">
+<!ENTITY styleSuperscriptCmd.label "Εκθέτης">
+<!ENTITY styleSuperscriptCmd.accesskey "θ">
+<!ENTITY styleSubscriptCmd.label "Δείκτης">
+<!ENTITY styleSubscriptCmd.accesskey "κ">
+<!ENTITY styleNonbreakingCmd.label "Χωρίς αλλαγή">
+<!ENTITY styleNonbreakingCmd.accesskey "λ">
+<!ENTITY styleEm.label "Έμφαση">
+<!ENTITY styleEm.accesskey "φ">
+<!ENTITY styleStrong.label "Ισχυρότερη έμφαση">
+<!ENTITY styleStrong.accesskey "χ">
+<!ENTITY styleCite.label "Παράθεση">
+<!ENTITY styleCite.accesskey "θ">
+<!ENTITY styleAbbr.label "Σύντμηση">
+<!ENTITY styleAbbr.accesskey "ν">
+<!ENTITY styleAcronym.label "Ακρωνύμιο">
+<!ENTITY styleAcronym.accesskey "ω">
+<!ENTITY styleCode.label "Κώδικας">
+<!ENTITY styleCode.accesskey "δ">
+<!ENTITY styleSamp.label "Δείγμα αποτελέσματος">
+<!ENTITY styleSamp.accesskey "μ">
+<!ENTITY styleVar.label "Μεταβλητό">
+<!ENTITY styleVar.accesskey "β">
+
+<!ENTITY formatFontColor.label "Χρώμα κειμένου…">
+<!ENTITY formatFontColor.accesskey "Χ">
+<!ENTITY tableOrCellColor.label "Χρώμα παρασκηνίου πίνακα ή κελιού…">
+<!ENTITY tableOrCellColor.accesskey "κ">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Αφαίρεση αγκυρών με όνομα">
+<!ENTITY formatRemoveNamedAnchors.accesskey "ρ">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Παράγραφος">
+<!ENTITY paragraphMenu.accesskey "γ">
+<!ENTITY paragraphParagraphCmd.label "Παράγραφος">
+<!ENTITY paragraphParagraphCmd.accesskey "φ">
+<!ENTITY heading1Cmd.label "Κεφαλίδα 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Κεφαλίδα 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Κεφαλίδα 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Κεφαλίδα 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Κεφαλίδα 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Κεφαλίδα 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Διεύθυνση">
+<!ENTITY paragraphAddressCmd.accesskey "θ">
+<!ENTITY paragraphPreformatCmd.label "Προ-μορφοποίηση">
+<!ENTITY paragraphPreformatCmd.accesskey "ρ">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Λίστα">
+<!ENTITY formatlistMenu.accesskey "Λ">
+<!ENTITY noneCmd.label "Κανένα">
+<!ENTITY noneCmd.accesskey "ν">
+<!ENTITY listBulletCmd.label "Κουκίδες">
+<!ENTITY listBulletCmd.accesskey "Κ">
+<!ENTITY listNumberedCmd.label "Αριθμημένη">
+<!ENTITY listNumberedCmd.accesskey "μ">
+<!ENTITY listTermCmd.label "Όρος">
+<!ENTITY listTermCmd.accesskey "ρ">
+<!ENTITY listDefinitionCmd.label "Ορισμός">
+<!ENTITY listDefinitionCmd.accesskey "μ">
+<!ENTITY listPropsCmd.label "Ιδιότητες λίστας…">
+<!ENTITY listPropsCmd.accesskey "δ">
+
+<!ENTITY ParagraphSelect.title "Παράγραφος">
+<!ENTITY ParagraphSelect.tooltip "Επιλέξτε μια μορφή λίστας">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Κύριος μέρος κειμένου">
+<!ENTITY bodyTextCmd.accesskey "μ">
+<!-- isn't used in menu now, but may be added in future -->
+<!ENTITY advancedPropertiesCmd.label "Προηγμένες ιδιότητες">
+<!ENTITY advancedPropertiesCmd.accesskey "γ">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Στοίχιση">
+<!ENTITY alignMenu.accesskey "Σ">
+<!ENTITY alignLeft.label "Αριστερά">
+<!ENTITY alignLeft.accesskey "Α">
+<!ENTITY alignLeft.tooltip "Στοίχιση αριστερά">
+<!ENTITY alignCenter.label "Κέντρο">
+<!ENTITY alignCenter.accesskey "Κ">
+<!ENTITY alignCenter.tooltip "Στοίχιση στο κέντρο">
+<!ENTITY alignRight.label "Δεξιά">
+<!ENTITY alignRight.accesskey "Δ">
+<!ENTITY alignRight.tooltip "Στοίχιση δεξιά">
+<!ENTITY alignJustify.label "Πλήρης στοίχιση">
+<!ENTITY alignJustify.accesskey "Π">
+<!ENTITY alignJustify.tooltip "Πλήρης στοίχιση">
+
+<!-- Layer toolbar items -->
+<!ENTITY absolutePosition.label "Τοποθέτηση">
+<!ENTITY layer.tooltip "Επίπεδο">
+<!ENTITY decreaseZIndex.label "Μεταφορά πίσω">
+<!ENTITY layerSendToBack.tooltip "Μεταφορά πίσω">
+<!ENTITY increaseZIndex.label "Μεταφορά μπροστά">
+<!ENTITY layerBringToFront.tooltip "Μεταφορά μπροστά">
+
+<!ENTITY increaseIndent.label "Αύξηση εσοχής">
+<!ENTITY increaseIndent.accesskey "Α">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Μείωση εσοχής">
+<!ENTITY decreaseIndent.accesskey "Μ">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Χρώματα και παρασκήνιο σελίδας…">
+<!ENTITY colorsAndBackground.accesskey "ρ">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Πίνακας">
+<!ENTITY tableMenu.accesskey "ν">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Επιλογή">
+<!ENTITY tableSelectMenu.accesskey "Ε">
+
+<!ENTITY tableSelectMenu2.label "Επιλογή πίνακα">
+<!ENTITY tableSelectMenu2.accesskey "Ε">
+<!ENTITY tableInsertMenu2.label "Εισαγωγή πίνακα">
+<!ENTITY tableInsertMenu2.accesskey "ι">
+<!ENTITY tableDeleteMenu2.label "Διαγραφή πίνακα">
+<!ENTITY tableDeleteMenu2.accesskey "Δ">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Εισαγωγή">
+<!ENTITY tableInsertMenu.accesskey "ι">
+<!ENTITY tableTable.label "Πίνακας">
+<!ENTITY tableTable.accesskey "Π">
+<!ENTITY tableRow.label "Γραμμή">
+<!ENTITY tableRows.label "Σειρές">
+<!ENTITY tableRow.accesskey "Γ">
+<!ENTITY tableRowAbove.label "Γραμμή πάνω">
+<!ENTITY tableRowAbove.accesskey "Γ">
+<!ENTITY tableRowBelow.label "Γραμμή κάτω">
+<!ENTITY tableRowBelow.accesskey "κ">
+<!ENTITY tableColumn.label "Στήλη">
+<!ENTITY tableColumns.label "Στήλες">
+<!ENTITY tableColumn.accesskey "Σ">
+<!ENTITY tableColumnBefore.label "Στήλη πριν">
+<!ENTITY tableColumnBefore.accesskey "τ">
+<!ENTITY tableColumnAfter.label "Στήλη μετά">
+<!ENTITY tableColumnAfter.accesskey "μ">
+<!ENTITY tableCell.label "Κελί">
+<!ENTITY tableCells.label "Κελιά">
+<!ENTITY tableCell.accesskey "Κ">
+<!ENTITY tableCellContents.label "Περιεχόμενα κελιού">
+<!ENTITY tableCellContents.accesskey "χ">
+<!ENTITY tableAllCells.label "Όλα τα κελιά">
+<!ENTITY tableAllCells.accesskey "λ">
+<!ENTITY tableCellBefore.label "Κελί πριν">
+<!ENTITY tableCellBefore.accesskey "Κ">
+<!ENTITY tableCellAfter.label "Κελί μετά">
+<!ENTITY tableCellAfter.accesskey "τ">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Διαγραφή">
+<!ENTITY tableDeleteMenu.accesskey "Δ">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "σ">
+<!ENTITY tableJoinCells.accesskey "σ">
+<!ENTITY tableSplitCell.label "Διαίρεση κελιού">
+<!ENTITY tableSplitCell.accesskey "κ">
+<!ENTITY convertToTable.label "Δημιουργία πίνακα από επιλογή">
+<!ENTITY convertToTable.accesskey "Δ">
+<!ENTITY tableProperties.label "Ιδιότητες πίνακα…">
+<!ENTITY tableProperties.accesskey "δ">
+
+<!-- Toolbar-only items -->
+<!ENTITY menuBar.tooltip "Γραμμή μενού">
+<!ENTITY formatToolbar.tooltip "Γραμμή εργαλείων μορφοποίησης">
+<!ENTITY cutToolbarCmd.tooltip "Αποκοπή">
+<!ENTITY copyToolbarCmd.tooltip "Αντιγραφή">
+<!ENTITY pasteToolbarCmd.tooltip "Επικόλληση">
+<!ENTITY findToolbarCmd.label "Εύρεση">
+<!ENTITY findToolbarCmd.tooltip "Εύρεση κειμένου στη σελίδα">
+<!ENTITY spellToolbarCmd.label "Ορθογραφικός έλεγχος">
+<!ENTITY spellToolbarCmd.tooltip "Ορθογραφικός έλεγχος στην επιλογή ή σε όλη τη σελίδα">
+<!ENTITY imageToolbarCmd.label "Εικόνα">
+<!ENTITY imageToolbarCmd.tooltip "Εισαγωγή νέας εικόνας ή επεξεργασία ιδιοτήτων επιλεγμένης εικόνας">
+<!ENTITY hruleToolbarCmd.label "Οριζ. γραμμή">
+<!ENTITY hruleToolbarCmd.tooltip "Εισαγωγή νέας οριζόντιας γραμμής ή επεξεργασία ιδιοτήτων επιλεγμένης γραμμής">
+<!ENTITY tableToolbarCmd.label "Πίνακας">
+<!ENTITY tableToolbarCmd.tooltip "Εισαγωγή νέου πίνακα ή επεξεργασία ιδιοτήτων επιλεγμένου πίνακα">
+<!ENTITY linkToolbarCmd.label "Σύνδεσμος">
+<!ENTITY linkToolbarCmd.tooltip "Εισαγωγή νέου ή επεξεργασία ιδιοτήτων επιλεγμένου δεσμού">
+<!ENTITY anchorToolbarCmd.label "Άγκυρα">
+<!ENTITY anchorToolbarCmd.tooltip "Εισαγωγή νέας άγκυρας ή επεξεργασία ιδιοτήτων επιλεγμένης άγκυρας">
+<!ENTITY colorButtons.title "Χρώματα">
+<!ENTITY TextColorButton.tooltip "Επιλογή χρώματος κειμένου">
+<!ENTITY BackgroundColorButton.tooltip "Επιλογή χρώματος παρασκηνίου">
+<!ENTITY HighlightColorButton.label "Επισήμαναση">
+<!ENTITY HighlightColorButton.tooltip "Επιλογή χρώματος επισήμανσης κειμένου">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSize.label "Μέγεθος γραμματοσειράς">
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Ορισμός μεγέθους γραμματοσειράς">
+<!ENTITY smaller.label "Μικρότερο">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Μικρότερο μέγεθος γραμματοσειράς">
+<!ENTITY larger.label "Μεγαλύτερο">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Μεγαλύτερο μέγεθος γραμματοσειράς">
+<!ENTITY bold.label "Έντονα">
+<!ENTITY boldToolbarCmd.tooltip "Έντονα">
+<!ENTITY italic.label "Πλάγια">
+<!ENTITY italicToolbarCmd.tooltip "Πλάγια">
+<!ENTITY underline.label "Υπογράμμιση">
+<!ENTITY underlineToolbarCmd.tooltip "Υπογράμμιση">
+<!ENTITY bullets.label "Κουκκίδες">
+<!ENTITY bulletListToolbarCmd.tooltip "Εφαρμογή ή αφαίρεση λίστας με κουκίδες">
+<!ENTITY numbers.label "Αριθμοί">
+<!ENTITY numberListToolbarCmd.tooltip "Εφαρμογή ή αφαίρεση αριθμημένης λίστας">
+<!ENTITY outdent.label "Εξοχή">
+<!ENTITY outdentToolbarCmd.tooltip "Εξοχή κειμένου (μετακίνηση αριστερά)">
+<!ENTITY indent.label "Εσοχή">
+<!ENTITY indentToolbarCmd.tooltip "Εσοχή κειμένου (μετακίνηση δεξιά)">
+<!ENTITY AlignPopupButton.label "Στοίχιση">
+<!ENTITY AlignPopupButton.tooltip "Επιλογή στοίχισης κειμένου">
+<!ENTITY InsertPopupButton.label "Εισαγωγή">
+<!ENTITY InsertPopupButton.tooltip "Εισαγωγή συνδέσμου, άγκυρας, εικόνας, οριζόντιας γραμμής ή πίνακα">
+<!ENTITY alignLeftButton.label "Στοίχιση αριστερά">
+<!ENTITY alignLeftButton.tooltip "Στοίχιση κειμένου μαζί με αριστερό περιθώριο">
+<!ENTITY alignCenterButton.label "Στοίχιση στο κέντρο">
+<!ENTITY alignCenterButton.tooltip "Στοίχιση κειμένου στο κέντρο">
+<!ENTITY alignRightButton.label "Στοίχιση δεξιά">
+<!ENTITY alignRightButton.tooltip "Στοίχιση κειμένου μαζί με δεξιό περιθώριο">
+<!ENTITY alignJustifyButton.label "Πλήρης στοίχιση">
+<!ENTITY alignJustifyButton.tooltip "Στοίχιση κειμένου μαζί με δεξιό και αριστερό περιθώριο">
+
+<!-- Structure Toolbar Context Menu items -->
+<!ENTITY structSelect.label         "Επιλογή">
+<!ENTITY structSelect.accesskey     "λ">
+<!ENTITY structRemoveTag.label      "Αφαίρεση ετικέτας">
+<!ENTITY structRemoveTag.accesskey  "ρ">
+<!ENTITY structChangeTag.label      "Αλλαγή ετικέτας">
+<!ENTITY structChangeTag.accesskey  "κ">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Εισαγωγή">
+<!ENTITY insertTOC.accesskey      "ι">
+<!ENTITY updateTOC.label          "Ενημέρωση">
+<!ENTITY updateTOC.accesskey      "ν">
+<!ENTITY removeTOC.label          "Αφαίρεση">
+<!ENTITY removeTOC.accesskey      "ρ">
+<!ENTITY tocMenu.label            "Πίνακας περιεχομένων…">
+<!ENTITY tocMenu.accesskey        "Π">

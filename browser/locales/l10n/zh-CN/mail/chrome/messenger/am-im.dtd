@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "账户属性">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "常规">
+<!ENTITY account.advanced              "高级选项">
+<!ENTITY account.name                  "用户名：">
+<!ENTITY account.password              "密码：">
+<!ENTITY account.alias                 "别名：">
+<!ENTITY account.newMailNotification   "新邮件通知">
+<!ENTITY account.autojoin              "自动加入频道：">
+<!ENTITY account.proxySettings.caption "代理设置：">
+<!ENTITY account.proxySettings.change.label     "更改…">
+<!ENTITY account.proxySettings.change.accessKey "C">

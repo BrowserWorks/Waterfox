@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Tárolt sütik">
+<!ENTITY     tab.bannedservers.label        "Sütit küldő webhelyek">
+<!ENTITY     div.bannedservers.label        "Azon webhelyek kezelése, amelyek sütiket tudnak, illetve nem tudnak eltárolni a számítógépén.">
+<!ENTITY     div.cookiesonsystem.label      "A számítógépén eltárolt sütik megtekintése és törlése">
+<!ENTITY     treehead.cookiename.label      "Süti neve">
+<!ENTITY     treehead.cookiedomain.label    "Webhely">
+<!ENTITY     treehead.cookieexpires.label   "Lejár">
+<!ENTITY     treehead.infoselected.label    "A kijelölt süti adatai">
+<!ENTITY     button.removecookie.label      "Süti törlése">
+<!ENTITY     button.removecookie.accesskey  "t">
+<!ENTITY     button.removeallcookies.label  "Összes süti törlése">
+<!ENTITY     button.removeallcookies.accesskey "s">
+
+<!ENTITY     search.placeholder             "Sütik keresése">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Név:">
+<!ENTITY     props.value.label              "Tartalom:">
+<!ENTITY     props.domain.label             "Kiszolgáló:">
+<!ENTITY     props.path.label               "Útvonal:">
+<!ENTITY     props.secure.label             "Biztonság:">
+<!ENTITY     props.expires.label            "Lejárat:">
+
+<!ENTITY     treehead.sitename.label        "Webhely">
+<!ENTITY     treehead.scheme.label          "Séma">
+<!ENTITY     treehead.status.label          "Állapot">
+<!ENTITY     windowtitle.label              "Sütikezelő">
+
+<!ENTITY     blockSite.label                "Tiltás">
+<!ENTITY     blockSite.accesskey            "T">
+<!ENTITY     allowSite.label                "Engedélyezés">
+<!ENTITY     allowSite.accesskey            "E">
+<!ENTITY     allowSiteSession.label         "Munkamenet">
+<!ENTITY     allowSiteSession.accesskey     "M">
+<!ENTITY     removepermission.label         "Webhely eltávolítása">
+<!ENTITY     removepermission.accesskey     "t">
+<!ENTITY     removeallpermissions.label     "Minden webhely eltávolítása">
+<!ENTITY     removeallpermissions.accesskey "s">
+
+<!ENTITY     futureCookies.label            "A webhelyek eltávolított sütijeinek újbóli létrehozásának tiltása">
+<!ENTITY     futureCookies.accesskey        "l">

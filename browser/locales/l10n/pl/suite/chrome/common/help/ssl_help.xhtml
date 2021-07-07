@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Ustawienia SSL</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="ssl_settings">Ustawienia SSL</h1>
+
+<p>Ten rozdział objaśnia konfigurację protokołu SSL i&nbsp;szyfrów.</p>
+
+<div class="contentsBox">W&nbsp;rozdziale:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_ssl">Preferencje SSL</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_ssl">Preferencje SSL</h2>
+
+<p>Ta część objaśnia używanie panelu konfiguracji protokołu SSL. Jeżeli panel nie jest w&nbsp;tej chwili widoczny, należy wykonać poniższe czynności:</p>
+
+<ol>
+  <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+  <li>W&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia wybrać SSL. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Prywatność i&nbsp;zabezpieczenia.)</li>
+</ol>
+
+<h3 id="ssl_protocol_versions">Wersje protokołu SSL</h3>
+
+<p><a href="glossary.xhtml#ssl">Protokół SSL</a> (ang. Secure Sockets Layer) definiuje zasady rządzące wzajemną autentykacją (uwierzytelnianiem) w&nbsp;komunikacji pomiędzy witryną WWW&nbsp;a&nbsp;oprogramowaniem służącym do przeglądania zawartości stron WWW. Zapewnia poufność i&nbsp;integralność transmisji danych. <!-- TODO: start localizing -->It is
+  also used for secure communication in various other protocols, e.g., for
+  protection of sensitive information exchanged with email, calendar, or
+  directory servers. The newer Transport Layer Security (TLS) protocol is an
+  IETF standard based on SSL but with its own version numbering. TLS 1.0 can
+  be thought of as SSL 3.1, TLS 1.1 is in turn an update to TLS 1.0, etc. Newer
+  protocols are preferred over older ones as they provide better security and
+  more features. Older protocols are supported to ensure compatibility.</p>
+
+<p>By default, &brandShortName; will select the most secure version which is
+  widely supported to connect to the server. If that attempt doesn&apos;t
+  succeed, it will try to connect with the next older version, etc., to the
+  extent allowed by the settings in this panel. The connection will fail if no
+  protocol supported by both sides is found. You can exclude older versions
+  explicitly or allow newer versions which may not be widely supported yet
+  with the following options:</p>
+
+<ul>
+  <li><strong>Enable</strong>: Check the <strong>SSL 3.0</strong>, <strong>TLS
+    1.0</strong>, <strong>TLS 1.1</strong>, and/or <strong>TLS 1.2</strong>
+    boxes to indicate which protocol versions can be used for a secure
+    connection to a server.</li>
+</ul>
+
+<p><strong>Notes</strong>:</p>
+
+<ul>
+  <li>At least one protocol version must be selected, thus it is not possible
+    to uncheck the last remaining box.</li>
+  <li>Also, the selection must be contiguous. It is not possible to select both
+    SSL 3.0 and TLS 1.1 but to exclude the intermediate TLS 1.0 version.</li>
+  <li>You can extend the range by multiple versions. For example, if only SSL
+    3.0 is currently checked and you select TLS 1.2, the TLS 1.0 and TLS 1.1
+    versions are automatically selected as well.</li>
+  <li>Checkboxes may appear checked but grayed out if you cannot uncheck them
+    without violating these rules. Uncheck the outermost boxes to regain
+    access to an enclosed intermediate version.</li>
+</ul>
+<!-- TODO: stop localizing -->
+
+<h3 id="ssl_warnings">Ostrzeżenia SSL</h3>
+
+<p>Bardzo łatwo jest zauważyć fakt oglądania strony WWW&nbsp;przy użyciu bezpiecznego połączenia. Jeżeli połączenie jest szyfrowane, wówczas ikona umieszczona w&nbsp;prawym dolnym rogu okna przeglądarki przedstawia zamkniętą kłódkę (<img src="chrome://communicator/skin/icons/lock-secure.png"/>). Jeżeli połączenie nie jest szyfrowane, wówczas ikona w&nbsp;prawym dolnym rogu okna przeglądarki nie pojawia się lub przedstawia otwartą kłódkę (<img src="chrome://communicator/skin/icons/lock-insecure.png"/>). <!-- TODO: start localizing -->Encrypted pages which contain some unencrypted items (mixed content) are shown with a broken-lock icon<!-- TODO: stop localizing --> (<img src="chrome://communicator/skin/icons/lock-broken.png"/>).</p>
+
+<p>Jeżeli zachodzi potrzeba pokazywania przez przeglądarkę dodatkowych ostrzeżeń dotyczących obsługi SSL, użytkownik może zaznaczyć jedną lub więcej opcji w&nbsp;panelu preferencji SSL. <!-- TODO: start localizing -->Unless stated otherwise, a notification bar will be presented at the top of the page triggering the alert, with an option to enter this panel to change the option if the alert is considered annoying.<!-- TODO: stop localizing --></p>
+
+<p>Aby uaktywnić którekolwiek z&nbsp;poniższych ostrzeżeń, należy zaznaczyć odpowiednią opcję:</p>
+
+<ul>
+  <li><strong>Wczytanie strony, która używa szyfrowania</strong>: Zaznaczenie tej opcji spowoduje pokazanie okna z&nbsp;odpowiednim ostrzeżeniem przy próbie wczytania przez przeglądarkę strony używającej szyfrowania danych podczas transmisji.</li>
+  <li><strong>Opuszczenie strony, która używa szyfrowania</strong>: Zaznaczenie tej opcji spowoduje pokazanie okna z&nbsp;odpowiednim ostrzeżeniem przy próbie przejścia ze strony używającej szyfrowania danych na stronę, która takiego szyfrowania nie używa.</li>
+  <li><strong>Przesyłanie danych pomiędzy stronami, które nie używają szyfrowania</strong>: Zaznaczenie tej opcji spowoduje pokazanie ostrzeżenia przy próbie przesyłania danych (np. przy użyciu formularza) przy użyciu nieszyfrowanego połączenia.
+    <!-- TODO: start localizing -->
+    When this option is
+    selected, a dialog box will be presented to the user <em>before</em> the
+    page is actually opened, which allows the loading of the page to be
+    canceled before any potentially sensitive information is sent over an
+    unencrypted connection that can easily be intercepted by others.
+
+   <p><strong>Note</strong>: Submitting a form from an encrypted to an
+      unencrypted page will always prompt a dialog prior to opening the page,
+      regardless of this setting.</p>
+  </li>
+  <!-- TODO: stop localizing -->
+  <li><strong>Przeglądanie strony tylko częściowo zaszyfrowanej</strong>: Zaznaczenie tej opcji spowoduje pokazanie ostrzeżenia przy przeglądaniu strony, której nie wszystkie elementy zostały przesłane przy wykorzystaniu szyfrowanego połączenia.
+  <!-- TODO: start localizing -->
+  <p><strong>Note</strong>: See the options in the Mixed Content section
+      below for blocking of such content and for more differentiated control
+      of the warnings.</p>
+  </li>
+</ul>
+
+<h3 id="mixed_content">Mixed Content</h3>
+
+<p>In general, there are two major issues related to transmitting sensitive
+  information over an unencrypted connection: One is the danger of someone
+  eavesdropping on the line, thus listening to the content transmitted; the
+  other of someone intercepting requests for the desired page and replacing
+  the legitimate content of that page with own (potentially malicious)
+  content. While so-called <q>Man In The Middle</q> attacks can usually be
+  detected in encrypted connections (e.g., by a certificate mismatch or an
+  invalid certificate presented by the interceptor), no such verification
+  exists for unencrypted connections.</p>
+
+<p>The term <q>Mixed Content</q> refers to a web page which itself is
+  encrypted, but which includes content on the same or a different server
+  which is <em>not</em> encrypted. Consequently, this part of the page is
+  still subject to the vulnerabilities of an unencrypted line. While there
+  are legitimate uses of that concept (such as including a company logo from
+  a different insecure website into an otherwise secure page), such designs
+  should be avoided.</p>
+
+<p>There are two general types of mixed content:</p>
+
+<ul>
+  <li><strong>Mixed Active Content</strong> (or Mixed Script Content): This
+    is content which has the potential to hide or modify parts of a web page,
+    or to actively leak content from the secure part of the page to its
+    insecure part. Examples include scripts (JavaScript), style sheets (CSS),
+    or the embedding of entire web pages into the main web page (iframes).</li>
+  <li><strong>Mixed Passive Content</strong> (or Mixed Display Content):
+    This type of content does <em>not</em> have the potential to alter or
+    monitor the web page as such. Examples include images and audio or video
+    streams. It is however possible that sensitive information is passed as
+    an encoding of the content&apos;s location (URL), as cookies, or returned
+    with the content itself (e.g., as text included in an image). Thus, passive
+    content isn&apos;t entirely harmless either.</li>
+</ul>
+
+<p>The following options allow you to be warned about and/or to block both
+  mixed active and mixed passive content:</p>
+
+<ul>
+  <li><strong>Warn me when encrypted pages contain insecure content</strong>:
+    Check this to instruct &brandShortName; to present a notification bar when
+    mixed <em>active</em> content was loaded or blocked. The notification bar
+    contains a button to open this preference panel.</li>
+  <li><strong>Don&apos;t load insecure content on encrypted pages</strong>:
+    Check this to prevent mixed active content from being loaded at all but
+    to be blocked. If also the <q>Warn me</q> option is checked, the
+    notification bar will contain two additional buttons:
+    <ul>
+      <li><strong>Keep Blocking</strong>: Dismiss the notification bar without
+        loading the potentially insecure content.</li>
+      <li><strong>Unblock</strong>:
+        Load the potentially insecure content <em>once</em> but not
+        automatically when this page is visited again in the future.</li>
+    </ul>
+  </li>
+  <li><strong>Warn me when encrypted pages contain other types of mixed
+    content</strong>: Check this to instruct &brandShortName; to present a
+    notification bar when mixed <em>passive</em> content was loaded or blocked.
+    The notification bar contains a button to open this preference panel.</li>
+  <li><strong>Don&apos;t load other types of mixed content on encrypted
+    pages</strong>: Check this to prevent mixed passive content from being
+    loaded at all but to be blocked. If also the <q>Warn me</q> option is
+    checked, a notification is presented that such content was blocked.</li>
+</ul>
+<!-- TODO: stop localizing -->
+
+<p>Krótkie definicje ważnych przy szyfrowaniu danych pojęć: <a href="glossary.xhtml#authentication">autoryzacja</a>, <a href="glossary.xhtml#encryption">szyfrowanie</a>, lub <a href="glossary.xhtml#certificate">certyfikat</a>.</p>
+
+<p>Więcej informacji o&nbsp;szyfrach i&nbsp;szyfrowaniu można znaleźć w&nbsp;poniższych dokumentach anglojęzycznych:</p>
+
+<ul>
+  <li>
+    <a href="https://developer.mozilla.org/en-US/docs/Introduction_to_Public-Key_Cryptography">Introduction to Public-Key Cryptography</a>.</li>
+  <li>
+    <a href="https://developer.mozilla.org/en-US/docs/Introduction_to_SSL">Introduction to SSL</a>.</li>
+  <li>
+    <a href="https://developer.mozilla.org/en-US/docs/NSS">Technologies Available in the Network Security Services (NSS)</a>.</li>
+</ul>
+
+</body>
+</html>

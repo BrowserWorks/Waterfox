@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookies">
+<!-- cookies -->
+
+
+<!ENTITY cookiePolicy.label             "Política de aceitação de cookies">
+
+<!ENTITY disableCookies.label           "Não permitir nenhum cookie">
+<!ENTITY disableCookies.accesskey       "N">
+
+<!ENTITY accNo3rdPartyCookies.label     "Permitir cookies somente para o site atual (sem cookies de terceiros):">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "Aceitar cookies de terceiros apenas para os sites já visitados">
+<!ENTITY acc3rdPartyVisited.accesskey   "v">
+
+<!ENTITY accAllCookies.label            "Permitir todos os cookies">
+<!ENTITY accAllCookies.accesskey        "c">
+
+<!ENTITY cookieRetentionPolicy.label    "Política de retenção">
+
+<!ENTITY acceptNormally.label           "Aceitar cookies">
+<!ENTITY acceptNormally.accesskey       "a">
+
+<!ENTITY acceptForSession.label         "Aceitar apenas para a sessão atual">
+<!ENTITY acceptForSession.accesskey     "r">
+
+<!ENTITY acceptforNDays.label           "Aceitar cookies por">
+<!ENTITY acceptforNDays.accesskey       "p">
+<!ENTITY days.label                     "dias">
+
+<!ENTITY warnAboutCookies.label         "Perguntar antes de aceitar um cookie">
+<!ENTITY warnAboutCookies.accesskey     "c">
+<!ENTITY forCurrentSession.label        "exceto para cookies de sessão">
+<!ENTITY forCurrentSession.accesskey    "x">
+
+<!ENTITY manageCookies.label            "Gerenciar cookies e sites">
+<!ENTITY manageCookiesDescription.label "Permite visualizar e gerenciar os cookies armazenados e aceitar ou recusar cookies de sites específicos. As configurações para sites específicos sobrepõem as configurações acima.">
+
+<!ENTITY viewCookies.label              "Exibir cookies...">
+<!ENTITY viewCookies.accesskey          "k">
+

@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "프로파일러는 샘플을 순환 버퍼에 저장합니다. 버퍼가 꽉차게 되면 새 샘플은 오래된 샘플을 덮어 씁니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "실시간으로 기록된 데이터를 랜더링 하기 위해서 설정에서 다중 프로세스 Firefox를 활성화하세요.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "버퍼가 꽉 찼습니다. 오래된 샘플이 덮어 써집니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "프로필 기록을 현재 이용할 수 없습니다. 모든 사생활 보호 창을 닫고 다시 시도하세요.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "로드 중…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "폭포수">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "기록 중에 브라우저가 수행하는 다양한 작업을 폭포수 형태로 순차적으로 표시합니다.">
+<!ENTITY performanceUI.toolbar.js-calltree "호출 트리">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "기록하는 동안 브라우저가 가장 많은 시간을 소요한 곳의 JavaScript 함수를 강조합니다.">
+<!ENTITY performanceUI.toolbar.memory-calltree "할당">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "기록 중에 메모리가 어디에 할당되었는지를 보여줍니다.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS 프레임 차트">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "기록 내용 위에 JavaScript 호출 스택을 보여줍니다.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "할당 프레임 차트">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "전체 시간">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "이 함수와 호출한 함수가 수행된 시간입니다.">
+<!ENTITY performanceUI.table.selfDuration             "자체 시간">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "이 함수 안에서만 수행된 시간입니다.">
+<!ENTITY performanceUI.table.totalPercentage          "전체 비용">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "이 함수와 호출한 함수가 수행한 시간의 백분율입니다.">
+<!ENTITY performanceUI.table.selfPercentage           "자체 비용">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "이 함수 안에서만 수행된 시간의 백분율입니다.">
+<!ENTITY performanceUI.table.samples                  "샘플수">
+<!ENTITY performanceUI.table.samples.tooltip          "프로파일러가 샘플을 채취했을 때 이 함수가 스택에 올라온 횟수입니다.">
+<!ENTITY performanceUI.table.function                 "함수">
+<!ENTITY performanceUI.table.function.tooltip         "샘플된 함수의 이름과 소스 위치입니다.">
+<!ENTITY performanceUI.table.totalAlloc               "전체 샘플 할당">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "이 위치와 피호출자 된 객체 할당 샘플의 수 입니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "타임라인에 표시할 데이터 선택">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "성능 속성을 설정하세요.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "호출 트리 뒤집기">
+<!ENTITY performanceUI.invertTree.tooltiptext "프로파일된 호출 경로를 가장 최근 프레임부터 시작해서 오래된 프레임으로 확장되도록 호출 트리 표시를 뒤집습니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "프레임 차트 뒤집기">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "프로파일된 호출 경로를 가장 최근 프레임부터 시작해서 오래된 프레임으로 확장되도록 프레임 차트 표시를 뒤집습니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Gecko 플랫폼 데이터 표시">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "JavaScript 프로파일러가 Gecko 플랫폼 심볼을 포함하도록 플랫폼 데이터를 활성화합니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "JIT 최적화 보기">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "각 JavaScript 프레인 안의 JIT 최적화 데이터 샘플 보기">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "재귀 호출 평평하게">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "함수를 살펴볼 때 재귀 호출을 평평하게 보여줍니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "메모리 기록">
+<!ENTITY performanceUI.enableMemory.tooltiptext "프로파일할 때 메모리를 기록합니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "할당 기록">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "프로파일할 때 객체 할당을 기록합니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "프레임비율 기록">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "프로파일할 때 프레임비율을 기록합니다.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "를 통해서 현재 기록중">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "콘솔에 ">
+<!ENTITY performanceUI.console.stopCommandEnd   " 입력을 통해서 기록을 중지합니다.">

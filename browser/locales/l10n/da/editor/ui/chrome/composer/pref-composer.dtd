@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composer.title "Composer">
+<!ENTITY recentFiles.title "Seneste sider">
+<!ENTITY documentsInMenu.label "Maksimum antal sider vist:">
+<!ENTITY documentsInMenu.accesskey "M">
+<!ENTITY savingFiles.title "Når sider gemmes eller udgives">
+<!ENTITY preserveExisting.label "Bevar original kildekodeformatering">
+<!ENTITY preserveExisting.accesskey "B">
+<!ENTITY preserveExisting.tooltip "Bevar linjeskift og sidens originale formatering">
+<!ENTITY saveAssociatedFiles.label "Gem billeder og andre tilknyttede filer, når sider gemmes">
+<!ENTITY saveAssociatedFiles.accesskey "G">
+<!ENTITY showPublishDialog.label "Vis altid dialogen Udgivelse, når sider udgives">
+<!ENTITY showPublishDialog.accesskey "V">
+<!ENTITY composerEditing.label "Redigering">
+<!ENTITY maintainStructure.label "Bevar tabeludseende, når der indsættes eller slettes celler">
+<!ENTITY maintainStructure.tooltip "Bevar tabellens rektangulære form ved automatisk at tilføje celler efter indsættelse eller sletning af celler">
+<!ENTITY maintainStructure.accesskey "B">
+<!ENTITY useCSS.label "Benyt CSS-stile i stedet for HTML-elementer og -attributter">
+<!ENTITY useCSS.accesskey "C">
+<!ENTITY crInPCreatesNewP.label "Retur i et afsnit opretter altid et nyt afsnit">
+<!ENTITY crInPCreatesNewP.accesskey "R">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Ρυθμίσεις ανεπιθύμητων">
+<!ENTITY trainingDescription.label "Αν ενεργοποιηθεί, πρέπει πρώτα να εκπαιδεύσετε το &brandShortName; ώστε να αναγνωρίζει την ανεπιθύμητη αλληλογραφία, χρησιμοποιώντας το αντίστοιχο κουμπί της γραμμής εργαλείων για επισήμανση των ανεπιθύμητων email. Πρέπει να αναγνωρίσετε τα ανεπιθύμητα και μη μηνύματα. Μετά από αυτό, το &brandShortName; θα μπορεί να επισημαίνει αυτόματα τα ανεπιθύμητα email.">
+<!ENTITY level.label "Ενεργοποίηση προσαρμοστικών ελέγχων ανεπιθύμητων email για αυτόν τον λογαριασμό">
+<!ENTITY level.accesskey "Ε">
+
+<!ENTITY move.label "Μετακίνηση νέων ανεπιθύμητων μηνυμάτων:">
+<!ENTITY move.accesskey "ν">
+<!ENTITY junkFolderOn.label "Στον φάκελο &quot;Ανεπιθύμητα&quot; του:">
+<!ENTITY junkFolderOn.accesskey "θ">
+<!ENTITY otherFolder.label "Σε άλλο:">
+<!ENTITY otherFolder.accesskey "λ">
+<!ENTITY purge1.label "Αυτόματη διαγραφή ανεπιθύμητης αλληλογραφίας, που είναι παλαιότερη από">
+<!ENTITY purge1.accesskey "υ">
+<!ENTITY purge2.label "ημέρες">
+
+<!ENTITY whitelistHeader.label "Να μην γίνεται αυτόματη επισήμανση αλληλογραφίας ως ανεπιθύμητης, όταν ο αποστολέας ανήκει στα εξής: ">
+<!ENTITY whitelistHeader.accesskey "μ">
+
+<!ENTITY ispHeadersWarning.label "Αν ενεργοποιηθεί, το &brandShortName; αυτόματα θα θεωρεί ανεπιθύμητα τα μηνύματα που επισημαίνονται από αυτή την εξωτερική υπηρεσία ταξινόμησης.">
+<!ENTITY ispHeaders.label "Να θεωρούνται έμπιστες οι κεφαλίδες ανεπιθύμητης αλληλογραφίας, που καθορίζονται από το: ">
+<!ENTITY ispHeaders.accesskey "φ">
+
+<!ENTITY junkClassification.label "Διαλογή">
+<!ENTITY junkActions.label "Προορισμός και φύλαξη">
+
+<!ENTITY globalJunkPrefs.label "Γενικές προτιμήσεις ανεπιθύμητων…">
+<!ENTITY globalJunkPrefs.accesskey "Θ">

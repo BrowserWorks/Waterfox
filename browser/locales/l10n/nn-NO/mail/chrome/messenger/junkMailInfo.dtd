@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Om uønskt e-post">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; oppdagar automatisk innkomande e-post som viser seg å vere søppel (òg kjend som «spam»). E-post som &brandShortName; trur er søppel, vil bli viste med eit søppelkasse-ikon">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Du må fyrst trene &brandShortName; til å identifisere uønskt e-post ved å bruke verktøylinja for uønskt e-post.">
+<!ENTITY info3.label   "Når &brandShortName; identifiserar uønskt e-post kan du bruka reklamepostkontrollen for å automatisk flytta innkomande uønskt e-post til mappa for uønskt e-post.">
+<!ENTITY info4.label   "Trykk «Hjelp» for meir informasjon.">

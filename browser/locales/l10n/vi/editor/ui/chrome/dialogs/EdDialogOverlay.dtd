@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Chỉnh sửa nâng cao…">
+<!ENTITY AdvancedEditButton.accessKey "S">
+<!ENTITY AdvancedEditButton.tooltip "Thêm hoặc chỉnh sửa thuộc tính HTML, thuộc tính style và JavaScript">
+<!ENTITY chooseFileButton.label "Chọn tập tin…">
+<!ENTITY chooseFileButton.accessKey "C">
+<!ENTITY chooseFileLinkButton.label "Chọn tập tin…">
+<!ENTITY chooseFileLinkButton.accessKey "h">
+<!ENTITY makeUrlRelative.label "URL tương đối so với địa chỉ trang">
+<!ENTITY makeUrlRelative.accessKey "U">
+<!ENTITY makeUrlRelative.tooltip "Thay đổi giữa URL tuyệt đối và tương đối. Bạn phải lưu trang trước khi thay đổi.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Nhập vị trí trang web, tệp cục bộ hoặc chọn neo được đặt tên hoặc tiêu đề từ menu ngữ cảnh của trường:">
+<!ENTITY LinkURLEditField2.accessKey "w">

@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Εμφάνιση">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "Κατά την εκκίνηση του &brandShortName;, άνοιγμα">
+<!ENTITY navCheck.label                         "Πρόγραμμα περιήγησης">
+<!ENTITY navCheck.accesskey                     "Π">
+<!ENTITY showToolsLegend.label                  "Εμφάνιση γραμμών ως">
+<!ENTITY picsNtextRadio.label                   "Εικόνες και κείμενο">
+<!ENTITY picsNtextRadio.accesskey               "Ε">
+<!ENTITY picsOnlyRadio.label                    "Μόνο εικόνες">
+<!ENTITY picsOnlyRadio.accesskey                "ό">
+<!ENTITY textonlyRadio.label                    "Μόνο κείμενο">
+<!ENTITY textonlyRadio.accesskey                "ν">
+<!ENTITY showHideTooltips.label                 "Εμφάνιση υποδείξεων">
+<!ENTITY showHideTooltips.accesskey             "υ">
+<!ENTITY showHideGrippies.label                 "Απόκρυψη λαβών γραμμών εργαλείων">
+<!ENTITY showHideGrippies.accesskey             "λ">
+
+<!ENTITY pref.locales.title                     "Γλώσσα περιβάλλοντος χρήστη">
+<!ENTITY selectLocale.label                     "Επιλέξτε τη γλώσσα για το κείμενο που εμφανίζεται στα παράθυρα διαλόγου, τα μενού, τις γραμμές εργαλείων και τις ετικέτες κουμπιών:">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "Μορφή ημερομηνίας και ώρας">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "Οι προτιμήσεις γλώσσας και μορφοποίησης θα τεθούν σε ισχύ όταν κάνετε επανεκκίνηση του &brandShortName;.">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "打开文件…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "打开网络地址…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "最近的页面">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "保存">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "另存为…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "保存并更改文字编码">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "发布">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "发布为…">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "恢复">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "发布站点设置…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "新建">
+<!ENTITY newToolbarCmd.tooltip "创建一个新编写窗口">
+<!ENTITY openToolbarCmd.label "打开">
+<!ENTITY openToolbarCmd.tooltip "打开本地文件">
+<!ENTITY saveToolbarCmd.tooltip "将文件保存在本地">
+<!ENTITY publishToolbarCmd.tooltip "上载文件到远端地址">
+<!ENTITY printToolbarCmd.label "打印">
+<!ENTITY printToolbarCmd.tooltip "打印此页">

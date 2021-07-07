@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!ENTITY MsgSynchronize.label "Nachrichten herunterladen und sychronisieren">
+<!ENTITY MsgSelect.label "Einträge für Offline-Gebrauch">
+<!ENTITY MsgSyncDesc.label "Wenn Sie bereits Mail-Ordner oder Newsgroups für den Offline-Gebrauch ausgewählt haben, können Sie diese jetzt herunterladen und/oder sychronisieren. Ansonsten, verwenden Sie die &quot;Wählen&quot;-Schaltfläche, um Mail-Ordner und Newsgroups für den Offline-Gebrauch auszuwählen.">
+<!ENTITY MsgSyncDirections.label "Folgendes herunterladen und/oder sychronisieren:">
+<!ENTITY syncTypeMail.label "Mail-Nachrichten">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Newsgroup-Nachrichten">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "Ungesendete Nachrichten senden">
+<!ENTITY sendMessage.accesskey "U">
+<!ENTITY workOffline.label "Nach Herunterladen/Synchronisieren offline arbeiten">
+<!ENTITY workOffline.accesskey "N">
+<!ENTITY selectButton.label "Auswählen…">
+<!ENTITY selectButton.accesskey "A">
+<!ENTITY MsgSelectDesc.label "Wählen Sie Mail-Ordner und Newsgroups für den Offline-Gebrauch.">
+<!ENTITY MsgSelectInd.label "Herunterladen">
+<!ENTITY MsgSelectItems.label "Ordner und Newsgroups">

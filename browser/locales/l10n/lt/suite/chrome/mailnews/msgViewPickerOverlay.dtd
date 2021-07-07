@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Rodomi laiškai:">
+<!ENTITY viewPicker.accesskey "d">
+<!ENTITY viewAll.label "Visi">
+<!ENTITY viewAll.accesskey "V">
+<!ENTITY viewUnread.label "Neskaityti">
+<!ENTITY viewUnread.accesskey "N">
+<!ENTITY viewNotDeleted.label "Nepašalinti">
+<!ENTITY viewNotDeleted.accesskey "p">
+<!ENTITY viewTags.label "Gairės">
+<!ENTITY viewTags.accesskey "G">
+<!ENTITY viewCustomViews.label "Kitos rodomų laiškų grupės">
+<!ENTITY viewCustomViews.accesskey "K">
+<!ENTITY viewVirtualFolder.label "Rodomus laiškus įrašyti į aplanką…">
+<!ENTITY viewVirtualFolder.accesskey "s">
+<!ENTITY viewCustomizeView.label "Tvarkyti…">
+<!ENTITY viewCustomizeView.accesskey "T">

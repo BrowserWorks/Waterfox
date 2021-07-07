@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Мастер создания учетной записи чата">
+
+<!ENTITY accountProtocolTitle.label   "Протокол чата">
+<!ENTITY accountProtocolInfo.label    "Выберите протокол для вашей учетной записи из этого списка.">
+<!ENTITY accountProtocolField.label   "Протокол:">
+<!ENTITY accountProtocolGetMore.label "Загрузить больше…">
+
+<!ENTITY accountUsernameTitle.label   "Имя пользователя">
+<!ENTITY accountUsernameDuplicate.label "Эта учетная запись уже существует!">
+
+<!ENTITY accountPasswordTitle.label   "Пароль">
+<!ENTITY accountPasswordInfo.label    "Введите ваш пароль в поле ниже.">
+<!ENTITY accountPasswordField.label   "Пароль:">
+<!ENTITY accountPasswordManager.label "Введённый здесь пароль будет сохранён в Менеджере паролей. Если вы хотите, чтобы у вас запрашивали пароль при каждом подключении этой учётной записи, оставьте это поле пустым.">
+
+<!ENTITY accountAdvancedTitle.label   "Дополнительные настройки">
+<!ENTITY accountAdvancedInfo.label    "Вы можете пропустить этот шаг, если хотите.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Уведомлять о новой почте">
+<!ENTITY accountAliasGroupbox.caption "Локальный псевдоним">
+<!ENTITY accountAliasField.label      "Псевдоним:">
+<!ENTITY accountAliasInfo.label       "Он будет отображаться только при разговорах с вашими собеседниками, другие контакты не смогут его видеть.">
+<!ENTITY accountProxySettings.caption "Настройки прокси">
+<!ENTITY accountProxySettings.change.label     "Изменить…">
+<!ENTITY accountProxySettings.change.accessKey "м">
+
+<!ENTITY accountSummaryTitle.label   "Сводка">
+<!ENTITY accountSummaryInfo.label    "Эта сводка содержит всю введённую вами информацию. Проверьте её правильность перед созданием учетной записи.">
+<!ENTITY accountSummary.connectNow.label "Включить учетную запись.">

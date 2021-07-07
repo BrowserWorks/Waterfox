@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!ENTITY dialogTitle.label "Επιλογές αρχειοθέτησης">
+<!ENTITY archiveGranularityPrefix.label "Κατά την αρχειοθέτηση μηνυμάτων, τοποθέτηση σε:">
+<!ENTITY archiveFlat.label "Έναν μοναδικό φάκελο">
+<!ENTITY archiveFlat.accesskey "μ">
+<!ENTITY archiveYearly.label "Ετήσιους φακέλους αρχειοθέτησης">
+<!ENTITY archiveYearly.accesskey "Ε">
+<!ENTITY archiveMonthly.label "Μηνιαίους φακέλους αρχειοθέτησης">
+<!ENTITY archiveMonthly.accesskey "ν">
+<!ENTITY keepFolderStructure.label "Διατήρηση υπάρχουσας δομής φακέλων των αρχειοθετημένων μηνυμάτων">
+<!ENTITY keepFolderStructure.accesskey "Δ">
+<!ENTITY archiveExample.label "Παράδειγμα">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Αρχειοθήκες">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Εισερχόμενα">

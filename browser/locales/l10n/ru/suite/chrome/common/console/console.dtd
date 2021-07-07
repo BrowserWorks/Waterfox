@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Консоль ошибок">
+
+<!ENTITY errFile.label        "Источник:">
+<!ENTITY errLine.label        "Строка:">
+<!ENTITY errColumn.label      "Символ:">
+
+<!ENTITY all.label            "Все">
+<!ENTITY all.accesskey        "е">
+<!ENTITY errors.label         "Ошибки">
+<!ENTITY errors.accesskey     "ш">
+<!ENTITY warnings.label       "Предупреждения">
+<!ENTITY warnings.accesskey   "р">
+<!ENTITY messages.label       "Сообщения">
+<!ENTITY messages.accesskey   "б">
+<!ENTITY clear.label          "Очистить">
+<!ENTITY clear.accesskey      "ч">
+<!ENTITY codeEval.label       "Код:">
+<!ENTITY codeEval.accesskey   "о">
+<!ENTITY evaluate.label       "Выполнить">
+<!ENTITY evaluate.accesskey   "ы">
+<!ENTITY filter2.label        "Фильтр:">
+<!ENTITY filter2.accesskey    "и">
+
+<!ENTITY copyCmd.label         "Копировать">
+<!ENTITY copyCmd.accesskey     "п">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Сортировка по возрастанию">
+<!ENTITY sortFirst.accesskey   "в">
+<!ENTITY sortLast.label        "Сортировка по убыванию">
+<!ENTITY sortLast.accesskey    "у">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Панель меню">
+<!ENTITY modeToolbar.tooltip   "Панель режима">
+<!ENTITY entryToolbar.tooltip  "Панель элемента JavaScript">
+<!ENTITY toolbarsCmd.label     "Показать/скрыть">
+<!ENTITY toolbarsCmd.accesskey "к">
+<!ENTITY toolbarMode.label     "Режим">
+<!ENTITY toolbarMode.accesskey "ж">
+<!ENTITY toolbarEval.label     "Элемент JavaScript">
+<!ENTITY toolbarEval.accesskey "J">

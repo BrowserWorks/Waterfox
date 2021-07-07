@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "视图：">
+<!ENTITY viewPicker.accesskey "i">
+<!ENTITY viewAll.label "所有">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "未读">
+<!ENTITY viewUnread.accesskey "U">
+<!ENTITY viewNotDeleted.label "未删除">
+<!ENTITY viewNotDeleted.accesskey "D">
+<!ENTITY viewTags.label "标签">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "自定义视图">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "将视图保存为文件夹…">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "定制">
+<!ENTITY viewCustomizeView.accesskey "C">

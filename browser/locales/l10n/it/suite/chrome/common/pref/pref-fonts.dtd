@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.fonts.title "Caratteri">
+<!ENTITY language.label "Caratteri per la codifica:">
+<!ENTITY language.accesskey "C">
+<!ENTITY typefaces.label "Carattere visualizzato">
+<!ENTITY sizes.label "Dimensione (pixel)">
+<!ENTITY proportional.label "Proporzionale:">
+<!ENTITY proportional.accesskey "P">
+<!ENTITY serif.label "Con grazie:">
+<!ENTITY serif.accesskey "z">
+<!ENTITY sans-serif.label "Senza grazie:">
+<!ENTITY sans-serif.accesskey "S">
+<!ENTITY monospace.label "Spaziatura fissa:">
+<!ENTITY monospace.accesskey "a">
+<!ENTITY fantasy.label "Fantasia:">
+<!ENTITY fantasy.accesskey "F">
+<!ENTITY cursive.label "Corsivo:">
+<!ENTITY cursive.accesskey "o">
+<!ENTITY font.langGroup.latin "Latino">
+<!ENTITY font.langGroup.japanese "Giapponese">
+<!ENTITY font.langGroup.trad-chinese "Cinese Tradizionale(Taiwan)">
+<!ENTITY font.langGroup.simpl-chinese "Cinese Semplificato">
+<!ENTITY font.langGroup.trad-chinese-hk "Cinese Tradizionale(Hong Kong)">
+<!ENTITY font.langGroup.korean "Coreano">
+<!ENTITY font.langGroup.cyrillic "Cirillico">
+<!ENTITY font.langGroup.el "Greco">
+<!ENTITY font.langGroup.thai "Tailandese">
+<!ENTITY font.langGroup.hebrew "Ebraico">
+<!ENTITY font.langGroup.arabic "Arabo">
+<!ENTITY font.langGroup.devanagari "Devengari">
+<!ENTITY font.langGroup.tamil "Tamil">
+<!ENTITY font.langGroup.armenian "Armeno">
+<!ENTITY font.langGroup.bengali "Bengalese">
+<!ENTITY font.langGroup.canadian "Sillabario canadese unificato">
+<!ENTITY font.langGroup.ethiopic "Etiope">
+<!ENTITY font.langGroup.georgian "Georgiano">
+<!ENTITY font.langGroup.gujarati "Gujarati">
+<!ENTITY font.langGroup.gurmukhi "Gurmukhi">
+<!ENTITY font.langGroup.khmer "Khmer">
+<!ENTITY font.langGroup.malayalam "Malayalam">
+<!ENTITY font.langGroup.math "Matematica">
+<!ENTITY font.langGroup.odia "Oriya">
+<!ENTITY font.langGroup.telugu "Telugu">
+<!ENTITY font.langGroup.kannada "Kannada">
+<!ENTITY font.langGroup.sinhala "Singalese">
+<!ENTITY font.langGroup.tibetan "Tibetano">
+<!ENTITY font.langGroup.other "Altri sistemi di scrittura">
+<!ENTITY minSize.label "Dimensione minima caratteri:">
+<!ENTITY minSize.accesskey "D">
+<!ENTITY minSize.none "Nessuna">
+<!ENTITY useDefaultFontSerif.label "Con grazie">
+<!ENTITY useDefaultFontSansSerif.label "Senza grazie">
+<!ENTITY useDocumentFonts.label "Permetti ai documenti di utilizzare i propri caratteri">
+<!ENTITY useDocumentFonts.accesskey "n">
+<!ENTITY header2 "Quando una pagina web specifica i propri caratteri">
+<!ENTITY useDefaultFont.label "Utilizza i caratteri selezionati, ignorando i caratteri specificati dalla pagina">
+<!ENTITY useDefaultFont.accesskey "U">

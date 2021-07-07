@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adressage">
+<!ENTITY emailCollectiontitle.label            "Collecte d’adresses">
+<!ENTITY emailCollectionPicker.label           "Ajouter les adresses à mes :">
+<!ENTITY emailCollectionPicker.accesskey       "o">
+<!ENTITY emailCollectiontext.label             "Les adresses de courriers sortants peuvent être automatiquement ajoutées dans un carnet d’adresses local.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Auto-complétion d’adresses">
+<!ENTITY highlightNonMatches.label             "Mettre en évidence les adresses qui ne sont pas complétées automatiquement">
+<!ENTITY highlightNonMatches.accesskey         "M">
+<!ENTITY addressingEnable.label                "Les carnets d’adresses locaux">
+<!ENTITY addressingEnable.accesskey            "x">
+<!ENTITY autocompleteText.label                "Lors de la recherche d’adresses, chercher les correspondances dans :">
+<!ENTITY directories.label                     "Le serveur d’annuaire :">
+<!ENTITY directories.accesskey                 "L">
+<!ENTITY directoriesNone.label                 "Aucun">
+<!ENTITY editDirectories.label                 "Modifier les annuaires…">
+<!ENTITY editDirectories.accesskey             "d">

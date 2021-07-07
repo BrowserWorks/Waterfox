@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "Πολυμέσα">
+<!ENTITY mediaHTML5Preferences.label    "Ήχος/βίντεο">
+<!ENTITY allowMediaAutoplay.label       "Ενεργοποίηση αυτόματης αναπαραγωγής πολυμέσων HTML5">
+<!ENTITY allowMediaAutoplay.accesskey   "α">
+
+<!ENTITY enableDrmMedia.label           "Ενεργοποίηση διαχείρισης ψηφιακών δικαιωμάτων για">
+<!ENTITY enableEmeForSuite.label        "Πρόσθετα αποκρυπτογράφησης περιεχομένου τρίτων">
+<!ENTITY enableEmeForSuite.accesskey    "Π">
+
+<!ENTITY animLoopingTitle.label         "Επανάληψη κινούμενων εικόνων">
+<!ENTITY animLoopAsSpecified.label      "Όσες φορές ορίζει η εικόνα">
+<!ENTITY animLoopAsSpecified.accesskey  "σ">
+<!ENTITY animLoopOnce.label             "Μία φορά">
+<!ENTITY animLoopOnce.accesskey         "Μ">
+<!ENTITY animLoopNever.label            "Ποτέ">
+<!ENTITY animLoopNever.accesskey        "τ">

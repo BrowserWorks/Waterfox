@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "HTML-e-post">
+
+<!ENTITY recipient.label "Nokre av mottakarane står lista opp med at dei ikkje kan motta HTML-e-post.">
+
+<!ENTITY question.label "Vil du konvertere meldinga til rein tekst, eller vil du sende henne i HTML likevel?">
+
+<!ENTITY plainTextAndHtml.label "Send i rein tekst og HTML">
+<!ENTITY plainTextAndHtml.accesskey "S">
+<!ENTITY plainTextOnly.label "Send meldinga som rein tekst">
+<!ENTITY plainTextOnly.accesskey "e">
+<!ENTITY htmlOnly.label "Send meldinga som rein HTML">
+<!ENTITY htmlOnly.accesskey "n">
+
+<!ENTITY send.label "Send">
+<!ENTITY send.accesskey "S">

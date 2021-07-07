@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-scripts.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+
+
+<!ENTITY pref.scripts.title              "Scenarijai ir papildiniai">
+
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+
+<!ENTITY enableJavaScript.label          "Leisti vykdyti „JavaScript“ scenarijus:">
+<!ENTITY allowScripts.label              "Scenarijams leisti atlikti šiuos veiksmus:">
+<!ENTITY allowScripts.accesskey          "v">
+<!ENTITY allowWindowMoveResize.label     "Keisti atvertų langų dydį bei padėtį">
+<!ENTITY allowWindowFlip.label           "Keisti langų aktyvumą">
+<!ENTITY allowWindowStatusChange.label   "Keisti tekstą būsenos juostoje">
+<!ENTITY allowContextmenuDisable.label   "Nerodyti ar keisti kontekstinį meniu">
+<!ENTITY allowHideStatusBar.label        "Nerodyti būsenos juostos">
+
+
+
+
+<!ENTITY enablePlugins.label             "Įjungti programos papildinius">
+<!ENTITY enablePluginForSuite.label      "programų pakete">
+<!ENTITY enablePluginForSuite.accesskey  "p">
+
+<!ENTITY whenPageRequiresPlugins.label   "Jeigu tinklalapyje naudojami papildiniai">
+<!ENTITY activateAllPlugins.label        "aktyvinti papildinius automatiškai">
+<!ENTITY activateAllPlugins.accesskey    "a">
+<!ENTITY warnPluginsRequired.label       "pranešti, jeigu reikia įdiegti daugiau papildinių">
+<!ENTITY warnPluginsRequired.accesskey   "d">

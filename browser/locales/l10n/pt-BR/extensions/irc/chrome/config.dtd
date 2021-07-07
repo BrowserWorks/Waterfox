@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Preferências do ChatZilla">
+<!ENTITY loading.label "Por favor aguarde, carregando...">
+<!ENTITY homepage.url "http://www.hacksrus.com/~ginda/chatzilla/">
+<!ENTITY homepage.label "Página do ChatZilla">
+<!ENTITY object.add.label "Adicionar...">
+<!ENTITY object.add.hint        "Adicionar uma rede, canal ou usuário para o qual definir preferências">
+<!ENTITY object.add.accesskey "A">
+<!ENTITY object.del.label "Remover">
+<!ENTITY object.del.hint        "Remove o objeto atual, limpando todas as preferências a ele associadas">
+<!ENTITY object.del.accesskey "R">
+<!ENTITY object.reset.label "Limpar">
+<!ENTITY object.reset.hint      "Define as preferências para o objeto de volta às preferências padrão">
+<!ENTITY object.reset.accesskey "L">
+<!ENTITY dialog.apply "Aplicar">
+<!ENTITY network "Rede">
+<!ENTITY channel "Canal">
+<!ENTITY user "Usuário">
+<!ENTITY config.add.title "Adicionar preferências ao objeto">
+<!ENTITY config.type.label "Tipo:">
+<!ENTITY config.type.hint         "Tipo do objeto a adicionar preferências">
+<!ENTITY config.type.accesskey "T">
+<!ENTITY config.network.label "Rede:">
+<!ENTITY config.network.hint      "Nome pelo qual a rede é conhecida ou nome do servidor">
+<!ENTITY config.network.accesskey "R">
+<!ENTITY config.target.label      "Alvo:">
+<!ENTITY config.target.hint       "Canal ou usuário alvo">
+<!ENTITY config.target.accesskey "A">

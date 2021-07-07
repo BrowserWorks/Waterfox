@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "笑脸">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "微笑">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "插入一个笑脸">
+<!ENTITY smiley2Cmd.label "皱眉">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "插入皱眉的脸">
+<!ENTITY smiley3Cmd.label "眨眼">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "插入眨眼的脸">
+<!ENTITY smiley4Cmd.label "吐舌">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "插入吐舌的脸">
+<!ENTITY smiley5Cmd.label "大笑">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "插入大笑的脸">
+<!ENTITY smiley6Cmd.label "窘迫">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "插入窘迫的脸">
+<!ENTITY smiley7Cmd.label "迟疑">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "插入迟疑表情">
+<!ENTITY smiley8Cmd.label "惊讶">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "插入惊讶的脸">
+<!ENTITY smiley9Cmd.label "亲吻">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "插入亲吻的脸">
+<!ENTITY smiley10Cmd.label "大叫">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "插入大叫的脸">
+<!ENTITY smiley11Cmd.label "耍酷">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "插入耍酷的脸">
+<!ENTITY smiley12Cmd.label "钱嘴">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "插入钱嘴的脸">
+<!ENTITY smiley13Cmd.label "吮脚">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "插入吮脚的脸">
+<!ENTITY smiley14Cmd.label "无辜">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "插入无辜的脸">
+<!ENTITY smiley15Cmd.label "哭泣">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "插入大哭的脸">
+<!ENTITY smiley16Cmd.label "缄默">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "插入缄默的脸">
+<!ENTITY SmileButton.label "插入笑脸">
+<!ENTITY SmileButton.tooltip "插入一个笑脸">

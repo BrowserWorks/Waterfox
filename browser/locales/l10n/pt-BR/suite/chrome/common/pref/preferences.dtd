@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Preferências">
+<!ENTITY  preferencesDefaultTitleWin.title "Opções">
+<!ENTITY  preferencesCloseButton.label "Fechar">
+<!ENTITY  preferencesCloseButton.accesskey "C">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Preferências">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;">
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;">
+<!ENTITY categoryHeader "Categoria">
+
+<!ENTITY appear.label "Aparência">
+<!ENTITY content.label "Conteúdo">
+<!ENTITY fonts.label "Fontes">
+<!ENTITY colors.label "Cores">
+<!ENTITY media.label "Mídia">
+<!ENTITY spellingPane.label "Ortografia">
+
+<!ENTITY navigator.label "Navegador">
+<!ENTITY history.label "Histórico">
+<!ENTITY languages.label "Idiomas">
+<!ENTITY applications.label "Programas">
+<!ENTITY locationBar.label "Barra de localização">
+<!ENTITY search.label "Pesquisar na web">
+<!ENTITY tabWindows.label "Abas">
+<!ENTITY links.label "Comportamento do link">
+<!ENTITY download.label "Downloads">
+
+<!ENTITY security.label "Privacidade e Segurança">
+<!ENTITY privatedata.label "Dados pessoais">
+<!ENTITY cookies.label "Cookies">
+<!ENTITY images.label "Imagens">
+<!ENTITY popups.label "Janelas popup">
+<!ENTITY passwords.label "Senhas">
+<!ENTITY masterpass.label "Senhas mestra">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Certificados">
+
+<!ENTITY sync.label "Sync">
+
+<!ENTITY advance.label "Avançado">
+<!ENTITY scriptsAndWindows.label "Scripts e Plugins">
+<!ENTITY keynav.label "Teclado">
+<!ENTITY findAsYouType.label "Localizar texto ao digitar">
+<!ENTITY cache.label "Cache">
+<!ENTITY offlineApps.label "Aplicativos em modo desconectado">
+<!ENTITY proxies.label "Proxies">
+<!ENTITY httpnetworking.label "HTTP">
+<!ENTITY smart.label "Instalação de programas">
+<!ENTITY mousewheel.label "Roda do mouse">
+
+<!ENTITY debugging.label "Depuração">
+
+<!ENTITY focusSearch.key "f">

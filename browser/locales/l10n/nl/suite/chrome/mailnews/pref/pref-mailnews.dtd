@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "E-mail &amp; nieuwsgroepen">
+<!ENTITY generalSettings.caption          "Algemene instellingen">
+<!ENTITY confirmMove.label                "Bevestiging vragen bij het verplaatsen van mappen naar de prullenbak">
+<!ENTITY confirmMove.accesskey            "B">
+<!ENTITY preserveThreading.label          "Berichtconversaties bij elkaar houden bij het sorteren van berichten">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY loadInBackground.label           "Naar nieuwe tabbladen schakelen wanneer deze worden geopend">
+<!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailBiffOnNewWindow.label        "Alleen op nieuwe berichten controleren na het openen van E-mail &amp; nieuwsgroepen">
+<!ENTITY mailBiffOnNewWindow.accesskey    "c">
+
+<!ENTITY defaultMailSettings.description  "&brandShortName; als de standaardtoepassing gebruiken voor:">
+<!ENTITY setDefaultMail.label             "E-mail">
+<!ENTITY setDefaultMail.accesskey         "m">
+<!ENTITY setDefaultNews.label             "Nieuws">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Feeds">
+<!ENTITY setDefaultFeed.accesskey         "e">
+
+<!ENTITY useInternalSettings.description  "Gebruik &brandShortName; E-mail &amp; nieuwsgroepen bij het openen van browserkoppelingen in:">
+<!ENTITY useInternalMail.label            "Mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Nieuws (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "i">
+
+<!ENTITY messengerStartPage.caption       "E-mail-startpagina">
+<!ENTITY enableStartPage.label            "Wanneer Mail start, de startpagina in het berichtgedeelte tonen">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "Locatie:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "Standaardinstelling herstellen">
+<!ENTITY useDefault.accesskey             "S">
+<!ENTITY rememberLastMsg.label            "Het laatst geselecteerde bericht onthouden">
+<!ENTITY rememberLastMsg.accesskey        "t">

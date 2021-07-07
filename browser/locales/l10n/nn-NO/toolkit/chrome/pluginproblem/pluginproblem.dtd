@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Trykk her for å aktivere programtillegget.">
+<!ENTITY clickToActivatePlugin                               "Aktiver programtillegget.">
+<!ENTITY checkForUpdates                                     "Søk etter oppdateringar…">
+<!ENTITY blockedPlugin.label                                 "Dette programtillegget er blokkert for å verne deg.">
+<!ENTITY hidePluginBtn.label                                 "Gøym programtillegget">
+<!ENTITY managePlugins                                       "Handtere programtillegga…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Last sida på nytt">
+<!ENTITY reloadPlugin.post                                   " for å prøve på nytt.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Send krasjrapport">
+<!ENTITY report.submitting                                   "Sender rapport …">
+<!ENTITY report.submitted                                    "Krasjrapport sendt.">
+<!ENTITY report.disabled                                     "Krasjrapporteringar er avslått.">
+<!ENTITY report.failed                                       "Mislykka sending.">
+<!ENTITY report.unavailable                                  "Ingen rapport tilgjengeleg.">
+<!ENTITY report.comment                                      "Legg til ein kommentar (kommentarar er offentleg synlege)">
+<!ENTITY report.pageURL                                      "Inkluder URL-en til denne sida">
+
+<!ENTITY plugin.file                                         "Fil">
+<!ENTITY plugin.mimeTypes                                    "MIME-typer">
+<!ENTITY plugin.flashProtectedMode.label                     "Slå på Adobe Flash beskytta-modus">
+<!ENTITY plugin.enableBlocklists.label                       "Blokker farleg og påtrengande Flash-innhald">

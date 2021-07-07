@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "ตัวช่วยบัญชีแชท">
+
+<!ENTITY accountProtocolTitle.label   "เครือข่ายแชท">
+<!ENTITY accountProtocolInfo.label    "โปรดเลือกเครือข่ายของบัญชีแชทของคุณ">
+<!ENTITY accountProtocolField.label   "เครือข่าย:">
+<!ENTITY accountProtocolGetMore.label "รับเพิ่มเติม…">
+
+<!ENTITY accountUsernameTitle.label   "ชื่อผู้ใช้">
+<!ENTITY accountUsernameDuplicate.label "บัญชีนี้ถูกกำหนดค่าแล้ว!">
+
+<!ENTITY accountPasswordTitle.label   "รหัสผ่าน">
+<!ENTITY accountPasswordInfo.label    "โปรดป้อนรหัสผ่านของคุณในช่องด้านล่าง">
+<!ENTITY accountPasswordField.label   "รหัสผ่าน:">
+<!ENTITY accountPasswordManager.label "รหัสผ่านที่ป้อนที่นี่จะถูกเก็บไว้ในตัวจัดการรหัสผ่าน เว้นช่องนี้ว่างไว้หากคุณต้องการให้ป้อนรหัสผ่านทุกครั้งที่เชื่อมต่อบัญชีนี้">
+
+<!ENTITY accountAdvancedTitle.label   "ตัวเลือกขั้นสูง">
+<!ENTITY accountAdvancedInfo.label    "คุณสามารถข้ามขั้นตอนนี้ได้หากคุณต้องการ">
+<!ENTITY accountAdvanced.newMailNotification.label   "แจ้งเตือนเมื่อมีจดหมายใหม่">
+<!ENTITY accountAliasGroupbox.caption "นามแฝงภายใน">
+<!ENTITY accountAliasField.label      "นามแฝง:">
+<!ENTITY accountAliasInfo.label       "สิ่งนี้จะปรากฏในการสนทนาของคุณเมื่อคุณพูดคุย ผู้ติดต่อระยะไกลจะไม่เห็น">
+<!ENTITY accountProxySettings.caption "การตั้งค่าพร็อกซี">
+<!ENTITY accountProxySettings.change.label     "เปลี่ยน…">
+<!ENTITY accountProxySettings.change.accessKey "ป">
+
+<!ENTITY accountSummaryTitle.label   "สรุป">
+<!ENTITY accountSummaryInfo.label    "แสดงผลบทสรุปของข้อมูลที่คุณป้อนด้านล่าง โปรดตรวจสอบก่อนสร้างบัญชี">
+<!ENTITY accountSummary.connectNow.label "เชื่อมต่อบัญชีนี้เดี๋ยวนี้">

@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Carnet d’adresses">
+<!ENTITY Addrbook.accesskey                    "C">
+<!ENTITY GeneratedName.label                   "Nom">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Adresse électronique">
+<!ENTITY PrimaryEmail.accesskey                "e">
+<!ENTITY Company.label                         "Société">
+<!ENTITY Company.accesskey                     "c">
+<!ENTITY _PhoneticName.label                   "Nom phonétique">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Surnom">
+<!ENTITY NickName.accesskey                    "S">
+<!ENTITY SecondEmail.label                     "Adresse alternative">
+<!ENTITY SecondEmail.accesskey                 "d">
+<!ENTITY Department.label                      "Service">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Fonction">
+<!ENTITY JobTitle.accesskey                    "t">
+<!ENTITY CellularNumber.label                  "Portable">
+<!ENTITY CellularNumber.accesskey              "b">
+<!ENTITY PagerNumber.label                     "Pager">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Tél. domicile">
+<!ENTITY HomePhone.accesskey                   "m">
+<!ENTITY WorkPhone.label                       "Tél. travail">
+<!ENTITY WorkPhone.accesskey                   "l">
+<!ENTITY ScreenName.label                      "Pseudo AIM">
+<!ENTITY ScreenName.accesskey                  "u">
+<!ENTITY ChatName.label                        "Pseudo pour discussion">
+<!ENTITY ChatName.accesskey                    "P">
+<!ENTITY sortAscending.label                   "Ordre croissant">
+<!ENTITY sortAscending.accesskey               "a">
+<!ENTITY sortDescending.label                  "Ordre décroissant">
+<!ENTITY sortDescending.accesskey              "d">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Écrire un message">
+<!ENTITY composeEmail.accesskey                "r">
+<!ENTITY copyAddress.label                     "Copier l’adresse électronique">
+<!ENTITY copyAddress.accesskey                 "C">
+<!ENTITY deleteAddrBookCard.label              "Supprimer">
+<!ENTITY deleteAddrBookCard.accesskey          "S">
+<!ENTITY newAddrBookCard.label                 "Nouvelle fiche…">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "Nouvelle liste…">
+<!ENTITY newAddrBookMailingList.accesskey      "l">
+<!ENTITY addrBookCardProperties.label          "Modifier">
+<!ENTITY addrBookCardProperties.accesskey      "M">

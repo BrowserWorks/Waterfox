@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Accounts - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Instant messaging status">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "New Account">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Close">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "No account configured yet">
+<!ENTITY accountManager.noAccount.description "Click on the &accountManager.newAccount.label; button to let &brandShortName; guide you through the process of configuring one.">
+<!ENTITY account.autoSignOn.label     "Sign-on at startup">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "Connect">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Disconnect">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Delete">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "Properties">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Move up">
+<!ENTITY account.movedown.label       "Move down">
+<!ENTITY account.cancelReconnection.label         "Cancel reconnection">
+<!ENTITY account.cancelReconnection.accesskey     "a">
+<!ENTITY account.copyDebugLog.label     "Copy Debug Log">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "Show Debug Log">
+<!ENTITY account.showDebugLog.accesskey "h">
+<!ENTITY account.connecting           "Connecting…">
+<!ENTITY account.disconnecting        "Disconnecting…">
+<!ENTITY account.disconnected         "Not Connected">

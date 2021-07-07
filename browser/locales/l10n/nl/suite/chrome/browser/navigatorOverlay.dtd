@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Browsertabblad">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Weblocatie openen…">
+<!ENTITY openCmd.accesskey "l">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Bestand openen…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Overige tabbladen sluiten">
+<!ENTITY closeOtherTabs.accesskey "b">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Tabbladen aan de rechterkant sluiten">
+<!ENTITY  closeTabsToTheEnd.accesskey "c">
+
+<!ENTITY uploadFile.label "Bestand publiceren…">
+<!ENTITY uploadFile.accesskey "u">
+
+<!ENTITY printSetupCmd.label "Pagina-instellingen…">
+<!ENTITY printSetupCmd.accesskey "i">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Zoeken op deze pagina…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Tonen/verbergen">
+<!ENTITY toolbarsCmd.accesskey "o">
+<!ENTITY tabbarCmd.label "Tabbladenbalk">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "Statusbalk">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Componentenbalk">
+<!ENTITY componentbarCmd.accesskey "C">
+
+<!ENTITY fullScreenCmd.label "Volledig scherm">
+<!ENTITY fullScreenCmd.accesskey "V">
+
+<!ENTITY useStyleSheetMenu.label "Stijl gebruiken">
+<!ENTITY useStyleSheetMenu.accesskey "e">
+<!ENTITY useStyleSheetNone.label "Geen">
+<!ENTITY useStyleSheetNone.accesskey "G">
+<!ENTITY useStyleSheetPersistentOnly.label "Standaard paginastijl">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "S">
+<!ENTITY bidiSwitchPageDirectionItem.label "Paginarichting omkeren">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "P">
+<!ENTITY pageSourceCmd.label "Paginabron">
+<!ENTITY pageSourceCmd.accesskey "b">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Pagina-info">
+<!ENTITY pageInfoCmd.accesskey "i">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Ga">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Startpagina">
+<!ENTITY goHomeCmd.accesskey "S">
+<!ENTITY historyCmd.label "Geschiedenis">
+<!ENTITY historyCmd.accesskey "G">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Onlangs gesloten tabbladen">
+<!ENTITY recentTabs.accesskey "t">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Onlangs gesloten vensters">
+<!ENTITY recentWindows.accesskey "e">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Vorige sessie herstellen">
+<!ENTITY historyRestoreLastSession.accesskey "s">
+<!ENTITY syncTabsMenu.label "Tabbladen van andere computers">
+<!ENTITY syncTabsMenu.accesskey "c">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Bladwijzers">
+<!ENTITY bookmarksMenu.accesskey "a">
+<!ENTITY addCurPageCmd.label "Bladwijzer voor deze pagina maken">
+<!ENTITY addCurPageCmd.accesskey "w">
+<!ENTITY addCurPageAsCmd.label "Bladwijzer archiveren…">
+<!ENTITY addCurPageAsCmd.accesskey "a">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Deze tabbladgroep toevoegen aan bladwijzers…">
+<!ENTITY addCurTabsAsCmd.accesskey "r">
+<!ENTITY manBookmarksCmd.label "Bladwijzers beheren…">
+<!ENTITY manBookmarksCmd.accesskey "B">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Zoeken op het web">
+<!ENTITY searchInternetCmd.accesskey "Z">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Pagina vertalen">
+<!ENTITY translateMenu.accesskey "v">
+
+<!ENTITY cookieMessageTitle.label "Cookietoestemmingen gewijzigd">
+<!ENTITY cookieDisplayCookiesCmd.label "Opgeslagen cookies beheren">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "b">
+<!ENTITY cookieAllowCookiesCmd.label "Cookies van deze website toestaan">
+<!ENTITY cookieAllowCookiesCmd.accesskey "C">
+<!ENTITY cookieAllowCookiesMsg.label "Cookies van deze website zullen altijd worden toegestaan.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Cookies van deze website toestaan voor sessie">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "w">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Deze website kan alleen cookies instellen voor de huidige sessie.">
+<!ENTITY cookieCookiesDefaultCmd.label "Standaard cookietoestemmingen gebruiken">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "d">
+<!ENTITY cookieCookiesDefaultMsg.label "Cookies van deze website zullen op basis van de standaardinstellingen worden geaccepteerd of geweigerd.">
+<!ENTITY cookieBlockCookiesCmd.label "Cookies van deze website blokkeren">
+<!ENTITY cookieBlockCookiesCmd.accesskey "k">
+<!ENTITY cookieBlockCookiesMsg.label "Cookies van deze website zullen altijd worden geweigerd.">
+
+<!ENTITY cookieImageMessageTitle.label "Afbeeldingstoestemmingen gewijzigd">
+<!ENTITY cookieDisplayImagesCmd.label "Afbeeldingstoestemmingen beheren">
+<!ENTITY cookieDisplayImagesCmd.accesskey "b">
+<!ENTITY cookieAllowImagesCmd.label "Afbeeldingen van deze website toestaan">
+<!ENTITY cookieAllowImagesCmd.accesskey "t">
+<!ENTITY cookieAllowImagesMsg.label "Afbeeldingen van deze website zullen altijd worden gedownload.">
+<!ENTITY cookieImagesDefaultCmd.label "Standaard afbeeldingstoestemmingen gebruiken">
+<!ENTITY cookieImagesDefaultCmd.accesskey "d">
+<!ENTITY cookieImagesDefaultMsg.label "Afbeeldingen van deze website zullen op basis van de standaardinstellingen worden gedownload.">
+<!ENTITY cookieBlockImagesCmd.label "Afbeeldingen van deze website blokkeren">
+<!ENTITY cookieBlockImagesCmd.accesskey "k">
+<!ENTITY cookieBlockImagesMsg.label "Afbeeldingen van deze website zullen nooit worden gedownload.">
+
+<!ENTITY popupsMessageChangeTitle.label "Pop-uptoestemmingen gewijzigd">
+<!ENTITY popupAllowCmd.label "Pop-ups van deze website toestaan">
+<!ENTITY popupAllowCmd.accesskey "P">
+<!ENTITY popupAllowMsg.label "Pop-ups van deze website zullen altijd worden getoond.">
+<!ENTITY popupDefaultCmd.label "Standaard pop-uptoestemmingen gebruiken">
+<!ENTITY popupDefaultCmd.accesskey "S">
+<!ENTITY popupDefaultMsg.label "Pop-ups van deze website zullen op basis van de standaardinstellingen worden getoond.">
+<!ENTITY popupBlockCmd.label "Pop-ups van deze website blokkeren">
+<!ENTITY popupBlockCmd.accesskey "w">
+<!ENTITY popupBlockMsg.label "Pop-ups van deze website zullen niet worden getoond.">
+<!ENTITY popupsManage.label "Pop-ups beheren">
+<!ENTITY popupsManage.accesskey "b">
+
+<!ENTITY cookieCookieManager.label "Cookiebeheerder">
+<!ENTITY cookieCookieManager.accesskey "C">
+<!ENTITY cookieImageManager.label "Afbeeldingenbeheerder">
+<!ENTITY cookieImageManager.accesskey "f">
+<!ENTITY popupsManager.label "Pop-upbeheerder">
+<!ENTITY popupsManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Privégegevens wissen">
+<!ENTITY clearPrivateDataCmd.accesskey "P">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "v">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Postranní lišta">
+<!ENTITY sidebar.reload.label           "Obnovit">
+<!ENTITY sidebar.reload.accesskey       "N">
+<!ENTITY sidebar.picker.label           "Panely">
+<!ENTITY sidebar.customize.label        "Přizpůsobit lištu…">
+<!ENTITY sidebar.customize.accesskey    "p">
+<!ENTITY sidebar.hide.label             "Skrýt panel">
+<!ENTITY sidebar.hide.accesskey         "K">
+<!ENTITY sidebar.switch.label           "Přepnout na panel">
+<!ENTITY sidebar.switch.accesskey       "P">
+<!ENTITY sidebarCmd.label               "Postranní lišta">
+<!ENTITY sidebarCmd.accesskey           "l">
+<!ENTITY sidebar.loading.label          "Načítání…">
+<!ENTITY sidebar.loadstopped.label      "Načítání zastaveno">
+<!ENTITY sidebar.loading.stop.label     "Zastavit">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "Momentálně nejsou dostupné žádné panely.">
+<!ENTITY sidebar.no-panels.add       'Další panely můžete přidat klepnutím na tlačítko "Panely".'>
+<!ENTITY sidebar.no-panels.hide      'Pokud si přejete Lištu zcela skrýt, vyberte z nabídky "Zobrazit" položku "Postranní lišta".'>
+<!ENTITY sidebar.sbDirectory.label   "Získat další…">
+
+<!ENTITY sidebar.pagenotfound.label  "Momentálně není dostupný žádný panel.">
+<!ENTITY sidebar.close.tooltip       "Zavře postranní lištu">
+<!ENTITY sidebar.open.tooltip        "Otevře postranní lištu">
+
+<!ENTITY sidebar.search.label         "Hledat">
+<!ENTITY sidebar.client-bookmarks.label     "Záložky">
+<!ENTITY sidebar.client-history.label       "Historie">
+<!ENTITY sidebar.client-addressbook.label   "Kontakty">

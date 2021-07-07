@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "副本和文件夹设置">
+<!ENTITY sendingPrefix.label "当发送消息时，自动：">
+<!ENTITY fccMailFolder.label "保留副本到：">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "将回复的邮件放入被回复邮件同一文件夹中">
+<!ENTITY fccReplyFollowsParent.accesskey "r">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc 这些邮件地址：">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "使用逗号分隔地址">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "密送至此邮件地址：">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "使用逗号分隔地址">
+<!ENTITY saveMessageDlg.label "保存消息时显示确认对话框">
+<!ENTITY saveMessageDlg.accesskey "w">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "“寄件备份”文件夹：">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "其他：">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "消息存档">
+<!ENTITY keepArchives.label "保存消息归档至：">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "存档选项…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "“归档”文件夹于：">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "其他：">
+<!ENTITY archiveInOtherFolder.accesskey "h">
+<!ENTITY specialFolders.label "草稿和模板">
+<!ENTITY keepDrafts2.label "保存草稿消息在：">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "“草稿”文件夹：">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "其他：">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "保留消息模板到：">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "“模板”文件夹：">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "其他：">
+<!ENTITY templateInOtherFolder.accesskey "e">

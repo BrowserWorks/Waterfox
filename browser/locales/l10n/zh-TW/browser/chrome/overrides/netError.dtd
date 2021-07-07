@@ -1,0 +1,183 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "頁面載入發生問題">
+<!ENTITY retry.label "重試">
+<!ENTITY returnToPreviousPage.label "返回">
+<!ENTITY returnToPreviousPage1.label "返回上一頁（建議）">
+<!ENTITY advanced2.label "進階…">
+<!ENTITY viewCertificate.label "檢視憑證">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "找不到伺服器">
+<!ENTITY dnsNotFound.longDesc1 "<strong>若網址正確無誤，還可試試下列方式:</strong>
+<ul>
+  <li>稍候再試。</li>
+  <li>檢查網路連線是否正常。</li>
+  <li>若透過防火牆連線，請檢查 &brandShortName; 是否有權連線到網際網路。</li>
+</ul>">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>請檢查檔名是否有大小寫錯誤、拼錯字。</li>
+  <li>請檢查檔案是否已被移動、改名或刪除。</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>可能是檔案被移走、移除，或存取權限不正確，造成無法存取。</li></ul>">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; 因為某些原因無法載入此網頁。</p>
+">
+
+<!ENTITY captivePortal.title "登入到網路">
+<!ENTITY captivePortal.longDesc2 "<p>您必須先登入才能存取網際網路。</p>">
+
+<!ENTITY openPortalLoginPage.label2 "開啟網路登入頁面">
+
+<!ENTITY malformedURI.pageTitle "網址無效">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>您所請求的文件已不存在於 &brandShortName; 的快取當中。</p><ul><li>為了您的安全，&brandShortName; 將不會自動重新請求敏感文件。</li><li>請點下重試以重新向網站請求取得文件。</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>請按下「重試」以切換到連線模式並重新載入頁面。</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>請向網站擁有者回報此問題。</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>請向網站擁有者回報此問題。</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul><li>您可能需要安裝其他軟體才能開啟此網址。</li></ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>請檢查 Proxy 設定是否正確。</li>
+  <li>與您的網路管理員聯絡，確定 Proxy 伺服器正常運作。</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>請檢查 Proxy 設定是否正確。</li>
+  <li>請檢查您的網路連線狀態。</li>
+  <li>若電腦或網路被防火牆或 Proxy 保護，請確定
+    &brandShortName; 被允許存取網路。</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>有時候停用或拒絕接受 Cookie 會造成此問題。</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>請確定電腦已安裝個人安全管理員 (Personal Security Manager)。</li>
+  <li>可能是伺服器上的非標準設定所造成的。</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "<ul>
+  <li>因為無法驗證已接收資料的真實性，無法顯示您嘗試檢視的頁面。</li>
+  <li>請向網站擁有者回報此問題。</li>
+</ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; 偵測到可能有安全性風險，並未連線至 <span class='hostname'/>。若繼續造訪此網站，攻擊者可能會嘗試偷走您的密碼、電子郵件或信用卡資料等個資。">
+<!ENTITY certerror.sts.introPara "&brandShortName; 偵測到潛在的安全性威脅，並未連線到 <span class='hostname'/>。此網站必須使用安全性連線。">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; 偵測到潛在的安全性威脅，並未連線到 <span class='hostname'/>。此網站可能有設定問題，或您的電腦上的時間不正確。">
+<!ENTITY certerror.expiredCert.secondPara2 "可能是網站的憑證已經過期，讓 &brandShortName; 無法安全地連線。若您造訪此網站，攻擊者可能嘗試偷走您的密碼、電子郵件、信用卡資料等個人資訊。">
+<!ENTITY certerror.expiredCert.sts.secondPara "可能是網站的憑證已經過期，讓 &brandShortName; 無法安全地連線。">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "您可以做什麼？">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>這個問題最有可能是由於網站端的設定不正確，無法由您調整設定解決。</p>
+<p>若目前連線到企業內部網路，或有使用防毒軟體，請洽詢技術支援團隊。也可以通知網站管理員處理這個問題。</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>您目前的電腦時間設定為 <span id='wrongSystemTime_systemDate2'/>。請到系統設定中確認此日期、時間、時區是否正確，然後重新載入 <span class='hostname'/>。</p>
+<p>若您的時間是正確的，可能是網站伺服器設定有誤，沒有辦法由您解決這個問題，請通知網站管理員這個問題。</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>這個問題最有可能是由於網站端的設定不正確，無法由您調整設定解決。請通知網站管理員處理。</p>">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>該網站可能暫時無法使用或太過忙碌，請過幾分鐘後再試試。</li>
+  <li>若無法載入任何網站，請檢查您的網路連線狀態。</li>
+  <li>若電腦或網路被防火牆或 Proxy 保護，請確定
+    &brandShortName; 被允許存取網路。</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; 阻止了這個頁面載入，因為這個頁面的內容安全政策不允許其以這種方式被載入。</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>因為這個頁面包含 X-Frame-Options 政策，不允許以這種方式載入，&brandShortName; 封鎖了這個頁面載入。</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>因為在資料傳輸過程當中偵測到錯誤，無法顯示您正要檢視的頁面。</p><ul><li>請通知網站管理者以讓他們知道這個問題。</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "接受風險並繼續">
+
+<!ENTITY errorReporting.automatic2 "回報這類的錯誤，幫助 Mozilla 找出並封鎖惡意網站">
+<!ENTITY errorReporting.learnMore "更多資訊…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>請聯絡網站管理員以通知他們這個問題。</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "進階資訊: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "警告: 本網站可能有安全性風險">
+<!ENTITY certerror.sts.pagetitle  "未連線: 潛在的安全性問題">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> 有一條稱為 HTTP Strict Transport Security (HSTS) 的安全性政策，讓 &brandShortName; 僅能與其進行安全連線。您無法加入例外，手動排除此政策。">
+<!ENTITY certerror.copyToClipboard.label "將文字複製到剪貼簿">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> 使用過時的安全性技術，容易遭受攻擊。攻擊者可以簡單地得知您認為安全的資訊。網站管理員修正伺服器設定後您才能連線至此網站。</p><p>錯誤代碼: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "已封鎖頁面">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> 應該是一個安全的網站，但無法建立安全連線。這個問題是由 <span class='mitm-name'/> 造成的，可能是來自您的電腦或您的所在網路中的軟體。">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "若您的防毒軟體包含掃描加密連線（或稱為「網頁掃描」、「HTTPS 掃描」），請關閉該功能。若這樣做仍然無效，您可以試著移除並重新安裝防毒軟體。">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "若您在公司網路中，請聯絡您的 IT 部門。">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "若您不了解 <span class='mitm-name'/>，這可能是一場攻擊，您不該繼續前往該網站。">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "若您不了解 <span class='mitm-name'/>，這可能是一場攻擊，您無法再做什麼以前往該網站。">
+
+<!ENTITY clockSkewError.longDesc "您的電腦認為目前時間為 <span id='wrongSystemTime_systemDate1'/>，不讓 &brandShortName; 建立安全連線。若要造訪 <span class='hostname'></span>，請到系統設定中確認日期、時間、時區設定是否正確，然後重新載入 <span class='hostname'></span>。">
+
+<!ENTITY prefReset.longDesc "看來可能是您的網路安全設定造成此問題，您是否要恢復預設設定值？">
+<!ENTITY prefReset.label "還原預設設定">
+
+<!ENTITY enableTls10.longDesc "此網站可能不支援 &brandShortName; 最低支援的 TLS 1.2 版通訊協定。開啟 TLS 1.0 或 TLS 1.1 可能可以進行連線。">
+<!ENTITY enableTls10.note "將於未來的版本中永久結束支援 TLS 1.0 及 TLS 1.1。">
+<!ENTITY enableTls10.label "開啟 TLS 1.0 與 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>因為偵測到網路通訊協定中的問題，無法顯示您嘗試檢視的頁面。</p><ul><li>請聯絡網站管理員來解決這個問題。</li></ul>">

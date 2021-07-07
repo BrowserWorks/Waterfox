@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Saitų atvėrimas">
+<!ENTITY newWindow.label "Saitų atvėrimas">
+<!ENTITY newWindowDescription.label "Saitus, kurie turėtų būti atveriami naujame lange, atverti:">
+<!ENTITY newWindowRestriction.label "Kai naują langą bando atverti scenarijus:">
+<!ENTITY external.label "Saitai iš kitų programų">
+<!ENTITY externalDescription.label "Saitus, perduotus kitų programų, atverti:">
+
+<!ENTITY openCurrent.label "šiuo metu atvertoje kortelėje">
+
+
+
+<!ENTITY openTab.label "naujoje kortelėje šiuo metu atvertame lange">
+
+
+
+<!ENTITY openWindow.label "naujame lange">
+
+
+
+<!ENTITY divertAll.label "vietoje lango visada atverti naują kortelę">
+<!ENTITY divertAll.accesskey "r">
+<!ENTITY divertNoFeatures.label "atverti naujas korteles tik vietoje netinkintų langų">
+<!ENTITY divertNoFeatures.accesskey "t">
+<!ENTITY dontDivert.label "visada atverti naują langą">
+<!ENTITY dontDivert.accesskey "n">

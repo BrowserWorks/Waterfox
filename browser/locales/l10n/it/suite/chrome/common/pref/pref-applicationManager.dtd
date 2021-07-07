@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY appManager.title "Dettagli applicazione">
+<!ENTITY appManager.style "width: 40ch; min-height: 20em;">
+<!ENTITY remove.label "Elimina">
+<!ENTITY remove.accesskey "E">

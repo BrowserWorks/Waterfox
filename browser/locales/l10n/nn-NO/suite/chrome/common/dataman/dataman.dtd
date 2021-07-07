@@ -1,0 +1,154 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Databehandlar">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Alle datatypar">
+<!ENTITY select.cookies.label "Berre infokapslar">
+<!ENTITY select.permissions.label "Berre løyve">
+<!ENTITY select.preferences.label "Berre innstillingar">
+<!ENTITY select.passwords.label "Berre passord">
+<!ENTITY select.storage.label "Berre datalagring">
+
+<!ENTITY domain.search.placeholder "Søk i domene">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Domene">
+
+<!ENTITY domain.ctx.forgetdomain.label "Gløym alt om dette domenet">
+<!ENTITY domain.ctx.forgetdomain.accesskey "G">
+<!ENTITY domain.ctx.forgetglobal.label "Gløym alt om globale data">
+<!ENTITY domain.ctx.forgetglobal.accesskey "e">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Infokapslar">
+<!ENTITY tab.permissions.label "Løyve">
+<!ENTITY tab.preferences.label "Innstillingar">
+<!ENTITY tab.passwords.label "Passord">
+<!ENTITY tab.storage.label "Datalagring">
+<!ENTITY tab.formdata.label "Skjemadata">
+<!ENTITY tab.forget.label "Gløym">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Dette domenet har lagra følgjande infokapslar på datamaskina di:">
+
+<!ENTITY cookies.tree.host.label "Nettstad">
+<!ENTITY cookies.tree.name.label "Namn på infokapsel">
+<!ENTITY cookies.tree.expires.label "Går ut">
+
+<!ENTITY cookies.infobox.label "Informasjon om vald infokapsel">
+
+<!ENTITY cookies.info.name.label "Namn:">
+<!ENTITY cookies.info.value.label "Innhald:">
+<!ENTITY cookies.info.host.label "Server:">
+<!ENTITY cookies.info.domain.label "Domene:">
+<!ENTITY cookies.info.path.label "Sti:">
+<!ENTITY cookies.info.sendtype.label "Send for:">
+<!ENTITY cookies.info.expires.label "Går ut:">
+
+<!ENTITY cookies.ctx.remove.label "Fjern">
+<!ENTITY cookies.ctx.remove.accesskey "F">
+<!ENTITY cookies.ctx.selectAll.label "Vel alle">
+<!ENTITY cookies.ctx.selectAll.accesskey "V">
+
+<!ENTITY cookies.button.remove.label "Fjern">
+<!ENTITY cookies.button.remove.accesskey "r">
+
+<!ENTITY cookies.blockOnRemove.accesskey "f">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Bruk standard">
+<!ENTITY perm.AskAlways "Spør alltid">
+<!ENTITY perm.NeverSave "Lagre aldri">
+<!ENTITY perm.Allow "Tillat">
+<!ENTITY perm.AllowSameDomain "Tillat for same domene">
+<!ENTITY perm.AllowSession "Tillat for programøkta">
+<!ENTITY perm.Block "Blokker">
+
+<!ENTITY perm.host.placeholder "Skriv inn eit tenarnamn">
+<!ENTITY perm.button.add.label "Legg til">
+<!ENTITY perm.button.add.accesskey "L">
+
+<!-- preferences -->
+
+<!ENTITY prefs.tree.host.label "Nettstad">
+<!ENTITY prefs.tree.name.label "Innstillingnamn">
+<!ENTITY prefs.tree.value.label "Verdi">
+
+<!ENTITY prefs.ctx.remove.label "Fjern">
+<!ENTITY prefs.ctx.remove.accesskey "F">
+<!ENTITY prefs.ctx.selectAll.label "Merk alt">
+<!ENTITY prefs.ctx.selectAll.accesskey "M">
+
+<!ENTITY prefs.button.remove.label "Fjern">
+<!ENTITY prefs.button.remove.accesskey "F">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Du har lagra følgjande passord for dette domenet:">
+
+<!ENTITY pwd.tree.host.label "Nettstad">
+<!ENTITY pwd.tree.username.label "Brukarnamn">
+<!ENTITY pwd.tree.password.label "Passord">
+
+<!ENTITY pwd.ctx.remove.label "Fjern">
+<!ENTITY pwd.ctx.remove.accesskey "F">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Kopier passordet">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "K">
+<!ENTITY pwd.ctx.selectAll.label "Merk alt">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "Fjern">
+<!ENTITY pwd.button.remove.accesskey "F">
+
+<!-- storage -->
+<!ENTITY storage.description "Dette domenet brukar følgjande datalager på datamaskina:">
+
+<!ENTITY storage.tree.host.label "Nettstad">
+<!ENTITY storage.tree.type.label "Type">
+<!ENTITY storage.tree.size.label "Storleik">
+
+<!ENTITY storage.ctx.remove.label "Fjern">
+<!ENTITY storage.ctx.remove.accesskey "F">
+<!ENTITY storage.ctx.selectAll.label "Merk alle">
+<!ENTITY storage.ctx.selectAll.accesskey "M">
+
+<!ENTITY storage.button.remove.label "Fjern">
+<!ENTITY storage.button.remove.accesskey "F">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Søk i feltdata">
+
+<!ENTITY fdata.tree.fieldname.label "Feltnamn">
+<!ENTITY fdata.tree.value.label "Innskriven verdi">
+<!ENTITY fdata.tree.usecount.label "Tal på brukstilfelle">
+<!ENTITY fdata.tree.firstused.label "Først brukt">
+<!ENTITY fdata.tree.lastused.label "Sist brukt">
+
+<!ENTITY fdata.ctx.remove.label "Fjern">
+<!ENTITY fdata.ctx.remove.accesskey "F">
+<!ENTITY fdata.ctx.selectAll.label "Merk alt">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+
+<!ENTITY fdata.button.remove.label "Fjern">
+<!ENTITY fdata.button.remove.accesskey "F">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Infokapslar">
+<!ENTITY forget.cookies.accesskey "K">
+<!ENTITY forget.permissions.label "Løyve">
+<!ENTITY forget.permissions.accesskey "L">
+<!ENTITY forget.preferences.label "Innhaldsinnstillingar">
+<!ENTITY forget.preferences.accesskey "I">
+<!ENTITY forget.passwords.label "Passord">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "Datalagring">
+<!ENTITY forget.storage.accesskey "D">
+<!ENTITY forget.formdata.label "Skjemadata">
+<!ENTITY forget.formdata.accesskey "S">
+
+<!ENTITY forget.button.label "Gløym desse dataa">
+<!ENTITY forget.button.accesskey "G">

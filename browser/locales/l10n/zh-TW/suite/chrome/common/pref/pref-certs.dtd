@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "管理憑證">
+<!ENTITY  managecerts.text         "使用憑證管理員以管理您個人的、其它人的憑證，以及憑證機構等資訊。">
+<!ENTITY  managecerts.button       "管理憑證…">
+<!ENTITY  managecerts.accesskey    "M">
+<!ENTITY  managedevices.caption    "管理安全裝置">
+<!ENTITY  managedevices.text       "使用此按鈕管理您的安全裝置，諸如智慧卡等。">
+<!ENTITY  managedevices.button     "管理安全裝置…">
+<!ENTITY  managedevices.accesskey  "S">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "憑證">
+<!ENTITY  certs.label              "憑證">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "使用線上憑證狀態協定 (OCSP) 來檢查目前憑證的有效性">
+<!ENTITY enableOCSP.accesskey                     "U">
+<!ENTITY validation.requireOCSP.description       "當 OCSP 伺服器連線失敗時，將憑證視為無效">
+<!ENTITY validation.requireOCSP.accesskey         "W">
+

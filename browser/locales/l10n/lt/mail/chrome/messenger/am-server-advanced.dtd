@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Papildomos paskyros nuostatos">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP serverio šakninis aplankas:">
+<!ENTITY serverDirectory.accesskey "š">
+<!ENTITY usingSubscription.label "Rodyti tik prenumeruotus aplankus">
+<!ENTITY usingSubscription.accesskey "R">
+<!ENTITY dualUseFolders.label "Serveris turi darbo su poaplankiais priemones">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Didžiausias leistinas lygiagrečių prisijungimų prie serverio skaičius">
+<!ENTITY maximumConnectionsNumber.accesskey "D">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Šios nuostatos apibrėžia IMAP serverio vardų sritis">
+<!ENTITY personalNamespace.label "Asmeninė vardų sritis:">
+<!ENTITY personalNamespace.accesskey "A">
+<!ENTITY publicNamespace.label "Viešoji (bendro naudojimo):">
+<!ENTITY publicNamespace.accesskey "V">
+<!ENTITY otherUsersNamespace.label "Kitų naudotojų:">
+<!ENTITY otherUsersNamespace.accesskey "K">
+<!ENTITY overrideNamespaces.label "Leisti serveriui keisti šias vardų sritis">
+<!ENTITY overrideNamespaces.accesskey "L">
+<!ENTITY pop3DeferringDesc.label "Laiškus, parsiųstus iš šios paskyros serverio, saugokite aplanke:" >
+<!ENTITY accountInbox.label "Šios paskyros gautų laiškų aplankas">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "kitos paskyros gautų laiškų aplanke">
+<!ENTITY deferToServer.accesskey "k">
+<!ENTITY deferGetNewMail.label "Tikrinant paštą, įtraukti ir šį serverį">
+<!ENTITY deferGetNewMail.accesskey "T">

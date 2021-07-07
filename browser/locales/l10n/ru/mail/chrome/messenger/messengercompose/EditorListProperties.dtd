@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Свойства списка">
+
+<!ENTITY ListType.label "Тип списка">
+<!ENTITY bulletStyle.label "Стиль маркированного списка:">
+<!ENTITY startingNumber.label "Начинать с:">
+<!ENTITY startingNumber.accessKey "Н">
+<!ENTITY none.value "Ничего">
+<!ENTITY bulletList.value "Маркированный (ненумерованный) список">
+<!ENTITY numberList.value "Нумерованный список">
+<!ENTITY definitionList.value "Список определений">
+<!ENTITY changeEntireListRadio.label "Изменить весь список">
+<!ENTITY changeEntireListRadio.accessKey "И">
+<!ENTITY changeSelectedRadio.label "Изменить выбранные элементы">
+<!ENTITY changeSelectedRadio.accessKey "в">

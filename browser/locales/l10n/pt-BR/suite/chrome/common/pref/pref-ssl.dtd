@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "Versões do protocolo SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption             "Avisos SSL/TLS">
+<!ENTITY SSLMixedContent.caption            "Conteúdo mesclado">
+<!ENTITY SSLClientAuthMethod.caption        "Seleção do certificado do cliente">
+
+<!ENTITY pref.ssltls.title                  "Segurança da camada de transporte (SSL/TLS)">
+<!ENTITY limit.description                  "Você pode restringir quais protocolos de criptografia usar para a segurança das conexões. Escolha uma única versão ou um intervalo de versões.">
+<!ENTITY limit.enable.label                 "Ativar:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "O &brandShortName; pode te alertar sobre o status de segurança da página web que você esteja vendo. O &brandShortName; deve exibir um alerta quando:">
+<!ENTITY warn.enteringsecure                "Carregar uma página que usa criptografia">
+<!ENTITY warn.enteringsecure.accesskey      "C">
+<!ENTITY warn.insecurepost                  "Enviar informações de formulário de uma página não criptografada para outra página não criptografada">
+<!ENTITY warn.insecurepost.accesskey        "E">
+<!ENTITY warn.leavingsecure                 "Sair de uma página criptografada">
+<!ENTITY warn.leavingsecure.accesskey       "S">
+
+<!ENTITY mixed.description                  "Páginas criptografadas podem conter conteúdo não criptografado que é vulnerável a espionagem ou fraudes. O &brandShortName; pode detectar e bloquear o seguinte:">
+<!ENTITY warn.mixedactivecontent            "Me alerte quando páginas criptografadas contiverem conteúdo não seguro">
+<!ENTITY warn.mixedactivecontent.accesskey  "a">
+<!ENTITY block.activecontent                "Não carregar conteúdo não seguro em páginas criptografadas">
+<!ENTITY block.activecontent.accesskey      "N">
+<!ENTITY warn.mixeddisplaycontent           "Me alerte quando páginas criptografadas contiverem outros tipos de conteúdos mesclados">
+<!ENTITY warn.mixeddisplaycontent.accesskey "c">
+<!ENTITY block.displaycontent               "Não carregar outros conteúdos mesclados em páginas criptografadas">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "Escolha como o &brandShortName; seleciona um certificado de segurança para apresentar a sites que solicitem um:">
+<!ENTITY certselect.auto                    "Selecionar automaticamente">
+<!ENTITY certselect.auto.accesskey          "S">
+<!ENTITY certselect.ask                     "Perguntar quando necessário">
+<!ENTITY certselect.ask.accesskey           "P">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Μερικές φορές, οι ιστοσελίδες διατίθενται σε παραπάνω από μία γλώσσες. Επιλέξτε τις γλώσσες εμφάνισης ιστοσελίδων με σειρά προτίμησης.">
+<!ENTITY languages.customize.title                      "Γλώσσες">
+<!ENTITY langtitle.label                                "Γλώσσες για ιστοσελίδες">
+<!ENTITY languages.customize.prefAddLangDescript        "Επιλέξτε τις γλώσσες που θέλετε να προσθέσετε.">
+<!ENTITY languages.customize.addButton.label            "Προσθήκη…">
+<!ENTITY languages.customize.addButton.accesskey        "Π">
+<!ENTITY languages.customize.deleteButton.label         "Αφαίρεση">
+<!ENTITY languages.customize.deleteButton.accesskey     "Α">
+<!ENTITY languages.customize.add.title.label            "Προσθήκη γλωσσών">
+<!ENTITY languages.customize.available.label            "Γλώσσες:">
+<!ENTITY languages.customize.active.label               "Γλώσσες σε σειρά προτίμησης:">
+<!ENTITY languages.customize.active.accesskey           "Γ">
+<!ENTITY languages.customize.others.label               "Άλλες:">
+<!ENTITY languages.customize.others.accesskey           "Ά">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Κωδικοποίηση κειμένου για παλαιό περιεχόμενο">
+<!ENTITY languages.customize.Fallback2.label            "Εφεδρική κωδικοποίηση κειμένου:">
+<!ENTITY languages.customize.Fallback2.accesskey        "κ">
+<!ENTITY languages.customize.Fallback2.desc             "Για παλαιό περιεχόμενο που δεν δηλώνει την κωδικοποίησή του.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "π.χ.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Μετακίνηση πάνω">
+<!ENTITY languages.customize.moveUp.accesskey           "π">
+<!ENTITY languages.customize.moveDown.label             "Μετακίνηση κάτω">
+<!ENTITY languages.customize.moveDown.accesskey         "κ">

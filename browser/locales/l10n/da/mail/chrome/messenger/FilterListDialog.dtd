@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Meddelelsesfiltre">
+<!ENTITY nameColumn.label "Filternavn">
+<!ENTITY activeColumn.label "Aktiveret">
+<!ENTITY newButton.label "Ny…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopier…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Rediger…">
+<!ENTITY editButton.accesskey "R">
+<!ENTITY deleteButton.label "Slet">
+<!ENTITY deleteButton.accesskey "S">
+<!ENTITY reorderTopButton "Flyt til top">
+<!ENTITY reorderTopButton.accessKey "t">
+<!ENTITY reorderTopButton.toolTip "Placer filter, så det eksekveres før alle andre">
+<!ENTITY reorderUpButton.label "Flyt op">
+<!ENTITY reorderUpButton.accesskey "o">
+<!ENTITY reorderDownButton.label "Flyt ned">
+<!ENTITY reorderDownButton.accesskey "e">
+<!ENTITY reorderBottomButton "Flyt til bund">
+<!ENTITY reorderBottomButton.accessKey "b">
+<!ENTITY reorderBottomButton.toolTip "Placer filter, så det eksekveres efter alle andre">
+<!ENTITY filterHeader.label "Aktiverede filtre køres automatisk i den rækkefølge, der er vist nedenfor.">
+<!ENTITY filtersForPrefix.label "Filtre for:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filterlog">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Kør nu">
+<!ENTITY runFilters.accesskey "K">
+<!ENTITY stopFilters.label "Stop">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Kør det markerede filter på:">
+<!ENTITY folderPickerPrefix.accesskey "i">
+<!ENTITY helpButton.label "Hjælp">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Søg i filtre efter navn…">

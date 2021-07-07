@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Nettlesarfane">
+<!ENTITY tabCmd.accesskey "N">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Opne nettadresse…">
+<!ENTITY openCmd.accesskey "O">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Opne fil…">
+<!ENTITY openFileCmd.accesskey "n">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Lat att andre faner">
+<!ENTITY closeOtherTabs.accesskey "a">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Lat att faner til høgre">
+<!ENTITY  closeTabsToTheEnd.accesskey "h">
+
+<!ENTITY uploadFile.label "Last opp fil…">
+<!ENTITY uploadFile.accesskey "F">
+
+<!ENTITY printSetupCmd.label "Utskriftsformat…">
+<!ENTITY printSetupCmd.accesskey "U">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Søk på denne sida…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Vis/Gøym">
+<!ENTITY toolbarsCmd.accesskey "V">
+<!ENTITY tabbarCmd.label "Fanelinje">
+<!ENTITY tabbarCmd.accesskey "F">
+<!ENTITY taskbarCmd.label "Statuslinje">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Komponentlinje">
+<!ENTITY componentbarCmd.accesskey "K">
+
+<!ENTITY fullScreenCmd.label "Fullskjerm">
+<!ENTITY fullScreenCmd.accesskey "F">
+
+<!ENTITY useStyleSheetMenu.label "Bruk stil">
+<!ENTITY useStyleSheetMenu.accesskey "B">
+<!ENTITY useStyleSheetNone.label "Ingen">
+<!ENTITY useStyleSheetNone.accesskey "I">
+<!ENTITY useStyleSheetPersistentOnly.label "Standardstil">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "S">
+<!ENTITY bidiSwitchPageDirectionItem.label "Byt sideretning">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "r">
+<!ENTITY pageSourceCmd.label "Vis kjeldekode">
+<!ENTITY pageSourceCmd.accesskey "k">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Sideinfo">
+<!ENTITY pageInfoCmd.accesskey "S">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Gå">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Heim">
+<!ENTITY goHomeCmd.accesskey "H">
+<!ENTITY historyCmd.label "Historikk">
+<!ENTITY historyCmd.accesskey "s">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Nyleg attlatne faner">
+<!ENTITY recentTabs.accesskey "N">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Nyleg attlatne vindauge">
+<!ENTITY recentWindows.accesskey "v">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Bygg oppatt siste programøkt">
+<!ENTITY historyRestoreLastSession.accesskey "G">
+<!ENTITY syncTabsMenu.label "Faner frå andre datamaskiner">
+<!ENTITY syncTabsMenu.accesskey "F">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Bokmerke">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY addCurPageCmd.label "Bokmerk denne sida">
+<!ENTITY addCurPageCmd.accesskey "B">
+<!ENTITY addCurPageAsCmd.label "Lag bokmerke…">
+<!ENTITY addCurPageAsCmd.accesskey "L">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Bokmerk denne fanegruppa…">
+<!ENTITY addCurTabsAsCmd.accesskey "G">
+<!ENTITY manBookmarksCmd.label "Handter bokmerke…">
+<!ENTITY manBookmarksCmd.accesskey "B">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Søk på nettet">
+<!ENTITY searchInternetCmd.accesskey "S">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Omsett sida">
+<!ENTITY translateMenu.accesskey "O">
+
+<!ENTITY cookieMessageTitle.label "Løyve for infokapslar endra">
+<!ENTITY cookieDisplayCookiesCmd.label "Handter lagra infokapslar">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "H">
+<!ENTITY cookieAllowCookiesCmd.label "Tillat infokapslar frå denne nettstaden">
+<!ENTITY cookieAllowCookiesCmd.accesskey "T">
+<!ENTITY cookieAllowCookiesMsg.label "Infokapslar frå denne nettstaden vil allttid tillatast.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Tillat øktinfokapslar frå denne nettstaden">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "ø">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Denne nettstaden vil kunne sette infokapsler berre for denne programøkta.">
+<!ENTITY cookieCookiesDefaultCmd.label "Bruk standardreglar for infokapslar">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "u">
+<!ENTITY cookieCookiesDefaultMsg.label "Infokapslar frå denne nettstaden vil bli akseptert eller blokkert basert på standardinnstillingar.">
+<!ENTITY cookieBlockCookiesCmd.label "Blokker infokapslar frå denne nettstaden">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "Infokapslar frå denne nettsaten vil alltid bli blokkerte.">
+
+<!ENTITY cookieImageMessageTitle.label "Løyve for bilde endra">
+<!ENTITY cookieDisplayImagesCmd.label "Handter bildeløyve">
+<!ENTITY cookieDisplayImagesCmd.accesskey "e">
+<!ENTITY cookieAllowImagesCmd.label "Tillat bilde frå denne nettstaden">
+<!ENTITY cookieAllowImagesCmd.accesskey "T">
+<!ENTITY cookieAllowImagesMsg.label "Bilde frå denne nettstaden vil alltid bli lasta ned.">
+<!ENTITY cookieImagesDefaultCmd.label "Bruk standard bildeløyve">
+<!ENTITY cookieImagesDefaultCmd.accesskey "u">
+<!ENTITY cookieImagesDefaultMsg.label "Bilde frå denne nettstaden vil bli lasta ned basert på standardinnstillingar.">
+<!ENTITY cookieBlockImagesCmd.label "Blokker bilde frå denne nettstaden">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "Bilde frå denne nettstaden vil aldri lastast ned.">
+
+<!ENTITY popupsMessageChangeTitle.label "LØyve for sprettoppvindauge endra">
+<!ENTITY popupAllowCmd.label "Tillat sprettoppvindauge frå denne nettsida">
+<!ENTITY popupAllowCmd.accesskey "T">
+<!ENTITY popupAllowMsg.label "Sprettoppvindauge frå denne nettstaden vil alltid bli viste.">
+<!ENTITY popupDefaultCmd.label "Bruk standardreglar for sprettoppvindauge">
+<!ENTITY popupDefaultCmd.accesskey "B">
+<!ENTITY popupDefaultMsg.label "Sprettoppvindauge frå denne nettstaden vil bli viste basert på standardinnstillingar.">
+<!ENTITY popupBlockCmd.label "Blokker sprettoppvindauge frå denne nettstaden">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "Sprettoppvindauge frå denne nettstaden vil ikkje bli viste.">
+<!ENTITY popupsManage.label "Handsam sprettoppvindauge">
+<!ENTITY popupsManage.accesskey "H">
+
+<!ENTITY cookieCookieManager.label "Infokapselhandsamar">
+<!ENTITY cookieCookieManager.accesskey "I">
+<!ENTITY cookieImageManager.label "Bildehandsamar">
+<!ENTITY cookieImageManager.accesskey "B">
+<!ENTITY popupsManager.label "Sprettoppvindaugehandsamar">
+<!ENTITY popupsManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Slett private data…">
+<!ENTITY clearPrivateDataCmd.accesskey "S">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

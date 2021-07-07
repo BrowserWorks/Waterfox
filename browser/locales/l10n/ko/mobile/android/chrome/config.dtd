@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "검색">
+
+<!ENTITY newPref.namePlaceholder       "이름">
+
+<!ENTITY newPref.valueBoolean          "불린">
+<!ENTITY newPref.valueString           "문자열">
+<!ENTITY newPref.valueInteger          "정수">
+
+<!ENTITY newPref.stringPlaceholder     "문자열을 입력하세요">
+<!ENTITY newPref.numberPlaceholder     "숫자를 입력하세요">
+
+<!ENTITY newPref.toggleButton          "켜기">
+<!ENTITY newPref.cancelButton          "취소">
+
+<!ENTITY contextMenu.copyPrefName      "이름 복사">
+<!ENTITY contextMenu.copyPrefValue     "값 복사">

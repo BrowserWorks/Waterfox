@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Spelling">
+<!ENTITY generalSpelling.label                "Algemeen">
+<!ENTITY checkSpellingWhenTyping.label        "Mijn spelling controleren tijdens het typen:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "s">
+<!ENTITY dontCheckSpelling.label              "Nooit">
+<!ENTITY multilineCheckSpelling.label         "In meerregelige velden">
+<!ENTITY alwaysCheckSpelling.label            "Alle velden">
+<!ENTITY spellForMailAndNews.label            "E-mail &amp; nieuwsgroepen">
+<!ENTITY checkSpellingBeforeSend.label        "Spelling controleren voor het verzenden">
+<!ENTITY checkSpellingBeforeSend.accesskey    "c">
+<!ENTITY spellCheckInline.label               "Spelling controleren tijdens het typen">
+<!ENTITY spellCheckInline.accesskey           "o">
+<!ENTITY languagePopup.label                  "Taal:">
+<!ENTITY languagePopup.accessKey              "T">
+<!ENTITY moreDictionaries.label               "Meer woordenboeken downloaden&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Geen woordenboeken beschikbaar.">

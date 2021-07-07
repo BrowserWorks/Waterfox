@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Komu: ">
+<!ENTITY fromField.label "Od:">
+<!ENTITY senderField.label "Odesílatel:">
+<!ENTITY organizationField.label "Organizace:">
+<!ENTITY replyToField.label "Odpověď: ">
+
+<!ENTITY subjectField.label "Předmět:">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Kopie: ">
+<!ENTITY bccField.label "Skrytá kopie: ">
+<!ENTITY newsgroupsField.label "Diskusní skupiny: ">
+<!ENTITY followupToField.label "Pokračování do: ">
+
+<!ENTITY tagsHdr.label "Štítky:">
+<!ENTITY dateField.label "Datum: ">
+<!ENTITY userAgentField.label "Poštovní klient: ">
+<!ENTITY referencesField.label "Reference: ">
+<!ENTITY messageIdField.label "Id zprávy: ">
+<!ENTITY inReplyToField.label "V odpovědi na: ">
+<!ENTITY originalWebsite.label "Webový server:">
+
+<!ENTITY editMessage.label "Upravit rozepsané…">
+<!ENTITY editMessage.accesskey "U">
+
+<!ENTITY attachmentsTree.label "Přílohy:">
+<!ENTITY attachmentsTree.accesskey "P">
+<!ENTITY openAttachmentCmd.label "Otevřít">
+<!ENTITY openAttachmentCmd.accesskey "O">
+<!ENTITY viewAttachmentCmd.label "Zobrazit zdrojový kód">
+<!ENTITY viewAttachmentCmd.accesskey "V">
+<!ENTITY saveAsAttachmentCmd.label "Uložit jako…">
+<!ENTITY saveAsAttachmentCmd.accesskey "j">
+<!ENTITY detachAttachmentCmd.label "Vyčlenit…">
+<!ENTITY detachAttachmentCmd.accesskey "V">
+<!ENTITY deleteAttachmentCmd.label "Smazat">
+<!ENTITY deleteAttachmentCmd.accesskey "m">
+<!ENTITY saveAllAttachmentsCmd.label "Uložit vše…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "U">
+<!ENTITY detachAllAttachmentsCmd.label "Vyčlenit vše…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "V">
+<!ENTITY deleteAllAttachmentsCmd.label "Smazat vše">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "S">

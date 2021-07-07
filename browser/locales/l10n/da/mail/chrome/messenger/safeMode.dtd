@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; Fejlsikret tilstand">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; køres nu i fejlsikret tilstand, som midlertidigt deaktiverer dine indstillinger, temaer og udvidelser.">
+<!ENTITY safeModeDescription2.label       "Du kan gøre nogle eller alle disse ændringer permanente:">
+
+<!ENTITY disableAddons.label              "Deaktiver alle tilføjelser">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Nulstil værktøjslinjer">
+<!ENTITY resetToolbars.accesskey          "N">
+
+<!ENTITY changeAndRestartButton.label     "Udfør ændringer og genstart">
+<!ENTITY changeAndRestartButton.accesskey "U">
+
+<!ENTITY continueButton.label             "Fortsæt i fejlsikret tilstand">
+<!ENTITY continueButton.accesskey         "F">

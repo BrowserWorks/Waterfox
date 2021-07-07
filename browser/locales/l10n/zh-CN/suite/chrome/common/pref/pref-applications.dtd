@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "应用程序助手">
+
+<!ENTITY typeColumn.label        "内容类型">
+<!ENTITY typeColumn.accesskey    "T">
+
+<!ENTITY actionColumn2.label     "动作">
+<!ENTITY actionColumn2.accesskey "A">
+
+<!ENTITY search.placeholder      "搜索类型及操作">
+
+<!ENTITY useAppChooser.label     "可用时，使用原生应用程序选择器">
+<!ENTITY useAppChooser.accesskey "U">

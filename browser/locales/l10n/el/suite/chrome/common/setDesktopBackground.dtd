@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Ορισμός φόντου επιφάνειας εργασίας">
+
+<!ENTITY position.label             "Θέση:">
+<!ENTITY position.accesskey         "Θ">
+<!ENTITY position.tile.label        "Πλακίδιο">
+<!ENTITY position.stretch.label     "Επέκταση">
+<!ENTITY position.center.label      "Κέντρο">
+<!ENTITY position.fill.label        "Γέμισμα">
+<!ENTITY position.fit.label         "Προσαρμογή">
+<!ENTITY picker.label               "Χρώμα:">
+<!ENTITY picker.accesskey           "Χ">
+<!ENTITY preview.caption            "Προεπισκόπηση">
+<!ENTITY apply.label                "Εφαρμογή">
+<!ENTITY apply.accesskey            "Ε">
+<!ENTITY close.label                "Κλείσιμο">

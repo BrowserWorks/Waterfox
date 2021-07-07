@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Tùy chọn lưu trữ">
+<!ENTITY archiveGranularityPrefix.label "Khi lưu trữ thư, xếp nó vào trong:">
+<!ENTITY archiveFlat.label "Chỉ một thư mục">
+<!ENTITY archiveFlat.accesskey "C">
+<!ENTITY archiveYearly.label "Các thư mục lưu trữ theo năm">
+<!ENTITY archiveYearly.accesskey "u">
+<!ENTITY archiveMonthly.label "Các thư mục lưu trữ theo tháng">
+<!ENTITY archiveMonthly.accesskey "e">
+<!ENTITY keepFolderStructure.label "Giữ cấu trúc thư mục lưu trữ hiệu tại">
+<!ENTITY keepFolderStructure.accesskey "G">
+<!ENTITY archiveExample.label "Ví dụ">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Lưu trữ">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Hộp thư">

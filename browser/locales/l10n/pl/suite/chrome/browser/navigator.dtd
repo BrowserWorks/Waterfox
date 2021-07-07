@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Tryb prywatny">
+
+<!ENTITY editPageCmd.label "Edytuj stronę">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Pasek narzędzi nawigacyjnych">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label "Pasek zakładek">
+<!ENTITY bookmarksToolbarCmd.accesskey "d">
+
+<!ENTITY closeWindow.label "Zamknij okno">
+<!ENTITY closeWindow.accesskey "k">
+
+<!ENTITY minimizeButton.tooltip "Minimalizuj">
+<!ENTITY restoreButton.tooltip "Przywróć">
+
+<!ENTITY feedsMenu.label "Subskrybuj tę stronę">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip "Pasek menu">
+<!ENTITY bookmarksToolbar.tooltip "Pasek zakładek">
+<!ENTITY navigationToolbar.tooltip "Pasek narzędzi nawigacyjnych">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label "Wstecz">
+<!ENTITY backButton.tooltip "Przejdź do poprzedniej strony">
+<!ENTITY forwardButton.label "Dalej">
+<!ENTITY forwardButton.tooltip "Przejdź do następnej strony (naciśnij strzałkę, aby zobaczyć listę stron)">
+<!ENTITY reloadButton.label "Odśwież">
+<!ENTITY reloadButton.tooltip "Odśwież bieżącą stronę">
+<!ENTITY stopButton.label "Zatrzymaj">
+<!ENTITY stopButton.tooltip "Zatrzymaj wczytywanie bieżącej strony">
+<!ENTITY searchButton.label "Szukaj">
+<!ENTITY searchButton.tooltip "Wprowadź słowo w polu po lewej stronie, a następnie kliknij przycisk Szukaj">
+<!ENTITY goButton.label "Idź">
+<!ENTITY goButton.tooltip "Wprowadź adres w polu po lewej stronie, a następnie kliknij przycisk Idź">
+<!ENTITY printButton.label "Drukuj">
+<!ENTITY printButton.tooltip "Drukuj bieżącą stronę">
+
+<!ENTITY throbber.tooltip "SeaMonkey.pl! Otwórz naszą stronę!">
+
+<!ENTITY locationBar.tooltip "Wprowadź termin, słowo kluczowe lub adres WWW">
+<!ENTITY locationBar.accesskey "d">
+<!ENTITY locationBar.title "Adres">
+<!ENTITY proxyIcon.tooltip "Przeciągnij i upuść tę ikonę, aby utworzyć odnośnik do tej strony">
+
+<!ENTITY searchItem.title "Szukaj">
+
+<!ENTITY bookmarksButton.label "Zakładki">
+<!ENTITY bookmarksButton.tooltip "Lista zakładek">
+<!ENTITY homeButton.label "Strona domowa">
+<!ENTITY bookmarksToolbarItem.label "Elementy paska zakładek">
+<!ENTITY bookmarksToolbarChevron.tooltip "Wyświetl więcej zakładek">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "Zakończono">
+
+<!ENTITY popupIcon.tooltiptext "Odblokuj możliwość wyświetlania wyskakujących okien przez tę witrynę">
+
+<!ENTITY viewSecurityInfo.label "Pokaż informacje o zabezpieczeniach">
+<!ENTITY viewSecurityInfo.accesskey "z">
+<!ENTITY viewCertificate.label "Pokaż certyfikat">
+<!ENTITY viewCertificate.accesskey "c">
+<!ENTITY viewCertManager.label "Otwórz menedżer certyfikatów">
+<!ENTITY viewCertManager.accesskey "m">

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!ENTITY calendar.subscriptions.dialog.title "Suscribirse a calendarios">
+<!ENTITY calendar.subscriptions.dialog.search.label.value "Mostrar calendarios que contengan:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label "Buscar">
+<!ENTITY calendar.subscriptions.dialog.select.label.value "Seleccionar calendarios para suscribirse:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label "Suscribirse">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label "Cancelar suscripción">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label "Buscar…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label "No se han encontrado coincidencias.">

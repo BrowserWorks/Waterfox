@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Witamy w programie &brandShortName;">
+<!ENTITY header2.label "Potrzebujesz nowego adresu e-mail?">
+<!ENTITY other.languages "Wyświetlani są jedynie dostawcy oferujący usługi w Twojej okolicy. Kliknij tutaj, aby wyświetlić pełną listę dostawców.">
+<!ENTITY error.line1 "Niestety nie znaleziono żadnego adresu e-mail dla tego zapytania.">
+<!ENTITY error.line2 "Można spróbować z innymi sugestiami nazw użytkownika, aby znaleźć więcej dostępnych adresów.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Można także spróbować u ">
+<!ENTITY error.suggest.middle "dostawców darmowych usług pocztowych">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Witaj ">
+<!ENTITY success.title.after ", następujące adresy e-mail są dostępne:">
+<!ENTITY success.tip "(można spróbować z innymi sugestiami, aby znaleźć więcej dostępnych adresów)">
+<!ENTITY partnership.description "We współpracy z kilkoma dostawcami usług pocztowych, program &brandShortName; może pomóc w założeniu nowego adresu e-mail. Wystarczy wprowadzić w pole wyszukiwania imię i nazwisko, pseudonim lub dowolne inne sugestie nazwy użytkownika, aby wyszukać dostępne adresy.">
+<!ENTITY existing.header "Masz już adres e-mail?">
+<!ENTITY tinyheader.title "Masz już adres e-mail?">
+<!ENTITY tinyheader.existing "Pomiń i użyj istniejącego adresu e-mail">
+<!ENTITY content.close "Anuluj">
+<!ENTITY successful.title "Gratulacje!">
+<!ENTITY successful.successMessage "Konto zostało poprawnie skonfigurowane.">
+<!ENTITY successful.write "Wyślij wiadomość">
+<!ENTITY successful.write.desc "Daj znać swojej rodzinie i znajomym o Twoim nowym adresie.<br/> W końcu po to się zakłada adresy?">
+<!ENTITY successful.customize "Dostosuj program &brandShortName; przy użyciu dodatków">
+<!ENTITY successful.customize.desc "Dzięki tysiącom dodatków można doskonale dostosować program &brandShortName; do swoich potrzeb.">
+<!ENTITY successful.attach "Dodaj sygnaturkę dla wiadomości">
+<!ENTITY successful.attach.desc "Każda wysyłana wiadomość może zawierać ulubiony cytat lub dowolne inne informacje automatycznie dołączane na jej końcu.">
+<!ENTITY successful.close "Zamknij to okno.">
+<!ENTITY input.namePlaceholder "Imię, nazwisko, pseudonim…">
+<!ENTITY input.search "Wyszukaj">
+<!ENTITY search_engine.title "Dostosuj wyszukiwarkę">
+<!ENTITY search_engine.message "Dostawca poczty może również dostarczyć wyszukiwarkę internetową.">
+<!ENTITY search_engine.button "Zakończ">

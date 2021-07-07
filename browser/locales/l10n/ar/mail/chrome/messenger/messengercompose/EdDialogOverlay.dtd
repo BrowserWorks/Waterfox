@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "تحرير متقدم…">
+<!ENTITY AdvancedEditButton.accessKey "م">
+<!ENTITY AdvancedEditButton.tooltip "أضِف أو عدّل صفات HTML، و صفات الطراز و جافا سكربت">
+<!ENTITY chooseFileButton.label "اختر الملف...">
+<!ENTITY chooseFileButton.accessKey "ف">
+<!ENTITY chooseFileLinkButton.label "اختر الملف...">
+<!ENTITY chooseFileLinkButton.accessKey "ل">
+<!ENTITY makeUrlRelative.label "المسار نسبي لمكان الصفحة">
+<!ENTITY makeUrlRelative.accessKey "م">
+<!ENTITY makeUrlRelative.tooltip "بدّل بين المسار النسبي والمطلق. يجب حفظ الصفحة أولا لتغيير هذا.">
+
+<!ENTITY LinkURLEditField2.label "أدخل موضع صفحة وِب أو ملف محلي أو اختر مربط مسمّى أو رأس من قائمة الحقل السياقية:">
+<!ENTITY LinkURLEditField2.accessKey "ض">

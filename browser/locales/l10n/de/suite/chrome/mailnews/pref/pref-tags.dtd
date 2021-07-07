@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Tags">
+<!ENTITY pref.tags.caption          "Tags anpassen">
+<!ENTITY pref.tags.description      "Tags können verwendet werden, um Ihre Nachrichten zu kategorisieren und Prioritäten zu setzen.">
+<!ENTITY tagColumn.label            "Tag">
+<!ENTITY colorColumn.label          "Farbe">
+<!ENTITY defaultTagName.label       "Unbenanntes Tag">
+<!ENTITY addTagButton.label         "Hinzufügen">
+<!ENTITY addTagButton.accesskey     "H">
+<!ENTITY deleteTagButton.label      "Löschen">
+<!ENTITY deleteTagButton.accesskey  "L">
+<!ENTITY raiseTagButton.label       "Priorität erhöhen">
+<!ENTITY raiseTagButton.accesskey   "P">
+<!ENTITY lowerTagButton.label       "Priorität reduzieren">
+<!ENTITY lowerTagButton.accesskey   "r">
+<!ENTITY restoreButton.label        "Standards wiederherstellen">
+<!ENTITY restoreButton.accesskey    "S">

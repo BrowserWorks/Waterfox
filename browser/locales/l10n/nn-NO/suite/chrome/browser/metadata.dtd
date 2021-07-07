@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Ingen eigenskapar er spesifiserte.">
+
+<!ENTITY caption.label         "Elementeigenskapar">
+<!ENTITY image-sec.label       "Bildeeigenskapar">
+<!ENTITY image-url.label       "Adresse:">
+<!ENTITY image-desc.label      "Skildring:">
+<!ENTITY image-alt.label       "Alternativ tekst:">
+<!ENTITY image-width.label     "Breidde:">
+<!ENTITY image-height.label    "Høgde:">
+<!ENTITY image-filesize.label  "FRilstorleik:">
+<!ENTITY image-filesize.value  "Ukjend">
+<!ENTITY insdel-sec.label      "Set inn/slett eigenskapar">
+<!ENTITY insdel-cite.label     "Info:">
+<!ENTITY insdel-date.label     "Dato:">
+<!ENTITY link-sec.label        "Lenkjeeigenskapar">
+<!ENTITY link-url.label        "Adresse:">
+<!ENTITY link-target.label     "Vert opna i:">
+<!ENTITY link-type.label       "Måltype:">
+<!ENTITY link-lang.label       "Målspråk:">
+<!ENTITY link-rel.label        "Relasjon:">
+<!ENTITY link-rev.label        "Reversert relasjon:">
+<!ENTITY misc-sec.label        "Diverse eigenskapar">
+<!ENTITY misc-lang.label       "Tekstspråk:">
+<!ENTITY misc-title.label      "Tittel:">
+<!ENTITY misc-tblsummary.label "Tabellsamandrag:">
+<!ENTITY quote-sec.label       "Sitateigenskapar">
+<!ENTITY quote-cite.label      "Info:">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Recherche à la saisie">
+<!ENTITY findAsYouTypeBehavior.label "Rechercher à la saisie">
+<!ENTITY findAsYouTypeTip.label "Astuce : Pour démarrer manuellement la fonction « Rechercher à la saisie », appuyez sur / pour chercher du texte ou ' pour chercher des liens, suivi du texte à chercher.">
+<!ENTITY findAsYouTypeTimeout.label "Effacer la recherche courante après quelques secondes d’inactivité">
+<!ENTITY findAsYouTypeTimeout.accesskey "E">
+<!ENTITY findAsYouTypeSound.label "Jouer un son quand le texte saisi est introuvable">
+<!ENTITY findAsYouTypeSound.accesskey "J">
+<!ENTITY findAsYouTypeEnableAuto.label "Chercher automatiquement à la saisie d’un texte dans :">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "C">
+<!ENTITY findAsYouTypeAutoText.label "Tout texte de la page">
+<!ENTITY findAsYouTypeAutoText.accesskey "T">
+<!ENTITY findAsYouTypeAutoLinks.label "Seulement les liens">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "S">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Afficher la barre d’outils de recherche lors de la recherche à la saisie">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "A">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Note : La recherche à la saisie sans l’affichage de la barre d’outils de recherche ne permet pas la recherche de texte dans d’autres langues.">

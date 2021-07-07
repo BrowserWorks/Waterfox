@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Historikk">
+
+<!ENTITY  pref.history.caption              "Nettlesarhistorikk">
+<!ENTITY  historyPages.label                "Nettlesaren hugsar nettsider som du har besøkt i det siste.">
+<!ENTITY  enableHistory.label               "Hugs besøkte nettsider">
+<!ENTITY  enableHistory.accesskey           "H">
+<!ENTITY  clearHistory.label                "Tøm historikk">
+<!ENTITY  clearHistory.accesskey            "T">
+
+<!ENTITY  locationBarHistory.caption        "Adresselinjehistorikk">
+<!ENTITY  urlBarHistoryEnabled.caption      "Tillat adresselinjehistorikk">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "d">
+<!ENTITY  clearLocationBar.label            "Tøm lista over nettstadar som er lagra i adresselinja.">
+<!ENTITY  clearLocationBarButton.label      "Tøm adressefeltet">
+<!ENTITY  clearLocationBarButton.accesskey  "m">
+<!ENTITY  formfillHistory.caption           "Skjema- og søkjehistorikk">
+<!ENTITY  enableFormfill.label              "Slå på skjema- og søkjehistorikk">
+<!ENTITY  enableFormfill.accesskey          "S">
+<!ENTITY  formfillExpire.label              "Hugs skjema- og søkjehistorikk for opptil">
+<!ENTITY  formfillExpire.accesskey          "u">
+<!ENTITY  formfillDays.label                "dagar">

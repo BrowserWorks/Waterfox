@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Unbenannt)">
+<!ENTITY  newTab.label           "Neues Tab">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Tab schließen">
+<!ENTITY  closeTab.accesskey         "T">
+<!ENTITY  closeOtherTabs.label   "Andere Tabs schließen">
+<!ENTITY  closeOtherTabs.accesskey         "A">
+<!ENTITY  reloadAllTabs.label    "Alle Tabs neu laden">
+<!ENTITY  reloadAllTabs.accesskey         "A">
+<!ENTITY  reloadTab.label        "Tab neu laden">
+<!ENTITY  reloadTab.accesskey         "T">
+<!ENTITY  bookmarkGroup.label    "Lesezeichen für diese Gruppe von Tabs hinzufügen">
+<!ENTITY  bookmarkGroup.accesskey  "L">
+<!ENTITY  closeTabButton.tooltip   "Aktuelles Tab schließen">
+<!ENTITY  newTabButton.tooltip   "Neues Tab öffnen">
+<!ENTITY  listAllTabs.tooltip    "Alle Tabs auflisten">
+<!ENTITY  undoCloseTab.label    "Schließen des Tabs rückgängig machen">
+<!ENTITY  undoCloseTab.accesskey  "S">

@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "收件人">
+<!ENTITY fromField4.label "来自">
+<!ENTITY senderField4.label "发件人">
+<!ENTITY author.label "作者">
+<!ENTITY organizationField4.label "组织">
+<!ENTITY replyToField4.label "回复地址">
+
+<!ENTITY subjectField4.label "主题">
+<!ENTITY ccField4.label "抄送">
+<!ENTITY bccField4.label "密送">
+<!ENTITY newsgroupsField4.label "新闻组">
+<!ENTITY followupToField4.label "回复到">
+<!ENTITY tagsHdr4.label "标签">
+<!ENTITY dateField4.label "日期">
+<!ENTITY userAgentField4.label "用户代理">
+<!ENTITY referencesField4.label "引用">
+<!ENTITY messageIdField4.label "消息 ID">
+<!ENTITY inReplyToField4.label "回复">
+<!ENTITY originalWebsite4.label "因特网站点">
+
+<!ENTITY hdrArchiveButton1.label "归档">
+<!ENTITY hdrArchiveButton1.tooltip "归档消息">
+<!ENTITY hdrSmartReplyButton1.label "智能回复">
+<!ENTITY hdrReplyButton1.label "回复">
+<!ENTITY hdrReplyButton2.tooltip "回复至此消息的发送者">
+<!ENTITY hdrReplyAllButton1.label "全部回复">
+<!ENTITY hdrReplyAllButton1.tooltip "回复发件人和所有收件人">
+<!ENTITY hdrReplyListButton1.label "回复列表">
+<!ENTITY hdrReplyListButton1.tooltip "回复至邮件列表">
+<!ENTITY hdrFollowupButton1.label "回复组">
+<!ENTITY hdrFollowupButton1.tooltip "向这个新闻组发送一封回复">
+<!ENTITY hdrForwardButton1.label "转发">
+<!ENTITY hdrForwardButton1.tooltip "转发此消息">
+<!ENTITY hdrJunkButton1.label "垃圾">
+<!ENTITY hdrJunkButton1.tooltip "标记为垃圾">
+<!ENTITY hdrTrashButton1.label "删除">
+<!ENTITY hdrTrashButton1.tooltip "删除此消息">
+
+<!ENTITY hdrViewToolbarShowFull.label "显示图标和文本">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "仅显示图标">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "仅显示文本">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "一律回复至发件人">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "更多">
+<!ENTITY otherActionsButton.tooltip "更多操作">
+<!ENTITY otherActionsOpenConversation1.label "在会话中打开">
+<!ENTITY otherActionsOpenConversation1.accesskey "C">
+<!ENTITY otherActionsOpenInNewWindow1.label "在新窗口中打开">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "W">
+<!ENTITY otherActionsOpenInNewTab1.label "在新标签页中打开">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "T">
+<!ENTITY markAsReadMenuItem1.label "标记为已读">
+<!ENTITY markAsReadMenuItem1.accesskey "R">
+<!ENTITY markAsUnreadMenuItem1.label "标记为未读">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "另存为…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "查看源代码">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "打印…">
+<!ENTITY otherActionsPrint1.accesskey "P">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "初始化时显示附件窗格">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "打开">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "另存为…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "移除…">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "删除">
+<!ENTITY deleteAttachmentCmd.accesskey    "e">
+<!ENTITY openAllAttachmentsCmd.label    "全部打开…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "O">
+<!ENTITY saveAllAttachmentsCmd.label    "全部保存…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "全部移除…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "全部删除…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "打开附件">
+
+<!ENTITY detachedAttachmentFolder.show.label        "打开所在文件夹">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "在“访达”中显示">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "保存">
+<!ENTITY saveAttachmentButton1.tooltip     "保存附件">
+<!ENTITY saveAllAttachmentsButton1.label   "全部保存">
+<!ENTITY saveAllAttachmentsButton1.tooltip "保存全部附件">
+
+<!ENTITY copyLinkCmd.label        "复制链接地址">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "复制 消息-ID">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "打开消息 ID 为">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "使用浏览器打开消息 ID 为">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

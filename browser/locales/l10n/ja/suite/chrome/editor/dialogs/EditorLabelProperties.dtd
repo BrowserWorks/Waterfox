@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label		"ラベルのプロパティ">
+
+<!ENTITY Settings.label			"設定">
+<!ENTITY Settings.accesskey		"S">
+
+<!ENTITY EditLabelText.label		"ラベルテキスト:">
+<!ENTITY EditLabelText.accesskey	"T">
+<!ENTITY LabelFor.label			"対象 ID:">
+<!ENTITY LabelFor.accesskey		"F">
+<!ENTITY AccessKey.label		"アクセスキー:">
+<!ENTITY AccessKey.accesskey		"K">
+
+<!ENTITY RemoveLabel.label		"ラベルを削除">
+<!ENTITY RemoveLabel.accesskey		"R">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+
+<!ENTITY newFolderDialog.title "Nová složka">
+<!ENTITY name.label "Název:">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "Vytvořit jako podsložku v:">
+<!ENTITY description.accesskey "p">
+<!ENTITY folderRestriction1.label "Tento server omezuje složky na dva speciální druhy.">
+<!ENTITY folderRestriction2.label "Nová složka smí obsahovat:">
+<!ENTITY foldersOnly.label "Pouze složky">
+<!ENTITY messagesOnly.label "Pouze zprávy">
+<!ENTITY accept.label "Vytvořit složku">
+<!ENTITY accept.accesskey "V">

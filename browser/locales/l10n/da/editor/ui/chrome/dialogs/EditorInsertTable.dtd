@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Indsæt tabel">
+<!ENTITY size.label "Størrelse:">
+<!ENTITY numRowsEditField.label "Rækker:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Kolonner:">
+<!ENTITY numColumnsEditField.accessKey "K">
+<!ENTITY widthEditField.label "Bredde:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY borderEditField.label "Udfyldt ramme:">
+<!ENTITY borderEditField.accessKey "U">
+<!ENTITY borderEditField.tooltip "Skriv størrelsen på tabellens ramme, eller skriv nul (0) for ingen ramme">
+<!ENTITY pixels.label "pixler">

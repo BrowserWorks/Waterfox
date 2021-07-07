@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label		"ボタンのプロパティ">
+
+<!ENTITY Settings.label			"設定">
+
+<!ENTITY ButtonType.label		"種類">
+<!ENTITY ButtonType.accesskey		"T">
+<!ENTITY submit.value			"送信">
+<!ENTITY reset.value			"リセット">
+<!ENTITY button.value			"ボタン">
+
+<!ENTITY ButtonName.label		"名前:">
+<!ENTITY ButtonName.accesskey		"N">
+<!ENTITY ButtonValue.label		"値:">
+<!ENTITY ButtonValue.accesskey		"V">
+<!ENTITY tabIndex.label			"タブインデックス:">
+<!ENTITY tabIndex.accesskey		"I">
+<!ENTITY ButtonDisabled.label		"無効化">
+<!ENTITY ButtonDisabled.accesskey	"D">
+<!ENTITY AccessKey.label		"アクセスキー:">
+<!ENTITY AccessKey.accesskey		"K">
+
+<!ENTITY RemoveButton.label		"ボタンを削除">
+<!ENTITY RemoveButton.accesskey		"R">

@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Siden kunne ikke hentes">
+<!ENTITY retry.label "Prøv igen">
+
+<!-- Specifikke fejl-beskeder -->
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Kunne ikke skabe forbindelse">
+<!ENTITY connectionFailure.longDesc "<p>Browseren var ikke i stand til at skabe forbindelse til det angivne websted. Dette kan skyldes:</p><ul><li>At webstedet midlertidigt er nede. Prøv igen senere</li><li>At der er problemer med din internetforbindelse. Kontrollèr, om du kan besøge andre websteder.</li><li>At din computer beskyttes af en forkert opsat firewall eller proxy. Kontrollèr dine indstillinger for firewall og proxy.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Port begrænset af sikkerhedshensyn">
+<!ENTITY deniedPortAccess.longDesc "<p>Den angivne adresse specificerede en port (fx <q>mozilla.org:80</q> for port 80 på mozilla.org), der normalt anvendes til <em>andre</em> formål end visning af hjemmesider. Browseren har afbrudt forespørgslen af sikkerhedshensyn.</p>">
+
+<!ENTITY dnsNotFound.title "Adressen kunne ikke findes">
+<!ENTITY dnsNotFound.longDesc "<p>Webstedet kunne ikke findes. Dette kan skyldes:</p><ul><li>At du har tastet forkert. Kontrollèr, at du har indtastet adressen korrekt, fx <q><strong>www</strong>.mozilla.org</q> og ikke <q><strong>ww</strong>.mozilla.org</q></li><li>At domænet ikke eksisterer. Det er måske blevet nedlagt?</li><li>At der er problemer med din internetforbindelse. Kontrollèr, om du kan besøge andre websteder, og at du ikke har blokeret webstedet i din DNS-opsætning.</li><li>At din computer beskyttes af en forkert opsat firewall eller proxy. Kontrollèr dine indstillinger for firewall og proxy.</li></ul>">
+
+<!ENTITY fileNotFound.title "Fil ikke fundet">
+<!ENTITY fileNotFound.longDesc "<ul><li>Er filen blevet omdøbt, fjernet eller flyttet?</li><li>Er der en stave- eller typografisk fejl i adressen? (Bemærk, at nogle servere behandler store og små bogstaver forskelligt)</li><li>Har du passende adgangstilladelse til den specifikke fil?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Filen kunne ikke tilgås">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Den kan være blevet slettet, flyttet eller tilladelserne for filen kan forhindre adgang.</li></ul>">
+
+<!ENTITY generic.title "Kan ikke færdiggøre forespørgsel">
+<!ENTITY generic.longDesc "<p>Yderligere information om dette problem eller denne fejl er ikke tilgængelig lige nu.</p>">
+
+<!ENTITY malformedURI.title "Ugyldig adresse">
+<!ENTITY malformedURI.longDesc "<p>Adressen er ikke angivet i et genkendt format. Kontrollèr, om der er fejl i adressen, og prøv igen.</p>">
+
+<!ENTITY netInterrupt.title "Dataoverførsel afbrudt">
+<!ENTITY netInterrupt.longDesc "<p>Browseren oprettede forbindelsen korrekt, men blev afbrudt under overførsel af data. Prøv igen. Hvis du stadig har problemer:</p><ul><li>Kan du besøge andre websteder? Kontrollèr din internetforbindelse.</li><li>Kontakt din netværksadministrator eller internetudbyder for assistance.</li></ul>">
+
+<!ENTITY notCached.title "Siden er udløbet">
+<!ENTITY notCached.longDesc "<p>Den forespurgte side er ikke tilgængelig i browserens cache.</p><ul><li>Af sikkerhedshensyn henter browseren ikke automatisk følsomme sider igen.</li><li>Klik for at prøve at hente siden igen fra webstedet.</li></ul>">
+
+<!ENTITY netOffline.title "Browseren er offline">
+<!ENTITY netOffline.longDesc2 "<p>Browseren er sat i Offline-tilstand og kan ikke forbinde til nettet.</p><ul><li>Er computeren forbundet til et aktivt netværk?</li><li>Vælg &quot;Prøv igen&quot; for at skifte til online-tilstand og genindlæse siden.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Indholdskodningsfejl">
+<!ENTITY contentEncodingError.longDesc "<p>Siden kunne ikke vises, da den bruger en ugyldig eller ikke-understøttet form for komprimering.</p><ul><li>Kontakt ejerne af webstedet omkring dette problem.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Usikker filtype">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Kontakt ejerne af webstedet omkring dette problem.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Forbindelsen blev afbrudt">
+<!ENTITY netReset.longDesc "<p>Forbindelsen til webstedet blev uventet afbrudt under oprettelse af forbindelse eller dataoverførsel. Prøv igen.</p>">
+
+<!ENTITY netTimeout.title "Browseren overskred tidsgrænsen">
+<!ENTITY netTimeout.longDesc "<p>Browseren overskred tidsgrænsen under forsøg på at forbinde til webstedet. Det kan skyldes:</p><ul><li>At webstedet er belastet af mange besøgende. Prøv igen senere.</li><li>At der er problemer med din internetforbindelse. Kontrollèr, om du kan besøge andre websteder. Kontakt evt. din netværksadministrator eller internetudbyder for yderligere hjælp.</li><li>At din computer beskyttes af en forkert opsat firewall eller proxy. Kontrollèr dine indstillinger for firewall og proxy.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Ukendt protokol">
+<!ENTITY unknownProtocolFound.longDesc "<p>Adressen starter med en protokol, der ikke er genkendt af browseren (fx <q>wxyz://</q>). Browseren kan derfor ikke oprette forbindelse til webstedet.</p><ul><li>Prøver du at få adgang til multimedia eller andet særligt indhold? Kontrollér, om webstedet stiller særlige krav.</li><li>Nogle protokoller kan kræve installation af særlige plugins, før browseren kan genkende dem.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxyserveren afviste forbindelse">
+<!ENTITY proxyConnectFailure.longDesc "<p>Browseren er konfigureret til at benytte en proxyserver, men proxyserveren afviste forbindelsen.</p><ul><li>Er browserens proxy indstillet korrekt? Kontrollèr indstillingerne og forsøg igen.</li><li>Tillader proxyservicen forbindelser fra dette netværk?</li><li>Har du stadig problemer? Kontakt din netværksadministrator eller internetudbyder for assistance.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Proxyserver blev ikke fundet">
+<!ENTITY proxyResolveFailure.longDesc "<p>Browseren er konfigureret til at benytte en proxyserver, men proxyen kunne ikke findes.</p><ul><li>Er browserens proxy indstillet korrekt? Kontrollèr indstillingerne og prøv igen.</li><li>Er computeren forbundet til et aktivt netværk?</li><li>Har du stadig problemer? Kontakt din netværksadministrator eller internetudbyder for assistance.</li></ul>">
+
+<!ENTITY redirectLoop.title "Uendelig viderestilling">
+<!ENTITY redirectLoop.longDesc "<p>Browseren har afbrudt forespørgslen, fordi webstedet viderestiller forespørgslen til sig selv på en måde, der forhindrer den i nogensinde at blive færdig.</p><ul><li>Har du deaktiveret eller blokeret cookies for dette websted?</li><li><em>Bemærk</em>: Hvis det ikke hjælper at aktivere cookies for webstedet, så skyldes problemet sandsynligvis en fejl på webserveren og ikke din computer.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Ukendt svar">
+<!ENTITY unknownSocketType.longDesc "<p>Webstedet svarede på netværksforespørgslen på en uventet måde, og browseren kan ikke fortsætte.</p>">
+
+<!ENTITY nssFailure2.title "Sikker forbindelse mislykkedes">
+<!ENTITY nssFailure2.longDesc2 "<p>Siden kunne ikke vises da autenticiteten af de modtagne data ikke kunne bekræftes.</p><ul><li>Kontakt ejerne af webstedet omkring dette problem.</li></ul>">
+
+<!ENTITY nssBadCert.title "Sikker forbindelse mislykkedes">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+<li>Dette kan skyldes et problem med serverens konfiguration, eller det kan skyldes, at nogen forsøger at give sig ud for at være serveren.</li>
+<li>Hvis du har kunnet tilgå serveren tidligere, kan problemet være midlertidligt, og du kan prøve igen senere.</li>
+</ul>
+">
+
+<!ENTITY securityOverride.linkText "Eller du kan tilføje en undtagelse…">
+<!ENTITY securityOverride.warningContent "
+<p>Du bør ikke tilføje en undtagelse, hvis du ikke bruger en internetforbindelse du stoler fuldt og fast på, eller hvis du ikke er vant til at se advarsler fra denne server.</p>
+<p>Hvis du stadig ønsker at tilføje en undtagelse, så kan du gøre dette under de avancerede krypteringsindstillinger.</p>
+">
+
+<!ENTITY cspBlocked.title "Blokeret grundet indholdssikkerhedspolitik">
+<!ENTITY cspBlocked.longDesc "<p>Browseren forhindrede denne side i at blive indlæst, da den har en indholdssikkerhedspolitik, der forbyder det.</p>">
+
+<!ENTITY xfoBlocked.title "Blokeret af politik for X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>Browseren forhindrede denne side i at blive indlæst, fordi siden har en politik for X-Frame-Options, der forbyder det.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fejlbehæftet indhold">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Siden kan ikke vises, da der er fundet en fejl i overførslen af data.</p><ul><li>Kontakt ejerne af webstedet omkring dette problem.</li></ul>">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakt ejerne af webstedet omkring dette problem.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Usikker forbindelse">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> bruger forældet sikkerheds-teknologi, der er sårbar overfor angreb. En angriber kan derfor nemt få adgang til information, som du troede var sikker. Webstedets administrator er nødt til at løse problemerne på serveren, før du kan besøge webstedet.</p><p>Fejlkode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokeret side">
+
+<!ENTITY networkProtocolError.title "Fejl i netværksprotokol">
+<!ENTITY networkProtocolError.longDesc "<p>Siden kan ikke vises, da der er fundet en fejl i netværksprotokollen.</p><ul><li>Kontakt ejerne af webstedet omkring dette problem.</li></ul>">

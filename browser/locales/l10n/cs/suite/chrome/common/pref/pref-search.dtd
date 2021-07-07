@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title "Hledání na webu">
+<!ENTITY legendHeader "Výchozí vyhledávací modul">
+<!ENTITY defaultSearchEngine.label "Hledat za použití:">
+<!ENTITY defaultSearchEngine.accesskey "H">
+
+<!-- Will be used by bug 595246 -->
+<!ENTITY engineManager.label "Správce vyhledávacích modulů…">
+
+<!ENTITY searchResults.label "Výsledky hledání">
+
+<!ENTITY openInTab.label "Výsledky hledání z postranní lišty zobrazit v novém panelu">
+<!ENTITY openInTab.accesskey "V">
+<!ENTITY openContextSearchTab.label "Při hledání z místní nabídky otevřít výsledky v panelu místo okna">
+<!ENTITY openContextSearchTab.accesskey "m">
+<!ENTITY openSidebarSearchPanel.label "Při hledání otevřít výsledky v panelu hledání v postranní liště">
+<!ENTITY openSidebarSearchPanel.accesskey "o">

@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Tabeleigenschappen">
+<!ENTITY applyButton.label                "Toepassen">
+<!ENTITY applyButton.accesskey            "T">
+<!ENTITY closeButton.label                "Sluiten">
+<!ENTITY tableTab.label                   "Tabel">
+<!ENTITY cellTab.label                    "Cellen">
+<!ENTITY tableRows.label                  "Rijen:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Kolommen:">
+<!ENTITY tableColumns.accessKey           "K">
+<!ENTITY tableHeight.label                "Hoogte:">
+<!ENTITY tableHeight.accessKey            "H">
+<!ENTITY tableWidth.label                 "Breedte:">
+<!ENTITY tableWidth.accessKey             "B">
+<!ENTITY tableBorderSpacing.label         "Randen en marges">
+<!ENTITY tableBorderWidth.label           "Rand:">
+<!ENTITY tableBorderWidth.accessKey       "n">
+<!ENTITY tableSpacing.label               "Marges:">
+<!ENTITY tableSpacing.accessKey           "M">
+<!ENTITY tablePadding.label               "Opvulling:">
+<!ENTITY tablePadding.accessKey           "p">
+<!ENTITY tablePxBetwCells.label           "pixels tussen cellen">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixels tussen celrand en inhoud">
+<!ENTITY tableAlignment.label             "Tabeluitlijning:">
+<!ENTITY tableAlignment.accessKey         "u">
+<!ENTITY tableCaption.label               "Bijschrift:">
+<!ENTITY tableCaption.accessKey           "i">
+<!ENTITY tableCaptionAbove.label          "Boven tabel">
+<!ENTITY tableCaptionBelow.label          "Onder tabel">
+<!ENTITY tableCaptionLeft.label           "Links van tabel">
+<!ENTITY tableCaptionRight.label          "Rechts van tabel">
+<!ENTITY tableCaptionNone.label           "Geen">
+<!ENTITY tableInheritColor.label          "(Paginakleur laten doorschijnen)">
+
+<!ENTITY cellSelection.label              "Selectie">
+<!ENTITY cellSelectCell.label             "Cel">
+<!ENTITY cellSelectRow.label              "Rij">
+<!ENTITY cellSelectColumn.label           "Kolom">
+<!ENTITY cellSelectNext.label             "Volgende">
+<!ENTITY cellSelectNext.accessKey         "V">
+<!ENTITY cellSelectPrevious.label         "Vorige">
+<!ENTITY cellSelectPrevious.accessKey     "o">
+<!ENTITY applyBeforeChange.label          "Huidige wijzigingen zullen worden toegepast voor het wijzigen van de selectie.">
+<!ENTITY cellContentAlignment.label       "Inhoud uitlijnen">
+<!ENTITY cellHorizontal.label             "Horizontaal:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "Verticaal:">
+<!ENTITY cellVertical.accessKey           "e">
+<!ENTITY cellStyle.label                  "Celstijl:">
+<!ENTITY cellStyle.accessKey              "s">
+<!ENTITY cellNormal.label                 "Normaal">
+<!ENTITY cellHeader.label                 "Kop">
+<!ENTITY cellTextWrap.label               "Tekstterugloop:">
+<!ENTITY cellTextWrap.accessKey           "l">
+<!ENTITY cellWrap.label                   "Teruglopen">
+<!ENTITY cellNoWrap.label                 "Niet teruglopen">
+<!ENTITY cellAlignTop.label               "Boven">
+<!ENTITY cellAlignMiddle.label            "Gecentreerd">
+<!ENTITY cellAlignBottom.label            "Onder">
+<!ENTITY cellAlignJustify.label           "Uitvullen">
+<!ENTITY cellInheritColor.label           "(Tabelkleur laten doorschijnen)">
+<!ENTITY cellUseCheckboxHelp.label        "Gebruik de selectievakjes om te bepalen welke eigenschappen worden toegepast op alle geselecteerde cellen">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Grootte">
+<!ENTITY pixels.label                     "pixels">
+<!ENTITY backgroundColor.label            "Achtergrondkleur:">
+<!ENTITY backgroundColor.accessKey        "A">
+<!ENTITY AlignLeft.label                  "Links">
+<!ENTITY AlignCenter.label                "Gecentreerd">
+<!ENTITY AlignRight.label                 "Rechts">

@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Oldalbetöltési hiba">
+<!ENTITY retry.label "Próbálja újra">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "A kapcsolódás sikertelen">
+<!ENTITY connectionFailure.longDesc "<p>Bár a webhely érvényesnek tűnik, a böngésző képtelen volt kapcsolatot létesíteni vele.</p><ul><li>Lehet, hogy a webhely ideiglenesen üzemen kívül van? Próbálja újra később.</li><li>Más webhelyeket sem képes elérni? Ellenőrizze a számítógép hálózati kapcsolatát.</li><li>Lehetséges, hogy tűzfal vagy proxy mögött van a számítógépe vagy a helyi hálózata? A helytelen beállítások zavarhatják a webböngészést.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "A port biztonsági okok miatt tiltva van">
+<!ENTITY deniedPortAccess.longDesc "<p>A kért cím olyan portot adott meg (pl. <q>mozilla.org:80</q> a mozilla.org 80-as portjához), amelyet általában <em>nem</em> szokás webböngészés céljaira használni. A böngésző nem engedélyezi ezt a lekérést az Ön védelme és biztonsága érdekében.</p>">
+
+<!ENTITY dnsNotFound.title "Cím nem található">
+<!ENTITY dnsNotFound.longDesc "<p>A böngésző nem találja a megadott címhez tartozó kiszolgálót.</p><ul><li>Nem vétett hibát a gép nevének beírásakor? (pl. <q><strong>ww</strong>.mozilla.org</q> a <q><strong>www</strong>.mozilla.org</q> helyett)</li><li>Biztos benne, hogy ez a tartománynév létezik? Lehet, hogy lejárt a regisztrációja.</li><li>Más webhelyeket sem képes elérni? Ellenőrizze a hálózati kapcsolatát és a DNS-kiszolgáló beállításait.</li><li>Lehetséges, hogy tűzfal vagy proxy mögött van a számítógépe vagy a helyi hálózata? A helytelen beállítások zavarhatják a webböngészést.</li></ul>">
+
+<!ENTITY fileNotFound.title "Fájl nem található">
+<!ENTITY fileNotFound.longDesc "<ul><li>Lehet, hogy a fájlt átnevezték, eltávolították vagy áthelyezték?</li><li>Nincs elgépelés, kis- és nagybetű eltérés stb. a címben?</li><li>Rendelkezik a megfelelő hozzáférési jogokkal a kért fájlhoz?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "A fájl elérése megtagadva">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Lehet hogy törölve lett, át lett helyezve, vagy a fájljogosultságok megakadályozzák a hozzáférést.</li> </ul>">
+
+<!ENTITY generic.title "A kérés nem teljesíthető">
+<!ENTITY generic.longDesc "<p>Jelenleg nem áll rendelkezésre további információ a problémáról vagy hibáról.</p>">
+
+<!ENTITY malformedURI.title "Érvénytelen cím">
+<!ENTITY malformedURI.longDesc "<p>A megadott cím formátuma nem felismerhető. Ellenőrizze a címsorba beírtakat, javítsa a hibákat, és próbálja újra.</p>">
+
+<!ENTITY netInterrupt.title "Az adatátvitel megszakadt">
+<!ENTITY netInterrupt.longDesc "<p>A böngésző sikeresen csatlakozott, de a kapcsolat megszakadt az adatátvitel közben. Próbálja újra később.</p><ul><li>Más webhelyeket sem képes elérni? Ellenőrizze a számítógép hálózati kapcsolatát.</li><li>Továbbra is fennáll a probléma? Kérjen segítséget a rendszergazdától vagy az internetszolgáltatójától.</li></ul>">
+
+<!ENTITY notCached.title "A dokumentum lejárt">
+<!ENTITY notCached.longDesc "<p>A kért dokumentum nem érhető el a böngésző gyorsítótárában.</p><ul><li>Biztonsági okokból a böngésző nem kéri le automatikusan az érzékeny adatokat tartalmazó dokumentumokat.</li><li>Kattintson a „Próbálja újra” gombra, hogy újra lekérje a dokumentumot a webhelyről.</li></ul>">
+
+<!ENTITY netOffline.title "Kapcsolat nélküli mód">
+<!ENTITY netOffline.longDesc2 "<p>A böngésző kapcsolat nélküli módban van, ezért nem tud csatlakozni a kért elemhez.</p><ul><li>Csatlakoztatva van a számítógép a hálózathoz?</li><li>Nyomja meg a &quot;Próbálja újra&quot; gombot az online módba váltáshoz és az oldal újratöltéséhez.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Tartalomkódolási hiba">
+<!ENTITY contentEncodingError.longDesc "<p>A megtekinteni kívánt oldal nem jeleníthető meg, mert érvénytelen vagy nem támogatott tömörítési formátumot használ.</p><ul><li>Lépjen kapcsolatba a webhely üzemeltetőjével, és értesítse a problémáról.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Nem biztonságos fájltípus">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Értesítse a webhely tulajdonosait erről a problémáról.</li> </ul>">
+
+<!ENTITY netReset.title "Kapcsolat megszakítva">
+<!ENTITY netReset.longDesc "<p>A hálózati kapcsolat megszakadt a kapcsolatfelvétel közben. Próbálja újra.</p>">
+
+<!ENTITY netTimeout.title "Hálózati időtúllépés">
+<!ENTITY netTimeout.longDesc "<p>A kért webhely nem válaszolt a kapcsolatkezdeményezésre, és a böngésző beszüntette a várakozást a válaszra.</p><ul><li>Lehet, hogy a kiszolgáló túl sok lekérést kap, vagy ideiglenesen üzemen kívül van? Próbálja újra később.</li><li>Más webhelyeket sem képes elérni? Ellenőrizze a számítógép hálózati kapcsolatát.</li><li>Lehetséges, hogy tűzfal vagy proxy mögött van a számítógépe vagy a helyi hálózata? A helytelen beállítások zavarhatják a webböngészést.</li><li>Továbbra is fennáll a probléma? Kérjen segítséget a rendszergazdától vagy az internetszolgáltatójától.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Ismeretlen protokoll">
+<!ENTITY unknownProtocolFound.longDesc "<p>A cím meghatározott egy protokollt (pl. <q>wxyz://</q>), amelyet a böngésző nem ismer fel, ezért nem képes megfelelően csatlakozni a webhelyhez.</p><ul><li>Multimédiás vagy más, nem szöveges szolgáltatást szeretne elérni? Nézze meg a webhelyet, milyen extra követelményeket támaszt.</li><li>Bizonyos protokollok harmadik féltől származó szoftverek vagy bővítmények meglétét követelik meg, a böngésző csak ezek megléte esetén ismeri fel az adott protokollt.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "A proxykiszolgáló visszautasította a kapcsolatot">
+<!ENTITY proxyConnectFailure.longDesc "<p>A böngésző proxykiszolgáló használatára van beállítva, de a proxy visszautasította a kapcsolatot.</p><ul><li>Jók a böngésző proxybeállításai? Ellenőrizze a beállításokat, és próbálja újra.</li><li>A proxyszolgáltatás engedélyezi a kapcsolatokat erről a hálózatról?</li><li>Továbbra is fennáll a probléma? Kérjen segítséget a rendszergazdától vagy az internetszolgáltatójától.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Proxykiszolgáló nem található">
+<!ENTITY proxyResolveFailure.longDesc "<p>A böngésző proxykiszolgáló használatára van beállítva, de a proxy nem található.</p><ul><li>Jók a böngésző proxybeállításai? Ellenőrizze a beállításokat, és próbálja újra.</li><li>Csatlakoztatva van a számítógép a hálózathoz?</li><li>Továbbra is fennáll a probléma? Kérjen segítséget a rendszergazdától vagy az internetszolgáltatójától.</li></ul>">
+
+<!ENTITY redirectLoop.title "Átirányítási hurok">
+<!ENTITY redirectLoop.longDesc "<p>A böngésző megszakította a kért elem lekérésére irányuló kísérleteket. A webhely oly módon irányította át a kérést, hogy az soha nem teljesülhet.</p><ul><li>Letiltotta a webhely által megkövetelt sütiket?</li><li><em>MEGJEGYZÉS</em>: Ha a webhely sütijeinek elfogadása nem oldja meg a problémát, valószínűleg a kiszolgáló beállításában van a hiba, nem az Ön számítógépében.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Helytelen válasz">
+<!ENTITY unknownSocketType.longDesc "<p>A webhely a hálózati kérésre váratlan módon válaszolt, ezért a böngésző nem tudja folytatni a párbeszédet.</p>">
+
+<!ENTITY nssFailure2.title "A biztonságos kapcsolat sikertelen">
+<!ENTITY nssFailure2.longDesc2 "<p>A megtekinteni kívánt oldal nem jeleníthető meg, mert a kapott adatok hitelessége nem ellenőrizhető.</p><ul><li>Lépjen kapcsolatba a webhely üzemeltetőjével, és értesítse a problémáról.</li></ul>">
+
+<!ENTITY nssBadCert.title "A biztonságos kapcsolat sikertelen">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Ezt okozhatja a kiszolgáló nem megfelelő beállítása, de az is lehet, hogy valaki megpróbál a kiszolgáló nevében fellépni.</li> <li>Ha korábban már sikeresen kapcsolódott ehhez a kiszolgálóhoz, akkor lehet, hogy a hiba csak ideiglenes, és később újra próbálkozhat.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "Vagy hozzáadhat egy kivételt…">
+<!ENTITY securityOverride.warningContent "<p>Ne adjon hozzá kivételt, ha nem teljesen megbízható internetkapcsolatot használ, vagy ha nem szokta látni ezt a figyelmeztetést ennél a kiszolgálónál.</p><p>Ha még mindig fel akarja venni ezt a webhelyet a kivételek közé, megteheti haladó titkosítási beállítások között.</p>">
+
+<!ENTITY cspBlocked.title "Blokkolva a tartalombiztonsági házirend szerint">
+<!ENTITY cspBlocked.longDesc "<p>A böngésző nem engedte meg, hogy az oldalt ezen a módon betöltse, mert az oldal tartalombiztonsági házirendje ezt tiltja.</p>">
+
+<!ENTITY xfoBlocked.title "Blokkolva az X-Frame-Options házirend alapján">
+<!ENTITY xfoBlocked.longDesc "<p>A böngésző nem engedte meg, hogy az oldalt ebben a környezetben betöltse, mert az oldal X-Frame-Options házirendje tiltja.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Sérült tartalom hiba">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A megtekinteni kívánt oldal nem jeleníthető meg, mert az adatátvitel közben hiba történt.</p><ul><li>Lépjen kapcsolatba a webhely üzemeltetőjével, és értesítse a problémáról.</li></ul>">
+
+<!ENTITY remoteXUL.title "Távoli XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Értesítse a webhely tulajdonosait erről a problémáról.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "A kapcsolat nem biztonságos">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> olyan biztonsági technológiát használ, amely elavult, és sérülékeny a támadásokkal szemben. Egy támadó könnyen felfedhet olyan információkat, amelyeket biztonságosnak gondol. A weboldal rendszergazdájának ki kell javítania a kiszolgálót, mielőtt meglátogathatja az oldalt.</p><p>Hibakód: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokkolt oldal">
+
+<!ENTITY networkProtocolError.title "Hálózati protokoll hiba">
+<!ENTITY networkProtocolError.longDesc "<p>A megtekinteni kívánt oldal nem jeleníthető meg, mert hiba történt a hálózati protokollban.</p><ul><li>Lépjen kapcsolatba a webhely üzemeltetőjével, és értesítse a problémáról.</li></ul>">

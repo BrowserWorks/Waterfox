@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutPage.title "Acerca de &brandShortName;">
+<!ENTITY aboutPage.warningVersion "&brandShortName; es experimental y puede ser inestable.">
+<!ENTITY aboutPage.checkForUpdates.link "Buscar actualizaciones »">
+<!ENTITY aboutPage.checkForUpdates.checking "Buscando actualizaciones…">
+<!ENTITY aboutPage.checkForUpdates.none "No hay actualizaciones">
+<!ENTITY aboutPage.checkForUpdates.available2 "Descargar actualización">
+<!ENTITY aboutPage.checkForUpdates.downloading "Descargando actualización…">
+<!ENTITY aboutPage.checkForUpdates.downloaded2 "Instalar actualización">
+<!ENTITY aboutPage.faq.label "FAQ">
+<!ENTITY aboutPage.support.label "Asistencia">
+<!ENTITY aboutPage.privacyPolicy.label "Política de privacidad">
+<!ENTITY aboutPage.rights.label "Conozca sus derechos">
+<!ENTITY aboutPage.relNotes.label "Notas de publicación">
+<!ENTITY aboutPage.credits.label "Créditos">
+<!ENTITY aboutPage.license.label "Información sobre la licencia">
+
+<!ENTITY aboutPage.logoTrademark "Firefox y los logotipos de Firefox son marcas registradas de Mozilla Foundation.">

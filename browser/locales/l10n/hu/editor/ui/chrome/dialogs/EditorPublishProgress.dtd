@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "Weboldal URL:">
+<!ENTITY docSubdir.label       "Oldalak alkönyvtára:">
+<!ENTITY otherSubdir.label     "Képek alkönyvtára:">
+
+<!ENTITY status.label          "Közzététel…">
+<!ENTITY fileList.label        "Közzététel állapota">
+<!ENTITY succeeded.label       "Sikeres">
+<!ENTITY failed.label          "Sikertelen">
+
+<!ENTITY keepOpen              "Maradjon nyitva ez az ablak a közzététel befejezése után.">
+<!ENTITY closeButton.label     "Bezárás">

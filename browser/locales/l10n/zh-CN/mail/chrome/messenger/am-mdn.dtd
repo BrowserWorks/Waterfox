@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "返回邮件回执">
+<!ENTITY useGlobalPrefs.label         "适用我的全局收件回执设置">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "全局首选项…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "使用专门的收件回执设置">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "发送消息时，一律要求得到邮件回执">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "当收到邮件回执时：">
+<!ENTITY leaveIt.label                "留在“收件箱”中">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "移到“寄件备份”文件夹中">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "当我收到消息，并且消息发件人索取邮件回执时(MDN)">
+<!ENTITY returnSome.label             "对某些消息返回邮件回执">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "总不发送邮件回执">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "如果我不在此消息的“收件人”或“抄送”列表中：">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "如果发件人在我的网域之外：">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "其它情况：">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "询问我">
+<!ENTITY alwaysSend.label             "一律发送">
+<!ENTITY neverSend.label              "不要发送">

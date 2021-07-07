@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Suscripciones a canales">
+<!ENTITY learnMore.label             "Saber más acerca de los canales">
+
+<!ENTITY feedTitle.label             "Título:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL del canal:">
+<!ENTITY feedLocation.accesskey      "F">
+<!ENTITY feedLocation2.placeholder   "Ingresa una URL de canal válida">
+<!ENTITY locationValidate.label      "Validar">
+<!ENTITY validateText.label          "Verificar validación y recuperar una dirección válida.">
+
+<!ENTITY feedFolder.label            "Almacenar los artículos en:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Buscar nuevos artículos cada ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minutos">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "días">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "El editor recomienda:">
+
+<!ENTITY quickMode.label             "Mostrar el resumen del artículo en vez de cargar la página web">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Crear etiquetas automáticamentes de los nombres de &lt;categoría&gt; del canal">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Anteponer etiquetas con:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Ingresa un prefijo de etiqueta">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Agregar">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Verificar">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Actualizar">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "Eliminar">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportar">
+<!ENTITY button.exportOPML.accesskey "X">
+<!ENTITY button.exportOPML.tooltip   "Exportar canales con estructura de carpetas; ctrl clic o ctrl intro para exportar canales como una lista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Cerrar">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xhtml -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Σύνθεση μηνυμάτων">
+<!ENTITY  recentFiles.title             "Μενού πρόσφατων σελίδων">
+<!ENTITY  documentsInMenu.label         "Μέγιστος αριθμός ιστορικού σελίδων:">
+<!ENTITY  documentsInMenu.accesskey     "γ">
+<!ENTITY  savingFiles.title             "Κατά την αποθήκευση ή δημοσίευση σελίδων">
+<!ENTITY  preserveExisting.label        "Διατήρηση μορφοποίησης αρχικού κώδικα">
+<!ENTITY  preserveExisting.accesskey    "τ">
+<!ENTITY  preserveExisting.tooltip      "Διατηρεί τις αλλαγές γραμμών και την αρχική μορφοποίηση της σελίδας">
+<!ENTITY  saveAssociatedFiles.label     "Να αποθηκεύονται εικόνες και άλλα σχετικά αρχεία κατά την αποθήκευση σελίδων">
+<!ENTITY  saveAssociatedFiles.accesskey "θ">
+<!ENTITY  showPublishDialog.label       "Να εμφανίζεται πάντα ο διάλογος δημοσίευσης κατά τη δημοσίευση σελίδων">
+<!ENTITY  showPublishDialog.accesskey   "φ">
+<!ENTITY  composerEditing.label         "Επεξεργασία">
+<!ENTITY  maintainStructure.label       "Διατήρηση διάταξης πίνακα κατά την εισαγωγή ή διαγραφή κελιών">
+<!ENTITY  maintainStructure.tooltip     "Διατηρεί τη μορφοποίηση του πίνακα με το να εισάγει αυτόματα κελιά κατά την εισαγωγή ή διαγραφή κελιών">
+<!ENTITY  maintainStructure.accesskey   "Δ">
+<!ENTITY  useCSS.label                  "Χρήση CSS styles αντί για γνωρίσματα HTML">
+<!ENTITY  useCSS.accesskey              "Χ">
+<!ENTITY  crInPCreatesNewP.label        "Το πλήκτρο Return σε μια παράγραφο να δημιουργεί πάντα νέα παράγραφο">
+<!ENTITY  crInPCreatesNewP.accesskey    "ρ">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Εφαρμογές ιστού εκτός σύνδεσης">
+<!ENTITY pref.offlineCache.caption          "Περιεχόμενο ιστού και δεδομένα χρήστη εκτός σύνδεσης">
+
+<!ENTITY clearOfflineAppCache.label         "Απαλοιφή">
+<!ENTITY clearOfflineAppCache.accesskey     "Α">
+
+<!ENTITY offlineAlwaysAllow.label           "Αποδοχή δεδομένων για χρήση εκτός σύνδεσης από όλες τις ιστοσελίδες">
+<!ENTITY offlineAlwaysAllow.accesskey       "Α">
+<!ENTITY offlineExplicit.label              "Να επιτρέπεται μόνο σε ιστοσελίδες με ρητά δικαιώματα">
+<!ENTITY offlineExplicit.accesskey          "Ν">
+<!ENTITY offlineNotifyAsk.label             "Ειδοποίηση όταν οι ιστοσελίδες θέλουν να αποθηκεύουν δεδομένα για χρήση εκτός σύνδεσης">
+<!ENTITY offlineNotifyAsk.accesskey         "Ε">
+<!ENTITY offlineNotifyPermissions.label     "Διαχείριση δικαιωμάτων">
+<!ENTITY offlineNotifyPermissions.accesskey "Δ">
+
+<!ENTITY offlineAppsUsage.label             "Οι ακόλουθες ιστοσελίδες χρησιμοποιούν χώρο εκτός σύνδεσης:">
+<!ENTITY offlineAppsListRemove.label        "Απαλοιφή δεδομένων…">
+<!ENTITY offlineAppsListRemove.accesskey    "δ">

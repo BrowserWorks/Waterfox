@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "端到端加密">
+<!ENTITY e2eLearnMore.label "了解更多">
+
+<!ENTITY e2eEnc.description "若不進行端到端加密，電子郵件服務供應商很容易就能取得您的訊息內容，並進行大規模監控。">
+<!ENTITY e2eeReqWarning.description "若您要求必須開啟加密，要先取得所有收件者的公鑰或憑證才能傳送訊息。">
+
+<!ENTITY e2eSigning.description "數位簽章讓收件者可以確認訊息是由您寄出的，並且內容未遭竄改。">
+<!ENTITY e2eTechPref.description "偏好的加密技術:">
+
+<!ENTITY doNotEncrypt.label "不要預設開啟加密">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "預設要求加密">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "用來加密的個人憑證:">
+<!ENTITY digitalSign.certificate.button "選擇…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "清除">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "選擇…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "清除">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "數位簽章">
+<!ENTITY signMessage2.label "預設加入我的數位簽章">
+<!ENTITY signMessage.accesskey "D">
+
+<!ENTITY signingCert2.message "用來簽章的個人憑證:">
+
+<!ENTITY sendingDefaults.label "傳送訊息時的預設設定">
+
+<!ENTITY technologyAutomatic.label "根據可用的金鑰或憑證自動選擇">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "管理 S/MIME 憑證">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME 安全裝置">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "偏好使用 S/MIME">
+<!ENTITY technologyOpenPGP.label "偏好使用 OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "選擇憑證">
+<!ENTITY certPicker.info  "憑證:">
+<!ENTITY certPicker.detailsLabel "所選憑證的詳細資訊:">
+
+<!ENTITY openpgpKey.message "用來加密與簽章的個人金鑰:">
+<!ENTITY openpgpKey.button "設定個人金鑰…">
+<!ENTITY openpgpKey.accesskey "o">

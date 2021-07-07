@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Privačių duomenų šalinimas">
+<!ENTITY sanitizeItems.label             "Išvalyti šiuos objektus:">
+
+<!ENTITY itemHistory.label               "naršymo žurnalą">
+<!ENTITY itemHistory.accesskey           "n">
+<!ENTITY itemUrlBar.label                "adreso lauko žurnalą">
+<!ENTITY itemUrlBar.accesskey            "l">
+<!ENTITY itemDownloads.label             "atsiuntimų žurnalą">
+<!ENTITY itemDownloads.accesskey         "a">
+<!ENTITY itemFormSearchHistory.label     "formos ir paieškos duomenis">
+<!ENTITY itemFormSearchHistory.accesskey "f">
+<!ENTITY itemCache.label                 "podėlį">
+<!ENTITY itemCache.accesskey             "p">
+<!ENTITY itemCookies.label               "slapukus">
+<!ENTITY itemCookies.accesskey           "s">
+<!ENTITY itemOfflineApps.label           "duomenis darbui neprisijungus">
+<!ENTITY itemOfflineApps.accesskey       "d">
+<!ENTITY itemPasswords.label             "įrašytus slaptažodžius">
+<!ENTITY itemPasswords.accesskey         "r">
+<!ENTITY itemSessions.label              "seansų tapatumo duomenis">
+<!ENTITY itemSessions.accesskey          "e">
+
+<!ENTITY sanitizeButton.label            "Pašalinti privačius duomenis dabar">

@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label  "Egenskaper">
+
+<!ENTITY generalInfo.label            "Allmän information">
+<!ENTITY folderCharsetFallback2.label             "Reservteckenkodning:">
+<!ENTITY folderCharsetFallback2.accesskey         "t">
+<!ENTITY folderCharsetEnforce2.label              "Tillämpa teckenkodningen på alla mappens meddelanden (individuella teckenkodningsinställningar och automatisk avkänning ignoreras)">
+<!ENTITY folderCharsetEnforce2.accesskey          "a">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Generera sammanställningsfilen på nytt">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparera mapp">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Ibland skadas innehållsförteckningenfilen (.msf) för en mapp och meddelanden kan verka saknas, eller borttagna meddelanden ligga kvar. Att reparera mappen kan lösa dessa problem.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Ta med meddelanden i denna mapp i generella sökresultat">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label                         "Behåll meddelanden">
+<!ENTITY retentionUseAccount.label "Använd inställningen från mitt konto">
+<!ENTITY retentionUseAccount.accesskey "k">
+<!ENTITY daysOld.label                           "dagar">
+<!ENTITY message.label                           "meddelandena">
+<!ENTITY retentionCleanup.label                  "Behåll:">
+<!ENTITY retentionCleanupImap.label 			"Behåll meddelanden, både de lokala kopiorna och deras original på servern:">
+<!ENTITY retentionCleanupPop.label 				"Behåll meddelanden, inklusiver deras original på servern:">
+<!ENTITY retentionDeleteMsg.label "Ta bort meddelanden äldre än">
+<!ENTITY retentionDeleteMsg.accesskey "e">
+<!ENTITY retentionKeepAll.label                  "Alla meddelanden">
+<!ENTITY retentionKeepAll.accesskey              "l">
+<!ENTITY retentionKeepRecent.label "De senaste">
+<!ENTITY retentionKeepRecent.accesskey "s">
+<!ENTITY retentionApplyToFlagged.label "Behåll alltid flaggade meddelanden">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Synkronisera">
+<!ENTITY folderCheckForNewMessages2.label        "När nya meddelanden hämtas från detta konto, kontrollera alltid denna mapp">
+<!ENTITY folderCheckForNewMessages2.accesskey    "k">
+
+<!ENTITY offlineFolder.check.label                          "Den här mappen ska kunna användas nedkopplad">
+<!ENTITY offlineFolder.check.accesskey           "D">
+<!ENTITY offlineFolder.button.label                         "Hämta nu">
+<!ENTITY offlineFolder.button.accesskey          "ä">
+
+<!ENTITY selectofflineNewsgroup.check.label                 "Den här diskussionsgruppen ska kunna användas nedkopplad">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "e">
+<!ENTITY offlineNewsgroup.button.label                      "Hämta nu">
+<!ENTITY offlineNewsgroup.button.accesskey       "ä">
+
+<!ENTITY folderProps.name.label	        "Namn:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Plats:"> 
+<!ENTITY folderProps.location.accesskey          "P">
+
+<!ENTITY folderSharingTab.label                             "Delning">
+<!ENTITY privileges.button.label                      "Privilegier">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                            "Du har dessa privilegier:">
+<!ENTITY folderType.label                             "Typ av mapp:">
+
+<!ENTITY folderQuotaTab.label                    "Kvot">
+<!ENTITY folderQuotaRoot.label                   "Kvot-rot:">
+<!ENTITY folderQuotaUsage.label                  "Användning:">
+<!ENTITY folderQuotaStatus.label                            "Status:">
+
+<!ENTITY numberOfMessages.label                  "Antal meddelanden:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "okänt">
+<!ENTITY sizeOnDisk.label                        "Diskutrymme:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "okänt">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title          "重命名文件夹">
+<!ENTITY rename.label                      "请输入文件夹的新名称:">
+<!ENTITY rename.accesskey                  "E">
+<!ENTITY accept.label                      "重命名">
+<!ENTITY accept.accesskey                  "R">

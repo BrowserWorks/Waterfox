@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "Почты и групп новостей">
+<!ENTITY enbPluginCheckMailNews.accesskey "ч">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label                       "Почта и группы новостей">
+<!ENTITY mail.accesskey                   "П">
+<!ENTITY addressbook.label                "Адресная книга">
+<!ENTITY addressbook.accesskey            "А">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label            "Отображение сообщений">
+<!ENTITY notifications.label              "Уведомления">
+<!ENTITY composingMessages.label          "Составление сообщений">
+<!ENTITY format.label                     "Формат исходящей почты">
+<!ENTITY address.label                    "Адресация">
+<!ENTITY junk.label                       "Спам и подозрительная почта">
+<!ENTITY tags.label                       "Метки">
+<!ENTITY return.label                     "Уведомления о прочтении">
+<!ENTITY characterEncoding2.label         "Кодировка текста">
+<!ENTITY networkStorage.label             "Сеть и хранилище">

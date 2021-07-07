@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Notifications">
+<!ENTITY notifications.caption            "Notifications">
+<!ENTITY newMessagesArrive.label          "When new messages arrive:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Show an alert for">
+<!ENTITY showAlertFor.accesskey           "S">
+<!ENTITY showAlertTimeEnd.label           "seconds">
+
+<!ENTITY showAlertPreviewText.label       "Show a preview of the message text">
+<!ENTITY showAlertPreviewText.accesskey   "v">
+<!ENTITY showAlertSubject.label           "Show the subject">
+<!ENTITY showAlertSubject.accesskey       "u">
+<!ENTITY showAlertSender.label            "Show the sender">
+<!ENTITY showAlertSender.accesskey        "n">
+<!ENTITY useSystemAlert.label             "Use the operating system&apos;s desktop notifications">
+<!ENTITY useSystemAlert.accesskey         "d">
+<!ENTITY useBuiltInAlert.label            "Use &brandShortName;&apos;s own notification windows">
+<!ENTITY useBuiltInAlert.accesskey        "w">
+
+<!ENTITY showTrayIcon.label               "Show a tray icon">
+<!ENTITY showTrayIcon.accesskey           "t">
+<!ENTITY showBalloon.label                "Show a balloon alert">
+<!ENTITY showBalloon.accesskey            "o">
+<!ENTITY bounceSystemDockIcon.label       "Animate the Dock icon">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "Play a sound">
+<!ENTITY playSound.accesskey              "P">
+<!ENTITY playButton.label                 "Play">
+<!ENTITY playButton.accesskey             "l">
+<!ENTITY systemsound.label                "System New Mail Sound">
+<!ENTITY systemsound.accesskey            "M">
+<!ENTITY customsound.label                "Custom sound file">
+<!ENTITY customsound.accesskey            "C">
+<!ENTITY browse.label                     "Browse…">
+<!ENTITY browse.accesskey                 "B">
+<!ENTITY browse.title                     "Choose file">

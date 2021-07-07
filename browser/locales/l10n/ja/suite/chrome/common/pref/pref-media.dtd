@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "メディア">
+<!ENTITY mediaHTML5Preferences.label    "音声/動画">
+<!ENTITY allowMediaAutoplay.label       "HTML5 メディアコンテンツの自動再生を有効にする">
+<!ENTITY allowMediaAutoplay.accesskey   "A">
+
+<!ENTITY enableDrmMedia.label           "DRM (Digital Rights Management) を有効にする">
+<!ENTITY enableEmeForSuite.label        "サードパーティ CDM (Content Decryption Modules)">
+<!ENTITY enableEmeForSuite.accesskey    "C">
+
+<!ENTITY animLoopingTitle.label         "アニメーション画像の繰り返し">
+<!ENTITY animLoopAsSpecified.label      "画像が指定した回数まで">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "1 回だけ">
+<!ENTITY animLoopOnce.accesskey         "O">
+<!ENTITY animLoopNever.label            "繰り返さない">
+<!ENTITY animLoopNever.accesskey        "v">

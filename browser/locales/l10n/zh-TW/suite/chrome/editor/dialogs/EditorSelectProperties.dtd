@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "選擇列表屬性">
+
+<!ENTITY Select.label "選取清單">
+<!ENTITY SelectName.label "清單名稱:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "高度:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "多選">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "已停用">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "選取順序(Tab Index):">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "選項群組">
+<!ENTITY OptGroupLabel.label "標籤:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "已停用">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "選項">
+<!ENTITY OptionText.label "文字:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "內含值:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "初始時自動選取">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "已停用">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "文字">
+<!ENTITY ValueHeader.label "值">
+<!ENTITY SelectedHeader.label "已選取">
+
+<!ENTITY AddOption.label "增加選項">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "新增群組">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "移除">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "上移">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "下移">
+<!ENTITY MoveElementDown.accesskey "D">
+

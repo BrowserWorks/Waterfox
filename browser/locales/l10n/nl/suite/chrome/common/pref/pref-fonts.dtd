@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Lettertypen">
+
+<!ENTITY  language.label                          "Lettertypen voor:">
+<!ENTITY  language.accesskey                      "L">
+
+<!ENTITY  typefaces.label                         "Lettertype">
+<!ENTITY  sizes.label                             "Grootte (pixels)">
+
+<!ENTITY  proportional.label                      "Proportioneel:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Met schreef:">
+<!ENTITY  serif.accesskey                         "s">
+<!ENTITY  sans-serif.label                        "Schreefloos:">
+<!ENTITY  sans-serif.accesskey                    "c">
+<!ENTITY  monospace.label                         "Monospace:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasie:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "Cursief:">
+<!ENTITY  cursive.accesskey                       "u">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latijns">
+<!ENTITY  font.langGroup.japanese                 "Japans">
+<!ENTITY  font.langGroup.trad-chinese             "Traditioneel Chinees (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Vereenvoudigd Chinees">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Traditioneel Chinees (Hongkong)">
+<!ENTITY  font.langGroup.korean                   "Koreaans">
+<!ENTITY  font.langGroup.cyrillic                 "Cyrillisch">
+<!ENTITY  font.langGroup.el                       "Grieks">
+<!ENTITY  font.langGroup.thai                     "Thais">
+<!ENTITY  font.langGroup.hebrew                   "Hebreeuws">
+<!ENTITY  font.langGroup.arabic                   "Arabisch">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamil">
+<!ENTITY  font.langGroup.armenian                 "Armeens">
+<!ENTITY  font.langGroup.bengali                  "Bengaals">
+<!ENTITY  font.langGroup.canadian                 "Verenigd Canadees lettergreepschrift">
+<!ENTITY  font.langGroup.ethiopic                 "Ethiopisch">
+<!ENTITY  font.langGroup.georgian                 "Georgisch">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Wiskunde">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Singalees">
+<!ENTITY  font.langGroup.tibetan                  "Tibetaans">
+<!ENTITY  font.langGroup.other                    "Andere schriftsystemen">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minimale lettergrootte:">
+<!ENTITY minSize.accesskey                        "n">
+<!ENTITY minSize.none                             "Geen">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Met schreef">
+<!ENTITY  useDefaultFontSansSerif.label           "Schreefloos">
+
+<!ENTITY  useDocumentFonts.label                  "Documenten toestaan andere lettertypen te gebruiken">
+<!ENTITY  useDocumentFonts.accesskey              "D">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Wanneer een webpagina eigen lettertypen kiest">
+<!ENTITY  useDefaultFont.label                    "Mijn standaard lettertypen gebruiken, de door de pagina gekozen lettertypen negeren">
+<!ENTITY  useDefaultFont.accesskey                "s">

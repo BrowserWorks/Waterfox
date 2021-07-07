@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Εισάγετε τη διεύθυνση ιστού (URL), ή προσδιορίστε το τοπικό αρχείο που θέλετε να ανοίξετε:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "Ε">
+<!ENTITY chooseFile.label "Επιλογή αρχείου…">
+<!ENTITY chooseFile.accesskey "Ε">
+<!ENTITY newPrivate.label "Νέο ιδιωτικό παράθυρο">
+<!ENTITY newWindow.label "Νέο παράθυρο προγράμματος περιήγησης">
+<!ENTITY newTab.label "Νέα καρτέλα προγράμματος περιήγησης">
+<!ENTITY currentTab.label "Τρέχουσα καρτέλα προγράμματος περιήγησης">
+<!ENTITY editNewWindow.label "Νέο παράθυρο σύνθεσης">
+<!ENTITY open.label "Άνοιγμα">
+<!ENTITY caption.label "Άνοιγμα διαδικτυακής τοποθεσίας">
+<!ENTITY openWhere.label "Άνοιγμα σε:">
+<!ENTITY openWhere.accesskey "Ά">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "加入頻道">
+
+<!ENTITY network.label     "網路:">
+<!ENTITY network.accesskey "N">
+
+<!ENTITY channel.label     "頻道:">
+<!ENTITY channel.accesskey "C">
+
+<!ENTITY topics.label     "搜尋主題及頻道名稱">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label     "加入">
+<!ENTITY join.accesskey "J">
+
+<!ENTITY minusers.label     "最少使用者數:">
+<!ENTITY minusers.accesskey "M">
+
+<!ENTITY maxusers.label     "最多使用者數:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "立即重新整理">
+<!ENTITY refresh.accesskey "">
+
+
+<!ENTITY col.network "網路">
+<!ENTITY col.name  "名稱">
+<!ENTITY col.users "使用者數">
+<!ENTITY col.topic "主題">

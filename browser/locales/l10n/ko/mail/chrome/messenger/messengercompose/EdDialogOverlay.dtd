@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "고급 편집…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "자바스크립트, 스타일 및 HTML을 수정하거나 추가합니다.">
+<!ENTITY chooseFileButton.label "파일 선택…">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "파일 선택…">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "페이지 주소의 상대 경로 (URL)">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "절대 또는 상대 경로 지정. 페이지 저장 전에 설정해야 합니다.">
+
+<!ENTITY LinkURLEditField2.label "필드 문맥 메뉴에서 페이지의 위치나 로컬 파일, 이름있는 앵커, 헤딩을 입력:">
+<!ENTITY LinkURLEditField2.accessKey "w">

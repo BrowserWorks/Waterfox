@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY selectAddressWindow.title           "Címzettek kiválasztása">
+<!-- Buttons -->
+
+<!ENTITY toButton.label                      "Címzett:"> 
+<!ENTITY toButton.accesskey                  "C"> 
+<!ENTITY ccButton.label                      "Másolat:"> 
+<!ENTITY ccButton.accesskey                  "M"> 
+<!ENTITY bccButton.label                     "Rejtett másolat:">  
+<!ENTITY bccButton.accesskey                 "R">  
+<!ENTITY newButton.label                     "Új…"> 
+<!ENTITY newButton.accesskey                 "Ú"> 
+<!ENTITY editButton.label                    "Szerkesztés…"> 
+<!ENTITY editButton.accesskey                "S">
+<!ENTITY removeButton.label                  "Eltávolítás"> 
+<!ENTITY removeButton.accesskey              "E"> 
+<!ENTITY lookIn.label                        "Keresés itt:"> 
+<!ENTITY lookIn.accesskey                    "K"> 
+<!ENTITY for.label                           "keresés erre:"> 
+<!ENTITY for.accesskey                       "e"> 
+<!ENTITY for.placeholder                     "Név vagy e-mail">
+<!ENTITY addressMessageTo.label              "Az üzenet címzettjei:"> 
+<!-- Tooltips items -->  
+
+<!ENTITY addressPickerNewButton.tooltip      "Új névjegykártya létrehozása"> 
+<!ENTITY addressPickerEditButton.tooltip     "A kijelölt névjegy szerkesztése"> 
+

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+
+<!ENTITY languages.customize.prefLangDescript           "A weboldalak néha több nyelven is elérhetőek. Adja meg sorrendben azokat a nyelveket, amelyeken a weboldalakat meg szeretné tekinteni.">
+<!ENTITY languages.customize.title                      "Nyelvek">
+<!ENTITY langtitle.label                                "A weboldalak nyelve">
+<!ENTITY languages.customize.prefAddLangDescript        "Jelölje ki a hozzáadandó nyelv(ek)et.">
+<!ENTITY languages.customize.addButton.label            "Hozzáadás…">
+<!ENTITY languages.customize.addButton.accesskey        "H">
+<!ENTITY languages.customize.deleteButton.label         "Eltávolítás">
+<!ENTITY languages.customize.deleteButton.accesskey     "E">
+<!ENTITY languages.customize.add.title.label            "Nyelvek hozzáadása">
+<!ENTITY languages.customize.available.label            "Nyelvek:">
+<!ENTITY languages.customize.active.label               "Nyelvek sorrendje:">
+<!ENTITY languages.customize.active.accesskey           "l">
+<!ENTITY languages.customize.others.label               "Egyéb:">
+<!ENTITY languages.customize.others.accesskey           "E">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Karakterkódolás örökölt tartalomhoz">
+<!ENTITY languages.customize.Fallback2.label            "Tartalék kó_dolás:">
+<!ENTITY languages.customize.Fallback2.accesskey        "T">
+<!ENTITY languages.customize.Fallback2.desc             "Ez a karakterkódolás kerül felhasználásra az örökölt tartalmakhoz, amelyek nem adják meg a kódolásukat.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "például: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Mozgatás felfelé">
+<!ENTITY languages.customize.moveUp.accesskey           "f">
+<!ENTITY languages.customize.moveDown.label             "Mozgatás lefelé">
+<!ENTITY languages.customize.moveDown.accesskey         "l">

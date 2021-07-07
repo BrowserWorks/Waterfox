@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "ผู้ติดต่อออนไลน์">
+<!ENTITY offlineContactsHeader.label   "ผู้ติดต่อออฟไลน์">
+<!ENTITY conversationsHeader.label     "การสนทนา">
+<!ENTITY searchResultConversation.label "ผลการค้นหา">
+<!ENTITY chat.noConv.title             "การสนทนาจะแสดงที่นี่">
+<!ENTITY chat.noConv.description       "เลือกผู้ติดต่อจากรายชื่อที่อยู่ในแผงด้านซ้ายเพื่อเริ่มการสนทนา">
+<!ENTITY chat.noPreviousConv.description       "ขณะนี้ &brandShortName; ไม่มีการสนทนาก่อนหน้าใด ๆ ที่เก็บไว้สำหรับผู้ติดต่อนี้">
+<!ENTITY chat.noAccount.title             "คุณยังไม่ได้ตั้งค่าบัญชีแชท">
+<!ENTITY chat.noAccount.description       "ให้ &brandShortName; แนะนำคุณผ่านกระบวนการตั้งค่าบัญชีแชทของคุณ">
+<!ENTITY chat.accountWizard.button       "เริ่มต้นใช้งาน">
+<!ENTITY chat.noConnectedAccount.title             "บัญชีแชทของคุณไม่ได้ถูกเชื่อมต่อ">
+<!ENTITY chat.noConnectedAccount.description       "คุณสามารถเชื่อมต่อบัญชีแชทได้จากกล่องโต้ตอบ 'สถานะการแชท':">
+<!ENTITY chat.showAccountManager.button       "แสดงสถานะการแชท">
+
+<!ENTITY chat.participants             "ผู้เข้าร่วม:">
+<!ENTITY chat.previousConversations    "การสนทนาก่อนหน้า:">
+<!ENTITY chat.ongoingConversation      "การสนทนาที่กำลังดำเนินอยู่">
+
+<!ENTITY openConversationCmd.label     "เริ่มการสนทนา">
+<!ENTITY openConversationCmd.accesskey "ร">
+<!ENTITY closeConversationCmd.label    "ปิดการสนทนา">
+<!ENTITY closeConversationCmd.accesskey "ป">
+<!ENTITY aliasCmd.label                "เปลี่ยนชื่อ">
+<!ENTITY aliasCmd.accesskey            "ป">
+<!ENTITY deleteCmd.label               "เอาผู้ติดต่อออก">
+<!ENTITY deleteCmd.accesskey           "อ">
+
+<!ENTITY openConversationButton.tooltip  "เริ่มการสนทนา">
+<!ENTITY closeConversationButton.tooltip "ปิดการสนทนา">
+
+<!ENTITY addBuddyButton.label          "เพิ่มผู้ติดต่อ">
+<!ENTITY joinChatButton.label          "เข้าร่วมแชท">
+<!ENTITY chatAccountsButton.label      "แสดงบัญชี">
+
+<!ENTITY status.available          "พร้อมใช้งาน">
+<!ENTITY status.unavailable        "ไม่พร้อมใช้งาน">
+<!ENTITY status.offline            "ออฟไลน์">
+
+<!ENTITY openLinkCmd.label            "เปิดลิงก์…">
+<!ENTITY openLinkCmd.accesskey        "ป">

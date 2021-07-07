@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Kortelės">
+
+<!ENTITY tabDisplay.label "Kortelių juosta">
+
+
+<!ENTITY background.label "Atveriant saitą naujoje kortelėje, įkelti ją į pirmąjį planą">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Įspėti prieš užveriant langą, kuriame yra atvertų kortelių">
+<!ENTITY warnOnClose.accesskey "ė">
+<!ENTITY relatedAfterCurrent.label "Susijusias korteles atverti greta esamos">
+<!ENTITY relatedAfterCurrent.accesskey "g">
+
+<!ENTITY loadGroup.label "Atveriant į adresyną įrašytą tinklalapių grupę:">
+<!ENTITY loadGroupAppend.label "Sukurti naujas korteles">
+<!ENTITY loadGroupAppend.accesskey "k">
+<!ENTITY loadGroupReplace.label "Pakeisti esamas">
+<!ENTITY loadGroupReplace.accesskey "P">
+
+<!ENTITY openTabs.label "Vietoj naujo naršyklės lango atverti kortelę">
+
+
+
+
+

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vložení matematiky">
+
+<!ENTITY sourceEditField.label "Vložte zdrojový kód LaTeXu:">
+
+<!ENTITY options.label "Možnosti">
+<!ENTITY optionInline.label "Režim zadávání">
+<!ENTITY optionInline.accesskey "z">
+<!ENTITY optionDisplay.label "Režim zobrazení">
+<!ENTITY optionDisplay.accesskey "o">
+<!ENTITY optionLTR.label "Směr zleva doprava">
+<!ENTITY optionLTR.accesskey "e">
+<!ENTITY optionRTL.label "Směr zprava doleva">
+<!ENTITY optionRTL.accesskey "p">
+
+<!ENTITY insertButton.label "Vložit">
+<!ENTITY insertButton.accesskey "V">

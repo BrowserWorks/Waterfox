@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "脚本和插件">
+
+<!ENTITY navigator.label                 "浏览器">
+<!ENTITY navigator.accesskey             "B">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "启用JavaScript">
+<!ENTITY allowScripts.label              "脚本程序:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "移动或调整现有的窗口">
+<!ENTITY allowWindowFlip.label           "提高或降低窗口">
+<!ENTITY allowWindowStatusChange.label   "改变状态栏的文本">
+<!ENTITY allowContextmenuDisable.label   "禁用或更换快捷菜单">
+<!ENTITY allowHideStatusBar.label        "隐藏状态栏">
+
+<!ENTITY debugging.label                  "JavaScript 调试">
+<!ENTITY debugEnableDump.label            "启用 JavaScript dump() 输出">
+<!ENTITY debugEnableDump.accesskey        "E">
+<!ENTITY debugStrictJavascript.label      "显示严格的 JavaScript 警告">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "显示 Chrome 的 JavaScript 错误和警告">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "允许插件用于">
+<!ENTITY enablePluginForSuite.label      "套件">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "当一个页面需要插件">
+<!ENTITY activateAllPlugins.label        "默认启用所有插件">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "如果需要安装额外的插件时警示我">
+<!ENTITY warnPluginsRequired.accesskey   "W">

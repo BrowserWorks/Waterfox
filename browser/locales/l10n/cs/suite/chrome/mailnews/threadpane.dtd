@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Vlákno">
+<!ENTITY fromColumn.label "Od">
+<!ENTITY recipientColumn.label "Příjemce">
+<!ENTITY attachmentColumn.label "Přílohy">
+<!ENTITY subjectColumn.label "Předmět">
+<!ENTITY dateColumn.label "Datum">
+<!ENTITY priorityColumn.label "Priorita">
+<!ENTITY tagsColumn.label "Štítky">
+<!ENTITY accountColumn.label "Účet">
+<!ENTITY statusColumn.label "Stav">
+<!ENTITY sizeColumn.label "Velikost">
+<!ENTITY junkStatusColumn.label "Stav zprávy">
+<!ENTITY unreadColumn.label "Nepřečteno">
+<!ENTITY totalColumn.label "Celkem">
+<!ENTITY readColumn.label "Přečteno">
+<!ENTITY receivedColumn.label "Doručeno">
+<!ENTITY flagColumn.label "Praporek">
+<!ENTITY locationColumn.label "Umístění">
+<!ENTITY idColumn.label "Pořadí přijetí">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Vyberte sloupce, které chcete zobrazit">
+<!ENTITY threadColumn2.tooltip "Zobrazíte vlákna zpráv">
+<!ENTITY fromColumn2.tooltip "Seřadíte podle odesílatele">
+<!ENTITY recipientColumn2.tooltip "Seřadíte podle příjemce">
+<!ENTITY attachmentColumn2.tooltip "Seřadíte podle příloh">
+<!ENTITY subjectColumn2.tooltip "Seřadíte podle předmětu">
+<!ENTITY dateColumn2.tooltip "Seřadíte podle data">
+<!ENTITY priorityColumn2.tooltip "Seřadíte podle priority">
+<!ENTITY tagsColumn2.tooltip "Seřadíte podle štítků">
+<!ENTITY accountColumn2.tooltip "Seřadíte podle účtu">
+<!ENTITY statusColumn2.tooltip "Seřadíte podle stavu">
+<!ENTITY sizeColumn2.tooltip "Seřadíte podle velikosti">
+<!ENTITY junkStatusColumn2.tooltip "Seřadíte podle druhu zprávy">
+<!ENTITY unreadColumn2.tooltip "Seřadíte dle počtu nepřečtených zpráv ve vlákně">
+<!ENTITY totalColumn2.tooltip "Seřadíte dle celkového počtu zpráv ve vlákně">
+<!ENTITY readColumn2.tooltip "Seřadíte podle přečtených">
+<!ENTITY receivedColumn2.tooltip "Seřadíte podle data doručení">
+<!ENTITY flagColumn2.tooltip "Seřadíte podle praporku">
+<!ENTITY locationColumn2.tooltip "Seřadíte podle umístění">
+<!ENTITY idColumn2.tooltip "Seřadíte podle pořadí přijetí">

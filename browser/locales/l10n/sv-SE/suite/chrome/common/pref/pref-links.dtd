@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Hantering av länkar">
+<!ENTITY newWindow.label "Länkar som öppnar nya fönster">
+<!ENTITY newWindowDescription.label "Öppna länkar som vill öppna nya fönster i">
+<!ENTITY newWindowRestriction.label "När skript vill öppna ett nytt fönster:">
+<!ENTITY external.label "Länkar från andra program">
+<!ENTITY externalDescription.label "Öppna länkar som kommer från andra program i">
+
+<!ENTITY openCurrent.label "Aktuell flik/fönster">
+<!ENTITY newWindowGroupCurrent.accesskey "A">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "En ny flik i aktuellt fönster">
+<!ENTITY newWindowGroupTab.accesskey "f">
+<!ENTITY externalGroupTab.accesskey "n">
+
+<!ENTITY openWindow.label "Ett nytt fönster">
+<!ENTITY newWindowGroupWindow.accesskey "E">
+<!ENTITY externalGroupWindow.accesskey "t">
+
+<!ENTITY divertAll.label "Dirigera alltid om fönster till flikar">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "Dirigera inte om anpassade fönster till flikar">
+<!ENTITY divertNoFeatures.accesskey "f">
+<!ENTITY dontDivert.label "Öppna alltid nya fönster">
+<!ENTITY dontDivert.accesskey "l">

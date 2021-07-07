@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Felugró ablakok">
+
+<!ENTITY pref.popups.caption            "Felugró ablakok">
+
+<!ENTITY popupBlock.label               "Kéretlen felugró ablakok tiltása">
+<!ENTITY popupBlock.accesskey           "b">
+
+<!ENTITY viewPermissions.label          "Engedélyek kezelése">
+<!ENTITY viewPermissions.accesskey      "k">
+
+<!ENTITY whenBlock.description          "Felugró ablak blokkolásakor:">
+<!ENTITY playSound.label                "Hangjelzés:">
+<!ENTITY playSound.accesskey            "H">
+<!ENTITY systemSound.label              "Rendszerhang">
+<!ENTITY systemSound.accesskey          "R">
+<!ENTITY customSound.label              "Egyedi hangfájl">
+<!ENTITY customSound.accesskey          "E">
+
+<!ENTITY selectSound.label              "Kiválasztás…">
+<!ENTITY selectSound.accesskey          "K">
+<!ENTITY playSoundButton.label          "Lejátszás">
+<!ENTITY playSoundButton.accesskey      "L">
+
+<!ENTITY displayIcon.label              "Ikon megjelenítése a böngészőablak állapotsorában">
+<!ENTITY displayIcon.accesskey          "I">
+
+<!ENTITY displayNotification.label      "Értesítés megjelenítése az ablak tetején">
+<!ENTITY displayNotification.accesskey  "m">
+
+<!ENTITY popupNote.description          "Megjegyzés: ha minden felugró ablakot blokkol, az problémákat okozhat bizonyos webhelyek, például banki portálok vagy webáruházak működésében, mert a bejeletkezés esetleg ilyen ablakon keresztül történik. Kattintson a Súgó gombra, hogy megtudja, hogyan engedélyezheti bizonyos webhelyeknek a felugró ablakok megjelenítését, míg minden más helyről származót blokkol. A blokkolás ellenére a webhelyek képesek lehetnek más módszerrel felugró ablakot nyitni.">
+

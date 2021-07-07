@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vlastnosti seznamu">
+
+<!ENTITY ListType.label "Typ seznamu">
+<!ENTITY bulletStyle.label "Styl odrážek:">
+<!ENTITY startingNumber.label "Začátek:">
+<!ENTITY startingNumber.accessKey "Z">
+<!ENTITY none.value "Žádný">
+<!ENTITY bulletList.value "Seznam s odrážkami">
+<!ENTITY numberList.value "Číslovaný seznam">
+<!ENTITY definitionList.value "Seznam definicí">
+<!ENTITY changeEntireListRadio.label "Změnit celý seznam">
+<!ENTITY changeEntireListRadio.accessKey "c">
+<!ENTITY changeSelectedRadio.label "Změnit pouze označené">
+<!ENTITY changeSelectedRadio.accessKey "m">

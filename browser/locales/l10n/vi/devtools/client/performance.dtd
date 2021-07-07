@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Trình lược tả lưu các mẫu trong bộ đệm tròn và khi bộ đệm đạt đến giới hạn cho bản ghi, các mẫu mới hơn bắt đầu ghi đè lên các mẫu cũ.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Cho phép xử lý đa tiến trình Firefox trong tùy chọn để hiển thị dữ liệu ghi trong thời gian thực.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Bộ đệm đã đầy. Các mẫu cũ hơn hiện đang được ghi đè.">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Ghi lại một hồ sơ hiện không có sẵn. Vui lòng đóng tất cả các cửa sổ duyệt web riêng tư và thử lại.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Đang tải…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Thác nước">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Hiển thị các hoạt động khác nhau mà trình duyệt đang thực hiện trong quá trình ghi, được trình bày tuần tự như một thác nước.">
+<!ENTITY performanceUI.toolbar.js-calltree "Cây">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Làm nổi bật các chức năng JavaScript mà khi đó trình duyệt dành nhiều thời gian nhất trong quá trình ghi.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Phân bố">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Hiển thị nơi bộ nhớ được phân bổ trong quá trình ghi.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Biểu đồ JS Flame">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Hiển thị ngăn xếp lệnh gọi JavaScript trong suốt quá trình ghi.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Biểu đồ phân bổ Flame">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Tổng thời gian">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Lượng thời gian dành cho chức năng này và chức năng mà nó gọi.">
+<!ENTITY performanceUI.table.selfDuration             "Thời gian bản thân">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Lượng thời gian chỉ dành cho chức năng này.">
+<!ENTITY performanceUI.table.totalPercentage          "Tổng tỉ lệ">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Tỷ lệ phần trăm thời gian dành cho chức năng này và chức năng mà nó gọi.">
+<!ENTITY performanceUI.table.selfPercentage           "Tỉ lệ bản thân">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Tỷ lệ phần trăm thời gian chỉ dành cho chức năng này.">
+<!ENTITY performanceUI.table.samples                  "Mẫu">
+<!ENTITY performanceUI.table.samples.tooltip          "Số lần hàm này nằm trên ngăn xếp khi trình lược tả lấy mẫu.">
+<!ENTITY performanceUI.table.function                 "Hàm">
+<!ENTITY performanceUI.table.function.tooltip         "Tên và vị trí nguồn của hàm được lấy mẫu.">
+<!ENTITY performanceUI.table.totalAlloc               "Tổng số phân bố mẫu">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Tổng số lượng mẫu tại vị trí này và các đối tượng được gọi.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Chọn kiểu dữ liệu sẽ hiển thị trong dòng thời gian">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Cấu hình tùy chọn hiệu suất.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Đảo ngược cây">
+<!ENTITY performanceUI.invertTree.tooltiptext "Đảo ngược cây các lệnh gọi hiển thị các đường dẫn lệnh gọi được định hình bắt đầu từ các khung nhỏ nhất và mở rộng ra các khung cũ hơn.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Đảo ngược biểu đồ Flame">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Đảo ngược biểu đồ flame hiển thị các đường dẫn lệnh gọi được định hình bắt đầu từ các khung nhỏ nhất và mở rộng ra các khung cũ hơn.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Hiện dữ liệu nền tảng Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Hiển thị dữ liệu nền tảng cho phép các báo cáo hồ sơ JavaScript bao gồm các biểu tượng nền tảng Gecko.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Hiện tối ưu hóa JIT">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Hiển thị dữ liệu tối ưu hóa JIT được lấy mẫu trong mỗi khung JavaScript.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Làm phẳng đệ quy cây">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Làm phẳng đệ quy khi kiểm tra chức năng.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Bản ghi bộ nhớ">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Ghi lại mức tiêu thụ bộ nhớ trong khi định hình.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Bản ghi phân bổ">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Ghi lại phân bổ đối tượng trong khi định hình.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Bản ghi tốc độ khung hình">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Ghi lại tốc độ khung hình trong khi định hình.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Hiện đang ghi các bản ghi qua">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Dừng ghi bằng cách nhập">
+<!ENTITY performanceUI.console.stopCommandEnd   "vào bàn điều khiển.">

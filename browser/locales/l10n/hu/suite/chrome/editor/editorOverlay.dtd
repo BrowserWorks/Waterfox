@@ -1,0 +1,368 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.key "S">
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Beillesztés formázás nélkül">
+<!ENTITY pasteNoFormatting.accesskey "f">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Beillesztés idézetként">
+<!ENTITY pasteAsQuotationCmd.accesskey "i">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.label "Újratördelés">
+<!ENTITY editRewrapCmd.key "j">
+<!ENTITY editRewrapCmd.accesskey "w">
+<!ENTITY findBarCmd.label "Keresés…">
+<!ENTITY findReplaceCmd.label "Keresés és csere…">
+<!ENTITY enableInlineSpellChecker.label "Helyesírás-ellenőrzés írás közben">
+<!ENTITY enableInlineSpellChecker.accesskey "e">
+<!ENTITY checkSpellingCmd2.label "Helyesírás-ellenőrzés…">
+<!ENTITY checkSpellingCmd2.accesskey "H">
+<!ENTITY checkSpellingCmd2.key "p">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Beszúrás">
+<!ENTITY insertMenu.accesskey "B">
+<!ENTITY insertLinkCmd2.label "Hivatkozás…">
+<!ENTITY insertLinkCmd2.accesskey "H">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Megnevezett horgony…">
+<!ENTITY insertAnchorCmd.accesskey "o">
+<!ENTITY insertImageCmd.label "Kép…">
+<!ENTITY insertImageCmd.accesskey "K">
+<!ENTITY insertHLineCmd.label "Vízszintes vonal">
+<!ENTITY insertHLineCmd.accesskey "V">
+<!ENTITY insertTableCmd.label "Táblázat…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Képlet…">
+<!ENTITY insertMathCmd.accesskey "K">
+<!ENTITY insertCharsCmd.label "Karakterek és szimbólumok…">
+<!ENTITY insertCharsCmd.accesskey "K">
+<!ENTITY insertBreakAllCmd.label "Sortörés a képek alatt">
+<!ENTITY insertBreakAllCmd.accesskey "k">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Hivatkozás létrehozása…">
+<!ENTITY createLinkCmd.accesskey "H">
+<!ENTITY editLinkCmd.label "Hivatkozás szerkesztése új szerkesztőablakban">
+<!ENTITY editLinkCmd.accesskey "s">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.title "Betűkészlet">
+<!ENTITY FontFaceSelect.tooltip "Betűkészlet kiválasztása">
+<!ENTITY fontfaceMenu.label "Betűkészlet">
+<!ENTITY fontfaceMenu.accesskey "B">
+<!ENTITY fontVarWidth.label "Proporcionális">
+<!ENTITY fontVarWidth.accesskey "P">
+<!ENTITY fontFixedWidth.label "Fix szélességű">
+<!ENTITY fontFixedWidth.accesskey "x">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "H">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.title "Betűméret">
+<!ENTITY FontSizeSelect.tooltip "Betűméret beállítása">
+<!ENTITY decreaseFontSize.label "Kisebb">
+<!ENTITY decreaseFontSize.accesskey "K">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Nagyobb">
+<!ENTITY increaseFontSize.accesskey "N">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Méret">
+<!ENTITY fontSizeMenu.accesskey "r">
+<!ENTITY size-tinyCmd.label "Apró">
+<!ENTITY size-tinyCmd.accesskey "A">
+<!ENTITY size-smallCmd.label "Kicsi">
+<!ENTITY size-smallCmd.accesskey "c">
+<!ENTITY size-mediumCmd.label "Közepes">
+<!ENTITY size-mediumCmd.accesskey "z">
+<!ENTITY size-largeCmd.label "Nagy">
+<!ENTITY size-largeCmd.accesskey "N">
+<!ENTITY size-extraLargeCmd.label "Nagyon nagy">
+<!ENTITY size-extraLargeCmd.accesskey "o">
+<!ENTITY size-hugeCmd.label "Hatalmas">
+<!ENTITY size-hugeCmd.accesskey "H">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Szöveg stílusa">
+<!ENTITY fontStyleMenu.accesskey "S">
+<!ENTITY styleBoldCmd.label "Félkövér">
+<!ENTITY styleBoldCmd.accesskey "F">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Dőlt">
+<!ENTITY styleItalicCmd.accesskey "D">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Aláhúzott">
+<!ENTITY styleUnderlineCmd.accesskey "A">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Áthúzott">
+<!ENTITY styleStrikeThruCmd.accesskey "t">
+<!ENTITY styleSuperscriptCmd.label "Felső index">
+<!ENTITY styleSuperscriptCmd.accesskey "e">
+<!ENTITY styleSubscriptCmd.label "Alsó index">
+<!ENTITY styleSubscriptCmd.accesskey "l">
+<!ENTITY styleNonbreakingCmd.label "Sortörés nélkül">
+<!ENTITY styleNonbreakingCmd.accesskey "S">
+<!ENTITY styleEm.label "Hangsúly">
+<!ENTITY styleEm.accesskey "H">
+<!ENTITY styleStrong.label "Erősebb hangsúly">
+<!ENTITY styleStrong.accesskey "b">
+<!ENTITY styleCite.label "Idézet">
+<!ENTITY styleCite.accesskey "I">
+<!ENTITY styleAbbr.label "Rövidítés">
+<!ENTITY styleAbbr.accesskey "R">
+<!ENTITY styleAcronym.label "Mozaikszó">
+<!ENTITY styleAcronym.accesskey "M">
+<!ENTITY styleCode.label "Kód">
+<!ENTITY styleCode.accesskey "K">
+<!ENTITY styleSamp.label "Példakimenet">
+<!ENTITY styleSamp.accesskey "P">
+<!ENTITY styleVar.label "Változó">
+<!ENTITY styleVar.accesskey "V">
+
+<!ENTITY formatFontColor.label "Szövegszín…">
+<!ENTITY formatFontColor.accesskey "z">
+<!ENTITY tableOrCellColor.label "Táblázat vagy cella háttérszíne…">
+<!ENTITY tableOrCellColor.accesskey "b">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Horgonyok eltávolítása">
+<!ENTITY formatRemoveNamedAnchors.accesskey "H">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Bekezdés">
+<!ENTITY paragraphMenu.accesskey "B">
+<!ENTITY paragraphParagraphCmd.label "Bekezdés">
+<!ENTITY paragraphParagraphCmd.accesskey "B">
+<!ENTITY heading1Cmd.label "Címsor 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Címsor 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Címsor 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Címsor 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Címsor 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Címsor 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Cím">
+<!ENTITY paragraphAddressCmd.accesskey "C">
+<!ENTITY paragraphPreformatCmd.label "Előformázott">
+<!ENTITY paragraphPreformatCmd.accesskey "E">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Felsorolás">
+<!ENTITY formatlistMenu.accesskey "F">
+<!ENTITY noneCmd.label "Nincs">
+<!ENTITY noneCmd.accesskey "N">
+<!ENTITY listBulletCmd.label "Számozatlan (felsorolás)">
+<!ENTITY listBulletCmd.accesskey "S">
+<!ENTITY listNumberedCmd.label "Számozott">
+<!ENTITY listNumberedCmd.accesskey "m">
+<!ENTITY listTermCmd.label "Kifejezés (DT)">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "Definíció (DD)">
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "Felsorolás tulajdonságai…">
+<!ENTITY listPropsCmd.accesskey "l">
+
+<!ENTITY ParagraphSelect.title "Bekezdés">
+<!ENTITY ParagraphSelect.tooltip "Bekezdésformátum választása">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Szövegtörzs">
+<!ENTITY bodyTextCmd.accesskey "S">
+<!-- isn't used in menu now, but may be added in future -->
+<!ENTITY advancedPropertiesCmd.label "Speciális beállítások">
+<!ENTITY advancedPropertiesCmd.accesskey "e">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Igazítás">
+<!ENTITY alignMenu.accesskey "I">
+<!ENTITY alignLeft.label "Balra">
+<!ENTITY alignLeft.accesskey "B">
+<!ENTITY alignLeft.tooltip "Balra igazítás">
+<!ENTITY alignCenter.label "Középre">
+<!ENTITY alignCenter.accesskey "K">
+<!ENTITY alignCenter.tooltip "Középre igazítás">
+<!ENTITY alignRight.label "Jobbra">
+<!ENTITY alignRight.accesskey "J">
+<!ENTITY alignRight.tooltip "Jobbra igazítás">
+<!ENTITY alignJustify.label "Sorkizárás">
+<!ENTITY alignJustify.accesskey "S">
+<!ENTITY alignJustify.tooltip "Sorkizártra igazítás">
+
+<!-- Layer toolbar items -->
+<!ENTITY absolutePosition.label "Pozicionálás">
+<!ENTITY layer.tooltip "Réteg">
+<!ENTITY decreaseZIndex.label "Hátraküldés">
+<!ENTITY layerSendToBack.tooltip "Hátraküldés">
+<!ENTITY increaseZIndex.label "Előrehozás">
+<!ENTITY layerBringToFront.tooltip "Előrehozás">
+
+<!ENTITY increaseIndent.label "Behúzás növelése">
+<!ENTITY increaseIndent.accesskey "n">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Behúzás csökkentése">
+<!ENTITY decreaseIndent.accesskey "c">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Oldal színei és háttere…">
+<!ENTITY colorsAndBackground.accesskey "h">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Táblázat">
+<!ENTITY tableMenu.accesskey "T">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Kijelölés">
+<!ENTITY tableSelectMenu.accesskey "K">
+
+<!ENTITY tableSelectMenu2.label "Táblázat kijelölése">
+<!ENTITY tableSelectMenu2.accesskey "k">
+<!ENTITY tableInsertMenu2.label "Táblázat beszúrása">
+<!ENTITY tableInsertMenu2.accesskey "b">
+<!ENTITY tableDeleteMenu2.label "Táblázat törlése">
+<!ENTITY tableDeleteMenu2.accesskey "t">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Beszúrás">
+<!ENTITY tableInsertMenu.accesskey "B">
+<!ENTITY tableTable.label "Táblázat">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "Sor">
+<!ENTITY tableRows.label "Sorok">
+<!ENTITY tableRow.accesskey "S">
+<!ENTITY tableRowAbove.label "Sor felülre">
+<!ENTITY tableRowAbove.accesskey "f">
+<!ENTITY tableRowBelow.label "Sor alulra">
+<!ENTITY tableRowBelow.accesskey "a">
+<!ENTITY tableColumn.label "Oszlop">
+<!ENTITY tableColumns.label "Oszlopok">
+<!ENTITY tableColumn.accesskey "o">
+<!ENTITY tableColumnBefore.label "Oszlop a bal oldalra">
+<!ENTITY tableColumnBefore.accesskey "b">
+<!ENTITY tableColumnAfter.label "Oszlop a jobb oldalra">
+<!ENTITY tableColumnAfter.accesskey "j">
+<!ENTITY tableCell.label "Cella">
+<!ENTITY tableCells.label "Cellák">
+<!ENTITY tableCell.accesskey "C">
+<!ENTITY tableCellContents.label "Cella tartalma">
+<!ENTITY tableCellContents.accesskey "t">
+<!ENTITY tableAllCells.label "Minden cella">
+<!ENTITY tableAllCells.accesskey "M">
+<!ENTITY tableCellBefore.label "Cella a bal oldalra">
+<!ENTITY tableCellBefore.accesskey "b">
+<!ENTITY tableCellAfter.label "Cella a jobb oldalra">
+<!ENTITY tableCellAfter.accesskey "j">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Törlés">
+<!ENTITY tableDeleteMenu.accesskey "T">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "Cellák egyesítése">
+<!ENTITY tableJoinCells.accesskey "e">
+<!ENTITY tableSplitCell.label "Cella felosztása">
+<!ENTITY tableSplitCell.accesskey "f">
+<!ENTITY convertToTable.label "Táblázat létrehozása a kijelölésből">
+<!ENTITY convertToTable.accesskey "l">
+<!ENTITY tableProperties.label "Táblázat tulajdonságai…">
+<!ENTITY tableProperties.accesskey "u">
+
+<!-- Toolbar-only items -->
+<!ENTITY menuBar.tooltip "Menüsor">
+<!ENTITY formatToolbar.tooltip "Formázás eszköztár">
+<!ENTITY cutToolbarCmd.tooltip "Kivágás">
+<!ENTITY copyToolbarCmd.tooltip "Másolás">
+<!ENTITY pasteToolbarCmd.tooltip "Beillesztés">
+<!ENTITY findToolbarCmd.label "Keresés">
+<!ENTITY findToolbarCmd.tooltip "Szöveg keresése az oldalon">
+<!ENTITY spellToolbarCmd.label "Helyesírás">
+<!ENTITY spellToolbarCmd.tooltip "A kijelölt rész vagy az egész oldal helyesírásának ellenőrzése">
+<!ENTITY imageToolbarCmd.label "Kép">
+<!ENTITY imageToolbarCmd.tooltip "Új kép beszúrása vagy a kijelölt tulajdonságainak módosítása">
+<!ENTITY hruleToolbarCmd.label "Vízszintes vonal">
+<!ENTITY hruleToolbarCmd.tooltip "Új vízszintes vonal beszúrása vagy a kijelölt tulajdonságainak módosítása">
+<!ENTITY tableToolbarCmd.label "Táblázat">
+<!ENTITY tableToolbarCmd.tooltip "Új táblázat beszúrása vagy a kijelölt tulajdonságainak módosítása">
+<!ENTITY linkToolbarCmd.label "Hivatkozás">
+<!ENTITY linkToolbarCmd.tooltip "Új hivatkozás beszúrása vagy a kijelölt tulajdonságainak módosítása">
+<!ENTITY anchorToolbarCmd.label "Horgony">
+<!ENTITY anchorToolbarCmd.tooltip "Új horgony beszúrása vagy a kijelölt tulajdonságainak módosítása">
+<!ENTITY colorButtons.title "Színek">
+<!ENTITY TextColorButton.tooltip "A szöveg színének beállítása">
+<!ENTITY BackgroundColorButton.tooltip "A háttér színének beállítása">
+<!ENTITY HighlightColorButton.label "Kiemelő">
+<!ENTITY HighlightColorButton.tooltip "Szövegkiemelésre használt szín kiválasztása">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSize.label "Betűméret">
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Betűméret beállítása">
+<!ENTITY smaller.label "Kisebb">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Kisebb betűméret">
+<!ENTITY larger.label "Nagyobb">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Nagyobb betűméret">
+<!ENTITY bold.label "Félkövér">
+<!ENTITY boldToolbarCmd.tooltip "Félkövér">
+<!ENTITY italic.label "Dőlt">
+<!ENTITY italicToolbarCmd.tooltip "Dőlt">
+<!ENTITY underline.label "Aláhúzott">
+<!ENTITY underlineToolbarCmd.tooltip "Aláhúzott">
+<!ENTITY bullets.label "Felsorolás">
+<!ENTITY bulletListToolbarCmd.tooltip "Felsorolás alkalmazása vagy megszüntetése">
+<!ENTITY numbers.label "Számozás">
+<!ENTITY numberListToolbarCmd.tooltip "Számozás alkalmazása vagy megszüntetése">
+<!ENTITY outdent.label "Behúzás csökkentése">
+<!ENTITY outdentToolbarCmd.tooltip "Behúzás csökkentése">
+<!ENTITY indent.label "Behúzás">
+<!ENTITY indentToolbarCmd.tooltip "Behúzás növelése">
+<!ENTITY AlignPopupButton.label "Igazítás">
+<!ENTITY AlignPopupButton.tooltip "Szöveg igazítása">
+<!ENTITY InsertPopupButton.label "Beszúrás">
+<!ENTITY InsertPopupButton.tooltip "Horgony, hivatkozás, kép, vízszintes vonal vagy táblázat beszúrása">
+<!ENTITY alignLeftButton.label "Balra igazítás">
+<!ENTITY alignLeftButton.tooltip "Szöveg igazítása a lap bal széléhez">
+<!ENTITY alignCenterButton.label "Középre igazítás">
+<!ENTITY alignCenterButton.tooltip "Szöveg igazítása középre">
+<!ENTITY alignRightButton.label "Jobbra igazítás">
+<!ENTITY alignRightButton.tooltip "Szöveg igazítása a lap jobb széléhez">
+<!ENTITY alignJustifyButton.label "Sorkizártra igazítás">
+<!ENTITY alignJustifyButton.tooltip "Szöveg sorkizárása">
+
+<!-- Structure Toolbar Context Menu items -->
+<!ENTITY structSelect.label         "Kijelölés">
+<!ENTITY structSelect.accesskey     "K">
+<!ENTITY structRemoveTag.label      "Elem eltávolítása">
+<!ENTITY structRemoveTag.accesskey  "E">
+<!ENTITY structChangeTag.label      "Elem megváltoztatása">
+<!ENTITY structChangeTag.accesskey  "m">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Beszúrás">
+<!ENTITY insertTOC.accesskey      "B">
+<!ENTITY updateTOC.label          "Frissítés">
+<!ENTITY updateTOC.accesskey      "F">
+<!ENTITY removeTOC.label          "Eltávolítás">
+<!ENTITY removeTOC.accesskey      "E">
+<!ENTITY tocMenu.label            "Tartalomjegyzék…">
+<!ENTITY tocMenu.accesskey        "T">

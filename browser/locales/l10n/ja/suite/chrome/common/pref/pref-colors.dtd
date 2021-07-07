@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "配色">
+<!ENTITY color                             "テキストと背景の色">
+<!ENTITY textColor.label                   "テキスト:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "背景:">
+<!ENTITY backgroundColor.accesskey         "B">
+<!ENTITY useSystemColors.label             "システムの配色を使用する">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "リンクに下線を付ける">
+<!ENTITY underlineLinks.accesskey          "U">
+<!ENTITY links                             "リンクの色">
+<!ENTITY linkColor.label                   "未訪問のリンク:">
+<!ENTITY linkColor.accesskey               "L">
+<!ENTITY activeLinkColor.label             "アクティブなリンク:">
+<!ENTITY activeLinkColor.accesskey         "c">
+<!ENTITY visitedLinkColor.label            "訪問したリンク:">
+<!ENTITY visitedLinkColor.accesskey        "V">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "ウェブページが独自の配色と背景を提供する場合">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "常にウェブページで指定された配色と背景色を使用する">
+<!ENTITY alwaysUseDocumentColors.accesskey "A">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "ウェブページで指定された配色と背景画像を無視して、自分で選択した配色を使用する">
+<!ENTITY useMyColors.accesskey             "m">
+<!ENTITY automaticColors.label             "高コントラストテーマ使用時のみ、ウェブページで指定された配色を無視する">
+<!ENTITY automaticColors.accesskey         "O">

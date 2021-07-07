@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "ตั้งค่าการเตือนความจำ">
+<!ENTITY reminder.add.label                                "เพิ่ม">
+<!ENTITY reminder.add.accesskey                            "พ">
+<!ENTITY reminder.remove.label                             "เอาออก">
+<!ENTITY reminder.remove.accesskey                         "อ">
+
+<!ENTITY reminder.reminderDetails.label                    "รายละเอียดการเตือนความจำ">
+<!ENTITY reminder.action.label                             "เลือกการกระทำการเตือนความจำ">
+
+<!ENTITY reminder.action.alert.label                       "แสดงการเตือน">
+<!ENTITY reminder.action.email.label                       "ส่งอีเมล">
+
+<!ENTITY alarm.units.minutes                               "นาที" >
+<!ENTITY alarm.units.hours                                 "ชั่วโมง" >
+<!ENTITY alarm.units.days                                  "วัน" >

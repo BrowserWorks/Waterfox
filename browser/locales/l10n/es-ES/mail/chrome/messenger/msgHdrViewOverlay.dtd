@@ -1,0 +1,111 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "A">
+<!ENTITY fromField4.label "De">
+<!ENTITY senderField4.label "Remitente">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Organización">
+<!ENTITY replyToField4.label "Responder a">
+
+<!ENTITY subjectField4.label "Asunto">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Grupos de noticias">
+<!ENTITY followupToField4.label "Continuación en">
+<!ENTITY tagsHdr4.label "Etiquetas">
+<!ENTITY dateField4.label "Fecha">
+<!ENTITY userAgentField4.label "Agente de usuario">
+<!ENTITY referencesField4.label "Referencias">
+<!ENTITY messageIdField4.label "Message ID">
+<!ENTITY inReplyToField4.label "En respuesta a">
+<!ENTITY originalWebsite4.label "Sitio web">
+
+<!ENTITY hdrArchiveButton1.label "Archivar">
+<!ENTITY hdrArchiveButton1.tooltip "Archivar este mensaje">
+<!ENTITY hdrSmartReplyButton1.label "Responder a interesados">
+<!ENTITY hdrReplyButton1.label "Responder">
+<!ENTITY hdrReplyButton2.tooltip "Contestar al remitente de este mensaje">
+<!ENTITY hdrReplyAllButton1.label "Responder a todos">
+<!ENTITY hdrReplyAllButton1.tooltip "Responder al remitente y a todos los destinatarios">
+<!ENTITY hdrReplyListButton1.label "Responder a la lista">
+<!ENTITY hdrReplyListButton1.tooltip "Responder a la lista de correo">
+<!ENTITY hdrFollowupButton1.label "Responder">
+<!ENTITY hdrFollowupButton1.tooltip "Publicar una respuesta a la conversación en este grupo de noticias">
+<!ENTITY hdrForwardButton1.label "Reenviar">
+<!ENTITY hdrForwardButton1.tooltip "Reenviar este mensaje">
+<!ENTITY hdrJunkButton1.label "No deseado">
+<!ENTITY hdrJunkButton1.tooltip "Marcar este mensaje como correo no deseado">
+<!ENTITY hdrTrashButton1.label "Eliminar">
+<!ENTITY hdrTrashButton1.tooltip "Eliminar este mensaje">
+
+<!ENTITY hdrViewToolbarShowFull.label "Mostrar iconos y texto">
+<!ENTITY hdrViewToolbarShowFull.accesskey "M">
+<!ENTITY hdrViewToolbarShowIcons.label "Mostrar sólo iconos">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "a">
+<!ENTITY hdrViewToolbarShowText.label "Mostrar sólo texto">
+<!ENTITY hdrViewToolbarShowText.accesskey "e">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Mostrar siempre Responder al remitente">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "Más">
+<!ENTITY otherActionsButton.tooltip "Más acciones">
+<!ENTITY otherActionsOpenConversation1.label "Abrir en la conversación">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "Abrir en una ventana nueva">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "v">
+<!ENTITY otherActionsOpenInNewTab1.label "Abrir en una pestaña nueva">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "t">
+<!ENTITY markAsReadMenuItem1.label "Marcar como leído">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "Marcar como no leído">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Guardar como…">
+<!ENTITY saveAsMenuItem1.accesskey "G">
+<!ENTITY viewSourceMenuItem1.label "Ver código fuente">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Imprimir…">
+<!ENTITY otherActionsPrint1.accesskey "I">
+
+<!ENTITY startExpandedCmd.label "Al abrir, mostrar el panel de adjuntos">
+<!ENTITY startExpandedCmd.accesskey "b">
+
+<!ENTITY openAttachmentCmd.label "Abrir">
+<!ENTITY openAttachmentCmd.accesskey "b">
+<!ENTITY saveAsAttachmentCmd.label "Guardar como…">
+<!ENTITY saveAsAttachmentCmd.accesskey "G">
+<!ENTITY detachAttachmentCmd.label "Separar adjuntos…">
+<!ENTITY detachAttachmentCmd.accesskey "S">
+<!ENTITY deleteAttachmentCmd.label "Eliminar">
+<!ENTITY deleteAttachmentCmd.accesskey "E">
+<!ENTITY openAllAttachmentsCmd.label "Abrir todo…">
+<!ENTITY openAllAttachmentsCmd.accesskey "o">
+<!ENTITY saveAllAttachmentsCmd.label "Guardar todo…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "G">
+<!ENTITY detachAllAttachmentsCmd.label "Separar todos los adjuntos…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "D">
+<!ENTITY deleteAllAttachmentsCmd.label "Eliminar todos…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "d">
+
+<!ENTITY openAttachment.tooltip "Abrir el archivo adjunto">
+
+<!ENTITY detachedAttachmentFolder.show.label "Abrir carpeta contenedora">
+<!ENTITY detachedAttachmentFolder.show.accesskey "c">
+<!ENTITY detachedAttachmentFolder.showMac.label "Mostrar en Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!ENTITY saveAttachmentButton1.label "Guardar">
+<!ENTITY saveAttachmentButton1.tooltip "Guardar el archivo adjunto">
+<!ENTITY saveAllAttachmentsButton1.label "Guardar todo">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Guardar todos los archivos adjuntos">
+
+<!ENTITY copyLinkCmd.label "Copiar la dirección del enlace">
+<!ENTITY copyLinkCmd.accesskey "C">
+
+<!ENTITY CopyMessageId.label "Copiar Message-ID">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Abrir mensaje para el Message-ID">
+<!ENTITY OpenMessageForMsgId.accesskey "m">
+<!ENTITY OpenBrowserWithMsgId.label "Abrir navegador con el Message-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "A">

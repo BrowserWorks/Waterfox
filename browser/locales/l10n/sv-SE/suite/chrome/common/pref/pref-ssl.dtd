@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS-protokollversioner">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS-varningar">
+<!ENTITY  SSLMixedContent.caption           "Blandat innehåll">
+<!ENTITY  SSLClientAuthMethod.caption       "Klientens val av certifikat">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "Du kan begränsa vilka krypteringsprotokoll som kan användas för säkra förbindelser. Välj en version eller ett spann av versioner.">
+<!ENTITY limit.enable.label                 "Aktivera:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; kan meddela dig om säkerhetsstatus hos webbsidor som du besöker. Låt &brandShortName; visa en varning när:">
+<!ENTITY warn.enteringsecure                "En sida som stöder kryptering hämtas">
+<!ENTITY warn.enteringsecure.accesskey      "E">
+<!ENTITY warn.insecurepost                  "Ett formulär skickas från en okrypterad sida till en okrypterad sida">
+<!ENTITY warn.insecurepost.accesskey        "s">
+<!ENTITY warn.leavingsecure                 "En sida som stöder kryptering lämnas">
+<!ENTITY warn.leavingsecure.accesskey       "d">
+
+<!ENTITY mixed.description                  "Krypterade sidor kan innehålla okrypterat innehåll som är möjligt att avlyssna eller förfalska. &brandShortName; kan upptäcka och blockera det:">
+<!ENTITY warn.mixedactivecontent            "Varna mig när en krypterad sida innehåller osäkert innehåll">
+<!ENTITY warn.mixedactivecontent.accesskey  "a">
+<!ENTITY block.activecontent                "Ladda inte osäkert innehåll på krypterade sidor">
+<!ENTITY block.activecontent.accesskey      "D">
+<!ENTITY warn.mixeddisplaycontent           "Varna mig när en krypterad sida innehåller andra typer av blandat innehåll">
+<!ENTITY warn.mixeddisplaycontent.accesskey "b">
+<!ENTITY block.displaycontent               "Ladda inte andra typer av blandat innehåll på krypterade sidor">
+<!ENTITY block.displaycontent.accesskey     "i">
+
+<!ENTITY certselect.description             "Bestäm hur &brandShortName; väljer vilket certifikat som ska presenteras för webbplatser:">
+<!ENTITY certselect.auto                    "Välj automatiskt">
+<!ENTITY certselect.auto.accesskey          "V">
+<!ENTITY certselect.ask                     "Fråga varje gång">
+<!ENTITY certselect.ask.accesskey           "F">
+

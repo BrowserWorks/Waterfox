@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label         "Đính kèm ảnh này vào thư">
+<!ENTITY attachImageSource.accesskey     "k">
+
+<!ENTITY attachLinkSource.label          "Đính kèm nguồn của liên kết này vào thư">
+<!ENTITY attachLinkSource.accesskey      "k">
+

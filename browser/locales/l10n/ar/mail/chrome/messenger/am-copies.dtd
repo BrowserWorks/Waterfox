@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "النُّسخ و المجلدات">
+<!ENTITY sendingPrefix.label "عند إرسال الرسائل، آليًا: ">
+<!ENTITY fccMailFolder.label "ضع نسخة في:">
+<!ENTITY fccMailFolder.accesskey "ض">
+<!ENTITY fccReplyFollowsParent.label "ضع الرّدود في مجلد الرّسالة التّي يتم الرّد عليها">
+<!ENTITY fccReplyFollowsParent.accesskey "ع">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "أرسِل Cc للعناوين التالية:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "عناوين مفصولة بفاصلة">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "أرسِل Bcc للعناوين التالية:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "عناوين مفصولة بفاصلة">
+<!ENTITY saveMessageDlg.label "أظهِر حوار تأكيد عندما تُحفظ الرسائل">
+<!ENTITY saveMessageDlg.accesskey "ظ">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "مُجلد ”المُرسل“ في:">
+<!ENTITY sentFolderOn.accesskey "م">
+<!ENTITY sentInOtherFolder.label "غير ذلك:">
+<!ENTITY sentInOtherFolder.accesskey "غ">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "أرشيف الرسائل">
+<!ENTITY keepArchives.label "ضع أرشيف الرسائل في:">
+<!ENTITY keepArchives.accesskey "ئ">
+<!ENTITY archiveHierarchyButton.label "خيارات الأرشفة…">
+<!ENTITY archiveHierarchyButton.accesskey "ف">
+<!ENTITY archivesFolderOn.label "مجلد ”الأرشيف“ في:">
+<!ENTITY archivesFolderOn.accesskey "ر">
+<!ENTITY archiveInOtherFolder.label "غير ذلك:">
+<!ENTITY archiveInOtherFolder.accesskey "ذ">
+<!ENTITY specialFolders.label "المسودات والقوالب">
+<!ENTITY keepDrafts2.label "احفظ مسودات الرسائل في:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "مجلد ”المسودات“ في:">
+<!ENTITY draftsFolderOn.accesskey "س">
+<!ENTITY draftInOtherFolder.label "غير ذلك:">
+<!ENTITY draftInOtherFolder.accesskey "ذ">
+<!ENTITY keepTemplates.label "ضع قوالب الرسائل في:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "مجلد ”القوالب“ في:">
+<!ENTITY templatesFolderOn.accesskey "ق">
+<!ENTITY templateInOtherFolder.label "غير ذلك:">
+<!ENTITY templateInOtherFolder.accesskey "ذ">

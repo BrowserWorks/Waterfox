@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Pomocné aplikace">
+
+<!ENTITY typeColumn.label        "Typ obsahu">
+<!ENTITY typeColumn.accesskey    "T">
+
+<!ENTITY actionColumn2.label     "Akce">
+<!ENTITY actionColumn2.accesskey "A">
+
+<!ENTITY search.placeholder      "Hledat typy a akce">
+
+<!ENTITY useAppChooser.label     "Pokud je k dispozici, použijte nativní nástroj pro výběr aplikací">
+<!ENTITY useAppChooser.accesskey "U">

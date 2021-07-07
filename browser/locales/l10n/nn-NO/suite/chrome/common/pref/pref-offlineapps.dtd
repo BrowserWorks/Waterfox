@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Fråkopla nettpplikasjonar">
+<!ENTITY pref.offlineCache.caption          "Fråkopla nettinnhald og brukardata">
+
+<!ENTITY clearOfflineAppCache.label         "Tøm">
+<!ENTITY clearOfflineAppCache.accesskey     "T">
+
+<!ENTITY offlineAlwaysAllow.label           "Tillat alle nettstadar å lagre data for fråkopla bruk">
+<!ENTITY offlineAlwaysAllow.accesskey       "T">
+<!ENTITY offlineExplicit.label              "Berre tillat nettstadar med klare løyve">
+<!ENTITY offlineExplicit.accesskey          "B">
+<!ENTITY offlineNotifyAsk.label             "Varsle meg når nettstadar ønskjer å lagre data for fråkopla bruk.">
+<!ENTITY offlineNotifyAsk.accesskey         "V">
+<!ENTITY offlineNotifyPermissions.label     "Handsam løyve">
+<!ENTITY offlineNotifyPermissions.accesskey "H">
+
+<!ENTITY offlineAppsUsage.label             "Følgjande nettstadar har løyve til å lagre data for fråkobla bruk:">
+<!ENTITY offlineAppsListRemove.label        "Tøm data…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

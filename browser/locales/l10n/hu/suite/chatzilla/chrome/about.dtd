@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "A ChatZilla névjegye">
+
+<!ENTITY chatzilla.label       "ChatZilla">
+<!ENTITY version.unknown.label "Ismeretlen verzió">
+<!ENTITY version.known.label   "&#37;S verzió">
+<!ENTITY description.label     "Letisztult, könnyen használható és egyszerűen bővíthető IRC-kliens.">
+
+<!ENTITY homepage.label    "Honlap meglátogatása">
+<!ENTITY copyversion.label "Verzió részleteinek másolása">
+
+<!ENTITY section.core.label    "Fejlesztőcsapat:">
+<!ENTITY section.locale.label  "Honosítás:">
+<!ENTITY section.contrib.label "Közreműködők:">

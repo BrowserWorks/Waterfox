@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "End-To-End Encryption">
+<!ENTITY e2eLearnMore.label "Learn more">
+
+<!ENTITY e2eEnc.description "Without end-to-end encryption the contents of messages are easily exposed to your email provider and to mass surveillance.">
+<!ENTITY e2eeReqWarning.description "If you require encryption, to send a message you must have the public key or certificate of every recipient.">
+
+<!ENTITY e2eSigning.description "A digital signature allows recipients to verify the message was sent by you, and that the content has not been changed.">
+<!ENTITY e2eTechPref.description "Preferred encryption technology:">
+
+<!ENTITY doNotEncrypt.label "Do not enable encryption by default">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Require encryption by default">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "Personal certificate for encryption:">
+<!ENTITY digitalSign.certificate.button "Select…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Clear">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "Select…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "Clear">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "Digital Signing">
+<!ENTITY signMessage2.label "Add my digital signature by default">
+<!ENTITY signMessage.accesskey "D">
+
+<!ENTITY signingCert2.message "Personal certificate for digital signing:">
+
+<!ENTITY sendingDefaults.label "Default settings for sending messages">
+
+<!ENTITY technologyAutomatic.label "Select automatically based on available keys or certificates">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Manage S/MIME Certificates">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME Security Devices">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "Prefer S/MIME">
+<!ENTITY technologyOpenPGP.label "Prefer OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Select Certificate">
+<!ENTITY certPicker.info  "Certificate:">
+<!ENTITY certPicker.detailsLabel "Details of selected certificate:">
+
+<!ENTITY openpgpKey.message "Personal key for encryption and digital signing:">
+<!ENTITY openpgpKey.button "Set Personal Key…">
+<!ENTITY openpgpKey.accesskey "o">

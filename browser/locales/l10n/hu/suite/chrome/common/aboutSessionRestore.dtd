@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Munkamenet helyreállítása">
+<!ENTITY restorepage.pagetitle      "Szeretné helyreállítani a munkamenetét?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Az előző &brandShortName; munkamenet váratlanul megszakadt. Elnézést kérünk a kellemetlenségért. Helyreállíthatja az előző munkamenet lapjait és ablakait, vagy új munkamenetet indíthat, ha nincs szüksége a korábbi ablakokra és lapokra.">
+<!ENTITY restorepage.remedies       "Ha a &brandShortName; ismételten bezáródik:">
+<!ENTITY restorepage.dueToChrome    "Próbálja meg letiltani a közelmúltban hozzáadott kiegészítőket a Kiegészítőkezelőben.">
+<!ENTITY restorepage.dueToContent   "Próbálja meg helyreállítani a munkamenetet a valószínűsíthetően problémát okozó weboldalak nélkül:">
+
+<!ENTITY restorepage.restoreButton  "Előző munkamenet helyreállítása">
+<!ENTITY restorepage.restore.access "E">
+<!ENTITY restorepage.cancelButton   "Új munkamenet indítása">
+<!ENTITY restorepage.cancel.access  "j">
+
+<!ENTITY restorepage.restoreHeader  "Helyreállítás">
+<!ENTITY restorepage.listHeader     "Ablakok és lapok">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "&#037;S. ablak">

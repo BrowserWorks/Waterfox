@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Fiókok – &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Azonnali üzenetküldés állapota">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Új fiók">
+<!ENTITY accountManager.newAccount.accesskey "f">
+<!ENTITY accountManager.close.label          "Bezárás">
+<!ENTITY accountManager.close.accesskey      "B">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Még nincs beállítva fiók">
+<!ENTITY accountManager.noAccount.description "Kattintson az &accountManager.newAccount.label; gombra, és a &brandShortName; végigvezeti a fiók beállításán.">
+<!ENTITY account.autoSignOn.label     "Bejelentkezés indításkor">
+<!ENTITY account.autoSignOn.accesskey "d">
+<!ENTITY account.connect.label        "Kapcsolódás">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Leválás">
+<!ENTITY account.disconnect.accesskey "L">
+<!ENTITY account.delete.label         "Törlés">
+<!ENTITY account.delete.accesskey     "T">
+<!ENTITY account.edit.label           "Tulajdonságok">
+<!ENTITY account.edit.accesskey       "T">
+<!ENTITY account.moveup.label         "Felfelé">
+<!ENTITY account.movedown.label       "Lefelé">
+<!ENTITY account.cancelReconnection.label         "Újracsatlakozás megszakítása">
+<!ENTITY account.cancelReconnection.accesskey     "r">
+<!ENTITY account.copyDebugLog.label     "Hibakeresési napló másolása">
+<!ENTITY account.copyDebugLog.accesskey "H">
+<!ENTITY account.showDebugLog.label     "Hibakereső napló megjelenítése">
+<!ENTITY account.showDebugLog.accesskey "H">
+<!ENTITY account.connecting           "Csatlakozás…">
+<!ENTITY account.disconnecting        "Szétkapcsolás…">
+<!ENTITY account.disconnected         "Nincs kapcsolódva">

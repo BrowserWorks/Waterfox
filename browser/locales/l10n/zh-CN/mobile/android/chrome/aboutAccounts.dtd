@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox 账户">
+<!ENTITY aboutAccounts.connected.description "您已登录为">
+<!ENTITY aboutAccounts.syncPreferences.label "点按这里查看有关同步服务的设置">
+
+<!ENTITY aboutAccounts.noConnection.title "没有互联网连接">
+<!ENTITY aboutAccounts.retry.label "重试">
+
+<!ENTITY aboutAccounts.restrictedError.title "受限">
+<!ENTITY aboutAccounts.restrictedError.description "您无法从此配置管理 Firefox 账号。">

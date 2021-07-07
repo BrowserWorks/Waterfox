@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label "Název:">
+<!ENTITY editBookmarkOverlay.name.accesskey "N">
+<!ENTITY editBookmarkOverlay.location.label "Adresa:">
+<!ENTITY editBookmarkOverlay.location.accesskey "A">
+<!ENTITY editBookmarkOverlay.feedLocation.label "Adresa kanálu:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey "d">
+<!ENTITY editBookmarkOverlay.siteLocation.label "Adresa stránky:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey "s">
+<!ENTITY editBookmarkOverlay.folder.label "Složka:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip "Zobrazí všechny složky záložek">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip "Skryje zobrazenou sekci">
+<!ENTITY editBookmarkOverlay.tags.label "Štítky">
+<!ENTITY editBookmarkOverlay.tags.accesskey "t">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label "Štítky oddělujte čárkou">
+<!ENTITY editBookmarkOverlay.description.label "Popis:">
+<!ENTITY editBookmarkOverlay.description.accesskey "P">
+<!ENTITY editBookmarkOverlay.keyword.label "Klíčové slovo:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip "Zobrazí všechny štítky">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label "Nahrát tuto záložku v postranní liště">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey "h">
+<!ENTITY editBookmarkOverlay.choose.label "Vybrat…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label "Nová složka">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey "v">

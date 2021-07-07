@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.masterpass.title "Hasło główne">
+
+<!ENTITY changepassword.caption "Zmiana hasła głównego">
+<!ENTITY changepassword.text "Wszystkie zachowane poufne dane, takie jak nazwy użytkowników, hasła i certyfikaty, są chronione przez hasło główne.">
+<!ENTITY changepassword.button "Zmień hasło…">
+<!ENTITY changepassword.accesskey "Z">
+
+<!ENTITY resetpassword.caption "Resetowanie hasła głównego">
+<!ENTITY resetpassword.text "Po zresetowaniu hasła głównego wszystkie hasła internetowe oraz hasła serwerów pocztowych, certyfikaty osobiste oraz klucze prywatne zostaną usunięte.">
+<!ENTITY resetpassword.button "Zresetuj hasło">
+<!ENTITY resetpassword.accesskey "R">

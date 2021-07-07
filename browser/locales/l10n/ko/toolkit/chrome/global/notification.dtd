@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeNotification.tooltip "메시지 닫기">
+
+<!ENTITY checkForUpdates "업데이트 확인…">
+
+<!ENTITY learnMoreNoEllipsis "더 알아보기">
+
+<!ENTITY defaultButton.label "네!">
+<!ENTITY defaultButton.accesskey "O">
+
+<!ENTITY moreActionsButton.accessibleLabel "작업 더보기">

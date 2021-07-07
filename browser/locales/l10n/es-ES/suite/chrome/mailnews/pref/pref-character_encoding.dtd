@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title "Codificación de texto">
+<!ENTITY messageDisplay.caption "Visualización">
+<!ENTITY viewFallbackCharset2.label "Codif. de texto predet.:">
+<!ENTITY viewFallbackCharset2.accesskey "C">
+<!ENTITY viewFallbackCharset.desc "(usado para contenido antiguo que no declara su codificación)">
+<!ENTITY composingMessages.caption "Redacción de mensajes">
+<!ENTITY useMIME.label "Usar codificación MIME 'quoted printable' en los mensajes que contienen caracteres de 8 bits. Déjelo sin marcar para enviar el mensaje tal cual.">
+<!ENTITY useMIME.accesskey "a">
+<!ENTITY sendDefaultCharset2.label "Codificación de texto predeterminada:">
+<!ENTITY sendDefaultCharset2.accesskey "d">
+<!ENTITY replyInDefaultCharset3.label "Cuando sea posible, usar esta codificación de texto predeterminada en las respuestas (si se desmarca, solo usarán este valor predeterminado los mensajes nuevos).">
+<!ENTITY replyInDefaultCharset3.accesskey "b">

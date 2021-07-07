@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "เกี่ยวกับ &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "ก">
+
+<!ENTITY preferencesCmdMac.label        "ค่ากำหนด…">
+
+<!ENTITY servicesMenuMac.label          "บริการ">
+
+<!ENTITY hideThisAppCmdMac2.label       "ซ่อน &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "ซ่อนอื่น ๆ">
+
+<!ENTITY showAllAppsCmdMac.label        "แสดงทั้งหมด">
+
+<!ENTITY touchBarCmdMac.label           "ปรับแต่งแถบสัมผัส…">

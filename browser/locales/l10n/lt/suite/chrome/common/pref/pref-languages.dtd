@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+
+<!ENTITY languages.customize.prefLangDescript           "Yra tinklalapių, parašytų keliomis kalbomis, su galimybe automatiškai parinkti kalbą. Įtraukite kalbas į žemiau esantį sąrašą ir išdėstykite jas pageidaujama parinkimo eile.">
+<!ENTITY languages.customize.title                      "Kalbos">
+<!ENTITY langtitle.label                                "Tinklalapių kalbos">
+<!ENTITY languages.customize.prefAddLangDescript        "Pažymėkite kalbas, kurias norėtumėte įtraukti į aktyvių sąrašą.">
+<!ENTITY languages.customize.addButton.label            "Įtraukti…">
+<!ENTITY languages.customize.addButton.accesskey        "r">
+<!ENTITY languages.customize.deleteButton.label         "Pašalinti">
+<!ENTITY languages.customize.deleteButton.accesskey     "P">
+<!ENTITY languages.customize.add.title.label            "Kalbos įtraukimas į sąrašą">
+<!ENTITY languages.customize.available.label            "Kalbos:">
+<!ENTITY languages.customize.active.label               "Kalbos (prioriteto tvarka):">
+<!ENTITY languages.customize.active.accesskey           "b">
+<!ENTITY languages.customize.others.label               "Kita:">
+<!ENTITY languages.customize.others.accesskey           "K">
+
+
+
+<!ENTITY languages.customize.Fallback2.desc             "Ši simbolių koduotė bus naudojama atvaizduojant tinklalapius, nenurodančius koduotės.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "pvz., en-bz, ar-jo">
+
+
+
+

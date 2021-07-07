@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Om &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "O">
+
+<!ENTITY preferencesCmdMac.label        "Inställningar…">
+
+<!ENTITY servicesMenuMac.label          "Tjänster">
+
+<!ENTITY hideThisAppCmdMac2.label       "Göm &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Göm övriga">
+
+<!ENTITY showAllAppsCmdMac.label        "Visa alla">
+
+<!ENTITY touchBarCmdMac.label           "Anpassa menyrad för Touch…">

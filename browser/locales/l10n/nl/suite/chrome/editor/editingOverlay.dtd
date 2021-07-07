@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Bestand openen…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Weblocatie openen…">
+<!ENTITY openRemoteCmd.accesskey "l">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Recente pagina’s">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "Opslaan">
+<!ENTITY saveCmd.accesskey "p">
+<!ENTITY saveAsCmd.label "Opslaan als…">
+<!ENTITY saveAsCmd.accesskey "s">
+<!ENTITY saveAsChangeEncodingCmd2.label "Opslaan en tekstcodering wijzigen">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "t">
+<!ENTITY publishCmd.label "Publiceren">
+<!ENTITY publishCmd.accesskey "u">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publiceren als…">
+<!ENTITY publishAsCmd.accesskey "c">
+<!ENTITY fileRevert.label "Ongedaan maken">
+<!ENTITY fileRevert.accesskey "m">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Publicatiewebsite-instellingen…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Formulier">
+<!ENTITY insertFormMenu.accesskey "F">
+<!ENTITY insertFormCmd.label "Formulier definiëren…">
+<!ENTITY insertFormCmd.accesskey "D">
+<!ENTITY insertInputTagCmd.label "Formulierveld…">
+<!ENTITY insertInputTagCmd.accesskey "v">
+<!ENTITY insertInputImageCmd.label "Formulierafbeelding…">
+<!ENTITY insertInputImageCmd.accesskey "a">
+<!ENTITY insertTextAreaCmd.label "Tekstgebied…">
+<!ENTITY insertTextAreaCmd.accesskey "T">
+<!ENTITY insertSelectCmd.label "Selectielijst…">
+<!ENTITY insertSelectCmd.accesskey "S">
+<!ENTITY insertButtonCmd.label "Knop definiëren…">
+<!ENTITY insertButtonCmd.accesskey "K">
+<!ENTITY insertLabelCmd.label "Label definiëren">
+<!ENTITY insertLabelCmd.accesskey "L">
+<!ENTITY insertFieldSetCmd.label "Veldverzameling definiëren…">
+<!ENTITY insertFieldSetCmd.accesskey "z">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nieuw">
+<!ENTITY newToolbarCmd.tooltip "Een nieuwe Composer-pagina creëren">
+<!ENTITY openToolbarCmd.label "Openen">
+<!ENTITY openToolbarCmd.tooltip "Een lokaal bestand openen">
+<!ENTITY saveToolbarCmd.tooltip "Bestand opslaan op een lokale locatie">
+<!ENTITY publishToolbarCmd.tooltip "Bestand uploaden naar een externe locatie">
+<!ENTITY printToolbarCmd.label "Afdrukken">
+<!ENTITY printToolbarCmd.tooltip "Deze pagina afdrukken">
+<!ENTITY formToolbarCmd.label "Formulier">
+<!ENTITY formToolbarCmd.tooltip "Een nieuw formulier invoegen of de eigenschappen van het geselecteerde formulier bewerken">

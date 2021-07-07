@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Chat-Konto einrichten">
+
+<!ENTITY accountProtocolTitle.label   "Chat-Netzwerk">
+<!ENTITY accountProtocolInfo.label    "Bitte wählen Sie das Netzwerk Ihres Chat-Kontos.">
+<!ENTITY accountProtocolField.label   "Netzwerk:">
+<!ENTITY accountProtocolGetMore.label "Weitere Netzwerke…">
+
+<!ENTITY accountUsernameTitle.label   "Benutzername">
+<!ENTITY accountUsernameDuplicate.label "Dieses Konto wurde bereits eingerichtet!">
+
+<!ENTITY accountPasswordTitle.label   "Passwort">
+<!ENTITY accountPasswordInfo.label    "Geben Sie Ihr Password in das folgende Feld ein.">
+<!ENTITY accountPasswordField.label   "Passwort:">
+<!ENTITY accountPasswordManager.label "Das hier eingegebene Passwort wird in der Passwortverwaltung gespeichert. Lassen Sie das Feld frei, wenn Sie bei jeder Verbindung mit dem Konto nach dem Passwort gefragt werden möchten.">
+
+<!ENTITY accountAdvancedTitle.label   "Erweiterte Einstellungen">
+<!ENTITY accountAdvancedInfo.label    "Dieser Schritt ist freiwillig und kann übersprungen werden.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Bei neuer E-Mail benachrichtigen">
+<!ENTITY accountAliasGroupbox.caption "Lokaler Anzeigename">
+<!ENTITY accountAliasField.label      "Anzeigename:">
+<!ENTITY accountAliasInfo.label       "Dieser Name wird in Ihren Gesprächen angezeigt, wenn Sie sprechen, und Ihre Gesprächspartner können ihn nicht sehen.">
+<!ENTITY accountProxySettings.caption "Proxy-Einstellungen">
+<!ENTITY accountProxySettings.change.label     "Ändern…">
+<!ENTITY accountProxySettings.change.accessKey "d">
+
+<!ENTITY accountSummaryTitle.label   "Zusammenfassung">
+<!ENTITY accountSummaryInfo.label    "Im Folgenden finden Sie eine Zusammenfassung der von Ihnen gemachten Angaben. Bitte überprüfen Sie diese vor dem Erstellen des Kontos.">
+<!ENTITY accountSummary.connectNow.label "Dieses Konto jetzt verbinden.">

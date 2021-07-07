@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Przeglądanie przy użyciu kart">
+
+<!ENTITY tabDisplay.label "Wyświetlanie kart">
+<!ENTITY autoHide.label "Ukrywaj pasek kart, jeżeli otwarta jest tylko jedna karta">
+<!ENTITY autoHide.accesskey2 "U">
+<!ENTITY background.label "Przechodź do nowych kart otwartych za pomocą odnośników">
+<!ENTITY background.accesskey "P">
+<!ENTITY warnOnClose.label "Ostrzegaj przed zamknięciem okna z wieloma kartami">
+<!ENTITY warnOnClose.accesskey "s">
+<!ENTITY relatedAfterCurrent.label "Otwórz powiązane karty obok obecnej karty">
+<!ENTITY relatedAfterCurrent.accesskey "t">
+
+<!ENTITY loadGroup.label "Podczas otwierania grupy zakładek">
+<!ENTITY loadGroupAppend.label "Otwieraj wszystkie jako nowe karty">
+<!ENTITY loadGroupAppend.accesskey "O">
+<!ENTITY loadGroupReplace.label "Otwieraj w bieżących kartach">
+<!ENTITY loadGroupReplace.accesskey "k">
+
+<!ENTITY openTabs.label "Otwieraj strony w nowej karcie zamiast w nowym oknie, jeżeli:">
+
+<!ENTITY openManagers.label "Otwieraj w nowej karcie zamiast w nowym oknie">
+<!ENTITY openDataManager.label "Menedżer danych">
+<!ENTITY openDataManager.accesskey "a">
+<!ENTITY openAddOnsManager.label "Dodatki">
+<!ENTITY openAddOnsManager.accesskey "D">

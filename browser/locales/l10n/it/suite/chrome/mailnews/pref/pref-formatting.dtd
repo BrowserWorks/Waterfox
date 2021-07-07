@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title "Formato di invio">
+<!ENTITY sendMaildesc.label "Se si spediscono messaggi come testo formattato (HTML) e uno o più destinatari sono indicati come non in grado di ricevere HTML:">
+<!ENTITY askMe.label "Chiedi cosa fare (Posta chiederà di scegliere un formato)">
+<!ENTITY askMe.accesskey "C">
+<!ENTITY convertPlain2.label "Converti il messaggio in testo semplice (la formattazione potrebbe andare persa)">
+<!ENTITY convertPlain2.accesskey "o">
+<!ENTITY sendHTML2.label "Spedisci il messaggio solamente come testo formattato (HTML) (potrebbe creare problemi di visualizzazione)">
+<!ENTITY sendHTML2.accesskey "f">
+<!ENTITY sendBoth2.label "Spedisci il messaggio sia come testo semplice che come HTML (maggiori dimensioni)">
+<!ENTITY sendBoth2.accesskey "S">
+<!ENTITY domain.title "Domini HTML e testo semplice">
+<!ENTITY domaindesc.label "Quando si invia un messaggio ad uno dei domini nell'elenco sottostante, Posta invierà automaticamente il messaggio nel formato preferito (testo formattato o semplice).">
+<!ENTITY HTMLdomaintitle.label "Domini HTML">
+<!ENTITY HTMLdomaintitle.accesskey "H">
+<!ENTITY PlainTexttitle.label "Domini testo semplice">
+<!ENTITY PlainTexttitle.accesskey "t">
+<!ENTITY AddButton.label "Aggiungi…">
+<!ENTITY AddHtmlDomain.accesskey "a">
+<!ENTITY AddPlainText.accesskey "u">
+<!ENTITY DeleteButton.label "Elimina">
+<!ENTITY DeleteHtmlDomain.accesskey "E">
+<!ENTITY DeletePlainText.accesskey "m">
+<!ENTITY add.htmltitle "Aggiunta nome dominio HTML">
+<!ENTITY add.htmldomain "Nome dominio HTML:">
+<!ENTITY add.plaintexttitle "Aggiunta nome dominio testo semplice">
+<!ENTITY add.plaintextdomain "Nome dominio testo semplice:">
+<!ENTITY domainnameError.title "Errore nel nome di dominio">
+<!ENTITY invalidEntryError.label "Il nome di dominio @string@ non è valido e verrà ignorato. I nomi di dominio validi devono contenere almeno un '.' e caratteri da entrambe i suoi lati.">
+<!ENTITY autoDowngrade.label "Invia automaticamente il messaggio come testo semplice se non è presente alcuna formattazione significativa (prevale su altre opzioni)">
+<!ENTITY autoDowngrade.accesskey "n">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "Felsökning">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "Visning">
+<!ENTITY debugXULBox.label                "Felsök XUL-rutor">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "Inaktivera XUL-cache">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "Händelser">
+<!ENTITY debugPaintFlashing.label "Färgblinkning (Caps-Lock växlar)">
+<!ENTITY debugPaintFlashing.accesskey "F">
+<!ENTITY debugPaintFlashingChrome.label "Färgblinkning Chrome">
+<!ENTITY debugPaintFlashingChrome.accesskey "C">
+<!ENTITY debugPaintDumping.label "Färgdumpning">
+<!ENTITY debugPaintDumping.accesskey "d">
+<!ENTITY debugInvalidateDumping.label "Upphäv dumpning">
+<!ENTITY debugInvalidateDumping.accesskey "U">
+<!ENTITY debugEventDumping.label "Händelsedumpning">
+<!ENTITY debugEventDumping.accesskey "H">
+<!ENTITY debugMotionEventDumping.label "Rörelsehändelsedumpning">
+<!ENTITY debugMotionEventDumping.accesskey "R">
+<!ENTITY debugCrossingEventDumping.label "Händelseöverskridande dumpning">
+<!ENTITY debugCrossingEventDumping.accesskey "ö">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "Flödesomformningshändelse">
+<!ENTITY debugReflowShowFrameCounts.label        "Visa bildräknare">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "b">
+<!ENTITY debugReflowDumpFrameCounts.label        "Dumpa bildräknare">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "r">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "Dumpa bild för bildräknare">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "f">

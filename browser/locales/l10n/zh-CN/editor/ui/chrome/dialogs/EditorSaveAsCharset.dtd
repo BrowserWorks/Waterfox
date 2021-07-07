@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are generic to all or most of the editor's dialogs. -->
+<!-- This button is for the progressive disclosure of additional editing functionality -->
+<!-- These strings are for use specifically in the editor's link dialog. -->
+
+
+
+<!ENTITY windowTitle2.label "保存并更改文字编码">
+<!ENTITY documentTitleTitle.label "页面标题">
+<!ENTITY documentCharsetTitle2.label "文字编码">
+<!ENTITY documentCharsetDesc2.label "选择您保存文档所要用的文字编码：">
+<!ENTITY documentExportToText.label "导出至文本">
+

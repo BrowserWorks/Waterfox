@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "Stránku se nepodařilo načíst">
+<!ENTITY gopherAddon.title      "Protokol Gopher">
+<!ENTITY gopherAddon.shortDesc  "gopher není registrovaným protokolem.">
+<!ENTITY gopherAddon.longDesc   "Adresu (URL) určuje protokol gopher, který už není podporován, takže se váš prohlížeč nemůže k serveru připojit. Pro přístup na tento server však můžete získat kompatibilní doplněk ze serveru Doplňky Mozilly.">
+<!ENTITY goToAddOn.label        "Přejít na stránku doplňku">

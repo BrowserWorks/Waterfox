@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label		"差出人情報を設定してください:">
+
+<!ENTITY settingsTab.label		"設定">
+<!ENTITY copiesFoldersTab.label		"送信控えと特別なフォルダー">
+<!ENTITY addressingTab.label		"編集とアドレス入力">
+
+<!ENTITY publicData.label		"公開データ">
+<!ENTITY privateData.label		"個人データ">
+<!ENTITY identityAlias.label		"差出人ラベル:">
+<!ENTITY identityAlias.accesskey	"b">

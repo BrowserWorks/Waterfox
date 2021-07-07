@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "الخصائص">
+<!ENTITY propertiesMenu.accesskey           "خ">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "خصائص دفتر العناوين">
+<!ENTITY abPropertiesMenu.accesskey         "ص">
+<!ENTITY contactPropertiesMenu.label        "خصائص جهة الاتصال">
+<!ENTITY contactPropertiesMenu.accesskey    "ص">
+<!ENTITY mailingListPropertiesMenu.label    "خصائص القائمة البريدية">
+<!ENTITY mailingListPropertiesMenu.accesskey "ق">
+
+<!ENTITY abContextMenuButton.tooltip        "اعرض قائمة دفتر العناوين السياقية">
+<!ENTITY addressbookPicker.label            "دفتر العناوين:">
+<!ENTITY addressbookPicker.accesskey        "ن">
+<!ENTITY searchContacts.label               "خصائص البحث:">
+<!ENTITY searchContacts.accesskey           "ث">
+<!ENTITY SearchNameOrEmail.label            "الاسم أو البريد الإلكتروني">
+
+<!ENTITY addtoToFieldMenu.label             "أضِف إلى الحقل">
+<!ENTITY addtoToFieldMenu.accesskey         "ح">
+<!ENTITY addtoCcFieldMenu.label             "أضِف إلى حقل نسخة كربونية">
+<!ENTITY addtoCcFieldMenu.accesskey         "ك">
+<!ENTITY addtoBccFieldMenu.label            "أضِف إلى حقل نسخة كربونية مخفية">
+<!ENTITY addtoBccFieldMenu.accesskey        "خ">
+<!ENTITY deleteAddrBookCard.label           "احذف">
+<!ENTITY deleteAddrBookCard.accesskey       "ذ">
+<!ENTITY propertiesContext.label            "الخصائص">
+<!ENTITY propertiesContext.accesskey        "خ">
+<!ENTITY abPropertiesContext.label          "الخصائص">
+<!ENTITY abPropertiesContext.accesskey      "خ">
+<!ENTITY editContactContext.label           "حرر جهة الاتصال">
+<!ENTITY editContactContext.accesskey       "ح">
+<!ENTITY editMailingListContext.label       "حرر القائمة">
+<!ENTITY editMailingListContext.accesskey   "ح">
+
+<!ENTITY newContactAbContext.label          "جهة اتصال جديدة">
+<!ENTITY newContactAbContext.accesskey      "ص">
+<!ENTITY newListAbContext.label             "قائمة جديدة">
+<!ENTITY newListAbContext.accesskey         "ق">
+
+<!ENTITY toButton.label                     "أضِف إلى:">
+<!ENTITY toButton.accesskey                 "ض">
+<!ENTITY ccButton.label                     "أضِف إلى نسخة كربونية:">
+<!ENTITY ccButton.accesskey                 "ف">
+<!ENTITY bccButton.label                    "أضِف إلى نسخة كربونية مخفية:">
+<!ENTITY bccButton.accesskey                "ب">

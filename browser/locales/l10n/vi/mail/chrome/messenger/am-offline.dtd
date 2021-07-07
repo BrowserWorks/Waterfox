@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Để tiết kiệm dung lượng đĩa, không tải:">
+<!ENTITY doNotDownloadNntp.label "Để tiết kiệm dung lượng đĩa, không tải xuống để dùng ngoại tuyến:">
+<!ENTITY doNotDownloadImap.label "Để tiết kiệm dung lượng đĩa, việc tải thư từ máy chủ và giữ bản sao ngoại tuyến có thể được giới hạn theo thời gian hoặc dung lượng.">
+<!ENTITY allFoldersOffline2.label "Giữ tin nhắn trong tất cả các thư mục cho tài khoản này trên máy tính này">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Lưu ý: Thay đổi này ảnh hưởng đến tất cả các thư mục trong tài khoản này. Để đặt các thư mục riêng lẻ, hãy sử dụng nút Nâng cao….">
+<!ENTITY offlineNotDownload.label "Thư lớn hơn">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "Không tải thư lớn hơn">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "ngày">
+<!ENTITY message.label "thư mới nhất">
+<!ENTITY nntpNotDownloadRead.label "Thư đã đọc">
+<!ENTITY nntpNotDownloadRead.accesskey "d">
+<!ENTITY nntpDownloadMsg.label "Thư cũ hơn">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Để khôi phục dung lượng đĩa, thư cũ sẽ bị xóa.">
+<!ENTITY retentionCleanupImap.label "Để khôi phục dung lượng đĩa, thư cũ có thể bị xóa vĩnh viễn, cả bản sao trong máy lẫn bản gốc trên máy chủ.">
+<!ENTITY retentionCleanupPop.label "Để khôi phục dung lượng đĩa, thư cũ có thể bị xóa vĩnh viễn, bao gồm cả bản gốc trên máy chủ.">
+<!ENTITY retentionKeepMsg.label "Xóa thư cũ hơn">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Không xóa bất kì thư nào">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Xóa tất cả trừ gần đây">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "Luôn luôn giữ lại thư gắn sao">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "Xóa nội dung khỏi thư lớn hơn">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "Chọn nhóm tin để dùng ngoại tuyến…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "Nâng cao…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "v">
+<!ENTITY syncGroupTitle.label "Đồng bộ hóa thư">
+<!ENTITY diskspaceGroupTitle.label "Dung lượng đĩa">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Đồng bộ hóa tất cả thư trong máy, không quan tâm đến thời gian">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Đồng bộ những thư mới nhất">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Ngày">
+<!ENTITY weekAgeInterval.label           "Tuần">
+<!ENTITY monthAgeInterval.label          "Tháng">
+<!ENTITY yearAgeInterval.label           "Năm">
+<!ENTITY ageAutosyncAfter.label          "">

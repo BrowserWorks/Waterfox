@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "บัญชี Firefox">
+<!ENTITY aboutAccounts.connected.description "คุณได้เชื่อมต่อเป็น">
+<!ENTITY aboutAccounts.syncPreferences.label "แตะที่นี่เพื่อตรวจสอบการตั้งค่า Sync">
+
+<!ENTITY aboutAccounts.noConnection.title "ไม่มีการเชื่อมต่ออินเทอร์เน็ต">
+<!ENTITY aboutAccounts.retry.label "ลองอีกครั้ง">
+
+<!ENTITY aboutAccounts.restrictedError.title "จำกัดแล้ว">
+<!ENTITY aboutAccounts.restrictedError.description "คุณไม่สามารถจัดการบัญชี Firefox จากโปรไฟล์นี้">

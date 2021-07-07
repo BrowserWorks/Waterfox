@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "下载管理器">
+
+<!ENTITY menuBar.tooltip                 "菜单栏">
+<!ENTITY searchBar.tooltip               "搜索栏">
+
+<!ENTITY search.placeholder              "搜索下载项">
+<!ENTITY search.label                    "搜索下载项">
+<!ENTITY search.accesskey                "S">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "清空列表">
+<!ENTITY cmd.clearList.tooltip           "移除列表中已完成、已取消以及已失败的下载项">
+<!ENTITY cmd.clearList.accesskey         "C">
+
+<!ENTITY col.name.label                  "名称">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "文件名">
+<!ENTITY col.status.label                "状态">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "状态">
+<!ENTITY col.actionPlay.label            "暂停/继续/重试">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "暂停/继续/重试">
+<!ENTITY col.actionStop.label            "取消/移动">
+<!ENTITY col.actionStop.accesskey        "C">
+<!ENTITY col.actionStop.tooltip          "取消/移动">
+<!ENTITY col.progress.label              "进度">
+<!ENTITY col.progress.accesskey          "P">
+<!ENTITY col.progress.tooltip            "进度">
+<!ENTITY col.timeremaining.label         "剩余时间">
+<!ENTITY col.timeremaining.accesskey     "L">
+<!ENTITY col.timeremaining.tooltip       "剩余时间">
+<!ENTITY col.transferred.label           "已传输">
+<!ENTITY col.transferred.accesskey       "T">
+<!ENTITY col.transferred.tooltip         "已传输">
+<!ENTITY col.transferrate.label          "速度">
+<!ENTITY col.transferrate.accesskey      "d">
+<!ENTITY col.transferrate.tooltip        "速度">
+<!ENTITY col.timeelapsed.label           "已用时间">
+<!ENTITY col.timeelapsed.accesskey       "E">
+<!ENTITY col.timeelapsed.tooltip         "已用时间">
+<!ENTITY col.starttime.label             "起始时间">
+<!ENTITY col.starttime.accesskey         "a">
+<!ENTITY col.starttime.tooltip           "起始时间">
+<!ENTITY col.endtime.label               "结束时间">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "结束时间">
+<!ENTITY col.progresstext.label          "&#037;">
+<!ENTITY col.progresstext.accesskey      "&#037;">
+<!ENTITY col.progresstext.tooltip        "进程 (&#037;)">
+<!ENTITY col.source.label                "源代码">
+<!ENTITY col.source.accesskey            "o">
+<!ENTITY col.source.tooltip              "源代码">
+
+<!ENTITY view.columns.label              "显示列">
+<!ENTITY view.columns.accesskey          "C">
+<!ENTITY view.sortBy.label               "排序">
+<!ENTITY view.sortBy.accesskey           "S">
+
+<!ENTITY view.unsorted.label             "不排序">
+<!ENTITY view.unsorted.accesskey         "U">
+<!ENTITY view.sortAscending.label        "A > Z 排序">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Z > A 排序">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "暂停">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "恢复">
+<!ENTITY cmd.resume.accesskey            "R">
+<!ENTITY cmd.retry.label                 "重试">
+<!ENTITY cmd.retry.accesskey             "t">
+<!ENTITY cmd.cancel.label                "取消">
+<!ENTITY cmd.cancel.accesskey            "C">
+<!ENTITY cmd.remove.label                "从列表中移除">
+<!ENTITY cmd.remove.accesskey            "e">
+<!ENTITY cmd.open.label                  "打开">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "打开所在文件夹">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "转至下载页面">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "复制下载链接">
+<!ENTITY cmd.copyDownloadLink.accesskey  "L">
+<!ENTITY cmd.properties.label            "属性…">
+<!ENTITY cmd.properties.accesskey        "s">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "允许下载">
+<!ENTITY cmd.unblock2.accesskey           "l">
+

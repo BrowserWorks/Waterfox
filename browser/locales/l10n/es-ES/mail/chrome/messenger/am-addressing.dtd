@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label "Redacción y direcciones">
+<!ENTITY addressingGroupTitle.label "Direcciones">
+<!ENTITY addressingText.label "Cuando se busquen direcciones:">
+<!ENTITY useGlobal.label "Utilizar mis preferencias de servidor LDAP globales para esta cuenta">
+<!ENTITY useGlobal.accesskey "U">
+<!ENTITY editDirectories.label "Editar directorios…">
+<!ENTITY editDirectories.accesskey "E">
+<!ENTITY directories.label "Utilizar un servidor LDAP diferente:">
+<!ENTITY directories.accesskey "d">
+<!ENTITY directoriesNone.label "Ninguno">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "Redacción">
+<!ENTITY useHtml.label "Redactar mensajes en formato HTML">
+<!ENTITY useHtml.accesskey "R">
+<!ENTITY autoQuote.label "Citar automáticamente el mensaje original al responder">
+<!ENTITY autoQuote.accesskey "C">
+<!ENTITY quoting.label "Al citar,">
+<!ENTITY quoting.accesskey "l">
+<!ENTITY aboveQuote.label "comenzar mi respuesta sobre el texto citado">
+<!ENTITY belowQuote.label "comenzar mi respuesta bajo el texto citado">
+<!ENTITY selectAndQuote.label "seleccionar el texto citado">
+<!ENTITY place.label "y poner mi firma">
+<!ENTITY place.accesskey "f">
+<!ENTITY belowText.label "bajo el texto citado (recomendado)">
+<!ENTITY aboveText.label "Bajo mi respuesta (sobre el texto citado)">
+<!ENTITY includeSigOnReply.label "Incluir firma en las respuestas">
+<!ENTITY includeSigOnReply.accesskey "I">
+<!ENTITY includeSigOnForward.label "Incluir firma en los re-envíos">
+<!ENTITY includeSigOnForward.accesskey "I">
+
+<!ENTITY globalComposingPrefs.label "Preferencias generales de redacción…">
+<!ENTITY globalComposingPrefs.accesskey "P">
+
+<!ENTITY globalAddressingPrefs.label "Preferencias generales de direcciones…">
+<!ENTITY globalAddressingPrefs.accesskey "a">

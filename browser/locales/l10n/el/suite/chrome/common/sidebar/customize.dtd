@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Προσαρμογή &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Καρτέλες στο &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "Κ">
+
+<!ENTITY sidebar.customize.title                "Προσαρμογή πλευρικής στήλης">
+<!ENTITY sidebar.customize.current2.label       "Καρτέλες στην πλευρική στήλη:">
+<!ENTITY sidebar.customize.current2.accesskey   "Κ">
+<!ENTITY sidebar.customize.customize.label      "Προσαρμογή καρτέλας…">
+<!ENTITY sidebar.customize.customize.accesskey  "Π">
+<!ENTITY sidebar.customize.remove.label         "Αφαίρεση">
+<!ENTITY sidebar.customize.remove.accesskey     "Α">
+<!ENTITY sidebar.customize.additional.label     "Διαθέσιμες καρτέλες:">
+<!ENTITY sidebar.customize.additional.accesskey "θ">
+<!ENTITY sidebar.customize.add.label            "Προσθήκη">
+<!ENTITY sidebar.customize.add.accesskey        "Π">
+<!ENTITY sidebar.customize.preview.label        "Προεπισκόπηση…">
+<!ENTITY sidebar.customize.preview.accesskey    "Π">
+<!ENTITY sidebar.customize.up.label             "Μετακίνηση πάνω">
+<!ENTITY sidebar.customize.up.accesskey         "π">
+<!ENTITY sidebar.customize.down.label           "Μετακίνηση κάτω">
+<!ENTITY sidebar.customize.down.accesskey       "κ">
+<!ENTITY sidebar.more.label                     "Εύρεση περισσότερων καρτελών…">
+<!ENTITY sidebar.more.accesskey                 "Ε">

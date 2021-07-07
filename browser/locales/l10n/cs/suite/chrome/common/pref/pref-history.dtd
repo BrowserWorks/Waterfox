@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.history.title "Historie">
+
+<!ENTITY pref.history.caption "Historie prohlížení">
+<!ENTITY historyPages.label "Historie je seznam navštívených stránek.">
+<!ENTITY enableHistory.label "Pamatovat si navštívené stránky">
+<!ENTITY enableHistory.accesskey "P">
+<!ENTITY clearHistory.label "Vymazat historii">
+<!ENTITY clearHistory.accesskey "h">
+
+<!ENTITY locationBarHistory.caption "Historie adresního řádku">
+<!ENTITY  urlBarHistoryEnabled.caption      "Povolit historii adresního řádku">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "o">
+<!ENTITY clearLocationBar.label "Smazat seznam uložených webů v adresním řádku.">
+<!ENTITY clearLocationBarButton.label "Smazat historii adres">
+<!ENTITY clearLocationBarButton.accesskey "a">
+<!ENTITY formfillHistory.caption "Historie formulářů a hledání">
+<!ENTITY enableFormfill.label "Povolit historii formulářů a hledání">
+<!ENTITY enableFormfill.accesskey "v">
+<!ENTITY formfillExpire.label "Pamatovat si historii formulářů a hledání až">
+<!ENTITY formfillExpire.accesskey "m">
+<!ENTITY formfillDays.label "dnů">
+

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "已存 Cookies">
+<!ENTITY     tab.bannedservers.label        "Cookie 網站設定">
+<!ENTITY     div.bannedservers.label        "選擇可以或不可以使用 Cookie 的網站。">
+<!ENTITY     div.cookiesonsystem.label      "檢視並移除儲存於您電腦上的 Cookie。">
+<!ENTITY     treehead.cookiename.label      "Cookie 名稱">
+<!ENTITY     treehead.cookiedomain.label    "網站">
+<!ENTITY     treehead.cookieexpires.label   "有效期限">
+<!ENTITY     treehead.infoselected.label    "關於已選取的 Cookie 的資訊:">
+<!ENTITY     button.removecookie.label      "刪除 Cookie">
+<!ENTITY     button.removecookie.accesskey  "R">
+<!ENTITY     button.removeallcookies.label  "刪除全部 Cookie">
+<!ENTITY     button.removeallcookies.accesskey "e">
+
+<!ENTITY     search.placeholder             "搜尋 Cookie">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "名稱:">
+<!ENTITY     props.value.label              "內容:">
+<!ENTITY     props.domain.label             "主機:">
+<!ENTITY     props.path.label               "路徑:">
+<!ENTITY     props.secure.label             "送出:">
+<!ENTITY     props.expires.label            "有效期限:">
+
+<!ENTITY     treehead.sitename.label        "網站">
+<!ENTITY     treehead.scheme.label          "Scheme">
+<!ENTITY     treehead.status.label          "狀態">
+<!ENTITY     windowtitle.label              "Cookie 管理員">
+
+<!ENTITY     blockSite.label                "封鎖">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "允許">
+<!ENTITY     allowSite.accesskey            "A">
+<!ENTITY     allowSiteSession.label         "此次連線">
+<!ENTITY     allowSiteSession.accesskey     "S">
+<!ENTITY     removepermission.label         "移除網站">
+<!ENTITY     removepermission.accesskey     "R">
+<!ENTITY     removeallpermissions.label     "移除所有網站">
+<!ENTITY     removeallpermissions.accesskey "e">
+
+<!ENTITY     futureCookies.label            "不允許已被移除 Cookie 的網站在未來設定 Cookie。">
+<!ENTITY     futureCookies.accesskey        "D">
+

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Selezione destinatari">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "A->"> 
+<!ENTITY toButton.accesskey                  "A"> 
+<!ENTITY ccButton.label                      "Cc->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "Ccn->">  
+<!ENTITY bccButton.accesskey                 "n">  
+<!ENTITY newButton.label                     "Nuova scheda…"> 
+<!ENTITY newButton.accesskey                 "h"> 
+<!ENTITY editButton.label                    "Modifica…"> 
+<!ENTITY editButton.accesskey                "M">
+<!ENTITY removeButton.label                  "Rimuovi"> 
+<!ENTITY removeButton.accesskey              "R"> 
+<!ENTITY lookIn.label                        "In:"> 
+<!ENTITY lookIn.accesskey                    "I"> 
+<!ENTITY for.label                           "indirizzi contenenti:"> 
+<!ENTITY for.accesskey                       "d"> 
+<!ENTITY for.placeholder                     "Nome o email">
+<!ENTITY addressMessageTo.label              "Spedisci messaggio a:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Crea una nuova scheda di indirizzi"> 
+<!ENTITY addressPickerEditButton.tooltip     "Modifica la scheda selezionata"> 
+

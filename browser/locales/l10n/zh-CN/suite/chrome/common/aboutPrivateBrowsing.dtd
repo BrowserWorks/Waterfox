@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "您正处于隐私浏览窗口中">
+<!ENTITY privatebrowsingpage.title.normal        "您想要进入隐私浏览模式吗？">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; 不会对此窗口保存任何历史记录。">
+<!ENTITY privatebrowsingpage.status.normal       "您当前未处于隐私浏览窗口。">
+
+<!ENTITY privatebrowsingpage.common.description  "在隐私浏览窗口中，&brandShortName; 不会保留任何浏览器历史、搜索历史、下载历史、网络表单历史、Cookie 以及临时互联网文件。不过，您创建的书签和下载的文件会被保留。">
+<!ENTITY privatebrowsingpage.track.warn          "尽管本机将不会记录您的浏览历史，但您的电信运营商或者雇主还是有可能追溯您访问过的页面。">
+<!ENTITY privatebrowsingpage.learnmore.label     "详细了解">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.info          "完成后，关闭本窗口即可停止隐私浏览。">
+<!ENTITY privatebrowsingpage.close.label         "立即关闭此窗口">
+<!ENTITY privatebrowsingpage.close.accesskey     "C">
+
+<!ENTITY privatebrowsingpage.start.info          "要开始隐私浏览，请点击下方的按钮，或者从菜单选择文件 ▶ 新建 ▶ 隐私浏览窗口。">
+<!ENTITY privatebrowsingpage.private.label       "打开一个新的隐私浏览窗口">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

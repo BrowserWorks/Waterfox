@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "軟體安裝">
+<!ENTITY addOnsTitle.label                    "附加元件">
+<!ENTITY addOnsAllow.label                    "允許網站安裝附加元件與更新">
+<!ENTITY addOnsAllow.accesskey                "b">
+<!ENTITY allowedSitesLink.label               "允許的網站">
+<!ENTITY autoAddOnsUpdates.label              "自動檢查更新">
+<!ENTITY autoAddOnsUpdates.accesskey          "o">
+<!ENTITY daily.label                          "每日">
+<!ENTITY addOnsDaily.accesskey                "d">
+<!ENTITY weekly.label                         "每週">
+<!ENTITY addOnsWeekly.accesskey               "k">
+<!ENTITY addOnsModeAutomatic.label            "自動下載並安裝更新">
+<!ENTITY addOnsModeAutomatic.accesskey        "m">
+<!ENTITY enablePersonalized.label             "個人化推薦的附加元件">
+<!ENTITY enablePersonalized.accesskey         "P">
+<!ENTITY addonManagerLink.label               "管理附加元件">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "自動檢查更新">
+<!ENTITY autoAppUpdates.accesskey             "t">
+<!ENTITY appDaily.accesskey                   "a">
+<!ENTITY appWeekly.accesskey                  "e">
+<!ENTITY appModeAutomatic.label               "自動下載並安裝更新檔案">
+<!ENTITY appModeAutomatic.accesskey           "u">
+<!ENTITY updateHistoryButton.label            "顯示更新紀錄…">
+<!ENTITY updateHistoryButton.accesskey        "S">

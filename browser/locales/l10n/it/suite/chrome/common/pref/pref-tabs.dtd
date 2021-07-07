@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Schede di navigazione">
+
+<!ENTITY tabDisplay.label "Visualizzazione schede">
+<!ENTITY autoHide.label "Nascondi la barra delle schede quando è aperta una sola scheda">
+<!ENTITY autoHide.accesskey2 "N">
+<!ENTITY background.label "Passa alle nuove schede aperte dai collegamenti">
+<!ENTITY background.accesskey "P">
+<!ENTITY warnOnClose.label "Avvisa alla chiusura di una finestra con più schede">
+<!ENTITY warnOnClose.accesskey "s">
+<!ENTITY relatedAfterCurrent.label "Apri le schede simili dopo quella corrente">
+<!ENTITY relatedAfterCurrent.accesskey "d">
+
+<!ENTITY loadGroup.label "All'apertura di un gruppo di segnalibri">
+<!ENTITY loadGroupAppend.label "Aggiungi le schede">
+<!ENTITY loadGroupAppend.accesskey "A">
+<!ENTITY loadGroupReplace.label "Sostituisci le schede aperte">
+<!ENTITY loadGroupReplace.accesskey "o">
+
+<!ENTITY openTabs.label "Apri una scheda al posto di una finestra con">
+
+<!ENTITY middleClick.label "Clic col tasto centrale, Ctrl+clic o Ctrl+Invio sui collegamenti nella pagina web">
+<!ENTITY middleClick.accesskey "w">
+<!ENTITY middleClickMac.label "Clic col tasto centrale, ⌘+clic o ⌘+Invio sui collegamenti nella pagina web">
+<!ENTITY middleClickMac.accesskey "w">
+<!ENTITY urlbar.label "Ctrl+Invio nella Barra degli indirizzi">
+<!ENTITY urlbar.accesskey "B">
+<!ENTITY urlbarMac.label "⌘+Invio nella Barra degli indirizzi">
+<!ENTITY urlbarMac.accesskey "B">
+
+<!ENTITY openManagers.label "Apri in una nuova scheda invece che in una finestra autonoma">
+<!ENTITY openDataManager.label "Gestione dati">
+<!ENTITY openDataManager.accesskey "G">
+<!ENTITY openAddOnsManager.label "Gestione componenti aggiuntivi">
+<!ENTITY openAddOnsManager.accesskey "c">

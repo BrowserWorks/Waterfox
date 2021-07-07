@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "주소록">
+<!ENTITY blankResultsPaneMessage.label                  "이 주소록은 검색된 연락처만 보여줍니다">
+<!ENTITY localResultsOnlyMessage.label                  "원격 주소록의 연락처는 검색하기 전에는 볼 수 없습니다">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "파일">
+<!ENTITY fileMenu.accesskey                             "f">
+<!ENTITY newMenu.label                                  "새로 만들기">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "연락처…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "목록…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "주소록…">
+<!ENTITY newAddressBookCmd.accesskey                    "B">
+<!ENTITY newCardDAVBookCmd.label                        "CardDAV 주소록…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP 디렉터리…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "메시지">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "m">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Mac OS X 주소록 사용">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "닫기">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "c">
+<!ENTITY printSetupCmd.label                            "인쇄 화면 설정…">
+<!ENTITY printSetupCmd.accesskey                        "u">
+<!ENTITY printPreviewContactCmd.label                   "연락처 인쇄 미리 보기">
+<!ENTITY printPreviewContactCmd.accesskey               "v">
+<!ENTITY printPreviewAddressBook.label                  "주소록 인쇄 미리 보기">
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+<!ENTITY printContactCmd.label                          "연락처 인쇄…">
+<!ENTITY printContactCmd.accesskey                      "P">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "주소록 인쇄…">
+<!ENTITY printAddressBook.accesskey                     "A">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "편집">
+<!ENTITY editMenu.accesskey                             "e">
+<!ENTITY deleteCmd.label                                "삭제">
+<!ENTITY deleteAbCmd.label                              "주소록 삭제">
+<!ENTITY deleteContactCmd.label                         "연락처 삭제">
+<!ENTITY deleteContactsCmd.label                        "선택한 연락처 삭제">
+<!ENTITY deleteListCmd.label                            "목록 삭제">
+<!ENTITY deleteListsCmd.label                           "목록 삭제">
+<!ENTITY deleteItemsCmd.label                           "아이템 삭제">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "속성">
+<!ENTITY propertiesMenu.accesskey                       "i">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "주소록 속성">
+<!ENTITY abPropertiesMenu.accesskey                     "i">
+<!ENTITY contactPropertiesMenu.label                    "연락처 속성">
+<!ENTITY contactPropertiesMenu.accesskey                "i">
+<!ENTITY mailingListPropertiesMenu.label                "메일링 리스트 속성">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "보기">
+<!ENTITY viewMenu.accesskey                             "v">
+<!ENTITY viewToolbarsMenu.label                         "도구 모음">
+<!ENTITY viewToolbarsMenu.accesskey                     "T">
+<!ENTITY menubarCmd.label                               "메뉴 모음">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "주소록 도구 모음">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "상태 표시줄">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "사용자 정의…">
+<!ENTITY customizeToolbar.accesskey                     "C">
+<!ENTITY layoutMenu.label                               "레이아웃">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "분류 창">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "연락처 창">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "이름 표시">
+<!ENTITY menu_ShowNameAs.accesskey                      "n">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "이름 성 형식">
+<!ENTITY firstLastCmd2.accesskey                        "f">
+<!ENTITY lastFirstCmd.label                             "성, 이름 형식">
+<!ENTITY lastFirstCmd.accesskey                         "l">
+<!ENTITY displayNameCmd.label                           "표시명">
+<!ENTITY displayNameCmd.accesskey                       "d">
+<!ENTITY sortMenu.label                                 "정렬">
+<!ENTITY sortMenu.accesskey                             "S">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "도구">
+<!ENTITY tasksMenu.accesskey                            "T">
+<!ENTITY messengerCmd.label                             "메일 및 뉴스 그룹">
+<!ENTITY messengerCmd.accesskey                         "m">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "주소록 검색…">
+<!ENTITY searchAddressesCmd.accesskey                   "S">
+<!ENTITY importCmd.label                                "가져오기…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "내보내기…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "설정">
+<!ENTITY preferencesCmd2.accesskey                      "O">
+<!ENTITY preferencesCmdUnix.label                       "설정">
+<!ENTITY preferencesCmdUnix.accesskey                   "n">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "새 연락처">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "새 목록">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY showAsDefault.label                            "기본 시작 디렉토리">
+<!ENTITY showAsDefault.accesskey                        "S">
+<!ENTITY editPropertiesButton.label                     "편집">
+<!ENTITY propertiesContext.label                        "속성">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "속성">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY syncContext.label                              "동기화">
+<!ENTITY syncContext.accesskey                          "y">
+<!ENTITY editContactContext.label                       "연락처 편집">
+<!ENTITY editContactContext.accesskey                   "E">
+<!ENTITY editMailingListContext.label                   "목록 편집">
+<!ENTITY editMailingListContext.accesskey               "E">
+<!ENTITY newmsgButton.label                             "쓰기">
+<!ENTITY newmsgButton.accesskey                         "W">
+<!ENTITY newIM.label                                    "메신저 메시지">
+<!ENTITY newIM.accesskey                                "I">
+<!ENTITY printButton.label                              "인쇄…">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY deleteButton2.label                            "삭제">
+<!ENTITY deleteButton2.accesskey                        "D">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "표시할 항목 선택">
+<!ENTITY newContactButton.tooltip                       "새 연락처 만들기">
+<!ENTITY newlistButton.tooltip                          "새 목록 만들기">
+<!ENTITY editPropertiesButton.tooltip                   "선택한 항목 편집">
+<!ENTITY editAbPropertiesButton.tooltip                 "선택한 주소록의 속성 편집">
+<!ENTITY editContactPropertiesButton.tooltip            "선택한 연락처 편집">
+<!ENTITY editMailingListPropertiesButton.tooltip        "선택한 메일링 리스트 편집">
+<!ENTITY newmsgButton.tooltip                           "새 메시지 만들기">
+<!ENTITY newIM.tooltip                                  "인스턴트 메시지 또는 채팅 보내기">
+<!ENTITY deleteButton2.tooltip                          "선택한 항목 삭제">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "이름 및 메일 포함:">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "주소록 검색">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "빠른 검색">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "주소록">
+<!ENTITY Addrbook.accesskey                             "B">
+<!ENTITY GeneratedName.label                            "이름">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "기본 메일">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "이름">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "조직">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "애칭">
+<!ENTITY NickName.accesskey                             "i">
+<!ENTITY SecondEmail.label                              "추가 메일">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "부서">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "직위">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "휴대폰">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "호출기">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "팩스">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "자택 전화">
+<!ENTITY HomePhone.accesskey                            "H">
+<!ENTITY WorkPhone.label                                "직장 전화">
+<!ENTITY WorkPhone.accesskey                            "W">
+<!ENTITY sortAscending.label                            "오름차순">
+<!ENTITY sortAscending.accesskey                        "A">
+<!ENTITY sortDescending.label                           "내림차순">
+<!ENTITY sortDescending.accesskey                       "D">
+<!ENTITY _PhoneticName.label                            "전화명">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "연락처">
+<!ENTITY home.heading                                   "자택">
+<!ENTITY other.heading                                  "기타">
+<!ENTITY chat.heading                                   "채팅">
+<!ENTITY phone.heading                                  "전화">
+<!ENTITY work.heading                                   "직장">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "설명">
+<!ENTITY addresses.heading                              "주소">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "지도 가져오기">
+<!ENTITY mapIt.tooltip                                  "웹에서 주소에 대한 지도 표시">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "창">
+<!ENTITY minimizeWindow.label                           "창 최소화">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "모두 앞으로 보내기">
+<!ENTITY zoomWindow.label                               "창 확대">

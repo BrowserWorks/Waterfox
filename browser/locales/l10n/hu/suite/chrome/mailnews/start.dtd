@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Üdvözli a &brandShortName; Levelező és hírolvasó">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Üdvözli a <a id="vendorURL" href="">&brandShortName;</a> Levelező és hírolvasó!'>
+<!ENTITY description.label
+"A &brandShortName; Levelező és hírolvasó egy nagy tudású nyílt forráskódú levelező és hírolvasó
+ügyfél, amely fejlett levélszemét-észlelést, és más hasznos funkciókat támogat.">
+<!ENTITY features.title "Funkciók">
+<!ENTITY feat_multiacc.label "Több postafiók támogatása">
+<!ENTITY feat_junk.label "Levélszemét-azonosítás">
+<!ENTITY feat_feeds.label "Hírolvasó">
+<!ENTITY feat_filters.label "Üzenetszűrők">
+<!ENTITY feat_htmlmsg.label "HTML-üzenetek támogatása">
+<!ENTITY feat_abook.label "Címjegyzék">
+<!ENTITY feat_tags.label "Testreszabható címkék és üzenetnézetek">
+<!ENTITY feat_integration.label
+"Szoros integráció a &brandShortName; alkalmazáscsomaggal">
+<!ENTITY dict.title "Szótárak">
+<!ENTITY dict_intro.label "A szótárak az üzenetek helyesírás-ellőrzésére használatosak.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Sok további nyelv telepíthető a <a href="https://addons.mozilla.org/seamonkey/">Mozilla kiegészítők</a>
+oldal <a id="dictURL" href="">szótárak</a> részéről.'>
+<!ENTITY dict_info.label2
+'Számos további nyelv telepíthető a
+<a id="dictURL" href="">szótárok</a> szakaszban a
+<a href="https://addons.thunderbird.net/seamonkey/">SeaMonkey és Thunderbird kiegészítők</a> oldalon.'>
+<!ENTITY info.title "További tudnivalók">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Örölünk</a> a hibajelentéseknek és a funkció kéréseknek, de kérjük olvassa el a <a id="releaseNotesURL" href="">kiadási megjegyzéseket</a>, valamint először keressen a <a href="https://bugzilla.mozilla.org/query.cgi">Bugzillában</a>.'>

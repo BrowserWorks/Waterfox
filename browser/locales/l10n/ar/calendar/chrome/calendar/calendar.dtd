@@ -1,0 +1,407 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "التقويم">
+<!ENTITY calendar.calendar.accesskey "ق">
+
+<!ENTITY calendar.newevent.button.tooltip         "أنشئ حدثا جديدا" >
+<!ENTITY calendar.newtask.button.tooltip          "أنشئ مهمة جديدة" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "أظهر المهام المكتملة">
+
+<!ENTITY calendar.today.button.label          "اليوم">
+<!ENTITY calendar.tomorrow.button.label       "الغد">
+<!ENTITY calendar.upcoming.button.label       "الآتية">
+
+<!ENTITY calendar.events.filter.all.label "كل الأحداث">
+<!ENTITY calendar.events.filter.today.label "أحداث اليوم">
+<!ENTITY calendar.events.filter.future.label "كل الأحداث الآتية">
+<!ENTITY calendar.events.filter.current.label "اليوم المحدد حاليا">
+<!ENTITY calendar.events.filter.currentview.label "الأحداث في المنظور الحالي">
+<!ENTITY calendar.events.filter.next7Days.label "الأحداث في السبع أيّام القادمة">
+<!ENTITY calendar.events.filter.next14Days.label "الأحداث في الأربعة عشر يوما القادمة">
+<!ENTITY calendar.events.filter.next31Days.label "الأحداث في الإحدى والثلاثين يوما القادمة">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "أحداث هذا الشهر">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "تم">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "رتّب بالإتمام">
+<!ENTITY calendar.unifinder.tree.priority.label            "الأولوية">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "رتّب بالأولوية">
+<!ENTITY calendar.unifinder.tree.title.label               "العنوان">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "رتّب بالعنوان">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "نسبة الاكتمال">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "رتّب بنسبة الاكتمال">
+<!ENTITY calendar.unifinder.tree.startdate.label           "البدء">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "رتّب بتاريخ البدء">
+<!ENTITY calendar.unifinder.tree.enddate.label             "الانتهاء">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "رتّب بتاريخ الانتهاء">
+<!ENTITY calendar.unifinder.tree.duedate.label             "الاستحقاق">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "رتّب بتاريخ الاستحقاق">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "الاكتمال">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "رتّب بتاريخ الاكتمال">
+<!ENTITY calendar.unifinder.tree.categories.label          "الفئة">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "رتّب بالفئة">
+<!ENTITY calendar.unifinder.tree.location.label            "المكان">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "رتّب بالمكان">
+<!ENTITY calendar.unifinder.tree.status.label              "الحالة">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "رتّب بالحالة">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "اسم التقويم">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "رتّب باسم التقويم">
+<!ENTITY calendar.unifinder.tree.duration.label            "وقت الاستحقاق">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "رتّب بالوقت حتى الاستحقاق">
+<!ENTITY calendar.unifinder.close.tooltip                  "أغلق قائمة الأحداث وكذلك مربع البحث">
+
+<!ENTITY calendar.today.button.tooltip          "اذهب الى اليوم" >
+<!ENTITY calendar.todaypane.button.tooltip      "أظهر لوحة اليوم" >
+
+<!ENTITY calendar.day.button.tooltip            "انتقل إلى منظور اليوم" >
+<!ENTITY calendar.week.button.tooltip           "انتقل إلى منظور الأسبوع" >
+<!ENTITY calendar.month.button.tooltip          "انتقل إلى منظور الشهر" >
+<!ENTITY calendar.multiweek.button.tooltip      "انتقل إلى منظور الأسابيع المتعددة" >
+
+<!ENTITY calendar.nextday.label                 "اليوم التالي" >
+<!ENTITY calendar.prevday.label                 "اليوم السابق" >
+<!ENTITY calendar.nextday.accesskey             "ت" >
+<!ENTITY calendar.prevday.accesskey             "س" >
+<!ENTITY calendar.nextweek.label                "الأسبوع القادم" >
+<!ENTITY calendar.prevweek.label                "الأسبوع الماضي" >
+<!ENTITY calendar.nextweek.accesskey            "ق" >
+<!ENTITY calendar.prevweek.accesskey            "ض" >
+<!ENTITY calendar.nextmonth.label               "الشهر القادم" >
+<!ENTITY calendar.prevmonth.label               "الشهر الماضي" >
+<!ENTITY calendar.nextmonth.accesskey           "د" >
+<!ENTITY calendar.prevmonth.accesskey           "م" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "تقدّم يوما واحدا" >
+<!ENTITY calendar.navigation.prevday.tooltip    "ارجع يوما واحدا" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "تقدّم أسبوعا واحدا" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "ارجع أسبوعا واحدا" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "تقدّم شهرا واحدا" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "ارجع شهرا واحدا" >
+
+<!ENTITY calendar.newevent.button.label         "حدث جديد" >
+<!ENTITY calendar.newtask.button.label          "مهمة جديدة" >
+<!ENTITY calendar.print.button.label            "اطبع" >
+<!ENTITY calendar.print.button.accesskey        "ط">
+
+<!ENTITY calendar.day.button.label              "اليوم" >
+<!ENTITY calendar.week.button.label             "الأسبوع" >
+<!ENTITY calendar.month.button.label            "الشهر" >
+<!ENTITY calendar.multiweek.button.label        "الأسابيع المتعددة" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "أيام العطل فقط" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "ع" >
+<!ENTITY calendar.displaytodos.checkbox.label   "المهام في المنظور" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "ه" >
+<!ENTITY calendar.completedtasks.checkbox.label     "أظهر المهام المكتملة" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "ك" >
+
+<!ENTITY calendar.orientation.label "دوّر المنظور" >
+<!ENTITY calendar.orientation.accesskey "د" >
+
+<!ENTITY calendar.search.options.searchfor " التي تحوي">
+
+<!ENTITY calendar.list.header.label                 "التقويم">
+
+<!ENTITY calendar.task.filter.title.label           "أظهِر">
+<!ENTITY calendar.task.filter.all.label             "الكل">
+<!ENTITY calendar.task.filter.all.accesskey         "ك">
+<!ENTITY calendar.task.filter.today.label           "اليوم">
+<!ENTITY calendar.task.filter.today.accesskey       "ي">
+<!ENTITY calendar.task.filter.next7days.label       "السبع أيّام القادمة">
+<!ENTITY calendar.task.filter.next7days.accesskey   "س">
+<!ENTITY calendar.task.filter.notstarted.label      "المهام التي لم تبدأ">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "ت">
+<!ENTITY calendar.task.filter.overdue.label         "المهام الفائت موعدها">
+<!ENTITY calendar.task.filter.overdue.accesskey     "ف">
+<!ENTITY calendar.task.filter.completed.label       "المهام المكتملة">
+<!ENTITY calendar.task.filter.completed.accesskey   "ك">
+<!ENTITY calendar.task.filter.open.label            "المهام غير المكتملة">
+<!ENTITY calendar.task.filter.open.accesskey        "غ">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "المهام الحالية">
+<!ENTITY calendar.task.filter.current.accesskey     "ح">
+
+<!ENTITY calendar.task-details.title.label           "العنوان">
+<!ENTITY calendar.task-details.organizer.label       "من">
+<!ENTITY calendar.task-details.priority.label        "الأولوية">
+<!ENTITY calendar.task-details.priority.low.label    "منخفضة">
+<!ENTITY calendar.task-details.priority.normal.label "عادية">
+<!ENTITY calendar.task-details.priority.high.label   "مرتفعة">
+<!ENTITY calendar.task-details.status.label          "الحالة">
+<!ENTITY calendar.task-details.category.label        "الفئة">
+<!ENTITY calendar.task-details.repeat.label          "التكرارية">
+<!ENTITY calendar.task-details.attachments.label     "المرفقات">
+<!ENTITY calendar.task-details.start.label           "تاريخ البدء">
+<!ENTITY calendar.task-details.due.label             "تاريخ الاستحقاق">
+
+<!ENTITY calendar.task.category.button.tooltip  "صنّف المهام">
+<!ENTITY calendar.task.complete.button.tooltip  "علّم المهام المحددة كمكتملة">
+<!ENTITY calendar.task.priority.button.tooltip  "غير الأولوية">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "رشّح المهام #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "افتح">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "ف">
+<!ENTITY calendar.context.modifyorviewtask.label      "افتح مهمة…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "ف">
+<!ENTITY calendar.context.newevent.label              "حدث جديد…">
+<!ENTITY calendar.context.newevent.accesskey          "ج">
+<!ENTITY calendar.context.newtodo.label               "مهمة جديدة…">
+<!ENTITY calendar.context.newtodo.accesskey           "ه">
+<!ENTITY calendar.context.deletetask.label            "احذف المهمة">
+<!ENTITY calendar.context.deletetask.accesskey        "ح">
+<!ENTITY calendar.context.deleteevent.label           "احذف الحدث">
+<!ENTITY calendar.context.deleteevent.accesskey       "ح">
+<!ENTITY calendar.context.cutevent.label              "قصّ">
+<!ENTITY calendar.context.cutevent.accesskey          "ص">
+<!ENTITY calendar.context.copyevent.label             "انسخ">
+<!ENTITY calendar.context.copyevent.accesskey         "س">
+<!ENTITY calendar.context.pasteevent.label            "ألصق">
+<!ENTITY calendar.context.pasteevent.accesskey        "ص">
+<!ENTITY calendar.context.button.label                "لوحة اليوم">
+<!ENTITY calendar.context.button.accesskey            "ي">
+
+<!ENTITY calendar.context.attendance.menu.label                 "الحضور">
+<!ENTITY calendar.context.attendance.menu.accesskey             "ض">
+<!ENTITY calendar.context.attendance.occurrence.label           "هذا التكرار">
+<!ENTITY calendar.context.attendance.all2.label                 "سلسلة مكتملة">
+<!ENTITY calendar.context.attendance.send.label                 "أرسِل تنبيهًا الآن">
+<!ENTITY calendar.context.attendance.send.accesskey             "س">
+<!ENTITY calendar.context.attendance.dontsend.label             "لا تُرسل تنبيهًا">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "ل">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "ق">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "قبلت">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "م">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "قبلت مبدئيًا">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "ض">
+<!ENTITY calendar.context.attendance.occ.declined.label         "رفضت">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "ض">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "فوّضت أحدًا">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "ن">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "ينتظر إجراءً">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "ع">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "يجري العمل عليه">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "ك">
+<!ENTITY calendar.context.attendance.occ.completed.label        "اكتمل">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "ت">
+<!ENTITY calendar.context.attendance.all.accepted.label         "قبلت">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "د">
+<!ENTITY calendar.context.attendance.all.tentative.label        "قبلت مبدئيًا">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "ف">
+<!ENTITY calendar.context.attendance.all.declined.label         "رفضت">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "ح">
+<!ENTITY calendar.context.attendance.all.delegated.label        "فوّضت أحدًا">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "ظ">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "ينتظر إجراءً">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "ه">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "يجري العمل عليه">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "ل">
+<!ENTITY calendar.context.attendance.all.completed.label        "اكتمل">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "التقدم">
+<!ENTITY calendar.context.progress.accesskey          "ق">
+<!ENTITY calendar.context.priority.label              "الأولوية">
+<!ENTITY calendar.context.priority.accesskey          "و">
+<!ENTITY calendar.context.postpone.label              "أجّل المهمة">
+<!ENTITY calendar.context.postpone.accesskey          "ج">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "علّم كمكتملة">
+<!ENTITY calendar.context.markcompleted.accesskey "ك">
+
+<!ENTITY progress.level.0             "مكتمل بنسبة 0&percnt;">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "مكتمل بنسبة 25&percnt;">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "مكتمل بنسبة 50&percnt;">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "مكتمل بنسبة 75&percnt;">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "مكتمل بنسبة 100&percnt;">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "غير محدّدة">
+<!ENTITY priority.level.none.accesskey      "ح">
+<!ENTITY priority.level.low                 "منخفضة">
+<!ENTITY priority.level.low.accesskey       "خ">
+<!ENTITY priority.level.normal              "عادية">
+<!ENTITY priority.level.normal.accesskey    "ع">
+<!ENTITY priority.level.high                "مرتفعة">
+<!ENTITY priority.level.high.accesskey      "ف">
+
+<!ENTITY calendar.context.postpone.1hour.label      "ساعة واحدة">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "س">
+<!ENTITY calendar.context.postpone.1day.label       "يوم واحد">
+<!ENTITY calendar.context.postpone.1day.accesskey   "ي">
+<!ENTITY calendar.context.postpone.1week.label      "أسبوع واحد">
+<!ENTITY calendar.context.postpone.1week.accesskey  "ب">
+
+<!ENTITY calendar.copylink.label       "انسخ مكان الرابط">
+<!ENTITY calendar.copylink.accesskey   "ن">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "احذف">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "تقويم جديد…">
+<!ENTITY calendar.context.newserver.accesskey          "ج">
+<!ENTITY calendar.context.findcalendar.label           "ابحث عن تقويم…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "ب" >
+<!ENTITY calendar.context.deleteserver2.label          "احذف التقويم…">
+<!ENTITY calendar.context.deleteserver2.accesskey      "ح">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "أزل التقويم…">
+<!ENTITY calendar.context.removeserver.accesskey       "ز">
+<!ENTITY calendar.context.unsubscribeserver.label      "ألغ الاشتراك مع التقويم…">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "ش">
+<!ENTITY calendar.context.synccalendars.label          "زامن التقويمات">
+<!ENTITY calendar.context.synccalendars.accesskey      "ز">
+<!ENTITY calendar.context.publish.label                "انشر التقويم…">
+<!ENTITY calendar.context.publish.accesskey            "ش">
+<!ENTITY calendar.context.export.label                 "صدّر التقويم…">
+<!ENTITY calendar.context.export.accesskey             "ص">
+<!ENTITY calendar.context.properties.label             "خصائص">
+<!ENTITY calendar.context.properties.accesskey         "خ">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "ظ">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "خ">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "ط">
+<!ENTITY calendar.context.showall.label                "أظهر كل التقويمات">
+<!ENTITY calendar.context.showall.accesskey            "ك">
+
+<!ENTITY calendar.context.convertmenu.label              "حوّل إلى">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "ح">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "و">
+<!ENTITY calendar.context.convertmenu.event.label        "حدث…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "ح">
+<!ENTITY calendar.context.convertmenu.message.label      "رسالة…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "س">
+<!ENTITY calendar.context.convertmenu.task.label         "مهمَّة…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "ه">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "الشهر المصغّر">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "غ">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "قائمة التقويمات">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "ق">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "رشّح المهام">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "ش">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "المكان:" >
+<!ENTITY calendar.alarm.details.label               "التفاصيل…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "غفوة لمدة" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "غفوة الكل لمدة" >
+<!ENTITY calendar.alarm.title.label                 "تذكيرات التقويمات" >
+<!ENTITY calendar.alarm.dismiss.label               "ارفض" >
+<!ENTITY calendar.alarm.dismissall.label            "ارفض الكل" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 دقائق" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 دقائق" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 دقيقة" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 دقيقة" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 دقيقة" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "ساعة واحدة" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "ساعتين" >
+<!ENTITY calendar.alarm.snooze.1day.label           "يوم واحد" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "ألغ الغفوة">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "تحرير التقويم">
+<!ENTITY calendar.server.dialog.name.label          "اسم التقويم:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "اللون:">
+<!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)‎">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.format.label                   "النسق:">
+<!ENTITY calendarproperties.location.label                 "المكان:">
+<!ENTITY calendarproperties.refreshInterval.label          "أنعش التقويم:">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "يدويا">
+<!ENTITY calendarproperties.name.label                     "الاسم:">
+<!ENTITY calendarproperties.readonly.label                 "للقراءة فقط">
+<!ENTITY calendarproperties.firealarms.label               "اعرض التذكيرات">
+<!ENTITY calendarproperties.cache3.label                   "دعم اللااتصال">
+<!ENTITY calendarproperties.enabled2.label                 "فعّل هذا التقويم">
+<!ENTITY calendarproperties.forceDisabled.label            "تعذر العثور على موفّر هذا التقويم. يحدث هذا غالبا إن عطلت إضافات معينة أو كانت غير مثبتة.">
+<!ENTITY calendarproperties.unsubscribe.label              "ألغ الاشتراك">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "غ">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "نشر التقويم">
+<!ENTITY calendar.publish.url.label                 "عنوان النشر">
+<!ENTITY calendar.publish.publish.button      "انشر">
+<!ENTITY calendar.publish.close.button      "أغلق">
+
+<!ENTITY calendar.publish.example.url.description   "رابط يشبه http://www.myserver.com/webdav/test.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "اختر تقويمًا">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "طباعة تقويم">
+<!ENTITY calendar.print.title.label "العنوان:">
+<!ENTITY calendar.print.layout.label "التخطيط:">
+<!ENTITY calendar.print.range.label "ما يجب طباعته">
+<!ENTITY calendar.print.currentView2.label "المنظور الحالي">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "الأحداث/المهام المحددة">
+<!ENTITY calendar.print.tasks.label "المهام">
+<!ENTITY calendar.print.events.label "الأحداث">
+<!ENTITY calendar.print.custom.label "مدى تاريخ مخصّص:">
+<!ENTITY calendar.print.from.label "من:">
+<!ENTITY calendar.print.to.label "إلى:">
+<!ENTITY calendar.print.settingsGroup.label "إعدادات الطباعة">
+<!ENTITY calendar.print.optionsGroup.label "خيارات">
+<!ENTITY calendar.print.taskswithnoduedate.label "المهام بلا وقت استحقاق">
+<!ENTITY calendar.print.completedtasks.label "المهام المكتملة">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "التفاصيل…">
+<!ENTITY calendar.error.code "رمز الخطأ:">
+<!ENTITY calendar.error.description "الوصف:">
+<!ENTITY calendar.error.title "حدث خطأ">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "أضفها كحدث">
+<!ENTITY calendar.extract.task.button          "أضفها كمهمة">
+<!ENTITY calendar.extract.event.button.tooltip "استخرج معلومات التقويم من الرسالة وأضفها إلى تقويمي كحدث">
+<!ENTITY calendar.extract.task.button.tooltip  "استخرج معلومات التقويم من الرسالة وأضفها إلى تقويمي كمهمة">

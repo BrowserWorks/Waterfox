@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Stavekontrol">
+<!ENTITY misspelledWord.label "Fejlstavet ord:">
+<!ENTITY wordEditField.label "Nyt ord:">
+<!ENTITY wordEditField.accessKey "y">
+<!ENTITY checkwordButton.label "Kontroller ord">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "Forslag:">
+<!ENTITY suggestions.accessKey "F">
+<!ENTITY ignoreButton.label "Ignorer">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignorer alle">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Erstat">
+<!ENTITY replaceButton.accessKey "E">
+<!ENTITY replaceAllButton.label "Erstat alle">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "Stop">
+<!ENTITY stopButton.accessKey "p">
+<!ENTITY userDictionary.label "Personlig ordbog:">
+<!ENTITY moreDictionaries.label "Hent flere">
+<!ENTITY addToUserDictionaryButton.label "Tilføj ord">
+<!ENTITY addToUserDictionaryButton.accessKey "T">
+<!ENTITY editUserDictionaryButton.label "Rediger…">
+<!ENTITY editUserDictionaryButton.accessKey "R">
+<!ENTITY recheckButton2.label "Kontroller teksten igen">
+<!ENTITY recheckButton2.accessKey "o">
+<!ENTITY closeButton.label "Luk">
+<!ENTITY closeButton.accessKey "L">
+<!ENTITY sendButton.label "Send">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "Sprog:">
+<!ENTITY languagePopup.accessKey "g">

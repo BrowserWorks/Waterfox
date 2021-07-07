@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Rechtschreibung">
+<!ENTITY generalSpelling.label                "Generell">
+<!ENTITY checkSpellingWhenTyping.label        "Rechtschreibung während der Eingabe prüfen:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "c">
+<!ENTITY dontCheckSpelling.label              "Nie">
+<!ENTITY multilineCheckSpelling.label         "In mehrzeiligen Feldern">
+<!ENTITY alwaysCheckSpelling.label            "Alle Felder">
+<!ENTITY spellForMailAndNews.label            "Mail &amp; Newsgroups">
+<!ENTITY checkSpellingBeforeSend.label        "Rechtschreibung vor dem Senden prüfen">
+<!ENTITY checkSpellingBeforeSend.accesskey    "e">
+<!ENTITY spellCheckInline.label               "Rechtschreibung während der Eingabe prüfen">
+<!ENTITY spellCheckInline.accesskey           "R">
+<!ENTITY languagePopup.label                  "Sprache:">
+<!ENTITY languagePopup.accessKey              "S">
+<!ENTITY moreDictionaries.label               "Weitere Wörterbücher herunterladen…">
+<!ENTITY noSpellCheckAvailable.label          "Keine Wörterbücher verfügbar.">

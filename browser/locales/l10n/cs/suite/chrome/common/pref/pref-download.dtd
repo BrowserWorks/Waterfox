@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Stahování">
+
+<!ENTITY downloadBehavior.label         "Při začátku stahování">
+<!ENTITY doNothing.label                "Neotevírat nic">
+<!ENTITY doNothing.accesskey            "N">
+<!ENTITY openProgressDialog.label       "Otevřít dialog s průběhem">
+<!ENTITY openProgressDialog.accesskey   "d">
+<!ENTITY openDM.label                   "Otevřít Správce stahování">
+<!ENTITY openDM.accesskey               "S">
+<!ENTITY flashWhenOpen.label            "Zablikat Správcem stahování, pokud už je otevřený.">
+<!ENTITY flashWhenOpen.accesskey        "Z">
+
+<!ENTITY downloadLocation.label         "Při ukládání souboru">
+<!ENTITY saveTo.label                   "Ukládat všechny soubory do složky">
+<!ENTITY saveTo.accesskey               "U">
+<!ENTITY chooseDownloadFolder.label     "Vybrat složku…">
+<!ENTITY chooseDownloadFolder.accesskey "r">
+<!ENTITY alwaysAsk.label                "U každého souboru se zeptat, kam ho uložit">
+<!ENTITY alwaysAsk.accesskey            "k">
+
+<!ENTITY finishedBehavior.label         "Když se dokončí stahování">
+<!ENTITY playSound.label                "Přehrát zvuk">
+<!ENTITY playSound.accesskey            "h">
+<!ENTITY browse.label                   "Procházet…">
+<!ENTITY browse.accesskey               "P">
+<!ENTITY playButton.label               "Přehrát">
+<!ENTITY playButton.accesskey           "e">

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey            "p">
+
+<!ENTITY findOnCmd.commandkey           "F">
+<!ENTITY findAgainCmd.commandkey        "G">
+<!ENTITY findAgainCmd.commandkey2       "VK_F3">
+
+<!ENTITY backButton.label               "Πίσω">
+<!ENTITY backButton.accesskey           "Π">
+<!ENTITY backButton.tooltip             "Μετάβαση μια σελίδα πίσω">
+<!ENTITY forwardButton.label            "Εμπρός">
+<!ENTITY forwardButton.accesskey        "Ε">
+<!ENTITY forwardButton.tooltip          "Μετάβαση μια σελίδα μπροστά">
+<!ENTITY copyCmd.label                  "Αντιγραφή">
+<!ENTITY copyCmd.accesskey              "Α">
+<!ENTITY selectAllCmd.label             "Επιλογή όλων">
+<!ENTITY selectAllCmd.accesskey         "ό">
+<!ENTITY goBackCmd.commandkey           "[">
+<!ENTITY goForwardCmd.commandkey        "]">
+<!ENTITY homeButton.label               "Αρχική">
+<!ENTITY homeButton.tooltip             "Μετάβαση στην αρχική σελίδα βοήθειας">
+<!ENTITY printButton.label              "Εκτύπωση">
+<!ENTITY printButton.tooltip            "Εκτύπωση σελίδας">
+<!ENTITY closeWindow.commandkey         "W">
+
+<!ENTITY search.emptytext               "Αναζήτηση">
+<!ENTITY searchHeader.label             "Αποτελέσματα αναζήτησης">
+<!ENTITY toctab.label                   "Περιεχόμενα">
+<!ENTITY toctab.accesskey               "Π">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY helpSearch.commandkey          "k">
+
+<!ENTITY zLevel.label                   "Πάντα σε πρώτο πλάνο">
+<!ENTITY zLevel.accesskey               "π">
+
+<!ENTITY fullZoomReduceBtn.label        "Σμίκρυνση">
+<!ENTITY fullZoomReduceBtn.accesskey    "Σ">
+<!ENTITY fullZoomEnlargeBtn.label       "Μεγέθυνση">
+<!ENTITY fullZoomEnlargeBtn.accesskey   "Μ">

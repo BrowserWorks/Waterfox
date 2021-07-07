@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composer.title "Composer">
+<!ENTITY recentFiles.title "Menu pagine recenti">
+<!ENTITY documentsInMenu.label "Massimo numero di pagine elencate:">
+<!ENTITY documentsInMenu.accesskey "n">
+<!ENTITY savingFiles.title "Salvando o pubblicando le pagine">
+<!ENTITY preserveExisting.label "Mantieni la formattazione originale del sorgente">
+<!ENTITY preserveExisting.accesskey "f">
+<!ENTITY preserveExisting.tooltip "Mantiene le interruzioni di riga e la formattazione originale della pagina">
+<!ENTITY saveAssociatedFiles.label "Salva assieme alla pagina immagini e altri file associati ">
+<!ENTITY saveAssociatedFiles.accesskey "S">
+<!ENTITY showPublishDialog.label "Visualizza sempre la finestra di dialogo quando si pubblica">
+<!ENTITY showPublishDialog.accesskey "V">
+<!ENTITY composerEditing.label "Modifica">
+<!ENTITY maintainStructure.label "Mantieni la struttura della tabella durante l'inserimento o l'eliminazione di celle">
+<!ENTITY maintainStructure.tooltip "Mantiene la forma rettangolare della tabella aggiungendo automaticamente celle dopo l'inserimento o l'eliminazione di celle">
+<!ENTITY maintainStructure.accesskey "M">
+<!ENTITY useCSS.label "Utilizza stili CSS al posto di elementi ed attributi HTML">
+<!ENTITY useCSS.accesskey "U">
+<!ENTITY crInPCreatesNewP.label "Invio in un paragrafo crea sempre un nuovo paragrafo">
+<!ENTITY crInPCreatesNewP.accesskey "I">

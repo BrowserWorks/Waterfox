@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used by SeaMonkey's custom about:certerror page,
+a replacement for the standard security certificate errors produced
+by NSS/PSM via netError.xhtml. -->
+
+<!ENTITY certerror.pagetitle  "不可信的连接">
+<!ENTITY certerror.longpagetitle "此连接不受信任">
+
+<!-- Localization note (certerror.introPara1) - The string "#1" will
+be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara1 "您想使用 &brandShortName; 安全连接至 <b>#1</b>，但是我们无法确认此连接是否安全。">
+
+<!-- Localization note (certerror.introPara1a) - The text content of the span
+tag will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara1a "您想使用 &brandShortName; 安全连接至 <span class='hostname'/>，但是我们无法确认此连接是否安全。">
+<!ENTITY certerror.introPara2 "通常，当您尝试安全连接时，站点会出示受信任的标识，以证明您访问的是正确的地址。然而，现在无法验证此网站的标识。">
+
+<!ENTITY certerror.whatShouldIDo.heading "怎么办？">
+<!ENTITY certerror.whatShouldIDo.content "如果您过去连接到此网站并且没有发现问题，那么此错误信息表示可能有人想冒充该网站，所以您应该停止浏览。">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "此网站使用了 HTTP 严格传输安全协议（HSTS），要求 &brandShortName;，只能与其建立安全的连接。正因如此，此证书无法添加到例外。">
+<!ENTITY certerror.getMeOutOfHere.label "太可怕了，还是返回我的默认主页吧">
+
+<!ENTITY certerror.expert.heading "我已充分了解可能的风险">
+<!ENTITY certerror.expert.content "如果您了解现在所发生的一切，您可以告诉 &brandShortName; 并让它信任此站点的标识。 
+<b>即使您信任此站点，这个错误还表明可能有人尝试干扰您的连接。</b>">
+<!ENTITY certerror.expert.contentPara2 "不要随便添加例外，除非您知道并认同该网站不使用受信任标识的理由。">
+<!ENTITY certerror.addException.label "添加例外…">
+
+<!ENTITY certerror.technical.heading "技术细节">
+
+<!ENTITY dnsNotFound.pageTitle "找不到服务器">
+<!ENTITY malformedURI.pageTitle "无效 URL">

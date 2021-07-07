@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Oldal forrása: ">
+
+<!ENTITY editMenu.label "Szerkesztés">
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY fileMenu.label "Fájl">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY savePageCmd.label "Oldal mentése…">
+<!ENTITY savePageCmd.accesskey "m">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Oldalbeállítás…">
+<!ENTITY pageSetupCmd.accesskey "b">
+<!ENTITY printPreviewCmd.label "Nyomtatási kép">
+<!ENTITY printPreviewCmd.accesskey "k">
+<!ENTITY printCmd.label "Nyomtatás…">
+<!ENTITY printCmd.accesskey "o">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Bezárás">
+<!ENTITY closeCmd.accesskey "B">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Ugrás sorra…">
+<!ENTITY goToLineCmd.accesskey "U">
+<!ENTITY goToLineCmd.commandkey "I">
+
+<!ENTITY viewMenu.label           "Nézet">
+<!ENTITY viewMenu.accesskey       "N">
+<!ENTITY reloadCmd.label "Újratöltés">
+<!ENTITY reloadCmd.accesskey "r">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Hosszú sorok törése">
+<!ENTITY menu_wrapLongLines.accesskey "H">
+<!ENTITY menu_highlightSyntax.label "Szintaxiskiemelés">
+<!ENTITY menu_highlightSyntax.accesskey "k">
+<!ENTITY menu_textSize.label "Szöveg mérete">
+<!ENTITY menu_textSize.accesskey "m">
+<!ENTITY menu_textEnlarge.label "Növelés">
+<!ENTITY menu_textEnlarge.accesskey "N">
+<!ENTITY menu_textReduce.label "Csökkentés">
+<!ENTITY menu_textReduce.accesskey "k">
+<!ENTITY menu_textReset.label "Normál">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Keresés ezen az oldalon…">
+<!ENTITY findOnCmd.accesskey "K">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Következő keresése">
+<!ENTITY findAgainCmd.accesskey "v">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Vissza">
+<!ENTITY backCmd.accesskey "V">
+<!ENTITY forwardCmd.label "Előre">
+<!ENTITY forwardCmd.accesskey "E">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Hivatkozás címének másolása">
+<!ENTITY copyLinkCmd.accesskey "H">
+<!ENTITY copyEmailCmd.label "E-mail-cím másolása">
+<!ENTITY copyEmailCmd.accesskey "E">

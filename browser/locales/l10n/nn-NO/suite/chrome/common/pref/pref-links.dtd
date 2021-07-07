@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Lenkjeoppførsel">
+<!ENTITY newWindow.label "Oppførsel ved opning av lenkjer">
+<!ENTITY newWindowDescription.label "Opne lenkjer som er meint å opnast i eit nytt vindauge i:">
+<!ENTITY newWindowRestriction.label "Når skript ønskjer å opne eit nytt vindauge:">
+<!ENTITY external.label "Lenkjer frå andre program">
+<!ENTITY externalDescription.label "Opne lenkjer sendt frå andre program i:">
+
+<!ENTITY openCurrent.label "Den aktive fana/vindauget">
+<!ENTITY newWindowGroupCurrent.accesskey "D">
+<!ENTITY externalGroupCurrent.accesskey "e">
+
+<!ENTITY openTab.label "Ei ny fane i det aktive vindauget">
+<!ENTITY newWindowGroupTab.accesskey "n">
+<!ENTITY externalGroupTab.accesskey "f">
+
+<!ENTITY openWindow.label "Eit nytt vindauge">
+<!ENTITY newWindowGroupWindow.accesskey "t">
+<!ENTITY externalGroupWindow.accesskey "v">
+
+<!ENTITY divertAll.label "Alltid gjer om vindauge til faner">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "Ikkje gjer om eigne vindauge til faner">
+<!ENTITY divertNoFeatures.accesskey "I">
+<!ENTITY dontDivert.label "Alltid opne nye vindauge">
+<!ENTITY dontDivert.accesskey "A">

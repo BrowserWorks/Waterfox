@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Сохранённые файлы">
+<!ENTITY aboutDownloads.empty                      "Нет сохранённых файлов">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Открыть папку с файлом">
+<!ENTITY cmd.show.accesskey                        "к">
+<!ENTITY cmd.showMac.label                         "Показать в Finder">
+<!ENTITY cmd.showMac.accesskey                     "к">
+<!ENTITY cmd.open.label                            "Открыть">
+<!ENTITY cmd.open.accesskey                        "ы">
+<!ENTITY cmd.removeFromHistory.label               "Удалить из истории">
+<!ENTITY cmd.removeFromHistory.accesskey           "а">
+<!ENTITY cmd.clearList.label                       "Очистить список">
+<!ENTITY cmd.clearList.accesskey                   "и">
+<!ENTITY cmd.clearList.tooltip                     "Удалить все записи из списка сохранённых файлов, за исключением текущих загрузок.">
+<!ENTITY cmd.searchDownloads.label                 "Поиск…">
+<!ENTITY cmd.searchDownloads.key                   "F">

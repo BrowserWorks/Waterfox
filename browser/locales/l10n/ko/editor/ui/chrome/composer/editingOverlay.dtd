@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "파일 열기…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "주소 열기…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "최근 페이지">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "저장">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "다른 이름으로 저장…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "문자 인코딩 변경 및 저장">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "공개">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "다른 이름으로 공개…">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "변환">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "웹 사이트 설정 공개…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "새로 만들기">
+<!ENTITY newToolbarCmd.tooltip "새 편집 페이지 만들기">
+<!ENTITY openToolbarCmd.label "열기">
+<!ENTITY openToolbarCmd.tooltip "로컬 파일 열기">
+<!ENTITY saveToolbarCmd.tooltip "로컬 경로에 파일 저장">
+<!ENTITY publishToolbarCmd.tooltip "외부 경로로 파일 보내기">
+<!ENTITY printToolbarCmd.label "인쇄">
+<!ENTITY printToolbarCmd.tooltip "이 페이지 인쇄">

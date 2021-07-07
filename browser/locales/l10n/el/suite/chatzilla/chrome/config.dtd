@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Προτιμήσεις ChatZilla">
+
+<!ENTITY loading.label  "Παρακαλώ περιμένετε, γίνεται φόρτωση…">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "Αρχική σελίδα ChatZilla">
+
+<!ENTITY object.add.label       "Προσθήκη…">
+<!ENTITY object.add.hint        "Προσθήκη νέου δικτύου, καναλιού ή χρήση για ενεργοποίηση των προτιμήσεων">
+<!ENTITY object.add.accesskey   "Π">
+
+<!ENTITY object.del.label       "Αφαίρεση">
+<!ENTITY object.del.hint        "Κατάργηση τρέχοντος αντικειμένου και όλων των προτιμήσεών του">
+<!ENTITY object.del.accesskey   "Α">
+
+<!ENTITY object.reset.label     "Επαναφορά">
+<!ENTITY object.reset.hint      "Επαναφορά των προτιμήσεων αυτού του αντικειμένου στις προεπιλογές">
+<!ENTITY object.reset.accesskey "φ">
+
+<!ENTITY dialog.apply   "Εφαρμογή">
+
+<!ENTITY network "Δίκτυο">
+<!ENTITY channel "Κανάλι">
+<!ENTITY user    "Χρήστης">
+
+<!ENTITY config.add.title "Προσθήκη αντικειμένου προτιμήσεων">
+
+<!ENTITY config.type.label        "Τύπος:">
+<!ENTITY config.type.hint         "Τύπος αντικειμένου για το οποίο θα προστεθούν προτιμήσεις">
+<!ENTITY config.type.accesskey    "Τ">
+<!ENTITY config.network.label     "Δίκτυο:">
+<!ENTITY config.network.hint      "Γνωστό όνομα δικτύου ή όνομα διακομιστή">
+<!ENTITY config.network.accesskey "Δ">
+<!ENTITY config.target.label      "Προορισμός:">
+<!ENTITY config.target.hint       "Κανάλι ή όνομα χρήστη προορισμού">
+<!ENTITY config.target.accesskey  "ρ">

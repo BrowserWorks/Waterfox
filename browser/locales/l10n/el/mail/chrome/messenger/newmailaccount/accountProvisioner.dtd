@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Καλώς ήλθατε στο &brandShortName;">
+<!ENTITY header2.label "Θέλετε να αποκτήσετε μια νέα διεύθυνση email;">
+<!ENTITY other.languages "Σας εμφανίζουμε μόνο τους παρόχους που προσφέρουν email στην περιοχή σας.  Πατήστε εδώ για να εμφανίσετε όλους τους παρόχους.">
+<!ENTITY error.line1 "Λυπούμαστε, δεν βρέθηκε καμία προτεινόμενη διεύθυνση email.">
+<!ENTITY error.line2 "Μπορείτε να αναζητήσετε ψευδώνυμα ή άλλους όρους για να βρείτε περισσότερα email.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Ακόμα, μπορείτε να δοκιμάσετε κάποια από τις ">
+<!ENTITY error.suggest.middle "δωρεάν εναλλακτικές λογαριασμών email">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Γεια σας ">
+<!ENTITY success.title.after ", ακολουθούν οι διαθέσιμες επιλογές διεύθυνσης email:">
+<!ENTITY success.tip "(Μπορείτε επίσης να αναζητήσετε ψευδώνυμα ή άλλους όρους για να βρείτε περισσότερα email)">
+<!ENTITY partnership.description "Σε συνεργασία με πολλούς παρόχους, το &brandShortName; σάς προσφέρει έναν νέο λογαριασμό email. Συμπληρώστε απλά το όνομα και το επώνυμό σας, ή οποιεσδήποτε άλλες λέξεις επιθυμείτε, στα παραπάνω πεδία για να ξεκινήσετε.">
+<!ENTITY existing.header "Έχετε ήδη μια διεύθυνση που θέλετε να χρησιμοποιήσετε;">
+<!ENTITY tinyheader.title "Έχετε ήδη μια διεύθυνση;">
+<!ENTITY tinyheader.existing "Παράλειψη και χρήση υπάρχοντος email">
+<!ENTITY content.close "Θα ρυθμίσω το λογαριασμό μου αργότερα">
+<!ENTITY successful.title "Συγχαρητήρια!">
+<!ENTITY successful.successMessage "Έχετε ρυθμίσει επιτυχώς το λογαριασμό σας.">
+<!ENTITY successful.write "Γράψτε κάποια μηνύματα">
+<!ENTITY successful.write.desc "Πείτε στους φίλους και την οικογένεια σας για την νέα σας διεύθυνση.<br/> Για αυτό εξάλλου δεν φτιάξατε αυτή την διεύθυνση;">
+<!ENTITY successful.customize "Προσαρμόστε το &brandShortName; με μερικά ενδιαφέροντα πρόσθετα">
+<!ENTITY successful.customize.desc "Υπάρχουν χιλιάδες πρόσθετα που σας επιτρέπουν να προσαρμόσετε το &brandShortName; στις ανάγκες σας.">
+<!ENTITY successful.attach "Επισύναψη μιας υπογραφής στο μήνυμα">
+<!ENTITY successful.attach.desc "Μπορείτε να επισυνάψετε αυτόματα μια παράθεση ή κάποιες πληροφορίες για τον εαυτό σας στο τέλος κάθε μηνύματος που στέλνετε.">
+<!ENTITY successful.close "Κλείσιμο του παραθύρου.">
+<!ENTITY input.namePlaceholder "Όνομα ή ψευδώνυμο">
+<!ENTITY input.search "Αναζήτηση">
+<!ENTITY search_engine.title "Προσαρμογή της μηχανής αναζήτησης">
+<!ENTITY search_engine.message "Ο πάροχος email μπορεί ακόμα να σας παρέχει κάποιες δυνατότητες αναζήτησης.">
+<!ENTITY search_engine.button "Τέλος">

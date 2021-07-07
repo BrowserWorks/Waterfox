@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Saugumas">
+<!ENTITY securityTab.label "Saugumas">
+<!ENTITY securityHeading.label "Norint išsiųsti ir gauti pasirašytus arba šifruotus laiškus, reikia nurodyti skaitmeninio parašo ir šifravimo liudijimus.">
+<!ENTITY encryptionGroupTitle.label "Šifravimas">
+<!ENTITY encryptionChoiceLabel.label "Išsiunčiamus laiškus:">
+<!ENTITY neverEncrypt.label "nešifruoti">
+<!ENTITY neverEncrypt.accesskey "n">
+<!ENTITY alwaysEncryptMessage.label "užšifruoti (laiškas nebus išsiųstas, jei bent vienas iš jo gavėjų neturi liudijimo)">
+<!ENTITY alwaysEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert.message "Šifravimui naudoti šį asmeninį liudijimą:">
+<!ENTITY digitalSign.certificate.button "Parinkti…">
+<!ENTITY digitalSign.certificate.accesskey "P">
+<!ENTITY digitalSign.certificate_clear.button "Išvalyti">
+<!ENTITY digitalSign.certificate_clear.accesskey "I">
+<!ENTITY encryption.certificate.button "Parinkti…">
+<!ENTITY encryption.certificate.accesskey "r">
+<!ENTITY encryption.certificate_clear.button "Išvalyti">
+<!ENTITY encryption.certificate_clear.accesskey "v">
+<!ENTITY signingGroupTitle.label "Skaitmeninis parašas">
+<!ENTITY signMessage.label "Išsiunčiamus laiškus pasirašyti skaitmeniniškai">
+<!ENTITY signMessage.accesskey "s">
+<!ENTITY signingCert.message "Parašui naudoti šį asmeninį liudijimą:">
+
+<!ENTITY certificates.label "Liudijimai">
+<!ENTITY manageCerts2.label "Tvarkyti liudijimus…">
+<!ENTITY manageCerts2.accesskey "T">
+<!ENTITY manageDevices.label "Tvarkyti saugumo priemones…">
+<!ENTITY manageDevices.accesskey "v">
+<!-- Strings for the cert picker dialog -->
+
+

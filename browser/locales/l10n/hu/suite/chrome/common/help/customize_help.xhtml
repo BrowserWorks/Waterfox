@@ -1,0 +1,1135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>A &brandShortName; testreszabása</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Ez a dokumentum csak a tájékoztatás célját szolgálja.
+  Segíthet abban, hogy személyes adataink biztonságát megvédjük az interneten. Azonban ez a dokumentum nem érinti az összes adatvédelmi és biztonsági kérdést, és nem tekinthető hivatalos ajánlatnak a megfelelő adatvédelmi és biztonsági rendszabályokat illetően.</div>
+
+<h1 id="customizing_mozilla">A &brandShortName; testreszabása</h1>
+
+<p> Mozilla a megfelelő szolgáltatások &ndash; például az Oldalsáv, a könyvjelzők és a böngészőlapok &ndash; használatával a saját igényekhez igazítható.</p>
+  
+<p>Ez a fejezet a &brandShortName; böngészőjének, a Navigátornak a testreszabását ismerteti.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#sidebar">Oldalsáv</a></li>
+    <li><a href="#tabbed_browsing">Böngészőlapok</a></li>
+    <li><a href="#changing_fonts_colors_and_themes">A betűkészletek, a színek és a témák megváltoztatása</a></li>
+    <li><a href="#toolbars">Eszköztárak</a></li>
+    <li><a href="#bookmarks">Könyvjelzők</a></li>
+    <li><a href="#specifying_how_mozilla_starts_up">A &brandShortName; indításának megadása</a></li>
+    <li><a href="cs_nav_prefs_appearance.xhtml#navigator_settings">A böngésző beállításai</a></li>
+    <li><a href="cs_nav_prefs_navigator.xhtml">Böngésző-beállítások</a></li>
+    <li><a href="cs_nav_prefs_advanced.xhtml">Haladó beállítások</a></li>
+  </ul>
+</div>
+
+<h2 id="sidebar">Oldalsáv</h2>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#what_is_sidebar">Az Oldalsáv fogalma</a></li>
+    <li><a href="#opening_closing_and_resizing_sidebar">Az Oldalsáv megnyitása, bezárása és átméretezése</a></li>
+    <li><a href="#viewing_sidebar_tabs">Az Oldalsáv panellapjainak megtekintése</a></li>
+    <li><a href="#adding_sidebar_tabs">Az Oldalsáv panellapjainak felvétele</a></li>
+    <li><a href="#customizing_individual_sidebar_tabs">Az Oldalsáv panellapjainak testreszabása</a></li>
+    <li><a href="#reorganizing_sidebar_tabs">Az Oldalsáv panellapjainak átrendezése</a></li>
+    <li><a href="#removing_sidebar_tabs">Az Oldalsáv panellapjainak eltávolítása</a></li>
+  </ul>
+</div>
+
+<h3 id="what_is_sidebar">Az Oldalsáv fogalma</h3>
+
+<p>Az Oldalsáv a böngésző egyéni igények szerint kialakítható területe, ahol a gyakran használt elemek helyezhetők el &ndash; a számos lehetőség közül például a legfrissebb hírek és időjárás-jelentés, a saját címjegyzék, tőzsdei árfolyamok és egy naptár. Az Oldalsáv ezeket az elemeket folyamatosan frissített panellapokon jeleníti meg.</p>
+
+<p>A &brandShortName;  az Oldalsávon eleve tartalmaz néhány beállított panellapot, de ezek újakkal bővíthetők, eltávolíthatók és átrendezhetők.</p>
+
+<p>[<a href="#sidebar">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="opening_closing_and_resizing_sidebar">Az Oldalsáv használata</h3>
+
+<p>Az Oldalsáv megnyitásához <span class="noMac">nyomjuk meg az <kbd>F9</kbd> gombot vagy</span> nyissuk meg a Nézet menüt az főablakban és válasszuk ki az Oldalsáv lehetőséget az almenüből</p>
+
+<p>Amikor az Oldalsáv már meg van nyitva, az Oldalsáv fogantyújának segtségével az Oldalsáv kinyitható, bezárható és átméretezhető az Oldalsáv kerete. Mozgassuk az egérmutatót a &brandShortName; ablakának bal oldali szegélyén fel és le. Amikor az egérmutató érinti az Oldalsáv &bdquo;fogantyúját&rdquo;, kéz alakúra változik, ahogyan azt a képen is láthatjuk.</p>
+
+<table summary="Image table">
+  <tr>
+    <td colspan="2"></td>
+  </tr>
+  <tr style="vertical-align: top;">
+    <td><img src="images/sidebar.png" alt="Oldalsáv fogantyúja"/></td>
+    <td style="vertical-align: middle;">
+      <p><strong>Oldalsáv<br/>fogantyúja</strong></p>
+    </td>
+  </tr>
+</table>
+
+<ul>
+  <li>Az Oldalsáv megnyitásához és bezárásához kattintsunk a fogantyúra.</li>
+  <li>Az Oldalsáv átméretezéséhez húzzuk az egérrel a fogantyút.</li>
+</ul>
+
+<p>Az Oldalsáv és fogantyújának eltávolításához hajtsuk végre a következő műveletek egyikét:</p>
+
+<ul>
+  <li class="noMac">Nyomjuk meg az <kbd>F9</kbd> billentyűt.</li>
+  <li>Kattintsunk a jobb felső sarkában látható X gombra.</li>
+  <li>Válasszuk a Nézet menü Eszköztárak parancsát, és töröljük az Oldalsáv jelölését.</li>
+</ul>
+
+<p>[<a href="#sidebar">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="viewing_sidebar_tabs">Az Oldalsáv panellapjainak megtekintése</h3>
+
+<p>Panellap megjelenítése:</p>
+
+<ul>
+  <li>Kattintsunk a panlellap címsorára, például kattintsunk a <q>Keresés</q> szóra. A kereső panellap megjelenik, amelynek segítségével kereséseket végezhetünk az interneten.</li>
+</ul>
+
+<p><strong>Tipp</strong>: Az oldalsáv újratöltéséhez jobb gombbal kattintsunk a panellap címsorán és a megjelenő menüből válasszuk ki az Frissítés lehetőséget.</p>
+
+<p>[<a href="#sidebar">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="adding_sidebar_tabs">Az Oldalsáv panellapjainak felvétele</h3>
+
+<p>Az Oldalsáv panellapjainak felvétele:</p>
+
+<ol>
+  <li>Kattintsunk az Oldalsáv tetején a <q>Panellapok</q> elemre, és válasszuk az Oldalsáv testreszabása parancsot.</li>
+  <li>Az Oldalsáv testreszabása párbeszédpanel bal oldali listáján jelöljük ki a kívánt panellapot. Kettintsunk duplán a mappákon a mappák tartalmának megjelenítéséhez és elrejtéséhez.</li>
+  <li>Kattintsunk a Hozzáadás gombra.</li>
+  <li>Hasonló módon vegyük fel a többi kívánt panellapot is.</li>
+  <li>A befejezéshez kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: ha nyolcnál több panellapot veszünk fel az Oldalsávra, a &brandShortName; a zsúfoltság csökkentése érdekében elrejti a többi panellapot. Az elrejtett panellapok az Oldalsáv alján látható lefelé mutató nyílra kattintva nézhetők át. A felfelé görgetés a felfelé mutató nyíllal lehetséges.</p>
+  
+<p><strong>Tippek</strong>:</p>
+
+<ul>
+  <li>Az Oldalsáv panellapja felvétele előtt megtekinthető: ehhez jelöljük ki a kívánt panellapot az Oldalsáv testreszabása párbeszédpanel bal oldali listáján, majd kattintsunk az Előnézet gombra.
+    Néhány másodperc múlva a panellap megjelenik az Oldalsáv-előzetes ablakban.</li>
+  <li>Az Oldalsáv rendelkezésre álló, kategóriákba rendezett listájának megtekintéséhez kattintsunk az Oldalsáv tetején a <q>Panellapok</q> elemre, és válasszuk az Oldalsáv-katalógus parancsot.</li>
+</ul>
+
+<p>Az Oldalsáv panellapjait be- és kikapcsolhatjuk.</p>
+
+<ol>
+  <li>Kattintsunk az Oldalsáv tetején a <q>Panellapok</q> elemre. Az aktuális panellapok neve megjelenik a menü alsó részén.</li>
+  <li>Jelöljük ki az Oldalsávon megjeleníteni kívánt panellapokat. Panellap kikapcsolásához töröljük a megfelelő jelölést (a panellap ezután is elérhető lesz a menün).</li>
+</ol>
+
+<p><strong>Tipp</strong>: az Oldalsáv valamelyik panellapjának gyors elrejtéséhez kattintsunk nevére az egér jobb oldali gombjával, és válasszuk a Panel elrejtése parancsot.</p>
+  
+<p>[<a href="#sidebar">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="customizing_individual_sidebar_tabs">Az Oldalsáv panellapjainak testreszabása</h3>
+
+<p><strong>Megjegyzés</strong>: ez a művelet nem hajtható végre az összes panellapon.</p>
+
+<ol>
+  <li>Kattintsunk az Oldalsáv tetején a <q>Panellapok</q> elemre, és válasszuk az Oldalsáv testreszabása parancsot.</li>
+  <li>Jelöljük ki a kívánt panellapot a jobb oldali listán.</li>
+  <li>Ha elérhető, kattintsunk a Panellap testreszabása gombra. A megjelenő ablak a panellap adatait és beállítási lehetőségeit tartalmazza.
+    <p>Az utasítások a panellap készítőjétől függnek: a panellap szolgáltatója a &brandShortName; mellett tetszőleges vállalat, szervezet vagy az internetet használó magánszemély lehet.</p>
+  </li>
+  <li>A megfelelő műveletek végrehajtása után zárjuk be az ablakot (vagy kövessük a szolgáltató utasításait).</li>
+  <li>A befejezéshez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[<a href="#sidebar">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="reorganizing_sidebar_tabs">Az Oldalsáv panellapjainak átrendezése</h3>
+
+<ol>
+  <li>Kattintsunk az Oldalsáv tetején a <q>Panellapok</q> elemre, és válasszuk az Oldalsáv testreszabása parancsot.</li>
+  <li>Jelöljük ki a kívánt panellapot a jobb oldali listán.</li>
+  <li>A panellap helyének módosításához kattintsunk a Fel vagy a Le gombra.</li>
+  <li>További panellapok átrendezéséhez ismételjük meg a 2. és a 3. lépést.</li>
+  <li>A befejezéshez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[<a href="#sidebar">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="removing_sidebar_tabs">Az Oldalsáv panellapjainak eltávolítása</h3>
+
+<ol>
+  <li>Kattintsunk az Oldalsáv tetején a <q>Panellapok</q> elemre, és válasszuk az Oldalsáv testreszabása parancsot.</li>
+  <li>Jelöljük ki a kívánt panellapot a jobb oldali listán.</li>
+  <li>Kattintsunk az Eltávolítás gombra.</li>
+  <li>További panellapok eltávolításához ismételjük meg a 2. és a 3. lépést.</li>
+  <li>A befejezéshez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[<a href="#sidebar">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="tabbed_browsing">Böngészőlapok</h2>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#what_is_tabbed_browsing">A böngészőlapok fogalma</a></li>
+    <li><a href="#setting_up_tabbed_browsing">A böngészőlapok beállítása</a></li>
+    <li><a href="#opening_tabs">Böngészőlapok megnyitása</a></li>
+    <li><a href="#moving_tabs">Böngészőlapok átrendezése</a></li>
+    <li><a href="#bookmarking_tabs">Böngészőlapok megjelölése könyvjelzővel</a></li>
+    <li><a href="#closing_tabs">Lapok bezárása</a></li>
+  </ul>
+</div>
+
+<h3 id="what_is_tabbed_browsing">A böngészőlapok fogalma</h3>
+
+<p>A böngészőlapok segítségével egynél több weboldalt is megnyithatunk egyetlen ablakban. Minden oldalhoz saját böngészőlap tartozik egyetlen böngészőablakban. Ezek neve megjelenik a Fülek sávján. Három helyett egy ablakban meglátogatható például a www.fsf.hu, a mozilla.org és a mozilla.fsf.hu.</p>
+
+<table summary="Image table">
+  <tr> 
+    <td>Új böngészőlap megnyitásához kattintsunk ide.</td>
+    <td></td>
+  </tr>
+  <tr> 
+    <td colspan="2">
+      <img src="images/tabbed_browsing_bar.png" alt="Fülek sávja"/>
+    </td>
+  </tr>
+  <tr> 
+    <td style="text-align: left;">Az éppen látott böngészőlap.</td>
+    <td style="text-align: right;">Az éppen megtekintett böngészőlap bezárásához kattintsunk ide.</td>
+  </tr>
+  <tr> 
+    <td colspan="2" style="text-align: center;"><strong>Fülek sávja</strong></td>
+  </tr>
+</table>
+
+<p>Több weboldal meglátogatásához nem szükséges több ablakot megnyitni, így helyet takaríthatunk meg az asztalon. A weboldalakat kényelmesen megnyithatjuk, bezárhatjuk és frissíthetjük egyetlen helyről is másik ablakba való áttérés nélkül.</p>
+
+<p>[<a href="#tabbed_browsing">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="setting_up_tabbed_browsing">A böngészőlapok beállítása</h3>
+
+<p>>A böngészőlapok használata számos módon testreszabható. Módosíthatók például a beállítások úgy, hogy az új böngészőlapok nyíljanak a címmezőből. A böngészőlapok használata más módon is beállítható, például az új böngészőlapok a háttérben is betölthetők úgy, hogy az első oldal látható a második oldal betöltése alatt. További tudnivalók a &brandShortName; a böngészőlapjainak beállításaival kapcsolatban: <a href="cs_nav_prefs_navigator.xhtml#tabbed_browsing">Böngésző beállításai – Böngészőlapok</a>.</p>
+
+<p>[<a href="#tabbed_browsing">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="opening_tabs">Böngészőlapok megnyitása</h3>
+
+<p>Böngészőlap az alábbi módokon nyitható meg:</p>
+
+<p><strong>Új, üres böngészőlap megnyitása</strong>:</p>
+
+<ul>
+  <li><strong>A Fájl menüből</strong>: válasszuk a Fájl menből az Új, majd az Böngészőlap parancsot.</li>
+  <li><strong>A Fülek sávjáról</strong>: ha látható, kattintsunk az <q>Új böngészőlap</q> ikon gombra <img src="chrome://global/skin/icons/tab-new.gif" alt="Új böngészőlap"/> a Fülek sávján.</li>
+  <li><strong>Helyi menüből</strong>: ha látható a Fülek sávja, kattintsunk rá az egér jobb oldali gombjával, és válasszuk a helyi menü Új böngészőlap parancsát.</li>
+</ul>
+
+<p><strong>Weboldal hivatkozásának megnyitása böngészőlapon</strong>:</p>
+
+<ul>
+  <li><strong>Helyi menüből</strong>: kattintsunk az egér jobb oldali gombjával a hivatkozásra <span class="mac">vagy egygombos egér esetén tartsuk lenyomva a <kbd>Ctrl</kbd> billentyűt és kattintsunk</span>, majd válasszuk a Megnyitás új lapon parancsot.</li>
+  <li><strong>A címmezőből</strong>: írjuk be a weboldal címét, és nyomjuk meg a <kbd class="mac">Cmd</kbd><kbd class="noMac">
+    Ctrl</kbd>+<kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> billentyűkombinációt.
+
+    <p><strong>Megjegyzés</strong>: a Böngészőlapok beállítópanelén be kell állítani, hogy a Ctrl+Enter a címmezőből böngészőlapot nyisson meg. További tudnivalók:
+      <a href="cs_nav_prefs_navigator.xhtml#tabbed_browsing">Böngésző beállításai – Böngészőlapok</a>.</p>
+  </li>
+</ul>
+
+<p><strong>Tippek</strong>:</p>
+
+<ul>
+  <li>Új, üres böngészőlap gyors megnyitásához nyomjuk meg a 
+    <kbd class="mac">Cmd</kbd>
+    <kbd class="noMac">Ctrl</kbd>+<kbd>T</kbd> billentyűkombinációt.</li>
+  <li>Valamelyik vagy az összes böngészőlap frissítéséhez kattintsunk az egér jobb oldali gombjával a Fülek sávjára, <span class="mac">vagy egygombos egér esetén tartsuk lenyomva a <kbd>Ctrl</kbd> billentyűt és kattintsunk</span> majd válasszuk ki a Böngészőlap frissítése vagy Az összes böngészőlap frissítése parancsot.</li>
+</ul>
+
+<p>[<a href="#tabbed_browsing">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="moving_tabs">Böngészőlapok átrendezése</h3>
+
+<p>A lapok a megnyitás sorrendjében jelennek meg, de elképzelhető, hogy nem ez a megfelelő sorrend. A lapot  a &brandShortName;-ablakon belül másik helyre is áthúzhatjuk az egérrel. A böngészőlap áthúzása közben a &brandShortName; megjelöli, hogy hova kerül áthelyezésre a böngészőlap. A másik lehetőség, hogy a megfelelő <a href="shortcuts-navigator.xhtml#tabbed_browsing_shortcuts">gyorsbillentyűvel</a> helyezzük át a lapot a kívánt helyre.</p>
+
+<p><strong>Megjegyzés</strong>: a gyorsbillentyűk nem használhatóak abban az esetben, ha a egy szövegmezőn van a fókusz.</p>
+
+<p>[<a href="#tabbed_browsing">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="bookmarking_tabs">Böngészőlapok megjelölése könyvjelzővel</h3>
+
+<p>A könyvjelzővel megjelölt böngészőlapok csoportját csoportkönyvjelzőnek hívjuk. Az aktuális ablak böngészőlapcsoportjának megjelölése könyvjelzővel:</p>
+
+<ol>
+  <li>Válasszuk a Könyvjelzők menü <q>Böngészőlapok csoportjának könyvjelzőzése</q> parancsát.</li>
+  <li>A Név mezőbe írjuk be a könyvjelzőcsoport nevét.</li>
+  <li>Adjuk meg a megfelelő beállítást:
+<ul>
+  <li><strong>Felvétel ide</strong>: adjuk meg a csoportkönyvjelző tárolási mappáját.</li>
+  <li><strong>Új mappa</strong>: erre a gombra kattintva új mappa adható meg a csoportkönyvjelző létrehozásához.</li>
+  <li><strong>Alapbeállítás</strong>: a gombra kattintva a csoportkönyvjelző az új könyvjelzők kijelölt mappájába kerül. További tudnivalók az új könyvjelzők mappájának megadásáról: <a href="#organizing_your_bookmarks">A könyvjelzők rendszerezése</a>.</li></ul>
+  <li>A csoportkönyvjelző felvételéhez kattintsunk az OK gombra.</li></li>
+</ol>
+
+<p><strong>Tipp</strong>: További tudnivalók a csoportkönyvjelzők használatáról: <a href="cs_nav_prefs_navigator.xhtml#navigator">Böngésző beállításai – Böngésző</a>.</p>
+
+<p>[<a href="#tabbed_browsing">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="closing_tabs">Lapok bezárása</h3>
+
+<p>A böngészőlapok számos módon bezárhatók:</p>
+
+<p><strong>Az éppen megtekintett böngészőlap bezárása</strong>:</p>
+
+<ul>
+  <li>Válasszuk a Fájl menü Böngészőlap bezárása parancsát.</li>
+  <li> Fülek sávjának jobb oldalán kattintsunk az <q>X</q> gombra.</li>
+</ul>
+
+<table summary="Image table">
+  <tr>
+    <td>Új böngészőlap megnyitásához kattintsunk ide.</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <img src="images/tabbed_browsing_bar.png" alt="Fülek sávja"/>
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align: left;">Az éppen látott böngészőlap.</td>
+    <td style="text-align: right;">Az éppen megtekintett böngészőlap bezárásához kattintsunk ide.</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;"><strong>Fülek sávja</strong></td>
+  </tr>
+</table>
+
+<p><strong>Tippek</strong>:</p>
+
+<ul>
+  <li>Tetszőleges böngészőlap bezárásához kattintsunk az egér jobb oldali gombjával a fülre, és válasszuk a Böngészőlap bezárása parancsot.</li>
+  <li>TEgy kivételével az összes többi böngészőlap bezáráshoz kattintsunk az egér jobb oldali gombjával a fülre, és válasszuk A többi böngészőlap bezárása parancsot.</li>
+</ul>
+
+<p>[<a href="#tabbed_browsing">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="changing_fonts_colors_and_themes">A betűkészletek, a színek és a témák megváltoztatása</h2>
+  
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#changing_the_default_fonts">Az alapértelmezett betűkészletek megadása</a></li>
+    <li><a href="#changing_the_default_colors">Az alapértelmezett színek megadása</a></li>
+    <li><a href="#changing_the_theme">A téma megadása</a></li>
+  </ul>
+</div>
+
+<h3 id="changing_the_default_fonts">Az alapértelmezett betűkészletek megadása</h3>
+
+<p>A szokásos esetekben a weboldalak a böngésző alapértelmezett betűkészletével vagy a weboldal szerzője által választott betűkészlettel jelennek meg.</p>
+
+<p>Az alapértelmezett betűkészletek megváltoztatása:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span> <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Megjelenés kategóriában kattintsunk a Betűkre. (Ha nem láthatóak az alkategóriák, a lista kibontásához kattintsunk duplán a Megjelenés kategóriára.)</li>
+  <li>A Kódolás lenyitható listán válasszunk karakterkészletet. Például a közép-európai (magyar) karakterkészlet alapértelmezett betűkészleteinek beállításához válasszuk a <q>Közép-európai</q> elemet.</li>
+  <li>Jelöljük be, hogy a proporcionális szöveg talpas (ilyen a Times New Roman) vagy talpatlan (ilyen az Arial) betűkészlettel jelenjen-e meg. Ezután adjuk meg a proporcionális szöveg betűméretét.</li>
+  <li>Ha az adott nyelvű karakterkészlethez rendelkezésre áll megfelelő betűkészlet, adjuk meg a Talpas, a Talpatlan, a Kurzív, a Díszes és a Fix szélességű betűkészletét. A fix szélességű betűk betűmérete is megadható.</li>
+  <li>Adjuk meg, hogy az alapértelmezett betűkészlet talpas vagy talpatlan legyen-e.</li>
+  <li>Adjunk meg egy fix szélességű betűkészletet és -méretet. Bizonyos típusú szövegrészek, például az egyenletek és a képletek, ilyen betűkészlettel jelennek meg.</li>
+</ol>
+
+<p>A weboldalak szerzői gyakran saját betűkészleteket és -méreteket választanak. Az alapbeállításként megadottakon kívüli betűkészletek használatához jelöljük be <q>A dokumentumok használhatják a saját maguk által megadott betűkészleteket</q> jelölőnégyzetet.</p>
+
+<p>[<a href="#changing_fonts_colors_and_themes">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="changing_the_default_colors">Az alapértelmezett színek megadása</h3>
+
+<p>A szokásos esetekben a weboldalak háttér- és szövegszínét a böngésző alapértelmezett színbeállításai vagy a weboldal szerzője által kiválasztott színek határozzák meg.</p>
+
+<p>Az alapértelmezett színek megváltoztatása:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span> <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Megjelenés kategóriában válasszuk a Színek elemet. (Ha nem láthatóak az alkategóriák, a lista kibontásához kattintsunk duplán a Színek kategóriára.)</li>
+  <li>Kattintsunk a <q>Szöveg</q>, a <q>Háttér</q>, a <q>Nem látogatott hivatkozások</q> és a <q>Látogatott hivatkozások</q> melletti színes elemre. Válasszunk mindegyikhez színt a palettáról. Az is megadható, hogy a hivatkozások alá legyenek-e húzva.</li>
+</ol>
+
+<p>MA weboldalak szerzői gyakran saját színeket választanak. Ezek a beállítások A <q>megadott színek használata, figyelmen kívül hagyva a weboldal által megadottakat</q> jelölőnégyzet bejelölésével felülbírálhatók.</p>
+
+<p>A weboldalak forrásának megtekintésekor a forrás HTML-elemei színekkel lesznek kiemelve, ha bejelöljük a <q>Szintaxiskiemelés engedélyezése</q> jelölőnégyzetet.</p>
+
+<p>[<a href="#changing_fonts_colors_and_themes">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="changing_the_theme">A téma megadása</h3>
+
+<p>A &brandShortName; általános megjelenítése megfelelő téma megadásával állítható be.</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span> <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Megjelenés kategóriában válasszuk a Témák elemet.</li>
+  <li>Jelöljük ki a használni kívánt témát.</li>
+  <li>A változtatások érvényesítéséhez kattintsunk az OK gombra.
+
+    <p><strong>Megjegyzés</strong>: új téma megadásakor a módosítás érvénybe léptetéséhez ki kell lépni a &brandShortName; programból, majd újra kell indítani azt.</p>
+  </li>
+</ol>
+
+<p><strong>Másik megoldás</strong>: új téma beállításához a Nézet menü Témák alkalmazása parancsát is használhatjuk.</p>
+
+<p>[<a href="#changing_fonts_colors_and_themes">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="toolbars">Eszköztárak</h2>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#navigation_toolbar">Böngésző eszköztár</a></li>
+    <li><a href="#personal_toolbar">Személyes eszköztár</a></li>
+    <li><a href="#status_bar">Állapotsor</a></li>
+    <li><a href="#component_bar">&brandShortName;-komponensek</a></li>
+    <li><a href="#hiding_a_toolbar">Eszköztár elrejtése</a></li>
+  </ul>
+</div>
+
+<h3 id="navigation_toolbar">Böngésző eszköztár</h3>
+
+<p>Az itt látható Böngésző eszköztár a web bejárására használható.</p>
+
+<table summary="Image table">
+  <tr>
+    <td colspan="4">
+      <img src="images/reload.gif" alt="Böngésző eszköztár"/>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Vissza</strong></td>
+    <td><strong>Előre</strong></td>
+    <td><strong>Frissítés</strong></td>
+    <td><strong>Leállítás</strong></td>
+  </tr>
+</table>
+
+<p>[<a href="#toolbars">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="personal_toolbar">Személyes eszköztár</h3>
+
+<p>A Személyes eszköztár teljes mértékben a saját igények szerint alakítható: mi határozhatjuk meg, hogy mi szerepeljen rajta. A Személyes eszköztár alaphelyzetben is tartalmaz néhány gombot: ilyen a Kezdőlap és a Könyvjelzők.</p>
+
+<table summary="Image table">
+  <tr> 
+    <td><img src="images/personalbar.png" alt="Személyes eszköztár"/></td>
+  </tr>
+  <tr>
+    <td style="text-align: center;"><strong>Személyes eszköztár</strong></td>
+  </tr>
+</table>
+
+<p>A Személyes eszköztár elemei egyszerűen felvehetők, törölhetők és átrendezhetők.</p>
+
+<h4 id="turning_buttons_on_and_off">Gombok be- és kikapcsolása</h4>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span><span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Kattintsunk a Böngésző elemre.</li>
+  <li>A <q>Válassza ki azokat a gombokat, amelyeket az eszköztáron szeretne látni</q> csoportban jelöljük ki a kívánt gombokat.</li>
+  <li>A befejezéshez kattintsunk az OK gombra.</li>
+</ol>
+
+<h4 id="adding_personal_toolbar_bookmarks">Könyvjelzők felvétele a Személyes eszköztárra</h4>
+
+<p>Felvehetjük a kedvenc könyvjelzők vagy a könyvjelzőket tartalmazó mappák gombjait is. A Személyes eszköztárra kerülő új könyvjelző létrehozása:</p>
+  
+<ol>
+  <li>Nyissuk meg a jelölni kívánt weboldalt.</li>
+  <li>Húzzuk a könyvjelző <img src="chrome://communicator/skin/bookmarks/bookmark-item.gif" alt="Könyvjelző ikon"/> ikont a Személyes eszköztár kívánt részére (az ikon a címmező tartalmától balra található). Az ikont közvetlenül a Személyes eszköztárra vagy annak egyik mappájára húzhatjuk. További tudnivalók könyvjelzőmappa felvételéről a Személyes eszköztárra: <a href="#adding_bookmark_folders_to_the_personal_toolbar">Könyvjelzőmappák felvétele a Személyes eszköztárra</a>.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: A könyvjelző <img src="chrome://communicator/skin/bookmarks/bookmark-item.gif" alt="Könyvjelző ikon"/> ikon más weboldalikonként jelenhet meg, ha bejelöltük A webhelyek ikonjai megjelenhetnek beállítást. A beállítás módosításáról lásd: <a href="cs_nav_prefs_appearance.xhtml#appearance">Megjelenítési beállítások – Megjelenés</a>.</p>
+
+<p>A Személyes eszköztár mappájának minden eleme gombként jelenik meg. Az összes megtekintéséhez valószínűleg növelni kell a böngészőablak méretét.</p>
+
+<p id="adding_bookmark_folders_to_the_personal_toolbar"><strong>Könyvjelzőmappák felvétele a Személyes eszköztárra</strong></p>
+
+<p>A kedvenc könyvjelzők kategóriákba sorolásához könyvjelzőmappákat vehetünk fel a Személyes eszköztárra. Az egyik ilyen mappa tartalmazhatja például a kedvenc időtöltéssel kapcsolatos, míg egy másik a napi munkához szükséges könyvjelzőket. Új könyvjelző felvétele a Személyes eszköztárra:</p>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>Jelöljük ki a <q>Személyes eszköztár mappájaként</q> megadott mappát.</li>
+  <li>Az eszköztáron kattintsunk az Új mappa gombra.</li>
+  <li>Írjuk be az új könyvjelzőmappa nevét. Az alapértelmezett név az <q>Új mappa</q>.</li>
+  <li>A név megerősítéshez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>Az új könyvjelzőmappa megjelenik a Személyes eszköztár végén.</p>
+
+<h4>Könyvjelzőmappa megadása a Személyes eszköztár mappájaként</h4>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>Jelöljük ki azt a könyvjelzőmappát, amelynek elemeit az eszköztáron szeretnénk megjeleníteni.</li>
+  <li>Válasszuk a Nézet menü Beállítás a személyes eszköztár mappájaként parancsát.</li>
+</ol>
+
+<p>A Személyes eszköztár gombjai ekkor a megadott mappa könyvjelzőinek fognak megfelelni.</p>
+
+<h4>Könyvjelzők eltávolítása a Személyes eszköztárról</h4>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>Kattintsunk a Személyes eszköztár mappájára.</li>
+  <li>Jelöljük ki a törölni kívánt könyvjelzőt vagy mappát.</li>
+  <li>Nyomjuk meg a Delete billentyűt.</li>
+  <li>Zárjuk be a Könyvjelzők kezelése ablakot.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a Személyes eszköztárról nem mappában lévő könyvjelző gyors eltávolításához kattintsunk az egér jobb oldali gombjával a könyvjelzőre, és válasszuk a Törlés parancsot.</p>
+
+<h4>A Személyes eszköztár átrendezése</h4>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>A Könyvjelzők ablakban kattintsunk a Személyes eszköztár mappájára.</li>
+  <li>Jelöljük ki a kívánt könyvjelzőt vagy mappát, és húzzuk kívánt új helyére.</li>
+  <li>Ha befejeztük az elemek elrendezését, zárjuk be a Könyvjelzők ablakot.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: a Személyes eszköztár szabványos gombjai, ilyen például a Keresés vagy a Kezdőlap, nem helyezhetők át, de <a href="#turning_buttons_on_and_off">ki- és bekapcsolhatók</a>.</p>
+
+<p><strong>Tipp</strong>: a Személyes eszköztáron elhelyezett könyvjelzők gyors áthelyezéséhez kattintsunk a kívánt könyvjelzőre, és húzzuk új helyére vagy egy mappába.</p>
+  
+<p>[<a href="#toolbars">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="status_bar">Állapotsor</h3>
+
+<p>Az állapotsor a &brandShortName;-ablakok alján jelenik meg. A következő elemeket tartalmazza:</p>
+
+<ul>
+  <li>&brandShortName;-komponensek: a kívánt összetevő megnyitását teszik lehetővé. További tudnivalók: <a href="#component_bar">&brandShortName;-komponensek</a>.</li>
+  <li>Állapotadatok: különféle adatok, például a weboldal címének és a betöltés állapotának megjelenítése.</li>
+  <li>Süti jelentése <img src="chrome://cookie/content/taskbar-cookie.gif" alt="Süti jelentése ikon"/>: akkor jelenik meg, ha a webhely egy sütit oly módon használt, amely értesítést igényel. További tudnivalók: <a href="using_priv_help.xhtml#cookie_notification">Süti jelentése</a>.</li>
+  <li>Kapcsolat nélküli munka <img src="chrome://communicator/skin/icons/offline.gif" alt="Kapcsolat nélküli munka ikon"/> vagy Online üzemmód <img src="chrome://communicator/skin/icons/online.gif"
+    alt="Online üzemmód ikon"/> ikon: erre az ikonra kattintva az üzemmódok között válthatunk. A kapcsolat nélküli munkánál a &brandShortName; nem csatlakozik az internetre például a weboldalakon lévő képek letöltéséhez vagy az elektronikus levelek automatikus ellenőrzéséhez.</li>
+  <li>Lakat ikon (például: <img src="chrome://communicator/skin/icons/lock-insecure.gif" alt="Lakat ikon"/>): azt jelzi, hogy az oldal teljes tartalma titkosítva volt-e a számítógépre való letöltéskor. További tudnivalók: <a href="using_certs_help.xhtml#checking_security_for_a_web_page">Weboldal biztonságának ellenőrzése</a>.</li>
+</ul>
+
+<p>[<a href="#toolbars">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="component_bar">&brandShortName;-komponensek</h3>
+
+<p>A &brandShortName;-ablakok alján az állapotsor bal oldalán megjelenő ikonokkal a kívánt összetevő nyitható meg (például a böngésző vagy a levelező).</p>
+  
+<p><img src="images/taskbar.png" alt="&brandShortName;-komponensek"/></p>
+
+<p>[<a href="#toolbars">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="hiding_a_toolbar">Eszköztár elrejtése</h3>
+
+<p>Az eszköztárak két módon rejthetők el:</p>
+
+<p>Eszköztár kis méretűre állítása:</p>
+
+<ul>
+  <li>Kattintsunk az eszköztár bal oldalán látható háromszög ikonra. Az eszköztár megjelenítéséhez kattintsunk ismét az ikonra. (Megjegyzés: a &brandShortName;-komponensek ezzel a módszerrel nem rejthetők el.)</li>
+</ul>
+
+<p>Eszköztár teljes elrejtése (beleértve a háromszög ikont is):</p>
+
+<ol>
+  <li>Nyissuk meg a Nézet menüt.</li>
+  <li>Válasszuk az Eszköztárak parancsot, és töröljük az elrejteni kívánt eszköztárak jelölését.</li>
+</ol>
+
+<p>A fordított művelethez válasszuk a Nézet menü Eszköztárak parancsát, és jelöljük be a megjeleníteni kívánt eszköztárakat.</p>
+  
+<p>[<a href="#toolbars">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="bookmarks">Könyvjelzők</h2>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#what_are_bookmarks">A könyvjelző fogalma</a></li>
+    <li><a href="#using_bookmarks">Könyvjelzők használata</a></li>
+    <li><a href="#creating_new_bookmarks">Új könyvjelzők létrehozása</a></li>
+    <li><a href="#organizing_your_bookmarks">A könyvjelzők rendszerezése</a></li>
+    <li><a href="#changing_individual_bookmarks">Egyedi könyvjelzők módosítása</a></li>
+    <li><a href="#searching_your_bookmarks">Könyvjelzők keresése</a></li>
+    <li><a href="#exporting_or_importing_a_bookmark_list">Könyvjelzőlista exportálása vagy importálása</a></li>
+  </ul>
+</div>
+
+<h3 id="what_are_bookmarks">A könyvjelző fogalma</h3>
+
+<p>A könyvjelzők a kedvenc és leggyakrabban látogatott weboldalakra mutató parancsikonok. Hosszú webcímek beírása helyett létrehozhatunk könyvjelzőket, amelyekkel közvetlenül elérhetjük a látni kívánt oldalakat.</p>
+
+<p>A könyvjelzők a Könyvjelzők menü, az Oldalsáv Könyvjelzők panellapja és a Könyvjelzők kezelése ablak segítségével érhetők el. A Könyvjelzők menüben megjelenő elemek a kedvenc weboldalak könyvjelzőinek felvételével és a könyvjelzők listájának rendszerezésével szabályozhatók.</p>
+
+<h3 id="using_bookmarks">Könyvjelzők használata</h3>
+
+<p>A &brandShortName; eleve tartalmaz néhány könyvjelzőt. A könyvjelzők használata:</p>
+
+<ol>
+  <li>Nyissuk meg a Könyvjelzők menüt.</li>
+  <li>Válasszunk könyvjelzőt a listáról vagy a lista valamelyik mappájából.</li>
+</ol>
+
+<p>[<a href="#bookmarks">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="creating_new_bookmarks">Új könyvjelzők létrehozása</h3>
+
+<p>A kedvenc webhelyekhez könyvjelző rendelhető, így egyszerűen visszatérhetünk ezekhez.</p>
+
+<p>Az aktuális oldal megjelöléséhez hajtsuk végre a megfelelő műveletet:</p>
+
+<ul>
+  <li>A Könyvjelzők menüben könyvjelző felvételéhez válasszuk a Könyvjelzők menü Könyvjelző hozzáadása parancsát.</li>
+  <li>Könyvjelző felvételéhez a Könyvjelzők menü adott mappájába vagy a könyvjelzőhöz megfelelő név vagy URL megadásához:
+    <ol>
+      <li>Válaszuk a Könyvjelzők menü Könyvjelzők felvétele mint parancsát. Adjuk meg a megfelelő beállítást:
+        <ul>
+          <li><strong>Név</strong>: írjuk be a könyvjelző kívánt nevét.</li>
+          <li><strong>Hely</strong>: írjuk be a könyvjelző kívánt címét.</li>
+          <li><strong>Keyword</strong>: adjuk meg a könyvjelző kulcsszavát, amelyet a címmezőbe begépelve meg lehet nyitni a könyvjelzőt (További tudnivalók: <a href="nav_help.xhtml#custom_keywords">Egyedi könyvjelző kulcsszavak használata</a>).</li>
+          <li><strong>Felvétel ide</strong>: adjuk meg a könyvjelző tárolási mappáját.</li>
+          <li><strong>Új mappa</strong>: erre a gombra kattintva új mappa adható meg a könyvjelző létrehozásához.</li>
+        </ul>
+      </li>
+      <li>A könyvjelző felvételéhez kattintsunk az OK gombra.</li>
+    </ol>
+  
+    <p><strong>Tipp</strong>: ha egy ablakban több böngészőlap van megnyitva, a <q>Könyvjelző a fülek csoportjából</q> jelölőnégyzet bejelölésével egyetlen könyvjelző vehető fel az aktuális ablak összes megnyitott panellapjának megnyitásához.</p>
+  </li>
+  <li>A Személyes eszköztárra könyvjelző felvételéhez húzzuk a címmező melletti könyvjelző ikon <img src="chrome://communicator/skin/bookmarks/bookmark-item.gif" alt="Könyvjelző ikon"/> a Személyes eszköztár kívánt részére. A könyvjelző a következő helyekre húzható:
+    <ul>
+      <li>a Személyes eszköztár Könyvjelzők mappájába,</li>
+      <li>a Személyes eszköztáron létrehozott valamelyik könyvjelzőmappába,</li>
+      <li>valamennyi könyvjelzőmappától jobbra magára a Személyes eszköztárra.
+        <p>További tudnivalók könyvjelzők felvételéről a Személyes eszköztárra: <a href="#adding_personal_toolbar_bookmarks">Könyvjelzők felvétele a Személyes eszköztárra</a>.</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<table summary="Image table">
+  <tr>
+    <td><img src="images/personalbar.png" alt="Személyes eszköztár"/></td>
+  </tr>
+  <tr>
+    <td><strong>Személyes eszköztár</strong></td>
+  </tr>
+</table>
+
+<ul>
+  <li>Könyvjelző felvételéhez az Oldalsáv Könyvjelzők panellapjára nyissuk meg az Oldalsávot, jelöljük ki a Könyvjelzők panellapot, és húzzuk a könyvjelző könyvjelző ikont <img src="chrome://communicator/skin/bookmarks/bookmark-item.gif" alt="Könyvjelző ikon"/> a címmező mellett a Könyvjelzők panellap könyvjelzőlistájára.
+  </li>
+</ul>
+
+<p><strong>Megjegyzés</strong>:</p>
+<ul>
+  <li>A könyvjelző ikon <img src="chrome://communicator/skin/bookmarks/bookmark-item.gif" alt="Könyvjelző ikon"/>  ikon más weboldalikonként jelenhet meg, ha bejelöltük A webhelyek ikonjai megjelenhetnek beállítást. A beállítás módosításáról lásd: <a href="cs_nav_prefs_appearance.xhtml#appearance"> Megjelenítési beállítások – Megjelenés</a>.</li>
+  <li>A fenti módszerekkel felvett könyvjelzők az Oldalsáv Könyvjelzők panellapja, a Könyvjelzők kezelése ablak és a Könyvjelzők menü segítségével érhetők el.</li>
+</ul>
+
+<p>[<a href="#bookmarks">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="organizing_your_bookmarks">A könyvjelzők rendszerezése</h3>
+
+<p>A könyvjelzők rendszerezéséhez válasszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát. A Könyvjelzők kezelése ablakban hajtsuk végre a megfelelő műveletet.</p>
+
+<p><strong>Tipp</strong>: a Könyvjelzők kezelése ablak az Oldalsáv Könyvjelzők panellapjáról is megnyitható: ehhez kattintsunk a panellap tetején a Könyvjelzőkezelő elemre.</p>
+
+<p>A mappákban lévő könyvjelzők megtekintése:</p>
+
+<ul>
+  <li>Tartalmának megjelenítéséhez kattintsunk duplán a mappára.</li>
+</ul>
+
+<p>Könyvjelző vagy mappa áthelyezése a listán:</p>
+
+<ul>
+  <li>Húzzuk a kívánt könyvjelzőt vagy mappát új helyére. Könyvjelzőt mappába helyezhetünk, ha ráhúzzuk.</li>
+</ul>
+
+<p>Új mappa vagy elválasztó létrehozása:</p>
+
+<ul>
+  <li>Kattintsunk a Könyvjelzők panellap tetején az Új mappa vagy az Új elválasztó elemre. Az új mappa vagy elválasztó a kijelölt elem alatt jelenik meg.</li>
+</ul>
+
+<p>Könyvjelző vagy mappa eltávolítása a listáról:</p>
+
+<ol>
+  <li>Jelöljük ki az eltávolítani könyvjelzőt vagy mappát.</li>
+  <li>Nyomjuk meg a Delete billentyűt, vagy kattintsunk a Könyvjelzők panellap tetején a Törlés gombra.</li>
+</ol>
+
+<p>A könyvjelzők sorba rendezése a Könyvjelzők kezelése ablakban:</p>
+
+<ul>
+  <li>Válasszuk a Nézet menü megfelelő parancsát (például Rendezés név szerint vagy Rendezés hely szerint).
+
+    <p><strong>Tipp</strong>: további oszlopok felvételéhez válasszuk a Nézet menü Oszlopok megjelenítése parancsát, és jelöljük ki az oszlopfejlécet a listán.</p></li>
+</ul>
+
+<h4>Az új könyvjelzők mappájának megadása</h4>
+
+<p>Amikor új könyvjelzőt hozunk létre, a &brandShortName; a könyvjelzőlista alján helyezi azt el. Ha a könyvjelzőket inkább mappában szeretnénk helyezni, megadhatunk egy mappát az új könyvjelzők számára.</p>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>A Könyvjelzők ablakban jelöljük ki az új könyvjelzők tárolására szolgáló mappát.</li>
+  <li>Válasszuk a Nézet menü Beállítás új könyvjelzőmappaként parancsát.</li>
+</ol>
+
+<p> [<a href="#bookmarks">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="changing_individual_bookmarks">Egyedi könyvjelzők módosítása</h3>
+
+<p>Az egyes könyvjelzők adatait a következő lépésekkel módosíthatjuk:</p>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>Jelöljük ki a kívánt könyvjelzőt.</li>
+  <li>Kattintsunk a Tulajdonságok gombra.</li>
+  <li>A megjelenő párbeszédpanelen váltsunk át az Információ panellapra.</li>
+</ol>
+
+<p>Itt átnevezhetjük a könyvjelzőt (ez a név jelenik meg a könyvjelzőlistán), megfelelő leírást adhatunk meg, és kulcsszót is beállíthatunk. (A könyvjelző kulcsszavát a hely mezőbe írhatjuk be.) További részletek: <a href="nav_help.xhtml#custom_keywords">Egyedi könyvjelző kulcsszavak használata</a>.</p>
+
+<p>Beállíthatjuk azt is, hogy a &brandShortName; ellenőrizze a jelölt webhelyek változásait.</p>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>Jelöljük ki a kívánt könyvjelzőt.</li>
+  <li>CKattintsunk a Tulajdonságok gombra.</li>
+  <li>A megjelenő párbeszédpanelen váltsunk át az Ütemezés panellapra.</li>
+  <li>Adjuk meg, hogy milyen gyakorisággal ellenőrizze a &brandShortName; a jelölt webhely változásait.</li>
+  <li>Ha a jelölt webhely változásairól értesítést szeretnénk kapni, váltsunk át az Értesítés panellapra, és adjuk meg a kívánt beállítást.</li>
+</ol>
+
+<p> [<a href="#bookmarks">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="searching_your_bookmarks">Könyvjelzők keresése</h3>
+
+<p>Keresés a könyvjelzőlistán:</p>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>A Könyvjelzők ablakban válasszuk a Feladatok menü Könyvjelzők keresése parancsát. A Könyvjelzők keresése párbeszédpanel jelenik meg.</li>
+  <li>A lenyitható listákon adjuk meg a keresés beállításait, majd kattintsunk a Keresés gombra. A feltételeknek megfelelő könyvjelzők jelennek meg. A keresési beállítások a következők lehetnek:
+    <ul>
+      <li>Válasszuk a „tartalmazza”, az „ezzel kezdődik” vagy az „ezzel végződik” beállítást, ha a keresett szónak vagy kifejezésnek csak egy részét ismerjük.</li>
+      <li>Válasszuk az „=” elemet, ha pontosan ismerjük a keresett fogalmat.</li>
+      <li>Válasszuk a „nem ez” vagy a „nem tartalmazza” beállítást a megfelelő oldalak kizárásához.</li>
+      <li>A mezőbe írjuk be a keresni vagy kizárni kívánt könyvjelzők vagy előzmények nevét vagy webcímét, illetve annak ismert részét.</li>
+      <li>A keresési beállítások mentéséhez jelöljük be a <q>Lekérdezés mentése a könyvjelzők közé</q> beállítást.</li>
+    </ul>
+  </li>
+  <li>A hely felkereséséhez kattintsunk duplán a lista kívánt könyvjelzőjére.</li>
+</ol>
+
+<p><strong>Tipp</strong>: nagyméretű listánál állítsuk nagyobbra a keresési eredmények ablakát.</p>
+
+<p>[<a href="#bookmarks">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="exporting_or_importing_a_bookmark_list">Könyvjelzőlista exportálása vagy importálása</h3>
+
+<p>A könyvjelzőket a bookmarks.html nevű fájl tárolja. Ezt a fájlt exportálhatjuk, és másolatát tetszőleges mappában elhelyezhetjük. Ezután ez a többi fájlhoz hasonlóan kezelhető és szerkeszthető.</p>
+  
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>A Könyvjelzők ablakban válasszuk a Feladatok menü Könyvjelzők exportálása parancsát.</li>
+  <li>A <q>Könyvjelzőfájl exportálása</q>  párbeszédpanelen adjuk meg a kívánt mappát. Ebbe a mappába kerül a bookmarks.html fájl másolata.</li>
+  <li>Kattintsunk a Mentés gombra.</li>
+</ol>
+
+<p>Ez a művelet nem változtatja meg a &brandShortName; könyvjelzőket.</p>
+
+<p>A más forrásokból származó könyvjelzőfájlok importálhatók. Ez végrehajtható például a &brandShortName; korábbi verzióiból, más böngészőkből vagy mások fájljaiból.</p>
+
+<p>A művelet végrehajtása előtt ellenőrizzük, hogy az átvenni kívánt könyvjelzőfájl HTML típusú legyen.</p>
+
+<ol>
+  <li>Válaszuk a Könyvjelzők menü Könyvjelzők kezelése parancsát.</li>
+  <li>A Könyvjelzők ablakban válasszuk a Feladatok menü Könyvjelzők importálása parancsát.</li>
+  <li>A <q>Könyvjelzőfájl importálása</q> párbeszédpanelen jelöljük ki a kívánt fájlt.</li>
+  <li>Kattintsunk a Megnyitás gombra.</li>
+</ol>
+
+<p>Az importált könyvjelzőfájlt új könyvjelzők csoportjának tekinti a program, és a könyvjelzőlista alján helyezi el. Ha megadtuk az új könyvjelzők mappáját, az importált könyvjelzők ebbe kerülnek.</p>
+
+<p><strong>Megjegyzés</strong>: a művelet a könyvjelzőket és mappákat importálja a megadott fájlból, és nem hoz létre újabb könyvjelzőfájlt.</p>
+
+<p>[<a href="#bookmarks">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="about_add-ons">A kiegészítőkről</h3>
+
+<h2 id="add-ons">Kiegészítők</h2>
+
+<p>One of the most exciting ways to customize &brandShortName; is through the
+  addition of Add-ons. In this section, you will learn what Add-ons are, how
+  to install them, and how to use the Add-on Manager.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#about_add-ons">A kiegészítőkről</a></li>
+    <li><a href="#installing_add-ons">Kiegészítők telepítése</a></li>
+    <li><a href="#using_the_add-on_manager">A Kiegészítőkezelő használata</a></li>
+  </ul>
+</div>
+
+<h3 id="about_add-ons">A kiegészítőkről</h3>
+
+<p>An Add-on is a piece of software that can be added to &brandShortName; to
+  change its appearance, behavior, or to add new features. It can also change
+  the language shown in the user interface. Add-ons can be classified in four
+  types:</p>
+
+<ul>
+  <li><strong>Extensions</strong>: This type of Add-on either changes the way
+    &brandShortName; behaves or adds new features to it. For instance, there
+    are extensions that provide you with weather forecasts, that add a
+    full-featured FTP client, or that block advertisements in web pages. Some
+    extensions are designed to work only with specific websites.</li>
+  <li><strong>Themes</strong>: Themes change the appearance and design of
+    &brandShortName;, but don&apos;t add or change features. They act as a
+    skin. &brandShortName; ships with two themes, Default Theme and Modern
+    Theme, but you can add more to fit your style.</li>
+  <li><strong>Languages</strong>: While you can download &brandShortName; in
+    a number of languages, you may add additional languages to it in the form
+    of language packs. This way, different users may use &brandShortName; in
+    their own language without having to install the program for everyone.
+    This is specially useful if you are going to install &brandShortName; on a
+    computer that is shared by different users in, for example, a computer lab.
+
+    <p><strong>Note</strong>: Language packs only change the user interface
+      language. Web pages, messages, newsgroup and news &amp; blog posts will
+      still be shown in the original language in which they were written.</p>
+  </li>
+  <li><strong>Plugins</strong>: Plugins act as connectors between
+    &brandShortName; and other programs. They enable you to see special content
+    (like Flash movies, or Adobe PDF documents) directly inside the
+    &brandShortName; browser window, instead of opening the target program in a
+    separate window.</li>
+</ul>
+
+<p>Add-ons always come as packages. Each Add-on is a single file with the XPI
+  extension, except in the case of plugins which usually are binaries specific
+  to the target operating system.</p>
+
+<p>[<a href="#add-ons">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="installing_add-ons">Kiegészítők telepítése</h3>
+
+<p>There are a number of ways to install Add-ons:</p>
+
+<ul>
+  <li>By clicking a link for an Add-on on a web page. This will trigger
+    a &brandShortName; dialog asking you to confirm or cancel the
+    installation, with the Install button disabled for some seconds in
+    order to avoid accidentally clicking it just as the dialog shows up.
+    
+    <p><strong>Note</strong>: As an additonal security measure,
+      &brandShortName; only allows installing Add-ons from a list of permitted
+      websites in the <a
+      href="cs_nav_prefs_advanced.xhtml#software_installation">Software
+      Installation preferences panel</a>.</p>
+  </li>
+  <li>By opening a previously saved Add-on package, just like you open a
+    regular file that you previously saved on your hard drive: Select Open file
+    from the File menu, or press <span class="mac"><kbd>Cmd</kbd></span><span
+    class="noMac"><kbd>Ctrl</kbd></span>+<kbd>O</kbd>.</li>
+  <li>By using the Get Add-ons panel in the Add-on Manager or clicking the
+    Install button in any of the panels in the Add-on Manager.</li>
+</ul>
+
+<p><strong>Note</strong>: Plugins are usually installed as a separate program
+  while &brandShortName; is closed so both the external program and the
+  corresponding plugin for &brandShortName; get installed correctly.</p>
+
+<p>[<a href="#add-ons">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="using_the_add-on_manager">A Kiegészítőkezelő használata</h3>
+
+<p>The Add-on Manager enables you to install and uninstall Add-ons, enable and
+  disable them and, in some cases, set preferences for them.</p>
+  
+<p id="accessing_the_add-on_manager">To access the Add-on Manager, follow any
+  of these steps:</p>
+
+<ul>
+  <li>Open the Tools menu, then select Add-on Manager.</li>
+  <li>Open the <span class="mac">&brandShortName;</span><span
+    class="noMac">Edit</span> menu and choose Preferences, expand the Advanced
+    category and click Software Installation.</li>
+</ul>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#the_get_add-ons_panel">The Get Add-ons panel</a></li>
+    <li><a href="#the_extensions_panel">The Extensions panel</a></li>
+    <li><a href="#the_themes_panel">The Themes panel</a></li>
+    <li><a href="#the_languages_panel">The Languages panel</a></li>
+    <li><a href="#the_plugins_panel">The Plugins panel</a></li>
+  </ul>
+</div>
+
+<h4 id="the_get_add-ons_panel">The Get Add-ons panel</h4>
+
+<p>The Get Add-ons panel in the Add-on Manager uses web services provided by
+  the Mozilla Add-ons website to present a list of recommended Add-ons, as
+  well as giving you the option to search all available Mozilla Add-ons
+  directly from the Add-on Manager. After
+  <a href="#accessing_the_add-on_manager">accessing the Add-on Manager</a>,
+  click the Get Add-ons button to show the Get Add-ons panel. There, you can
+  perform the following actions:</p>
+
+<ul>
+  <li>To search for Add-ons based on name, description or tags, use the
+    Search box. Type a word or phrase and press <span
+    class="mac"><kbd>Return</kbd></span><span
+    class="noMac"><kbd>Enter</kbd></span>. You will get a list of matching
+    Add-ons. To clear the search box terms and the result list, click the
+    icon inside the search box.
+
+    <p><strong>Note</strong>: Add-ons that are already installed or
+      incompatible with your current version of &brandShortName; will not be
+      displayed in the list of search results.</p>
+  </li>
+  <li>To open the Mozilla Add-ons website in a new browser window (or a new
+    browser tab, depending on your preferences), click Browse All Add-ons.</li>
+  <li>To get more information about one of the recommended Add-ons in the list
+    displayed by default, click the entry. The entry will expand, displaying
+    a larger image, a full description of the Add-on, and an indication of the
+    Add-on type (extension, theme, etc.). You will also be able to install the
+    Add-on by clicking the Add to &brandShortName; button inside the
+    expanded entry.</li>
+  <li>To display the full list of recommended Add-ons for &brandShortName; in a
+    new browser window (or a new browser tab, depending on your preferences),
+    scroll down the recommended Add-ons list until you see the See All
+    Recommended Add-ons link.</li>
+</ul>
+
+<p>[<a href="#using_the_add-on_manager">Vissza a fejezet elejére</a>]</p>
+
+<h4 id="the_extensions_panel">The Extensions panel</h4>
+
+<p>The Extensions panel in the Add-on Manager lists the installed extensions.
+  After <a href="#accessing_the_add-on_manager">accessing the Add-on
+  Manager</a>, click the Extensions button to show the Extensions panel. There,
+  you can perform the following actions:</p>
+
+<ul>
+  <li>To get more information about any of the installed extensions, click the
+    entry in the list. The entry will expand and show the full description of
+    the extension.
+
+    <p><strong>Note</strong>: Disabled extensions will appear greyed out.
+      Incompatible extensions will appear greyed out, since they are also
+      disabled, and with a forbidden sign over the extension icon (incompatible
+      extensions are those which define themselves as not compatible for the
+      version of &brandShortName; you are using).</p>
+  </li>
+  <li>To access preferences of an extension (if the extension features a
+    preferences panel), click the entry corresponding to the desired extension,
+    then click the Preferences button.
+
+    <p><strong>Note</strong>: If the extension does not feature a preferences
+      panel, the Preferences button will be disabled. You can&apos;t access
+      preferences of disabled or incompatible extensions.</p>
+  </li>
+  <li>To disable an extension, click the entry corresponding to the desired
+    extension, then click the Disable button. An info bar will appear to remind
+    you that changes will apply once you restart &brandShortName;. The info bar
+    features a Restart &brandShortName; button.</li>
+  <li>To enable an extension, click the entry corresponding to the desired
+    extension, then click the Enable button. An info bar will appear to remind
+    you that changes will apply once you restart &brandShortName;. The info bar
+    features a Restart &brandShortName; button.</li>
+  <li>To uninstall an extension, click the entry corresponding to the
+    desired extension, then click the Uninstall button. An info bar will
+    appear to remind you that changes will apply once you restart
+    &brandShortName;. The info bar features a Restart &brandShortName;
+    button.</li>
+  <li>To find updates for any extension in the list (including those marked as
+    incompatible), click the Find Updates button at the bottom of the
+    Add-on Manager.
+
+    <p>If updates are found, they will be displayed in a new panel. In the
+      panel, you can choose what extensions you want to update and then use the
+      Install Updates button to retrieve updated Add-ons. Once downloaded, you
+      will need to restart &brandShortName; to apply the updates.</p>
+  </li>
+</ul>
+
+<p>[<a href="#using_the_add-on_manager">Vissza a fejezet elejére</a>]</p>
+
+<h4 id="the_themes_panel">The Themes panel</h4>
+
+<p>The Themes panel in the Add-on Manager lists the installed themes. After
+  <a href="#accessing_the_add-on_manager">accessing the Add-on Manager</a>,
+  click the Themes button to show the Themes panel. There, you can perform the
+  following actions:</p>
+
+<ul>
+  <li>To get more information and a preview on any of the installed themes,
+    click an entry in the list. The entry will expand and show the full
+    description of the theme, along with a preview in the right side of the
+    Add-on Manager dialog (you may need to resize the dialog to properly see
+    the preview pane).</li>
+  <li>To use a theme, click the entry corresponding to the desired theme, then
+    click the Use Theme button. An info bar will appear to remind you that
+    changes will apply once you restart &brandShortName;. The info bar features
+    a Restart &brandShortName; button.
+    
+    <p><strong>Note</strong>: Contrary to extensions, you only can use one
+    theme at a time.</p>
+  </li>
+  <li>To uninstall a theme, click the entry corresponding to the desired theme,
+    then click the Uninstall button. An info bar will appear to remind
+    you that changes will apply once you restart &brandShortName;. The info bar
+    features a Restart &brandShortName; button.</li>
+</ul>
+
+<p>[<a href="#using_the_add-on_manager">Vissza a fejezet elejére</a>]</p>
+
+<h4 id="the_languages_panel">The Languages panel</h4>
+
+<p>The Languages panel in the Add-on Manager lists the installed Language
+  Packs. This panel only appears if you have installed a Language Pack.</p>
+
+<p>After <a href="#accessing_the_add-on_manager">accessing the Add-on
+  Manager</a>, click the Languages button to show the Languages panel. There,
+  you can perform the following actions:</p>
+
+<ul>
+  <li>To disable a language pack, click the entry corresponding to the desired
+    language pack, then click the Disable button. An info bar will appear to
+    remind you that changes will apply once you restart &brandShortName;. The
+    info bar features a Restart &brandShortName; button.</li>
+  <li>To enable a language pack, click the entry corresponding to the desired
+    language pack, then click the Enable button. An info bar will appear to
+    remind you that changes will apply once you restart &brandShortName;. The
+    info bar features a Restart &brandShortName; button.</li>
+  <li>To uninstall a language pack, click the entry corresponding to the
+    desired language pack, then click the Uninstall button. An info bar will
+    appear to remind you that changes will apply once you restart
+    &brandShortName;. The info bar features a Restart &brandShortName;
+    button.</li>
+</ul>
+
+<p><strong>Note</strong>: Enabling a language pack in the Language panel
+  doesn&apos;t change the language shown in &brandShortName;&apos;s user
+  interface, it only makes the language available for selection in the
+  <a href="cs_nav_prefs_appearance.xhtml#appearance">Megjelenés beállításai
+  panel</a>.</p>
+
+<p>[<a href="#using_the_add-on_manager">Vissza a fejezet elejére</a>]</p>
+
+<h4 id="the_plugins_panel">The Plugins panel</h4>
+
+<p>The Plugins panel in the Add-on Manager lists the installed Add-ons of type
+  Plugin. After <a href="#accessing_the_add-on_manager">accessing the Add-on
+  Manager</a>, click the Plugins button to show the Plugins panel. There, you
+  can perform the following actions:</p>
+
+<ul>
+  <li>To disable a plugin, click the entry corresponding to the desired plugin,
+    then click the Disable button.</li>
+  <li>To enable a plugin, click the entry corresponding to the desired plugin,
+    then click the Enable button.</li>
+</ul>
+
+<p><strong>Note</strong>: Contrary to other types of Add-ons, enabling and
+  disabling plugins doesn&apos;t require restarting &brandShortName;.</p>
+
+<p>[<a href="#using_the_add-on_manager">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="specifying_how_mozilla_starts_up">A &brandShortName; indításának megadása</h2>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#specifying_a_starting_page">Kezdőoldal megadása</a></li>
+    <li><a href="#changing_your_home_page">A kezdőlap módosítása</a></li>
+    <li><a href="#specifying_which_components_open_at_launch">Az indításkor megnyíló összetevők megadása</a></li>
+  </ul>
+</div>
+
+<h3 id="specifying_a_starting_page">Kezdőoldal megadása</h3>
+
+<p>Megadhatjuk, hogy a böngésző indításakor melyik oldal jelenjen meg:</p>
+
+<ol>
+  <li>Válasszuk ki a <span class="mac">&brandShortName;</span><span class="noMac">Szerkesztés</span> menüből a Beállítások parancsot.</li>
+  <li>Az Induláskor a böngészőablakban megjelenik csoportban adjuk meg, hogy üres oldalt, a saját kezdőlapot vagy a legutóbb meglátogatott weboldalt szeretnénk-e automatikusan megjeleníteni a böngésző indításakor. <p><strong>Megjegyzés</strong>: a Kezdőlap választásakor a Hely mezőbe írjuk be a címet.</p></li>
+</ol>
+
+<p>[<a href="#specifying_how_mozilla_starts_up">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="session_restore">Munkamenet visszaállítása</h3>
+
+<p>&brandShortName; periodically saves your browsing session (open windows
+  and tabs, including form data) to disk. When you start &brandShortName; with
+  Session Restore enabled, the windows and tabs from your previous session
+  will be restored. This is especially useful if your previous browsing session
+  ended unexpectedly (e.g. your computer crashed or a website you visited forced
+  &brandShortName; to terminate). &brandShortName; will automatically restore
+  the previous session if "Restore Previous Session" under "Display on Browser
+  Startup" has been selected. If you chose to not be warned when you close a
+  browser window with multiple tabs open (see <a href="#tabbed_browsing">Tabbed
+  Browsing</a> preference panel), &brandShortName; will open a page from
+  where you can choose which windows/tabs from the previous session you want to
+  restore. The same will happen if &brandShortName; crashes repeatedly.</p>
+
+<p>[<a href="#specifying_how_mozilla_starts_up">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="changing_your_home_page">A kezdőlap módosítása</h3>
+
+<p>A kezdőlap akkor jelenik meg, amikor a Személyes eszköztáron a Kezdőlap gombra kattintunk. A beállításoktól függően ez lehet a &brandShortName; böngésző indításakor automatikusan megnyíló oldal is.</p>
+
+<p>A kezdőlap megadása:</p>
+
+<ol>
+  <li>Válasszuk ki a <span class="mac">&brandShortName;</span><span class="noMac">Szerkesztés</span> menüből a Beállítások parancsot.</li>
+  <li>Kattintsunk a Böngésző kategóriára.</li>
+  <li>A Kezdőlap csoportban hajtsuk végre a megfelelő műveletet:
+    <ul>
+      <li>A Hely mezőbe írjuk be a kezdőlap címét.</li>
+      <li>Az Aktuális oldal használata választásával a böngészőben jelenleg megjelenített oldal lesz a kezdőlap.</li>
+      <li>Kattintsunk a Tallózás gombra, és jelöljük ki a merevlemezen a kívánt fájlt.</li>
+   </ul>
+ </li>
+</ol>
+
+<p><strong>Tipp</strong>: a kezdőlap gyors megadásához a Személyes eszköztáron húzzuk a könyvjelző ikont <img src="chrome://communicator/skin/bookmarks/bookmark-item.gif" alt="Könyvjelző ikon"/> a címmezőből a Kezdőlap gombra.</p>
+
+<p>[<a href="#specifying_how_mozilla_starts_up">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="specifying_which_components_open_at_launch">Az indításkor megnyíló összetevők megadása</h3>
+
+<p>Megadhatjuk, hogy a &brandShortName; indításakor mely összetevők nyíljanak meg (például a Levelező és hírolvasó, valamint a HTML-szerkesztő):</p>
+
+<ol>
+  <li>Válasszuk ki a <span class="mac">&brandShortName;</span><span class="noMac">Szerkesztés</span> menüből a Beállítások parancsot.</li>
+  <li>Kattintsunk a Megjelenés kategóriára.</li>
+  <li>Jelöljük ki a &brandShortName; indításakor automatikusan megnyitni kívánt összetevőket.</li>
+</ol>
+
+<p>[<a href="#specifying_how_mozilla_starts_up">Vissza a fejezet elejére</a>]</p>
+
+</body>
+</html>

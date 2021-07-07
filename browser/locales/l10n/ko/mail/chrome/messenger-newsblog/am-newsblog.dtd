@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "모든 피드에 대한 업데이트 활성화">
+<!ENTITY biffAll.accesskey             "E">
+
+<!ENTITY newFeedSettings.label         "새 피드에 대한 기본 설정">
+
+<!ENTITY manageSubscriptions.label     "구독 관리…">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!ENTITY feedWindowTitle.label         "피드 계정 마법사">
+<!ENTITY feeds.accountName             "블로그 및 뉴스 피드">

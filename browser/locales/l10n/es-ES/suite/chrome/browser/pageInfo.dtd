@@ -1,0 +1,98 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!ENTITY pageInfoWindow.dimensions "width: 100ch; height: 38em;">
+<!ENTITY copy.key "C">
+<!ENTITY copy.label "Copiar">
+<!ENTITY copy.accesskey "C">
+<!ENTITY selectall.key "A">
+<!ENTITY selectall.label "Seleccionar todo">
+<!ENTITY selectall.accesskey "A">
+<!ENTITY openHelpMac.key "?">
+<!ENTITY closeWindow.key "w">
+<!ENTITY copyLinks.label "Copiar enlace(s)">
+<!ENTITY copyLinks.accesskey "e">
+<!ENTITY openInNewTab.label "Abrir en una pestaña nueva">
+<!ENTITY openInNewTab.accesskey "n">
+<!ENTITY openInNewWindow.label "Abrir en una ventana nueva">
+<!ENTITY openInNewWindow.accesskey "i">
+<!ENTITY generalTab "General">
+<!ENTITY generalTab.accesskey "G">
+<!ENTITY generalTitle "Título:">
+<!ENTITY generalURL "Dirección:">
+<!ENTITY generalType "Tipo:">
+<!ENTITY generalMode "Modo de representación:">
+<!ENTITY generalSize "Tamaño:">
+<!ENTITY generalReferrer "URL de procedencia:">
+<!ENTITY generalSource "Origen del caché:">
+<!ENTITY generalModified "Modificado:">
+<!ENTITY generalEncoding2 "Codificación de texto:">
+<!ENTITY generalMetaName "Nombre">
+<!ENTITY generalMetaContent "Contenido">
+<!ENTITY generalSecurityDetails "Detalles">
+<!ENTITY generalSecurityDetails.accesskey "D">
+<!ENTITY formsTab "Formularios">
+<!ENTITY formsTab.accesskey "f">
+<!ENTITY formAction "Acción de formulario">
+<!ENTITY formMethod "Método">
+<!ENTITY formName "Nombre">
+<!ENTITY formEncoding "Codificación:">
+<!ENTITY formTarget "Destino:">
+<!ENTITY formFields "Campos:">
+<!ENTITY formLabel "Etiqueta">
+<!ENTITY formFName "Nombre del campo">
+<!ENTITY formType "Tipo">
+<!ENTITY formCValue "Valor actual">
+<!ENTITY linksTab "Enlaces">
+<!ENTITY linksTab.accesskey "l">
+<!ENTITY linkName "Nombre">
+<!ENTITY linkAddress "Dirección">
+<!ENTITY linkType "Tipo">
+<!ENTITY linkTarget "Destino">
+<!ENTITY linkAccessKey "Tecla de acceso rápido">
+<!ENTITY mediaTab "Medios">
+<!ENTITY mediaTab.accesskey "M">
+<!ENTITY mediaLocation "Dirección:">
+<!ENTITY mediaText "Texto asociado:">
+<!ENTITY mediaAltHeader "Texto alternativo">
+<!ENTITY mediaAddress "Dirección">
+<!ENTITY mediaType "Tipo">
+<!ENTITY mediaSize "Tamaño">
+<!ENTITY mediaCount "Cuenta">
+<!ENTITY mediaDimension "Dimensiones:">
+<!ENTITY mediaLongdesc "Descripción larga:">
+<!ENTITY mediaBlockImage.accesskey "B">
+<!ENTITY mediaSaveAs "Guardar como…">
+<!ENTITY mediaSaveAs.accesskey "u">
+<!ENTITY mediaSaveAs2.accesskey "a">
+<!ENTITY mediaPreview "Vista preliminar del medio:">
+<!ENTITY feedTab "Canales">
+<!ENTITY feedTab.accesskey "C">
+<!ENTITY feedSubscribe "Suscribirse">
+<!ENTITY feedSubscribe.accesskey "u">
+<!ENTITY permTab "Permisos">
+<!ENTITY permTab.accesskey "P">
+<!ENTITY permissionsFor "Permisos para:">
+<!ENTITY securityTab "Seguridad">
+<!ENTITY securityTab.accesskey "S">
+<!ENTITY securityHeader "Información de seguridad para esta página">
+<!ENTITY securityView.certView "Ver certificado">
+<!ENTITY securityView.accesskey "V">
+<!ENTITY securityView.unknown "Desconocido">
+<!ENTITY securityView.identity.header "Identidad del sitio web">
+<!ENTITY securityView.identity.owner "Propietario:">
+<!ENTITY securityView.identity.domain "Sitio web:">
+<!ENTITY securityView.identity.verifier "Verificado por:">
+<!ENTITY securityView.identity.validity "Caduca el:">
+<!ENTITY securityView.privacy.header "Privacidad e historial">
+<!ENTITY securityView.privacy.history "¿He visitado este sitio web antes hoy?">
+<!ENTITY securityView.privacy.cookies "¿Está guardando este sitio web información (cookies) en mi ordenador?">
+<!ENTITY securityView.privacy.viewCookies "Ver cookies">
+<!ENTITY securityView.privacy.viewCookies.accessKey "k">
+<!ENTITY securityView.privacy.passwords "¿He guardado contraseñas para este sitio web?">
+<!ENTITY securityView.privacy.viewPasswords "Ver contraseñas guardadas">
+<!ENTITY securityView.privacy.viewPasswords.accessKey "u">
+<!ENTITY securityView.technical.header "Detalles técnicos">

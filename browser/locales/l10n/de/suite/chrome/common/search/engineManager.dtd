@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  engineManager.title       "Suchmaschinen-Liste verwalten">
+<!ENTITY  engineManager.style       "min-width: 35em;">
+<!ENTITY  engineManager.intro       "Sie haben die folgenden Suchmaschinen installiert:">
+
+<!ENTITY  columnLabel.name          "Name">
+<!ENTITY  columnLabel.keyword       "Schlüsselwort">
+
+<!-- Buttons -->
+<!ENTITY  up.label                  "Nach oben">
+<!ENTITY  up.accesskey              "N">
+<!ENTITY  dn.label                  "Nach unten">
+<!ENTITY  dn.accesskey              "N">
+<!ENTITY  remove.label              "Entfernen">
+<!ENTITY  remove.accesskey          "E">
+<!ENTITY  edit.label                "Schlüsselwort bearbeiten…">
+<!ENTITY  edit.accesskey            "S">
+
+<!ENTITY  addEngine.label           "Weitere Suchmaschinen herunterladen…">
+<!ENTITY  addEngine.accesskey       "W">
+
+<!ENTITY  enableSuggest.label       "Suchvorschläge anzeigen">
+<!ENTITY  enableSuggest.accesskey   "v">
+
+<!ENTITY  restoreDefaults.label     "Standards wiederherstellen">
+<!ENTITY  restoreDefaults.accesskey "S">

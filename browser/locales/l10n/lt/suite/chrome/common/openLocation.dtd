@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/openLocation.xul -->
+
+
+<!ENTITY enter.label "Įveskite tinklalapio adresą (URL) arba parinkite norimą atverti failą iš disko:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "e">
+<!ENTITY chooseFile.label "Parinkti…">
+<!ENTITY chooseFile.accesskey "r">
+<!ENTITY newPrivate.label "naujame privačiojo naršymo lange">
+<!ENTITY newWindow.label "naujame naršyklės lange">
+<!ENTITY newTab.label "naujoje naršyklės kortelėje">
+<!ENTITY currentTab.label "aktyvioje naršyklės kortelėje">
+<!ENTITY editNewWindow.label "rašyklėje">
+<!ENTITY open.label "Atverti">
+<!ENTITY caption.label "Tinklalapio atvėrimas">
+<!ENTITY openWhere.label "Kur atverti:">
+<!ENTITY openWhere.accesskey "K">

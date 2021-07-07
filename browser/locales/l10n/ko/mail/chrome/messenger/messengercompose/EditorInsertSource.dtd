@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "HTML 삽입">
+<!ENTITY sourceEditField.label "HTML 문장 삽입:">
+<!ENTITY example.label "예:">
+<!-- LOCALIZATION NOTE (exampleOpenTag.label): DONT_TRANSLATE: they are text for HTML tagnames: "<i>" and "</i>" -->
+<!ENTITY exampleOpenTag.label "&lt;i&gt;">
+<!-- LOCALIZATION NOTE (exampleCloseTag.label): DONT_TRANSLATE: they are text for HTML tagnames: "<i>" and "</i>" -->
+<!ENTITY exampleCloseTag.label "&lt;/i&gt;">
+<!ENTITY exampleText.label "안녕하십시오?">
+<!ENTITY insertButton.label "삽입">
+<!ENTITY insertButton.accesskey "I">

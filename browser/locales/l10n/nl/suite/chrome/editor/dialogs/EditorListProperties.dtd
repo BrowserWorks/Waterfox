@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Lijsteigenschappen">
+
+<!ENTITY ListType.label "Lijsttype">
+<!ENTITY bulletStyle.label "Opsommingsstijl:">
+<!ENTITY startingNumber.label "Starten bij:">
+<!ENTITY startingNumber.accessKey "S">
+<!ENTITY none.value "Geen">
+<!ENTITY bulletList.value "Opsommingslijst (niet genummerd)">
+<!ENTITY numberList.value "Genummerde lijst">
+<!ENTITY definitionList.value "Definitielijst">
+<!ENTITY changeEntireListRadio.label "Hele lijst wijzigen">
+<!ENTITY changeEntireListRadio.accessKey "H">
+<!ENTITY changeSelectedRadio.label "Alleen geselecteerde items wijzigen">
+<!ENTITY changeSelectedRadio.accessKey "A">

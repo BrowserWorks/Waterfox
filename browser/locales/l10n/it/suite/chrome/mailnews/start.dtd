@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Benvenuti in &brandShortName; Posta e gruppi di discussione">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Benvenuti in <a id="vendorURL" href="">&brandShortName;</a> Posta e Gruppi di discussione!'>
+<!ENTITY description.label
+"&brandShortName; Posta e gruppi di discussione è un potente client open source per la posta ed i gruppi di discussione, che fornisce un controllo avanzato sulla posta spam ed altre interessanti caratteristiche.">
+<!ENTITY features.title "Funzionalità">
+<!ENTITY feat_multiacc.label "Gestione di account multipli">
+<!ENTITY feat_junk.label "Controllo della posta spam">
+<!ENTITY feat_feeds.label "Lettore feed">
+<!ENTITY feat_filters.label "Filtri per i messaggi">
+<!ENTITY feat_htmlmsg.label "Gestione messaggio HTML">
+<!ENTITY feat_abook.label "Rubrica">
+<!ENTITY feat_tags.label "Etichette e viste di posta personalizzabili">
+<!ENTITY feat_integration.label
+"Completa integrazione con la suite di applicazioni &brandShortName;">
+<!ENTITY dict.title "Dizionari">
+<!ENTITY dict_intro.label "I dizionari vengono utilizzati per controllare l'ortografia dei messaggi.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Dizionari per molte lingue possono essere installati dalla sezione <a href="https://it.add-ons.mozilla.org/it/seamonkey/1.1/dictionaries/">dizionari</a> su <a href="http://addons.mozilla.org/">Mozilla Add-ons</a>.'>
+<!ENTITY dict_info.label2
+'Dizionari per molte lingue possono essere installati
+dalla sezione <a id="dictURL" href="">dizionari</a> su
+<a href="https://addons.thunderbird.net/seamonkey/">Componenti aggiuntivi per SeaMonkey e Thunderbird</a>.'>
+<!ENTITY info.title "Ulteriori informazioni">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Gli sviluppatori</a> gradiscono segnalazioni di errori e richieste per nuove funzionalità, ma vi pregano di leggere le <a id="releaseNotesURL" href="">note di versione</a> e di controllare su <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> prima di aprire una nuova segnalazione.'>

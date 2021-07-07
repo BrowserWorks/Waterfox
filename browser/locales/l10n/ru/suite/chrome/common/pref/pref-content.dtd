@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Содержимое">
+<!ENTITY pref.content.description               "Эти настройки влияют на то, как содержимое веб-сайтов и сообщений отобразится в &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Значки веб-сайтов">
+<!ENTITY useSiteIcons.label                     "Показывать значки веб-сайтов">
+<!ENTITY useSiteIcons.accesskey                 "к">
+<!ENTITY useFavIcons2.label                     "Пытаться использовать значки серверов, если они не указаны страницей">
+<!ENTITY useFavIcons2.accesskey                 "ы">
+
+<!ENTITY scrolling.label                        "Прокрутка">
+<!ENTITY useAutoScroll.label                    "Использовать автоматическую прокрутку">
+<!ENTITY useAutoScroll.accesskey                "а">
+<!ENTITY useSmoothScroll.label                  "Использовать плавную прокрутку">
+<!ENTITY useSmoothScroll.accesskey              "л">
+
+<!ENTITY zoomPrefs.label                        "Настройки масштабирования">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Диапазон от">
+<!ENTITY minZoom.accesskey                      "о">
+<!ENTITY maxZoom.label                          "до">
+<!ENTITY maxZoom.accesskey                      "д">
+<!ENTITY percent.label                          "&#037;">
+
+<!ENTITY defaultZoom.label                      "Масштаб по умолчанию">
+<!ENTITY defaultZoom.accesskey                  "м">
+
+<!ENTITY siteSpecific.label                     "Запоминать масштаб для каждого сайта">
+<!ENTITY siteSpecific.accesskey                 "п">
+<!ENTITY textZoomOnly.label                     "Масштабировать только текст (не страницу целиком)">
+<!ENTITY textZoomOnly.accesskey                 "в">
+<!ENTITY enableAutomaticImageResizing.label     "Использовать автоматическое изменение размера изображений">
+<!ENTITY enableAutomaticImageResizing.accesskey "з">
+
+<!ENTITY allowHWAccel.label                     "По возможности использовать аппаратное ускорение">
+<!ENTITY allowHWAccel.accesskey                 "м">
+<!ENTITY blockAutoRefresh.label                 "Предупреждать при попытке веб-сайтов перенаправить или перезагрузить страницу">
+<!ENTITY blockAutoRefresh.accesskey             "ж">
+
+<!ENTITY showZoomStatusPanel.label              "Показывать управление масштабом в строке состояния">

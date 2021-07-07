@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Internett-søk">
+<!ENTITY legendHeader                     "Standard søkjemotor">
+<!ENTITY defaultSearchEngine.label        "Søk med:">
+<!ENTITY defaultSearchEngine.accesskey    "S">
+
+<!ENTITY engineManager.label              "Handter søkjemotorer…">
+
+<!ENTITY searchResults.label              "Søkjeresultat">
+
+<!ENTITY openInTab.label                  "Opne ei ny fane for søkjeresultat i sidestolpen">
+<!ENTITY openInTab.accesskey              "Å">
+<!ENTITY openContextSearchTab.label       "Opne ei fane i staden for eit vindauge for kontekstmenysøk">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "Opne søkjefana i sidestolpen ved søk">
+<!ENTITY openSidebarSearchPanel.accesskey "n">

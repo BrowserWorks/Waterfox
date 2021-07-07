@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editorWindow.titlemodifier "편집기">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!ENTITY compositionToolbarCmd.label "편집 도구 모음">
+<!ENTITY compositionToolbarCmd.accesskey "c">
+<!ENTITY compositionToolbar.tooltip "일반 도구 모음">
+<!ENTITY formattingToolbarCmd.label "형식 도구 모음">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "편집 모드 도구 모음">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+<!ENTITY exportToTextCmd.label "텍스트로 변환…">
+<!ENTITY exportToTextCmd.accesskey "T">
+<!ENTITY formatMenu.label "서식">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "그리드 맞추기">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "페이지 제목 및 설정…">
+<!ENTITY pageProperties.accesskey "g">
+<!ENTITY previewToolbarCmd.label "탐색">
+<!ENTITY previewToolbarCmd.tooltip "현재 페이지 브라우저로 읽기">
+<!ENTITY previewCmd.label "페이지 탐색">
+<!ENTITY previewCmd.accesskey "w">
+<!ENTITY sendPageCmd.label "페이지 보내기…">
+<!ENTITY sendPageCmd.accesskey "d">
+<!ENTITY validateCmd.label "HTML 검사">
+<!ENTITY validateCmd.accesskey "v">
+<!ENTITY AllTagsMode.label "모든 태그 보이기">
+<!ENTITY AllTagsMode.accesskey "A">
+<!ENTITY AllTagsMode.tooltip "HTML 태그 아이콘 보이기">
+<!ENTITY AllTagsModeTab.label "HTML 태그">
+<!ENTITY HTMLSourceMode.label "HTML 소스">
+<!ENTITY HTMLSourceMode.accesskey "h">
+<!ENTITY HTMLSourceMode.tooltip "HTML 편집">
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "소스">
+<!ENTITY NormalModeTab.label "기본">
+<!ENTITY NormalMode.label "일반 편집 모드">
+<!ENTITY NormalMode.accesskey "n">
+<!ENTITY NormalMode.tooltip "표 테두리와 내부 링크 보이기">
+<!ENTITY PreviewMode.label "미리 보기">
+<!ENTITY PreviewMode.accesskey "p">
+<!ENTITY PreviewMode.tooltip "WYSIWYG으로 브라우저에 표시">
+<!ENTITY PreviewModeTab.label "미리보기">

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "">
+<!ENTITY translation.translateThisPage.label    "로 된 페이지를 번역해서 보시겠습니까?">
+<!ENTITY translation.translate.button           "번역 돌리기">
+<!ENTITY translation.notNow.button              "나중에">
+
+<!ENTITY translation.translatingContent.label   "페이지 내용을 번역하고 있습니다…">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  toolkit/intl/languageNames.ftl file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "이 페이지의">
+<!ENTITY translation.translatedTo.label         "는">
+<!ENTITY translation.translatedToSuffix.label   "로 번역되었습니다.">
+
+<!ENTITY translation.showOriginal.button        "원본 보기">
+<!ENTITY translation.showTranslation.button     "번역본 보기">
+
+<!ENTITY translation.errorTranslating.label     "번역을 돌리다 오류가 발생했습니다.">
+<!ENTITY translation.tryAgain.button            "다시 시도">
+
+<!ENTITY translation.serviceUnavailable.label   "지금은 번역을 사용할 수 없습니다. 나중에 다시 시도하세요.">
+
+<!ENTITY translation.options.menu               "설정">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "이 사이트는 항상 번역하지 않기">
+<!ENTITY translation.options.neverForSite.accesskey "e">
+<!ENTITY translation.options.preferences.label  "번역 환경 설정">
+<!ENTITY translation.options.preferences.accesskey "T">
+

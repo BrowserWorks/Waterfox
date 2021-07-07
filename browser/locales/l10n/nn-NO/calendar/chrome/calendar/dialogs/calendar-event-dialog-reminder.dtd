@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Påminningar">
+<!ENTITY reminder.add.label                                "Legg til">
+<!ENTITY reminder.add.accesskey                            "L">
+<!ENTITY reminder.remove.label                             "Fjern">
+<!ENTITY reminder.remove.accesskey                         "F">
+
+<!ENTITY reminder.reminderDetails.label                    "Detaljar">
+<!ENTITY reminder.action.label                             "Vel ei påminningshandling">
+
+<!ENTITY reminder.action.alert.label                       "Vis eit varsel">
+<!ENTITY reminder.action.email.label                       "Send ein e-post">
+
+<!ENTITY alarm.units.minutes                               "minutt" >
+<!ENTITY alarm.units.hours                                 "timar" >
+<!ENTITY alarm.units.days                                  "dagar" >

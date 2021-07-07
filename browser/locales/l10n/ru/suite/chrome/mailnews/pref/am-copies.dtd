@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Копии и папки">
+<!ENTITY sendingPrefix.label "При отправке сообщений:">
+<!ENTITY fccMailFolder.label "Автоматически помещать копию в:">
+<!ENTITY fccMailFolder.accesskey "м">
+<!ENTITY fccReplyFollowsParent.label "Сохранять ответы в папке оригинала">
+<!ENTITY fccReplyFollowsParent.accesskey "я">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Отправлять копии (Cc) по адресам:">
+<!ENTITY ccAddress.accesskey "т">
+<!ENTITY ccAddressList.placeholder "Разделяйте адреса запятыми">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Отправлять скрытые копии (Bcc) по адресам:">
+<!ENTITY bccAddress.accesskey "к">
+<!ENTITY bccAddressList.placeholder "Разделяйте адреса запятыми">
+<!ENTITY saveMessageDlg.label "Запрашивать подтверждение при сохранении сообщений">
+<!ENTITY saveMessageDlg.accesskey "п">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "папку «Отправленные» на:">
+<!ENTITY sentFolderOn.accesskey "а">
+<!ENTITY sentInOtherFolder.label "Другую папку:">
+<!ENTITY sentInOtherFolder.accesskey "г">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Архивы сообщений">
+<!ENTITY keepArchives.label "Хранить архивированные сообщения в:">
+<!ENTITY keepArchives.accesskey "х">
+<!ENTITY archiveHierarchyButton.label "Настройки архивации…">
+<!ENTITY archiveHierarchyButton.accesskey "с">
+<!ENTITY archivesFolderOn.label "папке «Архивы» на:">
+<!ENTITY archivesFolderOn.accesskey "в">
+<!ENTITY archiveInOtherFolder.label "Другой папке:">
+<!ENTITY archiveInOtherFolder.accesskey "о">
+<!ENTITY specialFolders.label "Черновики и Шаблоны">
+<!ENTITY keepDrafts2.label "Хранить черновики сообщений в:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "папке «Черновики» на:">
+<!ENTITY draftsFolderOn.accesskey "н">
+<!ENTITY draftInOtherFolder.label "Другой папке:">
+<!ENTITY draftInOtherFolder.accesskey "у">
+<!ENTITY keepTemplates.label "Хранить шаблоны сообщений в:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "папке «Шаблоны» на:">
+<!ENTITY templatesFolderOn.accesskey "б">
+<!ENTITY templateInOtherFolder.label "Другой папке:">
+<!ENTITY templateInOtherFolder.accesskey "р">

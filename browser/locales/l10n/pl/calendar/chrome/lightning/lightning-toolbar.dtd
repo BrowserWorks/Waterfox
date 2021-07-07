@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name      "Pasek narzędzi kalendarza">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "k">
+<!ENTITY lightning.toolbar.task.name          "Pasek narzędzi zadań">
+<!ENTITY lightning.toolbar.task.name.accesskey "z">
+
+<!ENTITY lightning.toolbar.sync.label      "Synchronizuj">
+<!ENTITY lightning.toolbar.sync.tooltip "Odśwież kalendarze i synchronizuj zmiany">
+<!ENTITY lightning.toolbar.delete.label    "Usuń">
+<!ENTITY lightning.toolbar.delete.tooltip "Usuń zaznaczone zadania lub wydarzenia">
+<!ENTITY lightning.toolbar.edit.label      "Edytuj">
+<!ENTITY lightning.toolbar.edit.tooltip "Edytuj zaznaczone zadanie lub wydarzenie">
+<!ENTITY lightning.toolbar.gototoday.label "Dzisiaj">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Przejdź do panelu bieżących spraw">
+<!ENTITY lightning.toolbar.print.label     "Drukuj">
+<!ENTITY lightning.toolbar.print.tooltip "Drukuj zadania lub wydarzenia">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label "Kalendarz">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.calendar.tooltip "Przełącz na widok kalendarza">
+<!ENTITY lightning.toolbar.task.label "Zadania">
+<!ENTITY lightning.toolbar.task.accesskey "Z">
+<!ENTITY lightning.toolbar.task.tooltip "Przełącz na widok zadań">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Wydarzenie">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Utwórz nowe wydarzenie">
+<!ENTITY lightning.toolbar.newtask.label      "Zadanie">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Utwórz nowe zadanie">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Dzień">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Tydzień">
+<!ENTITY lightning.toolbar.week.accesskey            "T">
+<!ENTITY lightning.toolbar.multiweek.label           "Wiele tygodni">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "W">
+<!ENTITY lightning.toolbar.month.label               "Miesiąc">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!ENTITY lightning.toolbar.appmenuButton.label "Menu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip "Wyświetl menu programu &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label "Panel kalendarza">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey "P">
+<!ENTITY lightning.toolbar.calendarpane.label "Wyświetlaj panel kalendarza">
+<!ENTITY lightning.toolbar.calendarpane.accesskey "W">

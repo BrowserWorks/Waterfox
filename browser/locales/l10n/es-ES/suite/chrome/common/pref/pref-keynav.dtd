@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navegación con teclado">
+<!ENTITY tabNavigationBehavior.label "Navegación con el tabulador">
+<!ENTITY tabNavigationLinks.label "Enlaces">
+<!ENTITY tabNavigationLinks.accesskey "L">
+<!ENTITY tabNavigationForms.label "Botones, botones de radio, casillas de verificación y listas">
+<!ENTITY tabNavigationForms.accesskey "B">
+<!ENTITY tabNavigationTextboxes.label "Nota: cajas de texto y regiones desplazables siempre se incluyen en la tabulación.">
+<!ENTITY tabNavigationDesc.label "Cuando se pulsa Tab o Mayús+Tab, moverse entre:">
+<!ENTITY accessibilityBrowseWithCaret.label "Navegar con cursor">
+<!ENTITY browseWithCaretDesc.label "La navegación con cursor le permite navegar y realizar selecciones dentro de las páginas usando las teclas del cursor para mover un cursor visible.">
+<!ENTITY browseWithCaretUse.label "Usar navegación con cursor">
+<!ENTITY browseWithCaretUse.accesskey "U">
+<!ENTITY browseWithCaretShortCut.label "Usar el atajo de teclado F7 para alternar la navegación con cursor">
+<!ENTITY browseWithCaretShortCut.accesskey "s">
+<!ENTITY browseWithCaretWarn.label "Advertirme antes de activar la navegación con cursores">
+<!ENTITY browseWithCaretWarn.accesskey "A">
+<!ENTITY modifiers.label "Modificadores">
+<!ENTITY acceleratorKey.label "Tecla aceleradora:">
+<!ENTITY acceleratorKey.accesskey "T">
+<!ENTITY menuAccessKey.label "Tecla de acceso al menú:">
+<!ENTITY menuAccessKey.accesskey "c">
+<!ENTITY modifiersDesc.label "Nota: un valor cero desactiva una tecla modificadora.">

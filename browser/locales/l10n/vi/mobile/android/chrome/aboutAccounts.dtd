@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Tài khoản Firefox">
+<!ENTITY aboutAccounts.connected.description "Bạn đang kết nối với cái tên">
+<!ENTITY aboutAccounts.syncPreferences.label "Chạm để kiểm tra cài đặt đồng bộ hóa">
+
+<!ENTITY aboutAccounts.noConnection.title "Không có kết nối mạng">
+<!ENTITY aboutAccounts.retry.label "Thử lại">
+
+<!ENTITY aboutAccounts.restrictedError.title "Bị hạn chế">
+<!ENTITY aboutAccounts.restrictedError.description "Bạn không thể quản lý tài khoản Firefox từ hồ sơ này.">

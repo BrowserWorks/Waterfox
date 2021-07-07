@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Onlinecontacten">
+<!ENTITY offlineContactsHeader.label   "Offlinecontacten">
+<!ENTITY conversationsHeader.label     "Conversaties">
+<!ENTITY searchResultConversation.label "Zoekresultaat">
+<!ENTITY chat.noConv.title             "Conversaties worden hier weergegeven.">
+<!ENTITY chat.noConv.description       "Gebruik de contactlijst in het linker paneel om een conversatie te beginnen.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; heeft momenteel geen vorige conversaties voor dit contact opgeslagen.">
+<!ENTITY chat.noAccount.title             "U hebt nog geen chataccount ingesteld.">
+<!ENTITY chat.noAccount.description       "Laat &brandShortName; u door het instelproces van uw chataccount leiden.">
+<!ENTITY chat.accountWizard.button       "Beginnen">
+<!ENTITY chat.noConnectedAccount.title             "Uw chataccounts zijn niet verbonden.">
+<!ENTITY chat.noConnectedAccount.description       "U kunt deze verbinden vanuit het dialoogvenster ‘Chatstatus’:">
+<!ENTITY chat.showAccountManager.button       "Chatstatus tonen">
+
+<!ENTITY chat.participants             "Deelnemers:">
+<!ENTITY chat.previousConversations    "Vorige conversaties:">
+<!ENTITY chat.ongoingConversation      "Actieve conversatie">
+
+<!ENTITY openConversationCmd.label     "Een conversatie beginnen">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Conversatie sluiten">
+<!ENTITY closeConversationCmd.accesskey "s">
+<!ENTITY aliasCmd.label                "Hernoemen">
+<!ENTITY aliasCmd.accesskey            "H">
+<!ENTITY deleteCmd.label               "Contact verwijderen">
+<!ENTITY deleteCmd.accesskey           "v">
+
+<!ENTITY openConversationButton.tooltip  "Een conversatie beginnen">
+<!ENTITY closeConversationButton.tooltip "Conversatie sluiten">
+
+<!ENTITY addBuddyButton.label          "Contact toevoegen">
+<!ENTITY joinChatButton.label          "Chat bijwonen">
+<!ENTITY chatAccountsButton.label      "Accounts tonen">
+
+<!ENTITY status.available          "Beschikbaar">
+<!ENTITY status.unavailable        "Niet beschikbaar">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Koppeling openen…">
+<!ENTITY openLinkCmd.accesskey        "O">

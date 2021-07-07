@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Κρυφή μνήμη">
+<!ENTITY pref.cache.caption              "Ορισμός επιλογών κρυφής μνήμης">
+<!ENTITY cachePara                       'Η κρυφή μνήμη διατηρεί αντίγραφα των ιστοσελίδων που επισκέπτεστε συχνά στον σκληρό σας δίσκο. (Κάνοντας κλικ στο "Ανανέωση" εμφανίζεται πάντα η τελευταία έκδοση μιας σελίδας.)'>
+<!ENTITY cacheCheck.label                "Να επιτρέπεται στο &brandShortName; η διαχείριση του μεγέθους της κρυφής μνήμης μου">
+<!ENTITY cacheCheck.accesskey            "Ν">
+<!ENTITY diskCacheUpTo.label             "Χρήση έως">
+<!ENTITY diskCacheUpTo.accesskey         "Χ">
+<!ENTITY spaceMbytes                     "MB χώρου δίσκου για την κρυφή μνήμη">
+<!ENTITY diskCacheFolder.label           "Τοποθεσία φακέλου κρυφής μνήμης:">
+<!ENTITY clearDiskCache.label            "Απαλοιφή κρυφής μνήμης">
+<!ENTITY clearDiskCache.accesskey        "Α">
+<!ENTITY chooseDiskCacheFolder.label     "Επιλογή φακέλου…">
+<!ENTITY chooseDiskCacheFolder.accesskey "Ε">
+<!ENTITY diskCacheFolderExplanation      "Τα αρχεία κρυφής μνήμης θα αποθηκευτούν σε έναν υποφάκελο με το όνομα &quot;Cache&quot; στον κατάλογο που καθορίσατε. Επανεκκινήστε το &brandShortName; για να εφαρμοστούν οι αλλαγές.">
+<!ENTITY docCache.label                  "Σύγκριση της σελίδας από κρυφή μνήμη με τη σελίδα στο δίκτυο:">
+<!ENTITY docCache.accesskey              "γ">
+<!ENTITY checkOncePerSession.label       "Μία φορά ανά συνεδρία">
+<!ENTITY checkEveryTime.label            "Κάθε φορά που βλέπω τη σελίδα">
+<!ENTITY checkNever.label                "Ποτέ">
+<!ENTITY checkAutomatically.label        "Όταν η σελίδα δεν είναι ενημερωμένη">
+
+<!ENTITY prefetchTitle.label             "Προ-φόρτωση συνδέσμου">
+<!ENTITY enablePrefetch.label            "Προφόρτωση ιστοσελίδων στην κατάσταση αδράνειας, ώστε να φορτώνονται ταχύτερα οι σύνδεσμοι σε ιστοσελίδες που έχουν σχεδιαστεί για προφόρτωση">
+<!ENTITY enablePrefetch.accesskey        "Π">
+
+<!ENTITY debugCache.label                "Έλεγχος σφαλμάτων">
+<!ENTITY debugEnableMemCache.label       "Ενεργοποίηση κρυφής μνήμης μνήμης">
+<!ENTITY debugEnableMemCache.accesskey   "Ε">
+<!ENTITY debugEnableDiskCache.label      "Ενεργοποίηση κρυφής μνήμης δίσκου">
+<!ENTITY debugEnableDiskCache.accesskey  "δ">

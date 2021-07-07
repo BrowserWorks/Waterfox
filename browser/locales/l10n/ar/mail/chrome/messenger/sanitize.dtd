@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title         "امسح التأريخ الحالي">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "المدى الزمني الذي سيُمسح: ">
+<!ENTITY clearTimeDuration.accesskey      "م">
+<!ENTITY clearTimeDuration.lastHour       "آخر ساعة">
+<!ENTITY clearTimeDuration.last2Hours     "آخر ساعتين">
+<!ENTITY clearTimeDuration.last4Hours     "آخر أربع ساعات">
+<!ENTITY clearTimeDuration.today          "اليوم">
+<!ENTITY clearTimeDuration.everything     "التأريخ كله">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "التفاصيل">
+<!ENTITY detailsProgressiveDisclosure.accesskey "ف">
+
+
+<!ENTITY itemHistory.label                 "تأريخ التصفح">
+<!ENTITY itemHistory.accesskey             "ص">
+<!ENTITY itemCookies.label                 "الكعكات">
+<!ENTITY itemCookies.accesskey             "ت">
+<!ENTITY itemCache.label                   "الخبيئة">
+<!ENTITY itemCache.accesskey               "خ">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "لا يمكن التراجع عن هذا الإجراء.">
+
+<!ENTITY dialog.width                 "28em">

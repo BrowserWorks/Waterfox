@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY feedPage.title "查看收取点">
+<!ENTITY feedSubscribeNow "立即订阅">
+<!ENTITY feedMessenger "新闻组 &amp; 博客">
+<!ENTITY feedLiveBookmarks "实时书签">
