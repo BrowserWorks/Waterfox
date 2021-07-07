@@ -121,6 +121,9 @@ if CONFIG['JS_BUNDLED_EDITLINE']:
 if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']
 
+if CONFIG['JS_HAS_CTYPES']:
+    DIRS += ['ctypes']
+
 UNIFIED_SOURCES += [
     'jsalloc.cpp',
     'jsapi.cpp',
@@ -245,17 +248,6 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
         'vm/TraceLoggingTypes.cpp',
     ]
 
-if CONFIG['JS_HAS_CTYPES']:
-    SOURCES += [
-        'ctypes/CTypes.cpp',
-        'ctypes/Library.cpp',
-    ]
-    if not CONFIG['MOZ_SYSTEM_FFI']:
-        LOCAL_INCLUDES += [
-            '!ctypes/libffi/include',
-            'ctypes/libffi/src/%s' % CONFIG['FFI_TARGET_DIR'],
-        ]
-
 if CONFIG['MOZ_VTUNE']:
     SOURCES += [
         'vtune/ittnotify_static.c',
@@ -270,7 +262,3 @@ DIRS += [
 ]
 
 FINAL_LIBRARY = 'js'
-
-if CONFIG['_MSC_VER']:
-     if CONFIG['CPU_ARCH'] == 'x86_64' and CONFIG['JS_HAS_CTYPES']:
-        SOURCES['ctypes/CTypes.cpp'].no_pgo = True # Bug 810661

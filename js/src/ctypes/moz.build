@@ -1,0 +1,26 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+include('../js-config.mozbuild')
+include('../js-cxxflags.mozbuild')
+
+FINAL_LIBRARY = "js"
+
+# Includes should be relative to parent path
+LOCAL_INCLUDES += ["!..", ".."]
+
+SOURCES += [
+    'CTypes.cpp',
+    'Library.cpp',
+]
+
+if not CONFIG['MOZ_SYSTEM_FFI']:
+    LOCAL_INCLUDES += [
+        '!libffi/include',
+        'libffi/src/%s' % CONFIG['FFI_TARGET_DIR'],
+    ]
+
+if CONFIG['_MSC_VER'] and CONFIG['CPU_ARCH'] == 'x86_64':
+    SOURCES['CTypes.cpp'].no_pgo = True # Bug 810661
