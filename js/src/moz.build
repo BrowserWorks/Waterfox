@@ -14,6 +14,7 @@ DIRS += [
     'builtin',
     'devtools',
     'ds',
+    'frontend',
 ]
 
 if CONFIG['JS_BUNDLED_EDITLINE']:
@@ -115,12 +116,6 @@ EXPORTS.js += [
 ]
 
 UNIFIED_SOURCES += [
-    'frontend/BytecodeCompiler.cpp',
-    'frontend/BytecodeEmitter.cpp',
-    'frontend/FoldConstants.cpp',
-    'frontend/NameFunctions.cpp',
-    'frontend/ParseNode.cpp',
-    'frontend/TokenStream.cpp',
     'gc/Allocator.cpp',
     'gc/AtomMarking.cpp',
     'gc/Barrier.cpp',
@@ -337,8 +332,6 @@ UNIFIED_SOURCES += [
 
 # jsarray.cpp and jsatom.cpp cannot be built in unified mode because
 # xpcshell is broken during packaging when compiled with gcc-4.8.2
-# frontend/Parser.cpp cannot be built in unified mode because of explicit
-# template instantiations.
 # jsdtoa.cpp cannot be built in unified mode because we want to suppress
 # compiler warnings in third-party dtoa.c.
 # jsmath.cpp cannot be built in unified mode because it needs to re-#define the
@@ -351,7 +344,6 @@ UNIFIED_SOURCES += [
 # vm/Interpreter.cpp is gigantic and destroys incremental build times for any
 # files unlucky enough to be unified with it.
 SOURCES += [
-    'frontend/Parser.cpp',
     'gc/StoreBuffer.cpp',
     'jsarray.cpp',
     'jsatom.cpp',
@@ -561,13 +553,6 @@ else:
     SOURCES += [
         'perf/pm_stub.cpp'
     ]
-
-GENERATED_FILES += ['frontend/ReservedWordsGenerated.h']
-ReservedWordsGenerated = GENERATED_FILES['frontend/ReservedWordsGenerated.h']
-ReservedWordsGenerated.script = 'frontend/GenerateReservedWords.py'
-ReservedWordsGenerated.inputs += [
-    'frontend/ReservedWords.h'
-]
 
 DIRS += [
     'build',
