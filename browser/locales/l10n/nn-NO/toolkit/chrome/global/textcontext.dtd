@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Legg til i ordbok">
+<!ENTITY spellAddToDictionary.accesskey "L">
+<!ENTITY spellUndoAddToDictionary.label "Angre tillegg i ordbok">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Stavekontroll">
+<!ENTITY spellCheckToggle.accesskey "K">
+<!ENTITY spellNoSuggestions.label "(Ingen forslag)">
+<!ENTITY spellDictionaries.label "Språk">
+<!ENTITY spellDictionaries.accesskey "S">
+
+<!ENTITY searchTextBox.clear.label "Tøm">
+

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "사전에 추가">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "사전에 추가 취소">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "맞춤법 검사">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(추천 단어 없음)">
+<!ENTITY spellDictionaries.label "언어">
+<!ENTITY spellDictionaries.accesskey "l">
+
+<!ENTITY searchTextBox.clear.label "지우기">
+
