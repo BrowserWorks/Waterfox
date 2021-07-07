@@ -1,0 +1,28 @@
+# This Source Code Form is subject to the terms of the Waterfox Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+
+## Theme names and descriptions used in the Themes panel in about:addons
+
+# "Auto" is short for automatic. It can be localized without limitations.
+extension-default-theme-name-auto = Θέμα συστήματος — αυτόματο
+extension-default-theme-description = Χρήση ρύθμισης λειτουργικού συστήματος για κουμπιά, μενού και παράθυρα.
+extension-firefox-compact-light-name = Ανοιχτόχρωμο
+extension-firefox-compact-light-description = Ένα θέμα με φωτεινό σύνολο χρωμάτων.
+extension-firefox-compact-dark-name = Σκουρόχρωμο
+extension-firefox-compact-dark-description = Ένα θέμα με σκούρο σύνολο χρωμάτων.
+extension-firefox-alpenglow-name = Waterfox Alpenglow
+extension-firefox-alpenglow-description = Πολύχρωμη εμφάνιση για τα κουμπιά, τα μενού και τα παράθυρα.
+
+## Colorway Themes
+## These themes are variants of a colorway. The colorway is specified in the
+## $colorway-name variable.
+## Variables
+##   $colorway-name (String) The name of a colorway (e.g. Graffiti, Elemental).
+
+extension-colorways-soft-name = { $colorway-name } — Απαλό
+extension-colorways-balanced-name = { $colorway-name } — Ισορροπημένο
+# "Bold" is used in the sense of bravery or courage, not in the sense of
+# emphasized text.
+extension-colorways-bold-name = { $colorway-name } — Έντονο

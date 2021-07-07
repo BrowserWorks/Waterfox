@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title     "Éditeur de réseaux">
+<!ENTITY networksEditDialog.size      "width: 75ch; height: 28em;">
+
+<!ENTITY restoreButton.label          "Configuration par défaut">
+<!ENTITY restoreButton.accesskey      "f">
+
+<!ENTITY networkListAdd.label         "Ajouter un réseau…">
+<!ENTITY networkListAdd.accesskey     "A">
+<!ENTITY networkListAdd.tooltip       "Ajouter un nouveau réseau">
+<!ENTITY networkListEdit.label        "Modifier le réseau…">
+<!ENTITY networkListEdit.accesskey    "M">
+<!ENTITY networkListEdit.tooltip      "Modifier le réseau sélectionné">
+<!ENTITY networkListRemove.label      "Supprimer le réseau">
+<!ENTITY networkListRemove.accesskey  "S">
+<!ENTITY networkListRemove.tooltip    "Supprimer le réseau sélectionné">
+
+<!ENTITY serverListUp.label           "Déplacer vers le haut">
+<!ENTITY serverListUp.accesskey       "D">
+<!ENTITY serverListUp.tooltip         "Déplacer le serveur sélectionné vers le haut de la liste">
+<!ENTITY serverListDown.label         "Déplacer vers le bas">
+<!ENTITY serverListDown.accesskey     "b">
+<!ENTITY serverListDown.tooltip       "Déplacer le serveur sélectionné vers le bas de la liste">
+<!ENTITY serverListAdd.label          "Ajouter un serveur…">
+<!ENTITY serverListAdd.accesskey      "S">
+<!ENTITY serverListAdd.tooltip        "Ajouter un nouveau serveur">
+<!ENTITY serverListEdit.label         "Modifier le serveur…">
+<!ENTITY serverListEdit.accesskey     "i">
+<!ENTITY serverListEdit.tooltip       "Modifier le serveur sélectionné">
+<!ENTITY serverListRemove.label       "Supprimer le serveur">
+<!ENTITY serverListRemove.accesskey   "m">
+<!ENTITY serverListRemove.tooltip     "Supprimer le serveur sélectionné">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label          "Détails du serveur sélectionné :">
+<!ENTITY serverName.label             "Serveur :">
+<!ENTITY serverName.accesskey         "S">
+<!ENTITY serverPort.label             "Port :">
+<!ENTITY serverPort.accesskey         "P">
+<!ENTITY connectionSecurity.label     "Sécurité de la connexion :">
+<!ENTITY connectionSecurity.accesskey "n">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title       "Serveur IRC">
+<!ENTITY settings.caption             "Paramètres">
+<!ENTITY security.caption             "Sécurité">
+<!ENTITY serverPortDefault.label      "Défaut :">
