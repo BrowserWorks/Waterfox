@@ -34,7 +34,6 @@ UNIFIED_SOURCES += [
     'CacheIRSpewer.cpp',
     'CodeGenerator.cpp',
     'CompileWrappers.cpp',
-    'Disassembler.cpp',
     'EagerSimdUnbox.cpp',
     'EdgeCaseAnalysis.cpp',
     'EffectiveAddressAnalysis.cpp',
@@ -88,6 +87,9 @@ UNIFIED_SOURCES += [
     'VMFunctions.cpp',
     'WasmBCE.cpp',
 ]
+
+if CONFIG['MOZ_DEBUG']:
+    UNIFIED_SOURCES += ['Disassembler.cpp']
 
 if not CONFIG['ENABLE_ION']:
     UNIFIED_SOURCES += [
