@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Chuyển đổi sang bảng">
+<!ENTITY instructions1.label   "Trình soạn thảo tạo một hàng mới trên bảng cho mỗi đoạn đã chọn.">
+<!ENTITY instructions2.label   "Chọn kí tự dùng để tách các khối vào các cột:">
+<!ENTITY commaRadio.label      "Dấu phẩy">
+<!ENTITY spaceRadio.label      "Khoảng trống">
+<!ENTITY otherRadio.label      "Kí tự khác:">
+<!ENTITY deleteCharCheck.label "Xóa kí tự phân tách">
+<!ENTITY collapseSpaces.label  "Bỏ qua khoảng trống thừa">
+<!ENTITY collapseSpaces.tooltip "Chuyển đổi các khoảng trống kề cận thành một dấu ngăn cách">

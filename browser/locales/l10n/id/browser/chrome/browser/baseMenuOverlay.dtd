@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Tentang &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "T">
+
+<!ENTITY preferencesCmdMac.label        "Pengaturan…">
+
+<!ENTITY servicesMenuMac.label          "Layanan">
+
+<!ENTITY hideThisAppCmdMac2.label       "Sembunyikan &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Sembunyikan Lainnya">
+
+<!ENTITY showAllAppsCmdMac.label        "Tampilkan Semua">
+
+<!ENTITY touchBarCmdMac.label           "Ubahsuai Touch Bar…">

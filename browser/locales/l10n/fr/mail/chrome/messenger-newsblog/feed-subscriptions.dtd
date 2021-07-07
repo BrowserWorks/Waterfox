@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Abonnements aux flux">
+<!ENTITY learnMore.label             "En savoir plus à propos des flux">
+
+<!ENTITY feedTitle.label             "Titre :">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Adresse du flux : ">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Saisir une adresse de flux valide">
+<!ENTITY locationValidate.label      "Valider">
+<!ENTITY validateText.label          "Vérifier la validité de l’adresse du flux.">
+
+<!ENTITY feedFolder.label            "Conserver les articles du flux dans : ">
+<!ENTITY feedFolder.accesskey        "C">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Vérifier la présence de nouveaux articles chaque ">
+<!ENTITY biffStart.accesskey         "V">
+<!ENTITY biffMinutes.label           "minutes">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "jours">
+<!ENTITY biffDays.accesskey          "j">
+<!ENTITY recommendedUnits.label      "L’éditeur recommande :">
+
+<!ENTITY quickMode.label             "Afficher le résumé de l’article plutôt que de télécharger la page web">
+<!ENTITY quickMode.accesskey         "m">
+
+<!ENTITY autotagEnable.label         "Créer automatiquement des étiquettes depuis les noms des balises &lt;category&gt; du flux">
+<!ENTITY autotagEnable.accesskey     "r">
+<!ENTITY autotagUsePrefix.label      "Préfixer les étiquettes avec :">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Saisir un préfixe d’étiquette">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Ajouter">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Vérifier">
+<!ENTITY button.verifyFeed.accesskey "f">
+<!ENTITY button.updateFeed.label     "Mettre à jour">
+<!ENTITY button.updateFeed.accesskey "M">
+<!ENTITY button.removeFeed.label     "Supprimer">
+<!ENTITY button.removeFeed.accesskey "S">
+<!ENTITY button.importOPML.label     "Importer">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exporter">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Exporter les flux avec la structure des dossiers ; Ctrl+clic ou Ctrl+Entrée pour exporter les flux en tant que liste">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Fermer">

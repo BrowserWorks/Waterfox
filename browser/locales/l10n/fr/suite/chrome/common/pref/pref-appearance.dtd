@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Apparence">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "Au démarrage de &brandShortName;, lancer">
+<!ENTITY navCheck.label                         "Navigateur">
+<!ENTITY navCheck.accesskey                     "N">
+<!ENTITY showToolsLegend.label                  "Les barres d’outils contiennent">
+<!ENTITY picsNtextRadio.label                   "Les icônes sous-titrées">
+<!ENTITY picsNtextRadio.accesskey               "e">
+<!ENTITY picsOnlyRadio.label                    "Les icônes seulement">
+<!ENTITY picsOnlyRadio.accesskey                "s">
+<!ENTITY textonlyRadio.label                    "Le texte seulement">
+<!ENTITY textonlyRadio.accesskey                "x">
+<!ENTITY showHideTooltips.label                 "Afficher les infobulles">
+<!ENTITY showHideTooltips.accesskey             "b">
+
+<!ENTITY showHideGrippies.label                 "Masquer les points d’ancrage des barres d’outils">
+<!ENTITY showHideGrippies.accesskey             "g">
+
+<!ENTITY pref.locales.title                     "Langue de l’interface utilisateur">
+<!ENTITY selectLocale.label                     "Sélectionner la langue pour le texte qui apparaît dans les boîtes de dialogue, les menus, les barres d’outils et les boutons :">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "Format de la date et de l’heure">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "Les préférences de langue et de formatage prendront effet lors du redémarrage de &brandShortName;.">

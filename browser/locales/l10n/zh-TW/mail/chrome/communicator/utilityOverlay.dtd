@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "檔案">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "新增">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "編輯">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "復原">
+<!ENTITY undoCmd.accesskey          "U">
+<!ENTITY redoCmd.label            "取消「復原」">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "刪除">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "選項">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "偏好設定">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY customizeCmd.label "自訂">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "檢視">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "工具列">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "狀態列">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "關閉">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "C">
+
+<!ENTITY quitApplicationCmd.label  "結束">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "離開">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Q">
+
+<!ENTITY quitApplicationCmdMac.label  "離開 &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">

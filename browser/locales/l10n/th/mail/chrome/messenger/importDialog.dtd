@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "นำเข้า">
+<!ENTITY importAll.label          "นำเข้าทุกอย่าง">
+<!ENTITY importAll.accesskey      "ท">
+<!ENTITY importMail.label         "จดหมาย">
+<!ENTITY importMail.accesskey     "จ">
+<!ENTITY importFeeds.label        "การบอกรับฟีด">
+<!ENTITY importFeeds.accesskey    "ฟ">
+<!ENTITY importAddressbook.label  "สมุดรายชื่อ">
+<!ENTITY importAddressbook.accesskey "ส">
+<!ENTITY importSettings.label     "การตั้งค่า">
+<!ENTITY importSettings.accesskey "ก">
+<!ENTITY importFilters.label      "ตัวกรอง">
+<!ENTITY importFilters.accesskey  "ต">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "ตัวช่วยนำเข้าของ &brandShortName;">
+<!ENTITY importShortDesc.label    "นำเข้าจดหมาย สมุดรายชื่อ การตั้งค่า และตัวกรองจากโปรแกรมอื่น">
+
+<!ENTITY importDescription1.label "ตัวช่วยนี้จะนำเข้าข้อความจดหมาย รายการสมุดรายชื่อ การบอกรับฟีด ค่ากำหนด และ/หรือตัวกรองจากโปรแกรมจดหมายอื่นและรูปแบบสมุดรายชื่อทั่วไปลงใน &brandShortName;">
+<!ENTITY importDescription2.label "เมื่อข้อมูลเหล่านั้นถูกนำเข้าแล้ว คุณจะสามารถเข้าถึงข้อมูลเหล่านั้นได้จากภายใน &brandShortName;">
+
+<!ENTITY selectDescription.label  "โปรดเลือกชนิดของไฟล์ที่คุณต้องการนำเข้า:">
+<!ENTITY selectDescriptionB.label "โปรดเลือกบัญชีที่มีอยู่หรือสร้างบัญชีใหม่:">
+<!ENTITY selectDescription.accesskey "ป">
+<!ENTITY acctName.label           "ชื่อ:">
+<!ENTITY acctName.accesskey       "ช">
+<!ENTITY noModulesFound.label     "ไม่พบแอปพลิเคชันหรือไฟล์ที่จะนำเข้าข้อมูล">
+
+<!ENTITY back.label               "&lt; ย้อนกลับ">
+<!ENTITY forward.label            "ถัดไป &gt;">
+<!ENTITY finish.label             "เสร็จสิ้น">
+<!ENTITY cancel.label             "ยกเลิก">
+
+<!ENTITY select.label             "หรือเลือกชนิดของข้อมูลที่จะนำเข้า:">
+
+<!ENTITY title.label              "ชื่อเรื่อง">
+<!ENTITY processing.label         "กำลังนำเข้า…">

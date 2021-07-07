@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "การตั้งค่า">
+<!ENTITY security.caption "ความปลอดภัยและการรับรองความถูกต้อง">
+<!ENTITY serverName.label "ชื่อเซิร์ฟเวอร์:">
+<!ENTITY serverName.accesskey "ช">
+<!ENTITY serverDescription.label "คำอธิบาย:">
+<!ENTITY serverDescription.accesskey "ค">
+<!ENTITY serverPort.label "พอร์ต:">
+<!ENTITY serverPort.accesskey "พ">
+<!ENTITY userName.label "ชื่อผู้ใช้:">
+<!ENTITY userName.accesskey "อ">
+<!ENTITY connectionSecurity.label "ความปลอดภัยของการเชื่อมต่อ:">
+<!ENTITY connectionSecurity.accesskey "ว">
+<!ENTITY connectionSecurityType-0.label "ไม่มี">
+<!ENTITY connectionSecurityType-1.label "STARTTLS หากพร้อมใช้งาน">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "เซิร์ฟเวอร์ SMTP">
+<!ENTITY serverPortDefault.label "ค่าเริ่มต้น:">
+<!ENTITY authMethod.label "วิธีการรับรองความถูกต้อง:">
+<!ENTITY authMethod.accesskey "ก">

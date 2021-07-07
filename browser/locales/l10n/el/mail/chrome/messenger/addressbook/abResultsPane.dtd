@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Ευρετήριο">
+<!ENTITY Addrbook.accesskey                    "Ε">
+<!ENTITY GeneratedName.label                   "Όνομα">
+<!ENTITY GeneratedName.accesskey               "ν">
+<!ENTITY PrimaryEmail.label                    "Email">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Εταιρεία">
+<!ENTITY Company.accesskey                     "ρ">
+<!ENTITY _PhoneticName.label                   "Φωνητικό όνομα">
+<!ENTITY _PhoneticName.accesskey               "ω">
+<!ENTITY NickName.label                        "Ψευδώνυμο">
+<!ENTITY NickName.accesskey                    "δ">
+<!ENTITY SecondEmail.label                     "Επιπρόσθετο email">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Τμήμα">
+<!ENTITY Department.accesskey                  "μ">
+<!ENTITY JobTitle.label                        "Τίτλος">
+<!ENTITY JobTitle.accesskey                    "Τ">
+<!ENTITY CellularNumber.label                  "Κινητό">
+<!ENTITY CellularNumber.accesskey              "Κ">
+<!ENTITY PagerNumber.label                     "Βομβητής">
+<!ENTITY PagerNumber.accesskey                 "Β">
+<!ENTITY FaxNumber.label                       "Φαξ">
+<!ENTITY FaxNumber.accesskey                   "Φ">
+<!ENTITY HomePhone.label                       "Τηλέφωνο οικίας">
+<!ENTITY HomePhone.accesskey                   "Τ">
+<!ENTITY WorkPhone.label                       "Τηλέφωνο εργασίας">
+<!ENTITY WorkPhone.accesskey                   "ε">
+<!ENTITY ChatName.label                        "Όνομα συνομιλίας">
+<!ENTITY ChatName.accesskey                    "Ό">
+<!ENTITY sortAscending.label                   "Αύξουσα">
+<!ENTITY sortAscending.accesskey               "Α">
+<!ENTITY sortDescending.label                  "Φθίνουσα">
+<!ENTITY sortDescending.accesskey              "Φ">

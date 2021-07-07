@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Клиент по умолчанию">
+<!ENTITY defaultClient.intro  "Использовать &brandShortName; по умолчанию в качестве:">
+
+<!ENTITY browser.label "Браузера">
+<!ENTITY email.label "Почтового клиента">
+<!ENTITY newsgroups.label "Клиента групп новостей">
+<!ENTITY feeds.label "Клиента лент новостей">
+
+<!ENTITY checkOnStartup.label "Всегда производить эту проверку при запуске &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "В">

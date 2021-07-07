@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Speichermethode ändern">
+<!ENTITY converterDialog.continueButton "Weiter">
+<!ENTITY converterDialog.cancelButton "Abbrechen">
+<!ENTITY converterDialog.finishButton "Beenden">
+<!ENTITY converterDialog.complete "Die Umwandlung wurde abgeschlossen. &brandShortName; wird jetzt neu gestartet.">
+<!ENTITY converterDialog.error "Umwandlung fehlgeschlagen">
+

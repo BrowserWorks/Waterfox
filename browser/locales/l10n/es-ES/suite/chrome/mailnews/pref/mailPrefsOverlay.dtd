@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY enbPluginCheckMailNews.label "Correo y noticias">
+<!ENTITY enbPluginCheckMailNews.accesskey "o">
+<!ENTITY mail.label "Correo y noticias">
+<!ENTITY mail.accesskey "o">
+<!ENTITY addressbook.label "Libreta de direcciones">
+<!ENTITY addressbook.accesskey "A">
+<!ENTITY viewingMessages.label "Visualización">
+<!ENTITY notifications.label "Notificaciones">
+<!ENTITY composingMessages.label "Redacción">
+<!ENTITY format.label "Formato de envío">
+<!ENTITY address.label "Direcciones">
+<!ENTITY junk.label "Correo basura o sospechoso">
+<!ENTITY tags.label "Etiquetas">
+<!ENTITY return.label "Acuses de recibo">
+<!ENTITY characterEncoding2.label "Codificación de texto">
+<!ENTITY networkStorage.label "Red y almacenamiento">

@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Janelas pop-up">
+
+<!ENTITY pref.popups.caption            "Janelas pop-up">
+
+<!ENTITY popupBlock.label               "Bloquear janelas pop-up">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Gerir permissões">
+<!ENTITY viewPermissions.accesskey      "p">
+
+<!ENTITY whenBlock.description          "Ao bloquear uma janela pop-up:">
+<!ENTITY playSound.label                "Reproduzir um som:">
+<!ENTITY playSound.accesskey            "p">
+<!ENTITY systemSound.label              "Som do sistema">
+<!ENTITY systemSound.accesskey          "s">
+<!ENTITY customSound.label              "Ficheiro de som">
+<!ENTITY customSound.accesskey          "c">
+
+<!ENTITY selectSound.label              "Explorar…">
+<!ENTITY selectSound.accesskey          "o">
+<!ENTITY playSoundButton.label          "Reproduzir">
+<!ENTITY playSoundButton.accesskey      "z">
+
+<!ENTITY displayIcon.label              "Mostrar um ícone na barra de estado do navegador">
+<!ENTITY displayIcon.accesskey          "m">
+
+<!ENTITY displayNotification.label      "Mostrar uma barra de notificação no topo da área de conteúdo">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "Nota: Bloquear todos os pop-ups pode impedir que funcionalidades importantes de alguns sites funcionem, tais como janelas de início de sessão para sites de bancos e compras. Para detalhes sobre como permitir que sites específicos utilizem pop-ups enquanto bloqueando todos os outros, clique em Ajuda. Mesmo se estiverem bloqueados, alguns sites podem utilizar outros métodos para mostrar pop-ups.">

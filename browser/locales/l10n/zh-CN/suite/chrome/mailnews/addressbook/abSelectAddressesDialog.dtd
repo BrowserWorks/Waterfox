@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY selectAddressWindow.title           "选择地址">
+<!-- Buttons -->
+
+<!ENTITY toButton.label                      "到->"> 
+<!ENTITY toButton.accesskey                  "T"> 
+<!ENTITY ccButton.label                      "抄送->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "密送->">  
+<!ENTITY bccButton.accesskey                 "B">  
+<!ENTITY newButton.label                     "新建"> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "编辑…"> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "删除"> 
+<!ENTITY removeButton.accesskey              "R"> 
+<!ENTITY lookIn.label                        "查找位于:"> 
+<!ENTITY lookIn.accesskey                    "L"> 
+<!ENTITY for.label                           "寄件人:"> 
+<!ENTITY for.accesskey                       "f"> 
+<!ENTITY for.placeholder                     "名称或者电子邮件">
+<!ENTITY addressMessageTo.label              "地址信息:"> 
+<!-- Tooltips items -->  
+
+<!ENTITY addressPickerNewButton.tooltip      "创建新的通讯录名片"> 
+<!ENTITY addressPickerEditButton.tooltip     "编辑选择的名片"> 
+

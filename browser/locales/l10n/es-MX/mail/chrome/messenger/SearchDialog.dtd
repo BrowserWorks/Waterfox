@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xhtml -->
+<!ENTITY searchHeading.label         "Buscar mensajes en:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "Buscar subcarpetas">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnServer.label        "Ejecutar búsqueda en el servidor">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "Limpiar">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "Abrir">
+<!ENTITY openButton.accesskey        "n">
+<!ENTITY deleteButton.label          "Eliminar">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "Buscar mensajes">
+<!ENTITY results.label               "Resultados">
+<!ENTITY moveButton.label            "Mover a">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "Abrir en carpeta">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "Guardar como carpeta de búsqueda">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xhtml -->
+<!ENTITY abSearchHeading.label       "Buscar en:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "Propiedades">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Escribir">
+<!ENTITY composeButton.accesskey     "W">
+<!ENTITY deleteCardButton.label      "Eliminar">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "Búsqueda avanzada en la libreta de direcciones">

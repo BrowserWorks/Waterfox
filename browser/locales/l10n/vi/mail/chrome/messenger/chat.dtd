@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Liên hệ trực tuyến">
+<!ENTITY offlineContactsHeader.label   "Liên hệ ngoại tuyến">
+<!ENTITY conversationsHeader.label     "Cuộc trò chuyện">
+<!ENTITY searchResultConversation.label "Kết quả tìm kiếm">
+<!ENTITY chat.noConv.title             "Cuộc trò chuyện sẽ được hiển thị ở đây.">
+<!ENTITY chat.noConv.description       "Sử dụng danh sách liên hệ trong bảng điều khiển bên trái để bắt đầu một cuộc trò chuyện.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; hiện không có bất kỳ cuộc trò chuyện nào trước đó được lưu trữ cho liên hệ này.">
+<!ENTITY chat.noAccount.title             "Bạn chưa thiết lập tài khoản trò chuyện.">
+<!ENTITY chat.noAccount.description       "Hãy để &brandShortName; hướng dẫn bạn trong quá trình thiết lập tài khoản trò chuyện của bạn.">
+<!ENTITY chat.accountWizard.button       "Bắt đầu">
+<!ENTITY chat.noConnectedAccount.title             "Tài khoản trò chuyện của bạn không được kết nối.">
+<!ENTITY chat.noConnectedAccount.description       "Bạn có thể kết nối chúng từ hộp thoại 'Trạng thái trò chuyện':">
+<!ENTITY chat.showAccountManager.button       "Hiển thị trạng thái trò chuyện">
+
+<!ENTITY chat.participants             "Người tham gia:">
+<!ENTITY chat.previousConversations    "Cuộc trò chuyện trước:">
+<!ENTITY chat.ongoingConversation      "Cuộc trò chuyện đang diễn ra">
+
+<!ENTITY openConversationCmd.label     "Bắt đầu một cuộc trò chuyện">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Đóng cuộc trò chuyện">
+<!ENTITY closeConversationCmd.accesskey "C">
+<!ENTITY aliasCmd.label                "Đổi tên">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Xóa liên hệ">
+<!ENTITY deleteCmd.accesskey           "v">
+
+<!ENTITY openConversationButton.tooltip  "Bắt đầu một cuộc trò chuyện">
+<!ENTITY closeConversationButton.tooltip "Đóng cuộc trò chuyện">
+
+<!ENTITY addBuddyButton.label          "Thêm liên hệ">
+<!ENTITY joinChatButton.label          "Tham gia trò chuyện">
+<!ENTITY chatAccountsButton.label      "Hiển thị tài khoản">
+
+<!ENTITY status.available          "Có mặt">
+<!ENTITY status.unavailable        "Không sẵn sàng">
+<!ENTITY status.offline            "Ngoại tuyến">
+
+<!ENTITY openLinkCmd.label            "Mở liên kết…">
+<!ENTITY openLinkCmd.accesskey        "O">

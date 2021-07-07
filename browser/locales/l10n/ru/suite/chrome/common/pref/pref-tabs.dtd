@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Использование вкладок">
+
+<!ENTITY tabDisplay.label "Отображение вкладок">
+<!ENTITY autoHide.label "Скрывать панель вкладок, если открыта только одна вкладка">
+<!ENTITY autoHide.accesskey2 "а">
+<!ENTITY background.label "Переходить на новые вкладки, открываемые из ссылок">
+<!ENTITY background.accesskey "х">
+<!ENTITY warnOnClose.label "Предупреждать при закрытии окна с несколькими вкладками">
+<!ENTITY warnOnClose.accesskey "ж">
+<!ENTITY relatedAfterCurrent.label "Открывать связанные вкладки после текущей вкладки">
+<!ENTITY relatedAfterCurrent.accesskey "в">
+
+<!ENTITY loadGroup.label "При открытии группы закладок">
+<!ENTITY loadGroupAppend.label "Открывать новые вкладки">
+<!ENTITY loadGroupAppend.accesskey "ы">
+<!ENTITY loadGroupReplace.label "Использовать уже открытые вкладки">
+<!ENTITY loadGroupReplace.accesskey "о">
+
+<!ENTITY openTabs.label "Открывать вкладки вместо окон при">
+
+<!ENTITY middleClick.label "щелчке средней кнопки мыши, щелчке левой кнопки мыши с удержанием Ctrl или нажатии Ctrl+Enter на ссылках веб-страниц">
+<!ENTITY middleClick.accesskey "д">
+<!ENTITY middleClickMac.label "щелчке средней кнопкой мыши, щелчке с удержанием &#8984; или нажатии &#8984;+Return на ссылках веб-страницы">
+<!ENTITY middleClickMac.accesskey "д">
+<!ENTITY urlbar.label "щелчке Ctrl+Enter в панели адреса">
+<!ENTITY urlbar.accesskey "н">
+<!ENTITY urlbarMac.label "нажатии &#8984;+Return в панели адреса">
+<!ENTITY urlbarMac.accesskey "н">
+
+<!ENTITY openManagers.label "Открывать в новой вкладке вместо отдельного окна">
+<!ENTITY openDataManager.label "Управление данными">
+<!ENTITY openDataManager.accesskey "п">
+<!ENTITY openAddOnsManager.label "Управление дополнениями">
+<!ENTITY openAddOnsManager.accesskey "и">

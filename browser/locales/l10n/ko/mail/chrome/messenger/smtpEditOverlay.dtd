@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "설정">
+<!ENTITY security.caption "보안 및 인증">
+<!ENTITY serverName.label "서버 이름:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "상세 설명:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "포트:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "이름과 암호 사용">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "보안 연결:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "없음">
+<!ENTITY connectionSecurityType-1.label "STARTTLS (가능하면)">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "보내는 서버 (SMTP)">
+<!ENTITY serverPortDefault.label "기본:">
+<!ENTITY authMethod.label "인증 방식:">
+<!ENTITY authMethod.accesskey "i">

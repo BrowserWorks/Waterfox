@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Untuk">
+<!ENTITY fromField4.label "Dari">
+<!ENTITY senderField4.label "Pengirim">
+<!ENTITY author.label "Pembuat">
+<!ENTITY organizationField4.label "Organisasi">
+<!ENTITY replyToField4.label "Balas ke">
+
+<!ENTITY subjectField4.label "Subjek">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Newsgroups">
+<!ENTITY followupToField4.label "Tindaklanjut ke:">
+<!ENTITY tagsHdr4.label "Tag">
+<!ENTITY dateField4.label "Tanggal">
+<!ENTITY userAgentField4.label "Agen pengguna">
+<!ENTITY referencesField4.label "Referensi">
+<!ENTITY messageIdField4.label "ID Pesan">
+<!ENTITY inReplyToField4.label "Sebagai balasan untuk">
+<!ENTITY originalWebsite4.label "Situs web">
+
+<!ENTITY hdrArchiveButton1.label "Arsipkan">
+<!ENTITY hdrArchiveButton1.tooltip "Arsipkan pesan ini">
+<!ENTITY hdrSmartReplyButton1.label "Balasan pintar">
+<!ENTITY hdrReplyButton1.label "Balas">
+<!ENTITY hdrReplyButton2.tooltip "Balas ke pengirim pesan ini">
+<!ENTITY hdrReplyAllButton1.label "Balas ke semua">
+<!ENTITY hdrReplyAllButton1.tooltip "Balas ke pengirim dan semua penerima">
+<!ENTITY hdrReplyListButton1.label "Balas ke milis">
+<!ENTITY hdrReplyListButton1.tooltip "Balas ke milis">
+<!ENTITY hdrFollowupButton1.label "Balasan">
+<!ENTITY hdrFollowupButton1.tooltip "Kirimkan balasan ke newsgroup ini">
+<!ENTITY hdrForwardButton1.label "Teruskan">
+<!ENTITY hdrForwardButton1.tooltip "Teruskan pesan ini">
+<!ENTITY hdrJunkButton1.label "Junk">
+<!ENTITY hdrJunkButton1.tooltip "Tandai pesan ini sebagai pesan junk">
+<!ENTITY hdrTrashButton1.label "Hapus">
+<!ENTITY hdrTrashButton1.tooltip "Hapus pesan ini">
+
+<!ENTITY hdrViewToolbarShowFull.label "Tampilkan Ikon dan Teks">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Tampilkan Ikon Saja">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Tampilkan Teks Saja">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Selalu Tampilkan Balas ke Pengirim">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "p">
+
+<!ENTITY otherActionsButton2.label "Lebih Banyak">
+<!ENTITY otherActionsButton.tooltip "Tindakan lainnya">
+<!ENTITY otherActionsOpenConversation1.label "Tampilkan dalam Mode Percakapan">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "Buka di Jendela Baru">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "J">
+<!ENTITY otherActionsOpenInNewTab1.label "Buka di Tab Baru">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "T">
+<!ENTITY markAsReadMenuItem1.label "Tandai Sudah Dibaca">
+<!ENTITY markAsReadMenuItem1.accesskey "c">
+<!ENTITY markAsUnreadMenuItem1.label "Tandai Belum Dibaca">
+<!ENTITY markAsUnreadMenuItem1.accesskey "b">
+<!ENTITY saveAsMenuItem1.label "Simpan sebagai…">
+<!ENTITY saveAsMenuItem1.accesskey "s">
+<!ENTITY viewSourceMenuItem1.label "Tampilkan Kode Sumber">
+<!ENTITY viewSourceMenuItem1.accesskey "S">
+<!ENTITY otherActionsPrint1.label "Cetak…">
+<!ENTITY otherActionsPrint1.accesskey "C">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Awalnya Tampilkan Panel Lampiran">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Buka">
+<!ENTITY openAttachmentCmd.accesskey    "B">
+<!ENTITY saveAsAttachmentCmd.label    "Simpan dengan Nama…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "a">
+<!ENTITY detachAttachmentCmd.label    "Pisahkan…">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "Hapus">
+<!ENTITY deleteAttachmentCmd.accesskey    "H">
+<!ENTITY openAllAttachmentsCmd.label    "Buka Semua…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "m">
+<!ENTITY saveAllAttachmentsCmd.label    "Simpan Semua…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Pisahkan Semua…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "s">
+<!ENTITY deleteAllAttachmentsCmd.label    "Hapus Semua…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "Buka berkas terlampir">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Buka Foldernya">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Tampilkan di Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Simpan">
+<!ENTITY saveAttachmentButton1.tooltip     "Simpan berkas terlampir">
+<!ENTITY saveAllAttachmentsButton1.label   "Simpan Semua">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Simpan semua berkas terlampir">
+
+<!ENTITY copyLinkCmd.label        "Salin Lokasi Tautan">
+<!ENTITY copyLinkCmd.accesskey    "S">
+
+<!ENTITY CopyMessageId.label "Salin ID-Pesan">
+<!ENTITY CopyMessageId.accesskey "S">
+<!ENTITY OpenMessageForMsgId.label "Buka Pesan dengan ID">
+<!ENTITY OpenMessageForMsgId.accesskey "B">
+<!ENTITY OpenBrowserWithMsgId.label "Buka Program Peramban dengan ID-Pesan">
+<!ENTITY OpenBrowserWithMsgId.accesskey "P">

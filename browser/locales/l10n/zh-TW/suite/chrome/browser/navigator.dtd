@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "隱私瀏覽模式">
+
+<!ENTITY editPageCmd.label "編輯此頁">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "瀏覽工具列">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "書籤工具列">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+
+<!ENTITY closeWindow.label "關閉視窗">
+<!ENTITY closeWindow.accesskey "W">
+
+<!ENTITY minimizeButton.tooltip       "縮到最小">
+<!ENTITY restoreButton.tooltip        "回復">
+
+<!ENTITY feedsMenu.label "訂閱此頁面">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip                  "選單列">
+<!ENTITY bookmarksToolbar.tooltip         "書籤工具列">
+<!ENTITY navigationToolbar.tooltip        "瀏覽工具列">
+
+<!ENTITY editBookmark.done.label "完成">
+<!ENTITY editBookmark.cancel.label "取消">
+<!ENTITY editBookmark.removeBookmark.accessKey "R">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "上一頁">
+<!ENTITY backButton.tooltip           "回到上一頁">
+<!ENTITY forwardButton.label          "下一頁">
+<!ENTITY forwardButton.tooltip        "前進下一頁">
+<!ENTITY reloadButton.label           "重新載入">
+<!ENTITY reloadButton.tooltip         "重新載入最新的網頁內容">
+<!ENTITY stopButton.label             "停止">
+<!ENTITY stopButton.tooltip           "停止載入此網頁">
+<!ENTITY searchButton.label           "搜尋">
+<!ENTITY searchButton.tooltip         "在左邊的欄位中輸入關鍵字後按搜尋">
+<!ENTITY goButton.label               "衝">
+<!ENTITY goButton.tooltip             "在網址列中打入網址後按此開始瀏覽">
+<!ENTITY printButton.label            "列印">
+<!ENTITY printButton.tooltip          "列印此頁">
+
+<!ENTITY throbber.tooltip             "&vendorShortName; 的首頁">
+
+<!ENTITY throbber.tooltip2            "前往 &brandShortName; 首頁">
+
+<!ENTITY locationBar.tooltip          "輸入網址及搜尋欄位">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "網址">
+<!ENTITY proxyIcon.tooltip            "拖放圖示以建立此頁鏈結">
+
+<!ENTITY searchItem.title             "搜尋">
+
+<!ENTITY bookmarksButton.label        "書籤">
+<!ENTITY bookmarksButton.tooltip      "書籤列表">
+<!ENTITY homeButton.label             "首頁">
+<!ENTITY bookmarksToolbarItem.label   "書籤工具列項目">
+<!ENTITY bookmarksToolbarChevron.tooltip "顯示更多書籤">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "完成">
+
+<!ENTITY popupIcon.tooltiptext      "不再阻擋這個網站的彈出型視窗 (Popup)">
+
+<!ENTITY viewSecurityInfo.label      "檢視安全資訊">
+<!ENTITY viewSecurityInfo.accesskey  "S">
+<!ENTITY viewCertificate.label       "檢視憑證">
+<!ENTITY viewCertificate.accesskey   "C">
+<!ENTITY viewCertManager.label       "開啟憑證管理員">
+<!ENTITY viewCertManager.accesskey   "M">
+
+<!ENTITY zoomIn.tooltiptext          "放大">
+<!ENTITY zoomOut.tooltiptext         "縮小">

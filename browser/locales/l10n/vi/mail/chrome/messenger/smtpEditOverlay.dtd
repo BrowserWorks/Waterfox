@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Thiết lập">
+<!ENTITY security.caption "Bảo mật và Xác thực">
+<!ENTITY serverName.label "Tên Máy Chủ:">
+<!ENTITY serverName.accesskey "T">
+<!ENTITY serverDescription.label "Mô tả:">
+<!ENTITY serverDescription.accesskey "M">
+<!ENTITY serverPort.label "Cổng:">
+<!ENTITY serverPort.accesskey "C">
+<!ENTITY userName.label "Tên đăng nhập:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "Bảo mật kết nối:">
+<!ENTITY connectionSecurity.accesskey "k">
+<!ENTITY connectionSecurityType-0.label "Không có">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, nếu có">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Máy chủ SMTP">
+<!ENTITY serverPortDefault.label "Mặc định:">
+<!ENTITY authMethod.label "Phương thức xác thực:">
+<!ENTITY authMethod.accesskey "x">

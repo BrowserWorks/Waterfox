@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "寄件伺服器 (SMTP) 設定">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "管理您的身份識別資訊時，您可以自此清單選擇一個伺服器作為外寄郵件（SMTP）伺服器或「使用預設伺服器」以使用預設的伺服器。">
+
+<!ENTITY smtpListAdd.label  "新增…">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "編輯…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "移除">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "設為預設值">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "選擇的伺服器的詳細資訊:">
+<!ENTITY serverDescription.label "描述: ">
+<!ENTITY serverName.label "伺服器名稱:">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "使用者名稱:">
+<!ENTITY connectionSecurity.label "連線安全性: ">
+<!ENTITY authMethod.label   "驗證方式:">

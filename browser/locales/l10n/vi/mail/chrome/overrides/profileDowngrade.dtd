@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Bạn đã chạy một phiên bản cũ hơn của &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Phiên bản mới hơn của &brandProductName; có thể đã thực hiện các thay đổi đối với hồ sơ của bạn mà nó không còn tương thích với phiên bản cũ hơn này. Chỉ sử dụng cấu hình này với phiên bản mới hơn hoặc tạo cấu hình mới cho bản cài đặt &brandShortName;. Tạo một hồ sơ mới yêu cầu thiết lập lại tài khoản, lịch và các tiện ích mở rộng của bạn.">
+
+<!ENTITY window.moreinfo "Thông tin chi tiết…">
+<!ENTITY window.create "Tạo hồ sơ mới">
+<!ENTITY window.quit-win "Thoát">
+<!ENTITY window.quit-nonwin "Thoát">

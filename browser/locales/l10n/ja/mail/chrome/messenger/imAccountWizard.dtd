@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label		"チャットアカウントウィザード">
+
+<!ENTITY accountProtocolTitle.label	"チャットネットワーク">
+<!ENTITY accountProtocolInfo.label	"チャットアカウントのネットワークを選択してください。">
+<!ENTITY accountProtocolField.label	"ネットワーク:">
+<!ENTITY accountProtocolGetMore.label	"その他...">
+
+<!ENTITY accountUsernameTitle.label	"ユーザー名">
+<!ENTITY accountUsernameDuplicate.label	"このアカウントは設定済みです。">
+
+<!ENTITY accountPasswordTitle.label	"パスワード">
+<!ENTITY accountPasswordInfo.label	"アカウントのパスワードを入力してください。">
+<!ENTITY accountPasswordField.label	"パスワード:">
+<!ENTITY accountPasswordManager.label	"入力されたパスワードはパスワードマネージャーに保存されます。パスワードが不要またはアカウント接続時にパスワードを毎回入力したいときは、このボックスに何も入力しないでください。">
+
+<!ENTITY accountAdvancedTitle.label		"詳細オプション">
+<!ENTITY accountAdvancedInfo.label		"この手順は特に必要が無ければスキップできます。">
+<!ENTITY accountAdvanced.newMailNotification.label	"新着メールを通知する">
+<!ENTITY accountAliasGroupbox.caption		"ローカルの別名">
+<!ENTITY accountAliasField.label		"別名:">
+<!ENTITY accountAliasInfo.label			"別名は会話中にあなただけに表示される名前です。相手は見ることができません。">
+<!ENTITY accountProxySettings.caption		"プロキシー設定">
+<!ENTITY accountProxySettings.change.label	"変更...">
+<!ENTITY accountProxySettings.change.accessKey	"C">
+
+<!ENTITY accountSummaryTitle.label		"要約">
+<!ENTITY accountSummaryInfo.label		"以下は、入力したアカウント情報の要約です。アカウントを作成する前に確認してください。">
+<!ENTITY accountSummary.connectNow.label	"このアカウントを今すぐ接続する">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Исключения">
+<!ENTITY treehead.sitename.label        "Веб-сайт">
+<!ENTITY treehead.status.label          "Статус">
+<!ENTITY remove.label                   "Удалить веб-сайт">
+<!ENTITY remove.accesskey               "д">
+<!ENTITY removeall.label                "Удалить все веб-сайты">
+<!ENTITY removeall.accesskey            "е">
+<!ENTITY address.label                  "Адрес веб-сайта:">
+<!ENTITY address.accesskey              "д">
+<!ENTITY block.label                    "Блокировать">
+<!ENTITY block.accesskey                "л">
+<!ENTITY session.label                  "Разрешить на сессию">
+<!ENTITY session.accesskey              "с">
+<!ENTITY allow.label                    "Разрешить">
+<!ENTITY allow.accesskey                "з">

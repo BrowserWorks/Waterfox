@@ -1,0 +1,77 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-fonts.xul -->
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+
+
+<!ENTITY  pref.fonts.title                        "Šriftai">
+
+<!ENTITY  language.label                          "Kalbų grupė:">
+<!ENTITY  language.accesskey                      "K">
+
+<!ENTITY  typefaces.label                         "Šriftas">
+<!ENTITY  sizes.label                             "Dydis (taškais)">
+
+<!ENTITY  proportional.label                      "Įvairiaplotis:">
+<!ENTITY  proportional.accesskey                  "v">
+
+<!ENTITY  serif.label                             "Su užraitais:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Be užraitų:">
+<!ENTITY  sans-serif.accesskey                    "B">
+<!ENTITY  monospace.label                         "Lygiaplotis:">
+<!ENTITY  monospace.accesskey                     "L">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Su ornamentais:">
+<!ENTITY  fantasy.accesskey                       "o">
+<!ENTITY  cursive.label                           "Rankraštinis:">
+<!ENTITY  cursive.accesskey                       "R">
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.japanese                 "Japonų">
+<!ENTITY  font.langGroup.trad-chinese             "Tradicinė kinų (Taivanis)">
+<!ENTITY  font.langGroup.simpl-chinese            "Supaprastintoji kinų">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Tradicinė kinų (Honkongas)">
+<!ENTITY  font.langGroup.korean                   "Korėjiečių">
+<!ENTITY  font.langGroup.cyrillic                 "Kirilica">
+<!ENTITY  font.langGroup.el                       "Graikų">
+<!ENTITY  font.langGroup.thai                     "Tajų">
+<!ENTITY  font.langGroup.hebrew                   "Hebrajų">
+<!ENTITY  font.langGroup.arabic                   "Arabų">
+<!ENTITY  font.langGroup.devanagari               "Devangarių">
+<!ENTITY  font.langGroup.tamil                    "Tamilų">
+<!ENTITY  font.langGroup.armenian                 "Armėnų">
+<!ENTITY  font.langGroup.bengali                  "Bengalų">
+<!ENTITY  font.langGroup.canadian                 "Unifikuotas Kanados skiemenų rinkinys">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopų">
+<!ENTITY  font.langGroup.georgian                 "Gruzinų">
+<!ENTITY  font.langGroup.gujarati                 "Gujaračių">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukų">
+<!ENTITY  font.langGroup.khmer                    "Chmerų">
+<!ENTITY  font.langGroup.malayalam                "Malajų">
+
+
+
+
+
+
+
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minimalus šrifto dydis:">
+<!ENTITY minSize.accesskey                        "d">
+<!ENTITY minSize.none                             "Nenurodyti">
+<!-- default font type -->
+
+<!ENTITY  useDefaultFontSerif.label               "Su užraitais">
+<!ENTITY  useDefaultFontSansSerif.label           "Be užraitų">
+
+<!ENTITY  useDocumentFonts.label                  "Naudoti šriftus iš tinklalapio bei čia patikslintus, nepaisant nurodymų lauke „Įvairiaplotis“.">
+<!ENTITY  useDocumentFonts.accesskey              "u">
+<!-- leaving this stuff in for now -->
+
+
+<!ENTITY  header2                                 "Kai tinklalapyje nurodyti šriftai">
+
+

@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Penayangan Laman">
+<!ENTITY windowTitleSettings.label    "Pengaturan Penayangan">
+<!ENTITY publishTab.label             "Tayangkan">
+<!ENTITY settingsTab.label            "Pengaturan">
+<!ENTITY publishButton.label          "Tayangkan">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Nama Situs:">
+<!ENTITY siteList.accesskey           "N">
+<!ENTITY siteList.tooltip             "Pilih situs yang Anda inginkan untuk penayangan">
+<!ENTITY newSiteButton.label          "Situs Baru">
+<!ENTITY newSiteButton.accesskey      "B">
+<!ENTITY docDirList.label             "Subdirektori pada situs untuk laman ini:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Pilih atau masukkan nama subdirektori jarak jauh untuk laman ini">
+<!ENTITY publishImgCheckbox.label     "Sertakan gambar dan berkas lainnya">
+<!ENTITY publishImgCheckbox.accesskey "g">
+<!ENTITY publishImgCheckbox.tooltip   "Tayangkan gambar dan berkas lainnya berdasarkan rujukan laman ini">
+<!ENTITY sameLocationRadio.label      "Gunakan lokasi yang sama dengan laman ini">
+<!ENTITY sameLocationRadio.accesskey  "G">
+<!ENTITY sameLocationRadio.tooltip    "Tayangkan berkas pada lokasi yang sama dengan laman">
+<!ENTITY useSubdirRadio.label         "Gunakan subdirektori situs berikut:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Tayangkan berkas pada subdirektori jarak jauh terpilih">
+<!ENTITY otherDirList.tooltip         "Pilih atau masukkan nama subdirektori jarak jauh tempat berkas akan ditayangkan">
+<!ENTITY pageTitle.label              "Judul Laman:">
+<!ENTITY pageTitle.accesskey          "J">
+<!ENTITY pageTitle.tooltip            "Masukkan sebuah judul untuk mengidentifikasikan laman pada jendela dan markah">
+<!ENTITY pageTitleExample.label       "contoh: &quot;Laman Webku&quot;">
+<!ENTITY filename.label               "Nama berkas:">
+<!ENTITY filename.accesskey           "N">
+<!ENTITY filename.tooltip             "Masukkan nama untuk berkas ini, termasuk '.html' untuk laman web">
+<!ENTITY filenameExample.label        "contoh,: &quot;lamanwebku.html&quot;">
+<!ENTITY setDefaultButton.label       "Atur sebagai Default">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "Hapus Situs">
+<!ENTITY removeButton.accesskey       "H">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Situs Penayangan">
+<!ENTITY serverInfo.label             "Informasi Server">
+<!ENTITY loginInfo.label              "Informasi Log-masuk">
+<!ENTITY siteName.label               "Nama Situs:">
+<!ENTITY siteName.accesskey           "N">
+<!ENTITY siteName.tooltip             "Nama alias untuk mengenali situs penayangan ini (contoh: 'Situsku')">
+<!ENTITY siteUrl.label                "Alamat penayangan (contoh: 'ftp://ftp.myisp.com/namapengguna'):">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "Alamat FTP:// atau HTTP:// yang disediakan oleh ISP atau layanan hosting web Anda">
+<!ENTITY browseUrl.label              "Alamat HTTP untuk beranda Anda (contoh: 'http://http.myisp.com/namapengguna'):">
+<!ENTITY browseUrl.accesskey          "t">
+<!ENTITY browseUrl.tooltip            "Alamat HTTP:// untuk direktori home Anda (jangan sertakan nama berkas)">
+<!ENTITY username.label               "Nama pengguna:">
+<!ENTITY username.accesskey           "N">
+<!ENTITY username.tooltip             "Nama pengguna yang Anda gunakan untuk log-masuk ke ISP Anda atau layanan hosting web">
+<!ENTITY password.label               "Sandi:">
+<!ENTITY password.accesskey           "d">
+<!ENTITY password.tooltip             "Sandi yang bersesuaian dengan nama pengguna Anda">
+<!ENTITY savePassword.label           "Simpan Sandi">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Aktifkan pilihan ini untuk menyimpan sandi Anda secara aman dengan Pengelola Sandi">

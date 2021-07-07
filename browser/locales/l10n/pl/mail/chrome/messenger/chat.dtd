@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Znajomi online">
+<!ENTITY offlineContactsHeader.label   "Znajomi poza siecią">
+<!ENTITY conversationsHeader.label     "Rozmowy">
+<!ENTITY searchResultConversation.label "Wyniki wyszukiwania">
+<!ENTITY chat.noConv.title             "Tutaj będą wyświetlane rozmowy.">
+<!ENTITY chat.noConv.description       "Używaj kontaktów z listy w lewym panelu w celu rozpoczęcia rozmowy.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; obecnie nie ma zachowanych żadnych wcześniejszych rozmów dla tego kontaktu.">
+<!ENTITY chat.noAccount.title             "Brak skonfigurowanych kont komunikatora">
+<!ENTITY chat.noAccount.description       "Skorzystaj z przycisku „Nowe konto”, aby skonfigurować konto komunikatora w programie &brandShortName;.">
+<!ENTITY chat.accountWizard.button       "Nowe konto">
+<!ENTITY chat.noConnectedAccount.title             "Konta komunikatora nie są podłączone.">
+<!ENTITY chat.noConnectedAccount.description       "Konta komunikatora można podłączyć w oknie „Stan komunikatora”:">
+<!ENTITY chat.showAccountManager.button       "Wyświetl stan komunikatora">
+
+<!ENTITY chat.participants             "Uczestnicy:">
+<!ENTITY chat.previousConversations    "Wcześniejsze rozmowy:">
+<!ENTITY chat.ongoingConversation      "Aktywne rozmowy">
+
+<!ENTITY openConversationCmd.label     "Rozpocznij rozmowę">
+<!ENTITY openConversationCmd.accesskey "R">
+<!ENTITY closeConversationCmd.label    "Zamknij rozmowę">
+<!ENTITY closeConversationCmd.accesskey "Z">
+<!ENTITY aliasCmd.label                "Zmień nazwę">
+<!ENTITY aliasCmd.accesskey            "n">
+<!ENTITY deleteCmd.label               "Usuń kontakt">
+<!ENTITY deleteCmd.accesskey           "U">
+
+<!ENTITY openConversationButton.tooltip  "Rozpocznij rozmowę">
+<!ENTITY closeConversationButton.tooltip "Zamknij rozmowę">
+
+<!ENTITY addBuddyButton.label          "Dodaj kontakt">
+<!ENTITY joinChatButton.label          "Dołącz do rozmowy">
+<!ENTITY chatAccountsButton.label      "Pokaż konta">
+
+<!ENTITY status.available          "Dostępny">
+<!ENTITY status.unavailable        "Niedostępny">
+<!ENTITY status.offline            "Poza siecią">
+
+<!ENTITY openLinkCmd.label            "Otwórz odnośnik…">
+<!ENTITY openLinkCmd.accesskey        "O">

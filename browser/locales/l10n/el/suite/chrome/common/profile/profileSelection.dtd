@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Επιλογή προφίλ χρήστη">
+<!ENTITY            profileManager.title "Διαχείριση προφίλ &brandShortName;">
+
+<!ENTITY            manage.label     "Διαχείριση προφίλ…">
+<!ENTITY            manage.accesskey "Δ">
+<!ENTITY            select.label     "Χρήση προφίλ">
+
+<!ENTITY            availableProfiles.label "Διαθέσιμα προφίλ">
+
+<!ENTITY            introStart.label         "Για πρόσβαση στο προσωπικό σας προφίλ, το οποίο περιέχει τα αποθηκευμένα μηνύματα, τις ρυθμίσεις και άλλες εξατομικευμένες πληροφορίες σας, παρακαλώ επιλέξτε το προφίλ σας από τη λίστα και κάντε κλικ στο &start.label; για να ξεκινήσετε τη συνεδρία σας.">
+<!ENTITY            introSwitch.label        "Για εναλλαγή σε άλλο προφίλ, το οποίο περιέχει τα αποθηκευμένα μηνύματα, τις ρυθμίσεις και άλλες εξατομικευμένες πληροφορίες, παρακαλώ επιλέξτε αυτό το προφίλ από τη λίστα και κάντε κλικ στο &select.label; για να ξεκινήσετε τη χρήση αυτού του προφίλ.">
+<!ENTITY            profileManagerText.label "Το &brandShortName; αποθηκεύει πληροφορίες για τις ρυθμίσεις, τις προτιμήσεις, τους σελιδοδείκτες, τα αποθηκευμένα μηνύματα και άλλα στοιχεία χρήστη στο προφίλ χρήστη σας.">
+
+<!ENTITY            autoSelect.label         "Ορισμός προφίλ ως προεπιλογή">
+<!ENTITY            autoSelect.accesskey     "π">
+
+<!ENTITY            start.label              "Εκκίνηση &brandShortName;">
+<!ENTITY            exit.label               "Έξοδος">
+
+<!ENTITY            newButton.label          "Δημιουργία προφίλ…">
+<!ENTITY            newButton.accesskey      "Δ">
+<!ENTITY            renameButton.label       "Μετονομασία προφίλ…">
+<!ENTITY            renameButton.accesskey   "Μ">
+<!ENTITY            deleteButton.label       "Διαγραφή προφίλ…">
+<!ENTITY            deleteButton.accesskey   "Δ">
+
+<!ENTITY            offlineState.label       "Εργασία εκτός σύνδεσης">
+<!ENTITY            offlineState.accesskey   "κ">

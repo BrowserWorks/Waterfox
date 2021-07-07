@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "Медиа">
+<!ENTITY mediaHTML5Preferences.label    "Аудио и видео">
+<!ENTITY allowMediaAutoplay.label       "Включить автовоспроизведение медиаконтента HTML5">
+<!ENTITY allowMediaAutoplay.accesskey   "к">
+
+<!ENTITY enableDrmMedia.label           "Включить Управление цифровыми правами (DRM) для">
+<!ENTITY enableEmeForSuite.label        "Сторонних плагинов расшифровки контента">
+<!ENTITY enableEmeForSuite.accesskey    "о">
+
+<!ENTITY animLoopingTitle.label         "Проигрывать анимацию в изображениях">
+<!ENTITY animLoopAsSpecified.label      "Столько раз, сколько указано в изображении">
+<!ENTITY animLoopAsSpecified.accesskey  "л">
+<!ENTITY animLoopOnce.label             "Один раз">
+<!ENTITY animLoopOnce.accesskey         "и">
+<!ENTITY animLoopNever.label            "Никогда">
+<!ENTITY animLoopNever.accesskey        "а">

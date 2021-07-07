@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Vítá vás &brandShortName;">
+<!ENTITY header2.label "Chtěli byste novou e-mailovou adresu?">
+<!ENTITY other.languages "Zobrazeny jsou pouze poskytovatelé adres ve vaší oblasti. Klepněte zde pro zobrazení všech poskytovatelů.">
+<!ENTITY error.line1 "Je nám líto, ale nepodařilo se najít žádnou z navrhovaných adres.">
+<!ENTITY error.line2 "Pro získání více adres zkuste hledat přezdívku nebo jiný výraz.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "A nebo se zkuste registrovat u některého ">
+<!ENTITY error.suggest.middle "z poskytovatelů emailu zdarma">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "K zadanému jménu „">
+<!ENTITY success.title.after "“ byly nalezeny následující možnosti e-mailových adres:">
+<!ENTITY success.tip "(Pro získání více adres zkuste hledat přezdívku nebo jiný výraz)">
+<!ENTITY partnership.description "Ve spolupráci s řadou poskytovatelů vám &brandShortName; umožní založit si vlastní poštovní účet. Do pole výše vložte prosím vaše křesní jméno a příjmení nebo jakékoliv jiné slovo, které se vám líbí.">
+<!ENTITY existing.header "Mám již svoji e-mailovou adresu">
+<!ENTITY tinyheader.title "Už mám svůj e-mail">
+<!ENTITY tinyheader.existing "Přeskočit průvodce a použít existující e-mail">
+<!ENTITY content.close "Svůj účet si nastavím později.">
+<!ENTITY successful.title "Blahopřejeme!">
+<!ENTITY successful.successMessage "Váš účet byl úspěšně založen.">
+<!ENTITY successful.write "Napsat e-mail">
+<!ENTITY successful.write.desc "Dejte vědět svým přátelům o vaší nové adrese<br/> a pošlete jim z ní e-mail.">
+<!ENTITY successful.customize "Upravte si &brandShortName; některým z doplňků">
+<!ENTITY successful.customize.desc "Existují tisíce doplňků, které vám umožní upravit si &brandShortName; přesně podle vašich potřeb.">
+<!ENTITY successful.attach "Vytvořte si svůj podpis">
+<!ENTITY successful.attach.desc "Na konec každého e-mailu lze automaticky přidat libovolnou citaci nebo informae o vás.">
+<!ENTITY successful.close "Zavřít okno.">
+<!ENTITY input.namePlaceholder "Vaše jméno nebo přezdívka">
+<!ENTITY input.search "Hledat">
+<!ENTITY search_engine.title "Přizpůsobit hledání">
+<!ENTITY search_engine.message "Poskytovatel vašeho e-mailu, může bát i poskytovatelem výsledků hledání na webu.">
+<!ENTITY search_engine.button "Dokončit">

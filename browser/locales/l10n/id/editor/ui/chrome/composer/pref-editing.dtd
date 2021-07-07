@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Pengaturan Laman Baru">
+
+<!ENTITY  authorName.label          "Penyusun:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Tampilan Laman Default">
+
+<!ENTITY defaultColors.label        "Warna default pembaca (tidak menampilkan warna pada laman)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColors.label         "Gunakan warna kesukaan:">
+<!ENTITY customColors.accesskey     "G">
+
+<!ENTITY normalText.label           "Teks Normal">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Teks Tautan">
+<!ENTITY linkText.accesskey         "a">
+<!ENTITY activeLinkText.label       "Teks tautan aktif">
+<!ENTITY activeLinkText.accesskey   "a">
+<!ENTITY visitedLinkText.label      "Teks Tautan yang pernah Dikunjungi">
+<!ENTITY visitedLinkText.accesskey  "u">
+<!ENTITY background.label           "Latar Belakang:">
+<!ENTITY background.accesskey       "L">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Gambar Latar Belakang:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "Pilih Berkas…">
+<!ENTITY chooseFile.accesskey       "B">
+

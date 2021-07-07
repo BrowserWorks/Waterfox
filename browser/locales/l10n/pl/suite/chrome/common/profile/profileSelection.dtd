@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Wybierz profil użytkownika">
+<!ENTITY profileManager.title "Menedżer profili &brandShortName;">
+
+<!ENTITY manage.label "Zarządzaj profilami…">
+<!ENTITY manage.accesskey "Z">
+<!ENTITY select.label "Użyj profilu">
+
+<!ENTITY availableProfiles.label "Dostępne profile">
+
+<!ENTITY introStart.label "Wszystkie ustawienia własne, zakładki, zachowana poczta oraz inne dane użytkownika przechowywane są w profilach osobistych. Wybierz swój profil z listy, a następnie naciśnij przycisk &start.label;.">
+<!ENTITY introSwitch.label "Aby zmienić profil, w którym przechowywane są ustawienia własne, zakładki, zachowana poczta oraz inne dane użytkownika, należy wybrać nazwę profilu, a następnie nacisnąć przycisk &select.label;.">
+<!ENTITY profileManagerText.label "Program &brandShortName; wykorzystuje profile użytkowników do przechowywania ustawień, zakładek, zachowanych wiadomości, książek adresowych oraz innych osobistych danych użytkowników.">
+
+<!ENTITY autoSelect.label "Domyślnie (bez pytania) używaj zaznaczonego profilu przy uruchamianiu">
+<!ENTITY autoSelect.accesskey "D">
+
+<!ENTITY start.label "Uruchom program &brandShortName;">
+<!ENTITY exit.label "Zakończ">
+
+<!ENTITY newButton.label "Utwórz nowy profil…">
+<!ENTITY newButton.accesskey "n">
+<!ENTITY renameButton.label "Zmień nazwę profilu…">
+<!ENTITY renameButton.accesskey "Z">
+<!ENTITY deleteButton.label "Usuń profil…">
+<!ENTITY deleteButton.accesskey "U">
+
+<!ENTITY offlineState.label "Pracuj w trybie offline">
+<!ENTITY offlineState.accesskey "o">

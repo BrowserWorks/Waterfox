@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Создать папку">
+<!ENTITY name.label                 "Имя:">
+<!ENTITY name.accesskey             "И">
+<!ENTITY description.label          "Создать как вложенную папку:">
+<!ENTITY description.accesskey      "С">
+<!ENTITY folderRestriction1.label   "Этот сервер разделяет папки на два типа.">
+<!ENTITY folderRestriction2.label   "Разрешить новой папке содержать:">
+<!ENTITY foldersOnly.label          "Папки">
+<!ENTITY messagesOnly.label         "Сообщения">
+<!ENTITY accept.label               "Создать папку">
+<!ENTITY accept.accesskey           "з">

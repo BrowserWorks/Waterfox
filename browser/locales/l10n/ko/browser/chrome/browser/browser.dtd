@@ -1,0 +1,288 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "메뉴 열기">
+
+<!ENTITY navbarOverflow.label                "도구 더보기…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "탭 고정">
+<!ENTITY  unpinTab.label                     "탭 고정 해제">
+
+<!ENTITY  listAllTabs.label      "탭 전체 목록">
+
+<!ENTITY tabCmd.label "새 탭">
+<!ENTITY openFileCmd.label "파일 열기…">
+<!ENTITY printCmd.label "인쇄…">
+
+<!ENTITY taskManagerCmd.label "작업 관리자">
+
+<!ENTITY menubarCmd.label "메뉴 모음">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "탐색">
+<!ENTITY personalbarCmd.label "북마크 도구 모음">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "북마크">
+<!ENTITY bookmarksToolbarItem.label "북마크 도구 모음 항목">
+
+<!ENTITY fullScreenCmd.label "전체 화면">
+
+<!ENTITY pictureInPictureHideToggle.label "화면 속 화면 토글 숨기기">
+<!ENTITY pictureInPictureHideToggle.accesskey "H">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; 설정">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "다른 기기 연결…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.signin.label "&brandProductName;에 로그인">
+<!ENTITY fxa.menu.turnOnSync.label "&syncBrand.shortName.label; 켜기">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; 서비스">
+<!ENTITY fxa.menu.account.label "계정">
+<!ENTITY fxa.menu.settings.label "설정">
+<!ENTITY fxa.menu.accountSettings.label "계정 설정">
+<!ENTITY fxa.menu.manageAccount2.label "계정 관리">
+<!ENTITY fxa.menu.signOut.label "로그아웃…">
+<!ENTITY fxa.menu.setupSync.label "&syncBrand.shortName.label; 설정…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Firefox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "로그인한 모든 기기로 즉시 탭을 보냅니다.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "이 전체 화면 모드입니다">
+<!ENTITY fullscreenWarning.generic.label "이 문서는 전체 화면 모드입니다">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "전체 화면 종료 (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "전체 화면 종료 (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "사이트가 포인터를 제어하려 합니다. 다시 제어하려면 ESC 키를 누르세요.">
+<!ENTITY pointerlockWarning.generic.label "이 문서가 포인터를 제어하려 합니다. 다시 제어하려면 ESC 키를 누르세요.">
+
+<!ENTITY showAllBookmarks2.label "모든 북마크 보기">
+<!ENTITY recentBookmarks.label "최근 북마크됨">
+<!ENTITY bookmarksToolbarChevron.tooltip "북마크 더보기">
+
+<!ENTITY printButton.label            "인쇄">
+<!ENTITY printButton.tooltip          "이 페이지 인쇄">
+
+<!ENTITY searchItem.title             "검색">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "홈">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; 홈 페이지">
+
+<!ENTITY bookmarksButton.label          "북마크">
+
+<!ENTITY bookmarksSubview.label             "북마크">
+<!ENTITY bookmarksMenuButton2.label         "북마크 메뉴">
+<!ENTITY bookmarksMenuButton.other.label    "기타 북마크">
+<!ENTITY bookmarksMenuButton.mobile.label   "모바일 북마크">
+<!ENTITY viewBookmarksSidebar2.label        "북마크 탐색창 보기">
+<!ENTITY hideBookmarksSidebar.label         "북마크 탐색창 숨기기">
+<!ENTITY viewBookmarksToolbar.label         "북마크 도구 모음 표시">
+<!ENTITY hideBookmarksToolbar.label         "북마크 도구 모음 숨기기">
+<!ENTITY searchBookmarks.label              "북마크 검색">
+<!ENTITY bookmarkingTools.label             "북마크 도구">
+<!ENTITY addBookmarksMenu.label             "도구 모음에 북마크 메뉴 추가">
+<!ENTITY removeBookmarksMenu.label          "도구 모음에서 북마크 메뉴 제거">
+
+<!ENTITY historyButton.label            "기록">
+
+<!ENTITY downloads.label              "다운로드">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "다운로드">
+<!ENTITY addons.label                 "부가 기능">
+
+<!ENTITY webDeveloperMenu.label       "웹 개발자">
+
+<!ENTITY newNavigatorCmd.label        "새 창">
+<!ENTITY newPrivateWindow.label     "새 사생활 보호 창">
+
+<!ENTITY editMenu.label         "편집">
+<!ENTITY preferencesCmd2.label       "설정">
+<!ENTITY preferencesCmdUnix.label       "환경 설정">
+<!ENTITY logins.label                           "로그인과 비밀번호">
+
+<!ENTITY overflowCustomizeToolbar.label       "도구 모음 사용자 지정…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "기록">
+<!ENTITY historyUndoMenu.label "최근에 닫은 탭">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "최근에 닫은 창">
+
+<!ENTITY appMenuHistory.showAll.label "모든 기록 보기">
+
+<!ENTITY appMenuHistory.clearRecent.label "최근 기록 지우기…">
+<!ENTITY appMenuHistory.restoreSession.label "이전 세션 복원">
+<!ENTITY appMenuHistory.viewSidebar.label "기록 탐색창 보기">
+<!ENTITY appMenuHistory.hideSidebar.label "기록 탐색창 숨기기">
+<!ENTITY appMenuHistory.recentHistory.label "최근 기록">
+<!ENTITY appMenuHelp.label "도움말">
+
+<!ENTITY appMenuRemoteTabs.label "동기화된 탭">
+
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "열린 탭이 없음">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "더보기">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "이 기기의 탭 더 보기">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "모두 보기">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "이 기기의 탭 모두 보기">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "다른 기기의 탭 목록을 보려면 탭 동기화를 켜세요.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Firefox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "다른 기기에서도 여기에서 열린 탭을 사용하시겠습니까?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Sync 설정 열기">
+<!ENTITY appMenuRemoteTabs.welcome.label "다른 기기의 탭 목록을 봅니다.">
+<!ENTITY appMenuRemoteTabs.unverified.label "계정 확인이 필요합니다.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "&syncBrand.shortName.label;에 로그인…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "&syncBrand.shortName.label; 켜기…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "기기 관리…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "동기화된 탭 탐색창 보기">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "동기화된 탭 탐색창 숨기기">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "다른 기기 연결">
+
+<!ENTITY appMenuRecentHighlights.label "최근 하이라이트">
+
+<!ENTITY customizeMenu.addToToolbar.label "도구 모음에 추가">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "더보기 메뉴에 추가">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "더보기 메뉴에서 고정 해제">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "도구 모음에서 제거">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "더 많은 아이템 추가…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "기타 도구">
+
+<!ENTITY contentSearchSubmit.tooltip  "검색하기">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "검색">
+<!ENTITY searchIcon.tooltip           "검색">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "링크 복사">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "페이지를 Pocket에 저장">
+<!ENTITY pocketMenuitem.label         "Pocket 목록 보기">
+
+<!ENTITY emailPageCmd.label           "메일로 링크 보내기…">
+
+<!ENTITY fullZoom.label                 "확대/축소">
+
+<!ENTITY sidebarCloseButton.tooltip     "탐색창 닫기">
+
+<!ENTITY quitApplicationCmdWin2.label       "종료">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; 종료">
+<!ENTITY quitApplicationCmd.label       "종료">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; 종료">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "팝업 차단 설정 편집…">
+<!ENTITY editPopupSettings.label "팝업 차단 설정 편집…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "이 페이지에서 찾기…">
+
+<!ENTITY spellAddDictionaries.label "사전 추가…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "브라우저 탭">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "자동 숨기기">
+
+
+<!ENTITY uiTour.infoPanel.close "닫기">
+
+<!ENTITY panicButton.thankyou.msg1                "최근 기록이 지워졌습니다.">
+<!ENTITY panicButton.thankyou.msg2                "안전한 탐색!">
+<!ENTITY panicButton.thankyou.buttonlabel         "감사합니다!">
+
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; 업데이트 다운로드">
+<!ENTITY updateManual.panelUI.label "&brandShorterName; 의 새 복사본 다운로드">
+<!ENTITY updateUnsupported.panelUI.label "추가 업데이트를 수행할 수 없습니다">
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName; 업데이트를 위해 다시 시작">
+
+<!ENTITY sendToDevice.syncNotReady.label "기기를 동기화하고 있습니다…">
+
+<!ENTITY pageAction.shareUrl.label "공유">
+<!ENTITY pageAction.shareMore.label "더보기…">
+
+<!ENTITY libraryButton.tooltip "기록, 저장된 북마크 등 보기">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "접근성 기능 활성화됨">

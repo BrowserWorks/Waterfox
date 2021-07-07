@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title "Limpiar datos privados">
+<!ENTITY sanitizeItems.label "Vaciar ahora los siguientes elementos:">
+<!ENTITY itemHistory.label "Historial de navegación">
+<!ENTITY itemHistory.accesskey "H">
+<!ENTITY itemHistoryS.accesskey "v">
+<!ENTITY itemUrlBar.label "Historial de la barra de direcciones">
+<!ENTITY itemUrlBar.accesskey "b">
+<!ENTITY itemUrlBarS.accesskey "b">
+<!ENTITY itemDownloads.label "Historial de descargas">
+<!ENTITY itemDownloads.accesskey "D">
+<!ENTITY itemDownloadsS.accesskey "d">
+<!ENTITY itemFormSearchHistory.label "Formularios guardados e historial de búsquedas">
+<!ENTITY itemFormSearchHistory.accesskey "F">
+<!ENTITY itemFormSearchHistoryS.accesskey "m">
+<!ENTITY itemCache.label "Caché">
+<!ENTITY itemCache.accesskey "a">
+<!ENTITY itemCacheS.accesskey "h">
+<!ENTITY itemCookies.label "Cookies">
+<!ENTITY itemCookies.accesskey "C">
+<!ENTITY itemCookiesS.accesskey "k">
+<!ENTITY itemOfflineApps.label "Datos de sitios web sin conexión">
+<!ENTITY itemOfflineApps.accesskey "O">
+<!ENTITY itemOfflineAppsS.accesskey "w">
+<!ENTITY itemPasswords.label "Contraseñas guardadas">
+<!ENTITY itemPasswords.accesskey "C">
+<!ENTITY itemPasswordsS.accesskey "u">
+<!ENTITY itemSessions.label "Sesiones activas">
+<!ENTITY itemSessions.accesskey "S">
+<!ENTITY itemSessionsS.accesskey "e">
+<!ENTITY sanitizeButton.label "Limpiar datos privados ahora">

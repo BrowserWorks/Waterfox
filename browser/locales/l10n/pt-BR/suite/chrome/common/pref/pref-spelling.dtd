@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "Ortografia">
+<!ENTITY generalSpelling.label                "Geral">
+<!ENTITY checkSpellingWhenTyping.label        "Ao digitar, verificar minha ortografia:">
+<!ENTITY checkSpellingWhenTyping.accesskey    "v">
+<!ENTITY dontCheckSpelling.label              "Nunca">
+<!ENTITY multilineCheckSpelling.label         "Em caixas com várias linhas">
+<!ENTITY alwaysCheckSpelling.label            "Todas as caixas">
+<!ENTITY spellForMailAndNews.label            "Email e grupos de notícias">
+<!ENTITY checkSpellingBeforeSend.label        "Verificar ortografia antes de enviar">
+<!ENTITY checkSpellingBeforeSend.accesskey    "c">
+<!ENTITY spellCheckInline.label               "Verificação ortográfica automática">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "Idioma:">
+<!ENTITY languagePopup.accessKey              "m">
+<!ENTITY moreDictionaries.label               "Baixando mais dicionários&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "Nenhum dicionário disponível.">

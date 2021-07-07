@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Νέα εκδήλωση…">
+<!ENTITY event.new.event.accesskey              "δ">
+
+<!ENTITY event.new.task                         "Νέα εργασία…">
+<!ENTITY event.new.task.accesskey               "α">
+
+<!ENTITY calendar.import.label                  "Εισαγωγή…">
+<!ENTITY calendar.import.accesskey              "Ε">
+
+<!ENTITY calendar.export.label                  "Εξαγωγή…">
+<!ENTITY calendar.export.accesskey              "ξ">
+
+<!ENTITY calendar.publish.label                 "Δημοσίευση…">
+<!ENTITY calendar.publish.accesskey             "δ">
+
+<!ENTITY calendar.deletecalendar.label          "Διαγραφή επιλεγμένου ημερολογίου…">
+<!ENTITY calendar.deletecalendar.accesskey      "Δ">
+<!ENTITY calendar.unsubscribecalendar.label     "Κατάργηση συνδρομής στο επιλεγμένο ημερολόγιο…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "Κ">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Κατάργηση του επιλεγμένου ημερολογίου…">
+<!ENTITY calendar.removecalendar.accesskey      "Α">
+
+
+<!ENTITY calendar.menu.customize.label          "Προσαρμογή…">
+<!ENTITY calendar.menu.customize.accesskey      "Π">
+
+<!ENTITY showUnifinderCmd.label                 "Εύρεση εκδηλώσεων">
+<!ENTITY showUnifinderCmd.accesskey             "Ε">
+<!ENTITY showUnifinderCmd.tooltip               "Εναλλαγή παραθύρου εύρεσης εκδηλώσεων">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Εμφάνιση εργασιών στο ημερολόγιο">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "Ρ">
+
+<!ENTITY goTodayCmd.label                       "Σήμερα">
+<!ENTITY goTodayCmd.accesskey                   "Σ">
+
+<!ENTITY showCurrentView.label                  "Τρέχουσα προβολή">
+<!ENTITY showCurrentView.accesskey              "Ο">
+
+<!ENTITY calendar.properties.label              "Ιδιότητες ημερολογίου…">
+<!ENTITY calendar.properties.accesskey          "η">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "証明書の管理">
+<!ENTITY  managecerts.text         "証明書マネージャーは、あなた自身の証明書を管理するだけでなく、他の人や認証局証明書などを管理するために使用します。">
+<!ENTITY  managecerts.button       "証明書の管理...">
+<!ENTITY  managecerts.accesskey    "M">
+<!ENTITY  managedevices.caption    "セキュリティデバイスの管理">
+<!ENTITY  managedevices.text       "スマートカードのようなセキュリティデバイスを管理するために使用します。">
+<!ENTITY  managedevices.button     "セキュリティデバイスの管理...">
+<!ENTITY  managedevices.accesskey  "S">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "証明書">
+<!ENTITY  certs.label              "証明書">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "オンライン証明書状態プロトコル (OCSP) を使用すると、証明書の現在の正当性を検証できます。">
+<!ENTITY enableOCSP.accesskey                     "U">
+<!ENTITY validation.requireOCSP.description       "OCSP サーバーに接続できなかった場合は証明書を無効として扱う">
+<!ENTITY validation.requireOCSP.accesskey         "W">

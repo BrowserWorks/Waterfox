@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Επιλογή διευθύνσεων">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Προς->">
+<!ENTITY toButton.accesskey                  "Π">
+<!ENTITY ccButton.label                      "Κοιν.->">
+<!ENTITY ccButton.accesskey                  "Κ">
+<!ENTITY bccButton.label                     "Κρ.Κοιν.->">
+<!ENTITY bccButton.accesskey                 "ρ">
+<!ENTITY newButton.label                     "Νέο…">
+<!ENTITY newButton.accesskey                 "Ν">
+<!ENTITY editButton.label                    "Επεξεργασία…">
+<!ENTITY editButton.accesskey                "Ε">
+<!ENTITY removeButton.label                  "Αφαίρεση">
+<!ENTITY removeButton.accesskey              "Α">
+<!ENTITY lookIn.label                        "Αναζήτηση σε:">
+<!ENTITY lookIn.accesskey                    "Α">
+<!ENTITY for.label                           "για:">
+<!ENTITY for.accesskey                       "γ">
+<!ENTITY for.placeholder                     "Όνομα ή email">
+<!ENTITY addressMessageTo.label              "Αποστολή μηνύματος σε:">
+
+<!-- Tooltips items -->
+<!ENTITY addressPickerNewButton.tooltip      "Δημιουργία νέας κάρτας ευρετηρίου">
+<!ENTITY addressPickerEditButton.tooltip     "Επεξεργασία επιλεγμένης κάρτας">

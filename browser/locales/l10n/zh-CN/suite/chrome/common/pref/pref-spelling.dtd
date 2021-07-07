@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+   
+<!ENTITY prefSpelling.title                   "拼写检查">
+<!ENTITY generalSpelling.label                "常规">
+<!ENTITY checkSpellingWhenTyping.label        "打字时进行拼写检查：">
+<!ENTITY checkSpellingWhenTyping.accesskey    "W">
+<!ENTITY dontCheckSpelling.label              "永不">
+<!ENTITY multilineCheckSpelling.label         "在多行编辑框中">
+<!ENTITY alwaysCheckSpelling.label            "所有编辑框">
+<!ENTITY spellForMailAndNews.label            "邮件和新闻组">
+<!ENTITY checkSpellingBeforeSend.label        "发送前进行拼写检查">
+<!ENTITY checkSpellingBeforeSend.accesskey    "C">
+<!ENTITY spellCheckInline.label               "输入时检查拼写">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "语言：">
+<!ENTITY languagePopup.accessKey              "L">
+<!ENTITY moreDictionaries.label               "下载更多字典&#x2026;">
+<!ENTITY noSpellCheckAvailable.label          "没有字典可用。">

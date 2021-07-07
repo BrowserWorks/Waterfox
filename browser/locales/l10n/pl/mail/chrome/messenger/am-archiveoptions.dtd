@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Ustawienia archiwizacji">
+<!ENTITY archiveGranularityPrefix.label "Archiwum wiadomości przechowuj w:">
+<!ENTITY archiveFlat.label "pojedynczym folderze">
+<!ENTITY archiveFlat.accesskey "p">
+<!ENTITY archiveYearly.label "rocznych folderach">
+<!ENTITY archiveYearly.accesskey "r">
+<!ENTITY archiveMonthly.label "miesięcznych folderach">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Utrzymuj istniejącą strukturę folderów w archiwum">
+<!ENTITY keepFolderStructure.accesskey "U">
+<!ENTITY archiveExample.label "Przykład">
+<!ENTITY archiveFolderName.label "Archiwum">
+<!ENTITY inboxFolderName.label "Odebrane">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Zoeken op het internet">
+<!ENTITY legendHeader                     "Standaardzoekmachine">
+<!ENTITY defaultSearchEngine.label        "Zoeken met:">
+<!ENTITY defaultSearchEngine.accesskey    "Z">
+
+<!ENTITY engineManager.label              "Zoekmachines beheren…">
+
+<!ENTITY searchResults.label              "Zoekresultaten">
+
+<!ENTITY openInTab.label                  "Nieuwe tabbladen openen voor zoekresultaten in de zijbalk">
+<!ENTITY openInTab.accesskey              "N">
+<!ENTITY openContextSearchTab.label       "Tabblad in plaats van vensters openen voor een contextmenu webzoekopdracht">
+<!ENTITY openContextSearchTab.accesskey   "T">
+<!ENTITY openSidebarSearchPanel.label     "Het tabblad Zoeken openen in de zijbalk bij het aanroepen van een zoekopdracht">
+<!ENTITY openSidebarSearchPanel.accesskey "o">

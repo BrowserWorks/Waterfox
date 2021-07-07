@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "Huvudmenyn">
+<!ENTITY Toolbar.tooltip    "Verktygsfältet">
+
+
+<!ENTITY multiline-expand.tooltip   "Byt till flerradig inmatning (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "Byt till enkelradig inmatning (Ctrl+Down)">
+<!ENTITY multiline-send.tooltip     "Skicka denna text (Ctrl+Enter)">
+<!ENTITY server-nick.tooltip        "Ändra smeknamn eller sätt borta-status. För att få fram inmatningsrutan, tryck Escape.">
+
+<!ENTITY Underline.label             "Understruken">
+<!ENTITY Bold.label                  "Fetstilt">
+<!ENTITY Reverse.label               "Inverterat">
+<!ENTITY Normal.label                "Normalt">
+<!ENTITY Color.label                 "Färg">
+<!ENTITY ForeBack.label              "xx=Förgrund yy=Bakgrund">

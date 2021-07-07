@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "자정" >
+<!ENTITY time.noon "정오" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "일" >
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "월" >
+<!ENTITY day.2.Ddd.accesskey "M">
+<!ENTITY day.3.Ddd "화" >
+<!ENTITY day.3.Ddd.accesskey "T">
+<!ENTITY day.4.Ddd "수" >
+<!ENTITY day.4.Ddd.accesskey "W">
+<!ENTITY day.5.Ddd "목" >
+<!ENTITY day.5.Ddd.accesskey "h">
+<!ENTITY day.6.Ddd "금" >
+<!ENTITY day.6.Ddd.accesskey "F">
+<!ENTITY day.7.Ddd "토" >
+<!ENTITY day.7.Ddd.accesskey "a">
+
+<!ENTITY day.1.name "일요일" >
+<!ENTITY day.2.name "월요일" >
+<!ENTITY day.3.name "화요일" >
+<!ENTITY day.4.name "수요일" >
+<!ENTITY day.5.name "목요일" >
+<!ENTITY day.6.name "금요일" >
+<!ENTITY day.7.name "토요일" >
+
+<!ENTITY month.1.name "1월" >
+<!ENTITY month.2.name "2월" >
+<!ENTITY month.3.name "3월" >
+<!ENTITY month.4.name "4월" >
+<!ENTITY month.5.name "5월" >
+<!ENTITY month.6.name "6월" >
+<!ENTITY month.7.name "7월" >
+<!ENTITY month.8.name "8월" >
+<!ENTITY month.9.name "9월" >
+<!ENTITY month.10.name "10월" >
+<!ENTITY month.11.name "11월" >
+<!ENTITY month.12.name "12월" >
+
+<!ENTITY onemonthbackward.tooltip "이전 달" >
+<!ENTITY onemonthforward.tooltip "다음 달" >
+<!ENTITY oneyearbackward.tooltip "1년 전" >
+<!ENTITY oneyearforward.tooltip "1년 후" >
+<!ENTITY showToday.tooltip "오늘">
+<!ENTITY onedayforward.tooltip "1일 후">
+<!ENTITY onedaybackward.tooltip "1일 전">
+<!ENTITY showselectedday.tooltip "선택한 날의 이벤트 보기">

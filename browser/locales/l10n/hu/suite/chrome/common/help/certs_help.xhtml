@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Tanúsítványkezelő</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Ez a dokumentum csak a tájékoztatás célját szolgálja.
+  Segíthet abban, hogy a személyes adatainkat megvédjük az interneten,  de nem érinti az összes adatvédelmi és biztonsági kérdést, és nem tekinthető a Netscape hivatalos ajánlatának a megfelelő adatvédelmi és biztonsági rendszabályokat illetően.</div>
+
+<h1 id="certificate_manager">Tanúsítványkezelő</h1>
+
+<p>Ez a fejezet leírja, hogy hogyan használható az Tanúsítványkezelő. A tanúsítványok használatáról bővebben a <a href="using_certs_help.xhtml">Tanúsítványok használata</a> fejezetben olvashatunk.</p>
+
+<p>A Tanúsítványkezelő a következő lépésekkel hívható elő:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategóriában kattintsunk a Tanúsítványok elemre. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.)</li>
+  <li>Kattintsunk a Tanúsítványok kezelése gombra.</li>
+</ol>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#your_certificates">Saját tanúsítványok</a></li>
+    <li><a href="#other_peoples_certificates">Mások tanúsítványai</a></li>
+    <li><a href="#web_site_certificates">Webhelyek tanúsítványai</a></li>
+    <li><a href="#authorities">Hitelesítésszolgáltatók</a></li>
+    <li><a href="#others">Egyebek</a></li>
+  </ul>
+</div>
+
+<h2 id="your_certificates">Saját tanúsítványok</h2>
+
+<p>A <a href="#certificate_manager">Tanúsítványkezelő</a> Saját tanúsítványok panellapja a minket azonosító tanúsítványokat jeleníti meg. A saját tanúsítványok az azokat kiadó szervezetek neve alatt jelennek meg:</p>
+
+<ul>
+  <li>Ha nem jelennek meg a tanúsítványok nevei a szervezetek neve alatt, kattintsunk duplán a névre.</li>
+  <li>A tanúsítvány kiválasztásához kattintsunk a nevére.</li>
+  <li>Egynél több tanúsítvány kiválasztásához tartsunk nyomva a Control billentyűt, és kattintsunk a neveikre.</li>
+</ul>
+
+<p>Válasszunk ki egy vagy több tanúsítványt és kattintsunk a következő gombok egyikére:</p>
+
+<ul>
+  <li><strong>Megtekintés</strong>: részletes információk megjelenítése a kijelölt tanúsítványokról.</li>
+  <li><strong>Biztonsági mentés</strong>: a kijelölt tanúsítványokról biztonsági mentés készítése. Megjelenik egy párbeszédpanel, amelyben megadhatjuk a biztonsági mentést védő jelszót. A biztonsági mentés ezek után tetszőleges könyvtárba elhelyezhető.</li>
+  <li><strong>Összes mentése</strong>: minden tanúsítványról biztonsági másolatot készít, amely a <a href="glossary.xhtml#software_security_device">szoftveres adatvédelmi eszközben</a> tárolódik.
+  <li><strong>Törlés</strong>: a kijelölt tanúsítványok törlése.</li>
+
+    <p><strong>Megjegyzés: az intelligens kártyákon tárolt tanúsítványokról nem készíthető biztonsági mentés.</strong>
+      Akár a néhány kiválasztott tanúsítványra a Biztonsági mentés, akár a Biztonsági mentés mindenről gombot használjuk is, a biztonsági mentés nem fogja az intelligens kártyákon és egyéb külső adatvédelmi eszközökön tárol tanúsítványokat tárolni.  Csak a beépített szoftveres adatvédelmi eszközön tárolt tanúsítványokról készíthető biztonsági mentés.</p>
+<p>A következő műveletekhez nem kell kijelölni egy tanúsítványt sem:</p>
+</li>
+  <li><strong>Importálás:</strong> egy vagy több tanúsítvány importálása a biztonsági mentést tartalmazó állományból. Miután az Importálás gombot megnyomtuk, a Tanúsítványkezelő bekéri a biztonsági mentést tartalmazó állomány nevét. A tanúsítványokról készült biztonsági mentéseknek általában <tt>.p12</tt> a kiterjesztése, például <tt>MyCert.p12</tt> . Miután kiválasztottunk az importálandó fájlt, a Tanúsítványkezelő bekéri a biztonsági mentés elkészítésekor megadott jelszót.</li>
+</ul>
+
+<h3 id="choose_a_certificate_backup_password">Tanúsítványok biztonsági mentésének jelszava</h3>
+
+<p>A tanúsítványok biztonsági mentésének jelszava védi az egy vagy több tanúsítványt, amelyet a Tanúsítványkezelő <a href="#your_certificates">Saját tanúsítványok</a> panellapjáról választottunk ki mentésre.</p>
+
+<p>Ez a tanúsítvány biztonsági másolatának készítése során a Tanúsítványkezelő számára megadott jelszó. A tanúsítvány későbbi visszaállítása csak e jelszó birtokában lehetséges.</p>
+
+<ul>
+  <li><strong>Jelszó</strong>: írjuk be a biztonsági mentés jelszavát ebbe a mezőbe.</li>
+  <li><strong>Jelszó (ismét)</strong>: írjuk be ismét a biztonsági mentés jelszavát. Ha nem pontosan ugyanazt írjuk ide, mint az előbb, akkor az OK gomb inaktív marad. Ebben az esetben próbáljuk újra beírni az új jelszót.</li>
+</ul>
+
+<p>Ha valaki megszerzi a tanúsítványok biztonsági másolatát tartalmazó fájlt, és sikeresen importálja a tanúsítványokat, akkor a mi nevünkben küldhet üzeneteket és érhet el webhelyeket.  Ez akkor okozhat problémát, ha például digitálisan aláírjuk a fontos elektronikus leveleinket, vagy a bankszámlánkat és a befektetéseinket az interneten keresztül kezeljük.</p>
+
+<p>A <strong>jelszóminőség fokmérője</strong> nagyjából kijelzi, hogy milyen nehéz kitalálni a jelszavunkat. A figyelembe vett tényezők a jelszó hosszúsága, a kis- és nagybetűk váltogatott használata, valamint a számok és egyéb jelek használata. Mindazonáltal ez nem garantálja, hogy a jelszavunkat nem lehet kitalálni.</p>
+
+<p>A jó jelszó kiválasztásához további útmutatást találunk a <a href="passwords_help.xhtml#choosing_a_good_password">Hogyan válasszunk biztonságos jelszót</a> című dokumentumban.</p>
+
+<p>Az is fontos, hogy a jelszót biztonságos helyen tároljuk, és ne olyan helyen, ahol bárki könnyen hozzáférhet. Ha elfelejtjük ezt a jelszót, nem fogjuk tudni a tanúsítványokat visszaállítani a biztonsági mentésből.</p>
+
+<h3 id="delete_your_certificates">Tanúsítványok törlése</h3>
+
+<p>Mielőtt törölnénk egy lejárt saját tanúsítványt a Tanúsítványkezelő
+  <a href="#your_certificates">Saját tanúsítványok</a> panellapján, győződjünk meg arról, hogy soha többé nem lesz rá szükségünk, például egy régi elektronikus levél elolvasásához, amelyet az ennek a tanúsítványnak megfelelő személyes kulcs segítségével titkosítottak.</p>
+
+<h2 id="other_peoples_certificates">Mások tanúsítványai</h2>
+
+<p>A <a href="#certificate_manager">Tanúsítványkezelő</a> Mások tanúsítványai panellapja a birtokunkban lévő másokat azonosító tanúsítványokat jeleníti meg.</p>
+
+<p>Ha digitálisan aláírt elektronikus levelet kapunk valakitől, a Tanúsítványkezelő automatikusan importálja a tanúsítványukat. Ezeket a tanúsítványokat arra használhatjuk, hogy titkosított üzeneteket küldjünk ezeknek az embereknek.</p>
+
+<p>A mások tanúsítványai az azokat kiadó szervezetek neve alatt jelennek meg:</p>
+
+<ul>
+  <li>Ha nem jelennek meg a tanúsítványok nevei a szervezetek neve alatt, kattintsunk duplán a névre.</li>
+  <li>A tanúsítvány kiválasztásához kattintsunk a nevére.</li>
+  <li>Egynél több tanúsítvány kiválasztásához tartsunk nyomva a Control billentyűt, és kattintsunk a neveikre.</li>
+</ul>
+
+<p>Válasszunk ki egy vagy több tanúsítványt és kattintsunk a következő gombok egyikére:</p>
+
+<ul>
+  <li><strong>Megtekintés:</strong> részletes információk megjelenítése a kijelölt tanúsítványokról.</li>
+  <li><strong>Törlés:</strong> a kijelölt tanúsítványok törlése.</li>
+</ul>
+
+<h3 id="delete_email_certificates">E-mail tanúsítványok törlése</h3>
+
+<p>Mielőtt törölnénk valaki más tanúsítványát a Tanúsítványkezelő Mások tanúsítványai panellapján, győződjünk meg róla, hogy soha többé nem akarunk titkosított levelet küldeni annak a személynek, illetve hogy nem akarjuk többé ellenőrizni az általa küldött üzenetek digitális aláírását.</p>
+
+<h2 id="web_site_certificates">Webhelyek tanúsítványai</h2>
+
+<p>A Tanúsítványkezelő Webhelyek panellapja a birtokunkban lévő webhelyeket azonosító tanúsítványokat jeleníti meg.</p>
+
+<p>A webhelyek tanúsítványai az azokat kiadó szervezetek neve alatt jelennek meg:</p>
+
+<ul>
+  <li>Ha nem jelennek meg a tanúsítványok nevei a szervezetek neve alatt, kattintsunk duplán a névre.</li>
+  <li>A tanúsítvány kiválasztásához kattintsunk a nevére.</li>
+  <li>Egynél több tanúsítvány kiválasztásához tartsunk nyomva a Control billentyűt, és kattintsunk a neveikre.</li>
+</ul>
+
+<p>Válasszunk ki egy vagy több tanúsítványt és kattintsunk a következő gombok egyikére:</p>
+
+<ul>
+  <li><strong>Megtekintés:</strong> részletes információk megjelenítése a kijelölt tanúsítványokról.</li>
+  <li><strong>Szerkesztés:</strong> a kijelölt tanúsítványok bizalmi beállításainak megtekintése, illetve szerkesztése. A beállításokat arra használhatjuk, hogy egy webhely tanúsítványát megjelöljük úgy, hogy nem bízunk benne, vagy nem bízunk benne azonosítási célból.</li>
+  <li><strong>Törlés:</strong> a kijelölt tanúsítványok törlése.</li>
+</ul>
+
+<h3 id="edit_web_site_certificate_trust_settings">Webhely tanúsítványának megbízhatóságának beállítása</h3>
+
+<p>Miután a Tanúsítványkezelő <a href="#web_site_certificates">Webhelyek</a> panellapján kijelöltük egy webhely tanúsítványát, és megnyomtuk a Szerkesztés gombot, megjelenik a &bdquo;Webhely tanúsítványának megbízhatóságának beállítása&rdquo; párbeszédpanel. Itt megadhatjuk, hogy megbízunk-e a kijelölt tanúsítványban a webhely azonosításának és a titkosított kapcsolat létrehozásának tekintetében.</p>
+
+<p>A párbeszédpanel a következő elemekből áll:</p>
+
+<ul>
+  <li><strong>A <q><em>név</em></q> tanúsítványt kiadta</strong>: a tanúsítványt kibocsátó <a href="glossary.xhtml#certificate_authority">hitelesítésszolgáltató</a> adatait tartalmazza.</li>
+  <li><strong>Tanúsítvány-bizalom szerkesztése</strong>:
+    <ul>
+      <li><strong>Tanúsítvány megbízhatóságának kinyilvánítása</strong>: ha ezt a lehetőséget választjuk, a Tanúsítványkezelő ezentúl megbízik ebben a tanúsítványban a webhely azonosítása és a titkosított kapcsolat létrehozása céljából. Ha ezt a lehetőséget választjuk, akkor a webhely meglátogatásakor a böngésző a lehető legkevesebb (vagy semmi) figyelmeztető üzenetet kíséretében jeleníti meg a webhelyet.</li>
+      <li><strong>Tanúsítvány megbízhatatlanságának kinyilvánítása</strong>:
+        ha ezt a lehetőséget választjuk, a Tanúsítványkezelő ezentúl nem bízik meg ebben a tanúsítványban a webhely azonosítása és a titkosított kapcsolat létrehozása céljából. Ha azt a lehetőséget választjuk, a webhely meglátogatásakor a böngésző egy vagy több figyelmeztető üzenetet jelenít meg, mielőtt a webhely megjelenik.</li>
+    </ul>
+  </li>
+  <li><strong>Hitelesítésszolgáltató megbízhatóságának megadása</strong>: kattintsunk erre a gombra a webhely tanúsítványát kiadó hitelesítésszolgáltató megbízhatóságának megadásához. Ezek a beállítások lehetővé teszik, hogy megbízzunk vagy ne bízzunk meg egy adott hitelesítésszolgáltató által kiadott különféle tanúsítványokban. Például megadhatjuk, hogy az adott hitelesítésszolgáltató által kiadott minden webhelytanúsítványban megbízunk.</li>
+</ul>
+
+<p>A változtatások érvényesítéséhez kattintsunk az OK gombra.</p>
+
+<h3 id="delete_web_site_certificates">Webhely tanúsítványainak törlése</h3>
+
+<p>Mielőtt törölnénk egy webhely tanúsítványát a Tanúsítványkezelő <a href="#web_site_certificates">Webhelyek</a>  panellapján, győződjünk meg róla, hogy soha többé nincs szükségünk rá a webhely azonosításához vagy a titkosított kapcsolat létrehozásához.</p>
+
+<h2 id="authorities">Hitelesítésszolgáltatók</h2>
+
+<p>A <a href="#certificate_manager">Tanúsítványkezelő</a> Hitelesítésszolgáltatók panellapja a birtokunkban lévő <a href="glossary.xhtml#certificate_authority">hitelesítésszolgáltatókat</a> azonosító tanúsítványokat jeleníti meg.</p>
+
+<p>A hitelesítésszolgáltatók tanúsítványai az azokat kiadó szervezetek neve alatt jelennek meg:</p>
+
+<ul>
+  <li>Ha nem jelennek meg a tanúsítványok nevei a szervezetek neve alatt, kattintsunk duplán a névre.</li>
+  <li>A tanúsítvány kiválasztásához kattintsunk a nevére.</li>
+  <li>Egynél több tanúsítvány kiválasztásához tartsunk nyomva a Control billentyűt, és kattintsunk a neveikre.</li>
+</ul>
+
+<p>Válasszunk ki egy vagy több tanúsítványt és kattintsunk a következő gombok egyikére:</p>
+
+<ul>
+  <li><strong>Megjelenítés:</strong> részletes információk megjelenítése a kijelölt tanúsítványokról.</li>
+  <li><strong>Szerkesztés:</strong> a kijelölt tanúsítványok beállításainak megtekintése, illetve szerkesztése. Ezeket a beállításokat annak megadására használhatjuk, hogy milyen típusú tanúsítványokban bízunk meg az adott hitelesítésszolgáltató által kiadottak közül.</li>
+  <li><strong>Törlés:</strong> a kijelölt tanúsítványok törlése.</li>
+</ul>
+
+<p>Ha az egész <a href="glossary.xhtml#certificate_chain">tanúsítványláncban</a> megbízunk, elég csak a legfelső szintű hitelesítésszolgáltató beállításait módosítani.</p>
+
+<p>A lánc importálásához kattintsunk a hitelesítésszolgáltató által megadott weboldalon található hivatkozásra. Ezután a Hitelesítésszolgáltatók panellapon keressük meg a legfelső szintű hitelesítésszolgáltatót, és módosítsuk a beállításait.</p>
+
+<p>A legfelső szintű és a közbülső hitelesítésszolgáltatók ugyanazon szervezet alatt jelennek meg. A legfelső szintű tanúsítvány az, amelyik saját magát adja meg kibocsátóként.</p>
+
+<p><strong>Közbülső hitelesítésszolgáltató letöltése esetén</strong>: ha egy olyan közbülső hitelesítésszolgáltató-tanúsítványt töltünk le, amelynek a legfelső szintű tanúsítványa már megbízhatónak van jelölve, nem kell megadni, hogy milyen szerepekben bízunk meg benne. A közbülső tanúsítványok automatikusan öröklik a felsőbb szintűek bizalmi beállításait.</p>
+
+<h3 id="edit_ca_certificate_trust_settings">Hitelesítésszolgáltató tanúsítványának megbízhatóságának beállítása</h3>
+
+<p>Miután a Tanúsítványkezelő <a href="#authorities">Hitelesítésszolgáltatók</a> panellapján kijelöltük egy hitelesítésszolgáltató tanúsítványát, és megnyomtuk a Szerkesztés gombot, megjelenik a &bdquo;Hitelesítésszolgáltató tanúsítványának megbízhatóságának beállítása&rdquo; párbeszédpanel. Itt megadhatjuk azokat a hitelesítésszolgáltató által kiadott tanúsítványtípusokat, amelyekben megbízunk. Ha az összes jelölőnégyzetről eltávolítjuk a kijelölést, a Tanúsítványkezelő az adott hitelesítésszolgáltató által kiadott semelyik tanúsítványban sem fog megbízni.</p>
+
+<p>A beállítások hatása:</p>
+
+<ul>
+  <li><strong>Ez a tanúsítvány használható webhelyek azonosítására</strong>: a Tanúsítványkezelő meg fog bízni az adott hitelesítésszolgáltató által kiadott tanúsítványokban a webhelyek azonosításának és a kapcsolat titkosításának tekintetében. Ha erről a jelölőnégyzetről eltávolítjuk a kijelölést, a Tanúsítványkezelő az adott hitelesítésszolgáltató által kiadott webhelytanúsítványokban nem fog megbízni.</li>
+  <li><strong>Ez a tanúsítvány használható webhelyek azonosítására:</strong> a Tanúsítványkezelő meg fog bízni az adott hitelesítésszolgáltató által kiadott tanúsítványokban az elektronikus levelek aláírásának és titkosításának tekintetében. Ha erről a jelölőnégyzetről eltávolítjuk a kijelölést, a Tanúsítványkezelő az adott hitelesítésszolgáltató által kiadott e-mail tanúsítványokban nem fog megbízni.</li>
+  <li><strong>Ez a tanúsítvány használható szoftverkészítők azonosítására:</strong> a Tanúsítványkezelő meg fog bízni az adott hitelesítésszolgáltató által kiadott tanúsítványokban a szoftverkészítők azonosításának tekintetében. Ha erről a jelölőnégyzetről eltávolítjuk a kijelölést, a Tanúsítványkezelő az adott hitelesítésszolgáltató által kiadott ilyen tanúsítványokban nem fog megbízni.</li>
+</ul>
+
+<p>A beállítások érvényesítéséhez kattintsunk az OK gombra.</p>
+
+<h3 id="delete_ca_certificates">Hitelesítésszolgáltatók tanúsítványainak törlése</h3>
+
+<p>Mielőtt törölnénk egy hitelesítésszolgáltató tanúsítványát a Tanúsítványkezelő <a href="#authorities">Hitelesítésszolgáltatók</a>  panellapján, győződjünk meg róla, hogy soha többé nincs szükségünk ezen hitelesítésszolgáltató által kiadott tanúsítványok érvényesítésére. Ha töröljük egy hitelesítésszolgáltató egyetlen érvényes tanúsítványát, a Tanúsítványkezelő nem fog megbízni az általa kiadott tanúsítványokban.</p>
+
+<h2 id="device_manager">Eszközkezelő</h2>
+
+<p>Ez a fejezet az Eszközkezelő párbeszédpanelt írja le.
+  Az Eszközkezelő használatáról az <a href="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices">Intelligens kártyák és egyéb adatvédelmi eszközök fejezetben olvashatunk többet</a>.</p>
+
+<p>Az Eszközkezelő a következő lépésekkel hívható elő:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategóriában kattintsunk a Tanúsítványok elemre. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.</li>
+  <li>A Tanúsítványok panelen kattintsunk az Adatvédelmi eszközök kezelése gombra.</li>
+</ol>
+
+<p>Az Eszközkezelő  megjeleníti az összes elérhető PKCS #11 modult, és a modul neve alatt az adott modul által kezelt adatvédelmi eszközt.</p>
+
+<p>Egy modul vagy eszköz kiválasztása esetén a párbeszédpanel közepén megjelennek a hozzá tartozó információk, és a jobboldalon bizonyos gombok aktívak lesznek. Általában úgy lehet műveleteket végezni a modullal vagy az eszközzel, hogy kijelöljük a nevét, és a megfelelő gombra kattintunk:</p>
+
+<ul>
+  <li><strong>Bejelentkezés:</strong> bejelentkezés a kijelölt adatvédelmi eszközbe. Miután bejelentkeztünk az eszközbe, a mesterjelszó megkérdezésének gyakorisága függ az eszközhöz beállított
+    <a href="passwords_help.xhtml#master_password_timeout">Mesterjelszó lejárata</a> értéktől.</li>
+  <li><strong>Kijelentkezés:</strong> kijelentkezés a kijelölt adatvédelmi eszközből. Miután kijelentkeztünk az eszközből, az eszköz és a benne tárolt tanúsítványok nem lesznek elérhetőek a legközelebbi bejelentkezésig.</li>
+  <li><strong>Jelszó megváltoztatása</strong>: a kijelölt adatvédelmi eszköz mesterjelszavának megváltoztatása.</li>
+  <li><strong>Betöltés:</strong> megjelenik egy párbeszédpanel, amelyben megadható az új PKCS #11 modul neve és elérhetősége. Az új modul hozzáadása előtt telepítenünk kell a számítógépünkre a modul szoftverét, és ha szükséges, csatlakoztatnunk kell a megfelelő hardvereszközt. Kövessük a gyártó utasításait.</li>
+  <li><strong>Eltávolítás:</strong> a kijelölt modul eltávolítása. Ha eltávolítunk egy modult, a modul és a hozzá tartozó adatvédelmi eszköz nem lesz többé elérhető a böngésző számára.</li>
+  <li><strong>FIPS engedélyezése:</strong> FIPS üzemmódot kapcsolja be vagy ki. További tudnivalók találhatóak erről a <a href="using_certs_help.xhtml#enable_fips_mode">FIPS üzemmód engedélyezése</a> fejezetben.</li>
+</ul>
+
+</body>
+</html>

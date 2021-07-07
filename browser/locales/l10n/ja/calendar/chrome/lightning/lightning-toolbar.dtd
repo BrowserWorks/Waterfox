@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name	"カレンダーツールバー">
+<!ENTITY lightning.toolbar.calendar.name.accesskey	"C">
+<!ENTITY lightning.toolbar.task.name		"ToDo ツールバー">
+<!ENTITY lightning.toolbar.task.name.accesskey	"T">
+
+<!ENTITY lightning.toolbar.sync.label		"同期">
+<!ENTITY lightning.toolbar.sync.tooltip		"カレンダーを更新して変更を同期します">
+<!ENTITY lightning.toolbar.delete.label		"削除">
+<!ENTITY lightning.toolbar.delete.tooltip	"選択した予定または ToDo を削除します">
+<!ENTITY lightning.toolbar.edit.label		"編集">
+<!ENTITY lightning.toolbar.edit.tooltip		"選択した予定または ToDo を編集します">
+<!ENTITY lightning.toolbar.gototoday.label	"今日に移動">
+<!ENTITY lightning.toolbar.gototoday.tooltip	"今日の日付へ移動します">
+<!ENTITY lightning.toolbar.print.label		"印刷">
+<!ENTITY lightning.toolbar.print.tooltip	"予定または ToDo を印刷します">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label	"カレンダー">
+<!ENTITY lightning.toolbar.calendar.tooltip	"カレンダータブに切り替えます">
+<!ENTITY lightning.toolbar.calendar.accesskey	"C">
+<!ENTITY lightning.toolbar.task.label		"ToDo">
+<!ENTITY lightning.toolbar.task.tooltip		"ToDo タブに切り替えます">
+<!ENTITY lightning.toolbar.task.accesskey	"T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label	"予定">
+<!ENTITY lightning.toolbar.newevent.tooltip	"新しい予定を作成します">
+<!ENTITY lightning.toolbar.newtask.label	"ToDo">
+<!ENTITY lightning.toolbar.newtask.tooltip	"新しい ToDo を作成します">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label		"日表示">
+<!ENTITY lightning.toolbar.day.accesskey	"D">
+<!ENTITY lightning.toolbar.week.label		"週表示">
+<!ENTITY lightning.toolbar.week.accesskey	"W">
+<!ENTITY lightning.toolbar.multiweek.label	"多週表示">
+<!ENTITY lightning.toolbar.multiweek.accesskey	"u">
+<!ENTITY lightning.toolbar.month.label		"月表示">
+<!ENTITY lightning.toolbar.month.accesskey	"M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label		"アプリメニュー">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip	"&brandShortName; のメニューを表示します">
+<!ENTITY lightning.toolbar.calendarmenu.label		"カレンダーペイン">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey	"P">
+<!ENTITY lightning.toolbar.calendarpane.label		"カレンダーペインを表示します">
+<!ENTITY lightning.toolbar.calendarpane.accesskey	"P">

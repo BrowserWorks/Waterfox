@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Keamanan Pesan">
+<!ENTITY signatureCert.label "Tampilkan Sertifikat Tandatangan">
+<!ENTITY encryptionCert.label "Tampilkan Sertifikat Enkripsi">
+
+<!ENTITY signer.name "Ditandatangani oleh:">
+<!ENTITY recipient.name "Dienkripsi untuk:">
+<!ENTITY email.address "Alamat email:">
+<!ENTITY issuer.name "Sertifikat diterbitkan oleh:">
+
+<!-- LOCALIZATION NOTE(SMIME.label): This a name for a technical standard. You should not translate it, but if applicable, you may write it using localized characters. -->
+<!ENTITY SMIME.label "S/MIME">

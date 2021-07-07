@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Afspil">
+<!ENTITY playButton.pauseLabel "Pause">
+<!ENTITY muteButton.muteLabel "Slå lyd fra">
+<!ENTITY muteButton.unmuteLabel "Slå lyd til">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Fuld skærm">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Afslut fuld skærm">
+<!ENTITY castingButton.castingLabel "Cast til skærm">
+<!ENTITY closedCaption.off "Slået fra">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Lydstyrke">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Billede-i-billede">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Se billede-i-billede">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Afspil videoer i forgrunden, mens du gør andre ting i &brandShortName;">
+
+<!ENTITY error.aborted "Indlæsning af video stoppet.">
+<!ENTITY error.network "Afspilning af video stoppet på grund af en netværksfejl.">
+<!ENTITY error.decode "Videoen kan ikke afspilles fordi filen er ødelagt.">
+<!ENTITY error.srcNotSupported "Videoformat eller MIME-type understøttes ikke.">
+<!ENTITY error.noSource2 "Ingen videokilde med understøttet MIME-type fundet.">
+<!ENTITY error.generic "Afspilning af video  stoppet på grund af ukendt fejl.">
+
+<!ENTITY status.pictureInPicture "Denne video afspilles i tilstanden billede-i-billede.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

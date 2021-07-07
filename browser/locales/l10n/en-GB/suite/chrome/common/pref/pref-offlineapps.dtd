@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Offline Web Applications">
+<!ENTITY pref.offlineCache.caption          "Offline Web Content and User Data">
+
+<!ENTITY clearOfflineAppCache.label         "Clear">
+<!ENTITY clearOfflineAppCache.accesskey     "C">
+
+<!ENTITY offlineAlwaysAllow.label           "Allow all web sites to store data for offline use">
+<!ENTITY offlineAlwaysAllow.accesskey       "A">
+<!ENTITY offlineExplicit.label              "Only allow web sites with explicit permissions">
+<!ENTITY offlineExplicit.accesskey          "O">
+<!ENTITY offlineNotifyAsk.label             "Notify me when web sites want to store data for offline use">
+<!ENTITY offlineNotifyAsk.accesskey         "N">
+<!ENTITY offlineNotifyPermissions.label     "Manage Permissions">
+<!ENTITY offlineNotifyPermissions.accesskey "P">
+
+<!ENTITY offlineAppsUsage.label             "The following web sites are using offline storage:">
+<!ENTITY offlineAppsListRemove.label        "Clear Data…">
+<!ENTITY offlineAppsListRemove.accesskey    "D">

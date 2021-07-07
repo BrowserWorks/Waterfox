@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Thiết lập địa chỉ email hiện tại của bạn">
+<!ENTITY emailWizard.caption             "Sử dụng địa chỉ email hiện tại của bạn">
+<!ENTITY name.label                      "Tên của bạn:">
+<!ENTITY name.accesskey                  "T">
+<!ENTITY fullname.placeholder            "Tên đầy đủ của bạn">
+<!ENTITY name.text                       "Tên của bạn, cho người khác thấy">
+<!ENTITY name.error                      "Vui lòng nhập tên của bạn">
+<!ENTITY email.label                     "Địa chỉ email:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "Địa chỉ email của bạn">
+<!ENTITY email.text                      "Địa chỉ thư điện tử hiện tại của bạn">
+<!ENTITY email.error                     "Địa chỉ email không hợp lệ">
+<!ENTITY password.label                  "Mật khẩu:">
+<!ENTITY password.accesskey              "M">
+<!ENTITY password.placeholder            "Mật khẩu">
+<!ENTITY password.text                   "Phụ, chỉ sẽ được dùng để kiểm tra tên đăng nhập">
+<!ENTITY password.toggle                 "Hiện/ẩn mật khẩu">
+<!ENTITY rememberPassword.label          "Ghi nhớ mật khẩu">
+<!ENTITY rememberPassword.accesskey      "G">
+<!ENTITY usernameEx.label                "Tên đăng nhập của bạn:">
+<!ENTITY usernameEx.accesskey            "T">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "TENMIENCUABAN\tennguoidungcuaban">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Đăng nhập tên miền">
+
+<!ENTITY protocol.label                  "Giao thức:">
+<!ENTITY imapLong.label                  "IMAP (các thư mục từ xa)">
+<!ENTITY pop3Long.label                  "POP3 (giữ thư trên máy tính của bạn)">
+
+<!ENTITY manualConfigTable.summary       "Cài đặt máy chủ">
+<!ENTITY incoming.label                  "Đến:">
+<!ENTITY incomingColumn.label            "Hộp thư đến">
+<!ENTITY outgoing.label                  "Đi:">
+<!ENTITY outgoingColumn.label            "Hộp thư đi">
+<!ENTITY username.label                  "Tên đăng nhập:">
+<!ENTITY serverRow.label                 "Máy chủ:">
+<!ENTITY portRow.label                   "Cổng:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Xác minh">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Tự động nhận diện">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Không">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Máy chủ Exchange:">
+
+<!ENTITY advancedSetup.label             "Cấu hình nâng cao">
+<!ENTITY advancedSetup.accesskey         "n">
+<!ENTITY cancel.label                    "Hủy bỏ">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Tiếp tục">
+<!ENTITY continue.accesskey              "p">
+<!ENTITY stop.label                      "Dừng">
+<!ENTITY stop.accesskey                  "D">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Kiểm tra lại">
+<!ENTITY half-manual-test.accesskey      "K">
+<!ENTITY manual-config.label             "Cấu hình thủ công…">
+<!ENTITY manual-config.accesskey         "M">
+<!ENTITY open-provisioner.label          "Tạo địa chỉ email mới…">
+<!ENTITY open-provisioner.accesskey      "g">
+
+
+<!ENTITY get-help.label                  "Nhận trợ giúp">
+<!ENTITY get-help.accesskey              "H">
+
+
+<!ENTITY warning.label                   "Cảnh báo!">
+<!ENTITY incomingSettings.label          "Thiết lập nhận thư:">
+<!ENTITY outgoingSettings.label          "Thiết lập gửi thư:">
+<!ENTITY technicaldetails.label          "Chi tiết Kĩ thuật">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Tôi hiểu các nguy cơ.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Xong">
+<!ENTITY doneAccount.accesskey           "X">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Thay đổi Thiết lập">
+<!ENTITY changeSettings.accesskey        "y">
+
+<!ENTITY contactYourProvider.description "&brandShortName; có thể cho phép bạn tải thư bằng cấu hình đã cung cấp. Tuy nhiên, bạn nên liên hệ quản trị viên hoặc nhà cung cấp thư điện tử về vấn đề kết nối không phù hợp này. Xem FAQ của Thunderbird để biết thêm thông tin.">
+
+<!ENTITY insecureServer.tooltip.title    "Cảnh báo! Đây là một máy chủ không bảo mật.">
+<!ENTITY insecureServer.tooltip.details  "Nhấn lên vòng tròn để biết thêm chi tiết.">
+
+<!ENTITY insecureUnencrypted.description "Email và thông tin xác thực của bạn được gửi mà không mã hóa, do đó mật khẩu (và thư) của bạn có thể sẽ bị người khác đọc được. &brandShortName; vẫn để bạn tải thư, nhưng bạn nên liên hệ nhà cung cấp thư điện tử của mình vè việc cấu hình máy chủ với kết nối an toàn.">
+<!ENTITY insecureSelfSigned.description  "Máy chủ sử dụng một chứng thư mà chúng tôi không tin tưởng, do đó chúng tôi không thể chắc là liệu có ai đó đang can thiệp vào đường truyền giữa &brandShortName; và máy chủ của bạn hay không. &brandShortName; vẫn để cho bạn tải thư, nhưng bạn nên đề nghị nhà cung cấp thư điện tử của mình cấu hình máy chủ bằng một chứng thư tin cậy.">
+<!ENTITY secureServer.description        "Chúc mừng! Máy chủ này có an toàn.">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP-netwerken">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Directeverbindingsopties">
+<!ENTITY prefProxy.label                     "Proxyverbindingsopties">
+<!ENTITY prefEnableHTTP10.label              "HTTP 1.0 gebruiken">
+<!ENTITY prefEnableHTTP10.accesskey          "e">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "b">
+<!ENTITY prefEnableHTTP11.label              "HTTP 1.1 gebruiken">
+<!ENTITY prefEnableHTTP11.accesskey          "u">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "HTTP-verbindingen kunnen via deze opties worden fijnafgesteld om prestaties of compatibiliteit te verbeteren. Van sommige proxyservers is bijvoorbeeld bekend dat ze HTTP/1.0 vereisen (bekijk de uitgaveopmerkingen voor details).">
+<!ENTITY prefUseragent.label                 "Useragent-string">
+<!ENTITY prefFirefoxCompat.label             "Bekendmaken als Firefox-compatibel">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Lightning-installatie bekendmaken">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "WAARSCHUWING: het uitschakelen van deze instellingen kan ertoe leiden dat websites of services niet goed werken.">
+<!ENTITY prefFirefoxStrict.label             "Als Firefox identificeren">
+<!ENTITY prefFirefoxStrict.accesskey         "F">
+<!ENTITY prefFirefoxNone.label               "Als SeaMonkey identificeren">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Als SeaMonkey identificeren en Firefox-compatibiliteit promoten">
+<!ENTITY prefFirefoxCompat2.accesskey        "c">
+<!ENTITY prefCompatWarning2.desc             "WAARSCHUWING: het wijzigen van deze instelling kan ertoe leiden dat websites of services niet goed werken.">

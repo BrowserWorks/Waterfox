@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propiedades de campos del formulario">
+<!ENTITY windowTitleImage.label "Propiedades de imagen del formulario">
+
+<!ENTITY InputType.label "Tipo de campo">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Texto">
+<!ENTITY password.value "Contraseña">
+<!ENTITY checkbox.value "Casilla">
+<!ENTITY radio.value "Botón radio">
+<!ENTITY submit.value "Botón enviar">
+<!ENTITY reset.value "Botón reiniciar">
+<!ENTITY file.value "Archivo">
+<!ENTITY hidden.value "Oculto">
+<!ENTITY image.value "Imagen">
+<!ENTITY button.value "Botón">
+
+<!ENTITY InputSettings.label "Configuración de campos">
+<!ENTITY InputName.label "Campo nombre:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nombre de grupo:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valor de campo:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valor inicial:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Seleccionado al inicio">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "Seleccionado al inicio">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Sólo lectura">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "Deshabilitado">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Índice de tabulación:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Tamaño del campo:">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "Longitud máxima:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Tecla de acceso:">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "Aceptar tipos:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Propiedades de imagen…">
+<!ENTITY ImageProperties.accesskey "E">

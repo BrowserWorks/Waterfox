@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Søk etter meldingar i:">
+<!ENTITY searchHeading.accesskey     "ø">
+<!ENTITY searchSubfolders.label      "Søk i undermapper">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnServer.label        "Køyr søk på tenaren">
+<!ENTITY searchOnServer.accesskey    "K">
+<!ENTITY resetButton.label           "Tilbakestill">
+<!ENTITY resetButton.accesskey       "T">
+<!ENTITY openButton.label            "Opne">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "Slett">
+<!ENTITY deleteButton.accesskey      "S">
+<!ENTITY searchDialogTitle.label     "Søk i meldingar">
+<!ENTITY results.label               "Resultat">
+<!ENTITY moveButton.label            "Flytt til">
+<!ENTITY moveButton.accesskey        "t">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Opne i mappa">
+<!ENTITY openInFolder.accesskey      "m">
+<!ENTITY saveAsVFButton.label        "Lagre som søkjemappe">
+<!ENTITY saveAsVFButton.accesskey    "L">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Søk i:">
+<!ENTITY abSearchHeading.accesskey   "S">
+<!ENTITY propertiesButton.label      "Eigenskapar …">
+<!ENTITY propertiesButton.accesskey  "E">
+<!ENTITY composeButton.label         "Skriv ny e-post til">
+<!ENTITY composeButton.accesskey     "n">
+<!ENTITY deleteCardButton.label      "Slett">
+<!ENTITY deleteCardButton.accesskey  "t">
+<!ENTITY abSearchDialogTitle.label   "Avansert adresseboksøk">
+

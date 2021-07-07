@@ -1,0 +1,843 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" [
+    <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+    %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Preferencias de Correo y noticias</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+        type="text/css"/>
+</head>
+<body>
+
+<h1 id="mail_and_newsgroup_preferences">Preferencias de Correo y noticias</h1>
+
+<p>Las secciones listadas a continuación describen la configuración del panel
+  de preferencias de correo y grupos de noticias, que se aplican a todas sus
+  cuentas de correo y noticias. Para ver estas preferencias:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Haga doble clic en la categoría Correo y grupos de noticias para
+    expandir la lista.</li>
+</ol>
+
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#mail_and_newsgroups">Correo y noticias</a></li>
+    <li><a href="#message_display">Visualización</a></li>
+    <li><a href="#notifications">Notificaciones</a></li>
+    <li><a href="#composition">Redacción de mensajes</a></li>
+    <li><a href="#send_format">Formato de envío</a></li>
+    <li><a href="#addressing_preferences">Libreta de direcciones</a></li>
+    <li><a href="#junk_and_suspect_preferences">Correo basura y
+      sospechoso</a></li>
+    <li><a href="#tags">Etiquetas</a></li>
+    <li><a href="#return_receipts_preferences">Acuses de recibo</a></li>
+    <li><a href="#text_encoding">Codificación de texto</a></li>
+    <li><a href="#network_and_storage_preferences">Red y
+      almacenamiento</a></li>
+  </ul>
+</div>
+
+<h2 id="mail_and_newsgroups">Correo y noticias (preferencias de correo y
+  grupos de noticias)</h2>
+
+<p>Esta sección describe el panel principal de preferencias de correo y grupos
+  de noticias. Si no está viendo aún las preferencias de correo y grupos de
+  noticias, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>. Verá el
+    cuadro de diálogo de preferencias.</li>
+  <li>Elija la categoría Correo y grupos de noticias.</li>
+</ol>
+
+<ul>
+  <li><strong>Confirmar cuando se muevan carpetas a la papelera</strong>: elija
+    si &brandShortName; tiene que preguntar antes de borrar carpetas.</li>
+  <li><strong>Recordar el último mensaje seleccionado</strong>: elija esta
+    opción si quiere que &brandShortName; seleccione el mensaje que estaba
+    seleccionado cuando abandonó la carpeta en la que entra de nuevo.</li>
+  <li><strong>Preservar las conversaciones al ordenar mensajes</strong>:
+    seleccione esta opción si quiere que &brandShortName; mantenga el
+    agrupamiento anidado <a
+    href="mailnews_using_mail.xhtml#sorting_and_threading_messages">al ordenar
+    mensajes</a>. Si no se selecciona, &brandShortName; muestra los mensajes
+    automáticamente no anidados cuando los ordena haciendo clic en las
+    cabeceras de columna.</li>
+  <li><strong>Cambiar a las pestañas nuevas al abrirlas</strong>: seleccione
+    esta opción para que &brandShortName; cambie a la nueva pestaña abierta
+    al usar las opciones del menú contextual <q>Abrir en pestaña nueva</q> o
+    <q>Abrir mensaje en pestaña nueva</q>.</li>
+  <li><strong>Buscar correo nuevo sólo tras abrir Correo y noticias</strong>:
+    por defecto, &brandShortName; busca nuevos mensajes incluso si solamente
+    hay abierta una ventana de navegador. Elija esta opción si quiere retrasar
+    la búsqueda de correo nuevo hasta que se haya abierto al menos una vez una
+    ventana de Correo y noticias (ya sea automáticamente <a
+    href="cs_nav_prefs_appearance.xhtml#appearance">durante el inicio</a> o
+    manualmente).</li>
+  <li class="win"><strong>Usar &brandShortName; como la aplicación de correo
+    predeterminada</strong>: establece Correo y noticias de &brandShortName;
+    como la aplicación de correo predeterminada en Windows y las aplicaciones
+    ejecutadas en éste, como Microsoft Word.
+    <p><strong>Nota</strong>: si se configura &brandShortName; como la
+      aplicación de correo predeterminada, puede afectar a otras aplicaciones
+      de correo. Para restablecer la aplicación previamente seleccionada,
+      desmarque esta opción.</p></li>
+  <li><strong>Usar Correo y Noticias &brandShortName; al abrir enlaces del
+    navegador de</strong>: por defecto, cualquier enlace a direcciones de
+    correo o grupos de noticias abiertos desde páginas del navegador u otros
+    mensajes es manejado por el propio &brandShortName;. Desmarque las casillas
+    de Correo o Noticias si desea que sea una aplicación externa la que maneje
+    esos enlaces. En este caso, se abrirá un diálogo para seleccionar la
+    aplicación que deberá usarse.
+    
+    <!-- remove the following warning once bug 198547 is fixed -->
+    <p><strong>Nota</strong>: no desmarque ninguna de estas casillas y luego
+      seleccione &brandShortName; en el diálogo a menos que también esté
+      registrado como la aplicación por defecto en el sistema para correo o
+      noticias. De hacerlo, provocará que &brandShortName; le preguntará
+      continuamente qué programa usar al abrir un enlace.</p>
+  </li>
+  <li><strong>Cuando se inicie Correo y noticias, mostrar esta página en el
+    área de mensaje</strong>: seleccione esta opción para ver la página de
+    inicio. La página de inicio aparece en el área de mensajes la primera vez
+    que abra Correo y noticias. Esta página es la página predeterminada, pero
+    puede elegir la página web o URL que prefiera. Para desactivar la página de
+    inicio, desmarque esta opción. Pulse en Restaurar valores predeterminados
+    para volver a la página original que se incluye con &brandShortName;.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="message_display">Visualización (preferencias de correo y
+  grupos de noticias)</h2>
+
+<p>Las preferencias de visualización de mensajes le permiten elegir la forma
+  en que se muestran los mensajes en todas las cuentas. Si no está ya viendo
+  la configuración de visualización de mensajes, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, elija Visualización (si
+    no hay subcategorías visibles, haga doble clic en Correo y noticias para
+    expandir la lista).</li>
+</ol>
+
+<ul>
+  <li><strong>Al abrir mensajes, mostrarlos en</strong>: estas opciones
+    controlan el comportamiento al abrir mensajes en una ventana separada,
+    p.e., al hacer doble clic en ellos en la lista de mensajes de una carpeta:
+    <ul>
+      <li><strong>Una ventana de mensajes nueva</strong>: elija esta opción si
+        quiere abrir cada mensaje en una ventana nueva.</li>
+      <li><strong>Una ventana de mensajes existente</strong>: elija esta opción
+        si quiere reutilizar una ventana de mensajes ya abierta para el
+        siguiente mensaje.</li>
+      <li><strong>Cerrar la ventana con el mensaje al eliminar un
+        mensaje</strong>: marque esta opción si quiere que la ventana de
+        mensajes se cierre automáticamente cuando el mensaje que está viendo
+        sea eliminado.</li>
+    </ul>
+  </li>
+  <li><strong>Bloquear imágenes y otro contenido de orígenes remotos</strong>:
+    seleccione esta casilla si no quiere mostrar imágenes y otros contenidos
+    remotos en los mensajes recibidos, excepto de remitentes a los que se lo
+    haya permitido en sus libretas de direcciones (esta casilla está
+    seleccionada por defecto).</li>
+  <li><strong>Mostrar sólo el atributo 'nombre mostrado' para las personas de
+    mi libreta de direcciones</strong>: marque esta casilla si quiere ahorrar
+    algo de espacio en las cabeceras de los mensajes donde se muestran las
+    direcciones de correo. Si se selecciona, los remitentes y destinatarios
+    conocidos se listarán sólo con su nombre mostrado, sus direcciones de
+    correo quedan ocultas. Puede ver la dirección de correo completa al pasar
+    sobre dichas entradas con el puntero del ratón.</li>
+  <li><strong>Marcar automáticamente mensajes como leídos</strong>: seleccione
+    esta casilla para marcar los mensajes como leídos una vez hayan sido
+    abiertos (esta casilla está seleccionada por defecto).
+    <ul>
+      <li><strong>Sólo tras mostrarlo durante [__] segundos</strong>: marque
+        esta opción si no quiere que un mensaje sea marcado como leído cuando
+        sólo le está echando un vistazo. Introduzca el número de segundos que
+        quiere que muestre el mensaje antes de ser marcado como leído
+        automáticamente. Si no se marca esta casilla, los mensajes son
+        marcados como leídos tan pronto como se abren.</li>
+    </ul>    
+  </li>
+  <li><strong>Mensajes en texto sin formato</strong>: estas opciones controlan
+    cómo se muestran los mensajes en texto sin formato. Estas opciones no
+    tienen ningún efecto al visualizar mensajes en HTML (texto enriquecido), o
+    al escribir nuevos mensajes.
+    <ul>
+      <li><strong>Tipo de letra</strong>: seleccione el tipo de letra que
+        prefiere para ver los mensajes en texto sin formato: tipo de
+        de anchura fija o de anchura variable.</li>
+      <li><strong>Ajustar texto al ancho de la ventana</strong>: seleccione
+        esta opción para que las palabras de los mensajes no se dividan
+        y que el texto fluya hasta el ancho de la ventana del correo.</li>
+      <li><strong>Mostrar emoticones como gráficos</strong>:
+        seleccione esta opción para que cuando reciba mensajes que
+        contengan emoticones (también llamados smileys) &brandShortName;
+        pueda convertirlos en gráficos. Por ejemplo:
+
+        <table border="1">
+          <tr align="center">
+            <td><strong>Esto</strong>:</td>
+            <td><strong>Se ve como</strong>:</td>
+          </tr>
+          <tr align="center">
+            <td>:-)</td>
+            <td><img src="images/smile.png" alt="" /></td>
+          </tr>
+          <tr align="center">
+            <td>:)</td>
+            <td><img src="images/smile.png" alt="" /></td>
+          </tr>
+          <tr align="center">
+            <td>:-(</td>
+            <td><img src="images/frown.png" alt="" /></td>
+          </tr>
+          <tr align="center">
+            <td>:(</td>
+            <td><img src="images/frown.png" alt="" /></td>
+          </tr>
+          <tr align="center">
+            <td>;-)</td>
+            <td><img src="images/wink.png" alt="" /></td>
+          </tr>
+          <tr align="center">
+            <td>;-p</td>
+            <td><img src="images/sick.png" alt="" /></td>
+          </tr>
+        </table>
+        Esta opción también controla algunas convenciones habituales
+        de aspecto en texto sin formato:
+        <table border="1">
+          <tr align="center">
+            <td><strong>Esto</strong>:</td>
+            <td><strong>se visualiza así</strong>:</td>
+          </tr>
+          <tr align="center">
+            <td>mm^2</td>
+            <td>mm<sup>2</sup></td>
+          </tr>
+          <tr align="center">
+            <td>+/-1</td>
+            <td>±1</td>
+          </tr>
+        </table>
+      </li>
+      <li><strong>Configuración de mensajes citados</strong>: elija un estilo,
+        tamaño o color diferente para los mensajes de texto sin formato
+        citados para distinguir más fácilmente el texto citado (normalmente el
+        contenido de un mensaje al cual le ha contestado el remitente, o partes
+        citadas de un mensaje al que ha contestado usted).</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="notifications">Notificaciones (preferencias de correo y grupos de
+  noticias)</h2>
+
+<p>Las preferencias de notificaciones le permiten seleccionar distintos métodos
+  para informarle de la llegada de un nuevo mensaje, de modo que no tenga que
+  estar mirando constantemente en las carpetas.</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, elija Notificaciones (si
+    no hay subcategorías visibles, haga doble clic en Correo y noticias para
+    expandir la lista).</li>
+</ol>
+
+<ul>
+  <li><strong>Mostrar una alerta durante [__] segundos</strong>: seleccione
+    esta opción si quiere que Correo y Noticias de &brandShortName; muestre
+    una alerta en su escritorio cuando lleguen nuevos mensajes. Esta alerta
+    se ubica normalmente sobre su bandeja del sistema en la esquina inferior
+    derecha de su pantalla. La alerta sólo aparece una vez cuando llegan
+    mensajes nuevos, se muestra durante la cantidad de tiempo especificada y
+    no aparecerá de nuevo hasta que haya visitado una de sus carpetas con
+    correo nuevo, lea uno de los mensajes nuevos o comprobado los mensajes
+    nuevos manualmente.
+    
+    <table>
+      <tr>
+        <td colspan="2"><img src="images/mail_newmail_alert.png" hspace="0"
+        vspace="0" /></td>
+      </tr>
+      <tr>
+        <td width="20"></td>
+        <td><strong>Alerta de escritorio de correo nuevo</strong></td>
+       </tr>
+    </table>
+
+    Las siguientes opciones determinan que elementos específicos del mensaje
+    se muestran en la alerta de cada nuevo mensaje:
+    <ul>
+      <li><strong>Mostrar una vista preliminar del texto del mensaje</strong>:
+        marque esta opción para mostrar las primeras palabras del mensaje
+        recibido en la alerta.</li>
+      <li><strong>Mostrar el asunto</strong>: marque esta opción para mostrar
+        la línea del asunto del mensaje en la alerta.</li>
+      <li><strong>Mostrar el remitente</strong>: marque esta opción para mostrar
+        el nombre o dirección de correo del remitente en la alerta.</li>
+    </ul>
+    <ul class="unix">
+      <li><strong>Usas las notificaciones de escritorio del sistema
+        operativo</strong>: marque esta opción para usar el sistema de
+        notificaciones del sistema operativo (p.e.: libnotify), si está
+        disponible. Observe que algunas opciones de configuración del mensaje
+        de alerta pueden no admitirse.</li>
+      <li><strong>Usa las ventanas de notificación propias de
+        &brandShortName;</strong>: marque esta opción para usar el sistema
+        incorporado de notificaciones basado en
+        <a href="glossary.xhtml#xul">XUL</a> para nuevas alertas de correo.
+        Se admiten todas las opciones de configuración.</li>
+    </ul>
+    <p>Cuando aparece la alerta, pulsar en la entrada de un mensaje le llevará
+      a la carpeta respectiva y abrirá el mensaje. Puede cerrar la alerta usando
+      el botón <strong>x</strong>.</p>
+    
+    <p>La alerta de nuevo mensaje continuará funcionando incluso después de que
+      cierre la ventana de correo (siempre y cuando haya otra ventana abierta
+      de &brandShortName;).</p>
+  </li>
+  <li class="win"><strong>Mostrar un icono en la bandeja</strong>: seleccione
+    esta casilla si quiere que Correo y noticias &brandShortName; muestre un
+    icono en su bandeja de sistema (que normalmente se encuentra en la esquina
+    inferior derecha de su pantalla) cuando lleguen nuevos mensajes. Este icono
+    permanecerá en la bandeja de sistema hasta que visite alguna de sus
+    carpetas con mensajes nuevos, leído uno de los nuevos mensajes o comprobado
+    manualmente si hay nuevos mensajes.
+    <p style="text-indent: 20px"><img src="images/mail_newmail_trayicon.png"
+      alt=""/>&nbsp;&nbsp;<strong>Icono de nuevo correo de la bandeja</strong></p>
+    <p>Cuando aparece el icono, si hace doble clic se abrirá la ventana
+      principal de Correo y noticias de &brandShortName;.</p>
+    <p><strong>Nota</strong>: en Windows 7 y superiores, las opciones de iconos
+      del área de notificación de &brandShortName; ha de ser <q>Mostrar icono y
+      notificaciones</q> para que el icono permanezca visible. En caso
+      contrario, puede desaparecer tras un corto periodo de tiempo.</p>
+    <ul>
+      <li><strong>Mostrar una alerta emergente</strong>: como alternativa a la
+        alerta de escritorio descrita más arriba, puede usar la notificación
+        emergente del sistema operativo. Cuando llegue un mensaje nuevo, esto
+        mostrará el icono junto con una alerta emergente que indica el número
+        de nuevos mensajes disponibles en la cuenta.
+        <p style="text-indent: 20px"><img src="images/mail_newmail_balloon.png"
+          alt=""/><strong>Alerta emergente</strong></p>
+        <p>Cuando aparece la alerta emergente, al pulsar sobre ella se abre la
+          ventana principal de Correo y Noticias. La duración de la alerta
+          emergente depende la configuración de su sistema operativo. Puede
+          cerrar la alerta emergente usando el botón <strong>x</strong>.</p>
+        <p>La alerta de nuevo mensaje continuará funcionando incluso tras
+          cerrar la ventana de Correo (siempre y cuando haya otra ventana
+          abierta de &brandShortName;).</p>
+        <p><strong>Nota</strong>: <q>Mostrar una alerta durante [__]
+          segundos</q> y <q>Mostrar una alerta emergente</q> no pueden ser
+          seleccionadas al mismo tiempo. Marcar una opción desmarcará la
+          otra.</p>
+      </li>
+    </ul>
+  </li>
+
+  <li class="mac"><strong>Animar el icono del Dock</strong>: seleccione esta
+    casilla si quiere que Correo y noticias haga rebotar el icono de
+    &brandShortName; en el Dock cuando lleguen nuevos mensajes.</li>
+
+  <li><strong>Reproducir un sonido</strong>: seleccione esta opción si
+    quiere que Correo y noticias &brandShortName; reproduzca un sonido cuando
+    lleguen nuevos mensajes. Puede elegir entre el sonido predeterminado del
+    sistema y su propio sonido en formato WAV. Si escoge la segunda
+    opción, use el botón Examinar para localizarlo en el cuadro
+    de diálogo de apertura de archivos. Pulse el botón Reproducir
+    para reproducir a modo de prueba el sonido elegido.
+  
+    <p>Una vez se ha iniciado Correo &brandShortName;, el sonido de nuevos
+      mensajes continuará funcionando incluso si cierra la ventana de
+      Correo (siempre y cuando haya otra ventana abierta de
+      &brandShortName;).</p>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="composition">Redacción de mensajes (preferencias de correo y
+  grupos de noticias)</h2>
+
+<p>Las preferencias de redacción afectan a la forma de crear mensajes para
+  todas las cuentas (como puede ser las opciones de reenvío o autocompletado
+  de direcciones). Si todavía no está viendo las opciones de redacción de
+  mensajes, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de correo y grupos de noticias, seleccione
+    Redacción de mensajes (si no hay subcategorías visibles,
+    haga doble clic en Correo y noticias para expandir la lista).</li>
+</ol>
+
+<ul>
+  <li><strong>Reenviar mensajes</strong>: elija cómo quiere que
+    aparezca el texto reenviado: como un adjunto o incorporado
+    (en el cuerpo de su mensaje).</li>
+  <li><strong>Citar adjuntos visibles en línea en las respuestas</strong>:
+    si esta opción está marcada, entonces los adjuntos (tales como imágenes,
+    texto o mensajes) visualizados en línea se incluirán en la cita al 
+    responder a un mensaje.</li>
+  <li><strong>Guardar el mensaje automáticamente cada [__]
+    minutos</strong>: seleccione esta opción si quiere que Correo
+    y noticias guarde automáticamente el mensaje que está
+    escribiendo en el intervalo dado. Tras un fallo del programa o
+    el ordenador podrá encontrar la última versión
+    guardada del mensaje en su carpeta Borradores.</li>
+  <li><strong>Confirmar al usar el atajo de teclado para enviar un
+    mensaje</strong>: marque esta opción si quiere que se le pregunte
+    si está seguro de que quiere enviar el mensaje cuando pulse
+    Ctrl+Enter en el editor de mensajes. Esto puede ayudarle a evitar enviar
+    el mensaje por equivocación si pulsa el atajo de teclado
+    inadvertidamente mientras redacta un mensaje.</li>
+  <li><strong>Ajuste de línea en mensajes de texto en [__]
+    caracteres</strong>: introduzca un número para establecer el
+    margen derecho para el texto en el área de mensajes.</li>
+  <li><strong>Seleccione el tipo de cabecera de respuesta</strong>:
+    Seleccione el tipo de cabecera de respuesta que desee usar. Hay cuatro
+    opciones disponibles:
+    <ol>
+      <li>Sin cabecera de respuesta</li>
+      <li>[Autor] escribió:<br/>
+        esta opción está basada en la preferencia
+        mailnews.reply_header_authorwrotesingle.</li>
+      <li>El [fecha], [autor] escribió:<br/>
+        esta opción está basada en la preferencia
+        mailnews.reply_header_ondateauthorwrote.</li>
+      <li>[Autor] escribió el [fecha]:<br/>
+        esta opción está basada en la preferencia
+        mailnews.reply_header_authorwroteondate.</li>
+    </ol>
+  </li>
+  <li><strong>Valores predeterminados para mensajes HTML</strong>: aquí
+    puede definir qué valores predeterminados desea para el tipo y
+    tamaño de letra y los colores de texto y fondo si decide enviar los
+    mensajes en formato HTML.</li>
+   <li><strong>Formato de redacción predeterminado</strong>: seleccione el
+     estilo inicial para redactar mensajes. Con el formato <q>Cuerpo del
+     texto</q>, la tecla Enter siempre inserta simplemente una línea nueva,
+     mientras que con el formato <q>Párrafo</q>, la tecla Enter abre un
+     párrafo nuevo con un espaciado de línea adicional. Use Mayús+Enter
+     para insertar solo un salto de línea con independencia de este
+     ajuste.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="send_format">Formato de envío (preferencias de correo y grupos de
+  noticias)</h2>
+
+<p>Las preferencias del formato de envío permiten especificar qué formato
+  quiere que tengan los mensajes que mande. Si no está todavía en la
+  configuración de Formato de envío, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la cateogría de Correo y grupos de noticias, elija Formato de envío
+    (si no hay subcategorías visibles, haga doble clic en Correo y noticias
+    para expandir la lista).</li>
+</ol>
+
+<p>Los mensajes con formato (redactados en HTML) pueden enviarse como HTML,
+  texto sin formato o ambos (aquellos redactados en texto sin formato siempre
+  se enviarán únicamente como texto sin formato).
+</p>
+
+<p>Si cualquiera de los destinatarios  no está explícitamente listado para
+  recibir HTML, basándose en su entrada en la libreta d direcciones o en una
+  configuración basada en el dominio como se explica más abajo, se aplicarán
+  las siguientes opciones:</p>
+
+<ul>
+  <li><strong>Preguntarme qué hacer</strong>: esta opción hace que
+    &brandShortName; le pregunte qué formato quiere elegir antes de enviar el
+    mensaje.</li>
+  <li><strong>Convertir el mensaje a texto sin formato</strong>: esta opción
+    envía el mensaje únicamente como texto sin formato y, por tanto, hará que
+    su mensaje pierda formato como los colores personalizados o texto en
+    negrita. También eliminará todas las imágenes que estén incrustadas en el
+    mensaje (pero no los adjuntos).</li>
+  <li><strong>Enviar el mensaje solo como HTML</strong>: si selecciona esta
+    opción, tenga en cuenta que algunos programas de correo pueden tener
+    problemas para mostrar el mensaje correctamente, al no enviarse una
+    representación alternativa del mensaje en texto sin formato.</li>
+  <li><strong>Enviar el mensaje en ambos formatos, texto sin formato y
+    HTML</strong>: esta opción es el mejor compromiso entre compatibilidad y
+    conservación de formato e imágenes incrustadas, pero incrementa el
+    tamaño del mensaje.</li>
+</ul>
+
+<p>Configuración para dominios completos:</p>
+<ul>
+  <li><strong>Enviar automáticamente el mensaje como texto sin formato si no
+    se aprecia un formato significativo:</strong>: use esta opción para
+    convertir los mensajes redactados en HTML a texto sin formato para
+    reducir el tamaño del mensaje si no se ha aplicado formato o se ha aplicado
+    muy poco formato significativo. <q>Significativo</q> en este caso incluye
+    estilos de negrita o cursiva, subrayados, colores personalizados, etc.
+    Esta comprobación se ejecuta <em>antes</em> de consultar la libreta de
+    direcciones o configuraciones de dominio para determinar el formato de
+    envío.</li>
+</ul>
+
+<p>Por ejemplo, si habitualmente manda correo a varios destinatarios que tienen
+  el mismo dominio (por ejemplo, todos sus colegas tienen direcciones de correo
+  electrónico que acaban en <q>netscape.net</q>), y si sabe que este nombre de
+  dominio es capaz de mostrar mensajes en HTML, entonces puede añadir el
+  dominio netscape.net a la lista de dominios HTML para que &brandShortName;
+  automáticamente envíe los mensajes en HTML a estos destinatarios (observe que
+  no se envía la parte en texto sin formato en este caso).</p>
+
+<p>Igualmente, si suele enviar correo a personas en un dominio que sabe que
+  sólo puede recibir mensajes en texto sin formato, puede añadir ese dominio a
+  la lista de dominios de texto sin formato, para que &brandShortName;
+  automáticamente envíe los mensajes a ese dominio en texto sin formato (no se
+  envía la parte en HTML).</p>
+
+<p>Cuando añada a una persona o una dirección a la libreta de direcciones,
+  puede especificar si ese destinatario puede recibir mensajes en HTML. Sin
+  embargo, cuando no se sabe esta información, puede configurar en las
+  preferencias de formato de envío cómo quiere que &brandShortName; trate
+  estos mensajes.</p>
+
+<p><strong>Nota</strong>: si habitualmente redacta mensajes en HTML, tenga en
+  cuenta que a veces no todos los destinatarios usan programas de correo que
+  puedan mostrar HTML adecuadamente. Las preferencias de formato de envío le
+  permiten especificar el formato de los mensajes que vayan a destinatarios que
+  no pueden ver correo en HTML. Puede convertir los mensajes a texto sencillo,
+  con formato sólo HTML, o a ambos formatos. Esta configuración se aplica a
+  todas las cuentas de correo, pero sólo a mensajes de correo y no a mensajes
+  de grupos de noticias.</p>
+
+<p>[ <a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a> ]</p>
+
+<h2 id="addressing_preferences">Libreta de direcciones (preferencias de correo
+  y grupos de noticias)</h2>
+
+<p>Las preferencias de direcciones permiten controlar la configuración para las
+  libretas de direcciones de &brandShortName; (por ejemplo, la recogida de
+  direcciones de correo electrónico y el autocompletado de direcciones). Si
+  todavía no está viendo las opciones de direcciones, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, seleccione Direcciones
+    (si no hay opciones disponibles en esta categoría, haga doble clic en la
+    categoría para expandir la lista).</li>
+</ol>
+
+<ul>
+  <li><strong>Recogida de direcciones de correo electrónico</strong>:
+    seleccione esta opción si quiere que Correo y noticias &brandShortName;
+    recoja automáticamente las direcciones de correo de los destinatarios. Use
+    la lista desplegable para elegir si quiere que las direcciones se añadan a
+    las direcciones recopiladas o su libreta de direcciones personal.</li>
+  <li id="address_autocompletion"><strong>Autocompletado de
+    direcciones</strong>: el autocompletado de direcciones permite buscar
+    direcciones rápidamente sin tener que buscar nombres o escribir las
+    direcciones completas. Seleccione desde qué ubicación realizará Correo y
+    Noticias la búsqueda de direcciones coincidentes: <q>Libretas de
+    direcciones locales</q> (Libreta de direcciones personal, Libreta de
+    direcciones recopiladas, o cualquier otra libreta de direcciones local),
+    <q>Servidor de directorio</q> (un servidor de directorio LDAP disponible) o
+    ambas. Si quiere que Correo y Noticias resalte las direcciones que no se
+    autocompletan, seleccione esa opción.
+
+    <p><strong>Nota</strong>: si, mientras escribe una dirección, hay varias
+    coincidencias, &brandShortName; muestra una lista con todas las
+    posibilidades.</p>
+
+  <p>Si elige la opción de servidor de directorio, elija uno de la lista. Un
+    servidor de directorio permite realizar búsquedas de direcciones que no se
+    encuentran en las libretas de direcciones locales. El directorio que
+    seleccione también será usado para buscar certificados cuando intente
+    enviar un mensaje cifrado a uno o más destinatarios de los que no tenga
+    certificados en archivo local.</p>
+
+  <p>Vea <a
+    href="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories">Añadir
+    y borrar directorios LDAP</a> para información sobre la configuración de un
+    servidor de directorio LDAP.</p>
+
+  <p><strong>Nota</strong>: la configuración del servidor de directorio que
+    introduzca en el cuadro de diálogo Preferencias se aplican a todas las
+    cuentas de correo. Puede omitir esta configuración para cuentas
+    individuales especificando un servidor de directorio LDAP diferente en la
+    configuración específica de la cuenta. Para establecer opciones de
+    direccionamiento para una cuenta específica, abra el menú Editar y escoja
+    Configuración de cuentas de correo y noticias.</p>
+  </li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="junk_and_suspect_preferences">Correo basura y sospechoso (preferencias
+  de correo y grupos de noticias)</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias de correo basura y
+  sospechoso. Si no está viendo ya el panel de preferencias de correo basura y
+  sospechoso, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría de Correo y grupos de noticias, seleccione Correo basura y
+    sospechoso (si no hay opciones disponibles en esta categoría, haga doble
+    clic en la categoría para expandir la lista).</li>
+</ol>
+
+<ul>
+  <li><strong>Cuando marco los mensajes como basura</strong>: escoja esta
+    opción para indicar que quiere que haga &brandShortName; cuando se
+    marquen manualmente mensajes como correo basura.
+    <ul>
+      <li><strong>Moverlos a la carpeta <q>Basura</q> de la cuenta</strong>:
+        escoja esta opción para mover los mensajes marcados manualmente
+        como correo basura a la carpeta Basura.</li>
+      <li><strong>Borrarlos</strong>: escoja esta opción para mover los
+        mensajes marcados manualmente como correo basura a la papelera.</li>
+    </ul>
+  </li>
+  <li><strong>Marcar mensajes como leídos</strong>:
+    <ul>
+      <li><strong>Cuando &brandShortName; determine que son correo
+        basura</strong>: seleccione esta opción para marcar los mensajes
+        identificados como correo basura como leídos, para que no aparezcan
+        como nuevos.</li>
+      <li><strong>Cuando yo los marco manualmente como correo basura</strong>:
+        seleccione esta opción para marcar los mensajes como leídos cuando usted
+        los marque manualmente como correo basura.</li>
+    </ul>
+  </li>
+  <li><strong>Activar registro del filtro de correo basura</strong>: seleccione
+    esta opción para permitir el registro del historial de detecciones de
+    correo basura. Pulse el botón <strong>Mostrar el registro</strong> para
+    abrir un diálogo mostrando este registro.</li>
+  <li><strong>Reiniciar datos de entrenamiento</strong>: pulse este botón para
+    limpiar los datos de entrenamiento del filtro adaptativo de correo basura.
+    Puesto que esto tendrá como efecto la destrucción de su información
+    personal sobre correo basura, se le pedirá confirmación.</li>
+  <li><strong>Avisarme si el mensaje que estoy leyendo es sospechoso de ser
+    fraudulento</strong>: elija esta opción para hacer que &brandShortName;
+    analice los mensajes en busca de posibles fraudes basados en técnicas
+    comunes para engañar a la gente.</li>
+  <li><strong>Permitir a los clientes antivirus analizar los mensajes entrantes
+    más fácilmente</strong>: elija esta opción para permitir que
+    &brandShortName; facilite al software antivirus analizar los mensajes de
+    correo entrante en busca de virus antes de que se guarden localmente.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="tags">Etiquetas (preferencias de correo y grupos de noticias)</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias
+  Etiquetas. Use las preferencias de etiquetas para definir el texto, color y
+  orden de las etiquetas de mensajes. Si todavía no se encuentra en el
+  panel Etiquetas, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría Correo y grupos de noticias, seleccione Etiquetas
+    (si no hay subcategorías visibles, haga doble clic en Correo y
+    noticias para expandir la lista).</li>
+</ol>
+
+<ul>
+  <li><strong>Personalizar etiquetas</strong>: especifica el nombre y color
+    de cada etiqueta. Se puede editar o sustituir el texto por defecto de la
+    etiqueta con su propio texto (hasta 32 caracteres). Para cambiar el color
+    de la etiqueta, pulse en el selector de color que hay junto al nombre de
+    la etiqueta y elija uno nuevo. Use los botones Subir y Bajar para ordenar
+    sus etiquetas por orden descendente de importancia. Los mensajes con
+    múltiples etiquetas se colorearán de acuerdo a su etiqueta más importante.</li>
+  <li><strong>Restablecer valores predeterminados</strong>: elimina todas las
+    etiquetas personalizadas y revierte a únicamente los textos y colores
+    de las etiquetas predeterminadas.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="return_receipts_preferences">Acuse de recibo (preferencias de
+  correo y grupos de noticias)</h2>
+
+<p>Esta sección describe cómo usar el panel de preferencias
+  Acuse de recibo. Si no está ya viendo el panel Acuse de recibo,
+  siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Correo y noticias, seleccione Acuse de recibo
+    (si no hay subcategorías visibles, haga doble clic en Correo y
+    noticias para expandir la lista).</li>
+</ol>
+
+<p>El panel de preferencias Acuse de recibo se usa para definir la
+  configuración de los acuses de recibo para los mensajes salientes de
+  todas sus cuentas. También se usan las preferencias de acuse de recibo
+  para especificar cómo manejar las solicitudes que recibe de acuses de
+  recibo.</p>
+
+<ul>
+  <li><strong>Cuando envío un mensaje, solicitar siempre un acuse de
+    recibo</strong>: habilita la solicitud automática de acuses de recibo
+    para todos los mensajes salientes de todas sus cuentas de correo.</li>
+  <li><strong>Dejarlo en mi bandeja de entrada</strong>: los mensajes de
+    confirmación de acuses de recibo serán depositados en su bandeja de entrada.
+    <p><strong>Truco</strong>: escoja esta opción si quiere usar un filtro que
+      automáticamente mueva los mensajes de confirmación de acuses de recibo a
+      una carpeta específica. Para información sobre cómo crear y usar filtros,
+      vea <a href="mailnews_organizing.xhtml#creating_message_filters">Crear
+      filtros de mensajes</a>.</p>
+  </li>
+  <li><strong>Moverlo a mi carpeta <q>Enviados</q></strong>: los mensajes
+    entrantes de confirmación de acuse de recibo se moverán a su carpeta
+    Enviados.</li>
+  <li><strong>Nunca contestar el acuse de recibo</strong>: escoja esta opción si
+    no quiere enviar un acuse de recibo en respuesta a las solicitudes de otras
+    personas.</li>
+  <li><strong>Permitir acuses de recibo para algunos mensajes</strong>: escoja
+    cómo quiere responder a las solicitudes que reciba de acuses de recibo.</li>
+</ul>
+
+<p>Para reemplazar estas preferencias globales en cuentas individuales, vea
+  <a href="mailnews_account_settings.xhtml#return_receipts">Configuración de
+  cuentas de correo y noticias - Acuse de recibo</a>.</p>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de la
+  sección</a>]</p>
+
+<h2 id="text_encoding">Codificación de texto (preferencias de
+  correo y grupos de noticias)</h2>
+
+<p>Las preferencias de codificación de texto (caracteres) le permiten elegir
+  cómo se codifican los mensajes cuando se muestran o crean en todas
+  las cuentas. Si no está viendo ya la configuración de codificación de
+  texto, siga estos pasos:</p>  
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Correo y noticias, seleccione Codificación de texto
+    (si no hay subcategorías visibles, haga doble clic en Correo y
+    noticias para expandir la lista).</li>
+</ol>
+
+<ul>
+  <li><strong>Codificación de texto predeterminada</strong>:
+    pulse en esta lista desplegable para seleccionar la codificación de
+    texto que quiere que use Correo y noticias como predeterminada para
+    los mensajes entrantes de correo electrónico y grupos de noticias. Se
+    supone que los remitentes deben declarar la codificación de texto en
+    la que deben mostrarse sus mensajes, pero el contenido más antiguo (p.e.,
+    procedente de listas de correo o grupos de noticias internacionales) quizá
+    no lo hagan. Esta codificación se usa para esos mensajes que recibe en los
+    cuales la codificación de texto (MIME charset) no se especifica.
+    
+    <p><strong>Nota</strong>: las carpetas pueden anular individualmente esta
+      preferencia en la pestaña Información general de las propiedades de la
+      carpeta. A este diálogo puede accederse desde el menú Editar de una ventana
+      de Correo y noticias cuando se selecciona una carpeta.</p>
+    
+    <p><strong>Consejo</strong>: puede ver o cambiar más tarde la
+      codificación de texto para un mensaje concreto. Seleccione una carpeta y
+      luego el mensaje que quiere mostrar. Abra el menú Ver y elija
+      Codificación de texto.</p>
+  </li>
+  <li><strong>Usar codificación MIME 'quoted printable' en los mensajes
+    que contienen caracteres de 8 bits. Déjelo sin marcar para enviar
+    el mensaje tal cual</strong>: marque esta casilla para que Correo y
+    noticias use la codificación MIME <q>quoted printable</q> al enviar
+    mensajes normales que usen una codificación de texto de 8 bits
+    (por ejemplo, Latin ISO-8859-3). Esto suele ser necesario únicamente
+    cuando se comunica a través de un servidor antiguo que no procesa
+    correctamente las codificaciones de 8 bits.</li>
+  <li><strong>Codificación predeterminada de texto</strong>:
+    seleccione la codificaciónd de texto que quiere que &brandShortName; use
+    como predeterminado para los mensajes salientes de correo y grupos de
+    noticias.</li>
+  <li><strong>Si es posible, usar la codificación de texto por defecto
+    en las respuestas.</strong>: por defecto, la codificación de texto
+    seleccionada <strong>no</strong> es la que se usará cuando conteste a un
+    mensaje. En su lugar se usará la del mensaje que está siendo contestado.
+    Elija esta opción para usar la codificación de texto predeterminada
+    para los mensajes salientes incluso al responder, siempre que los
+    caracteres citados puedan representarse en la codificación seleccionada.</li>
+</ul>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de
+  la sección</a>]</p>
+
+<h2 id="network_and_storage_preferences">Red y almacenamiento (preferencias de
+  correo y grupos de noticias)</h2>
+
+<p>Esta sección describe cómo usar el panel Red y almacenamiento. Si todavía no
+  está viendo el panel, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Correo y noticias, seleccione Red y almacenamiento (si
+    no hay subcategorías visibles, haga doble clic en Correo y noticias para
+    expandir la lista).</li>
+</ol>
+
+<p>Las preferencias del panel Red y almacenamiento le permiten configurar cómo
+  trabajar sin conexión, cómo proceder al volver a conectarse y cómo gestionar
+  el espacio en disco.</p>
+
+<ul>
+  <li><strong>Sin conexión</strong>: seleccione cómo quiere que
+    &brandShortName; gestione los mensajes cuando conecte o desconecte.</li>
+  <li><strong>Conexiones de correo</strong>: elija cuánto tiempo quiere que
+    intente conectar Correo y noticias con el servidor antes de que caduque la
+    conexión.</li>    
+  <li><strong>Espacio en disco</strong>: seleccione esta opción para
+    ahorrar espacio en disco compactando automáticamente las carpetas de
+    los mensajes cuando esto suponga ahorrar la cantidad de espacio en disco
+    introducida.</li>
+</ul>
+
+<p>Vea <a href="mailnews_offline.xhtml#working_offline">Trabajar sin
+  conexión</a> para información sobre cómo trabajar sin conexión.</p>
+
+<p>[<a href="#mail_and_newsgroup_preferences">Volver al principio de
+  la sección</a>]</p>
+</body>
+</html>

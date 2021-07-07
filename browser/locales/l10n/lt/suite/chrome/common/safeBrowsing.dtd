@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Išeiti">
+<!ENTITY safeb.palm.decline.label "Nepaisyti šio įspėjimo">
+
+
+<!ENTITY safeb.blocked.malwarePage.title "Tinklalapis laikomas kenkėjišku!">
+<!-- Localization note (safeb.blocked.malwarePage.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Yra pranešta, jog šis tinklalapis (<span id='malware_sitename'/>) yra kenkėjiškas, tad jis užblokuotas, remiantis naršyklės saugumo nuostatomis.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Kenkėjiškais tinklalapiais siekiama įdiegti programas, vagiančias asmeninius duomenis, naudojančias kompiuterį kitų atakoms ir kenkiančias pačiai sistemai.</p><p>Kai kuriuose tinklalapiuose tai daroma tyčia, tačiau dažniausiai tai – nesankcionuoto įsikišimo į tinklalapį be jo savininkų žinios pasėkmė.</p>">
+
+<!-- Localization note (safeb.blocked.unwantedPage.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc2) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+
+<!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
+
+
+
+

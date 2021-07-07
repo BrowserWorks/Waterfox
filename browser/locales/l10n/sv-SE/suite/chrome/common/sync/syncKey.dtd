@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Din &syncBrand.fullName.label;-nyckel">
+<!ENTITY syncKey.page.description         "Den här nyckeln används för att avkoda datan i ditt &syncBrand.fullName.label;-konto. Du måste använda denna nyckel varje gång du ställer in &syncBrand.fullName.label; på en ny dator eller enhet.">
+<!ENTITY syncKey.keepItSecret.heading     "Håll den hemlig">
+<!ENTITY syncKey.keepItSecret.description "Ditt &syncBrand.fullName.label;-konto är krypterat för att skydda din personliga integritet. Utan den här nyckeln skulle det ta flera år för någon att dekryptera din personliga information. Du är den ende som har den här nyckeln. Det betyder att bara du har tillgång till din &syncBrand.fullName.label;-data.">
+<!ENTITY syncKey.keepItSafe.heading       "Förvara den säkert">
+<!ENTITY syncKey.keepItSafe1.description  "Tappa inte bort den här nyckeln.">
+<!ENTITY syncKey.keepItSafe2.description  " Vi har ingen kopia av den här nyckeln (då vore den inte hemlig!) så ">
+<!ENTITY syncKey.keepItSafe3.description  "vi kan inte hjälpa dig att återfå den">
+<!ENTITY syncKey.keepItSafe4.description  " om den tappas bort. Du måste använda den här nyckeln varje gång du ansluter en ny dator eller enhet till &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Läs mer om &syncBrand.fullName.label; och din personliga integritet på ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "&syncBrand.fullName.label;s användarvillkor finns på ">
+<!ENTITY syncKey.footer2.label            ". Sekretesspolicyn finns på ">
+<!ENTITY syncKey.footer3.label            ".">

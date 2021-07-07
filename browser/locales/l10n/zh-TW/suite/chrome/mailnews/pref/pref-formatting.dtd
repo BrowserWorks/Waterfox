@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "寄件格式">
+<!ENTITY sendMaildesc.label           "寄出格式化（HTML）訊息時，或超過一個收件者未被列為可以接收 HTML 郵件時:">
+<!ENTITY askMe.label                  "詢問我如何處理（Mail 將會請您選擇格式）">
+<!ENTITY askMe.accesskey              "k">
+<!ENTITY convertPlain2.label          "將訊息轉換為純文字格式（可能會遺失樣式）">
+<!ENTITY convertPlain2.accesskey      "C">
+<!ENTITY sendHTML2.label              "僅使用 HTML 格式傳送訊息（可能會有顯示問題）">
+<!ENTITY sendHTML2.accesskey          "S">
+<!ENTITY sendBoth2.label              "使用 HTML 和純文字格式傳送訊息（檔案較大）">
+<!ENTITY sendBoth2.accesskey          "n">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML 與純文字網域">
+<!ENTITY domaindesc.label             "當您寄信到下列網域時，將會自動送出相對應的格式（格式化文字或純文字）。">
+<!ENTITY HTMLdomaintitle.label        "HTML 格式網域">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "純文字網域">
+<!ENTITY PlainTexttitle.accesskey     "P">
+<!ENTITY AddButton.label              "新增…">
+<!ENTITY AddHtmlDomain.accesskey      "A">
+<!ENTITY AddPlainText.accesskey       "d">
+<!ENTITY DeleteButton.label           "刪除">
+<!ENTITY DeleteHtmlDomain.accesskey   "e">
+<!ENTITY DeletePlainText.accesskey    "t">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "新增使用 HTML 格式網域">
+<!ENTITY add.htmldomain               "HTML 格式網域名稱:">
+<!ENTITY add.plaintexttitle           "增加純文字網域名稱">
+<!ENTITY add.plaintextdomain          "純文字網域名稱:">
+
+<!ENTITY domainnameError.title        "網域名稱錯誤">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "網域名稱 @string@ 無效，將會被忽略。有效的網域名稱必須包含至少一個點，且兩側都要有字母。">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "若沒有格式上的大問題，自動以純文字格式傳送訊息（蓋過其他選項）">
+<!ENTITY autoDowngrade.accesskey      "o">
+

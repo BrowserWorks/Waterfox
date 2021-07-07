@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Message Display">
+<!ENTITY style.label                      "Style:">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "Regular">
+<!ENTITY bold.label                       "Bold">
+<!ENTITY italic.label                     "Italic">
+<!ENTITY boldItalic.label                 "Bold Italic">
+<!ENTITY size.label                       "Size:">
+<!ENTITY size.accesskey                   "z">
+<!ENTITY bigger.label                     "Bigger">
+<!ENTITY smaller.label                    "Smaller">
+<!ENTITY color.label                      "Colour:">
+<!ENTITY color.accesskey                  "C">
+<!ENTITY displayPlainText.caption         "Plain text messages">
+<!ENTITY fontPlainText.label              "Font:">
+<!ENTITY fontPlainText.accesskey          "F">
+<!ENTITY displayQuoted.label              "Settings for quoted messages:">
+<!ENTITY wrapInMsg.label                  "Wrap text to fit window width">
+<!ENTITY wrapInMsg.accesskey              "W">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Display emoticons as graphics">
+<!ENTITY convertEmoticons.accesskey       "D">
+<!ENTITY generalMessageDisplay.caption    "General">
+<!ENTITY autoMarkAsRead.label             "Automatically mark messages as read">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Only after displaying for">
+<!ENTITY markAsReadAfter.accesskey        "t">
+<!ENTITY secondsLabel.label               "seconds">
+
+<!ENTITY openingMessages.label            "When opening messages, display them in:">
+<!ENTITY newWindowRadio.label             "A new message window">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "An existing message window">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "Block images and other content from remote sources">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "Show only display name for people in my address book">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "Close message window when deleting the message">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

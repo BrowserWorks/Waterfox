@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Fehler-Konsole">
+
+<!ENTITY errFile.label        "Quelldatei:">
+<!ENTITY errLine.label        "Zeile:">
+<!ENTITY errColumn.label      "Spalte:">
+
+<!ENTITY all.label            "Alle">
+<!ENTITY all.accesskey        "A">
+<!ENTITY errors.label         "Fehler">
+<!ENTITY errors.accesskey     "e">
+<!ENTITY warnings.label       "Warnungen">
+<!ENTITY warnings.accesskey   "W">
+<!ENTITY messages.label       "Mitteilungen">
+<!ENTITY messages.accesskey   "M">
+<!ENTITY clear.label          "Leeren">
+<!ENTITY clear.accesskey      "L">
+<!ENTITY codeEval.label       "Code:">
+<!ENTITY codeEval.accesskey   "C">
+<!ENTITY evaluate.label       "Ausführen">
+<!ENTITY evaluate.accesskey   "u">
+<!ENTITY filter2.label        "Filter:">
+<!ENTITY filter2.accesskey    "F">
+
+<!ENTITY copyCmd.label         "Kopieren">
+<!ENTITY copyCmd.accesskey     "K">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Erster > Letzter Sortierreihenfolge">
+<!ENTITY sortFirst.accesskey   "s">
+<!ENTITY sortLast.label        "Letzter > Erster Sortierreihenfolge">
+<!ENTITY sortLast.accesskey    "z">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Menüleiste">
+<!ENTITY modeToolbar.tooltip   "Modus-Symbolleiste">
+<!ENTITY entryToolbar.tooltip  "Symbolleiste für JavaScript-Eingaben">
+<!ENTITY toolbarsCmd.label     "Anzeigen/Verstecken">
+<!ENTITY toolbarsCmd.accesskey "z">
+<!ENTITY toolbarMode.label     "Modus">
+<!ENTITY toolbarMode.accesskey "M">
+<!ENTITY toolbarEval.label     "JavaScript-Eingabe">
+<!ENTITY toolbarEval.accesskey "J">

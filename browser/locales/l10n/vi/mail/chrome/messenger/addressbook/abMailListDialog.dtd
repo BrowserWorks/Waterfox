@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Danh sách gửi thư mới">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Thêm vào: ">
+<!ENTITY addToAddressBook.accesskey     "v">
+<!ENTITY ListName.label                 "Tên danh sách: ">
+<!ENTITY ListName.accesskey             "S">
+<!ENTITY ListNickName.label             "Biệt hiệu danh sách: ">
+<!ENTITY ListNickName.accesskey         "n">
+<!ENTITY ListDescription.label          "Mô tả: ">
+<!ENTITY ListDescription.accesskey      "M">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Nhập địa chỉ email để thêm chúng vào danh sách thư:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Di chuyển lên">
+<!ENTITY DownButton.label               "Di chuyển xuống">

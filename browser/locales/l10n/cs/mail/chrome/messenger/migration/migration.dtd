@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Průvodce importem">
+
+<!ENTITY importFromWin.label            "Importovat možnosti, nastavení účtu, kontakty a ostatní data z aplikace:">
+<!ENTITY importFromNonWin.label         "Importovat předvolby, nastavení účtu, kontakty a ostatní data z aplikace:">
+<!ENTITY importSourceNotFound.label     "Žádné aplikace pro import dat nebyly nalezeny.">
+
+<!ENTITY importFromNothing.label        "Nic neimportovat">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 nebo novější">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importovat nastavení a poštovní složky">
+<!ENTITY importItems.title              "Importované položky">
+<!ENTITY importItems.label              "Zvolte položky, které chcete importovat:">
+
+<!ENTITY migrating.title                "Probíhá import…">
+<!ENTITY migrating.label                "Teď jsou importovány následující položky…">
+
+<!ENTITY selectProfile.title            "Volba profilu">
+<!ENTITY selectProfile.label            "Importovat je možné z následujících profilů:">
+
+<!ENTITY done.title                     "Import byl dokončen">
+<!ENTITY done.label                     "Následující položky byly úspěšně importovány:">

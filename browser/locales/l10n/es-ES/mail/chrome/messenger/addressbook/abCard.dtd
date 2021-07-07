@@ -1,0 +1,152 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab "Contacto">
+<!ENTITY Contact.accesskey "C">
+<!ENTITY Name.box "Nombre">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!ENTITY NameField1.id "FirstName">
+<!ENTITY NameField2.id "LastName">
+<!ENTITY PhoneticField1.id "PhoneticFirstName">
+<!ENTITY PhoneticField2.id "PhoneticLastName">
+
+<!ENTITY NameField1.label "Nombre:">
+<!ENTITY NameField1.accesskey "N">
+<!ENTITY NameField2.label "Apellidos:">
+<!ENTITY NameField2.accesskey "A">
+<!ENTITY PhoneticField1.label "Nombre fonético:">
+<!ENTITY PhoneticField2.label "Nombre fonético:">
+<!ENTITY DisplayName.label "Mostrado:">
+<!ENTITY DisplayName.accesskey "M">
+<!ENTITY preferDisplayName.label "Preferir siempre el nombre mostrado al de la cabecera del mensaje">
+<!ENTITY preferDisplayName.accesskey "s">
+<!ENTITY NickName.label "Apodo:">
+<!ENTITY NickName.accesskey "o">
+
+<!ENTITY PrimaryEmail.label "Correo electrónico:">
+<!ENTITY PrimaryEmail.accesskey "e">
+<!ENTITY SecondEmail.label "Correo electrónico adicional:">
+<!ENTITY SecondEmail.accesskey "r">
+<!ENTITY PreferMailFormat.label "Prefiere recibir mensajes formateados como:">
+<!ENTITY PreferMailFormat.accesskey "b">
+<!ENTITY PlainText.label "Texto sin formato">
+<!ENTITY HTML.label "HTML">
+<!ENTITY Unknown.label "Desconocido">
+<!ENTITY chatName.label "Nombre en el chat:">
+
+<!ENTITY WorkPhone.label "Trabajo:">
+<!ENTITY WorkPhone.accesskey "b">
+<!ENTITY HomePhone.label "Casa:">
+<!ENTITY HomePhone.accesskey "C">
+<!ENTITY FaxNumber.label "Fax:">
+<!ENTITY FaxNumber.accesskey "x">
+<!ENTITY PagerNumber.label "Buscapersonas:">
+<!ENTITY PagerNumber.accesskey "u">
+<!ENTITY CellularNumber.label "Móvil:">
+<!ENTITY CellularNumber.accesskey "v">
+
+<!ENTITY Home.tab "Privado">
+<!ENTITY Home.accesskey "P">
+<!ENTITY HomeAddress.label "Dirección:">
+<!ENTITY HomeAddress.accesskey "d">
+<!ENTITY HomeAddress2.label "">
+<!ENTITY HomeAddress2.accesskey "">
+<!ENTITY HomeCity.label "Ciudad:">
+<!ENTITY HomeCity.accesskey "u">
+<!ENTITY HomeState.label "Provincia/estado:">
+<!ENTITY HomeState.accesskey "v">
+<!ENTITY HomeZipCode.label "Código postal / ZIP:">
+<!ENTITY HomeZipCode.accesskey "o">
+<!ENTITY HomeCountry.label "País:">
+<!ENTITY HomeCountry.accesskey "P">
+<!ENTITY HomeWebPage.label "Página web:">
+<!ENTITY HomeWebPage.accesskey "w">
+<!ENTITY Birthday.label "Cumpleaños:">
+<!ENTITY Birthday.accesskey "u">
+<!ENTITY Month.placeholder "Mes">
+<!ENTITY Day.placeholder "Día">
+<!ENTITY Year.placeholder "Año">
+<!ENTITY Age.label "Edad:">
+<!ENTITY Age.placeholder "Edad">
+
+<!ENTITY Work.tab "Trabajo">
+<!ENTITY Work.accesskey "T">
+<!ENTITY JobTitle.label "Título:">
+<!ENTITY JobTitle.accesskey "T">
+<!ENTITY Department.label "Departamento:">
+<!ENTITY Department.accesskey "D">
+<!ENTITY Company.label "Organización:">
+<!ENTITY Company.accesskey "O">
+<!ENTITY WorkAddress.label "Dirección:">
+<!ENTITY WorkAddress.accesskey "d">
+<!ENTITY WorkAddress2.label "">
+<!ENTITY WorkAddress2.accesskey "">
+<!ENTITY WorkCity.label "Ciudad:">
+<!ENTITY WorkCity.accesskey "u">
+<!ENTITY WorkState.label "Provincia/estado:">
+<!ENTITY WorkState.accesskey "v">
+<!ENTITY WorkZipCode.label "Código postal / ZIP:">
+<!ENTITY WorkZipCode.accesskey "o">
+<!ENTITY WorkCountry.label "País:">
+<!ENTITY WorkCountry.accesskey "P">
+<!ENTITY WorkWebPage.label "Página web:">
+<!ENTITY WorkWebPage.accesskey "w">
+
+<!ENTITY Other.tab "Otros">
+<!ENTITY Other.accesskey "t">
+<!ENTITY Custom1.label "Personalizado 1:">
+<!ENTITY Custom1.accesskey "1">
+<!ENTITY Custom2.label "Personalizado 2:">
+<!ENTITY Custom2.accesskey "2">
+<!ENTITY Custom3.label "Personalizado 3:">
+<!ENTITY Custom3.accesskey "3">
+<!ENTITY Custom4.label "Personalizado 4:">
+<!ENTITY Custom4.accesskey "4">
+<!ENTITY Notes.label "Notas:">
+<!ENTITY Notes.accesskey "N">
+
+<!ENTITY Chat.tab "Chat">
+<!ENTITY Chat.accesskey "h">
+<!ENTITY Gtalk.label "Google Talk:">
+<!ENTITY Gtalk.accesskey "G">
+<!ENTITY AIM.label "AIM:">
+<!ENTITY AIM2.accesskey "M">
+<!ENTITY Yahoo.label "Yahoo!:">
+<!ENTITY Yahoo.accesskey "Y">
+<!ENTITY Skype.label "Skype:">
+<!ENTITY Skype.accesskey "S">
+<!ENTITY QQ.label "QQ:">
+<!ENTITY QQ.accesskey "Q">
+<!ENTITY MSN.label "MSN:">
+<!ENTITY MSN2.accesskey "N">
+<!ENTITY ICQ.label "ICQ:">
+<!ENTITY ICQ.accesskey "I">
+<!ENTITY XMPP.label "ID de Jabber:">
+<!ENTITY XMPP.accesskey "J">
+<!ENTITY IRC.label "Apodo en IRC:">
+<!ENTITY IRC.accesskey "R">
+
+<!ENTITY Photo.tab "Foto">
+<!ENTITY Photo.accesskey "o">
+<!ENTITY GenericPhoto.label "Foto genérica">
+<!ENTITY GenericPhoto.accesskey "g">
+<!ENTITY DefaultPhoto.label "Predeterminado">
+<!ENTITY PhotoFile.label "En este equipo">
+<!ENTITY PhotoFile.accesskey "n">
+<!ENTITY BrowsePhoto.label "Examinar">
+<!ENTITY BrowsePhoto.accesskey "x">
+<!ENTITY PhotoURL.label "En la web">
+<!ENTITY PhotoURL.accesskey "w">
+<!ENTITY PhotoURL.placeholder "Pegue o escriba la dirección web de una foto">
+<!ENTITY UpdatePhoto.label "Actualizar">
+<!ENTITY UpdatePhoto.accesskey "u">
+<!ENTITY PhotoDropTarget.label "Arrastre una nueva foto aquí">

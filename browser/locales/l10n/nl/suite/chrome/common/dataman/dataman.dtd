@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Gegevensbeheerder">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Alle gegevenstypen">
+<!ENTITY select.cookies.label "Alleen cookies">
+<!ENTITY select.permissions.label "Alleen toestemmingen">
+<!ENTITY select.preferences.label "Alleen voorkeuren">
+<!ENTITY select.passwords.label "Alleen wachtwoorden">
+<!ENTITY select.storage.label "Alleen opslag">
+
+<!ENTITY domain.search.placeholder "Domeinen doorzoeken">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Domein">
+
+<!ENTITY domain.ctx.forgetdomain.label "Dit domein vergeten">
+<!ENTITY domain.ctx.forgetdomain.accesskey "r">
+<!ENTITY domain.ctx.forgetglobal.label "Algemene gegevens vergeten">
+<!ENTITY domain.ctx.forgetglobal.accesskey "r">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY tab.permissions.label "Toestemmingen">
+<!ENTITY tab.preferences.label "Voorkeuren">
+<!ENTITY tab.passwords.label "Wachtwoorden">
+<!ENTITY tab.storage.label "Opslag">
+<!ENTITY tab.formdata.label "Formuliergegevens">
+<!ENTITY tab.forget.label "Vergeten">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Dit domein heeft de volgende cookies op uw computer opgeslagen:">
+
+<!ENTITY cookies.tree.host.label "Website">
+<!ENTITY cookies.tree.name.label "Cookienaam">
+<!ENTITY cookies.tree.expires.label "Verloopt op">
+
+<!ENTITY cookies.infobox.label "Informatie over het geselecteerde cookie">
+
+<!ENTITY cookies.info.name.label "Naam:">
+<!ENTITY cookies.info.value.label "Inhoud:">
+<!ENTITY cookies.info.host.label "Host:">
+<!ENTITY cookies.info.domain.label "Domein:">
+<!ENTITY cookies.info.path.label "Pad:">
+<!ENTITY cookies.info.sendtype.label "Verzenden bij:">
+<!ENTITY cookies.info.expires.label "Verloopt:">
+
+<!ENTITY cookies.ctx.remove.label "Verwijderen">
+<!ENTITY cookies.ctx.remove.accesskey "V">
+<!ENTITY cookies.ctx.selectAll.label "Alles selecteren">
+<!ENTITY cookies.ctx.selectAll.accesskey "A">
+
+<!ENTITY cookies.button.remove.label "Verwijderen">
+<!ENTITY cookies.button.remove.accesskey "V">
+
+<!ENTITY cookies.blockOnRemove.label "Websites waarvan cookies zijn verwijderd niet toestaan nieuwe cookies op te slaan">
+<!ENTITY cookies.blockOnRemove.accesskey "W">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Standaard gebruiken">
+<!ENTITY perm.AskAlways "Altijd vragen">
+<!ENTITY perm.NeverSave "Nooit opslaan">
+<!ENTITY perm.Allow "Toestaan">
+<!ENTITY perm.AllowSameDomain "Toestaan voor het zelfde domein">
+<!ENTITY perm.AllowSession "Toestaan voor sessie">
+<!ENTITY perm.Block "Blokkeren">
+
+<!ENTITY perm.host.placeholder "Voer een hostnaam in">
+<!ENTITY perm.button.add.label "Toevoegen">
+<!ENTITY perm.button.add.accesskey "T">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Inhoudsvoorkeuren zijn een manier voor &brandShortName; om de instellingen voor een specifieke website op te slaan.">
+
+<!ENTITY prefs.tree.host.label "Website">
+<!ENTITY prefs.tree.name.label "Voorkeurnaam">
+<!ENTITY prefs.tree.value.label "Waarde">
+
+<!ENTITY prefs.ctx.remove.label "Verwijderen">
+<!ENTITY prefs.ctx.remove.accesskey "V">
+<!ENTITY prefs.ctx.selectAll.label "Alles selecteren">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+
+<!ENTITY prefs.button.remove.label "Verwijderen">
+<!ENTITY prefs.button.remove.accesskey "V">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Voor dit domein zijn de volgende wachtwoorden opgeslagen:">
+
+<!ENTITY pwd.tree.host.label "Website">
+<!ENTITY pwd.tree.username.label "Gebruikersnaam">
+<!ENTITY pwd.tree.password.label "Wachtwoord">
+
+<!ENTITY pwd.ctx.remove.label "Verwijderen">
+<!ENTITY pwd.ctx.remove.accesskey "V">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Wachtwoord kopiëren">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "k">
+<!ENTITY pwd.ctx.selectAll.label "Alles selecteren">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "Verwijderen">
+<!ENTITY pwd.button.remove.accesskey "V">
+
+<!-- storage -->
+<!ENTITY storage.description "Dit domein gebruikt de volgende webopslag op uw computer:">
+
+<!ENTITY storage.tree.host.label "Website">
+<!ENTITY storage.tree.type.label "Type">
+<!ENTITY storage.tree.size.label "Grootte">
+
+<!ENTITY storage.ctx.remove.label "Verwijderen">
+<!ENTITY storage.ctx.remove.accesskey "r">
+<!ENTITY storage.ctx.selectAll.label "Alles selecteren">
+<!ENTITY storage.ctx.selectAll.accesskey "A">
+
+<!ENTITY storage.button.remove.label "Verwijderen">
+<!ENTITY storage.button.remove.accesskey "r">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Veldgegevens doorzoeken">
+
+<!ENTITY fdata.tree.fieldname.label "Veldnaam">
+<!ENTITY fdata.tree.value.label "Ingevoerde waarde">
+<!ENTITY fdata.tree.usecount.label "Aantal malen gebruikt">
+<!ENTITY fdata.tree.firstused.label "Eerst gebruikt">
+<!ENTITY fdata.tree.lastused.label "Laatst gebruikt">
+
+<!ENTITY fdata.ctx.remove.label "Verwijderen">
+<!ENTITY fdata.ctx.remove.accesskey "V">
+<!ENTITY fdata.ctx.selectAll.label "Alles selecteren">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+
+<!ENTITY fdata.button.remove.label "Verwijderen">
+<!ENTITY fdata.button.remove.accesskey "V">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "Toestemmingen">
+<!ENTITY forget.permissions.accesskey "T">
+<!ENTITY forget.preferences.label "Inhoudsvoorkeuren">
+<!ENTITY forget.preferences.accesskey "I">
+<!ENTITY forget.passwords.label "Wachtwoorden">
+<!ENTITY forget.passwords.accesskey "W">
+<!ENTITY forget.storage.label "Opslag">
+<!ENTITY forget.storage.accesskey "O">
+<!ENTITY forget.formdata.label "Formuliergegevens">
+<!ENTITY forget.formdata.accesskey "F">
+
+<!ENTITY forget.button.label "Deze gegevens wissen">
+<!ENTITY forget.button.accesskey "D">

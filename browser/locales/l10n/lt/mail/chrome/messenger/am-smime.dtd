@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Abipusis šifravimas">
+<!ENTITY e2eLearnMore.label "Sužinokite daugiau">
+
+<!ENTITY e2eEnc.description "Be abipusio šifravimo laiškų turinį gali lengvai pamatyti jūsų el. pašto paslaugų teikėjas ir globalūs informacijos stebėtojai.">
+<!ENTITY e2eeReqWarning.description "Kai reikalaujate šifravimo, siunčiant pranešimą privalote turėti kiekvieno gavėjo viešąjį raktą arba sertifikatą.">
+
+<!ENTITY e2eSigning.description "Skaitmeninis parašas leidžia gavėjams įsitikinti kad pranešimą išsiuntėte jūs ir kad jo turinys nebuvo pakeistas.">
+<!ENTITY e2eTechPref.description "Pageidaujama šifravimo technologija:">
+
+<!ENTITY doNotEncrypt.label "Pagal nutylėjimą, šifravimas nenaudojamas">
+<!ENTITY doNotEncrypt.accesskey "n">
+<!ENTITY requireEncryptMessage.label "Pagal nutylėjimą, šifravimas būtinas">
+<!ENTITY requireEncryptMessage.accesskey "b">
+<!ENTITY encryptionCert2.message "Asmeninis šifravimo sertifikatas:">
+<!ENTITY digitalSign.certificate.button "Parinkti…">
+<!ENTITY digitalSign.certificate.accesskey "P">
+<!ENTITY digitalSign.certificate_clear.button "Išvalyti">
+<!ENTITY digitalSign.certificate_clear.accesskey "v">
+<!ENTITY encryption.certificate.button "Parinkti…">
+<!ENTITY encryption.certificate.accesskey "r">
+<!ENTITY encryption.certificate_clear.button "Išvalyti">
+<!ENTITY encryption.certificate_clear.accesskey "t">
+<!ENTITY signingGroupTitle.label "Skaitmeninis parašas">
+<!ENTITY signMessage2.label "Pagal nutylėjimą, pridėti mano skaitmeninį parašą">
+<!ENTITY signMessage.accesskey "s">
+<!ENTITY signingCert2.message "Asmeninis skaitmeninio parašo sertifikatas:">
+
+<!ENTITY sendingDefaults.label "Numatytieji pranešimų siuntimo nustatymai">
+
+<!ENTITY technologyAutomatic.label "Parinkti automatiškai, atsižvelgiant į turimus raktus ir sertifikatus">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Tvarkyti S/MIME liudijimus">
+<!ENTITY manageCerts3.accesskey "T">
+<!ENTITY manageDevices2.label "S/MIME saugumo priemonės">
+<!ENTITY manageDevices2.accesskey "s">
+
+<!ENTITY technologySMIME.label "S/MIME">
+<!ENTITY technologyOpenPGP.label "„OpenPGP“">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Pasirinkite liudijimą">
+<!ENTITY certPicker.info  "Liudijimas:">
+<!ENTITY certPicker.detailsLabel "Pasirinktojo liudijimo duomenys:">
+
+<!ENTITY openpgpKey.message "Asmeninis raktas šifravimui ir skaitmeniniam pasirašymui:">
+<!ENTITY openpgpKey.button "Nustatyti asmeninį raktą…">
+<!ENTITY openpgpKey.accesskey "o">

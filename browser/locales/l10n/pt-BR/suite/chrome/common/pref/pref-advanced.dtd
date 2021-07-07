@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Avançado">
+
+<!ENTITY systemPref.caption               "Preferências do Sistema">
+<!ENTITY systemPrefCheck.label            "Usar preferências do sistema">
+<!ENTITY systemPrefCheck.accesskey        "s">
+<!ENTITY systemPref.desc                  "Com esta opção, o &brandShortName; utiliza as preferências do sistema. Estas definições do sistema sobrepõem-se às preferências do &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption         "Integração com o sistema">
+<!ENTITY prefCheckDefaultClient.label     "Verificar configurações de aplicativos padrão ao iniciar">
+<!ENTITY prefCheckDefaultClient.accesskey "s">
+
+<!ENTITY printing.label                   "Imprimindo">
+<!ENTITY useNativePrintDialog.label       "Usar diálogo de impressão nativo (onde for aceito)">
+<!ENTITY useNativePrintDialog.accesskey   "U">
+<!ENTITY useGlobalPrintSettings.label     "Usar configurações globais de impressão">
+<!ENTITY useGlobalPrintSettings.accesskey "g">
+
+<!ENTITY crashReports.caption             "Relator de travamentos">
+<!ENTITY submitCrashes.label              "Enviar relatórios de travamento">
+<!ENTITY submitCrashes.accesskey          "s">
+
+<!ENTITY devTools.caption                 "Ferramentas do desenvolvedor">
+<!ENTITY allowDebugger.label              "Permitir que um depurador se conecte ao &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "P">
+<!ENTITY allowRemoteConnections.label     "Permitir conexões a partir de outros computadores">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "Pedir confirmação para conexões recebidas">
+<!ENTITY connectionPrompt.accesskey       "p">
+<!ENTITY remoteDebuggerPort.label         "Numero da porta para conexão:">
+<!ENTITY remoteDebuggerPort.accesskey     "N">

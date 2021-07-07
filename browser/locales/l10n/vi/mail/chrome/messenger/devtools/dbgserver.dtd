@@ -1,0 +1,4 @@
+<!ENTITY options.title "Tùy chọn công cụ dành cho nhà phát triển">
+<!ENTITY options.status.label "Trạng thái:">
+<!ENTITY options.port.label "Cổng:">
+<!ENTITY options.forcelocal.label "Cho phép kết nối từ các máy tính khác">

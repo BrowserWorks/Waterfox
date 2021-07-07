@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Geavanceerd">
+
+<!ENTITY systemPref.caption               "Systeemvoorkeuren">
+<!ENTITY systemPrefCheck.label            "Voorkeuren van systeem gebruiken">
+<!ENTITY systemPrefCheck.accesskey        "V">
+<!ENTITY systemPref.desc                  "Met deze optie neemt &brandShortName; voorkeuren van het systeem over. Deze systeeminstellingen hebben voorrang op de voorkeuren van &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption         "Systeemintegratie">
+<!ENTITY prefCheckDefaultClient.label     "Instellingen van standaardtoepassingen controleren bij het opstarten">
+<!ENTITY prefCheckDefaultClient.accesskey "s">
+
+<!ENTITY printing.label                   "Afdrukken">
+<!ENTITY useNativePrintDialog.label       "Ingebouwde afdrukdialoog gebruiken (indien ondersteund)">
+<!ENTITY useNativePrintDialog.accesskey   "I">
+<!ENTITY useGlobalPrintSettings.label     "Globale afdrukinstellingen gebruiken">
+<!ENTITY useGlobalPrintSettings.accesskey "G">
+
+<!ENTITY crashReports.caption             "Crashreporter">
+<!ENTITY submitCrashes.label              "Crashrapporten verzenden">
+<!ENTITY submitCrashes.accesskey          "C">
+
+<!ENTITY devTools.caption                 "Ontwikkelaarshulpmiddelen">
+<!ENTITY allowDebugger.label              "Een debugger toestaan om verbinding te maken met &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "t">
+<!ENTITY allowRemoteConnections.label     "Verbindingen vanaf andere computers toestaan">
+<!ENTITY allowRemoteConnections.accesskey "o">
+<!ENTITY connectionPrompt.label           "Vraag voor inkomende verbindingen">
+<!ENTITY connectionPrompt.accesskey       "i">
+<!ENTITY remoteDebuggerPort.label         "Verbindingspoortnummer:">
+<!ENTITY remoteDebuggerPort.accesskey     "n">

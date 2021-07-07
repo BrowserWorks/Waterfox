@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle                    "Bővítmény telepítése…">
+
+<!ENTITY name.label                     "Név:">
+<!ENTITY name.accesskey                 "N">
+
+<!ENTITY name.autopick.label            "Automatikus névválasztás">
+<!ENTITY name.autopick.accesskey        "A">
+
+<!ENTITY source.label                   "Forrás:">
+<!ENTITY source.accesskey               "F">
+
+<!ENTITY browse.label                   "Tallózás…">
+<!ENTITY browse.accesskey               "T">

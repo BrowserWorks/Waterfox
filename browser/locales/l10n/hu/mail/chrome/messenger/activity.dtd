@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Tevékenységkezelő">
+
+<!ENTITY cmd.pause.label                  "Szünet">
+<!ENTITY cmd.pause.accesskey              "S">
+<!ENTITY cmd.resume.label                 "Folytatás">
+<!ENTITY cmd.resume.accesskey             "F">
+<!ENTITY cmd.cancel.label                 "Mégse">
+<!ENTITY cmd.cancel.accesskey             "M">
+<!ENTITY cmd.undo.label                   "Visszavonás">
+<!ENTITY cmd.undo.accesskey               "V">
+<!ENTITY cmd.recover.label                "Visszaállítás">
+<!ENTITY cmd.recover.accesskey            "i">
+<!ENTITY cmd.retry.label                  "Újra">
+<!ENTITY cmd.retry.accesskey              "r">
+<!ENTITY cmd.removeFromList.label         "Törlés a listáról">
+<!ENTITY cmd.removeFromList.accesskey     "T">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Lista törlése">
+<!ENTITY cmd.clearList.tooltip            "A befejezett, félbeszakított vagy sikertelen elemek törlése a listáról">
+<!ENTITY cmd.clearList.accesskey          "i">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Keresés…">

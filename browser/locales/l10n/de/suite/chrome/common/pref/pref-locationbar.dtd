@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Adressleiste">
+
+<!ENTITY autoComplete.label                    "Automatische Vervollständigung">
+<!ENTITY autoCompleteMatchHistory.label        "Automatisch Websites aus der Chronik vorschlagen">
+<!ENTITY autoCompleteMatchHistory.accesskey    "C">
+<!ENTITY autoCompleteMatchBookmarks.label      "Automatisch Websites aus Lesezeichen vorschlagen">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "u">
+<!ENTITY autoCompleteAutoFill.label            "Automatisch die beste Übereinstimmung eintragen">
+<!ENTITY autoCompleteAutoFill.accesskey        "A">
+<!ENTITY autoCompleteShowPopup.label           "Liste von übereinstimmenden Ergebnissen anzeigen">
+<!ENTITY autoCompleteShowPopup.accesskey       "L">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Nur zuvor eingegebene Webseiten durchsuchen">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "N">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Übereinstimmung">
+<!ENTITY autoCompleteMatch.accesskey           "m">
+<!ENTITY autoCompleteMatchAnywhere             "Überall in Adresse oder Titel">
+<!ENTITY autoCompleteMatchWordsFirst           "Überall, aber bevorzugt an Wortgrenzen">
+<!ENTITY autoCompleteMatchWords                "Nur an Wortgrenzen">
+<!ENTITY autoCompleteMatchStart                "Nur am Beginn von Adresse oder Titel">
+<!ENTITY showInternetSearch.label              "Standard-Internet-Suchmaschine anzeigen">
+<!ENTITY showInternetSearch.accesskey          "S">
+
+<!ENTITY formatting.label                      "Formatierung">
+<!ENTITY domainFormatting.label                "Die effektive Domain für Websites und FTP-Server hervorheben">
+<!ENTITY domainFormatting.accesskey            "D">
+<!ENTITY highlightSecure.label                 "Webseiten mit einem hohen Verbindungssicherheitsniveau hervorheben">
+<!ENTITY highlightSecure.accesskey             "V">
+
+<!ENTITY unknownLocations.label                "Unbekannte Adressen">
+<!ENTITY domainGuessing.label                  "&quot;www.&quot; und &quot;.com&quot; an die Adresse anhängen, wenn eine Webseite nicht gefunden wird">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "Eine Web-Suche durchführen, wenn der eingegebene Text keine Web-Adresse ist">
+<!ENTITY keywords.accesskey                    "E">

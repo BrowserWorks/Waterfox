@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti textového pole">
+<!ENTITY Settings.label "Nastavení">
+<!ENTITY TextAreaName.label "Název pole:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Řádky:">
+<!ENTITY TextAreaRows.accessKey "d">
+<!ENTITY TextAreaCols.label "Sloupce:">
+<!ENTITY TextAreaCols.accessKey "S">
+<!ENTITY TextAreaReadOnly.label "Pouze pro čtení">
+<!ENTITY TextAreaReadOnly.accessKey "r">
+<!ENTITY TextAreaDisabled.label "Vypnuto">
+<!ENTITY TextAreaDisabled.accessKey "V">
+<!ENTITY TextAreaTabIndex.label "Rejstřík pro tab:">
+<!ENTITY TextAreaTabIndex.accessKey "R">
+<!ENTITY TextAreaAccessKey.label "Přístupová klávesa:">
+<!ENTITY TextAreaAccessKey.accessKey "k">
+<!ENTITY InitialText.label "Výchozí text:">
+<!ENTITY InitialText.accessKey "t">
+<!ENTITY TextAreaWrap.label "Druh zalamování:">
+<!ENTITY TextAreaWrap.accessKey "z">
+<!ENTITY WrapDefault.value "Výchozí">
+<!ENTITY WrapOff.value "Zakázáno">
+<!ENTITY WrapHard.value "Tvrdé">
+<!ENTITY WrapSoft.value "Měkké">
+<!ENTITY WrapPhysical.value "Fyzické">
+<!ENTITY WrapVirtual.value "Virtuální">

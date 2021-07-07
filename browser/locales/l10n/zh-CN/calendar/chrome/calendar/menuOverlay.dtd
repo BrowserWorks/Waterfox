@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "新事件…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "新建任务…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "导入…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "导出…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "发布…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "删除选中日历…">
+<!ENTITY calendar.deletecalendar.accesskey      "D">
+<!ENTITY calendar.unsubscribecalendar.label     "取消订阅选中的日历…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "移除选中的日历…">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "自定义…">
+<!ENTITY calendar.menu.customize.accesskey      "C">
+
+<!ENTITY showUnifinderCmd.label                 "查找事件">
+<!ENTITY showUnifinderCmd.accesskey             "F">
+<!ENTITY showUnifinderCmd.tooltip               "切换查找事件窗格">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "在日历上显示任务">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "今天">
+<!ENTITY goTodayCmd.accesskey                   "T">
+
+<!ENTITY showCurrentView.label                  "当前视图">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "日历属性…">
+<!ENTITY calendar.properties.accesskey          "C">

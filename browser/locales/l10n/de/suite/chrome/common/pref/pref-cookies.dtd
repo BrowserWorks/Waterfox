@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookies">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Cookie-Akzeptanzregeln">
+
+<!ENTITY disableCookies.label           "Cookies blockieren">
+<!ENTITY disableCookies.accesskey       "k">
+
+<!ENTITY accNo3rdPartyCookies.label     "Cookies nur von direkt aufgerufener Website erlauben (keine Cookies von Drittanbietern)">
+<!ENTITY accNo3rdPartyCookies.accesskey "d">
+
+<!ENTITY acc3rdPartyVisited.label       "Cookies von Drittanbietern nur für zuvor besuchte Webseiten zulassen">
+<!ENTITY acc3rdPartyVisited.accesskey   "C">
+
+<!ENTITY accAllCookies.label            "Alle Cookies erlauben">
+<!ENTITY accAllCookies.accesskey        "A">
+
+<!ENTITY cookieRetentionPolicy.label    "Regeln für Cookie-Lebensdauer">
+
+<!ENTITY acceptNormally.label           "Cookies normal akzeptieren">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Nur für aktuelle Session akzeptieren">
+<!ENTITY acceptForSession.accesskey     "S">
+
+<!ENTITY acceptforNDays.label           "Cookies akzeptieren für">
+<!ENTITY acceptforNDays.accesskey       "o">
+<!ENTITY days.label                     "Tage.">
+
+<!ENTITY manageCookies.label            "Cookies und Websites verwalten">
+<!ENTITY manageCookiesDescription.label "Ermöglicht Ihnen, gespeicherte Cookies und Website-spezifische Einstellungen für das Akzeptieren von Cookies anzusehen und zu verwalten. Website-spezifische Einstellungen übergehen die obigen Einstellungen.">
+
+<!ENTITY viewCookies.label              "Cookie-Verwaltung">
+<!ENTITY viewCookies.accesskey          "M">
+

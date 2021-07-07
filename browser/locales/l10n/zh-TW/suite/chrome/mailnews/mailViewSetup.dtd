@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY mailViewSetupTitle.label "郵件檢視設定">
+<!ENTITY mailViewHeading.label "郵件檢視名稱:">
+<!ENTITY mailViewHeading.accesskey "e">
+<!ENTITY searchTermCaption.label "選取此分頁時只顯示下列郵件:">
+
+

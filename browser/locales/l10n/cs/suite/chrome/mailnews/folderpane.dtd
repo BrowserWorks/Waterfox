@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY nameColumn.label "Jméno">
+<!ENTITY unreadColumn.label "Nepřečtené">
+<!ENTITY totalColumn.label "Celkem">
+<!ENTITY folderSizeColumn.label "Velikost">
+<!ENTITY folderLocationToolbarItem.title "Umístění složky">
+<!ENTITY mailViewsToolbarItem.title "Pohledy pošty">
+<!ENTITY searchToolbarItem.title "Hledat">
+<!ENTITY searchSubjectOrAddress.placeholder "Hledat předmět nebo adresu">

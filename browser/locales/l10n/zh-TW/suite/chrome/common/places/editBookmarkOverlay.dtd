@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "名稱:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "位置:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "L">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "消息來源網址:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "網站網址:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "S">
+<!ENTITY editBookmarkOverlay.folder.label                    "資料夾:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "顯示所有書籤資料夾">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "隱藏">
+<!ENTITY editBookmarkOverlay.tags.label                      "標籤:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "以逗號分隔每個標籤">
+<!ENTITY editBookmarkOverlay.description.label               "說明:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "D">
+<!ENTITY editBookmarkOverlay.keyword.label                   "關鍵字:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "K">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "顯示所有標籤">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "在側邊欄載入此書籤">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "h">
+<!ENTITY editBookmarkOverlay.choose.label                    "選擇…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "新增資料夾">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "o">

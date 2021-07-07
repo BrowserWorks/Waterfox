@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: Strings below used to be in mozilla-central's
+  toolkit/locales/en-US/chrome/global/customizeToolbar.dtd -->
+<!ENTITY dialog.title             "Modification des barres d’outils">
+<!ENTITY dialog.dimensions        "width: 94ch; height: 36em;">
+<!ENTITY instructions.description "Ajoutez ou supprimez des éléments en les faisant glisser vers ou hors des barres d’outils.">
+<!ENTITY show.label               "Afficher :">
+<!ENTITY iconsAndText.label       "Texte et icônes">
+<!ENTITY icons.label              "Icônes">
+<!ENTITY text.label               "Texte">
+<!ENTITY useSmallIcons.label      "Petites icônes">
+<!ENTITY restoreDefaultSet.label  "Configuration par défaut">
+<!ENTITY addNewToolbar.label      "Nouvelle barre">
+<!ENTITY saveChanges.label        "Terminé">
+<!ENTITY undoChanges.label        "Annuler les changements">

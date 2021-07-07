@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Įrašyti failai">
+<!ENTITY aboutDownloads.empty                      "Nėra įrašytų failų">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Atverti aplanką">
+<!ENTITY cmd.show.accesskey                        "A">
+<!ENTITY cmd.showMac.label                         "Rodyti per „Finder“">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Atverti">
+<!ENTITY cmd.open.accesskey                        "A">
+<!ENTITY cmd.removeFromHistory.label               "Pašalinti iš sąrašo">
+<!ENTITY cmd.removeFromHistory.accesskey           "š">
+<!ENTITY cmd.clearList.label                       "Išvalyti sąrašą">
+<!ENTITY cmd.clearList.accesskey                   "v">
+<!ENTITY cmd.clearList.tooltip                     "Iš sąrašo pašalinti užbaigtus, atsisakytus ar nepavykusius failus">
+<!ENTITY cmd.searchDownloads.label                 "Ieškoti...">
+<!ENTITY cmd.searchDownloads.key                   "s">

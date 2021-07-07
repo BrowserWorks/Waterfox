@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY server.label "Konto: ">
+<!ENTITY server.accesskey "K">
+
+<!ENTITY virtualFolderListTitle.title        "Välj mapp(ar)">
+<!ENTITY virtualFolderDesc.label       "Välj mappar att söka i:">
+
+
+<!ENTITY folderName.label "Mappnamn">
+<!ENTITY folderSearch.label "Sök">

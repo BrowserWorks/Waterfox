@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства метки">
+
+<!ENTITY Settings.label "Параметры">
+<!ENTITY Settings.accesskey "а">
+
+<!ENTITY EditLabelText.label "Редактировать текст:">
+<!ENTITY EditLabelText.accesskey "Р">
+<!ENTITY LabelFor.label "Переход к:">
+<!ENTITY LabelFor.accesskey "П">
+<!ENTITY AccessKey.label "Клавиша доступа:">
+<!ENTITY AccessKey.accesskey "К">
+
+<!ENTITY RemoveLabel.label "Удалить метку">
+<!ENTITY RemoveLabel.accesskey "У">

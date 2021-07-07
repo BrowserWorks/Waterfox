@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox 帳號">
+<!ENTITY aboutAccounts.connected.description "您已登入為">
+<!ENTITY aboutAccounts.syncPreferences.label "點擊此處檢查 Sync 設定">
+
+<!ENTITY aboutAccounts.noConnection.title "沒有網際網路連線">
+<!ENTITY aboutAccounts.retry.label "重試">
+
+<!ENTITY aboutAccounts.restrictedError.title "已受限">
+<!ENTITY aboutAccounts.restrictedError.description "您無法從此設定檔管理 Firefox 帳號。">
+

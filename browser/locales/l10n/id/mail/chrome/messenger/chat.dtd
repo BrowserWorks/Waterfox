@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Kontak Daring">
+<!ENTITY offlineContactsHeader.label   "Kontak Luring">
+<!ENTITY conversationsHeader.label     "Percakapan">
+<!ENTITY searchResultConversation.label "Hasil pencarian">
+<!ENTITY chat.noConv.title             "Percakapan akan ditampilkan di sini.">
+<!ENTITY chat.noConv.description       "Gunakan daftar kontak di panel kiri untuk memulai percakapan.">
+<!ENTITY chat.noPreviousConv.description       "Saat ini &brandShortName; tidak memiliki data percakapan sebelumnya untuk kontak ini.">
+<!ENTITY chat.noAccount.title             "Anda belum pernah menyetel akun ngobrol.">
+<!ENTITY chat.noAccount.description       "Ikuti panduan &brandShortName; untuk menyiapkan akun ngobrol Anda.">
+<!ENTITY chat.accountWizard.button       "Memulai">
+<!ENTITY chat.noConnectedAccount.title             "Akun ngobrol Anda tidak tersambung.">
+<!ENTITY chat.noConnectedAccount.description       "Anda dapat menyambung ke akun lewat dialog 'Status ngobrol':">
+<!ENTITY chat.showAccountManager.button       "Tampilkan status ngobrol">
+
+<!ENTITY chat.participants             "Peserta:">
+<!ENTITY chat.previousConversations    "Percakapan Sebelumnya:">
+<!ENTITY chat.ongoingConversation      "Percakapan Saat Ini">
+
+<!ENTITY openConversationCmd.label     "Mulai Percakapan">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Tutup Percakapan">
+<!ENTITY closeConversationCmd.accesskey "c">
+<!ENTITY aliasCmd.label                "Ganti nama">
+<!ENTITY aliasCmd.accesskey            "G">
+<!ENTITY deleteCmd.label               "Hapus kontak">
+<!ENTITY deleteCmd.accesskey           "H">
+
+<!ENTITY openConversationButton.tooltip  "Mulai percakapan">
+<!ENTITY closeConversationButton.tooltip "Tutup percakapan">
+
+<!ENTITY addBuddyButton.label          "Tambahkan Kontak">
+<!ENTITY joinChatButton.label          "Gabung ke Ngobrol">
+<!ENTITY chatAccountsButton.label      "Tampilkan Akun">
+
+<!ENTITY status.available          "Tersedia">
+<!ENTITY status.unavailable        "Tidak Tersedia">
+<!ENTITY status.offline            "Luring">
+
+<!ENTITY openLinkCmd.label            "Buka Tautan…">
+<!ENTITY openLinkCmd.accesskey        "T">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Select Addresses">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "To->"> 
+<!ENTITY toButton.accesskey                  "T"> 
+<!ENTITY ccButton.label                      "Cc->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "Bcc->">  
+<!ENTITY bccButton.accesskey                 "B">  
+<!ENTITY newButton.label                     "New…"> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "Edit…"> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "Remove"> 
+<!ENTITY removeButton.accesskey              "R"> 
+<!ENTITY lookIn.label                        "Look in:"> 
+<!ENTITY lookIn.accesskey                    "L"> 
+<!ENTITY for.label                           "for:"> 
+<!ENTITY for.accesskey                       "f"> 
+<!ENTITY for.placeholder                     "Name or Email">
+<!ENTITY addressMessageTo.label              "Address message to:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Create a new address book card"> 
+<!ENTITY addressPickerEditButton.tooltip     "Edit the selected card"> 
+

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Import af data">
+<!ENTITY migration.welcome "Velkommen">
+<!ENTITY migration.importing "Importerer">
+<!ENTITY migration.list.description "&brandShortName; kan importere kalender-data fra mange populære programmer. Data fra de følgende programmer blev fundet på din computer. Vælg hvilke af dem, du vil importere data fra.">
+<!ENTITY migration.progress.description "Importerer valgte data">

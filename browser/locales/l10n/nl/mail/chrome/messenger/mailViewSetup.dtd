@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY mailViewSetupTitle.label "Berichtenweergave-instellingen">
+<!ENTITY mailViewHeading.label "Berichtenweergavenaam:">
+<!ENTITY mailViewHeading.accesskey "B">
+<!ENTITY searchTermCaption.label "Als deze weergave is geselecteerd, alleen berichten weergeven die:">

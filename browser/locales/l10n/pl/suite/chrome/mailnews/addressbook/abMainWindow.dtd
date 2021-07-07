@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title "Książka adresowa">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!-- File Menu -->
+<!ENTITY newContact.label "Wizytówka…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newContact.accesskey "W">
+<!ENTITY newListCmd.label "Lista dystrybucyjna…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY newListCmd.accesskey "l">
+<!ENTITY newAddressBookCmd.label "Książka adresowa…">
+<!ENTITY newAddressBookCmd.accesskey "k">
+<!ENTITY newLDAPDirectoryCmd.label "Katalog LDAP…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey "D">
+<!ENTITY newIM.label "Komunikator">
+<!ENTITY printContactViewCmd.label "Drukuj wizytówkę…">
+<!ENTITY printContactViewCmd.accesskey "D">
+<!ENTITY printPreviewContactViewCmd.label "Podgląd wydruku wizytówki">
+<!ENTITY printPreviewContactViewCmd.accesskey "w">
+<!ENTITY printContactViewCmd.key "P">
+<!ENTITY printAddressBook.label "Drukuj książkę adresową…">
+<!ENTITY printAddressBook.accesskey "a">
+<!ENTITY printPreviewAddressBook.label "Podgląd wydruku książki adresowej">
+<!ENTITY printPreviewAddressBook.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label "Usuń książkę adresową">
+<!ENTITY deleteContactCmd.label "Usuń wizytówkę">
+<!ENTITY deleteContactsCmd.label "Usuń zaznaczone wizytówki">
+<!ENTITY deleteListCmd.label "Usuń listę">
+<!ENTITY deleteListsCmd.label "Usuń zaznaczone listy">
+<!ENTITY deleteItemsCmd.label "Usuń zaznaczone elementy">
+<!ENTITY swapFirstNameLastNameCmd.label "Zamień miejscami Imię/Nazwisko">
+<!ENTITY swapFirstNameLastNameCmd.accesskey "w">
+<!ENTITY propertiesCmd.label "Właściwości…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY propertiesCmd.accesskey "i">
+<!ENTITY propertiesCmd.key "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label "Pasek narzędzi książki adresowej">
+<!ENTITY showAbToolbarCmd.accesskey "o">
+<!ENTITY layoutMenu.label "Układ">
+<!ENTITY layoutMenu.accesskey "U">
+<!ENTITY showDirectoryPane.label "Panel książek adresowych">
+<!ENTITY showDirectoryPane.accesskey "P">
+<!ENTITY showContactPane2.label "Panel kontaktu">
+<!ENTITY showContactPane2.accesskey "k">
+<!ENTITY menu_ShowNameAs.label "Wyświetlaj nazwę jako">
+<!ENTITY menu_ShowNameAs.accesskey "z">
+<!ENTITY firstLastCmd.label "Imię Nazwisko">
+<!ENTITY firstLastCmd.accesskey "I">
+<!ENTITY lastFirstCmd.label "Nazwisko, imię">
+<!ENTITY lastFirstCmd.accesskey "N">
+<!ENTITY displayNameCmd.label "Wyświetlana nazwa">
+<!ENTITY displayNameCmd.accesskey "W">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label "Importuj…">
+<!ENTITY importCmd.accesskey "I">
+<!ENTITY exportCmd.label "Eksportuj…">
+<!ENTITY exportCmd.accesskey "E">
+
+<!-- Toolbar and Popup items -->  
+<!ENTITY newContactButton.label "Nowa wizytówka">
+<!ENTITY newContactButton.accesskey "N">
+<!ENTITY newlistButton.label "Nowa lista dystrybucyjna">
+<!ENTITY newlistButton.accesskey "l">
+<!ENTITY editItemButton.label "Właściwości">
+<!ENTITY editItemButton.accesskey "W">
+<!ENTITY newmsgButton.label "Nowa">
+<!ENTITY newmsgButton.accesskey "N">
+<!ENTITY deleteItemButton.label "Usuń">
+<!ENTITY deleteItemButton.accesskey "U">
+<!ENTITY newimButton.label "Komunikator">
+<!ENTITY newimButton.accesskey "K">
+<!ENTITY searchNameAndEmail.placeholder "Szukaj w nazwiskach, imionach oraz adresach e-mail">
+<!ENTITY searchBox.title "Szukaj">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip "Pasek narzędzi książki adresowej">
+<!ENTITY newContactButton.tooltip "Dodaj nową wizytówkę do książki adresowej">
+<!ENTITY newlistButton.tooltip "Utwórz nową listę dystrybucyjną">
+<!ENTITY editItemButton.tooltip "Edytuj zaznaczony element">
+<!ENTITY newmsgButton.tooltip "Wyślij wiadomość">
+<!ENTITY newIM.tooltip "Połącz z adresatem za pomocą komunikatora">
+<!ENTITY deleteItemButton.tooltip "Usuń zaznaczony element">
+<!ENTITY throbber.tooltip "&vendorShortName;PL! Otwórz naszą stronę!">
+<!ENTITY advancedButton.tooltip "Zaawansowane wyszukiwanie adresów">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label "Książki adresowe">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading "Kontakt">
+<!ENTITY home.heading "Dom">
+<!ENTITY other.heading "Inne">
+<!ENTITY phone.heading "Telefon">
+<!ENTITY work.heading "Praca">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading "Opis">
+<!ENTITY addresses.heading "Adresy">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label "Pokaż mapę">
+<!ENTITY mapIt.tooltip "Wyświetl mapę z sieci WWW dla tego adresu">
+
+<!-- Status Bar -->  
+<!ENTITY statusText.label "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY hideSwapFnLnUI "true">

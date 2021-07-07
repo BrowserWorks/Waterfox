@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY all.label "Descargar todas las cabeceras">
+<!ENTITY all.accesskey "D">
+<!ENTITY download.label "Descargar">
+<!ENTITY download.accesskey "g">
+<!ENTITY headers.label "Cabeceras">
+<!ENTITY headers.accesskey "C">
+<!ENTITY mark.label "Marcar las cabeceras restantes como leídas">
+<!ENTITY mark.accesskey "M">

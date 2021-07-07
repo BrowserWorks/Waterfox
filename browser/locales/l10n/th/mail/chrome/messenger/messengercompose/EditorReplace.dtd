@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "ค้นหาแล้วแทนที่">
+<!ENTITY findField.label "ค้นหาข้อความ:">
+<!ENTITY findField.accesskey "ค">
+<!ENTITY replaceField.label "แทนที่ด้วย:">
+<!ENTITY replaceField.accesskey "ท">
+<!ENTITY caseSensitiveCheckbox.label "ตรงตามตัวพิมพ์ใหญ่-เล็ก">
+<!ENTITY caseSensitiveCheckbox.accesskey "ต">
+<!ENTITY wrapCheckbox.label "ครอบคลุมให้ทั่ว">
+<!ENTITY wrapCheckbox.accesskey "ห">
+<!ENTITY backwardsCheckbox.label "ค้นหาแบบย้อนกลับ">
+<!ENTITY backwardsCheckbox.accesskey "ย">
+<!ENTITY findNextButton.label "ค้นหาต่อไป">
+<!ENTITY findNextButton.accesskey "ไ">
+<!ENTITY replaceButton.label "แทนที่">
+<!ENTITY replaceButton.accesskey "แ">
+<!ENTITY replaceAndFindButton.label "แทนที่แล้วค้นหา">
+<!ENTITY replaceAndFindButton.accesskey "า">
+<!ENTITY replaceAllButton.label "แทนที่ทั้งหมด">
+<!ENTITY replaceAllButton.accesskey "ม">
+<!ENTITY closeButton.label "ปิด">
+<!ENTITY closeButton.accesskey "ป">

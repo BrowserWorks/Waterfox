@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/navigator.xul -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+
+
+
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Privatusis naršymas">
+
+<!ENTITY editPageCmd.label "Taisyti tinklalapį">
+<!ENTITY editPageCmd.accesskey "T">
+
+
+<!ENTITY navbarCmd.label "Naršymo juosta">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "Adresyno juosta">
+<!ENTITY bookmarksToolbarCmd.accesskey "A">
+
+<!ENTITY closeWindow.label "Užverti langą">
+<!ENTITY closeWindow.accesskey "l">
+
+<!ENTITY minimizeButton.tooltip       "Suskleisti">
+<!ENTITY restoreButton.tooltip        "Normalioji veiksena">
+
+<!ENTITY feedsMenu.label "Prenumeruoti šio tinklalapio naujienas">
+<!ENTITY feedsMenu.accesskey "P">
+
+<!ENTITY menuBar.tooltip                  "Meniu juosta">
+<!ENTITY bookmarksToolbar.tooltip         "Adresyno juosta">
+<!ENTITY navigationToolbar.tooltip        "Naršymo mygtykų juosta">
+<!-- Toolbar items --> 
+
+<!ENTITY backButton.label             "Atgal">
+<!ENTITY backButton.tooltip           "Vienu tinklalapiu atgal">
+<!ENTITY forwardButton.label          "Pirmyn">
+<!ENTITY forwardButton.tooltip        "Vienu tinklalapiu pirmyn">
+<!ENTITY reloadButton.label           "Iš naujo">
+<!ENTITY reloadButton.tooltip         "Šį tinklalapį atsiųsti iš naujo">
+<!ENTITY stopButton.label             "Stabdyti">
+<!ENTITY stopButton.tooltip           "Stabdyti šio tinklalapio atsiuntimą">
+<!ENTITY searchButton.label           "Ieškoti">
+<!ENTITY searchButton.tooltip         "Surinkite žodį ar frazę kairiau esančiame lauke ir spustelėkite „Ieškoti“">
+<!ENTITY goButton.label               "Eiti">
+<!ENTITY goButton.tooltip             "Surinkite adresą kairiau esančiame lauke ir spustelėkite „Eiti“">
+<!ENTITY printButton.label            "Spausdinti">
+<!ENTITY printButton.tooltip          "Spausdinti šį tinklalapį">
+
+<!ENTITY throbber.tooltip             "Eiti į &vendorShortName; tinklalapį">
+
+<!ENTITY locationBar.tooltip          "Paieškai surinkite žodį, frazę arba interneto adresą">
+
+<!ENTITY locationBar.title            "Adresas">
+<!ENTITY proxyIcon.tooltip            "Jei norite saitą į tinklalapį įrašyti į asmeninę mygtukų juostą, nuvilkite šį ženkliuką">
+
+
+<!ENTITY bookmarksButton.label        "Adresynas">
+<!ENTITY bookmarksButton.tooltip      "Įrašytų adresų sąrašas">
+<!ENTITY homeButton.label             "Pradžia">
+<!ENTITY bookmarksToolbarItem.label   "Adresyno juostos elementai">
+<!ENTITY bookmarksToolbarChevron.tooltip "Rodyti daugiau adresų">
+<!-- Statusbar -->
+
+<!ENTITY  statusText.label            "Dokumentas baigtas">
+
+<!ENTITY popupIcon.tooltiptext      "Leisti šios svetainės iškylančiuosius langus">
+
+<!ENTITY viewSecurityInfo.label      "Rodyti saugos informaciją">
+<!ENTITY viewSecurityInfo.accesskey  "s">
+<!ENTITY viewCertificate.label       "Rodyti liudijimą">
+<!ENTITY viewCertificate.accesskey   "l">
+<!ENTITY viewCertManager.label       "Atverti liudijimų tvarkytuvę">
+<!ENTITY viewCertManager.accesskey   "t">

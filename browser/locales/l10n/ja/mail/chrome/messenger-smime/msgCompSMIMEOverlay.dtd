@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label	"暗号化しない">
+<!ENTITY menu_securityDoNotEncrypt.accesskey	"o">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label	"暗号化を許可">
+<!ENTITY menu_securityEncryptOptional.accesskey	"w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label	"暗号化が必要">
+<!ENTITY menu_securityEncryptRequire.accesskey	"E">
+
+<!ENTITY menu_securitySign.label		"このメッセージにデジタル署名">
+<!ENTITY menu_securitySign.accesskey		"M">
+
+<!ENTITY menu_securityAttachMyKey.label		"公開鍵を添付">
+<!ENTITY menu_securityAttachMyKey.accesskey	"A">
+
+<!ENTITY menu_securityTech.label		"暗号化技術">
+<!ENTITY menu_securityTech.accesskey		"T">
+
+<!ENTITY menu_techPGP.label			"OpenPGP">
+<!ENTITY menu_techPGP.accesskey			"O">
+<!ENTITY menu_techSMIME.label			"S/MIME">
+<!ENTITY menu_techSMIME.accesskey		"S">
+
+<!ENTITY menu_securityStatus.label		"セキュリティ情報を見る">
+<!ENTITY menu_securityStatus.accesskey		"I">
+
+<!ENTITY securityButton.label			"セキュリティ">
+<!ENTITY securityButton.tooltip			"セキュリティ設定を確認または変更">
+
+<!ENTITY menu_viewSecurityStatus.label		"メッセージのセキュリティ情報">
+<!ENTITY menu_viewSecurityStatus.accesskey	"I">

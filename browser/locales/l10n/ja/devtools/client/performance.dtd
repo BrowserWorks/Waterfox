@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "プロファイラはサンプルを環状バッファに保存します。記録容量の限界に達した場合、新しいサンプルはバッファの開始地点から上書きしていきます。">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "記録データのリアルタイム表示を有効にするには、設定でマルチプロセス Firefox を有効にしてください。">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "バッファ容量が限界に達したため、古いサンプルが上書されます。">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "プロファイルの記録は現在利用できません。プライベートウィンドウをすべて閉じてから試してください。">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "読み込み中...">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall		"タイムライン">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext	"パフォーマンス情報の記録以外の動作を、連続したタイムラインとして表示します。">
+<!ENTITY performanceUI.toolbar.js-calltree		"呼び出しツリー">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext	"パフォーマンス情報の記録中にもっとも長時間動作していた JavaScript の関数をハイライトします。">
+<!ENTITY performanceUI.toolbar.memory-calltree		"メモリー割り当て">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext	"パフォーマンス情報の記録中に割り当てられたメモリーを表示します。">
+<!ENTITY performanceUI.toolbar.js-flamegraph		"JS フレームチャート">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext	"パフォーマンス情報の記録時の JavaScript コールスタックを表示します。">
+<!ENTITY performanceUI.toolbar.memory-flamegraph	"メモリー割り当てフレームチャート">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "合計時間">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "この関数と呼び出した関数の実行にかかった時間です。">
+<!ENTITY performanceUI.table.selfDuration             "時間">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "この関数の実行にかかった時間です。">
+<!ENTITY performanceUI.table.totalPercentage          "合計コスト">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "この関数と呼び出した関数の実行にかかった時間の割合です。">
+<!ENTITY performanceUI.table.selfPercentage           "コスト">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "この関数の実行にかかった時間の割合です。">
+<!ENTITY performanceUI.table.samples                  "サンプル">
+<!ENTITY performanceUI.table.samples.tooltip          "プロファイラがサンプルを採取したときに、この関数がスタック上に現れた回数です。">
+<!ENTITY performanceUI.table.function                 "関数">
+<!ENTITY performanceUI.table.function.tooltip         "サンプル採取された関数の名前とソース上の場所です。">
+<!ENTITY performanceUI.table.totalAlloc               "割り当てサンプル合計">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "この場所と呼び出し先で割り当てられたオブジェクトの合計サンプル数です。">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "タイムラインに表示するデータを選択します">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "プロファイラの設定を行います。">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "呼び出しツリーを反転">
+<!ENTITY performanceUI.invertTree.tooltiptext "呼び出しツリーを反転すると、プロファイルされた呼び出し経路を新しい順に、展開した状態で表示します。">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "フレームチャートを反転">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "フレームチャートを反転すると、プロファイルされた呼び出し経路を新しい順に、展開した状態で表示します。">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Gecko プラットフォームのデータを表示">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "このオプションを有効にすると、JavaScript プロファイラの出力に Gecko プラットフォームのシンボルが含まれるようになります。">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "JIT 最適化を表示">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "JavaScript の各フレームに収集された、JIT 最適化データを表示します。">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "呼び出しツリーを均す">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "このオプションを有効にすると、関数インスペクト時の呼び出しツリーの表示を平らにします。">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "メモリー消費を記録">
+<!ENTITY performanceUI.enableMemory.tooltiptext "このオプションを有効にすると、プロファイル時のメモリー消費を記録します。">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "メモリー割り当てを記録">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "このオプションを有効にすると、プロファイル時のメモリー割り当てを記録します。">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "フレームレートを記録">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "このオプションを有効にすると、プロファイル時のフレームレートを記録します。">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "で記録中です。">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "コンソールからの">
+<!ENTITY performanceUI.console.stopCommandEnd   "の入力により記録終了しました。">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "Versões do protocolo SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption             "Avisos SSL/TLS">
+<!ENTITY SSLMixedContent.caption            "Conteúdo misto">
+<!ENTITY SSLClientAuthMethod.caption        "Seleção do certificado de cliente">
+
+<!ENTITY pref.ssltls.title                  "Segurança da Camada de Transporte (SSL/TLS)">
+<!ENTITY limit.description                  "Pode indicar que protocolos de encriptação usar para ligações seguras. Escolha apenas uma versão ou um intervalo de versões.">
+<!ENTITY limit.enable.label                 "Ativar:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "O &brandShortName; pode alertar do estado de segurança da página web que está a visualizar. Configure o &brandShortName; para mostrar um aviso quando:">
+<!ENTITY warn.enteringsecure                "Carregar uma página que suporte encriptação">
+<!ENTITY warn.enteringsecure.accesskey      "C">
+<!ENTITY warn.insecurepost                  "Enviar dados de um formulário de uma página não encriptada para outra página não encriptada">
+<!ENTITY warn.insecurepost.accesskey        "s">
+<!ENTITY warn.leavingsecure                 "Sair de uma página que suporte encriptação">
+<!ENTITY warn.leavingsecure.accesskey       "a">
+
+<!ENTITY mixed.description                  "As páginas encriptadas podem conter conteúdo vulnerável a eavesdropping ou fraude. O &brandShortName; pode detetar e bloquear:">
+<!ENTITY warn.mixedactivecontent            "Avisar-me quando as páginas encriptadas contêm conteúdo inseguro">
+<!ENTITY warn.mixedactivecontent.accesskey  "v">
+<!ENTITY block.activecontent                "Não carregar conteúdo inseguro em páginas encriptadas">
+<!ENTITY block.activecontent.accesskey      "g">
+<!ENTITY warn.mixeddisplaycontent           "Avisar-me quando páginas encriptadas contêm outros tipos de conteúdo misto">
+<!ENTITY warn.mixeddisplaycontent.accesskey "c">
+<!ENTITY block.displaycontent               "Não carregar outro tipo de conteúdo misto ou páginas encriptadas">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "Decide como é que o &brandShortName; seleciona um certificado de segurança para apresentar em websites que necessitam:">
+<!ENTITY certselect.auto                    "Selecionar automaticamente">
+<!ENTITY certselect.auto.accesskey          "e">
+<!ENTITY certselect.ask                     "Pedir sempre">
+<!ENTITY certselect.ask.accesskey           "d">

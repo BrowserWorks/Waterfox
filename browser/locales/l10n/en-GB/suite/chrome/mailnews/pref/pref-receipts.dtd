@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Return Receipts">
+<!ENTITY prefReceipts.caption         "Return Receipts">
+<!ENTITY requestReceipt.label         "When sending messages, always request a return receipt">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "When a receipt arrives:">
+<!ENTITY leaveIt.label                "Leave it in my Inbox">
+<!ENTITY leaveIt.accesskey            "L">
+<!ENTITY moveToSent.label             "Move it to my &quot;Sent&quot; folder">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "When I receive a request for a return receipt:">
+<!ENTITY returnSome.label             "Allow return receipts for some messages">
+<!ENTITY returnSome.accesskey         "A">
+<!ENTITY never.label                  "Never send a return receipt">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "If I'm not in the To or Cc of the message:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "If the sender is outside my domain:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "In all other cases:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "Ask me">
+<!ENTITY alwaysSend.label             "Always send">
+<!ENTITY neverSend.label              "Never send">

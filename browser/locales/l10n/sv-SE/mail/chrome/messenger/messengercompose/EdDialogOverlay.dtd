@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Avancerad redigering…">
+<!ENTITY AdvancedEditButton.accessKey "c">
+<!ENTITY AdvancedEditButton.tooltip "Lägg till eller modifiera HTML-attribut, stilegenskaper och JavaScript">
+<!ENTITY chooseFileButton.label "Välj fil…">
+<!ENTITY chooseFileButton.accessKey "V">
+<!ENTITY chooseFileLinkButton.label "Välj fil…">
+<!ENTITY chooseFileLinkButton.accessKey "f">
+<!ENTITY makeUrlRelative.label "Webbadressen är relativ till sidans plats">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Byt mellan relativ och absolut URL. Du måste spara sidan innan du ändrar.">
+
+<!ENTITY LinkURLEditField2.label "Ange en webbadress, en lokal fil eller välj ett namngivet ankare eller rubrik från fältets snabbmeny:">
+<!ENTITY LinkURLEditField2.accessKey "w">

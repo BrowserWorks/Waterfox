@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "郵件與新聞群組">
+<!ENTITY generalSettings.caption          "一般設定">
+<!ENTITY confirmMove.label                "移動資料夾到垃圾桶時確認">
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "排序訊息時保留討論串結構">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY loadInBackground.label           "開啟分頁後，自動切換到新分頁">
+<!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailBiffOnNewWindow.label        "只在開啟郵件與新聞群組後檢查新郵件">
+<!ENTITY mailBiffOnNewWindow.accesskey    "O">
+
+<!ENTITY defaultMailSettings.description  "將 &brandShortName; 設定為下列項目的應用程式:">
+<!ENTITY setDefaultMail.label             "郵件">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "新聞群組">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "消息來源">
+<!ENTITY setDefaultFeed.accesskey         "e">
+
+<!ENTITY useInternalSettings.description  "使用 &brandShortName; 內建的郵件與新聞群組功能開啟下列訊息類型中的瀏覽器鏈結:">
+<!ENTITY useInternalMail.label            "郵件 (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "新聞群組 (news:、snews:、nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "開始頁面">
+<!ENTITY enableStartPage.label            "當啟動 Mail 時，在訊息區域顯示開始頁面">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "位置:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "回復預設值">
+<!ENTITY useDefault.accesskey             "D">
+<!ENTITY rememberLastMsg.label            "記住最後一次所選的訊息">
+<!ENTITY rememberLastMsg.accesskey        "R">

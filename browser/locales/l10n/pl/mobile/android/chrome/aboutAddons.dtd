@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+    - License, v. 2.0. If a copy of the MPL was not distributed with this
+    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2 "Dodatki">
+<!ENTITY aboutAddons.header2 "Zainstalowane dodatki">
+
+<!ENTITY addonAction.enable "Włącz">
+<!ENTITY addonAction.disable "Wyłącz">
+<!ENTITY addonAction.uninstall "Usuń">
+<!ENTITY addonAction.undo "Cofnij">
+<!ENTITY addonAction.update "Aktualizuj">
+
+<!ENTITY addonUnsigned.message "&brandShortName; nie może zweryfikować dodatku.">
+<!ENTITY addonUnsigned.learnMore "Więcej informacji">

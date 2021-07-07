@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "เหตุการณ์ใหม่…">
+<!ENTITY event.new.event.accesskey              "ม">
+
+<!ENTITY event.new.task                         "งานใหม่…">
+<!ENTITY event.new.task.accesskey               "ง">
+
+<!ENTITY calendar.import.label                  "นำเข้า…">
+<!ENTITY calendar.import.accesskey              "น">
+
+<!ENTITY calendar.export.label                  "ส่งออก…">
+<!ENTITY calendar.export.accesskey              "ส">
+
+<!ENTITY calendar.publish.label                 "เผยแพร่…">
+<!ENTITY calendar.publish.accesskey             "ผ">
+
+<!ENTITY calendar.deletecalendar.label          "ลบปฏิทินที่เลือก…">
+<!ENTITY calendar.deletecalendar.accesskey      "ล">
+<!ENTITY calendar.unsubscribecalendar.label     "เลิกบอกรับปฏิทินที่เลือก…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "เ">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "เอาปฏิทินที่เลือกออก…">
+<!ENTITY calendar.removecalendar.accesskey      "อ">
+
+
+<!ENTITY calendar.menu.customize.label          "ปรับแต่ง…">
+<!ENTITY calendar.menu.customize.accesskey      "ป">
+
+<!ENTITY showUnifinderCmd.label                 "ค้นหาเหตุการณ์">
+<!ENTITY showUnifinderCmd.accesskey             "ค">
+<!ENTITY showUnifinderCmd.tooltip               "เปิด/ปิดบานหน้าต่างการค้นหาเหตุการณ์">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "แสดงงานในปฏิทิน">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "ส">
+
+<!ENTITY goTodayCmd.label                       "วันนี้">
+<!ENTITY goTodayCmd.accesskey                   "ว">
+
+<!ENTITY showCurrentView.label                  "มุมมองปัจจุบัน">
+<!ENTITY showCurrentView.accesskey              "ม">
+
+<!ENTITY calendar.properties.label              "คุณสมบัติปฏิทิน…">
+<!ENTITY calendar.properties.accesskey          "ค">

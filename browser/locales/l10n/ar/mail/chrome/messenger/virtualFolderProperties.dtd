@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "مجلد البحث المحفوظ الجديد">
+<!ENTITY name.label                 "الاسم:">
+<!ENTITY name.accesskey             "س">
+<!ENTITY description.label          "أنشئ كمجلد فرعي تحت:">
+<!ENTITY description.accesskey      "ف">
+
+<!ENTITY searchTermCaption.label "اضبط معايير البحث المُستخدمة في مجلد البحث المحفوظ هذا: ">
+
+<!ENTITY folderSelectionCaption.label "اختر ملفات للبحث: ">
+<!ENTITY chooseFoldersButton.label "اختر…">
+<!ENTITY chooseFoldersButton.accesskey "خ">
+
+<!ENTITY searchOnline.label "ابحث على اتصال (يعطي نتائج محدَّثة لـ IMAP و مجلد الأخبار لكن يزيد زمن فتح الملف)">
+<!ENTITY searchOnline.accesskey "ص">
+<!ENTITY newFolderButton.label       "أنشئ">
+<!ENTITY newFolderButton.accesskey   "ئ">
+<!ENTITY editFolderButton.label      "حدّث">
+<!ENTITY editFolderButton.accesskey  "د">

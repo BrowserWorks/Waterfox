@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistente de importação">
+
+<!ENTITY importFrom.label               "Importar opções, favoritos, histórico, senhas e outros dados do:">
+<!ENTITY importFromUnix.label           "Importar preferências, favoritos, histórico, senhas e outros dados do:">
+
+<!ENTITY importFromIE.label             "Internet Explorer">
+<!ENTITY importFromIE.accesskey         "I">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge (Legado)">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Não importar nada">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "F">
+<!ENTITY importFrom360se.label          "360 Secure Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Não foi encontrado nenhum programa com informações de favoritos, histórico ou senhas.">
+
+<!ENTITY importSource.title             "Importar dados e configurações">
+<!ENTITY importItems.title              "Itens a importar">
+<!ENTITY importItems.label              "Selecione que itens importar:">
+
+<!ENTITY migrating.title                "Importando…">
+<!ENTITY migrating.label                "Estes itens estão sendo importados…">
+
+<!ENTITY selectProfile.title            "Selecionar perfil">
+<!ENTITY selectProfile.label            "Estes perfis estão disponíveis para importação:">
+
+<!ENTITY done.title                     "Importação concluída">
+<!ENTITY done.label                     "Estes itens foram importados com êxito:">
+
+<!ENTITY closeSourceBrowser.label       "Certifique-se de que o navegador selecionado esteja fechado antes de continuar.">

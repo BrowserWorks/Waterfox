@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Historik">
+
+<!ENTITY  pref.history.caption             "Webbläsarhistorik">
+<!ENTITY  historyPages.label        "Historiken består av en lista med redan besökta sidor.">
+<!ENTITY  enableHistory.label               "Kom ihåg besökta sidor">
+<!ENTITY  enableHistory.accesskey           "K">
+<!ENTITY  clearHistory.label        "Rensa historiken">
+<!ENTITY  clearHistory.accesskey    "R">
+
+<!ENTITY  locationBarHistory.caption        "Adressfältshistorik">
+<!ENTITY  urlBarHistoryEnabled.caption      "Aktivera adressfältshistorik">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "k">
+<!ENTITY  clearLocationBar.label            "Rensa listan med webbplatser i adressfältet.">
+<!ENTITY  clearLocationBarButton.label      "Rensa adressfältet">
+<!ENTITY  clearLocationBarButton.accesskey  "a">
+<!ENTITY  formfillHistory.caption           "Formulär och sökhistorik">
+<!ENTITY  enableFormfill.label              "Används formulär och sökhistorik">
+<!ENTITY  enableFormfill.accesskey          "A">
+<!ENTITY  formfillExpire.label              "Kom ihåg formulär och sökhistorik i upp till">
+<!ENTITY  formfillExpire.accesskey          "f">
+<!ENTITY  formfillDays.label                "dagar">

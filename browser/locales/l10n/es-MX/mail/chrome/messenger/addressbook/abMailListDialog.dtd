@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Nueva lista de correo">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Agregar a: ">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Nombre de la lista: ">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Apodo de la lista: ">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "Descripción: ">
+<!ENTITY ListDescription.accesskey      "D">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Escribe las direcciones de correo electrónico y agrégalas a la lista de correo:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Mover hacia arriba">
+<!ENTITY DownButton.label               "Mover hacia abajo">
+

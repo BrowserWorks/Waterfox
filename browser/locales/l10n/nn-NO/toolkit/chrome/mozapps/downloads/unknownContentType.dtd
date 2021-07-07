@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Du har valt å opne:">
+<!ENTITY  from.label                  "Frå:">
+<!ENTITY  actionQuestion.label        "Kva skal &brandShortName; gjere med denne fila?">
+
+<!ENTITY  openWith.label              "Opne med">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Andre…">
+
+<!ENTITY  saveFile.label              "Lagre fila">
+<!ENTITY  saveFile.accesskey          "L">
+
+<!ENTITY  rememberChoice.label        "Gjer dette automatisk frå no av.">
+<!ENTITY  rememberChoice.accesskey    "d">
+
+<!ENTITY  whichIs.label              "som er:">
+
+<!ENTITY  chooseHandlerMac.label      "Vel…">
+<!ENTITY  chooseHandlerMac.accesskey  "V">
+<!ENTITY  chooseHandler.label         "Bla gjennom…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "Vil du lagre denne fila?">

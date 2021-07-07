@@ -1,0 +1,201 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label		"ページ読み込みエラー"><!-- (^^; タイトルバーやタブに表示されるので簡潔に -->
+<!ENTITY retry.label			"再試行">
+<!ENTITY returnToPreviousPage.label	"戻る">
+<!ENTITY returnToPreviousPage1.label	"戻る (推奨)">
+<!ENTITY advanced2.label		"詳細情報...">
+<!ENTITY viewCertificate.label		"証明書を確認">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc	"&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc	"">
+
+<!ENTITY dnsNotFound.pageTitle		"サーバーが見つかりませんでした">
+<!ENTITY dnsNotFound.longDesc1		"
+<strong>アドレスが正しい場合は、以下のことを試してください:</strong>
+<ul>
+  <li>後でもう一度試してください。</li>
+  <li>ネットワーク接続を確認してください。</li>
+  <li>ファイアウォール越しに接続している場合は、&brandShortName; がウェブへの接続を許可されているか確認してください。</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc		"
+<ul>
+  <li>アドレスに大文字/小文字の違い、その他の間違いがないか確認してください。</li>
+  <li>ファイルの名前が変更、削除、または移動している可能性があります。</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>ファイルが削除または移動されているかファイルの許可属性によりアクセスが拒否された可能性があります。</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc		"
+<p>何らかの理由により &brandShortName; はこのページを正常に読み込めませんでした。</p>
+">
+
+<!ENTITY captivePortal.title		"ネットワークにログイン">
+<!ENTITY captivePortal.longDesc2 "
+<p>インターネットへ接続するには、このネットワークにログインする必要があります。</p>
+">
+
+<!ENTITY openPortalLoginPage.label2	"ネットワークのログインページを開く">
+
+<!ENTITY malformedURI.pageTitle		"不正な URL">
+
+<!ENTITY netInterrupt.longDesc		"&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc		"<p>リクエストされた &brandShortName; のキャッシュ内のドキュメントは、利用できません。</p><ul><li>安全対策のため、&brandShortName; は注意を要するドキュメントを自動的に再リクエストしません。</li><li>&quot;再試行&quot; ボタンをクリックしてドキュメントをウェブサイトから読み込んでください。</li></ul>">
+
+<!ENTITY netOffline.longDesc2	"
+<ul>
+  <li>&quot;再試行&quot; ボタンを押してブラウザーをオンラインモードに切り替え、ページを再読み込みしてください。</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc	"
+<ul>
+  <li>この問題をウェブサイトの管理者に報告してください。</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc	"
+<ul>
+  <li>この問題をウェブサイトの管理者に報告してください。</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc		"&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc		"&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc	"
+<ul>
+  <li>このプロトコルを使用するアドレスを開くには、別のソフトウェアをインストールする必要があるかもしれません。</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc	"
+<ul>
+  <li>プロキシー設定が正しいか確認してください。</li>
+  <li>プロキシーサーバーが正常に動作しているかネットワーク管理者に問い合わせてください。</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc	"
+<ul>
+  <li>プロキシー設定が正しいか確認してください。</li>
+  <li>コンピューターが有効なネットワークに接続されているか確認してください。</li>
+  <li>ファイアウォールやプロキシーでネットワークが保護されている場合、&brandShortName; によるウェブアクセスが許可されているか確認してください。</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc		"
+<ul>
+  <li>Cookie を無効化したり拒否していることにより、この問題が発生している可能性もあります。</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc	"
+<ul>
+  <li>コンピューターにパーソナルセキュリティマネージャーがインストールされているか確認してください。</li>
+  <li>サーバーの設定が間違っていることにより、この問題が発生している可能性もあります。</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2		"
+<ul>
+  <li>受信したデータの真正性を検証できなかったため、このページは表示できませんでした。</li>
+  <li>この問題をウェブサイトの管理者に連絡してください。</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2			"&brandShortName; はセキュリティ上の潜在的な脅威を検知したため、<span class='hostname'/> への接続を中止しました。このサイトに訪問すると、攻撃者がパスワードやメールアドレス、クレジットカードの詳細な情報を盗み取ろうとする恐れがあります。">
+<!ENTITY certerror.sts.introPara	"&brandShortName; はセキュリティ上の潜在的な脅威を検知したため、<span class='hostname'/> への接続を中止しました。このウェブサイトには安全な接続が必要なためです。">
+
+<!ENTITY certerror.expiredCert.introPara	"&brandShortName; は問題を検知したため、<span class='hostname'/> への接続を中止しました。このウェブサイトの設定が不適切、またはあなたのコンピューターの時刻設定に誤りがあります。">
+<!ENTITY certerror.expiredCert.secondPara2	"ウェブサイトの証明書が有効期限切れの可能性があるため、安全な接続ができません。このサイトを訪問すると、パスワードやメールアドレス、クレジットカードの詳細情報を攻撃者に盗み取られる恐れがあります。">
+<!ENTITY certerror.expiredCert.sts.secondPara	"ウェブサイトの証明書が有効期限切れの可能性があるため、安全な接続ができません。">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle	"どうすればいいですか？">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>この問題はウェブサイトに原因があり、あなたにできることはありません。</p>
+<p>組織内のネットワークからアクセスしている、またはウイルス対策ソフトウェアを利用している場合は、あなたの所属組織のネットワーク管理者に連絡してください。ウェブサイトの管理者に問題を報告するのもよいでしょう。</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>あなたのコンピューターの時刻は <span id='wrongSystemTime_systemDate2'/> に設定されています。正しい日付と時刻、タイムゾーンをコンピューターに設定して、<span class='hostname'/> を再読み込みしてください。</p>
+<p>すでに正しい時刻が設定されている場合は、ウェブサイトに問題があるため、あなたにできることはありません。ウェブサイトの管理者に問題を報告するのもよいでしょう。</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>この問題はウェブサイトに原因があり、あなたにできることはありません。ウェブサイトの管理者に問題を報告するのもよいでしょう。</p>
+">
+
+<!ENTITY sharedLongDesc			"
+<ul>
+  <li>このサイトが一時的に利用できなくなっていたり、サーバーの負荷が高すぎて接続できなくなっている可能性があります。しばらくしてから再度試してください。</li>
+  <li>他のサイトも表示できない場合、コンピューターのネットワーク接続を確認してください。</li>
+  <li>ファイアウォールやプロキシーでネットワークが保護されている場合、&brandShortName; によるウェブアクセスが許可されているか確認してください。</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc		"<p>セキュリティポリシーにより読み込みが禁止されたコンテンツが含まれているため、このページの読み込みを中止しました。</p>">
+
+<!ENTITY xfoBlocked.longDesc		"<p>このコンテキストへの読み込みを禁止する X-Frame-Options が設定されているため、このページの読み込みを中止しました。</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc	"<p>このページは、データの伝送中にエラーが検出されたため表示できません。</p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label	"危険性を承知で続行">
+
+<!ENTITY errorReporting.automatic2	"エラーを報告すると、悪意のあるサイトの特定とブロックに役立ちます">
+<!ENTITY errorReporting.learnMore	"エラーの説明...">
+
+<!ENTITY remoteXUL.longDesc		"<p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2		"高度な情報: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2			"警告: 潜在的なセキュリティリスクあり">
+<!ENTITY certerror.sts.pagetitle		"接続中止: 潜在的なセキュリティ問題">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1	"<span class='hostname'></span> は HTTP Strict Transport Security (HSTS) と呼ばれるセキュリティポリシーが設定されており、&brandShortName; は安全な接続でしか通信できません。そのため、このサイトを例外に追加することはできません。">
+<!ENTITY certerror.copyToClipboard.label	"テキストをクリップボードにコピー">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc	"<p><span class='hostname'></span> は攻撃に対して脆弱な古いセキュリティ技術を使用しています。攻撃者は保護された情報を簡単に暴露できます。サイトを安全に訪れるには、このウェブサイトの管理者にサーバーの問題を修正してもらう必要があります。</p><p>エラーコード: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title			"ブロックしたページ">
+
+<!ENTITY certerror.mitm.longDesc			"<span class='hostname'></span> は安全なサイトだと思われますが、安全な接続を確立できませんでした。この問題はあなたのコンピューターかネットワークにある <span class='mitm-name'/> が原因です。">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1		"ウイルス対策ソフトウェアに暗号化された接続をスキャンする機能 (“ウェブスキャン” または “HTTPS スキャン” という機能名) が含まれている場合は、その機能を無効にしてください。無効にしても解決できない場合は、ウイルス対策ソフトウェアを削除して再インストールしてください。">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2		"組織内のネットワークからアクセスしている場合は、ネットワーク管理者に連絡してください。">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3		"<span class='mitm-name'/> に心当たりがない場合は攻撃されている可能性があるため、以後このサイトには接続しないでください。">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3	"<span class='mitm-name'/> に心当たりがない場合は攻撃されている可能性があるため、このサイトにアクセスする方法はありません。">
+
+<!ENTITY clockSkewError.longDesc		"あなたのコンピューターは現在の日時を <span id='wrongSystemTime_systemDate1'/> だと誤解しており、&brandShortName; の安全な接続を妨げる原因になります。<span class='hostname'></span> にアクセスして、コンピュータの現在の日付と時刻、タイムゾーンを正しいものに更新して、<span class='hostname'></span> を再読み込みしてください。">
+
+<!ENTITY prefReset.longDesc			"ネットワークセキュリティの設定がこの問題の原因になっている可能性があります。既定値に戻しますか？">
+<!ENTITY prefReset.label			"既定値に戻す">
+
+<!ENTITY enableTls10.longDesc		"このウェブサイトは &brandShortName; の最低サポートバージョンの TLS 1.2 プロトコルをサポートしていない可能性があります。TLS 1.0 と TLS 1.1 を有効にすると、接続できる場合があります。">
+<!ENTITY enableTls10.note		"TLS 1.0 と TLS 1.1 は将来のリリースで永久に無効化される予定です。">
+<!ENTITY enableTls10.label		"TLS 1.0 と TLS 1.1 を有効にする">
+
+<!ENTITY networkProtocolError.longDesc	"<p>表示しようとしているページは、ネットワークプロトコルにエラーが検出されたため表示できません。</p><ul><li>ウェブサイトの所有者に連絡を取り、この問題を報告してください。</li></ul>">

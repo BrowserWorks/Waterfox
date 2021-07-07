@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Configuración de SSL</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="ssl_settings">Configuración de SSL/TLS</h1>
+
+<p>Esta sección describe cómo configurar sus preferencias SSL/TLS.</p>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_ssltls">Preferencias de
+      privacidad y seguridad - SSL/TLS</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_ssltls">Preferencias de privacidad y
+  seguridad - SSL/TLS</h2>
+
+<p>Esta sección describe cómo utilizar el panel de preferencias
+  SSL/TLS. Si no está viendo el panel, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Privacidad y seguridad, escoja la
+    subcategoría SSL/TLS. Si no aparece ninguna subcategoría, haga
+    doble clic en Privacidad y seguridad para expandir la lista.</li>
+</ol>
+  
+<h3 id="ssltls_protocol_versions">Versiones del protocolo SSL/TLS</h3>
+
+<p>El protocolo <a href="glossary.xhtml#ssl">Capa de Conexiones Seguras
+  (SSL)</a> y su sucesor, el protocolo <a href="glossary.xhtml#tls">Seguridad
+  de la Capa de Transporte (TLS)</a> son estándares que definen las reglas que
+  dirigen la identificación mutua entre un sitio web y un navegador web y el
+  cifrado de información que fluye entre ellos. También se usan para
+  comunicaciones seguras en varios protocolos más, p.e., para la protección de
+  información confidencial intercambiada con servidores de correo electrónico,
+  calendario o directorio.</p>
+  
+<p>Los protocolos SSL 2.0 y SSL 3.0 son inseguros y por ello desaprobados. El
+  protocolo actual TLS se basa en SSL pero con su propia numeración de
+  versiones. TLS 1.0 puede ser considerado equivalente a SSL 3.1, TLS 1.1 es a
+  su vez una actualización de TLS 1.0, etc. Los protocolos más recientes se
+  prefieren a los más antiguos, ya que proporcionan mejor seguridad y más
+  características. Los protocolos más antiguos se admiten para asegurar la
+  compatibilidad.</p>
+
+<p>Por defecto, &brandShortName; seleccionará la versión más segura admitida
+  con carácter general para conectar al servidor. Si ese intento no tiene
+  éxito, intentará conectar con la versión inmediatamente anterior, y así
+  sucesivamente hasta donde le permitan las opciones establecidas en el panel.
+  La conexión fallará si no se encuentra ningún protocolo admitido por ambas
+  partes. Puede excluir las versiones más antiguas explícitamente, o permitir
+  versiones más modernas que pueden no estar admitidas ampliamente aún, con
+  las siguientes opciones:</p>
+
+<ul>
+  <li><strong>Activar</strong>: marque las casillas <strong>TLS 1.0</strong>,
+    <strong>TLS 1.1</strong>, <strong>TLS 1.2</strong> y/o
+    <strong>TLS 1.3</strong> para indicar qué versiones del protocolo se
+    pueden usar para una conexión segura al servidor.</li>
+</ul>
+
+<p><strong>Notas</strong>:</p>
+
+<ul>
+  <li>Debe seleccionarse al menos una versión del protocolo, por lo que no es
+    posible desmarcar la última casilla marcada.</li>
+  <li>Además, la selección debe ser consecutiva. No es posible seleccionar
+    TLS 1.0 y TLS 1.2 pero excluir la versión intermedia TLS 1.1.</li>
+  <li>Puede extender el rango en múltiples versiones. Por ejemplo, si sólo
+    está marcada TLS 1.0 y se selecciona TLS 1.2, se seleccionará también
+    automáticamente la versión TLS 1.1.</li>
+  <li>Las casillas pueden aparecer marcadas pero desactivadas si no se pueden
+    desmarcar sin violar estas reglas. Desmarque las casillas de los extremos
+    para poder acceder a las versiones intermedias.</li>
+</ul>
+
+<h3 id="ssltls_warnings">Advertencias SSL/TLS</h3>
+
+<p>Es fácil saber cuándo el servidor web que se está visitando utiliza una
+  conexión cifrada. Si la conexión está cifrada, el candado en la esquina
+  inferior derecha del navegador estará cerrado
+  (<img src="chrome://communicator/skin/icons/lock-secure.png"/>). Si la
+  conexión no está cifrada, el candado permanecerá abierto
+  (<img src="chrome://communicator/skin/icons/lock-insecure.png"/>). Las
+  páginas cifradas que contienen algunos elementos no cifrados (contenido
+  mezclado) se muestran con el icono de un candado roto
+  (<img src="chrome://communicator/skin/icons/lock-broken.png"/>).</p>
+
+<p>Si usted desea advertencias adicionales, puede seleccionar una o
+  más de las casillas de advertencia en el panel de preferencias SSL/TLS.
+  A menos que se indique lo contrario, se presentará una barra de
+  notificación en la parte superior de la página que ha provocado el
+  aviso, con una opción para entrar en este panel para cambiar la
+  opción si el aviso se considera molesto.</p>
+
+<p>Para activar cualquiera de estas advertencias, seleccione la casilla
+  correspondiente:</p>
+
+<ul>
+  <li><strong>Cargar una página que implementa cifrado</strong>:
+    seleccione esta advertencia si desea ser advertido siempre que cargue una
+    página que implementa cifrado.</li>
+  <li><strong>Abandonar una página que implementa cifrado</strong>:
+    seleccione esta advertencia si quiere ser advertido siempre que vaya a
+    abandonar una página que implemente cifrado para dirigirse a una que
+    no lo implemente.</li>
+  <li><strong>Enviar datos de un formulario desde una página sin cifrar a
+    otra sin cifrar</strong>: seleccione esta advertencia si quiere ser
+    advertido siempre que vaya a enviar datos a través de una conexión no
+    cifrada. Cuando se selecciona esta opción, se presenta un cuadro de
+    diálogo <em>antes</em> de que se abra la página, lo que permite que
+    se cancele la carga de la misma antes de que se envíe cualquier
+    información potencialmente confidencial bajo una conexión no cifrada
+    que pueda ser fácilmente interceptada por otros.
+    
+    <p><strong>Nota</strong>: enviar un formulario desde una página
+      cifrada a una no cifrada siempre provocará que se muestre un
+      diálogo antes de abrir la página, con independencia del valor de esta
+      opción.</p>
+  </li>
+</ul>
+
+<h3 id="mixed_content">Contenido mezclado</h3>
+
+<p>En general, hay dos cuestiones principales relacionadas con la transmisión
+  de información confidencial a través de conexiones no cifradas: una es el
+  peligro de que alguien tenga <em>pinchada</em> la línea, por tanto escuchando
+  el contenido transmitido; el otro es que alguien intercepte las solicitudes
+  de la página deseada y reemplace el contenido legítimo de esa página por el
+  suyo propio (potencialmente malicioso). Aunque estos ataques, conocidos como
+  <q>Homre interpuesto (Man In The Middle)</q>, pueden ser detectados
+  normalmente en las conexiones cifradas (p.e. por la discrepancia en el
+  certificado o que este no sea válido), tal verificación no existe en el caso
+  de las conexiones no cifradas.</p>
+
+  <p>El término <q>Contenido mezclado</q> se refiere a una página web que está
+    cifrada en sí misma, pero que incluye contenido en el mismo servidor o en
+    uno diferente que <em>no</em> está cifrado. En consecuencia, esta parte de
+    la página está sujeta a las vulnerabilidades de una línea no cifrada. Si
+    bien pueden existir usos legítimos de este concepto (tal como incluir el
+    logo de una compañía desde un sitio web no seguro en otra página distinta
+    segura), tales diseños deberían evitarse.</p>
+    
+    <p>Hay dos tipos generales de contenido mezclado:</p>
+
+    <ul>
+      <li><strong>Contenido mezclado activo</strong> (o contenido mezclado de
+        scripts): este es contenido que tiene el potencial de ocultar o
+        modificar partes de una página web, o de filtrar de manera activa
+        contenido de la parte segura de la página a su parte no segura. Los
+        ejemplos incluyen scripts (JavaScript), hojas de estilo (CSS), o la
+        inclusión de páginas web completas en la página principal
+        (iframes).</li>
+      <li><strong>Contenido mezclado pasivo</strong> (o contenido mezclado
+        visual): este tipo de contenido <em>no</em> tiene el potencial de
+        alterar o monitorizar la página web como tal. Los ejemplos incluyen
+        imágenes y flujos de audio o vídeo. Sin embargo, es posible que se
+        pase información confidencial a través de la dirección del contenido
+        (URL), como cookies o devuelto con el propio contenido (p.e., como
+        texto incluido en una imagen). Por ello, el contenido pasivo tampoco
+        es totalmente inocuo.</li>
+    </ul>
+
+   <p>Las siguientes opciones le permiten ser avisado sobre el contenido
+     mezclado activo y pasivo, así como bloquearlo:</p>
+
+   <ul>
+     <li><strong>Advertirme cuando las páginas cifradas contengan contenido
+       no seguro</strong>: marque esta casilla para indicar a &brandShortName;
+       que presente una barra de notificación cuando se cargue o bloquee
+       contenido mezclado <em>activo</em>. La barra de notificaciones contiene
+       un botón para abrir este panel de preferencias.</li>
+     <li><strong>No cargar contenido no seguro en páginas cifradas</strong>:
+       marque esta casilla para evitar por completo que se cargue contenido
+       mezclado activo. Si también está marcada la opción <q>Advertirme</q>, la
+       barra de notificación contendrá dos botones adicionales:
+       <ul>
+         <li><strong>Seguir bloqueando</strong>: elimina la barra de
+           notificación sin cargar el contenido potencialmente inseguro.</li>
+         <li><strong>Desbloquear</strong>: carga el contenido potencialmente
+           inseguro <em>una sola vez</em> pero no automáticamente cuando esta
+           página sea visitada de nuevo en el futuro.</li>
+       </ul>
+       <strong>Nota</strong>: la selección <q>Desbloquear</q> para un sitio
+         específico puede revocarse en la pestaña Permisos del administrador de
+         datos. Cuando se encuentra en una
+         <a href="using_priv_help.xhtml#browsing_in_a_private_window">ventana
+         privada</a>, estas opciones no están disponibles en la barra de
+         notificaciones.</li>
+     <li><strong>Advertirme cuando las páginas cifradas contengan otros tipos de
+       contenido mezclado</strong>: marque esta casilla para indicar a
+       &brandShortName; que presente una barra de notificación cuando se cargue
+       o bloquee contenido mezclado <em>pasivo</em>. La barra de notificación
+       contendrá un botón para abrir este panel de preferencias.</li>
+     <li><strong>No cargar otros tipos de contenido mezclado en páginas
+       cifradas</strong>: marque esta casilla para evitar por completo que se
+       cargue contenido mezclado pasivo. Si también está marcada la opción
+       <q>Advertirme</q>, se presenta una notificación de que se ha bloqueado
+       ese contenido.</li>
+   </ul>
+
+<p>Para ver definiciones breves, pulse <a href=
+  "glossary.xhtml#authentication">identificación</a>, <a href=
+  "glossary.xhtml#encryption">cifrado</a>, o <a href=
+  "glossary.xhtml#certificate">certificado</a>.</p>
+
+<p>Para más información sobre cifrados y criptografía,
+  vea los siguientes documentos en línea (en inglés):</p>
+
+<ul>
+  <li><a href=
+    "https://developer.mozilla.org/en-US/docs/Introduction_to_Public-Key_Cryptography"
+    >Introducción a la criptografía de clave pública</a>.</li>
+  <li><a href=
+    "https://developer.mozilla.org/en-US/docs/Introduction_to_SSL">Introducción
+    a SSL</a>.</li>
+  <li><a href=
+    "https://developer.mozilla.org/en-US/docs/NSS">Tecnologías disponibles en
+    los servicios de seguridad de red (NSS)</a>.</li>
+  </ul>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label "Informazioni su &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "I">
+
+<!ENTITY preferencesCmdMac.label "Preferenze…">
+
+<!ENTITY servicesMenuMac.label "Servizi">
+
+<!ENTITY hideThisAppCmdMac2.label "Nascondi &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label "Nascondi altre">
+
+<!ENTITY showAllAppsCmdMac.label "Mostra tutte">
+
+<!ENTITY touchBarCmdMac.label "Personalizza Touch Bar…">

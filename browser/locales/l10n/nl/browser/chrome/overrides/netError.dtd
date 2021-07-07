@@ -1,0 +1,208 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Probleem bij het laden van de pagina">
+<!ENTITY retry.label "Opnieuw proberen">
+<!ENTITY returnToPreviousPage.label "Terug">
+<!ENTITY returnToPreviousPage1.label "Teruggaan (Aanbevolen)">
+<!ENTITY advanced2.label "Geavanceerd…">
+<!ENTITY viewCertificate.label "Certificaat bekijken">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Server niet gevonden">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Als het adres juist is, kunt u drie andere dingen proberen:</strong>
+<ul>
+  <li>Probeer het later opnieuw.</li>
+  <li>Controleer uw netwerkverbinding.</li>
+  <li>Als u verbinding hebt maar zich achter een firewall bevindt, controleer dan of &brandShortName; toegang heeft tot het web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Controleer de bestandsnaam op grote/kleine letters of andere typefouten.</li>
+  <li>Controleer of het bestand is verplaatst, hernoemd of verwijderd.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Het kan zijn verwijderd, verplaatst, of bestandsmachtigingen kunnen toegang tegengaan.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; kan deze pagina om de een of andere reden niet laden.</p>
+">
+
+<!ENTITY captivePortal.title "Aanmelden bij netwerk">
+<!ENTITY captivePortal.longDesc2 "
+<p>U moet zich aanmelden bij dit netwerk voordat u toegang hebt tot het internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Aanmeldingspagina voor netwerk openen">
+
+<!ENTITY malformedURI.pageTitle "Ongeldige URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Het opgevraagde document is niet beschikbaar in de buffer van &brandShortName;.</p><ul><li>Als beveiligingsmaatregel vraagt &brandShortName; gevoelige documenten niet automatisch opnieuw op.</li><li>Klik op Opnieuw proberen om het document opnieuw van de website op te vragen.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Klik op ‘Opnieuw proberen’ om naar de onlinemodus over te schakelen en de pagina opnieuw te laden.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Misschien moet u andere software installeren om dit adres te openen.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Controleer of uw proxyinstellingen juist zijn.</li>
+  <li>Neem contact op met uw netwerkbeheerder om te controleren of de proxyserver
+    werkt.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Controleer of uw proxyinstellingen juist zijn.</li>
+  <li>Controleer of uw computer een werkende netwerkverbinding heeft.</li>
+  <li>Als uw computer of netwerk wordt beveiligd door een firewall of proxy,
+    zorg er dan voor dat &brandShortName; toegang heeft tot het web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dit probleem kan soms worden veroorzaakt door het uitschakelen of weigeren
+    van cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Zorg ervoor dat de persoonlijke beveiligingsbeheerder op uw systeem
+    is geïnstalleerd.</li>
+  <li>Dit kan het gevolg zijn van een niet-standaard configuratie van de server.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>De pagina die u wilt bekijken kan niet worden weergegeven, omdat de echtheid van de ontvangen gegevens niet kon worden geverifieerd.</li>
+  <li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; heeft een mogelijk beveiligingsrisico gedetecteerd en is niet doorgegaan naar <span class='hostname'/>. Als u deze website bezoekt, zouden aanvallers gegevens kunnen proberen te stelen, zoals uw wachtwoorden, e-mailadressen of creditcardgegevens.">
+<!ENTITY certerror.sts.introPara "&brandShortName; heeft een mogelijk beveiligingsrisico gedetecteerd en is niet doorgegaan naar <span class='hostname'/>, omdat deze website een beveiligde verbinding vereist.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; heeft een probleem gedetecteerd en is niet doorgegaan naar <span class='hostname'/>. Of de website is onjuist geconfigureerd, of uw computerklok is op de verkeerde tijd ingesteld.">
+<!ENTITY certerror.expiredCert.secondPara2 "Waarschijnlijk is het certificaat van de website verlopen, waardoor &brandShortName; geen beveiligde verbinding kan maken. Als u deze website bezoekt, zouden aanvallers gegevens kunnen proberen te stelen, zoals uw wachtwoorden, e-mailadressen of creditcardgegevens.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Waarschijnlijk is het certificaat van de website verlopen, waardoor &brandShortName; geen beveiligde verbinding kan maken.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Wat kunt u hieraan doen?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Het probleem ligt zeer waarschijnlijk bij de website, en u kunt niets doen om dit te verhelpen.</p>
+<p>Als u zich op een zakelijk netwerk bevindt of antivirussoftware gebruikt, kunt u contact opnemen met de ondersteuningsafdelingen voor assistentie. U kunt ook de beheerder van de website over het probleem informeren.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Uw computerklok is ingesteld op <span id='wrongSystemTime_systemDate2'/>. Zorg ervoor dat uw computer op de juiste datum, tijd en tijdzone is ingesteld in uw systeeminstellingen, en vernieuw daarna <span class='hostname'/>.</p>
+<p>Als uw klok al op de juiste tijd is ingesteld, is de website waarschijnlijk onjuist geconfigureerd, en kunt u niets doen om het probleem te verhelpen. U kunt wel de beheerder van de website over het probleem informeren.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Het probleem ligt zeer waarschijnlijk bij de website, en u kunt niets doen om dit te verhelpen. U kunt wel de beheerder van de website over het probleem informeren.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Misschien is de website tijdelijk niet beschikbaar of overbelast. Probeer het
+    over enkele ogenblikken opnieuw.</li>
+  <li>Als u geen enkele pagina kunt laden, controleer dan de netwerkverbinding
+    van uw computer.</li>
+  <li>Als uw computer of netwerk wordt beveiligd door een firewall of proxy,
+    zorg er dan voor dat &brandShortName; toegang heeft tot het web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; heeft voorkomen dat de pagina op deze manier werd geladen, omdat de pagina een inhoudsbeveiligingsbeleid heeft dat dit niet toestaat.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; heeft voorkomen dat de pagina in deze context werd geladen, omdat de pagina een beleid voor X-Frame-Options heeft dat dit niet toestaat.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>De pagina die u wilt bekijken kan niet worden weergegeven, omdat er een fout in de gegevensoverdracht is gedetecteerd.</p><ul><li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Het risico aanvaarden en doorgaan">
+
+<!ENTITY errorReporting.automatic2 "Fouten als deze rapporteren om Mozilla te helpen kwaadwillende websites te herkennen en te blokkeren">
+<!ENTITY errorReporting.learnMore "Meer info…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Geavanceerde info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Waarschuwing: mogelijk beveiligingsrisico">
+<!ENTITY certerror.sts.pagetitle  "Geen verbinding gemaakt: mogelijk beveiligingsprobleem">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> heeft een beveiligingsbeleid met de naam HTTP Strict Transport Security (HSTS), wat betekent dat &brandShortName; alleen een beveiligde verbinding ermee kan maken. U kunt geen uitzondering toevoegen om deze website te bezoeken.">
+<!ENTITY certerror.copyToClipboard.label "Tekst naar klembord kopiëren">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> gebruikt verouderde beveiligingstechnologie die kwetsbaar is voor aanvallen. Een aanvaller kan eenvoudig gegevens onthullen waarvan u dacht dat deze veilig waren. De websitebeheerder dient eerst de server in orde te maken voordat u de website kunt bezoeken.</p><p>Foutcode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Geblokkeerde pagina">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> is zeer waarschijnlijk een veilige website, maar er kon geen beveiligde verbinding tot stand worden gebracht. Dit probleem wordt veroorzaakt door <span class='mitm-name'/>, dat software op uw computer of op uw netwerk betreft.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Als uw antivirussoftware een functie bevat die versleutelde verbindingen scant (vaak ‘webscanning’ of ‘https-scanning’ genoemd), kunt u die functie uitschakelen. Als dat niet werkt, kunt u de antivirussoftware verwijderen en opnieuw installeren.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Als u zich op een zakelijk netwerk bevindt, kunt u contact opnemen met uw IT-afdeling.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Als u niet bekend bent met <span class='mitm-name'/>, kan dit een aanval zijn en kunt u de website beter niet bezoeken.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Als u niet bekend bent met <span class='mitm-name'/>, kan dit een aanval zijn, en is er niets wat u kunt doen om de website te bezoeken.">
+
+<!ENTITY clockSkewError.longDesc "Uw computer denkt dat het <span id='wrongSystemTime_systemDate1'/> is, waardoor &brandShortName; geen beveiligde verbinding met <span class='hostname'></span> kan maken. Werk uw computerklok bij naar de huidige datum, tijd en tijdzone in uw systeeminstellingen, en vernieuw daarna de pagina om <span class='hostname'></span> te bezoeken.">
+
+<!ENTITY prefReset.longDesc "Het lijkt erop dat dit door uw netwerkbeveiligingsinstellingen wordt veroorzaakt. Wilt u de standaardinstellingen herstellen?">
+<!ENTITY prefReset.label "Standaardinstellingen herstellen">
+
+<!ENTITY enableTls10.longDesc "Deze website ondersteunt mogelijk het TLS 1.2-protocol niet, wat de minimale versie is die door &brandShortName; wordt ondersteund. Door TLS 1.0 en TLS 1.1 in te schakelen kan mogelijk de verbinding tot stand worden gebracht.">
+<!ENTITY enableTls10.note "TLS 1.0 en TLS 1.1 worden in een toekomstige versie permanent uitgeschakeld.">
+<!ENTITY enableTls10.label "TLS 1.0 en 1.1 inschakelen">
+
+<!ENTITY networkProtocolError.longDesc "<p>De pagina die u wilt bekijken kan niet worden weergegeven, omdat er een fout in het netwerkprotocol is gedetecteerd.</p><ul><li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li></ul>">

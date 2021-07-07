@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Ny mapp för sparad sökning">
+<!ENTITY name.label                 "Namn:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Skapa som undermapp till:">
+<!ENTITY description.accesskey      "S">
+
+<!ENTITY searchTermCaption.label "Anpassa de sökkriterier som används för den här virtuella mappen: ">
+
+<!ENTITY folderSelectionCaption.label "Välj mappar att söka i: ">
+<!ENTITY chooseFoldersButton.label "Välj…">
+<!ENTITY chooseFoldersButton.accesskey "V">
+
+<!ENTITY searchOnline.label "Sök online (ger uppdaterade resultat för IMAP och nyhetsmappar men förlänger tiden det tar att öppna mappen)">
+<!ENTITY searchOnline.accesskey "o">
+<!ENTITY newFolderButton.label       "Skapa">
+<!ENTITY newFolderButton.accesskey   "k">
+<!ENTITY editFolderButton.label      "Uppdatera">
+<!ENTITY editFolderButton.accesskey  "U">

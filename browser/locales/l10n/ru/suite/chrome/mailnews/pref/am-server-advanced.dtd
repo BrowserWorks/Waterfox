@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Дополнительные параметры учётной записи">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "Каталог IMAP-сервера:">
+<!ENTITY serverDirectory.accesskey "а">
+<!ENTITY usingSubscription.label "Показывать только папки на которые вы подписаны">
+<!ENTITY usingSubscription.accesskey "о">
+<!ENTITY dualUseFolders.label "Сервер поддерживает папки, содержащие вложенные папки и сообщения">
+<!ENTITY dualUseFolders.accesskey "е">
+<!ENTITY maximumConnectionsNumber.label "Максимальное число кэшируемых соединений">
+<!ENTITY maximumConnectionsNumber.accesskey "к">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Эти настройки определяют пространства имён на вашем IMAP-сервере">
+<!ENTITY personalNamespace.label "Личное пространство имён:">
+<!ENTITY personalNamespace.accesskey "ч">
+<!ENTITY publicNamespace.label "Общее (совместно используемое):">
+<!ENTITY publicNamespace.accesskey "б">
+<!ENTITY otherUsersNamespace.label "Другие пользователи:">
+<!ENTITY otherUsersNamespace.accesskey "у">
+<!ENTITY overrideNamespaces.label "Разрешить серверу перекрывать эти пространства имён">
+<!ENTITY overrideNamespaces.accesskey "з">
+<!ENTITY pop3DeferringDesc.label "При загрузке почты c сервера этой учётной записи, помещать новые сообщения в следующую папку:" >
+<!ENTITY accountInbox.label "«Входящие» для этой учётной записи">
+<!ENTITY accountInbox.accesskey "д">
+<!ENTITY deferToServer.label "«Входящие» для другой учётной записи">
+<!ENTITY deferToServer.accesskey "х">
+<!ENTITY deferGetNewMail.label "Загружать почту с данного сервера">
+<!ENTITY deferGetNewMail.accesskey "ж">

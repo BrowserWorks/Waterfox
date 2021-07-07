@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Tài khoản – &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Trạng thái nhắn tin tức thời">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Tài khoản mới">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Đóng">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Chưa có cấu hình tài khoản nào">
+<!ENTITY accountManager.noAccount.description "Nhấp vào nút &accountManager.newAccount.label; để &brandShortName; hướng dẫn bạn qua quá trình cấu hình một.">
+<!ENTITY account.autoSignOn.label     "Đăng nhập khi khởi động">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "Kết nối">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Ngắt kết nối">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Xóa">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "Thuộc tính">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Di chuyển lên">
+<!ENTITY account.movedown.label       "Di chuyển xuống">
+<!ENTITY account.cancelReconnection.label         "Hủy kết nối lại">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "Sao chép nhật ký gỡ lỗi">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "Xem nhật ký gỡ lỗi">
+<!ENTITY account.showDebugLog.accesskey "H">
+<!ENTITY account.connecting           "Đang kết nối…">
+<!ENTITY account.disconnecting        "Đang ngắt kết nối…">
+<!ENTITY account.disconnected         "Chưa được kết nối">

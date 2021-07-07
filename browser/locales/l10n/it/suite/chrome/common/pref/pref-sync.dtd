@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setupButton.label "Configurazione di &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey "C">
+<!ENTITY weaveDesc.label "&syncBrand.fullName.label; consente l'accesso alla cronologia, ai segnalibri, alle password e alle schede aperte da tutti i propri dispositivi.">
+<!ENTITY accountGroupboxCaption.label "Account di &syncBrand.fullName.label;">
+<!ENTITY accountName.label "Nome account:">
+<!ENTITY updatePass.label "Aggiorna">
+<!ENTITY updatePass.accesskey "A">
+<!ENTITY resetPass.label "Azzera">
+<!ENTITY resetPass.accesskey "z">
+<!ENTITY manageAccount.label "Gestione account">
+<!ENTITY manageAccount.accesskey "a">
+<!ENTITY viewQuota.label "Visualizza quota">
+<!ENTITY viewQuota.accesskey "V">
+<!ENTITY changePassword.label "Cambia la password">
+<!ENTITY changePassword.accesskey "C">
+<!ENTITY myRecoveryKey.label "Chiave di ripristino">
+<!ENTITY myRecoveryKey.accesskey "C">
+<!ENTITY resetSync.label "Ripristina la sincronizzazione">
+<!ENTITY resetSync.accesskey "z">
+<!ENTITY unlinkDevice.label "Scollega questo dispositivo">
+<!ENTITY unlinkDevice.accesskey "d">
+<!ENTITY addDevice.label "Aggiungi un dispositivo">
+<!ENTITY addDevice.accesskey "A">
+<!ENTITY syncComputerName.label "Nome del computer:">
+<!ENTITY syncComputerName.accesskey "N">
+<!ENTITY syncMy2.label "Sincronizza:">
+<!ENTITY engine.addons.label "Componenti aggiuntivi">
+<!ENTITY engine.addons.accesskey "C">
+<!ENTITY engine.bookmarks.label "Segnalibri">
+<!ENTITY engine.bookmarks.accesskey "e">
+<!ENTITY engine.tabs.label "Schede">
+<!ENTITY engine.tabs.accesskey "h">
+<!ENTITY engine.history.label "Cronologia">
+<!ENTITY engine.history.accesskey "r">
+<!ENTITY engine.passwords.label "Password">
+<!ENTITY engine.passwords.accesskey "w">
+<!ENTITY engine.prefs.label "Preferenze">
+<!ENTITY engine.prefs.accesskey "P">
+<!ENTITY prefs.tosLink.label "Condizioni di utilizzo del servizio">
+<!ENTITY prefs.ppLink.label "Informativa sulla privacy">

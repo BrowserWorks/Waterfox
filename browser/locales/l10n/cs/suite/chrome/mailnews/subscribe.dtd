@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title "Správce odebírání">
+<!ENTITY subscribeButton.label "Odebírat">
+<!ENTITY subscribeButton.accesskey "O">
+<!ENTITY unsubscribeButton.label "Zrušit odběr">
+<!ENTITY unsubscribeButton.accesskey "d">
+<!ENTITY newGroupsTab.label "Nové skupiny">
+<!ENTITY newGroupsTab.accesskey "N">
+<!ENTITY refreshButton.label "Obnovit">
+<!ENTITY refreshButton.accesskey "b">
+<!ENTITY stopButton.label "Zastavit">
+<!ENTITY stopButton.accesskey "Z">
+<!ENTITY server.label "Účet:">
+<!ENTITY server.accesskey "t">
+<!ENTITY subscribedHeader.label "Odebírat">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label "Zprávy"> --> 
+<!ENTITY namefield.label "Zobrazit položky které obsahují:">
+<!ENTITY namefield.accesskey "o">

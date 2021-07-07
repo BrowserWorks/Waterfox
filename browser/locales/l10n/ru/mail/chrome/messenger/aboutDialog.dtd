@@ -1,0 +1,113 @@
+<!ENTITY aboutDialog.title          "О &brandFullName;">
+
+<!-- LOCALIZATION NOTE (update.*):
+# These strings are also used in the update pane of preferences.
+# See about:preferences#advanced.
+-->
+<!-- LOCALIZATION NOTE (update.checkForUpdatesButton.*, update.updateButton.*):
+# Only one button is present at a time.
+# The button when displayed is located directly under the Thunderbird version in
+# the about dialog.
+-->
+<!ENTITY update.checkForUpdatesButton.label       "Проверить на обновления">
+<!ENTITY update.checkForUpdatesButton.accesskey   "о">
+<!ENTITY update.updateButton.label3               "Перезапустить &brandShorterName; для обновления">
+<!ENTITY update.updateButton.accesskey            "е">
+
+
+<!-- LOCALIZATION NOTE (warningDesc.version): This is a warning about the experimental nature of Nightly builds. It is only shown in this version. -->
+<!ENTITY warningDesc.version        "&brandShortName; является экспериментальным и может быть нестабилен.">
+<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly builds automatically send Telemetry data back to Mozilla. It is only shown in this version. "It" refers to brandShortName. -->
+<!ENTITY warningDesc.telemetryDesc  "Он автоматически отправляет информацию о производительности, аппаратном обеспечении, использовании и настройках в &vendorShortName;, чтобы помочь сделать &brandShortName; лучше.">
+
+<!-- LOCALIZATION NOTE (community.exp.*) This paragraph is shown in "experimental" builds, i.e. Nightly builds, instead of the other "community.*" strings below. -->
+<!ENTITY community.exp.start        "">
+<!-- LOCALIZATION NOTE (community.exp.mozillaLink): This is a link title that links to https://www.mozilla.org/. -->
+<!ENTITY community.exp.mozillaLink  "&vendorShortName;">
+<!ENTITY community.exp.middle       " является ">
+<!-- LOCALIZATION NOTE (community.exp.creditslink): This is a link title that links to about:credits. -->
+<!ENTITY community.exp.creditsLink  "глобальным сообществом">
+<!ENTITY community.exp.end          ", работающим над тем, чтобы Интернет оставался открытым, публичным и доступным для всех и каждого.">
+
+<!ENTITY community.start2           "&brandShortName; создан ">
+<!-- LOCALIZATION NOTE (community.mozillaLink): This is a link title that links to https://www.mozilla.org/. -->
+<!ENTITY community.mozillaLink      "&vendorShortName;">
+<!ENTITY community.middle2          " — ">
+<!-- LOCALIZATION NOTE (community.creditsLink): This is a link title that links to about:credits. -->
+<!ENTITY community.creditsLink      "глобальным сообществом">
+<!ENTITY community.end3             ", работающим над тем, чтобы Интернет оставался открытым, публичным и доступным для всех и каждого.">
+
+<!ENTITY helpus.start               "Хотите помочь? ">
+<!-- LOCALIZATION NOTE (helpus.donateLink): This is a link title that links to the thunderbird donation page -->
+<!ENTITY helpus.donateLink          "Сделайте пожертвование">
+<!ENTITY helpus.middle              " или ">
+<!-- LOCALIZATION NOTE (helpus.getInvolvedLink): This is a link title that links to https://www.thunderbird.net/get-involved/. -->
+<!ENTITY helpus.getInvolvedLink     "присоединяйтесь!">
+<!ENTITY helpus.end                 "">
+
+<!ENTITY releaseNotes.link          "Примечания к выпуску">
+
+<!-- LOCALIZATION NOTE (bottomLinks.license): This is a link title that links to about:license. -->
+<!ENTITY bottomLinks.license        "Информация о лицензии">
+
+<!-- LOCALIZATION NOTE (bottomLinks.rights): This is a link title that links to about:rights. -->
+<!ENTITY bottomLinks.rights         "Права конечного пользователя">
+
+<!-- LOCALIZATION NOTE (bottomLinks.privacy): This is a link title that links to https://www.mozilla.org/legal/privacy/. -->
+<!ENTITY bottomLinks.privacy        "Политика приватности">
+
+<!-- LOCALIZATION NOTE (update.checkingForUpdates): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.checkingForUpdates  "Проверка наличия обновлений…">
+<!-- LOCALIZATION NOTE (update.noUpdatesFound): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.noUpdatesFound      "Установлена последняя версия &brandShortName;">
+<!-- LOCALIZATION NOTE (update.adminDisabled): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.adminDisabled       "Обновления отключены вашим системным администратором">
+<!-- LOCALIZATION NOTE (update.otherInstanceHandlingUpdates): try to make the localized text short -->
+<!ENTITY update.otherInstanceHandlingUpdates "Обновление производится другим процессом &brandShortName;">
+
+<!-- LOCALIZATION NOTE (update.failed.start,update.failed.linkText,update.failed.end):
+     update.failed.start, update.failed.linkText, and update.failed.end all go into
+     one line with linkText being wrapped in an anchor that links to a site to download
+     the latest version of Firefox (e.g. https://www.firefox.com). As this is all in
+     one line, try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.failed.start        "Обновление не удалось. ">
+<!ENTITY update.failed.linkText     "Загрузите последнюю версию">
+<!ENTITY update.failed.end          "">
+
+<!-- LOCALIZATION NOTE (update.manual.start,update.manual.end): update.manual.start and update.manual.end
+     all go into one line and have an anchor in between with text that is the same as the link to a site
+     to download the latest version of Firefox (e.g. https://www.firefox.com). As this is all in one line,
+     try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.manual.start        "Загрузить ">
+<!ENTITY update.manual.linkText     "последнюю версию">
+<!ENTITY update.manual.end          "">
+
+<!-- LOCALIZATION NOTE (update.unsupported.start,update.unsupported.linkText,update.unsupported.end):
+     update.unsupported.start, update.unsupported.linkText, and
+     update.unsupported.end all go into one line with linkText being wrapped in
+     an anchor that links to a site to provide additional information regarding
+     why the system is no longer supported. As this is all in one line, try to
+     make the localized text short (see bug 843497 for screenshots). -->
+<!ENTITY update.unsupported.start    "Вы не можете производить дальнейшие обновления на этой системе. ">
+<!ENTITY update.unsupported.linkText "Подробнее">
+<!ENTITY update.unsupported.end      "">
+
+<!-- LOCALIZATION NOTE (update.downloading.start,update.downloading.end): update.downloading.start and
+     update.downloading.end all go into one line, with the amount downloaded inserted in between. As this
+     is all in one line, try to make the localized text short (see bug 596813 for screenshots). The — is
+     the "em dash" (long dash).
+     example: Downloading update — 111 KB of 13 MB -->
+<!ENTITY update.downloading.start   "Загрузка обновления — ">
+<!ENTITY update.downloading.end     "">
+
+<!ENTITY update.applying            "Применение обновления…">
+
+<!ENTITY update.restarting          "Перезапуск…">
+
+<!-- LOCALIZATION NOTE (channel.description.start,channel.description.end): channel.description.start and
+     channel.description.end create one sentence, with the current channel label inserted in between.
+     example: You are currently on the _Stable_ update channel. -->
+<!ENTITY channel.description.start  "Сейчас вы находитесь на канале обновлений ">
+<!ENTITY channel.description.end    ".">
+
+<!ENTITY cmdCloseMac.commandKey "w">

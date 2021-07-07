@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "新信件:(未命名)">
+
+<!ENTITY fromAddr.label "寄件者:">
+<!ENTITY fromAddr.accesskey "r">
+<!ENTITY toAddr.label "收件者:">
+<!ENTITY ccAddr.label "副本:">
+<!ENTITY bccAddr.label "密件副本:">
+<!ENTITY replyAddr.label "回函地址:">
+<!ENTITY newsgroupsAddr.label "新聞群組:">
+<!ENTITY followupAddr.label "原文參見:">
+<!ENTITY subject.label "主旨:">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachments.label "附件:">
+<!ENTITY attachments.accesskey "c">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "儲存">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "另存新檔">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "檔案…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "草稿">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "範本">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY attachMenu.label "附件">
+<!ENTITY attachMenu.accesskey "t">
+<!ENTITY attachFileCmd.label "檔案…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachPageCmd.label "網頁…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "個人名片 (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "立刻寄出">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "稍候再寄">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "L">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "重新斷行">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "w">
+<!ENTITY accountManagerCmd.label "郵件與新聞群組帳號設定…">
+<!ENTITY accountManagerCmd.accesskey "M">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "郵件工具列">
+<!ENTITY showComposeToolbarCmd.accesskey "o">
+<!ENTITY showFormatToolbarCmd.label "格式化工具列">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "格式">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "選項">
+<!ENTITY optionsMenu.accesskey "p">
+
+<!ENTITY quoteCmd.label "引用前封訊息">
+<!ENTITY quoteCmd.accesskey "Q">
+<!ENTITY selectAddressCmd.label "選擇地址…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "A">
+
+<!ENTITY priorityMenu.label "重要性">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY lowestPriorityCmd.label "最低">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "低">
+<!ENTITY lowPriorityCmd.accesskey "o">
+<!ENTITY normalPriorityCmd.label "標準">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "高">
+<!ENTITY highPriorityCmd.accesskey "i">
+<!ENTITY highestPriorityCmd.label "最高">
+<!ENTITY highestPriorityCmd.accesskey "H">
+
+<!ENTITY returnReceiptMenu.label "收件回執">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "遞送狀態通知">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "格式">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "自動偵測">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "只有純文字">
+<!ENTITY plainTextFormatCmd.accesskey "P">
+<!ENTITY htmlFormatCmd.label "只有 HTML">
+<!ENTITY htmlFormatCmd.accesskey "R">
+<!ENTITY bothFormatCmd.label "純文字及 HTML">
+<!ENTITY bothFormatCmd.accesskey "L">
+
+<!ENTITY fileCarbonCopyCmd.label "寄送副本到">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "歸檔至此">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "傳送">
+<!ENTITY addressButton.label "通訊錄">
+<!ENTITY attachButton.label "附件">
+<!ENTITY spellingButton.label "拼字檢查">
+<!ENTITY saveButton.label "儲存">
+<!ENTITY stopButton.label "停止">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "通訊錄列">
+<!ENTITY formatToolbar.tooltip "格式化工具列">
+<!ENTITY sendButton.tooltip "立刻寄出此訊息"> 
+<!ENTITY sendlaterButton.tooltip "稍後再寄出此封郵件"> 
+<!ENTITY addressButton.tooltip "從通訊錄裡選擇收件者"> 
+<!ENTITY attachButton.tooltip "附加檔案"> 
+<!ENTITY saveButton.tooltip "儲存此訊息"> 
+<!ENTITY stopButton.tooltip "停止傳送"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "開啟">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "重新命名…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY deleteAttachment.accesskey "D">
+<!ENTITY selectAllAttachments.accesskey "A">
+<!ENTITY attachFile.label "附加檔案…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachPage.label "附加網頁…">
+<!ENTITY attachPage.accesskey "W">

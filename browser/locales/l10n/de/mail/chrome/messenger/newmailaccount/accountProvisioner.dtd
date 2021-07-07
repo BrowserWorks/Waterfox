@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Willkommen bei &brandShortName;">
+<!ENTITY header2.label "Wollen Sie eine neue E-Mail-Adresse haben?">
+<!ENTITY other.languages "Es werden nur E-Mail-Dienste gezeigt, die Adressen in Ihrer Region anbieten.  Hier klicken, um alle Anbieter zu zeigen.">
+<!ENTITY error.line1 "Entschuldigung, es konnten keine passenden E-Mail-Adressen gefunden werden.">
+<!ENTITY error.line2 "Sie können mit Spitznamen oder anderen Begriffen versuchen, mögliche E-Mail-Adressen zu finden">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Zudem können Sie einen der ">
+<!ENTITY error.suggest.middle "alternativen kostenlosen E-Mail-Dienste">
+<!ENTITY error.suggest.after " ausprobieren.">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hallo ">
+<!ENTITY success.title.after ", folgende E-Mail-Adressen sind für Sie verfügbar:">
+<!ENTITY success.tip "(Sie können mit Spitznamen oder anderen Begriffen versuchen, weitere E-Mail-Adressen zu finden)">
+<!ENTITY partnership.description "In Zusammenarbeit mit verschiedenen Anbietern bietet &brandShortName; Ihnen die Möglichkeit ein neues E-Mail-Konto und somit eine neue E-Mail-Adresse zu erhalten. Geben Sie oben einfach Ihren Vor- und Nachnamen oder beliebige andere Begriffe ein, um zu beginnen.">
+<!ENTITY existing.header "Haben Sie bereits eine E-Mail-Adresse, die Sie verwenden wollen?">
+<!ENTITY tinyheader.title "Eine E-Mail-Adresse bekommen?">
+<!ENTITY tinyheader.existing "Überspringen und meine bestehende E-Mail-Adresse verwenden">
+<!ENTITY content.close "Ich werde mein E-Mail-Konto später konfigurieren.">
+<!ENTITY successful.title "Glückwunsch!">
+<!ENTITY successful.successMessage "Sie haben Ihr E-Mail-Konto erfolgreich erstellt.">
+<!ENTITY successful.write "E-Mails schreiben">
+<!ENTITY successful.write.desc "Informieren Sie Ihre Bekannten und Familie über die neue E-Mail-Adresse.<br/> Dafür haben Sie doch das neue Postfach, stimmts?">
+<!ENTITY successful.customize "Passen Sie &brandShortName; mit tollen Add-ons an">
+<!ENTITY successful.customize.desc "Es gibt tausende Add-ons, mit deren Hilfe Sie &brandShortName; an Ihre speziellen Bedürfnisse anpassen können.">
+<!ENTITY successful.attach "Eine persönliche Signatur an meine E-Mails anhängen">
+<!ENTITY successful.attach.desc "Sie können einen kurzen Text, ein Zitat oder Informationen über Sie selbst automatisch an das Ende Ihrer gesendeten Nachrichten hängen.">
+<!ENTITY successful.close "Dieses Fenster schließen.">
+<!ENTITY input.namePlaceholder "Ihr Name oder Spitzname">
+<!ENTITY input.search "Suchen">
+<!ENTITY search_engine.title "Wählen Sie eine Suchmaschine aus">
+<!ENTITY search_engine.message "Der Anbieter Ihres E-Mail-Diensts kann Ihnen auch die Möglichkeit zur Suche im Web anbieten.">
+<!ENTITY search_engine.button "Fertigstellen">

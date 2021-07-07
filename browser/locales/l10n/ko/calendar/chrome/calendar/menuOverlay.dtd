@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "새 이벤트…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "새 태스크…">
+<!ENTITY event.new.task.accesskey               "T">
+
+<!ENTITY calendar.import.label                  "가져오기…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "캘린더 내보내기…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "출판…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "선택한 캘린더 삭제…">
+<!ENTITY calendar.deletecalendar.accesskey      "D">
+<!ENTITY calendar.unsubscribecalendar.label     "선택한 캘린더 구독 취소…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "선택한 캘린더 제거…">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "사용자 설정…">
+<!ENTITY calendar.menu.customize.accesskey      "C">
+
+<!ENTITY showUnifinderCmd.label                 "이벤트 찾기">
+<!ENTITY showUnifinderCmd.accesskey             "F">
+<!ENTITY showUnifinderCmd.tooltip               "이벤트 찾기 창 표시">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "캘린더에 태스크 표시">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "오늘로 가기">
+<!ENTITY goTodayCmd.accesskey                   "T">
+
+<!-- Toolbar items -->
+<!ENTITY showCurrentView.label                  "현재 보기">
+<!ENTITY showCurrentView.accesskey              "V">
+<!ENTITY calendar.properties.label              "캘린더 속성…">
+<!ENTITY calendar.properties.accesskey          "C">

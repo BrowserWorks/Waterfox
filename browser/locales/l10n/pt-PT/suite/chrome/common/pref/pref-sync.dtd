@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "Configurar o &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "C">
+<!ENTITY weaveDesc.label            "O &syncBrand.fullName.label; permite-lhe aceder ao seu histórico, marcadores, palavras-passe e separadores em todos os seus dispositivos.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "Conta &syncBrand.fullName.label;">
+<!ENTITY accountName.label            "Nome da conta:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Atualizar">
+<!ENTITY updatePass.accesskey         "A">
+<!ENTITY resetPass.label              "Repor">
+<!ENTITY resetPass.accesskey          "R">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Gerir conta">
+<!ENTITY manageAccount.accesskey      "a">
+<!ENTITY viewQuota.label              "Ver quota">
+<!ENTITY viewQuota.accesskey          "V">
+<!ENTITY changePassword.label         "Mudar palavra-passe">
+<!ENTITY changePassword.accesskey     "M">
+<!ENTITY myRecoveryKey.label          "Minha chave de recuperação">
+<!ENTITY myRecoveryKey.accesskey      "M">
+<!ENTITY resetSync.label              "Repor o Sync">
+<!ENTITY resetSync.accesskey          "R">
+<!ENTITY unlinkDevice.label           "Desassociar este dispositivo">
+<!ENTITY unlinkDevice.accesskey       "D">
+<!ENTITY addDevice.label              "Adicionar dispositivo">
+<!ENTITY addDevice.accesskey          "A">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Nome do computador:">
+<!ENTITY syncComputerName.accesskey   "N">
+
+<!ENTITY syncMy2.label              "Sincronizar:">
+<!ENTITY engine.addons.label        "Extras">
+<!ENTITY engine.addons.accesskey    "a">
+<!ENTITY engine.bookmarks.label     "Marcadores">
+<!ENTITY engine.bookmarks.accesskey "M">
+<!ENTITY engine.tabs.label          "Separadores">
+<!ENTITY engine.tabs.accesskey      "S">
+<!ENTITY engine.history.label       "Histórico">
+<!ENTITY engine.history.accesskey   "H">
+<!ENTITY engine.passwords.label     "Palavras-passe">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label         "Preferências">
+<!ENTITY engine.prefs.accesskey     "P">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Termos de serviço">
+<!ENTITY prefs.ppLink.label         "Política de privacidade">

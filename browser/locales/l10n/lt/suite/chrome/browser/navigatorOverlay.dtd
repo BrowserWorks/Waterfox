@@ -1,0 +1,145 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File Menu -->
+
+<!ENTITY tabCmd.label "Naršyklės kortelė">
+<!ENTITY tabCmd.accesskey "o">
+
+<!ENTITY openCmd.label "Atverti tinklavietę…">
+<!ENTITY openCmd.accesskey "v">
+
+<!ENTITY openFileCmd.label "Atverti failą…">
+<!ENTITY openFileCmd.accesskey "A">
+
+
+<!ENTITY closeOtherTabs.label "Užverti kitas korteles">
+<!ENTITY closeOtherTabs.accesskey "k">
+
+<!ENTITY uploadFile.label "Išsiųsti failą…">
+<!ENTITY uploadFile.accesskey "I">
+
+<!ENTITY printSetupCmd.label "Puslapio nuostatos…">
+<!ENTITY printSetupCmd.accesskey "P">
+<!-- Edit Menu -->
+
+<!ENTITY findOnCmd.label "Ieškoti šiame tinklalapyje…">
+<!-- View Menu -->
+
+<!ENTITY toolbarsCmd.label "Priemonių juostos">
+<!ENTITY toolbarsCmd.accesskey "o">
+<!ENTITY tabbarCmd.label "Kortelių juosta">
+<!ENTITY tabbarCmd.accesskey "K">
+<!ENTITY taskbarCmd.label "Būsenos juosta">
+<!ENTITY taskbarCmd.accesskey "B">
+<!ENTITY componentbarCmd.label "Darbų mygtukų juosta">
+<!ENTITY componentbarCmd.accesskey "D">
+
+<!ENTITY fullScreenCmd.label "Visas ekranas">
+<!ENTITY fullScreenCmd.accesskey "V">
+
+<!ENTITY useStyleSheetMenu.label "Tinklalapio stilius">
+<!ENTITY useStyleSheetMenu.accesskey "s">
+<!ENTITY useStyleSheetNone.label "Nėra">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "Pagrindinis tinklalapio stilius">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "P">
+<!ENTITY bidiSwitchPageDirectionItem.label "Pakeisti puslapio kryptį">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "P">
+<!ENTITY pageSourceCmd.label "Pirminis tekstas">
+<!ENTITY pageSourceCmd.accesskey "t">
+
+<!ENTITY pageInfoCmd.label "Informacija apie tinklalapį">
+<!ENTITY pageInfoCmd.accesskey "I">
+
+<!-- Go Menu -->
+
+<!ENTITY goMenu.label "Eiti">
+<!ENTITY goMenu.accesskey "E">
+<!ENTITY goHomeCmd.label "Į pradžios tinklalapį">
+<!ENTITY goHomeCmd.accesskey "r">
+<!ENTITY historyCmd.label "Į žurnalą">
+<!ENTITY historyCmd.accesskey "ž">
+
+<!ENTITY recentTabs.label "Paskiausiai užvertos kortelės">
+<!ENTITY recentTabs.accesskey "P">
+
+<!ENTITY recentWindows.label "Paskiausiai užverti langai">
+<!ENTITY recentWindows.accesskey "l">
+
+<!ENTITY historyRestoreLastSession.label "Atkurti paskiausiąjį seansą">
+<!ENTITY historyRestoreLastSession.accesskey "A">
+<!ENTITY syncTabsMenu.label "Kortelės iš kitų kompiuterių">
+<!ENTITY syncTabsMenu.accesskey "k">
+<!-- Bookmarks Menu -->
+
+<!ENTITY bookmarksMenu.label "Adresynas">
+<!ENTITY bookmarksMenu.accesskey "A">
+<!ENTITY addCurPageCmd.label "Įrašyti į adresyną">
+<!ENTITY addCurPageCmd.accesskey "r">
+<!ENTITY addCurPageAsCmd.label "Įrašyti į adresyną kaip…">
+<!ENTITY addCurPageAsCmd.accesskey "a">
+
+<!ENTITY addCurTabsAsCmd.label "Įrašyti į adresyną šią kortelių grupę…">
+<!ENTITY addCurTabsAsCmd.accesskey "k">
+<!ENTITY manBookmarksCmd.label "Tvarkyti adresyną…">
+<!ENTITY manBookmarksCmd.accesskey "T">
+
+<!-- Tools Menu -->
+
+<!ENTITY searchInternetCmd.label "Paieška internete">
+<!ENTITY searchInternetCmd.accesskey "n">
+
+<!ENTITY translateMenu.label "Išversti tinklalapį">
+<!ENTITY translateMenu.accesskey "v">
+
+<!ENTITY cookieMessageTitle.label "Pakeisti slapukų leidimai">
+<!ENTITY cookieDisplayCookiesCmd.label "Tvarkyti įrašytus slapukus">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "T">
+<!ENTITY cookieAllowCookiesCmd.label "Priimti šios svetainės slapukus">
+<!ENTITY cookieAllowCookiesCmd.accesskey "P">
+<!ENTITY cookieAllowCookiesMsg.label "Bus leidžiama atsiųsti slapukus iš šios svetainės.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Priimti šios svetainės slapukus vienam seansui">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "r">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Šiai svetainei bus leidžiama įrašyti slapukus tik vienam (esamam) seansui.">
+<!ENTITY cookieCookiesDefaultCmd.label "Naudoti numatytuosius slapukų leidimus">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "N">
+<!ENTITY cookieCookiesDefaultMsg.label "Šios svetainės slapukų priėmimo arba atmetimo taisyklės bus imamos iš numatytųjų nuostatų.">
+<!ENTITY cookieBlockCookiesCmd.label "Nepriimti šios svetainės slapukų">
+<!ENTITY cookieBlockCookiesCmd.accesskey "N">
+<!ENTITY cookieBlockCookiesMsg.label "Šios svetainės slapukai bus atmetami.">
+
+<!ENTITY cookieImageMessageTitle.label "Pakeisti paveikslų atsiuntimo leidimai">
+<!ENTITY cookieDisplayImagesCmd.label "Tvarkyti leidimus atsiųsti paveikslus">
+<!ENTITY cookieDisplayImagesCmd.accesskey "T">
+<!ENTITY cookieAllowImagesCmd.label "Leisti atsiųsti šios svetainės paveikslus">
+<!ENTITY cookieAllowImagesCmd.accesskey "L">
+<!ENTITY cookieAllowImagesMsg.label "Bus atsiunčiami visi svetainės paveikslai.">
+<!ENTITY cookieImagesDefaultCmd.label "Naudoti numatytuosius paveikslų leidimus">
+<!ENTITY cookieImagesDefaultCmd.accesskey "m">
+<!ENTITY cookieImagesDefaultMsg.label "Šios svetainės paveikslai bus atsiunčiami taip, kaip nurodyta numatytosiose nuostatose.">
+<!ENTITY cookieBlockImagesCmd.label "Nesiųsti šios svetainės paveikslų">
+<!ENTITY cookieBlockImagesCmd.accesskey "N">
+<!ENTITY cookieBlockImagesMsg.label "Šios svetainės paveikslai nebus atsiunčiami.">
+
+<!ENTITY popupAllowCmd.label "Leisti šios svetainės iškylančiuosius langus">
+<!ENTITY popupAllowCmd.accesskey "L">
+
+
+
+
+
+
+
+<!ENTITY popupsManage.label "Tvarkyti iškylančiųjų langų leidimus">
+<!ENTITY popupsManage.accesskey "š">
+
+<!ENTITY cookieCookieManager.label "Slapukų tvarkytuvė">
+<!ENTITY cookieCookieManager.accesskey "S">
+<!ENTITY cookieImageManager.label "Paveikslų tvarkytuvė">
+<!ENTITY cookieImageManager.accesskey "P">
+<!ENTITY popupsManager.label "Iškylančiųjų langų tvarkytuvė">
+<!ENTITY popupsManager.accesskey "š">
+
+<!ENTITY clearPrivateDataCmd.label "Pašalinti privačius duomenis…">
+<!ENTITY clearPrivateDataCmd.accesskey "š">

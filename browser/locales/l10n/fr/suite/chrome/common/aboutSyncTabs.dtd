@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label               "Onglets d’autres ordinateurs">
+
+<!ENTITY tabs.searchText.label                   "Rechercher des onglets…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label                   "Ouvrir cet onglet">
+<!ENTITY tabs.context.openTab.accesskey               "O">
+<!ENTITY tabs.context.openMultipleTabs.label          "Ouvrir les onglets sélectionnés">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "O">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "Marquer cet onglet…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "M">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "Marquer les onglets sélectionnés…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "s">
+<!ENTITY tabs.context.refreshList.label               "Actualiser la liste">
+<!ENTITY tabs.context.refreshList.accesskey           "c">

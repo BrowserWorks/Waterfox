@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "例外">
+<!ENTITY treehead.sitename.label        "报告站点">
+<!ENTITY treehead.status.label          "状态">
+<!ENTITY remove.label                   "删除站点">
+<!ENTITY remove.accesskey               "R">
+<!ENTITY removeall.label                "删除全部站点">
+<!ENTITY removeall.accesskey            "e">
+<!ENTITY address.label                  "网址：">
+<!ENTITY address.accesskey              "d">
+<!ENTITY block.label                    "阻止">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "在当前会话中允许">
+<!ENTITY session.accesskey              "S">
+<!ENTITY allow.label                    "是">
+<!ENTITY allow.accesskey                "A">

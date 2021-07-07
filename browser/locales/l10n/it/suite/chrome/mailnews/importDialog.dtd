@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importa">
+<!ENTITY importAll.label "Importa tutto">
+<!ENTITY importAll.accesskey "t">
+<!ENTITY importMail.label "Posta">
+<!ENTITY importMail.accesskey "P">
+<!ENTITY importFeeds.label "Sottoscrizioni ai feed">
+<!ENTITY importFeeds.accesskey "d">
+<!ENTITY importAddressbook.label "Rubriche">
+<!ENTITY importAddressbook.accesskey "R">
+<!ENTITY importSettings.label "Impostazioni">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label "Filtri">
+<!ENTITY importFilters.accesskey "F">
+<!ENTITY window.width "45em">
+<!ENTITY window.macWidth "50em">
+<!ENTITY importTitle.label "Importazione guidata di &brandShortName;">
+<!ENTITY importShortDesc.label "Importa posta, impostazioni, rubriche e filtri da altri programmi">
+<!ENTITY importDescription1.label "Questo processo importerà in &brandShortName; messaggi di posta, voci di rubrica, preferenze e/o filtri da altri programmi di posta e rubriche comuni.">
+<!ENTITY importDescription2.label "Una volta importate, vi si potrà accedere da &brandShortName;.">
+<!ENTITY selectDescription.label "Selezionare il programma dal quale eseguire l'importazione:">
+<!ENTITY selectDescriptionB.label "Selezionare un account esistente o crearne uno nuovo:">
+<!ENTITY selectDescription.accesskey "S">
+<!ENTITY acctName.label "Nome:">
+<!ENTITY acctName.accesskey "N">
+<!ENTITY noModulesFound.label "Non è stato trovato alcun file o applicazione da cui importare dati.">
+<!ENTITY back.label "&lt; Indietro">
+<!ENTITY forward.label "Avanti &gt;">
+<!ENTITY finish.label "Finito">
+<!ENTITY cancel.label "Annulla">
+<!ENTITY select.label "o seleziona il tipo di materiale da importare:">
+<!ENTITY title.label "Titolo">
+<!ENTITY processing.label "Importazione in corso…">

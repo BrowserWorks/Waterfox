@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "Κύριο μενού">
+<!ENTITY Toolbar.tooltip    "Κύρια γραμμή εργαλείων">
+
+
+<!ENTITY multiline-expand.tooltip   "Εναλλαγή σε είσοδο πολλαπλών γραμμών (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "Εναλλαγή σε είσοδο μονής γραμμής (Ctrl+Up)">
+<!ENTITY multiline-send.tooltip     "Αποστολή κειμένου (Ctrl+Enter)">
+<!ENTITY server-nick.tooltip        "Αλλαγή ψευδωνύμου ή ορισμός κατάστασης. Για εστίαση στο πλαίσιο εισόδου, πατήστε Escape.">
+
+<!ENTITY Underline.label             "Υπογράμμιση">
+<!ENTITY Bold.label                  "Έντονη γραφή">
+<!ENTITY Reverse.label               "Αντίστροφη βίντεο">
+<!ENTITY Normal.label                "Κανονικό">
+<!ENTITY Color.label                 "Χρώμα">
+<!ENTITY ForeBack.label              "xx=Προσκήνιο yy=Παρασκήνιο">

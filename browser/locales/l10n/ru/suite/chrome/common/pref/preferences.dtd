@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Настройки">
+<!ENTITY  preferencesDefaultTitleWin.title "Настройки">
+<!ENTITY  preferencesCloseButton.label "Закрыть">
+<!ENTITY  preferencesCloseButton.accesskey "ы">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Настройки">
+<!ENTITY prefWindow.size "width: 150ch; height: 45em;">
+<!ENTITY prefWindowMac.size "width: 74em; height: 43em;">
+<!ENTITY prefWindowWin.size "width: 155ch; height: 45em;">
+<!ENTITY prefWindowMac2.size "width: 70em; height: 41em;">
+<!ENTITY prefWindowWin2.size "width: 125ch; height: 44em;">
+<!ENTITY categoryHeader "Категория">
+
+<!ENTITY appear.label "Внешний вид">
+<!ENTITY content.label "Содержимое">
+<!ENTITY fonts.label "Шрифты">
+<!ENTITY colors.label "Цвета">
+<!ENTITY media.label "Медиа">
+<!ENTITY spellingPane.label "Орфография">
+
+<!ENTITY navigator.label "Браузер">
+<!ENTITY history.label "Журнал">
+<!ENTITY languages.label "Языки">
+<!ENTITY applications.label "Приложения">
+<!ENTITY locationBar.label "Панель адреса">
+<!ENTITY search.label "Поиск в Интернете">
+<!ENTITY tabWindows.label "Вкладки">
+<!ENTITY links.label "Поведение ссылок">
+<!ENTITY download.label "Загрузки">
+
+<!ENTITY security.label "Приватность и защита">
+<!ENTITY privatedata.label "Личные данные">
+<!ENTITY cookies.label "Куки">
+<!ENTITY images.label "Изображения">
+<!ENTITY popups.label "Всплывающие окна">
+<!ENTITY passwords.label "Пароли">
+<!ENTITY masterpass.label "Мастер-пароль">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Сертификаты">
+
+<!ENTITY sync.label "Синхронизация">
+
+<!ENTITY advance.label "Дополнительно">
+<!ENTITY scriptsAndWindows.label "Сценарии и плагины">
+<!ENTITY keynav.label "Клавиатура">
+<!ENTITY findAsYouType.label "Поиск по мере набора">
+<!ENTITY cache.label "Кэш">
+<!ENTITY offlineApps.label "Автономные приложения">
+<!ENTITY proxies.label "Прокси-серверы">
+<!ENTITY httpnetworking.label "Работа с HTTP">
+<!ENTITY smart.label "Установка ПО">
+<!ENTITY mousewheel.label "Колесико мыши">
+
+<!ENTITY debugging.label "Отладка">
+
+<!ENTITY focusSearch.key "f">

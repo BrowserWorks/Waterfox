@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Rozpoczęto pobieranie pliku:">
+<!ENTITY  from.label                  "Adres:">
+<!ENTITY  actionQuestion.label        "Po ukończeniu pobierania:">
+
+<!ENTITY  openWith.label              "Otwórz za pomocą">
+<!ENTITY  openWith.accesskey          "o">
+<!ENTITY  other.label                 "Inna aplikacja…">
+
+<!ENTITY  saveFile.label              "Zapisz plik">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "Pamiętaj tę decyzję dla wszystkich plików tego typu">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "Typ pliku:">
+
+<!ENTITY  chooseHandlerMac.label      "Wybierz…">
+<!ENTITY  chooseHandlerMac.accesskey  "W">
+<!ENTITY  chooseHandler.label         "Przeglądaj…">
+<!ENTITY  chooseHandler.accesskey     "P">
+
+<!ENTITY  unknownPromptText.label     "Czy zapisać ten plik?">

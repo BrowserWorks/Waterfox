@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "郵件儲存">
+<!ENTITY securitySettings.label "安全設定">
+<!ENTITY serverSettings.label "伺服器設定">
+<!ENTITY serverType.label "伺服器類型:">
+<!ENTITY serverName.label "伺服器名稱:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "使用者名稱:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "預設:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "每">
+<!ENTITY biffStart.accesskey "y">
+<!ENTITY biffEnd.label "分鐘檢查新郵件">
+<!ENTITY useIdleNotifications.label "收到新訊息時，允許即時的伺服器通知">
+<!ENTITY useIdleNotifications.accesskey "w">
+<!ENTITY connectionSecurity.label "連線安全性:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "無">
+<!ENTITY connectionSecurityType-1.label "嘗試使用 STARTTLS">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "驗證方式:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "不刪除伺服器上的郵件">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "只讀取標頭資訊">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "最多">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "天">
+<!ENTITY deleteOnServer2.label "直到我將它們刪除">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "自動下載所有新郵件或文章">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "當我刪除郵件時:">
+<!ENTITY modelMoveToTrash.label "移動到此資料夾:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "標示為「已刪除」">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "直接砍掉">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "結束時清理「收件匣」">
+<!ENTITY expungeOnExit.accesskey "e">
+<!ENTITY emptyTrashOnExit.label "結束時清空垃圾桶">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "啟動時檢查有無新郵件或文章">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "要下載超過">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "封">
+<!ENTITY alwaysAuthenticate.label "連線到此伺服器時一律要求認證">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY newsrcFilePath1.label "News.rc 檔案:">
+<!ENTITY newsrcPicker1.label "選擇 News.rc 檔案">
+<!ENTITY abbreviate.label "資料夾顯示新聞群組名稱的方式:">
+<!ENTITY abbreviateOn.label "完整名稱 (例: 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "縮寫 (例: 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "進階…">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY serverDefaultCharset2.label "預設文字編碼:">
+<!ENTITY localPath1.label "本機目錄:">
+<!ENTITY localFolderPicker.label "選取本地目錄">
+<!ENTITY browseFolder.label "瀏覽…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "瀏覽…">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "帳號設定">
+<!ENTITY accountSettingsDesc.label "這是沒有任何身份資訊的特殊帳號。">
+<!ENTITY storeType.label "訊息儲存方式:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "為每個信件匣建立一個檔案（mbox）">
+<!ENTITY maildirStore.label "為每封訊息建立檔案（maildir）">

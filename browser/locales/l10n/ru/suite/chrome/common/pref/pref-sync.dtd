@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "Настроить &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "с">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; позволяет вам получить доступ к вашему журналу, закладкам, паролям и открытым вкладкам со всех ваших устройств.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "Учётная запись &syncBrand.fullName.label;">
+<!ENTITY accountName.label            "Имя учётной записи:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Обновить">
+<!ENTITY updatePass.accesskey         "и">
+<!ENTITY resetPass.label              "Сбросить">
+<!ENTITY resetPass.accesskey          "р">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Управление учётной записью">
+<!ENTITY manageAccount.accesskey      "в">
+<!ENTITY viewQuota.label              "Просмотреть квоту">
+<!ENTITY viewQuota.accesskey          "м">
+<!ENTITY changePassword.label         "Сменить пароль">
+<!ENTITY changePassword.accesskey     "е">
+<!ENTITY myRecoveryKey.label          "Мой ключ восстановления">
+<!ENTITY myRecoveryKey.accesskey      "й">
+<!ENTITY resetSync.label              "Перенастроить Sync">
+<!ENTITY resetSync.accesskey          "н">
+<!ENTITY unlinkDevice.label           "Отсоединить это устройство">
+<!ENTITY unlinkDevice.accesskey       "о">
+<!ENTITY addDevice.label              "Добавить устройство">
+<!ENTITY addDevice.accesskey          "б">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Имя компьютера:">
+<!ENTITY syncComputerName.accesskey   "я">
+
+<!ENTITY syncMy2.label              "Синхронизировать мои:">
+<!ENTITY engine.addons.label        "Дополнения">
+<!ENTITY engine.addons.accesskey    "п">
+<!ENTITY engine.bookmarks.label     "Закладки">
+<!ENTITY engine.bookmarks.accesskey "к">
+<!ENTITY engine.tabs.label          "Вкладки">
+<!ENTITY engine.tabs.accesskey      "д">
+<!ENTITY engine.history.label       "Историю">
+<!ENTITY engine.history.accesskey   "т">
+<!ENTITY engine.passwords.label     "Пароли">
+<!ENTITY engine.passwords.accesskey "л">
+<!ENTITY engine.prefs.label         "Настройки">
+<!ENTITY engine.prefs.accesskey     "а">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Условия службы">
+<!ENTITY prefs.ppLink.label         "Политика приватности">
