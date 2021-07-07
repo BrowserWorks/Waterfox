@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ha abierto una versión más antigua de &brandProductName;">
+<!ENTITY window.style "width: 510px;">
+
+<!ENTITY window.nosync2 "Puede que una versión más reciente de &brandProductName; haya hecho cambios en su perfil que lo hacen incompatible con esta versión más antigua. Use este perfil solo con esa versión más reciente o cree un nuevo perfil para esta instalación de &brandShortName;. Crear un perfil nuevo requiere configurar de nuevo sus cuentas, calendarios y complementos.">
+
+<!ENTITY window.moreinfo "Más información…">
+<!ENTITY window.create "Crear perfil nuevo">
+<!ENTITY window.quit-win "Salir">
+<!ENTITY window.quit-nonwin "Salir">

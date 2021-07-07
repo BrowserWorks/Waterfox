@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Neuer gespeicherter Suchordner">
+<!ENTITY name.label                    "Name:">
+<!ENTITY name.accesskey                "N">
+<!ENTITY description.label             "Erstellen als Unterordner von:">
+<!ENTITY description.accesskey         "s">
+
+<!ENTITY searchTermCaption.label       "Die Suchkriterien für diesen gespeicherten Suchordner konfigurieren:">
+
+<!ENTITY folderSelectionCaption.label  "Wählen Sie die Ordner zum Durchsuchen">
+<!ENTITY chooseFoldersButton.label     "Durchsuchen…">
+<!ENTITY chooseFoldersButton.accesskey "D">
+
+<!ENTITY searchOnline.label            "Online suchen (Ergibt aktuelle Ergebnisse für IMAP und News-Ordner, aber verlängert die Zeit, um den Ordner zu öffnen)">
+<!ENTITY searchOnline.accesskey        "O">
+<!ENTITY newFolderButton.label         "Erstellen">
+<!ENTITY newFolderButton.accesskey     "E">
+<!ENTITY editFolderButton.label        "Aktualisieren">
+<!ENTITY editFolderButton.accesskey    "A">

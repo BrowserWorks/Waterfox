@@ -1,0 +1,94 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * This file contains all localizable skin settings such as
+ *   font, layout, and geometry
+ *   Contributor(s):
+ *   Tsahi Asher (tsahi_75@yahoo.com)
+ *   Reuven Gonen  (linxspider@yahoo.com)
+ */
+window {
+  font: 3mm tahoma,arial,helvetica,sans-serif;
+}
+
+
+/**************************
+**  Global Settings  **
+***************************/
+
+/*make UI RTL */
+
+window,prefwindow,dialog,wizard,page,menu { direction: rtl; }
+
+/*
+   chrome://browser/skin/pageInfo.css uses italic font style for the disabled textboxes.
+   Because Persian italic fonts are busted on some platforms (such as Vista), opt for not
+   using them.
+   We do this globally because any other similar code would result in imperfect rendering.
+*/
+
+textbox[disabled] {
+  font-style: normal !important;
+}
+
+/* Make the XML error page RTL (bug 417489) */
+
+parsererror {
+  direction: rtl;
+}
+
+
+/********************
+**  Firefox  **
+*********************/
+
+
+/*
+    Set LTR for url and file paths and align them to the right - Bug 289934
+    Updates:
+    - Removed #downloadFolder (bug 1457720).
+*/
+
+#link-url-text, #source, #path, #url, #feedurl, #urltext {
+  direction: ltr !important;
+  text-align: right !important;
+}
+
+
+/********************
+**  Thunderbird  **
+*********************/
+
+
+#statusbar-display {
+  direction: ltr !important;
+  text-align: right !important;
+  }
+
+/* Set Folder Pane on the left side of window */
+
+#mailContentWrapper {
+  direction: ltr !important;
+}
+
+/* Set Mail Content titlebar as RTL */
+
+#searchBox {
+  direction: rtl !important;
+}
+
+/* Set Statusbar to LTR */
+
+#statusText {
+  direction: ltr !important;
+  text-align: right !important;
+}
+
+/********************
+**  Extensions  **
+*********************/
+
+#adblockPreferencesWindow
+{direction: ltr !important }

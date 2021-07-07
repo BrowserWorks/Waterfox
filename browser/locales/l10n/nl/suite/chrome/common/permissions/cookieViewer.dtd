@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Opgeslagen cookies">
+<!ENTITY     tab.bannedservers.label        "Cookiewebsites">
+<!ENTITY     div.bannedservers.label        "Websites beheren die wel en niet cookies kunnen opslaan op uw computer.">
+<!ENTITY     div.cookiesonsystem.label      "Op uw computer opgeslagen cookies bekijken en verwijderen.">
+<!ENTITY     treehead.cookiename.label      "Cookienaam">
+<!ENTITY     treehead.cookiedomain.label    "Website">
+<!ENTITY     treehead.cookieexpires.label   "Verloopt op">
+<!ENTITY     treehead.infoselected.label    "Informatie over het geselecteerde cookie">
+<!ENTITY     button.removecookie.label      "Cookie verwijderen">
+<!ENTITY     button.removecookie.accesskey  "v">
+<!ENTITY     button.removeallcookies.label  "Alle cookies verwijderen">
+<!ENTITY     button.removeallcookies.accesskey "A">
+
+<!ENTITY     search.placeholder             "Cookies zoeken">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Naam:">
+<!ENTITY     props.value.label              "Inhoud:">
+<!ENTITY     props.domain.label             "Host:">
+<!ENTITY     props.path.label               "Pad:">
+<!ENTITY     props.secure.label             "Verzenden bij:">
+<!ENTITY     props.expires.label            "Verloopt:">
+
+<!ENTITY     treehead.sitename.label        "Website">
+<!ENTITY     treehead.scheme.label          "Schema">
+<!ENTITY     treehead.status.label          "Status">
+<!ENTITY     windowtitle.label              "Cookiebeheerder">
+
+<!ENTITY     blockSite.label                "Blokkeren">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Toestaan">
+<!ENTITY     allowSite.accesskey            "T">
+<!ENTITY     allowSiteSession.label         "Sessie">
+<!ENTITY     allowSiteSession.accesskey     "e">
+<!ENTITY     removepermission.label         "Website verwijderen">
+<!ENTITY     removepermission.accesskey     "v">
+<!ENTITY     removeallpermissions.label     "Alle websites verwijderen">
+<!ENTITY     removeallpermissions.accesskey "A">
+
+<!ENTITY     futureCookies.label            "Websites waarvan cookies zijn verwijderd niet toestaan nieuwe cookies in te stellen">
+<!ENTITY     futureCookies.accesskey        "W">

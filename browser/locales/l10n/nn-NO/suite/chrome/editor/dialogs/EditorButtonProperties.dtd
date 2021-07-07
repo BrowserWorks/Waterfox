@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Knappeeigenskapar">
+
+<!ENTITY Settings.label "Innstillingar">
+
+<!ENTITY ButtonType.label "Type">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Send">
+<!ENTITY reset.value "Still tilbake">
+<!ENTITY button.value "Knapp">
+
+<!ENTITY ButtonName.label "Namn:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Verdi:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Tabulatorindeks">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "Slått av">
+<!ENTITY ButtonDisabled.accesskey "S">
+<!ENTITY AccessKey.label "Snøggtast:">
+<!ENTITY AccessKey.accesskey "S">
+
+<!ENTITY RemoveButton.label "Fjern knapp">
+<!ENTITY RemoveButton.accesskey "F">

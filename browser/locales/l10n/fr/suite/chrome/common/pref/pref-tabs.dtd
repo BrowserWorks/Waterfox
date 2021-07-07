@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Onglets">
+
+<!ENTITY tabDisplay.label "Affichage par onglets">
+<!ENTITY autoHide.label "Masquer la barre des onglets s’il n’y en a qu’un d’ouvert">
+<!ENTITY autoHide.accesskey2 "a">
+<!ENTITY background.label "Basculer vers les nouveaux onglets ouverts">
+<!ENTITY background.accesskey "B">
+<!ENTITY warnOnClose.label "Me prévenir lors de la fermeture d’une fenêtre contenant plusieurs onglets">
+<!ENTITY warnOnClose.accesskey "M">
+<!ENTITY relatedAfterCurrent.label "Ouvrir les onglets liés après l’onglet courant">
+<!ENTITY relatedAfterCurrent.accesskey "O">
+
+<!ENTITY loadGroup.label "À l’ouverture d’un marque-page de groupe d’onglets">
+<!ENTITY loadGroupAppend.label "Ajouter des onglets">
+<!ENTITY loadGroupAppend.accesskey "o">
+<!ENTITY loadGroupReplace.label "Remplacer les onglets déjà ouverts">
+<!ENTITY loadGroupReplace.accesskey "R">
+
+<!ENTITY openTabs.label "Ouvrir des onglets plutôt que des fenêtres pour">
+
+<!ENTITY middleClick.label "Clic du milieu, Ctrl+Clic ou Ctrl+Entrée sur les liens d’une page web">
+<!ENTITY middleClick.accesskey "C">
+<!ENTITY middleClickMac.label "Clic du milieu, &#8984;+clic ou &#8984;+Retour sur les liens d’une page web">
+<!ENTITY middleClickMac.accesskey "C">
+<!ENTITY urlbar.label "Ctrl+Entrée dans la barre d’adresse">
+<!ENTITY urlbar.accesskey "L">
+<!ENTITY urlbarMac.label "&#8984;+Retour dans la barre d’adresse">
+<!ENTITY urlbarMac.accesskey "L">
+
+<!ENTITY openManagers.label "Ouvrir un nouvel onglet au lieu d’une fenêtre dédiée">
+<!ENTITY openDataManager.label "Gestionnaire de données">
+<!ENTITY openDataManager.accesskey "d">
+<!ENTITY openAddOnsManager.label "Gestionnaire de modules">
+<!ENTITY openAddOnsManager.accesskey "n">

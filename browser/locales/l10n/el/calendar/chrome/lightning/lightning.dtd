@@ -1,0 +1,110 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Ημερολόγιο">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Εκδήλωση…">
+<!ENTITY lightning.menupopup.new.event.accesskey "Σ">
+<!ENTITY lightning.menupopup.new.task.label     "Εργασία…">
+<!ENTITY lightning.menupopup.new.task.accesskey "Ε">
+<!ENTITY lightning.menupopup.new.calendar.label "Ημερολόγιο…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "Η">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Αρχείο ημερολογίου…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "η">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Ημερολόγιο">
+<!ENTITY lightning.menu.view.calendar.accesskey        "Η">
+<!ENTITY lightning.menu.view.tasks.label               "Εργασίες">
+<!ENTITY lightning.menu.view.tasks.accesskey           "ρ">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Εκδηλώσεις και εργασίες">
+<!ENTITY lightning.menu.eventtask.accesskey            "σ">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Email:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Να προτιμάται ο προγραμματισμός με ηλεκτρονικό ταχυδρομείο">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Προς το παρόν, μπορείτε να το ενεργοποιήσετε μόνο αφού ρυθμίσετε αυτό το ημερολόγιο στο παράθυρο ιδιοτήτων, αν ο διακομιστής ημερολογίων διαχειρίζεται τον προγραμματισμό.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Η επιλογή είναι διαθέσιμη αν ο διακομιστής ημερολογίου διαχειρίζεται τον προγραμματισμό. Η ενεργοποίησή του θα επιτρέψει την εναλλακτική ο προγραμματισμός να γίνεται βάσει του ηλεκτρονικού ταχυδρομείου αντί να το αφήνει στον διακομιστή.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Αποδοχή">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Αποδοχή πρόσκλησης σε εκδήλωση">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Αποδοχή όλων">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Αποδοχή πρόσκλησης για όλες τις καταχωρήσεις της εκδήλωσης">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Προσθήκη">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Προσθήκη εκδήλωσης στο ημερολόγιο">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Απόρριψη">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Απόρριψη πρόσκλησης σε εκδήλωση">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Αρνητική απάντηση σε όλα">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Απόρριψη πρόσκλησης για όλες τις καταχωρήσεις της εκδήλωσης">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Απόρριψη">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Αρνητική απάντηση στην αντιπρόταση">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Διαγραφή">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Διαγραφή από το ημερολόγιο">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Λεπτομέρειες…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Εμφάνιση λεπτομερειών εκδήλωσης">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Να μην εμφανίζονται αυτά τα μηνύματα">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Ημερολόγιο">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Μετάβαση στην καρτέλα ημερολογίου">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Περισσότερα">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Κλικ για εμφάνιση περισσότερων επιλογών">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Επιβεβαίωση εκ νέου">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Αποστέλλεται μια επιβεβαίωση εκ νέου στο διοργανωτή">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Επαναπρογραμματισμός">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Επαναπρογραμματισμός εκδήλωσης">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Αποθήκευση αντιγράφου">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Αποθήκευση αντιγράφου της εκδήλωσης στο ημερολόγιο ανεξαρτήτως της απάντησης στον διοργανωτή. Η λίστα παρευρισκόμενων θα διαγραφεί.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Αβεβαιότητα">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Επιφυλακτική αποδοχή πρόσκλησης σε εκδήλωση">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Αβεβαιότητα για όλα">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Επιφυλακτική αποδοχή πρόσκλησης για όλες τις καταχωρήσεις της εκδήλωσης">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Ενημέρωση">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Ενημέρωση εκδήλωσης στο ημερολόγιο">
+<!ENTITY lightning.imipbar.description                                      "Αυτό το μήνυμα περιέχει πρόσκληση σε εκδήλωση.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Αποστολή μιας απάντησης τώρα">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Αποστολή μιας απάντησης στον οργανωτή">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Αποστολή μιας απάντησης σε όλη τη σειρά των οργανωτών">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Να μην αποσταλεί απάντηση">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Αλλαγή της κατάστασης συμμετοχής χωρίς αποστολή απάντησης στον οργανωτή">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Αλλάξτε την κατάσταση συμμετοχής σας για τη σειρά χωρίς αποστολή απόκρισης στον οργανωτή">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "Ν">
+<!ENTITY lightning.keys.todo.new "Ρ">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Δημιουργία νέου ημερολογίου">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Εμφάνιση μικρο-μήνα">
+<!ENTITY todaypane.showMinimonth.accesskey "μ">
+<!ENTITY todaypane.showMiniday.label "Εμφάνιση μικρο-ημέρας">
+<!ENTITY todaypane.showMiniday.accesskey  "η">
+<!ENTITY todaypane.showNone.label "Τίποτα από τα δύο">
+<!ENTITY todaypane.showNone.accesskey "Τ">
+<!ENTITY todaypane.showTodayPane.label "Εμφάνιση παραθύρου ημέρας">
+<!ENTITY todaypane.showTodayPane.accesskey "π">
+<!ENTITY todaypane.statusButton.label "Προβολή ημέρας">

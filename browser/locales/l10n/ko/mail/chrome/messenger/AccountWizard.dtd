@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "계정 마법사">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "메시지 수신을 위해서는 계정을 설정해야 합니다.">
+<!ENTITY accountTypeTitle.label "새 계정 설정">
+<!ENTITY accountTypeDesc2.label "이 마법사는 계정을 설정하는데 필요한 정보를 수집합니다. 자세한 내용은 시스템 관리자 또는 ISP에 문의하십시오.">
+<!ENTITY accountTypeDirections.label "설정할 계정의 종류를 선택하십시오:">
+<!ENTITY accountTypeMail.label "메일 계정">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "뉴스 그룹 계정">
+<!ENTITY accountTypeNews.accesskey "w">
+
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "유닉스 메일스풀(Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "아이디">
+<!ENTITY identityDesc.label "메시지 전송 시 계정마다 다른 아이디로 보낼 수 있습니다.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "보내는 메일의 보낸 사람 항목에 표시할 이름을 입력하십시오.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(예: 홍길동)">
+<!ENTITY fullnameLabel.label "이름:">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "메일 주소:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "받는 서버 정보">
+<!ENTITY incomingServerTypeDesc.label "받는 서버의 종류를 선택하십시오.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "서버에 메일 남기기">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "포트 번호:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "기본 포트:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "메일 수신 서버의 이름을 입력해 주십시오.(예: mail.example.kr)">
+<!ENTITY incomingServer.label "메일 수신 서버:">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "메일 제공자로 지정된 수신 서버의 사용자명을 입력해 주십시오.(예: jsmith)">
+<!ENTITY incomingUsername.label "사용자명:">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "뉴스(NNTP) 서버의 이름을 입력해 주십시오. (예:  news.example.kr)">
+<!ENTITY newsServerLabel.label "뉴스 서버:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "송신 서버 정보">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "메일 송신(SMTP) 서버의 이름을 입력해 주십시오.(예: smtp.example.kr)">
+<!ENTITY outgoingServer.label "메일 송신 서버:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "메일 제공자로 지정된 보내는 서버의 사용자명을 입력해 주십시오 (일반적으로 수신 서버의 사용자명과 같음).">
+<!ENTITY outgoingUsername.label "보내는 서버의 사용자명:">
+<!ENTITY outgoingUsername.accesskey "U">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "메일 송신 서버의 설정은 [계정 설정] 으로 변경할 수 있습니다.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "메일 서버 (SMTP) &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot; 사용합니다.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "계정 아이디 &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot; 사용합니다.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "메일 서버 (SMTP) &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;는 수신 서버와 동일하기 때문에 송신 서버의 접근에도 수신 서버의 계정을 사용합니다.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "계정 이름">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "참조할 계정 이름을 입력하십시오.">
+<!ENTITY accnameLabel.label "계정 이름:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "축하합니다! 계정 설정이 완료되었습니다.">
+<!ENTITY completionText.label "아래의 정보가 맞는지 다시 확인하십시오.">
+<!ENTITY serverTypePrefix.label "받는 서버 종류:">
+<!ENTITY serverNamePrefix.label "받는 서버 이름:">
+<!ENTITY smtpServerNamePrefix.label "보내는 서버 (SMTP):">
+<!ENTITY newsServerNamePrefix.label "뉴스 서버 이름 (NNTP):">
+<!ENTITY downloadOnLogin.label "메시지 지금 받기">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "설정한 계정의 디렉터리에 메일을 저장하려면 체크 박스의 체크를 제거하십시오. 이는 이 계정이 상단에 나타남을 의미합니다. 반면에 로컬 폴더의 전체 메일함 계정의 일부분으로 취급됩니다.">
+<!ENTITY deferStorage.label "전체 메일함 사용 (로컬 폴더에 메일 저장)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "이 설정을 저장하려면 완료를 눌러 계정 마법사를 종료하십시오.">
+<!ENTITY clickFinish.labelMac "현재 설정을 저장하고 계정 마법사를 종료하려면 완료를 선택하십시오.">

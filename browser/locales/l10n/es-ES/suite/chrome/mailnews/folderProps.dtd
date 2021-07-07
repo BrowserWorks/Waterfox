@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label "Propiedades">
+<!ENTITY generalInfo.label "Información general">
+<!ENTITY folderCharsetFallback2.label "Codif. de texto predet.:">
+<!ENTITY folderCharsetFallback2.accesskey "C">
+<!ENTITY folderCharsetEnforce2.label "Aplicar la codificación a todos los mensajes de la carpeta (se ignorarán las preferencias de codificación de texto de mensajes individuales, así como la detección automática)">
+<!ENTITY folderCharsetEnforce2.accesskey "c">
+<!ENTITY folderRebuildSummaryFileTip2.label "Reconstruir el archivo índice resumen">
+<!ENTITY folderRebuildSummaryFile2.label "Reparar carpeta">
+<!ENTITY folderRebuildSummaryFile2.accesskey "R">
+<!ENTITY folderRebuildSummaryFile.explanation "Algunas veces el archivo índice de la carpeta (.msf) se daña y puede parecer que algunos mensajes válidos desaparecen mientras que otros eliminados siguen mostrándose; reparar la carpeta puede corregir estos problemas.">
+<!ENTITY folderIncludeInGlobalSearch.label "Incluir mensajes en esta carpeta en los resultados de la búsqueda global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey "I">
+<!ENTITY retention.label "Política de retención">
+<!ENTITY retentionUseAccount.label "Usar los datos de mi cuenta">
+<!ENTITY retentionUseAccount.accesskey "i">
+<!ENTITY daysOld.label "días">
+<!ENTITY message.label "mensajes más modernos">
+<!ENTITY retentionCleanup.label "Conservar mensajes:">
+<!ENTITY retentionCleanupImap.label "Conservar mensajes, tanto las copias locales como sus originales en el servidor:">
+<!ENTITY retentionCleanupPop.label "Conservar mensajes, incluyendo sus originales en el servidor:">
+<!ENTITY retentionDeleteMsg.label "Eliminar mensajes con más de">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Todos los mensajes">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "Los">
+<!ENTITY retentionKeepRecent.accesskey "L">
+<!ENTITY retentionApplyToFlagged.label "Conservar siempre mensajes señalados">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+<!ENTITY folderSynchronizationTab.label "Sincronización">
+<!ENTITY folderCheckForNewMessages2.label "Al obtener mensajes nuevos de esta cuenta, comprobar siempre esta carpeta">
+<!ENTITY folderCheckForNewMessages2.accesskey "b">
+<!ENTITY offlineFolder.check.label "Seleccionar esta carpeta para usar sin conexión">
+<!ENTITY offlineFolder.check.accesskey "S">
+<!ENTITY offlineFolder.button.label "Descargar ahora">
+<!ENTITY offlineFolder.button.accesskey "D">
+<!ENTITY selectofflineNewsgroup.check.label "Seleccionar este grupo de noticias para usar sin conexión">
+<!ENTITY selectofflineNewsgroup.check.accesskey "o">
+<!ENTITY offlineNewsgroup.button.label "Descargar ahora">
+<!ENTITY offlineNewsgroup.button.accesskey "D">
+<!ENTITY folderProps.name.label "Nombre:">
+<!ENTITY folderProps.name.accesskey "N">
+<!ENTITY folderProps.location.label "Ubicación:">
+<!ENTITY folderProps.location.accesskey "U">
+<!ENTITY folderSharingTab.label "Compartir">
+<!ENTITY privileges.button.label "Privilegios…">
+<!ENTITY privileges.button.accesskey "P">
+<!ENTITY permissionsDesc.label "Tiene los siguientes permisos:">
+<!ENTITY folderType.label "Tipo de carpeta:">
+<!ENTITY folderQuotaTab.label "Cuota">
+<!ENTITY folderQuotaUsage.label "Uso:">
+<!ENTITY folderQuotaStatus.label "Estado:">
+<!ENTITY numberOfMessages.label "Número de mensajes:">
+<!ENTITY numberUnknown.label "desconocido">
+<!ENTITY sizeOnDisk.label "Tamaño en disco:">
+<!ENTITY sizeUnknown.label "desconocido">

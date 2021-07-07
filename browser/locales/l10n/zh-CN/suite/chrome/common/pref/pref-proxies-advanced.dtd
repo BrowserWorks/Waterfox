@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+
+<!ENTITY  pref.proxies.advanced.title "高级代理服务器配置">
+<!ENTITY  protocols.caption           "专用协议的代理服务器">
+<!ENTITY  protocols.description       "通常代理服务器能处理的协议如下.">
+<!ENTITY  http.label                  "HTTP 代理:">
+<!ENTITY  http.accesskey              "x">
+<!ENTITY  ssl.label                   "SSL 代理:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "FTP 代理：">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "为所有的协议使用HTTP代理服务器的设置">
+<!ENTITY  reuseProxy.accesskey        "U">
+<!ENTITY  port.label                  "端口:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "普通代理服务器">
+<!ENTITY  socks.description           "SOCKS代理是一种通用代理有时被用在企业或类似的环境中.">
+<!ENTITY  socks.label                 "SOCKS代理服务器:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "用来解析主机(建议SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

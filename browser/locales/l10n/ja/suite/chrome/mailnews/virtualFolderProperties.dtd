@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "新しい検索フォルダー">
+<!ENTITY name.label                    "名前:">
+<!ENTITY name.accesskey                "N">
+<!ENTITY description.label             "作成先:">
+<!ENTITY description.accesskey         "C">
+
+<!ENTITY searchTermCaption.label       "検索フォルダーで使用する検索条件を設定してください: ">
+
+<!ENTITY folderSelectionCaption.label  "検索対象: ">
+<!ENTITY chooseFoldersButton.label     "選択...">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label            "オンラインで検索 (IMAP やニュースフォルダーでも最新の結果が得られますが、フォルダーを開くのに時間がかかります)">
+<!ENTITY searchOnline.accesskey        "S">
+<!ENTITY newFolderButton.label         "作成">
+<!ENTITY newFolderButton.accesskey     "r">
+<!ENTITY editFolderButton.label        "更新">
+<!ENTITY editFolderButton.accesskey    "U">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "有些網頁會提供多種語言的版本，您可於此處設定偏好的顯示語言順序。">
+<!ENTITY languages.customize.title                      "語言">
+<!ENTITY langtitle.label                                "網頁所使用的語言">
+<!ENTITY languages.customize.prefAddLangDescript        "選擇您想要新增的語言。">
+<!ENTITY languages.customize.addButton.label            "新增…">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+<!ENTITY languages.customize.deleteButton.label         "移除">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.add.title.label            "新增語言">
+<!ENTITY languages.customize.available.label            "語言:">
+<!ENTITY languages.customize.active.label               "偏好語言順序:">
+<!ENTITY languages.customize.active.accesskey           "L">
+<!ENTITY languages.customize.others.label               "其它:">
+<!ENTITY languages.customize.others.accesskey           "O">
+<!ENTITY languages.customize.Fallback2.grouplabel       "開啟老舊內容時使用的文字編碼">
+<!ENTITY languages.customize.Fallback2.label            "備用字元編碼:">
+<!ENTITY languages.customize.Fallback2.accesskey        "T">
+<!ENTITY languages.customize.Fallback2.desc             "供無法宣告編碼格式的老舊文件使用。">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "例如:en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "上移">
+<!ENTITY languages.customize.moveUp.accesskey           "U">
+<!ENTITY languages.customize.moveDown.label             "下移">
+<!ENTITY languages.customize.moveDown.accesskey         "D">
+

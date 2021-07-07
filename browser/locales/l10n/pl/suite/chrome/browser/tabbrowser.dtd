@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY untitledTab "(Bez nazwy)">
+<!ENTITY newTab.label "Nowa karta">
+<!ENTITY newTab.accesskey "N">
+<!ENTITY closeTab.label "Zamknij kartę">
+<!ENTITY closeTab.accesskey "Z">
+<!ENTITY closeOtherTabs.label "Zamknij inne karty">
+<!ENTITY closeOtherTabs.accesskey "i">
+<!ENTITY reloadAllTabs.label "Odśwież wszystkie karty">
+<!ENTITY reloadAllTabs.accesskey "w">
+<!ENTITY reloadTab.label "Odśwież kartę">
+<!ENTITY reloadTab.accesskey "k">
+<!ENTITY bookmarkGroup.label "Dodaj zakładkę do bieżącej grupy kart">
+<!ENTITY bookmarkGroup.accesskey "g">
+<!ENTITY closeTabButton.tooltip "Zamknij bieżącą kartę">
+<!ENTITY newTabButton.tooltip "Otwórz nową kartę">
+<!ENTITY listAllTabs.tooltip "Pokaż wszystkie karty">
+<!ENTITY undoCloseTab.label "Przywróć zamkniętą kartę">
+<!ENTITY undoCloseTab.accesskey "P">

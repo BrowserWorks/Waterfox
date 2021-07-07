@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Nepavyko įkelti tinklalapio">
+<!ENTITY retry.label "Bandyti dar kartą">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Nepavyko užmegzti ryšio">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Prieiga prie šio adreso apribota">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Nerastas serveris">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Patikrinkite, ar rinkdami adresą nepadarėte klaidų, pavyzdžiui, <strong>ww</strong>.example.com vietoje <strong>www</strong>.example.com</li> <li>Jei nepavyksta įkelti ir kitų tinklalapių, patikrinkite kompiuterio ryšį su tinklu.</li> <li>Jei jūsų kompiuteris ar tinklas apsaugotas užkarda arba jungiamasi per įgaliotąjį serverį, įsitikinkite, jog programai „&brandShortName;“ leidžiama pasiekti saityną.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Nerastas failas">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Patikrinkite, ar failo varde nėra rinkimo klaidų, pvz., didžiosios raidės pakeistos mažosiomis.</li> <li>Patikrinkite, ar failas nebuvo perkeltas, pervardytas ar pašalintas.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Prieiga prie failo negalima">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Failas galėjo būti pašalintas, perkeltas arba prieigą prie jo riboja leidimai.</li> </ul>">
+
+<!ENTITY generic.title "Klaida">
+<!ENTITY generic.longDesc "<p>Programai „&brandShortName;“ nepavyko įkelti šio tinklalapio dėl nežinomos priežasties.</p>">
+
+<!ENTITY malformedURI.title "Neteisingas adresas">
+<!ENTITY malformedURI.longDesc "<ul> <li>Saityno adresai paprastai turi tokį pavidalą: <strong>http://www.example.com/</strong></li> <li>Įsitikinkite, kad vartojate tinkamą adreso komponentų skirtuką (t. y. dešininį brūkšnį <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Ryšys buvo nutrauktas">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumento galiojimas baigėsi">
+<!ENTITY notCached.longDesc "<p>Prašomo dokumento programos podėlyje nėra.</p><ul><li>Saugumo sumetimais „&brandShortName;“ jautrių dokumentų automatiškai iš naujo neatsiunčia.</li><li>Jeigu norite dokumentą iš svetainės atsiųsti iš naujo, spustelėkite „Bandyti dar kartą“.</li></ul>">
+
+<!ENTITY netOffline.title "Dirbama neprisijungus prie tinklo">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Spustelėkite „Bandyti dar kartą“, kad būtų prisijungta prie tinklo ir pabandyta įkelti tinklalapį iš naujo.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Kodavimo klaida">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Prašome pranešti svetainės savininkams apie šią problemą.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Nesaugus failo tipas">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Prašome pranešti svetainės savininkams apie šią problemą.</li> </ul>">
+
+<!ENTITY netReset.title "Ryšys nutrūko">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Baigėsi prisijungimui skirtas laikas">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Neatpažintas adresas">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Gali būti, kad šiam adresui atverti reikia įdiegti papildomą programinę įrangą.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Įgaliotasis serveris atmeta ryšį">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Patikrinkite, ar programoje nurodytos teisingos įgaliotojo serverio nuostatos.</li> <li>Jei norite sužinoti, ar įgaliotasis serveris veikia korektiškai, kreipkitės į sistemos administratorių.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Nerastas įgaliotasis serveris">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Patikrinkite, ar programoje nurodytos teisingos įgaliotojo serverio nuostatos.</li> <li>Patikrinkite, ar yra ryšys tarp jūsų kompiuterio ir tinklo.</li> <li>Jei jūsų kompiuteris ar tinklas apsaugotas užkarda arba jungiamasi per įgaliotąjį serverį, tai įsitikinkite, kad programai „&brandShortName;“ leidžiama pasiekti saityną.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Neteisingas tinklalapio peradresavimas">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ši klaida galėjo įvykti dėl to, kad programa nepriima svetainės slapukų.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Netikėtas serverio atsakas">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Įsitikinkite, kad į jūsų sistemą yra įdiegta asmeninio saugumo tvarkytuvė.</li> <li>Ši klaida galėjo įvykti dėl nestandartinės serverio konfigūracijos.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Saugaus ryšio užmegzti nepavyko">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Tinklalapis, kurį bandote atverti, negali būti parodytas, nes nepavyko patikrinti gautų duomenų autentiškumo.</li> <li>Prašom pranešti apie šią problemą svetainės savininkams.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Saugaus ryšio užmegzti nepavyko">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Ši problema gali kilti dėl blogai parinktų serverio nuostatų arba dėl bandymo apsimesti kitu serveriu.</li> <li>Jei prie šio serverio sėkmingai jungėtės anksčiau, šis nesklandumas gali būti laikinas. Bandykite prisijungti vėliau.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Ši svetainė laikinai nepasiekiama arba yra per daug apkrauta. Šiek tiek palaukite ir bandykite prisijungti iš naujo.</li> <li>Jei nepavyksta įkelti ir kitų tinklalapių, patikrinkite kompiuterio ryšį su tinklu.</li> <li>Jei jūsų kompiuteris ar tinklas apsaugotas užkarda arba jungiamasi per įgaliotąjį serverį, įsitikinkite, jog programai „&brandShortName;“ leidžiama pasiekti saityną.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Užblokuota dėl saugumo politikos">
+<!ENTITY cspBlocked.longDesc "<p>„&brandShortName;“ neleido įkelti šio tinklalapio, nes jo saugumo politika neleidžia jo turinio įterpti nurodytuoju būdu.</p>">
+
+<!ENTITY xfoBlocked.title "Užblokuota pagal „X-Frame-Options“ politiką">
+<!ENTITY xfoBlocked.longDesc "<p>„&brandShortName;“ neleido įkelti šio tinklalapio šiame kontekste, nes jo „X-Frame-Options“ politika to neleidžia.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Klaida: duomenys pažeisti">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Tinklalapio, kurį bandote atverti, parodyti negalima, nes perduodant duomenis įvyko klaida.</p><ul><li>Siūlome susisiekti su svetainės savininkais ar valdytojais ir pranešti jiems apie šią problemą.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Galite sukurti išimtį…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Išeiti">
+<!ENTITY securityOverride.exceptionButtonLabel "Sukurti išimtį…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Išimties kurti neturėtumėte, jei naudojatės interneto ryšiu, kuriuo nepasitikite pilnai, arba jei anksčiau nematėte įspėjimo apie šį serverį.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL iš tinklo">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Siūlome susisiekti su svetainės savininkais ar valdytojais ir pranešti jiems apie šią problemą.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Jūsų ryšys nėra saugus">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> naudoja saugumo technologiją, kuri yra pasenusi ir pažeidžiama. Prisijungę piktavaliai lengvai galėtų pamatyti informaciją, kuri jums atrodo saugi. Aplankykite šį tinklapį tik tada, kai jo administratorius pašalins saugumo spragas.</p><p>Klaidos kodas: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Užblokuotas puslapis">
+
+<!ENTITY networkProtocolError.title "Tinklo protokolo klaida">
+<!ENTITY networkProtocolError.longDesc "<p>Tinklalapis, kurį bandote atverti, negali būti įkeltas dėl tinklo protokole aptiktos klaidos.</p><ul><li>Susisiekite su svetainės prižiūrėtojais ir praneškite apie šią problemą.</li></ul>">

@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Üzenetek rendszerezése és a levélszemét kezelése</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+<h1 id="organizing_your_messages">Üzenetek rendszerezése</h1>
+
+<div class="contentsBox">
+  <ul>
+    <li><a href="#creating_a_folder">Mappa létrehozása</a></li>
+    <li><a href="#renaming_a_folder">Mappa átnevezése</a></li>
+    <li><a href="#moving_or_copying_a_folder">Mappa áthelyezése vagy másolása</a></li>
+    <li><a href="#filing_messages_in_folders">Üzenetek mappákba rendezése</a></li>
+    <li><a href="#sharing_folders_with_other_users">Mappák megosztása más felhasználókkal (csak IMAP)</a></li>
+    <li><a href="#tagging_messages">Üzenetek címkézése</a></li>
+    <li><a href="#marking_or_flagging_messages">Üzenetek megjelölése</a></li>
+    <li><a href="#using_message_views">Üzenetnézetek használata</a></li>
+    <li><a href="#creating_message_filters">Levelezőszűrők létrehozása</a></li>
+    <li><a href="#searching_through_messages">Keresés az üzenetekben</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_folder">Mappa létrehozása</h2>
+
+<p>Üzenetmappa létrehozásához induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Fájl menüből az Új, majd a Mappa parancsot. Az Új mappa párbeszédpanel jelenik meg.</li>
+  <li>Írjuk be a mappa nevét.</li>
+  <li>A lenyitható listán adjuk meg a mappa helyét, majd kattintsunk az OK gombra. Az új mappa megjelenik a Levelező mappalistáján.</li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="renaming_a_folder">Mappa átnevezése</h2>
+
+<p>Üzenetmappa átnevezéséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Jelöljük ki az átnevezni kívánt mappát.</li>
+  <li>Válasszuk a Fájl menü Mappa átnevezése parancsát. A Mappa átnevezése párbeszédpanel jelenik meg.</li>
+  <li>Írjuk be az új nevet, majd kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: ha <a href="#creating_message_filters">szűrt üzenetek</a> tárolására használt mappát nevezünk át, a szűrő automatikusan az átnevezett mappa használatára frissül.</p>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="moving_or_copying_a_folder">Mappa áthelyezése vagy másolása</h2>
+
+<p>Egy mappát és tartalmát másik postafiókba másolhatunk, illetve ugyanazon a postafiókon belül át is helyezhetünk.</p>
+
+<p>Mappa áthelyezéséhez vagy másolásához induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Jelöljük ki az áthelyezni vagy másolni kívánt mappát.</li>
+  <li>Hajtsuk végre a megfelelő műveletet:
+    <ul>
+      <li>A postafiókon belül a mappa áthelyezéséhez húzzuk a mappát a kívánt mappa nevére. Az áthelyezett mappa ennek a mappának az almappája lesz.</li>
+      <li>A mappa másik postafiókba másolásához húzzuk a mappát a postafiók nevére.</li>
+      <li>A mappa másik postafiók másik mappájába másolásához húzzuk a mappát a másik postafiók másik mappájának nevére. A másolt mappa a másik mappa almappája lesz.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="filing_messages_in_folders">Üzenetek mappákba rendezése</h2>
+
+<p>A következő módszerekkel az üzeneteket az egyik mappából másikba helyezhetjük át.</p>
+
+<ul>
+  <li>Jelöljük ki az üzenetet, kattintsunk az eszköztáron az Áthelyezés gombra, és a lenyitható listán adjuk meg a kívánt postafiókot és célmappát.</li>
+  <li>Húzzuk át az üzeneteket a kívánt mappába.
+
+    <p><strong>Megjegyzés</strong>: ha IMAP vagy POP levelezőkiszolgáló mappájából üzenetet húzunk át a merevlemez helyi mappájába, az üzenet a helyi mappába kerül, és a kiszolgáló mappájából törlődik.</p>
+  </li>
+</ul>
+
+<p>Üzenet másolása egyik mappából egy másikba:</p>
+
+<ol>
+  <li>Jelöljük ki az üzenetet, és kattintsunk rá az egér jobb oldali gombjával.</li>
+  <li>Válasszuk a helyi menü <q>Átmásolás</q> parancsát, és a lenyitható listán adjuk meg a kívánt postafiókot és célmappát.</li>
+</ol>
+
+<p><strong>Tipp</strong>: úgy is átmásolhatjuk az üzenetet egyik mappából a másikba, hogy lenyomva tartjuk a Shift billentyűt miközben az üzenetet az üzenetlistából egy másik mappa fölé húzzuk.</p>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="sharing_folders_with_other_users">Mappák megosztása más felhasználókkal (csak IMAP)</h2>
+
+<p>Az IMAP-postafiókok felhasználói megoszthatják a mappáikat a hálózat többi felhasználójával. A megosztott mappák segítségével a hírcsoportokhoz hasonlóan több felhasználó láthatja ugyanazokat az üzeneteket. A megosztott mappák csak olyan IMAP-kiszolgálóval használhatóak, amely támogatja a hozzáférési listák (ACL) kezelését. Ha nem vagyunk biztosak benne, hogy az IMAP-kiszolgálónk támogatja-e a megosztott mappákat, kérdezzük meg a rendszergazdát.</p>
+
+<p>Egy mappa többi felhasználóval történő megosztásához a vagy egy mappa megosztási adatainak megtekintéséhez induljunk ki a Levelező ablakból.</p>
+
+<ol>
+  <li>Az IMAP-postafiókon belül válasszuk ki a mappát, amelyet meg szeretnénk osztani, vagy válasszuk ki a mappát, amely megosztási adataira kíváncsiak vagyunk.
+
+    <p>A Helyi mappák alatt lévő mappákat és a POP-postafiókok mappáit nem lehet megosztani.</p>
+  </li>
+  <li>Válasszuk a Szerkesztés menü Mappatulajdonságok parancsát.</li>
+  <li>Kattintsunk a Megosztás fülre.</li>
+  <li>Kattintsunk a Jogosultságok gombra. A program elkérheti a hálózati felhasználói nevünket és jelszavunkat.
+
+    <p>A Jogosultságok gomb csak akkor működik, ha az IMAP-kiszolgáló engedélyezi a mappák megosztási jogosultságainak beállítását. Ha ez a gomb nem érhető el, akkor csak megnézni tudjuk a mappa megosztási jogosultságait, de megváltoztatni nem.</p>
+  </li>
+  <li>Kövessük a képernyőn megjelenő utasításokat a felhasználók és a mappahozzáférési jogusultságaik beállításához.
+    <ul>
+      <li><strong>Olvasási jog</strong>: a felhasználó elolvashatja az üzeneteket és kimásolhatja a tartalmukat, de nem módosíthatja vagy törölheti őket, és nem másolhat üzeneteket a mappába. A felhasználó megjelölheti az üzeneteket olvasottként vagy olvasatlanként. További tudnivalók: <a href="#marking_or_flagging_messages">Üzenetek megjelölése</a>.</li>
+      <li><strong>Olvasási és írási jog</strong>: az olvasási jogon felül a felhasználó módosíthatja és törölheti az üzeneteket. A felhasználó üzeneteket is másolhat vagy helyezhet át a mappába.</li>
+      <li><strong>Rendszergazda jog</strong>: az olvasási és írási jogon felül a felhasználó felhasználókat tud hozzáadni és eltávolítani, és meg tudja változtatni a mappák jogosultságait.</li>
+    </ul>
+  </li>
+  <li>A változtatások érvényesítéséhez kattintsunk az OK gombra.</li>
+  <li>A Tulajdonságok párbeszédpanel bezárásához kattintsunk az OK gombra.</li>
+</ol>
+
+<p>A postafiók mappalistájában a megosztott mappák ikonja jelzi a mappa megosztott állapotát.</p>
+
+<p>A többi felhasználónak üzenetet küldhetünk, hogy feliratkozhatnak a megosztott mappánkra. Ehhez induljunk a Levelező ablakból.</p>
+
+<ol>
+  <li>Válasszuk ki a megosztott mappát.</li>
+  <li>Kattintsunk az egér jobb gombjábal, és a helyi menüből válasszuk A mappa helyének másolása parancsot.</li>
+  <li>Kattintsunk az Új üzenet gombra. Megjelenik az Új üzenet ablak.</li>
+  <li>Kattintsunk az üzenet törzsére, majd a Szerkesztés menüből válasszuk a Beillesztés parancsot.</li>
+  <li>Címezzük meg az üzenetet, írjuk be a tárgyat és az üzenet szövegét. Írjuk meg a címzettnek, hogy úgy iratkozhat fel a megosztott mappánkra, hogy az üzenetbe másolt hivatkozásra kattint.
+
+    <p>Csak a velünk azonos hálózatban dolgozó felhasználók tudnak feliratkozni a megosztott mappára.</p>
+  </li>
+  <li>Kattintsunk a Küldés gombra.</li>
+</ol>
+
+<h3 id="subscribing_to_a_shared_folder">Feliratkozás egy megosztott mappára</h3>
+
+<p>A megosztott mappára történő feliratkozás hasonló egy hírcsoportra történő feliratkozáshoz. A feliratkozást kezdjük a Levelező ablakban:</p>
+
+<ol>
+  <li>Válasszuk a Fájl menü Feliratkozás parancsát. A Feliratkozás párbeszédpanel jelenik meg.</li>
+  <li>Ha szükséges, a Postafiók lenyitható listán válasszunk másik IMAP-postafiókot.</li>
+  <li>Jelöljük ki a mappát, amelyre fel kívánunk iratkozni.</li>
+  <li>Kattintsunk a Feliratkozás gombra vagy a mappa mellett a Feliratkozás oszlopba. Minden olyan mappa mellett, amelyre feliratkoztunk, pipa jelenik meg. A jelentkezés törléséhez kattintsunk a Leiratkozás gombra.</li>
+  <li>Kattintsunk az OK gombra. Az kiválasztott mappák listája megjelenik a Levelező ablakban.</li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="labeling_messages">Üzenetek címkézése</h2>
+
+<p>Az üzeneteket címkékkel láthatjuk el, ami megkönnyíti rendszerezésüket.
+  Alkalmazhatjuk a szabványos színt és címkeszöveget, de saját igények szerinti színeket és címkeszöveget is megadhatunk.</p>
+
+<p>A címkézés leghatékonyabb módja az üzenetszűrő használata, amellyel automatikusan megvalósítható az üzenetek címkézése. Megadhatunk például egy olyan szűrőt, amely a főnökünktől érkező üzeneteket a <q>Fontos</q>feliratú címkével látja el, és vörös színnel jeleníti meg. További tudnivalók: <a href="#creating_message_filters">Levelezőszűrők létrehozása</a>.</p>
+
+<h3 id="applying_a_label">Címke alkalmazása</h3>
+
+<p>Üzenet címkével jelöléséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Jelöljük ki a címkézni kívánt üzenetet.</li>
+  <li>Válasszuk az Üzenet menü Címke parancsát.</li>
+  <li>A listán jelöljük ki a használni kívánt címkét.</li>
+</ol>
+
+<p>Az üzenet fejléce a választott címkeszínre változik. A címke szövege csak akkor látható, ha a Levelező ablakban megjelenítjük a Címke oszlopot.</p>
+
+<p><strong>Tipp</strong>: az üzenetek gyors címkézéséhez, illetve a címke eltávolításához jelöljünk ki egy vagy több üzenetet, és nyomjuk meg a billentyűzeten az 1, 2, 3, 4 vagy 5 billentyűt. A 0 billentyű törli a címkét.</p>
+
+<p>A Címke oszlop megjelenítéséhez induljunk ki a Levelező ablakból:</p>
+
+<ul>
+  <li>Kattintsunk az oszlopok megjelenítésére, illetve elrejtésére szolgáló <img src="images/columns.png" alt=""/> gombra, és jelöljük ki a Címke oszlopot a listán.</li>
+</ul>
+
+<p><strong>Megjegyzés</strong>: az üzenetcímkék adott fiókon belül működnek. Ha például másik postafiókba helyezünk át vagy másolunk egy címkével ellátott üzenetet, a címke nem marad meg. Ugyanígy eltűnik a címke, ha ilyen üzenetet másik címzettnek továbbítunk. Ha IMAP postafióknál az IMAP-kiszolgáló támogatja a felhasználói kulcsszavakat, az üzenetcímkék megmaradnak, ha másik helyről jelentkezünk be a postafiókba.</p>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="customizing_labels">Címkék testreszabása</h3>
+
+<p>A címkék színe és szövege saját igényekhez igazítható.</p>
+
+<p>A címkék testreszabásához induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot. A Beállítások párbeszédpanel jelenik meg.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk a Címkék elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)</li>
+  <li>Szerkesszük a címke szövegét, vagy írjunk be másikat. A címke szövege legfeljebb 32 karakterből állhat.</li>
+  <li>A címke színének módosításához kattintsunk a címke melletti színválasztóra, és adjunk meg másik színt.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>A módosítások azonnal érvénybe lépnek.</p>
+
+<p><strong>Tipp</strong>: az alapértelmezett címkeszöveg és szín visszaállításához a fenti lépésekkel jelenítsük meg a címkék beállításait, és kattintsunk az Alapértelmezett értékek visszaállítása gombra.</p>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="sorting_messages_by_label">Üzenetek rendezése címkék szerint</h3>
+
+<p>Az üzenetek rendezéséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Ha a Címke oszlop nem látható, megjelenítéséhez kattintsunk az oszlopok megjelenítésére, illetve elrejtésére szolgáló <img src="images/columns.png" alt=""/> gombra, és jelöljük ki a Címke oszlopot a listán.</li>
+  <li>Kattintsunk a Címke oszlopra, ekkor az üzenetek a címkék szerint rendezve jelennek meg, az egyes címkéken belül pedig a dátum alapján növekvő sorrendben.</li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="removing_labels">Címkék eltávolítása</h3>
+
+<p>Üzenetcímke eltávolításához induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Jelöljünk ki egy vagy több címkével jelölt üzenetet.</li>
+  <li>Válasszuk az Üzenet menü Címke parancsát.</li>
+  <li>Az üzenetcímke szövegénél válasszuk a <q>Nincs</q> elemet.</li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="marking_or_flagging_messages">Üzenetek megjelölése</h2>
+
+<p>Az elolvasott üzeneteket időnként olvasatlanra szeretnénk visszaállítani, hogy így később újra elolvassuk és válaszoljunk rá.</p>
+
+<p>Üzenet olvasatlanra állításhoz induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Üzeneteinek megjelenítéséhez jelöljünk ki egy levelező vagy hírcsoportmappát.</li>
+  <li>Az olvasatlanra állítani kívánt üzeneteknél kattintsunk az Olvasás oszlopra. Az olvasatlanként megjelölt üzeneteknél a <img src="images/mail_unread.png"
+    alt=""/> szimbólum jelenik meg az Olvasás oszlopban. Az olvasottként megjelölt üzeneteknél a <img src="images/mail_read.png" alt=""/> szimbólum jelenik meg az Olvasás oszlopban. Ha az Olvasás oszlop nem látható, megjelenítéséhez kattintsunk az Oszlopok megjelenítésére, illetve elrejtésére szolgáló <img src="images/columns.png" alt=""/> gombra, és jelöljük ki az Olvasás oszlopot a listán.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_read_column.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td><strong>Olvasás oszlop</strong></td>
+  </tr>
+</table>
+
+<p>A később letölteni kívánt üzeneteket megjelölhetjük <a href="#downloading_selected_or_flagged_messages_for_offline_use">kapcsolat nélküli használatra</a>.</p>
+
+<p>Az üzenetek megjelöléséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Üzeneteinek megjelenítéséhez jelöljünk ki egy levelező vagy hírcsoportmappát.</li>
+  <li>A letölteni kívánt üzeneteknél kattintsunk a Jelölés oszlopra. Az ilyen üzeneteknél a <img src="images/mail_flag.png" alt=""/> szimbólum jelenik meg.  Ha a Jelölés oszlop nem látható, megjelenítéséhez kattintsunk az oszlopok megjelenítésére, illetve elrejtésére szolgáló <img src="images/columns.png"
+    alt=""/> gombra, és jelöljük ki a Jelölés oszlopot a listán.</li>
+</ol>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_flag_column.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td><strong>Jelölés oszlop</strong></td>
+  </tr>
+</table>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="using_message_views">Üzenetnézetek használata</h2>
+
+<p>Alkalmazhatunk előre beállított vagy egyedi üzenetnézeteket, hogy a megjelenített üzenetek szűrésével megkönnyítsük az üzenetek kezelését.</p>
+
+<p>Egy üzenetnézet használatához nyissuk meg a Nézet menüt, és válasszuk az Üzenetek  menüpontot. Válasszunk egy parancsot az almenüből.</p>
+
+<ul>
+  <li><strong>Mind</strong>: Az összes üzenet megtekintéséhez válasszuk ezt a parancsot.</li>
+  <li><strong>Olvasatlan</strong>: Az olvasatlan üzenetek megtekintéséhez válasszuk ezt a parancsot.</li>
+  <li><strong>Címkék</strong>: Válasszunk egy <a href="#labeling_messages">címkét</a> a címkézett üzenetek megtekintéséhez.</li>
+  <li><strong>Egyedi üzenetnézetek</strong>:  Válasszunk egy egyedi üzenetnézetet. Alapértelmezésben négy előre definiált üzenetnézet áll rendelkezésünkre: <q>Ismerőstől</q>, <q>Nemrég érkezett</q>, <q>Elmúlt 5 nap</q> és <q>Nem szemét</q>.</li>
+  <li><strong>Testreszabás…</strong>: Az üzenetnézetek megtekintéséhez és módosításához válasszuk ezt a parancsot.</li>
+</ul>
+
+<p><strong>Tipp</strong>: Gyorsan válthatunk üzenetnézetet a Keresősáv Nézet mezőjéből. Ha a Keresősáv nem látható, nyissuk meg a Nézet menüt, majd a Megjelenítés/Elrejtés elemet, majd a Keresősáv elemet.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/mail_quicksearch.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 80px;"></td>
+    <td><strong>Keresősáv</strong></td>
+  </tr>
+</table>
+
+<h3 id="creating_a_custom_view">Egyéni nézet létrehozása</h3>
+
+<p>Csak bizonyos kritériumnak megfelelő üzenetek megjelenítéséhez készíthetünk egyedi üzenetnézeteket.</p>
+
+<p>Üzenetnézet létrehozása vagy módosítása:</p>
+
+<ol>
+  <li>Nyissuk meg a Nézet menüt, és válasszuk az Üzenetek, majd a Testreszabás… menüpontot.</li>
+  <li>Új nézet létrehozásához kattintsunk az Új gombra. Üzenetnézet módosításához kattintsunk a módosítandó nézet nevére, majd kattintsunk a Szerkesztés gombra.</li>
+  <li>Adjuk meg az üzenetnézet nevét.</li>
+  <li>Adjuk meg, hogy a műveletet a Levelező a feltételek milyen típusú teljesülésekor hajtsa végre: <q>a következők <em>mind</em></q> illeszkedjenek vagy <q>a következők <em>bármelyike</em></q> illeszkedjen.</li>
+  <li>Használjuk a legördülő listát a szűrési feltétel megadásához (például: <q>Tárgy</q>, <q>Feladó</q>, <q>tartalmazza</q>, <q>nem tartalmazza</q>) és adjuk meg az illesztendő szöveget vagy mondatot.
+
+    <p><strong>Tipp</strong>: ha az első lenyitható listán nem szereplő (például a Resent-From) fejlécelemet tartalmazó üzeneteket szeretnénk keresni, kattintsunk a legördülő lista Testreszabás elemére, és írjuk be a keresni kívánt fejlécelemet. A &brandShortName; Levelező és hírolvasó felveszi ezt a lenyitható listára, így ezután ezt is választhatjuk keresési feltételként. Az egyéni fejlécelemet pontosan kell beírni, mert a Levelező csak a beírt kifejezéssel tökéletesen megegyező elemeket fogja megtalálni.</p>
+  </li>
+  <li>A Több gombbal további feltételeket vehetünk fel, a Kevesebb gombbal eltávolíthatunk feltételeket.</li>
+  <li>A beállítások elfogadásához kattintsunk az OK gombra.</li>
+  <li>Kattintsunk az OK gombra az Üzenetnézetek testreszabása párbeszédpanelben. A kiválasztott nézet automatikusan aktívvá válik.</li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="creating_message_filters">Levelezőszűrők létrehozása</h2>
+
+<p>A levelezőszűrők az üzenetek kezelésében és rendszerezésében segítenek. Ha létrehozunk ilyen szűrőket, a &brandShortName; Levelező és hírolvasó a megadott feltételek alapján automatikusan végrehajt bizonyos műveleteket a beérkező üzeneteken. Például készíthetünk olyan szűrőt, amely a beérkezett üzeneteket automatikusan adott mappába helyezi. A levelezőszűrők adott fiókon belül működnek.</p>
+
+<p>A Levelezőszűrők párbeszédpanel a Levelező ablakból a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Feladatok menü Levelezőszűrők parancsát. A Levelezőszűrők párbeszédpanel jelenik meg.</li>
+  <li>Ha több levelező-postafiókkal rendelkezünk, jelöljük ki azt, amelyben a szűrőt használni szeretnénk.</li>
+  <li>Kattintsunk az Új gombra. A Szűrés szabályai párbeszédpanelen megadhatjuk, hogy milyen típusú üzeneteken alkalmazzuk a szűrőt, és milyen műveletet kívánunk végrehajtani.</li>
+  <li>Írjuk be a szűrő nevét.</li>
+  <li>Adjuk meg, hogy a műveletet a Levelező a feltételek milyen típusú teljesülésekor hajtsa végre: <q><em>a következők</em> mind</q> illeszkedjenek vagy <q><em>a következők</em> bármelyike</q>.</li>
+  <li>A lenyitható listákon válasszuk ki a keresési feltételt (például: <q>Tárgy</q>, <q>Feladó</q>, <q>tartalmazza</q>, <q>nem tartalmazza</q>) majd írjuk be a keresett szót vagy kifejezést.
+
+    <p><strong>Tipp</strong>: ha az első lenyitható listán nem szereplő (például a Resent-From) fejlécelemet tartalmazó üzeneteket szeretnénk keresni, kattintsunk a legördülő lista Testreszabás elemére, és írjuk be a keresni kívánt fejlécelemet. A &brandShortName; Levelező és hírolvasó felveszi ezt a lenyitható listára, így ezután ezt is választhatjuk keresési feltételként. Az egyéni fejlécelemet pontosan kell beírni, mert a Levelező csak a beírt kifejezéssel tökéletesen megegyező elemeket fogja megtalálni.</p>
+  </li>
+  <li>A <q>Több</q> gombbal további feltételeket vehetünk fel, a <q>Kevesebb</q> gombbal eltávolíthatunk feltételeket.</li>
+  <li>A lenyitható listán válasszuk ki a feltételeknek megfelelő üzeneteken végrehajtani kívánt műveletet (például Áthelyezés).
+
+    <p><strong>Tipp</strong>: a beérkezett üzenetek automatikus címkézéséhez válasszuk az <q>Üzenet címkézése</q> műveletet.</p>
+  </li>
+  <li>Adjuk meg az üzenetek tárolására szolgáló célmappát, vagy hozzunk létre új mappát.</li>
+  <li>A beállítások elfogadásához kattintsunk az OK gombra.</li>
+  <li>A Levelezőszűrők párbeszédpanelen kattintsunk az OK gombra. A szűrő azonnal érvénybe lép, és vizsgálja az ezután beérkező üzeneteket.</li>
+</ol>
+
+<p>A szűrők kezeléséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Feladatok menü Levelezőszűrők parancsát. A Levelezőszűrők párbeszédpanel jelenik meg.</li>
+  <li>Ha több levelező-postafiókkal rendelkezünk, jelöljük ki azt, amelyben a szűrőt használni szeretnénk.</li>
+  <li>Válasszunk a következő lehetőségek közül:
+    <ul>
+      <li><strong>Szűrő be- és kikapcsolása</strong>: a szűrő neve melletti négyzetre kattintva engedélyezhetjük vagy tilthatjuk működését.</li>
+      <li><strong>Szűrő szerkesztése</strong>: jelöljük ki a kívánt szűrőt, és kattintsunk a Szerkesztés gombra (vagy kattintsunk duplán a szűrő nevére). A Szűrés szabályai párbeszédpanelen hajtsuk végre a megfelelő módosításokat.</li>
+      <li><strong>Szűrő törlése</strong>: jelöljük ki a szűrőt, és kattintsunk a Törlés gombra.</li>
+      <li><strong>A szűrők alkalmazási sorrendjének megváltoztatása</strong>: a szűrőlistán kattintsunk a kívánt névre, majd áthelyezéséhez a <q>Feljebb mozgatás</q> vagy a <q>Lejjebb mozgatás</q> gombra.
+
+        <p><strong>Megjegyzés</strong>:  a program a megadott sorrendben alkalmazza a szűrőket a beérkezett üzenetekre mindaddig, míg egy szűrési művelet azt nem törli, vagy a Beérkezett üzenetek mappába nem helyezi.</p>
+      </li>
+    </ul>
+  </li>
+  <li>Ha befejeztük a szűrők kezelését, kattintsunk az OK gombra. Ha új szűrőt hoztunk létre, az azonnal érvénybe lép, és vizsgálja az ezután beérkező üzeneteket.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: ha szűrt üzenetek tárolására szolgáló mappát törlünk, a szűrő ezután nem fog működni. A törölt mappához tartozó szűrési feltételeknek eleget tevő üzenetek a Beérkezett üzenetek mappába kerülnek. Ha átnevezünk vagy áthelyezünk egy ilyen mappát, a szűrő automatikusan az új mappa használatára frissül.</p>
+
+<p><strong>Tipp</strong>:  a szűrők a meglévő üzenetekre nincsenek hatással. Ha meglévő üzeneteket szeretnénk áthelyezni másik mappába, az Eszközök menüből válasszuk ki a <q>Szűrők futtatása a mappán</q> parancsot vagy <a href="#searching_through_messages">keressük meg</a> ezeket az üzeneteket, és rendezzük másik mappába.</p>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="filtering_messages_from_a_specific_sender">Adott feladó üzeneteinek szűrése</h3>
+
+<p>A Mozilla gyors módszert biztosít az adott feladótól érkező üzenetek szűrőjének létrehozásához.Ha például a gyermekünk tanárától érkező üzeneteket automatikusan az Iskola nevű mappába szeretnénk helyezni, az ezt végrehajtó szűrőt egyszerűen beállíthatjuk.</p>
+
+<p>Az adott feladótól érkező üzenetek szűrőjének létrehozásához induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Jelöljük ki a kívánt feladó egyik üzenetét.</li>
+  <li>Válasszuk az Üzenet menü Szűrő létrehozása parancsát. A Szűrés szabályai párbeszédpanel jelenik meg. A feladó e-mail címe alapján a &brandShortName; előre kitölti a szűrő neve, a szűrő feltétele és a szűrő művelete (Áthelyezés) mezőt.</li>
+  <li>Adjuk meg az adott feladótól érkező üzenetek tárolására szolgáló célmappát, vagy hozzunk létre új mappát.</li>
+  <li>A beállítások elfogadásához kattintsunk az OK gombra. A <a href="#creating_message_filters">Levelezőszűrők</a> párbeszédpanel jelenik meg, ahol szűrőket hozhatunk létre, törölhetünk vagy szerkeszthetünk.</li>
+  <li>Kattintsunk az OK gombra. A szűrő azonnal érvénybe lép, és vizsgálja az adott feladótól ezután beérkező üzeneteket.</li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="searching_through_messages">Keresés az üzenetekben</h2>
+
+<p>A &brandShortName; Levelező és hírolvasó gyors módszert biztosít szöveg kereséséhez adott üzenetben, üzenetek kereséséhez tárgy vagy feladó alapján, de a feltételek kombinációját is használhatjuk adott mappa, hírcsoport vagy postafiók üzeneteiben a kereséshez.</p>
+
+<p>Adott üzenet szöveg kereséséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>Jelöljük ki az üzenetet, és válasszuk a Szerkesztés menü Keresés ebben az üzenetben parancsát.</li>
+  <li>A párbeszédpanelbe írjuk be a keresett szöveget.</li>
+  <li>A szöveg első előfordulásának kijelöléséhez kattintsunk a Keresés gombra.</li>
+  <li>A további előfordulásokhoz kattintsunk ismét a Keresés gombra, majd ha befejeztük a műveletet, a Mégse gombra.</li>
+  <li>A Szerkesztés menü Következő találat parancsával a megadott szöveg keresését indíthatjuk újra.</li>
+</ol>
+
+<p>A kijelölt mappa üzenetei között a tárgy vagy feladó alapján történő gyors keresést kezdjük a Levelező ablakban:</p>
+
+<ol>
+  <li>A <q>Tárgy vagy feladó tartalmazza</q>, mezőbe írjuk be a tárgy szövegében vagy a feladó nevében keresett szöveget. Megadhatjuk a tárgy vagy a név egy részét, de beírhatunk teljes szót vagy nevet is.
+
+    <p>Amint befejeztük a beírást, a &brandShortName; Levelező és hírolvasó csak azokat az üzeneteket jeleníti meg a kijelölt mappából, amelyek tárgya vagy feladója tartalmazza a keresett szöveget.</p>
+  </li>
+  <li>A keresett szöveg törléséhez és a kijelölt mappa összes üzenetének megjelenítéséhez kattintsunk a Törlés gombra.</li>
+</ol>
+
+<h3 id="searching_for_specific_messages">Adott üzenetek keresése</h3>
+
+<p>A levelezési mappákban vagy a hírcsoportokban megkereshetjük a kívánt üzeneteket. Az Üzenetek keresése párbeszédpanel a Levelező ablakból a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Feladatok menü Üzenetek keresése parancsát. Az Üzenetek keresése párbeszédpanel jelenik meg.</li>
+  <li>A <q>Keresés helye</q>mezőben jelöljük ki azt a postafiókot, hírcsoportot vagy mappát, amelyben keresni szeretnénk.</li>
+  <li>A <q>Keresés az almappákban is</q> négyzet bejelölésével a keresést kiterjeszthetjük az almappákra is.</li>
+  <li>A <q>Keresés a helyi rendszerben</q> négyzet bejelölésével csak a helyileg lementett hírcsoportok és IMAP postafiókok üzeneteikre korlátozhatjuk a keresést.
+
+    <p><strong>Megjegyzés</strong>: A jelölőnégyzet le van tiltva, ha nincs lehetőség a távoli üzenetek közötti keresésre.</p>
+  </li>
+  <li>Adjuk meg, hogy a Mozilla Levelező és hírolvasó az üzenetek keresésénél az összes megadott feltételt figyelembe vegye-e, vagy találatnak számítson a legalább egy feltételnek eleget tevő bejegyzés is.</li>
+  <li>A lenyitható listákon válasszuk ki a keresési feltételt (például: <q>Tárgy</q>, <q>Feladó</q>, <q>tartalmazza</q> és <q>nem tartalmazza</q>), majd írjuk be a keresett szót vagy kifejezést.
+
+    <p><strong>Tipp</strong>: ha az első lenyitható listán nem szereplő (például a Resent-From) fejlécelemet tartalmazó üzeneteket szeretnénk keresni, kattintsunk a legördülő lista Testreszabás elemére, és írjuk be a keresni kívánt fejlécelemet. A &brandShortName; Levelező és hírolvasó felveszi ezt a lenyitható listára, így ezután ezt is választhatjuk keresési feltételként. Az egyéni fejlécelemet pontosan kell beírni, mert a Levelező csak a beírt kifejezéssel tökéletesen megegyező elemeket fogja megtalálni.</p>
+  </li>
+  <li>A Több gombbal további feltételeket vehetünk fel, a Kevesebb gombbal eltávolíthatunk feltételeket.</li>
+  <li>A keresés indításához kattintsunk a Keresés gombra, az Alaphelyzet gombbal a kiindulási helyzetbe térhetünk vissza. A keresés eredménye a párbeszédpanel alsó részén jelenik meg.
+    <ul>
+      <li>Valamelyik üzenet megnyitásához és elolvasásához jelöljük ki az üzenetet, és kattintsunk a Megnyitás gombra, vagy kattintsunk duplán a kívánt üzenetre.</li>
+      <li>Az üzenetek a fejlécre kattintva a kívánt oszlop szerint rendezhetők.</li>
+      <li>Az Eredmények mezőben megjelenő üzeneteket másik mappába másolhatjuk vagy helyezhetjük át: ehhez jelöljük ki a kívánt üzenetet, és az Iktatás lenyitható listán adjuk meg a célmappát. Ha a célmappa ugyanezen a postafiókon belül található, az üzenetet áthelyezi a program. Ha a célmappa másik postafiókban található, az üzenetet átmásolja a program.</li>
+      <li>Az Eredmények mezőben megjelenő valamelyik üzenet törléséhez jelöljük azt ki, és kattintsunk a Törlés gombra.</li>
+      <li>Az üzenet tárolási mappáját is megnyithatjuk: jelöljük ki az üzenetet, és kattintsunk az Üzenetmappa megnyitása gombra.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[ <a href="#organizing_your_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h1 id="controlling_junk_mail">Levélszemét kezelése</h1>
+
+<p>Ez a szakasz leírja hogy hogyan használható a &brandShortName; levélszemét-kezelő funkciója a kéretlen levelek kiszűrésére.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#using_junk_mail_controls">A Levélszemét-kezelő használata</a></li>
+    <li><a href="#junk_controls_options">Levélszemét-kezelő használata</a></li>
+    <li><a href="#junk_controls_and_filters">Levélszemét kezelése és Levélszűrők</a></li>
+  </ul>
+</div>
+
+
+<h2 id="using_junk_mail_controls">A Levélszemét-kezelő használata</h2>
+
+<p>&brandShortName; levélszemét-kezelő funkciója segítségével kiértékelhetők a beérkező levelek és azonosíthatók a szemét (vagy kéretlen) üzenetek. A funkció a Bayes-féle osztályozási módszert használja. Először &brandShortName; megtanulja, mi a szemét, és mi nem. Mutatunk neki néhány szemét és néhány nem szemét levelet. Azután hagyjuk automatikusan azonosíttatni a beérkező üzeneteket. Ha &brandShortName; hibát vét, akkor ki tudjuk javítani.</p>
+
+<p>A levélszemét-kezelő használata:</p>
+
+<ol>
+  <li>Először &brandShortName; megtanulja azonosítani a szemét és a nem szemét üzeneteket. A kiválasztott üzenet(ek)hez háromféle módon kapcsolhatjuk a szemét- illetve nem szemét státuszt:
+    <ul>
+      <li>Válasszuk az Üzenet menü <q>Megjelölés</q> menüpontját, majd a <q>Szemétként</q>
+        vagy a <q>Nem szemétként</q> parancsot.</li>
+      <li>Kattintsunk a Szemét ikonra a Levelező eszköztáron.</li>
+      <li><img src="images/mail_junk_column.png" style="float:right" alt=""/>
+
+        <p>Az üzenetlistában kattintsunk a Szemét-e oszlopra. (Ha nem látjuk, akkor kattintsunk a jobbszélső gombra (<img src="images/columns.png" alt=""/>) az üzenetlista fejlécében és válasszuk a Szemét-e elemet a listából.)</p>
+      </li>
+    </ul>
+
+    <p>Ha kapcsolgatjuk a Szemét-e státuszt, akkor egy kuka ikon megjelenik vagy eltűnik a Szemét-e állapotoszlopában, így jelezve a kiválasztott üzenet státuszát.</p>
+  </li>
+  <li>Válasszuk a Feladatok menü <q>Levélszemét kezelése…</q> parancsát. Engedélyezzük a postafiókra a levélszemét kezelését, és a &brandShortName; a beérkező üzeneteket automatikusan osztályozni fogja. (További tudnivalók: <a href="#junk_controls_options">Levélszemét-kezelő használata</a>.)</li>
+  <li>Ha vírusos leveleket is fel szeretnénk ismertetni, akkor vegyük fontolóra az ismerősöktől jövő levelek automatikus átengedésének megtiltását (sok vírus tömegével küld üzeneteket a fertőzött számítógép címjegyzékében található címekre).</li>
+  <li>Ha a Levélszemét-kezelő rosszul ismer fel egy üzenetet, akkor mindenképpen javítsuk, akár szemét, akár nem szemét üzenetről van szó.</li>
+  <li>Már beérkezett üzenetek elemzéséhez jelöljük ki az üzeneteket, és válasszuk a Feladatok menü <q>Levélszemétgyűjtő futattása a mappán</q> parancsát.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: A &brandShortName; csak akkor fogja futtatni a Levélszemét-kezelőt, ha az azonosító adatbázisban vannak információk a nem szemét üzenetekről. Ha a Levélszemét-kezelő nem működik, akkor válasszunk ki néhány üzenetet, és jelöljük meg őket nem szemétként.</p>
+
+<p>[ <a href="#controlling_junk_mail">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="#controlling_junk_mail">Levélszemét-kezelő használata</h2>
+
+<p>A Levélszemét-kezelő működésének pontos áttekintéséhez válasszuk a Feladatok menü <q>Levélszemét kezelése…</q> parancsát:</p>
+
+<ul>
+  <li><strong>Postafiók</strong>: Válasszunk egy postafiókot a Levélszemét-kezelő beállításainak megváltoztatásához az adott postafiókon. (Megjegyzés: minden postafiók ugyanazt az azonosító adatbázist használja.)</li>
+  <li><strong>Levélszemétnapló</strong>: Kattintsunk a gombra a levélszemét-felismerések listáját tartalmazó párbeszédpanel megnyitásához. A párbeszédpanelen letilthatjuk a Levélszemétnapló vezetését.</li>
+  <li><strong>Levélszemét kezelésének engedélyezése</strong>: Jelöljük be, ha kérjük a levélszemét felismertetését.</li>
+  <li><strong>Ne jelölje meg levélszemétként az üzenetet, ha a feladója benne van a címjegyzékben</strong>: Jelöljük be ha ki akarjuk védeni, hogy véletlenül levélszemétté váljanak az ismerős emberek üzenetei.</li>
+  <li><strong>A levélszemétként azonosított bejövő üzenetek áthelyezése</strong>: Jelöljük be, ha szeretnénk, hogy a levélszemét automatikusan egy megadott mappába kerüljön.
+    <ul>
+      <li><strong><q>Szemét</q> mappa [postafiók]</strong>: az alapértelmezett levélszemétmappa használatához válasszuk ezt.</li>
+      <li><strong>Egyéb: [postafiók]</strong>: egyedi levélszemét mappa beállításához válasszuk ezt.</li>
+      <li><strong>A levélszemétként megjelölt üzenetek törlése [__] nap elteltével ebből a mappából</strong>: Ha biztosak vagyunk benne, hogy a levélszemétként azonosított üzenetek valóban szemetek, akkor jelöljük be, hogy a bizonyos időnél régebben érkezett levélszemét automatikusan törlődjön.</li>
+    </ul>
+  </li>
+  <li><strong>A szemétként megjelölt levelek megjelölése olvasottként</strong>: Válasszuk ki ezt a beállítást, ha el akarjuk kerülni, hogy a levélszemétnek jelölt üzenet új üzenetként jelenjen meg.</li>
+  <li><strong>Ha kézzel jelölöm meg az üzeneteket szemétként</strong>: Válasszuk ezt annak beállításához, hogy a &brandShortName; mit csináljon a kézzel megjelölt levélszeméttel.
+    <ul>
+      <li><strong>Áthelyezés<q>Szemét</q> mappába</strong>: Válasszuk ezt, ha a kézzel szemétként megjelölt üzeneteket a levélszemét mappába szeretnénk áthelyezni.</li>
+      <li><strong>Törlés</strong>: Válasszuk ezt, ha a kézzel szemétként megjelölt üzeneteket a kukába szeretnénk áthelyezni.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[ <a href="#controlling_junk_mail">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="junk_controls_and_filters">Levélszemét kezelése és Levélszűrők</h2>
+
+<p>A levélszemét azonosítása a levélszűrők végrehajtása után történik és csak a Beérkezett üzenetek mappán és annak almappáin fut végig. Használjuk ki ennek előnyeit! Például azt az üzenetet, melyről biztosan tudjuk, hogy nem levélszemét szűrhetjük a Beérkezett üzenetek mappán kívülre, így az biztosan nem lesz levélszemétként azonosítva (ez különösen hasznos, ha hírlevelekre vagyunk feliratkozva vagy moderált levelezőlista tagjai vagyunk).</p>
+
+<p>[ <a href="#controlling_junk_mail">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="phishing_detection">Phishing Detection</h2>
+
+<p>Phishing is a particularly common fraudulent business scheme in which
+  a party creates counterfeit websites designed to trick recipients into
+  divulging personal data such as credit card numbers, account usernames,
+  passwords and social security numbers. Hijacking brand names of banks,
+  e-retailers and credit card companies, phishers often convince
+  recipients to respond.</p>
+
+<p>In many cases, you&apos;ll receive a link to a phishing page via an email
+  which claims to come from an official-looking address. You can also end up
+  at these pages by following links that you find on the Web or in IM
+  messages.</p>
+
+<p><strong>Tip</strong>: Since a forged <a href="glossary.xhtml#url">URL</a>
+  can look very similar to a genuine one, it&apos;s safer to use a bookmark
+  you&apos;ve created or to type the URL into the location bar by hand instead
+  of following a link in an email message. Always consider the risk of a forged
+  URL if you&apos;re asked to log in or provide private information on a
+  website.</p>
+
+<p>&brandShortName; Mail phishing detector is enabled by default. When it
+  encounters a mail which seems to be scam, it will show a warning bar in the
+  message window.</p>
+
+<p>If you think that the email is a valid one, you can click on the <q>Not
+  Scam</q> button, and the warning bar will disappear.</p>
+
+<p>When a user clicks on a link in an email that appears to be a phishing URL,
+  &brandShortName; will prompt the user with a dialog box before the website
+  is opened.</p>
+
+<p>This prompt will appear if either of the following is true: the host name of
+  the actual URL is an <a href="glossary.xhtml#ip_address">IP address</a>, or
+  the link text is a URL whose host name does not match the host name of the
+  actual URL.</p>
+
+<p><strong>Note</strong>: Phishing detection has a higher precedence than Junk
+  Mail detection.</p>
+
+<p>For more technical details on this subject, see the online document
+  <a href="http://www.honeynet.org/papers/phishing/">Know your Enemy:
+  Phishing</a>.</p>
+
+<p>[ <a href="#controlling_junk_mail">Vissza a fejezet elejére</a> ]</p>
+</body>
+</html>

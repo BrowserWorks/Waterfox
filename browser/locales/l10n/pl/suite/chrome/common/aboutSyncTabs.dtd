@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label "Karty z innych komputerów">
+
+<!ENTITY tabs.searchText.label "Pisz tutaj, by wyszukać karty…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label "Otwórz tę kartę">
+<!ENTITY tabs.context.openTab.accesskey "O">
+<!ENTITY tabs.context.openMultipleTabs.label "Otwórz zaznaczone karty">
+<!ENTITY tabs.context.openMultipleTabs.accesskey "O">
+<!ENTITY tabs.context.bookmarkSingleTab.label "Dodaj zakładkę do tej karty…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey "D">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label "Dodaj zakładki do zaznaczonych kart…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey "D">
+<!ENTITY tabs.context.refreshList.label "Odśwież listę">
+<!ENTITY tabs.context.refreshList.accesskey "w">

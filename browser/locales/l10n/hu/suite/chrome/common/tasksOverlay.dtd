@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Kis méret">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "Nagyítás">
+<!ENTITY navigatorCmd.label "Böngésző">
+<!ENTITY navigatorCmd.accesskey "B">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "e">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Hibakonzol">
+<!ENTITY errorConsoleCmd.accesskey "k">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Böngésző">
+<!ENTITY taskComposer.tooltip "HTML-szerkesztő">
+
+<!ENTITY webDevelopment.label "Webfejlesztés">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "Ablakok">
+<!ENTITY windowMenu.accesskey "A">
+
+<!ENTITY tasksMenu.label "Eszközök">
+<!ENTITY tasksMenu.accesskey "E">
+
+<!ENTITY datamanCmd.label "Adatkezelő">
+<!ENTITY datamanCmd.accesskey "A">
+
+<!ENTITY passwordManagerCmd.label "Jelszókezelő">
+<!ENTITY passwordManagerCmd.accesskey "J">
+
+<!ENTITY passwordDisplayCmd.label "Tárolt jelszavak kezelése">
+<!ENTITY passwordDisplayCmd.accesskey "T">
+
+<!ENTITY passwordExpireCmd.label "Kijelentkezés">
+<!ENTITY passwordExpireCmd.accesskey "l">
+
+<!ENTITY downloadManagerCmd.label "Letöltéskezelő">
+<!ENTITY downloadManagerCmd.accesskey "L">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Kiegészítőkezelő">
+<!ENTITY addOnsManagerCmd.accesskey "K">
+<!ENTITY addOnsManagerCmd.commandkey "e">
+
+<!ENTITY switchProfileCmd.label "Profilváltás…">
+<!ENTITY switchProfileCmd.accesskey "P">
+
+<!ENTITY syncBrand.shortName.label "Szinkronizálás">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Szinkronizálás beállítása…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Szinkronizálás">
+<!ENTITY syncSyncNowItem.accesskey "S">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "鼠标滚轮">
+<!ENTITY mouseWheelPanel.label           "指定当使用这个修饰键时鼠标滚轮的行为 ">
+<!ENTITY usingJustTheWheel.label         "无修饰键">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "垂直滚动">
+<!ENTITY mouseWheelHorizGroup.label      "水平滚动">
+<!ENTITY sameAsVertical.label            "与垂直滚动一样">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "什么也不做">
+<!ENTITY doNothing.accesskey             "D">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "滚动文档">
+<!ENTITY scrollDocument.accesskey        "S">
+<!ENTITY scrollDocumentHoriz.accesskey   "c">
+<!ENTITY history.label                   "在浏览器历史列表中前后移动">
+<!ENTITY history.accesskey               "M">
+<!ENTITY historyHoriz.accesskey          "b">
+<!ENTITY zoom.label                      "缩放网页">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "o">
+<!ENTITY wheelSpeed.label                "鼠标滚轮速度：">
+<!ENTITY wheelSpeed.accesskey            "w">
+<!ENTITY wheelSpeedHoriz.accesskey       "u">
+<!ENTITY reverseDirection.label          "反方向">
+<!ENTITY reverseDirection.accesskey      "R">
+<!ENTITY reverseDirectionHoriz.accesskey "e">

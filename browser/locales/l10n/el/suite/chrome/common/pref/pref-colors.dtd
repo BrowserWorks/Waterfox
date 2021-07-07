@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Χρώματα">
+<!ENTITY color                             "Κείμενο και παρασκήνιο">
+<!ENTITY textColor.label                   "Κείμενο:">
+<!ENTITY textColor.accesskey               "Κ">
+<!ENTITY backgroundColor.label             "Παρασκήνιο:">
+<!ENTITY backgroundColor.accesskey         "Π">
+<!ENTITY useSystemColors.label             "Χρήση χρωμάτων συστήματος">
+<!ENTITY useSystemColors.accesskey         "σ">
+
+<!ENTITY underlineLinks.label              "Υπογράμμιση συνδέσμων">
+<!ENTITY underlineLinks.accesskey          "Υ">
+<!ENTITY links                             "Χρώματα συνδέσμων">
+<!ENTITY linkColor.label                   "Μη ανοιγμένοι σύνδεσμοι:">
+<!ENTITY linkColor.accesskey               "Σ">
+<!ENTITY activeLinkColor.label             "Ενεργοί σύνδεσμοι:">
+<!ENTITY activeLinkColor.accesskey         "ρ">
+<!ENTITY visitedLinkColor.label            "Ανοιγμένοι σύνδεσμοι:">
+<!ENTITY visitedLinkColor.accesskey        "ε">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Όταν μια ιστοσελίδα παρέχει τα δικά της χρώματα και φόντο">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Πάντα χρήση χρωμάτων και φόντου που ορίζονται από την ιστοσελίδα">
+<!ENTITY alwaysUseDocumentColors.accesskey "Π">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Χρήση επιλεγμένων χρωμάτων, αγνοώντας τα καθορισμένα χρώματα και την εικόνα φόντου">
+<!ENTITY useMyColors.accesskey             "σ">
+<!ENTITY automaticColors.label             "Παράβλεψη χρωμάτων σελίδας μόνο κατά τη χρήση θέματος υψηλής αντίθεσης">
+<!ENTITY automaticColors.accesskey         "μ">

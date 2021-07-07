@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Conversación">
+<!ENTITY fromColumn.label "Remitente">
+<!ENTITY recipientColumn.label "Destinatario">
+<!ENTITY attachmentColumn.label "Adjuntos">
+<!ENTITY subjectColumn.label "Asunto">
+<!ENTITY dateColumn.label "Fecha">
+<!ENTITY priorityColumn.label "Prioridad">
+<!ENTITY tagsColumn.label "Etiquetas">
+<!ENTITY accountColumn.label "Cuenta">
+<!ENTITY statusColumn.label "Estado">
+<!ENTITY sizeColumn.label "Tamaño">
+<!ENTITY junkStatusColumn.label "Estado de correo basura">
+<!ENTITY unreadColumn.label "No leídos en la conversación">
+<!ENTITY totalColumn.label "Total en la conversación">
+<!ENTITY readColumn.label "Leído">
+<!ENTITY receivedColumn.label "Recibido">
+<!ENTITY flagColumn.label "Señal">
+<!ENTITY locationColumn.label "Ubicación">
+<!ENTITY idColumn.label "Orden de recepción">
+<!ENTITY columnChooser2.tooltip "Seleccione las columnas que desea mostrar">
+<!ENTITY threadColumn2.tooltip "Mostrar conversaciones de mensajes">
+<!ENTITY fromColumn2.tooltip "Ordenar por remitente">
+<!ENTITY recipientColumn2.tooltip "Ordenar por destinatario">
+<!ENTITY attachmentColumn2.tooltip "Ordenar por adjuntos">
+<!ENTITY subjectColumn2.tooltip "Ordenar por asunto">
+<!ENTITY dateColumn2.tooltip "Ordenar por fecha">
+<!ENTITY priorityColumn2.tooltip "Ordenar por prioridad">
+<!ENTITY tagsColumn2.tooltip "Ordenar por etiquetas">
+<!ENTITY accountColumn2.tooltip "Ordenar por cuenta">
+<!ENTITY statusColumn2.tooltip "Ordenar por estado">
+<!ENTITY sizeColumn2.tooltip "Ordenar por tamaño">
+<!ENTITY junkStatusColumn2.tooltip "Ordenar por estado de correo basura">
+<!ENTITY unreadColumn2.tooltip "Número de mensajes no leídos en una conversación">
+<!ENTITY totalColumn2.tooltip "Número total de mensajes en la conversación">
+<!ENTITY readColumn2.tooltip "Ordenar por leídos/no leídos">
+<!ENTITY receivedColumn2.tooltip "Ordenar por fecha de recepción">
+<!ENTITY flagColumn2.tooltip "Ordenar por señal">
+<!ENTITY locationColumn2.tooltip "Ordenar por ubicación">
+<!ENTITY idColumn2.tooltip "Ordenar por orden de recepción">

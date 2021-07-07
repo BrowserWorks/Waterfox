@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Indirizzi">
+<!ENTITY emailCollectiontitle.label            "Raccolta di indirizzi email">
+<!ENTITY emailCollectionPicker.label           "Aggiungi indirizzi email a:">
+<!ENTITY emailCollectionPicker.accesskey       "A">
+<!ENTITY emailCollectiontext.label             "Gli indirizzi di posta elettronica possono essere aggiunti automaticamente ad una rubrica locale.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Auto completamento indirizzi">
+<!ENTITY highlightNonMatches.label             "Evidenziare gli indirizzi che non hanno completamento automatico">
+<!ENTITY highlightNonMatches.accesskey         "E">
+<!ENTITY addressingEnable.label                "Rubriche locali">
+<!ENTITY addressingEnable.accesskey            "R">
+<!ENTITY autocompleteText.label                "Durante l'immissione dei destinatari, cerca indirizzi corrispondenti in:">
+<!ENTITY directories.label                     "Rubrica remota:">
+<!ENTITY directories.accesskey                 "u">
+<!ENTITY directoriesNone.label                 "Nessuno">
+<!ENTITY editDirectories.label                 "Modifica rubrica…">
+<!ENTITY editDirectories.accesskey             "M">

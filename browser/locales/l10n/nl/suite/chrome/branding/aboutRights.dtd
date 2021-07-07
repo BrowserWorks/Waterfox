@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Over uw rechten">
+<!ENTITY rights.intro "&brandFullName; is vrije en opensourcesoftware, gebouwd door een gemeenschap van duizenden mensen over de hele wereld. Er zijn een paar zaken die u moet weten:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; wordt beschikbaar gesteld onder de voorwaarden van de ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Dit betekent dat u &brandShortName; mag gebruiken, kopiëren en naar anderen mag distribueren. Ook mag u de broncode van &brandShortName; modificeren naar een vorm die aan uw eisen voldoet. De Mozilla Public License geeft u tevens het recht uw aangepaste versies te distribueren.">
+
+<!ENTITY rights.intro-point2a "Mozilla verleent u geen rechten op de Mozilla- en SeaMonkey-handelsmerken of -logo’s. Aanvullende informatie over handelsmerken is ">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; verleent u geen rechten op de handelsmerken en logo’s van &quot;&brandFullName;&quot;. Meer info over handelsmerken kan worden gevonden op ">
+<!ENTITY rights.intro-point2b "hier">
+<!ENTITY rights.intro-point2c " te vinden.">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "Enkele onderdelen in &brandShortName;, zoals de Crashreporter, bieden u de mogelijkheid feedback aan &vendorShortName; te leveren. Door het indienen van feedback geeft u &vendorShortName; toestemming de feedback te gebruiken om hun producten te verbeteren, de feedback op hun websites te publiceren en de feedback te verspreiden.">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Enkele onderdelen in &brandShortName;, zoals de Crashreporter, bieden u de mogelijkheid feedback aan &vendorShortName; te leveren. Door het indienen van feedback geeft u &vendorShortName; toestemming de feedback te gebruiken om hun producten te verbeteren, de feedback op hun websites te publiceren en de feedback te verspreiden.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "Privacybeleidsregels voor producten van &vendorShortName; zijn ">
+<!ENTITY rights.intro-point3b "hier">
+<!ENTITY rights.intro-point3c " te vinden.">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; biedt optionele website-informatiediensten, zoals de add-on- of Safe Browsing-diensten; we kunnen echter niet garanderen dat deze 100&#37; nauwkeurig of foutvrij zijn. Meer details, waaronder informatie over het uitschakelen van de functies die deze diensten gebruiken, is te vinden in de ">
+<!ENTITY rights.intro-point4b "servicevoorwaarden">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "&brandFullName;-websitediensten">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a "&brandFullName; biedt optionele webgebaseerde diensten (‘Diensten’) aan, die beschikbaar zijn voor uw gebruik met deze binaire versie van &brandShortName;, zoals hieronder beschreven. Deze diensten (zoals de add-on-suggestie- en -updateservice, de dienst Safe Browsing of de notificatiefunctie van de dienst Locatiebewust navigeren) zijn standaard geactiveerd. Als u een of meer van deze diensten niet wilt gebruiken of de voorwaarden hieronder niet wilt accepteren, kunt u ">
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "&vendorShortName; biedt optionele webgebaseerde diensten (‘Diensten’) aan, die beschikbaar zijn voor uw gebruik met deze binaire versie van &brandShortName;, zoals hieronder beschreven. Enkele van deze diensten (zoals de add-on-suggestie- en -updateservice, de dienst Safe Browsing of de notificatiefunctie van de dienst Locatiebewust navigeren) zijn standaard geactiveerd. Als u een of meer van deze diensten niet wilt gebruiken of de voorwaarden hieronder niet wilt accepteren, kunt u ">
+<!ENTITY rights3.webservices-b "hier">
+<!ENTITY rights3.webservices-c " instructies over het uitschakelen van een bepaalde functie of dienst vinden.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "Add-ondiensten: ">
+<!ENTITY rights.addons-b "standaard zal &brandShortName; add-ons op de &view.discover.label;-pagina voorstellen en periodiek controleren op updates. Als u de functie volledig wilt uitschakelen om informatie-uitwisseling over geïnstalleerde add-ons met de server te voorkomen, volg dan deze stappen:">
+<!ENTITY rights.addons-term1 "Open de toepassingsvoorkeuren">
+<!ENTITY rights.addons-term2 "Selecteer in de &advance.label; categorie het &smart.label;-paneel ">
+<!ENTITY rights.addons-term3 "Vink de opties ‘&autoAddOnsUpdates.label;’ en ‘&enablePersonalized.label;’ uit">
+<!ENTITY rights.addons-term4 "Add-ondiensten zijn nu uitgeschakeld">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Safe Browsing: ">
+<!ENTITY rights.safebrowsing-b "uitschakelen van de functie Safe Browsing wordt niet aanbevolen, omdat dit ervoor kan zorgen dat u onveilige websites bezoekt. Als u de functie volledig wilt uitschakelen, volg dan deze stappen:">
+<!ENTITY rights.safebrowsing-term1 "Open de toepassingsvoorkeuren">
+<!ENTITY rights.safebrowsing-term2 "Selecteer het hoofd &security.label;-paneel">
+<!ENTITY rights.safebrowsing-term3 "Vink de opties ‘&blockAttackSites.label;’ en ‘&blockWebForgeries.label;’ uit">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing is nu uitgeschakeld">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Locatiebewust navigeren: ">
+<!ENTITY rights.locationawarebrowsing-b "vraagt altijd om toestemming. Er worden nooit locatiegegevens verzonden zonder uw toestemming. Als u de functie volledig wilt uitschakelen, volg dan deze stappen:">
+<!ENTITY rights.locationawarebrowsing-term1 "Open de toepassingsvoorkeuren">
+<!ENTITY rights.locationawarebrowsing-term2 "Selecteer het hoofd &security.label;-paneel">
+<!ENTITY rights.locationawarebrowsing-term3 "Selecteer de optie &quot;&geoDisabled.label;&quot;">
+<!ENTITY rights.locationawarebrowsing-term4 "Locatiebewust navigeren is nu uitgeschakeld">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "&vendorShortName; en Mozilla samen met zijn medewerkers, licentiegevers en partners werken aan het verstrekken van de meest nauwkeurige en bijgewerkte Diensten. We kunnen echter niet garanderen dat deze informatie volledig en foutvrij is. De dienst Safe Browsing bijvoorbeeld identificeert mogelijk bepaalde riskante websites niet, en bepaalde veilige websites ten onrechte wel. Alle locaties die door de dienst Locatiebewust navigeren van onze serviceproviders worden verkregen, zijn enkel schattingen. Noch wij, noch de serviceproviders garanderen de nauwkeurigheid van de gegeven locaties.">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "&vendorShortName; samen met zijn medewerkers, licentiegevers en partners werken aan het verstrekken van de meest nauwkeurige en bijgewerkte Diensten.  We kunnen echter niet garanderen dat deze informatie volledig en foutvrij is.  De dienst Safe Browsing bijvoorbeeld identificeert mogelijk bepaalde riskante websites niet, en bepaalde veilige websites ten onrechte wel. Alle locaties die door de dienst Locatiebewust navigeren van onze serviceproviders worden verkregen, zijn enkel schattingen. Noch wij, noch de serviceproviders garanderen de nauwkeurigheid van de gegeven locaties.">
+<!ENTITY rights.webservices-term1 "&vendorShortName; kan de Diensten naar eigen goeddunken discontinueren of wijzigen.">
+<!ENTITY rights.webservices-term2 "U kunt deze Diensten gebruiken met de bijgeleverde versie van &brandShortName;, en u hebt alle benodigde rechten om dit te doen. &vendorShortName; en zijn licentiegevers behouden alle overige rechten in de Diensten. Deze voorwaarden zijn niet bedoeld om enige rechten die zijn verleend onder opensourcelicenties welke van toepassing zijn op &brandShortName; en overeenkomende broncodeversies van &brandShortName; te beperken.">
+<!ENTITY rights.webservices-term2a "U kunt deze Diensten gebruiken met de bijgeleverde versie van &brandShortName;, en u hebt alle benodigde rechten om dit te doen. &vendorShortName; en zijn licentiegevers behouden alle overige rechten in de Diensten. Deze voorwaarden zijn niet bedoeld om enige rechten die zijn verleend onder opensourcelicenties welke van toepassing zijn op &brandShortName; en overeenkomende broncodeversies van &brandShortName; te beperken.">
+<!ENTITY rights.webservices-term3 "De Diensten worden aangeboden zonder enige garantie. &vendorShortName;, zijn medewerkers, licentiegevers en distributeurs wijzen alle uitdrukkelijke of impliciete garanties af, met inbegrip van, maar niet beperkt tot garanties van verhandelbaarheid en geschiktheid van de Diensten voor een bepaald doel. U draagt de volledige verantwoordelijkheid wat betreft het selecteren van de Diensten voor uw doeleinden en wat betreft de kwaliteit en prestaties van de Diensten. Sommige wetgevingen staan uitsluitingen of beperkingen van impliciete garanties niet toe, dus mogelijk is deze disclaimer op u niet van toepassing.">
+<!ENTITY rights.webservices-term4 "Behoudens zoals vereist bij de wet zijn &vendorShortName;, zijn medewerkers, licentiegevers en distributeurs niet aansprakelijk voor enige indirecte, speciale, incidentele, straffende of gevolgschade voortvloeiend uit of op enige manier verband houdend met het gebruik van &brandShortName; en de Diensten. De collectieve aansprakelijkheid onder deze voorwaarden zal het bedrag van $500 (vijfhonderd dollar) niet overschrijden. Sommige wetgevingen staan uitsluitingen of beperkingen van bepaalde garanties niet toe, dus mogelijk zijn deze uitsluiting en beperking op u niet van toepassing.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; is te allen tijde gerechtigd deze voorwaarden te wijzigen. Deze voorwaarden mogen niet worden gewijzigd of geannuleerd zonder schriftelijke toestemming van &vendorShortName;.">
+<!ENTITY rights.webservices-term6 "Deze voorwaarden vallen onder en zijn opgesteld in overeenstemming de Duitse wetgeving en alle geschillen in relatie tot deze voorwaarden dienen te worden voorgelegd ter exclusieve beoordeling door een competente rechtbank in Duitsland. Als een of meer van deze voorwaarden als ongeldig of onafdwingbaar worden beschouwd, blijven de overige bepalingen onverminderd van kracht. In geval van strijdigheid tussen een vertaalde versie van deze voorwaarden en de Engelse versie prevaleert de Engelse versie.">
+
+<!ENTITY rights.webservices-term6a "Deze voorwaarden vallen onder en zijn opgesteld in overeenstemming met de Duitse wetgeving en alle geschillen in relatie tot deze voorwaarden dienen te worden voorgelegd ter exclusieve beoordeling door een competente rechtbank in Duitsland. Als een of meer van deze voorwaarden als ongeldig of onafdwingbaar worden beschouwd, blijven de overige bepalingen onverminderd van kracht. In geval van strijdigheid tussen een vertaalde versie van deze voorwaarden en de Engelse versie, prevaleert de Engelse versie.">

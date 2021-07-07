@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title	"フォルダー名変更">
+<!ENTITY rename.label			"フォルダーの新しい名前を入力してください:">
+<!ENTITY rename.accesskey		"E">
+<!ENTITY accept.label			"名前を変更">
+<!ENTITY accept.accesskey		"R">

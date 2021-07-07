@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Rozšířené nastavení účtu">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "Adresář serveru IMAP:">
+<!ENTITY serverDirectory.accesskey "A">
+<!ENTITY usingSubscription.label "Zobrazit pouze odebírané složky">
+<!ENTITY usingSubscription.accesskey "b">
+<!ENTITY dualUseFolders.label "Server podporuje složky, které obsahují podsložky se zprávami">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Maximální počet spojení serveru do mezipaměti">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Tyto předvolby určují jmenné prostory na serveru IMAP">
+<!ENTITY personalNamespace.label "Osobní prostor:">
+<!ENTITY personalNamespace.accesskey "O">
+<!ENTITY publicNamespace.label "Veřejný (sdílený):">
+<!ENTITY publicNamespace.accesskey "e">
+<!ENTITY otherUsersNamespace.label "Ostatní uživatelé:">
+<!ENTITY otherUsersNamespace.accesskey "u">
+<!ENTITY overrideNamespaces.label "Povolit serveru přepsat tyto jmenné prostory">
+<!ENTITY overrideNamespaces.accesskey "P">
+<!ENTITY pop3DeferringDesc.label "Staženou poštu ze serveru tohoto účtu uložit v následující složce:" >
+<!ENTITY accountInbox.label "Doručená pošta v tomto účtu">
+<!ENTITY accountInbox.accesskey "d">
+<!ENTITY deferToServer.label "Doručená pošta v jiném účtu">
+<!ENTITY deferToServer.accesskey "r">
+<!ENTITY deferGetNewMail.label "Při stahování nové pošty stahovat i z tohoto serveru">
+<!ENTITY deferGetNewMail.accesskey "t">

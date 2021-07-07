@@ -1,0 +1,1248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>&brandShortName; Mail verwenden</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+     type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="reading_messages">Nachrichten lesen</h1>
+
+<div class="contentsBox">In diesem Abschnitt:
+  <ul>
+    <li><a href="#getting_new_messages">Neue Nachrichten abrufen</a></li>
+    <li><a href="#choosing_how_you_view_the_mail_window">Aussehen des Mail-Fensters festlegen</a></li>
+    <li><a href="#sorting_and_threading_messages">Nachrichten sortieren und threading</a></li>
+    <li><a href="#saving_and_printing_messages">Nachrichten speichern und drucken</a></li>
+    <li><a href="#controlling_images_scripts_and_plug-ins">Bilder, Skripte und PlugIns einstellen</a></li>
+  </ul>
+</div>
+
+<h2 id="getting_new_messages">Neue Nachrichten abrufen</h2>
+
+<p>Wenn Sie Mail &amp; Newsgroups starten k&#246;nnen Sie neue Nachrichten auf einem IMAP-Account automatisch herunterladen lassen
+und diese in Ihrer Inbox anzeigen lassen, indem Sie die Inbox Ihres IMAP-Accounts markieren.</p>
+
+<p>Bei einem POP-Account m&#252;ssen Sie die Inbox markieren und auf Abrufen klicken um Ihre neuen Nachrichten zu erhalten. 
+Standartm&#228;ssig werden Nachrichten vollst&#228;ndig von Ihrem POP-Server heruntergeladen und von diesem gel&#246;scht wenn Sie diese vollst&#228;ndig erhalten haben.
+Sie k&#246;nnen Ihre <a href="mailnews_account_settings.xhtml#pop_server_settings">POP Servereinstellungen</a> &#228;ndern, so dass Sie nur den MailKopf erhalten und/oder eine Kopie der heruntergeladenden Nachricht am Server behalten.</p>
+
+<p>Wenn Sie bei einem News-Account die Newsgroup-Liste aufklappen, wird diese
+  automatisch auf neue Nachrichten gepr&#252;ft. Dies geschieht auch, wenn Sie eine
+  Newsgroup ausw&#228;hlen. W&#228;hrend Sie eine Newsgroup lesen, k&#246;nnen Sie auf neue
+  Nachrichten pr&#252;fen, indem Sie auf die Schaltfl&#228;che <q>Abrufen</q> klicken.</p>
+
+<p>Bei Blog &amp; Newsfeed-Account wird dieser automatisch auf neue Nachrichten gepr&#252;ft, wenn Sie diesen
+  das erste Mal aufklappen. Ansonsten k&#246;nnen Sie auf neue Nachrichten pr&#252;fen, indem Sie auf die
+  Schaltfl&#228;che <q>Abrufen</q> klicken.</p>
+
+<p>Sie k&#246;nnen Mail &amp; Newsgroups auch so einstellen, dass neue Nachrichten beim Start automatisch abgerufen werden 
+  und dass Mail &amp; Newsgroups selbst&#228;ndig in von Ihnen festgelegten Intervallen nach neuen Nachrichten nachschaut.</p>
+
+<table>
+<tr>
+<td colspan="2"><img src="images/task_mail.png" alt="" /></td>
+</tr>
+
+<tr>
+<td style="width: 20px;" />
+<td><strong>Mail &amp; Newsgroups Symbol</strong></td>
+</tr>
+</table>
+
+<p>Das Mail &amp; Newsgroups Symbol in der Statuszeile zeigt einen gr&#252;nen Pfeil um Sie darauf aufmerksam zu machen, dass Sie
+neue Nachrichten erhalten haben.</p>
+
+<table>
+<tr>
+<td colspan="2"><img src="images/task_newmail.png" alt="" /></td>
+</tr>
+
+<tr>
+<td style="width: 20px;" />
+<td><strong>Benachrichtigung bei neuen E-Mails</strong></td>
+</tr>
+</table>
+
+<p>So richten Sie Mozilla Mail &amp; Newsgroups f&#252;r die automatische &#220;berpr&#252;fung auf neue Nachrichten ein (ausgehend vom Mail-Fenster):</p>
+
+<ol>
+<li>&#214;ffnen Sie das Men&#252; <span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span> und klicken Sie auf Mail &amp; Newsgroups Account
+Einstellungen. Es erscheint der Mail &amp; Newsgroups-Account Einstellungen Dialog.</li>
+
+<li>Wenn Sie mehrere Accounts haben, markieren Sie den entsprechenden Account und
+  klicken Sie auf die Kategorie Servereinstellungen f&#252;r den entsprechenden Acount.</li>
+
+<li>W&#228;hlen Sie nun eine oder beide der folgende Option in den Servereinstellungen-Kategorie:
+
+<ul>
+<li><strong>Beim Starten auf neue Mail pr&#252;fen</strong>: W&#228;hlen Sie diesen Schalter, 
+wenn &brandShortName; bei jedem Start von Mail &amp; Newsgroups &#252;berpr&#252;fen soll. 
+Bei POP-Accounts werden neue Nachrichten erst dann heruntergeladen, wenn Sie auf
+Abrufen klicken, es sei den Sie haben die Option <q>Neue Nachrichten automatisch 
+herunterladen</q> aktiviert.</li>
+
+<li><strong>Alle  [__] auf neue Nachrichten &#252;berpr&#252;fen</strong>:
+W&#228;hlen sie diese Schalter um den Interval zwischen den automatischen &#220;berpr&#252;fung 
+auf neue Nachrichten festzulegen. Sie k&#246;nnen weiterhin jederzeit auf neue Nachrichten 
+pr&#252;fen, indem Sie im Mail-Fenster auf Abrufen klicken.</li>
+</ul>
+</li>
+
+<li>Klicken Sie auf OK. Ihre Einstellungen werden beim n&#228;chsten Start von &brandShortName; 
+Mail &amp; Newsgroups wirksam.</li>
+</ol>
+
+<p>Wenn Sie m&#246;chten, dass &brandShortName; Mail &amp; Newsgroups einen Sound abspielt 
+  oder eine Benachrichtigung anzeigt wenn neuen Mails verf&#252;gbar sind, Siehe 
+  <a href="mailnews_preferences.xhtml#notifications">Mail &amp; Newsgroups Einstellungen 
+- Benachrichtigungen</a>.</p>
+
+<p>Sie k&#246;nnen Ihre Nachrichten jederzeit von Hand abrufen. Um Nachrichten f&#252;r 
+den selektierten Account abzurufen, k&#246;nnen Sie folgendes
+tun:</p>
+
+<ul>
+<li>Klicken Sie auf Abrufen in der Mail-Symbolleiste.</li>
+
+<li>&#214;ffnen Sie das Men&#252; Dateu (im Mail-Fenster) und w&#228;hlen dort Abrufen.</li>
+</ul>
+
+<p>Um Nachrichten fuer alle Accounts abzurufen, beginnen Sie im Mail-Fenster:</p>
+
+<ol>
+<li>Klicken Sie auf den Pfeil auf dem Abrufen-Button in der Mail-Symbolleiste.</li>
+
+<li>W&#228;hlen Sie <q>Alle Nachrichten abrufen</q>. &brandShortName; Mail &amp; Newsgroups
+wird daraufhin die neuen Nachrichten f&#252;r alle Ihre Mail-Accounts abrufen.
+
+<p>Wenn Sie bei einem Ihrer Mail-Accounts gerade nicht angemeldet sind, fragt &brandShortName; Mail &amp; Newsgroups 
+Sie nach dem Benutzernamen und Passwort, bevor es die Nachrichten f&#252;r diesen Account abruft.
+(Wenn Sie Ihren Benutzernamen und Ihr Passwort schon im Passwortmanager abgespeichert haben, fragt
+Sie Mail &amp; Newsgroups nat&#252;rlich nicht danach)</p>
+</li>
+</ol>
+
+<p><strong>Hinweis</strong>: Sie k&#246;nnen auch das Men&#252; Datei (im Mail-Fenster) &#246;ffnen
+und auf <q>Alle Nachrichten abrufen</q> klicken.</p>
+
+<p>Um Nachrichten f&#252;r ein bestimmtes Accounts abzurufen, beginnen Sie im Mail-Fenster:</p>
+
+<ol>
+<li>Klicken Sie auf den Pfeil auf dem Abrufen-Button in der Mail-Symbolleiste.</li>
+
+<li>W&#228;hlen Sie den Account, f&#252;r welchen Sie die neuen Nachrichten abrufen m&#246;chten.</li>
+</ol>
+
+<p><strong>Hinweis</strong>: Mail &amp; Newsgroups fragt Sie beim ersten Abruf von Nachrichten nach Ihrem Passwort.
+Sie k&#246;nnen ausw&#228;hlen, ob Sie Ihr Passwort im Passwortmanager speichern wollen oder nicht.</p>
+
+<p>Der Passwortmanager kann alle Ihre Benutzernamen und Passw&#246;rter lokal auf Ihrem Computer 
+in einer Datei speichern. Mehr Informationen finden Sie unter <a
+href="using_priv_help.xhtml#using_the_password_manager">Benutzen des Passwort-Managers</a>.</p>
+
+<p>[<a href="#reading_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="choosing_how_you_view_the_mail_window">Aussehen des Mail-Fensters festlegen</h2>
+
+<p>Sie k&ouml;nnen das Aussehen des Mail-Fensters(das ist das Fenster, das Sie sehen wenn Sie 
+auf Mail &amp; Newsgroups im Men&#252; Fenster klicken) anpassen:</p>
+
+<ul>
+<li>&#214;ffnen Sie das Men&#252; Ansicht, w&#228;hlen sie <q>Anzeigen/verstecken</q> und klicken Sie auf
+Nachrichten-Symbolleiste, Such-Leiste oder Statuszeile um diese anzuzeigen oder zu verstecken.</li>
+
+<li>&#214;ffnen Sie das Men&#252; Ansichtund  w&#228;hlen sie <q>Layout</q> um Ansicht Ihres Mail-Fenstes
+zu &#228;ndern.</li>
+
+<li>Sie k&#246;nnen jeden Bereich ein- und ausblenden und zwischen einer Ansicht mit zwei Bereichen und 
+einer Ansicht mit drei Bereichen hin- und herschalten.</li>
+</ul>
+
+<p>[<a href="#reading_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="sorting_and_threading_messages">Nachrichten sortieren und threading</h2>
+
+<p>Sie k&#246;nnen die Nachrichten nach folgenden Kriterien sortieren: Betreff,
+  Absender, Datum oder Priorit&#228;t. Beginnen Sie dazu im Mail-Fenster:</p>
+
+<ul>
+<li>Klicken Sie auf die entsprechende Spalten&#252;berschrift im Fenster mit der Nachrichtenliste. 
+Oder &#246;ffnen Sie das Men&#252; Ansicht, w&#228;hlen <q>Sortieren nach</q> und klicken in der 
+Liste auf die gew&#252;nschte Sortierung.</li>
+</ul>
+
+<p>Um Spalten&#252;berschriften neu anordnen, beginnen Sie im Mail-Fenster:</p>
+
+<ul>
+<li>Klicken Sie auf eine Spalten&#252;berschrift und ziehen Sie sie 
+    nach links oder rechts um die Spalte zu verschieben.</li>
+</ul>
+
+<p>Um Spalten ein- oder auszublenden, beginnen Sie im Mail-Fenster:</p>
+
+<ul>
+<li>Klicken Sie auf das Ein-/Ausblenden-Symbol <img src="images/columns.png" alt=""/> umd w&#228;hlen Sie die
+    Spalten, welche ein-/ausgeblendet werden sollen.</li>
+</ul>
+
+<p>So gruppieren Sie Nachrichten nach Threads (thematisch), sodass jede Nachricht mit allen dazugeh&#246;rigen
+Antworten aufgelistet wird:</p>
+
+<ul>
+<li>Klicken Sie auf den Thread-Knopf links neben der Betreff-, Absender- und Datums-Spalten&#252;berschrift.
+Oder &#246;ffnen Sie das Men&#252; Ansicht, w&#228;hlen <q>Sortieren nachung</q> und klicken in 
+der Liste auf <q>Mit Threads</q></li>
+</ul>
+
+<table>
+<tr>
+<td colspan="2"><img src="images/threadbutton.png" alt="" /></td>
+</tr>
+
+<tr>
+<td style="width: 20px;" />
+<td><strong>Thread Knopf</strong></td>
+</tr>
+</table>
+
+<p><strong>Tipp</strong>: Der Thread-Knopf sortiert die Threads automatisch nach Alter der Start-Nachrichten.
+Wenn Sie eine andere Sortierung m&#246;chten, &#246;ffnen Sie das Man&#252; Ansicht w&#228;hlen die 
+gew&#252;nschte Sortierung aus dem Unterme&#252;.</p>
+
+<p><strong>Tipp</strong>: W&#228;hlen Sie <q>Threads beim Sortieren erhalten</q> im
+  <a href="mailnews_preferences.xhtml#mail_and_newsgroups">Mail &amp; Newsgroups Einstellungen</a> 
+  wenn &brandShortName; die Thread-Darstellung erhalten soll, wenn die Sortierung durch einen 
+  Klick auf die entsprechende Spalten&#252;berschrift ge&#228;ndert wird. In diesem Modus 
+  schaltet der Thread-Button zwischen Thread- und Listenansicht um. Wenn <q>Threads beim 
+  Sortieren erhalten</q> nicht aktiviert ist, schaltet &brandShortName; automatisch in die 
+  Listenansicht um, sobald Sie auf eine Spalten&#252;berschrift klicken.</p>
+
+<p><strong>Tipp</strong>: Um Threads mit ungelesenen Nachrichten hervorzuheben, werden im geschlossenen Zustand
+die Start-Nachrichten unterstrichen dargestellt.</p>
+
+<p>[<a href="#reading_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="saving_and_printing_messages">Nachrichten speichern und drucken</h2>
+
+<p>Um eine Nachricht als normalen Text, HTML oder OUtlook Express-Format zu speichern. folgen Sie 
+diesen Anweisungen:</p>
+
+<ol>
+<li>Markieren Sie die gew&#252;nschte Nachricht in der Liste</li>
+
+<li>&#214;ffnen Sie das Men&#252; Datei und w&#228;hlen Sie Speichern unter und dann Datei</li>
+
+<li>W&#228;hlen Sie bei <q>Dateityp</q> den Datei-Typ (HTML, Text, oder Mail
+Datei) unter dem Sie die Email speichern wollen. W&#228;hlen Sie Mail-Datei, wenn Sie so speichern wollen, dass diese 
+von Microsoft Outlook oder Outlook Express ge&#246;ffnet werden kann.</li>
+
+<li>&#196;ndern Sie die Dateinamen-Erweiterung auf .html, .txt, oder .eml,
+abh&#228;ngig vom Datei-Typ den Sie in Schritt 3 ausgew&#228;hlt haben.</li>
+
+<li>W&#228;hlen Sie einen Dateinamen und einen Speicherort und klicken Sie auf Speichern.</li>
+</ol>
+
+<p>Um eine ausgew&#228;hlte Nachricht zu drucken:</p>
+
+<ul>
+<li>Klicken Sie auf Drucken.</li>
+</ul>
+
+<p>[<a href="#reading_messages">Zur&#252;ck zum Beginn des Abschnitts</a>
+]</p>
+
+<h2 id="controlling_images_scripts_and_plug-ins">Bilder, Skripte und PlugIns einstellen</h2>
+
+<p>Standardm&#228;ssig werden Ihnen Grafiken und sonstige eingebetteten Inhalte in der 
+   Mail-Nachricht nicht angezeigt, es sei den, der Absender befindet sich ihn einem Ihrer Adressb&#252;cher
+   und Sie erlauben die Anzeige. Um diese Einstellungen zu &#228;ndern, gehen Sie wie folgt vor:</p>
+
+<ol>
+<li>&#214;ffnen sie das Men&#252; <q>Bearbeiten</q> und w&#228;hlen Einstellungen.</li>
+
+<li>Unter der Kategorie Mail &amp; Newsgroups, klicken sie auf Nachrichtenansicht. 
+(Wenn keine Unterkategorieren sicherbar sind, doppelklicken Sie auf Datenschutz &amp; 
+Sicherheit um die Liste aufzuklappen.)</li>
+
+<li>Entfernen Sie das H&#228;ckchen bei der Option <q>Grafiken und andere Inhalte aus externen Quellen blockieren</q>.</li>
+<li>Klicken Sie auf OK um Ihre Einstellungen zu &#252;bernehmen.</li>
+</ol>
+
+<p><strong>Hinweis</strong>: Siehe <q>Von au&#223;en stammende Grafiken in HTML-Mails erlauben</q> unter
+  <a href="mailnews_addressbooks.xhtml#creating_a_new_address_book_card">Eine neue Visitenkarte erstellen</a> 
+  wenn Sie genauere Informationen dar&#252;ber erhalten wollen, wie Sie f&#252;r bestimmte Sender externe Inhalte
+  zulassen k&#246;nnen.</p>
+
+<p>Standartm&#228;ssig sind f&#252;r ankommende Nachrichten Plug-Ins deaktiviert. 
+Um diese Einstellungen zu &#228;ndern:</p>
+
+<ol>
+<li>&#214;ffnen sie das Men&#252; <span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span>
+und w&#228;hlen Einstellungen.</li>
+
+<li>Unter der Kategorie Erweitert, klicken sie auf Scripte &amp; Plug-Ins.
+(Wenn keine Unterkategorieren sicherbar sind, doppelklicken Sie auf Erweitert um die Liste aufzuklappen.)</li>
+
+<ul>
+<li>Unter <q>Plug-Ins aktivieren f&#252;r</q>, w&#228;hlen Sie <q>Mail &amp; Newsgroups</q> um 
+Plugins zu aktivieren.</li>
+</ul>
+<li>Klicken sie auf OK um Ihre Einstellungen zu &#252;bernehmen.</li>
+</ol>
+
+<p>[<a href="#reading_messages">Zur&#252;ck zum Beginn des Abschnitts</a>
+]</p>
+
+<h1 id="sending_messages">Nachrichten senden</h1>
+
+<div class="contentsBox">In diesem Abschnitt:
+  <ul>
+    <li><a href="#composing_mail_and_newsgroup_messages">Mail und Newsgroup Nachrichten erstellen</a></li>
+    <li><a href="#using_the_message_composition_window">Das Nachrichtenerstellungsfenster benutzen</a></li>
+    <li><a href="#addressing_a_message">Nachrichten adressieren</a></li>
+    <li><a href="#selecting_message_sending_options">Optionen zum Senden von Nachrichten festlegen</a></li>
+    <li><a href="#replying_to_a_message">Nachrichten beantworten</a></li>
+    <li><a href="#forwarding_a_message">Nachrichten weiterleiten</a></li>
+    <li><a href="#confirming_that_your_message_was_opened">Best&#228;tigungen f&#252;r ge&#246;ffnete Mails</a></li>
+    <li><a href="#saving_and_editing_a_message_draft">Entw&#252;rfe speichern und bearbeiten</a></li>
+    <li><a href="#creating_and_using_templates">Vorlagen erzeugen und verwenden</a></li>
+  </ul>
+</div>
+
+<h2 id="composing_mail_and_newsgroup_messages">Mail und Newsgroup Nachrichten erstellen</h2>
+
+<p>Um eine neue Nachricht zu adressieren, zu erstellen, auf eine Nachricht
+zu antworten oder eine Nachricht zu senden, f&#252;hren Sie einen der folgenden
+Schritte aus:</p>
+
+<ul>
+<li>Sie k&#246;nnen in jedem &brandShortName;-Fenster das Men&#252; Datei &#246;ffnen
+und auf die Option Neu und anschlie&#223;end auf Nachricht klicken.</li>
+
+<li>Klicken Sie auf Verfassen in der Symbolleiste im
+Mail-Fenster.</li>
+
+<li>Wenn eine Nachricht angezeigt wird, klicken Sie auf Antworten,
+Weiterleiten oder Antw. an alle in der Symbolleiste.</li>
+
+<li>W&#228;hlen Sie eine Adresse im Adressbuch aus und klicken Sie auf
+Verfassen im Adressbuch.</li>
+</ul>
+
+<p><strong>Tipp</strong>: Benutzen Sie das Mail &amp;
+Newsgroups Account-Erstellungen
+- <a href="mailnews_account_settings.xhtml#addressing">Erstellen &amp; Adressieren</a>
+Dialogfeld
+um den HTML-Text-Editor zum erstellen von Nachrichten dieses Accounts zu
+verwenden.
+(Sie k&#246;nnen f&#252;r jeden Account den bevorzugten Editor w&#228;hlen.)
+Siehe <a href="mailnews_getting_started.xhtml#changing_the_settings_for_an_account">&#196;ndern von
+Accounteinstellungen</a> f&#252;r mehr Informationen.</p>
+
+<p><strong>Hinweis</strong>: Generell ist es nicht m&#246;glich, Nachrichten zu entwerfen, welche auf einen
+  Blog &amp; Newsfeed-Account ver&#246;ffentlicht werden sollen. Wenn Sie Nachrichten auf ein Blog
+  ver&#246;ffentlichen wollen (und die entsprechenden Rechte haben), m&#252;ssen Sie den Mechanismus 
+  des entsprechenden Blog-Dienstes verwerden. In manchen F&#228;llen kann dies auch durch das Senden einer 
+  E-Nail-Nachricht an eine bestimmte Adresse erfolgen.</p>
+
+<p>Wenn Sie Nachrichten im HTML-Format erstellen, k&#246;nnen Sie verschiedene
+Schriftarten, Text-Styles (wie zum Beispiel Fett oder kursiv) sowie Text-Farben, 
+Tabellen, Nummerierte und nicht numerierte Listen, Grafiken benutzen.
+Manche Empf&#228;nger sind m&#246;glicherweise nur in der Lage Nachrichten im 
+Text-Format zu lesen.
+Wenn Sie den Normaltext-Editor von Zeit zu Zeit verwenden m&#246;chten, k&#246;nnen Sie
+die Umschalttaste gedr&#252;ckt halten, w&#228;hrend Sie auf Erstellen oder Antworten
+klicken, um den Normaltext-Editor bei Bedarf zu verwenden.</p>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="using_the_message_composition_window">Das
+Nachrichtenerstellungsfenster benutzen</h2>
+
+<p>Verwenden Sie das Erstellungsfenster, um E-Mail- und Foren-Nachrichten
+zu adressieren, zu erstellen und zu senden. W&#228;hlen Sie als erstes im Eingenschafts-Dialog
+<a href="mailnews_account_settings.xhtml#addressing">Erstellen &amp; Adressieren</a> , ob Sie Nachrichten 
+standardm&#228;ssig als Reintext oder HTML verfassen m&#246;chten. Zum Dialog gelangen Sie indem Sie
+im Men&#252; <span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span> 
+Mail &amp; Newsgroups Account-Einstellungen w&#228;hlen.</p>
+
+<p>Um das Verfassen-Fenster zu sehn, klicken sie auf das Verfassen-Symbol in der Mail-Symbolleiste.</p>
+
+<p>Das Erstellungsfenster enth&#228;lt folgende Elemente:</p>
+
+<ul>
+<li>Mail-Symbolleiste
+
+<p>Sie k&#246;nnen auf eine der folgenden Schaltfl&#228;chen klicken:</p>
+
+<ul>
+<li><strong>Senden</strong>: Die Nachricht versenden.</li>
+
+<li><strong>Adresse</strong>: Nach Namen im Adressbuch suchen.</li>
+
+<li><strong>Anh&#228;nge</strong>: Eine Datei an die Nachricht anh&#228;ngen.
+Siehe <a href="#using_attachments">Anh&#228;nge verwenden</a> f&#252;r mehr Informationen.</li>
+
+<li><strong>Rechtschreibung</strong>: Die Rechtschreibung in der Nachricht &#252;berpr&#252;fen.</li>
+
+<li><strong>Sicherheit</strong>: Zeigt Informationen ob Ihre Nachricht verschl&#252;sselt oder/und 
+digital Signiert verschickt wird.</li>
+
+<li><strong>Speichern</strong>: Nachricht als Entwurf speichern.</li>
+</ul>
+</li>
+
+<li>Addressierungs-Feld: Hier wird die Email-Adresse der Empf&#228;nger eingetragen.</li>
+
+<li>Das Feld Anlagen: Wenn Sie eine Datei an eine Nachricht anh&#228;ngen (indem Sie in dieses 
+Feld klicken oder den Anhang-Knopf dr&#252;cken), wird der Dateiname in diesem Feld angezeigt.</li>
+
+<li>Nachrichten-Text-Feld: Geben Sie hier ihren Nachrichten-Text ein.</li>
+</ul>
+
+<p>Wenn Sie Nachrichten mit Hilfe des HTML-Editors erstellen m&#246;chten, wird eine zus&#228;tzliche 
+Symbolleiste mit &#228;hnlichen Textformatierungsschaltfl&#228;chen wie im &brandShortName; Composer eingeblendet.</p>
+
+<p>Weitere Hilfe zum Benutzen des HTML-Editors finden Sie unter <a
+href="composer_help.xhtml#formatting_your_web_pages">Formatieren von
+Webseiten</a>.</p>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="addressing_a_message">Nachrichten adressieren</h2>
+
+<p>So adressieren Sie E-Mail-Nachrichten:</p>
+
+<ol>
+<li>Geben Sie den Namen in das Adressfeld ein.
+
+<p>Wenn die Option <a href="mailnews_preferences.xhtml#">Adressen-Autovervollst&#228;ndigung</a>
+  aktiviert ist (diese Option ist standardm&#228;&#223;ig aktiviert), m&#252;ssen Sie 
+  nur die ersten Buchstaben des Namens des Empf&#228;ngers eingeben, Mail &amp; Newsgroups 
+  vervollst&#228;ndigt die Adresse selbst&#228;ndig. (Sie k&#246;nnen auch einen Teil des 
+  Namens eingeben und sofort auf die Eingabetaste dr&#252;cken - die Adresse wird daraufhin 
+  von Mail &amp; Newsgroups vervollst&#228;ndigt.)</p>
+</li>
+
+<li>Wenn mehrere Adressen gefunden wurden, w&#228;hlen Sie eine aus und dr&#252;cken Sie die Eingabetaste.
+
+<p><strong>Hinweis</strong>: Trennen Sie mehrere Adressen in derselben Zeile durch Kommas. 
+Trennen Sie Vor- und Zunamen nicht durch Kommas. Mehrere Eintr&#228;ge k&#246;nnen sein:</p>
+<p><tt>user1@netscape.net,user2@netscape.net</tt></p>
+</li>
+
+<li>Wenn die Nachricht von einem anderen Accizbt gesendet  werden soll,
+m&#252;ssen Sie auf die Schaltfl&#228;che <q>Von</q> klicken, um den entsprechenden Account auszuw&#228;hlen. 
+Siehe <a href="#changing_the_account_from_which_a_message_is_sent">&#196;ndern des Absenderaccounts</a> 
+f&#252;r mehr Informationen.</li>
+
+<li>Wenn notwendig, klicken Sie auf die Schaltfl&#228;che <q>An</q>, um einen anderen Empf&#228;ngertyp 
+auszuw&#228;hlen:
+
+<ul>
+    <li><strong>An</strong>: F&#252;r prim&#228;re Empf&#228;nger der Nachricht.</li>
+    <li><strong>Cc</strong>:  F&#252;r sekund&#228;re Empf&#228;nger der Nachricht (Kopie).</li>
+    <li><strong>Bcc</strong>: F&#252;r sekund&#228;re Empf&#228;nger, die anderen Empf&#228;ngern, 
+        einschlie&#223;lich den Empf&#228;ngern der Cc-Liste, nicht angezeigt werden.</li>
+    <li><strong>Reply-To</strong>: Wenn die Empf&#228;nger an eine andere E-Mail-Adresse, nicht an die 
+        Absenderadresse, antworten sollen.</li>
+    <li><strong>Newsgroup</strong>: Zum Senden von Nachrichten an ein Forum.</li>
+    <li><strong>Followup-To</strong>: Zum Weiterleiten von Foren-Nachrichten, sodass nachfolgende 
+        Antworten direkt an das weitergeleitete Forum und nicht an das urspr&#252;ngliche Forum 
+        weitergeleitet werden.</li>
+</ul>
+</li>
+</ol>
+
+<p><strong>Tipp</strong>: Sie k&#246;nnen eine Nachricht schnell adressieren, indem Sie mit der rechten 
+Maustaste auf die E-Mail-Adresse in der Nachricht, die Sie gerade lesen, klicken und die Option
+<q>Senden an</q> aus dem Popup-Men&#252; ausw&#228;hlen.</p>
+
+<p id="changing_the_account_from_which_a_message_is_sent"><strong>&#196;ndern
+des Absenderaccounts</strong></p>
+
+<p>Wenn Sie &#252;ber mehrere E-Mail-Account verf&#252;gen, basiert der Account, der im Feld
+<q>Von</q> angezeigt wird, auf dem Account (oder Server), das ausgew&#228;hlt ist, wenn Sie 
+eine neue Nachricht erstellen m&#246;chten.
+In &brandShortName; Mail &amp; Newsgroups k&ouml;nnen Sie jedoch den Account, von dem eine Nachricht 
+gesendet wird, &#228;ndern, w&#228;hrend Sie die Nachricht erstellen. Klicken Sie auf das Feld 
+<q>Von</q>, um eine Liste der Accounts anzuzeigen, und w&#228;hlen Sie anschlie&#223;end den 
+entsprechenden Account aus. Eine Kopie der Nachricht wird im Ordner <q>Gesendet</q> gespeichert, 
+der zu dem Account geh&#246;rt, von dem aus die Nachricht gesendet wurde.</p>
+
+<p><strong>&#220;ber automatische Adress-Vervollst&#228;ndigung</strong></p>
+
+<p>Sie k&#246;nnen mit dieser Funktion Nachrichten im Erstellungsfenster adressieren, ohne Namen 
+zu suchen oder vollst&#228;ndige Namen einzugeben. Mail &amp; Newsgroups &#252;berpr&#252;ft 
+automatisch die Adressb&#252;cher und einen <a href="glossary.xhtml#ldap">LDAP-Server</a> 
+(sofern verf&#252;gbar) und vervollst&#228;ndigt die Namen, wenn eine eindeutige 
+&#220;bereinstimmung vorhanden ist. Fehler werden verhindert, indem eine Auswahl aller 
+m&#246;glichen Namen angezeigt wird, wenn mehrere &#220;bereinstimmungen gefunden wurden. 
+Die automatischen Adress-Vervollst&#228;ndigung ist standardm&#228;ssig aktiviert.</p>
+
+<p>Wenn Sie eine von Mail &amp; Newsgroups angebotene Adresse nicht verwenden m&#246;chten, m&#252;ssen Sie auf die 
+R&#252;ckw&#228;rtstaste oder die ENTF-Taste dr&#252;cken und eine andere Adresse eingeben.</p>
+
+<p>So deaktivieren Sie die automatische Adress-Vervollst&#228;ndigung:</p>
+
+<ol>
+<li>&#214;ffnen Sie das Men&#252; <span class="noMac">Bearbeiten</span>
+<span class="mac">&brandShortName;</span> und w&#228;hlen Sie Einstellungen.</li>
+
+<li>Klicken Sie in der Kategorie Mail &amp; Newsgroups auf Adressieren. (Wenn in dieser 
+Kategorie keine Optionen angezeigt werden, doppelklicken Sie auf die Kategorie, um die Liste einzublenden.).</li>
+
+<li>Deaktivieren Sie im Bereich Adressen-Autovervollst&#228;ndigen die 
+Kontrollk&#228;stchen <q>Lokale Adressb&#252;cher</q> und <q>LDAP-Verzeichnis-Server</q></li>
+
+<li>Klicken Sie auf OK.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="selecting_message_sending_options">Optionen zum Senden von
+Nachrichten festlegen</h2>
+
+<p>Sie k&#246;nnen w&#228;hrend des Erstellens einer Nachricht diese zus&#228;tzlichen Optionen f&#252;r 
+das Senden von Nachrichten aus dem Men&#252; <q>Optionen</q> ausw&#228;hlen:</p>
+
+<ul>
+<li><strong>Adressen ausw&#228;hlen</strong>: 
+Mit der Option <q>Adressen ausw&#228;hlen</q> k&#246;nnen Sie die Adresse des Empf&#228;ngers 
+aus den Adressb&#252;chern ausw&#228;hlen. W&#228;hlen Sie eine Adresse aus und klicken Sie 
+anschlie&#223;end auf <q>An:</q>, <q>Cc:</q> oder <q>Bcc:</q>, um die Nachricht zu adressieren.</li>
+
+<li><strong>Rechtschreibung pr&#252;fen</strong>:&#220;berpr&#252;ft die Rechtschreibung des 
+Nachrichtentexts. Sie k&#246;nnen auch auf <q>Rechtschreibung</q> in der Symbolleiste klicken.</li>
+<li><strong>Rechtschreibpr&#252;fung w&#228;hrend der Eingabe</strong>: W&#228;hlen Sie diese Option, 
+wenn Sie eine automatische Rechtschreibpr&#252;fung w&#228;hrend der Eingabe durchf&#252;hren wollen.</li>
+<li><strong>Nachricht zitieren</strong>: W&#228;hlen Sie diese Option, wenn Sie die derzeit im 
+Mail-News-Fenster ausgew&#228;hlte Nachricht als Zitat einf&#252;gen wollen.</li>
+<li><strong>Empfangsbest&#228;tigungen</strong>: W&#228;hlen Sie diese Option um
+eine Bestitung zu erhalten, wenn der Empf&#228;nger die Nachricht &#246;ffnet.
+Bedenken sie, dass der Empf&#228;nger immer noch entscheiden kann, diese Best&#228;tigung nicht zu schicken.
+Diese Option erlaubt es Ihnen, die Empfangsbest&#228;tigung auf Nachrichten-Basis zu setzen.
+Um eine Empfangsbest&#228;tigung f&#252;r alle Nachrichten welche Sie senden zu aktivieren, benutzen Sie 
+die Empfangsbest&#228;tigungs-Einstellungen. Siehe 
+<a href="mailnews_preferences.xhtml#return_receipts_preferences">Mail &amp; Newsgroups Einstellungen 
+- Empfangsbest&#228;tigungen</a> f&#252;r mehr Informationen.</li>
+
+<li><strong>Format</strong>: Sie k&#246;nnen die Nachricht als Normaltext oder im HTML-Format oder 
+in beiden Formaten senden. Wenn Sie die Option <q>Automatisch erkennen</q> ausw&#228;hlen, 
+m&#252;ssen Sie Mail &amp; Newsgroups das Format angeben, wenn nicht bekannt ist, ob das 
+E-Mail-Programm des Empf&#228;ngers eine HTML-Nachricht anzeigen kann. Das ausgew&#228;hlte 
+Format &#252;berschreibt das Sendeformat, das Sie mit dem Befehl <q>Einstellungen</q> im Men&#252; 
+<span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span> festgelegt haben.</li>
+
+<li><strong>Priorit&#228;t</strong>: W&#228;hlen Sie eine Priorit&#228;t aus, um festzulegen, ob die Nachricht mit 
+niedrigster, niedriger, normaler, hoher oder h&#246;chster Priorit&#228;t verschickt werden soll.</li>
+<li><strong>Zeichensatz</strong>: W&#228;hlen Sie hier den Zeichensatz, welcher in der Nachricht 
+verwendet werden soll.</li> 
+<li><strong>Eine Kopie senden an</strong>: W&#228;hlen Sie diese Option aus, wenn Sie eine 
+zus&#228;tzliche Kopie der gesendeten Nachricht in einem Ordner ablegen m&#246;chten, der 
+nicht dem Standardordner f&#252;r Gesendete Nachrichten entspricht. W&#228;hlen Sie 
+anschlie&#223;end den entsprechenden Ordner aus.</li>
+
+<li><strong>Sicherheit</strong>: W&#228;hlen sie diese Option um die Sicherhetis-Einstellungen dieser 
+Nachricht zu &#228;ndern.</li>
+</ul>
+
+<p>Weitere Formatier-M&#246;glichkeiten befinden sich im Bearbeiten-Men&#252;:</p>
+<ul>
+  <li><strong>Neu umbrechen:</strong> Wenn Sie eine Nachricht mit dem Normaltext-Editor erstellen,
+    k&#246;nnen Sie den Befehl <q>Neu umbrechen</q> verwenden, um lange Zeilen zitierten Texts umzubrechen,
+    damit dieser in das Erstellungsfenster passt. Mit diesem Befehl wird der markierte zitierte Text auf 
+    den Wert welcher in den Einstellungen bez&#252;glich <a href="mailnews_preferences.xhtml#composition">
+    Verfassen</a> angegeben wurde. Dieser Befehl ist besonders n&#252;tzlich, wenn Sie eine Nachricht 
+    in einer Antwort zitieren, die lange Zeilen enth&#228;lt.
+
+    <p>Verwenden Sie den Befehl Mail &amp; Newsgroups-Account Einstellungen im Men&#252; 
+    <span class="noMac">Bearbeiten</span><span class="mac">&brandShortName;</span>, 
+    um den Normaltext-Editor zum Erstellen von Nachrichten zu verwenden. W&#228;hlen Sie im 
+    Dialogfeld <q>Account-Einstellungen</q>
+    den entsprechenden Account aus und deaktivieren Sie die Option <q>Nachrichten in HTML verfassen</q>, um den 
+    Normaltext-Editor f&#252;r alle Nachrichten zu verwenden. Wenn Sie den Normaltext-Editor nur von Zeit 
+    zu Zeit verwenden m&#246;chten, k&#246;nnen Sie die Umschalttaste gedr&#252;ckt halten, 
+    w&#228;hrend Sie auf <q>Erstellen</q> oder <q>Antworten</q> klicken, um den Normaltext-Editor bei 
+    Bedarf zu verwenden.</p>
+  </li>
+</ul>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="replying_to_a_message">Nachrichten beantworten</h2>
+
+<p>Um auf eine Nachricht zu antworten:</p>
+
+<ul>
+<li>Markieren Sie die Nachricht.</li>
+
+<li>Klicken Sie auf Antworten um nur dem Absender zu antworten.</li>
+
+<li>Klicken Sie auf Antw. an alle um an alle Empf&#228;nger und den Absender dieser Nachricht zu antworten.</li>
+</ul>
+
+<p>Um die Orginalnachricht in Ihrer Antwort einzuf&#252;gen und zu definieren, wo die Orgnial-Nachricht platziert 
+wird, folgen Sie diesen Schritten:</p>
+
+<ol>
+<li>&#214;ffnen Sie das Men&#252; <span class="noMac">Bearbeiten</span>
+<span class="mac">&brandShortName;</span> und w&#228;hlen Sie Mail &amp; Newsgroups-Account
+Einstellungen. Sie sehen den Mail &amp; Newsgroups-Account Einstellungen -Dialog.</li>
+
+<li>Wenn Sie mehrere Accounts haben, w&#228;hlen Sie einen Account aus und klicken Sie auf die
+<a href="mailnews_account_settings.xhtml#addressing">Erstellen &amp; Adressieren</a> Kategorie dieses Accounts.</li>
+
+<li>W&#228;hlen Sie <q>Automatisch die Originalnachricht beim Antworten zitieren</q> aus.</li>
+
+<li>W&#228;hlen Sie, wo Ihre Antwort platziert werden soll. 
+<q>Antwort unter zitiertem Text beginnen</q> ist die Standard-Einstellung.</li>
+
+<li>Wenn Sie eine <a href="mailnews_account_settings.xhtml#account_settings">Signatur</a> an alle ausgehenden Nachrichten anh&#228;ngen wollen
+und Ihre Antwort &#252;ber dem Orginaltext erscheinen soll, k&#246;nnen Sie zus&#228;tzlich ausw&#228;hlen, 
+wo Ihre Signatur Platziert werden soll:
+
+<ul>
+<li>W&#228;hlen Sie <q>unter zitierten Text setzen (empfohlen)</q> um Ihre Signatur am Ende der 
+Nachrichte zu platzieren unterhalb der Orginal-Nachricht.</li>
+
+<li>W&#228;hlen Sie <q>unter meine Antwort (&#252;ber dem zitiertem Text) setzen</q> um Ihre 
+Signatur unterhalb Ihrer Antwort, oberhalb der Orginal-Nachricht zu platzieren.</li>
+</ul>
+<p><strong>Hinweis</strong>: Wenn Sie eine Signatur erstellt haben, k&#246;nnen Sie Sich beim 
+  Antworten auf eine Nachricht entscheiden, diese <a href="mailnews_account_settings.xhtml#addressing">nicht anzuh&#228;ngen</a>.</p>
+</li>
+
+
+<li>Klicken Sie auf OK.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="forwarding_a_message">Nachrichten weiterleiten</h2>
+
+<p>Wenn Sie eine Nachricht weiterleiten, k&#246;nnen Sie angeben, wo der weitergeleitete Inhalt in der
+neuen Nachricht eingef&#252;gt wird:
+<em>inline</em> (im Text der Nachricht) oder als <em>Anlage</em>.</p>
+
+<p>Weiterleiten einer Nachricht:</p>
+
+<ol>
+<li>Markieren Sie die Nachricht und klicken Sie auf Weiterleiten.</li>
+
+<li>Geben Sie den Namen oder die E-Mailadresse des Empf&#228;ngers an.</li>
+
+<li>Klicken Sie auf Senden.</li>
+</ol>
+
+<p>So legen Sie die Standardeinstellungen zum Weiterleiten von Nachrichten fest:</p>
+
+<ol>
+<li>&#214;ffnen Sie das Men&#252; <span class="noMac">Bearbeiten</span>
+<span class="mac">&brandShortName;</span> und w&#228;hlen Sie Einstellungen.</li>
+
+<li>Klicken Sie unter der Kategorie Mail &amp; Newsgroups auf <a
+  href="mailnews_preferences.xhtml#composition">Verfassen</a>. (Wenn in dieser Kategorie 
+  keine Optionen angezeigt werden, doppelklicken Sie die Kategorie, um die Liste einzublenden.)</li>
+
+<li>Unter Nachrichten weiterleiten, w&#228;hlen Sie Inline (in der Nachricht) oder als Anhang.
+<p><strong>Hinweis</strong>: Wenn Sie eine Signatur erstellt haben und Inline weiterleiten,
+   wird die Signatur entsprechend Ihrer Antworten-Einstellung eingef&#252;gt. Sie k&#246;nnen diese
+   jedoch optional auch <a href="mailnews_account_settings.xhtml#addressing">nicht anh&#228;ngen</a> lassen, wenn Sie eine Nachricht
+   weiterleiten.</p>
+</li>
+
+<li>Klicken Sie auf OK.</li>
+</ol>
+
+<p><strong>Tipp</strong>: Um die Standard-Einstellung beim Weiterleiten von Nachrichten zu 
+&#252;berschreiben, w&#228;hlen sie eine Nachricht,&#246;ffnen das Nachrichten-Men&#252; 
+und w&#228;hlen unter dem Men&#252;punkt <q>Weiterleiten als</q> Inline oder Anh&#228;nge.</p>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="confirming_that_your_message_was_opened">Best&#228;tigungen f&#252;r
+ge&#246;ffnete Mails</h2>
+
+<p>Sie k&#246;nnen eine Empfangsbest&#228;tigung benutzen, um dar&#252;ber informiert zu werden, 
+wenn der Empf&#228;nger die Nachricht ge&#246;ffnet hat.
+Der Empf&#228;nger muss ein Mail-Programm benutzen, welches den Message Disposition Notification (MDN)
+Standard implementiert. Bedenken Sie, dass der Empf&#228;nger das Senden der Empfangsbest&#228;tigung 
+unterbinden kann, auch wenn Sie eine solche w&#252;nschen. Nachrichten welche Sie an Newsgroups 
+schicken, enthalten keine Empfangsbest&#228;tigungs-Aufforderung, da News-Server diese 
+Funktion nicht unterst&#252;tzen.</p>
+
+<p>Um Empangsbest&#228;tigungen f&#252;r alle von Ihnen abgeschickten Nachrichten
+  anzufordern, verwenden Sie die <a href="mailnews_preferences.xhtml#return_receipts_preferences">
+  Empfangsbest&#228;tigungs</a>-Einstellungen, in denen Sie auch das Verhalten von ankommenden 
+  Empfangsbest&#228;tigungen einstellen k&#246;nnen. Sie k&#246;nnen diese Globale Einstellung 
+  mit dem Einstellugnen f&#252;r jeden Account &#252;berschrieben.</p>
+
+<p>Um Empfangsbest&#228;tigungen auf Nachrichtenbasis zu aktivieren, folgen Sie diesen Anweisungen:</p>
+
+<ul>
+<li>Ausgehend vom Mail-Erstellen-Fenster, &#246;ffnen Sie das Men&#252; Optionen und w&#228;hlen 
+Empfangsbest&#228;tigung.</li>
+</ul>
+
+<p>Um automatisch eine Empfangsbest&#228;tigung f&#252;r jeden Ihrer Accounts anzuforden:</p>
+
+<ol>
+<li>&#214;ffnen Sie das Men&#252; <span class="noMac">Bearbeiten</span>
+<span class="mac">&brandShortName;</span> und w&#228;hlen Sie Einstellungen.</li>
+
+<li>Klicken Sie unter der Kategorie Mail &amp; Newsgroups auf <a
+href="mailnews_preferences.xhtml#return_receipts_preferences">Empfangsbest&#228;tigungen</a>.
+(Wenn in dieser Kategorie keine Optionen angezeigt werden, 
+doppelklicken Sie die Kategorie, um die Liste einzublenden.)</li>
+
+<li>W&#228;hlen Sie <q>Beim senden von Nachrichten immer eine Empfangsbest&#228;tigung verlangen.</q></li>
+
+<li>Klicken sie auf OK.</li>
+</ol>
+
+<p>F&#252;r mehr Informationen &#252;ber Empfangsbest&#228;tigungen, siehe 
+<a href="mailnews_preferences.xhtml#return_receipts_preferences">Mail &amp; Newsgroups
+Einstellungen - Empfangsbest&#228;tigungen</a>.</p>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="saving_and_editing_a_message_draft">Entw&#252;rfe speichern und
+bearbeiten</h2>
+
+<p>So speichern Sie den Entwurf einer E-Mail-Nachricht, den Sie sp&#228;ter vervollst&#228;ndigen m&#246;chten:</p>
+
+<ul>
+<li>Klicken Sie im Erstellungsfenster auf Speichern oder &#246;ffnen Sie das Men&#252; Datei und w&#228;hlen Sie
+Als Entwurf speichern. Standardm&#228;&#223;ig wird die Nachricht im Ordner <q>Entw&#252;rfe</q> 
+f&#252;r den aktuellen Account gespeichert.
+
+<p><strong>Hinweis</strong>: Die Nachricht bleibt nach dem Speichern als Entwurf ge&#246;ffnet.</p>
+</li>
+</ul>
+
+<p>So bearbeiten Sie einen Nachrichtenentwurf:</p>
+
+<ol>
+<li>Klicken Sie im Mail-Fenster auf den Ordner <q>Entw&#252;rfe</q>, f&#252;r den Account, in dem Sie den 
+    Nachrichtenentwurf erstellt haben.</li>
+
+<li>Klicken Sie auf die Nachricht, die Sie bearbeiten m&#246;chten.</li>
+
+<li>Klicken Sie in der oberen rechten Ecke der Nachricht auf Entwurf bearbeiten.</li>
+
+<li>Nehmen Sie die notwendigen &#196;nderungen an der Nachricht vor.</li>
+
+<li>Klicken Sie auf Senden, um die Nachricht abzuschicken, oder auf Speichern, wenn Sie die 
+    Nachricht sp&#228;ter weiter bearbeiten m&#246;chten.
+
+<p><strong>Hinweis</strong>: Senden der Nachricht entfernt diese aus dem Enwurfs-Ordner.</p>
+</li>
+</ol>
+
+<p><strong>Tipp</strong>: Sie k&#246;nnen auch auf die Nachricht doppelklicken, um sie zur 
+Bearbeitung zu &#246;ffnen. Dies ist besonders dann hilfreich, wenn das Nachrichtenfenster 
+geschlossen ist.</p>
+
+<p>Um eine oder mehrere nicht mehr ben&#246;tigte Nachrichten-Entw&#252;rfe zu l&#246;schen, 
+beginnen Sie vom Mail-Fenster:</p>
+
+<ol>
+<li>Klicken sie auf den Entwurf-Ordner des Accounts, wo Sie die Nachrichten-Entw&#252;rfe erstellt haben.</li>
+
+<li>W&#228;hlen Sie die Nachrichten-Entw&#252;rfe, welche sie l&#246;schen wollen.</li>
+
+<li>Klicken Sie auf L&#246;schen in der Mail-Symbolleiste.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>]</p>
+
+<h2 id="creating_and_using_templates">Vorlagen erzeugen und
+verwenden</h2>
+
+<p>Mit Vorlagen k&#246;nnen Sie Nachrichten formatieren, die Sie regelm&#228;&#223;ig versenden, z.B. 
+w&#246;chentliche Statusberichte. Sie k&#246;nnen eine Nachricht in jedem Fenster, in dem sie 
+angezeigt wird, als Vorlage speichern, auch in einem Nachrichtenerstellungsfenster.</p>
+
+<p>So speichern Sie eine Nachricht als Vorlage:</p>
+
+<ol>
+<li>Im Mail-Fenster klicken Sie auf Verfassen um eine neue Nachricht zu erstellen. Setzen Sie 
+dort die Schriftart, Textgr&#246;sse, Textfarbe, Hintergrundfarbe und andere Formatierungen, 
+welche Sie wollen.
+
+<p>Alternativ k&#246;nnen Sie auch eine existierende Nachricht &#246;ffnen, welche schon 
+das von Ihnen gew&#252;nschte Format hat.</p>
+</li>
+
+<li>W&#228;hrend eine Nachricht angezeigt wird: &#214;ffnen Sie das Men&#252; Datei und klicken Sie auf 
+<q>Speichern unter</q> und anschlie&#223;end auf Vorlage. Die Vorlagendatei wird 
+im Ordner Vorlagen gespeichert.</li>
+</ol>
+
+<p>So bearbeiten oder verwenden Sie eine Vorlage:</p>
+
+<ol>
+<li>Im Mail-Fenster w&#228;hlen Sie den Ordner Vorlagen des E-Mail-Accounts aus f&#252;r 
+den Sie die Vorlage erstellt haben.</li>
+
+<li>Doppelklicken Sie auf die Nachricht, die Sie bearbeiten m&#246;chten.</li>
+
+<li>Bearbeiten Sie die Nachricht, und anschlie&#223;end k&#246;nnen Sie die Nachricht speichern oder versenden.
+
+<p><strong>Hinweis</strong>: Senden der Nachricht l&#246;scht diese nicht aus dem Vorlagen-Ordner. 
+Die Vorlage bleibt zur sp&#228;teren Verwendug erhalten.</p>
+</li>
+</ol>
+
+<p>Um eine oder mehrer nicht mehr ben&#246;tigte Vorlagen zu l&#246;schen, beginnen Sie im Mail-Fenster:</p>
+
+<ol>
+<li>Klicken Sie auf den Vorlagen-Ordner des Accounts wo Sie die Vorlagen erstellt haben.</li>
+
+<li>W&#228;hlen Sie die Vorlagen welche Sie l&#246;schen wollen.</li>
+
+<li>Klicken Sie auf L&#246;schen in der Mail-Symbolleiste.</li>
+</ol>
+
+<p>[<a href="#sending_messages">Zur&#252;ck zum Beginn des
+Abschnitts</a>
+]</p>
+
+<h1 id="creating_html_mail_messages">Nachrichten im HTML-Format erstellen</h1>
+
+<div class="contentsBox">In diesem Abschnitt:
+  <ul>
+    <li><a href="#using_html_in_your_messages">HTML in Nachrichten benutzen</a></li>
+    <li><a href="#choosing_html_mail_sending_options">Sendeoptionen f&#252;r HTML-Nachrichten</a></li>
+    <li><a href="#specifying_recipients_for_html_messages">Empf&#228;nger f&#252;r HTML-Nachrichten festlegen</a></li>
+    <li><a href="#viewing_the_message_source_for_html_messages">Quelltext der HTML-Nachrichten ansehen</a></li>
+    <li><a href="#using_the_html_mail_question_dialog_box">Dialogfeld zur Frage von HTML-Nachrichten</a></li>
+  </ul>
+</div>
+
+<h2 id="using_html_in_your_messages">HTML in Nachrichten benutzen</h2>
+
+<p>HTML-Nachrichten k&#246;nnen wie eine Web-Seite formatierten Text,
+Verkn&#252;pfungen, Grafiken und Tabelle enthalten. Allerdings k&#246;nnen
+einige Benutzer m&#246;glicherweise keine HTML-Nachrichten empfangen. In
+&brandShortName; Mail &amp; Newsgroups k&#246;nnen Sie Nachrichten mit Hilfe
+des HTML-Editors oder mit Hilfe des Normaltext-Editors erstellen.
+Au&#223;erdem k&#246;nnen Sie w&#228;hlen, ob der Empf&#228;nger
+standardm&#228;&#223;ig HTML- oder Normaltext-Nachrichten empfangen soll und
+wie Mail &amp; Newsgroups verfahren soll, wenn nicht bekannt ist, ob der
+Empf&#228;nger Nachrichten im HTML-Format empfangen kann.</p>
+
+<p>So legen Sie fest, ob der HTML-Editor standardm&#228;&#223;ig zum Erstellen
+von Nachrichten verwendet wird (ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>W&#228;hlen Sie aus dem Men&#252; <q><span class="noMac">Bearbeiten</span>
+  <span class="mac">&brandShortName;</span></q> die Option <q>Mail
+      &amp; Newsgroups-Account-Einstellungen</q>. Das Dialogfeld <q>Mail &amp;
+	  Newsgroups-Account-Einstellungen</q> wird angezeigt.</li>
+
+  <li>W&#228;hlen Sie den E-Mail- oder Newsgroup-Account aus, den Sie verwenden
+      m&#246;chten.</li>
+
+  <li>W&#228;hlen Sie die Option <q>Nachrichten im HTML-Format verfassen</q>.
+      Die Formatierungs-Symbolleiste wird im Erstellungsfenster angezeigt.
+	  Aktivieren Sie dieses Kontrollk&#228;stchen nicht, wenn Sie den
+	  Normaltext-Editor verwenden m&#246;chten.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h3 id="editing_or_inserting_html_elements">Bearbeiten oder Einf&#252;gen von
+HTML-Elementen</h3>
+
+<p>Falls Sie wissen wie man mit HTML-Quelltext arbeitet, k&#246;nnen Sie die
+zus&#228;tzlichen HTML-Tags, Style-Atribute und JavaScript in Ihrer Nachricht
+bearbeiten oder einf&#252;gen. Sollten Sie allerdings nicht wissen wie man mit
+HTML-Quelltext umgeht, ist es das beste darin nichts zu &#228;ndern. Um mit
+HTML-Quelltext zu arbeiten, benutzen Sie eine der folgenden Methoden:</p>
+
+<ul>
+  <li>Plazieren Sie den Cursor dort wo Sie HTML-Code einf&#252;gen wollen und
+      w&#228;hlen Sie aus dem Men&#252; <q>Einf&#252;gen</q> den Punkt <q>HTML</q>.
+	  In der Dialogbox k&#246;nnen Sie dann HTML-Tags und Text eingeben. Durch
+	  einen Klick auf <q>Einf&#252;gen</q> werden die &#196;nderungen in die
+	  Nachricht eingef&#252;gt.</li>
+
+  <li>Markieren Sie den HTML-Quelltext den Sie &#228;ndern wollen und &#246;ffnen
+      Sie das Men&#252; <q>Einf&#252;gen</q> und dann den Punkt <q>HTML</q>. In
+	  der Dialogbox <q>HTML einf&#252;gen</q> k&#246;nnen Sie dann die HTML-Tags
+	  und den Text &#228;ndern. Ein abschlie&#223;ender Klick auf <q>Einf&#252;gen</q>
+	  f&#252;hrt die &#196;nderungen durch.</li>
+
+  <li>W&#228;hlen Sie ein Element wie Tabelle, Grafik, Link, benanntes Ziel oder
+      horizontale Linie. Doppelklicken Sie das Element um die entsprechenden
+	  Eigenschaften daf&#252;r anzuzeigen. Klicken Sie auf <q>Erweitert</q>
+	  um die erweiterten Einstellungen anzuzeigen. Sie k&#246;nnen die
+	  erweiterten Eigenschaften dazu benutzen, um HTML-Attribute und
+	  JavaScript mit Objekten zu verbinden.</li>
+</ul>
+
+<p>F&#252;r mehr Informationen &#252;ber das bearbeiten von HTML-Quelltext, lesen Sie:
+<a href="composer_help.xhtml#using_the_advanced_property_editor">Verwenden des Editors f&#252;r 
+erweiterte Eigenschaften</a>.</p>
+
+<p>[<a href="#creating_html_mail_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="choosing_html_mail_sending_options">Sendeoptionen f&#252;r
+HTML-Nachrichten</h2>
+
+<p>Sie k&#246;nnen die Standardmethode ausw&#228;hlen, die von Mail &amp;
+Newsgroups f&#252;r das Versenden von HTML-Nachrichten verwendet wird, wenn
+nicht bekannt ist, ob das E-Mail-Programm des Empf&#228;ngers formatierte
+Nachrichten anzeigen kann.</p>
+
+<p>So w&#228;hlen Sie Optionen f&#252;r das Versenden von HTML-E-Mails
+(ausgehend vom Mail-Fenster):</p>
+
+<ol>
+  <li>&#214;ffnen Sie das <q><span class="noMac">Bearbeiten</span>
+    <span class="mac">&brandShortName;</span>-Men&#252;</q> und w&#228;hlen Sie Einstellungen.</li>
+  <li>Unter der Kategorie Mail &amp; Newsgroups klicken Sie auf
+    <a href="mailnews_preferences.xhtml#send_format">Sendeformat</a>.
+    <p><strong>Anmerkung</strong>: Diese Einstellung gilt nur f&#252;r
+    E-Mails und nicht f&#252;r Beitr&#228;ge in Newsgroups.</p></li>
+  <li>W&#228;hlen Sie die gew&#252;nschte Option und klicken Sie auf OK.</li>
+</ol>
+
+<p>Wenn Sie beim Verfassen einer Nachricht feststellen, dass einer der
+Empf&#228;nger keine Nachrichten im HTML-Format empfangen kann, k&#246;nnen Sie
+die Nachricht beim Senden in ein anderes Format umwandeln:</p>
+
+<ol>
+  <li>Im Fenster Verfassen, &#246;ffnen Sie das Menu Optionen und klicken auf
+      Format.</li>
+
+  <li>W&#228;hlen Sie das Format in dem Sie die Nachricht versenden
+      m&#246;chten:
+
+  <ul>
+    <li><strong>Autom. bestimmen</strong>: Mail &amp; Newsgroups w&#228;hlt
+	    selber das passende Format aus.</li>
+
+    <li><strong>Nur normaler Text</strong>: Dadurch gehen Formatierungen
+	    verloren (z.B. fettgedruckter Text wird nicht fettgedruckt
+		dargestellt).</li>
+
+    <li><strong>Nur Rich Text (HTML)</strong>: Einige E-Mailprogramme
+	    k&#246;nnen beim Anzeigen dieser Nachricht Probleme haben. W&#228;hlen
+		Sie diese Einstellung nur wenn Sie wissen das der Empf&#228;nger
+		HTML-Nachrichten empfangen kann.</li>
+
+    <li><strong>Reiner Text und Rich Text (HTML)</strong>: Dies ben&#246;tigt
+	    mehr Speicherplatz, ist aber die beste Auswahl wenn Sie nicht wissen ob
+		das E-Mail Programm des Empf&#228;ngers auch HTML-Mails empfangen kann.</li>
+  </ul></li>
+
+  <li>Wenn Sie die Nachricht komplett verfasst haben, klicken Sie auf Senden.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="specifying_recipients_for_html_messages">Empf&#228;nger f&#252;r
+HTML-Nachrichten festlegen</h2>
+
+<p>Sie k&#246;nnen Zeit sparen, indem Sie angeben, ob die Personen im
+Adressbuch Nachrichten im HTML-Format oder im Normaltext-Format bevorzugen.</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Fenster</q> und w&#228;hlen Sie
+      <q>Adressbuch</q> aus.</li>
+
+  <li>W&#228;hlen Sie auf der linken Seite das Adressbuch aus und
+      anschlie&#223;end auf der rechten Seite die Karte der Person.</li>
+
+  <li>Klicken Sie auf <q>Eigenschaften</q>, um das Dialogfeld <q>Karte
+      f&#252;r</q> anzuzeigen.</li>
+
+  <li>W&#228;hlen Sie auf der Registerkarte <q>Name</q> im Dropdown-Listenfeld
+      <q>Bevorzugt folgendes Nachrichtenformatt</q> den Eintrag <q>HTML</q>,
+	  wenn Sie wissen, das dieser Empf&#228;nger Nachrichten im HTML-Format
+	  (mit Links, Grafiken oder Tabellen) empfangen kann.
+      
+  <p> Wenn dieser Empf&#228;nger nur normale
+      Textnachrichten (ohne Formatierungen) empfangen kann, w&#228;hlen Sie
+	  <q>Normaltext</q>. Wenn Sie sich nicht sicher sind, w&#228;hlen Sie
+	  <q>Unbekannt</q>.</p>
+
+      <p>In diesem Falle entscheidet Mail &amp; Newsgroups &#252;ber das zu
+	  sendende Format auf der Basis der Einstellungen f&#252;r das Sendeformat
+	  im Dialogfeld <q>Einstellungen</q>. Wenn Mail &amp; Newsgroups das
+	  korrekte Format nicht ermitteln kann, werden Sie beim Senden gebeten, ein
+	  Format auszuw&#228;hlen.</p></li>
+
+  <li>Klicken Sie auf <q>OK</q>.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="viewing_the_message_source_for_html_messages">Quelltext der
+HTML-Nachrichten ansehen</h2>
+
+<p>Sie k&#246;nnen den Quelltext einer empfangenen Nachricht auf folgende
+Weise anschauen:</p>
+
+<ol>
+  <li>&#214;ffnen Sie die Nachricht.</li>
+  <li>&#214;ffnen Sie das Men&#252; <q>Ansicht</q> und klicken auf
+      <q>Nachrichten-Quelltext</q>.</li>
+</ol>
+
+<p>[<a href="#creating_html_mail_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="using_the_html_mail_question_dialog_box">Dialogfeld zur Frage von
+HTML-Nachrichten</h2>
+
+<p>Das Dialogfeld <q>Frage zu HTML-Sendungen</q> wird angezeigt, wenn Sie
+versuchen, eine Nachricht an jemanden zu senden, der keine HTML-Nachrichten
+empfangen m&#246;chte, oder wenn Mail nicht feststellen kann, ob der
+Empf&#228;nger HTML-Nachrichten anzeigen kann. Senden Sie eine Nachricht im
+Normaltext-Format, wenn Sie nicht sicher sind.</p>
+
+<p>[<a href="#creating_html_mail_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h1 id="using_attachments">Anh&#228;nge verwenden</h1>
+
+<div class="contentsBox">In diesem Abschnitt:
+  <ul>
+    <li><a href="#attaching_a_file_or_web_page">Anh&#228;ngen einer Datei oder Webseite</a></li>
+    <li><a href="#viewing_and_opening_attachments">Anh&#228;nge anzeigen und &#246;ffnen</a></li>
+    <li><a href="#saving_attachments">Anh&#228;nge speichern</a></li>
+  </ul>
+</div>
+
+<h2 id="attaching_a_file_or_web_page">Anh&#228;ngen einer Datei oder Webseite</h2>
+
+<p>Eine Datei zu einer Nachricht hinzuf&#252;gen:</p>
+
+<ol>
+  <li>Im Fenster Verfassen klicken Sie auf <q>Anh&#228;nge</q> oder &#246;ffnen
+      Sie das Men&#252; <q>Datei</q> und klicken Sie auf <q>Datei
+	  hinzuf&#252;gen</q>. Es erscheint ein neues Fenster.
+      <p><strong>Tipp</strong>: Sie k&#246;nnen auch in den Bereich Anh&#228;nge
+	  klicken, um eine Datei hinzuzuf&#252;gen.</p></li>
+
+  <li>Geben Sie den Namen der Datei ein, die Sie hinzuf&#252;gen wollen, oder
+      w&#228;hlen Sie eine Datei von Ihrer Festplatte aus.</li>
+
+  <li>Klicken Sie auf <q>&#214;ffnen</q>. Der Dateiname erscheint nun im
+      Bereich Anh&#228;nge im Fenster Verfassen.</li>
+</ol>
+
+<p><strong>Tipp</strong>: Sie k&#246;nnen auch per Drag&amp;Drop Dateien
+hinzuf&#252;gen.</p>
+
+<p>Eine Webseite zu einer Nachricht hinzuf&#252;gen:</p>
+
+<ol>
+  <li>Im Fenster Verfassen &#246;ffnen Sie das Men&#252; <q>Datei</q> und
+      klicken auf <q>Webseite hinzuf&#252;gen</q>.</li>
+
+  <li>Geben Sie dann die Adresse der Seite ein und klicken Sie auf OK. Die
+      Adresse der Seite erscheint jetzt im Bereich Anh&#228;nge im Fenster
+	  Verfassen.</li>
+</ol>
+
+<p><strong>Tipp</strong>: Wenn Sie eine Webseite im Browser betrachen,
+k&#246;nnen Sie diese jemanden schicken, in dem Sie &#252;ber das Men&#252;
+<q>Datei</q> die Option <q>Seite senden</q> w&#228;hlen.</p>
+
+<p>[<a href="#using_attachments">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="viewing_and_opening_attachments">Anh&#228;nge anzeigen und &#246;ffnen</h2>
+
+<p>Wenn Sie eine Nachricht mit einer Anlage empfangen, die von &brandShortName;
+dargestellt werden kann (z.B Grafik-u. HTML-Dateien), wird die Anlage
+innerhalb der Nachricht angezeigt. F&#252;r andere Dateitypen
+k&#246;nnen Sie sich aussuchen, ob Sie die Anlage mit einem anderen Programm
+&#246;ffnen wollen, oder auf der Festplatte speichern wollen.</p>
+
+<p>Bevor Sie mit &brandShortName; eine Anlage &#246;ffnen k&#246;nnen,
+m&#252;ssen Sie sicherstellen, dass Sie auf Ihrem Computer ein Programm haben,
+das das Dateiformat der Anlage &#246;ffnen kann. Wenn Sie zum Beispiel eine
+Exceltabelle &#246;ffnen wollen, m&#252;ssen Sie ein Programm installiert
+haben, das Exceldateien &#246;ffnen kann.</p>
+
+<p>&#214;ffnen einer Anlage:</p>
+
+<ol>
+  <li>Doppelklicken Sie auf die Anlage, die Sie &#246;ffnen wollen.</li>
+
+  <li>Im n&#228;chsten Fenster w&#228;hlen Sie aus, was &brandShortName; mit
+      der Anlage machen soll:
+      <ul>
+        <li>Wenn &brandShortName; ein Programm auf Ihrem Computer findet, mit
+		    dem Sie die Anlage &#246;ffnen k&#246;nnen, k&#246;nnen Sie die
+			Anlage mit diesem Programm &#246;ffnen. Klicken Sie auf
+			<q>W&#228;hlen</q> um die Anlage mit einem anderen Programm zu
+			&#246;ffnen.</li>
+
+        <li>Wenn &brandShortName; kein Programm auf Ihrem Computer findet, mit
+		    dem man die Anlage &#246;ffnen kann, k&#246;nnen Sie die Anlage
+			speichern. Es wird Ihnen zwar nicht m&#246;glich sein die Anlage zu
+			&#246;ffnen. Sie k&#246;nnen sie aber zumindest auf Ihrer
+			Festplatte speichern bis Sie ein Programm installiert, haben mit
+			dem Sie die Anlage &#246;ffnen k&#246;nnen.</li>
+
+        <li>Klicken Sie auf <q>Erweitert</q> um einen neuen Dateityp zur Liste
+		    der Hilfsanwendungen hinzuzuf&#252;gen. &brandShortName; benutzt
+			die Hilfsanwendungen um festzustellen, wie die Dateitypen von
+			anderen Programmen von &brandShortName; aus ge&#246;ffnet werden
+			k&#246;nnen. Mehr Informationen finden Sie unter: 
+            <a href="nav_help.xhtml#plugins_and_downloads">Plugins und Downloads</a>.</li>
+      </ul></li>
+
+  <li>Klicken Sie auf OK.</li>
+</ol>
+
+<p><strong>Anmerkung</strong>: Wenn Sie Ihre Nachrichten von einem IMAP-Server
+abrufen, bleiben die Anlagen auf dem Server gespeichert.</p>
+
+<p>[<a href="#using_attachments">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="saving_attachments">Anh&#228;nge speichern</h2>
+
+<p>Speichern einer Anlage:</p>
+
+<ol>
+  <li>Markieren Sie rechts im Fenster <q>Anh&#228;nge</q> die Anlage, die Sie
+      speichern m&#246;chten.</li>
+
+  <li>Klicken Sie mit der rechten Maustaste <span class="mac">oder, wenn Sie eine Ein-Tasten Maus benutzen, 
+  <kbd>control</kbd>-Klick</span> auf die Anlage und w&#228;hlen Sie aus dem Popup-Men&#252; <q>Speichern als</q>
+	  aus.</li>
+
+  <li>W&#228;hlen Sie einen Dateinamen und einen Ort auf der Festplatte, wo Sie
+      die Anlage speichern wollen, klicken Sie dann auf OK. Mail &amp;
+	  Newsgroups speichert die Anlage jetzt an dem angegebenen Ort.</li>
+</ol>
+
+<p><strong>Tipp</strong>: Um alle Anlagen zu speichern klicken Sie mit der
+rechten Maustaste <span class="mac">oder, wenn Sie eine Ein-Tasten Maus benutzen, 
+  <kbd>control</kbd>-Klick</span> auf die erste Anlage und w&#228;hlen aus dem Popup-Men&#252;
+<q>Alle speichern</q>. Sie k&#246;nnen jetzt den Ort angeben, wohin
+&brandShortName; die Anlagen speichern soll. </p>
+
+<p>[<a href="#using_attachments">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h1 id="deleting_messages">Nachrichten l&#246;schen</h1>
+
+<div class="contentsBox">In diesem Abschnitt:
+
+<ul>
+<li><a href="#deleting_pop_or_imap_messages">POP oder IMAP Nachrichten l&#246;schen</a></li>
+<li><a href="#moving_messages_to_and_from_the_trash">Nachrichten aus und in den Papierkorb verschieben</a></li>
+</ul>
+</div>
+
+<h2 id="deleting_pop_or_imap_messages">POP oder IMAP Nachrichten l&#246;schen</h2>
+
+<p>Wie Nachrichten gel&#246;scht werden h&#228;ngt von Ihrem verwendeten
+Mail-Server-Typ ab: POP oder IMAP. Gel&#246;schte POP Nachrichten werden
+automatisch in den Papierkorb verschoben. IMAP-Benutzer haben verschiedene
+M&#246;glichkeiten, Nachrichten zu l&#246;schen.</p>
+
+<p>Um Nachrichten aus Ihrem Posteingang oder einem anderen ORdner zu
+l&#246;schen, beginnen wir im Mail-Fenster:</p>
+
+<ol>
+  <li>In der Nachrichtenliste markieren Sie die Nachrichten und klicken auf
+      <q>L&#246;schen</q>. Standardm&#228;&#223;ig verschiebt Mail &amp; Newsgroups die
+	  ausgew&#228;hlten Nachrichten in den Papierkorb.</li>
+
+  <li>Um Nachrichten entg&#252;ltig zu l&#246;schen, &#246;ffnen Sie das Men&#252;
+      <q>Datei</q> und w&#228;hlen <q>Papierkorb-Ordner leeren</q>.</li>
+</ol>
+
+<p>Um Nachrichten zu l&#246;schen ohne sie zu &#246;ffnen, beginnen wir im
+Mail-Fenster:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q>Ansicht</q> und Untermen&#252;
+      <q>Anzeigen/Verstecken</q>. Dort deaktivieren Sie das Nachrichtenfenster.
+
+      <p>Alternativ dazu k&#246;nnen Sie auch auf den Griff des
+	  Nachrichtenfensters klicken (Die kleine gezahnte Fl&#228;che - zentriert
+	  unterhalb des Nachrichtenfensters), um die Nachrichtenansicht zu
+	  schlie&#223;en.</p></li>
+
+  <li>In der Nachrichtenliste markieren Sie nun die Nachrichten und klicken
+      auf <q>L&#246;schen</q>.</li>
+</ol>
+
+<p>Einstellungen zum L&#246;schen von IMAP-Nachrichten:</p>
+
+<ol>
+  <li>&#214;ffnen Sie das Men&#252; <q><span class="noMac">Bearbeiten</span>
+  <span class="mac">&brandShortName;</span></q> und w&#228;hlen Sie <q>Mail &amp;
+      Newsgroups-Account-Einstellungen</q>.</li>
+
+  <li>Suchen Sie den IMAP-Account den Sie &#228;nden wollen und klicken Sie auf
+      <q>Server-Einstellungen</q> unterhalb des Account-Namens.</li>
+
+  <li>W&#228;hlen Sie die entsprechenden
+      <a href="mailnews_account_settings.xhtml#when_i_delete_a_message">Einstellungen</a>, die beim L&#246;schen
+	  gelten sollen und klicken Sie auf <q>OK</q>.</li>
+</ol>
+
+<p>[<a href="#deleting_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+<h2 id="moving_messages_to_and_from_the_trash">Nachrichten aus und in den 
+Papierkorb verschieben</h2>
+
+<p>Wenn Sie einen POP-Server benutzen oder bei einem IMAP-Server den Papierkorb
+benutzen, k&#246;nnen Sie so Nachrichten aus Ihrem Posteingang oder anderen
+Ordnern l&#246;schen:</p>
+
+<ol>
+  <li>Markieren Sie in der Nachrichtenliste die Nachrichten, die Sie
+      l&#246;schen wollen.</li>
+
+  <li>Klicken Sie auf L&#246;schen. Mail &amp; Newsgroups verschiebt die
+      Nachrichten jetzt in den Papierkorb.</li>
+</ol>
+
+<p>Nachrichten aus dem Papierkorb zur&#252;ckholen:</p>
+
+<ol>
+  <li>Klicken Sie auf den Ordner Papierkorb.</li>
+
+  <li>Markieren Sie die Nachrichten, die Sie zur&#252;ckholen wollen, und
+      ziehen Sie sie in einen anderen Ordner.</li>
+</ol>
+
+<p>Nachrichten endg&#252;ltig l&#246;schen:</p>
+
+<ul>
+  <li>Um Nachrichten entg&#252;ltig zu l&#246;schen, &#246;ffnen Sie das Men&#252;
+      <q>Datei</q> und w&#228;hlen <q>Papierkorb-Ordner leeren</q>.</li>
+</ul>
+
+<p>[<a href="#deleting_messages">Zur&#252;ck zum Beginn des Abschnitts</a>]</p>
+
+</body>
+</html>

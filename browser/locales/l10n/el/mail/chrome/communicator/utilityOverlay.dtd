@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Αρχείο">
+<!ENTITY fileMenu.accesskey        "Α">
+<!ENTITY newMenu.label            "Νέο">
+<!ENTITY newMenu.accesskey          "Ν">
+
+<!ENTITY editMenu.label          "Επεξεργασία">
+<!ENTITY editMenu.accesskey        "Ε">
+<!ENTITY undoCmd.label            "Αναίρεση">
+<!ENTITY undoCmd.accesskey          "ρ">
+<!ENTITY redoCmd.label            "Επανάληψη">
+<!ENTITY redoCmd.accesskey          "Ε">
+<!ENTITY deleteCmd.label          "Διαγραφή">
+<!ENTITY deleteCmd.accesskey        "Δ">
+<!ENTITY preferencesCmd2.label "Επιλογές">
+<!ENTITY preferencesCmd2.accesskey "ο">
+<!ENTITY preferencesCmdUnix.label       "Προτιμήσεις">
+<!ENTITY preferencesCmdUnix.accesskey     "ρ">
+<!ENTITY customizeCmd.label "Προσαρμογή">
+<!ENTITY customizeCmd.accesskey "σ">
+
+<!ENTITY viewMenu.label          "Προβολή">
+<!ENTITY viewMenu.accesskey        "ρ">
+<!ENTITY viewToolbarsMenu.label        "Γραμμές εργαλείων">
+<!ENTITY viewToolbarsMenu.accesskey      "γ">
+<!ENTITY showTaskbarCmd.label          "Γραμμή κατάστασης">
+<!ENTITY showTaskbarCmd.accesskey        "σ">
+
+<!ENTITY closeCmd.label      "Κλείσιμο">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "Κ">
+
+<!ENTITY quitApplicationCmd.label  "Έξοδος">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "ξ">
+
+<!ENTITY quitApplicationCmdUnix.label  "Έξοδος">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Έ">
+
+<!ENTITY quitApplicationCmdMac.label  "Κλείσιμο &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "λ">

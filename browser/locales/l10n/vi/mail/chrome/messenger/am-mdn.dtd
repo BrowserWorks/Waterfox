@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Chứng nhận Hồi báo">
+<!ENTITY useGlobalPrefs.label         "Dùng tùy chỉnh chứng nhận hồi báo bao quát của tôi">
+<!ENTITY useGlobalPrefs.accesskey     "D">
+<!ENTITY globalReceipts.label         "Tùy chỉnh tổng quát…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Tùy biến chứng nhận hồi báo cho tài khoản này">
+<!ENTITY useCustomPrefs.accesskey     "y">
+<!ENTITY requestReceipt.label         "Khi gửi thư, luôn luôn yêu cầu chứng chận hồi báo">
+<!ENTITY requestReceipt.accesskey     "K">
+<!ENTITY receiptArrive.label          "Khi một chứng nhận đến:">
+<!ENTITY leaveIt.label                "Để nó trong Hộp thư của tôi">
+<!ENTITY leaveIt.accesskey            "H">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Chuyển nó vào thư mục &quot;Đã gửi&quot;">
+<!ENTITY moveToSent.accesskey         "C">
+<!ENTITY requestMDN.label             "Khi tôi nhận được một yêu cầu chứng nhận hồi báo:">
+<!ENTITY returnSome.label             "Cho phép chứng nhận hồi báo đối với một số loại thư">
+<!ENTITY returnSome.accesskey         "b">
+<!ENTITY never.label                  "Không bao giờ gửi chứng nhận hồi báo">
+<!ENTITY never.accesskey              "a">
+<!ENTITY notInToCc.label              "Nếu tôi không nằm trong trường Tới hoặc Cc của thư:">
+<!ENTITY notInToCc.accesskey          "N">
+<!ENTITY outsideDomain.label          "Nếu người gửi nằm ngoài tên miền của tôi:">
+<!ENTITY outsideDomain.accesskey      "u">
+<!ENTITY otherCases.label             "Trong mọi trường hợp khác:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "Hỏi tôi">
+<!ENTITY alwaysSend.label             "Luôn gửi">
+<!ENTITY neverSend.label              "Không bao giờ gửi">

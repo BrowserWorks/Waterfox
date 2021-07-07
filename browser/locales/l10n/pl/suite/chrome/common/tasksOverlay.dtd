@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY navigatorCmd.label "Przeglądarka">
+<!ENTITY navigatorCmd.accesskey "P">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Kompozytor Stron">
+<!ENTITY editorCmd.accesskey "K">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Konsola błędów">
+<!ENTITY errorConsoleCmd.accesskey "K">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Przeglądarka">
+<!ENTITY taskComposer.tooltip "Kompozytor Stron">
+
+<!ENTITY webDevelopment.label "Narzędzia programistyczne">
+<!ENTITY webDevelopment.accesskey "r">
+
+<!ENTITY windowMenu.label "Okno">
+<!ENTITY windowMenu.accesskey "O">
+
+<!ENTITY tasksMenu.label "Narzędzia">
+<!ENTITY tasksMenu.accesskey "N">
+
+<!ENTITY datamanCmd.label "Menedżer danych">
+<!ENTITY datamanCmd.accesskey "e">
+
+<!ENTITY passwordManagerCmd.label "Menedżer haseł">
+<!ENTITY passwordManagerCmd.accesskey "h">
+
+<!ENTITY passwordDisplayCmd.label "Zarządzaj zapamiętanymi hasłami">
+<!ENTITY passwordDisplayCmd.accesskey "Z">
+
+<!ENTITY passwordExpireCmd.label "Wyloguj">
+<!ENTITY passwordExpireCmd.accesskey "l">
+
+<!ENTITY downloadManagerCmd.label "Menedżer pobierania plików">
+<!ENTITY downloadManagerCmd.accesskey "b">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Dodatki">
+<!ENTITY addOnsManagerCmd.accesskey "D">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Zmień profil…">
+<!ENTITY switchProfileCmd.accesskey "m">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Skonfiguruj usługę Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Synchronizuj teraz">
+<!ENTITY syncSyncNowItem.accesskey "S">

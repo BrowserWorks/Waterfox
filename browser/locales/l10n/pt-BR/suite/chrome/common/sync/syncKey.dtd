@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Sua chave do &syncBrand.fullName.label;">
+<!ENTITY syncKey.page.description         "A chave é usada para descriptografar os dados da sua conta &syncBrand.fullName.label;. Você precisará fornecê-la cada vez que configurar o &syncBrand.fullName.label; em um novo computador ou dispositivo.">
+<!ENTITY syncKey.keepItSecret.heading     "A mantenha secreta">
+<!ENTITY syncKey.keepItSecret.description "A conta &syncBrand.fullName.label; é criptografada para proteger sua privacidade. Sem esta chave, alguém levaria anos para descobrir suas informações pessoais. Você é a única pessoa que possui esta chave. Isto significa que só você pode acessar seus dados do &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading       "A mantenha segura">
+<!ENTITY syncKey.keepItSafe1.description  "Não perca esta chave.">
+<!ENTITY syncKey.keepItSafe2.description  " Nós não temos uma cópia da sua chave (afinal ela é secreta!). Por isso ">
+<!ENTITY syncKey.keepItSafe3.description  "nós não poderemos ajudá-lo a recuperá-la">
+<!ENTITY syncKey.keepItSafe4.description  " caso a perca. Você precisará usar esta chave sempre que conectar um novo computador ou dispositivo ao &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Saiba mais sobre o &syncBrand.fullName.label; e sua privacidade em ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Os termos do serviço do &syncBrand.fullName.label; estão disponíveis em ">
+<!ENTITY syncKey.footer2.label            ". A política de privacidade está disponível em ">
+<!ENTITY syncKey.footer3.label            ".">

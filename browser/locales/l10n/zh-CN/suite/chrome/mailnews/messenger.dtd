@@ -1,0 +1,552 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messengerWindow.title "邮件 &amp; 新闻组">
+<!ENTITY titleModifier.label "&brandShortName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- tabmail -->
+<!ENTITY tabmailClose.label "关闭标签页">
+<!ENTITY tabmailClose.tooltip "关闭标签页">
+<!ENTITY tabmailNewButton.tooltip "复制当前标签">
+<!ENTITY tabmailCloseButton.tooltip "关闭当前标签页">
+<!ENTITY tabmailAllTabs.tooltip "列出全部标签页">
+
+<!-- menu items: the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY newMessage.label "新建消息">
+<!ENTITY newMessage.accesskey "N">
+<!ENTITY newFolderCmd.label "文件夹…">
+<!ENTITY newFolderCmd.accesskey "F">
+<!ENTITY newVirtualFolderCmd.label "已保存搜索…">
+<!ENTITY newVirtualFolderCmd.accesskey "S">
+<!ENTITY newTabCmd.label "复制标签">
+<!ENTITY newTabCmd.accesskey "T">
+<!ENTITY newTabCmd.key "t">
+<!ENTITY closeTabCmd.label "关闭标签页">
+<!ENTITY closeTabCmd.accesskey "e">
+<!ENTITY newAccountCmd.label "账户…">
+<!ENTITY newAccountCmd.accesskey "A">
+<!ENTITY openMessageFileCmd.label "打开文件…">
+<!ENTITY openMessageFileCmd.accesskey "O">
+<!ENTITY openAttachmentCmd.label "附件">
+<!ENTITY openAttachmentCmd.accesskey "h">
+<!ENTITY saveAsMenu.label "另存为">
+<!ENTITY saveAsMenu.accesskey "S">
+<!ENTITY saveAsFileCmd.label "文件">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "模板">
+<!ENTITY saveAsTemplateCmd.accesskey "T">
+<!ENTITY getNewMsgCmd.label "接收新的消息">
+<!ENTITY getNewMsgCmd.accesskey "G">
+<!ENTITY getNewMsgCmd2.key "d">
+<!ENTITY getNewMsgForCmd.label "获取新消息">
+<!ENTITY getNewMsgForCmd.accesskey "w">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "添加账户">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "A">
+<!ENTITY getAllNewMsgCmd2.key "d">
+<!ENTITY getNextNMsgCmd.label "获取后 500 条新闻消息">
+<!ENTITY getNextNMsgCmd.accesskey "t">
+<!ENTITY sendUnsentCmd.label "发送未发送消息...">
+<!ENTITY sendUnsentCmd.accesskey "d">
+<!ENTITY subscribeCmd.label "订阅…">
+<!ENTITY subscribeCmd.accesskey "b">
+<!ENTITY renameFolder.label "重命名文件夹…">
+<!ENTITY renameFolder.accesskey "R">
+<!ENTITY compactFolders.label "压缩文件夹。">
+<!ENTITY compactFolders.accesskey "F">
+<!ENTITY emptyTrashCmd.label "清空“废件箱”">
+<!ENTITY emptyTrashCmd.accesskey "y">
+<!ENTITY offlineMenu.label "脱机">
+<!ENTITY offlineMenu.accesskey "l">
+<!ENTITY synchronizeOfflineCmd.label "立即下载/同步…">
+<!ENTITY synchronizeOfflineCmd.accesskey "S">
+<!ENTITY settingsOfflineCmd.label "脱机设置…">
+<!ENTITY settingsOfflineCmd.accesskey "e">
+<!ENTITY downloadSelectedCmd.label "获取选中的消息">
+<!ENTITY downloadSelectedCmd.accesskey "t">
+<!ENTITY downloadFlaggedCmd.label "获得消息头">
+<!ENTITY downloadFlaggedCmd.accesskey "G">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "删除消息">
+<!ENTITY deleteMsgCmd.accesskey "D">
+<!ENTITY undeleteMsgCmd.label "恢复已删除的消息">
+<!ENTITY undeleteMsgCmd.accesskey "d">
+<!ENTITY cancelNewsMsgCmd.label "取消消息">
+<!ENTITY cancelNewsMsgCmd.accesskey "n">
+<!ENTITY deleteMsgsCmd.label "删除选定的消息">
+<!ENTITY deleteMsgsCmd.accesskey "D">
+<!ENTITY undeleteMsgsCmd.label "恢复所选的消息">
+<!ENTITY undeleteMsgsCmd.accesskey "d">
+<!ENTITY deleteFolderCmd.label "删除文件夹">
+<!ENTITY deleteFolderCmd.accesskey "D">
+<!ENTITY unsubscribeNewsgroupCmd.label "取消订阅">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "n">
+<!ENTITY selectMenu.label "选择">
+<!ENTITY selectMenu.accesskey "S">
+<!ENTITY selectThreadCmd.label "论题">
+<!ENTITY selectThreadCmd.accesskey "T">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "消息头">
+<!ENTITY selectFlaggedCmd.accesskey "F">
+<!ENTITY menuFavoriteFolder.label "收藏夹">
+<!ENTITY menuFavoriteFolder.accesskey "v">
+<!ENTITY folderPropsCmd.label "属性…">
+<!ENTITY folderPropsFolderCmd.label "文件夹属性…">
+<!ENTITY folderPropsNewsgroupCmd.label "新闻组属性…">
+<!ENTITY folderPropsCmd.accesskey "o">
+<!ENTITY accountManagerCmd.label "邮件  新闻组账户设置…">
+<!ENTITY accountManagerCmd.accesskey "M">
+<!ENTITY undoDeleteMsgCmd.label "撤销 删除消息">
+<!ENTITY redoDeleteMsgCmd.label "重做删除消息">
+<!ENTITY undoMoveMsgCmd.label "撤销 移动消息">
+<!ENTITY redoMoveMsgCmd.label "重做移动消息">
+<!ENTITY undoCopyMsgCmd.label "撤销 复制消息">
+<!ENTITY redoCopyMsgCmd.label "重做复制消息">
+<!ENTITY undoMarkAllCmd.label "撤消全部标记为已读">
+<!ENTITY redoMarkAllCmd.label "重做全部标记为已读">
+<!ENTITY undoDefaultCmd.label "还原">
+<!ENTITY redoDefaultCmd.label "重复">
+
+<!-- View Menu -->
+<!ENTITY showMessengerToolbarCmd.label "邮件工具栏">
+<!ENTITY showMessengerToolbarCmd.accesskey "M">
+<!ENTITY showSearchToolbarCmd.label "搜索栏">
+<!ENTITY showSearchToolbarCmd.accesskey "a">
+<!ENTITY showTabsToolbarCmd.label "标签工具栏">
+<!ENTITY showTabsToolbarCmd.accesskey "T">
+
+<!ENTITY messagePaneLayoutStyle.label "布局">
+<!ENTITY messagePaneLayoutStyle.accesskey "L">
+<!ENTITY messagePaneClassic.label "经典视图">
+<!ENTITY messagePaneClassic.accesskey "C">
+<!ENTITY messagePaneWide.label "宽视图">
+<!ENTITY messagePaneWide.accesskey "W">
+<!ENTITY messagePaneVertical.label "直视图">
+<!ENTITY messagePaneVertical.accesskey "V">
+<!ENTITY showMessagePaneCmd.label "消息">
+<!ENTITY showMessagePaneCmd.accesskey "M">
+<!ENTITY showThreadPaneCmd.label "话题窗格">
+<!ENTITY showThreadPaneCmd.accesskey "T">
+<!ENTITY showFolderPaneCmd.label "文件夹窗格">
+<!ENTITY showFolderPaneCmd.accesskey "F">
+<!-- LOCALIZATION NOTE (toggleFolderPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleFolderPaneCmd.key "S">
+
+<!-- sortMenu is also used by addressbook -->
+<!ENTITY sortMenu.label "排序">
+<!ENTITY sortMenu.accesskey "t">
+
+<!ENTITY sortByDateCmd.label "日期">
+<!ENTITY sortByDateCmd.accesskey "e">
+<!ENTITY sortByReceivedCmd.label "接收时间">
+<!ENTITY sortByReceivedCmd.accesskey "v">
+<!ENTITY sortByFlagCmd.label "标记">
+<!ENTITY sortByFlagCmd.accesskey "l">
+<!ENTITY sortByPriorityCmd.label "优先">
+<!ENTITY sortByPriorityCmd.accesskey "P">
+<!ENTITY sortBySizeCmd.label "大小">
+<!ENTITY sortBySizeCmd.accesskey "z">
+<!ENTITY sortByStatusCmd.label "状态">
+<!ENTITY sortByStatusCmd.accesskey "u">
+<!ENTITY sortByTagsCmd.label "标签">
+<!ENTITY sortByTagsCmd.accesskey "g">
+<!ENTITY sortByJunkStatusCmd.label "垃圾状态">
+<!ENTITY sortByJunkStatusCmd.accesskey "J">
+<!ENTITY sortBySubjectCmd.label "主题">
+<!ENTITY sortBySubjectCmd.accesskey "S">
+<!ENTITY sortByFromCmd.label "从">
+<!ENTITY sortByFromCmd.accesskey "F">
+<!ENTITY sortByRecipientCmd.label "接收者">
+<!ENTITY sortByRecipientCmd.accesskey "c">
+<!ENTITY sortByUnreadCmd.label "已读">
+<!ENTITY sortByUnreadCmd.accesskey "R">
+<!ENTITY sortByOrderReceivedCmd.label "按接收时间排序">
+<!ENTITY sortByOrderReceivedCmd.accesskey "O">
+<!ENTITY sortByAttachmentsCmd.label "附件">
+<!ENTITY sortByAttachmentsCmd.accesskey "m">
+<!ENTITY sortAscending.label "升序">
+<!ENTITY sortAscending.accesskey "A">
+<!ENTITY sortDescending.label "降序">
+<!ENTITY sortDescending.accesskey "D">
+<!ENTITY sortThreaded.label "有话题">
+<!ENTITY sortThreaded.accesskey "T">
+<!ENTITY sortUnthreaded.label "无话题">
+<!ENTITY sortUnthreaded.accesskey "h">
+<!ENTITY groupBySort.label "按排序分组">
+<!ENTITY groupBySort.accesskey "G">
+<!ENTITY msgsMenu.label "消息">
+<!ENTITY msgsMenu.accesskey "M">
+<!ENTITY threads.label "论题">
+<!ENTITY threads.accesskey "e">
+<!ENTITY allMsgsCmd.label "所有">
+<!ENTITY allMsgsCmd.accesskey "A">
+<!ENTITY expandAllThreadsCmd.label "展开所有话题">
+<!ENTITY expandAllThreadsCmd.accesskey "E">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "折叠所有话题">
+<!ENTITY collapseAllThreadsCmd.accesskey "C">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "未读">
+<!ENTITY unreadMsgsCmd.accesskey "U">
+<!ENTITY threadsWithUnreadCmd.label "有未读消息的话题">
+<!ENTITY threadsWithUnreadCmd.accesskey "T">
+<!ENTITY watchedThreadsWithUnreadCmd.label "观察的且有未读消息的论题">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "W">
+<!ENTITY ignoredThreadsCmd.label "已忽略的话题">
+<!ENTITY ignoredThreadsCmd.accesskey "I">
+
+<!ENTITY headersMenu.label "标题">
+<!ENTITY headersMenu.accesskey "H">
+<!ENTITY headersAllCmd.label "所有">
+<!ENTITY headersAllCmd.accesskey "A">
+<!ENTITY headersNormalCmd.label "普通">
+<!ENTITY headersNormalCmd.accesskey "N">
+<!ENTITY bodyMenu.label "消息体为">
+<!ENTITY bodyMenu.accesskey "B">
+<!ENTITY bodyAllowHTML.label "原始 HTML">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "简单 HTML">
+<!ENTITY bodySanitized.accesskey "S">
+<!ENTITY bodyAsPlaintext.label "纯文本">
+<!ENTITY bodyAsPlaintext.accesskey "P">
+<!ENTITY bodyAllParts.label "所有主体部分">
+<!ENTITY bodyAllParts.accesskey "A">
+
+<!ENTITY bodyMenuFeed.label "用邮件正文作为">
+<!ENTITY bodyMenuFeed.accesskey "B">
+<!ENTITY viewFeedWebPage.label "网页">
+<!ENTITY viewFeedWebPage.accesskey "W">
+<!ENTITY viewFeedSummary.label "概述">
+<!ENTITY viewFeedSummary.accesskey "m">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "默认格式">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "D">
+
+<!ENTITY viewAttachmentsInlineCmd.label "查看直接插入的附件">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "D">
+<!ENTITY reloadCmd.label "重新加载">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY stopCmd.label "停止">
+<!ENTITY stopCmd.accesskey "S">
+<!ENTITY pageSourceCmd.label "消息源代码">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.key "u">
+
+<!ENTITY findCmd.label "在此消息中查找…">
+
+<!-- LOCALIZATION NOTE (quickFilterBar.show.key2):
+     This is the key used to show the Lightning quick filter bar. -->
+<!ENTITY quickFilterBar.show.key2 "K">
+
+<!-- Go Menu -->
+
+<!ENTITY goMenu.label "转到">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY nextMenu.label "前进">
+<!ENTITY nextMenu.accesskey "N">
+<!ENTITY nextMsgCmd.label "消息">
+<!ENTITY nextMsgCmd.accesskey "M">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "未读消息">
+<!ENTITY nextUnreadMsgCmd.accesskey "U">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextFlaggedMsgCmd.label "消息头">
+<!ENTITY nextFlaggedMsgCmd.accesskey "F">
+<!ENTITY nextUnreadThread.label "未读论题">
+<!ENTITY nextUnreadThread.accesskey "T">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "后退">
+<!ENTITY prevMenu.accesskey "P">
+<!ENTITY prevMsgCmd.label "消息">
+<!ENTITY prevMsgCmd.accesskey "M">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "未读消息">
+<!ENTITY prevUnreadMsgCmd.accesskey "U">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goBackCmd.label "上一步">
+<!ENTITY goBackCmd.accesskey "B">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.label "转发">
+<!ENTITY goForwardCmd.accesskey "F">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY prevFlaggedMsgCmd.label "消息头">
+<!ENTITY prevFlaggedMsgCmd.accesskey "F">
+<!ENTITY folderMenu.label "文件夹">
+<!ENTITY folderMenu.accesskey "o">
+<!ENTITY startPageCmd.label "邮件起始页">
+<!ENTITY startPageCmd.accesskey "S">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "消息">
+<!ENTITY msgMenu.accesskey "M">
+<!ENTITY newMsgCmd.label "新建消息">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "消息">
+<!ENTITY newNewMsgCmd.accesskey "M">
+<!ENTITY replyMsgCmd.label "回复">
+<!ENTITY replyMsgCmd.accesskey "R">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replyListCmd.label "回复到列表">
+<!ENTITY replyListCmd.accesskey "y">
+<!ENTITY replyNewsgroupCmd.label "回复到新闻组">
+<!ENTITY replyNewsgroupCmd.accesskey "y">
+<!ENTITY replySenderCmd.label "只回复发件人">
+<!ENTITY replySenderCmd.accesskey "R">
+<!ENTITY replyToAllMsgCmd.label "全部回复">
+<!ENTITY replyToAllMsgCmd.accesskey "p">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToSenderAndNewsgroupCmd.label "回复发送人和新闻组">
+<!ENTITY replyToSenderAndNewsgroupCmd.accesskey "p">
+<!ENTITY replyToAllRecipientsCmd.label "回复所有收件人">
+<!ENTITY replyToAllRecipientsCmd.accesskey "A">
+<!ENTITY forwardMsgCmd.label "转发">
+<!ENTITY forwardMsgCmd.accesskey "F">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "转发">
+<!ENTITY forwardAsMenu.accesskey "o">
+<!ENTITY forwardAsInline.label "内联">
+<!ENTITY forwardAsInline.accesskey "I">
+<!ENTITY forwardAsAttachmentCmd.label "附件">
+<!ENTITY forwardAsAttachmentCmd.accesskey "A">
+<!ENTITY editMsgAsNewCmd.label "作为新消息编辑">
+<!ENTITY editMsgAsNewCmd.accesskey "E">
+<!ENTITY editMsgAsNewCmd.key "e">
+<!ENTITY createFilter.label "根据消息创建过滤器…">
+<!ENTITY createFilter.accesskey "a">
+<!ENTITY archiveMsgCmd.label "归档">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY moveMsgToMenu.label "移动到">
+<!ENTITY moveMsgToMenu.accesskey "M">
+<!ENTITY copyMessageLocation.label "复制消息地址">
+<!ENTITY copyMessageLocation.accesskey "M">
+<!ENTITY copyMsgToMenu.label "复制到">
+<!ENTITY copyMsgToMenu.accesskey "C">
+<!ENTITY moveCopyMsgRecentMenu.label "最近">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY killThreadMenu.label "忽略论题">
+<!ENTITY killThreadMenu.accesskey "I">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "忽略子论题">
+<!ENTITY killSubthreadMenu.accesskey "S">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "观察论题">
+<!ENTITY watchThreadMenu.accesskey "W">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY fileHereMenu.label "移动至此处">
+<!ENTITY fileHereMenu.accesskey "F">
+<!ENTITY copyHereMenu.label "复制至此处">
+<!ENTITY copyHereMenu.accesskey "C">
+<!ENTITY tagMenu.label "标记符">
+<!ENTITY tagMenu.accesskey "g">
+<!ENTITY tagCustomize.label "定制">
+<!ENTITY tagCustomize.accesskey "C">
+<!ENTITY markMenu.label "标记">
+<!ENTITY markMenu.accesskey "k">
+<!ENTITY markThreadAsReadCmd.label "论题为已读">
+<!ENTITY markThreadAsReadCmd.accesskey "T">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "已读日期…">
+<!ENTITY markReadByDateCmd.accesskey "D">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "全部已读">
+<!ENTITY markAllReadCmd.accesskey "A">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markAsJunkCmd.label "为垃圾">
+<!ENTITY markAsJunkCmd.accesskey "J">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "为非垃圾">
+<!ENTITY markAsNotJunkCmd.accesskey "N">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "运行垃圾邮件控制">
+<!ENTITY recalculateJunkScoreCmd.accesskey "C">
+<!ENTITY markAsShowRemoteCmd.label "显示远程内容">
+<!ENTITY markAsShowRemoteCmd.accesskey "e">
+<!ENTITY markAsShowRemoteCmd.key "r">
+<!ENTITY markAsNotPhishCmd.label "标记为非垃圾指令.label">
+<!ENTITY markAsNotPhishCmd.accesskey "S">
+<!ENTITY markAsNotPhishCmd.key "p">
+<!ENTITY openFeedMessage.label "打开收取点消息">
+<!ENTITY openFeedMessage.accesskey "O">
+<!ENTITY openFeedWebPageInWindow.label "在新窗口中打开网页">
+<!ENTITY openFeedWebPageInWindow.accesskey "W">
+<!ENTITY openFeedSummaryInWindow.label "在新窗口打开摘要">
+<!ENTITY openFeedSummaryInWindow.accesskey "S">
+<!ENTITY openFeedWebPageInMP.label "切换是否显示消息窗格中的网页和摘要">
+<!ENTITY openFeedWebPageInMP.accesskey "T">
+
+<!-- Tools Menu -->
+<!ENTITY searchMailCmd.label "搜索消息…">
+<!ENTITY searchMailCmd.accesskey "M">
+<!ENTITY searchMailCmd.key "s">
+<!ENTITY searchAddressesCmd.label "搜索地址…">
+<!ENTITY searchAddressesCmd.accesskey "c">
+<!ENTITY filtersCmd.label "消息过滤器…">
+<!ENTITY filtersCmd.accesskey "F">
+<!ENTITY filtersApply.label "对文件夹执行过滤器">
+<!ENTITY filtersApply.accesskey "R">
+<!ENTITY filtersApplyToSelection.label "对所选消息运行过滤器">
+<!ENTITY filtersApplyToSelection.accesskey "g">
+<!ENTITY filtersApplyToMessage.label "对消息运行过滤器">
+<!ENTITY filtersApplyToMessage.accesskey "g">
+<!ENTITY runJunkControls.label "对文件夹运行垃圾邮件控制">
+<!ENTITY runJunkControls.accesskey "u">
+<!ENTITY deleteJunk.label "删除当前文件夹中标记为垃圾的消息">
+<!ENTITY deleteJunk.accesskey "e">
+<!ENTITY importCmd.label "导入…">
+<!ENTITY importCmd.accesskey "I">
+
+<!-- Folder Pane -->
+<!ENTITY nameColumn.label "类别">
+<!ENTITY unreadColumn.label "未读">
+<!ENTITY totalColumn.label "总共">
+
+<!-- Toolbar items -->
+<!ENTITY getMsgButton.label "获取邮件">
+<!ENTITY getAllNewMsgCmd.label "获取所有新消息">
+<!ENTITY getAllNewMsgCmd.accesskey "G">
+<!ENTITY newMsgButton.label "编写">
+<!ENTITY newHTMLMessageCmd.label "用HTML编写">
+<!ENTITY newHTMLMessageCmd.accesskey "H">
+<!ENTITY newPlainTextMessageCmd.label "用普通文本编写">
+<!ENTITY newPlainTextMessageCmd.accesskey "P">
+<!ENTITY replyButton.label "回复">
+<!ENTITY replyAllButton.label "全部回复">
+<!ENTITY forwardButton.label "转发">
+<!ENTITY fileButton.label "文件">
+<!ENTITY nextButton.label "前进">
+<!ENTITY goBackButton.label "回到上一步">
+<!ENTITY goForwardButton.label "向前">
+<!ENTITY deleteButton.label "删除">
+<!ENTITY undeleteButton.label "撤消删除">
+<!ENTITY markButton.label "标记">
+<!ENTITY printButton.label "打印">
+<!ENTITY stopButton.label "停止">
+<!ENTITY junkButton.label "垃圾">
+<!ENTITY notJunkButton.label "非垃圾">
+<!ENTITY searchButton.title "高级搜索">
+
+<!-- Tooltips -->
+<!ENTITY menuBar.tooltip "菜单栏">
+<!ENTITY mailToolbar.tooltip "邮件工具栏">
+<!ENTITY searchToolbar.tooltip "搜索栏">
+<!ENTITY advancedButton.tooltip "高级消息搜索">
+<!ENTITY getMsgButton.tooltip "获取新消息">
+<!ENTITY newMsgButton.tooltip "创建新消息">
+<!ENTITY replyButton.tooltip "回复消息">
+<!ENTITY replyAllButton.tooltip "回复发件人和所有收件人">
+<!ENTITY replyAllButtonNews.tooltip "回复发件人与新闻组">
+<!ENTITY forwardButton.tooltip "转发选择的消息">
+<!ENTITY fileButton.tooltip "移动选择的消息">
+<!ENTITY nextButton.tooltip "转至下一条未读消息">
+<!ENTITY goBackButton.tooltip "后退至上一条消息">
+<!ENTITY goForwardButton.tooltip "前进至下一条消息">
+<!ENTITY deleteButton.tooltip "删除选择的消息或文件夹">
+<!ENTITY undeleteButton.tooltip "恢复选中消息">
+<!ENTITY markButton.tooltip "标记消息">
+<!ENTITY printButton.tooltip "打印此消息">
+<!ENTITY stopButton.tooltip "停止当前的传输">
+<!ENTITY junkButton.tooltip "将选中的消息标记为垃圾(或者非垃圾)">
+<!ENTITY notJunkButton.tooltip "将所选消息标记为非垃圾邮件">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "显示此消息中的远程内容">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "S">
+<!ENTITY editRemoteContentSettings.label "编辑远程内容的权限…">
+<!ENTITY editRemoteContentSettings.accesskey "E">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "完成">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextOpenNewWindow.label "在新窗口中打开消息">
+<!ENTITY contextOpenNewWindow.accesskey "W">
+<!ENTITY contextOpenNewTab.label "在新标签页中打开消息">
+<!ENTITY contextOpenNewTab.accesskey "T">
+<!ENTITY contextEditAsNew.label "作为新消息编辑…">
+<!ENTITY contextEditAsNew.accesskey "E">
+<!ENTITY contextReplySender.label "只回复发件人">
+<!ENTITY contextReplySender.accesskey "O">
+<!ENTITY contextReplyList.label "回复到列表">
+<!ENTITY contextReplyList.accesskey "y">
+<!ENTITY contextReplyNewsgroup.label "回复到新闻组">
+<!ENTITY contextReplyNewsgroup.accesskey "y">
+<!ENTITY contextReplyAll.label "全部回复">
+<!ENTITY contextReplyAll.accesskey "R">
+<!ENTITY contextReplySenderAndNewsgroup.label "回复发送人和新闻组">
+<!ENTITY contextReplySenderAndNewsgroup.accesskey "p">
+<!ENTITY contextForward.label "转发">
+<!ENTITY contextForward.accesskey "F">
+<!ENTITY contextForwardAsAttachment.label "作为附件转发">
+<!ENTITY contextForwardAsAttachment.accesskey "o">
+<!ENTITY contextArchive.label "归档">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextMoveMsgMenu.label "移动到">
+<!ENTITY contextMoveMsgMenu.accesskey "M">
+<!ENTITY contextCopyMsgMenu.label "复制到">
+<!ENTITY contextCopyMsgMenu.accesskey "C">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "最近">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "R">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "我的收藏">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "F">
+<!ENTITY contextSaveAs.label "另存为…">
+<!ENTITY contextSaveAs.accesskey "S">
+<!ENTITY contextPrint.label "打印…">
+<!ENTITY contextPrint.accesskey "P">
+<!ENTITY contextPrintPreview.label "打印预览">
+<!ENTITY contextPrintPreview.accesskey "v">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "获取账户信息">
+<!ENTITY folderContextGetMessages.accesskey "G">
+<!ENTITY folderContextMarkAllFoldersRead.label "标记所有收件箱为已读">
+<!ENTITY folderContextMarkAllFoldersRead.accesskey "M">
+<!ENTITY folderContextOpenNewWindow.label "在新窗口打开邮件">
+<!ENTITY folderContextOpenNewWindow.accesskey "W">
+<!ENTITY folderContextOpenNewTab.label "在新标签页中打开">
+<!ENTITY folderContextOpenNewTab.accesskey "T">
+<!ENTITY folderContextRename.label "重命名">
+<!ENTITY folderContextRename.accesskey "R">
+<!ENTITY folderContextRemove.label "删除">
+<!ENTITY folderContextRemove.accesskey "D">
+<!ENTITY folderContextCompact.label "压缩此文件夹">
+<!ENTITY folderContextCompact.accesskey "F">
+<!ENTITY folderContextEmptyTrash.label "清空“废件箱”">
+<!ENTITY folderContextEmptyTrash.accesskey "y">
+<!ENTITY folderContextEmptyJunk.label "清空垃圾">
+<!ENTITY folderContextEmptyJunk.accesskey "J">
+<!ENTITY folderContextSendUnsentMessages.label "发送未发送消息...">
+<!ENTITY folderContextSendUnsentMessages.accesskey "d">
+<!ENTITY folderContextUnsubscribe.label "取消订阅">
+<!ENTITY folderContextUnsubscribe.accesskey "U">
+<!ENTITY folderContextMarkNewsgroupRead.label "标记新闻组为已读">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "k">
+<!ENTITY folderContextMarkMailFolderRead.label "标记文件夹已读">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "k">
+<!ENTITY folderContextNew.label "新建子文件夹…">
+<!ENTITY folderContextNew.accesskey "N">
+<!ENTITY folderContextSubscribe.label "订阅…">
+<!ENTITY folderContextSubscribe.accesskey "b">
+<!ENTITY folderContextSearchMessages.label "搜索消息…">
+<!ENTITY folderContextSearchMessages.accesskey "S">
+<!ENTITY folderContextProperties.label "属性…">
+<!ENTITY folderContextProperties.accesskey "P">
+<!ENTITY folderContextFavoriteFolder.label "收藏夹">
+<!ENTITY folderContextFavoriteFolder.accesskey "a">
+<!ENTITY folderContextSettings.label "设置…">
+<!ENTITY folderContextSettings.accesskey "e">
+
+<!-- focusSearchInput.key also used by addressbook -->
+<!ENTITY focusSearchInput.key "k">
+<!ENTITY advancedButton.label "高级…">
+<!ENTITY advancedButton.accesskey "A">
+<!ENTITY searchButton.label "搜索消息…">
+<!ENTITY searchButton.accesskey "S">
+
+<!ENTITY all.label "所有">
+<!ENTITY all.accesskey "A">

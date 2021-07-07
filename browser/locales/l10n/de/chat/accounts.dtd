@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Konten - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Chat-Status">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Neues Konto">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Schließen">
+<!ENTITY accountManager.close.accesskey      "S">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Bislang kein Konto eingerichtet">
+<!ENTITY accountManager.noAccount.description "Klicken Sie auf die Schaltfläche &accountManager.newAccount.label;, um sich von &brandShortName; durch die Einrichtung führen zu lassen.">
+<!ENTITY account.autoSignOn.label     "Automatisches Verbinden beim Start">
+<!ENTITY account.autoSignOn.accesskey "m">
+<!ENTITY account.connect.label        "Verbinden">
+<!ENTITY account.connect.accesskey    "V">
+<!ENTITY account.disconnect.label     "Verbindung trennen">
+<!ENTITY account.disconnect.accesskey "T">
+<!ENTITY account.delete.label         "Entfernen">
+<!ENTITY account.delete.accesskey     "f">
+<!ENTITY account.edit.label           "Einstellungen">
+<!ENTITY account.edit.accesskey       "E">
+<!ENTITY account.moveup.label         "Nach oben">
+<!ENTITY account.movedown.label       "Nach unten">
+<!ENTITY account.cancelReconnection.label         "Wiederverbinden abbrechen">
+<!ENTITY account.cancelReconnection.accesskey     "b">
+<!ENTITY account.copyDebugLog.label     "Debug-Protokoll kopieren">
+<!ENTITY account.copyDebugLog.accesskey "D">
+<!ENTITY account.showDebugLog.label     "Debug-Protokoll anzeigen">
+<!ENTITY account.showDebugLog.accesskey "a">
+<!ENTITY account.connecting           "Verbinden…">
+<!ENTITY account.disconnecting        "Verbindung trennen…">
+<!ENTITY account.disconnected         "Nicht verbunden">

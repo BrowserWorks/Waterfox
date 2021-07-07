@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "隨打即找">
+<!ENTITY findAsYouTypeBehavior.label "隨打即找">
+<!ENTITY findAsYouTypeTip.label "小技巧:要手動指定隨打即找的模式可用 / 指定搜尋文字，而 ' 則為搜尋鏈結，然後再打入要搜尋的字串。">
+<!ENTITY findAsYouTypeTimeout.label "幾秒鐘沒動作時就清除目前搜尋">
+<!ENTITY findAsYouTypeTimeout.accesskey "C">
+<!ENTITY findAsYouTypeSound.label "找不到輸入文字時發出聲音">
+<!ENTITY findAsYouTypeSound.accesskey "P">
+<!ENTITY findAsYouTypeEnableAuto.label "在網頁內打字時自動尋找:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "F">
+<!ENTITY findAsYouTypeAutoText.label "頁面內的任何文字">
+<!ENTITY findAsYouTypeAutoText.accesskey "A">
+<!ENTITY findAsYouTypeAutoLinks.label "只有鏈結">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "L">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "隨打即搜尋時顯示搜尋工具列">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "S">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "請注意: 不顯示搜尋列的隨打即找功能，目前還不支援多國語言文字輸入。">
+

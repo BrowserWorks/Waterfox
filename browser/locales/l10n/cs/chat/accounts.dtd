@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Účty - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Stav IM">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Nový účet">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Zavřít">
+<!ENTITY accountManager.close.accesskey      "Z">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Zatím není vytvořen žádný účet">
+<!ENTITY accountManager.noAccount.description "Klepněte na tlačítko &accountManager.newAccount.label; a &brandShortName; vám pomůže vytvořit nový účet.">
+<!ENTITY account.autoSignOn.label     "Připojit při startu">
+<!ENTITY account.autoSignOn.accesskey "s">
+<!ENTITY account.connect.label        "Připojit">
+<!ENTITY account.connect.accesskey    "P">
+<!ENTITY account.disconnect.label     "Odpojit">
+<!ENTITY account.disconnect.accesskey "O">
+<!ENTITY account.delete.label         "Smazat">
+<!ENTITY account.delete.accesskey     "m">
+<!ENTITY account.edit.label           "Vlastnosti">
+<!ENTITY account.edit.accesskey       "V">
+<!ENTITY account.moveup.label         "Posunout výše">
+<!ENTITY account.movedown.label       "Posunout níže">
+<!ENTITY account.cancelReconnection.label         "Zrušit opětovné připojení">
+<!ENTITY account.cancelReconnection.accesskey     "r">
+<!ENTITY account.copyDebugLog.label     "Kopírovat ladicí protokol">
+<!ENTITY account.copyDebugLog.accesskey "K">
+<!ENTITY account.showDebugLog.label     "Zobrazit ladicí protokol">
+<!ENTITY account.showDebugLog.accesskey "Z">
+<!ENTITY account.connecting           "Připojování…">
+<!ENTITY account.disconnecting        "Odpojování…">
+<!ENTITY account.disconnected         "Nepřipojeno">

@@ -1,0 +1,102 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "امتلأ الصِوان. أكتُب الآن فوق أكثر العينات قِدمًا.">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "تسجيل ملف إعدادات غير متاح حاليًا. رجاء أغلق كافة نوافذ التصفح الخاص و حاول مرة أخرى.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "يحمّل…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.js-calltree "شجرة النداءات">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "يُبرز دوال جافاسكرِبت التي قضى المتصفّح أغلب وقته في إجرائها أثناء التسجيل.">
+<!ENTITY performanceUI.toolbar.memory-calltree "المخصصات">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "يظهر أين خُصصت الذاكرة خلال التسجيل.">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "إجمالي الوقت">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "الوقت الذي استُغرق في هذه الدالة وما استدعته من دوال.">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "الوقت المستغرق في هذه الدالة فقط.">
+<!ENTITY performanceUI.table.totalPercentage          "إجمالي التكلفة">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "النسبة المئوية للوقت المستغرق في هذه الدالة وما تستدعيه من دوال.">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "النسبة المئوية للوقت المستغرق في هذه الدالة فقط.">
+<!ENTITY performanceUI.table.samples                  "أمثلة">
+<!ENTITY performanceUI.table.function                 "الدالة">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "حدّد أي البيانات ستعرض في المخطط الزمني">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "سجّل الذاكرة">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "سجل معدل الإطارات">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "يسجل حاليًا عبر">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "أوقِف التسجيل بإدخال">
+<!ENTITY performanceUI.console.stopCommandEnd   "في المعراض.">

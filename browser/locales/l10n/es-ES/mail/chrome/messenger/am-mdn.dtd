@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "Acuses de recibo">
+<!ENTITY useGlobalPrefs.label "Usar las preferencias globales de acuse de recibo para esta cuenta">
+<!ENTITY useGlobalPrefs.accesskey "U">
+<!ENTITY globalReceipts.label "Preferencias generales…">
+<!ENTITY globalReceipts.accesskey "a">
+<!ENTITY useCustomPrefs.label "Personalizar acuse de recibo para esta cuenta">
+<!ENTITY useCustomPrefs.accesskey "P">
+<!ENTITY requestReceipt.label "Al enviar mensajes, solicitar siempre un acuse de recibo">
+<!ENTITY requestReceipt.accesskey "v">
+<!ENTITY receiptArrive.label "Cuando llegue un acuse de recibo:">
+<!ENTITY leaveIt.label "Dejarlo en mi bandeja de entrada">
+<!ENTITY leaveIt.accesskey "D">
+<!ENTITY moveToSent.label "Moverlo a mi carpeta &quot;Enviados&quot;">
+<!ENTITY moveToSent.accesskey "M">
+<!ENTITY requestMDN.label "Cuando reciba una solicitud de acuse de recibo:">
+<!ENTITY returnSome.label "Permitir acuse de recibo para algunos mensajes">
+<!ENTITY returnSome.accesskey "e">
+<!ENTITY never.label "Nunca enviar acuse de recibo">
+<!ENTITY never.accesskey "N">
+<!ENTITY notInToCc.label "Si no estoy en el A. o Cc: del mensaje:">
+<!ENTITY notInToCc.accesskey "T">
+<!ENTITY outsideDomain.label "Si el remitente no está en mi dominio:">
+<!ENTITY outsideDomain.accesskey "s">
+<!ENTITY otherCases.label "En los demás casos:">
+<!ENTITY otherCases.accesskey "o">
+<!ENTITY askMe.label "Preguntarme">
+<!ENTITY alwaysSend.label "Enviar siempre">
+<!ENTITY neverSend.label "No enviar nunca">

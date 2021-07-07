@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label		"テキストエリアのプロパティ">
+
+<!ENTITY Settings.label			"設定">
+
+<!ENTITY TextAreaName.label		"名前:">
+<!ENTITY TextAreaName.accessKey		"N">
+<!ENTITY TextAreaRows.label		"行数:">
+<!ENTITY TextAreaRows.accessKey		"R">
+<!ENTITY TextAreaCols.label		"幅:">
+<!ENTITY TextAreaCols.accessKey		"C">
+<!ENTITY TextAreaReadOnly.label		"表示のみ">
+<!ENTITY TextAreaReadOnly.accessKey	"O">
+<!ENTITY TextAreaDisabled.label		"無効化">
+<!ENTITY TextAreaDisabled.accessKey	"D">
+<!ENTITY TextAreaTabIndex.label		"タブインデックス:">
+<!ENTITY TextAreaTabIndex.accessKey	"I">
+<!ENTITY TextAreaAccessKey.label	"アクセスキー:">
+<!ENTITY TextAreaAccessKey.accessKey	"K">
+<!ENTITY InitialText.label		"テキストの初期値:">
+<!ENTITY InitialText.accessKey		"T">
+
+<!ENTITY TextAreaWrap.label		"改行方法:">
+<!ENTITY TextAreaWrap.accessKey		"W">
+<!ENTITY WrapDefault.value		"標準">
+<!ENTITY WrapOff.value			"自動改行しない">
+<!ENTITY WrapHard.value			"自動改行する(hard)">
+<!ENTITY WrapSoft.value			"表示のみ改行(soft)">
+<!ENTITY WrapPhysical.value		"自動改行する(physical)">
+<!ENTITY WrapVirtual.value		"表示のみ改行(virtual)">

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "オフラインウェブアプリケーション">
+<!ENTITY pref.offlineCache.caption          "オフラインのウェブコンテンツとユーザーデータ">
+
+<!ENTITY clearOfflineAppCache.label         "消去">
+<!ENTITY clearOfflineAppCache.accesskey     "C">
+
+<!ENTITY offlineAlwaysAllow.label           "すべてのウェブサイトでオフラインで使用するデータの格納を許可する">
+<!ENTITY offlineAlwaysAllow.accesskey       "A">
+<!ENTITY offlineExplicit.label              "明示的な権限のあるウェブサイトのみ許可する">
+<!ENTITY offlineExplicit.accesskey          "O">
+<!ENTITY offlineNotifyAsk.label             "ウェブサイトがオフラインで使用するデータの格納を求めてきたときに通知する">
+<!ENTITY offlineNotifyAsk.accesskey         "N">
+<!ENTITY offlineNotifyPermissions.label     "許可設定を管理">
+<!ENTITY offlineNotifyPermissions.accesskey "P">
+
+<!ENTITY offlineAppsUsage.label             "以下のウェブサイトがオフラインデータを使用しています:">
+<!ENTITY offlineAppsListRemove.label        "データ消去...">
+<!ENTITY offlineAppsListRemove.accesskey    "D">

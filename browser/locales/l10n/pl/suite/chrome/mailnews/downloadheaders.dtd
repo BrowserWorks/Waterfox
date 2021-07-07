@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY all.label "Pobierz nagłówki wszystkich wiadomości">
+<!ENTITY all.accesskey "D">
+<!ENTITY download.label "Pobierz nagłówki">
+<!ENTITY download.accesskey "o">
+<!ENTITY headers.label "wiadomości">
+<!ENTITY headers.accesskey "w">
+<!ENTITY mark.label "Oznacz pozostałe jako przeczytane">
+<!ENTITY mark.accesskey "z">

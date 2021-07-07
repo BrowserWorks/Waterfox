@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY playButton.playLabel "Riproduci">
+<!ENTITY playButton.pauseLabel "Pausa">
+<!ENTITY muteButton.muteLabel "Disattiva audio">
+<!ENTITY muteButton.unmuteLabel "Attiva audio">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Schermo intero">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Esci da schermo intero">
+<!ENTITY castingButton.castingLabel "Trasmetti a schermo">
+<!ENTITY closedCaption.off "Disattivati">
+<!ENTITY volumeScrubber.label "Dispositivo di scorrimento volume">
+
+<!ENTITY pictureInPicture.label "Picture-in-Picture">
+
+<!ENTITY pictureInPictureToggle.label "Guarda con Picture-in-Picture">
+<!ENTITY pictureInPictureExplainer "Riproduci i video in primo piano mentre fai altre cose in &brandShortName;">
+
+<!ENTITY error.aborted "Il caricamento del video è stato interrotto.">
+<!ENTITY error.network "La riproduzione del video è stata annullata a causa di un errore di rete.">
+<!ENTITY error.decode "Il video non può essere riprodotto in quanto il file è danneggiato.">
+<!ENTITY error.srcNotSupported "Formato video o MIME type non supportato.">
+<!ENTITY error.noSource2 "Non è stato trovato alcun video con formato o MIME type supportati.">
+<!ENTITY error.generic "La riproduzione del video è stata annullata a causa di un errore sconosciuto.">
+
+<!ENTITY status.pictureInPicture "Questo video è riprodotto in modalità Picture-in-Picture.">
+
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

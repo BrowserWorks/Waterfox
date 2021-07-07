@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "帳號 - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "即時訊息狀態">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "新增帳號">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "關閉">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "未設定帳號">
+<!ENTITY accountManager.noAccount.description "請點擊 &accountManager.newAccount.label; 按鈕讓 &brandShortName; 帶您進行設定帳號。">
+<!ENTITY account.autoSignOn.label     "啟動時登入">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "連線">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "取消連線">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "刪除">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "屬性">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "上移">
+<!ENTITY account.movedown.label       "下移">
+<!ENTITY account.cancelReconnection.label         "停止重新連線">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "複製除錯紀錄">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "顯示除錯紀錄">
+<!ENTITY account.showDebugLog.accesskey "H">
+<!ENTITY account.connecting           "連線中…">
+<!ENTITY account.disconnecting        "正在離線…">
+<!ENTITY account.disconnected         "未連線">

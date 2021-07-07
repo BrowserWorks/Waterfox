@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Otevřít soubor…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Otevřít adresu…">
+<!ENTITY openRemoteCmd.accesskey "a">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Poslední dokumenty">
+<!ENTITY fileRecentMenu.accesskey "d">
+<!ENTITY saveCmd.label "Uložit">
+<!ENTITY saveCmd.accesskey "U">
+<!ENTITY saveAsCmd.label "Uložit jako…">
+<!ENTITY saveAsCmd.accesskey "l">
+<!ENTITY saveAsChangeEncodingCmd2.label "Uložit a změnit znakovou sadu textu">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "v">
+<!ENTITY publishCmd.label "Publikovat">
+<!ENTITY publishCmd.accesskey "P">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publikovat jako…">
+<!ENTITY publishAsCmd.accesskey "i">
+<!ENTITY fileRevert.label "Vrátit zpět">
+<!ENTITY fileRevert.accesskey "z">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Nastavení pro publikování…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Formulář">
+<!ENTITY insertFormMenu.accesskey "F">
+<!ENTITY insertFormCmd.label "Definovat formulář…">
+<!ENTITY insertFormCmd.accesskey "D">
+<!ENTITY insertInputTagCmd.label "Pole formuláře…">
+<!ENTITY insertInputTagCmd.accesskey "e">
+<!ENTITY insertInputImageCmd.label "Obrázek formuláře…">
+<!ENTITY insertInputImageCmd.accesskey "O">
+<!ENTITY insertTextAreaCmd.label "Oblast textu…">
+<!ENTITY insertTextAreaCmd.accesskey "t">
+<!ENTITY insertSelectCmd.label "Výběr ze seznamu…">
+<!ENTITY insertSelectCmd.accesskey "s">
+<!ENTITY insertButtonCmd.label "Definovat tlačítko…">
+<!ENTITY insertButtonCmd.accesskey "t">
+<!ENTITY insertLabelCmd.label "Definovat popisek">
+<!ENTITY insertLabelCmd.accesskey "e">
+<!ENTITY insertFieldSetCmd.label "Definovat skupinu polí…">
+<!ENTITY insertFieldSetCmd.accesskey "f">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nová">
+<!ENTITY newToolbarCmd.tooltip "Vytvoří novou stránku">
+<!ENTITY openToolbarCmd.label "Otevřít">
+<!ENTITY openToolbarCmd.tooltip "Otevře uložený soubor">
+<!ENTITY saveToolbarCmd.tooltip "Uloží stránku do souboru">
+<!ENTITY publishToolbarCmd.tooltip "Umístí soubor na vzdálený server">
+<!ENTITY printToolbarCmd.label "Tisknout">
+<!ENTITY printToolbarCmd.tooltip "Vytiskne tuto stránku">
+<!ENTITY formToolbarCmd.label "Formulář">
+<!ENTITY formToolbarCmd.tooltip "Vložte nový formulář nebo upravte vlastnosti vybraného formuláře">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopie i foldery">
+<!ENTITY sendingPrefix.label "Wysyłając wiadomości automatycznie: ">
+<!ENTITY fccMailFolder.label "umieszczaj ich kopie w:">
+<!ENTITY fccMailFolder.accesskey "i">
+<!ENTITY fccReplyFollowsParent.label "umieszczaj odpowiedzi w folderze wiadomości, na którą odpowiada użytkownik">
+<!ENTITY fccReplyFollowsParent.accesskey "m">
+<!ENTITY ccAddress.label "wysyłaj kopię do:">
+<!ENTITY ccAddress.accesskey "k">
+<!ENTITY ccAddressList.placeholder "adresy e-mail rozdzielone przecinkami">
+<!ENTITY bccAddress.label "wysyłaj ukrytą kopię do:">
+<!ENTITY bccAddress.accesskey "u">
+<!ENTITY bccAddressList.placeholder "adresy e-mail rozdzielone przecinkami">
+<!ENTITY saveMessageDlg.label "Wyświetlaj okno dialogowe potwierdzające zapisywanie wiadomości">
+<!ENTITY saveMessageDlg.accesskey "e">
+<!ENTITY sentFolderOn.label "folderze Wysłane konta:">
+<!ENTITY sentFolderOn.accesskey "W">
+<!ENTITY sentInOtherFolder.label "folderze:">
+<!ENTITY sentInOtherFolder.accesskey "f">
+<!ENTITY archivesTitle.label "Archiwum">
+<!ENTITY keepArchives.label "Archiwum wiadomości przechowuj w:">
+<!ENTITY keepArchives.accesskey "r">
+<!ENTITY archiveHierarchyButton.label "Ustawienia archiwizacji…">
+<!ENTITY archiveHierarchyButton.accesskey "t">
+<!ENTITY archivesFolderOn.label "folderze Archiwum konta:">
+<!ENTITY archivesFolderOn.accesskey "A">
+<!ENTITY archiveInOtherFolder.label "folderze:">
+<!ENTITY archiveInOtherFolder.accesskey "d">
+<!ENTITY specialFolders.label "Szkice i szablony">
+<!ENTITY keepDrafts2.label "Szkice wiadomości przechowuj w:">
+<!ENTITY draftsFolderOn.label "folderze Szkice konta:">
+<!ENTITY draftsFolderOn.accesskey "S">
+<!ENTITY draftInOtherFolder.label "folderze:">
+<!ENTITY draftInOtherFolder.accesskey "l">
+<!ENTITY keepTemplates.label "Szablony wiadomości przechowuj w:">
+<!ENTITY templatesFolderOn.label "folderze Szablony konta:">
+<!ENTITY templatesFolderOn.accesskey "z">
+<!ENTITY templateInOtherFolder.label "innym folderze:">
+<!ENTITY templateInOtherFolder.accesskey "n">

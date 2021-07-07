@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "حدث جديد…">
+<!ENTITY event.new.event.accesskey              "ج">
+
+<!ENTITY event.new.task                         "مهمة جديدة…">
+<!ENTITY event.new.task.accesskey               "ه">
+
+<!ENTITY calendar.import.label                  "استورد…">
+<!ENTITY calendar.import.accesskey              "س">
+
+<!ENTITY calendar.export.label                  "صدّر…">
+<!ENTITY calendar.export.accesskey              "ص">
+
+<!ENTITY calendar.publish.label                 "انشر…">
+<!ENTITY calendar.publish.accesskey             "ن">
+
+<!ENTITY calendar.deletecalendar.label          "احذف التقويم المحدد…">
+<!ENTITY calendar.deletecalendar.accesskey      "ح">
+<!ENTITY calendar.unsubscribecalendar.label     "ألغ الاشتراك من التقويم المحدد…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "غ">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "أزل التقويم المحدد…">
+<!ENTITY calendar.removecalendar.accesskey      "ز">
+
+
+<!ENTITY calendar.menu.customize.label          "خصّص…">
+<!ENTITY calendar.menu.customize.accesskey      "ص">
+
+<!ENTITY showUnifinderCmd.label                 "اعثر على أحداث">
+<!ENTITY showUnifinderCmd.accesskey             "ع">
+<!ENTITY showUnifinderCmd.tooltip               "بدّل عرض لوحة البحث عن الأحداث">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "اعرض المهام في التقويم">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "ه">
+
+<!ENTITY goTodayCmd.label                       "اليوم">
+<!ENTITY goTodayCmd.accesskey                   "ي">
+
+<!ENTITY showCurrentView.label                  "المنظور الحالي">
+<!ENTITY showCurrentView.accesskey              "ظ">
+
+<!ENTITY calendar.properties.label              "خصائص التقويم…">
+<!ENTITY calendar.properties.accesskey          "ق">

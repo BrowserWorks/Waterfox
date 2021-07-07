@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Impor Buku Alamat">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Data yang Diimpor: ">
+<!ENTITY fieldMapImport.next.label "Lanjut">
+<!ENTITY fieldMapImport.next.accesskey "L">
+<!ENTITY fieldMapImport.previous.label "Sebelumnya">
+<!ENTITY fieldMapImport.previous.accesskey "S">
+<!ENTITY fieldMapImport.text "Gunakan tombol Geser Atas dan Geser Bawah untuk mencocokkan item buku alamat di sebelah kiri dengan item data yang diimpor di sebelah kanan. Matikan item yang tidak ingin diimpor.">
+<!ENTITY fieldMapImport.up.label "Geser Atas">
+<!ENTITY fieldMapImport.up.accesskey "A">
+<!ENTITY fieldMapImport.down.label "Geser Bawah">
+<!ENTITY fieldMapImport.down.accesskey "B">
+<!ENTITY fieldMapImport.fieldListTitle "Isian Buku Alamat">
+<!ENTITY fieldMapImport.dataTitle "Data yang diimpor">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Baris pertama berisi nama jenis isian">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "i">

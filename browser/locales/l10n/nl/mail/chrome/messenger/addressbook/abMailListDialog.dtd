@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Nieuwe mailinglijst">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Toevoegen aan: ">
+<!ENTITY addToAddressBook.accesskey     "a">
+<!ENTITY ListName.label                 "Lijstnaam: ">
+<!ENTITY ListName.accesskey             "L">
+<!ENTITY ListNickName.label             "Lijstbijnaam: ">
+<!ENTITY ListNickName.accesskey         "b">
+<!ENTITY ListDescription.label          "Beschrijving: ">
+<!ENTITY ListDescription.accesskey      "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Typ e-mailadressen om deze toe te voegen aan de mailinglijst:">
+<!ENTITY AddressTitle.accesskey         "T">
+<!ENTITY UpButton.label                 "Omhoog verplaatsen">
+<!ENTITY DownButton.label               "Omlaag verplaatsen">

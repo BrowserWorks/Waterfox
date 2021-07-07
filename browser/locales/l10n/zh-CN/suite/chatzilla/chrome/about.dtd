@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "关于 ChatZilla">
+
+<!ENTITY chatzilla.label       "ChatZilla">
+<!ENTITY version.unknown.label "未知版本">
+<!ENTITY version.known.label   "版本 &#37;S">
+<!ENTITY description.label     "一款简洁、易用、且可高度扩展的网络聊天（IRC）客户端。">
+
+<!ENTITY homepage.label    "访问主页">
+<!ENTITY copyversion.label "复制版本详细信息">
+
+<!ENTITY section.core.label    "核心开发团队：">
+<!ENTITY section.locale.label  "本地化：">
+<!ENTITY section.contrib.label "贡献者：">

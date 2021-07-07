@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.appearance.title "Apariencia">
+<!ENTITY onStartLegend.label "Cuando se inicie &brandShortName;, abrir">
+<!ENTITY navCheck.label "Navegador">
+<!ENTITY navCheck.accesskey "N">
+<!ENTITY showToolsLegend.label "Mostrar barras de herramientas como">
+<!ENTITY picsNtextRadio.label "Imágenes y texto">
+<!ENTITY picsNtextRadio.accesskey "t">
+<!ENTITY picsOnlyRadio.label "Sólo imágenes">
+<!ENTITY picsOnlyRadio.accesskey "o">
+<!ENTITY textonlyRadio.label "Sólo texto">
+<!ENTITY textonlyRadio.accesskey "x">
+<!ENTITY showHideTooltips.label "Mostrar consejos">
+<!ENTITY showHideTooltips.accesskey "M">
+<!ENTITY showHideGrippies.label "Ocultar asas de las barras de herramientas">
+<!ENTITY showHideGrippies.accesskey "a">
+<!ENTITY pref.locales.title "Idioma de la interfaz de usuario">
+<!ENTITY selectLocale.label "Seleccione el idioma del texto que aparece en las cajas de diálogo, menús, barras de herramientas y etiquetas de botones:">
+<!ENTITY dateTimeFormatting.label "Formato de fecha y hora">
+<!ENTITY restartOnLocaleChange.label "Las preferencias de idioma y formato tendrán efecto cuando reinicie &brandShortName;.">

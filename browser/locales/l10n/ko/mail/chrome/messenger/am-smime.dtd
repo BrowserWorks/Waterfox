@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "종단간 암호화">
+<!ENTITY e2eLearnMore.label "더 알아보기">
+
+<!ENTITY e2eEnc.description "종단간 암호화가 없으면 메시지 내용이 전자 메일 공급자 및 대중 사찰에 쉽게 노출됩니다.">
+<!ENTITY e2eeReqWarning.description "암호화가 필요한 경우 메시지를 보내려면 모든 수신자의 공개 키 또는 인증서가 있어야 합니다.">
+
+<!ENTITY e2eSigning.description "디지털 서명을 사용하면 수신자가 메시지를 보냈으며 내용이 변경되지 않았음을 확인할 수 있습니다.">
+<!ENTITY e2eTechPref.description "선호하는 암호화 기술:">
+
+<!ENTITY doNotEncrypt.label "기본적으로 암호화를 활성화하지 않음">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "기본적으로 암호화를 필요로 함">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "암호화를 위한 개인 인증서:">
+<!ENTITY digitalSign.certificate.button "선택…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "제거">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "선택…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "제거">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "디지털 서명">
+<!ENTITY signMessage2.label "기본적으로 내 디지털 서명 추가">
+<!ENTITY signMessage.accesskey "D">
+
+<!ENTITY signingCert2.message "디지털 서명을 위한 개인 인증서:">
+
+<!ENTITY sendingDefaults.label "메시지 전송을 위한 기본 설정">
+
+<!ENTITY technologyAutomatic.label "사용 가능한 키 또는 인증서를 기반으로 자동 선택">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "S/MIME 인증서 관리">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME 보안 장치">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "S/MIME 선호">
+<!ENTITY technologyOpenPGP.label "OpenPGP 선호">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "인증서 선택">
+<!ENTITY certPicker.info  "인증서:">
+<!ENTITY certPicker.detailsLabel "선택한 인증서 상세 정보:">
+
+<!ENTITY openpgpKey.message "암호화 및 디지털 서명을위한 개인 키:">
+<!ENTITY openpgpKey.button "개인 키 설정…">
+<!ENTITY openpgpKey.accesskey "o">

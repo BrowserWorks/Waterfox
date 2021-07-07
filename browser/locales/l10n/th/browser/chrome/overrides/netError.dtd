@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "มีปัญหาในการโหลดหน้า">
+<!ENTITY retry.label "ลองอีกครั้ง">
+<!ENTITY returnToPreviousPage.label "ย้อนกลับ">
+<!ENTITY returnToPreviousPage1.label "ย้อนกลับ (แนะนำ)">
+<!ENTITY advanced2.label "ขั้นสูง…">
+<!ENTITY viewCertificate.label "ดูใบรับรอง">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "ไม่พบเซิร์ฟเวอร์">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>หากที่อยู่นั้นถูกต้อง นี่คือสามสิ่งอื่น ๆ ที่คุณสามารถลอง:</strong>
+<ul>
+  <li>ลองอีกครั้งในภายหลัง</li>
+  <li>ตรวจสอบการเชื่อมต่อเครือข่ายของคุณ</li>
+  <li>หากคุณเชื่อมต่ออยู่แต่อยู่หลังไฟร์วอลล์ ตรวจสอบว่า &brandShortName; มีการอนุญาตให้เข้าถึงเว็บ</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>ตรวจสอบชื่อไฟล์สำหรับตัวพิมพ์ใหญ่เล็กหรือข้อผิดพลาดการพิมพ์อื่น ๆ</li> <li>ตรวจสอบเพื่อดูหากไฟล์ถูกย้าย เปลี่ยนชื่อ หรือลบ</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>ไฟล์อาจถูกเอาออก ย้าย หรือสิทธิอนุญาตของไฟล์อาจป้องกันการเข้าถึง</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; ไม่สามารถโหลดหน้านี้ได้ด้วยเหตุผลบางอย่าง</p>">
+
+<!ENTITY captivePortal.title "เข้าสู่ระบบเครือข่าย">
+<!ENTITY captivePortal.longDesc2 "
+<p>คุณต้องเข้าสู่ระบบเครือข่ายนี้ก่อนที่คุณจะสามารถเข้าถึงอินเทอร์เน็ต</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "เปิดหน้าเข้าสู่ระบบของเครือข่าย">
+
+<!ENTITY malformedURI.pageTitle "URL ไม่ถูกต้อง">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>เอกสารที่ขอไม่มีในแคชของ &brandShortName;</p><ul><li>ตามมาตรการรักษาความปลอดภัย &brandShortName; จะไม่ขอเอกสารที่ละเอียดอ่อนให้ใหม่โดยอัตโนมัติ</li><li>คลิก ลองอีกครั้ง เพื่อขอเอกสารจากเว็บไซต์ใหม่</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>กด &quot;ลองอีกครั้ง&quot; เพื่อสลับเป็นโหมดออนไลน์และโหลดหน้าใหม่</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>คุณอาจจำเป็นต้องติดตั้งซอฟต์แวร์อื่นเพื่อเปิดที่อยู่นี้</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>ตรวจสอบให้แน่ใจว่าการตั้งค่าพร็อกซีถูกต้อง</li> <li>ติดต่อผู้ดูแลเครือข่ายของคุณเพื่อให้แน่ใจว่าเซิร์ฟเวอร์พร็อกซีกำลังทำงานอยู่</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>ตรวจสอบให้แน่ใจว่าการตั้งค่าพร็อกซีถูกต้อง</li> <li>ตรวจสอบให้แน่ใจว่าคอมพิวเตอร์ของคุณมีการเชื่อมต่อเครือข่ายที่ทำงานได้</li> <li>หากคอมพิวเตอร์หรือเครือข่ายของคุณถูกปกป้องด้วยไฟร์วอลล์หรือพร็อกซี ตรวจสอบให้แน่ใจว่า &brandShortName; ได้รับอนุญาตให้เข้าถึงเว็บ</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>ปัญหานี้บางครั้งอาจมีสาเหตุมาจากการปิดใช้งานหรือปฏิเสธการยอมรับคุกกี้</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>ตรวจสอบให้แน่ใจว่าระบบของคุณมีตัวจัดการความปลอดภัยส่วนบุคคลติดตั้งอยู่</li> <li>สิ่งนี้อาจเกิดจากการกำหนดค่าที่ไม่มาตรฐานบนเซิร์ฟเวอร์</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>ไม่สามารถแสดงหน้าที่คุณกำลังพยายามจะดูเนื่องจากไม่สามารถยืนยันความถูกต้องของข้อมูลที่ได้รับ</li> <li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; ตรวจพบภัยคุกคามด้านความปลอดภัยที่อาจเกิดขึ้นและไม่ได้ดำเนินการต่อไปยัง <span class='hostname'/> ถ้าคุณเยี่ยมชมไซต์นี้ ผู้โจมตีอาจพยายามล้วงข้อมูล เช่น รหัสผ่าน อีเมล หรือรายละเอียดบัตรเครดิตของคุณ">
+<!ENTITY certerror.sts.introPara "&brandShortName; ตรวจพบภัยคุกคามด้านความปลอดภัยที่อาจเกิดขึ้นและไม่ได้ดำเนินการต่อไปยัง <span class='hostname'/> เนื่องจากเว็บไซต์นี้ต้องการการเชื่อมต่อที่ปลอดภัย">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; ตรวจพบปัญหาและไม่ได้ดำเนินการต่อไปยัง <span class='hostname'/> เว็บไซต์อาจถูกกำหนดค่าอย่างไม่ถูกต้องหรือนาฬิกาคอมพิวเตอร์ของคุณถูกตั้งค่าเป็นเวลาที่ผิด">
+<!ENTITY certerror.expiredCert.secondPara2 "ดูเหมือนว่าใบรับรองของเว็บไซต์จะหมดอายุแล้ว ซึ่งทำให้ &brandShortName; ไม่สามารถเชื่อมต่ออย่างปลอดภัยได้ ถ้าคุณเยี่ยมชมไซต์นี้ ผู้โจมตีอาจพยายามล้วงข้อมูล เช่น รหัสผ่าน อีเมล หรือรายละเอียดบัตรเครดิตของคุณ">
+<!ENTITY certerror.expiredCert.sts.secondPara "ดูเหมือนว่าใบรับรองของเว็บไซต์จะหมดอายุแล้ว ซึ่งทำให้ &brandShortName; ไม่สามารถเชื่อมต่ออย่างปลอดภัยได้">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "คุณสามารถทำอะไรเกี่ยวกับเรื่องนี้ได้บ้าง?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>ปัญหานี้มักเกิดขึ้นกับเว็บไซต์ และไม่มีวิธีใดที่คุณสามารถแก้ปัญหานี้ได้</p>
+<p>ถ้าคุณกำลังใช้เครือข่ายบริษัทหรือกำลังใช้ซอฟต์แวร์ป้องกันไวรัส คุณสามารถติดต่อขอความช่วยเหลือจากทีมสนับสนุนได้ คุณยังสามารถแจ้งให้ผู้ดูแลของเว็บไซต์ทราบเกี่ยวกับปัญหานี้ได้</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>นาฬิกาคอมพิวเตอร์ของคุณถูกตั้งค่าเป็น <span id='wrongSystemTime_systemDate2'/> ตรวจให้แน่ใจว่าคอมพิวเตอร์ของคุณถูกตั้งค่าเป็นวันที่ เวลา และเขตเวลาที่ถูกต้องในการตั้งค่าระบบของคุณ แล้วลองรีเฟรช <span class='hostname'/></p>
+<p>ถ้านาฬิกาของคุณถูกตั้งค่าเป็นเวลาที่ถูกต้องอยู่แล้ว แสดงว่าเว็บไซต์อาจจะถูกกำหนดค่าอย่างไม่ถูกต้อง และไม่มีวิธีใดที่คุณสามารถแก้ปัญหานี้ได้ คุณสามารถแจ้งให้ผู้ดูแลของเว็บไซต์นี้ทราบเกี่ยวกับปัญหานี้ได้</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>ปัญหานี้มักเกิดขึ้นกับเว็บไซต์ และไม่มีวิธีใดที่คุณสามารถแก้ปัญหานี้ได้ คุณสามารถแจ้งให้ผู้ดูแลของเว็บไซต์ทราบเกี่ยวกับปัญหานี้ได้</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>ไซต์อาจไม่พร้อมใช้งานชั่วคราวหรือกำลังทำงานหนักเกินไป ลองอีกครั้งในอีกสักครู่</li> <li>หากคุณไม่สามารถโหลดหน้าใด ๆ ได้ ตรวจสอบการเชื่อมต่อเครือข่ายของคอมพิวเตอร์ของคุณ</li> <li>หากคอมพิวเตอร์หรือเครือข่ายของคุณถูกปกป้องด้วยไฟร์วอลล์หรือพร็อกซี ตรวจสอบให้แน่ใจว่า &brandShortName; ได้รับอนุญาตให้เข้าถึงเว็บ</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ได้ป้องกันไม่ให้หน้านี้โหลดด้วยวิธีนี้เนื่องจากหน้ามีนโยบายความปลอดภัยของเนื้อหาที่ไม่อนุญาต</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ได้ป้องกันหน้านี้จากการโหลดในบริบทนี้เนื่องจากหน้ามีนโยบาย X-Frame-Options ที่ไม่อนุญาต</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ไม่สามารถแสดงหน้าที่คุณกำลังพยายามจะดูเนื่องจากตรวจพบข้อผิดพลาดในการส่งผ่านข้อมูล</p><ul><li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "ยอมรับความเสี่ยงและดำเนินการต่อ">
+
+<!ENTITY errorReporting.automatic2 "รายงานข้อผิดพลาดเช่นนี้เพื่อช่วย Mozilla ระบุและปิดกั้นไซต์ที่ประสงค์ร้าย">
+<!ENTITY errorReporting.learnMore "เรียนรู้เพิ่มเติม…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "ข้อมูลขั้นสูง: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "คำเตือน: ความเสี่ยงด้านความปลอดภัยที่อาจเกิดขึ้นข้างหน้า">
+<!ENTITY certerror.sts.pagetitle  "ไม่ได้เชื่อมต่อ: ปัญหาความปลอดภัยที่อาจเกิดขึ้น">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> มีนโยบายการรักษาความปลอดภัยที่เรียกว่า HTTP Strict Transport Security (HSTS) ซึ่งหมายความว่า &brandShortName; สามารถทำการเชื่อมต่อได้อย่างปลอดภัยเท่านั้น คุณไม่สามารถเพิ่มข้อยกเว้นเพื่อเยี่ยมชมไซต์นี้ได้">
+<!ENTITY certerror.copyToClipboard.label "คัดลอกข้อความไปยังคลิปบอร์ด">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ใช้เทคโนโลยีความปลอดภัยที่ล้าสมัยและเสี่ยงต่อการถูกโจมตี ผู้โจมตีสามารถเปิดเผยข้อมูลที่คุณคิดว่าปลอดภัยได้อย่างง่ายดาย ผู้ดูแลเว็บไซต์จำเป็นต้องแก้ไขเซิร์ฟเวอร์ก่อนที่คุณจะสามารถเยี่ยมชมไซต์ได้</p><p>รหัสข้อผิดพลาด: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "หน้าที่ถูกปิดกั้น">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> ดูเหมือนจะเป็นไซต์ที่ปลอดภัย แต่ไม่สามารถทำการเชื่อมต่ออย่างปลอดภัยได้ ปัญหานี้เกิดจาก <span class='mitm-name'/> ซึ่งอาจเป็นเนื่องจากซอฟต์แวร์ที่ติดตั้งบนคอมพิวเตอร์ของคุณหรือเครือข่ายของคุณ">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "ถ้าซอฟต์แวร์ป้องกันไวรัสของคุณมีคุณลักษณะที่ใช้สแกนการเชื่อมต่อที่ถูกเข้ารหัส (มักถูกเรียกว่า “การสแกนเว็บ” หรือ “การสแกน HTTPS”) คุณสามารถปิดใช้งานคุณลักษณะนั้นได้ ถ้าวิธีนี้ใช้ไม่ได้ผล คุณสามารถลบและติดตั้งซอฟต์แวร์ป้องกันไวรัสใหม่ได้">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "ถ้าคุณกำลังใช้เครือข่ายบริษัท คุณสามารถติดต่อแผนกไอทีของคุณได้">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "ถ้าคุณไม่คุ้นเคยกับ <span class='mitm-name'/> แสดงว่าอาจเป็นการโจมตีและคุณไม่ควรดำเนินการต่อไปยังไซต์นี้">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "ถ้าคุณไม่คุ้นเคยกับ <span class='mitm-name'/> แสดงว่าอาจเป็นการโจมตี และไม่มีวิธีใดที่คุณสามารถเข้าถึงไซต์นี้ได้">
+
+<!ENTITY clockSkewError.longDesc "คอมพิวเตอร์ของคุณคิดว่าเวลาปัจจุบันคือ <span id='wrongSystemTime_systemDate1'/> ซึ่งทำให้ &brandShortName; ไม่สามารถทำการเชื่อมต่ออย่างปลอดภัยได้ เมื่อต้องการเยี่ยมชม <span class='hostname'></span> ให้อัปเดตนาฬิกาคอมพิวเตอร์ของคุณในการตั้งค่าระบบของคุณให้เป็นวันที่ เวลา และเขตเวลาปัจจุบัน แล้วรีเฟรช <span class='hostname'></span>">
+
+<!ENTITY prefReset.longDesc "ดูเหมือนว่าการตั้งค่าความปลอดภัยเครือข่ายของคุณอาจเป็นสาเหตุของสิ่งนี้ คุณต้องการเรียกคืนการตั้งค่าเริ่มต้นหรือไม่?">
+<!ENTITY prefReset.label "เรียกคืนการตั้งค่าเริ่มต้น">
+
+<!ENTITY enableTls10.longDesc "เว็บไซต์นี้อาจไม่รองรับโปรโตคอล TLS 1.2 ซึ่งเป็นรุ่นขั้นต่ำที่รองรับโดย &brandShortName; การเปิดใช้งาน TLS 1.0 และ TLS 1.1 อาจทำให้การเชื่อมต่อนี้สำเร็จ">
+<!ENTITY enableTls10.note "TLS 1.0 และ TLS 1.1 จะถูกปิดใช้งานอย่างถาวรในรุ่นอนาคต">
+<!ENTITY enableTls10.label "เปิดใช้งาน TLS 1.0 และ 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>ไม่สามารถแสดงหน้าที่คุณกำลังพยายามจะดูเนื่องจากตรวจพบข้อผิดพลาดในโปรโตคอลเครือข่าย</p><ul><li>โปรดติดต่อเจ้าของเว็บไซต์เพื่อแจ้งพวกเขาให้ทราบถึงปัญหานี้</li></ul>">

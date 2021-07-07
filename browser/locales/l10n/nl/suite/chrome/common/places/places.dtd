@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliotheek">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Ordenen">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Uw bladwijzers ordenen">
+
+<!ENTITY file.close.label               "Sluiten">
+<!ENTITY file.close.accesskey           "S">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Weergaven">
+<!ENTITY views.accesskey                "W">
+<!ENTITY views.tooltip                  "Uw weergave wijzigen">
+<!ENTITY view.columns.label             "Kolommen tonen">
+<!ENTITY view.columns.accesskey         "K">
+<!ENTITY view.sort.label                "Sorteren">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Ongesorteerd">
+<!ENTITY view.unsorted.accesskey        "O">
+<!ENTITY view.sortAscending.label       "Sorteervolgorde A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Sorteervolgorde Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Bladwijzers importeren vanuit HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "m">
+<!ENTITY exportBookmarksToHTML.label       "Bladwijzers exporteren naar HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "x">
+<!ENTITY importOtherBrowser.label          "Gegevens van een andere browser importeren…">
+<!ENTITY importOtherBrowser.accesskey      "d">
+
+<!ENTITY cmd.backup.label               "Reservekopie maken…">
+<!ENTITY cmd.backup.accesskey           "R">
+<!ENTITY cmd.restore2.label             "Herstellen">
+<!ENTITY cmd.restore2.accesskey         "H">
+<!ENTITY cmd.restoreFromFile.label      "Bestand kiezen…">
+<!ENTITY cmd.restoreFromFile.accesskey  "B">
+
+<!ENTITY cmd.deleteDomainData.label     "Deze website vergeten">
+<!ENTITY cmd.deleteDomainData.accesskey "e">
+
+<!ENTITY cmd.open.label                  "Openen">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.open_window.label           "Openen in een nieuw venster">
+<!ENTITY cmd.open_window.accesskey       "v">
+<!ENTITY cmd.open_private_window.label     "Openen in een nieuw privévenster">
+<!ENTITY cmd.open_private_window.accesskey "r">
+<!ENTITY cmd.open_tab.label              "Openen in een nieuw tabblad">
+<!ENTITY cmd.open_tab.accesskey          "t">
+<!ENTITY cmd.open_all_in_tabs.label      "Alle openen in tabbladen">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "t">
+
+<!ENTITY cmd.properties.label            "Eigenschappen">
+<!ENTITY cmd.properties.accesskey        "E">
+
+<!ENTITY cmd.sortby_name.label              "Sorteren op naam">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "S">
+
+<!ENTITY cmd.new_bookmark.label            "Nieuwe bladwijzer…">
+<!ENTITY cmd.new_bookmark.accesskey        "b">
+<!ENTITY cmd.new_folder.label              "Nieuwe map…">
+<!ENTITY cmd.new_folder.accesskey          "m">
+<!ENTITY cmd.context_new_folder.accesskey  "m">
+<!ENTITY cmd.new_separator.label           "Nieuw scheidingsteken">
+<!ENTITY cmd.new_separator.accesskey       "c">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Livebladwijzer opnieuw laden">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "L">
+
+<!ENTITY col.name.label          "Naam">
+<!ENTITY col.tags.label          "Labels">
+<!ENTITY col.url.label           "Locatie">
+<!ENTITY col.mostrecentvisit.label "Meest recente bezoek">
+<!ENTITY col.visitcount.label    "Bezoekteller">
+<!ENTITY col.description.label   "Beschrijving">
+<!ENTITY col.dateadded.label     "Toegevoegd">
+<!ENTITY col.lastmodified.label  "Laatst gewijzigd">
+
+<!ENTITY search.placeholder  "Zoeken">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "Meer">
+<!ENTITY detailsPane.more.accesskey "M">
+<!ENTITY detailsPane.less.label "Minder">
+<!ENTITY detailsPane.less.accesskey "M">
+<!ENTITY detailsPane.selectAnItemText.description "Selecteer een item om de eigenschappen ervan te bekijken en te wijzigen">
+
+<!ENTITY view.label               "Weergeven">
+<!ENTITY view.accesskey           "r">
+<!ENTITY byDate.label             "Op datum">
+<!ENTITY byDate.accesskey         "d">
+<!ENTITY bySite.label             "Op website">
+<!ENTITY bySite.accesskey         "w">
+<!ENTITY byMostVisited.label      "Op meest bezocht">
+<!ENTITY byMostVisited.accesskey  "m">
+<!ENTITY byLastVisited.label      "Op laatst bezocht">
+<!ENTITY byLastVisited.accesskey  "l">
+<!ENTITY byDayAndSite.label       "Op datum en website">
+<!ENTITY byDayAndSite.accesskey   "e">

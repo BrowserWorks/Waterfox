@@ -1,0 +1,57 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Ulozte kopii tohoto souboru jako userChrome.css do adresare chrome 
+ * v adresari s uzivatelskym profilem a upravte dle svych predstav.
+ */
+
+/*
+ * Tento soubor se pouziva k nastaveni nekterych vychytavek uzivatelskeho 
+ * rozhrani aplikaci Mozilla. Pravidla s deklaraci !important prevazi 
+ * nad vychozimi pravidly.
+ */
+
+/*
+ * Radku @namespace NEODSTRANUJTE -- je nutna pro spravne fungovani celeho souboru
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* nastavit vychozi namespace XUL */
+
+
+/*
+ * Nektera vylepseni pristupnosti:
+ */
+/*
+ * Priklad: nastavit velikost pisma na 20pt
+ *
+ * * {
+ *   font-size: 20pt !important;
+ * }
+ */
+/*
+ * Priklad: nastavit velikost pisma v nabidce na 15pt
+ *
+ * menupopup > * {
+ *   font-size: 15pt !important;
+ * }
+ */
+/*
+ * Priklad: nastavit v adresnim radku (URL) neproporcionalni pismo s pevnou sirkou
+ *
+ * #urlbar {
+ *    font-family: monospace !important;
+ * }
+ */
+
+/*
+ * Priklad: skryt pohybujici se kolecko pri nacitani stranky
+ *
+ * #throbber-box {
+ *   display: none !important;
+ * }
+ */
+
+/*
+ * Vice prikladu naleznete na http://www.mozilla.org/unix/customizing.html
+ */

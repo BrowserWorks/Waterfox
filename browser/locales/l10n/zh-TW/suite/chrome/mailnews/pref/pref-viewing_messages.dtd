@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "訊息顯示">
+<!ENTITY style.label                      "樣式:">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "正常">
+<!ENTITY bold.label                       "粗體字">
+<!ENTITY italic.label                     "斜體字">
+<!ENTITY boldItalic.label                 "粗斜體">
+<!ENTITY size.label                       "大小:">
+<!ENTITY size.accesskey                   "z">
+<!ENTITY bigger.label                     "增大">
+<!ENTITY smaller.label                    "減少">
+<!ENTITY color.label                      "色彩:">
+<!ENTITY color.accesskey                  "C">
+<!ENTITY displayPlainText.caption         "純文字訊息">
+<!ENTITY fontPlainText.label              "字型:">
+<!ENTITY fontPlainText.accesskey          "F">
+<!ENTITY displayQuoted.label              "訊息引用設定:">
+<!ENTITY wrapInMsg.label                  "依照視窗寬度換行">
+<!ENTITY wrapInMsg.accesskey              "W">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "顯示表情符號圖片">
+<!ENTITY convertEmoticons.accesskey       "D">
+<!ENTITY generalMessageDisplay.caption    "一般">
+<!ENTITY autoMarkAsRead.label             "自動將郵件標示為已讀">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "在顯示">
+<!ENTITY markAsReadAfter.accesskey        "t">
+<!ENTITY secondsLabel.label               "秒之後">
+
+<!ENTITY openingMessages.label            "當開啟訊息時，將它們顯示於:">
+<!ENTITY newWindowRadio.label             "新視窗">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "重複使用已存在的視窗">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "阻擋位於遠端來源的圖片與其他內容">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "顯示通訊錄裡設定的名字">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "刪除訊息時關閉視窗">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">
+

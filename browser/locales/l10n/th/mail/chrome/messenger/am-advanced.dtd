@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "การตั้งค่าเซิร์ฟเวอร์ขาออก (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "เมื่อจัดการข้อมูลประจำตัวของคุณ คุณสามารถใช้เซิร์ฟเวอร์จากรายการนี้โดยเลือกเป็นเซิร์ฟเวอร์ขาออก (SMTP) หรือคุณสามารถใช้เซิร์ฟเวอร์เริ่มต้นจากรายการนี้โดยเลือก &quot;ใช้เซิร์ฟเวอร์เริ่มต้น&quot;">
+
+<!ENTITY smtpListAdd.label  "เพิ่ม…">
+<!ENTITY smtpListAdd.accesskey  "พ">
+<!ENTITY smtpListEdit.label "แก้ไข…">
+<!ENTITY smtpListEdit.accesskey "ก">
+<!ENTITY smtpListDelete.label "เอาออก">
+<!ENTITY smtpListDelete.accesskey "อ">
+<!ENTITY smtpListSetDefault.label "ตั้งเป็นค่าเริ่มต้น">
+<!ENTITY smtpListSetDefault.accesskey "ต">
+
+<!ENTITY serverDetails.label "รายละเอียดของเซิร์ฟเวอร์ที่เลือก:">
+<!ENTITY serverDescription.label "คำอธิบาย: ">
+<!ENTITY serverName.label "ชื่อเซิร์ฟเวอร์: ">
+<!ENTITY serverPort.label "พอร์ต: ">
+<!ENTITY userName.label   "ชื่อผู้ใช้: ">
+<!ENTITY connectionSecurity.label "ความปลอดภัยในการเชื่อมต่อ: ">
+<!ENTITY authMethod.label   "วิธีการรับรองความถูกต้อง: ">

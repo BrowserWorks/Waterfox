@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adresboek">
+<!ENTITY Addrbook.accesskey                    "s">
+<!ENTITY GeneratedName.label                   "Naam">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-mailadres">
+<!ENTITY PrimaryEmail.accesskey                "m">
+<!ENTITY Company.label                         "Organisatie">
+<!ENTITY Company.accesskey                     "O">
+<!ENTITY _PhoneticName.label                   "Fonetische naam">
+<!ENTITY _PhoneticName.accesskey               "c">
+<!ENTITY NickName.label                        "Bijnaam">
+<!ENTITY NickName.accesskey                    "B">
+<!ENTITY SecondEmail.label                     "Extra e-mailadres">
+<!ENTITY SecondEmail.accesskey                 "a">
+<!ENTITY Department.label                      "Afdeling">
+<!ENTITY Department.accesskey                  "d">
+<!ENTITY JobTitle.label                        "Functie">
+<!ENTITY JobTitle.accesskey                    "t">
+<!ENTITY CellularNumber.label                  "Mobiel">
+<!ENTITY CellularNumber.accesskey              "i">
+<!ENTITY PagerNumber.label                     "Pieper">
+<!ENTITY PagerNumber.accesskey                 "r">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "x">
+<!ENTITY HomePhone.label                       "Telefoon thuis">
+<!ENTITY HomePhone.accesskey                   "f">
+<!ENTITY WorkPhone.label                       "Telefoon werk">
+<!ENTITY WorkPhone.accesskey                   "w">
+<!ENTITY ChatName.label                        "Chatnaam">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Oplopend">
+<!ENTITY sortAscending.accesskey               "p">
+<!ENTITY sortDescending.label                  "Aflopend">
+<!ENTITY sortDescending.accesskey              "f">

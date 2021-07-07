@@ -1,0 +1,111 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Đến">
+<!ENTITY fromField4.label "Từ">
+<!ENTITY senderField4.label "Người gửi">
+<!ENTITY author.label "Tác giả">
+<!ENTITY organizationField4.label "Tổ chức">
+<!ENTITY replyToField4.label "Trả lời đến">
+
+<!ENTITY subjectField4.label "Tiêu đề">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Nhóm tin">
+<!ENTITY tagsHdr4.label "Nhãn">
+<!ENTITY dateField4.label "Ngày">
+<!ENTITY userAgentField4.label "Chuỗi đại diện người dùng">
+<!ENTITY referencesField4.label "Tài liệu tham khảo">
+<!ENTITY messageIdField4.label "ID thư">
+<!ENTITY originalWebsite4.label "Trang web">
+
+<!ENTITY hdrArchiveButton1.label "Lưu trữ">
+<!ENTITY hdrArchiveButton1.tooltip "Lưu trữ thư này">
+<!ENTITY hdrSmartReplyButton1.label "Trả lời thông minh">
+<!ENTITY hdrReplyButton1.label "Trả lời">
+<!ENTITY hdrReplyButton2.tooltip "Trả lời người gửi thư này">
+<!ENTITY hdrReplyAllButton1.label "Trả lời tất cả">
+<!ENTITY hdrReplyAllButton1.tooltip "Trả lời người gửi và tất cả người nhận">
+<!ENTITY hdrReplyListButton1.label "Trả lời danh sách">
+<!ENTITY hdrReplyListButton1.tooltip "Trả lời danh sách thư">
+<!ENTITY hdrFollowupButton1.tooltip "Đăng một bài theo dõi cho nhóm tin này">
+<!ENTITY hdrForwardButton1.label "Chuyển tiếp">
+<!ENTITY hdrForwardButton1.tooltip "Chuyển tiếp thư này">
+<!ENTITY hdrJunkButton1.label "Thư rác">
+<!ENTITY hdrJunkButton1.tooltip "Đánh dấu thư này là thư rác">
+<!ENTITY hdrTrashButton1.label "Xóa">
+<!ENTITY hdrTrashButton1.tooltip "Xóa thư này">
+
+<!ENTITY hdrViewToolbarShowFull.label "Hiển thị biểu tượng và văn bản">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Chỉ hiển thị biểu tượng">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "Chỉ hiển thị văn bản">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Luôn hiển thị trả lời cho người gửi">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "Thêm">
+<!ENTITY otherActionsButton.tooltip "Nhiều hành động hơn">
+<!ENTITY otherActionsOpenConversation1.label "Mở trong hội thoại">
+<!ENTITY otherActionsOpenConversation1.accesskey "C">
+<!ENTITY otherActionsOpenInNewWindow1.label "Mở trong cửa sổ mới">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "W">
+<!ENTITY otherActionsOpenInNewTab1.label "Mở trong thẻ mới">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "T">
+<!ENTITY markAsReadMenuItem1.label "Đánh dấu là đã đọc">
+<!ENTITY markAsReadMenuItem1.accesskey "R">
+<!ENTITY markAsUnreadMenuItem1.label "Đánh dấu là chưa đọc">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Lưu thành…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Xem mã nguồn">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "In…">
+<!ENTITY otherActionsPrint1.accesskey "P">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Hiển thị ngăn đính kèm ban đầu">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Mở">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "Lưu thành…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "Tách rời…">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "Xóa">
+<!ENTITY deleteAttachmentCmd.accesskey    "e">
+<!ENTITY openAllAttachmentsCmd.label    "Mở tất cả…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "O">
+<!ENTITY saveAllAttachmentsCmd.label    "Lưu tất cả…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Tách rời tất cả…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "Xóa tất cả…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "Mở tập tin đính kèm">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Mở thư mục chứa">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Hiển thị trong Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Lưu">
+<!ENTITY saveAttachmentButton1.tooltip     "Lưu tập tin đính kèm">
+<!ENTITY saveAllAttachmentsButton1.label   "Lưu tất cả">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Lưu tất cả tập tin đính kèm">
+
+<!ENTITY copyLinkCmd.label        "Sao chép địa chỉ liên kết">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "Sao chép ID thư">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Mở thư cho ID">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "Mở trình duyệt với ID thư">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

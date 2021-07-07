@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Choisir comme fond d’écran">
+
+<!ENTITY position.label             "Position :">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Mosaïque">
+<!ENTITY position.stretch.label     "Étirer">
+<!ENTITY position.center.label      "Centrer">
+<!ENTITY position.fill.label        "Remplir">
+<!ENTITY position.fit.label         "Ajuster">
+<!ENTITY picker.label               "Couleur :">
+<!ENTITY picker.accesskey           "C">
+<!ENTITY preview.caption            "Aperçu">
+<!ENTITY apply.label                "Appliquer">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "Fermer">

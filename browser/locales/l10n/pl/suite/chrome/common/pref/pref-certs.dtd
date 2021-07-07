@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY managecerts.caption "Menedżer certyfikatów">
+<!ENTITY managecerts.text "Użyj menedżera certyfikatów do zarządzania osobistymi certyfikatami jak i certyfikatami innych osób oraz organów certyfikacji.">
+<!ENTITY managecerts.button "Zarządzaj certyfikatami…">
+<!ENTITY managecerts.accesskey "M">
+<!ENTITY managedevices.caption "Menedżer urządzeń zabezpieczających">
+<!ENTITY managedevices.text "Naciśnij ten przycisk, aby zarządzać urządzeniami zabezpieczającymi takimi jak karty inteligentne.">
+<!ENTITY managedevices.button "Zarządzaj urządzeniami zabezpieczającymi…">
+<!ENTITY managedevices.accesskey "Z">
+
+<!ENTITY ssl.label "SSL">
+
+<!ENTITY pref.certs.title "Certyfikaty">
+<!ENTITY certs.label "Certyfikaty">
+
+<!ENTITY validation.ocsp.caption "OCSP">
+<!ENTITY enableOCSP.label "Używaj protokołu weryfikacji stanu certyfikatu (OCSP) do potwierdzania wiarygodności certyfikatów">
+<!ENTITY enableOCSP.accesskey "U">
+<!ENTITY validation.requireOCSP.description "Jeśli nie uda się połączyć z serwerem OCSP, traktuj certyfikat jako niewiarygodny">
+<!ENTITY validation.requireOCSP.accesskey "O">

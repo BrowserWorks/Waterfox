@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "Profiler ukládá vzorky v kruhové vyrovnávací paměti a poté, co vyrovnávací paměť dosáhne limitu pro nahrávání, novější vzorky začnou přepisovat vzorky na začátku záznamu.">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Povolte v předvolbách používání více procesů prohlížeče Firefox pro vykreslování záznamu dat v reálném čase.">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "Vyrovnávací paměť je plná. Starší vzorky jsou přepisovány.">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "Nahrávání profilu je momentálně nedostupné. Zavřete prosím všechna anonymní okna a zkuste to znovu.">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "Načítání…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Waterfall">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "Zobrazí různé operace prohlížeče prováděné během nahrávání a sestavené postupně jako vodopád.">
+<!ENTITY performanceUI.toolbar.js-calltree "Strom volání">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "Zvýrazní funkce JavaScriptu, kde prohlížeč strávil většinu času v průběhu nahrávání.">
+<!ENTITY performanceUI.toolbar.memory-calltree "Alokace">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "Ukazuje, kde byla pamět přidělena během nahrávání.">
+<!ENTITY performanceUI.toolbar.js-flamegraph "Graf využití JS">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Zobrazí zásobník volání JavaScriptu po dobu běhu nahrávky.">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Graf využití alokací">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "Celkový čas">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "Množství času stráveného v této funkci a funkcích, které jsou volány.">
+<!ENTITY performanceUI.table.selfDuration             "Vlastní čas">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "Množství času stráveného pouze v rámci této funkce.">
+<!ENTITY performanceUI.table.totalPercentage          "Celkové vytížení">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "Procento času stráveného v této funkci a funkcích, které jsou volány.">
+<!ENTITY performanceUI.table.selfPercentage           "Vlastní vytížení">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "Procento času stráveného pouze v rámci této funkce.">
+<!ENTITY performanceUI.table.samples                  "Vzorky">
+<!ENTITY performanceUI.table.samples.tooltip          "Čas této funkci na zásobníku, když profiler vzal vzorek.">
+<!ENTITY performanceUI.table.function                 "Funkce">
+<!ENTITY performanceUI.table.function.tooltip         "Název a adresa zdroje vzorkové funkce.">
+<!ENTITY performanceUI.table.totalAlloc               "Celkový počet vzorků alokací">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Celkový počet vzorků alokovaných objektů v tomto umístění a ve volaných.">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "Zvolte data, které se zobrazí na časové ose">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "Nastavení preferovaného výkonu.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "Invertovat strom volání">
+<!ENTITY performanceUI.invertTree.tooltiptext "Invertováním stromu volání zobrazíte cesty profilovaných volání od nejmladších záznamů po nejstarší.">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "Invertovat graf">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "Invertováním grafu zobrazíte cesty profilovaných volání od nejmladších záznamů po nejstarší.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "Zobrazit data platformy Gecko">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "Zobrazování dat platformy umožňuje v nástroji profilování JavaScriptu zahrnout i symboly platformy Gecko.">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "Zobrazit JIT optimalizace">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "Zobrazit JIT optimalizace dat vzorku v každém snímku JavaScriptu.">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "Rozbalit rekurzivní strukturu stromu">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "Rozbalí rekurzi při zkoumání funkcí.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "Nahrávat paměť">
+<!ENTITY performanceUI.enableMemory.tooltiptext "Nahrává spotřebu paměti během profilování.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "Nahrávat alokace">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "Nahrává alokace objektů během profilování.">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "Zaznamenávat frekvenci snímků">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "Zaznamenává frekvenci snímků během profilování.">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "Aktuálně nahráváte přes">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "Zastavte nahrávání zadáním">
+<!ENTITY performanceUI.console.stopCommandEnd   "do konzole.">

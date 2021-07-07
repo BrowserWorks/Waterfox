@@ -1,0 +1,111 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 42em;"><!-- en-US: width: 100ch; height: 30em; -->
+
+<!ENTITY  copy.key              "C">
+<!ENTITY  copy.label            "コピー">
+<!ENTITY  copy.accesskey        "C">
+<!ENTITY  selectall.key         "A">
+<!ENTITY  selectall.label       "すべて選択">
+<!ENTITY  selectall.accesskey   "A">
+<!ENTITY  openHelpMac.key       "?">
+<!ENTITY  closeWindow.key       "w">
+<!ENTITY  copyLinks.label       "リンクをコピー">
+<!ENTITY  copyLinks.accesskey       "L">
+<!ENTITY  openInNewTab.label        "新しいタブで開く">
+<!ENTITY  openInNewTab.accesskey    "T">
+<!ENTITY  openInNewWindow.label     "新しいウィンドウで開く">
+<!ENTITY  openInNewWindow.accesskey "W">
+
+<!ENTITY  generalTab            "一般">
+<!ENTITY  generalTab.accesskey  "G">
+<!ENTITY  generalTitle          "タイトル:">
+<!ENTITY  generalURL            "アドレス:">
+<!ENTITY  generalType           "MIME タイプ:">
+<!ENTITY  generalMode           "描画モード:">
+<!ENTITY  generalSize           "サイズ:">
+<!ENTITY  generalReferrer       "参照元 URL:">
+<!ENTITY  generalSource         "ソース:">
+<!ENTITY  generalModified       "更新日時:">
+<!ENTITY  generalEncoding2      "テキストエンコーディング:">
+<!ENTITY  generalMetaName       "名前">
+<!ENTITY  generalMetaContent    "コンテンツ">
+<!ENTITY  generalSecurityDetails           "詳細">
+<!ENTITY  generalSecurityDetails.accesskey "D">
+
+<!ENTITY  formsTab              "フォーム">
+<!ENTITY  formsTab.accesskey    "F">
+<!ENTITY  formAction            "フォームの動作">
+<!ENTITY  formMethod            "メソッド">
+<!ENTITY  formName              "名前">
+<!ENTITY  formEncoding          "エンコーディング:">
+<!ENTITY  formTarget            "ターゲット:">
+<!ENTITY  formFields            "フィールド:">
+<!ENTITY  formLabel             "ラベル">
+<!ENTITY  formFName             "フィールドの名前">
+<!ENTITY  formType              "種類">
+<!ENTITY  formCValue            "現在値">
+
+<!ENTITY  linksTab              "リンク">
+<!ENTITY  linksTab.accesskey    "L">
+<!ENTITY  linkName              "名前">
+<!ENTITY  linkAddress           "アドレス">
+<!ENTITY  linkType              "種類">
+<!ENTITY  linkTarget            "ターゲット">
+<!ENTITY  linkAccessKey         "アクセスキー">
+
+<!ENTITY  mediaTab              "メディア">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaLocation         "URL:">
+<!ENTITY  mediaText             "関連テキスト:">
+<!ENTITY  mediaAltHeader        "代替テキスト">
+<!ENTITY  mediaAddress          "アドレス">
+<!ENTITY  mediaType             "種類">
+<!ENTITY  mediaSize             "サイズ">
+<!ENTITY  mediaCount            "訪問回数">
+<!ENTITY  mediaDimension        "寸法:">
+<!ENTITY  mediaLongdesc         "詳しい説明:">
+<!ENTITY  mediaBlockImage.accesskey "B">
+<!ENTITY  mediaSaveAs           "名前を付けて保存...">
+<!ENTITY  mediaSaveAs.accesskey "A">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "メディアプレビュー:">
+
+<!ENTITY  feedTab               "フィード">
+<!ENTITY  feedTab.accesskey     "F">
+<!ENTITY  feedSubscribe         "購読">
+<!ENTITY  feedSubscribe.accesskey "u">
+
+<!ENTITY  permTab               "許可">
+<!ENTITY  permTab.accesskey     "P">
+<!ENTITY  permissionsFor        "許可情報:">
+
+<!ENTITY  securityTab           "セキュリティ">
+<!ENTITY  securityTab.accesskey "S">
+<!ENTITY  securityHeader        "このページのセキュリティ情報">
+<!ENTITY  securityView.certView "証明書の表示">
+<!ENTITY  securityView.accesskey "V">
+<!ENTITY  securityView.unknown   "不明">
+
+
+<!ENTITY  securityView.identity.header   "ウェブサイトの識別情報">
+<!ENTITY  securityView.identity.owner    "運営者:">
+<!ENTITY  securityView.identity.domain   "ウェブサイト:">
+<!ENTITY  securityView.identity.verifier "認証局:">
+<!ENTITY  securityView.identity.validity "有効期限:">
+
+<!ENTITY  securityView.privacy.header                   "プライバシーと履歴">
+<!ENTITY  securityView.privacy.history                  "昨日までに何回このサイトを訪問したことがあるか？">
+<!ENTITY  securityView.privacy.cookies                  "このサイトはコンピューターに情報 (Cookie) を保存しているか？">
+<!ENTITY  securityView.privacy.viewCookies              "Cookie を表示">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "このサイトのパスワードを保存しているか？">
+<!ENTITY  securityView.privacy.viewPasswords            "パスワードを表示">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "w">
+
+<!ENTITY  securityView.technical.header                 "技術情報">

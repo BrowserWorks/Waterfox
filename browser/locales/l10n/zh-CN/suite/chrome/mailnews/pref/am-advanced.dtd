@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "发送服务器 (SMTP) 设置">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "管理您账号的同时，您可以从此列表中选择外发服务器 (SMTP)，或者您也可以从列表中选择 &quot;使用默认服务器&quot;。">
+
+<!ENTITY smtpListAdd.label  "添加…">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "编辑…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "删除">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "设为默认">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "选中服务器的详细信息：">
+<!ENTITY serverDescription.label "描述：">
+<!ENTITY serverName.label "服务器名称：">
+<!ENTITY serverPort.label "端口：">
+<!ENTITY userName.label   "用户名：">
+<!ENTITY connectionSecurity.label "连接安全： ">
+<!ENTITY authMethod.label   "验证方式： ">

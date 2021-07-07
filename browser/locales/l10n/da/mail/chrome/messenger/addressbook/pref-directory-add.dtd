@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "Navn:">
+<!ENTITY directoryName.accesskey "N">
+<!ENTITY directoryHostname.label "Værtsnavn:">
+<!ENTITY directoryHostname.accesskey "V">
+<!ENTITY directoryBaseDN.label "Base DN:">
+<!ENTITY directoryBaseDN.accesskey "b">
+<!ENTITY findButton.label "Find">
+<!ENTITY findButton.accesskey "f">
+<!ENTITY directorySecure.label "Brug sikker forbindelse (SSL)">
+<!ENTITY directorySecure.accesskey "i">
+<!ENTITY directoryLogin.label "Bind DN:">
+<!ENTITY directoryLogin.accesskey "D">
+<!ENTITY General.tab "Generelt">
+<!ENTITY Offline.tab "Offline">
+<!ENTITY Advanced.tab "Avanceret">
+<!ENTITY portNumber.label "Port:">
+<!ENTITY portNumber.accesskey "p">
+<!ENTITY searchFilter.label "Søgefilter:">
+<!ENTITY searchFilter.accesskey "f">
+<!ENTITY scope.label "Scope:">
+<!ENTITY scope.accesskey "S">
+<!ENTITY scopeOneLevel.label "Et niveau">
+<!ENTITY scopeOneLevel.accesskey "E">
+<!ENTITY scopeSubtree.label "Underniveau">
+<!ENTITY scopeSubtree.accesskey "U">
+<!ENTITY return.label "Returner ikke flere end">
+<!ENTITY return.accesskey "R">
+<!ENTITY results.label "Resultater">
+<!ENTITY offlineText.label "Du kan hente en lokal kopi af dette katalog så det kan bruges når du arbejder offline.">
+
+<!ENTITY saslMechanism.label               "Log-in-metode: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "Simpel">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth "36em">

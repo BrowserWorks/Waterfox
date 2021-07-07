@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Создание нового календаря" >
+<!ENTITY wizard.label             "Создать новый календарь" >
+<!ENTITY wizard.description       "Расположение вашего календаря" >
+
+<!ENTITY initialpage.description    "Ваш календарь может быть сохранен на вашем компьютере или на удалённом сервере, для того, чтобы вы могли обратиться к нему из любого места или использовать его совместно с вашими друзьями или коллегами." >
+<!ENTITY initialpage.computer.label  "На моём компьютере">
+<!ENTITY initialpage.network.label  "В сети">
+
+<!ENTITY locationpage.description         "Введите информацию, необходимую для получения доступа к вашему удалённому календарю." >
+<!ENTITY locationpage.login.description   "Не обязательно: введите имя пользователя и пароль" >
+<!ENTITY locationpage.username.label      "Имя пользователя:" >
+<!ENTITY locationpage.password.label      "Пароль:" >
+
+<!ENTITY custompage.shortdescription  "Настройки календаря" >
+<!ENTITY custompage.longdescription   "Вы можете дать вашему календарю имя и присвоить особый цвет для отображения событий этого календаря." >
+
+<!ENTITY finishpage.shortdescription  "Календарь создан" >
+<!ENTITY finishpage.longdescription   "Ваш календарь был успешно создан." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Другое">
+
+<!ENTITY buttons.create.label "Создать календарь">
+<!ENTITY buttons.create.accesskey "з">
+
+<!ENTITY buttons.find.label "Найти календари">
+<!ENTITY buttons.find.accesskey "и">
+
+<!ENTITY buttons.back.label "Назад">
+<!ENTITY buttons.back.accesskey "а">
+
+<!ENTITY buttons.subscribe.label "Подписаться">
+<!ENTITY buttons.subscribe.accesskey "с">
+
+<!ENTITY calendartype.label "Тип календаря:">
+<!ENTITY location.label "Адрес:">
+<!ENTITY location.placeholder "URL или имя хоста сервера календаря">
+
+<!ENTITY network.nocredentials.label "Для этого адреса не требуются учётные данные">
+<!ENTITY network.loading.description "Пожалуйста, подождите, ваши календари обрабатываются.">
+<!ENTITY network.notfound.description "Не удалось найти календари по данному адресу. Пожалуйста, проверьте свои настройки.">
+<!ENTITY network.authfail.description "Введённые учётные данные не приняты. Пожалуйста, проверьте ваши настройки.">
+
+<!ENTITY network.subscribe.single.description "Пожалуйста, выберите календари, на которые вы хотели бы подписаться.">
+<!ENTITY network.subscribe.multiple.description "По данному адресу доступны несколько типов календарей. Пожалуйста, выберите тип календаря, а затем отметьте календари, на которые вы бы хотели подписаться.">

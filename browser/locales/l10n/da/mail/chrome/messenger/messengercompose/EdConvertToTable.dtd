@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY windowTitle.label "Konverter til tabel">
+<!ENTITY instructions1.label "Composer opretter en ny tabelrække for hvert punkt i det markerede.">
+<!ENTITY instructions2.label "Vælg det tegn der bruges til at adskille kolonner i det markerede:">
+<!ENTITY commaRadio.label "Komma">
+<!ENTITY spaceRadio.label "Mellemrum">
+<!ENTITY otherRadio.label "Andre tegn:">
+<!ENTITY deleteCharCheck.label "Slet separator-tegnet">
+<!ENTITY collapseSpaces.label "Ignorer ekstra mellemrum">
+<!ENTITY collapseSpaces.tooltip "Erstat sammenhængende mellemrum med en separator">

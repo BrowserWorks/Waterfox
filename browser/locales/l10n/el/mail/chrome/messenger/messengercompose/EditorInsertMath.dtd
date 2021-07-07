@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Εισαγωγή μαθηματικού τύπου">
+
+<!ENTITY sourceEditField.label "Εισάγετε πηγαίο κώδικα LaTeX:">
+
+<!ENTITY options.label "Επιλογές">
+<!ENTITY optionInline.label "Λειτουργία εντός γραμμής">
+<!ENTITY optionInline.accesskey "γ">
+<!ENTITY optionDisplay.label "Λειτουργία προβολής">
+<!ENTITY optionDisplay.accesskey "Λ">
+<!ENTITY optionLTR.label "Κατεύθυνση αριστερά προς δεξιά">
+<!ENTITY optionLTR.accesskey "α">
+<!ENTITY optionRTL.label "Κατεύθυνση δεξιά προς αριστερά">
+<!ENTITY optionRTL.accesskey "Κ">
+
+<!ENTITY insertButton.label "Εισαγωγή">
+<!ENTITY insertButton.accesskey "Ε">

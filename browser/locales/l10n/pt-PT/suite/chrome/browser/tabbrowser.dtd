@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Sem nome)">
+<!ENTITY  newTab.label           "Novo separador">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Fechar separador">
+<!ENTITY  closeTab.accesskey         "c">
+<!ENTITY  closeOtherTabs.label   "Fechar outros separadores">
+<!ENTITY  closeOtherTabs.accesskey         "o">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Fechar separadores à direita">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "Recarregar todos os separadores">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "Recarregar separador">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "Adicionar este grupo de separadores aos marcadores">
+<!ENTITY  bookmarkGroup.accesskey  "i">
+<!ENTITY  closeTabButton.tooltip   "Fechar separador atual">
+<!ENTITY  newTabButton.tooltip   "Abrir um novo separador">
+<!ENTITY  listAllTabs.tooltip    "Listar todos os separadores">
+<!ENTITY  undoCloseTab.label    "Anular fecho de separador">
+<!ENTITY  undoCloseTab.accesskey  "u">

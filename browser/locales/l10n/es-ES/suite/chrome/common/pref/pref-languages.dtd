@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY languages.customize.prefLangDescript "Las páginas web están a veces disponibles en más de un idioma. Escoja los idiomas en los que prefiere ver las páginas web, en orden de preferencia.">
+<!ENTITY languages.customize.title "Idiomas">
+<!ENTITY langtitle.label "Idiomas para páginas web">
+<!ENTITY languages.customize.prefAddLangDescript "Seleccione los idiomas que quiera añadir.">
+<!ENTITY languages.customize.addButton.label "Añadir…">
+<!ENTITY languages.customize.addButton.accesskey "A">
+<!ENTITY languages.customize.deleteButton.label "Eliminar">
+<!ENTITY languages.customize.deleteButton.accesskey "R">
+<!ENTITY languages.customize.add.title.label "Añadir idiomas">
+<!ENTITY languages.customize.available.label "Idiomas:">
+<!ENTITY languages.customize.active.label "Idiomas en orden de preferencia:">
+<!ENTITY languages.customize.active.accesskey "I">
+<!ENTITY languages.customize.others.label "Otros:">
+<!ENTITY languages.customize.others.accesskey "O">
+<!ENTITY languages.customize.Fallback2.grouplabel "Codif. de texto para contenido antiguo">
+<!ENTITY languages.customize.Fallback2.label "Codif. de texto predet.:">
+<!ENTITY languages.customize.Fallback2.accesskey "C">
+<!ENTITY languages.customize.Fallback2.desc "Usado para contenido antiguo que no declara su codificación.">
+<!ENTITY languages.customize.others.examples "ej.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label "Arriba">
+<!ENTITY languages.customize.moveUp.accesskey "A">
+<!ENTITY languages.customize.moveDown.label "Abajo">
+<!ENTITY languages.customize.moveDown.accesskey "b">

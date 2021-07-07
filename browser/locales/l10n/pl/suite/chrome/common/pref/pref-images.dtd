@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title "Obrazy">
+
+<!ENTITY imageBlocking.label "Zasady akceptowania obrazów">
+
+<!ENTITY imageDetails "Ustawienia pobierania obrazów ze stron WWW.">
+
+<!ENTITY loadAllImagesRadio.label "Pobieraj wszystkie obrazy">
+<!ENTITY loadAllImagesRadio.accesskey "b">
+<!ENTITY loadOrgImagesRadio.label "Pobieraj obrazy pochodzące wyłącznie z serwera, z którym pierwotnie nawiązano połączenie">
+<!ENTITY loadOrgImagesRadio.accesskey "n">
+<!ENTITY loadNoImagesRadio.label "Nie pobieraj żadnych obrazów">
+<!ENTITY loadNoImagesRadio.accesskey "a">
+<!ENTITY viewPermissions.label "Zarządzaj uprawnieniami">
+<!ENTITY viewPermissions.accesskey "Z">
+<!ENTITY animLoopingTitle.label "Animowane obrazy powinny być odtworzone">
+<!ENTITY animLoopAsSpecified.label "Tyle razy, ile jest to określone we właściwościach obrazu">
+<!ENTITY animLoopAsSpecified.accesskey "T">
+<!ENTITY animLoopOnce.label "Raz">
+<!ENTITY animLoopOnce.accesskey "R">
+<!ENTITY animLoopNever.label "Nigdy">
+<!ENTITY animLoopNever.accesskey "N">

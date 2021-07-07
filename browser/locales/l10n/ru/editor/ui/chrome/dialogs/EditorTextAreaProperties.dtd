@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства текстового поля">
+
+<!ENTITY Settings.label "Параметры">
+
+<!ENTITY TextAreaName.label "Имя поля:">
+<!ENTITY TextAreaName.accessKey "И">
+<!ENTITY TextAreaRows.label "Строк:">
+<!ENTITY TextAreaRows.accessKey "С">
+<!ENTITY TextAreaCols.label "Символов в строке:">
+<!ENTITY TextAreaCols.accessKey "м">
+<!ENTITY TextAreaReadOnly.label "Только для чтения">
+<!ENTITY TextAreaReadOnly.accessKey "Т">
+<!ENTITY TextAreaDisabled.label "Отключено">
+<!ENTITY TextAreaDisabled.accessKey "О">
+<!ENTITY TextAreaTabIndex.label "Последовательность перехода:">
+<!ENTITY TextAreaTabIndex.accessKey "л">
+<!ENTITY TextAreaAccessKey.label "Клавиша доступа:">
+<!ENTITY TextAreaAccessKey.accessKey "К">
+<!ENTITY InitialText.label "Первоначальный текст:">
+<!ENTITY InitialText.accessKey "е">
+
+<!ENTITY TextAreaWrap.label "Режим переноса:">
+<!ENTITY TextAreaWrap.accessKey "Р">
+<!ENTITY WrapDefault.value "По умолчанию">
+<!ENTITY WrapOff.value "Отключён">
+<!ENTITY WrapHard.value "Жесткий">
+<!ENTITY WrapSoft.value "Мягкий">
+<!ENTITY WrapPhysical.value "Физический">
+<!ENTITY WrapVirtual.value "Виртуальный">

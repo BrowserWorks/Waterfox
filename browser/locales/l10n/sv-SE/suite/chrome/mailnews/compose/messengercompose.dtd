@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Skriv: (ämne saknas)">
+
+<!ENTITY fromAddr.label "Från:">
+<!ENTITY fromAddr.accesskey "å">
+<!ENTITY toAddr.label "Till:">
+<!ENTITY ccAddr.label "Kopia:">
+<!ENTITY bccAddr.label "Dold kopia:">
+<!ENTITY replyAddr.label "Svara till:">
+<!ENTITY newsgroupsAddr.label "Diskussionsgrupp:">
+<!ENTITY followupAddr.label "Uppföljning till:">
+<!ENTITY subject.label "Ämne:">
+<!ENTITY subject.accesskey "Ä">
+<!ENTITY attachments.label "Bilagor:">
+<!ENTITY attachments.accesskey "B">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Spara">
+<!ENTITY saveCmd.accesskey "r">
+<!ENTITY saveAsCmd.label "Spara som">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Fil…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Utkast">
+<!ENTITY saveAsDraftCmd.accesskey "U">
+<!ENTITY saveAsTemplateCmd.label "Mall">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY attachMenu.label "Bifoga">
+<!ENTITY attachMenu.accesskey "B">
+<!ENTITY attachFileCmd.label "Bifoga fil…">
+<!ENTITY attachFileCmd.accesskey "B">
+<!ENTITY attachPageCmd.label "Bifoga webbsida…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Visitkort (vCard)">
+<!ENTITY attachVCardCmd.accesskey "V">
+<!ENTITY sendNowCmd.label "Skicka nu">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "i">
+<!ENTITY sendLaterCmd.label "Skicka senare">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "k">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Ombryt">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "y">
+<!ENTITY accountManagerCmd.label "Kontoinställningar för E-post &amp; Grupper…">
+<!ENTITY accountManagerCmd.accesskey "ä">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Verktyg för e-post">
+<!ENTITY showComposeToolbarCmd.accesskey "V">
+<!ENTITY showFormatToolbarCmd.label "Formateringsverktyg">
+<!ENTITY showFormatToolbarCmd.accesskey "o">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formatering">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Alternativ">
+<!ENTITY optionsMenu.accesskey "l">
+
+<!ENTITY quoteCmd.label "Citera meddelande">
+<!ENTITY quoteCmd.accesskey "i">
+<!ENTITY selectAddressCmd.label "Välj adresser…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "V">
+
+<!ENTITY priorityMenu.label "Prioritet">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY lowestPriorityCmd.label "Lägsta">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "Låg">
+<!ENTITY lowPriorityCmd.accesskey "g">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "Hög">
+<!ENTITY highPriorityCmd.accesskey "H">
+<!ENTITY highestPriorityCmd.label "Högsta">
+<!ENTITY highestPriorityCmd.accesskey "s">
+
+<!ENTITY returnReceiptMenu.label "Begär mottagningskvitto">
+<!ENTITY returnReceiptMenu.accesskey "B">
+<!ENTITY dsnMenu.label "Skicka leveransstatusmeddelande">
+<!ENTITY dsnMenu.accesskey "m">
+
+<!ENTITY outputFormatMenu.label "Format">
+<!ENTITY outputFormatMenu.accesskey  "f">
+<!ENTITY autoFormatCmd.label "Automatisk avkänning">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Endast oformaterad text">
+<!ENTITY plainTextFormatCmd.accesskey "E">
+<!ENTITY htmlFormatCmd.label "Endast formaterad text (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+<!ENTITY bothFormatCmd.label "Både oformaterad och formaterad (HTML) text">
+<!ENTITY bothFormatCmd.accesskey "o">
+
+<!ENTITY fileCarbonCopyCmd.label "Skicka kopia till">
+<!ENTITY fileCarbonCopyCmd.accesskey "o">
+<!ENTITY fileHereMenu.label "Arkivera här">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Skicka">
+<!ENTITY addressButton.label "Adress">
+<!ENTITY attachButton.label "Bifoga">
+<!ENTITY spellingButton.label "Stavning">
+<!ENTITY saveButton.label "Spara">
+<!ENTITY stopButton.label "Stopp">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Adressfält">
+<!ENTITY formatToolbar.tooltip "Formateringsverktyg">
+<!ENTITY sendButton.tooltip "Skicka meddelandet nu"> 
+<!ENTITY sendlaterButton.tooltip "Skicka meddelandet senare"> 
+<!ENTITY addressButton.tooltip "Välj en mottagare ur en adressbok"> 
+<!ENTITY attachButton.tooltip "Bifoga en fil till meddelandet"> 
+<!ENTITY saveButton.tooltip "Spara det här meddelandet"> 
+<!ENTITY stopButton.tooltip "Avbryt den aktuella överföringen"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Öppna">
+<!ENTITY openAttachment.accesskey "Ö">
+<!ENTITY renameAttachment.label "Byt namn…">
+<!ENTITY renameAttachment.accesskey "n">
+<!ENTITY deleteAttachment.accesskey "T">
+<!ENTITY selectAllAttachments.accesskey "a">
+<!ENTITY attachFile.label "Bifoga fil(er)…">
+<!ENTITY attachFile.accesskey "f">
+<!ENTITY attachPage.label "Bifoga webbsida…">
+<!ENTITY attachPage.accesskey "w">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "アドレスの選択">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "To-&gt;">
+<!ENTITY toButton.accesskey                  "T">
+<!ENTITY ccButton.label                      "Cc-&gt;">
+<!ENTITY ccButton.accesskey                  "C">
+<!ENTITY bccButton.label                     "Bcc-&gt;">
+<!ENTITY bccButton.accesskey                 "B">
+<!ENTITY newButton.label                     "新規...">
+<!ENTITY newButton.accesskey                 "N">
+<!ENTITY editButton.label                    "編集...">
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "削除">
+<!ENTITY removeButton.accesskey              "R">
+<!ENTITY lookIn.label                        "選択:">
+<!ENTITY lookIn.accesskey                    "L">
+<!ENTITY for.label                           "検索:">
+<!ENTITY for.accesskey                       "f">
+<!ENTITY for.placeholder                     "名前またはメールアドレス">
+<!ENTITY addressMessageTo.label              "メッセージを送信するアドレス:">
+
+<!-- Tooltips items -->
+<!ENTITY addressPickerNewButton.tooltip      "新しい連絡先を作成します">
+<!ENTITY addressPickerEditButton.tooltip     "選択した連絡先を編集します">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Informazioni sui messaggi di posta indesiderata">
+<!ENTITY window.width "450">
+<!ENTITY info1a.label "&brandShortName; individua automaticamente tra la posta in arrivo i messaggi non sollecitati (anche detti spam). I messaggi identificati da &brandShortName; come indesiderati vengono contrassegnati con l’icona “posta indesiderata”">
+<!ENTITY info1b.label ".">
+<!ENTITY info2.label "Inizialmente è necessario addestrare &brandShortName; a riconoscere i messaggi indesiderati utilizzando il pulsante “Indesiderata” nella barra degli strumenti. Premendo questo pulsante è possibile assegnare o togliere lo stato di “indesiderato” al messaggio selezionato.">
+<!ENTITY info3.label "Una volta che &brandShortName; ha imparato a identificare correttamente i messaggi indesiderati, è possibile utilizzare i Controlli di posta indesiderata per spostare automaticamente i messaggi non desiderati nella cartella Posta indesiderata.">
+<!ENTITY info4.label "Per maggiori informazioni fare clic su Guida.">

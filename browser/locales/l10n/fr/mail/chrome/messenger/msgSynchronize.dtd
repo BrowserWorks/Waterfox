@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Télécharger et synchroniser les messages">
+<!ENTITY MsgSelect.label "Éléments pour une utilisation hors connexion">
+<!ENTITY MsgSyncDesc.label "Si vous avez déjà sélectionné un dossier de courrier ou un groupe pour une utilisation hors connexion, vous pouvez les télécharger et/ou les synchroniser maintenant. Sinon, utiliser le bouton « Sélectionner » pour choisir les dossiers ou groupes à utiliser.">
+<!ENTITY MsgSyncDirections.label "Télécharger et/ou synchroniser ceci :">
+<!ENTITY syncTypeMail.label "Courriers">
+<!ENTITY syncTypeMail.accesskey "C">
+<!ENTITY syncTypeNews.label "Messages des groupes">
+<!ENTITY syncTypeNews.accesskey "g">
+<!ENTITY sendMessage.label "Envoyer les messages en attente">
+<!ENTITY sendMessage.accesskey "E">
+<!ENTITY workOffline.label "Se déconnecter à la fin du téléchargement et/ou de la synchronisation.">
+<!ENTITY workOffline.accesskey "D">
+<!ENTITY selectButton.label "Sélectionner…">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Choisir les dossiers de courrier et les groupes à utiliser hors connexion.">
+<!ENTITY MsgSelectInd.label "Télécharger">
+<!ENTITY MsgSelectItems.label "Dossiers et groupes">

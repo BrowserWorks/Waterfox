@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY mainWindow.title "&brandShortName;">
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+<!ENTITY mainWindow.titleprivate "Navegación privada">
+<!ENTITY editPageCmd.label "Editar página">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+<!ENTITY navbarCmd.label "Barra de herramientas de navegación">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label "Barra de herramientas de marcadores">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+<!ENTITY closeWindow.label "Cerrar ventana">
+<!ENTITY closeWindow.accesskey "C">
+<!ENTITY minimizeButton.tooltip "Minimizar">
+<!ENTITY restoreButton.tooltip "Restaurar">
+<!ENTITY feedsMenu.label "Suscribirse a esta página">
+<!ENTITY feedsMenu.accesskey "S">
+<!ENTITY menuBar.tooltip "Barra de menú">
+<!ENTITY bookmarksToolbar.tooltip "Barra de herramientas de marcadores">
+<!ENTITY navigationToolbar.tooltip "Barra de herramientas de navegación">
+<!ENTITY editBookmark.done.label "Hecho">
+<!ENTITY editBookmark.cancel.label "Cancelar">
+<!ENTITY editBookmark.removeBookmark.accessKey "E">
+<!ENTITY backButton.label "Anterior">
+<!ENTITY backButton.tooltip "Ir a la página anterior">
+<!ENTITY forwardButton.label "Siguiente">
+<!ENTITY forwardButton.tooltip "Ir a la página siguiente">
+<!ENTITY reloadButton.label "Recargar">
+<!ENTITY reloadButton.tooltip "Recargar esta página">
+<!ENTITY stopButton.label "Parar">
+<!ENTITY stopButton.tooltip "Parar la carga de esta página">
+<!ENTITY searchButton.label "Buscar">
+<!ENTITY searchButton.tooltip "Escriba una palabra en el campo de texto de la izquierda, y pulse Buscar">
+<!ENTITY goButton.label "Ir">
+<!ENTITY goButton.tooltip "Escriba una dirección en el campo de la izquierda, y pulse Ir">
+<!ENTITY printButton.label "Imprimir">
+<!ENTITY printButton.tooltip "Imprimir esta página">
+<!ENTITY locationBar.tooltip "Introduzca el término, palabra clave o página web que desea buscar">
+<!ENTITY locationBar.accesskey "d">
+<!ENTITY locationBar.title "Dirección">
+<!ENTITY proxyIcon.tooltip "Arrastre y suelte este icono para crear un enlace a esta página">
+<!ENTITY searchItem.title "Buscar">
+<!ENTITY bookmarksButton.label "Marcadores">
+<!ENTITY bookmarksButton.tooltip "Lista de marcadores">
+<!ENTITY homeButton.label "Inicio">
+<!ENTITY bookmarksToolbarItem.label "Elementos de la barra de herramientas de marcadores">
+<!ENTITY bookmarksToolbarChevron.tooltip "Mostrar más marcadores">
+<!ENTITY statusText.label "Hecho">
+<!ENTITY popupIcon.tooltiptext "Desbloquear las ventanas emergentes de este sitio web">
+<!ENTITY viewSecurityInfo.label "Ver información de seguridad">
+<!ENTITY viewSecurityInfo.accesskey "V">
+<!ENTITY viewCertificate.label "Ver certificado">
+<!ENTITY viewCertificate.accesskey "r">
+<!ENTITY viewCertManager.label "Abrir administrador de certificados">
+<!ENTITY viewCertManager.accesskey "A">
+<!ENTITY zoomIn.tooltiptext "Mayor">
+<!ENTITY zoomOut.tooltiptext "Menor">

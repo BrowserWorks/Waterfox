@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!ENTITY replaceDialog.title "찾아서 바꾸기">
+<!ENTITY findField.label "찾을 단어:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "바꿀 단어:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "대소문자 구별">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "줄 바꾸기">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY backwardsCheckbox.label "거꾸로 찾기">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "다음 찾기">
+<!ENTITY findNextButton.accesskey "F">
+<!ENTITY replaceButton.label "바꾸기">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "찾아서 바꾸기">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "모두 바꾸기">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "닫기">
+<!ENTITY closeButton.accesskey "C">

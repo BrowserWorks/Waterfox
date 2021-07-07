@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Свернуть">
+<!ENTITY minimizeWindowCmd.key "в">
+<!ENTITY zoomWindowCmd.label "Масштаб">
+<!ENTITY navigatorCmd.label "Браузер">
+<!ENTITY navigatorCmd.accesskey "р">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Компоновщик">
+<!ENTITY editorCmd.accesskey "о">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Консоль ошибок">
+<!ENTITY errorConsoleCmd.accesskey "о">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Браузер">
+<!ENTITY taskComposer.tooltip "Компоновщик">
+
+<!ENTITY webDevelopment.label "Веб-разработка">
+<!ENTITY webDevelopment.accesskey "е">
+
+<!ENTITY windowMenu.label "Окно">
+<!ENTITY windowMenu.accesskey "к">
+
+<!ENTITY tasksMenu.label "Инструменты">
+<!ENTITY tasksMenu.accesskey "н">
+
+<!ENTITY datamanCmd.label "Управление данными">
+<!ENTITY datamanCmd.accesskey "в">
+
+<!ENTITY passwordManagerCmd.label "Управление паролями">
+<!ENTITY passwordManagerCmd.accesskey "л">
+
+<!ENTITY passwordDisplayCmd.label "Управление сохранёнными паролями">
+<!ENTITY passwordDisplayCmd.accesskey "п">
+
+<!ENTITY passwordExpireCmd.label "Закончить сеанс">
+<!ENTITY passwordExpireCmd.accesskey "ч">
+
+<!ENTITY downloadManagerCmd.label "Управление загрузками">
+<!ENTITY downloadManagerCmd.accesskey "з">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Управление дополнениями">
+<!ENTITY addOnsManagerCmd.accesskey "д">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Выбрать другой профиль…">
+<!ENTITY switchProfileCmd.accesskey "ы">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Настроить синхронизацию…">
+<!ENTITY syncSetup.accesskey "х">
+<!ENTITY syncSyncNowItem.label "Синхронизировать">
+<!ENTITY syncSyncNowItem.accesskey "х">

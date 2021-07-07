@@ -1,0 +1,171 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Falha no carregamento da página">
+<!ENTITY retry.label "Tentar novamente">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Não é possível conectar-se">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Endereço restrito">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Servidor não encontrado">
+<!ENTITY dnsNotFound.longDesc "<ul> 
+<li>Verifique se há erro de digitação no endereço. Como 
+<strong>ww</strong>.example.com em vez de 
+<strong>www</strong>.example.com</li> 
+<li>Se você não consegue abrir nenhuma página, verifique a conexão de rede 
+do seu computador.</li> 
+<li>Se o seu computador ou rede forem protegidos por um firewall ou proxy, certifique-se 
+que o &brandShortName; esteja autorizado a acessar a web.</li> 
+</ul>">
+
+<!ENTITY fileNotFound.title "Arquivo não encontrado">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>Verifique se o nome do arquivo possui erros de digitação, como uma letra maiúscula em vez de minúscula.</li> 
+<li>Verifique se o arquivo foi movido, renomeado ou excluído.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "Acesso ao arquivo foi negado">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Isso pode ter sido removido, movido ou as permissões do arquivo podem estar impedindo o acesso.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "<p>Algo impediu o &brandShortName; de carregar esta página.</p>">
+
+<!ENTITY malformedURI.title "Endereço inválido">
+<!ENTITY malformedURI.longDesc "<ul> 
+<li>Normalmente, os endereços web são escritos como 
+<strong>http://www.example.com/</strong></li> 
+<li>Verifique se utilizou as barras corretamente (exemplo 
+<strong>/</strong>).</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "Conexão interrompida">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Documento fora de validade">
+<!ENTITY notCached.longDesc "<p>O documento solicitado não está mais no cache de navegação.</p><ul><li>Como precaução de segurança, o &brandShortName; não solicita de novo automaticamente documentos contendo informações confidenciais.</li><li>Clique em “Tentar novamente” para solicitar mais uma vez o documento do site.</li></ul>">
+
+<!ENTITY netOffline.title "Modo desconectado">
+<!ENTITY netOffline.longDesc2 "<ul> 
+  <li>Pressione &quot;Tentar novamente&quot; para mudar para modo conectado e recarregar a página.</li>
+</ul>">
+
+<!ENTITY contentEncodingError.title "Erro na codificação do conteúdo">
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>Por favor, contate os responsáveis pelo site para informá-los deste problema.</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.title "Tipo de arquivo não seguro">
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>Por favor, contate os responsáveis pelo site para informá-los deste problema.</li> 
+</ul>">
+
+<!ENTITY netReset.title "Conexão reiniciada">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Tempo limite atingido">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "O endereço não foi entendido">
+<!ENTITY unknownProtocolFound.longDesc "<ul> 
+<li> Talvez seja necessário instalar outro software para abrir o endereço. </li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "Conexão recusada pelo servidor proxy">
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>Verifique as configurações de proxy para certificar-se de que estejam corretas.</li> 
+<li>Contate seu administrador de rede para certificar-se de que o servidor proxy esteja 
+funcionando.</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "Servidor proxy não encontrado">
+<!ENTITY proxyResolveFailure.longDesc "<ul> 
+<li>Verifique as configurações de proxy para certificar-se de que estejam corretas.</li> 
+<li>Certifique-se de que a conexão de rede do seu computador esteja funcionando.</li> 
+<li>Se o seu computador ou rede forem protegidos por um firewall ou proxy, certifique-se 
+de que o &brandShortName; esteja autorizado a acessar a web.</li> 
+</ul>">
+
+<!ENTITY redirectLoop.title "Redirecionamento incorreto">
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>Este problema algumas vezes pode ser causado pela desativação ou o bloqueio 
+de cookies.</li> 
+</ul>">
+
+<!ENTITY unknownSocketType.title "Resposta não prevista do servidor">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>Certifique-se de que o seu sistema possui o Personal Security Manager 
+instalado.</li> 
+<li>Isto pode ser devido a uma configuração não padrão do servidor.</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "Falha na conexão segura">
+<!ENTITY nssFailure2.longDesc2 "<ul> 
+  <li>A página que você está tentando abrir não pode ser exibida porque a autenticidade dos dados recebidos não pôde ser comprovada.</li> 
+  <li>Entre em contato com os responsáveis pelo site para informar este problema.</li>
+</ul>">
+
+<!ENTITY nssBadCert.title "Falha na conexão segura">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>Pode ser um problema com a configuração do servidor 
+ou pode ser alguém tentando se passar por ele.</li> 
+<li>Se você já conectou-se com êxito a este servidor, o erro pode ser 
+temporário e você pode tentar mais tarde.</li> 
+</ul>">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>Este site pode estar temporariamente fora do ar ou sobrecarregado. Tente de novo 
+em alguns instantes.</li> 
+<li>Se você não consegue carregar nenhuma página, verifique a conexão de rede 
+do computador.</li> 
+<li>Se o seu computador ou rede forem protegidos por um firewall ou proxy, certifique-se 
+de que o &brandShortName; esteja autorizado a acessar a web.</li> 
+</ul>">
+
+<!ENTITY cspBlocked.title "Bloqueado pela política de segurança de conteúdo">
+<!ENTITY cspBlocked.longDesc "<p>O &brandShortName; impediu esta página de carregar desta forma porque a política de segurança de conteúdo da página não permite.</p>">
+
+<!ENTITY xfoBlocked.title "Bloqueada pela política X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>O &brandShortName; impediu que esta página fosse carregada neste contexto porque a página tem uma política X-Frame-Options que não permite.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Conteúdo corrompido">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A página que você está tentando abrir não pode ser exibida devido a um erro detectado na transmissão dos dados.</p><ul><li>Por favor, contacte os donos do website para informá-los do problema.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Ou você pode adicionar uma exceção…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Me tire daqui!">
+<!ENTITY securityOverride.exceptionButtonLabel "Adicionar exceção…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Você não deve adicionar uma exceção se estiver usando uma conexão com a internet que não confie totalmente ou se você não costumava ver um alerta para este servidor.</p> 
+ 
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> 
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL remoto">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Por favor, contate os responsáveis pelo site para informá-los deste problema.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Sua conexão não é segura">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> usa tecnologia de segurança obsoleta e vulnerável a ataques. Um invasor pode facilmente revelar informações que você acreditava estar seguras. O administrador do site precisa corrigir o servidor antes que você possa visitar o site.</p><p>Código de erro: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Página bloqueada">
+
+<!ENTITY networkProtocolError.title "Erro de protocolo de rede">
+<!ENTITY networkProtocolError.longDesc "<p>A página que você está tentando ver não pôde ser exibida porque foi detectado um erro no protocolo de rede.</p><ul><li>Entre em contato com o responsável pelo site para informar este problema.</li></ul>">

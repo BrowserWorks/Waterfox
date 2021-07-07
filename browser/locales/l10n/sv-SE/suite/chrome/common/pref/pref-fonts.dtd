@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Teckensnitt">
+
+<!ENTITY  language.label                          "Teckensnitt för:">
+<!ENTITY  language.accesskey                      "s">
+
+<!ENTITY  typefaces.label                         "Teckensnitt">
+<!ENTITY  sizes.label                             "Storlek (pixlar)">
+
+<!ENTITY  proportional.label                      "Variabelt breddsteg:">
+<!ENTITY  proportional.accesskey                  "V">
+
+<!ENTITY  serif.label                             "Antikva:">
+<!ENTITY  serif.accesskey                         "n">
+<!ENTITY  sans-serif.label                        "Sanserif:">
+<!ENTITY  sans-serif.accesskey                    "a">
+<!ENTITY  monospace.label                         "Fast breddsteg:">
+<!ENTITY  monospace.accesskey                     "F">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Extrem:">
+<!ENTITY  fantasy.accesskey                       "t">
+<!ENTITY  cursive.label                           "Skript:">
+<!ENTITY  cursive.accesskey                       "k">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latinska">
+<!ENTITY  font.langGroup.japanese                 "Japanska">
+<!ENTITY  font.langGroup.trad-chinese             "Traditionell kinesiska (Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Förenklad kinesiska">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Traditionell kinesiska (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreanska">
+<!ENTITY  font.langGroup.cyrillic                 "Kyrilliska">
+<!ENTITY  font.langGroup.el                       "Grekiska">
+<!ENTITY  font.langGroup.thai                     "Thailändska">
+<!ENTITY  font.langGroup.hebrew                   "Hebreiska">
+<!ENTITY  font.langGroup.arabic                   "Arabiska">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamilska">
+<!ENTITY  font.langGroup.armenian                 "Armeniska">
+<!ENTITY  font.langGroup.bengali                  "Bengali">
+<!ENTITY  font.langGroup.canadian                 "Enhetliga kanadensiska stavelser">
+<!ENTITY  font.langGroup.ethiopic                 "Etiopiska">
+<!ENTITY  font.langGroup.georgian                 "Georgiska">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Matematik">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibetanska">
+<!ENTITY  font.langGroup.other                    "Övriga skriftsystem">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Minsta teckensnittsstorlek:">
+<!ENTITY minSize.accesskey                        "i">
+<!ENTITY minSize.none                             "Ingen">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Antikva">
+<!ENTITY  useDefaultFontSansSerif.label           "Sanserif">
+
+<!ENTITY  useDocumentFonts.label                  "Tillåt dokument att använda andra teckensnitt">
+<!ENTITY  useDocumentFonts.accesskey              "l">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Webbsidan innehåller egna teckensnitt">
+<!ENTITY  useDefaultFont.label                    "Använd mina förvalda teckensnitt istället för dokumentets">
+<!ENTITY  useDefaultFont.accesskey                "ä">

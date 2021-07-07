@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "履歴">
+
+<!ENTITY  pref.history.caption              "訪問履歴">
+<!ENTITY  historyPages.label                "履歴は過去に訪問したページの一覧です。">
+<!ENTITY  enableHistory.label               "履歴を記憶させる">
+<!ENTITY  enableHistory.accesskey           "R">
+<!ENTITY  clearHistory.label                "履歴を消去">
+<!ENTITY  clearHistory.accesskey            "s">
+
+<!ENTITY  locationBarHistory.caption        "アドレスバーの履歴"><!-- en-US: "Location Bar History" -->
+<!ENTITY  urlBarHistoryEnabled.caption      "アドレスバーの履歴を有効にする">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "E">
+<!ENTITY  clearLocationBar.label            "アドレスバーメニューに保存されているサイト一覧を消去します。">
+<!ENTITY  clearLocationBarButton.label      "アドレスバーの履歴を消去">
+<!ENTITY  clearLocationBarButton.accesskey  "L">
+<!ENTITY  formfillHistory.caption           "フォームと検索の履歴">
+<!ENTITY  enableFormfill.label              "フォームと検索の入力履歴を記憶させる">
+<!ENTITY  enableFormfill.accesskey          "n">
+<!ENTITY  formfillExpire.label              "フォームと検索の履歴を">
+<!ENTITY  formfillExpire.accesskey          "f">
+<!ENTITY  formfillDays.label                "日分記憶させる">

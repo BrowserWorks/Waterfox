@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Courriers indésirables et suspects">
+<!ENTITY junkSettings.caption "Gérer les indésirables">
+<!ENTITY junkMail.intro "Définir les paramètres par défaut des indésirables. Les paramètres pour les indésirables propres à chaque compte peuvent être configurés dans le menu  « Paramètres des comptes… ».">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Quand je marque des messages comme indésirables :">
+<!ENTITY manualMark.accesskey           "m">
+<!ENTITY manualMarkModeMove.label       "les déplacer dans le dossier « Indésirables »">
+<!ENTITY manualMarkModeMove.accesskey   "e">
+<!ENTITY manualMarkModeDelete.label     "les supprimer">
+<!ENTITY manualMarkModeDelete.accesskey "s">
+
+<!ENTITY markAsRead.intro               "Marquer les messages comme lus :">
+<!ENTITY autoMarkAsRead.label           "Quand &brandShortName; détermine que les messages sont indésirables">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "Quand je le spécifie">
+<!ENTITY manualMarkAsRead.accesskey     "Q">
+
+<!ENTITY enableJunkLogging.label        "Activer la journalisation du filtre des indésirables">
+<!ENTITY enableJunkLogging.accesskey    "c">
+<!ENTITY openJunkLog.label              "Afficher le journal">
+<!ENTITY openJunkLog.accesskey          "h">
+<!ENTITY resetTrainingData.label        "Réinitialiser les données d’apprentissage">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "Courrier suspect">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Courrier frauduleux">
+<!ENTITY enablePhishingDetector.label     "Signaler si le message en cours de lecture est susceptible d’être frauduleux">
+<!ENTITY enablePhishingDetector.accesskey "f">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Antivirus">
+<!ENTITY antiVirus.label                  "Autoriser les logiciels antivirus à analyser les courriers entrants avant qu’ils ne soient stockés localement">
+<!ENTITY antiVirus.accesskey              "A">

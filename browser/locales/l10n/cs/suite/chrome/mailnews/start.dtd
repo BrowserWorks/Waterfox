@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Vítá vás &brandShortName; Pošta a diskusní skupiny">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Vítá vás <a id="vendorURL" href="">&brandShortName;</a> Pošta a diskusní skupiny!'>
+<!ENTITY description.label
+"&brandShortName; Pošta a diskusní skupiny je výkonný open-source klient pro správu elektronické pošty a diskusních skupin, podporující kontrolu na nevyžádanou poštu a další užitečné vlastnosti.">
+<!ENTITY features.title "Vlastnosti">
+<!ENTITY feat_multiacc.label "Podpora vícenásobných účtů">
+<!ENTITY feat_junk.label "Kontrola na nevyžádanou poštu">
+<!ENTITY feat_feeds.label "Čtečka">
+<!ENTITY feat_filters.label "Filtry zpráv">
+<!ENTITY feat_htmlmsg.label "Podpora HTML zpráv">
+<!ENTITY feat_abook.label "Kontakty">
+<!ENTITY feat_tags.label "Uživatelské štítky a pohledy na zprávy">
+<!ENTITY feat_integration.label
+"Úzká spolupráce s balíkem &brandShortName;">
+<!ENTITY dict.title "Slovníky">
+<!ENTITY dict_intro.label "Slovníky jsou používány ke kontrole pravopisu vašich zpráv.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Řadu dalších slovníku si můžete nainstalovat ze sekce <a id="dictURL" href="">slovníky</a> na serveru <a href="https://addons.mozilla.org/seamonkey/">Doplňky Mozilly</a>.'>
+<!ENTITY dict_info.label2
+'Další jazyky můžete nainstalovat ze sekce <a id="dictURL" href="">slovníky</a> na serveru s <a href="https://addons.thunderbird.net/seamonkey/">Doplňky pro aplikace Thunderbird a SeaMonkey</a>.'>
+<!ENTITY info.title "Více informací">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Uvítáme</a> vaše hlášení chyb a žádosti o nové vlastnosti, ale nejprve si prosím přečtěte <a id="releaseNotesURL" href="">poznámky k vydání</a> a zkuste prohledat <a href="https://bugzilla.mozilla.org/query.cgi">Bugzillu</a>.'>

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Uložené cookies">
+<!ENTITY     tab.bannedservers.label        "Nastavení webových serverů">
+<!ENTITY     div.bannedservers.label        "Výběr serverů v internetu, které mohou a nemohou ukládat cookies na tomto počítači.">
+<!ENTITY     div.cookiesonsystem.label      "Zobrazení a odstranění cookies uložených na tomto počítači.">
+<!ENTITY     treehead.cookiename.label      "Název cookie">
+<!ENTITY     treehead.cookiedomain.label    "Server">
+<!ENTITY     treehead.cookieexpires.label   "Vyprší">
+<!ENTITY     treehead.infoselected.label    "Informace o vybrané cookie">
+<!ENTITY     button.removecookie.label      "Odebrat cookie">
+<!ENTITY     button.removecookie.accesskey  "O">
+<!ENTITY     button.removeallcookies.label  "Odebrat všechny cookies">
+<!ENTITY     button.removeallcookies.accesskey "d">
+
+<!ENTITY     search.placeholder             "Hledat cookies">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Název:">
+<!ENTITY     props.value.label              "Obsah:">
+<!ENTITY     props.domain.label             "Server:">
+<!ENTITY     props.path.label               "Cesta:">
+<!ENTITY     props.secure.label             "Omezení na:">
+<!ENTITY     props.expires.label            "Platnost do:">
+
+<!ENTITY     treehead.sitename.label        "Server">
+<!ENTITY     treehead.scheme.label          "Schéma">
+<!ENTITY     treehead.status.label          "Stav">
+<!ENTITY     windowtitle.label              "Správce cookies">
+
+<!ENTITY     blockSite.label                "Blokovat">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Povolit">
+<!ENTITY     allowSite.accesskey            "P">
+<!ENTITY     allowSiteSession.label         "Relace">
+<!ENTITY     allowSiteSession.accesskey     "R">
+<!ENTITY     removepermission.label         "Odebrat server">
+<!ENTITY     removepermission.accesskey     "O">
+<!ENTITY     removeallpermissions.label     "Odebrat všechny servery">
+<!ENTITY     removeallpermissions.accesskey "d">
+
+<!ENTITY     futureCookies.label            "Zakázat serverům znovu nastavovat dříve odebrané cookies">
+<!ENTITY     futureCookies.accesskey        "Z">

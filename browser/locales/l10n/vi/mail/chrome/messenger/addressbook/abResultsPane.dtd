@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Sổ địa chỉ">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "Tên">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "Email">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Tổ chức">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Tên ngữ âm">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Biệt danh">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Email phụ">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Bộ phận">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Chức vụ">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Di động">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Máy nhắn tin">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Điện thoại nhà">
+<!ENTITY HomePhone.accesskey                   "H">
+<!ENTITY WorkPhone.label                       "Điện thoại công ty">
+<!ENTITY WorkPhone.accesskey                   "W">
+<!ENTITY ChatName.label                        "Tên trò chuyện:">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Tăng dần">
+<!ENTITY sortAscending.accesskey               "A">
+<!ENTITY sortDescending.label                  "Giảm dần">
+<!ENTITY sortDescending.accesskey              "D">

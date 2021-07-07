@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Usar certificados</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="using_certificates">Usar certificados</h1>
+
+<p>Un certificado es el equivalente digital de un carné o tarjeta de
+  identificación. Del mismo modo que puede tener varios carnés o
+  tarjetas de identificación para propósitos diferentes (permiso
+  de conducir, tarjeta de identificación de empleado o tarjeta de
+  crédito), también puede tener certificados distintos para
+  propósitos distintos.</p>
+
+<p>En esta sección se explica cómo se realizan operaciones
+  relacionadas con los certificados.</p>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#getting_your_own_certificates">Obtención de un
+      certificado propio</a></li>
+    <li><a href="#checking_security_for_a_web_page">Comprobación de
+      la seguridad de una página web</a></li>
+    <li><a href="#managing_certificates">Administración de
+      certificados</a></li>
+    <li><a href="#managing_smart_cards_and_other_security_devices">Administración
+      de tarjetas inteligentes y dispositivos de seguridad</a></li>
+    <li><a href="#managing_ssltls_warnings_and_settings">Gestionar
+      advertencias y configuración SSL/TLS</a></li>
+    <li><a href="#controlling_validation">Control de validación</a></li>
+  </ul>
+</div>
+
+<h1 id="getting_your_own_certificate">Obtención de un certificado
+  propio</h1>
+
+<p>Del mismo modo que una tarjeta de crédito o un permiso de conducir,
+  un certificado es un documento de identificación que puede utilizar
+  para identificarse en Internet y en otras redes. Al igual que ocurre con
+  otros identificadores personales que se utilizan a menudo, los certificados
+  los emiten normalmente organizaciones con autoridad reconocida para emitir
+  este tipo de identificación. Las organizaciones que emiten
+  certificados se denominan <strong>autoridades certificadoras
+  (CA)</strong>.</p>
+
+<p>Puede obtener certificados que le identifiquen de CA públicas, de
+  administradores del sistema o de CA especiales dentro de su
+  organización, o de sitios web que ofrezcan servicios especializados
+  que requieran un medio de identificación más fiable que su
+  nombre y contraseña.</p>
+
+<p>Del mismo modo que los requisitos de un permiso de conducir varían
+  en función del tipo de vehículo que desee conducir, los
+  requisitos para la obtención de un certificado varían
+  según el fin para el que desee utilizarlo. En algunos casos, la
+  obtención de un certificado puede resultar tan sencilla como acceder a
+  una página web, introducir cierta información personal y
+  descargar automáticamente el certificado en el navegador. En otros
+  casos es posible que haya que seguir procedimientos más
+  complicados.</p>
+
+<p>Puede obtener un certificado hoy mismo si visita la URL de una autoridad
+  certificadora y sigue las instrucciones que aparecen en pantalla. Si desea
+  obtener una lista de autoridades certificadoras que emiten certificados
+  reconocidos por &brandShortName;, vea el documento en línea <a
+  href="http://www.mozilla.org/projects/security/certs/included/">Lista de
+  certificados incluidos</a>.</p>
+
+<p>Una vez que obtiene un certificado, éste se almacena
+  automáticamente en un <a href=
+  "glossary.xhtml#security_device">dispositivo de seguridad</a>. El navegador
+  incorpora su propio dispositivo de seguridad de software integrado. Un
+  dispositivo de seguridad también puede ser un componente de hardware,
+  como por ejemplo, una tarjeta inteligente.</p>
+
+<p>Al igual que un permiso de conducir o una tarjeta de crédito, un
+  certificado es un documento valioso para la identificación que puede
+  utilizarse para fines maliciosos si cae en las manos equivocadas. Una vez que
+  haya obtenido un certificado que le identifique, debería protegerlo de
+  dos formas: realizando una copia de seguridad y configurando una <a href=
+  "glossary.xhtml#master_password">contraseña maestra</a>.</p>
+
+<p>Cuando obtiene por primera vez un certificado, es posible que se le pida
+  que realice una copia de seguridad de él. Si todavía no ha
+  creado una contraseña maestra, se le pedirá que lo haga.</p>
+
+<p>Si desea más información sobre la realización de
+  copias de seguridad y la configuración de contraseñas maestras,
+  consulte <a href="certs_help.xhtml#your_certificates">Sus
+  certificados</a>.</p>
+
+<p>[<a href="#using_certificates">Volver al principio de la
+  sección</a>]</p>
+
+<h1 id="checking_security_for_a_web_page">Comprobación de la
+  seguridad de una página web</h1>
+
+<p>Al visualizar cualquier página web, el icono del candado situado en
+  la esquina inferior derecha de la ventana informa sobre si todo el contenido
+  de la página se ha protegido mediante <a href=
+  "glossary.xhtml#encryption">cifrado</a> mientras el equipo lo
+  recibía:</p>
+
+<table summary="iconos de candado">
+  <tr>
+    <td><img alt="icono del candado cerrado" src=
+    "chrome://communicator/skin/icons/lock-secure.png"/></td>
+    <td>Un candado cerrado significa que la página se protegió
+    mediante cifrado mientras se recibía.</td>
+  </tr>
+  <tr>
+    <td><img alt="icono del candado abierto" src=
+    "chrome://communicator/skin/icons/lock-insecure.png"/></td>
+    <td>Un candado abierto significa que la página no se
+    protegió mediante cifrado mientras se recibía.</td>
+  </tr>
+  <tr>
+    <td><img alt="icono del candado roto" src=
+    "chrome://communicator/skin/icons/lock-broken.png"/></td>
+    <td>Un candado roto significa que algunos de los elementos de la
+    página o todos ellos no estaban protegidos mediante cifrado
+    cuando ésta se recibió, aunque la página HTML
+    externa estaba cifrada.</td>
+  </tr>
+</table>
+
+<p>Si desea más información sobre el estado de cifrado de la
+  página en el momento de su recepción, haga clic en el icono del
+  candado (o abra el menú Ver, seleccione Información de la
+  página y haga clic en la pestaña Seguridad).</p>
+
+<p>La pestaña Seguridad de Información de la página
+  proporciona información de dos tipos:</p>
+
+<ul>
+  <li>La mitad superior describe si el sitio web que muestra la
+    página se ha verificado (si desea más información
+    sobre la validación de certificados, consulte <a href=
+    "#controlling_validation">Cómo se controla la
+    validación</a>).</li>
+  <li>La mitad inferior describe si los contenidos de la página que
+    se está visualizando están protegidos mediante cifrado
+    cuando viajan por la red.</li>
+</ul>
+
+<p><strong>Importante</strong>: el icono del candado sólo describe el
+  estado del cifrado de la página durante la recepción en su
+  equipo. Para recibir un aviso cuando envía o recibe información no
+  cifrada, o para bloquear contenido mezclado potencialmente dañino,
+  seleccione las opciones adecuadas de advertencias SSL/TLS y contenido
+  mezclado. Si desea más información, consulte
+  <a href="ssl_help.xhtml">Preferencias de privacidad y
+  seguridad - SSL/TLS</a>.</p>
+
+<p>[<a href="#using_certificates">Volver al principio de la
+  sección</a>]</p>
+  
+<h1 id="managing_certificates">Administración de certificados</h1>
+
+<p>Puede utilizar el administrador de certificados para gestionar los
+  certificados que tenga disponibles. Los certificados pueden almacenarse en el
+  disco duro del equipo o en <a href="glossary.xhtml#smart_card">tarjetas
+  inteligentes</a> u otros dispositivos de seguridad conectados al
+  ordenador.</p>
+
+<p>Para abrir el administrador de certificados:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Dentro de la categoría Privacidad y seguridad, haga clic en
+    Certificados (si no aparece ninguna subcategoría, haga doble clic
+    en Seguridad y privacidad para expandir la lista).</li>
+  <li>En la sección Administrar certificados, haga clic en
+    Administrar certificados. Aparece el administrador de certificados.</li>
+</ol>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#managing_certificates_that_identify_you">Administración
+      de certificados que identifican al usuario</a></li>
+    <li><a href="#managing_certificates_that_identify_people">Administración
+      de certificados que identifican personas</a></li>
+    <li><a href="#managing_certificates_that_identify_servers">Administración
+      de certificados que identifican servidores</a></li>
+    <li><a href="#managing_certificates_that_identify_certificate_authorities">Administración
+      de certificados que identifican a autoridades certificadoras</a></li>
+    <li><a href="#managing_certificates_that_identify_others">Administración
+      de certificados que identifican a otros</a></li>
+  </ul>
+</div>
+
+<h2 id="managing_certificates_that_identify_you">Administración de
+  certificados que identifican al usuario</h2>
+
+<p>Al abrir por primera vez el administrador de certificados, se dará cuenta de
+  que tiene varias pestañas en la parte superior de la ventana. La primera
+  pestaña se llama Sus certificados y muestra los certificados que tiene
+  disponibles su navegador o cliente de correo para identificarle. La lista de
+  sus certificados aparece bajo los nombres de las organizaciones que los han
+  emitido.</p>
+
+<p>Para realizar una acción sobre uno o más certificados, haga clic en la
+  entrada del certificado (o en <kbd class="mac">Cmd</kbd><kbd
+  class="noMac">Ctrl</kbd>-clic para seleccionar más de uno) y, a continuación,
+  haga clic en uno de los botones en la base de la ventana del administrador de
+  certificados. Cada uno de estos botones le permite acceder a otra ventana en
+  la que puede realizar la acción que describe el botón. Haga clic en el botón
+  Ayuda de cualquier ventana para obtener más información sobre la utilización
+  de esta ventana.</p>
+
+<p>Si desea más información sobre cómo ver y administrar estos certificados,
+  consulte <a href="certs_help.xhtml#your_certificates">Sus
+  certificados</a>.</p>
+
+<p>[<a href="#managing_certificates">Volver al principio de la
+  sección</a>]</p>
+  
+<h2 id="managing_certificates_that_identify_people">Administración de
+  certificados que identifican pesonas</h2>
+
+<p>Al redactar un mensaje de correo, tiene la posibilidad de adjuntar una firma
+  digital. La <a href="glossary.xhtml#digital_signature">firma digital</a>
+  permite a los destinatarios del mensaje comprobar que el mensaje viene
+  realmente de usted y que no ha sido manipulado desde el momento del
+  envío.</p>
+
+<p>Cada vez que envíe un mensaje firmado digitalmente, automáticamente enviará
+  con él su certificado de cifrado. Este certificado permite a los
+  destinatarios del mensaje enviarle mensajes cifrados.</p>
+
+<p>Una de las maneras más sencillas de obtener el certificado de cifrado de
+  otra persona es que dicha persona le envíe un mensaje con firma digital. El
+  administrador de certificados almacena automáticamente los certificados de
+  otras personas siempre que se reciben de este modo.</p>
+
+<p>Para ver todos los certificados que identifican a otras personas disponibles
+  en el administrador de certificados, haga clic en la pestaña Personas, en la
+  parte superior de la ventana Administrador de certificados. Podrá enviar
+  mensajes cifrados a cualquier persona para la que aparezca un certificado
+  válido. La lista de certificados aparece bajo los nombres de las
+  organizaciones que los han emitido.</p>
+
+<p>Para realizar una acción sobre uno o más certificados, haga clic en la
+  entrada del certificado (o en <kbd class="mac">Cmd</kbd><kbd
+  class="noMac">Ctrl</kbd>-clic para seleccionar más de uno) y, a continuación,
+  haga clic en uno de los botones en la base de la ventana del administrador de
+  certificados. Cada uno de estos botones le permite acceder a otra ventana
+  desde la que puede realizar la acción que el botón describe. Haga clic en el
+  botón Ayuda de cualquier ventana para obtener más información sobre la
+  utilización de esta ventana.</p>
+
+<p>Si desea más información sobre cómo ver y administrar estos certificados,
+  vea la descripción de la pestaña <a
+  href="certs_help.xhtml#people">Personas</a> del administrador de
+  certificados.</p>
+
+<p>[<a href="#managing_certificates">Volver al principio de la
+  sección</a>]</p>
+  
+<h2 id="managing_certificates_that_identify_servers">Administración
+  de certificados que identifican servidores</h2>
+
+<p>Algunos sitios web y servidores de correo utilizan certificados para
+  identificarse a sí mismos. Tal identificación es necesaria antes de que el
+  servidor pueda cifrar la información transferida entre el sitio y el equipo
+  del usuario (o viceversa), para que nadie pueda leer los datos mientras están
+  circulando.</p>
+
+<p>Si la URL de un sitio web comienza por <tt>https://</tt>, éste
+  dispone de un certificado. Si visita un sitio web de este tipo y su
+  certificado lo ha emitido una CA que el administrador de certificados no
+  conoce o en la que no confía, se le preguntará si desea aceptar
+  el certificado del sitio web. Al aceptar el certificado de un sitio web
+  nuevo, el administrador de certificados lo agrega a la lista de certificados
+  de sitios web.</p>
+
+<p>Para ver todos los certificados de sitios web disponibles para el navegador,
+  haga clic en la pestaña Servidores, en la parte superior de la ventana
+  Administrador de certificados.</p>
+
+<p>Para realizar una acción sobre uno o más certificados, haga clic en la
+  entrada del certificado (o <kbd class="mac">Cmd</kbd><kbd
+  class="noMac">Ctrl</kbd>-clic para seleccionar más de uno) y, a
+  continuación, haga clic en uno de los botones en la parte inferior de la
+  ventana del administrador de certificados. Cada uno de estos botones le
+  permite acceder a otra ventana en la que puede realizar la acción
+  correspondiente. Pulse el botón Ayuda en cualquier ventana para obtener más
+  información sobre el uso de esa ventana.</p>
+
+<p>Si desea más información sobre cómo ver y administrar estos certificados,
+  vea la descripción de la pestaña <a
+  href="certs_help.xhtml#servers">Servidores</a> del administrador de
+  certificados.</p>
+
+<p>[<a href="#managing_certificates">Volver al principio de la
+  sección</a>]</p>
+  
+<h2 id="managing_certificates_that_identify_certificate_authorities">Administración
+  de certificados que identifican a autoridades certificadoras (CA)</h2>
+
+<p>Igual que ocurre con otras formas de identificación que se utilizan
+  a menudo, los certificados los emiten organizaciones con autoridad reconocida
+  para emitir este tipo de identificación. Las organizaciones que emiten
+  certificados se denominan <a href=
+  "glossary.xhtml#certificate_authority">autoridades certificadoras (CA)</a>.
+  Los certificados que identifican a CA se denominan certificados de CA.</p>
+
+<p>El administrador de certificados dispone normalmente de muchos
+  certificados de CA almacenados. Estos certificados de CA permiten que el
+  administrador de certificados reconozca los certificados emitidos por las CA
+  correspondientes, y pueda trabajar con ellos. No obstante, la presencia de un
+  certificado de CA en esta lista <em>no</em> garantiza que pueda confiarse en
+  los certificados que emite. El usuario o el administrador del sistema deben
+  tomar decisiones sobre los tipos de certificados en los que confiar
+  según las necesidades de seguridad.</p>
+
+<p>Para ver todos los certificados de CA disponibles para el navegador, haga
+  clic en la pestaña Autoridades, en la parte superior de la ventana
+  Administrador de certificados.</p>
+
+<p>Para realizar una acción sobre uno o más certificados de CA,
+  haga clic en la entrada del certificado (o en <kbd class="mac">Cmd</kbd><kbd
+  class="noMac">Ctrl</kbd>-clic para seleccionar más de uno) y, a
+  continuación, en uno de los botones en la parte inferior de la ventana del
+  administrador de certificados. Cada uno de estos botones le permite acceder a
+  otra ventana desde la que puede realizar la acción que el botón describe.
+  Haga clic en el botón Ayuda de cualquier ventana para obtener más información
+  sobre la utilización de esta ventana.</p>
+
+<p>Si desea más información sobre cómo ver y administrar estos certificados, vea
+  la descripción de la pestaña <a
+  href="certs_help.xhtml#authorities">Autoridades</a> del administrador de
+  certificados.</p>
+
+<p>[<a href="#managing_certificates">Volver al principio de la
+  sección</a>]</p>
+  
+<h2 id="managing_certificates_that_identify_others">Administración de
+  certificados que identifican a otros</h2>
+
+<p>Para ver todos los certificados que no se ajustan a ninguna de las otras
+  categorías, pulse en la pestaña Otros en la parte superior de la ventana del
+  administrador de certificados.</p>
+
+<p>Para más detalles sobre cómo ver y administrar estos certificados, vea la
+  descripción de la pestaña <a href="certs_help.xhtml#others">Otros</a> del
+  administrador de certificados.</p>
+
+<p>[<a href="#managing_certificates">Volver al principio de la
+  sección</a>]</p>
+  
+<h1 id="managing_smart_cards_and_other_security_devices">Administración
+  de tarjetas inteligentes y otros dispositivos de seguridad</h1>
+
+<p>Una tarjeta inteligente es un pequeño dispositivo, que normalmente
+  tiene el tamaño de una tarjeta de crédito, que contiene un
+  microprocesador y es capaz de almacenar información sobre la
+  identidad del usuario (como las <a href="glossary.xhtml#private_key">claves
+  privadas</a> y los <a href="glossary.xhtml#certificate">certificados</a>) y
+  puede llevar a cabo operaciones criptográficas.</p>
+
+<p>Para utilizar una tarjeta inteligente, normalmente se necesita un lector
+  de tarjetas inteligentes (un dispositivo de hardware) conectado al equipo y
+  también el software que controla al lector.</p>
+
+<p>Una tarjeta inteligente es sólo un tipo de dispositivo de
+  seguridad. Un dispositivo de seguridad (también llamado símbolo
+  de seguridad) es un dispositivo de hardware o software que proporciona
+  servicios criptográficos y almacena información sobre la
+  identidad del usuario. Utilice el administrador de dispositivos para trabajar
+  con tarjetas inteligentes y otros dispositivos de seguridad.</p>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#about_security_devices_and_modules">Qué son los
+      dispositivos y los módulos de seguridad</a></li>
+    <li><a href="#using_security_devices">Usar los dispositivos de
+      seguridad</a></li>
+    <li><a href="#using_security_modules">Usar los módulos de
+      seguridad</a></li>
+    <li><a href="#using_fips_mode">Activación del modo FIPS</a></li>
+  </ul>
+</div>
+
+<h2 id="about_security_devices_and_modules">Qué son los dispositivos
+  y los módulos de seguridad</h2>
+
+<p>El administrador de dispositivos muestra una ventana en la que aparece una
+  lista con los dispositivos de seguridad disponibles. Puede utilizar el
+  administrador de dispositivos para gestionar cualquier dispositivo de
+  seguridad, incluidas las tarjetas inteligentes, que admitan el
+  estándar de criptografía de clave pública (PKCS)
+  #11.</p>
+
+<p>Un <a href="glossary.xhtml#pkcs_11_module">módulo PKCS #11</a>
+  (también denominado módulo de seguridad) controla uno o
+  más dispositivos de seguridad de un modo similar a como un controlador
+  de software controla un dispositivo externo como una impresora o un
+  módem. Si está instalando una tarjeta inteligente, debe
+  instalar el módulo PKCS #11 para la tarjeta inteligente de su equipo y
+  también debe conectar un lector de tarjetas inteligentes.</p>
+
+<p>De forma predeterminada, el administrador de dispositivos controla dos
+  módulos PKCS #11 internos que gestionan tres dispositivos de
+  seguridad:</p>
+
+<ul>
+  <li><strong>Módulo interno PKCS #11 de &brandShortName;</strong>:
+    controla dos dispositivos de seguridad:
+    <ul>
+      <li><strong>Servicios criptográficos generales</strong>: un
+        dispositivo de seguridad especial que lleva a cabo todas las
+        operaciones criptográficas que requiere el módulo
+        interno PKCS #11 de &brandShortName;.</li>
+      <li><strong>Dispositivo software de seguridad</strong>: almacena sus
+        certificados y las claves que no están almacenadas en
+        dispositivos de seguridad externos, incluido cualquier certificado de
+        CA que pueda haber instalado además de los que vienen
+        incorporados con el navegador.</li>
+    </ul>
+  </li>
+  <li><strong>Módulo raíz incorporado</strong>: controla un
+    dispositivo de seguridad especial denominado Símbolo de objeto
+    incorporado. Este dispositivo de seguridad almacena los <a href=
+    "glossary.xhtml#ca_certificate">certificados de CA</a> predeterminados que
+    vienen incorporados con el navegador.</li>
+</ul>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Volver al
+  principio de la sección</a>]</p>
+  
+<h2 id="using_security_devices">Usar los dispositivos de seguridad</h2>
+
+<p>El administrador de dispositivos permite a los usuarios realizar
+  operaciones en dispositivos de seguridad. Para abrir el administrador de
+  dispositivos, siga los pasos que se indican a continuación:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Dentro de la categoría Privacidad y seguridad, haga clic en
+    Certificados (si no aparece ninguna subcategoría, haga doble clic
+    en Seguridad y privacidad para expandir la lista).</li>
+  <li>En el panel Certificados, haga clic en Gestionar dispositivos de
+    seguridad.</li>
+</ol>
+
+<p>El administrador de dispositivos ofrece una lista de todos los
+  módulos disponibles PKCS #11 en negrita y de los dispositivos de
+  seguridad gestionados por cada módulo bajo el nombre del mismo.</p>
+
+<p>Si selecciona un dispositivo de seguridad, la información sobre
+  él aparece en mitad de la ventana administrador de dispositivos y
+  algunos de los botones del lado derecho de la ventana pasan a estar
+  disponibles. Si selecciona, por ejemplo, Dispositivo software de seguridad,
+  puede llevar a cabo estas acciones:</p>
+
+<ul>
+  <li>Haga clic en Iniciar sesión o Terminar sesión para
+    iniciar o finalizar la sesión con el Dispositivo de seguridad de
+    software. Si está iniciando sesión, se le pedirá que
+    escriba la contraseña maestra para el dispositivo. Tiene que iniciar
+    sesión en un dispositivo de seguridad antes de que el software del
+    navegador pueda utilizarlo para ofrecer servicios
+    criptográficos.</li>
+  <li>Haga clic en Cambiar contraseña para cambiar la
+    contraseña maestra para el dispositivo.</li>
+</ul>
+
+<p>Puede llevar a cabo estas acciones con la mayoría de los
+  dispositivos de seguridad. No obstante, no puede llevarlas a cabo en
+  Símbolo de objeto incorporado o en Servicios criptográficos
+  generales, que son dispositivos especiales que normalmente deben estar
+  disponibles en todo momento.</p>
+
+<p>Si desea más información, consulte <a href=
+  "certs_help.xhtml#device_manager">Administrador de dispositivos</a>.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Volver al
+  principio de la sección</a>]</p>
+  
+<h2 id="using_security_modules">Usar los módulos de seguridad</h2>
+
+<p>Si desea utilizar una tarjeta inteligente o cualquier otro dispositivo de
+  seguridad externo, en primer lugar debe instalar el software del
+  módulo en el equipo y, si fuera necesario, conectar cualquier
+  hardware asociado. Siga las instrucciones que vienen con el hardware.</p>
+
+<p>Después de instalar un módulo nuevo en el equipo, siga los
+  siguientes pasos para cargarlo:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Dentro de la categoría Privacidad y seguridad, haga clic en
+    Certificados (si no aparece ninguna subcategoría, haga doble clic en
+    Seguridad y privacidad para expandir la lista).</li>
+  <li>En el panel Certificados, haga clic en Administrar dispositivos de
+    seguridad.</li>
+  <li>Haga clic en Cargar.</li>
+  <li>En el cuadro de diálogo Cargar módulo PKCS #11, haga clic
+    en el botón Examinar, localice el archivo del módulo y haga
+    clic en Abrir.</li>
+  <li>Rellene el campo Nombre del módulo con el nombre del
+    módulo y haga clic en Aceptar.</li>
+</ol>
+
+<p>El módulo nuevo aparecerá entonces en la lista de
+  módulos con el nombre que el usuario le asignó.</p>
+
+<p>Para descargar un módulo PKCS #11, seleccione su nombre y haga clic
+  en Descargar.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Volver al
+  principio de la sección</a>]</p>
+  
+<h2 id="enable_fips_mode">Activación del modo FIPS</h2>
+
+<p>Federal Information Processing Standards Publications (Publicaciones de
+  Estándares de Procesamiento de Información Federal o FIPS PUBS)
+  140-1 es un estándar del gobierno de Estados Unidos para la
+  implantación de módulos criptográficos, es decir,
+  hardware o software que cifre y descifre los datos o realice otras
+  operaciones criptográficas (como la creación o
+  verificación de firmas digitales). La mayoría de los productos
+  que se venden al gobierno de Estados Unidos deben cumplir con uno o
+  más de los estándares FIPS.</p>
+
+<p>Para habilitar el modo FIPS para el navegador, debe utilizar el
+  administrador de dispositivos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Dentro de la categoría Privacidad y seguridad, haga clic en
+    Certificados (si no aparece ninguna subcategoría, haga doble clic
+    en Seguridad y privacidad para expandir la lista).</li>
+  <li>En el panel Certificados, haga clic en Administrar dispositivos de
+    seguridad.</li>
+  <li>Haga clic en el botón Habilitar FIPS. Al habilitar FIPS, el
+    nombre del módulo interno PKCS #11 de NSS cambia a NSS Internal FIPS
+    PKCS #11 Module y el botón Habilitar FIPS cambia a Deshabilitar
+    FIPS.</li>
+</ol>
+
+<p>Para desactivar el modo FIPS, haga clic en Deshabilitar FIPS.</p>
+
+<p>[<a href="#managing_smart_cards_and_other_security_devices">Volver al
+  principio de la sección</a>]</p>
+  
+<h1 id="managing_ssl_warnings_and_settings">Gestionar advertencias y
+  configuración SSL/TLS</h1>
+
+<p>El protocolo de Capa de Conexiones Seguras (SSL) permite al equipo
+  intercambiar en forma cifrada información en Internet con otros
+  ordenadores, es decir, la información en tránsito está
+  codificada para que nadie pueda descifrarla. SSL también se utiliza
+  para identificar equipos en Internet mediante <a href=
+  "glossary.xhtml#certificate">certificados</a>.</p>
+
+<p>El protocolo TLS (Seguridad de la Capa de Transporte) es una norma nueva
+  basada en SSL. Las antiguas versiones SSL han sido desaprobadas por motivos
+  de seguridad y TLS es el único protocolo admitido. El conjunto por defecto
+  de versiones TLS funciona para la mayoría de la gente con los servidores
+  actuales. Sin embargo, en algunas circunstancias los administradores de
+  sistemas u otras personas con el conocimiento adecuado pueden querer
+  ajustar las opciones de SSL/TLS para afinarlos correctamente para cubrir
+  necesidades especiales de seguridad o para tener en cuenta las capacidades
+  limitadas de algunos servidores antiguos.</p>  
+
+<p>No debe ajustar la configuración de SSL/TLS de su navegador a menos que
+  sepa lo que está haciendo o reciba asistencia de una persona que tenga
+  conocimientos. Si por alguna razón necesita ajustar la configuración, siga
+  estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>En la categoría Privacidad y seguridad, seleccione SSL/TLS (si no
+    aparece ninguna subcategoría, haga doble clic en Seguridad y
+    privacidad para expandir la lista).</li>
+</ol>
+
+<p>Si desea más información, consulte <a href=
+  "ssl_help.xhtml">Configuración SSL/TLS</a>.</p>
+
+<p>[<a href="#using_certificates">Volver al principio de la
+  sección</a>]</p>
+  
+<h1 id="controlling_validation">Control de validación</h1>
+
+<p>Como ya se ha explicado anteriormente en <a href=
+  "#getting_your_own_certificate">Obtención de un certificado propio</a>,
+  un certificado es un documento de identificación muy parecido a un
+  permiso de conducir, que el usuario puede utilizar para identificarse en
+  Internet y en otras redes. Sin embargo, igual que ocurre con un permiso de
+  conducir, un certificado puede caducar o no ser válido por alguna otra
+  razón. Por lo tanto, el software de su navegador tiene que confirmar
+  de algún modo la validez de cualquier certificado dado antes de
+  confiar en él para propósitos de identificación.</p>
+
+<p>En esta sección se describe el modo en el que el administrador de
+  certificados valida los certificados y cómo se puede controlar ese
+  proceso. Para comprender el proceso, debería estar familiarizado con
+  el <a href="glossary.xhtml#public-key_cryptography">cifrado de clave
+  pública</a>. Si no está familiarizado con la utilización
+  de certificados, debe consultar con el administrador del sistema antes de
+  tratar de cambiar cualquiera de los valores de validación del
+  certificado del navegador.</p>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#how_validation_works">Cómo funciona la
+      validación</a></li>
+    <li><a href="#configuring_ocsp">Cómo se configura OCSP</a></li>
+  </ul>
+</div>
+
+<h2 id="how_validation_works">Cómo funciona la validación</h2>
+
+<p>Siempre que utilice o visualice un certificado almacenado por el
+  administrador de certificados, tiene que seguir varios pasos para
+  verificarlo. Como mínimo, se confirma que la firma digital de la CA en
+  el certificado la creó una CA cuyo certificado está (1)
+  presente en la lista de certificados de CA disponibles del administrador de
+  certificados y (2) marcado como de confianza para la emisión del tipo
+  de certificados que se verifica.</p>
+
+<p>Si el certificado de CA no está presente, en la <a href=
+  "glossary.xhtml#certificate_chain">cadena de certificados</a> del
+  certificado de CA debe haber un certificado de CA de nivel superior que
+  esté presente y en el que se confíe. El administrador de
+  certificados también confirma si el certificado cuya
+  verificación se esté llevando a cabo está marcado en
+  ese momento como de confianza. Si cualquiera de estas comprobaciones falla,
+  el administrador de certificados marca el certificado como no verificado y
+  no reconoce la identidad del mismo.</p>
+
+<p>Puede que un certificado pase todas estas pruebas y aún así
+  se vea comprometido de algún modo; por ejemplo, es posible que el
+  certificado pueda revocarse debido a que una persona no autorizada haya
+  tenido acceso a la clave privada. Un certificado comprometido puede provocar
+  que una persona o un sitio web no autorizados se hagan pasar por propietarios
+  del certificado.</p>
+
+<p>Un modo de combatir esta amenaza sería que el administrador de certificados
+  compruebe una lista de revocación de certificados (CRL) previamente
+  descargada como parte del proceso de verificación. Sin embargo, esas listas
+  pueden ser grandes y necesitan ser actualizadas frecuentemente para estar
+  actualizadas y seguir siendo útiles.</p>
+
+<p>La manera preferida de combatir esta amenaza consiste en utilizar un
+  servidor especial que admita el Protocolo de estado de certificados en línea
+  (OCSP). Un servidor así puede responder a las consultas de clientes
+  acerca de certificados individuales (consulte <a href=
+  "#configuring_ocsp">Cómo se configura OCSP</a>, a continuación).</p>
+
+<p>El servidor, denominado contestador OCSP, recibe periódicamente una
+  CRL actualizada desde la CA que emite los certificados que hay que verificar.
+  El usuario puede configurar el administrador de certificados para que
+  envíe una solicitud de estado de un certificado al contestador OCSP, y
+  éste confirme si el certificado es válido.</p>
+
+<p>[<a href="#controlling_validation">Volver al principio de la
+  sección</a>]</p>
+  
+<h2 id="configuring_ocsp">Cómo se configura OCSP</h2>
+
+<p>La configuración que controla OCSP forma parte de las preferencias
+  de certificados. Para ver las preferencias de certificados, siga
+  los pasos que se indican a continuación:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Dentro de la categoría Privacidad y seguridad, haga clic en
+    Certificados (si no aparece ninguna subcategoría, haga doble
+    clic en Seguridad y privacidad para expandir la lista).</li>
+</ol>
+
+<p>Si desea obtener más información sobre las opciones OCSP
+  disponibles, consulte <a href="certs_prefs_help.xhtml#ocsp">Preferencias
+  de privacidad y seguridad - Certificados, OCSP.</a></p>
+
+<p>[<a href="#controlling_validation">Volver al principio de la
+  sección</a>]</p>
+</body>
+</html>

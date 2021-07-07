@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "我的足迹">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "管理">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "管理您的书签">
+
+<!ENTITY file.close.label               "关闭">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "视图">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "更换显示方式">
+<!ENTITY view.columns.label             "显示列">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "排序">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "未排序">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A > Z 排序">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "降序排列（Z > A）">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "从 HTML 文件导入书签…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "导出书签到 HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "从其他浏览器导入数据…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "备份…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "恢复">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "选择文件…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY cmd.deleteDomainData.label     "清除此站点信息">
+<!ENTITY cmd.deleteDomainData.accesskey "F">
+
+<!ENTITY cmd.open.label                  "打开">
+<!ENTITY cmd.open.accesskey              "О">
+<!ENTITY cmd.open_window.label           "在新窗口中打开">
+<!ENTITY cmd.open_window.accesskey       "N">
+<!ENTITY cmd.open_private_window.label     "在新隐私窗口中打开">
+<!ENTITY cmd.open_private_window.accesskey "P">
+<!ENTITY cmd.open_tab.label              "在新标签页中打开">
+<!ENTITY cmd.open_tab.accesskey          "w">
+<!ENTITY cmd.open_all_in_tabs.label      "在标签页中打开书签组">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "O">
+
+<!ENTITY cmd.properties.label      "属性">
+<!ENTITY cmd.properties.accesskey  "i">
+
+<!ENTITY cmd.sortby_name.label              "按名称排序">
+<!ENTITY cmd.sortby_name.accesskey          "S">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "新建书签…">
+<!ENTITY cmd.new_bookmark.accesskey        "B">
+<!ENTITY cmd.new_folder.label              "新建文件夹…">
+<!ENTITY cmd.new_folder.accesskey          "o">
+<!ENTITY cmd.context_new_folder.accesskey  "F">
+<!ENTITY cmd.new_separator.label           "新建分割条">
+<!ENTITY cmd.new_separator.accesskey       "S">
+
+<!ENTITY cmd.reloadLivebookmark.label      "重新载入实时书签">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "R">
+
+<!ENTITY col.name.label          "名称">
+<!ENTITY col.tags.label          "标签">
+<!ENTITY col.url.label           "位置">
+<!ENTITY col.mostrecentvisit.label "最近访问">
+<!ENTITY col.visitcount.label    "访问次数">
+<!ENTITY col.description.label   "描述">
+<!ENTITY col.dateadded.label     "添加日期">
+<!ENTITY col.lastmodified.label  "修改日期">
+
+<!ENTITY search.placeholder  "搜索">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "更多">
+<!ENTITY detailsPane.more.accesskey "e">
+<!ENTITY detailsPane.less.label "更少">
+<!ENTITY detailsPane.less.accesskey "e">
+<!ENTITY detailsPane.selectAnItemText.description "选择一个条目来查看或编辑其属性">
+
+<!ENTITY view.label               "查看">
+<!ENTITY view.accesskey           "w">
+<!ENTITY byDate.label             "按日期">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "按站点">
+<!ENTITY bySite.accesskey         "S">
+<!ENTITY byMostVisited.label      "按访问次数">
+<!ENTITY byMostVisited.accesskey  "V">
+<!ENTITY byLastVisited.label      "按上次访问时间">
+<!ENTITY byLastVisited.accesskey  "L">
+<!ENTITY byDayAndSite.label       "按日期和站点">
+<!ENTITY byDayAndSite.accesskey   "t">

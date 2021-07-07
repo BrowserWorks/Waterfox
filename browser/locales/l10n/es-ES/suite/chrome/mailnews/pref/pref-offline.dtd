@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.network.title "Red y almacenamiento">
+<!ENTITY pref.offline.caption "Sin conexión">
+<!ENTITY textStartUp "Al iniciar:">
+<!ENTITY textStartUp.accesskey "A">
+<!ENTITY menuitemRememberPrevState "Recordar el modo de conexión previo">
+<!ENTITY menuitemAskMe "Preguntarme el modo de conexión (sin/con) al iniciar">
+<!ENTITY menuitemAlwaysOnline "Iniciar siempre con conexión">
+<!ENTITY menuitemAlwaysOffline "Iniciar siempre sin conexión">
+<!ENTITY menuitemAutomatic "Detectar automáticamente (si está disponible)">
+<!ENTITY textGoingOnline "¿Procesar mensajes no enviados al pasar a modo con conexión?">
+<!ENTITY radioAutoSend "Sí">
+<!ENTITY radioAutoSend.accesskey "S">
+<!ENTITY radioNotSend "No">
+<!ENTITY radioNotSend.accesskey "N">
+<!ENTITY radioAskUnsent "Preguntarme">
+<!ENTITY radioAskUnsent.accesskey "P">
+<!ENTITY textGoingOffline "¿Descargar mensajes antes de pasar a modo sin conexión?">
+<!ENTITY radioAutoDownload "Siempre">
+<!ENTITY radioAutoDownload.accesskey "e">
+<!ENTITY radioNotDownload "Nunca">
+<!ENTITY radioNotDownload.accesskey "u">
+<!ENTITY radioAskDownload "Preguntarme">
+<!ENTITY radioAskDownload.accesskey "g">
+<!ENTITY mailConnections.caption "Conexiones de correo">
+<!ENTITY mailnewsTimeout.label "Caducidad de la conexión:">
+<!ENTITY mailnewsTimeout.accesskey "d">
+<!ENTITY mailnewsTimeoutSeconds.label "segundos">
+<!ENTITY Diskspace "Espacio en disco">
+<!ENTITY offlineCompactFolders.label "Compactar todas las carpetas cuando se ahorren más de">
+<!ENTITY offlineCompactFolders.accesskey "C">
+<!ENTITY offlineCompactFoldersMB.label "MB en total">

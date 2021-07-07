@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Selecione o perfil de utilizador">
+<!ENTITY            profileManager.title "Gestor de perfis do &brandShortName;">
+
+<!ENTITY            manage.label     "Gerir perfis…">
+<!ENTITY            manage.accesskey "G">
+<!ENTITY            select.label     "Utilizar perfil">
+
+<!ENTITY            availableProfiles.label "Perfis disponíveis">
+
+<!ENTITY            introStart.label         "Para aceder ao seu perfil pessoal, que contém as suas mensagens guardadas, definições e outra informação personalizada, escolha o seu perfil da lista e clique &start.label; para iniciar a sua sessão.">
+<!ENTITY            introSwitch.label        "Para trocar para outro perfil, que contém mensagens guardadas, definições e outra informação personalizada, por favor escolha o perfil da lista, e clique &select.label; para começar a utilizar esse perfil.">
+<!ENTITY            profileManagerText.label "O &brandShortName; guarda informação sobre as suas definições, preferências, marcadores, mensagens guardadas e outros itens no seu perfil de utilizador.">
+
+<!ENTITY            autoSelect.label         "Pré-definido para este perfil">
+<!ENTITY            autoSelect.accesskey     "s">
+
+<!ENTITY            start.label              "Iniciar o &brandShortName;">
+<!ENTITY            exit.label               "Sair">
+
+<!ENTITY            newButton.label          "Criar um perfil…">
+<!ENTITY            newButton.accesskey      "C">
+<!ENTITY            renameButton.label       "Renomear perfil…">
+<!ENTITY            renameButton.accesskey   "R">
+<!ENTITY            deleteButton.label       "Apagar perfil...">
+<!ENTITY            deleteButton.accesskey   "A">
+
+<!ENTITY            offlineState.label       "Trabalhar offline">
+<!ENTITY            offlineState.accesskey   "o">

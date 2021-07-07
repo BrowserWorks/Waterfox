@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Ιδιότητες">
+
+<!ENTITY generalInfo.label                       "Γενικές πληροφορίες">
+<!ENTITY folderCharsetFallback2.label            "Εφεδρική κωδικοποίηση κειμένου:">
+<!ENTITY folderCharsetFallback2.accesskey        "Ε">
+<!ENTITY folderCharsetEnforce2.label             "Εφαρμογή κωδικοποίησης σε όλα τα μηνύματα του φακέλου (οι ξεχωριστές ρυθμίσεις κωδικοποίησης κειμένου των μηνυμάτων και ο αυτόματος εντοπισμός θα αγνοηθούν)">
+<!ENTITY folderCharsetEnforce2.accesskey         "Ε">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Εκ νέου δημιουργία ευρετηρίου αρχείων περίληψης">
+<!ENTITY folderRebuildSummaryFile2.label         "Επιδιόρθωση φακέλου">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "Ε">
+<!ENTITY folderRebuildSummaryFile.explanation    "Μερικές φορές, το αρχείο ευρετηρίου φακέλων (.msf) καταστρέφεται και φαίνεται ότι λείπουν μηνύματα ή εμφανίζονται διαγραμμένα μηνύματα· η επιδιόρθωση του φακέλου ενδέχεται να λύσει αυτά τα ζητήματα.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Συμπερίληψη μηνυμάτων φακέλου στα αποτελέσματα της καθολικής αναζήτησης">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "κ">
+
+<!ENTITY retention.label "Πολιτική διατήρησης">
+<!ENTITY retentionUseAccount.label "Χρήση ρυθμίσεων λογαριασμού">
+<!ENTITY retentionUseAccount.accesskey "Χ">
+<!ENTITY daysOld.label "ημερών">
+<!ENTITY message.label "μηνύματα">
+<!ENTITY retentionCleanup.label "Διατήρηση μηνυμάτων:">
+<!ENTITY retentionCleanupImap.label "Διατήρηση μηνυμάτων, τόσο των τοπικών αντιγράφων όσο και τα αρχικών στον διακομιστή:">
+<!ENTITY retentionCleanupPop.label "Διατήρηση μηνυμάτων, καθώς και των πρωτότυπων στον διακομιστή:">
+<!ENTITY retentionDeleteMsg.label "Διαγραφή μηνυμάτων παλαιότερων από">
+<!ENTITY retentionDeleteMsg.accesskey "μ">
+<!ENTITY retentionKeepAll.label "Όλα τα μηνύματα">
+<!ENTITY retentionKeepAll.accesskey "Ό">
+<!ENTITY retentionKeepRecent.label "Το νεότερο">
+<!ENTITY retentionKeepRecent.accesskey "ν">
+<!ENTITY retentionApplyToFlagged.label "Πάντα διατήρηση των μηνυμάτων με σημαία">
+<!ENTITY retentionApplyToFlagged.accesskey "α">
+
+<!ENTITY folderSynchronizationTab.label          "Συγχρονισμός">
+<!ENTITY folderCheckForNewMessages2.label        "Κατά τη λήψη μηνυμάτων από αυτό τον λογαριασμό, να γίνεται πάντα έλεγχος αυτού του φακέλου">
+<!ENTITY folderCheckForNewMessages2.accesskey    "χ">
+
+<!ENTITY offlineFolder.check.label               "Επιλογή αυτού του φακέλου για χρήση εκτός σύνδεσης">
+<!ENTITY offlineFolder.check.accesskey           "Ε">
+<!ENTITY offlineFolder.button.label              "Λήψη τώρα">
+<!ENTITY offlineFolder.button.accesskey          "Λ">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Επιλογή αυτής της ομάδας συζήτησης για χρήση εκτός σύνδεσης">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "ο">
+<!ENTITY offlineNewsgroup.button.label           "Λήψη τώρα">
+<!ENTITY offlineNewsgroup.button.accesskey       "Λ">
+
+<!ENTITY folderProps.name.label                  "Όνομα:">
+<!ENTITY folderProps.name.accesskey              "Ό">
+<!ENTITY folderProps.location.label              "Τοποθεσία:">
+<!ENTITY folderProps.location.accesskey          "Τ">
+
+<!ENTITY folderSharingTab.label                  "Κοινή χρήση">
+<!ENTITY privileges.button.label                 "Δικαιώματα…">
+<!ENTITY privileges.button.accesskey             "Δ">
+<!ENTITY permissionsDesc.label                   "Έχετε τα ακόλουθα δικαιώματα:">
+<!ENTITY folderType.label                        "Τύπος φακέλου:">
+
+<!ENTITY folderQuotaTab.label                    "Όριο">
+<!ENTITY folderQuotaUsage.label                  "Χρήση:">
+<!ENTITY folderQuotaStatus.label                 "Κατάσταση:">
+
+<!ENTITY numberOfMessages.label                  "Αριθμός μηνυμάτων:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "άγνωστος">
+<!ENTITY sizeOnDisk.label                        "Μέγεθος στο δίσκο:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "άγνωστο">

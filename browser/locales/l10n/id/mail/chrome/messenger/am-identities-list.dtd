@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Kelola identitas untuk akun ini. Identitas pertama digunakan sebagai standar.">
+<!ENTITY identitiesListAdd.label  "Tambah…">
+<!ENTITY identitiesListAdd.accesskey  "T">
+<!ENTITY identitiesListEdit.label "Ubah…">
+<!ENTITY identitiesListEdit.accesskey "U">
+<!ENTITY identitiesListDefault.label "Setel Baku">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "Hapus">
+<!ENTITY identitiesListDelete.accesskey "H">
+<!ENTITY identitiesListClose.label "Tutup">
+<!ENTITY identitiesListClose.accesskey "T">

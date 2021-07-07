@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Rede e Armazenamento">
+<!ENTITY pref.offline.caption             "Modo desconectado">
+<!ENTITY textStartUp                      "Ao iniciar:">
+<!ENTITY textStartUp.accesskey            "A">
+<!ENTITY menuitemRememberPrevState        "Lembrar o último modo utilizado">
+<!ENTITY menuitemAskMe                    "Perguntar-me se eu desejo iniciar em modo conectado ou desconectado">
+<!ENTITY menuitemAlwaysOnline             "Sempre iniciar no modo conectado">
+<!ENTITY menuitemAlwaysOffline            "Sempre iniciar no modo desconectado">
+<!ENTITY menuitemAutomatic                "Detectar automaticamente (se disponível)">
+<!ENTITY textGoingOnline                  "Ao sair do modo desconectado enviar as mensagens da pasta &quot;Saída&quot;:">
+<!ENTITY radioAutoSend                    "Sim">
+<!ENTITY radioAutoSend.accesskey          "S">
+<!ENTITY radioNotSend                     "Não">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Perguntar">
+<!ENTITY radioAskUnsent.accesskey         "P">
+<!ENTITY textGoingOffline                 "Receber mensagens antes de desconectar:">
+<!ENTITY radioAutoDownload                "Sim">
+<!ENTITY radioAutoDownload.accesskey      "m">
+<!ENTITY radioNotDownload                 "Não">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "Perguntar">
+<!ENTITY radioAskDownload.accesskey       "e">
+<!ENTITY mailConnections.caption          "Conexões de email">
+<!ENTITY mailnewsTimeout.label            "Atingido o tempo limite de conexão:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "segundos">
+<!ENTITY Diskspace                        "Espaço em disco">
+<!ENTITY offlineCompactFolders.label      "Compactar todas as pastas se puder liberar pelo menos">
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "MB no total">

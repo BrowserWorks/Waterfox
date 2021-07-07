@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>&brandShortName; Advanced Preferences Help</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="advanced_preferences">Advanced Preferences</h1>
+
+<p>This section describes how to use the Advanced preferences panel. If you are
+  not already viewing the panel, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Click the Advanced category.</li>
+</ol>
+
+<div class="contentsBox">In this section:
+  <ul>
+    <li><a href="#advanced">Advanced</a></li>
+    <li><a href="#scripts_and_plugins">Scripts &amp; Plugins</a></li>
+    <li><a href="#keyboard_navigation">Keyboard Navigation</a></li>
+    <li><a href="#fayt">Find As You Type</a></li>
+    <li><a href="#cache">Cache</a></li>
+    <li><a href="#offline_apps">Offline Apps</a></li>
+    <li><a href="#proxies">Proxies</a></li>
+    <li><a href="#http_networking">HTTP Networking</a></li>
+    <li><a href="#software_installation">Software Installation</a></li>
+    <li><a href="#mouse_wheel">Mouse Wheel</a></li>
+    <li><a href="#debugging">Debugging</a></li>
+    <li><a href="#dom_inspector">DOM Inspector</a></li>
+  </ul>
+</div>
+
+<h2 id="advanced">Advanced Preferences - Advanced</h2>
+
+<p>This section describes how to use the main Advanced preferences panel. If
+  you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Click the Advanced category.</li>
+</ol>
+
+<p>The main Advanced preferences panel allows you to:</p>
+
+<ul>
+  <li><strong>Check default application settings on startup</strong>:
+    Select this to have &brandShortName; check whether it is the default
+    application for tasks like browsing and mail. If &brandShortName; detects
+    on startup that it is not the default application for any of these tasks,
+    a dialog will appear that allows you to choose which tasks &brandShortName;
+    should handle by default.</li>
+  <li><strong>Use Native Print Dialog (where supported)</strong>: Select this
+    to enable &brandShortName; to use the native print dialog, where supported,
+    rather than its own.</li>
+  <li><strong>Use Global Print Settings</strong>: Select this to enable
+    &brandShortName; to use the same print settings for all windows. If disabled
+    each window users its own settings and changes in one window do not affect
+    the settings in another.</li>
+  <li><strong>Submit crash reports</strong>: Select this to enable the Mozilla
+    Crash Reporter. If &brandShortName; crashes, you will be asked in each case
+    whether to report the issue.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="scripts_and_plugins">Advanced Preferences - Scripts &amp;
+  Plugins</h2>
+
+<p>This section describes how to use the Scripts &amp; Plugins preferences
+  panel. If you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Scripts &amp; Plugins. (If no
+    subcategories are visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Scripts &amp; Plugins preferences panel allows you to control how
+  JavaScript and plugins are used:</p>
+
+<ul>
+  <li><strong>Enable JavaScript for</strong>:
+    <ul>
+      <li><strong>Browser</strong>: Select this to turn on JavaScript for web
+        pages opened in the browser.</li>
+    </ul>
+  </li>
+  <li><strong>Allow scripts to</strong>: Select these checkboxes to control
+    how JavaScript can be used:
+    <ul>
+      <li><strong>Move or resize existing windows</strong>: Allows open windows
+        to be resized or moved.</li>
+      <li><strong>Raise or lower windows</strong>: Allows windows to be placed
+        under or on top of other windows.</li>
+      <li><strong>Hide the status bar</strong>: Allows the status bar to be
+        hidden.</li>
+      <li><strong>Change status bar text</strong>: Allows status bar text to be
+        changed, such as in scrolling text in the status bar.</li>
+      <li><strong>Change images</strong>: Allows images to be changed or
+        animated, such as in image rollovers (images that change when the mouse
+        cursor is placed over them).</li>
+      <li><strong>Disable or replace context menus</strong>: Allows right-click
+        menus<span class="mac"> or, if you&apos;re using a one-button mouse,
+        <kbd>Ctrl</kbd>-click menus</span> to be replaced or disabled by
+        webpages.</li>
+    </ul>
+  </li>
+  <li><strong>Enable JavaScript dump() output</strong>: Select this to enable
+    dump() statements in JavaScript code to be displayed in the console.</li>
+  <li><strong>Show strict JavaScript warnings</strong>: Select this to show in
+    the console the strict warnings generated by the JavaScript Engine for the
+    code it is processing.</li>
+  <li><strong>Show chrome JavaScript errors and warnings</strong>: Select this
+    to show in the console errors and warnings being generated by the JavaScript
+    code embedded within &brandShortName; when it is run.</li>
+  <li><strong>Enable Plugins for</strong>: Use these checkboxes to control how
+    plugins are used:
+    <ul>
+      <li><strong>Suite</strong>: Globally enables or disables plugins.</li>
+      <li><strong>Mail &amp; Newsgroups</strong>: Allows plugins to be used in
+        Mail &amp; Newsgroups.</li>
+    </ul>
+  </li>
+  <li><strong>When a page requires plugins</strong>: Select these
+    checkboxes to control what &brandShortName; should do if a web page requires
+    plugins:
+    <ul>
+      <li><strong>Activate all plugins by default</strong>: If you select this,
+        &brandShortName; will load and run all plugins found on the web page.
+        Otherwise, if the page requires plugins, &brandShortName; will show a
+        notification (plugin icon in the location bar or notification bar), plus
+        a placeholder for every plugin instance found on the page (unless the
+        website is whitelisted, see below).
+        You can activate individual visible plugin instances with a left mouse
+        click or use the notification to activate all the plugins on the page.
+        From the notification you have the option to either temporarily activate
+        the plugins or remember the choice for the current website. Remembered
+        choices can be edited using the Data Manager (Permissions tab).</li>
+      <li><strong>Warn me if additional plugins need to be installed</strong>:
+        When a website requires a plugin which is not installed,
+        a notification bar will be displayed above the website content area.
+        From the bar you will be able to download and install the missing
+        plugin.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>For more information about plugins, see
+  <a href="nav_help.xhtml#plugins_and_downloads">Plugins and Downloads</a>.
+</p>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="keyboard_navigation">Advanced Preferences - Keyboard Navigation</h2>
+
+<p>This section describes how to use the Keyboard Navigation preferences
+  panel. If you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Keyboard Navigation. (If no
+    subcategories are visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Keyboard Navigation preferences panel allows you to control how you use
+  the keyboard to navigate in web pages:</p>
+
+<ul>
+  <li class="noMac"><strong>Tab Key Navigation</strong>: Select which elements
+    should be taken into account when using the Tab key on a page:
+    <ul>
+      <li><strong>Links</strong>: If checked, pressing <kbd>Tab</kbd> or
+        <kbd>Shift</kbd>+<kbd>Tab</kbd> moves between links.</li>
+      <li><strong>Buttons, radio buttons, checkboxes, and selection
+        lists</strong>: If checked, pressing <kbd>Tab</kbd> or
+        <kbd>Shift</kbd>+<kbd>Tab</kbd> moves between buttons, radio buttons,
+        check boxes, and selection lists.</li>
+    </ul>
+  </li>
+  <li><strong>Browse With Caret</strong>: Select if and how <a
+    href="glossary.xhtml#caret_browsing">caret browsing</a> should be used:
+    <ul>
+      <li><strong>Use caret browsing</strong>: If checked, caret browsing will
+        be enabled by default when you load a web page.</li>
+      <li><strong>Use the F7 shortcut to toggle caret browsing</strong>: If
+        checked, the F7 shortcut will toggle caret browsing on or off. Otherwise
+        &brandShortName; will not use the shortcut and the below option will
+        have no effect.</li>
+      <li><strong>Warn me before turning on caret browsing</strong>: If checked,
+        &brandShortName; will issue a warning dialog if the caret browsing mode
+        is about to be entered, allowing you to choose whether to proceed or
+        not. (There is no warning when leaving caret browsing mode.)</li>
+    </ul>
+  </li>
+  <li><strong>Modifiers</strong>: Select which keyboard modifiers should
+    be used, if at all:
+    <ul>
+      <li><strong>Accelerator key</strong>: The key value to be used for the
+        accelerator key.</li>
+      <li><strong>Menu access key</strong>: The key value to be used for the
+        menu access key.</li>
+      <li><strong>Note</strong>: Setting a value of zero for either of the
+        above modifiers disables that key.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="fayt">Advanced Preferences - Find As You Type</h2>
+
+<p>This section describes how to use the Find As You Type references
+  panel. If you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Find As You Type. (If no
+    subcategories are visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Find As You Type preferences panel allows you to control how you use
+  the keyboard to search for text in web pages:</p>
+
+<ul>
+  <li><strong>Find automatically when typing within a web page</strong>: If
+    checked, typing text in a web page automatically activates Find As You Type
+    and locates the text you typed (if it exists in the page). Choose whether
+    you want typing to find any text in the page or links only. If unchecked,
+    you must choose Find Links As You Type or Find Text As You Type from the
+    Edit menu before typing the text you want to find.</li>
+  <li><strong>Play a sound when typed text isn&apos;t found</strong>: If
+    checked, Find As You Type plays a sound when the typed text isn&apos;t
+    found in the web page.</li>
+  <li><strong>Clear the current search after a few seconds of
+    inactivity</strong>: If checked, the search will be cancelled after a few
+    seconds of keyboard inactivity.</li>
+  <li><strong>Show the find toolbar during find as you type</strong>: If
+    checked, the find toolbar will open when Find As You Type is activated and
+    what you type will be entered into the toolbar search field. If unchecked,
+    the find toolbar will not be opened and the search string will be displayed
+    in the status bar. Note that international text entry will not work in this
+    mode.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="cache">Advanced Preferences - Cache</h2>
+
+<p>This section describes how to use the Cache preferences panel. If
+  you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Cache. (If no subcategories are
+    visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Cache preferences panel allows you to adjust the &brandShortName; memory
+  and disk cache:</p>
+
+<ul>
+  <li><strong>Let &brandShortName; manage the size of my cache</strong>: Select
+    this to let &brandShortName; apply a heuristic based on the space available
+    on your hard disk in order to determine your cache size. (This is the
+    default.)</li>
+  <li><strong>Use up to [__] MB of disk space for the cache</strong>: Type in
+    the amount of disk cache you want to allocate for &brandShortName;. The disk
+    cache is saved to your hard disk (drive) and can be used again, even if you
+    have restarted your computer. (The default is 1024 MB. This preference is
+    ignored if the above checkbox is selected.)</li>
+  <li><strong>Clear Cache</strong>: Click this to clear the disk cache.</li>
+  <li><strong>Cache Folder Location</strong>: Shows the current location of the
+    disk cache folder 
+    <ul>
+      <li><strong>Choose Folder</strong>: Click this to choose a folder
+        location for the disk cache.</li>
+    </ul>
+  </li>
+  <li><strong>Compare the page in the cache to the page on the
+    network</strong>:
+    <ul>
+      <li><strong>Every time I view the page</strong>: Select this if you want
+        &brandShortName; to compare a web page to the cache every time you view
+        it.</li>
+      <li><strong>When the page is out of date</strong>: Select this if you
+        want &brandShortName; to compare a web page to the cache when the page
+        is determined by the server to have expired.</li>
+      <li><strong>Once per session</strong>: Select this if you want
+        &brandShortName; to compare a web page to the cache once for each time
+        you start &brandShortName;.</li>
+      <li><strong>Never</strong>: Select this if you do not want
+        &brandShortName; to compare cached information to the network.</li>
+    </ul>
+  </li>
+  <li><strong>Prefetch web pages when idle, so that links in web pages
+    designed for prefetching can load more quickly</strong>: Select this to
+    decrease the time it takes to load web pages when you click a link in a web
+    page that uses prefetching. For more information about Link Prefetching, see
+    the online
+    <a href="https://developer.mozilla.org/docs/Web/HTTP/Link_prefetching_FAQ">Link
+    Prefetching FAQ</a>.</li>
+  <li><strong>Enable Disk Cache</strong>: Select this to enable the use of the
+    disk cache up to the limits specified above.</li>
+  <li><strong>Enable Memory Cache</strong>: Select this to enable the use of a
+    memory cache.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="offline_apps">Advanced Preferences - Offline Apps</h2>
+
+<p>This section describes how to use the Offline Web Applications preferences
+  panel. If you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Offline Apps. (If no subcategories are
+    visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Offline Web Applications panel allows you to control and monitor how
+  websites use &brandShortName;&apos;s offline storage. Websites can provide
+  complex functionality beyond just the presentation of content, implementing
+  <a href="glossary.xhtml#web_application">web applications</a>. In general,
+  such web applications require you to stay online in order to use them, thus
+  won&apos;t function when you are disconnected from the network (offline).
+  If permitted, websites can store their content and any data you entered
+  locally in &brandShortName;. In this way, web applications can be used even
+  without a network connection.</p>
+
+<p>The <strong>Offline Web Content and User Data</strong> section provides the
+  following functions:</p>
+
+<ul>
+  <li><strong>Your offline storage currently uses [__] of disk space</strong>:
+    This entry is informational and provides you with an estimate of the
+    offline data currently used by all web applications combined.</li>
+  <li><strong>Clear</strong>: Immediately clears data that has been saved
+    by all websites for use when you are offline.</li>
+  <li><strong>Allow all websites to store data for offline use</strong>: Select
+    this option if you want to permit websites by default to store web content
+    and user data locally on the disk of your computer.</li>
+  <li><strong>Only allow websites with explicit permissions</strong>: Select
+    this option if you want to control whether or not a website can store web
+    content for offline use locally. Unless explicit permission has been
+    granted, the website&apos;s request to access the offline storage is
+    blocked or a notification shown to give you the option to allow it.</li>
+  <li><strong>Notify me when websites want to store data for offline
+    use</strong>: Check this box if you want to be notified when a website
+    requests to store content or data in the offline storage but does not
+    currently have any permissions set whether or not it is allowed to do so.
+    An information bar will appear for this site offering the following options:
+    <ul>
+      <li><strong>Always Allow</strong>: Permanently allow this site the use
+        of the offline storage for this and future accesses.</li>
+      <li><strong>Never for This Site</strong>: Permanently deny this site
+        the use of the offline storage for this and future accesses.</li>
+      <li><strong>Not Now</strong>: Deny this site the use of the offline
+        storage for this request but ask again for future accesses.</li>
+    </ul>
+    <p><strong>Note</strong>: The offline storage is <em>not</em> available in
+      a <a href="using_priv_help.xhtml#browsing_in_a_private_window">private
+      window</a>. You will receive a notification if this option is checked,
+      but all requests will be blocked.</p>
+  </li>
+  <!-- NOTE: link "Data Manager" below once bug 599097 has been fixed -->
+  <li><strong>Manage Permissions</strong>: Opens the Data Manager in a new
+    tab or window where you can modify the Offline Web Applications permissions
+    for each domain:
+    <ul>
+      <li><strong>Use Default</strong>: Check this box to return to the default
+        behavior, thus presenting the information bar with the next request
+        from a site within each domain if the notification option is chosen
+        (effectively removes the entry from this listing).</li>
+      <li><strong>Allow</strong>: Select this option to allow this site
+        the use of the offline storage for all accesses.</li>
+      <li><strong>Block</strong>: Select this option to deny this site
+        the use of the offline storage for all accesses.</li>
+    </ul>
+  </li>
+  <li><strong>The following websites are using offline storage</strong>:
+    Lists the domains of all websites which have stored offline data, along
+    with the amount of data currently used by this domain.</li>
+  <li><strong>Clear Data</strong>: Select a website domain and click this
+    button to delete all offline data for the specified domain. Click <q>Remove
+    offline data</q> after being prompted for confirmation to do so.</li>
+</ul>
+       
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="proxies">Advanced Preferences - Proxies</h2>
+
+<p>This section describes how to use the Proxies preferences panel. If
+  you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Proxies. (If no subcategories are
+    visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Proxies preferences panel allows you to set up &brandShortName; to use a
+  <a href="glossary.xhtml#proxy">proxy</a>:</p>
+
+<p><strong>Before you start</strong>: Ask your network administrator if you
+  have a proxy configuration file or for the names and port numbers of the
+  proxy.</p>
+
+<ul>
+  <li><strong>Direct connection to the Internet</strong>: Choose this if you
+    don&apos;t want to use a proxy.</li>
+  <li><strong>Automatically discover the proxy configuration</strong>: Choose
+    this if you want &brandShortName; to automatically detect and configure the
+    proxy settings, using the <a href="glossary.xhtml#wpad">WPAD protocol</a>.</li>
+  <li><strong>Automatic proxy configuration URL</strong>: Choose this if you
+    have a proxy auto-configuration (PAC) file or URL, then enter the
+    configuration URL.
+    <ul>
+      <li><strong>Reload</strong>: Click this to reload the configuration file.
+
+        <p>A PAC file has JavaScript code which chooses a proxy to use depending
+          on the address you open. The same file can use more than one proxy or
+          use proxies only for specific addresses. For more information about
+          the content of PAC files, see the online
+          <a href="https://developer.mozilla.org/docs/Web/HTTP/Proxy_servers_and_tunneling/Proxy_Auto-Configuration_%28PAC%29_file">MDN
+          documentation on Proxy Auto-Configuration files</a>.</p>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Manual proxy configuration</strong>: Choose this if you
+    don&apos;t have a proxy location (URL), or the automatic proxy discovery
+    was unable to setup the proxy settings correctly.
+    <ul>
+      <li><strong>Proxy</strong>: Enter the name or numeric IP address of
+        the proxy server.</li>
+      <li><strong>Port</strong>: Enter the port number in the Port field. Click
+        on <q>Advanced</q> to set
+        <a href="#advanced_proxy_preferences">Advanced Proxy Preferences</a></li>
+      <li><strong>No Proxy for</strong>: Type the domains and/or IP addresses
+        that you do not want to use a proxy for. Separate each entry with a
+        comma. (Example: <kbd>.mozilla.org, .net.nz, 192.168.1.0/24</kbd>.)
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="advanced_proxy_preferences">Advanced Proxy Preferences</h3>
+
+<p>If you want to use different proxies for different protocols or need to use
+  a SOCKS proxy:</p>
+
+<ul>
+  <li><strong>HTTP Proxy</strong>, <strong>SSL Proxy</strong>,
+    <strong>FTP Proxy</strong>: Enter the name or numeric IP address 
+    of the proxy server. Type the port in the Port fields.
+
+    <p><strong>Note</strong>: If you&apos;re using the same settings
+      for all types of proxies, click on <q>Use HTTP Proxy settings
+      for all protocols</q>.</p>
+
+  </li>
+  <li><strong>SOCKS Proxy</strong>: Enter the name or numeric IP address
+    of the proxy server. Enter the port number in the Port field. 
+    <ul>
+      <li><strong>SOCKS v4, SOCKS v5</strong>: When entering a SOCKS Proxy,
+        select <q>SOCKS v4</q> or <q>SOCKS v5</q>, depending on what version
+        of <a href="glossary.xhtml#socks">SOCKS</a> is used for the proxy.</li>
+      <li><strong>Use for resolving hostnames</strong>: Select this to
+        use the SOCKS Proxy for resolving hostnames. This is
+        recommended for SOCKS v5 proxies.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="http_networking">Advanced Preferences - HTTP Networking</h2>
+
+<p>This section describes how to use the HTTP Networking preferences panel. If
+  you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click HTTP Networking. (If no subcategories
+    are visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The HTTP Networking preferences panel is used to configure HTTP-based
+  networking:</p>
+
+<ul>
+  <li><strong>Direct Connection Options, Proxy Connection Options</strong>:
+    Choose the HTTP version and options for direct and proxy connections.
+    <ul>
+      <li><strong>Use HTTP 1.0</strong>: Choose this to use the original
+        version of HTTP, standardized in 1996. This setting is mostly intended
+        for compatibility reasons with proxy or older web servers.</li>
+      <li><strong>Use HTTP 1.1</strong>: Choose this to use the current version
+        of HTTP, which offers performance enhancements, including more efficient
+        use of HTTP connections, better support for client-side caching, and
+        more refined control over cache expiration and replacement policies.</li>
+    </ul>
+  </li>
+  <li><strong>User Agent String</strong>:
+    The identifier sent by &brandShortName; to all websites is used for
+    statistics about website usage but also sometimes to expose certain features
+    only to known browsers (a practice known as "sniffing"). Consequently,
+    changing this option may result in websites not working properly.
+    &brandShortName; can:
+    <ul>
+      <li><strong>Identify as Firefox</strong>: Do not mention &brandShortName;,
+        send a Firefox identifier instead. This might be needed for websites
+        which refuse to work when &brandShortName; is mentioned in the
+        identifier.</li>
+      <li><strong>Identify as &brandShortName;</strong>: &brandShortName; will
+        identify itself as &brandShortName;, without mentioning Firefox.</li>
+      <li><strong>Identify as &brandShortName; and advertise Firefox
+        compatibility</strong>: &brandShortName; will identify itself as both
+        &brandShortName; and also compatible with Firefox. This allows websites
+        that check for certain browsers rather than certain functionality to
+        work with &brandShortName;, while still appearing as &brandShortName; in
+        website statistics.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="software_installation">Advanced Preferences - Software
+  Installation</h2>
+
+<p>This section describes how to use the Software Installation preferences
+  panel. If you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Software Installation. (If no
+    subcategories are visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Software Installation preferences panel is used to enable add-on
+  installation and updates. The Add-ons Manager allows you to view and manage
+  all your installed extensions and themes.</p>
+
+<ul>
+  <li><strong>Add-ons</strong>:
+    <ul>
+      <li><strong>Allow websites to install add-ons and updates</strong>:
+        Select this if you want to allow websites to install add-ons and
+        updates to be used with &brandShortName;. You will be prompted before
+        each installation.
+        <ul>
+          <li><strong>Allowed Websites</strong>: Click this link to open the
+            Data Manager tab, where you can view and edit the list of websites
+            that you want to allow to install software</li>
+          <li><strong>Automatically check for updates</strong>:Select this to
+            be notified when a new version of one of your installed add-ons is
+            available. Choose whether you want &brandShortName; to do a
+            <strong>daily</strong> or a <strong>weekly</strong> check for new
+            versions.</li>
+          <li><strong>Automatically download and install the update</strong>:
+            Select this if you want &brandShortName; to automatically download
+            and install updates for you when they become available. The download
+            will happen in the background, with low priority. After the download
+            has finished the update to the add-on will be installed
+            automatically the next time you start &brandShortName;.</li>
+        </ul>
+      </li>
+      <li><strong>Personalize Add-on recommendations</strong>: Select this to
+        be offered suggestions for add-ons in the &quot;Get Add-ons&quot; tab
+        of the manager:
+        <ul>
+          <li>Note that this function involves sending a list of your
+            currently installed add-ons to the add-on website.</li>
+          <li>Disabling this option will also suppress contacting the add-on
+            site periodically for any new information about installed add-ons,
+            but won't affect automated updates.</li>
+        </ul>
+      </li>
+      <li><strong>Manage Add-ons</strong>: Click this link to open the Add-ons
+        Manager in a new browser tab.</li>
+    </ul>
+  </li>
+  <li><strong>&brandShortName;</strong>:
+    <ul>
+      <li><strong>Automatically check for updates</strong>:Select this to be
+        notified when a new version of &brandShortName; is available. Choose
+        whether you want &brandShortName; to do a <strong>daily</strong> or
+        a <strong>weekly</strong> check for new versions.
+        <ul>
+          <li><strong>Automatically download and install the update</strong>:
+            Select this if you want &brandShortName; to automatically download
+            and install updates for you when they become available. The download
+            will happen in the background, with low priority. After the download
+            has finished the update to &brandShortName; will be installed
+            automatically the next time you start it.</li>
+        </ul>
+        <p><strong>Note</strong>: You can use Check for Updates from the
+          <span class="mac">&brandShortName;</span><span class="noMac">Help</span>
+          menu to manually initiate the search for a &brandShortName; update.
+          <span class="noMac">The label of the menu item will change when an
+          update is being downloaded or ready to be applied.</span></p>
+      </li>
+      <li><strong>Show Update History...</strong>: Click this to open the Update
+        History dialog box which shows a list of &brandShortName; updates that
+        have been installed, including the update type (e.g. Security Update),
+        time of installation and installation status. The Details link next to
+        each update takes you to a web page that contains further information
+        regarding the update.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="mouse_wheel">Advanced Preferences - Mouse Wheel</h2>
+
+<p>This section describes how to use the Mouse Wheel preferences panel. If
+  you&apos;re not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Mouse Wheel. (If no subcategories
+    are visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Mouse Wheel preferences panel allows you to control how the mouse wheel
+  on your mouse (in between your mouse buttons) is used in &brandShortName;.
+  Modern mice may have two wheels or a button that can be used to switch the
+  scroll direction of the wheel. The behaviour for the vertical wheel function
+  is set in the upper panel <strong>Vertical scrolling</strong> while the 
+  horizontal mode is controlled by the lower panel <strong>Horizontal
+  scrolling</strong>.</p>
+
+<ul>
+  <li>Select <q>No modifier key</q> or select a key that you want to use
+    along with the mouse wheel. Use the checkboxes below to configure mouse
+    wheel behavior:
+
+    <ul>
+      <li><strong>Same as vertical scrolling</strong>: Choose this when your
+        mouse has a single control that provides both vertical and horizontal
+        scrolling. If your mouse has a separate horizontal scrolling control
+        then you can choose to assign a different function to it.</li>
+      <li><strong>Do nothing</strong>: Choose this to disable the scroll wheel
+        when used with the specified modifier key.</li>
+      <li><strong>Scroll the document</strong>: Choose this to scroll the
+        document by the system default number of lines or characters.</li>
+      <li><strong>Move back and forward in the browsing history</strong>:
+        Choose this to use the mouse wheel to navigate back or forward to
+        previous pages you&apos;ve visited.</li>
+      <li><strong>Zoom the page in or out</strong>: Choose this to use
+        the mouse wheel to increase or decrease the size of a web page.
+        This setting can help you better read a page, or make text fit on the
+        screen.</li>
+    </ul>
+
+    <p>Use the <strong>Mouse wheel speed</strong> option to adjust the
+      responsiveness of the wheel. To reverse the scroll direction, use negative
+      numbers or select <strong>Reverse direction</strong>.</p>
+
+    <p><strong>Note</strong>: Each modifier key can be assigned to a different
+      function.</p>
+  </li>
+  <li>If your mouse does not have a mode for horizontal scrolling, any setting
+    in the lower panel <strong>Horizontal scrolling</strong> will be ignored.
+  </li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="debugging">Advanced Preferences - Debugging</h2>
+
+<p>This section describes how to use the Debugging preferences panel. If you are
+  not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click Debugging. (If no subcategories are
+    visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>The Debugging preferences panel allows you to control various preferences
+  relating to XUL rendering and debugging events including reflow ones. Some
+  preferences only take affect once &brandShortName; has been restarted:</p>
+
+<ul>
+  <li><strong>Debug XUL boxes</strong>: Select this to enable the debugging of
+    XUL boxes, it also requires &brandShortName; to be restarted for the change
+    to take affect.</li>
+  <li><strong>Disable XUL Cache</strong>: Select this to disable the use of a
+    cache for chrome-level XUL components (XUL, JavaScript, CSS). With the
+    cache disabled files are re-read each time they are used rather than reading
+    them from a cache, which will slow down &brandShortName; but is useful for
+    debugging problems in XUL components.</li>
+</ul>
+
+<p>[<a href="#advanced_preferences">Return to beginning of section</a>]</p>
+
+<h2 id="dom_inspector">Advanced Preferences - DOM Inspector</h2>
+
+<p>DOM Inspector is an optional <a href="developer_tools.xhtml">Web development
+  component</a>. This section describes how to use its preferences panel.
+  If you are not already viewing it, follow these steps:</p>
+
+<ol>
+  <li>Open the <span class="mac">&brandShortName;</span>
+    <span class="noMac">Edit</span> menu and choose Preferences.</li>
+  <li>Under the Advanced category, click DOM Inspector. (If no subcategories are
+    visible, double-click Advanced to expand the list.)</li>
+</ol>
+
+<p>When you select an element, DOM Inspector can automatically highlight it by
+  flashing it or its border:</p>
+
+<ul>
+  <li><strong>Blink Selected Element</strong>: Check this option to enable the
+    highlighting of an element that you select. By default, a flashing border
+    will appear around the element.
+    <ul>
+      <li><strong>Border Color</strong>: Select the color of the border around
+        the element.</li>
+      <li><strong>Border Width</strong>: Enter the width of the border around
+        the element.</li>
+      <li><strong>Blink Duration</strong>: Enter the length of time
+      (in milliseconds) for which you want the flashing to occur.</li>
+      <li><strong>Blink Speed</strong>: Enter the time interval
+        (in milliseconds) between the flashes.</li>
+      <li><strong>Invert Color</strong>: Check this option to paint the
+        selected element with the inverted border color. This will cause the
+        whole element&mdash;including its border&mdash;to flash.</li>
+    </ul>
+  </li>
+</ul>
+
+</body>
+</html>

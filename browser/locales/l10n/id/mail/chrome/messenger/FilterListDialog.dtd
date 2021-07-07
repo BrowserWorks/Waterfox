@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filter Pesan">
+<!ENTITY nameColumn.label "Nama Filter">
+<!ENTITY activeColumn.label "Aktifkan">
+<!ENTITY newButton.label "Baru…">
+<!ENTITY newButton.accesskey "B">
+<!ENTITY newButton.popupCopy.label "Salin…">
+<!ENTITY newButton.popupCopy.accesskey "C">
+<!ENTITY editButton.label "Ubah…">
+<!ENTITY editButton.accesskey "U">
+<!ENTITY deleteButton.label "Hapus">
+<!ENTITY deleteButton.accesskey "H">
+<!ENTITY reorderTopButton "Pindahkan ke Atas">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Atur ulang filter agar dijalankan sebelum yang lainnya">
+<!ENTITY reorderUpButton.label "Naikkan">
+<!ENTITY reorderUpButton.accesskey "N">
+<!ENTITY reorderDownButton.label "Turunkan">
+<!ENTITY reorderDownButton.accesskey "T">
+<!ENTITY reorderBottomButton "Pindahkan ke Bawah">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Susun ulang filter sehingga dijalankan setelah semua yang lain">
+<!ENTITY filterHeader.label "Filter yang aktif akan dijalankan secara otomatis sesuai urutan di bawah ini.">
+<!ENTITY filtersForPrefix.label "Filter untuk:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Log Filter">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Jalankan Sekarang">
+<!ENTITY runFilters.accesskey "J">
+<!ENTITY stopFilters.label "Hentikan">
+<!ENTITY stopFilters.accesskey "H">
+<!ENTITY folderPickerPrefix.label "Jalankan Filter yang Terpilih pada:">
+<!ENTITY folderPickerPrefix.accesskey "a">
+<!ENTITY helpButton.label "Bantuan">
+<!ENTITY helpButton.accesskey "B">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Pencarian filter berdasarkan nama ...">

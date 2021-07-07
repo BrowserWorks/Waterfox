@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Krypter ikke">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "r">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Kræv kryptering">
+<!ENTITY menu_securityEncryptRequire.accesskey "y">
+
+<!ENTITY menu_securitySign.label "Underskriv meddelelsen digitalt">
+<!ENTITY menu_securitySign.accesskey "U">
+
+<!ENTITY menu_securityAttachMyKey.label "Vedhæft min offentlige nøgle">
+<!ENTITY menu_securityAttachMyKey.accesskey "V">
+
+<!ENTITY menu_securityTech.label "Krypteringsteknologi">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Meddelelsens sikkerhedsoplysninger">
+<!ENTITY menu_securityStatus.accesskey "S">
+
+<!ENTITY securityButton.label "Sikkerhed">
+<!ENTITY securityButton.tooltip "Vis eller rediger sikkerhedsindstillinger">
+
+<!ENTITY menu_viewSecurityStatus.label "Sikkerhedsoplysninger">
+<!ENTITY menu_viewSecurityStatus.accesskey "o">

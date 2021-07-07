@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "網頁瀏覽器">
+
+<!ENTITY navRadio.label                 "顯示於">
+<!ENTITY navRadio.accesskey             "n">
+<!ENTITY navStartPageMenu.label         "瀏覽器啟動">
+<!ENTITY newWinPageMenu.label           "新視窗">
+<!ENTITY newTabPageMenu.label           "開新分頁">
+
+<!ENTITY blankPageRadio.label           "空白頁">
+<!ENTITY blankPageRadio.accesskey       "B">
+<!ENTITY homePageRadio.label            "首頁">
+<!ENTITY homePageRadio.accesskey        "m">
+<!ENTITY lastPageRadio.label            "最後一次開啟的網頁">
+<!ENTITY lastPageRadio.accesskey        "L">
+<!ENTITY restoreSessionRadio.label      "回復先前的瀏覽狀態">
+<!ENTITY restoreSessionRadio.accesskey  "P">
+
+<!ENTITY restoreSessionIntro.label      "還原視窗與瀏覽階段時">
+<!ENTITY restoreImmediately.label       "立即還原所有分頁">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "還原">
+<!ENTITY restoreTabs.accesskey          "s">
+<!ENTITY restoreTabsAtATime.label       "個分頁">
+<!ENTITY restoreDeferred.label          "只在我需要時還原分頁">
+<!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY homePageIntro.label            "當按下「首頁」按鈕時會自動瀏覽此(組)網址">
+<!ENTITY useCurrent.label               "使用目前頁面">
+<!ENTITY useCurrent.accesskey           "U">
+<!ENTITY useCurrentGroup.label          "使用目前分頁組">
+<!ENTITY useCurrentGroup.accesskey      "G">
+<!ENTITY browseFile.label               "選擇檔案…">
+<!ENTITY browseFile.accesskey           "C">
+<!ENTITY useDefault.label               "回復預設值">
+<!ENTITY useDefault.accesskey           "R">
+
+<!ENTITY defaultBrowserGroup.label      "預設瀏覽器">
+<!ENTITY defaultBrowserButton.label     "設為預設瀏覽器">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText             "&brandShortName; 已經是您的預設瀏覽器了。">
+<!ENTITY defaultPendingText             "按下確定後 &brandShortName; 會被設定為您的預設瀏覽器。">
+<!ENTITY wasMadeDefaultText             "已將 &brandShortName; 設定為您的預設瀏覽器。">
+<!ENTITY makeDefaultText                "將 &brandShortName; 設為您的預設瀏覽器。">

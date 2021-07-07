@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Üzenet biztonsága">
+<!ENTITY subject.plaintextWarning "Figyelem: Az elektronikus levelek tárgya soha nincs titkosítva.">
+<!ENTITY status.heading "Üzenetének tartalma a következőképpen lesz továbbítva:">
+<!ENTITY status.signed "Digitálisan aláírt:">
+<!ENTITY status.encrypted "Titkosított:">
+<!ENTITY status.certificates "Tanúsítványok:">
+<!ENTITY view.label "Megtekintés">
+<!ENTITY view.accesskey "M">
+<!ENTITY tree.recipient "Címzett">
+<!ENTITY tree.status "Állapot">
+<!ENTITY tree.issuedDate "Kiadva">
+<!ENTITY tree.expiresDate "Lejár">

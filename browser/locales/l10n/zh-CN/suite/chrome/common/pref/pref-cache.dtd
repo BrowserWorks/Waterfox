@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "高速缓存">
+<!ENTITY pref.cache.caption              "设置缓存选项">
+<!ENTITY cachePara                       "缓存将经常访问的网页副本保存在你的硬盘上。（点击“重新载入”可以显示网页的最新版本。）">
+<!ENTITY cacheCheck.label                "让 &brandShortName; 管理我的缓存大小。">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "最多使用">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "缓存可以使用的磁盘空间（MB）。">
+<!ENTITY diskCacheFolder.label           "缓存文件夹位置：">
+<!ENTITY clearDiskCache.label            "清空缓存">
+<!ENTITY clearDiskCache.accesskey        "C">
+<!ENTITY chooseDiskCacheFolder.label     "选择文件夹…">
+<!ENTITY chooseDiskCacheFolder.accesskey "F">
+<!ENTITY diskCacheFolderExplanation      "缓存文件将存储在你指定路径的一个名为 &quot;Cache&quot; 的子文件夹中。重新启动 &brandShortName; 后更改才会生效。">
+<!ENTITY docCache.label                  "缓存中的页面与网络上的页面进行比较：">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "每次会话中一次">
+<!ENTITY checkEveryTime.label            "每次查看该页面时">
+<!ENTITY checkNever.label                "总不">
+<!ENTITY checkAutomatically.label        "页面过期时">
+
+<!ENTITY prefetchTitle.label             "链接预读数">
+<!ENTITY enablePrefetch.label            "在空闲时进行网页预读，以便为预读而设计的链接的页面可以更快地加载">
+<!ENTITY enablePrefetch.accesskey        "P">
+
+<!ENTITY debugCache.label                "调试">
+<!ENTITY debugEnableMemCache.label       "启用内存缓存">
+<!ENTITY debugEnableMemCache.accesskey   "E">
+<!ENTITY debugEnableDiskCache.label      "启用磁盘缓存">
+<!ENTITY debugEnableDiskCache.accesskey  "D">

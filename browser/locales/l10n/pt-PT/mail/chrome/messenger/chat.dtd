@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Contactos online">
+<!ENTITY offlineContactsHeader.label   "Contactos offline">
+<!ENTITY conversationsHeader.label     "Conversas">
+<!ENTITY searchResultConversation.label "Resultado da pesquisa">
+<!ENTITY chat.noConv.title             "As conversas serão mostradas aqui.">
+<!ENTITY chat.noConv.description       "Utilize a lista de contactos no painel da esquerda para iniciar uma conversa.">
+<!ENTITY chat.noPreviousConv.description       "Atualmente, o &brandShortName; não tem qualquer conversa guardada para este contacto.">
+<!ENTITY chat.noAccount.title             "Ainda não configurou uma conta de chat.">
+<!ENTITY chat.noAccount.description       "Deixar que o &brandShortName; o ajude no processo de configuração da conta de chat.">
+<!ENTITY chat.accountWizard.button       "Começar">
+<!ENTITY chat.noConnectedAccount.title             "As suas contas de chat não estão ligadas.">
+<!ENTITY chat.noConnectedAccount.description       "Pode ligar as contas no diálogo 'Estado do chat':">
+<!ENTITY chat.showAccountManager.button       "Mostrar estado do chat">
+
+<!ENTITY chat.participants             "Participantes:">
+<!ENTITY chat.previousConversations    "Conversas anteriores:">
+<!ENTITY chat.ongoingConversation      "Conversas atuais">
+
+<!ENTITY openConversationCmd.label     "Iniciar uma conversa">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Fechar conversa">
+<!ENTITY closeConversationCmd.accesskey "c">
+<!ENTITY aliasCmd.label                "Renomear">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Remover contacto">
+<!ENTITY deleteCmd.accesskey           "R">
+
+<!ENTITY openConversationButton.tooltip  "Iniciar uma conversa">
+<!ENTITY closeConversationButton.tooltip "Fechar conversa">
+
+<!ENTITY addBuddyButton.label          "Adicionar contacto">
+<!ENTITY joinChatButton.label          "Entrar no chat">
+<!ENTITY chatAccountsButton.label      "Mostrar contas">
+
+<!ENTITY status.available          "Disponível">
+<!ENTITY status.unavailable        "Indisponível">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Abrir ligação…">
+<!ENTITY openLinkCmd.accesskey        "A">

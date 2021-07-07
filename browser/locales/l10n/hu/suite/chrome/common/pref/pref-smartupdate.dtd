@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+
+<!ENTITY pref.smartUpdate.title               "Szoftvertelepítés">
+<!ENTITY addOnsTitle.label                    "Kiegészítők">
+<!ENTITY addOnsAllow.label                    "Kiegészítők telepítésének és frissítésének engedélyezése a webhely számára">
+<!ENTITY addOnsAllow.accesskey                "e">
+<!ENTITY allowedSitesLink.label               "Engedélyezett webhelyek">
+<!ENTITY autoAddOnsUpdates.label              "Frissítések automatikus keresése">
+<!ENTITY autoAddOnsUpdates.accesskey          "F">
+<!ENTITY daily.label                          "naponta">
+<!ENTITY addOnsDaily.accesskey                "n">
+<!ENTITY weekly.label                         "hetente">
+<!ENTITY addOnsWeekly.accesskey               "h">
+<!ENTITY addOnsModeAutomatic.label            "Frissítések automatikus letöltése és telepítése">
+<!ENTITY addOnsModeAutomatic.accesskey        "a">
+<!ENTITY enablePersonalized.label             "Kiegészítők ajánlásának személyessé tétele">
+<!ENTITY enablePersonalized.accesskey         "K">
+<!ENTITY addonManagerLink.label               "Kiegészítők kezelése">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Frissítések automatikus keresése">
+<!ENTITY autoAppUpdates.accesskey             "k">
+<!ENTITY appDaily.accesskey                   "n">
+<!ENTITY appWeekly.accesskey                  "h">
+<!ENTITY appModeAutomatic.label               "Frissítések automatikus letöltése és telepítése">
+<!ENTITY appModeAutomatic.accesskey           "l">
+<!ENTITY updateHistoryButton.label            "Frissítési előzmények megjelenítése…">
+<!ENTITY updateHistoryButton.accesskey        "F">

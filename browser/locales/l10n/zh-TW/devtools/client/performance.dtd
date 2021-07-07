@@ -1,0 +1,130 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Performance strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkey -->
+
+<!-- LOCALIZATION NOTE : FILE The correct localization of this file might be to
+  - keep it in English, or another language commonly spoken among web developers.
+  - You want to make that choice consistent across the developer tools.
+  - A good criteria is the language in which you'd find the best
+  - documentation on web development on the web. -->
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusTooltip): This string
+  -  is displayed as the tooltip for the buffer capacity during a recording. -->
+<!ENTITY performanceUI.bufferStatusTooltip "效能檢測器會將樣本儲存於一個循環的緩衝區當中，當緩衝區已滿時，新的取樣將會覆蓋開始記錄時的取樣。">
+
+<!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
+  -  is displayed as a message for why the real time overview graph is disabled
+  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "在偏好設定當中使用多程序的 Firefox，以便即時描繪紀錄資料。">
+
+<!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
+  -  is displayed when the profiler's circular buffer has started to overlap. -->
+<!ENTITY performanceUI.bufferStatusFull "緩衝區已滿，舊的取樣將被覆蓋。">
+
+<!-- LOCALIZATION NOTE (performanceUI.unavailableNoticePB): This is the label shown
+  -  in the details view while the profiler is unavailable, for example, while
+  -  in Private Browsing mode. -->
+<!ENTITY performanceUI.unavailableNoticePB "目前無法記錄檢測資料。請關閉所有的隱私瀏覽視窗後再試一次。">
+
+<!-- LOCALIZATION NOTE (performanceUI.loadingNotice): This is the label shown
+  -  in the details view while loading a profile. -->
+<!ENTITY performanceUI.loadingNotice "載入中…">
+
+<!-- LOCALIZATION NOTE (performanceUI.toolbar.*): These strings are displayed
+  -  in the toolbar on buttons that select which view is currently shown. -->
+<!ENTITY performanceUI.toolbar.waterfall "Waterfall">
+<!ENTITY performanceUI.toolbar.waterfall.tooltiptext "以瀑布的方式循序顯示瀏覽器的不同操作。">
+<!ENTITY performanceUI.toolbar.js-calltree "呼叫樹">
+<!ENTITY performanceUI.toolbar.js-calltree.tooltiptext "在紀錄時，強調瀏覽器花最多時間處理的 JavaScript 函數。">
+<!ENTITY performanceUI.toolbar.memory-calltree "配置">
+<!ENTITY performanceUI.toolbar.allocations.tooltiptext "在紀錄中顯示記憶體被配置到何處。">
+<!ENTITY performanceUI.toolbar.js-flamegraph "JS Flame 圖">
+<!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "顯示記錄過程中的 JavaScript 呼叫堆疊。">
+<!ENTITY performanceUI.toolbar.memory-flamegraph "配置 Flame 圖">
+
+<!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
+  -  in the call tree headers for a recording. -->
+<!ENTITY performanceUI.table.totalDuration            "總時間">
+<!ENTITY performanceUI.table.totalDuration.tooltip    "在此函數及其所呼叫的函數中所花費的時間。">
+<!ENTITY performanceUI.table.selfDuration             "自己的時間">
+<!ENTITY performanceUI.table.selfDuration.tooltip     "僅在此函數中所花費的時間。">
+<!ENTITY performanceUI.table.totalPercentage          "總成本">
+<!ENTITY performanceUI.table.totalPercentage.tooltip  "在此函數及其所呼叫的函數中所花費的時間比例。">
+<!ENTITY performanceUI.table.selfPercentage           "自己的成本">
+<!ENTITY performanceUI.table.selfPercentage.tooltip   "僅在此函數中所花費的時間比例。">
+<!ENTITY performanceUI.table.samples                  "取樣數">
+<!ENTITY performanceUI.table.samples.tooltip          "當效能檢測器取樣時，此函數在堆疊中的次數。">
+<!ENTITY performanceUI.table.function                 "函數">
+<!ENTITY performanceUI.table.function.tooltip         "被取樣函數的名稱與原始碼位置。">
+<!ENTITY performanceUI.table.totalAlloc               "總取樣到的配置數">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "在此位置被呼叫項目取樣到的總配置數。">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
+  -  is displayed next to the filter button-->
+<!ENTITY performanceUI.options.filter.tooltiptext "選擇要在時間軸中顯示哪些資料">
+
+<!-- LOCALIZATION NOTE (performanceUI.options.gear.tooltiptext): This is the
+  -  tooltip for the options button. -->
+<!ENTITY performanceUI.options.gear.tooltiptext "設定效能偏好。">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertTree): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's call tree. -->
+<!ENTITY performanceUI.invertTree             "反轉呼叫樹">
+<!ENTITY performanceUI.invertTree.tooltiptext "反轉呼叫樹後，會依照從最新到最舊的畫框順序來顯示分析出的呼叫路徑。">
+
+<!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
+  -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
+<!ENTITY performanceUI.invertFlameGraph             "反轉 Flame 圖">
+<!ENTITY performanceUI.invertFlameGraph.tooltiptext "反轉 Flame 圖可從最新往最舊的畫框來顯示受分析的呼叫路徑。">
+
+<!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the
+  -  label for the checkbox that toggles whether or not Gecko platform data
+  -  is displayed in the profiler. -->
+<!ENTITY performanceUI.showPlatformData             "顯示 Gecko 平台資料">
+<!ENTITY performanceUI.showPlatformData.tooltiptext "顯示平台資料將能讓 JavaScript 效能檢測報告包含 Gecko 平台符號">
+
+<!-- LOCALIZATION NOTE (performanceUI.showJITOptimizations): This string
+  -  is displayed next to a checkbox determining whether or not JIT optimization data
+  -  should be displayed. -->
+<!ENTITY performanceUI.showJITOptimizations             "顯示 JIT 最佳化資料">
+<!ENTITY performanceUI.showJITOptimizations.tooltiptext "顯示每個 JavaScript 畫框中取樣到的 JIT 最佳化資料。">
+
+<!-- LOCALIZATION NOTE (performanceUI.flattenTreeRecursion): This is the
+  -  label for the checkbox that toggles the flattening of tree recursion in inspected
+  -  functions in the profiler. -->
+<!ENTITY performanceUI.flattenTreeRecursion             "平面化樹狀遞迴">
+<!ENTITY performanceUI.flattenTreeRecursion.tooltiptext "在檢測函數時把遞迴平面化。">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableMemory): This string
+  -  is displayed next to a checkbox determining whether or not memory
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableMemory             "記錄記憶體">
+<!ENTITY performanceUI.enableMemory.tooltiptext "進行效能檢測時記錄記憶體消耗情況。">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableAllocations): This string
+  -  is displayed next to a checkbox determining whether or not allocation
+  -  measurements are enabled. -->
+<!ENTITY performanceUI.enableAllocations             "記錄配置">
+<!ENTITY performanceUI.enableAllocations.tooltiptext "進行效能檢測時記錄物件配置情況。">
+
+<!-- LOCALIZATION NOTE (performanceUI.enableFramerate): This string
+  -  is displayed next to a checkbox determining whether or not framerate
+  -  is recorded. -->
+<!ENTITY performanceUI.enableFramerate             "記錄畫框率">
+<!ENTITY performanceUI.enableFramerate.tooltiptext "進行效能檢測時記錄畫框率。">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.recordingNoticeStart/recordingNoticeEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Wraps the command used to start, like "Currently recording via console.profile("label")" -->
+<!ENTITY performanceUI.console.recordingNoticeStart "目前正透過下列方式記錄中:">
+<!ENTITY performanceUI.console.recordingNoticeEnd   "">
+
+<!-- LOCALIZATION NOTE (performanceUI.console.stopCommandStart/stopCommandEnd):
+  -  This string is displayed when a recording is selected that started via console.profile.
+  -  Indicates how to stop the recording, wrapping the command, like
+  -  "Stop recording by entering console.profileEnd("label") into the console." -->
+<!ENTITY performanceUI.console.stopCommandStart "在主控台中輸入">
+<!ENTITY performanceUI.console.stopCommandEnd   "以停止紀錄。">

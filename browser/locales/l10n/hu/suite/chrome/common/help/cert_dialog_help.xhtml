@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Tanúsítványinformációk és döntések</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Ez a dokumentum csak tajékoztató célokat szolgál. 
+  Segítségére lehet abban, hogy megőrizze bizalmas adatait és biztonságát 
+  a Világhálón. Azonban ez a leírás nem tárgyalja az ősszes internetes 
+  biztonsági és adatvédelmi kockázatot, valamint nem kívánja meghatározni, 
+  hogy mi helyes és mi nem az internetes biztonsági és adatvédelmi 
+  kockázatok kezelésében.</div>
+
+<h1 id="certificate_information_and_decisions">Tanúsítványinformációk és 
+  döntések</h1>
+
+<p>Ez a fejezet bemutatja, hogy hogyan kezeljuk a Tanusítványkezelő 
+  különböző helyzetekben megjelenitett üzeneteit. Az itt megadott további
+  információk a megjelenő párbeszédablak Súgó gombjával hozható elő.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#certificate_viewer">Tanúsítványmegjelenítő</a></li>
+    <li><a href="#choose_security_device">Adatvédelmi eszköz választása</a></li>
+    <li><a href="#encryption_key_copy">A titkosító kulcs másolata</a></li>
+    <li><a href="#certificate_backup">Tanúsítványok biztonsági másolata</a></li>
+    <li><a href="#user_identification_request">Felhasználóhitelesítési kérelem</a></li>
+    <li><a href="#new_certificate_authority">Új hitelesítésszolgáltató</a></li>
+    <li><a href="#web_site_certificates">Website Certificates</a></li>
+  </ul>
+</div>
+
+<h2 id="certificate_viewer">Tanúsítványmegjelenítő</h2>
+
+<p>Tanúsítványmegjelenítővel a kiválasztott tanúsítvány adatait tekinthetjük meg. Az Általános panellapon összefoglaló információk olvashatóak a tanúsítvány kiadójáról, az ellenőrzési állapotáról, a használatának céljáról stb. A Részletek lapon minden részletes információt megtekinthetünk a tanusítvány tartalmáról.</p>
+
+<p>A Tanúsítványmegjelenítő a következő lépésekkel hívható elő:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategóriában kattintsunk a Tanúsítványokra. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.</li>
+  <li>Kattintsunk a Tanúsítványok kezelése gombra.</li>
+  <li>Kattintsunk a megtekinteni kívánt tanúsítványtípusnak megfelelő panellapra.</li>
+  <li>Jelöljük ki a megtekinteni kívánt tanúsítványt.</li>
+  <li>Kattintsunk a Megjelenítés gombra.</li>
+</ol>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#general_tab">Általános panellap</a></li>
+    <li><a href="#details_tab">Részletek panellap</a></li>
+  </ul>
+</div>
+
+<h3 id="general_tab">Általános panellap</h3>
+
+<p>A Tanúsítványmegjelenítő első megnyitásakor az Általános panellap jelenik meg, amelyen a kiválasztott tanúsítvány következő adatai jelennek meg:</p>
+
+<ul>
+  <li><strong>Ez a tanúsítvány az alábbi célokra lett kiállítva::</strong> Lásd
+    <a href="glossary.xhtml#certificate_verification">tanúsítványellenőrzés</a>
+    részt, ahol részletesen ismertetve van, hogy miként ellenőrzi a Tanúsítványkezelő a tanúsítványokat. A tanúsítványokat a következő célokra lehet használni:
+    <ul>
+      <li><strong>SSL ügyféltanúsítvány</strong>: a felhasználót a weboldalak kérésére azonosító tanúsítvány</li>
+      <li><strong>SSL kiszolgálótanúsítvány</strong>: a weboldalak kiszolgálóját a böngésző kérésére azonosítő tanúsítvány</li>
+      <li><strong>E-mail aláíró tanúsítvány</strong>: olyan tanúsítvány, amely minket azonosít, ha egy elektronikus levelet digitális aláírással látunk el.</li>
+      <li><strong>Az e-mail címzettjének tanúsítványa</strong>: olyan tanúsítvány, amely valaki mást azonosít, akinek például titkosított levelet küldhetünk a segítségével.</li>
+      <li><strong>Hitelességi állapotot vizsgáló választanúsítvány</strong>: olyan tanúsítvány, amely egy online hitelességi állapotot vizsgáló szervezetet azonosít, amely az OCSP protokollt használja a tanúsítványok érvényességének ellenőrzéséhez. Az OCSP-ről többet tudhatunk meg az <a href="validation_help.xhtml">Érvényesítés beállításai</a> fejezetből.</li>
+      <li><strong>SSL hitelesítésszolgáltató:</strong> olyan tanúsítvány, amely hitelesítésszolgáltatót azonosít. A hitelesítésszolgáltató az a szervezet, amely a számítógépes hálózatokban való azonosítást szolgáló tanúsítványokat bocsátja ki.</li>
+    </ul>
+  </li>
+  <li><strong>Tulajdonos</strong>: a következő tanúsítványadatokat találjuk itt:
+    <ul>
+      <li><strong>Általános név</strong>: annak a személynek vagy egyéb entitásnak a neve, akit a tanúsítvány azonosít.</li>
+      <li><strong>Szervezet</strong>: a szervezet neve, amelyhez az entitás tartozik (például cégnév).</li>
+      <li><strong>Szervezeti egység</strong>: a szervezeti egység, amelyhez az entitás tartozik (például Könyvelési főosztály).</li>
+      <li><strong>Sorozatszám</strong>: a tanúsítvány sorozatszáma.</li>
+    </ul>
+  </li>
+  <li><strong>Kiállító</strong>: Összesíti (hasonlóképpen, mint a <q>Tulajdonos</q> lapon; lásd feljebb) a tanúsítvány kiállítójáról elérhető információkat.</li>
+  <li><strong>Érvényesség</strong>: megadja a tanúsítvány érvényességének időtartamát.</li>
+  <li><strong>Ujjlenyomatok</strong>: felsorolja a tanúsítványhoz tartozó ujjlenyomatokat.
+    Az ujjlenyomat egy egyedi számsorozat, amelyet egy matematikai függvény állít elő a tanúsítvány tartalmából.
+    A tanúsítvány ujjlenyomata felhasználható annak ellenőrzésére, hogy a tanusítványt nem manipulálták-e.</li>
+</ul>
+
+<h3 id="details_tab">Részletek lap</h3>
+
+<p>Kattintsunk a Tanúsítványmegjelenítő felső részén található Részletek lapra,
+  ha részletesebb információkat szeretnénk megtudni a kiválasztott tanúsítványról. To examine information
+  Ha részleteket szeretnénk a Tanúsítvány hierarchia területen lévő tanúsítványról, akkor válasszuk ki a nevét,
+  valasszuk ki a azt a mezőt amiről többet szeretnénk megtudni majd olvassuk le a mező értékét:</p>
+
+<ul>
+  <li><strong>Tanúsítványhierarchia</strong>: megjeleníti a tanúsítványláncot azzal
+  a tanúsítvánnyal a végén, amelyet eredetileg kijelöltünk. A tanúsítványlánc tanúsítványok olyan
+  hierarchikus rendszere, amelyben minden tanúsítványt egy felsőbb szintű hitelesítésszolgáltató írt alá.
+  Egy CA tanúsítvány egy <a href="glossary.xhtml#certificate_authority">tanúsítványkiállítót</a>
+  jelöl, amit a kiállító az általa kiállított tanúsítványok aláírására használ. A hitelesítésszolgáltató tanúsítványát aláírhatja egy felsőbb szintű hitelesítésszolgáltató, így egy egészen a <a href="glossary.xhtml#root_ca">legfelső szintű hitelesítésszolgáltatóig</a> nyúló lánc alakulhat ki.</li>
+  <li><strong>Tanúsítványmezők</strong>: a Tanúsítványhierarchiából kiválasztott tanúsítvány mezőit jeleníti meg.</li>
+  <li><strong>Mezőérték</strong>: a Tanúsítványmezőkből kiválasztott mező értékét jeleníti meg.</li>
+</ul>
+
+<p>A Tanúsítványmegjelenítő törekszik arra, hogy a mezőértékeket az ember számára könnyen olvasható formában jelenítse meg. Ha bizonyos mezők tartalmát nem tudja értelmezni, akkor a tanúsítványban szereplő tényleges értékeket jeleníti meg.</p>
+
+<h2 id="choose_security_device">Az adatvédelmi eszköz kiválasztása</h2>
+
+<p>Az adatvédelmi eszköz (vagy más néven token) olyan hardveres vagy szoftveres eszköz, amely kriptográfiai szolgáltatásokat nyújt (titkosítás és visszafejtés), valamint tanúsítványokat és kulcsokat tárol. Amikor a Tanúsítványkezelő nem tudja eldönteni, hogy melyik adatvédelmi eszközt használja egy tanúsítvány importálásánál vagy egy kriptográfiai műveletnél (Például: kulcsgenenerálás egy új tanúsítvány számára), megjelenik az Adatvédelmi eszköz választása párbeszédpanel. Ebben a párbeszédpanelben kiválaszthatunk egyet a Tanúsítványkezelő által felismert kettő vagy több adatvédelmi eszköz közül.</p>
+
+<p>Az intelligens kártya egyfajta adatvédelmi eszköz. Ha például egy intelligens kártyákat beolvasó eszköz van csatlakoztatva a gépünkhöz, és egy intelligens kártyát helyeztünk bele, az intelligens kártya neve meg fog jelenni a legördülő elemben. Ebben az esetben válasszuk ki az intelligens kártya nevét, hogy a Tanúsítványkezelő tudja, hogy azt szeretnénk használni.</p>
+
+<p>A Tanúsítványellenőrző beépített és használt adatvédelmi eszközzel rendelkezik, amit  alapértelmezetten használ is.
+   Ez bármikor használható, további biztonsági berendezések meg-, illetve meg nem lététől függetlenűl.</p>
+
+<h2 id="encryption_key_copy">A titkosító kulcs másolata</h2>
+
+<p>A külön aláíró és titkosító e-mail tanúsítványokat kibocsátó <a href="glossary.xhtml#certificate_authority">hitelesítésszolgáltatók</a> általában biztonsági másolatot készítenek a személyes <a href="glossary.xhtml#encryption_key">titkosító kulcsról</a> a tanúsítvány elkészítésének folyamata során.</p>
+
+<p>A Titkosító kulcs másolata párbeszédpanel lehetővé teszi, hogy jóváhagyjuk az ilyen biztonsági mentést, vagy megszakíthatjuk a tanúsítványkérési folyamatot. A hitelesítésszolgáltató a titkosító kulcsunk biztonsági másolatának birtokában képes arra, hogy minden nekünk küldött levelet visszafejtsen, amelyet a megfelelő nyilvános kulcsunkkal titkosítottak.</p>
+
+<p>A Titkos kulcs másolata párbeszédpanelen az alábbi lehetőségek közül választhatunk:</p>
+
+<ul>
+  <li><strong>Tanúsítvány megtekintése</strong>: a biztonsági másolatot kérő hitelesítésszolgáltatót azonosító tanúsítvány megtekintéséhez kattintsunk a Tanúsítvány megtekintése gombra.</li>
+  <li><strong>OK</strong>: ha megbízunk a tanúsítvány által azonosított hitelesítésszolgáltatóban, és megengedjük, hogy visszafejtse a leveleinket, kattintsunk az OK gombra.
+
+    <p>Ha nem vagyunk biztosak abban, hogy megbízunk-e a biztonsági másolatot kérő hitelesítésszolgáltatóban, beszéljünk a rendszergazdával.</p>
+  </li>
+  <li><strong>Mégse</strong>: ha nem megbízható a tanúsítványkiállító, aki a biztonsági másolatot kéri,
+  akkor nem kérünk tőle tanúsítványt. A Mégse gomb a biztonsági mentés és a tanúsítványkérés folyamatát egyaránt megszakítja.</li>
+</ul>
+
+<p>Miután a hitelesítésszolgáltató elkészítette a titkosító kulcs biztonsági másolatát, ezzel a kulccsal még akkor is eltudjuk olvasni a titkosított leveleinket, ha elvesztettük a jelszavunkat, vagy a kulcsunk saját másolatát. Ha nincs a kulcsról biztonsági mentés, és elveszítjük a jelszót vagy a kulcsot, semmilyen módon nem fogjuk tudni elolvasni az ezzel a kulccsal titkosított elektronikus leveleket.</p>
+
+<h2 id="certificate_backup">Tanúsítványok biztonsági másolata</h2>
+
+<p>Amikor kapunk egy tanúsítványt, készítsünk el a tanúsítvány és a személyes kulcs biztonsági mentését, és tároljuk az biztonságos helyen. Például másoljuk hajlékonylemezre, és a lemezt tároljuk egyéb értékeink mellett a páncélszekrényben. Ha így teszünk, akkor a merevlemez vagy a fájl tönkremenetele esetén is könnyen helyreállíthatjuk a tanúsítványt.</p>
+
+<p>Legjobb esetben is kényelmetlenséget okoz, de akár katasztrofális következménye is lehet annak, ha elveszítjük a tanúsítványunkat és a hozzá tartozó személyes kulcsot, attól függően, hogy mire használjuk. Például:</p>
+
+<ul>
+  <li>Ha elveszítünk egy tanúsítványt, ami fontos weboldalakon azonosít minket, akkor nem tudjuk elérni az oldalt addig, amíg új tanúsítványt nem szerzünk.</li>
+  <li>Ha elveszítjük az elektronikus levelek titkosításához használt tanúsítványt, nem fogjuk tudni elolvasni a titkosított leveleket – sem az általunk küldött titkosított leveleket, sem a nekünk küldötteket.
+    Ha ez bekövetkezik, és nem tudjuk a tanúsítványhoz tartozó személyes titkosító kulcs biztonsági másolatát megszerezni, akkor soha nem fogjuk tudni elolvasni az ezzel a kulccsal titkosított leveleket.</li>
+</ul>
+
+<p>Akárcsak a többi értékes adatról, a tanúsítványokról is biztonsági mentést kell készíteni, hogy elkerüljük a későbbi gondokat és kiadásokat. Tegyük meg ezt most..</p>
+
+<h2 id="user_identification_request">Felhasználóazonosítási kérelem</h2>
+
+<p>Néhány weboldal felhasználói név és jelszó helyett tanúsítványt kér az azonosításunkra, mivel a tanúsítvány
+  sokkal megbízhatóbb módot ad az azonosításra. Ezt az interneten át történő azonosítási módszert más néven
+  az <a href="glossary.xhtml#client_authentication">ügyfél hitelesítésének</a> is nevezik.</p>
+
+<p>Elképzelhető azonban, hogy a Tanúsítványkezelő egynél több tanúsítványt tárol, amit a webhely kérésére a személyazonosságunk hitelesítésére felmutathat. Ebben az esetben a Tanúsítványkezelő megjeleníti a Felhasználóazonosítási kérelem párbeszédpanelt, amelyen kétféle információ található:</p>
+
+<p><strong>A webhely azt kívánja, hogy Ön igazolja magát egy tanúsítvánnyal</strong>: a párbeszédpanelnek ez a szakasza a következő információkat írja ki.</p>
+
+<ul>
+  <li><strong>Gépnév</strong>: az azonosítást kérő kiszolgáló neve, ahogy az URL részeként megjelenik. A Netscape oldalának gépneve <tt>home.netscape.com</tt>.</li>
+  <li><strong>Szervezet</strong>: a webhelyet üzemeltető szervezet neve.</li>
+  <li><strong>Kiállító</strong>: annak a <a href="glossary.xhtml#certificate_authority">tanúsítványkiállítónak</a>
+   a neve, aki kiállította a tanúsítványt.</li>
+</ul>
+
+<p><strong>Válassza ki az azonosításhoz használandó tanúsítványt</strong>: Azok a tanúsítványok,
+  amik felhasználhatóak az azonosításunkra az ezt kérő weboldalak felé kiválasztható a párbeszédablak
+  legördülőmenüjéből. Válasszunk olyan tanúsítványt, amit legvalószínűleg alfogad a weboldal, amit meg akarunk látogatni.</p>
+
+<p>A döntés megkönnyítése érdekében a kijelölt tanúsítvány itt felsorolt adatai megjelennek:</p>
+
+<ul>
+  <li><strong>Tulajdonos</strong>:  a tanúsítvány által azonosított személy adatai (például a nevünk és e-mail címünk), a tanúsítvány sorozatszáma és az érvényesség dátumai jelennek meg itt.</li>
+  <li><strong>Kiállító:</strong> a tanúsítványt kibocsátó hitelesítésszolgáltató adatai jelennek itt meg, például a neve és a székhelye.</li>
+</ul>
+
+<h2 id="new_certificate_authority">Új hitelesítésszolgáltató</h2>
+
+<p>A Tanúsítványkezelő által kezelt tanúsítványok között, akár a számítógépen, akár egy külső adatvédelmi eszközön, például intelligens kártyán tároljuk őket, megtalálhatóak a <a href="glossary.xhtml#certificate_authority">hitelesítészolgáltatókat</a> azonosító tanúsítványok.
+  A többi kezelt tanúsítvány felismeréséhez a Tanúsítványkezelőnek rendelkeznie kell olyan tanúsítványokkal, amelyek a tanúsítványokat kiadó, vagy a kiadásukat engedélyező hitelesítésszolgáltatókhoz tartoznak.</p>
+  
+<p>Mikor eldöntjük, hogy megbízunk egy hitelesítésszolgáltatóban, akkor a Tanúsítványkezelő letölti
+  a annak tanúsítványát és a továbbiakban megbízik minden általa kiállított tanúsítványban.</p>
+
+<p>Az új hitelesítésszolgáltató tanúsítványának letöltése előtt a Tanúsítványkezelő lehetővé teszi,
+  hogy meghatározzuk azokat a területeket, amelyeken a tanúsítványban megbízunk.
+  A következő lehetőségek közül választhatunk:</p>
+
+<ul>
+  <li><strong>Megbízás a weboldalak azonosítására</strong>: Weboldal tanúsítvány egyes oldalak számára,
+    ez pénzátutalást lebonyolító oldalak esetében nagyon fontos lehet, mivel egy helytelen,
+    vagy hamis azonosítás súlyos következményeket okozhat.</li>
+  <li><strong>Megbízás levelezőpartnerek azonosítására</strong>: ha szandékunkban áll
+    levelezőpartnereinknek titkosított formában bizalmas adatokat kűldeni, vagy a partnerek
+    pontos azonosítása valamilyen oknál fogva fontos számunkra, akkor meg kell fontoljuk, hogy
+    a hitelesítésszolgáltató a jövőben megfelelően fogja-e azonosítani a partnereink tanúsítványait.</li>
+  <li><strong>Megbízás szoftverfejlesztők azonosítására</strong>: ennek a lehetőségnek
+    a választásával megbízunk a hitelesítésszolgáltató által kiadott olyan tanúsítványokban,
+    amelyek Java kisalkalmazások vagy JavaScript programok eredetét igazolják.
+    Ezek a programok különleges hozzáférést kérhetnek a számítógéphez,
+    például fájlokat szeretnének módosítani. Mivel ezekkel a hozzáférési jogokkal vissza lehet élni,
+    például minden letörölhető a merevlemezről, legyünk nagyon körültekintőek
+    ennek a lehetőségnek a kiválasztásakor, hacsak nem vagyunk teljesen biztosak abban,
+    hogy a hitelesítésszolgáltató megbízható ebből a szempontból.</li>
+</ul>
+
+<p>Mielőtt megbíznánk egy új hitelesítésszolgáltatóban, győződjünk meg róla,
+  hogy ismerjük az üzemeltetőjét, valmint, hogy a hitelesítésszolgáltató módszerei és működési
+  szabályzata megfelel-e a tanúsítvány az általunk tervezett felhasználáshoz. Például, ha a hitelesítésszolgáltató
+  tanúsítványokat ad ki pénzátutalási célokra használt weboldalhoz, akkor győződjünk meg róla,
+  hogy megfelel-e nekünk a a biztonság, amit a hitelesítésszolgáltató garantál.</p>
+
+<ul>
+<li><strong>Megjelenítés</strong>: kattintsunk erre a gombra a letölteni kívánt
+    hitelesítésszolgáltatói tanúsítvány megjelenítéséhez. Ha nem szeretnénk letölteni a tanúsítványt,
+    akkor kattintsunk a Mégse gombra.</li>
+</ul>
+
+<h2 id="web_site_certificates">Weboldalak tanúsítványai</h2>
+
+<p>Az olyan weblapoknál, amik támogatják az 
+  <a href="glossary.xhtml#ssl">SSL-t</a> az alabbi ablakok jelenhetnek meg:
+  <a href="glossary.xhtml#authentication">azonosítás</a> és
+  <a href="glossary.xhtml#encryption">titkosítás</a>. Hiba esetén két fajta oldal jelenhet meg:
+  <a href="#secure_connection_failed_page">A biztonságos kapcsolat sikertelen</a> és a
+  <a href="#untrusted_connection_page">Nem megbízható kapcsolat</a> oldalak.</p>
+</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#secure_connection_failed_page">A biztonságos kapcsolat sikertelen oldal</a></li>
+    <li><a href="#untrusted_connection_page">Nem megbízható kapcsolat oldal</a></li>
+    <li><a href="#secure_connection_failed_dialog">A biztonságos kapcsolat sikertelen párbeszédablak</a></li>
+    <li><a href="#certificate_expired">A kiszolgáló tanúsítványa lejárt</a></li>
+    <li><a href="#certificate_not_yet_valid">A kiszolgáló tanúsítványa még nem érvényes</a></li>
+    <li><a href="#domain_name_mismatch">A tartománynév nem egyezik</a></li>
+  </ul>
+</div>
+
+<h3 id="secure_connection_failed_page">A biztonságos kapcsolat sikertelen oldal</h3>
+
+<p>Abban az esetben ha letiltottuk az SSL protokollt (például
+  <a href="ssl_help.xhtml#ssl_settings">SSL beálltások</a>) oldalon vagy olyan webhelyek meglátogatása estén, amelyek az SSL protokoll régebbi, nem biztonságos verzióját alkalmazzák, akkor „A biztonságos kapcsolat sikertelen” című oldal jelenik meg.
+  Ez az oldal néhány háttérinformációt tartalmaz (például: 
+  <strong>Hibakód</strong>ot amely egyedileg azonosítja probléma típusát, amelyet a &brandShortName; észlelt a webhellyel kapcsolatban) és az <strong>Újratöltés</strong> gombot, ami újratölti a weboldalt..</p>
+
+<h3 id="untrusted_connection_page">Nem megbízható kapcsolat oldal</h3>
+
+<p>Ha az SSL engedélyezve van, akkor a hibaoldal a következő címmel jelenik meg: &quot;Nem megbízható kapcsolat&quot;. Számos oka lehet annak, hogy egy kapcsolat nem megbízható. Néhány gyakori probléma:</p>
+
+<ul>
+  <li>a webhely tanusítványa<a href="#certificate_expired">nem érvényes többé (lejárt)</a></li>
+  <li>a webhely tanusítványa <a href="#certificate_not_yet_valid">még nem érvényes</a></li>
+  <li>a webhely tanusítvány egy másik tartományra érvényes
+    (<a href="#domain_name_mismatch">a tartománynév nem egyezik</a>)</li>
+  <li>a webhely tanusítványa önaláíró (így a webhely azonossága nem ellenőrizhető).</li>
+  <li>a hitelesítésszolgáltatói tanusítványa nem megbízható (a &brandShortName; nem tudja ellenőrizni a tanusítvány hitelességét mert nem ismeri fel a <a href="glossary.xhtml#certificate_authority"> hitelesítésszolgáltatót (CA)</a>, aki kiállította a webhely tanusítványát)</li>
+</ul>
+
+<h3 id="web_site_certified_by_an_unknown_authority">A webhelyet ismeretlen hitelesítésszolgáltató azonosította</h3>
+
+<p>Sok webhely használ tanúsítványokat az oldal azonosítására. Ha a Tanúsítványkezelő nem ismeri a webhely tanúsítványát kiállító <a href="glossary.xhtml#certificate_authority">hitelesítésszolgáltatót</a>, egy figyelmeztető üzenetet jelenít meg, amely lehetővé teszi a webhely tanúsítványának vizsgálatát, és dönthetünk a továbblépésről.</p>
+
+<ul>
+  <li><strong>Tanúsítvány vizsgálata</strong>: A webhely tanúsítványának megtekintéséhez kattintsunk a gombra.</li>
+</ul>
+
+<p>A következő lehetőségek közül választhatunk:</p>
+
+<ul>
+  <li><strong>A tanúsítvány végleges elfogadása</strong>: akkor válasszuk ezt a lehetőséget a tanúsítvány elfogadásához (a nyilvánvaló probléma ellenére) és webhelyhez való csatlakozáshoz. A Tanúsítványkezelő érvényesnek fogja tartani ezt a tanúsítványt mindaddig, amíg le nem jár.</li>
+  <li><strong>A tanúsítvány ideiglenes elfogadása erre a munkamenetre</strong>: akkor válasszuk ezt a lehetőséget a tanúsítvány ideiglenes elfogadásához és webhelyhez való csatlakozáshoz. A Tanúsítványkezelő ezt a tanúsítványt csak a böngésző következő indításáig fogja érvényes azonosítónak elfogadni. Ugyanez a figyelmeztetés a webhely legközelebbi felkeresésekor is megjelenhet.</li>
+  <li><strong>Tanúsítvány elutasítása és a kapcsolat megszakítása a webhellyel</strong>: akkor válasszuk ezt a lehetőséget, ha egyáltalán nem akarjuk meglátogatni a webhelyet. Ez a választás helyénvaló akkor, ha a pénzügyi műveletet hajtunk végre a webhelyen. Ebben az esetben jelentsük a problémát banknak, vagy a webhelyet üzemeltető szervezetnek, és a további lépések megtétele előtt győződjünk meg arról, hogy a webhely tanúsítványa érvényes-e.</li>
+</ul>
+
+<p>A változtatások érvényesítéséhez kattintsunk az OK gombra. Ha a Mégse gombra kattintunk,
+  a Tanúsítványkezelő nem fogja a tanúsítványt érvényes azonosítónak tekinteni,
+  és nem kapcsolódik a webhelyhez.</p>
+
+<p><strong>Figyelmeztetés a kiszolgáló rendszergazdájának</strong>: ez a figyelmeztetés arra utalhat, hogy a kiszolgáló nincs helyesen beállítva. Ha ez a helyzet, a kiszolgáló rendszergazdájának vagy webmesterének ellenőriznie kell a szükséges közbülső CA-k állapotát, és a hiányzó tanúsítványokat telepítenie kell a kiszolgálóra.</p>
+
+<p>Ha fel akarjuk keresni ez ügyben a webhely webmesterét, a következő adatokat mellékeljük:</p>
+
+<ul>
+  <li>A kiszolgáló rendszergazdája ebből kinyerheti a közbülső CA-kra vonatkozó adatokat:
+    <a href="http://knowledge.verisign.com/search/solution.jsp?id=vs2119">Mire való a közbülső CA tanúsítvány? (What
+    is the purpose of the Intermediate CA certificate?)</a></li>
+  <li>Ha a kiszolgáló VeriSign-tanúsítványt használ, a rendszergazda letöltheti innen a megfelelő tanúsítványt:
+    <a href="http://www.verisign.com/support/ssl-certificates-support/install-ssl-certificate.html">SSL tanúsítvány támogatási oldal (SSL Certificates Support)</a></li>
+</ul>
+
+<p><strong>Haladó felhasználóknak</strong>: ha azt szeretnénk, hogy a Tanúsítványkezelő egy adott hitelesítésszolgáltató által kiadott valamennyi tanúsítványban megbízzon, az megfelelő hitelesítésszolgáltató tanúsítványának bizalmi beállításait kell átírnunk. A megfelelő párbeszédpanel a következő lépésekkel érhető el:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Az Adatvédelem és biztonság kategóriában kattintsunk a Tanúsítványokra. (Ha nem láthatóak az alkategóriák, az alkategóriák kibontásához kattintsunk duplán az Adatvédelem és biztonság kategóriára.</li>
+  <li>Kattintsunk a Tanúsítványok kezelése gombra.</li>
+  <li>Kattintsunk a Hitelesítésszolgáltatók panellapra.</li>
+  <li>Válasszuk ki azt a hitelesítésszolgáltatói tanúsítványt, amelynek a bizalmi beállításait módosítani kívánjuk.</li>
+  <li>Kattintsunk a Szerkesztés gombra, és válasszuk ki a megfelelő bizalmi beállításokat.</li>
+</ol>
+
+<h3 id="certificate_expired">A kiszolgáló tanúsítványa lejárt</h3>
+
+<p>Akár egy hitelkártyának, jogosítványnak, vagy bármely más igazolványak, úgy a <a href="glossary.xhtml#certificate">tanúsítványnak</a> is
+  van érvényességi ideje. A tanúsítvány lejáratakor a tulajdonosának új tanúsítványt kell szereznie.</p>
+
+<p>A Tanúsítványkezelő figyelmeztet, ha olyan webhelyek készülünk meglátogatni, amelynek a tanúsítvány lejárt. Az első teendő ilyenkor, hogy ellenőrizzük a számítógépünk dátumának és órájának megfelelő beállítását. Ha a számítógép órája a lejárat dátumánál későbbi időpontra van állítva, a Tanúsítványkezelő a webhely tanúsítványát lejártként fogja kezelni.  </p>
+<p>Ha a számítógép órájának beállítása megfelel a valóságnak, akkor el kell döntenünk, hogy megbízunk-e a webhelyben.  A döntés függ attól, hogy milyen célból kerestük fel a webhelyet, és hogy mit tudunk róla. A legtöbb kereskedelmi webhely gondoskodik a tanúsítvány cseréjéről még a lejárat előtt.</p>
+
+<p>Ha a számítógép órájának beállítása megfelel a valóságnak, akkor el kell döntenünk, hogy megbízunk-e a webhelyben.  A döntés függ attól, hogy milyen célból kerestük fel a webhelyet, és hogy mit tudunk róla. A legtöbb kereskedelmi webhely gondoskodik a tanúsítvány cseréjéről még a lejárat előtt.</p>
+
+<p>A Lejárt kiszolgálótanúsítvány párbeszédpanelen az alábbi lehetőségek közül választhatunk:</p>
+
+<ul>
+  <li><strong>Tanúsítvány megtekintése</strong>: a tanúsítvány adatainak,
+  többek közt az érvényességi idejének megtekintéséhez kattintsunk a Tanúsítvány megtekintése gombra.</li>
+  <li><strong>OK</strong>: ha okunk van azt hinni, hogy a tanúsítvány figyelmetlenségből eredő hiba miatt járt le, választhatjuk az OK gombot a tanúsítvány elfogadásához az aktuális munkamenet idejére, és problémáról értesíthetjük a webhely webmesterét.
+
+    <p>Megfontoltan cselekedjünk, amíg a webhelyen tartózkodunk.</p>
+  </li>
+  <li><strong>Mégse</strong>: Ha azt gyanítjuk, hogy ez a probléma veszélyes lehet és úgy döntünk,
+    hogy egyáltalán nem akarjuk meglátogatni az oldalt, kattintsunk a Mégse gombra
+    (ebben az esetben a Tanúsítványkezelő nem csatlakoztat minket az oldalhoz).</li>
+</ul>
+
+<h3 id="certificate_not_yet_valid">A kiszolgáló tanúsítványa még nem érvényes</h3>
+
+<p>Akár egy hitelkártyának, jogosítványnak, vagy bármely más igazolványak, úgy a <a href="glossary.xhtml#certificate">tanúsítványnak</a> is van érvényességi ideje.</p>
+
+<p>A Tanúsítványkezelő figyelmeztet minket, ha a olyan oldalt látogatunk meg, aminek a tanúsítványa még nem érvényes.
+  Az első teendő ilyenkor,
+  hogy ellenőrizzük a számítógépünk dátumának és órájának megfelelő beállítását.
+  Ha a számítógép órája rossz dátumra van beállítva, akkor a Tanúsítványkezelő
+  indokolatlan esetben is érvénytelennek nyilváníthatja a tanúsítványokat.</p>
+
+<p>Ha a számítógép órájának beállítása megfelel a valóságnak, akkor el kell döntenünk, hogy megbízunk-e a webhelyben.  A döntés függ attól, hogy milyen célból kerestük fel a webhelyet, és hogy mit tudunk róla. A legtöbb kereskedelmi webhely gondoskodik arról, hogy csak az érvényességi dátum kezdete után vegye használatba a tanúsítványt.</p>
+
+<p>A kiszolgálótanúsítvány még nem érvényes párbeszédpanelen az alábbi lehetőségek közül választhatunk:</p>
+
+<ul>
+  <li><strong>Tanúsítvány megtekintése</strong>: a tanúsítvány adatainak,
+  többek közt az érvényességi idejének megtekintéséhez kattintsunk a Tanúsítvány megtekintése gombra.</li>
+  <li><strong>OK</strong>: ha okunk van azt hinni, hogy a probléma figyelmetlenségből
+  eredő hiba következménye, választhatjuk az OK gombot a tanúsítvány elfogadásához
+  az aktuális munkamenet idejére, és problémáról értesíthetjük a webhely webmesterét.
+
+    <p>Megfontoltan cselekedjünk, amíg a webhelyen tartózkodunk.</p>
+  </li>
+  <li><strong>Mégse</strong>: Ha azt gyanítjuk, hogy ez a probléma veszélyes lehet és úgy döntünk,
+    hogy egyáltalán nem akarjuk meglátogatni az oldalt, kattintsunk a Mégse gombra
+    (ebben az esetben a Tanúsítványkezelő nem csatlakoztat minket az oldalhoz).</li>
+</ul>
+
+<h3 id="domain_name_mismatch">A tartománynév nem egyezik</h3>
+
+<p>Egy kiszolgáló <a href="glossary.xhtml#certificate">tanúsítványa</a> a kiszolgáló nevét
+  a tartománynevével jelöli. Például a Mozilla weboldalának tartományneve <tt>www.mozilla.org</tt>.
+  Ha a tanúsítványban szereplő tartománynév nem egyezik a weboldal nevével, akkor az annak a jele lehet,
+  hogy valaki megpróbál minket félrevezetni.</p>
+
+<p>A webhely megbízhatóságáról való döntésünk függ attól, hogy milyen célból
+  kerestük fel a webhelyet, és hogy mit tudunk róla. A legtöbb keresekedelmi webhely ügyel rá,
+  hogy az oldal kiszolgálóneve egyezzék a tanúsítványban szereplővel.</p>
+
+<p>Az Eltérő tartománynév párbeszédpanelen az alábbi lehetőségek közül választhatunk:</p>
+
+<ul>
+  <li><strong>Tanúsítvány megtekintése</strong>: a tanúsítvány adatainak
+  megvizsgálásához kattintsunk a Tanúsítvány megtekintése gombra.</li>
+  <li><strong>OK</strong>: ha okunk van azt hinni, hogy a probléma figyelmetlenségből
+  eredő hiba következménye, választhatjuk az OK gombot a tanúsítvány elfogadásához
+  az aktuális munkamenet idejére, és problémáról értesíthetjük a webhely webmesterét.
+
+    <p>Megfontoltan cselekedjünk, amíg a webhelyen tartózkodunk,
+    és minden ott található információt kezeljünk fenntartásokkal.</p>
+  </li>
+  <li><strong>Mégse</strong>: Ha azt gyanítjuk, hogy ez a probléma veszélyes lehet és úgy döntünk,
+    hogy egyáltalán nem akarjuk meglátogatni az oldalt, kattintsunk a Mégse gombra
+    (ebben az esetben a Tanúsítványkezelő nem csatlakoztat minket az oldalhoz).</li>
+</ul>
+
+<p>Ha úgy döntünk, hogy mégis elfogadjuk a tanúsítvány erre a munkamanetre,
+  akkor megfontoltan cselekedjünk, amíg a webhelyen tartózkodunk és minden
+  információt kezeljünk fentartásokkal.</p>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY msgComposeWindow.title "Komponowanie: (bez tematu)">
+
+<!ENTITY fromAddr.label "Nadawca:">
+<!ENTITY fromAddr.accesskey "d">
+<!ENTITY subject.label "Temat:">
+<!ENTITY subject.accesskey "T">
+<!ENTITY attachments.label "Załączniki:">
+<!ENTITY attachments.accesskey "a">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Zapisz">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "Zapisz jako">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Plik…">
+<!ENTITY saveAsFileCmd.accesskey "P">
+<!ENTITY saveAsDraftCmd.label "Szkic">
+<!ENTITY saveAsDraftCmd.accesskey "c">
+<!ENTITY saveAsTemplateCmd.label "Szablon">
+<!ENTITY saveAsTemplateCmd.accesskey "b">
+<!ENTITY attachMenu.label "Załącz">
+<!ENTITY attachMenu.accesskey "c">
+<!ENTITY attachFileCmd.label "Plik…">
+<!ENTITY attachFileCmd.accesskey "l">
+<!ENTITY attachPageCmd.label "Stronę WWW…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!ENTITY attachVCardCmd.label "Wizytówkę (vCard)">
+<!ENTITY attachVCardCmd.accesskey "t">
+<!ENTITY sendNowCmd.label "Wyślij teraz">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "t">
+<!ENTITY sendLaterCmd.label "Wyślij później">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "p">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Zawiń wiersze">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey "Z">
+<!ENTITY accountManagerCmd.label "Konfiguracja kont…">
+<!ENTITY accountManagerCmd.accesskey "g">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Pasek narzędzi poczty">
+<!ENTITY showComposeToolbarCmd.accesskey "P">
+<!ENTITY showFormatToolbarCmd.label "Pasek narzędzi formatowania">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "F">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Opcje">
+<!ENTITY optionsMenu.accesskey "j">
+
+<!ENTITY quoteCmd.label "Cytuj wiadomość">
+<!ENTITY quoteCmd.accesskey "C">
+<!ENTITY selectAddressCmd.label "Wybierz adresy…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "W">
+
+<!ENTITY priorityMenu.label "Priorytet">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY lowestPriorityCmd.label "Najniższy">
+<!ENTITY lowestPriorityCmd.accesskey "a">
+<!ENTITY lowPriorityCmd.label "Niski">
+<!ENTITY lowPriorityCmd.accesskey "i">
+<!ENTITY normalPriorityCmd.label "Normalny">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Wysoki">
+<!ENTITY highPriorityCmd.accesskey "W">
+<!ENTITY highestPriorityCmd.label "Najwyższy">
+<!ENTITY highestPriorityCmd.accesskey "j">
+
+<!ENTITY returnReceiptMenu.label "Żądaj potwierdzenia doręczenia">
+<!ENTITY returnReceiptMenu.accesskey "p">
+<!ENTITY dsnMenu.label "Informuj o statusie dostarczania">
+<!ENTITY dsnMenu.accesskey "n">
+
+<!ENTITY outputFormatMenu.label "Wyślij wiadomość jako">
+<!ENTITY outputFormatMenu.accesskey "j">
+<!ENTITY autoFormatCmd.label "Wybierz automatycznie">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Tylko tekst">
+<!ENTITY plainTextFormatCmd.accesskey "T">
+<!ENTITY htmlFormatCmd.label "Tylko HTML">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Tekst oraz HTML">
+<!ENTITY bothFormatCmd.accesskey "o">
+
+<!ENTITY fileCarbonCopyCmd.label "Zachowaj kopię wiadomości w folderze">
+<!ENTITY fileCarbonCopyCmd.accesskey "h">
+<!ENTITY fileHereMenu.label "Zachowaj tutaj">
+
+<!ENTITY sendButton.label "Wyślij">
+<!ENTITY addressButton.label "Adres">
+<!ENTITY attachButton.label "Załącz">
+<!ENTITY spellingButton.label "Pisownia">
+<!ENTITY saveButton.label "Zapisz jako">
+<!ENTITY stopButton.label "Zatrzymaj">
+
+<!ENTITY addressBar.tooltip "Pasek adresowania">
+<!ENTITY formatToolbar.tooltip "Pasek narzędzi formatowania">
+<!ENTITY sendButton.tooltip "Wyślij tę wiadomość">
+<!ENTITY sendlaterButton.tooltip "Wyślij tę wiadomość później">
+<!ENTITY addressButton.tooltip "Wybierz adresata z książki adresowej">
+<!ENTITY attachButton.tooltip "Dodaj pliki do tej wiadomości">
+<!ENTITY saveButton.tooltip "Zapisz wiadomość jako">
+<!ENTITY stopButton.tooltip "Zatrzymaj bieżący transfer">
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Otwórz">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "Zmień nazwę…">
+<!ENTITY renameAttachment.accesskey "Z">
+<!ENTITY deleteAttachment.accesskey "U">
+<!ENTITY selectAllAttachments.accesskey "w">
+<!ENTITY attachFile.label "Załącz plik">
+<!ENTITY attachFile.accesskey "p">
+<!ENTITY attachPage.label "Załącz stronę WWW…">
+<!ENTITY attachPage.accesskey "W">

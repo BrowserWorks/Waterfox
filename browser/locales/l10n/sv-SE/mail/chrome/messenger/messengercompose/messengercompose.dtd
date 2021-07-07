@@ -1,0 +1,345 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Skriv: (inget ämne)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Arkiv">
+<!ENTITY fileMenu.accesskey "A">
+<!ENTITY newMenu.label "Nytt">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Nytt meddelande">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "Ny adressbokskontakt…">
+<!ENTITY newContact.accesskey "A">
+<!ENTITY attachMenu.label "Bifoga">
+<!ENTITY attachMenu.accesskey "f">
+<!ENTITY attachFileCmd.label "Bifoga fil…">
+<!ENTITY attachFileCmd.accesskey "B">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Bifoga webbsida…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Visitkort (vCard)">
+<!ENTITY attachVCardCmd.accesskey "V">
+<!ENTITY remindLater.label "Påminn mig senare">
+<!ENTITY remindLater.accesskey "P">
+<!ENTITY closeCmd.label "Stäng">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "ä">
+<!ENTITY saveCmd.label "Spara">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "Spara som">
+<!ENTITY saveAsCmd.accesskey "m">
+<!ENTITY saveAsFileCmd.label "Fil…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Utkast">
+<!ENTITY saveAsDraftCmd.accesskey "U">
+<!ENTITY saveAsTemplateCmd.label "Mall">
+<!ENTITY saveAsTemplateCmd.accesskey "M">
+<!ENTITY sendNowCmd.label "Skicka nu">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "n">
+<!ENTITY sendLaterCmd.label "Skicka senare">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "r">
+<!ENTITY printSetupCmd.label "Utskriftsformat…">
+<!ENTITY printSetupCmd.accesskey "o">
+<!ENTITY printPreviewCmd.label "Förhandsgranska">
+<!ENTITY printPreviewCmd.accesskey "h">
+<!ENTITY printCmd.label "Skriv ut…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "u">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Redigera">
+<!ENTITY editMenu.accesskey "R">
+<!ENTITY undoCmd.label "Ångra">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "Å">
+<!ENTITY redoCmd.label "Gör om">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "G">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "y">
+<!ENTITY deleteCmd.label "Ta bort">
+<!ENTITY deleteCmd.accesskey "T">
+<!ENTITY editRewrapCmd.label "Gör om radbrytning">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Byt namn på bilaga…">
+<!ENTITY renameAttachmentCmd.accesskey "B">
+<!ENTITY reorderAttachmentsCmd.label "Omordna bilagor…">
+<!ENTITY reorderAttachmentsCmd.accesskey "O">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Bifogningsfönstret">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "g">
+<!ENTITY selectAllCmd.accesskey "M">
+<!ENTITY findBarCmd.label "Sök…">
+<!ENTITY findBarCmd.accesskey "S">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Sök och ersätt…">
+<!ENTITY findReplaceCmd.accesskey "r">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Sök nästa">
+<!ENTITY findAgainCmd.accesskey "n">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Sök tidigare">
+<!ENTITY findPrevCmd.accesskey "d">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Omordna bilagor">
+<!ENTITY moveAttachmentTopPanelBtn.label "Flytta till toppen">
+<!ENTITY moveAttachmentUpPanelBtn.label "Flytta upp">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Flytta ihop">
+<!ENTITY moveAttachmentDownPanelBtn.label "Flytta ner">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Flytta till botten">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Sortera: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Sortera: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Sortera urval: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Sortera urval: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Visa">
+<!ENTITY viewMenu.accesskey "s">
+<!ENTITY viewToolbarsMenuNew.label "Verktygsfält">
+<!ENTITY viewToolbarsMenuNew.accesskey "V">
+<!ENTITY menubarCmd.label "Menyfält">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "Skriv">
+<!ENTITY showCompositionToolbarCmd.accesskey "k">
+<!ENTITY showFormattingBarCmd.label "Formateringsverktyg">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "Statusfält">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Anpassa…">
+<!ENTITY customizeToolbar.accesskey "A">
+
+<!ENTITY addressSidebar.label "Kontaktsidofältet">
+<!ENTITY addressSidebar.accesskey "K">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Formatering">
+<!ENTITY formatMenu.accesskey "F">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Inställningar">
+<!ENTITY optionsMenu.accesskey "n">
+<!ENTITY checkSpellingCmd2.label "Kontrollera stavning…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "t">
+<!ENTITY enableInlineSpellChecker.label "Automatisk stavningskontroll">
+<!ENTITY enableInlineSpellChecker.accesskey "u">
+<!ENTITY quoteCmd.label "Citera meddelande">
+<!ENTITY quoteCmd.accesskey "C">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Bifoga visitkort (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Mottagningskvitto">
+<!ENTITY returnReceiptMenu.accesskey "M">
+<!ENTITY dsnMenu.label "Leveranskvitto">
+<!ENTITY dsnMenu.accesskey "L">
+<!ENTITY deliveryFormatMenu.label "Leveransformat">
+<!ENTITY deliveryFormatMenu.accesskey "f">
+<!ENTITY autoFormatCmd.label "Auto-avkänning">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Endast vanlig text">
+<!ENTITY plainTextFormatCmd.accesskey "v">
+<!ENTITY htmlFormatCmd.label "Endast HTML">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Både vanlig text och HTML">
+<!ENTITY bothFormatCmd.accesskey "B">
+<!ENTITY priorityMenu.label "Prioritet">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.title "Prioritet">
+<!ENTITY priorityButton.tooltiptext "Ändra meddelandets prioritet">
+<!ENTITY priorityButton.label "Prioritet:">
+<!ENTITY lowestPriorityCmd.label "Lägsta">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "Låg">
+<!ENTITY lowPriorityCmd.accesskey "å">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Hög">
+<!ENTITY highPriorityCmd.accesskey "ö">
+<!ENTITY highestPriorityCmd.label "Högsta">
+<!ENTITY highestPriorityCmd.accesskey "t">
+<!ENTITY fileCarbonCopyCmd.label "Skicka en kopia till">
+<!ENTITY fileCarbonCopyCmd.accesskey "c">
+<!ENTITY fileHereMenu.label "Arkivera här">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Verktyg">
+<!ENTITY tasksMenu.accesskey "V">
+<!ENTITY messengerCmd.label "E-post &amp; Diskussionsgrupper">
+<!ENTITY messengerCmd.accesskey "p">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Adressboken">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Kontoinställningar">
+<!ENTITY accountManagerCmd2.accesskey "K">
+<!ENTITY accountManagerCmdUnix2.accesskey "K">
+<!ENTITY preferencesCmd2.label "Inställningar">
+<!ENTITY preferencesCmd2.accesskey "n">
+<!ENTITY preferencesCmdUnix.label "Inställningar">
+<!ENTITY preferencesCmdUnix.accesskey "I">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Minimera">
+<!ENTITY bringAllToFront.label "Lägg i förgrunden">
+<!ENTITY zoomWindow.label "Zooma fönster">
+<!ENTITY windowMenu.label "Fönster">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Skicka">
+<!ENTITY quoteButton.label "Citera">
+<!ENTITY addressButton.label "Adress">
+<!ENTITY attachButton.label "Bifoga">
+<!ENTITY spellingButton.label "Stavning">
+<!ENTITY saveButton.label "Spara">
+<!ENTITY printButton.label "Skriv ut">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Skickar meddelandet nu">
+<!ENTITY sendlaterButton.tooltip "Skickar meddelandet senare">
+<!ENTITY quoteButton.tooltip "Citerar föregående meddelande">
+<!ENTITY addressButton.tooltip "Väljer mottagare ur någon adressbok">
+<!ENTITY attachButton.tooltip2 "Lägg till bilaga">
+<!ENTITY spellingButton.tooltip "Kontrollerar stavningen på markerad text eller hela meddelandet">
+<!ENTITY saveButton.tooltip "Sparar meddelandet">
+<!ENTITY cutButton.tooltip              "Klipp ut">
+<!ENTITY copyButton.tooltip             "Kopiera">
+<!ENTITY pasteButton.tooltip            "Klistra in">
+<!ENTITY printButton.tooltip "Skriv ut det här meddelandet">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Andra typer av adressfält">
+<!ENTITY fromAddr2.label "Från">
+<!ENTITY fromAddr.accesskey "n">
+<!ENTITY toAddr2.label "Till">
+<!ENTITY ccAddr2.label "Kopia">
+<!ENTITY bccAddr2.label "Dold kopia">
+<!ENTITY replyAddr2.label "Svar till">
+<!ENTITY newsgroupsAddr2.label "Diskussionsgrupp">
+<!ENTITY followupAddr2.label "Uppföljning till">
+<!ENTITY subject2.label "Ämne">
+<!ENTITY subject.accesskey "e">
+<!ENTITY attachmentBucketCloseButton.tooltip "Dölj bifogningsfönstret">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Infoga en smilis">
+<!ENTITY smiley1Cmd.label "Ler">
+<!ENTITY smiley2Cmd.label "Bister">
+<!ENTITY smiley3Cmd.label "Blinkar">
+<!ENTITY smiley4Cmd.label "Dreglar">
+<!ENTITY smiley5Cmd.label "Skrattar">
+<!ENTITY smiley6Cmd.label "Generad">
+<!ENTITY smiley7Cmd.label "Rådvill">
+<!ENTITY smiley8Cmd.label "Överraskad">
+<!ENTITY smiley9Cmd.label "Puss">
+<!ENTITY smiley10Cmd.label "Skriker">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley12Cmd.label "Skrytmåns">
+<!ENTITY smiley13Cmd.label "Bortgjord">
+<!ENTITY smiley14Cmd.label "Oskyldig">
+<!ENTITY smiley15Cmd.label "Gråter">
+<!ENTITY smiley16Cmd.label "Tiger">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Inga förslag hittades">
+<!ENTITY spellCheckIgnoreWord.label "Ignorera ord">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Lägg till i ordbok">
+<!ENTITY spellCheckAddToDictionary.accesskey "ä">
+<!ENTITY undo.label "Ångra">
+<!ENTITY undo.accesskey "Å">
+<!ENTITY cut.label "Klipp ut">
+<!ENTITY cut.accesskey "K">
+<!ENTITY copy.label "Kopiera">
+<!ENTITY copy.accesskey "o">
+<!ENTITY paste.label "Klistra in">
+<!ENTITY paste.accesskey "l">
+<!ENTITY pasteQuote.label "Klistra in som citat">
+<!ENTITY pasteQuote.accesskey "c">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Öppna">
+<!ENTITY openAttachment.accesskey "Ö">
+<!ENTITY delete.label "Ta bort">
+<!ENTITY delete.accesskey "T">
+<!ENTITY removeAttachment.label "Ta bort bilaga">
+<!ENTITY removeAttachment.accesskey "o">
+<!ENTITY renameAttachment.label "Byt namn…">
+<!ENTITY renameAttachment.accesskey "n">
+<!ENTITY reorderAttachments.label "Omordna bilagor…">
+<!ENTITY reorderAttachments.accesskey "O">
+<!ENTITY removeAllAttachments.label "Ta bort alla bilagor">
+<!ENTITY removeAllAttachments.accesskey "r">
+<!ENTITY selectAll.label "Markera allt">
+<!ENTITY selectAll.accesskey "M">
+<!ENTITY attachFile.label "Bifoga fil(er)…">
+<!ENTITY attachFile.accesskey "B">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Konvertera till…">
+<!ENTITY convertCloud.accesskey "v">
+<!ENTITY cancelUpload.label "Avbryt överföring">
+<!ENTITY cancelUpload.accesskey "A">
+<!ENTITY convertRegularAttachment.label "Vanlig bilaga">
+<!ENTITY convertRegularAttachment.accesskey "V">
+<!ENTITY attachPage.label "Bifoga webbsida…">
+<!ENTITY attachPage.accesskey "w">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Inledningsvis visa bifogningsfönstret">
+<!ENTITY initiallyShowAttachmentPane.accesskey "v">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Lägg till ordlista…">
+<!ENTITY spellAddDictionaries.accesskey "L">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Kontakter">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Anpassa från adress…">
+<!ENTITY customizeFromAddress.accesskey "A">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Meddelandetext">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Stavningsspråk">
+<!ENTITY encodingStatusPanel.tooltip "Textkodning">

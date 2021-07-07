@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plug-ins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "E-post &amp; Grupper">
+<!ENTITY enbPluginCheckMailNews.accesskey "p">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label "E-post &amp; Grupper">
+<!ENTITY mail.accesskey "E">
+<!ENTITY addressbook.label "Adressbok">
+<!ENTITY addressbook.accesskey "A">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label "Visa meddelanden">
+<!ENTITY notifications.label "Varskoendesignaler">
+<!ENTITY address.label "Adressera">
+<!ENTITY composingMessages.label "Skriva meddelanden">
+<!ENTITY format.label "Skicka i format">
+<!ENTITY return.label "Mottagningskvitton">
+<!ENTITY junk.label                       "Skräppost">
+<!ENTITY tags.label                       "Etiketter">
+<!ENTITY characterEncoding2.label          "Teckenkodning">
+<!ENTITY networkStorage.label             "Nätverk &amp; lagring">

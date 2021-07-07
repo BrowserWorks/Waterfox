@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Ιστορικό">
+
+<!ENTITY  pref.history.caption              "Ιστορικό περιήγησης">
+<!ENTITY  historyPages.label                "Το ιστορικό είναι μια λίστα με σελίδες που επισκεφθήκατε προηγουμένως.">
+<!ENTITY  enableHistory.label               "Απομνημόνευση σελίδων που έχετε επισκεφθεί">
+<!ENTITY  enableHistory.accesskey           "Α">
+<!ENTITY  clearHistory.label                "Εκκαθάριση ιστορικού">
+<!ENTITY  clearHistory.accesskey            "σ">
+
+<!ENTITY  locationBarHistory.caption        "Ιστορικό γραμμής διευθύνσεων">
+<!ENTITY  urlBarHistoryEnabled.caption      "Ενεργοποίηση ιστορικού γραμμής διευθύνσεων">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "Ε">
+<!ENTITY  clearLocationBar.label            "Εκκαθάριση της λίστας των ιστοσελίδων που έχει αποθηκευτεί στο μενού της γραμμής διευθύνσεων.">
+<!ENTITY  clearLocationBarButton.label      "Απαλοιφή γραμμής διευθύνσεων">
+<!ENTITY  clearLocationBarButton.accesskey  "δ">
+<!ENTITY  formfillHistory.caption           "Ιστορικό αναζήτησης και φορμών">
+<!ENTITY  enableFormfill.label              "Ενεργοποίηση ιστορικού φορμών και αναζήτησης">
+<!ENTITY  enableFormfill.accesskey          "ν">
+<!ENTITY  formfillExpire.label              "Αποθήκευση ιστορικού φορμών και αναζήτησης για έως και">
+<!ENTITY  formfillExpire.accesskey          "ω">
+<!ENTITY  formfillDays.label                "ημέρες">

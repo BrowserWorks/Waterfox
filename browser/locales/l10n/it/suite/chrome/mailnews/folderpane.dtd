@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--null-->
+<!ENTITY nameColumn.label "Nome">
+<!ENTITY unreadColumn.label "Non letto">
+<!ENTITY totalColumn.label "Totale">
+<!ENTITY folderSizeColumn.label "Dimensione">
+<!ENTITY folderLocationToolbarItem.title "Posizione">
+<!ENTITY mailViewsToolbarItem.title "Viste di posta">
+<!ENTITY searchToolbarItem.title "Cerca">
+<!ENTITY searchSubjectOrAddress.placeholder "Cerca per oggetto o indirizzo">

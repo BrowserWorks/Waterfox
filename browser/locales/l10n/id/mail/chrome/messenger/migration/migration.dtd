@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Penuntun Impor">
+
+<!ENTITY importFromWin.label            "Impor Pengaturan, Pengaturan Akun, Buku Alamat, Filter, dan data Lainnya dari:">
+<!ENTITY importFromNonWin.label         "Impor Pengaturan, Pengaturan Akun, Buku Alamat, Filter, dan data Lainnya dari:">
+<!ENTITY importSourceNotFound.label     "Tidak ada aplikasi untuk darimana mengimpor data yang ditemukan.">
+
+<!ENTITY importFromNothing.label        "Jangan impor apa pun">
+<!ENTITY importFromNothing.accesskey    "J">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 atau lebih baru">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Impor Pengaturan dan Folder Email">
+<!ENTITY importItems.title              "Item untuk Diimpor">
+<!ENTITY importItems.label              "Pilih item yang akan diimpor:">
+
+<!ENTITY migrating.title                "Mengimpor…">
+<!ENTITY migrating.label                "Berikut ini yang sedang diimpor…">
+
+<!ENTITY selectProfile.title            "Pilih Profil">
+<!ENTITY selectProfile.label            "Profil berikut tersedia untuk diimpor:">
+
+<!ENTITY done.title                     "Proses Impor Selesai">
+<!ENTITY done.label                     "Item berikut sukses diimpor:">

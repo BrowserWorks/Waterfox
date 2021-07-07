@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "移除账户和数据">
+<!ENTITY removeButton.label           "移除">
+<!ENTITY removeButton.accesskey       "R">
+<!ENTITY removeAccount.label          "移除账户信息">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "只移除 &brandShortName; 记录的此账户的信息。不会影响服务器上的它的数据。">
+<!ENTITY removeData.label             "移除消息数据">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "移除会话数据">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "在您的本地磁盘上移除此账户相关的所有消息、文件夹和过滤器。这不会影响服务器上可能还保留的一些消息。如果您计划将本地数据留作存档，或者不久后仍使用 &brandShortName;，请不要选择此选项。">
+<!ENTITY removeDataServerAccount.desc "在您的本地磁盘上移除此账户相关的所有消息、文件夹和过滤器。您的消息和文件夹仍在服务器上保存。">
+<!ENTITY removeDataChatAccount.desc   "移除本地磁盘上为此账户存储的所有会话记录。">
+<!ENTITY showData.label               "显示数据位置">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "正在移除选定数据…">
+<!ENTITY progressSuccess              "移除成功。">
+<!ENTITY progressFailure              "移除失败。">

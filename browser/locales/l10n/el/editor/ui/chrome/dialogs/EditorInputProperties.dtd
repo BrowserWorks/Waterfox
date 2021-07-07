@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Ιδιότητες πεδίου φόρμας">
+<!ENTITY windowTitleImage.label "Ιδιότητες εικόνας φόρμας">
+
+<!ENTITY InputType.label "Τύπος πεδίου">
+<!ENTITY InputType.accesskey "Τ">
+<!ENTITY text.value "Κείμενο">
+<!ENTITY password.value "Κωδικός">
+<!ENTITY checkbox.value "Πλαίσιο ελέγχου">
+<!ENTITY radio.value "Κουμπί Radio">
+<!ENTITY submit.value "Κουμπί υποβολής">
+<!ENTITY reset.value "Κουμπί επαναφοράς">
+<!ENTITY file.value "Αρχείο">
+<!ENTITY hidden.value "Κρυφό">
+<!ENTITY image.value "Εικόνα">
+<!ENTITY button.value "Κουμπί">
+
+<!ENTITY InputSettings.label "Ρυθμίσεις Πεδίου">
+<!ENTITY InputName.label "Όνομα πεδίου:">
+<!ENTITY InputName.accesskey "δ">
+<!ENTITY GroupName.label "Όνομα ομάδας:">
+<!ENTITY GroupName.accesskey "ν">
+<!ENTITY InputValue.label "Τιμή πεδίου:">
+<!ENTITY InputValue.accesskey "μ">
+<!ENTITY InitialValue.label "Αρχική τιμή:">
+<!ENTITY InitialValue.accesskey "χ">
+<!ENTITY InputChecked.label "Αρχικά τσεκαρισμένο">
+<!ENTITY InputChecked.accesskey "τ">
+<!ENTITY InputSelected.label "Αρχικά επιλεγμένο">
+<!ENTITY InputSelected.accesskey "χ">
+<!ENTITY InputReadOnly.label "Μόνο για ανάγνωση">
+<!ENTITY InputReadOnly.accesskey "ν">
+<!ENTITY InputDisabled.label "Απενεργοποιημένο">
+<!ENTITY InputDisabled.accesskey "π">
+<!ENTITY tabIndex.label "Ευρετήριο καρτέλας:">
+<!ENTITY tabIndex.accesskey "σ">
+<!ENTITY TextSize.label "Μέγεθος πεδίου:">
+<!ENTITY TextSize.accesskey "θ">
+<!ENTITY TextLength.label "Μέγιστο μήκος:">
+<!ENTITY TextLength.accesskey "Μ">
+<!ENTITY AccessKey.label "Πλήκτρο συντόμευσης:">
+<!ENTITY AccessKey.accesskey "Κ">
+<!ENTITY Accept.label "Αποδεκτοί τύποι:">
+<!ENTITY Accept.accesskey "Α">
+
+<!ENTITY ImageProperties.label "Ιδιότητες εικόνας…">
+<!ENTITY ImageProperties.accesskey "τ">

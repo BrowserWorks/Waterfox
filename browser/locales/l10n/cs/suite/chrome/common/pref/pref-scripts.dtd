@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Skripty a zásuvné moduly">
+
+<!ENTITY navigator.label                 "Prohlížeč">
+<!ENTITY navigator.accesskey             "P">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Povolit JavaScript pro">
+<!ENTITY allowScripts.label              "Umožnit skriptům:">
+<!ENTITY allowScripts.accesskey          "m">
+<!ENTITY allowWindowMoveResize.label     "Přemísťovat nebo měnit velikost otevřených oken">
+<!ENTITY allowWindowFlip.label           "Přenést okno do popředí nebo do pozadí">
+<!ENTITY allowWindowStatusChange.label   "Změnit text na stavovém řádku">
+<!ENTITY allowContextmenuDisable.label   "Zakázat či nahradit místní nabídku">
+<!ENTITY allowHideStatusBar.label        "Skrýt stavový řádek">
+
+<!ENTITY debugging.label                  "Ladění JavaScriptu">
+<!ENTITY debugEnableDump.label            "Povolit výstup JavaScriptu ()">
+<!ENTITY debugEnableDump.accesskey        "o">
+<!ENTITY debugStrictJavascript.label      "Zobrazit varování scrict JavaScript">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "Zobrazit chyby a varování chrome JavaScript">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "Povolit zásuvné moduly pro">
+<!ENTITY enablePluginForSuite.label      "SeaMonkey">
+<!ENTITY enablePluginForSuite.accesskey  "S">
+
+<!ENTITY whenPageRequiresPlugins.label   "Pokud stránka vyžaduje zásuvný modul">
+<!ENTITY activateAllPlugins.label        "Automaticky spustit všechny moduly">
+<!ENTITY activateAllPlugins.accesskey    "A">
+<!ENTITY warnPluginsRequired.label       "Upozornit, pokud je potřeba doinstalovat další moduly">
+<!ENTITY warnPluginsRequired.accesskey   "U">

@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY validatePage.label			"このページを検証">
+<!ENTITY validatePage.accesskey			"V">
+<!ENTITY allowRemoteDebugging.label		"リモートデバッグを許可">
+<!ENTITY allowRemoteDebugging.accesskey		"A">
+
+<!ENTITY devToolsCmd.keycode			"VK_F12">
+<!ENTITY devToolsCmd.keytext			"F12">
+
+<!ENTITY devtoolsConnect.label			"接続...">
+<!ENTITY devtoolsConnect.accesskey		"e">
+
+<!ENTITY browserConsoleCmd.label		"ブラウザーコンソール">
+<!ENTITY browserConsoleCmd.commandkey		"Z">
+<!ENTITY browserConsoleCmd.accesskey		"B">
+
+<!ENTITY responsiveDesignTool.label		"レスポンシブデザインビュー">
+<!ENTITY responsiveDesignTool.accesskey		"R">
+
+<!ENTITY eyedropper.label			"スポイト">
+<!ENTITY eyedropper.accesskey			"y">
+
+<!-- LOCALIZATION NOTE (scratchpad.label): This menu item label appears
+  -  in the Tools menu. See bug 653093.
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+<!ENTITY scratchpad.label			"スクラッチパッド">
+<!ENTITY scratchpad.accesskey			"S">
+<!ENTITY scratchpad.keycode			"VK_F4">
+<!ENTITY scratchpad.keytext			"F4">
+
+<!-- LOCALIZATION NOTE (browserToolboxMenu.label): This is the label for the
+  -  application menu item that opens the browser toolbox UI in the Tools menu. -->
+<!ENTITY browserToolboxMenu.label		"ブラウザーツールボックス">
+<!ENTITY browserToolboxMenu.accesskey		"e">
+<!ENTITY browserToolboxCmd.commandkey		"I">
+
+<!-- LOCALIZATION NOTE (browserContentToolboxMenu.label): This is the label for the
+  -  application menu item that opens the browser content toolbox UI in the Tools menu.
+  -  This toolbox allows to debug the chrome of the content process in multiprocess builds.  -->
+<!ENTITY browserContentToolboxMenu.label	"ブラウザーコンテンツツールボックス">
+<!ENTITY browserContentToolboxMenu.accesskey	"x">
+
+<!ENTITY devToolbarCloseButton.tooltiptext	"開発ツールバーを閉じます">
+<!ENTITY devToolbarMenu.label			"開発ツールバー">
+<!ENTITY devToolbarMenu.accesskey		"D">
+
+<!ENTITY webide.label				"WebIDE">
+<!ENTITY webide.accesskey			"W">
+<!ENTITY webide.keycode				"VK_F8">
+<!ENTITY webide.keytext				"F8">
+
+<!ENTITY devToolbar.keycode                  "VK_F2">
+<!ENTITY devToolbar.keytext                  "F2">
+
+<!ENTITY devToolboxMenuItem.label            "Toggle Tools">
+<!ENTITY devToolboxMenuItem.accesskey        "T">
+<!ENTITY devToolboxMenuItem.keytext          "I">
+
+<!ENTITY devToolbarToolsButton.tooltip       "Toggle developer tools">
+
+<!ENTITY getMoreDevtoolsCmd.label            "Get More Tools">
+<!ENTITY getMoreDevtoolsCmd.accesskey        "M">

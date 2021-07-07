@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Minimera">
+<!ENTITY minimizeWindowCmd.key "M">
+<!ENTITY zoomWindowCmd.label "Zooma">
+<!ENTITY navigatorCmd.label "Webbläsare">
+<!ENTITY navigatorCmd.accesskey "W">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "c">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Felkonsol">
+<!ENTITY errorConsoleCmd.accesskey "F">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Webbläsare">
+<!ENTITY taskComposer.tooltip "Composer">
+
+<!ENTITY webDevelopment.label "Webbutveckling">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "Fönster">
+<!ENTITY windowMenu.accesskey "F">
+
+<!ENTITY tasksMenu.label "Verktyg">
+<!ENTITY tasksMenu.accesskey "t">
+
+<!ENTITY datamanCmd.label "Hantera webbplatsdata">
+<!ENTITY datamanCmd.accesskey "d">
+
+<!ENTITY passwordManagerCmd.label "Lösenordshanteraren">
+<!ENTITY passwordManagerCmd.accesskey "L">
+
+<!ENTITY passwordDisplayCmd.label "Hantera sparade lösenord">
+<!ENTITY passwordDisplayCmd.accesskey "s">
+
+<!ENTITY passwordExpireCmd.label "Logga ut">
+<!ENTITY passwordExpireCmd.accesskey "u">
+
+<!ENTITY downloadManagerCmd.label "Filhämtaren">
+<!ENTITY downloadManagerCmd.accesskey "h">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Tilläggshanteraren">
+<!ENTITY addOnsManagerCmd.accesskey "ä">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Byt användarprofil…">
+<!ENTITY switchProfileCmd.accesskey "y">
+
+<!ENTITY syncBrand.shortName.label "Synk">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Ställ in synkning…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Synka nu">
+<!ENTITY syncSyncNowItem.accesskey "S">

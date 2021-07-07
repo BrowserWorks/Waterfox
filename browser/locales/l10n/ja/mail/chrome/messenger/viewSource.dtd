@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title		"&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier	"&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator	" - ">
+<!ENTITY mainWindow.preface		"次のソース: ">
+
+<!ENTITY editMenu.label			"編集">
+<!ENTITY editMenu.accesskey		"E">
+<!ENTITY fileMenu.label			"ファイル">
+<!ENTITY fileMenu.accesskey		"F">
+<!ENTITY savePageCmd.label		"名前を付けてページを保存...">
+<!ENTITY savePageCmd.accesskey		"A">
+<!ENTITY savePageCmd.commandkey		"S">
+<!ENTITY pageSetupCmd.label		"ページ設定...">
+<!ENTITY pageSetupCmd.accesskey		"u">
+<!ENTITY printPreviewCmd.label		"印刷プレビュー">
+<!ENTITY printPreviewCmd.accesskey	"v">
+<!ENTITY printCmd.label			"印刷...">
+<!ENTITY printCmd.accesskey		"P">
+<!ENTITY printCmd.commandkey		"P">
+<!ENTITY closeCmd.label			"閉じる">
+<!ENTITY closeCmd.accesskey		"C">
+<!ENTITY closeCmd.commandkey		"W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey		"+">
+<!ENTITY textEnlarge.commandkey2	"=">
+<!ENTITY textEnlarge.commandkey3	";"><!-- JIS キーボード用 -->
+<!ENTITY textReduce.commandkey		"-">
+<!ENTITY textReduce.commandkey2		"">
+<!ENTITY textReset.commandkey		"0">
+<!ENTITY textReset.commandkey2		"">
+
+<!ENTITY goToLineCmd.label		"指定行へ移動...">
+<!ENTITY goToLineCmd.accesskey		"G">
+<!ENTITY goToLineCmd.commandkey		"l">
+
+<!ENTITY viewMenu.label			"表示">
+<!ENTITY viewMenu.accesskey		"V">
+<!ENTITY reloadCmd.label		"再読み込み">
+<!ENTITY reloadCmd.accesskey		"R">
+<!ENTITY reloadCmd.commandkey		"r">
+<!ENTITY menu_wrapLongLines.title	"長い行を折り返す">
+<!ENTITY menu_wrapLongLines.accesskey	"W">
+<!ENTITY menu_highlightSyntax.label	"構文を強調表示">
+<!ENTITY menu_highlightSyntax.accesskey	"H">
+<!ENTITY menu_textSize.label		"文字サイズ">
+<!ENTITY menu_textSize.accesskey	"Z">
+<!ENTITY menu_textEnlarge.label		"大きく">
+<!ENTITY menu_textEnlarge.accesskey	"I">
+<!ENTITY menu_textReduce.label		"小さく">
+<!ENTITY menu_textReduce.accesskey	"D">
+<!ENTITY menu_textReset.label		"通常サイズ">
+<!ENTITY menu_textReset.accesskey	"N">
+
+<!ENTITY findOnCmd.label		"このページを検索...">
+<!ENTITY findOnCmd.accesskey		"F">
+<!ENTITY findOnCmd.commandkey		"f">
+<!ENTITY findAgainCmd.label		"次を検索">
+<!ENTITY findAgainCmd.accesskey		"g">
+<!ENTITY findAgainCmd.commandkey	"g">
+<!ENTITY findAgainCmd.commandkey2	"VK_F3">
+<!ENTITY findSelectionCmd.commandkey	"e">
+
+<!ENTITY backCmd.label			"戻る">
+<!ENTITY backCmd.accesskey		"B">
+<!ENTITY forwardCmd.label		"進む">
+<!ENTITY forwardCmd.accesskey		"F">
+<!ENTITY goBackCmd.commandKey		"[">
+<!ENTITY goForwardCmd.commandKey	"]">
+
+<!ENTITY copyLinkCmd.label		"リンクの URL をコピー">
+<!ENTITY copyLinkCmd.accesskey		"L">
+<!ENTITY copyEmailCmd.label		"メールアドレスをコピー">
+<!ENTITY copyEmailCmd.accesskey		"E">

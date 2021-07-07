@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label "Libreta de direcciones">
+<!ENTITY Addrbook.accesskey "B">
+<!ENTITY GeneratedName.label "Nombre">
+<!ENTITY GeneratedName.accesskey "N">
+<!ENTITY PrimaryEmail.label "Correo electrónico">
+<!ENTITY PrimaryEmail.accesskey "E">
+<!ENTITY Company.label "Organización">
+<!ENTITY Company.accesskey "z">
+<!ENTITY _PhoneticName.label "Nombre fonético">
+<!ENTITY _PhoneticName.accesskey "o">
+<!ENTITY NickName.label "Apodo">
+<!ENTITY NickName.accesskey "p">
+<!ENTITY SecondEmail.label "Correo electrónico adicional">
+<!ENTITY SecondEmail.accesskey "l">
+<!ENTITY Department.label "Departamento">
+<!ENTITY Department.accesskey "r">
+<!ENTITY JobTitle.label "Puesto">
+<!ENTITY JobTitle.accesskey "u">
+<!ENTITY CellularNumber.label "Móvil">
+<!ENTITY CellularNumber.accesskey "M">
+<!ENTITY PagerNumber.label "Buscapersonas">
+<!ENTITY PagerNumber.accesskey "B">
+<!ENTITY FaxNumber.label "Fax">
+<!ENTITY FaxNumber.accesskey "F">
+<!ENTITY HomePhone.label "Teléfono particular">
+<!ENTITY HomePhone.accesskey "i">
+<!ENTITY WorkPhone.label "Teléfono del trabajo">
+<!ENTITY WorkPhone.accesskey "t">
+<!ENTITY ChatName.label "Nombre del chat">
+<!ENTITY ChatName.accesskey "C">
+<!ENTITY sortAscending.label "Ascendente">
+<!ENTITY sortAscending.accesskey "A">
+<!ENTITY sortDescending.label "Descendente">
+<!ENTITY sortDescending.accesskey "D">
+<!ENTITY composeEmail.label "Redactar mensaje para">
+<!ENTITY composeEmail.accesskey "C">
+<!ENTITY copyAddress.label "Copiar dirección de correo electrónico">
+<!ENTITY copyAddress.accesskey "A">
+<!ENTITY deleteAddrBookCard.label "Eliminar">
+<!ENTITY deleteAddrBookCard.accesskey "E">
+<!ENTITY newAddrBookCard.label "Nueva tarjeta…">
+<!ENTITY newAddrBookCard.accesskey "N">
+<!ENTITY newAddrBookMailingList.label "Nueva lista de correo…">
+<!ENTITY newAddrBookMailingList.accesskey "l">
+<!ENTITY addrBookCardProperties.label "Propiedades">
+<!ENTITY addrBookCardProperties.accesskey "P">

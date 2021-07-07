@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "无属性集。">
+
+<!ENTITY caption.label         "元素属性">
+<!ENTITY image-sec.label       "图像属性">
+<!ENTITY image-url.label       "位置：">
+<!ENTITY image-desc.label      "说明：">
+<!ENTITY image-alt.label       "替代文本：">
+<!ENTITY image-width.label     "宽度：">
+<!ENTITY image-height.label    "高度：">
+<!ENTITY image-filesize.label  "文件大小：">
+<!ENTITY image-filesize.value  "未知">
+<!ENTITY insdel-sec.label      "插入/删除 属性">
+<!ENTITY insdel-cite.label     "信息：">
+<!ENTITY insdel-date.label     "日期：">
+<!ENTITY link-sec.label        "链接特性">
+<!ENTITY link-url.label        "目标地址：">
+<!ENTITY link-target.label     "链接打开位置：">
+<!ENTITY link-type.label       "目标类型：">
+<!ENTITY link-lang.label       "目标语言">
+<!ENTITY link-rel.label        "关系：">
+<!ENTITY link-rev.label        "逆关系：">
+<!ENTITY misc-sec.label        "其他属性">
+<!ENTITY misc-lang.label       "文本语言：">
+<!ENTITY misc-title.label      "标题：">
+<!ENTITY misc-tblsummary.label "表格概要：">
+<!ENTITY quote-sec.label       "引用属性">
+<!ENTITY quote-cite.label      "信息：">

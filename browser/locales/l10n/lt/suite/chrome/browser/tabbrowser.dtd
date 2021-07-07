@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "Bevardė">
+<!ENTITY  newTab.label           "Nauja kortelė">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Užverti kortelę">
+<!ENTITY  closeTab.accesskey         "U">
+<!ENTITY  closeOtherTabs.label   "Užverti kitas korteles">
+<!ENTITY  closeOtherTabs.accesskey         "k">
+<!ENTITY  reloadAllTabs.label    "Atsiųsti visų kortelių tinklalapius iš naujo">
+<!ENTITY  reloadAllTabs.accesskey         "v">
+<!ENTITY  reloadTab.label        "Atsiųsti kortelės tinklalapį iš naujo">
+<!ENTITY  reloadTab.accesskey         "A">
+<!ENTITY  bookmarkGroup.label    "Kortelių grupę įrašyti į adresyną">
+<!ENTITY  bookmarkGroup.accesskey  "g">
+<!ENTITY  closeTabButton.tooltip   "Užverti šią kortelę">
+<!ENTITY  newTabButton.tooltip   "Atverti naują kortelę">
+<!ENTITY  listAllTabs.tooltip    "Pateikti visas korteles">
+<!ENTITY  undoCloseTab.label    "Atšaukti kortelės užvėrimą">
+<!ENTITY  undoCloseTab.accesskey  "ž">

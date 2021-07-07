@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle                    "Εγκατάσταση αρθρώματος…">
+
+<!ENTITY name.label                     "Όνομα:">
+<!ENTITY name.accesskey                 "Ό">
+
+<!ENTITY name.autopick.label            "Αυτόματη επιλογή ονόματος για εμένα">
+<!ENTITY name.autopick.accesskey        "Α">
+
+<!ENTITY source.label                   "Πηγή:">
+<!ENTITY source.accesskey               "γ">
+
+<!ENTITY browse.label                   "Περιήγηση…">
+<!ENTITY browse.accesskey               "Π">

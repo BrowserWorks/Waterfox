@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "あなたの &syncBrand.fullName.label; キー">
+<!ENTITY syncKey.page.description         "このキーは、サーバーに保存されているあなたの &syncBrand.fullName.label; アカウントのデータを復号するために使用されます。別のパソコンやスマートフォンで &syncBrand.fullName.label; をセットアップする際、このキーを入力する必要があります。">
+<!ENTITY syncKey.keepItSecret.heading     "秘密にしてください">
+<!ENTITY syncKey.keepItSecret.description "あなたの &syncBrand.fullName.label; アカウントは、プライバシーを守るために暗号化されます。このキーがない限り、もし誰かがあなたの個人情報を解読しようとしても数年はかかります。このキーを持っている人はあなただけです。つまり、あなたの &syncBrand.fullName.label; データにアクセスできるのはあなただけ、ということです。">
+<!ENTITY syncKey.keepItSafe.heading       "安全に保護してください">
+<!ENTITY syncKey.keepItSafe1.description  "このキーをなくさないでください。">
+<!ENTITY syncKey.keepItSafe2.description  " キーはサーバーに保存されていません (そうすると秘密を守れなくなってしまいます)。このため、">
+<!ENTITY syncKey.keepItSafe3.description  " リカバリーキーを失くすと取り戻すことはできません。">
+<!ENTITY syncKey.keepItSafe4.description  " このキーは、別のパソコンやスマートフォンから &syncBrand.fullName.label; へ接続する際にも必要となります。">
+<!ENTITY syncKey.findOutMore1.label       "&syncBrand.fullName.label; とプライバシーに関しては ">
+<!ENTITY syncKey.findOutMore2.label       " にある説明をご覧ください。">
+<!ENTITY syncKey.footer1.label            "&syncBrand.fullName.label; の利用規約は ">
+<!ENTITY syncKey.footer2.label            " でご覧いただけます。プライバシーポリシーは ">
+<!ENTITY syncKey.footer3.label            " でご覧いただけます。">

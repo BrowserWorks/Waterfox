@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP-beállítások">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Közvetlen kapcsolat beállításai">
+<!ENTITY prefProxy.label                     "Proxyn keresztüli kapcsolat beállításai">
+<!ENTITY prefEnableHTTP10.label              "HTTP 1.0 használata">
+<!ENTITY prefEnableHTTP10.accesskey          "H">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "HTTP 1.1 használata">
+<!ENTITY prefEnableHTTP11.accesskey          "P">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "A HTTP-kapcsolatok teljesítménye, illetve kompatibilitása finomhangolható ezekkel a beállításokkal. Bizonyos proxykiszolgálók például megkövetelik a HTTP/1.0-t (olvassa el a verzióinformációkat további részletekért).">
+<!ENTITY prefUseragent.label                 "Böngésző azonosító karakterlánc">
+<!ENTITY prefFirefoxCompat.label             "Firefox kompatibilitás jelzése">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Lightning telepítés jelzése">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "FIGYELMEZTETÉS: ezen beállítások letiltása azt eredményezheti, hogy a webhelyek vagy a szolgáltatások nem fognak megfelelően működni.">
+<!ENTITY prefFirefoxStrict.label             "Azonosítás Firefoxként">
+<!ENTITY prefFirefoxStrict.accesskey         "A">
+<!ENTITY prefFirefoxNone.label               "Azonosítás SeaMonkeyként">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Azonosítás SeaMonkeyként, és Firefox kompatibilitás hirdetése">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "FIGYELMEZTETÉS: e beállítások megváltoztatása azt eredményezheti, hogy a webhelyek vagy a szolgáltatások nem fognak megfelelően működni.">

@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Agenda">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Évènement…">
+<!ENTITY lightning.menupopup.new.event.accesskey "v">
+<!ENTITY lightning.menupopup.new.task.label     "Tâche…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Agenda…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "A">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Ouvrir">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "Message enregistré…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Fichier d’agenda…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "F">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Agenda">
+<!ENTITY lightning.menu.view.calendar.accesskey        "d">
+<!ENTITY lightning.menu.view.tasks.label               "Tâches">
+<!ENTITY lightning.menu.view.tasks.accesskey           "T">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Évènements et tâches">
+<!ENTITY lightning.menu.eventtask.accesskey            "v">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Adresse électronique :">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Choisir la planification des courriels côté client">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Pour l’instant, vous ne pouvez l’activer qu’après avoir configuré cet agenda via sa boîte de dialogue de propriétés, si le serveur d’agenda prend en charge la planification.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Cette option est uniquement disponible si le serveur d’agenda gère la planification. L’activation permettra de revenir à la planification par courrier électronique standard au lieu de la laisser au serveur.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Accepter">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Accepter l’invitation à l’évènement">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Tout accepter">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Accepter les invitations pour toutes les occurrences de cet évènement">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Ajouter">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Ajouter l’évènement à l’agenda.">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Refuser">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Refuser l’invitation à l’évènement">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Tout refuser">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Refuser les invitations pour toutes les occurrences de cet évènement">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Décliner">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Décliner la contre-proposition">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Supprimer">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Supprimer de l’agenda">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Détails…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Afficher les détails de l’évènement">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Ne pas afficher ces messages">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Agenda">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Aller à l’onglet de l’agenda">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Plus">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Cliquer pour afficher plus d’options">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Reconfirmer">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Envoyer une reconfirmation à l’organisateur">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Reprogrammer">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Reprogrammer l’évènement">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Enregistrer une copie">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Enregistre une copie de l’évènement dans l’agenda indépendamment de la réponse faite à l’organisateur. La liste des invités sera effacée.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Accepter provisoirement">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Accepter provisoirement l’invitation à l’évènement">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Tout accepter provisoirement">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Accepter provisoirement les invitations pour toutes les occurrences de cet évènement">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Mettre à jour">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Mettre à jour l’évènement dans l’agenda">
+<!ENTITY lightning.imipbar.description                                      "Ce message contient une invitation à un évènement.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Envoyer une réponse immédiatement">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Envoyer une réponse à l’organisateur">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Envoyer une réponse à l’organisateur pour toute la série">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Ne pas envoyer de réponse">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Changer votre statut de participation sans envoyer de réponse à l’organisateur">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Changer votre statut de participation pour la série sans envoyer de réponse à l’organisateur">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Créer un nouvel agenda">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Afficher le « Mois réduit »">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Afficher le « Jour réduit »">
+<!ENTITY todaypane.showMiniday.accesskey  "J">
+<!ENTITY todaypane.showNone.label "Ne rien afficher">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Afficher le panneau « Aujourd’hui »">
+<!ENTITY todaypane.showTodayPane.accesskey "A">
+<!ENTITY todaypane.statusButton.label "Panneau « Aujourd’hui »">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label               "Καρτέλες από άλλους υπολογιστές">
+
+<!ENTITY tabs.searchText.label                   "Πληκτρολογήστε εδώ για εύρεση καρτελών…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label                   "Άνοιγμα καρτέλας">
+<!ENTITY tabs.context.openTab.accesskey               "Ά">
+<!ENTITY tabs.context.openMultipleTabs.label          "Άνοιγμα επιλεγμένων καρτελών">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "Ά">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "Προσθήκη καρτέλας στους σελιδοδείκτες…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "Π">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "Προσθήκη επιλεγμένων καρτελών στους σελιδοδείκτες…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "Π">
+<!ENTITY tabs.context.refreshList.label               "Ανανέωση λίστας">
+<!ENTITY tabs.context.refreshList.accesskey           "Α">

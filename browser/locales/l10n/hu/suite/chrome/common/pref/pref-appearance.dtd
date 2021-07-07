@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Megjelenés">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "A &brandShortName; indulásakor az alábbi ablakok nyíljanak meg:">
+<!ENTITY navCheck.label                         "Böngésző">
+<!ENTITY navCheck.accesskey                     "B">
+<!ENTITY showToolsLegend.label                  "Az eszköztár gombjain látható">
+<!ENTITY picsNtextRadio.label                   "Kép és szöveg">
+<!ENTITY picsNtextRadio.accesskey               "K">
+<!ENTITY picsOnlyRadio.label                    "Csak kép">
+<!ENTITY picsOnlyRadio.accesskey                "s">
+<!ENTITY textonlyRadio.label                    "Csak szöveg">
+<!ENTITY textonlyRadio.accesskey                "C">
+<!ENTITY showHideTooltips.label                 "Buboréksúgók megjelenítése">
+<!ENTITY showHideTooltips.accesskey             "B">
+
+<!ENTITY showHideGrippies.label                 "Eszköztár fogódzkodóinak elrejtése">
+<!ENTITY showHideGrippies.accesskey             "G">
+
+<!ENTITY pref.locales.title                     "Felhasználói felület nyelve">
+<!ENTITY selectLocale.label                     "Válassza ki a párbeszédablakok, menük, eszköztárak és nyomógombok nyelvét.">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "Dátum és idő formázás">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "Az új nyelvi és formázási beállítások a &brandShortName; újraindítása után lépnek érvénybe.">

@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Barra de herramientas del calendario">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "B">
+<!ENTITY lightning.toolbar.task.name "Barra de herramientas de tareas">
+<!ENTITY lightning.toolbar.task.name.accesskey "a">
+<!ENTITY lightning.toolbar.sync.label "Sincronizar">
+<!ENTITY lightning.toolbar.sync.tooltip "Recargar calendarios y sincronizar cambios">
+<!ENTITY lightning.toolbar.delete.label "Eliminar">
+<!ENTITY lightning.toolbar.delete.tooltip "Eliminar eventos o tareas seleccionados">
+<!ENTITY lightning.toolbar.edit.label "Editar">
+<!ENTITY lightning.toolbar.edit.tooltip "Editar tarea o evento seleccionado">
+<!ENTITY lightning.toolbar.gototoday.label "Ir a hoy">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Ir a hoy">
+<!ENTITY lightning.toolbar.print.label "Imprimir">
+<!ENTITY lightning.toolbar.print.tooltip "Imprimir eventos o tareas">
+<!ENTITY lightning.toolbar.calendar.label "Calendario">
+<!ENTITY lightning.toolbar.calendar.tooltip "Pasar a la pestaña del calendario">
+<!ENTITY lightning.toolbar.calendar.accesskey "C">
+<!ENTITY lightning.toolbar.task.label "Tareas">
+<!ENTITY lightning.toolbar.task.tooltip "Pasar a la barra de herramientas de tareas">
+<!ENTITY lightning.toolbar.task.accesskey "T">
+<!ENTITY lightning.toolbar.newevent.label "Evento">
+<!ENTITY lightning.toolbar.newevent.tooltip "Crear un nuevo evento">
+<!ENTITY lightning.toolbar.newtask.label "Tarea">
+<!ENTITY lightning.toolbar.newtask.tooltip "Crear una tarea nueva">
+<!ENTITY lightning.toolbar.day.label "Día">
+<!ENTITY lightning.toolbar.day.accesskey "D">
+<!ENTITY lightning.toolbar.week.label "Semana">
+<!ENTITY lightning.toolbar.week.accesskey "S">
+<!ENTITY lightning.toolbar.multiweek.label "Multisemana">
+<!ENTITY lightning.toolbar.multiweek.accesskey "u">
+<!ENTITY lightning.toolbar.month.label "Mes">
+<!ENTITY lightning.toolbar.month.accesskey "M">
+<!ENTITY lightning.toolbar.appmenuButton.label "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip "Mostrar el menú &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label "Panel del calendario">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey "P">
+<!ENTITY lightning.toolbar.calendarpane.label "Mostrar panel del calendario">
+<!ENTITY lightning.toolbar.calendarpane.accesskey "P">

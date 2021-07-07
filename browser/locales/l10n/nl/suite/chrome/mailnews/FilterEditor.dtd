@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filterregels">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Filternaam:">
+<!ENTITY filterName.accesskey "F">
+
+<!ENTITY recentFolders.label "Recente">
+
+<!ENTITY junk.label "Ongewenst bericht">
+<!ENTITY notJunk.label "Geen ongewenst bericht">
+
+<!ENTITY lowestPriorityCmd.label "Laagst">
+<!ENTITY lowPriorityCmd.label "Laag">
+<!ENTITY normalPriorityCmd.label "Normaal">
+<!ENTITY highPriorityCmd.label "Hoog">
+<!ENTITY highestPriorityCmd.label "Hoogst">
+
+<!ENTITY contextDesc.label "Filter toepassen bij het:">
+<!ENTITY contextIncomingMail.label "Ophalen van nieuwe e-mail:">
+<!ENTITY contextIncomingMail.accesskey "O">
+<!ENTITY contextManual.label "Handmatig uitvoeren">
+<!ENTITY contextManual.accesskey "H">
+<!ENTITY contextBeforeCls.label "Filteren voor ongewensteberichtenclassificatie">
+<!ENTITY contextAfterCls.label "Filteren na ongewensteberichtenclassificatie">
+<!ENTITY contextOutgoing.label "Na verzenden">
+<!ENTITY contextOutgoing.accesskey "N">
+<!ENTITY contextArchive.label "Archiveren">
+<!ENTITY contextArchive.accesskey "r">
+<!ENTITY contextPeriodic.accesskey "P">
+
+<!ENTITY filterActionDesc.label "Deze acties uitvoeren:">
+<!ENTITY filterActionDesc.accesskey "v">
+
+<!ENTITY filterActionOrderWarning.label "Noot: filteracties worden in een andere volgorde uitgevoerd.">
+<!ENTITY filterActionOrder.label "Uitvoeringsvolgorde bekijken">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Bericht verplaatsen naar">
+<!ENTITY copyMessage.label "Bericht kopiëren naar">
+<!ENTITY forwardTo.label "Bericht doorsturen naar">
+<!ENTITY replyWithTemplate.label "Antwoorden met sjabloon">
+<!ENTITY markMessageRead.label "Markeren als gelezen">
+<!ENTITY markMessageUnread.label "Markeren als ongelezen">
+<!ENTITY markMessageStarred.label "Markering toevoegen">
+<!ENTITY setPriority.label "Prioriteit wijzigen naar">
+<!ENTITY addTag.label "Bericht labelen">
+<!ENTITY setJunkScore.label "Ongewenstberichtstatus instellen op">
+<!ENTITY deleteMessage.label "Bericht verwijderen">
+<!ENTITY deleteFromPOP.label "Verwijderen van POP-server">
+<!ENTITY fetchFromPOP.label "Ophalen van POP-server">
+<!ENTITY ignoreThread.label "Conversatie negeren">
+<!ENTITY ignoreSubthread.label "Subconversatie negeren">
+<!ENTITY watchThread.label "Conversatie volgen">
+<!ENTITY stopExecution.label "Uitvoeren van filter stoppen">
+
+<!ENTITY addAction.tooltip "Een nieuwe actie toevoegen">
+<!ENTITY removeAction.tooltip "Deze actie verwijderen">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

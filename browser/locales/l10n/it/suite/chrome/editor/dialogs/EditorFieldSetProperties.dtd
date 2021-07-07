@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietà gruppo campi">
+<!ENTITY Legend.label "Legenda">
+<!ENTITY Legend.accesskey "L">
+<!ENTITY EditLegendText.label "Modifica legenda:">
+<!ENTITY EditLegendText.accesskey "M">
+<!ENTITY LegendAlign.label "Allineamento legenda:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "Predefinito">
+<!ENTITY AlignLeft.label "Sinistra">
+<!ENTITY AlignCenter.label "Centro">
+<!ENTITY AlignRight.label "Destra">
+<!ENTITY RemoveFieldSet.label "Rimuovi gruppo campi">
+<!ENTITY RemoveFieldSet.accesskey "R">

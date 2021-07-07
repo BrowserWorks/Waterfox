@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Прокси-серверы">
+<!ENTITY  pref.proxies.desc             "Прокси-сервер является сервером, который может фильтровать содержимое и ускорять ваше соединение с Интернетом.">
+<!ENTITY  proxyTitle.label              "Настройка прокси для доступа в Интернет">
+<!ENTITY  directTypeRadio.label         "Прямое соединение с Интернет">
+<!ENTITY  directTypeRadio.accesskey     "П">
+<!ENTITY  systemTypeRadio.label         "Использовать системные настройки прокси">
+<!ENTITY  systemTypeRadio.accesskey     "с">
+<!ENTITY  manualTypeRadio.label         "Ручная настройка сервиса прокси:">
+<!ENTITY  manualTypeRadio.accesskey     "в">
+<!ENTITY  wpadTypeRadio.label           "Автоматический поиск конфигурации прокси">
+<!ENTITY  wpadTypeRadio.accesskey       "А">
+<!ENTITY  autoTypeRadio.label           "URL автоматической настройки сервиса прокси:">
+<!ENTITY  autoTypeRadio.accesskey       "а">
+<!ENTITY  reload.label                  "Обновить">
+<!ENTITY  reload.accesskey              "б">
+<!ENTITY  http.label                    "Прокси:">
+<!ENTITY  http.accesskey                "р">
+<!ENTITY  port.label                    "Порт:">
+<!ENTITY  HTTPPort.accesskey            "о">
+<!ENTITY  advanced.label                "Дополнительно…">
+<!ENTITY  advanced.accesskey            "Д">
+<!ENTITY  noproxy.label                 "Не использовать прокси для:">
+<!ENTITY  noproxy.accesskey             "д">
+<!ENTITY  noproxyExplain.label          "Пример: .mozilla-russia.org, .net.nz, 192.168.1.0/24">

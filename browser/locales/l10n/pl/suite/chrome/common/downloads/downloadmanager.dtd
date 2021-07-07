@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title "Menedżer pobierania plików">
+
+<!ENTITY menuBar.tooltip "Pasek menu">
+<!ENTITY searchBar.tooltip "Pasek wyszukiwania">
+
+<!ENTITY search.placeholder "Szukaj w liście pobierań">
+<!ENTITY search.label "Szukaj">
+<!ENTITY search.accesskey "S">
+<!ENTITY search.key "f">
+
+<!ENTITY cmd.clearList.label "Wyczyść listę">
+<!ENTITY cmd.clearList.tooltip "Usuń z listy pliki, których pobieranie zostało zakończone, anulowane lub się nie powiodło">
+<!ENTITY cmd.clearList.accesskey "W">
+
+<!ENTITY col.name.label "Nazwa">
+<!ENTITY col.name.accesskey "N">
+<!ENTITY col.name.tooltip "Nazwa pliku">
+<!ENTITY col.status.label "Status">
+<!ENTITY col.status.accesskey "S">
+<!ENTITY col.status.tooltip "Status">
+<!ENTITY col.actionPlay.label "Wstrzymaj/Kontynuuj/Pobierz ponownie">
+<!ENTITY col.actionPlay.accesskey "z">
+<!ENTITY col.actionPlay.tooltip "Wstrzymaj/Kontynuuj/Pobierz ponownie">
+<!ENTITY col.actionStop.label "Anuluj/Usuń">
+<!ENTITY col.actionStop.accesskey "j">
+<!ENTITY col.actionStop.tooltip "Anuluj/Usuń">
+<!ENTITY col.progress.label "Postęp">
+<!ENTITY col.progress.accesskey "t">
+<!ENTITY col.progress.tooltip "Postęp">
+<!ENTITY col.timeremaining.label "Pozostało">
+<!ENTITY col.timeremaining.accesskey "P">
+<!ENTITY col.timeremaining.tooltip "Pozostało">
+<!ENTITY col.transferred.label "Pobrano">
+<!ENTITY col.transferred.accesskey "b">
+<!ENTITY col.transferred.tooltip "Pobrano">
+<!ENTITY col.transferrate.label "Szybkość">
+<!ENTITY col.transferrate.accesskey "k">
+<!ENTITY col.transferrate.tooltip "Szybkość">
+<!ENTITY col.timeelapsed.label "Upłynęło">
+<!ENTITY col.timeelapsed.accesskey "U">
+<!ENTITY col.timeelapsed.tooltip "Upłynęło">
+<!ENTITY col.starttime.label "Rozpoczęto">
+<!ENTITY col.starttime.accesskey "R">
+<!ENTITY col.starttime.tooltip "Rozpoczęto">
+<!ENTITY col.endtime.label "Zakończono">
+<!ENTITY col.endtime.accesskey "a">
+<!ENTITY col.endtime.tooltip "Zakończono">
+<!ENTITY col.progresstext.label "&#37;">
+<!ENTITY col.progresstext.accesskey "&#37;">
+<!ENTITY col.progresstext.tooltip "Postęp pliku (&#37;)">
+<!ENTITY col.source.label "Źródło">
+<!ENTITY col.source.accesskey "o">
+<!ENTITY col.source.tooltip "Źródło">
+
+<!ENTITY view.columns.label "Wyświetl kolumny">
+<!ENTITY view.columns.accesskey "k">
+<!ENTITY view.sortBy.label "Sortuj według">
+<!ENTITY view.sortBy.accesskey "S">
+
+<!ENTITY view.unsorted.label "Nieposortowane">
+<!ENTITY view.unsorted.accesskey "N">
+<!ENTITY view.sortAscending.label "Porządek sortowania A > Z">
+<!ENTITY view.sortAscending.accesskey "A">
+<!ENTITY view.sortDescending.label "Porządek sortowania Z > A">
+<!ENTITY view.sortDescending.accesskey "Z">
+
+<!ENTITY cmd.pause.label "Wstrzymaj">
+<!ENTITY cmd.pause.accesskey "y">
+<!ENTITY cmd.resume.label "Kontynuuj">
+<!ENTITY cmd.resume.accesskey "K">
+<!ENTITY cmd.retry.label "Pobierz ponownie">
+<!ENTITY cmd.retry.accesskey "p">
+<!ENTITY cmd.cancel.label "Anuluj">
+<!ENTITY cmd.cancel.accesskey "A">
+<!ENTITY cmd.remove.label "Usuń z listy">
+<!ENTITY cmd.remove.accesskey "U">
+<!ENTITY cmd.open.label "Otwórz">
+<!ENTITY cmd.open.accesskey "O">
+<!ENTITY cmd.show.label "Otwórz folder zawierający">
+<!ENTITY cmd.show.accesskey "f">
+<!ENTITY cmd.goToDownloadPage.label "Przejdź do strony pobierania">
+<!ENTITY cmd.goToDownloadPage.accesskey "s">
+<!ENTITY cmd.copyDownloadLink.label "Kopiuj adres źródłowy">
+<!ENTITY cmd.copyDownloadLink.accesskey "d">
+<!ENTITY cmd.properties.label "Właściwości…">
+<!ENTITY cmd.properties.accesskey "c">

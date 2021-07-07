@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Pengaturan Akun Canggih">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Direktori server IMAP:">
+<!ENTITY serverDirectory.accesskey "D">
+<!ENTITY usingSubscription.label "Hanya tampilkan folder yang dilanggan">
+<!ENTITY usingSubscription.accesskey "l">
+<!ENTITY dualUseFolders.label "Server mendukung folder yang berisi subfolder dan pesan">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Jumlah sambungan maksimum ke server yang disimpan pada tembolok">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Pengaturan ini menentukan namespace pada server IMAP Anda">
+<!ENTITY personalNamespace.label "Namespace personal:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Publik (berbagi-pakai):">
+<!ENTITY publicNamespace.accesskey "b">
+<!ENTITY otherUsersNamespace.label "Pengguna Lain:">
+<!ENTITY otherUsersNamespace.accesskey "L">
+<!ENTITY overrideNamespaces.label "Izinkan server untuk mengganti namespace ini">
+<!ENTITY overrideNamespaces.accesskey "I">
+<!ENTITY pop3DeferringDesc.label "Saat mengunduh surel dari server akun ini, gunakan folder berikut untuk menyimpan pesan baru:">
+<!ENTITY accountInbox.label "Kotak masuk untuk akun ini">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Kotak masuk untuk akun yang lain">
+<!ENTITY deferToServer.accesskey "l">
+<!ENTITY deferGetNewMail.label "Sertakan server ini saat mengunduh email baru">
+<!ENTITY deferGetNewMail.accesskey "S">

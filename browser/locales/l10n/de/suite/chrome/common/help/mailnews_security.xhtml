@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Signieren &amp; und Verschl&#252;sseln von Nachrichten</title>
+    <link rel="stylesheet" href="helpFileLayout.css" type="text/css" />
+</head>
+<body>
+<h1 id="signing_and_encrypting_messages">Signieren &amp; und Verschl&#252;sseln von Nachrichten</h1>
+
+<div class="contentsBox">In diesem Abschnitt:
+    <ul>
+        <li><a href="#about_digital_signatures_and_encryption">&#220;ber digitale Signaturen &amp; 
+            Verschl&#252;sselung</a></li>
+        <li><a href="#getting_other_peoples_certificates">Zertifikate von anderen Personen erhalten</a></li>
+        <li><a href="#configuring_security_settings">Sicherheitseinstellungen konfigurieren</a></li>
+        <li><a href="#signing_and_encrypting_a_new_message">Signierung &amp; Verschl&#252;sselung einer neuen
+            Nachricht</a></li>
+        <li><a href="#reading_signed_and_encrypted_messages">Signierte &amp; verschl&#252;sselte Nachrichten
+            lesen</a></li>
+        <li><a href="#message_security_compose_window">Nachrichten-Sicherheit - Erstellungsfenster</a></li>
+        <li><a href="#message_security_received_message">Nachrichten-Sicherheit - Erhaltene Nachricht</a></li>
+    </ul>
+</div>
+
+<h2 id="about_digital_signatures_and_encryption">&#220;ber digitale Signaturen &amp; Verschl&#252;sselung</h2>
+<p>Wenn Sie eine Email erstellen, k&#246;nnen Sie bestimmen, ob Sie Ihre digitale Signatur anh&#228;ngen
+   m&#246;chten. Eine <a href="glossary.xhtml#digital_signature">digitale Signatur</a> erlaubt es den 
+   Empf&#228;ngern der Nachricht zu &#252;berpr&#252;fen, ob die Nachricht wirklich von Ihnen stammt und 
+   das sie seit dem Versenden nicht manipuliert wurde.</p>
+
+<p>Wenn Sie eine Email erstellen, k&#246;nnen Sie diese auch verschl&#252;sseln.
+   <a href="glossary.xhtml#encryption">Verschl&#252;sselung</a> macht es f&#252;r jeden anderen als
+   den gewollten Empf&#228;nger sehr schwierig, die Nachricht zu lesen, w&#228;hrend sie &#252;ber
+   das Internet transportiert wird.</p>
+
+<p>Signierung und Verschl&#252;sselung sind f&#252;r Newsgroup-Nachrichten nicht verf&#252;gbar.</p>
+
+<p>Bevor Sie eine Nachricht signieren oder verschl&#252;sseln k&#246;nnen, m&#252;ssen Sie diese einleitenden Schritte durchf&#252;hren:</p>
+
+<ol>
+    <li>Besorgen Sie sich ein oder mehrere <a href="glossary.xhtml#certificate">Zertifikate</a>
+        (das digitale &#196;quivalent zu ID-Karten). F&#252;r Einzelheiten siehe 
+        <a href="using_certs_help.xhtml#getting_your_own_certificate">Beschaffung Ihres eigenen Zertifikates</a>.</li>
+    <li>Konfigurieren Sie die Sicherheitseinstellungen Ihres Email-Accounts. F&#252;r Einzelheiten siehe
+        <a href="mailnews_account_settings.xhtml#security">Konfiguration Ihrer Sicherheits-Einstellungen</a>.</li>
+</ol>
+
+<p>Wenn Sie diese Schritte durchgef&#252;hrt haben, k&#246;nnen Sie den Anweisungen in
+  <a href="#signing_and_encrypting_a_new_message">Signierung &amp; Verschl&#252;sselung 
+  einer neuen Nachricht</a> folgen.</p>
+
+<p>Die folgenden Abschnitte bieten einen kurzen &#220;berblick dar&#252;ber, wie digitale Signaturen und 
+   Verschl&#252;sselung funktionieren. Wegen weiterer technischer Einzelheiten zu diesem Thema siehe die
+   Online-Dokumentation <a href="http://developer.mozilla.org/en/Introduction_to_Public-Key_Cryptography">
+   Introduction to Public-Key Cryptography</a>.</p>
+
+<h3 id="how_digital_signatures_work">Wie digitale Signaturen arbeiten</h3>
+
+<p>Eine digitale Signatur ist ein spezieller Code, f&#252;r jede Nachricht einzigartig, der
+   mittels <a href="glossary.xhtml#public-key_cryptography">public-key-Kryptografie</a> erstellt wurde.</p>
+
+<p>Eine digitale Signatur ist vollkommen anders als eine handgeschriebene Signatur, 
+   obwohl sie manchmal f&#252;r &#228;hnliche rechtliche Zwecke wie eine Vertragsunterzeichnung 
+   genutzt wird.</p>
+
+<p>Um eine digitale Signatur f&#252;r eine Email zu erstellen, die Sie versenden, ben&#246;tigen 
+   Sie zwei Dinge:</p>
+
+<ul>
+    <li>Ein <a href="glossary.xhtml#signing_certificate">Signatur-Zertifikat</a>
+        as Sie f&#252;r diesen Zweck identifiziert. Wann immer Sie eine Nachricht signieren, 
+        wird ihr Signatur-Zertifikat hinzugef&#252;gt. Das Zertifikat enth&#228;lt einen
+        <a href="glossary.xhtml#public_key">&#246;ffentlichen Schl&#252;ssel</a>. Die Anwesenheit des 
+        Zertifiktas in der Nachricht erm&#246;glicht es dem Empf&#228;nger, Ihre digitale Signatur zu verifizieren.
+        <p>Ihr Zertifikat &#228;hnelt etwa Ihrem Namen und Telefonnummer im Telefonbuch&mdash;
+        Es ist &#246;ffentliche Information, die es anderen erm&#246;glicht, mit Ihnen zu kommunizieren.</p></li>
+    <li>Ein <a href="glossary.xhtml#private_key">privater Schl&#252;ssel</a>, welcher erstellt und auf Ihrem
+        Computer gespeichert wird, wenn Sie erstmals ein Zertifikat erhalten.
+        <p>Ihr privater Schl&#252;ssel f&#252;r ein Signatur-Zertifikat wird von Ihrem 
+           <a href="glossary.xhtml#master_password">Master-Passwort</a> gesch&#252;tzt und das 
+           &brandShortName;-Programm wird es gegen&#252;ber niemandem aufdecken. Die Mail- &amp; 
+           Newsgroup-Software benutzt Ihren privaten Schl&#252;ssel, um eine eindeutige, verifizierbare
+           digitale Signatur f&#252;r jede Nachricht zu erzeugen, die Sie signieren m&#246;chten.</p></li>
+</ul>
+
+<h3 id="how_encryption_works">Wie Verschl&#252;sselung funktioniert</h3>
+
+<p>Um eine Email zu verschl&#252;sseln, m&#252;ssen Sie ein
+   <a href="glossary.xhtml#encryption_certificate">Verschl&#252;sselungs-Zertifikat</a>
+   von jedem der Email-Empf&#228;nger besitzen. Der &#246;ffentliche Schl&#252;ssel in jedem 
+   Zertifikat wird benutzt, um die Nachricht f&#252;r diesen Empf&#228;nger zu verschl&#252;sseln.</p>
+
+<p>Wenn sie nur f&#252;r einen einzigen Empf&#228;nger kein Zertifikat besitzen, 
+   kann die Nachricht nicht verschl&#252;sselt werden.</p>
+
+<p>Die Software beim Empf&#228;nger benutzt dessen privaten Schl&#252;ssel, 
+   der auf dessen Computer verbleibt, um die Nachricht zu entschl&#252;sseln.</p>
+  
+<p>[<a href="#signing_and_encrypting_messages">Zur&#252;ck zum Anfang des Abschnitts</a>]</p>
+
+<h2 id="getting_other_peoples_certificates">Zertifikate von anderen Personen erhalten</h2>
+
+<p>Wann immer Sie eine digitale Signatur versenden, wird Ihr Verschl&#252;sselungs-Zertifkat 
+   automatisch mitgesandt. Daher ist es am einfachsten, von einer anderen Person ihr entsprechendes 
+   Zertifikat zu erhalten, das diese Person Ihnen eine digital signierte Nachricht schickt.</p>
+
+<p>Wenn Sie eine solche Nachricht erhalten, wird das Zertifikat dieser Person automatisch vom 
+   <a href="certs_help.xhtml">Zertifikat-Manager</a> gespeichert, welches der Teil des Browsers ist, der die 
+   Zertifikate verwaltet.
+   Dies ist sinnvoll, da Sie ein Zertifikat f&#252;r jeden Empf&#228;nger ben&#246;tigen, dem Sie eine Email
+   in verschl&#252;sselter Form schicken wollen.</p>
+
+<p>Eine andere M&#246;glichkeit, Zertifikate zu erhalten, ist es, in einem &#246;ffentlichen Verzeichnis 
+   nachzuschauen, wie in den <q>Telefonbuch-</q>Verzeichnissen, die von vielen Firmen unterhalten werden.</p>
+
+<p>Es ist auch m&#246;glich, Zertifikate automatisch nachzuschlagen. Diese Eigenschaft wird gesteuert 
+   &#252;ber <a href="mailnews_preferences.xhtml#addressing_preferences">Mail &amp; Newsgroups-Einstellungen -
+   Adressierung</a> oder <a href="mailnews_account_settings.xhtml#addressing">Mail &amp; Newgroups-Account-Einstellungen
+   - Adressierung</a>, die so konfiguriert werden k&#246;nnen, dass sie die Email-Adressen der 
+   Empf&#228;nger in einem Verzeichnis nachschlagen.</p>
+
+<p>Wenn Sie einen Account benutzen, der konfiguriert ist, Adressen in einem Verzeichnis nachzuschlagen, 
+   dann wird das gleiche Verzeichnis nach &#252;bereinstimmenden Zertifikaten durchsucht, wenn Sie versuchen, 
+   eine verschl&#252;sselte Nachricht an einen oder mehrere Empf&#228;nger zu senden, f&#252;r die Sie kein 
+   Zertifikat lokal gespeichert haben.</p>
+
+<p>Das Verzeichnis wird auch nach fehlenden Zertifikaten durchsucht, wenn Sie das Drop-Down-Men&#252; 
+   unter dem Sicherheits-Icon im Erstellungs-Fenster &#246;ffnen und Sicherheits-Info anzeigen w&#228;hlen.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Zur&#252;ck zum Anfang des Abschnitts</a>]</p>
+
+<h2 id="configuring_security_settings">Sicherheitseinstellungen konfigurieren</h2>
+
+<p>Sobald Sie ein Email-Zertifikat (oder mehrere) erhalten haben, m&#252;ssen Sie 
+  die Zertifikate angeben, die Sie f&#252;r das Signieren und Verschl&#252;sseln von Nachrichten 
+  benutzen wollen.</p> 
+
+<p>F&#252;r Informationen &#252;ber den Erhalt von Email-Zertifikaten siehe 
+   <a href="using_certs_help.xhtml#getting_your_own_certificate">Ein eigenes Zertifikat erwerben</a>.</p>
+
+<p>Um anzugeben, welche Signier- und Verschl&#252;sselungs-Zertifikate mit einem speziellen Account genutzt werden
+   sollen, starten Sie aus dem Mail-Fenster:</p>
+
+<ol>
+    <li>&#214;ffnen Sie das Bearbeiten-Men&#252; und w&#228;hlen Sie Mail &amp; Newsgroups-Account-Einstellungen.</li>
+    <li>W&#228;hlen Sie Sicherheit unter dem Namen des Mail-Accounts, dessen Sicherheitseinstellungen Sie
+        konfigurieren wollen.</li>
+    <li>Unter Digitaler Signatur w&#228;hlen Sie Auswahl. (Es kann sein, dass Sie nach Ihrem
+        <a href="glossary.xhtml#master_password">Master-Passwort</a> gefragt werden, bevor Sie weitermachen
+        k&#246;nnen.)
+        <p>Es erscheint eine Dialogbox, die Ihnen eine Auswahl aus Ihren verf&#252;gbaren Zertifikaten
+        erm&#246;glicht.</p></li>
+    <li>W&#228;hlen Sie das Signatur-Zertifikat, das Sie benutzen m&#246;chten und klicken Sie auf OK.</li>
+    <li>F&#252;hren Sie die gleiche Schritte unter Verschl&#252;sselung durch: klicken Sie auf den Auswahl-Button,
+    selektieren Sie das Verschl&#252;sselungszertifikat und klicken Sie auf OK.</li>
+
+    <p>In manchen F&#228;llen k&#246;nnen Sie das gleiche Zertifikat f&#252;r die Verschl&#252;sselung benutzen, 
+       das Sie unter Digitaler Signatur angegeben haben; &#252;berpr&#252;fen Sie das mit Ihrem 
+       Systemadministrator, um sicher zu sein.</p>
+</ol>
+
+<p>Optional k&#246;nnen Sie auch einstellen, das Sie normalerweise alle Nachrichten, die von diesem Account versandt 
+   werden, signieren oder verschl&#252;sseln wollen. Diese Account-spezifischen Einstellungen sind nur f&#252;r 
+   Ihre Bequemlichkeit gedacht; Sie k&#246;nnen die Fehlwert-Einstellungen f&#252;r einzelne Nachrichten
+   &#252;berschreiben.</p>
+
+<p>Um Ihre Standard-Einstellungen f&#252;r Signieren und Verschl&#252;sseln zu konfigurieren, starten Sie vom 
+   Sicherheits-Panel f&#252;r den Account (wie oben beschrieben) und w&#228;hlen Sie Ihre Einstellungen wie folgt:</p>
+<ul>
+    <li>Unter digitale Signatur
+    <ul>
+        <li><strong>Nachrichten digital signieren</strong>: Wenn diese Checkbox aktiviert ist, werden alle
+            Nachrichten, die Sie von diesem Account aus versenden, digital signiert, es sei denn, 
+            Sie &#228;ndern die Einstellung vor dem Versenden dieser Nachricht. Um diese Einstellung zu 
+            &#228;ndern, deselektieren Sie die Checkbox.</li>
+    </ul>
+    </li>
+    <li>Unter Verschl&#252;sselung (eines ausw&#228;hlen):
+    <ul>
+        <li><strong>Niemals</strong>: Wenn diese Option gew&#228;hlt ist, werden von diesem Account 
+            versandte Nachrichten nicht verschl&#252;sselt, sofern Sie nicht vor dem Versenden anderes
+            einstellen.</li>
+        <li><strong>Erforderlich</strong>: Wenn diese Option aktiviert ist, werden alle von diesem Account 
+            versandten Nachrichten verschl&#252;sselt &mdash; aber nur, wenn Sie &#252;ber g&#252;ltige 
+            Zertifikate von jedem der Nachrichten-Empf&#228;nger verf&#252;gen. Wenn Sie nicht &#252;ber 
+            alle erforderlichen Zertifikate verf&#252;gen, kann die Nachricht nicht verschickt werden, 
+            solange Sie die Verschl&#252;sselung f&#252;r diese Nachricht nicht deaktivieren.</li>
+    </ul>
+    </li>
+</ul>
+
+<p>Wenn Sie die Konfiguration Ihrer Mail-Sicherheits-Einstellungen beendet haben, klicken Sie zur Best&#228;tigung
+   auf OK.</p>
+ 
+<p>[<a href="#signing_and_encrypting_messages">Zur&#252;ck zum Anfang des Abschnitts</a>]</p>
+
+<h2 id="signing_and_encrypting_a_new_message">Signierung &amp; Verschl&#252;sselung einer neuen Nachricht</h2>
+
+<p>Bevor Sie beginnen, Nachrichten digital zu signieren oder zu verschl&#252;sseln, m&#252;ssen Sie mindestens ein 
+   Email-Zertifikat erhalten und Ihre Email-Sicherheits-Einstellungen korrekt konfiguriert haben. F&#252;r 
+   Zusatzinformationen zu diesen Fragen siehe <a href="#about_digital_signatures_and_encryption">&#220;ber digitale
+   Signaturen &amp; Verschl&#252;sselung</a>.</p>
+
+<p>Die Eintragungen, die Sie in <a href="mailnews_account_settings.xhtml#security">Mail &amp; Newsgroups-Account-Einstellungen - 
+   Sicherheit</a> gemacht haben, bestimmen die Standard-Einstellungen f&#252;r jedes neue Nachrichtenfenster, 
+   das sich &#246;ffnet, wenn Sie mit dem Schreiben einer Email beginnen.</p>
+
+<p>Zum &#214;ffnen eines Erstellungsfenster starten Sie vom Mail-Fenster und klicken Sie auf Verfassen. Sie
+   k&#246;nnen die Standard-Sicherheitseinstellungen unmittelbar daran erkennen, ob die folgenden Icons 
+   in der unteren rechen Ecke des Fensters vorhanden sind:</p>
+
+<table>
+    <tr>
+        <td>
+            <img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif" alt="digital signature icon" />
+        </td>
+        <td>Die Nachricht wird digital signiert werden (vorausgesetzt, Sie besitzen ein g&#252;ltiges
+            Email-Zertifikat, das Sie identifiziert).</td>
+    </tr>
+    <tr>
+        <td>
+            <img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif" alt="encryption icon" />
+        </td>
+        <td>Die Nachricht wird verschl&#252;sselt (vorausgesetzt, dass Sie g&#252;ltige 
+            Zertifikate f&#252;r alle Empf&#228;nger besitzen).</td>
+    </tr>
+</table>
+
+<p>Um diese Einstellungen an- oder abzuschalten, klicken Sie auf den Pfeil unter dem Sicherheits-Icon in der 
+   Email-Werkzeugleiste oben im Fenster. Dann w&#228;hlen Sie aus der Drop-Down-Liste den gew&#252;nschten
+   Eintrag:</p>
+
+<ul>
+    <li><strong>Diese Nachricht nicht verschl&#252;sseln</strong>: W&#228;hlen Sie diesen Eintrag, wenn Sie die
+        Verschl&#252;sselung f&#252;r diese Nachricht abschalten wollen. Die Nachricht wird nicht
+        verschl&#252;sselt, wenn sie &#252;ber das Internet versandt wird.</li>
+    <li><strong>Diese Nachricht verschl&#252;seln</strong>: W&#228;hlen Sie diesen Eintrag, wenn Sie die
+        Verschl&#252;sselung f&#252;r diese Nachricht aktivieren m&#246;chten. Die Nachricht wird in
+        verschl&#252;sselter Form versandt. Sie kann jedoch nicht gesendet werden, wenn Sie keine
+        g&#252;ltigen Zertifikate f&#252;r alle Empf&#228;nger besitzen.</li>
+    <li><strong>Diese Nachricht digital signieren</strong>: W&#228;hlen Sie diesen Eintrag, um die 
+        digitale Signatur f&#252;r diese Nachricht ein- oder auszuschalten. Eine Markierung zeigt an,
+        das die Nachricht signiert wird.</li> 
+    <li><strong>Sicherheits-Information anzeigen</strong>: W&#228;hlen Sie diesen Eintrag, um detaillierte 
+        Informationen &#252;ber den Sicherheitsstatus dieser Nachricht anzuzeigen&mdash; damit Sie z. B. 
+        bestimmen k&#246;nnen, ob Sie ein Zertifikat f&#252;r einen der Empf&#228;nger einholen m&#252;ssen.</li>
+</ul>
+
+<p>Um detaillierte Informationen &#252;ber den Sicherheitsstatus einer Nachricht zu sehen, 
+   k&#246;nnen Sie auch das Schl&#252;ssel- oder Sperr-Icon (wie in <a href="#message_security_compose_window">
+   Nachrichten-Sicherheit - Erstellungsfenster</a> beschrieben) anklicken.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Zur&#252;ck zum Anfang des Abschnitts</a>]</p>
+
+<h2 id="reading_signed_and_encrypted_messages">Signierte &amp; verschl&#252;sselte Nachrichten lesen</h2>
+
+<p>Wenn Sie eine signierte oder verschl&#252;sselte Nachricht im Email-Fenster ansehen, zeigen diese Icons in der 
+   oberen rechten Ecke des Nachrichten-Kopfes den Sicherheitsstatus der Nachricht an:</p>
+  
+<table>
+    <tr>
+        <td>
+            <img src="chrome://messenger/skin/smime/icons/hdrSignOk.gif" alt="digital signature icon" />
+        </td>
+        <td>Die Nachricht ist digital signiert und wurde verifiziert. Wenn es ein Problem mit der Signatur 
+        gibt, wird ein zerbrochener Stift angezeigt.</td>
+    </tr>
+    <tr>
+        <td>
+            <img src="chrome://messenger/skin/smime/icons/hdrSignUnknown.gif" alt="unknown icon" />
+        </td>
+        <td>Die Nachricht ist signiert, besitzt aber einen gro&#223;en Anhang, der noch nicht vom 
+      IMAP-Server abgerufen wurde. Daher kann die Signatur nicht verifiziert werden. Klicken Sie auf 
+      das Icon, um den Anhang abzurufen  und die Signatur zu verifizieren.</td>
+    </tr>
+    <tr>
+        <td>
+            <img src="chrome://messenger/skin/smime/icons/hdrCryptoOk.gif" alt="encryption icon" />
+        </td>
+        <td>Die Nachricht ist verschl&#252;sselt. Wenn es ein Problem mit der Verschl&#252;sselung gibt,
+            wird ein zerbrochener Schl&#252;ssel angezeigt. </td>
+    </tr>
+</table>
+
+<p>F&#252;r Informationen &#252;ber die Zertifikat-Validierung siehe
+   <a href="using_certs_help.xhtml#controlling_validation">Kontrolle der Validierung</a>.</p>
+
+<p>Um detaillierte Informationen &#252;ber die Sicherheit der Nachricht zu sehen, klicken Sie auf das 
+   Schl&#252;ssel- oder Sperr-Icon, oder folgen Sie den Anweisungen in 
+   <a href="#message_security_received_message">Nachrichten-Sicherheit - Erhaltene Nachricht</a>.</p>
+
+<p>[<a href="#signing_and_encrypting_messages">Zur&#252;ck zum Anfang des Abschnitts</a>]</p>
+
+<h2 id="message_security_compose_window">Nachrichten-Sicherheit - Erstellungsfenster</h2>
+
+<p>Dieser Abschnitt beschreibt das Nachrichten-Sicherheitsfenster, das Sie f&#252;r jede Nachricht &#246;ffnen
+   k&#246;nnen, die Sie erstellen. Wenn das Fenster Nachrichten-Sicherheit noch nicht ge&#246;ffnet ist, klicken 
+   Sie auf das Sicherheits-Icon in der Werkzeugleiste des Erstellungs-Fensters.</p>
+
+
+<p>Das Fenster Nachrichten-Sicherheit beschreibt, wie Ihre Nachricht verschickt wird:</p>
+
+<ul>
+    <li><strong>Digital signiert</strong>: Diese Zeile beschreibt, ob Ihre Nachricht signiert wird. Es gibt drei
+    M&#246;glichkeiten:
+    <ul>
+        <li><strong>Ja</strong>: Digitale Signatur wurde f&#252;r diese Nachricht aktiviert, Sie haben ein
+            g&#252;ltiges Zertifikat, das Sie identifiziert und die Nachricht kann signiert werden.</li>
+        <li><strong>Nein</strong>: Digitale Signatur wurde f&#252;r diese Nachricht deaktiviert.</li>
+        <li><strong>Nicht m&#246;glich</strong>: Digitale Signatur wurde f&#252;r diese Nachricht aktiviert. 
+            Es ist jedoch kein g&#252;ltiges, Sie identifizierendes 
+            <a href="glossary.xhtml#certificate">Zertifikat</a> vorhanden, oder es gibt ein anderes 
+            Problem, das eine Signatur unm&#246;glich macht.</li>
+    </ul>
+    </li>
+    <li><strong>Verschl&#252;sselt</strong>: Diese Zeile beschreibt, ob Ihre Nachricht 
+    verschl&#252;sselt wird. Es gibt drei M&#246;glichkeiten:
+    <ul>
+        <li><strong>Ja</strong>: Verschl&#252;sselung ist f&#252;r diese Nachricht aktiviert, 
+        g&#252;ltige Zertifikate f&#252;r alle aufgef&#252;hrten Empf&#228;nger sind vorhanden 
+        und die Nachricht kann verschl&#252;sselt werden.</li>
+        <li><strong>Nein</strong>: Verschl&#252;sselung ist deaktiviert oder es ist nicht m&#246;glich, 
+        diese Nachricht zu verschl&#252;sseln.</li>
+    <li><strong>Nicht m&#246;glich</strong>: Verschl&#252;sselung ist aktiviert f&#252;r diese Nachricht. 
+    Es ist jedoch mindestens f&#252;r einen Empf&#228;nger kein g&#252;ltiges Zertifikat vorhanden, oder es 
+    sind keine Empf&#228;nger aufgef&#252;hrt, oder es gibt ein anderes Problem, das eine 
+    Verschl&#252;sselung unm&#246;glich macht.</li>
+    </ul>
+    </li>
+</ul>
+
+<p>Das Fenster Nachrichten-Sicherheit zeigt auch die Zertifikate an, die f&#252;r die Empf&#228;nger Ihrer
+   Nachricht vorhanden sind:</p>
+
+<ul>
+    <li><strong>Anzeigen</strong>: Um die Einzelheiten f&#252;r eines der Zertifikate in der Liste anzuzeigen,
+        selektieren Sie dessen Namen und klicken auf Anzeigen.</li>
+</ul>
+
+<p>F&#252;r weitere Informationen &#252;ber die Ausstellung von Zertifikaten und die Konfiguration der
+   Einstellungen zur Nachrichten-Sicherheit siehe <a href="#signing_and_encrypting_messages">Signieren 
+   &amp; Verschl&#252;sseln von Nachrichten</a>.</p>
+
+<p>Um Ihre Einstellungen f&#252;r die Signierung oder Verschl&#252;sselung einer einzelnen Nachricht anzuzeigen,
+   klicken Sie auf den Pfeil neben dem Sicherheits-Button im Erstellungsfenster, dann w&#228;hlen Sie die
+   gew&#252;nschten Optionen.</p>
+
+<p>Um Ihre Standard-Einstellungen f&#252;r Signierung und Verschl&#252;sselung f&#252;r alle Nachrichten 
+   anzuzeigen, siehe <a href="mailnews_account_settings.xhtml#security">Mail- &amp; Newsgroups-Account-Einstellungen -
+   Sicherheit</a></p>
+
+<p>[<a href="#signing_and_encrypting_messages">Zur&#252;ck zum Anfang des Abschnitts</a>]</p>
+
+<h2 id="message_security_received_message">Nachrichten-Sicherheit - Erhaltene Nachricht</h2>
+
+<p>Dieser Abschnitt beschreibt das Nachrichten-Sicherheits-Fenster, das Sie f&#252;r jede Nachricht 
+   &#246;ffnen k&#246;nnen, die Sie erhalten haben. Wenn Sie das Fenster Nachrichten-Sicherheit f&#252;r
+   empfangene Nachrichten noch nicht ge&#246;ffnet haben, f&#252;hren Sie diese Schritte aus:</p>
+
+<ol>
+    <li>Im Nachrichten-Fenster w&#228;hlen Sie die Nachricht, f&#252;r die Sie die Sicherheitsinformation 
+    anzeigen wollen.</li>
+    <li>&#214;ffnen Sie das Anzeigen-Men&#252; und w&#228;hlen Sie Nachrichtensicherheitsinformation.</li>
+</ol>
+
+<p>Das Fenster Nachrichtensicherheit zeigt folgende Information an:</p>
+
+<ul>
+    <li><strong>Digitale Signatur.</strong> Der obere Abschnitt beschreibt, ob die Nachricht digital signiert 
+    wurde und wenn, ob die Signatur g&#252;ltig ist.</li>
+  
+    <p>Wenn die Validierung fehlschlug, w&#228;hrend OCSP aktiviert war, &#252;berpr&#252;fen Sie 
+    die OCSP-Einstellungen in <a href="validation_help.xhtml#privacy_and_security_preferences_validation">
+    Privatsph&#228;re- &amp; Sicherheitseinstellungen - Validierung</a>. Wenn Sie mit OCSP nicht vertraut 
+    sind, &#252;berpr&#252;fen Sie die Einstellungen mit Ihrem Systemadministrator. Wenn die Einstellungen 
+    korrekt sind, kann es Probleme mit dem OCSP-Dienst geben oder das zur Erstellung der Signatur 
+    benutzte Zertifikat ist nicht mehr g&#252;ltig.</p>
+
+    <p>Falls die Signatur ung&#252;ltig ist wegen eines Problems mit den Vertrauenseinstellungen des 
+    Zertifikats, k&#246;nnen Sie den <a href="certs_help.xhtml">Zertifikats-Manager</a> zum Anzeigen 
+    oder Editieren dieser Einstellungen benutzen.</p>
+  
+    <li><strong>Signatur-Zertifikat anzeigen.</strong> Wenn die Nachricht signiert ist, k&#246;nnen 
+    Sie durch Anklicken dieses Buttons das Zertifikat anzeigen, das zur Signierung benutzt wurde.</li>
+    <li><strong>Verschl&#252;sselung.</strong> Der untere Abschnitt informiert dar&#252;ber, ob 
+    die Nachricht verschl&#252;sselt ist und ob es irgendwelche Probleme mit der Entschl&#252;sselung gibt.
+    <ul>
+        <li>Falls der Inhalt der Nachricht w&#228;hrend der &#220;bertragung ge&#228;ndert wurde, sollten Sie den 
+            Absender um eine erneute Sendung bitten. Die &#196;nderungen k&#246;nnten durch Netzwerkprobleme 
+            verursacht sein.</li>
+        <li>Falls eine Kopie Ihres eigenen Zertifikats (die vom Absender zur Verschl&#252;sselung der Nachricht
+            benutzt wurde) nicht auf Ihrem Computer verf&#252;gbar ist, kann der private Schl&#252;ssel, der zur
+            Entschl&#252;sselung der Nachricht ben&#246;tigt wird, nicht benutzt werden. Die einzige L&#246;sung
+            ist es, eine Sicherheitskopie Ihres Zertifikates und dessen privaten Schl&#252;ssels zu importieren
+            (siehe <a href="certs_help.xhtml#your_certificates">Ihre Zertifikate</a> wegen Einzelheiten.)
+            Wenn Sie keinen Zugriff auf eine Sicherung Ihres Zertifikates haben, werden Sie die Nachricht 
+            nicht entschl&#252;sseln k&#246;nnen.</li>
+    </ul>
+    </li>
+</ul>
+
+<p>[<a href="#signing_and_encrypting_messages">Zur&#252;ck zum Anfang des Abschnitts</a>]</p>
+
+</body>
+</html>

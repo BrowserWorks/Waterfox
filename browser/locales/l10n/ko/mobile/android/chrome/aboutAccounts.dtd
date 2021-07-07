@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox Accounts">
+<!ENTITY aboutAccounts.connected.description "연결되어 있음">
+<!ENTITY aboutAccounts.syncPreferences.label "Sync 설정 확인하기">
+
+<!ENTITY aboutAccounts.noConnection.title "인터넷에 연결되지 않음">
+<!ENTITY aboutAccounts.retry.label "다시 시도">
+
+<!ENTITY aboutAccounts.restrictedError.title "제한된 프로필">
+<!ENTITY aboutAccounts.restrictedError.description "이 프로필은 Firefox Accounts를 사용할 수 없습니다.">

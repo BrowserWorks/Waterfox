@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Kleuren">
+<!ENTITY color                             "Tekst en achtergrond">
+<!ENTITY textColor.label                   "Tekst:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Achtergrond:">
+<!ENTITY backgroundColor.accesskey         "A">
+<!ENTITY useSystemColors.label             "Systeemkleuren gebruiken">
+<!ENTITY useSystemColors.accesskey         "S">
+
+<!ENTITY underlineLinks.label              "Koppelingen onderstrepen">
+<!ENTITY underlineLinks.accesskey          "K">
+<!ENTITY links                             "Koppelingskleuren">
+<!ENTITY linkColor.label                   "Niet-bezochte koppelingen:">
+<!ENTITY linkColor.accesskey               "N">
+<!ENTITY activeLinkColor.label             "Actieve koppelingen:">
+<!ENTITY activeLinkColor.accesskey         "c">
+<!ENTITY visitedLinkColor.label            "Bezochte koppelingen:">
+<!ENTITY visitedLinkColor.accesskey        "B">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Wanneer een webpagina eigen kleuren en achtergronden opgeeft">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Altijd de door de webpagina opgegeven kleuren en achtergrond gebruiken">
+<!ENTITY alwaysUseDocumentColors.accesskey "w">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Mijn gekozen kleuren gebruiken, de opgegeven kleuren en achtergrondafbeelding negeren">
+<!ENTITY useMyColors.accesskey             "M">
+<!ENTITY automaticColors.label             "Alleen bij gebruik van een hoog contrast thema de paginakleuren negeren">
+<!ENTITY automaticColors.accesskey         "r">

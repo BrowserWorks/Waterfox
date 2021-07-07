@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Webové stránky jsou někdy k dispozici v několika jazycích. Zvolte jazyky v takovém pořadí, v jakém se mají používat pro zobrazování webových stránek.">
+<!ENTITY languages.customize.title                      "Jazyky">
+<!ENTITY langtitle.label                                "Jazyky webových stránek">
+<!ENTITY languages.customize.prefAddLangDescript        "Zvolte jazyk nebo jazyky, které chcete přidat.">
+<!ENTITY languages.customize.addButton.label            "Přidat…">
+<!ENTITY languages.customize.addButton.accesskey        "P">
+<!ENTITY languages.customize.deleteButton.label         "Odebrat">
+<!ENTITY languages.customize.deleteButton.accesskey     "D">
+<!ENTITY languages.customize.add.title.label            "Přidat jazyky">
+<!ENTITY languages.customize.available.label            "Jazyky:">
+<!ENTITY languages.customize.active.label               "Jazyky v pořadí, v jakém se mají používat:">
+<!ENTITY languages.customize.active.accesskey           "J">
+<!ENTITY languages.customize.others.label               "Ostatní:">
+<!ENTITY languages.customize.others.accesskey           "O">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Znaková sada textu pro původní obsah">
+<!ENTITY languages.customize.Fallback2.label            "Výchozí znaková sada:">
+<!ENTITY languages.customize.Fallback2.accesskey        "z">
+<!ENTITY languages.customize.Fallback2.desc             "Tato znaková sada textu se používá pro původní obsah, který neobsahuje definici o své znakové sadě.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "Např.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Posunout výše">
+<!ENTITY languages.customize.moveUp.accesskey           "v">
+<!ENTITY languages.customize.moveDown.label             "Posunout níže">
+<!ENTITY languages.customize.moveDown.accesskey         "n">

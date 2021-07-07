@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Ειδοποιήσεις">
+<!ENTITY notifications.caption            "Ειδοποιήσεις">
+<!ENTITY newMessagesArrive.label          "Όταν φθάνουν νέα μηνύματα:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Εμφάνιση ειδοποίησης για">
+<!ENTITY showAlertFor.accesskey           "Ε">
+<!ENTITY showAlertTimeEnd.label           "δευτερόλεπτα">
+
+<!ENTITY showAlertPreviewText.label       "Εμφάνιση προεπισκόπησης κειμένου μηνύματος">
+<!ENTITY showAlertPreviewText.accesskey   "φ">
+<!ENTITY showAlertSubject.label           "Εμφάνιση θέματος">
+<!ENTITY showAlertSubject.accesskey       "θ">
+<!ENTITY showAlertSender.label            "Εμφάνιση αποστολέα">
+<!ENTITY showAlertSender.accesskey        "π">
+<!ENTITY useSystemAlert.label             "Χρήση ειδοποιήσεων λειτουργικού συστήματος">
+<!ENTITY useSystemAlert.accesskey         "λ">
+<!ENTITY useBuiltInAlert.label            "Χρήση παραθύρων ειδοποιήσεων του &brandShortName;">
+<!ENTITY useBuiltInAlert.accesskey        "π">
+
+<!ENTITY showTrayIcon.label               "Εμφάνιση εικονιδίου στη γραμμή">
+<!ENTITY showTrayIcon.accesskey           "μ">
+<!ENTITY showBalloon.label                "Εμφάνιση ειδοποίησης συστήματος">
+<!ENTITY showBalloon.accesskey            "ο">
+<!ENTITY bounceSystemDockIcon.label       "Κίνηση εικονιδίου γραμμής">
+<!ENTITY bounceSystemDockIcon.accesskey   "Κ">
+
+<!ENTITY playSound.label                  "Αναπαραγωγή ήχου">
+<!ENTITY playSound.accesskey              "Α">
+<!ENTITY playButton.label                 "Αναπαραγωγή">
+<!ENTITY playButton.accesskey             "γ">
+<!ENTITY systemsound.label                "Ήχος νέου email συστήματος">
+<!ENTITY systemsound.accesskey            "μ">
+<!ENTITY customsound.label                "Προσαρμοσμένο αρχείο ήχου">
+<!ENTITY customsound.accesskey            "Π">
+<!ENTITY browse.label                     "Περιήγηση…">
+<!ENTITY browse.accesskey                 "Π">
+<!ENTITY browse.title                     "Επιλογή αρχείου">

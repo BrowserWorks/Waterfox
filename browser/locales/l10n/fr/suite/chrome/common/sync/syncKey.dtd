@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Votre clé &syncBrand.fullName.label;">
+<!ENTITY syncKey.page.description         "Cette clé est utilisée pour décoder les données de votre compte &syncBrand.fullName.label;. Vous devrez saisir cette clé chaque fois que vous configurez &syncBrand.fullName.label; sur un nouvel ordinateur ou un autre appareil.">
+<!ENTITY syncKey.keepItSecret.heading     "Ne la communiquez à personne">
+<!ENTITY syncKey.keepItSecret.description "Votre compte &syncBrand.fullName.label; est chiffré pour protéger votre vie privée. Sans cette clé, il faudrait des années avant que quiconque puisse arriver à décoder vos informations personnelles. Vous êtez la seule personne à avoir cette clé. Cela signifie que personne d’autre ne peut accéder à vos données &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading       "Ne la perdez pas">
+<!ENTITY syncKey.keepItSafe1.description  "Ne perdez pas cette clé.">
+<!ENTITY syncKey.keepItSafe2.description  " Nous n’en gardons aucune copie (elle n’aurait plus rien de secret !), ">
+<!ENTITY syncKey.keepItSafe3.description  "nous ne pourrons donc pas vous aider à la retrouver">
+<!ENTITY syncKey.keepItSafe4.description  " si elle est perdue. Vous en aurez besoin chaque fois que vous connecterez un nouvel ordinateur ou autre appareil à &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Pour en savoir plus sur &syncBrand.fullName.label; et votre vie privée, consultez ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Les conditions d’utilisation de &syncBrand.fullName.label; sont disponibles à l’adresse ">
+<!ENTITY syncKey.footer2.label            ". La politique de confidentialité se trouve à l’adresse ">
+<!ENTITY syncKey.footer3.label            ".">

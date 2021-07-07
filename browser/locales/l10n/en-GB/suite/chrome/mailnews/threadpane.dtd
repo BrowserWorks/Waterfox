@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Thread">
+<!ENTITY fromColumn.label "From">
+<!ENTITY recipientColumn.label "Recipient">
+<!ENTITY attachmentColumn.label "Attachments">
+<!ENTITY subjectColumn.label "Subject">
+<!ENTITY dateColumn.label "Date">
+<!ENTITY priorityColumn.label "Priority">
+<!ENTITY tagsColumn.label "Tags">
+<!ENTITY accountColumn.label "Account">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Size">
+<!ENTITY junkStatusColumn.label "Junk Status">
+<!ENTITY unreadColumn.label "Unread in Thread">
+<!ENTITY totalColumn.label "Total in Thread">
+<!ENTITY readColumn.label "Read">
+<!ENTITY receivedColumn.label "Received">
+<!ENTITY flagColumn.label "Flag">
+<!ENTITY locationColumn.label "Location">
+<!ENTITY idColumn.label "Order Received">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Select columns to display">
+<!ENTITY threadColumn2.tooltip "Display message threads">
+<!ENTITY fromColumn2.tooltip "Sort by from">
+<!ENTITY recipientColumn2.tooltip "Sort by recipient">
+<!ENTITY attachmentColumn2.tooltip "Sort by attachments">
+<!ENTITY subjectColumn2.tooltip "Sort by subject">
+<!ENTITY dateColumn2.tooltip "Sort by date">
+<!ENTITY priorityColumn2.tooltip "Sort by priority">
+<!ENTITY tagsColumn2.tooltip "Sort by tags">
+<!ENTITY accountColumn2.tooltip "Sort by account">
+<!ENTITY statusColumn2.tooltip "Sort by status">
+<!ENTITY sizeColumn2.tooltip "Sort by size">
+<!ENTITY junkStatusColumn2.tooltip "Sort by junk status">
+<!ENTITY unreadColumn2.tooltip "Number of unread messages in thread">
+<!ENTITY totalColumn2.tooltip "Total number of messages in thread">
+<!ENTITY readColumn2.tooltip "Sort by read">
+<!ENTITY receivedColumn2.tooltip "Sort by date received">
+<!ENTITY flagColumn2.tooltip "Sort by flag">
+<!ENTITY locationColumn2.tooltip "Sort by location">
+<!ENTITY idColumn2.tooltip "Sort by order received">

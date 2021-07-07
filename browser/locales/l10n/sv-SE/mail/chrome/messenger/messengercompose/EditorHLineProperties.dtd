@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Egenskaper för vågrät linje">
+
+<!ENTITY dimensionsBox.label "Dimensioner">
+<!ENTITY heightEditField.label "Höjd:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Bredd:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY pixelsPopup.value "pixlar">
+<!ENTITY alignmentBox.label "Kantställning">
+<!ENTITY leftRadio.label "Vänster">
+<!ENTITY leftRadio.accessKey "V">
+<!ENTITY centerRadio.label "Centrerad">
+<!ENTITY centerRadio.accessKey "e">
+<!ENTITY rightRadio.label "Höger">
+<!ENTITY rightRadio.accessKey "g">
+
+<!ENTITY threeDShading.label "3D-skugga">
+<!ENTITY threeDShading.accessKey "D">
+<!ENTITY saveSettings.label "Använd som standard">
+<!ENTITY saveSettings.accessKey "s">
+<!ENTITY saveSettings.tooltip "Lagra inställningarna för infogande av nya linjer">

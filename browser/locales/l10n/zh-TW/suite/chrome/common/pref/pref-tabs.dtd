@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "分頁瀏覽">
+
+<!ENTITY tabDisplay.label "分頁顯示">
+<!ENTITY autoHide.label "只有一個分頁時自動隱藏分頁工具列">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "在背景載入鏈結">
+<!ENTITY background.accesskey "S">
+<!ENTITY warnOnClose.label "關閉瀏覽器時若還有多個分頁請通知我">
+<!ENTITY warnOnClose.accesskey "W">
+<!ENTITY relatedAfterCurrent.label "將相關分頁開啟於目前分頁之後">
+<!ENTITY relatedAfterCurrent.accesskey "O">
+
+<!ENTITY loadGroup.label "開啟書籤群組時">
+<!ENTITY loadGroupAppend.label "新增分頁">
+<!ENTITY loadGroupAppend.accesskey "A">
+<!ENTITY loadGroupReplace.label "取代已有分頁">
+<!ENTITY loadGroupReplace.accesskey "R">
+
+<!ENTITY openTabs.label "在下列情形開啟至分頁而非新視窗:">
+
+<!ENTITY middleClick.label "在網頁的鏈結上按中鍵、壓住 Ctrl 按左鍵，或是 Ctrl+Enter">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "在網頁的鏈結上按滑鼠中鍵、&#8984;+滑鼠左鍵或 &#8984;+Return">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "在網址列按 Ctrl+Enter">
+<!ENTITY urlbar.accesskey "L">
+<!ENTITY urlbarMac.label "在網址列按 &#8984;+Return">
+<!ENTITY urlbarMac.accesskey "L">
+
+<!ENTITY openManagers.label "在新分頁，而不是獨立視窗中開啟">
+<!ENTITY openDataManager.label "資料管理員">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "附加元件管理員">
+<!ENTITY openAddOnsManager.accesskey "n">

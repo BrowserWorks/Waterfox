@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Vytváření">
+<!ENTITY generalComposing.label               "Obecné">
+<!ENTITY forwardMsg.label                     "Přeposílat zprávy:">
+<!ENTITY inline.label                         "Vložené">
+<!ENTITY inline.accesskey                     "l">
+<!ENTITY asAttachment.label                   "Jako přílohu">
+<!ENTITY asAttachment.accesskey               "p">
+
+<!ENTITY replyQuoteInline.label               "Citovat v odpovědích vložené přílohy">
+<!ENTITY replyQuoteInline.accesskey           "C">
+<!ENTITY warnOnSendAccelKey.label             "Při odeslání zprávy pomocí klávesové zkratky požadovat potvrzení">
+<!ENTITY warnOnSendAccelKey.accesskey         "d">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Automaticky uložit zprávu každých">
+<!ENTITY autoSave.accesskey                   "A">
+<!ENTITY autoSaveEnd.label                    "minut">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Zalamovat odchozí textové zprávy po">
+<!ENTITY wrapOutMsg.accesskey                 "m">
+<!ENTITY char.label                           "znacích">
+
+<!ENTITY defaultMessagesHeader.label          "Výchozí nastavení pro HTML zprávy">
+<!ENTITY font.label                           "Písmo:">
+<!ENTITY font.accesskey                       "s">
+<!ENTITY size.label                           "Velikost:">
+<!ENTITY size.accesskey                       "e">
+<!ENTITY fontColor.label                      "Text:">
+<!ENTITY fontColor.accesskey                  "x">
+<!ENTITY bgColor.label                        "Pozadí:">
+<!ENTITY bgColor.accesskey                    "z">
+<!ENTITY defaultCompose.label                 "Výchozí formát vytváření:">
+<!ENTITY defaultBodyText.label                "Text v těle (klávesa Enter začne nový řádek)">
+<!ENTITY defaultBodyText.accesskey            "o">
+<!ENTITY defaultParagraph.label               "Odstavec (klávesa Enter začne nový odstavec)">
+<!ENTITY defaultParagraph.accesskey           "d">
+
+<!ENTITY selectHeaderType.label               "Zvolte typ hlavičky odpovědi:">
+<!ENTITY selectHeaderType.accesskey           "e">
+<!ENTITY noReplyOption.label                  "Bez hlavičky">
+<!-- LOCALIZATION NOTE (authorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwrotesingle preference. [Author] needs to be
+  translated. -->
+<!ENTITY authorWroteOption.label              "[Autor] napsal:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_ondateauthorwrote preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY onDateAuthorWroteOption.label        "[Dne] [autor] napsal:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwroteondate preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY authorWroteOnDateOption.label        "[Autor] napsal [dne]:">

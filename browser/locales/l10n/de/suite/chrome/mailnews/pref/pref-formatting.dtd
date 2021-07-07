@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Sendeformat">
+<!ENTITY sendMaildesc.label           "Beim Senden von formatierten (HTML-) Nachrichten an einen oder mehrere Empfänger, die nicht für HTML-Empfang eingetragen sind:">
+<!ENTITY askMe.label                  "Abfrage, was geschehen soll (Mail fragt Sie nach einem Format)">
+<!ENTITY askMe.accesskey              "A">
+<!ENTITY convertPlain2.label          "Die Nachricht in Reintext konvertieren (Formatierung könnte verloren gehen)">
+<!ENTITY convertPlain2.accesskey      "D">
+<!ENTITY sendHTML2.label              "Die Nachricht nur als HTML senden (könnte Anzeigeprobleme verursachen)">
+<!ENTITY sendHTML2.accesskey          "H">
+<!ENTITY sendBoth2.label              "Die Nachricht sowohl als Reintext als auch als HTML senden (größere Nachricht)">
+<!ENTITY sendBoth2.accesskey          "N">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML- und Reintext-Domains">
+<!ENTITY domaindesc.label             "Wenn Sie eine Nachricht an eine Adresse mit einem der unten aufgelisteten Domainnamen senden, sendet Mail die Nachricht automatisch im richtigen Format (formatierter Text oder Reintext).">
+<!ENTITY HTMLdomaintitle.label        "HTML-Domains.">
+<!ENTITY HTMLdomaintitle.accesskey    "H">
+<!ENTITY PlainTexttitle.label         "Reintext-Domains.">
+<!ENTITY PlainTexttitle.accesskey     "R">
+<!ENTITY AddButton.label              "Hinzufügen…">
+<!ENTITY AddHtmlDomain.accesskey      "z">
+<!ENTITY AddPlainText.accesskey       "u">
+<!ENTITY DeleteButton.label           "Löschen">
+<!ENTITY DeleteHtmlDomain.accesskey   "L">
+<!ENTITY DeletePlainText.accesskey    "s">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "HTML-Domainnamen hinzufügen">
+<!ENTITY add.htmldomain               "HTML-Domainnamen:">
+<!ENTITY add.plaintexttitle           "Reintext-Domainnamen hinzufügen">
+<!ENTITY add.plaintextdomain          "Reintext-Domainnamen">
+
+<!ENTITY domainnameError.title        "Domainnamenfehler">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Der Domainname @string@ ist ungültig und wird ignoriert. Gültige Domainnamen müssen zumindest einen &quot;.&quot; und beiderseits davon Buchstaben enthalten.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Die Nachricht automatisch als Reintext senden wenn keine signifikanten Formatierungen vorhanden sind (übergeht andere Optionen)">
+<!ENTITY autoDowngrade.accesskey      "R">

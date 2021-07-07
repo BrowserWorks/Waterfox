@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Programinstallering">
+<!ENTITY addOnsTitle.label                    "Utvidingar">
+<!ENTITY addOnsAllow.label                    "Tillat nettstadar å installere utvidingar og oppdateringar">
+<!ENTITY addOnsAllow.accesskey                "T">
+<!ENTITY allowedSitesLink.label               "Tillatte nettstadar">
+<!ENTITY autoAddOnsUpdates.label              "Automatisk søk etter oppdateringar">
+<!ENTITY autoAddOnsUpdates.accesskey          "o">
+<!ENTITY daily.label                          "dagleg">
+<!ENTITY addOnsDaily.accesskey                "d">
+<!ENTITY weekly.label                         "kvar veke">
+<!ENTITY addOnsWeekly.accesskey               "v">
+<!ENTITY addOnsModeAutomatic.label            "Automatisk last ned og installer oppdateringane">
+<!ENTITY addOnsModeAutomatic.accesskey        "A">
+<!ENTITY enablePersonalized.label             "Personleggjer utvidingstilrådingar">
+<!ENTITY enablePersonalized.accesskey         "P">
+<!ENTITY addonManagerLink.label               "Handter utvidingar">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Automatisk søk etter oppdateringar">
+<!ENTITY autoAppUpdates.accesskey             "t">
+<!ENTITY appDaily.accesskey                   "a">
+<!ENTITY appWeekly.accesskey                  "k">
+<!ENTITY appModeAutomatic.label               "Automatisk last ned og installer oppdateringa">
+<!ENTITY appModeAutomatic.accesskey           "A">
+<!ENTITY updateHistoryButton.label            "Vis oppdateringshistorikk…">
+<!ENTITY updateHistoryButton.accesskey        "V">

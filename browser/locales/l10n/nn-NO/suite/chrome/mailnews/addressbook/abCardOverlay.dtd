@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Namn">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Fornamn:">
+<!ENTITY NameField1.accesskey           "F">
+<!ENTITY NameField2.label               "Etternamn:">
+<!ENTITY NameField2.accesskey           "E">
+<!ENTITY PhoneticField1.label           "Fonetisk:">
+<!ENTITY PhoneticField2.label           "Fonetisk:">
+<!ENTITY DisplayName.label              "Fullt namn:">
+<!ENTITY DisplayName.accesskey          "F">
+<!ENTITY preferDisplayName.label        "Alltid føretrekk å vise namnet i staden for det i meldingshovudet">
+<!ENTITY preferDisplayName.accesskey    "A">
+<!ENTITY NickName.label                 "Kallenamn:">
+<!ENTITY NickName.accesskey             "K">
+
+<!ENTITY PrimaryEmail.label             "E-postadresse:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Annan e-post:">
+<!ENTITY SecondEmail.accesskey          "A">
+<!ENTITY PreferMailFormat.label         "Føretrekkjer å få meldingar formatert som:">
+<!ENTITY PreferMailFormat.accesskey     "r">
+<!ENTITY PlainText.label                "Rein tekst">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Ukjent">
+<!ENTITY ScreenName.label               "Skjermnamn:">
+<!ENTITY ScreenName.accesskey           "S">
+
+<!ENTITY WorkPhone.label                "Arbeid:">
+<!ENTITY WorkPhone.accesskey            "A">
+<!ENTITY HomePhone.label                "Heime:">
+<!ENTITY HomePhone.accesskey            "H">
+<!ENTITY FaxNumber.label                "Faks:">
+<!ENTITY FaxNumber.accesskey            "k">
+<!ENTITY PagerNumber.label              "Personsøkjar:">
+<!ENTITY PagerNumber.accesskey          "P">
+<!ENTITY CellularNumber.label           "Mobiltelefon:">
+<!ENTITY CellularNumber.accesskey       "M">
+
+<!ENTITY Home.tab                       "Privat">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adresse:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Poststad:">
+<!ENTITY HomeCity.accesskey             "o">
+<!ENTITY HomeState.label                "Delstat/region:">
+<!ENTITY HomeState.accesskey            "e">
+<!ENTITY HomeZipCode.label              "Postnummer:">
+<!ENTITY HomeZipCode.accesskey          "s">
+<!ENTITY HomeCountry.label              "Land:">
+<!ENTITY HomeCountry.accesskey          "L">
+<!ENTITY HomeWebPage.label              "Nettside:">
+<!ENTITY HomeWebPage.accesskey          "N">
+<!ENTITY Birthday.label                 "Fødselsdag:">
+<!ENTITY Birthday.accesskey             "F">
+<!ENTITY In.label                       "">
+<!ENTITY Year.placeholder               "År">
+<!ENTITY Or.value                       "eller">
+<!ENTITY Age.placeholder                "Alder">
+<!ENTITY YearsOld.label                 "">
+
+<!ENTITY Work.tab                       "Arbeid">
+<!ENTITY Work.accesskey                 "A">
+<!ENTITY JobTitle.label                 "Tittel:">
+<!ENTITY JobTitle.accesskey             "T">
+<!ENTITY Department.label               "Avdeling:">
+<!ENTITY Department.accesskey           "A">
+<!ENTITY Company.label                  "Organisasjon:">
+<!ENTITY Company.accesskey              "O">
+<!ENTITY WorkAddress.label              "Adresse:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Poststad:">
+<!ENTITY WorkCity.accesskey             "t">
+<!ENTITY WorkState.label                "Delstat/region:">
+<!ENTITY WorkState.accesskey            "s">
+<!ENTITY WorkZipCode.label              "Postnummer:">
+<!ENTITY WorkZipCode.accesskey          "P">
+<!ENTITY WorkCountry.label              "Land:">
+<!ENTITY WorkCountry.accesskey          "L">
+<!ENTITY WorkWebPage.label              "Nettside:">
+<!ENTITY WorkWebPage.accesskey          "N">
+
+<!ENTITY Other.tab                      "Anna">
+<!ENTITY Other.accesskey                "A">
+<!ENTITY Custom1.label                  "Tilpassa 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Tilpassa 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Tilpassa 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Tilpassa 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Notat:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Photo.tab                      "Foto">
+<!ENTITY Photo.accesskey                "F">
+<!ENTITY PhotoDesc.label                "Vel ein av følgjande:">
+<!ENTITY GenericPhoto.label             "Generelt bilde">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "Standard">
+<!ENTITY PhotoFile.label                "På denne datamaskina">
+<!ENTITY PhotoFile.accesskey            "P">
+<!ENTITY BrowsePhoto.label              "Bla gjennom">
+<!ENTITY BrowsePhoto.accesskey          "B">
+<!ENTITY PhotoURL.label                 "På nettet">
+<!ENTITY PhotoURL.accesskey             "n">
+<!ENTITY PhotoURL.placeholder           "Lim eller skriv inn nettadressa til eit foto">
+<!ENTITY UpdatePhoto.label              "Oppdater">
+<!ENTITY UpdatePhoto.accesskey          "O">
