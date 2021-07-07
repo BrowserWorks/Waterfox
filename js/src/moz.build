@@ -10,19 +10,6 @@ include('js-testing.mozbuild')
 
 FILES_PER_UNIFIED_FILE = 6
 
-DIRS += [
-    'builtin',
-    'devtools',
-    'ds',
-    'frontend',
-]
-
-if CONFIG['JS_BUNDLED_EDITLINE']:
-    DIRS += ['editline']
-
-if not CONFIG['JS_DISABLE_SHELL']:
-    DIRS += ['shell']
-
 CONFIGURE_DEFINE_FILES += [
     'js-confdefs.h',
 ]
@@ -114,6 +101,19 @@ EXPORTS.js += [
     '../public/Vector.h',
     '../public/WeakMapPtr.h',
 ]
+
+DIRS += [
+    'builtin',
+    'devtools',
+    'ds',
+    'frontend',
+]
+
+if CONFIG['JS_BUNDLED_EDITLINE']:
+    DIRS += ['editline']
+
+if not CONFIG['JS_DISABLE_SHELL']:
+    DIRS += ['shell']
 
 UNIFIED_SOURCES += [
     'gc/Allocator.cpp',
