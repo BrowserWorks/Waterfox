@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+include('js-cxxflags.mozbuild')
+
 # Directory metadata
 component_engine = ('Core', 'JavaScript Engine')
 component_gc     = ('Core', 'JavaScript: GC')
@@ -661,29 +663,6 @@ if CONFIG['_MSC_VER']:
         SOURCES['builtin/RegExp.cpp'].no_pgo = True # Bug 772303
     elif CONFIG['CPU_ARCH'] == 'x86_64' and CONFIG['JS_HAS_CTYPES']:
         SOURCES['ctypes/CTypes.cpp'].no_pgo = True # Bug 810661
-    # Prevent floating point errors caused by VC++ optimizations
-    # XXX We should add this to CXXFLAGS, too?
-    CFLAGS += ['-fp:precise']
-    # C4805 warns mixing bool with other integral types in computation.
-    # But given the conversion from bool is specified, and this is a
-    # pattern widely used in code in js/src, suppress this warning here.
-    CXXFLAGS += ['-wd4805']
-    # C4661 ("no suitable definition provided for explicit template
-    # instantiation request") is emitted for all Parser methods that
-    # have a Parser<FullParseHandler> definition but no
-    # Parser<SyntaxParseHandler> definition, see bug 1167030.
-    CXXFLAGS += ['-wd4661']
-    CXXFLAGS += ['-we4067', '-we4258', '-we4275']
-    CXXFLAGS += ['-wd4146'] # FIXME: unary minus operator applied to unsigned type (bug 1229189)
-
-    # This is intended as a temporary hack to support building with VS2015.
-    # 'noexcept' used with no exception handling mode specified;
-    # termination on exception is not guaranteed. Specify /EHsc
-    CXXFLAGS += ['-wd4577']
-    CXXFLAGS += ['-wd4312']
-
-CFLAGS += CONFIG['MOZ_ICU_CFLAGS']
-CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
 
 # Prepare self-hosted JS code for embedding
 GENERATED_FILES += [('selfhosted.out.h', 'selfhosted.js')]
@@ -724,18 +703,12 @@ selfhosted.inputs = [
 ]
 
 if CONFIG['JS_HAS_CTYPES']:
-    if CONFIG['MOZ_SYSTEM_FFI']:
-        CXXFLAGS += CONFIG['MOZ_FFI_CFLAGS']
-    else:
+    if not CONFIG['MOZ_SYSTEM_FFI']:
         # Windows needs this to be linked with a static library.
         DEFINES['FFI_BUILDING'] = True
 
-if CONFIG['GNU_CXX']:
-    # Also disable strict-aliasing for GCC compiler, that is enabled by default
-    # starting with version 7.1, see Bug 1363009
-    CXXFLAGS += ['-Wno-shadow', '-Werror=format', '-fno-strict-aliasing']
-
 # Suppress warnings in third-party code.
+# We are keeping this in the main moz.build because it is file specific
 if CONFIG['CLANG_CXX']:
     SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
 

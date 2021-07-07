@@ -1,0 +1,37 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+CFLAGS += CONFIG['MOZ_ICU_CFLAGS']
+CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
+
+if CONFIG['_MSC_VER']:
+    # Prevent floating point errors caused by VC++ optimizations
+    CFLAGS += ['-fp:precise']
+    CXXFLAGS += ['-fp:precise']
+
+    # C4805 warns mixing bool with other integral types in computation.
+    # But given the conversion from bool is specified, and this is a
+    # pattern widely used in code in js/src, suppress this warning here.
+    CXXFLAGS += ['-wd4805']
+
+    # C4661 ("no suitable definition provided for explicit template
+    # instantiation request") is emitted for all Parser methods that
+    # have a Parser<FullParseHandler> definition but no
+    # Parser<SyntaxParseHandler> definition, see bug 1167030.
+    CXXFLAGS += ['-wd4661', '-we4067', '-we4258', '-we4275']
+    CXXFLAGS += ['-wd4146'] # FIXME: unary minus operator applied to unsigned type (bug 1229189)
+
+    # This is intended as a temporary hack to support building with VS2015.
+    # 'noexcept' used with no exception handling mode specified;
+    # termination on exception is not guaranteed. Specify /EHsc
+    CXXFLAGS += ['-wd4577', '-wd4312']
+
+if CONFIG['GNU_CXX']:
+    # Disable strict-aliasing for GCC, which is enabled by default
+    # starting with version 7.1, see Mozilla bug 1363009.
+    CXXFLAGS += ['-Wno-shadow', '-Werror=format', '-fno-strict-aliasing']
+
+if CONFIG['JS_HAS_CTYPES'] and CONFIG['MOZ_SYSTEM_FFI']:
+    CXXFLAGS += CONFIG['MOZ_FFI_CFLAGS']
