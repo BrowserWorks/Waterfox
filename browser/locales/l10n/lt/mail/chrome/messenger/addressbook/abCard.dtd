@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Adresatas">
+<!ENTITY Contact.accesskey               "C">
+<!ENTITY Name.box                        "Vardas">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Vardas:">
+<!ENTITY NameField1.accesskey           "F">
+<!ENTITY NameField2.label               "Pavardė:">
+<!ENTITY NameField2.accesskey           "L">
+<!ENTITY PhoneticField1.label           "Fonetinis:">
+<!ENTITY PhoneticField2.label           "Fonetinis:">
+<!ENTITY DisplayName.label              "Rodomas vardas:">
+<!ENTITY DisplayName.accesskey          "D">
+<!ENTITY preferDisplayName.label        "Visada rodyti šį vardą vietoj nurodyto laiško antraštėje">
+<!ENTITY preferDisplayName.accesskey    "y">
+<!ENTITY NickName.label                 "Slapyvardis:">
+<!ENTITY NickName.accesskey             "N">
+
+<!ENTITY PrimaryEmail.label             "El. paštas:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "Papildomas el. pašto adresas:">
+<!ENTITY SecondEmail.accesskey          "i">
+<!ENTITY PreferMailFormat.label         "Laiškus pageidauja gauti šiuo formatu:">
+<!ENTITY PreferMailFormat.accesskey     "v">
+<!ENTITY PlainText.label                "Paprastas tekstas">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Nežinoma">
+<!ENTITY chatName.label                 "Slapyvardis pokalbiuose:">
+
+<!ENTITY WorkPhone.label                "Darbo:">
+<!ENTITY WorkPhone.accesskey            "k">
+<!ENTITY HomePhone.label                "Namų:">
+<!ENTITY HomePhone.accesskey            "m">
+<!ENTITY FaxNumber.label                "Faksas:">
+<!ENTITY FaxNumber.accesskey            "x">
+<!ENTITY PagerNumber.label              "Pranešimų gaviklis:">
+<!ENTITY PagerNumber.accesskey          "g">
+<!ENTITY CellularNumber.label           "Mobilusis:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Asmeninis">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Adresas:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Miestas:">
+<!ENTITY HomeCity.accesskey             "y">
+<!ENTITY HomeState.label                "Valstija ar sritis / provincija:">
+<!ENTITY HomeState.accesskey            "S">
+<!ENTITY HomeZipCode.label              "Pašto kodas:">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "Valstybė:">
+<!ENTITY HomeCountry.accesskey          "u">
+<!ENTITY HomeWebPage.label              "Tinklalapis:">
+<!ENTITY HomeWebPage.accesskey          "e">
+<!ENTITY Birthday.label                 "Gimimo diena:">
+<!ENTITY Birthday.accesskey             "B">
+<!ENTITY Month.placeholder              "mėnuo">
+<!ENTITY Day.placeholder                "diena">
+<!ENTITY Year.placeholder               "metai">
+<!ENTITY Age.label                      "Amžius:">
+<!ENTITY Age.placeholder                "amžius">
+
+<!ENTITY Work.tab                       "Darbo">
+<!ENTITY Work.accesskey                 "W">
+<!ENTITY JobTitle.label                 "Pareigos:">
+<!ENTITY JobTitle.accesskey             "i">
+<!ENTITY Department.label               "Padalinys:">
+<!ENTITY Department.accesskey           "m">
+<!ENTITY Company.label                  "Organizacija:">
+<!ENTITY Company.accesskey              "n">
+<!ENTITY WorkAddress.label              "Adresas:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Miestas:">
+<!ENTITY WorkCity.accesskey             "y">
+<!ENTITY WorkState.label                "Valstija ar sritis / provincija:">
+<!ENTITY WorkState.accesskey            "S">
+<!ENTITY WorkZipCode.label              "Pašto kodas:">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "Valstybė:">
+<!ENTITY WorkCountry.accesskey          "u">
+<!ENTITY WorkWebPage.label              "Tinklalapis:">
+<!ENTITY WorkWebPage.accesskey          "e">
+
+<!ENTITY Other.tab                      "Kita">
+<!ENTITY Other.accesskey                "h">
+<!ENTITY Custom1.label                  "Papildoma 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Papildoma 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Papildoma 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Papildoma 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Pastabos:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "Pokalbiai">
+<!ENTITY Chat.accesskey                 "a">
+<!ENTITY Gtalk.label                    "„Google Talk“:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "„Jabber“ ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC slapyvardis:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Nuotrauka">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY GenericPhoto.label             "Nuotrauka">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "Numatytasis">
+<!ENTITY PhotoFile.label                "Failas šiame kompiuteryje">
+<!ENTITY PhotoFile.accesskey            "n">
+<!ENTITY BrowsePhoto.label              "Parinkti">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "Atvaizdas iš tinklo">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "Įveskite nuotraukos saitą">
+<!ENTITY UpdatePhoto.label              "Atnaujinti">
+<!ENTITY UpdatePhoto.accesskey          "u">
+<!ENTITY PhotoDropTarget.label          "Čia nuvilkite naują nuotrauką">

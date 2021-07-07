@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Betűk">
+
+<!ENTITY  language.label                          "Kódolás:">
+<!ENTITY  language.accesskey                      "K">
+
+<!ENTITY  typefaces.label                         "Betűkészlet">
+<!ENTITY  sizes.label                             "Méret (képpont)">
+
+<!ENTITY  proportional.label                      "Proporcionális:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Talpas:">
+<!ENTITY  serif.accesskey                         "T">
+<!ENTITY  sans-serif.label                        "Talpatlan:">
+<!ENTITY  sans-serif.accesskey                    "a">
+<!ENTITY  monospace.label                         "Fix szélességű:">
+<!ENTITY  monospace.accesskey                     "F">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Díszes:">
+<!ENTITY  fantasy.accesskey                       "D">
+<!ENTITY  cursive.label                           "Kurzív:">
+<!ENTITY  cursive.accesskey                       "K">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latin">
+<!ENTITY  font.langGroup.japanese                 "Japán">
+<!ENTITY  font.langGroup.trad-chinese             "Hagyományos kínai (Tajvan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Egyszerűsített kínai">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Hagyományos kínai (Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Koreai">
+<!ENTITY  font.langGroup.cyrillic                 "Cirill">
+<!ENTITY  font.langGroup.el                       "Görög">
+<!ENTITY  font.langGroup.thai                     "Thai">
+<!ENTITY  font.langGroup.hebrew                   "Héber">
+<!ENTITY  font.langGroup.arabic                   "Arab">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamil">
+<!ENTITY  font.langGroup.armenian                 "Örmény">
+<!ENTITY  font.langGroup.bengali                  "Bengáli">
+<!ENTITY  font.langGroup.canadian                 "Egységes kanadai szótagírás">
+<!ENTITY  font.langGroup.ethiopic                 "Etióp">
+<!ENTITY  font.langGroup.georgian                 "Grúz">
+<!ENTITY  font.langGroup.gujarati                 "Gudzsarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Matematika">
+<!ENTITY  font.langGroup.odia                     "Orija">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Szingaléz">
+<!ENTITY  font.langGroup.tibetan                  "Tibeti">
+<!ENTITY  font.langGroup.other                    "Más írásrendszer">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Legkisebb betűméret:">
+<!ENTITY minSize.accesskey                        "L">
+<!ENTITY minSize.none                             "Nincs">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Talpas">
+<!ENTITY  useDefaultFontSansSerif.label           "Talpatlan">
+
+<!ENTITY  useDocumentFonts.label                  "A dokumentumok használhatják a saját maguk által megadott betűkészleteket.">
+<!ENTITY  useDocumentFonts.accesskey              "z">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Amikor a dokumentum saját maga választ betűkészletet,">
+<!ENTITY  useDefaultFont.label                    "mindig az itt megadott betűkészleteket használja, figyelmen kívül hagyva a dokumentum beállításait.">
+<!ENTITY  useDefaultFont.accesskey                "m">

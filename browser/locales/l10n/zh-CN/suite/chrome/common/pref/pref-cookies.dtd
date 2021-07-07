@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookie">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Cookie 接受策略">
+
+<!ENTITY disableCookies.label           "阻止 cookie">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "只接受来自本网站的 Cookie （不接受第三方 Cookie）">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "只允许之前访问过的网站保留第三方 Cookie">
+<!ENTITY acc3rdPartyVisited.accesskey   "v">
+
+<!ENTITY accAllCookies.label            "接受所有 Cookie">
+<!ENTITY accAllCookies.accesskey        "c">
+
+<!ENTITY cookieRetentionPolicy.label    "Cookie 存留策略">
+
+<!ENTITY acceptNormally.label           "正常接受 Cookie">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "仅限当前会话">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "接受 Cookie 于">
+<!ENTITY acceptforNDays.accesskey       "f">
+<!ENTITY days.label                     "天">
+
+<!ENTITY manageCookies.label            "管理 Cookie 和站点">
+<!ENTITY manageCookiesDescription.label "您可以查看和管理已存储的 Cookie 以及各站点接受和拒绝 Cookie 的设置。各站点的设置会覆盖以上设置。">
+
+<!ENTITY viewCookies.label              "Cookie 管理器">
+<!ENTITY viewCookies.accesskey          "M">
+

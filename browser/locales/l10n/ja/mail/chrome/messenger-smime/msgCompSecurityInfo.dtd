@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label			"メッセージのセキュリティ">
+<!ENTITY subject.plaintextWarning	"注意: メッセージの件名は暗号化されず、常に平文で送信されます。">
+<!ENTITY status.heading			"このメッセージでデジタル署名と暗号化を使用するかどうか:">
+<!ENTITY status.signed			"デジタル署名する:">
+<!ENTITY status.encrypted		"内容を暗号化する:">
+<!ENTITY status.certificates		"受信者の個人証明書:">
+<!ENTITY view.label			"表示">
+<!ENTITY view.accesskey			"V">
+<!ENTITY tree.recipient			"受信者">
+<!ENTITY tree.status			"状態">
+<!ENTITY tree.issuedDate		"発行日">
+<!ENTITY tree.expiresDate		"有効期限">

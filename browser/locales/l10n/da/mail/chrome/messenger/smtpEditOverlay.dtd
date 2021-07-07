@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Indstillinger">
+<!ENTITY security.caption "Sikkerhed og godkendelse">
+<!ENTITY serverName.label "Servernavn:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "Beskrivelse:">
+<!ENTITY serverDescription.accesskey "k">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Brugernavn:">
+<!ENTITY userName.accesskey "B">
+<!ENTITY connectionSecurity.label "Forbindelsessikkerhed:">
+<!ENTITY connectionSecurity.accesskey "F">
+<!ENTITY connectionSecurityType-0.label "Ingen">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, hvis tilgængelig">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP-server">
+<!ENTITY serverPortDefault.label "Standard:">
+<!ENTITY authMethod.label "Godkendelsesmetode:">
+<!ENTITY authMethod.accesskey "G">
+

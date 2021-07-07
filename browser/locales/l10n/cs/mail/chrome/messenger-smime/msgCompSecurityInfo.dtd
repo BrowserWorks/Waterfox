@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Zabezpečení zprávy">
+<!ENTITY subject.plaintextWarning "Poznámka: Řádky s předmětem zprávy nejsou nikdy šifrovány.">
+<!ENTITY status.heading "Obsah zprávy bude odeslán následovně:">
+<!ENTITY status.signed "Elektronicky podepsaný:">
+<!ENTITY status.encrypted "Zašifrovaný:">
+<!ENTITY status.certificates "Certifikáty:">
+<!ENTITY view.label "Zobrazit">
+<!ENTITY view.accesskey "Z">
+<!ENTITY tree.recipient "Příjemce">
+<!ENTITY tree.status "Stav">
+<!ENTITY tree.issuedDate "Vydal">
+<!ENTITY tree.expiresDate "Vyprší">

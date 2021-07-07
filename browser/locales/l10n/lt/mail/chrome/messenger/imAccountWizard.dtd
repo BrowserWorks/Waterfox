@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Pokalbių paskyros kūrimas">
+
+<!ENTITY accountProtocolTitle.label   "Paskyros tipas">
+<!ENTITY accountProtocolInfo.label    "Pasirinkite pokalbių paskyros tipą.">
+<!ENTITY accountProtocolField.label   "Tipas:">
+<!ENTITY accountProtocolGetMore.label "Gauti daugiau…">
+
+<!ENTITY accountUsernameTitle.label   "Abonento vardas">
+<!ENTITY accountUsernameDuplicate.label "Ši paskyra jau sukonfigūruota!">
+
+<!ENTITY accountPasswordTitle.label   "Slaptažodis">
+<!ENTITY accountPasswordInfo.label    "Įveskite savo slaptažodį į laukelį žemiau.">
+<!ENTITY accountPasswordField.label   "Slaptažodis:">
+<!ENTITY accountPasswordManager.label "Čia įvestas slaptažodis bus įsimintas slaptažodžių tvarkytuvėje. Palikite laukelį tuščią, jeigu norite, kad slaptažodžio būtų prašoma kaskart prisijungiant prie paskyros.">
+
+<!ENTITY accountAdvancedTitle.label   "Papildomos nuostatos">
+<!ENTITY accountAdvancedInfo.label    "Šį žingsnį galite drąsiai praleisti, jeigu tik norite.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Pranešti apie gautus el. laiškus">
+<!ENTITY accountAliasGroupbox.caption "Vietinis kitavardis">
+<!ENTITY accountAliasField.label      "Kitavardis:">
+<!ENTITY accountAliasInfo.label       "Šis kitavardis jūsų pokalbiuose bus rodomas jums. Pašnekovai jo nematys.">
+<!ENTITY accountProxySettings.caption "Įgaliotojo serverio sąranka">
+<!ENTITY accountProxySettings.change.label     "Keisti…">
+<!ENTITY accountProxySettings.change.accessKey "K">
+
+<!ENTITY accountSummaryTitle.label   "Informacijos patvirtinimas">
+<!ENTITY accountSummaryInfo.label    "Jūsų pateikta informacija abonentui užregistruoti pateikiama žemiau. Dar kartą ją patikrinkite prieš užbaigdami paskyros kūrimą.">
+<!ENTITY accountSummary.connectNow.label "Iškart prisijungti prie šios paskyros.">

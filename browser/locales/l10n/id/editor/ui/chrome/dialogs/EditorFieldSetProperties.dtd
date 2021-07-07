@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Properti Himpunan Field">
+
+<!ENTITY Legend.label "Legenda">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Ubah Legenda:">
+<!ENTITY EditLegendText.accesskey "U">
+<!ENTITY LegendAlign.label "Ratakan Legenda">
+<!ENTITY LegendAlign.accesskey "R">
+<!ENTITY AlignDefault.label "Default">
+<!ENTITY AlignLeft.label "Kiri">
+<!ENTITY AlignCenter.label "Tengah">
+<!ENTITY AlignRight.label "Kanan">
+
+<!ENTITY RemoveFieldSet.label "Hapus Himpunan Field">
+<!ENTITY RemoveFieldSet.accesskey "H">

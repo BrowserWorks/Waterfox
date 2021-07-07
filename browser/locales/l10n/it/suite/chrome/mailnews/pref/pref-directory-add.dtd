@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "Nome:">
+<!ENTITY directoryName.accesskey "N">
+<!ENTITY directoryHostname.label "Nome host:">
+<!ENTITY directoryHostname.accesskey "h">
+<!ENTITY directoryBaseDN.label "DN base:">
+<!ENTITY directoryBaseDN.accesskey "b">
+<!ENTITY findButton.label "Trova">
+<!ENTITY findButton.accesskey "T">
+<!ENTITY directorySecure.label "Utilizza connessione sicura (SSL)">
+<!ENTITY directorySecure.accesskey "n">
+<!ENTITY directoryLogin.label "DN associato:">
+<!ENTITY directoryLogin.accesskey "D">
+<!ENTITY General.tab "Generale">
+<!ENTITY Offline.tab "Non in linea">
+<!ENTITY Advanced.tab "Avanzate">
+<!ENTITY portNumber.label "Numero porta:">
+<!ENTITY portNumber.accesskey "p">
+<!ENTITY searchFilter.label "Filtro di ricerca:">
+<!ENTITY searchFilter.accesskey "F">
+<!ENTITY scope.label "Campo di ricerca:">
+<!ENTITY scope.accesskey "C">
+<!ENTITY scopeOneLevel.label "Un livello">
+<!ENTITY scopeOneLevel.accesskey "U">
+<!ENTITY scopeSubtree.label "Tutti i sottolivelli">
+<!ENTITY scopeSubtree.accesskey "T">
+<!ENTITY return.label "Non visualizzare più di">
+<!ENTITY return.accesskey "N">
+<!ENTITY results.label "risultati">
+<!ENTITY offlineText.label "È possibile scaricare una copia locale di questa directory, in modo da renderla disponibile per lavorarci non in linea.">
+<!ENTITY saslMechanism.label "Metodo di accesso:">
+<!ENTITY saslMechanism.accesskey "M">
+<!ENTITY saslOff.label "Semplice">
+<!ENTITY saslOff.accesskey "e">
+<!ENTITY saslGSSAPI.label "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey "K">
+<!ENTITY newDirectoryWidth "36em">

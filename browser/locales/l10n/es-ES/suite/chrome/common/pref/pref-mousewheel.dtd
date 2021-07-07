@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mouseWheel.title "Rueda del ratón">
+<!ENTITY mouseWheelPanel.label "Indique el comportamiento de la rueda del ratón al usarla con esta tecla: ">
+<!ENTITY usingJustTheWheel.label "Sin tecla modificadora">
+<!ENTITY usingWheelAndAlt.label2 "Alt">
+<!ENTITY usingWheelAndOption.label "Opción">
+<!ENTITY usingWheelAndCtrl.label2 "Ctrl">
+<!ENTITY usingWheelAndShft.label2 "Mayús">
+<!ENTITY mouseWheelGroup.label "Desplazamiento vertical">
+<!ENTITY mouseWheelHorizGroup.label "Desplazamiento horizontal">
+<!ENTITY sameAsVertical.label "La misma que la del desplazamiento vertical">
+<!ENTITY sameAsVertical.accesskey "L">
+<!ENTITY doNothing.label "No hacer nada">
+<!ENTITY doNothing.accesskey "N">
+<!ENTITY doNothingHoriz.accesskey "h">
+<!ENTITY scrollDocument.label "Desplazar el documento">
+<!ENTITY scrollDocument.accesskey "D">
+<!ENTITY scrollDocumentHoriz.accesskey "c">
+<!ENTITY history.label "Moverse adelante y atrás en el historial de navegación">
+<!ENTITY history.accesskey "M">
+<!ENTITY historyHoriz.accesskey "r">
+<!ENTITY zoom.label "Aumentar o reducir el tamaño de la página">
+<!ENTITY zoom.accesskey "A">
+<!ENTITY zoomHoriz.accesskey "o">
+<!ENTITY wheelSpeed.label "Velocidad de la rueda del ratón:">
+<!ENTITY wheelSpeed.accesskey "V">
+<!ENTITY wheelSpeedHoriz.accesskey "u">
+<!ENTITY reverseDirection.label "Invertir dirección">
+<!ENTITY reverseDirection.accesskey "I">
+<!ENTITY reverseDirectionHoriz.accesskey "e">

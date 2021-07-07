@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Välkommen till &brandShortName;">
+<!ENTITY header2.label "Vill du ha en ny e-postadress?">
+<!ENTITY other.languages "Vi visar endast de adressleverantörer som finns för ditt område.  Klicka här för att visa alla leverantörer.">
+<!ENTITY error.line1 "Tyvärr, vi kunde inte hitta några förslag på e-postadresser.">
+<!ENTITY error.line2 "Du kan prova att söka efter smeknamn eller andra termer för att hitta fler alternativ">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Du kan även prova något av ">
+<!ENTITY error.suggest.middle "gratisalternativen för e-post">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Hej ">
+<!ENTITY success.title.after ", följande e-postadresser finns tillgängliga för dig:">
+<!ENTITY success.tip "(Du kan även söka efter smeknamn eller andra termer för att hitta fler alternativ)">
+<!ENTITY partnership.description "I samarbete med flera leverantörer kan &brandShortName; erbjuda dig ett nytt e-postkonto. Fyll bara i ditt för- och efternamn, eller några andra ord du vill använda, i ovanstående fält för att komma igång.">
+<!ENTITY existing.header "Har du redan en adress som du vill använda?">
+<!ENTITY tinyheader.title "Har du en adress?">
+<!ENTITY tinyheader.existing "Hoppa över det här och använd en existerande e-postadress">
+<!ENTITY content.close "Jag vill konfigurera mitt konto senare.">
+<!ENTITY successful.title "Gratulerar!">
+<!ENTITY successful.successMessage "Du har nu lagt till ditt konto.">
+<!ENTITY successful.write "Skriv några e-postmeddelanden">
+<!ENTITY successful.write.desc "Berätta för släkt och vänner om din nya adress.<br/> Det var väl därför du skaffade dig ett konto, eller hur?">
+<!ENTITY successful.customize "Anpassa &brandShortName; med lite coola tillägg">
+<!ENTITY successful.customize.desc "Det finns tusentals tillägg för att anpassa &brandShortName; för dina behov.">
+<!ENTITY successful.attach "Bifoga en personlig signatur till mina meddelanden">
+<!ENTITY successful.attach.desc "Du kan automatiskt lägga till ett citat eller lite information om dig själv till alla meddelanden du skickar.">
+<!ENTITY successful.close "Stäng det här fönstret.">
+<!ENTITY input.namePlaceholder "Ditt namn, eller smeknamn">
+<!ENTITY input.search "Sök">
+<!ENTITY search_engine.title "Anpassa sökmotorn">
+<!ENTITY search_engine.message "Din e-postleverantör kan också erbjuda webbsökningsmöjligheter.">
+<!ENTITY search_engine.button "Avsluta">

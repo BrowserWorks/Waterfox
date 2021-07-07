@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Usuń">
+<!ENTITY editContactPanelDeleteContact.accesskey "U">
+
+<!ENTITY editContactName.label "Wyświetlaj jako:">
+<!ENTITY editContactName.accesskey "W">
+
+<!ENTITY editContactEmail.label "E-mail:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Książka adresowa:">
+<!ENTITY editContactAddressBook.accesskey "K">
+
+<!ENTITY editContactPanelDone.label "Zapisz">
+<!ENTITY editContactPanelDone.accesskey "Z">
+
+<!ENTITY contactMoveDisabledWarning.description "Nie można zmienić książki adresowej, ponieważ adres znajduje się na liście dystrybucyjnej.">

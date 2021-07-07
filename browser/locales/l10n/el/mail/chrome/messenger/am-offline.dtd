@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Για εξοικονόμηση αποθηκευτικού χώρου, να μη λαμβάνονται:">
+<!ENTITY doNotDownloadNntp.label "Για εξοικονόμηση αποθηκευτικού χώρου, να μη λαμβάνονται για εργασία χωρίς σύνδεση:">
+<!ENTITY doNotDownloadImap.label "Για εξοικονόμηση χώρου, μπορείτε να περιορίσετε κατά ημερομηνία ή μέγεθος τη λήψη μηνυμάτων από το διακομιστή, καθώς και τη διατήρηση τοπικών αντιγράφων για εργασία εκτός σύνδεσης.">
+<!ENTITY allFoldersOffline2.label "Διατήρηση των μηνυμάτων όλων των φακέλων αυτού του λογαριασμού, σε αυτό τον υπολογιστή">
+<!ENTITY allFoldersOffline2.accesskey "ο">
+<!ENTITY allFoldersOfflineNote.label 'Σημείωση: Η αλλαγή θα επηρεάσει όλους τους φακέλους αυτού του λογαριασμού. Για ορισμό μεμονωμένων φακέλων, κάντε κλικ στο κουμπί "Σύνθετα…".'>
+<!ENTITY offlineNotDownload.label "Μηνύματα μεγαλύτερα από">
+<!ENTITY offlineNotDownload.accesskey "Μ">
+<!ENTITY autosyncNotDownload.label "Να μην γίνεται λήψη μηνυμάτων, μεγαλύτερων από">
+<!ENTITY autosyncNotDownload.accesskey "μ">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "ημερών">
+<!ENTITY message.label "μηνυμάτων">
+<!ENTITY nntpNotDownloadRead.label "Αναγνωσμένα μηνύματα">
+<!ENTITY nntpNotDownloadRead.accesskey "γ">
+<!ENTITY nntpDownloadMsg.label "Μηνύματα περισσότερο από">
+<!ENTITY nntpDownloadMsg.accesskey "σ">
+<!ENTITY retentionCleanup.label "Για να ανακτήσετε χώρο στο δίσκο, μπορείτε να διαγράψετε τα παλιά μηνύματα.">
+<!ENTITY retentionCleanupImap.label "Για ανάκτηση χώρου, μπορείτε να διαγράψετε οριστικά τα παλιά σας μηνύματα (τοπικά αντίγραφα και πρωτότυπα απομακρυσμένου διακομιστή).">
+<!ENTITY retentionCleanupPop.label "Για εξοικονόμηση αποθηκευτικού χώρου, μπορείτε να διαγράψετε μόνιμα τα παλιά σας μηνύματα μαζί με τα αρχικά μηνύματα στον απομακρυσμένο διακομιστή.">
+<!ENTITY retentionKeepMsg.label "Διαγραφή μηνυμάτων, παλαιότερων από">
+<!ENTITY retentionKeepMsg.accesskey "μ">
+<!ENTITY retentionKeepAll.label "Να μην γίνει διαγραφή μηνυμάτων">
+<!ENTITY retentionKeepAll.accesskey "η">
+<!ENTITY retentionKeepRecent.label "Διαγραφή όλων, εκτός των τελευταίων">
+<!ENTITY retentionKeepRecent.accesskey "κ">
+<!ENTITY retentionApplyToFlagged.label "Διατήρηση μηνυμάτων με αστέρι">
+<!ENTITY retentionApplyToFlagged.accesskey "σ">
+<!ENTITY nntpRemoveMsgBody.label "Διαγραφή σώματος από μηνύματα μεγαλύτερα από">
+<!ENTITY nntpRemoveMsgBody.accesskey "φ">
+<!ENTITY offlineSelectNntp.label "Επιλογή ομάδων συζήτησης για χρήση εκτός σύνδεσης…">
+<!ENTITY offlineSelectNntp.accesskey "λ">
+<!ENTITY offlineImapAdvancedOffline.label "Σύνθετα…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "θ">
+<!ENTITY syncGroupTitle.label "Συγχρονισμός μηνυμάτων">
+<!ENTITY diskspaceGroupTitle.label "Χώρος δίσκου">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Τοπικός συγχρονισμός όλων των μηνυμάτων ανεξαρτήτως ημερομηνίας">
+<!ENTITY allAutosync.accesskey           "χ">
+<!ENTITY ageAutosyncBefore.label         "Συγχρονισμός των τελευταίων">
+<!ENTITY ageAutosync.accesskey           "γ">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "ημερών">
+<!ENTITY weekAgeInterval.label           "εβδομάδων">
+<!ENTITY monthAgeInterval.label          "μηνών">
+<!ENTITY yearAgeInterval.label           "ετών">
+<!ENTITY ageAutosyncAfter.label          "">

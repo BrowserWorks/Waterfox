@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "선택 목록 설정">
+<!ENTITY Select.label "선택 목록">
+<!ENTITY SelectName.label "목록 이름:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "높이:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "다중 선택">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "선택하지 않음">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "탭 목록:">
+<!ENTITY SelectTabIndex.accesskey "I">
+<!ENTITY OptGroup.label "옵션 그룹">
+<!ENTITY OptGroupLabel.label "레이블:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "선택하지 않음">
+<!ENTITY OptGroupDisabled.accesskey "D">
+<!ENTITY Option.label "옵션">
+<!ENTITY OptionText.label "글자:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "값:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "기본적으로 선택함">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "선택하지 않음">
+<!ENTITY OptionDisabled.accesskey "D">
+<!ENTITY TextHeader.label "글자">
+<!ENTITY ValueHeader.label "값">
+<!ENTITY SelectedHeader.label "초기 선택">
+<!ENTITY AddOption.label "옵션 추가">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "그룹 추가">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "제거">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "위로 이동">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "아래로 이동">
+<!ENTITY MoveElementDown.accesskey "D">

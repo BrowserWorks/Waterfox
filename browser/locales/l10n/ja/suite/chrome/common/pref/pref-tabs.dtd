@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "タブブラウズ">
+
+<!ENTITY tabDisplay.label "タブ表示">
+<!ENTITY autoHide.label "開いたタブが 1 つだけのとき、タブバーを隠す">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "新しいタブを前面に表示する (リンクを開いたとき)">
+<!ENTITY background.accesskey "S">
+<!ENTITY warnOnClose.label "複数のタブを開いたままウィンドウを閉じるときに警告する">
+<!ENTITY warnOnClose.accesskey "W">
+<!ENTITY relatedAfterCurrent.label "新しいタブを現在のタブのあとに開く"><!--Open related tabs after current tab-->
+<!ENTITY relatedAfterCurrent.accesskey "O">
+
+<!ENTITY openTabs.label "ウィンドウの代わりにタブを開く場合">
+<!ENTITY middleClick.label "ウェブページ内のリンクを中クリック、Ctrl+クリックまたは Ctrl+Enter">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "ウェブページ内のリンクを中クリック、&#8984;+クリックまたは &#8984;+Return">
+<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY urlbar.label "ロケーションバー内で Ctrl+Enter">
+<!ENTITY urlbar.accesskey "L">
+<!ENTITY urlbarMac.label "ロケーションバー内で &#8984;+Return">
+<!ENTITY urlbarMac.accesskey "L">
+
+<!ENTITY openManagers.label "独立したウィンドウの代わりに新しいタブで開く">
+<!ENTITY openDataManager.label "データマネージャー">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "アドオンマネージャー">
+<!ENTITY openAddOnsManager.accesskey "n">

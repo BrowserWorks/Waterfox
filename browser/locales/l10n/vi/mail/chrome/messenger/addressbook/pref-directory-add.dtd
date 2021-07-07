@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Tên: ">
+<!ENTITY directoryName.accesskey           "T">
+<!ENTITY directoryHostname.label           "Tên máy chủ: ">
+<!ENTITY directoryHostname.accesskey       "c">
+<!ENTITY directoryBaseDN.label             "Tên phân biệt gốc: ">
+<!ENTITY directoryBaseDN.accesskey         "g">
+<!ENTITY findButton.label                  "Tìm">
+<!ENTITY findButton.accesskey              "m">
+<!ENTITY directorySecure.label             "Dùng kết nối an toàn (SSL)">
+<!ENTITY directorySecure.accesskey         "D">
+<!ENTITY directoryLogin.label              "Tên phân biệt liên kết: ">
+<!ENTITY directoryLogin.accesskey          "l">
+<!ENTITY General.tab                       "Tổng quát">
+<!ENTITY Offline.tab                       "Ngoại tuyến">
+<!ENTITY Advanced.tab                      "Nâng cao">
+<!ENTITY portNumber.label                  "Số cổng: ">
+<!ENTITY portNumber.accesskey              "S">
+<!ENTITY searchFilter.label                "Bộ lọc tìm kiếm: ">
+<!ENTITY searchFilter.accesskey            "l">
+<!ENTITY scope.label                       "Phạm vi: ">
+<!ENTITY scope.accesskey                   "v">
+<!ENTITY scopeOneLevel.label               "Một cấp độ">
+<!ENTITY scopeOneLevel.accesskey           "p">
+<!ENTITY scopeSubtree.label                "Cây con">
+<!ENTITY scopeSubtree.accesskey            "o">
+<!ENTITY return.label                      "Đừng trả về nhiều hơn">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "kết quả">
+<!ENTITY offlineText.label                 "Bạn có thể tải xuống một bản sao của thư mục này để sử dụng khi đang ở chế độ ngoại tuyến.">
+<!ENTITY saslMechanism.label               "Phương thức đăng nhập: ">
+<!ENTITY saslMechanism.accesskey           "P">
+<!ENTITY saslOff.label                     "Đơn giản">
+<!ENTITY saslOff.accesskey                 "g">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">
+

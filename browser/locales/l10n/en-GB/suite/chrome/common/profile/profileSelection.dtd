@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Select User Profile">
+<!ENTITY            profileManager.title "&brandShortName; Profile Manager">
+
+<!ENTITY            manage.label     "Manage Profiles…">
+<!ENTITY            manage.accesskey "M">
+<!ENTITY            select.label     "Use Profile">
+
+<!ENTITY            availableProfiles.label "Available Profiles">
+
+<!ENTITY            introStart.label         "To access your personal profile, which contains your stored messages, settings and other personalised information, please choose your profile from the list, and click &start.label; to begin your session.">
+<!ENTITY            introSwitch.label        "To switch to another profile, which contains stored messages, settings and other personalised information, please choose that profile from the list, and click &select.label; to begin using that profile.">
+<!ENTITY            profileManagerText.label "&brandShortName; stores information about your settings, preferences, bookmarks, stored messages and other user items in your user profile.">
+
+<!ENTITY            autoSelect.label         "Default to this profile">
+<!ENTITY            autoSelect.accesskey     "s">
+
+<!ENTITY            start.label              "Start &brandShortName;">
+<!ENTITY            exit.label               "Exit">
+
+<!ENTITY            newButton.label          "Create Profile…">
+<!ENTITY            newButton.accesskey      "C">
+<!ENTITY            renameButton.label       "Rename Profile…">
+<!ENTITY            renameButton.accesskey   "R">
+<!ENTITY            deleteButton.label       "Delete Profile…">
+<!ENTITY            deleteButton.accesskey   "D">
+
+<!ENTITY            offlineState.label       "Work offline">
+<!ENTITY            offlineState.accesskey   "o">

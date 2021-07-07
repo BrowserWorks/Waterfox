@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Chattkontoguiden">
+
+<!ENTITY accountProtocolTitle.label   "Chattnätverk">
+<!ENTITY accountProtocolInfo.label    "Vänligen välj nätverk för ditt chattkonto.">
+<!ENTITY accountProtocolField.label   "Nätverk:">
+<!ENTITY accountProtocolGetMore.label "Hämta fler…">
+
+<!ENTITY accountUsernameTitle.label   "Användarnamn">
+<!ENTITY accountUsernameDuplicate.label "Detta konto är redan konfigurerat!">
+
+<!ENTITY accountPasswordTitle.label   "Lösenord">
+<!ENTITY accountPasswordInfo.label    "Ange ditt lösenord i rutan nedan.">
+<!ENTITY accountPasswordField.label   "Lösenord:">
+<!ENTITY accountPasswordManager.label "Lösenordet som anges här kommer att lagras i lösenordshanteraren. Låt fältet vara tomt om du vill bli tillfrågad om ditt lösenord varje gång detta konto ansluts.">
+
+<!ENTITY accountAdvancedTitle.label   "Avancerade inställningar">
+<!ENTITY accountAdvancedInfo.label    "Du får gärna hoppa över detta steg om du vill.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Meddela om ny e-post">
+<!ENTITY accountAliasGroupbox.caption "Lokala alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Detta kommer bara att visas i dina konversationer när du chattar, fjärranslutna kontakter kommer inte se det.">
+<!ENTITY accountProxySettings.caption "Proxyinställningar">
+<!ENTITY accountProxySettings.change.label     "Ändra…">
+<!ENTITY accountProxySettings.change.accessKey "n">
+
+<!ENTITY accountSummaryTitle.label   "Sammanfattning">
+<!ENTITY accountSummaryInfo.label    "En sammanfattning av den information du angav visas nedan. Vänligen kontrollera den innan kontot skapas.">
+<!ENTITY accountSummary.connectNow.label "Anslut detta konto nu.">

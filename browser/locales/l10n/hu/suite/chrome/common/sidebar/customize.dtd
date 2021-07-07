@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Az Oldalsáv (&sidebarName;) testreszabása">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Panellapok az Oldalsávon (&sidebarName;):">
+<!ENTITY sidebar.customize.current.accesskey    "T">
+
+<!ENTITY sidebar.customize.title                "Az Oldalsáv testreszabása">
+<!ENTITY sidebar.customize.current2.label       "Lapok az oldalsávban:">
+<!ENTITY sidebar.customize.current2.accesskey   "T">
+<!ENTITY sidebar.customize.customize.label      "Panellap testreszabása…">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Eltávolítás">
+<!ENTITY sidebar.customize.remove.accesskey     "E">
+<!ENTITY sidebar.customize.additional.label     "Elérhető panellapok:">
+<!ENTITY sidebar.customize.additional.accesskey "l">
+<!ENTITY sidebar.customize.add.label            "Hozzáadás">
+<!ENTITY sidebar.customize.add.accesskey        "H">
+<!ENTITY sidebar.customize.preview.label        "Előnézet…">
+<!ENTITY sidebar.customize.preview.accesskey    "n">
+<!ENTITY sidebar.customize.up.label             "Fel">
+<!ENTITY sidebar.customize.up.accesskey         "F">
+<!ENTITY sidebar.customize.down.label           "Le">
+<!ENTITY sidebar.customize.down.accesskey       "L">
+<!ENTITY sidebar.more.label                     "További panellapok…">
+<!ENTITY sidebar.more.accesskey                 "T">

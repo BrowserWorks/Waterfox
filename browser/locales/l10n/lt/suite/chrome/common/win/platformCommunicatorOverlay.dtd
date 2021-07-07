@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- win -->
+<!-- LOCALIZATION NOTE : FILE Do not translate "accel" or "shift",
+                         You may want to translate the Cmd.key and accesskey --> 
+
+
+<!ENTITY closeCmd.label                 "Užverti">  
+<!ENTITY closeCmd.key                   "W">  
+<!ENTITY closeCmd.accesskey             "U">
+
+<!ENTITY quitApplicationCmd.label       "Baigti darbą"> 
+<!ENTITY quitApplicationCmd.key         "Q"> 
+<!ENTITY quitApplicationCmd.accesskey   "B">
+
+<!ENTITY redoCmd.key                    "Y">  
+<!ENTITY findReplaceCmd.key             "H">
+<!ENTITY findTypeTextCmd.key            "/">
+<!ENTITY findTypeLinksCmd.key           "'">
+
+<!ENTITY accel.emacs_conflict           "accel">
+<!-- Help viewer -->
+
+<!ENTITY openHelpCmd.label              "Žinyno turinys">
+<!ENTITY openHelpCmd.accesskey          "Ž">
+<!ENTITY openHelpCmd.key                "VK_F1">
+<!ENTITY helpForIEUsers.label           "Informacija „Internet Explorer“ naudotojams">
+<!ENTITY helpForIEUsers.accesskey       "I">
+<!-- LOCALIZATION NOTE some localizations need to change the
+                       "Help" menu label on Windows -->
+<!ENTITY helpMenu.label                 "Žinynas"> 
+<!ENTITY helpMenu.accesskey             "Ž">
+<!-- Key labels, for mousewheel prefs -->
+
+<!ENTITY ctrlKey.label                  "Vald">
+<!ENTITY altKey.label                   "Alt">
+<!ENTITY shiftKey.label                 "Lyg2">
+
+

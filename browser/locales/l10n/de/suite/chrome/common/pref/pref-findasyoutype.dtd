@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Suche beim Tippen">
+<!ENTITY findAsYouTypeBehavior.label "Während der Eingabe suchen">
+<!ENTITY findAsYouTypeTip.label "Tipp: um die Suche beim Eintippen manuell zu starten, tippen Sie / zur Suche von Text oder ' zur Suche von Links ein, gefolgt vom Text, den Sie suchen wollen.">
+<!ENTITY findAsYouTypeTimeout.label "Die aktuelle Suche nach einigen Sekunden Inaktivität beenden">
+<!ENTITY findAsYouTypeTimeout.accesskey "D">
+<!ENTITY findAsYouTypeSound.label "Einen Klang abspielen, wenn der eingetippte Text nicht gefunden wurde">
+<!ENTITY findAsYouTypeSound.accesskey "K">
+<!ENTITY findAsYouTypeEnableAuto.label "Beim Eintippen innerhalb einer Webseite automatisch suchen:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "B">
+<!ENTITY findAsYouTypeAutoText.label "Jeglichen Text auf der Seite">
+<!ENTITY findAsYouTypeAutoText.accesskey "T">
+<!ENTITY findAsYouTypeAutoLinks.label "Nur Links">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "L">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Die Suchleiste beim Suchen während der Eingabe anzeigen">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "S">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Anmerkung: Das Suchen während der Eingabe ohne Anzeige der Suchleiste erlaubt keine erweitere Eingabe von internationalem Text.">

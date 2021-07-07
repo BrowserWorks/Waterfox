@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Tập tin">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Mới">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Chỉnh sửa">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Hoàn tác">
+<!ENTITY undoCmd.accesskey          "U">
+<!ENTITY redoCmd.label            "Làm lại">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "Xóa">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "Tùy chọn">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Tùy chỉnh">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY customizeCmd.label "Tùy biến">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "Hiển thị">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Thanh công cụ">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "Thanh trạng thái">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "Đóng">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "C">
+
+<!ENTITY quitApplicationCmd.label  "Thoát">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "Thoát">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Q">
+
+<!ENTITY quitApplicationCmdMac.label  "Thoát &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">

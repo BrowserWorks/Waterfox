@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Instellingen voor uitgaande server (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Bij het beheren van uw identiteiten kunt u een server van deze lijst gebruiken door deze als de uitgaande (SMTP-)server te selecteren, of u kunt de standaardserver van deze lijst gebruiken door ‘Standaardserver gebruiken’ te selecteren.">
+
+<!ENTITY smtpListAdd.label "Toevoegen…">
+<!ENTITY smtpListAdd.accesskey "T">
+<!ENTITY smtpListEdit.label "Bewerken…">
+<!ENTITY smtpListEdit.accesskey "B">
+<!ENTITY smtpListDelete.label "Verwijderen">
+<!ENTITY smtpListDelete.accesskey "V">
+<!ENTITY smtpListSetDefault.label "Als standaard instellen">
+<!ENTITY smtpListSetDefault.accesskey "d">
+
+<!ENTITY serverDetails.label "Details van geselecteerde server:">
+<!ENTITY serverDescription.label "Beschrijving: ">
+<!ENTITY serverName.label "Servernaam: ">
+<!ENTITY serverPort.label "Poort: ">
+<!ENTITY userName.label "Gebruikersnaam: ">
+<!ENTITY connectionSecurity.label "Verbindingsbeveiliging: ">
+<!ENTITY authMethod.label   "Authenticatiemethode: ">

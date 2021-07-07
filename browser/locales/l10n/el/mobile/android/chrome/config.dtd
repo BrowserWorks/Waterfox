@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Αναζήτηση">
+
+<!ENTITY newPref.namePlaceholder       "Όνομα">
+
+<!ENTITY newPref.valueBoolean          "Δυαδικός">
+<!ENTITY newPref.valueString           "Συμβολοσειρά">
+<!ENTITY newPref.valueInteger          "Ακέραιος">
+
+<!ENTITY newPref.stringPlaceholder     "Εισάγετε μια συμβολοσειρά">
+<!ENTITY newPref.numberPlaceholder     "Εισάγετε έναν αριθμό">
+
+<!ENTITY newPref.toggleButton          "Εναλλαγή">
+<!ENTITY newPref.cancelButton          "Ακύρωση">
+
+<!ENTITY contextMenu.copyPrefName      "Αντιγραφή ονόματος">
+<!ENTITY contextMenu.copyPrefValue     "Αντιγραφή τιμής">

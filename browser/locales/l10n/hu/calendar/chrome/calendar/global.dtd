@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "éjfél" >
+<!ENTITY time.noon "dél" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Va." >
+<!ENTITY day.1.Ddd.accesskey "V">
+<!ENTITY day.2.Ddd "Hé." >
+<!ENTITY day.2.Ddd.accesskey "H">
+<!ENTITY day.3.Ddd "Ke." >
+<!ENTITY day.3.Ddd.accesskey "K">
+<!ENTITY day.4.Ddd "Sze." >
+<!ENTITY day.4.Ddd.accesskey "S">
+<!ENTITY day.5.Ddd "Csü." >
+<!ENTITY day.5.Ddd.accesskey "C">
+<!ENTITY day.6.Ddd "Pé." >
+<!ENTITY day.6.Ddd.accesskey "P">
+<!ENTITY day.7.Ddd "Szo." >
+<!ENTITY day.7.Ddd.accesskey "z">
+
+<!ENTITY day.1.name "Vasárnap" >
+<!ENTITY day.2.name "Hétfő" >
+<!ENTITY day.3.name "Kedd" >
+<!ENTITY day.4.name "Szerda" >
+<!ENTITY day.5.name "Csütörtök" >
+<!ENTITY day.6.name "Péntek" >
+<!ENTITY day.7.name "Szombat" >
+
+<!ENTITY month.1.name "Január" >
+<!ENTITY month.2.name "Február" >
+<!ENTITY month.3.name "Március" >
+<!ENTITY month.4.name "Április" >
+<!ENTITY month.5.name "Május" >
+<!ENTITY month.6.name "Június" >
+<!ENTITY month.7.name "Július" >
+<!ENTITY month.8.name "Augusztus" >
+<!ENTITY month.9.name "Szeptember" >
+<!ENTITY month.10.name "Október" >
+<!ENTITY month.11.name "November" >
+<!ENTITY month.12.name "December" >
+
+<!ENTITY onemonthbackward.tooltip "Egy hónapot előre" >
+<!ENTITY onemonthforward.tooltip "Egy hónapot vissza" >
+<!ENTITY oneyearbackward.tooltip "Egy évet vissza" >
+<!ENTITY oneyearforward.tooltip "Egy évet előre" >
+<!ENTITY showToday.tooltip "Ugrás a mai napra">
+<!ENTITY onedayforward.tooltip "Egy napot előre">
+<!ENTITY onedaybackward.tooltip "Egy napot vissza">
+<!ENTITY showselectedday.tooltip "Események megjelenítése a kijelölt naphoz">

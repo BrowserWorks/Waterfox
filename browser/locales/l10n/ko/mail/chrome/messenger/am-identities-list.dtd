@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "이 계정의 발신인 정보를 관리합니다. 첫번째 발신인 정보가 기본적으로 사용됩니다.">
+<!ENTITY identitiesListAdd.label  "추가…">
+<!ENTITY identitiesListAdd.accesskey  "A">
+<!ENTITY identitiesListEdit.label "편집…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "기본으로 설정">
+<!ENTITY identitiesListDefault.accesskey "S">
+
+<!ENTITY identitiesListDelete.label "삭제">
+<!ENTITY identitiesListDelete.accesskey "D">
+<!ENTITY identitiesListClose.label	"닫기">
+<!ENTITY identitiesListClose.accesskey	"C">

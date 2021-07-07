@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "給">
+<!ENTITY fromField4.label "從">
+<!ENTITY senderField4.label "寄件者">
+<!ENTITY author.label "作者">
+<!ENTITY organizationField4.label "組織">
+<!ENTITY replyToField4.label "回覆至">
+
+<!ENTITY subjectField4.label "主旨">
+<!ENTITY ccField4.label "副本">
+<!ENTITY bccField4.label "密件副本">
+<!ENTITY newsgroupsField4.label "新聞群組">
+<!ENTITY followupToField4.label "原文參見">
+<!ENTITY tagsHdr4.label "標籤">
+<!ENTITY dateField4.label "日期">
+<!ENTITY userAgentField4.label "使用者代理字串">
+<!ENTITY referencesField4.label "參考資料">
+<!ENTITY messageIdField4.label "郵件 ID">
+<!ENTITY inReplyToField4.label "回覆給">
+<!ENTITY originalWebsite4.label "網站">
+
+<!ENTITY hdrArchiveButton1.label "備存">
+<!ENTITY hdrArchiveButton1.tooltip "備存此訊息">
+<!ENTITY hdrSmartReplyButton1.label "智慧回覆">
+<!ENTITY hdrReplyButton1.label "回覆">
+<!ENTITY hdrReplyButton2.tooltip "回應此訊息給寄件者">
+<!ENTITY hdrReplyAllButton1.label "回覆全部">
+<!ENTITY hdrReplyAllButton1.tooltip "回信給寄件者及所有收件者">
+<!ENTITY hdrReplyListButton1.label "回覆清單">
+<!ENTITY hdrReplyListButton1.tooltip "回覆到郵件群組">
+<!ENTITY hdrFollowupButton1.label "加入討論">
+<!ENTITY hdrFollowupButton1.tooltip "加入此郵件群組的討論">
+<!ENTITY hdrForwardButton1.label "轉寄">
+<!ENTITY hdrForwardButton1.tooltip "轉寄此訊息">
+<!ENTITY hdrJunkButton1.label "垃圾郵件">
+<!ENTITY hdrJunkButton1.tooltip "將此訊息標示為垃圾郵件">
+<!ENTITY hdrTrashButton1.label "刪除">
+<!ENTITY hdrTrashButton1.tooltip "刪除此訊息">
+
+<!ENTITY hdrViewToolbarShowFull.label "顯示圖示與文字">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "只顯示圖示">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "只顯示文字">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "總是顯示回覆給寄件者">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "更多">
+<!ENTITY otherActionsButton.tooltip "更多操作">
+<!ENTITY otherActionsOpenConversation1.label "以討論串檢視模式開啟">
+<!ENTITY otherActionsOpenConversation1.accesskey "C">
+<!ENTITY otherActionsOpenInNewWindow1.label "開啟至新視窗">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "w">
+<!ENTITY otherActionsOpenInNewTab1.label "用新分頁開啟">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "T">
+<!ENTITY markAsReadMenuItem1.label "標示為已讀">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "標示為未讀">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "另存為…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "檢視原始碼">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "列印…">
+<!ENTITY otherActionsPrint1.accesskey "P">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "啟動時顯示附件窗格">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "開啟">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "另存新檔…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "取出…">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "刪除">
+<!ENTITY deleteAttachmentCmd.accesskey    "e">
+<!ENTITY openAllAttachmentsCmd.label    "開啟全部…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "O">
+<!ENTITY saveAllAttachmentsCmd.label    "全部儲存…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "s">
+<!ENTITY detachAllAttachmentsCmd.label    "全部取出…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "d">
+<!ENTITY deleteAllAttachmentsCmd.label    "全部刪除…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "開啟附加的檔案">
+
+<!ENTITY detachedAttachmentFolder.show.label        "開啟所在資料夾">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "在 Finder 中顯示">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "儲存">
+<!ENTITY saveAttachmentButton1.tooltip     "儲存附加檔案">
+<!ENTITY saveAllAttachmentsButton1.label   "儲存所有附件">
+<!ENTITY saveAllAttachmentsButton1.tooltip "儲存所有附加檔案">
+
+<!ENTITY copyLinkCmd.label        "複製鏈結網址">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "複製 Message-ID">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "開啟此 Message-ID 的郵件">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "在瀏覽器開啟此 Message-ID 的郵件">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

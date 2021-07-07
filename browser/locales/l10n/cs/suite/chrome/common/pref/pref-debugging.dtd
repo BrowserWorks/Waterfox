@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "Ladění">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "Vykreslování">
+<!ENTITY debugXULBox.label                "Ladění XUL boxů">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "Zakázat XUL mezipaměť">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "Události">
+<!ENTITY debugPaintFlashing.label "Zvýrazňování překreslování (přepíná Caps-Lock)">
+<!ENTITY debugPaintFlashing.accesskey "p">
+<!ENTITY debugPaintFlashingChrome.label "Zvýrazňování překreslování Chrome">
+<!ENTITY debugPaintFlashingChrome.accesskey "e">
+<!ENTITY debugPaintDumping.label "Dump vykreslení">
+<!ENTITY debugPaintDumping.accesskey "v">
+<!ENTITY debugInvalidateDumping.label "Dump zneplatnění">
+<!ENTITY debugInvalidateDumping.accesskey "n">
+<!ENTITY debugEventDumping.label "Dump události">
+<!ENTITY debugEventDumping.accesskey "d">
+<!ENTITY debugMotionEventDumping.label "Dump události pohybu">
+<!ENTITY debugMotionEventDumping.accesskey "p">
+<!ENTITY debugCrossingEventDumping.label "Crossing Event Dumping">
+<!ENTITY debugCrossingEventDumping.accesskey "C">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "Přeformátovat události">
+<!ENTITY debugReflowShowFrameCounts.label        "Zobrazit započtené snímky">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "s">
+<!ENTITY debugReflowDumpFrameCounts.label        "Dump započtených snímků">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "D">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "Dump snímek po snímku">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "u">

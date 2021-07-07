@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Vy:">
+<!ENTITY viewPicker.accesskey "y">
+<!ENTITY viewAll.label "Alla">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "Olästa">
+<!ENTITY viewUnread.accesskey "O">
+<!ENTITY viewNotDeleted.label "Ej borttagna">
+<!ENTITY viewNotDeleted.accesskey "b">
+<!ENTITY viewTags.label "Etiketter">
+<!ENTITY viewTags.accesskey "E">
+<!ENTITY viewCustomViews.label "Anpassade vyer">
+<!ENTITY viewCustomViews.accesskey "v">
+<!ENTITY viewVirtualFolder.label "Spara vyn som en mapp…">
+<!ENTITY viewVirtualFolder.accesskey "S">
+<!ENTITY viewCustomizeView.label "Anpassa…">
+<!ENTITY viewCustomizeView.accesskey "n">

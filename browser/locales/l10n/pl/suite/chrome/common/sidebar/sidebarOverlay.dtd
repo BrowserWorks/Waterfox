@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label "Panel boczny">
+<!ENTITY sidebar.reload.label "Odśwież">
+<!ENTITY sidebar.reload.accesskey "O">
+<!ENTITY sidebar.picker.label "Karty">
+<!ENTITY sidebar.customize.label "Dostosuj panel boczny…">
+<!ENTITY sidebar.customize.accesskey "D">
+<!ENTITY sidebar.hide.label "Ukryj kartę">
+<!ENTITY sidebar.hide.accesskey "U">
+<!ENTITY sidebar.switch.label "Przełącz kartę">
+<!ENTITY sidebar.switch.accesskey "P">
+<!ENTITY sidebarCmd.label "Panel boczny">
+<!ENTITY sidebarCmd.accesskey "b">
+<!ENTITY sidebar.loading.label "Wczytywanie…">
+<!ENTITY sidebar.loadstopped.label "Wczytywanie zatrzymane">
+<!ENTITY sidebar.loading.stop.label "Zatrzymaj">
+<!ENTITY sidebar.loading.stop.accesskey "Z">
+
+<!ENTITY sidebar.no-panels.state "Panel boczny jest obecnie pusty.">
+<!ENTITY sidebar.no-panels.add "Możesz dodać karty naciskając przycisk Karty.">
+<!ENTITY sidebar.no-panels.hide "Aby całkowicie ukryć panel boczny, w menu Widok otwórz pozycję „Pokaż/Ukryj”, a następnie „Panel boczny”.">
+<!ENTITY sidebar.sbDirectory.label "Katalog paneli bocznych…">
+
+<!ENTITY sidebar.pagenotfound.label "Ta karta w chwili obecnej jest niedostępna.">
+<!ENTITY sidebar.close.tooltip "Zamknij panel boczny">
+<!ENTITY sidebar.open.tooltip "Otwórz panel boczny">
+
+<!ENTITY sidebar.search.label "Szukaj">
+<!ENTITY sidebar.client-bookmarks.label "Zakładki">
+<!ENTITY sidebar.client-history.label "Historia">
+<!ENTITY sidebar.client-addressbook.label "Książka adresowa">

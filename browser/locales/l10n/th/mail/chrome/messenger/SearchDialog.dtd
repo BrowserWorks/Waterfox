@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "ค้นหาข้อความใน:">
+<!ENTITY searchHeading.accesskey     "ค">
+<!ENTITY searchSubfolders.label      "ค้นหาโฟลเดอร์ย่อย">
+<!ENTITY searchSubfolders.accesskey  "น">
+<!ENTITY searchOnServer.label        "เรียกใช้การค้นหาบนเซิร์ฟเวอร์">
+<!ENTITY searchOnServer.accesskey    "ร">
+<!ENTITY resetButton.label           "ล้าง">
+<!ENTITY resetButton.accesskey       "ล">
+<!ENTITY openButton.label            "เปิด">
+<!ENTITY openButton.accesskey        "ป">
+<!ENTITY deleteButton.label          "ลบ">
+<!ENTITY deleteButton.accesskey      "ล">
+<!ENTITY searchDialogTitle.label     "ค้นหาข้อความ">
+<!ENTITY results.label               "ผลลัพธ์">
+<!ENTITY moveButton.label            "ย้ายไปยัง">
+<!ENTITY moveButton.accesskey        "ย">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "เปิดในโฟลเดอร์">
+<!ENTITY openInFolder.accesskey      "ด">
+<!ENTITY saveAsVFButton.label        "บันทึกเป็นโฟลเดอร์การค้นหา">
+<!ENTITY saveAsVFButton.accesskey    "บ">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "ค้นหาใน:">
+<!ENTITY abSearchHeading.accesskey   "ค">
+<!ENTITY propertiesButton.label      "คุณสมบัติ">
+<!ENTITY propertiesButton.accesskey  "ส">
+<!ENTITY composeButton.label         "เขียน">
+<!ENTITY composeButton.accesskey     "ข">
+<!ENTITY deleteCardButton.label      "ลบ">
+<!ENTITY deleteCardButton.accesskey  "ล">
+<!ENTITY abSearchDialogTitle.label   "การค้นหาสมุดรายชื่อขั้นสูง">
+

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Το κλειδί &syncBrand.fullName.label; σας">
+<!ENTITY syncKey.page.description         "Αυτό το κλειδί χρησιμοποιείται για την αποκρυπτογράφηση των δεδομένων σας στον λογαριασμό &syncBrand.fullName.label;. Θα πρέπει να εισάγετε το κλειδί κάθε φορά που ρυθμίζετε το &syncBrand.fullName.label; σε έναν νέο υπολογιστή ή συσκευή.">
+<!ENTITY syncKey.keepItSecret.heading     "Κρατήστε το μυστικό">
+<!ENTITY syncKey.keepItSecret.description "Ο λογαριασμός &syncBrand.fullName.label; σας είναι κρυπτογραφημένος για την προστασία του απορρήτου σας. Χωρίς αυτό το κλειδί, θα χρειαστούν χρόνια για να αποκωδικοποιήσει κάποιος τρίτος τα προσωπικά σας δεδομένα. Μόνο εσείς έχετε στην κατοχή σας το κλειδί. Επομένως, μόνο εσείς μπορείτε να έχετε πρόσβαση στα δεδομένα σας στο &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading       "Φυλάξτε το">
+<!ENTITY syncKey.keepItSafe1.description  "Μην χάσετε αυτό το κλειδί.">
+<!ENTITY syncKey.keepItSafe2.description  "Δεν διατηρούμε αντίγραφο του κλειδιού σας (αλλιώς δεν θα ήταν μυστικό!), επομένως ">
+<!ENTITY syncKey.keepItSafe3.description  "δεν μπορούμε να σας βοηθήσουμε να το ανακτήσετε">
+<!ENTITY syncKey.keepItSafe4.description  " αν χαθεί. Θα χρειαστείτε αυτό το κλειδί κάθε φορά που συνδέετε έναν νέο υπολογιστή ή συσκευή στο &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Μάθετε περισσότερα σχετικά με το &syncBrand.fullName.label; και το απόρρητό σας στο ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Οι όροι υπηρεσίας του &syncBrand.fullName.label; είναι διαθέσιμοι στο ">
+<!ENTITY syncKey.footer2.label            ". Η πολιτική απορρήτου είναι διαθέσιμη στο ">
+<!ENTITY syncKey.footer3.label            ".">

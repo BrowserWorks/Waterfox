@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "媒體">
+<!ENTITY mediaHTML5Preferences.label    "音訊/視訊">
+<!ENTITY allowMediaAutoplay.label       "開啟 HTML5 媒體內容的自動播放">
+<!ENTITY allowMediaAutoplay.accesskey   "A">
+
+<!ENTITY enableDrmMedia.label           "為下列網站開啟 Digital Rights Management:">
+<!ENTITY enableEmeForSuite.label        "第三方內容解碼模組">
+<!ENTITY enableEmeForSuite.accesskey    "C">
+
+<!ENTITY animLoopingTitle.label         "要動態圖片重複顯示的次數:">
+<!ENTITY animLoopAsSpecified.label      "由圖片檔指定">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "一次">
+<!ENTITY animLoopOnce.accesskey         "O">
+<!ENTITY animLoopNever.label            "永不">
+<!ENTITY animLoopNever.accesskey        "v">

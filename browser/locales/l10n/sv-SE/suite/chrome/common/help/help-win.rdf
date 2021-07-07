@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE rdf:RDF SYSTEM "chrome://branding/locale/brand.dtd" >
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:nc="http://home.netscape.com/NC-rdf#">
+
+<rdf:Description about="suite-toc.rdf#ieusers"
+  nc:name="For Internet Explorer Users"
+  nc:link="forieusers.xhtml">
+  <nc:subheadings>
+    <rdf:Seq><rdf:li>
+      <rdf:Description ID="terms"
+        nc:name="Terminology Differences"
+        nc:link="forieusers.xhtml#mozilla_and_internet_explorer_terminology_differences"/>
+    </rdf:li>
+    <rdf:li>
+      <rdf:Description ID="favorites"
+        nc:name="About Your IE Favorites"
+        nc:link="forieusers.xhtml#about_your_ie_favorites"/>
+    </rdf:li>
+    <rdf:li>
+      <rdf:Description ID="key-features"
+        nc:name="Browser Features"
+        nc:link="forieusers.xhtml#browser_features"/>
+    </rdf:li>
+    <rdf:li>
+      <rdf:Description ID="more-features"
+        nc:name="Other Features"
+        nc:link="forieusers.xhtml#other_features"/>
+    </rdf:li>
+    <rdf:li>
+      <rdf:Description ID="keyboard-shortcuts"
+        nc:name="Keyboard Shortcuts"
+        nc:link="forieusers.xhtml#keyboard_shortcuts"/>
+    </rdf:li></rdf:Seq>
+  </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="suite-toc.rdf#nav-doc-ses">
+  <nc:subheadings>
+    <rdf:Seq><rdf:li>
+      <rdf:Description ID="nav-doc-default"
+        nc:name="Making &brandShortName; Your Default Browser"
+        nc:link="nav_help.xhtml#making_mozilla_your_default_browser"/>
+    </rdf:li></rdf:Seq>
+  </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-index1.rdf#browser">
+  <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="browser:default"
+         nc:name="default browser"
+         nc:link="nav_help.xhtml#making_mozilla_your_default_browser"/>
+       </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#d">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="default_browser_preferences"
+         nc:name="default browser preferences"
+	 nc:link="cs_nav_prefs_navigator.xhtml#navigator"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-indexAZ.rdf#i">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="ieusers"
+         nc:name="Internet Explorer User Help"
+	 nc:link="forieusers.xhtml"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="#ieusers">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="ieusers:terminology-differences"
+         nc:name="Terminology Differences"
+         nc:link="forieusers.xhtml#mozilla_and_internet_explorer_terminology_differences"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="ieusers:your-favorites"
+         nc:name="About Your IE Favorites"
+         nc:link="forieusers.xhtml#about_your_ie_favorites"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="ieusers:additional-software"
+         nc:name="Other Features"
+         nc:link="forieusers.xhtml#other_features"/>
+     </rdf:li>
+     <rdf:li>
+       <rdf:Description ID="ieusers:keyboard-shortcuts"
+         nc:name="Keyboard Shortcuts"
+         nc:link="forieusers.xhtml#keyboard_shortcuts"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+<rdf:Description about="help-index1.rdf#preferences">
+   <nc:subheadings>
+     <rdf:Seq><rdf:li>
+       <rdf:Description ID="preferences:default_browser"
+         nc:name="default browser preferences"
+	 nc:link="cs_nav_prefs_navigator.xhtml#navigator"/>
+     </rdf:li></rdf:Seq>
+   </nc:subheadings>
+</rdf:Description>
+
+</rdf:RDF>

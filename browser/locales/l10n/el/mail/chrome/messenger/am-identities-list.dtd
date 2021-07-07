@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Κάντε διαχείριση των ταυτοτήτων για αυτόν τον λογαριασμό. Χρησιμοποιείται η πρώτη ταυτότητα από προεπιλογή.">
+<!ENTITY identitiesListAdd.label  "Προσθήκη…">
+<!ENTITY identitiesListAdd.accesskey  "Π">
+<!ENTITY identitiesListEdit.label "Επεξεργασία…">
+<!ENTITY identitiesListEdit.accesskey "Ε">
+<!ENTITY identitiesListDefault.label "Ορισμός προεπιλογής">
+<!ENTITY identitiesListDefault.accesskey "Ο">
+<!ENTITY identitiesListDelete.label "Διαγραφή">
+<!ENTITY identitiesListDelete.accesskey "Δ">
+<!ENTITY identitiesListClose.label "Κλείσιμο">
+<!ENTITY identitiesListClose.accesskey "Κ">

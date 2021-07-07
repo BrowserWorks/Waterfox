@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "ファイルを開く...">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "ウェブページを開く...">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "最近使用したページ">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "保存">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "名前を付けて保存...">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "テキストエンコーディングを変更して保存">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "公開">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "設定して公開...">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "入力の取り消し">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "公開先サイトの設定...">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "フォーム">
+<!ENTITY insertFormMenu.accesskey "F">
+<!ENTITY insertFormCmd.label "フォームの定義...">
+<!ENTITY insertFormCmd.accesskey "D">
+<!ENTITY insertInputTagCmd.label "フォームフィールド...">
+<!ENTITY insertInputTagCmd.accesskey "e">
+<!ENTITY insertInputImageCmd.label "フォーム画像...">
+<!ENTITY insertInputImageCmd.accesskey "I">
+<!ENTITY insertTextAreaCmd.label "テキストエリア...">
+<!ENTITY insertTextAreaCmd.accesskey "T">
+<!ENTITY insertSelectCmd.label "選択リスト...">
+<!ENTITY insertSelectCmd.accesskey "S">
+<!ENTITY insertButtonCmd.label "ボタンの定義...">
+<!ENTITY insertButtonCmd.accesskey "B">
+<!ENTITY insertLabelCmd.label "ラベルの定義">
+<!ENTITY insertLabelCmd.accesskey "L">
+<!ENTITY insertFieldSetCmd.label "フィールドセットの定義...">
+<!ENTITY insertFieldSetCmd.accesskey "F">
+
+<!-- Toolbar-only items -->
+<!ENTITY newToolbarCmd.label "新規作成">
+<!ENTITY newToolbarCmd.tooltip "新しい Composer ページを作成します">
+<!ENTITY openToolbarCmd.label "開く">
+<!ENTITY openToolbarCmd.tooltip "ファイルを開きます">
+<!ENTITY saveToolbarCmd.tooltip "ローカル URL にファイルを保存します">
+<!ENTITY publishToolbarCmd.tooltip "リモート URL にファイルをアップロードします">
+<!ENTITY printToolbarCmd.label "印刷">
+<!ENTITY printToolbarCmd.tooltip "このページを印刷します">

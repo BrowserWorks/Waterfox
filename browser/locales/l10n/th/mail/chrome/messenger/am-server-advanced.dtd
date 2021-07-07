@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "การตั้งค่าบัญชีขั้นสูง">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "ไดเรกทอรีเซิร์ฟเวอร์ IMAP:">
+<!ENTITY serverDirectory.accesskey "ด">
+<!ENTITY usingSubscription.label "แสดงเฉพาะโฟลเดอร์ที่บอกรับเท่านั้น">
+<!ENTITY usingSubscription.accesskey "ส">
+<!ENTITY dualUseFolders.label "เซิร์ฟเวอร์รองรับโฟลเดอร์ที่มีโฟลเดอร์ย่อยและข้อความ">
+<!ENTITY dualUseFolders.accesskey "ซ">
+<!ENTITY maximumConnectionsNumber.label "จำนวนการเชื่อมต่อเซิร์ฟเวอร์สูงสุดที่จะแคช">
+<!ENTITY maximumConnectionsNumber.accesskey "จ">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "ค่ากำหนดเหล่านี้ระบุเนมสเปซที่อยู่บนเซิร์ฟเวอร์ IMAP ของคุณ">
+<!ENTITY personalNamespace.label "เนมสเปซส่วนตัว:">
+<!ENTITY personalNamespace.accesskey "น">
+<!ENTITY publicNamespace.label "สาธารณะ (ที่แบ่งปัน):">
+<!ENTITY publicNamespace.accesskey "า">
+<!ENTITY otherUsersNamespace.label "ผู้ใช้อื่น ๆ:">
+<!ENTITY otherUsersNamespace.accesskey "ผ">
+<!ENTITY overrideNamespaces.label "อนุญาตให้เซิร์ฟเวอร์เขียนทับเนมสเปซเหล่านี้ได้">
+<!ENTITY overrideNamespaces.accesskey "อ">
+<!ENTITY pop3DeferringDesc.label "เมื่อดาวน์โหลดจดหมายจากเซิร์ฟเวอร์ของบัญชีนี้ ให้ใช้โฟลเดอร์ต่อไปนี้เก็บข้อความใหม่:">
+<!ENTITY accountInbox.label "กล่องขาเข้าสำหรับบัญชีนี้">
+<!ENTITY accountInbox.accesskey "ก">
+<!ENTITY deferToServer.label "กล่องขาเข้าสำหรับบัญชีอื่น">
+<!ENTITY deferToServer.accesskey "อ">
+<!ENTITY deferGetNewMail.label "รวมเซิร์ฟเวอร์นี้เมื่อได้รับจดหมายใหม่">
+<!ENTITY deferGetNewMail.accesskey "ร">

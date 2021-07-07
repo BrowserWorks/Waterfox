@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства формы">
+
+<!ENTITY Settings.label "Параметры">
+
+<!ENTITY FormName.label "Имя формы:">
+<!ENTITY FormName.accesskey "И">
+<!ENTITY FormAction.label "URL обработчика:">
+<!ENTITY FormAction.accesskey "о">
+<!ENTITY FormMethod.label "Метод:">
+<!ENTITY FormMethod.accesskey "М">
+<!ENTITY FormEncType.label "Тип содержимого:">
+<!ENTITY FormEncType.accesskey "Т">
+<!ENTITY FormTarget.label "Целевой фрейм:">
+<!ENTITY FormTarget.accesskey "Ц">
+
+<!ENTITY RemoveForm.label "Удалить форму">
+<!ENTITY RemoveForm.accesskey "У">

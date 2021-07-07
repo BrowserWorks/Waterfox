@@ -1,0 +1,139 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Sự cố khi tải trang">
+<!ENTITY retry.label "Thử lại">
+<!ENTITY returnToPreviousPage.label "Quay lại">
+<!ENTITY returnToPreviousPage1.label "Quay lại (Khuyến nghị)">
+<!ENTITY advanced2.label "Nâng cao…">
+<!ENTITY viewCertificate.label "Xem chứng chỉ">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Không tìm thấy máy chủ">
+<!ENTITY dnsNotFound.longDesc1 "<strong>Nếu địa chỉ đúng, có ba việc bạn có thể thử:</strong> <ul>
+  <li>Thử lại sau.</li>
+  <li>Kiểm tra kết nối mạng của bạn.</li>
+  <li>Nếu bạn đã kết nối mạng nhưng có cài đặt tường lửa, hãy kiểm tra &brandShortName; có quyền truy cập web không.</li> </ul>">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kiểm tra tên xem có lỗi gõ HOA-thường hay lỗi nào khác không.</li> <li>Kiểm tra xem tập tin có bị di chuyển, đổi tên hay bị xóa không.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Nó có thể đã bị xóa, chuyển đi, hay quyền truy cập tập tin đã bị chặn.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>Vì lý do nào đó, &brandShortName; không thể mở trang này.</p>">
+
+<!ENTITY captivePortal.title "Đăng nhập vào mạng">
+<!ENTITY captivePortal.longDesc2 "
+<p>Bạn cần đăng nhập vào mạng trước khi có thể truy cập Internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Mở trang đăng nhập mạng">
+
+<!ENTITY malformedURI.pageTitle "URL không hợp lệ">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Tài liệu được yêu cầu không có sẵn trong bộ đệm của &brandShortName;.</p><ul><li>Vì lí do bảo mật, &brandShortName; không tự động tải lại các tài liệu nhạy cảm.</li><li>Nhấn nút Thử Lại để yêu cầu tải lại tài liệu từ trang web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Nhấn &quot;Thử lại&quot; để chuyển sang chế độ trực tuyến và tải lại trang.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Vui lòng liên hệ với chủ trang web để báo với họ về vấn đề này.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Vui lòng liên hệ với chủ trang web để báo với họ về vấn đề này.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Có lẽ bạn cần phải cài đặt phần mềm khác mới mở được.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kiểm tra thiết lập proxy để chắc chắn rằng mọi thứ đều đúng.</li> <li>Liên hệ với quản trị mạng của bạn để chắc chắn rằng máy chủ proxy  vẫn đang hoạt động.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Kiểm tra thiết lập proxy.</li> <li>Kiểm tra kết nối mạng.</li> <li>Nếu máy tính hoặc mạng được bảo vệ bởi tường lửa hoặc proxy, hãy chắc chắn rằng &brandShortName; được phép truy cập Web.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Vấn đề này thỉnh thoảng có thể xảy ra do bạn vô hiệu hóa hoặc từ chối cookie.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kiểm tra để chắc chắn rằng hệ thống của bạn có Trình quản lí Bảo mật Cá nhân đã được cài đặt.</li> <li>Điều này có thể là do cấu hình không chuẩn trên máy chủ.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul><li>Không thể hiển thị trang bạn muốn xem vì không thể kiểm tra tính xác thực của dữ liệu nhận được.</li><li>Vui lòng liên hệ chủ trang web để báo với họ vấn đề này.</li></ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; phát hiện một mối đe dọa bảo mật và không tiếp tục đến <span class='hostname'/>. Nếu bạn truy cập trang web này, kẻ tấn công có thể cố gắng lấy cắp thông tin như mật khẩu, email hoặc chi tiết thẻ tín dụng của bạn.">
+<!ENTITY certerror.sts.introPara "&brandShortName; phát hiện một mối đe dọa bảo mật tiềm năng và không tiếp tục đến <span class='hostname'/> vì trang web này yêu cầu kết nối an toàn.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; đã phát hiện sự cố và không tiếp tục đến <span class='hostname'/>. Trang web định cấu hình sai hoặc đồng hồ máy tính của bạn không đúng.">
+<!ENTITY certerror.expiredCert.secondPara2 "Có vẻ như chứng chỉ của trang web đã hết hạn, việc này sẽ ngăn chặn &brandShortName; từ kết nối an toàn. Nếu bạn truy cập trang này, kẻ tấn công có thể cố gắng lấy cắp thông tin như mật khẩu, email hoặc chi tiết thẻ tín dụng của bạn.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Có vẻ như chứng chỉ của trang web đã hết hạn, việc này sẽ ngăn chặn &brandShortName; từ kết nối an toàn.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Bạn có thể làm gì về nó?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Vấn đề rất có thể xảy ra với trang web và bạn không thể làm gì để giải quyết nó.</p>
+<p>Nếu bạn đang sử dụng mạng công ty hoặc sử dụng phần mềm chống vi-rút, bạn có thể liên hệ với nhóm hỗ trợ để được trợ giúp. Bạn cũng có thể thông báo cho quản trị viên của trang web về sự cố.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Đồng hồ máy tính của bạn được đặt thành <span id='wrongSystemTime_systemDate2'/>. Đảm bảo máy tính của bạn được đặt đúng ngày, giờ và múi giờ trong cài đặt hệ thống của bạn, sau đó làm mới <span class='hostname'/>.</p>
+<p>Nếu đồng hồ của bạn đã được đặt đúng thời điểm, trang web có thể bị định cấu hình sai và bạn không thể làm gì để giải quyết vấn đề. Bạn có thể thông báo cho quản trị viên của trang web về sự cố.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Vấn đề rất có thể xảy ra với trang web và bạn không thể làm gì để giải quyết vấn đề này. Bạn có thể thông báo cho quản trị viên của trang web về sự cố.</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>Trang web này có thể bị gián đoạn tạm thời hoặc do quá tải. Hãy thử lại trong chốc lát.</li> <li>Nếu bạn không thể mở bất kì trang nào, hãy kiểm tra kết nối mạng.</li> <li>Nếu máy tính hoặc mạng của bạn được bảo vệ bởi tường lửa hoặc proxy, hãy chắc chắn rằng &brandShortName; được phép truy cập Web.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; không tải trang này vì nó có một chính sách bảo vệ nội dung không cho phép việc tải theo cách này.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; đã ngăn trang này tải trong ngữ cảnh này vì trang có chính sách X-Frame-Options mà nó không cho phép.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Không thể hiển thị được trang mà bạn muốn xem vì có lỗi trong truyền tải dữ liệu.</p><ul><li>Vui lòng liên hệ chủ trang web để báo họ về vấn đề này.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Chấp nhận rủi ro và tiếp tục">
+
+<!ENTITY errorReporting.automatic2 "Báo cáo những lỗi như thế này để giúp Mozilla nhận diện và chặn những trang độc hại">
+<!ENTITY errorReporting.learnMore "Tìm hiểu thêm…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Vui lòng liên hệ với chủ trang web để báo với họ vấn đề này.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Thông tin bổ sung: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Cảnh báo: Rủi ro bảo mật tiềm ẩn">
+<!ENTITY certerror.sts.pagetitle  "Không kết nối: Sự cố bảo mật tiềm ẩn">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> có chính sách bảo mật được gọi là HTTP Strict Transport Security (HSTS), có nghĩa là &brandShortName; chỉ có thể kết nối với nó một cách an toàn. Bạn không thể thêm ngoại lệ để truy cập trang web này.">
+<!ENTITY certerror.copyToClipboard.label "Sao chép văn bản vào bộ nhớ tạm">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> sử dụng công nghệ bảo mật lỗi thời và dễ bị tấn công. Một kẻ tấn công có thể dễ dàng làm lộ những thông tin mà bạn nghĩ là an toàn. Người quản lý trang web trước tiên sẽ cần phải sửa lỗi máy chủ trước khi bạn có thể vào trang.</p><p>Mã lỗi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Trang bị chặn">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> rất có thể là một trang web an toàn, nhưng không thể thiết lập kết nối an toàn. Sự cố này xảy ra do <span class='mitm-name'/>, có thể là phần mềm trên máy tính hoặc mạng của bạn.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Nếu phần mềm chống vi-rút của bạn bao gồm một tính năng quét các kết nối được mã hóa (thường được gọi là “quét trang web” hoặc “quét https”), bạn có thể tắt tính năng đó. Nếu điều đó không hoạt động, bạn có thể gỡ bỏ và cài đặt lại phần mềm chống vi-rút.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Nếu bạn đang ở trong một mạng công ty, bạn có thể phải liên hệ với bộ phận CNTT của bạn.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Nếu bạn không quen với <span class='mitm-name'/>, thì đây có thể là một cuộc tấn công và bạn không nên tiếp tục đến trang web.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Nếu bạn không quen với <span class='mitm-name'/>, thì đây có thể là một cuộc tấn công và bạn không thể làm gì để truy cập trang web.">
+
+<!ENTITY clockSkewError.longDesc "Đồng hồ máy tính của bạn hiện tại là <span id='wrongSystemTime_systemDate1'/>, việc này ngăn chặn &brandShortName; từ kết nối an toàn. Để truy cập <span class='hostname'></span>, hãy cập nhật đồng hồ máy tính trong cài đặt hệ thống của bạn thành ngày, giờ và múi giờ hiện tại, sau đó làm mới <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Dường như là cài đặt bảo mật mạng của bạn có thể gây ra điều này. Bạn có muốn khôi phục cài đặt mặc định?">
+<!ENTITY prefReset.label "Khôi phục cài đặt mặc định">
+
+<!ENTITY enableTls10.longDesc "Trang web này có thể không hỗ trợ giao thức TLS 1.2, đây là phiên bản tối thiểu được hỗ trợ bởi &brandShortName;. Kích hoạt TLS 1.0 và TLS 1.1 có thể cho phép kết nối này.">
+<!ENTITY enableTls10.note "TLS 1.0 và TLS 1.1 sẽ bị vô hiệu hóa vĩnh viễn trong phiên bản tương lai.">
+<!ENTITY enableTls10.label "Kích hoạt TLS 1.0 và 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Không thể hiển thị trang bạn đang cố xem vì lỗi trong giao thức mạng đã được phát hiện.</p><ul><li>Vui lòng liên hệ với chủ sở hữu trang web để thông báo cho họ về sự cố này.</li></ul>">

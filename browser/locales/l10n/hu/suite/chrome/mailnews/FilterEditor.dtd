@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Szűrés szabályai">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Szűrő neve:">
+<!ENTITY filterName.accesskey "z">
+
+<!ENTITY recentFolders.label "Recent">
+
+<!ENTITY junk.label "Szemét">
+<!ENTITY notJunk.label "Nem szemét">
+
+<!ENTITY lowestPriorityCmd.label "Nem sürgős">
+<!ENTITY lowPriorityCmd.label "Kevéssé sürgős">
+<!ENTITY normalPriorityCmd.label "Normál">
+<!ENTITY highPriorityCmd.label "Sürgős">
+<!ENTITY highestPriorityCmd.label "Rendkívül sürgős">
+
+<!ENTITY contextDesc.label "Szűrő alkalmazása:">
+<!ENTITY contextIncomingMail.label "Új üzenet érkezésekor">
+<!ENTITY contextIncomingMail.accesskey "j">
+<!ENTITY contextManual.label "Kézzel futtatva">
+<!ENTITY contextManual.accesskey "K">
+<!ENTITY contextBeforeCls.label "Szűrők alkalmazása a levélszemét-ellenőrzés előtt">
+<!ENTITY contextAfterCls.label "Szűrők alkalmazása a levélszemét-ellenőrzés után">
+<!ENTITY contextOutgoing.label "Küldés után">
+<!ENTITY contextOutgoing.accesskey "s">
+<!ENTITY contextArchive.label "Archiválás">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY contextPeriodic.accesskey "I">
+
+<!ENTITY filterActionDesc.label "Műveletek végrehajtása:">
+<!ENTITY filterActionDesc.accesskey "v">
+
+<!ENTITY filterActionOrderWarning.label "Megjegyzés: a szűrési műveletek más sorrendben lesznek futtatva.">
+<!ENTITY filterActionOrder.label "Végrehajtási sorrend megjelenítése">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Üzenet áthelyezése">
+<!ENTITY copyMessage.label "Üzenet átmásolása">
+<!ENTITY forwardTo.label "Üzenet továbbítása">
+<!ENTITY replyWithTemplate.label "Válasz sablon használatával">
+<!ENTITY markMessageRead.label "Megjelölés olvasottként">
+<!ENTITY markMessageUnread.label "Megjelölés olvasatlanként">
+<!ENTITY markMessageStarred.label "Csillag hozzáadása">
+<!ENTITY setPriority.label "Prioritás beállítása">
+<!ENTITY addTag.label "Üzenet címkézése">
+<!ENTITY setJunkScore.label "Szemét vagy nem szemét">
+<!ENTITY deleteMessage.label "Üzenet törlése">
+<!ENTITY deleteFromPOP.label "Törlés a POP-kiszolgálóról">
+<!ENTITY fetchFromPOP.label "Letöltés a POP-kiszolgálóról">
+<!ENTITY ignoreThread.label "Témacsoport kihagyása">
+<!ENTITY ignoreSubthread.label "Témacsoportrész kihagyása">
+<!ENTITY watchThread.label "Témacsoport figyelése">
+<!ENTITY stopExecution.label "Szűrő végrehajtásának leállítása">
+
+<!ENTITY addAction.tooltip "Új művelet hozzáadása">
+<!ENTITY removeAction.tooltip "A művelet eltávolítása">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

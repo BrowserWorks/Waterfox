@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title			"アラームの設定">
+<!ENTITY reminder.add.label			"追加">
+<!ENTITY reminder.add.accesskey			"A">
+<!ENTITY reminder.remove.label			"削除">
+<!ENTITY reminder.remove.accesskey		"R">
+
+<!ENTITY reminder.reminderDetails.label		"アラームの詳細">
+<!ENTITY reminder.action.label			"アラーム動作の選択">
+
+<!ENTITY reminder.action.alert.label		"アラームを表示する">
+<!ENTITY reminder.action.email.label		"メールを送信する">
+
+<!ENTITY alarm.units.minutes			"分">
+<!ENTITY alarm.units.hours			"時間">
+<!ENTITY alarm.units.days			"日">

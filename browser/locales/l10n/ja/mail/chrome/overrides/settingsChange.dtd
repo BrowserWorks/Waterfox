@@ -1,0 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  settingsChangePreferences.label	"この設定は &brandShortName; の設定の [添付ファイル] パネルから変更できます。">
+<!ENTITY  settingsChangeOptions.label		"この設定は &brandShortName; のオプションの [添付ファイル] パネルから変更できます。">

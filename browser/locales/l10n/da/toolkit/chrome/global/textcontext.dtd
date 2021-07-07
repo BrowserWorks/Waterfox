@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Føj til ordbog">
+<!ENTITY spellAddToDictionary.accesskey "ø">
+<!ENTITY spellUndoAddToDictionary.label "Fortryd tilføjelse til ordbog">
+<!ENTITY spellUndoAddToDictionary.accesskey "ø">
+<!ENTITY spellCheckToggle.label "Stavekontrol">
+<!ENTITY spellCheckToggle.accesskey "t">
+<!ENTITY spellNoSuggestions.label "(ingen staveforslag)">
+<!ENTITY spellDictionaries.label "Sprog">
+<!ENTITY spellDictionaries.accesskey "p">
+
+<!ENTITY searchTextBox.clear.label "Ryd">
+
+<!ENTITY fillLoginMenu.label          "Udfyld login">
+<!ENTITY fillLoginMenu.accesskey      "U">
+<!ENTITY fillPasswordMenu.label       "Udfyld adgangskode">
+<!ENTITY fillPasswordMenu.accesskey   "U">
+<!ENTITY fillUsernameMenu.label       "Udfyld brugernavn">
+<!ENTITY fillUsernameMenu.accesskey   "U">
+<!ENTITY noLoginSuggestions.label     "(Ingen login-forslag)">
+<!ENTITY viewSavedLogins.label        "Vis gemte logins">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Εισαγωγή ευρετηρίου διευθύνσεων">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Εισηγμένα δεδομένα για εγγραφή:">
+<!ENTITY fieldMapImport.next.label "Επόμενο">
+<!ENTITY fieldMapImport.next.accesskey "ν">
+<!ENTITY fieldMapImport.previous.label "Προηγούμενο">
+<!ENTITY fieldMapImport.previous.accesskey "Π">
+<!ENTITY fieldMapImport.text 'Με τα κουμπιά "Μετακίνηση πάνω" και "Μετακίνηση κάτω", αντιστοιχίστε τα πεδία του ευρετηρίου διευθύνσεων στα αριστερά με τα σωστά δεδομένα προς εισαγωγή στα δεξιά. Καταργήστε την επιλογή των στοιχείων που δεν θέλετε να εισαχθούν.'>
+<!ENTITY fieldMapImport.up.label "Μετακίνηση πάνω">
+<!ENTITY fieldMapImport.up.accesskey "π">
+<!ENTITY fieldMapImport.down.label "Μετακίνηση κάτω">
+<!ENTITY fieldMapImport.down.accesskey "κ">
+<!ENTITY fieldMapImport.fieldListTitle "Πεδία ευρετηρίου διευθύνσεων">
+<!ENTITY fieldMapImport.dataTitle "Δεδομένα εγγραφής για εισαγωγή:">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Η πρώτη εγγραφή περιέχει τα ονόματα πεδίων">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "π">

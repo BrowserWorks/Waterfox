@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "啟動時檢查是否有新文章">
+<!ENTITY loginAtStartup.accesskey "C">
+<!ENTITY biffAll.label "開啟更新所有資訊來源">
+<!ENTITY biffAll.accesskey "E">
+
+<!ENTITY newFeedSettings.label "新資訊來源的預設設定">
+
+<!ENTITY manageSubscriptions.label "管理訂閱清單…">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "部落格與新聞來源">
+<!ENTITY feeds.wizardShortName "消息來源">
+<!ENTITY feeds.wizardLongName "部落格與新聞來源">
+<!ENTITY feeds.wizardLongName.accesskey "F">

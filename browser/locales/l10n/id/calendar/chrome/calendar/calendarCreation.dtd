@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Buat Kalender Baru" >
+<!ENTITY wizard.label             "Buat kalender baru" >
+<!ENTITY wizard.description       "Cari kalender Anda" >
+
+<!ENTITY initialpage.description    "Kalender dapat disimpan dalam komputer Anda atau disimpan di komputer server agar dapat diakses jarak jauh atau dapat digunakan bersama-sama dengan teman atau rekan kerja Anda." >
+<!ENTITY initialpage.computer.label  "Di komputer saya">
+<!ENTITY initialpage.network.label  "Di dalam Jaringan">
+
+<!ENTITY locationpage.description         "Menyediakan keterangan tentang apa yang dibutuhkan untuk mengakses kalender jarak jauh Anda" >
+<!ENTITY locationpage.login.description   "Tidak wajib: masukkan nama pengguna dan sandi" >
+<!ENTITY locationpage.username.label      "Nama Pengguna:" >
+<!ENTITY locationpage.password.label      "Sandi:" >
+
+<!ENTITY custompage.shortdescription  "Atur kalender Anda" >
+<!ENTITY custompage.longdescription   "Anda dapat memberikan nama alias (nickname) pada kalender Anda dan mengganti warna penunjuk acara pada kalender ini." >
+
+<!ENTITY finishpage.shortdescription  "Kalender Telah Dibuat" >
+<!ENTITY finishpage.longdescription   "Kalender Anda telah dibuat." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Lainnya">
+
+<!ENTITY buttons.create.label "Buat Kalender">
+<!ENTITY buttons.create.accesskey "u">
+
+<!ENTITY buttons.find.label "Temukan Kalender">
+<!ENTITY buttons.find.accesskey "T">
+
+<!ENTITY buttons.back.label "Kembali">
+<!ENTITY buttons.back.accesskey "K">
+
+<!ENTITY buttons.subscribe.label "Berlangganan">
+<!ENTITY buttons.subscribe.accesskey "l">
+
+<!ENTITY calendartype.label "Jenis Kalender:">
+<!ENTITY location.label "Lokasi:">
+<!ENTITY location.placeholder "URL atau nama host dari server kalender">
+
+<!ENTITY network.nocredentials.label "Lokasi ini tidak memerlukan pengenal">
+<!ENTITY network.loading.description "Mohon tunggu sembari menemukan kalender.">
+<!ENTITY network.notfound.description "Kalender tidak ditemukan di lokasi ini. Mohon periksa pengaturan Anda.">
+<!ENTITY network.authfail.description "Pengenal yang telah Anda masukkan tidak diterima. Silakan periksa pengaturan Anda.">
+
+<!ENTITY network.subscribe.single.description "Pilih kalender yang ingin Anda langgani.">
+<!ENTITY network.subscribe.multiple.description "Berbagai tipe kalender tersedia untuk lokasi ini. Silakan memilih tipe kalender, lalu tandai kalender yang ingin Anda ikuti.">

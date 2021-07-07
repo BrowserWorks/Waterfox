@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importovat">
+<!ENTITY importAll.label          "Importovat vše">
+<!ENTITY importAll.accesskey      "v">
+<!ENTITY importMail.label         "Pošta">
+<!ENTITY importMail.accesskey     "P">
+<!ENTITY importFeeds.label        "Kanály">
+<!ENTITY importFeeds.accesskey    "a">
+<!ENTITY importAddressbook.label  "Složky kontaktů">
+<!ENTITY importAddressbook.accesskey "K">
+<!ENTITY importSettings.label     "Nastavení">
+<!ENTITY importSettings.accesskey "N">
+<!ENTITY importFilters.label      "Filtry">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Průvodce importem aplikace &brandShortName;">
+<!ENTITY importShortDesc.label    "Import zpráv, kontaktů, nastavení a filtrů z jiných programů">
+
+<!ENTITY importDescription1.label "Tento průvodce naimportuje poštovní zprávy, kontakty, kanály, předvolby anebo filtry z ostatních poštovních programů a kontaktů v běžném formátu do aplikace &brandShortName;.">
+<!ENTITY importDescription2.label "K importovaným položkám pak můžete přistupovat přímo z aplikace &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Vyberte prosím typ souboru, ze kterého chcete importovat:">
+<!ENTITY selectDescriptionB.label "Vyberte prosím existující účet nebo vytvořte účet nový:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label           "Název:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Žádné aplikace nebo soubory pro import dat nebyly nalezeny.">
+
+<!ENTITY back.label               "&lt; Zpět">
+<!ENTITY forward.label            "Další &gt;">
+<!ENTITY finish.label             "Dokončit">
+<!ENTITY cancel.label             "Zrušit">
+
+<!ENTITY select.label             "Vyberte typ načítaných položek:">
+
+<!ENTITY title.label              "Titul">
+<!ENTITY processing.label         "Probíhá import…">

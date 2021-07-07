@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Zarządzaj tożsamościami dla tego konta. Pierwsza tożsamość na liście będzie używana jako domyślna.">
+<!ENTITY identitiesListAdd.label "Dodaj…">
+<!ENTITY identitiesListAdd.accesskey "D">
+<!ENTITY identitiesListEdit.label "Edytuj…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "Ustaw jako domyślną">
+<!ENTITY identitiesListDefault.accesskey "w">
+<!ENTITY identitiesListDelete.label "Usuń">
+<!ENTITY identitiesListDelete.accesskey "U">
+<!ENTITY identitiesListClose.label "Zamknij">
+<!ENTITY identitiesListClose.accesskey "Z">

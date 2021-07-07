@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Nedlasting i framdrift…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Pause">
+<!ENTITY cmd.resume.tooltip              "Fortset">
+<!ENTITY cmd.retry.tooltip               "Prøv igjen">
+<!ENTITY cmd.cancel.tooltip              "Avbryt">
+<!ENTITY cmd.open.label                  "Opne">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Opne mappa med fila">
+<!ENTITY cmd.show.accesskey              "n">
+<!ENTITY cmd.goToDownloadPage.label      "Gå til nedlastingssida">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "Kopier nedlastingslenkje">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY closeWhenDone.label             "Lat at dette vindauget når nedlastinga er fullført.">
+<!ENTITY closeWhenDone.accesskey         "u">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Εισαγωγή δεδομένων">
+<!ENTITY migration.welcome "Καλωσορίσατε">
+<!ENTITY migration.importing "Γίνεται εισαγωγή">
+<!ENTITY migration.list.description "Το &brandShortName; μπορεί να εισαγάγει ημερολογιακά δεδομένα από πολλές δημοφιλείς εφαρμογές. Βρέθηκαν δεδομένα από τις ακόλουθες εφαρμογές του υπολογιστή σας. Παρακαλώ επιλέξτε από ποιες από αυτές θα θέλατε να εισαγάγετε δεδομένα.">
+<!ENTITY migration.progress.description "Γίνεται εισαγωγή των επιλεγμένων δεδομένων">

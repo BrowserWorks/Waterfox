@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "โหมดปลอดภัย &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; กำลังทำงานในโหมดปลอดภัย ซึ่งจะปิดใช้งานการตั้งค่า, ชุดตกแต่ง, และส่วนขยายที่กำหนดเองชั่วคราว">
+<!ENTITY safeModeDescription2.label       "คุณสามารถทำการเปลี่ยนแปลงบางส่วนหรือทั้งหมดอย่างถาวร:">
+
+<!ENTITY disableAddons.label              "ปิดใช้งานส่วนเสริมทั้งหมด">
+<!ENTITY disableAddons.accesskey          "ป">
+
+<!ENTITY resetToolbars.label              "ตั้งค่าแถบเครื่องมือและส่วนควบคุมใหม่">
+<!ENTITY resetToolbars.accesskey          "ต">
+
+<!ENTITY changeAndRestartButton.label     "ทำการเปลี่ยนแปลงและเริ่มการทำงานใหม่">
+<!ENTITY changeAndRestartButton.accesskey "ท">
+
+<!ENTITY continueButton.label             "ดำเนินการต่อในโหมดปลอดภัย">
+<!ENTITY continueButton.accesskey         "ด">

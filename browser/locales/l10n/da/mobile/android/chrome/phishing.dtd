@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Få mig væk herfra!">
+<!ENTITY safeb.palm.decline.label "Ignorer denne advarsel">
+<!ENTITY safeb.palm.reportPage.label "Hvorfor blev denne side blokeret?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Rådgivning leveret af <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Anmeldt angrebswebsted!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Dette websted (<span id='malware_sitename'/>) er blevet anmeldt som et angrebswebsted, og er blokeret i henhold til dine sikkerhedsindstillinger.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Angrebswebsteder forsøger at installere software, som stjæler private oplysninger, bruger din computer til at angribe andre, eller skader dit system.</p><p>Nogle angrebswebsteder distribuerer med fortsæt skadelig software, men mange andre er kompromitteret uden viden eller accept fra webstedets ejere.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Vildledende websted!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Webstedet <span id='phishing_sitename'/> er blevet anmeldt som et vildledende websted og er blevet blokeret som følge af dine sikkerhedsindstillinger.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Vildledende websteder prøver at få dig til at foretage farlige handlinger, som fx installation af skadelig software eller afsløring af personlig information såsom adgangskoder, telefonnummer eller oplysninger om betalingskort.</p><p>Indtastning af personlige informationer på denne side kan resultere i identitetstyveri eller anden svindel.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Websted anmeldt for uønsket software!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Webstedet <span id='unwanted_sitename'/> er blevet anmeldt for at indeholde uønsket software og er blevet blokeret som følge af dine sikkerhedsindstillinger.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Websteder med uønsket software prøver at lokke dig til at installere software, der kan påvirke dit system på uventede måder.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Webstedet kan indeholde skadelig software">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; har blokeret denne side, da den kan forsøge at installere skadelige apps, der stjæler eller sletter information om dig (fx billeder, adgangskoder, beskeder eller kreditkort).">

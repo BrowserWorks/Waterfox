@@ -1,0 +1,209 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Erreur de chargement de la page">
+<!ENTITY retry.label "Réessayer">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "La connexion a échoué">
+<!ENTITY connectionFailure.longDesc "
+<p>Bien que le site semble valide, le navigateur n’a pas pu établir de
+connexion.</p>
+<ul>
+  <li> Le site est peut-être temporairement indisponible ? Réessayez plus tard.</li>
+  <li>D’autres sites sont aussi inaccessibles ? Vérifiez la connexion au réseau
+  de votre ordinateur.</li>
+  <li>Votre ordinateur ou votre réseau est-il protégé par un pare-feu ou un
+  proxy ? Des paramètres incorrects peuvent interférer avec la navigation sur
+  le Web.</li>
+  <li>Vous avez toujours des problèmes ? Consultez votre administrateur réseau
+  ou votre fournisseur d’accès à Internet pour obtenir de l’aide.</li>
+</ul>
+">
+
+<!ENTITY deniedPortAccess.title "Port restreint pour des raisons de sécurité">
+<!ENTITY deniedPortAccess.longDesc "
+<p>L’adresse demandée indique un port (par ex. « mozilla.org:80 » pour le port
+80 sur mozilla.org) qui est normalement utilisé pour d’<em>autres</em> usages
+que la navigation sur le Web. Le navigateur a annulé la requête pour votre
+protection et votre sécurité.</p>
+">
+
+<!ENTITY dnsNotFound.title "Adresse introuvable">
+<!ENTITY dnsNotFound.longDesc "
+<p>Le navigateur n’a pas pu trouver le serveur hôte pour l’adresse indiquée.</p>
+<ul>
+  <li>Avez-vous fait une erreur en saisissant le nom de domaine ?  (par ex.
+  « <strong>ww</strong>.mozilla.org » au lieu de
+  « <strong>www</strong>.mozilla.org »)</li>
+  <li>Cette adresse de domaine existe-t-elle ? Son enregistrement a peut-être
+  expiré.</li>
+  <li>D’autres sites sont aussi inaccessibles ? Vérifiez la connexion au réseau
+  de votre ordinateur et les paramètres du serveur DNS.</li>
+  <li>Votre ordinateur ou votre réseau est-il protégé par un pare-feu ou un
+  proxy ? Des paramètres incorrects peuvent interférer avec la navigation sur
+  le Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Fichier introuvable">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Le fichier a peut-être été renommé, supprimé ou déplacé ?</li>
+  <li>Y a-t-il une erreur de majuscule, d’accent ou une autre erreur
+  typographique dans l’adresse ?</li>
+  <li>Avez-vous des permissions d’accès suffisantes pour ce fichier ?</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "L’accès au fichier a été refusé">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Il a peut-être été supprimé, déplacé ou les permissions associées au fichier ne permettent pas d’y accéder.</li></ul>">
+
+<!ENTITY generic.title "La requête ne peut aboutir">
+<!ENTITY generic.longDesc "<p>Aucune autre information disponible concernant le problème ou l’erreur.</p>">
+
+<!ENTITY malformedURI.title "L’adresse n’est pas valide">
+<!ENTITY malformedURI.longDesc "
+<p>L’adresse fournie n’est pas dans un format reconnu. Veuillez vérifier qu’il
+n’y a pas d’erreur dans la barre d’adresse et réessayez.</p>
+">
+
+<!ENTITY netInterrupt.title "La connexion a été interrompue">
+<!ENTITY netInterrupt.longDesc "
+<p>Le navigateur s’est connecté avec succès mais la connexion a été interrompue
+pendant le transfert d’informations. Veuillez réessayer.</p>
+<ul>
+  <li>D’autres sites sont aussi inaccessibles ? Vérifiez la connexion au réseau
+  de votre ordinateur.</li>
+  <li>Vous avez toujours des problèmes ? Consultez votre administrateur réseau
+  ou votre fournisseur d’accès à Internet pour obtenir de l’aide.</li>
+</ul>
+">
+
+<!ENTITY notCached.title "Le document est expiré">
+<!ENTITY notCached.longDesc "
+<p>Le document demandé n’est pas disponible dans le cache du navigateur.</p>
+<ul>
+  <li>Pour des raisons de sécurité, le navigateur ne redemande pas automatiquement les documents sensibles.</li>
+  <li>Cliquer sur « Essayer à nouveau » pour redemander le document à partir du site web.</li>
+</ul>
+">
+
+<!ENTITY netOffline.title "Mode hors connexion">
+<!ENTITY netOffline.longDesc2 "<p>Le navigateur est en mode hors connexion et ne peut pas se connecter à l’adresse indiquée.</p>
+<ul>
+  <li>L’ordinateur est-il connecté au réseau ?</li>
+  <li>Cliquez sur le bouton « Réessayer » pour revenir en mode connecté et recharger la page.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Erreur d’encodage de contenu">
+<!ENTITY contentEncodingError.longDesc "
+<p>La page que vous essayez de voir ne peut être affichée car elle utilise un
+type de compression invalide ou non pris en charge.</p>
+<ul>
+  <li>Veuillez contacter les propriétaires du site web pour les informer de ce problème.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Type de fichier non sûr">
+<!ENTITY unsafeContentType.longDesc "<ul><li>Veuillez contacter les propriétaires du site web pour les informer de ce problème.</li></ul>">
+
+<!ENTITY netReset.title "La connexion a été réinitialisée">
+<!ENTITY netReset.longDesc "
+<p>La liaison au réseau a été interrompue pendant la négociation d’une
+connexion. Veuillez réessayer.</p>
+">
+
+<!ENTITY netTimeout.title "Le délai d’attente est dépassé">
+<!ENTITY netTimeout.longDesc "
+<p>Le navigateur a attendu trop longtemps lors de la connexion au site et a
+arrêté d’attendre une réponse.</p>
+<ul>
+  <li>Le serveur est peut-être en surcharge ou est temporairement en panne ?
+  Réessayez plus tard.</li>
+  <li>D’autres sites sont aussi inaccessibles ? Vérifiez la connexion au
+  réseau de votre ordinateur.</li>
+  <li>Votre ordinateur ou votre réseau est-il protégé par un pare-feu ou un
+  proxy ? Des paramètres incorrects peuvent interférer avec la navigation sur
+  le Web.</li>
+  <li>Vous avez toujours des problèmes ? Consultez votre administrateur réseau
+  ou votre fournisseur d’accès à Internet pour obtenir de l’aide.</li>
+</ul>
+">
+
+<!ENTITY unknownProtocolFound.title "L’adresse n’a pas été reconnue">
+<!ENTITY unknownProtocolFound.longDesc "
+<p>L’adresse indique un protocole (par ex. « wxyz:// ») inconnu du navigateur
+qui ne peut donc pas se connecter correctement au site.</p>
+<ul>
+  <li>Essayez-vous d’accéder à du contenu multimédia ou d’autres services non
+  texte ? Vérifiez les prérequis logiciels du site.</li>
+  <li>Certains protocoles peuvent nécessiter un logiciel tiers ou des plugins
+  pour que le navigateur puisse les reconnaître.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "La connexion a été refusée par le serveur proxy">
+<!ENTITY proxyConnectFailure.longDesc "
+<p>Le navigateur est configuré pour utiliser un serveur proxy mais le proxy a
+refusé la connexion.</p>
+<ul>
+  <li>La configuration proxy du navigateur est-elle correcte ? Vérifiez les
+  paramètres et réessayez.</li>
+  <li>Le service proxy autorise-t-il les connexions à partir de ce réseau ?</li>
+  <li>Vous avez toujours des problèmes ? Consultez votre administrateur réseau ou
+  votre fournisseur d’accès à Internet pour obtenir de l’aide.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Le serveur proxy est introuvable">
+<!ENTITY proxyResolveFailure.longDesc "<p>Le navigateur est configuré pour utiliser un serveur proxy mais le serveur proxy est introuvable.</p><ul><li>La configuration proxy du navigateur est-elle correcte ? Vérifiez les paramètres et réessayez.</li><li>L’ordinateur est-il connecté au réseau ?</li><li>Vous avez toujours des problèmes ? Consultez votre administrateur réseau ou votre fournisseur d’accès à Internet pour obtenir de l’aide.</li></ul>">
+
+<!ENTITY redirectLoop.title "La page n’est pas redirigée correctement">
+<!ENTITY redirectLoop.longDesc "<p>Le navigateur a arrêté d’attendre une réponse du site. Le site crée une redirection de telle sorte que la requête ne peut jamais aboutir.</p><ul><li>Avez-vous désactivé ou bloqué les cookies nécessaires pour ce site ?</li><li><em>NOTE</em> : Si le problème n’est pas résolu en acceptant les cookies de ce site, il s’agit probablement d’un problème de configuration du serveur et non de votre ordinateur.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Réponse inattendue du serveur">
+<!ENTITY unknownSocketType.longDesc "<p>Le site a répondu à la requête réseau d’une façon inattendue et le navigateur ne peut continuer.</p>">
+
+<!ENTITY nssFailure2.title "Échec de la connexion sécurisée">
+<!ENTITY nssFailure2.longDesc2 "<p>La page que vous essayez de consulter ne peut pas être affichée car l’authenticité des données reçues ne peut être vérifiée.</p><ul><li>Veuillez contacter les propriétaires du site web pour les en informer.</li></ul>">
+
+<!ENTITY nssBadCert.title "Échec de la connexion sécurisée">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Ceci peut être dû à un problème de configuration du serveur ou à une personne
+  essayant d’usurper l’identité du serveur.</li>
+  <li>Si vous vous êtes déjà connecté avec succès à ce serveur, l’erreur est
+  peut-être temporaire et vous pouvez essayer à nouveau plus tard.</li>
+</ul>">
+
+<!ENTITY securityOverride.linkText "Ou vous pouvez ajouter une exception…">
+<!ENTITY securityOverride.warningContent "
+<p>Vous ne devez pas ajouter d’exception si vous utilisez une connexion à Internet en laquelle vous n’avez pas totalement confiance ou si vous n’avez pas l’habitude de recevoir un avertissement pour ce serveur.</p>
+<p>Si vous souhaitez tout de même ajouter une exception pour ce site, vous pouvez le faire depuis les paramètres de chiffrement avancés.</p>
+">
+
+<!ENTITY cspBlocked.title "Bloqué par une stratégie de sécurité de contenu">
+<!ENTITY cspBlocked.longDesc "<p>Le navigateur a empêché le chargement de cette page de cette manière car la page a une stratégie de sécurité de contenu qui ne le permet pas.</p>">
+
+<!ENTITY xfoBlocked.title "Bloqué par la politique X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>Le navigateur a empêché le chargement de cette page dans ce contexte car la politique X-Frame-Options de la page ne l’autorise pas.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Erreur due à un contenu corrompu">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>La page que vous essayez de voir ne peut pas être affichée car une erreur dans la transmission de données a été détectée.</p><ul><li>Veuillez contacter les propriétaires du site web pour les informer de ce problème.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL distant">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Veuillez contacter les propriétaires du site web pour les informer de ce problème.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "La connexion n’est pas sécurisée">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> fait appel à des technologies de sécurisation obsolètes et vulnérables aux attaques. Un attaquant pourrait facilement révéler des informations que vous pensiez être sécurisées. L’administrateur du site web devra d’abord corriger le serveur avant que vous puissiez visiter le site.</p><p>Code d’erreur : NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Page bloquée">
+
+<!ENTITY networkProtocolError.title "Erreur de protocole réseau">
+<!ENTITY networkProtocolError.longDesc "<p>La page à laquelle vous essayez d’accéder ne peut pas être affichée, car une erreur du protocole réseau a été détectée.</p><ul><li>Veuillez contacter les propriétaires du site web pour les informer de ce problème.</li></ul>">

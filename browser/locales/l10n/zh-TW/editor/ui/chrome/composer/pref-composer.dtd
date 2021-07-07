@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "最近開啟頁面">
+<!ENTITY  documentsInMenu.label         "最大列出頁數:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "要存檔或發佈網頁時">
+<!ENTITY  preserveExisting.label        "保留原始碼格式">
+<!ENTITY  preserveExisting.accesskey    "P">
+<!ENTITY  preserveExisting.tooltip      "保留斷行與原頁面格式">
+<!ENTITY  saveAssociatedFiles.label     "儲存網頁時一起儲存圖片及其它相關檔案。">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "發佈頁面前一律顯示發佈對話窗">
+<!ENTITY  showPublishDialog.accesskey   "A">
+<!ENTITY  composerEditing.label         "編輯">
+<!ENTITY  maintainStructure.label       "插入與刪除表格儲存格時維護表格樣式">
+<!ENTITY  maintainStructure.tooltip     "增刪資料時自動維護表格形狀">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "使用 CSS 樣式代替 HTML 屬性">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "在段落中按下 Enter 時建立新段落">
+<!ENTITY  crInPCreatesNewP.accesskey    "r">
+

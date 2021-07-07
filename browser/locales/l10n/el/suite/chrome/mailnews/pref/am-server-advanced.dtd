@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Προηγμένες ρυθμίσεις λογαριασμού">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "Κατάλογος διακομιστή IMAP:">
+<!ENTITY serverDirectory.accesskey "δ">
+<!ENTITY usingSubscription.label "Εμφάνιση μόνο εγγεγραμμένων φακέλων">
+<!ENTITY usingSubscription.accesskey "γ">
+<!ENTITY dualUseFolders.label "Ο διακομιστής υποστηρίζει φακέλους που περιέχουν υποφακέλους και μηνύματα">
+<!ENTITY dualUseFolders.accesskey "φ">
+<!ENTITY maximumConnectionsNumber.label "Μέγιστος αριθμός συνδέσεων διακομιστή στην κρυφή μνήμη">
+<!ENTITY maximumConnectionsNumber.accesskey "Μ">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Αυτές οι προτιμήσεις καθορίζουν τους χώρους ονομάτων στον διακομιστή IMAP σας">
+<!ENTITY personalNamespace.label "Προσωπικός χώρος ονόματος:">
+<!ENTITY personalNamespace.accesskey "Π">
+<!ENTITY publicNamespace.label "Δημόσιο (κοινόχρηστο):">
+<!ENTITY publicNamespace.accesskey "μ">
+<!ENTITY otherUsersNamespace.label "Άλλοι χρήστες:">
+<!ENTITY otherUsersNamespace.accesskey "Ά">
+<!ENTITY overrideNamespaces.label "Να επιτρέπεται στον διακομιστή η παράκαμψη αυτών των χώρων ονομάτων">
+<!ENTITY overrideNamespaces.accesskey "Ν">
+<!ENTITY pop3DeferringDesc.label "Κατά τη λήψη email από τον διακομιστή του λογαριασμού, να γίνεται χρήση του εξής φακέλου για αποθήκευση νέων μηνυμάτων:">
+<!ENTITY accountInbox.label "Εισερχόμενα αυτού του λογαριασμού">
+<!ENTITY accountInbox.accesskey "σ">
+<!ENTITY deferToServer.label "Εισερχόμενα διαφορετικού λογαριασμού">
+<!ENTITY deferToServer.accesskey "δ">
+<!ENTITY deferGetNewMail.label "Να περιλαμβάνεται αυτός ο διακομιστής κατά τη λήψη νέων email">
+<!ENTITY deferGetNewMail.accesskey "π">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS 通訊協定版本">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS 警告">
+<!ENTITY SSLMixedContent.caption            "混合內容">
+<!ENTITY SSLClientAuthMethod.caption        "客戶端認證方式選擇">
+
+<!ENTITY pref.ssltls.title                  "傳輸層安全通訊協定（SSL/TLS）">
+<!ENTITY limit.description                  "您可以限制只使用哪些加密通訊協定進行安全連線。請選擇單一版本或是連續版本號的幾個版本。">
+<!ENTITY limit.enable.label                 "啟用:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; 可以警示您正在檢視的網頁的安全性狀態。&brandShortName; 將在遇到下面的情況時警告您: ">
+<!ENTITY warn.enteringsecure                "載入支援加密的網頁中">
+<!ENTITY warn.enteringsecure.accesskey      "L">
+<!ENTITY warn.insecurepost                  "由未加密的網頁傳送資料到未加密的網頁中">
+<!ENTITY warn.insecurepost.accesskey        "S">
+<!ENTITY warn.leavingsecure                 "離開支援加密的網頁中">
+<!ENTITY warn.leavingsecure.accesskey       "a">
+
+<!ENTITY mixed.description                  "已加密的頁面可能包含容易被監聽或偽造的未加密內容，&brandShortName; 可以幫您偵測並封鎖:">
+<!ENTITY warn.mixedactivecontent            "加密頁面中包含不安全內容時警告我">
+<!ENTITY warn.mixedactivecontent.accesskey  "W">
+<!ENTITY block.activecontent                "不要在加密頁面中載入不安全的內容">
+<!ENTITY block.activecontent.accesskey      "D">
+<!ENTITY warn.mixeddisplaycontent           "加密頁面中包含其他類型的混和內容時警告我">
+<!ENTITY warn.mixeddisplaycontent.accesskey "c">
+<!ENTITY block.displaycontent               "不要在加密頁面中載入其他類型的混和內容">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "決定 &brandShortName; 如何選取安全憑證以代表需要的網站:">
+<!ENTITY certselect.auto                    "自動選擇">
+<!ENTITY certselect.auto.accesskey          "A">
+<!ENTITY certselect.ask                     "每次都要詢問">
+<!ENTITY certselect.ask.accesskey           "E">

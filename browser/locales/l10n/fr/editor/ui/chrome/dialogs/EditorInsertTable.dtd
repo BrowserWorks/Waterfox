@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Insérer un tableau">
+
+<!ENTITY size.label "Taille">
+<!ENTITY numRowsEditField.label "Lignes :">
+<!ENTITY numRowsEditField.accessKey "N">
+<!ENTITY numColumnsEditField.label "Colonnes :">
+<!ENTITY numColumnsEditField.accessKey "c">
+<!ENTITY widthEditField.label "Largeur :">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY borderEditField.label "Bordure :">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "Saisissez un nombre pour la bordure du tableau, ou zéro (0) si pas de bordure.">
+<!ENTITY pixels.label "pixels">

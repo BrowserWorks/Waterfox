@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Címjegyzék">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!ENTITY blankResultsPaneMessage.label                  "Ez a címjegyzék csak keresés után jelenít meg névjegyeket">
+<!ENTITY localResultsOnlyMessage.label                  "A távoli címjegyzékekből származó névjegyek nem jelennek meg, amíg nem keres rájuk">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Névjegy…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "j">
+<!ENTITY newListCmd.label                               "Levelezőlista…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Címjegyzék…">
+<!ENTITY newAddressBookCmd.accesskey                    "C">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-címtár…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Névjegy nyomtatása…">
+<!ENTITY printContactViewCmd.accesskey                  "N">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Névjegy nyomtatási képe">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printAddressBook.label                         "Címjegyzék nyomtatása…">
+<!ENTITY printAddressBook.accesskey                     "C">
+<!ENTITY printPreviewAddressBook.label                  "Címjegyzék nyomtatási képe">
+<!ENTITY printPreviewAddressBook.accesskey              "n">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Címjegyzék törlése">
+<!ENTITY deleteContactCmd.label                         "Névjegy törlése">
+<!ENTITY deleteContactsCmd.label                        "Kiválasztott névjegyek törlése">
+<!ENTITY deleteListCmd.label                            "Lista törlése">
+<!ENTITY deleteListsCmd.label                           "Kijelölt listák törlése">
+<!ENTITY deleteItemsCmd.label                           "Kijelölt elemek törlése">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Utónév és vezetéknév felcserélése">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "U">
+<!ENTITY propertiesCmd.label                            "Tulajdonságok…">
+<!ENTITY propertiesCmd.accesskey                        "i">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Címjegyzék eszköztár">
+<!ENTITY showAbToolbarCmd.accesskey                     "C">
+<!ENTITY layoutMenu.label                               "Elrendezés">
+<!ENTITY layoutMenu.accesskey                           "l">
+<!ENTITY showDirectoryPane.label                        "Könyvtár ablaktábla">
+<!ENTITY showDirectoryPane.accesskey                    "l">
+<!ENTITY showContactPane2.label                         "Névjegyek ablaktábla">
+<!ENTITY showContactPane2.accesskey                     "b">
+<!ENTITY menu_ShowNameAs.label                          "Nevek megjelenítése">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!ENTITY firstLastCmd.label                             "Utónév, vezetéknév">
+<!ENTITY firstLastCmd.accesskey                         "U">
+<!ENTITY lastFirstCmd.label                             "Vezetéknév, utónév">
+<!ENTITY lastFirstCmd.accesskey                         "V">
+<!ENTITY displayNameCmd.label                           "Megjelenítendő név">
+<!ENTITY displayNameCmd.accesskey                       "M">
+
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Importálás…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Exportálás…">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Új névjegy">
+<!ENTITY newContactButton.accesskey                     "n">
+<!ENTITY newlistButton.label                            "Új lista">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY editItemButton.label                           "Tulajdonságok">
+<!ENTITY editItemButton.accesskey                       "T">
+<!ENTITY newmsgButton.label                             "Új üzenet">
+<!ENTITY newmsgButton.accesskey                         "z">
+<!ENTITY deleteItemButton.label                         "Törlés">
+<!ENTITY deleteItemButton.accesskey                     "T">
+<!ENTITY newimButton.label                              "Azonnali üzenet">
+<!ENTITY newimButton.accesskey                          "A">
+<!ENTITY printButton.label                              "Nyomtatás">
+<!ENTITY printButton.accesskey                          "o">
+<!ENTITY searchNameAndEmail.placeholder                 "Név és cím keresése">
+<!ENTITY searchBox.title                                "Keresés">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Címjegyzék eszköztár">
+<!ENTITY newContactButton.tooltip                       "Új névjegy létrehozása a címjegyzékben">
+<!ENTITY newlistButton.tooltip                          "Egy új lista létrehozása">
+<!ENTITY editItemButton.tooltip                         "Kiválasztott elemek szerkesztése">
+<!ENTITY newmsgButton.tooltip                           "Új üzenet létrehozása">
+<!ENTITY newIM.tooltip                                  "Üzenet küldése vagy csevegés">
+<!ENTITY printButton.tooltip                            "A kijelölt elem nyomtatása">
+<!ENTITY deleteItemButton.tooltip                       "Kiválasztott elemek törlése">
+<!ENTITY throbber.tooltip                               "Ugrás a &vendorShortName; honlapjára">
+<!ENTITY throbber.tooltip2                              "Ugrás a &brandShortName; honlapjára">
+<!ENTITY advancedButton.tooltip                         "Keresés az üzenetekben…">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Címjegyzékek">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Névjegy">
+<!ENTITY home.heading                                   "Otthon">
+<!ENTITY other.heading                                  "Egyéb">
+<!ENTITY chat.heading                                   "Csevegés">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Munka">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Leírás">
+<!ENTITY addresses.heading                              "Címek">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Térkép">
+<!ENTITY mapIt.tooltip                                  "A címhez tartozó térkép megjelenítése a webről">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

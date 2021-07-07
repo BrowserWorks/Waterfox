@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title	"エラーコンソール">
+
+<!ENTITY errFile.label		"ソースファイル:">
+<!ENTITY errLine.label		"行:">
+<!ENTITY errColumn.label	"列:">
+
+<!ENTITY all.label		"すべて">
+<!ENTITY all.accesskey		"A">
+<!ENTITY errors.label		"エラー">
+<!ENTITY errors.accesskey	"r">
+<!ENTITY warnings.label		"警告">
+<!ENTITY warnings.accesskey	"n">
+<!ENTITY messages.label		"メッセージ">
+<!ENTITY messages.accesskey	"M">
+<!ENTITY clear.label		"消去">
+<!ENTITY clear.accesskey	"l">
+<!ENTITY codeEval.label		"コード:">
+<!ENTITY codeEval.accesskey	"o">
+<!ENTITY evaluate.label		"コードを評価">
+<!ENTITY evaluate.accesskey	"u">
+<!ENTITY filter2.label		"絞り込み:">
+<!ENTITY filter2.accesskey	"i">
+
+<!ENTITY copyCmd.label		"コピー">
+<!ENTITY copyCmd.accesskey	"C">
+<!ENTITY copyCmd.commandkey	"C">
+<!ENTITY sortFirst.label	"最初 > 最後の順に並べる">
+<!ENTITY sortFirst.accesskey	"f">
+<!ENTITY sortLast.label		"最後 > 最初の順に並べる">
+<!ENTITY sortLast.accesskey	"l">
+<!ENTITY closeCmd.commandkey	"w">
+<!ENTITY focus1.commandkey	"l">
+<!ENTITY focus2.commandkey	"d">
+
+<!ENTITY menuBar.tooltip	"メニューバー">
+<!ENTITY modeToolbar.tooltip	"モードツールバー">
+<!ENTITY entryToolbar.tooltip	"Javascript 入力ツールバー">
+<!ENTITY toolbarsCmd.label	"表示/隠す">
+<!ENTITY toolbarsCmd.accesskey	"w">
+<!ENTITY toolbarMode.label	"モード">
+<!ENTITY toolbarMode.accesskey	"M">
+<!ENTITY toolbarEval.label	"JavaScript 入力">
+<!ENTITY toolbarEval.accesskey	"J">

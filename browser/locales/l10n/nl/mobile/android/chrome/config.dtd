@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Zoeken">
+
+<!ENTITY newPref.namePlaceholder       "Naam">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "String">
+<!ENTITY newPref.valueInteger          "Integer">
+
+<!ENTITY newPref.stringPlaceholder     "Voer een string in">
+<!ENTITY newPref.numberPlaceholder     "Voer een nummer in">
+
+<!ENTITY newPref.toggleButton          "Omschakelen">
+<!ENTITY newPref.cancelButton          "Annuleren">
+
+<!ENTITY contextMenu.copyPrefName      "Naam kopiëren">
+<!ENTITY contextMenu.copyPrefValue     "Waarde kopiëren">

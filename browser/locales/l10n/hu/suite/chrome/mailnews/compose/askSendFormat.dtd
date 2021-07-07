@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Küldés HTML formátumban">
+
+<!ENTITY recipient.label "Egyes felsorolt címzettek nem tudnak HTML-levelet fogadni.">
+
+<!ENTITY question.label "Szeretné az üzenetet sima szöveggé alakítva elküldeni, vagy maradjon HTML formátumú?">
+
+<!ENTITY plainTextAndHtml.label "Küldés normál szövegként és HTML-ben">
+<!ENTITY plainTextAndHtml.accesskey "s">
+<!ENTITY plainTextOnly.label "Küldés csak normál szövegként">
+<!ENTITY plainTextOnly.accesskey "n">
+<!ENTITY htmlOnly.label "Küldés csak HTML-ben">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Küldés">
+<!ENTITY send.accesskey "K">

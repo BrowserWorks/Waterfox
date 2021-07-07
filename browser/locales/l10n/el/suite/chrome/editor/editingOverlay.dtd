@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Άνοιγμα αρχείου…">
+<!ENTITY openFileCmd.accesskey "Ά">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Άνοιγμα διεύθυνσης ιστού…">
+<!ENTITY openRemoteCmd.accesskey "θ">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Πρόσφατες σελίδες">
+<!ENTITY fileRecentMenu.accesskey "φ">
+<!ENTITY saveCmd.label "Αποθήκευση">
+<!ENTITY saveCmd.accesskey "σ">
+<!ENTITY saveAsCmd.label "Αποθήκευση ως…">
+<!ENTITY saveAsCmd.accesskey "ω">
+<!ENTITY saveAsChangeEncodingCmd2.label "Αποθήκευση και αλλαγή κωδικοποίησης κειμένου">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "λ">
+<!ENTITY publishCmd.label "Δημοσίευση">
+<!ENTITY publishCmd.accesskey "μ">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Δημοσίευση ως…">
+<!ENTITY publishAsCmd.accesskey "ς">
+<!ENTITY fileRevert.label "Επαναφορά">
+<!ENTITY fileRevert.accesskey "φ">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Ρυθμίσεις ιστοσελίδας δημοσίευσης…">
+<!ENTITY publishSettings.accesskey "θ">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Φόρμα">
+<!ENTITY insertFormMenu.accesskey "Φ">
+<!ENTITY insertFormCmd.label "Ορισμός φόρμας…">
+<!ENTITY insertFormCmd.accesskey "Ο">
+<!ENTITY insertInputTagCmd.label "Πεδίο φόρμας…">
+<!ENTITY insertInputTagCmd.accesskey "ε">
+<!ENTITY insertInputImageCmd.label "Εικόνα φόρμας…">
+<!ENTITY insertInputImageCmd.accesskey "ι">
+<!ENTITY insertTextAreaCmd.label "Πεδίο κειμένου…">
+<!ENTITY insertTextAreaCmd.accesskey "κ">
+<!ENTITY insertSelectCmd.label "Λίστα επιλογής…">
+<!ENTITY insertSelectCmd.accesskey "Λ">
+<!ENTITY insertButtonCmd.label "Ορισμός κουμπιού…">
+<!ENTITY insertButtonCmd.accesskey "μ">
+<!ENTITY insertLabelCmd.label "Ορισμός ετικέτας">
+<!ENTITY insertLabelCmd.accesskey "τ">
+<!ENTITY insertFieldSetCmd.label "Ορισμός συνόλου πεδίων…">
+<!ENTITY insertFieldSetCmd.accesskey "σ">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Νέα">
+<!ENTITY newToolbarCmd.tooltip "Δημιουργία νέας σελίδας σύνταξης">
+<!ENTITY openToolbarCmd.label "Άνοιγμα">
+<!ENTITY openToolbarCmd.tooltip "Άνοιγμα τοπικού αρχείου">
+<!ENTITY saveToolbarCmd.tooltip "Αποθήκευση αρχείου σε τοπική τοποθεσία">
+<!ENTITY publishToolbarCmd.tooltip "Μεταφόρτωση αρχείου σε απομακρυσμένη τοποθεσία">
+<!ENTITY printToolbarCmd.label "Εκτύπωση">
+<!ENTITY printToolbarCmd.tooltip "Εκτύπωση σελίδας">
+<!ENTITY formToolbarCmd.label "Φόρμα">
+<!ENTITY formToolbarCmd.tooltip "Εισαγωγή νέας φόρμας ή επεξεργασία ιδιοτήτων επιλεγμένης φόρμας">

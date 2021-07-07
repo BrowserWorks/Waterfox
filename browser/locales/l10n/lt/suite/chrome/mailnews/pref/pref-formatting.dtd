@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Siunčiamo teksto tipai">
+<!ENTITY sendMaildesc.label           "Išsiunčiant laiškus raiškiuoju (HTML) tekstu gali paaiškėti, kad esama adresatų, neįtrauktų į gavėjų, galinčių priimti tokį tekstą, sąrašą. Tuomet:">
+<!ENTITY askMe.label                  "įspėti, kad reikia pasirinkti kitą (grynojo) teksto tipą">
+<!ENTITY askMe.accesskey              "s">
+
+
+
+
+
+
+<!-- Html and Plain Text Domains  -->
+
+<!ENTITY domain.title                 "Raiškiojo (HTML) ir grynojo teksto laiškų sritys">
+<!ENTITY domaindesc.label             "Kai siunčiate laišką adresu, esančiu vienoje žemiau išvardintų sričių, programa jį automatiškai išsiųs nurodytu formatu (raiškiuoju arba grynuoju tekstu).">
+<!ENTITY HTMLdomaintitle.label        "HTML sritys">
+<!ENTITY HTMLdomaintitle.accesskey    "H">
+<!ENTITY PlainTexttitle.label         "Grynojo teksto sritys">
+<!ENTITY PlainTexttitle.accesskey     "G">
+<!ENTITY AddButton.label              "Įtraukti…">
+<!ENTITY AddHtmlDomain.accesskey      "t">
+<!ENTITY AddPlainText.accesskey       "r">
+<!ENTITY DeleteButton.label           "Pašalinti">
+<!ENTITY DeleteHtmlDomain.accesskey   "P">
+<!ENTITY DeletePlainText.accesskey    "š">
+<!-- Add Domain Name -->
+
+<!ENTITY add.htmltitle                "HTML srities vardo įtraukimas">
+<!ENTITY add.htmldomain               "Srities, priimančios HTML teksto laiškus, vardas:">
+<!ENTITY add.plaintexttitle           "Grynojo teksto srities vardo įtraukimas">
+<!ENTITY add.plaintextdomain          "Srities, priimančios grynojo teksto laiškus, vardas:">
+
+<!ENTITY domainnameError.title        "Netinkamas srities vardas">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Srities vardas „@string@“ yra netinkamas, todėl bus praleistas. Varde privalo būti bent vienas taškas, iš abiejų pusių apsuptas simboliais.">
+<!-- Global auto-detect switch -->
+

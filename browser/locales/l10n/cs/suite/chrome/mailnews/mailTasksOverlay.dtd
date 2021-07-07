@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- LOCALIZATION NOTE (messengerCmd.label): DONT_TRANSLATE -->
+<!ENTITY messengerCmd.label					"Pošta a diskusní skupiny">
+<!ENTITY messengerCmd.accesskey				"o">
+<!ENTITY messengerCmd.commandkey			"2">
+<!ENTITY addressBookCmd.label				"Kontakty">  
+<!ENTITY addressBookCmd.accesskey			"a">
+<!ENTITY addressBookCmd.commandkey			"5">
+
+<!ENTITY taskMessenger.tooltip  "Pošta a diskusní skupiny">
+<!ENTITY taskAddressBook.tooltip  "Kontakty">
+
+<!-- searchAddressesCmd is also used by addressbook -->
+<!ENTITY searchAddressesCmd.label                       "Hledat v kontaktech…">
+<!ENTITY searchAddressesCmd.accesskey                   "k">
+
+<!ENTITY searchMailCmd.label "Hledat ve zprávách…">
+<!ENTITY searchMailCmd.accesskey "z">
+<!ENTITY searchMailCmd.key "f">

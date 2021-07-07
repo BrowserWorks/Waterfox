@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "เปิดไฟล์…">
+<!ENTITY openFileCmd.accesskey "ป">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "เปิดตำแหน่งที่ตั้งเว็บ…">
+<!ENTITY openRemoteCmd.accesskey "ด">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "หน้าล่าสุด">
+<!ENTITY fileRecentMenu.accesskey "ห">
+<!ENTITY saveCmd.label "บันทึก">
+<!ENTITY saveCmd.accesskey "บ">
+<!ENTITY saveAsCmd.label "บันทึกเป็น…">
+<!ENTITY saveAsCmd.accesskey "น">
+<!ENTITY saveAsChangeEncodingCmd2.label "บันทึกแล้วเปลี่ยนการเข้ารหัสข้อความ">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "ท">
+<!ENTITY publishCmd.label "เผยแพร่">
+<!ENTITY publishCmd.accesskey "ผ">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "เผยแพร่เป็น…">
+<!ENTITY publishAsCmd.accesskey "ย">
+<!ENTITY fileRevert.label "เปลี่ยนกลับ">
+<!ENTITY fileRevert.accesskey "ล">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "การตั้งค่าไซต์การเผยแพร่…">
+<!ENTITY publishSettings.accesskey "ก">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "ใหม่">
+<!ENTITY newToolbarCmd.tooltip "สร้างหน้าเขียนใหม่">
+<!ENTITY openToolbarCmd.label "เปิด">
+<!ENTITY openToolbarCmd.tooltip "เปิดไฟล์ในเครื่อง">
+<!ENTITY saveToolbarCmd.tooltip "บันทึกไฟล์ไปยังตำแหน่งที่ตั้งในเครื่อง">
+<!ENTITY publishToolbarCmd.tooltip "อัปโหลดไฟล์ไปยังตำแหน่งที่ตั้งระยะไกล">
+<!ENTITY printToolbarCmd.label "พิมพ์">
+<!ENTITY printToolbarCmd.tooltip "พิมพ์หน้านี้">

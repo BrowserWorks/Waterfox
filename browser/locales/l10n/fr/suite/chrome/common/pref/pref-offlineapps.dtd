@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Applications web hors connexion">
+<!ENTITY pref.offlineCache.caption          "Contenu web et données utilisateur hors connexion">
+
+<!ENTITY clearOfflineAppCache.label         "Effacer">
+<!ENTITY clearOfflineAppCache.accesskey     "E">
+
+<!ENTITY offlineAlwaysAllow.label           "Autoriser tous les sites web à conserver des données pour une utilisation hors connexion">
+<!ENTITY offlineAlwaysAllow.accesskey       "A">
+<!ENTITY offlineExplicit.label              "Autoriser uniquement les sites grâce à des permissions explicites">
+<!ENTITY offlineExplicit.accesskey          "u">
+<!ENTITY offlineNotifyAsk.label             "M’avertir lorsqu’un site souhaite conserver des données pour une utilisation hors connexion">
+<!ENTITY offlineNotifyAsk.accesskey         "M">
+<!ENTITY offlineNotifyPermissions.label     "Gérer les permissions">
+<!ENTITY offlineNotifyPermissions.accesskey "G">
+
+<!ENTITY offlineAppsUsage.label             "Les sites suivants ont recours au stockage hors connexion :">
+<!ENTITY offlineAppsListRemove.label        "Effacer les données…">
+<!ENTITY offlineAppsListRemove.accesskey    "f">

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Составление и адресация">
+<!ENTITY addressingGroupTitle.label "Адресация">
+<!ENTITY addressingText.label      "При подборе адресов:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Использовать для этой учётной записи глобальные настройки LDAP-сервера">
+<!ENTITY useGlobal.accesskey       "л">
+<!ENTITY editDirectories.label     "Изменить сервер каталогов…">
+<!ENTITY editDirectories.accesskey "з">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Использовать другой LDAP-сервер:">
+<!ENTITY directories.accesskey     "д">
+<!ENTITY directoriesNone.label     "Нет">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Составление">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Составлять сообщения в формате HTML">
+<!ENTITY useHtml.accesskey                    "я">
+<!ENTITY autoQuote.label                      "При ответе автоматически цитировать текст исходного сообщения">
+<!ENTITY autoQuote.accesskey                  "о">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "При цитировании,">
+<!ENTITY quoting.accesskey                    "н">
+<!ENTITY aboveQuote.label                     "поместить курсор перед цитируемым текстом">
+<!ENTITY belowQuote.label                     "поместить курсор после цитируемого текста">
+<!ENTITY selectAndQuote.label                 "выделить цитируемый текст">
+<!ENTITY place.label                          "и ставить подпись">
+<!ENTITY place.accesskey                      "в">
+<!ENTITY belowText.label                      "после цитируемого текста (рекомендуется)">
+<!ENTITY aboveText.label                      "после моего ответа (перед цитируемым текстом)">
+<!ENTITY includeSigOnReply.label              "Включать подпись в ответы">
+<!ENTITY includeSigOnReply.accesskey          "ю">
+<!ENTITY includeSigOnForward.label            "Включать подпись в пересылаемые письма">
+<!ENTITY includeSigOnForward.accesskey        "с">
+
+<!ENTITY globalComposingPrefs.label           "Глобальные настройки составления сообщений…">
+<!ENTITY globalComposingPrefs.accesskey       "а">
+
+<!ENTITY globalAddressingPrefs.label          "Глобальные настройки адресации…">
+<!ENTITY globalAddressingPrefs.accesskey      "ы">

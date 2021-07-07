@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "날짜 순으로 읽음 표시">
+<!ENTITY markByDateLower.label "보낸 사람:">
+<!ENTITY markByDateLower.accesskey "F">
+<!ENTITY markByDateUpper.label "받는 사람:">
+<!ENTITY markByDateUpper.accesskey "T">

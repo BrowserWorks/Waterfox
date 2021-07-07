@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Programm zur Verbesserung der Benutzerfreundlichkeit von ChatZilla">
+<!ENTITY window.size   "width: 48em;">
+
+<!ENTITY intro.label "Das Programm zur Verbesserung der Benutzerfreundlichkeit sammelt Informationen über Ihre Verwendung von ChatZilla, ohne Sie zu unterbrechen. Dies hilft den Entwicklern, herauszufinden, welche ChatZilla-Funktionen verbessert werden sollen. Keine der Informationen werden verwendet, um Sie zu identifizieren oder zu kontaktieren.">
+
+<!ENTITY groupSend.label        "Folgende Daten senden:">
+<!ENTITY sendClient.label       "Wenn ChatZilla geöffnet und geschlossen wird">
+<!ENTITY sendClient.accesskey   "W">
+<!ENTITY sendCommand.label      "Kommandos, Menüs und Dialoge, die verwendet werden">
+<!ENTITY sendCommand.accesskey  "K">
+<!ENTITY sendID.label           "Ihre eindeutige ID:">
+<!ENTITY sendIDSrc.label        "(zufällig erstellt)">
+
+<!ENTITY groupNotSent.label     "Daten, die nie gesendet werden:">
+<!ENTITY notsentNickname.label  "Ihr Nick">
+<!ENTITY notsentMessages.label  "Nachrichteninhalte, inklusive Aktionen und Notizen">
+<!ENTITY notsentArguments.label "Argumente und Daten, die an alle Kommandos, Menüs und Dialoge übergeben wurden">
+<!ENTITY notsentURLs.label      "Namen und URLs von Netzwerken, Servern, Channels und Benutzern">
+<!ENTITY notsentFiles.label     "Namen und Inhalte von gesendeten und empfangenen Dateien">

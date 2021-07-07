@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "設定">
+<!ENTITY security.caption "安全與認證">
+<!ENTITY serverName.label "伺服器名稱:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "說明:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "使用者名稱:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "連線安全性:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "無">
+<!ENTITY connectionSecurityType-1.label "嘗試使用 STARTTLS">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP 寄件伺服器">
+<!ENTITY serverPortDefault.label "預設:">
+<!ENTITY authMethod.label "驗證方式:">
+<!ENTITY authMethod.accesskey "i">

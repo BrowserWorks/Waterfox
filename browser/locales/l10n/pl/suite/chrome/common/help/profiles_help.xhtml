@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Zarządzanie profilami</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="managing_profiles">Zarządzanie profilami</h1>
+
+<p>W&nbsp;przypadku, gdy użytkownik korzysta z&nbsp;Internetu zarówno do celów prywatnych jak i&nbsp;służbowych, przydatne może być posiadanie dwóch zupełnie różnych zbiorów zakładek, preferencji, książek adresowych, kont pocztowych, ustawień panelu bocznego, itp. Podobnie, gdy z&nbsp;tego samego komputera korzysta wiele osób, możliwe jest, aby każda z&nbsp;nich miała indywidualne ustawienia, zapisane w&nbsp;danych odrębnych tożsamości internetowych, w&nbsp;&brandShortName; zwanych profilami.</p>
+
+<p>Modułem &brandShortName; umożliwiającym zarządzanie tożsamościami (profilami) internetowymi jest Menedżer Profili. Pozwala on na tworzenie profili, z&nbsp;których każdy przechowuje osobną konfigurację przeglądarki, ustawienia poczty, zestaw zakładek, książek adresowych itp. Podczas instalacji Mozilli automatycznie tworzony jest jeden profil domyślny. Jeżeli utworzony zostanie jeden lub więcej dodatkowych profili, to przy każdym starcie dowolnego komponentu &brandShortName;, użytkownik zostanie zapytany, którego profilu chce użyć.</p>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#creating_a_new_profile">Tworzenie nowego profilu</a></li>
+    <li><a href="#deleting_or_renaming_a_profile">Usuwanie lub zmiana nazwy profilu</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_new_profile">Tworzenie nowego profilu</h2>
+
+<p>W&nbsp;celu utworzenia nowego profilu użytkownika należy:</p>
+
+<ol>
+  <li>Uruchomić Menedżera profili:
+    <ul>
+      <li><strong>Jeżeli &brandShortName; jest uruchomiona</strong>: Należy z&nbsp;menu Narzędzia wybrać Zmień profil.</li>
+      <li><strong>Jeżeli &brandShortName; nie jest uruchomiona</strong>:<span class="win"> Należy z&nbsp;menu Start wybrać kategorie: Programy, &brandShortName;, Menedżer profili.</span><span class="mac"> Należy nacisnąć przycisk <kbd>Option</kbd> podczas uruchamiania &brandShortName; z&nbsp;Findera lub Doku.</span><span class="unix"> Należy w&nbsp;konsoli wykonać następujące polecenie: <kbd>./seamonkey -profilemanager</kbd></span></li>
+    </ul>
+  </li>
+  <li>Nacisnąć przycisk Utwórz nowy profil, zapoznać się z&nbsp;krótkimi informacjami na temat tworzonego profilu, a&nbsp;następnie nacisnąć przycisk Dalej.</li>
+  <li>W&nbsp;kolejnym oknie wprowadzić nazwę profilu. Nazwa może być dowolna, jednak musi być różna od nazw już istniejących profili.</li>
+  <li>Zaaprobować domyślny katalog przechowywania danych profilu, lub (po naciśnięciu przycisku Wybierz katalog) wybrać dysk i&nbsp;katalog przechowywania danych profilu.</li>
+  <li>Jeżeli w&nbsp;programie są zainstalowane różne pakiety językowe, należy nacisnąć przycisk Wybierz język i&nbsp;wybrać żądany język.</li>
+  <li>Aby zakończyć tworzenie nowego profilu, nacisnąć przycisk Zakończ.</li>
+</ol>
+
+<p>[<a href="#managing_profiles">Na początek rozdziału</a>]</p>
+
+<h2 id="deleting_or_renaming_a_profile">Usuwanie lub zmiana nazwy profilu</h2>
+
+<p>Użytkownik ma także możliwość usunięcia profili, które nie są już dłużej potrzebne i&nbsp;używane. W&nbsp;celu usunięcia lub zmiany nazwy profilu, należy:</p>
+
+<ol>
+  <li>Uruchomić Menedżera profili:
+    <ul>
+      <li><strong>Jeżeli &brandShortName; jest uruchomiona</strong>: Należy z&nbsp;menu Narzędzia wybrać Zmień profil. <strong>Uwaga</strong>: nie można skasować aktualnie używanego profilu.</li>
+      <li><strong>Jeżeli &brandShortName; nie jest uruchomiona</strong>:<span class="win"> Należy z&nbsp;menu Start wybrać kategorie: Programy, &brandShortName;, Menedżer profili.</span><span class="mac"> Należy nacisnąć przycisk <kbd>Option</kbd> podczas uruchamiania &brandShortName; z&nbsp;Findera lub Doku.</span><span class="unix"> Należy w&nbsp;konsoli wykonać następujące polecenie: <kbd>./mozilla -profilemanager</kbd></span></li>
+    </ul>
+  </li>
+  <li>W&nbsp;celu usunięcia profilu należy zaznaczyć jego nazwę, a&nbsp;następnie nacisnąć przycisk Usuń zaznaczony profil. W&nbsp;oknie dialogowym potwierdzenia kasowania profilu użytkownik może wybrać jedną z&nbsp;następujących opcji:
+    <ul>
+      <li><strong>Usuń pliki</strong>: usuwa cały katalog profilu wraz z&nbsp;plikami z&nbsp;danymi (takimi jak: zachowana poczta, zakładki, certyfikaty, ustawienia i&nbsp;wszystkie inne pozostałe prywatne dane). <em>Przed wyborem tej opcji należy upewnić się czy na pewno w&nbsp;przyszłości żadne z&nbsp;informacji nie będą potrzebne. Jest to operacja której nie można cofnąć.</em></li>
+      <li><strong>Nie usuwaj plików</strong>: Usuwa profil z&nbsp;listy dostępnych profili jednak nie usuwa fizycznie z&nbsp;dysku ani katalogów ani plików.</li>
+    </ul>
+  </li>
+  <li>W&nbsp;celu zmiany nazwy zaznaczonego profilu należy zaznaczyć jego nazwę, a&nbsp;następnie nacisnąć przycisk Zmień nazwę profilu i&nbsp;postępować zgodnie ze wskazówkami na ekranie.</li>
+</ol>
+
+<p>[<a href="#managing_profiles">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Συμμετοχή στο κανάλι">
+
+<!ENTITY network.label     "Δίκτυο:">
+<!ENTITY network.accesskey "Δ">
+
+<!ENTITY channel.label     "Κανάλι:">
+<!ENTITY channel.accesskey "Κ">
+
+<!ENTITY topics.label     "Αναζήτηση θεμάτων και ονομάτων καναλιών">
+<!ENTITY topics.accesskey "θ">
+
+<!ENTITY join.label     "Συμμετοχή">
+<!ENTITY join.accesskey "Σ">
+
+<!ENTITY minusers.label     "Ελάχιστοι χρήστες:">
+<!ENTITY minusers.accesskey "Ε">
+
+<!ENTITY maxusers.label     "Μέγιστοι χρήστες:">
+<!ENTITY maxusers.accesskey "γ">
+
+<!ENTITY refresh.label     "Ανανέωση τώρα">
+<!ENTITY refresh.accesskey "">
+
+<!ENTITY network.hint.label "Εισαγάγετε οποιοδήποτε δίκτυο ή όνομα διακομιστή (μπορείτε να συμπεριλάβετε μια θύρα) και ένα κανάλι για συμμετοχή.">
+
+<!ENTITY col.network "Δίκτυο">
+<!ENTITY col.name  "Όνομα">
+<!ENTITY col.users "Χρήστες">
+<!ENTITY col.topic "Θέμα">

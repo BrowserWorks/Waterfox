@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Asistente de cuenta de chat">
+
+<!ENTITY accountProtocolTitle.label   "Red de chat">
+<!ENTITY accountProtocolInfo.label    "Por favor, elige la red de tu cuenta de chat.">
+<!ENTITY accountProtocolField.label   "Red:">
+<!ENTITY accountProtocolGetMore.label "Obtener más…">
+
+<!ENTITY accountUsernameTitle.label   "Nombre de usuario">
+<!ENTITY accountUsernameDuplicate.label "¡Esta cuenta ya está configurada!">
+
+<!ENTITY accountPasswordTitle.label   "Contraseña">
+<!ENTITY accountPasswordInfo.label    "Por favor, ingresa tu contraseña en el cuadro de texto siguiente.">
+<!ENTITY accountPasswordField.label   "Contraseña:">
+<!ENTITY accountPasswordManager.label "La contraseña ingresada será almacenada en el administrador de contraseña. Deja este espacio vacío si quieres que tu contraseña ser solicitada cada vez que te conectes a tu cuenta.">
+
+<!ENTITY accountAdvancedTitle.label   "Opciones avanzadas">
+<!ENTITY accountAdvancedInfo.label    "Siéntete libre de saltarte este paso si quieres.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Notificar sobre nuevos mensajes">
+<!ENTITY accountAliasGroupbox.caption "Alias local">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Esto solamente se mostrará durante las conversiones que tengas, los contactos no lo verán.">
+<!ENTITY accountProxySettings.caption "Configuración del proxy">
+<!ENTITY accountProxySettings.change.label     "Cambiar…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "Resumen">
+<!ENTITY accountSummaryInfo.label    "Un resumen de la información que ingresaste se mostrará a continuación. Por favor, revísala antes de que la cuenta sea creada.">
+<!ENTITY accountSummary.connectNow.label "Conectar esta cuenta ahora.">

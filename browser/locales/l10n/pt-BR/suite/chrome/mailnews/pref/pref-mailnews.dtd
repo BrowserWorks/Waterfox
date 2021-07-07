@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Email e grupos de notícias">
+<!ENTITY generalSettings.caption          "Geral">
+<!ENTITY confirmMove.label                "Confirmar ao mover pastas para a lixeira">
+<!ENTITY confirmMove.accesskey            "l">
+<!ENTITY preserveThreading.label          "Manter tópicos agrupados ao ordenar mensagens">
+<!ENTITY preserveThreading.accesskey      "p">
+<!ENTITY loadInBackground.label           "Mudar para novas abas quando forem abertas">
+<!ENTITY loadInBackground.accesskey       "M">
+<!ENTITY mailBiffOnNewWindow.label        "Só verificar se há novos emails após abrir email e grupos de notícias">
+<!ENTITY mailBiffOnNewWindow.accesskey    "o">
+
+<!ENTITY defaultMailSettings.description  "Definir o &brandShortName; como aplicativo padrão para:">
+<!ENTITY setDefaultMail.label             "Email">
+<!ENTITY setDefaultMail.accesskey         "E">
+<!ENTITY setDefaultNews.label             "Notícias">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "RSS">
+<!ENTITY setDefaultFeed.accesskey         "R">
+
+<!ENTITY useInternalSettings.description  "Usar o Email e grupos de notícias do &brandShortName; quando abrir no navegador links de:">
+<!ENTITY useInternalMail.label            "Email (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Servidor de notícias (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "Página inicial do Mail">
+<!ENTITY enableStartPage.label            "Ao iniciar o Email, abrir a página inicial na área da mensagem">
+<!ENTITY enableStartPage.accesskey        "A">
+<!ENTITY location.label                   "Endereço:">
+<!ENTITY location.accesskey               "E">
+<!ENTITY useDefault.label                 "Usar o padrão">
+<!ENTITY useDefault.accesskey             "U">
+<!ENTITY rememberLastMsg.label            "Lembrar da última mensagem selecionada">
+<!ENTITY rememberLastMsg.accesskey        "r">

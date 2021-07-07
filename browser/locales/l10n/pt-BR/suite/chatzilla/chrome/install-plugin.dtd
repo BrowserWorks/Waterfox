@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle                    "Instalar plugin…">
+
+<!ENTITY name.label                     "Nome:">
+<!ENTITY name.accesskey                 "N">
+
+<!ENTITY name.autopick.label            "Escolher automaticamente um nome para mim">
+<!ENTITY name.autopick.accesskey        "A">
+
+<!ENTITY source.label                   "Origem:">
+<!ENTITY source.accesskey               "O">
+
+<!ENTITY browse.label                   "Procurar…">
+<!ENTITY browse.accesskey               "P">

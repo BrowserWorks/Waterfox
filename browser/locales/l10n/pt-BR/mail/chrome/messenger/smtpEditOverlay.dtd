@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Configurações">
+<!ENTITY security.caption "Segurança e autenticação">
+<!ENTITY serverName.label "Servidor:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "Descrição:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "Porta:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Nome de usuário:">
+<!ENTITY userName.accesskey "u">
+<!ENTITY connectionSecurity.label "Segurança da conexão:">
+<!ENTITY connectionSecurity.accesskey "e">
+<!ENTITY connectionSecurityType-0.label "Nenhuma">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, se disponível">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Servidor de envio (SMTP)">
+<!ENTITY serverPortDefault.label "Padrão:">
+<!ENTITY authMethod.label "Modo de autenticação:">
+<!ENTITY authMethod.accesskey "o">

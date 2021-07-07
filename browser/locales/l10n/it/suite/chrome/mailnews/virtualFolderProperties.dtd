@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nuova cartella ricerca salvata">
+<!ENTITY name.label "Nome:">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "Crea come sottocartella di:">
+<!ENTITY description.accesskey "C">
+<!ENTITY searchTermCaption.label "Configura i criteri di ricerca utilizzati per questa cartella virtuale salvata:">
+<!ENTITY folderSelectionCaption.label "Selezionare le cartelle per la ricerca: ">
+<!ENTITY chooseFoldersButton.label "Scegli…">
+<!ENTITY chooseFoldersButton.accesskey "c">
+<!ENTITY searchOnline.label "Ricerca in linea (restituisce risultati aggiornati per le cartelle IMAP e Gruppi di discussione, ma accresce il tempo necessario all'apertura della cartella)">
+<!ENTITY searchOnline.accesskey "R">
+<!ENTITY newFolderButton.label "Crea">
+<!ENTITY newFolderButton.accesskey "r">
+<!ENTITY editFolderButton.label "Aggiorna">
+<!ENTITY editFolderButton.accesskey "A">

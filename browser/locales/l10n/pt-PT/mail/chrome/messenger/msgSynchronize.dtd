@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Transferir e sincronizar mensagens">
+<!ENTITY MsgSelect.label "Itens para utilização offline">
+<!ENTITY MsgSyncDesc.label "Se já selecionou pastas de correio ou grupos de notícias para utilizar no modo offline, pode transferi-los e sincronizá-los. Se ainda não o fez, utilize o botão &quot;Selecionar&quot; para escolher as pastas de correio e os grupos de notícias para serem utilizados no modo offline.">
+<!ENTITY MsgSyncDirections.label "Descarregar e/ou sincronizar o seguinte:">
+<!ENTITY syncTypeMail.label "Mensagens eletrónicas">
+<!ENTITY syncTypeMail.accesskey "e">
+<!ENTITY syncTypeNews.label "Mensagens de grupos de notícias">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Enviar mensagens não enviadas">
+<!ENTITY sendMessage.accesskey "E">
+<!ENTITY workOffline.label "Trabalhar offline ao terminar a descarga e/ou sincronização">
+<!ENTITY workOffline.accesskey "o">
+<!ENTITY selectButton.label "Selecionar...">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Escolha as pastas de correio e grupos de discussão para utilização offline.">
+<!ENTITY MsgSelectInd.label "Descarregar">
+<!ENTITY MsgSelectItems.label "Pastas e Grupos de Discussão">

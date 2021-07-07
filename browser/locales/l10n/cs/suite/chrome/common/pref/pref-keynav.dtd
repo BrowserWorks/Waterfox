@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navigace klávesnicí">
+<!ENTITY tabNavigationBehavior.label "Navigace pomocí kláves">
+<!ENTITY tabNavigationLinks.label "Odkazy">
+<!ENTITY tabNavigationLinks.accesskey "K">
+<!ENTITY tabNavigationForms.label "Tlačítka, přepínací tlačítka, zaškrtávací boxy a seznamy">
+<!ENTITY tabNavigationForms.accesskey "T">
+<!ENTITY tabNavigationTextboxes.label "Pozn.: Vstupní textová políčka jsou vždy součástí přepínání.">
+<!ENTITY tabNavigationDesc.label "Pokud je stisknut Tab nebo Shift+Tab, přepnout mezi:">
+<!ENTITY accessibilityBrowseWithCaret.label "Procházení stránky">
+<!ENTITY browseWithCaretDesc.label "Tato funkce umístí do stránky pohyblivý textový kurzor, který vám umožní procházet stránku a vybírat text pomocí klávesnice.">
+<!ENTITY browseWithCaretUse.label "Použít funkci Procházení stránky">
+<!ENTITY browseWithCaretUse.accesskey "P">
+<!ENTITY browseWithCaretShortCut.label "Přepínat stav pomocí klávesy F7">
+<!ENTITY browseWithCaretShortCut.accesskey "s">
+<!ENTITY browseWithCaretWarn.label "Upozornit při zapnutí funkce Procházení stránky">
+<!ENTITY browseWithCaretWarn.accesskey "U">
+
+<!ENTITY modifiers.label "Modifikátory">
+<!ENTITY acceleratorKey.label "Klíč akcelerátoru:">
+<!ENTITY acceleratorKey.accesskey "a">
+<!ENTITY menuAccessKey.label "Klávesa pro přístup do nabídky:">
+<!ENTITY menuAccessKey.accesskey "n">
+<!ENTITY modifiersDesc.label "Poznámka: Hodnota nula zakáže modifikační klávesu.">

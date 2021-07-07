@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Supprimer le compte et les données">
+<!ENTITY removeButton.label           "Supprimer">
+<!ENTITY removeButton.accesskey       "S">
+<!ENTITY removeAccount.label          "Supprimer les données du compte">
+<!ENTITY removeAccount.accesskey      "c">
+<!ENTITY removeAccount.desc           "Supprime les données du compte connues par &brandShortName;. Cette action n’affecte pas le compte qui se trouve sur le serveur.">
+<!ENTITY removeData.label             "Supprimer les données des messages">
+<!ENTITY removeData.accesskey         "m">
+<!ENTITY removeDataChat.label         "Supprimer les données des conversations">
+<!ENTITY removeDataChat.accesskey     "m">
+<!ENTITY removeDataLocalAccount.desc  "Supprime du disque local tous les messages et les filtres associés à ce compte. Cette action n’affecte pas certains messages qui resteront sur le serveur. N’effectuez pas cette action si vous prévoyez d’archiver les données locales ou de les réutiliser plus tard dans &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Supprime du disque local tous les messages, les dossiers et les filtres associés à ce compte. Les messages et les dossiers seront conservés sur le serveur.">
+<!ENTITY removeDataChatAccount.desc   "Supprime du disque local tous les historiques de conversations associés à ce compte.">
+<!ENTITY showData.label               "Afficher les données de localisation">
+<!ENTITY showData.accesskey           "A">
+<!ENTITY progressPending              "Supprimer les données sélectionnées…">
+<!ENTITY progressSuccess              "Suppression réussie.">
+<!ENTITY progressFailure              "Échec de la suppression.">

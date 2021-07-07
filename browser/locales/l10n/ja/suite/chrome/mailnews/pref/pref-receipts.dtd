@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "開封確認">
+<!ENTITY prefReceipts.caption         "開封確認">
+<!ENTITY requestReceipt.label         "メッセージ送信時に、毎回開封確認の返送を求める">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "開封確認が届いたとき:">
+<!ENTITY leaveIt.label                "受信トレイに残す">
+<!ENTITY leaveIt.accesskey            "L">
+<!ENTITY moveToSent.label             "送信済みトレイに移動する">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "開封確認の返送を求められたとき:">
+<!ENTITY returnSome.label             "必要に応じて開封確認を返送する">
+<!ENTITY returnSome.accesskey         "A">
+<!ENTITY never.label                  "開封確認を返送しない">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "メッセージの宛先や Cc に自分が含まれていない場合:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "送信者が自分のドメインと異なる場合:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "上記のいずれにも当てはまらない場合:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "確認する">
+<!ENTITY alwaysSend.label             "常に送信する">
+<!ENTITY neverSend.label              "送信しない">

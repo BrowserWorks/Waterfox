@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Feed-abonnementer">
+<!ENTITY learnMore.label             "Læs mere om feeds">
+
+<!ENTITY feedTitle.label             "Titel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Feed URL:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Indtast en gyldig feed-adresse">
+<!ENTITY locationValidate.label      "Valider">
+<!ENTITY validateText.label          "Tjek validering og hent en virkende URL.">
+
+<!ENTITY feedFolder.label            "Opbevar artikler i:">
+<!ENTITY feedFolder.accesskey        "O">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Kontroller for nye artikler hvert ">
+<!ENTITY biffStart.accesskey         "K">
+<!ENTITY biffMinutes.label           "minut">
+<!ENTITY biffMinutes.accesskey       "m">
+<!ENTITY biffDays.label              "dage">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Udgiveren anbefaler:">
+
+<!ENTITY quickMode.label             "Vis artikeltekst i stedet for at hente websiden">
+<!ENTITY quickMode.accesskey         "V">
+
+<!ENTITY autotagEnable.label         "Opret automatisk mærkater fra &lt;category&gt;-navne i feeds">
+<!ENTITY autotagEnable.accesskey     "P">
+<!ENTITY autotagUsePrefix.label      "Forsyn mærkaterne med præfikset:">
+<!ENTITY autotagUsePrefix.accesskey  "y">
+<!ENTITY autoTagPrefix.placeholder   "Indtast et præfiks til mærkaterne">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Tilføj">
+<!ENTITY button.addFeed.accesskey    "ø">
+<!ENTITY button.verifyFeed.label     "Bekræft">
+<!ENTITY button.verifyFeed.accesskey "B">
+<!ENTITY button.updateFeed.label     "Opdater">
+<!ENTITY button.updateFeed.accesskey "a">
+<!ENTITY button.removeFeed.label     "Fjern">
+<!ENTITY button.removeFeed.accesskey "F">
+<!ENTITY button.importOPML.label     "Importer">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksporter">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Eksporter feed med mappestruktur; Brug Ctrl+klik eller Ctrl+Enter til at eksportere feedet som en liste">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Luk">

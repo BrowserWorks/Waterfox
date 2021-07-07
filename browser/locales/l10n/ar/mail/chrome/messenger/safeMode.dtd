@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "وضع &brandShortName; الآمن">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "يعمل &brandShortName; في الوضع الآمن، والذي سيعطل مؤقتًا إعداداتك المخصصة وامتداداتك وسِماتك.">
+<!ENTITY safeModeDescription2.label       "يمكنك جعل بعض هذه التعديلات أو جميعها دائمة:">
+
+<!ENTITY disableAddons.label              "عطّل كل الإضافات">
+<!ENTITY disableAddons.accesskey          "ع">
+
+<!ENTITY resetToolbars.label              "صفّر أشرطة الأدوات والأزرار">
+<!ENTITY resetToolbars.accesskey          "ر">
+
+<!ENTITY changeAndRestartButton.label     "طبّق التغييرات وأعد التشغيل">
+<!ENTITY changeAndRestartButton.accesskey "ش">
+
+<!ENTITY continueButton.label             "واصِل في الوضع الآمن">
+<!ENTITY continueButton.accesskey         "ن">

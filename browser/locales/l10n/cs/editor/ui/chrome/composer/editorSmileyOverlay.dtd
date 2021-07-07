@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smajlík">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Úsměv">
+<!ENTITY smiley1Cmd.accesskey "m">
+<!ENTITY smiley1Cmd.tooltip "Vloží smajlíka">
+<!ENTITY smiley2Cmd.label "Zamračený">
+<!ENTITY smiley2Cmd.accesskey "Z">
+<!ENTITY smiley2Cmd.tooltip "Vloží zamračeného smajlíka">
+<!ENTITY smiley3Cmd.label "Mrknutí">
+<!ENTITY smiley3Cmd.accesskey "k">
+<!ENTITY smiley3Cmd.tooltip "Vloží mrkajícího smajlíka">
+<!ENTITY smiley4Cmd.label "Vyplazený jazyk">
+<!ENTITY smiley4Cmd.accesskey "j">
+<!ENTITY smiley4Cmd.tooltip "Vloží smajlíka s vyplazeným jazykem">
+<!ENTITY smiley5Cmd.label "Smích">
+<!ENTITY smiley5Cmd.accesskey "S">
+<!ENTITY smiley5Cmd.tooltip "Vloží smějícího se smajlíka">
+<!ENTITY smiley6Cmd.label "Rozpačitý">
+<!ENTITY smiley6Cmd.accesskey "R">
+<!ENTITY smiley6Cmd.tooltip "Vloží rozpačitého smajlíka">
+<!ENTITY smiley7Cmd.label "Nerozhodný">
+<!ENTITY smiley7Cmd.accesskey "h">
+<!ENTITY smiley7Cmd.tooltip "Vloží nerozhodného smajlíka">
+<!ENTITY smiley8Cmd.label "Překvapený">
+<!ENTITY smiley8Cmd.accesskey "P">
+<!ENTITY smiley8Cmd.tooltip "Vloží překvapeného smajlíka">
+<!ENTITY smiley9Cmd.label "Polibek">
+<!ENTITY smiley9Cmd.accesskey "P">
+<!ENTITY smiley9Cmd.tooltip "Vloží líbajícího smajlíka">
+<!ENTITY smiley10Cmd.label "Ječící">
+<!ENTITY smiley10Cmd.accesskey "J">
+<!ENTITY smiley10Cmd.tooltip "Vloží ječícího smajlíka">
+<!ENTITY smiley11Cmd.label "Senzační">
+<!ENTITY smiley11Cmd.accesskey "e">
+<!ENTITY smiley11Cmd.tooltip "Vloží senzačního smajlíka">
+<!ENTITY smiley12Cmd.label "Splň slib nebo mlč">
+<!ENTITY smiley12Cmd.accesskey "b">
+<!ENTITY smiley12Cmd.tooltip "Vloží smajlíka typu splň slib nebo mlč">
+<!ENTITY smiley13Cmd.label "Trapas">
+<!ENTITY smiley13Cmd.accesskey "T">
+<!ENTITY smiley13Cmd.tooltip "Vloží smajlíka typu trapas">
+<!ENTITY smiley14Cmd.label "Nevinný">
+<!ENTITY smiley14Cmd.accesskey "i">
+<!ENTITY smiley14Cmd.tooltip "Vloží nevinného smajlíka">
+<!ENTITY smiley15Cmd.label "Pláč">
+<!ENTITY smiley15Cmd.accesskey "l">
+<!ENTITY smiley15Cmd.tooltip "Vloží plačícího smajlíka">
+<!ENTITY smiley16Cmd.label "Pusa na zámek">
+<!ENTITY smiley16Cmd.accesskey "n">
+<!ENTITY smiley16Cmd.tooltip "Vloží smajlíka typu pusa na zámek">
+<!ENTITY SmileButton.label "Vloží emotikony">
+<!ENTITY SmileButton.tooltip "Vloží smajlíka">

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "送信日時による既読設定">
+<!ENTITY markByDateLower.label "既読にする開始日:">
+<!ENTITY markByDateLower.accesskey "F">
+<!ENTITY markByDateUpper.label "終了日:">
+<!ENTITY markByDateUpper.accesskey "T">

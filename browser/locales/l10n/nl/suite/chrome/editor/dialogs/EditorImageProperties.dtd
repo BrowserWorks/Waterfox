@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Afbeeldingseigenschappen">
+
+<!ENTITY pixelsPopup.value "pixels">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Afbeeldingslocatie:">
+<!ENTITY locationEditField.accessKey "A">
+<!ENTITY locationEditField.tooltip "Typ de bestandsnaam of locatie van de afbeelding">
+<!ENTITY locationEditField.shortenedDataURI "Gegevens-URI is ingekort (Kopiëren plaatst de volledige URI op het klembord)">
+<!ENTITY title.label "Tooltip:">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "Het HTML-attribuut ‘title’ dat als tooltip verschijnt">
+<!ENTITY altText.label "Alternatieve tekst:">
+<!ENTITY altText.accessKey "e">
+<!ENTITY altTextEditField.tooltip "Typ tekst die op de plaats van de afbeelding moet worden weergegeven">
+<!ENTITY noAltText.label "Geen alternatieve tekst gebruiken">
+<!ENTITY noAltText.accessKey "G">
+
+<!ENTITY previewBox.label "Afbeeldingsvoorbeeld">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Werkelijke grootte:">
+<!ENTITY actualSizeRadio.label "Werkelijke grootte">
+<!ENTITY actualSizeRadio.accessKey "W">
+<!ENTITY actualSizeRadio.tooltip "Terugkeren naar werkelijke grootte van afbeelding">
+<!ENTITY customSizeRadio.label "Aangepaste grootte">
+<!ENTITY customSizeRadio.accessKey "n">
+<!ENTITY customSizeRadio.tooltip "De afbeeldingsgrootte zoals weergegeven in de pagina wijzigen">
+<!ENTITY heightEditField.label "Hoogte:">
+<!ENTITY heightEditField.accessKey "o">
+<!ENTITY widthEditField.label "Breedte:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY constrainCheckbox.label "Verhouding behouden">
+<!ENTITY constrainCheckbox.accessKey "V">
+<!ENTITY constrainCheckbox.tooltip "Hoogte-breedteverhouding van de afbeelding behouden">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Afbeeldingskaart">
+<!ENTITY removeImageMapButton.label "Verwijderen">
+<!ENTITY removeImageMapButton.accessKey "w">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Tekst uitlijnen naar afbeelding">
+<!ENTITY bottomPopup.value "Aan de onderkant">
+<!ENTITY topPopup.value "Aan de bovenkant">
+<!ENTITY centerPopup.value "In het midden">
+<!ENTITY wrapRightPopup.value "Rechts uitlijnen">
+<!ENTITY wrapLeftPopup.value "Links uitlijnen">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Tussenruimtes">
+<!ENTITY leftRightEditField.label "Links en rechts:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "Boven en onder:">
+<!ENTITY topBottomEditField.accessKey "B">
+<!ENTITY borderEditField.label "Vaste rand:">
+<!ENTITY borderEditField.accessKey "V">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Rand om gekoppelde afbeelding weergeven">
+<!ENTITY showImageLinkBorder.accessKey "R">
+<!ENTITY LinkAdvancedEditButton.label "Koppel geavanceerd bewerken…">
+<!ENTITY LinkAdvancedEditButton.accessKey "K">
+<!ENTITY LinkAdvancedEditButton.tooltip "HTML-attributen, stijlkenmerken en JavaScript toevoegen of aanpassen">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formulier">
+<!ENTITY imageLocationTab.label "Locatie">
+<!ENTITY imageDimensionsTab.label "Afmetingen">
+<!ENTITY imageAppearanceTab.label "Vormgeving">
+<!ENTITY imageLinkTab.label "Koppeling">

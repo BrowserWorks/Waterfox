@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "收藏庫">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "管理">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "管理您的書籤">
+
+<!ENTITY file.close.label               "關閉">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "檢視">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "變更檢視方式">
+<!ENTITY view.columns.label             "顯示欄位">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "排序">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "不排序">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "遞增排序 (A > Z)">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "遞減排序 (Z > A)">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "自 HTML 匯入書籤…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "匯出書籤成 HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "自其他瀏覽器匯入資料…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "備份…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "回復">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "選擇檔案…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "名稱">
+<!ENTITY col.tags.label          "標籤">
+<!ENTITY col.url.label           "網址">
+<!ENTITY col.mostrecentvisit.label "最近瀏覽">
+<!ENTITY col.visitcount.label    "瀏覽次數">
+<!ENTITY col.dateadded.label     "加入日期">
+<!ENTITY col.lastmodified.label  "上次修改">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "匯入及備份">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "匯入與備份您的書籤">
+
+<!ENTITY backButton.tooltip  "回上一頁">
+
+<!ENTITY forwardButton.tooltip  "到下一頁">
+
+<!ENTITY detailsPane.selectAnItemText.description "請選擇一個項目以檢視或編輯其屬性">
+

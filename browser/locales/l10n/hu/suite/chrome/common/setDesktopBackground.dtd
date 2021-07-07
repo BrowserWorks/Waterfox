@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Asztalháttér beállítása">
+
+<!ENTITY position.label             "Pozíció:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Mozaik">
+<!ENTITY position.stretch.label     "Nyújtás">
+<!ENTITY position.center.label      "Középre">
+<!ENTITY position.fill.label        "Kitöltés">
+<!ENTITY position.fit.label         "Illesztés">
+<!ENTITY picker.label               "Szín:">
+<!ENTITY picker.accesskey           "z">
+<!ENTITY preview.caption            "Előnézet">
+<!ENTITY apply.label                "Alkalmaz">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "Bezárás">

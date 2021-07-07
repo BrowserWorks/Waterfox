@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Visualizzare Informazioni sulla pagina</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="viewing_page_info">Visualizzare informazioni sulla pagina</h1>
+
+<p>La finestra di dialogo Visualizza informazioni pagina consiste in varie schede che 
+  presentano diversi tipi di informazioni sulla pagina che si sta visualizzando. Questa 
+  sezione fornisce una breve descrizione delle informazioni disponibili in ogni scheda.</p>
+
+<p>Per vedere le informazioni sulla pagina visualizzata dal browser, aprire il menu 
+  Visualizza e scegliere Info pagina. Si pu&ograve; poi fare clic sulla scheda 
+  corrispondente al tipo di informazioni volute.</p>
+
+<p>La maggior parte delle informazioni contenute nelle schede Generali, Moduli, 
+  Collegamenti e Media in Info pagina deriva dal sorgente HTML della pagina. Tali 
+  informazioni sono di solito interessanti solo per gli sviluppatori web e altri 
+  specialisti.</p>
+
+<p>Per informazioni dettagliate su HTML, inclusi i tag mostrati da Info pagina, 
+  vedere <a href="http://www.w3.org/TR/REC-html40/">HTML 4.01
+  Specification</a> (in Inglese).</p>
+
+<div class="contentsBox">In questa sezione:
+  <ul>
+    <li><a href="#general_tab">Scheda Generale</a></li>
+    <li><a href="#forms_tab">Scheda Moduli</a></li>
+    <li><a href="#links_tab">Scheda Collegamenti</a></li>
+    <li><a href="#media_tab">Scheda Media</a></li>
+    <li><a href="#privacy_tab">Scheda Privacy</a></li>
+    <li><a href="#security_tab">Scheda Sicurezza</a></li>
+  </ul>
+</div>
+
+<h2 id="general_tab">Generale (Scheda Info pagina)</h2>
+
+<p>Quando si sceglie Info pagina dal menu Visualizza, la scheda Generale presenta le 
+  informazioni di base sulla pagina visualizzata nel browser.</p>
+
+<p>La parte in alto mostra il nome della pagina (se ne ha uno) e le seguenti 
+  informazioni:</p>
+
+<ul>
+  <li><strong>URL</strong>: Mostra l&apos;
+    <a href="glossary.xhtml#uniform_resource_locator">Identificatore Uniforme di Risorsa</a> 
+    per la pagina&mdash;cio&egrave;, l&apos;indirizzo standard che appare nella Barra 
+    indirizzi nella parte alta della finestra del browser.</li>
+  <li><strong>Modo rendering</strong>: Indica che il browser sta utilizzando la 
+    <strong>Modalit&agrave; compatibile</strong> o la <strong>Modalit&agrave; rispetto 
+    standard</strong> per formattare la pagina. La Modalit&agrave; compatibile tiene conto 
+    del comportamento non standard adottato da alcune pagine web progettate per le versioni 
+    meno recenti di web browser che non sono pienamente rispettosi degli standard. La 
+    Modalit&agrave; rispetto standard aderisce strettamente alle specifiche degli standard. 
+    Il browser seleziona il modo rendering automaticamente in base alle informazioni 
+    contenute nella pagina web stessa.</li>
+  <li><strong>Sorgente</strong>: Determina se il codice sorgente della pagina in 
+    oggetto &egrave; stato memorizzato in cache.</li>
+  <li><strong>Codifica</strong>: La codifica caratteri usata nel documento HTML 
+    in oggetto.</li>
+  <li><strong>Dimensione</strong>: La dimensione del file, se disponibile.</li>
+  <li><strong>Modificato</strong>: La data dell&apos;ultima modifica della pagina, se
+    disponibile.</li>
+  <li><strong>Scadenza</strong>: La data di scadenza delle informazioni visualizzate 
+    nella pagina.</li>
+</ul>
+
+<p>La sezione inferiore presenta i metatag inseriti nella pagina. I metatag forniscono 
+  informazioni sul tipo di contenuto visualizzato nella pagina, come una descrizione 
+  generica della pagina, le parole chiave per i motori di ricerca, le informazioni sul 
+  copyright, ecc.</p>
+
+<h2 id="forms_tab">Moduli (Scheda Info pagina)</h2>
+
+<p>Quando si sceglie Info pagina dal menu Visualizza e si seleziona la scheda Moduli, 
+  compaiono le informazioni su tutti i moduli presenti nella pagina visualizzata dal 
+  browser.</p>
+
+<p>La sezione superiore elenca informazioni di base sul modo in cui ogni modello 
+  nella pagina &egrave; specificato nel sorgente HTML:</p>
+
+<ul>
+  <li><strong>Nome</strong>: Il nome del modulo, se esiste.</li>
+  <li><strong>Metodo</strong>: Il metodo HTML utilizzato per inviare al 
+    server web le informazioni acquisite dal modulo. <tt>GET</tt> accoda i 
+    valori inseriti all&apos;indirizzo del sito web a cui si invia il modulo. 
+    <tt>POST</tt> invia i valori al sito web come parametri leggibili con 
+    un programma residente sul sito web.</li>
+  <li><strong>Azione modulo</strong>: L&apos;URL del programma da lanciare all&apos;invio del 
+    modulo.</li>
+</ul>
+
+<p>Quando si seleziona un modulo elencato nella sezione superiore della scheda Moduli, 
+  la sezione inferiore mostra informazioni dettagliate sul modo in cui ogni elemento di 
+  quel modulo &egrave; specificato nel sorgente HTML:</p>
+
+<ul>
+  <li><strong>Etichetta</strong>: L&apos;etichetta dell&apos;elemento (se indicata come tale in 
+    HTML).</li>
+  <li><strong>Nome campo</strong>: Il nome dell&apos;elemento.</li>
+  <li><strong>Tipo</strong>: Il tipo di input dell&apos;elemento, come <tt>TEXT</tt> (per 
+    inviare testo), <tt>RADIO</tt> (per un pulsante di tipo radio), o <tt>HIDDEN</tt> 
+    (per memorizzare le informazioni che vengono inviate ma non visualizzate sullo 
+    schermo).</li>
+  <li><strong>Valore corrente</strong>: Il valore corrente dell&apos;elemento. Ad esempio, 
+    il valore corrente di un elemento di testo &egrave; il testo che esso contiene al 
+    momento.</li>
+</ul>
+
+<h2 id="links_tab">Collegamenti (Scheda Info pagina)</h2>
+
+<p>Quando si sceglie Info pagina dal menu Visualizza e si seleziona la scheda 
+  Collegamenti, compare una lista di tutti i collegamenti disponibili in tale pagina. 
+  Le seguenti informazioni vengono mostrate per ogni collegamento:</p>
+
+<ul>
+  <li><strong>Nome</strong>: Il testo mostrato nel browser come collegamento.</li>
+  <li><strong>Indirizzo</strong>: L&apos;<a href="glossary.xhtml#url">URL</a> 
+    della pagina indicata dal collegamento.</li>
+  <li><strong>Tipo</strong>: Il tipo di collegamento, come &agrave;ncora (per collegarsi ad 
+    un&apos;area specifica del documento HTML) o Invio modulo.</li>
+</ul>
+
+<h2 id="media_tab">Media (Scheda Info pagina)</h2>
+
+<p>Quando si sceglie Info pagina dal menu Visualizza e si seleziona la scheda Media, 
+  compare una lista di tutte le immagini e degli altri elementi multimediali mostrati 
+  dalla pagina.</p>
+
+<p>La sezione superiore elenca informazioni di base su ogni elemento, incluso il 
+  suo indirizzo (<a href="glossary.xhtml#url">URL</a>) ed il tipo.</p>
+
+<p>Quando si seleziona un elemento media elencato nella sezione superiore della 
+  scheda Media, la sezione inferiore evidenzia le informazioni disponibili su tale 
+  elemento, come la descrizione, la grandezza, o le dimensioni.</p>
+
+<p>L&apos;elemento selezionato &egrave; visibile nella sezione inferiore della finestra 
+  di dialogo. Per visualizzare le immagini ingrandite, &egrave; necessario fare clic 
+  sull&apos;angolo in basso a destra della finestra di dialogo Info pagina e trascinarlo.</p>
+
+<p>Per salvare un elemento media come file separato, scegliere:</p>
+
+<ul>
+  <li><strong>Salva come</strong>: Selezionare l&apos;elemento da salvare, fare clic su 
+    Salva come, e individuare il percorso in cui si vuole salvarlo.</li>
+</ul>
+
+<h2 id="privacy_tab">Privacy (Scheda Info pagina)</h2>
+
+<p>Quando si seleziona Info pagina dal menu Visualizza e si fa clic sulla scheda Privacy,
+  viene visualizzata una lista di tutti gli elementi speciali che fanno parte della pagina.</p>
+
+<ul>
+  <li><strong>Componenti della pagina</strong>: Soot l&apos;URL della pagina, ci sono diverse
+    categorie. Per vedere la lista degli elementi in ciascuna categoria, fare doppio
+    clic sul nome:
+    <ul>
+      <li><strong>Collegamenti</strong>: Mostra tutti i collegamenti.</li>
+      <li><strong>Applet Java</strong>: Elenca le applet Java (se presenti).</li>
+      <li><strong>Mappe per le immagini</strong>: Mostra tutte le immagini mappa.</li>
+      <li><strong>Invio moduli</strong>: Elenca i nomi degli script usati per ricevere
+        informazioni dall&apos;utente nella pagina.</li>
+      <li><strong>Riquadri</strong>: Mostra i riquadri che formano la pagina.</li>
+      <li><strong>Immagini</strong>: Visualizza tutte le immagini utilizzate nella
+        pagina.</li>
+      <li><strong>Documenti esterni caricati</strong>: Contiene la lista dei
+        documenti esterni caricati per visualizzare la pagina (come ad esempio i file css
+	o le immagini).</li>
+      <li><strong>Oggetti generici</strong>: Mostra una lista degli oggetti
+        generici.</li>
+      <li><strong>Script</strong>: Elenca tutti gli script nella pagina.</li>
+    </ul>
+  </li>
+  <li><strong>Politiche</strong>: Questo pulsante prover&agrave; ad aprire il file delle
+    politiche per il sito di cui si sta visualizzando la pagina.</li>
+  <li><strong>Sommario</strong>: Selezionare questo se si vuole mostrare il Visualizzatore
+    di Politiche di Privacy, che mostra i dati principali circa le politiche di privacy del
+    sito in cui si sta navigando.</li>
+  <li><strong>Opzioni</strong>: Questo pulsante prover&agrave; ad aprire la pagina sul sito
+    remoto che permette all&apos;utente di modificare i suoi dati personali memorizzati sul
+    sito remoto.</li>
+</ul>
+
+<h2 id="security_tab">Sicurezza (Scheda Info pagina)</h2>
+
+<p>Quando si sceglie Info pagina dal menu Visualizza e si seleziona la scheda 
+  Sicurezza, compaiono le informazioni sull&apos;
+  <a href="glossary.xhtml#authentication">autenticazione</a> e la 
+  <a href="glossary.xhtml#encryption">cifratura</a> della pagina web visualizzata. 
+  La sezione superiore determina se l&apos;identit&agrave; del sito web &egrave; stata 
+  controllata, e la sezione inferiore determina se la pagina era cifrata quando &egrave; 
+  stata ricevuta dal browser.</p>
+
+<p>Si pu&ograve; aprire la scheda Sicurezza direttamente selezionando l&apos;icona 
+  lucchetto nell&apos;angolo in basso a destra di ogni finestra browser.</p>
+
+<p>La sezione superiore della scheda Sicurezza pu&ograve; visualizzare uno di questi messaggi:</p>
+
+<ul>
+  <li><strong>Identit&agrave; del sito web non verificata</strong>: Indica che il sito 
+    web visualizzato &egrave; privo di un certificato di autenticazione. Per questo la 
+    Gestione certificati non pu&ograve; verificare la sua identit&agrave;. &Egrave; 
+    possibile, anche se difficile, che il sito web rivendichi una falsa identit&agrave;.</li>
+  <li><strong>Identit&agrave; del sito web verificata</strong>: Il certificato che la 
+    Gestione certificati ha usato per verificare l&apos;identit&agrave; di questo sito web &egrave; 
+    stato rilasciato da una Autorit&agrave; di certificazione (CA) indicata come attendibile. 
+    Rappresenta, quindi, una garanzia piuttosto affidabile di autenticit&agrave; del sito web.</li>
+</ul>
+
+<p>La sezione inferiore della scheda Sicurezza pu&ograve; visualizzare uno di 
+  questi messaggi:</p>
+
+<ul>
+  <li><strong>Connessione non cifrata</strong>: Le informazioni trasmesse 
+    attraverso Internet da o verso il proprio computer, possono essere osservate 
+    da terzi durante il transito, ma &egrave; improbabile che ci&ograve; si 
+    verifichi.</li>
+  <li><strong>Connessione cifrata</strong>: In generale, la robustezza della connessione 
+    cifrata dipende dalla lunghezza delle chiavi di cifratura, misurata in bit. Pi&ugrave; 
+    lunga la chiave, pi&ugrave; avanzato &egrave; il livello di cifratura&mdash;ovvero, 
+    diventa pi&ugrave; difficile per una persona non autorizzata decodificare le 
+    informazioni cifrate.
+
+    <p>La finestra Info pagina descrive la robustezza della cifratura in uno dei tre 
+      modi:</p>
+
+    <ul>
+      <li><strong>Cifratura alta</strong>: Cifratura pi&ugrave; avanzata disponibile, che 
+        usa chiavi di 128 bit come minimo.</li>
+      <li><strong>Cifratura media</strong>: Un po&apos; pi&ugrave; robusta della cifratura bassa, 
+        che usa chiavi di 56 o 64 bit.</li>
+      <li><strong>Cifratura bassa</strong>: Cifratura meno avanzata disponibile, che usa 
+        chiavi di 40 bit.</li>
+    </ul>
+
+    <p>La maggior parte dei siti web utilizza la cifratura forte. Se si sta visitando un sito 
+      web pi&ugrave; vecchio che usa una forma pi&ugrave; debole di cifratura, &egrave; possibile 
+      che le informazioni trasmesse attraverso Internet da o verso il proprio computer, possono 
+      essere osservate da terzi durante il transito, ma &egrave; improbabile che ci&ograve; si 
+      verifichi.</p>
+  </li>
+</ul>
+
+<p>L&apos;assenza di cifratura o di una cifratura avanzata dovrebbe allarmare solo nel caso di 
+  invio o visualizzazione di informazioni confidenziali, come il numero della propria carta 
+  di credito.</p>
+
+<p>Si pu&ograve; verificare rapidamente lo stato di cifratura di una pagina web osservando lo stato
+  dell&apos;icona lucchetto nell&apos;angolo in basso a destra della finestra del browser. Per 
+  ulteriori dettagli, vedere
+  <a href="using_certs_help.xhtml#checking_security_for_a_web_page">Verificare la
+  sicurezza di una pagina web</a>.</p>
+
+</body>
+</html>

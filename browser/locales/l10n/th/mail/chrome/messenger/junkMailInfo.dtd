@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "เกี่ยวกับจดหมายขยะ">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; ตรวจจับข้อความที่เข้ามาซึ่งดูเหมือนจะเป็นจดหมายขยะ (หรือที่รู้จักกันว่าสแปม) โดยอัตโนมัติ ข้อความที่ &brandShortName; คิดว่าเป็นขยะจะแสดงไอคอนขยะ">
+<!ENTITY info1b.label  "">
+<!ENTITY info2.label   "ในตอนแรก คุณจะต้องสอนให้ &brandShortName; ระบุจดหมายขยะโดยกดปุ่มแถบเครื่องมือขยะเพื่อทำเครื่องหมายข้อความว่าเป็นขยะหรือไม่เป็นขยะ">
+<!ENTITY info3.label   "เมื่อ &brandShortName; สามารถระบุจดหมายขยะได้อย่างถูกต้องแล้ว คุณสามารถใช้การควบคุมจดหมายขยะเพื่อย้ายจดหมายขยะที่เข้ามาไปยังโฟลเดอร์ขยะโดยอัตโนมัติได้">
+<!ENTITY info4.label   "สำหรับข้อมูลเพิ่มเติม คลิก ช่วยเหลือ">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Listen-Eigenschaften">
+
+<!ENTITY ListType.label "Listentyp">
+<!ENTITY bulletStyle.label "Aufzählungszeichen:">
+<!ENTITY startingNumber.label "Beginnen mit:">
+<!ENTITY startingNumber.accessKey "B">
+<!ENTITY none.value "keine">
+<!ENTITY bulletList.value "Unnummerierte Auflistung">
+<!ENTITY numberList.value "Nummerierte Aufzählung">
+<!ENTITY definitionList.value "Definitionsliste">
+<!ENTITY changeEntireListRadio.label "Ganze Liste ändern">
+<!ENTITY changeEntireListRadio.accessKey "L">
+<!ENTITY changeSelectedRadio.label "Nur gewählte Elemente ändern">
+<!ENTITY changeSelectedRadio.accessKey "g">

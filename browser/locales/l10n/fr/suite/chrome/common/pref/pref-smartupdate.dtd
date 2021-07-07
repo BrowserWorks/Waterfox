@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Installation des logiciels">
+<!ENTITY addOnsTitle.label                    "Modules complémentaires">
+<!ENTITY addOnsAllow.label                    "Autoriser les sites web à installer et à mettre à jour des modules complémentaires">
+<!ENTITY addOnsAllow.accesskey                "b">
+<!ENTITY allowedSitesLink.label               "Sites web autorisés">
+<!ENTITY autoAddOnsUpdates.label              "Vérifier automatiquement les mises à jour">
+<!ENTITY autoAddOnsUpdates.accesskey          "r">
+<!ENTITY daily.label                          "tous les jours">
+<!ENTITY addOnsDaily.accesskey                "o">
+<!ENTITY weekly.label                         "toutes les semaines">
+<!ENTITY addOnsWeekly.accesskey               "n">
+<!ENTITY addOnsModeAutomatic.label            "Télécharger et installer automatiquement les mises à jour">
+<!ENTITY addOnsModeAutomatic.accesskey        "m">
+<!ENTITY enablePersonalized.label             "Personnaliser les recommandations de modules">
+<!ENTITY enablePersonalized.accesskey         "P">
+<!ENTITY addonManagerLink.label               "Gérer les modules complémentaires">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Vérifier automatiquement les mises à jour">
+<!ENTITY autoAppUpdates.accesskey             "V">
+<!ENTITY appDaily.accesskey                   "s">
+<!ENTITY appWeekly.accesskey                  "m">
+<!ENTITY appModeAutomatic.label               "Télécharger et installer automatiquement la mise à jour">
+<!ENTITY appModeAutomatic.accesskey           "u">
+<!ENTITY updateHistoryButton.label            "Afficher l’historique des mises à jour…">
+<!ENTITY updateHistoryButton.accesskey        "h">

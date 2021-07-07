@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Oznacz wiadomości jako przeczytane, według daty">
+<!ENTITY markByDateLower.label "Oznacz wiadomości jako przeczytane, od:">
+<!ENTITY markByDateLower.accesskey "O">
+<!ENTITY markByDateUpper.label "do:">
+<!ENTITY markByDateUpper.accesskey "d">

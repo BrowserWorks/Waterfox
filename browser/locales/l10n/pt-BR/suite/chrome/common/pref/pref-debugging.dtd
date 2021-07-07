@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from pref-eventdebugging.xul -->
+
+<!ENTITY pref.debugging.title "Depuração">
+
+<!-- Render Debugging -->
+<!ENTITY debugRendering.label             "Renderização">
+<!ENTITY debugXULBox.label                "Debugar caixas XUL">
+<!ENTITY debugXULBox.accesskey            "X">
+<!ENTITY debugDisableXULCache.label       "Desativar cache XUL">
+<!ENTITY debugDisableXULCache.accesskey   "L">
+
+<!-- Event Debugging -->
+<!ENTITY debugEvents.label "Eventos">
+<!ENTITY debugPaintFlashing.label "Piscamento ao desenhar (botão Caps Lock alterna)">
+<!ENTITY debugPaintFlashing.accesskey "P">
+<!ENTITY debugPaintFlashingChrome.label "Chrome de piscamento ao desenhar">
+<!ENTITY debugPaintFlashingChrome.accesskey "h">
+<!ENTITY debugPaintDumping.label "Dump de desenho">
+<!ENTITY debugPaintDumping.accesskey "a">
+<!ENTITY debugInvalidateDumping.label "Dump de invalidação">
+<!ENTITY debugInvalidateDumping.accesskey "n">
+<!ENTITY debugEventDumping.label "Dump de eventos">
+<!ENTITY debugEventDumping.accesskey "e">
+<!ENTITY debugMotionEventDumping.label "Dump de eventos de movimento">
+<!ENTITY debugMotionEventDumping.accesskey "m">
+<!ENTITY debugCrossingEventDumping.label "Dump de eventos de cruzamento">
+<!ENTITY debugCrossingEventDumping.accesskey "c">
+
+<!-- Reflow Event Debugging -->
+<!ENTITY debugReflowEvents.label                 "Eventos de refluxo">
+<!ENTITY debugReflowShowFrameCounts.label        "Mostrar contagem de frames">
+<!ENTITY debugReflowShowFrameCounts.accesskey    "s">
+<!ENTITY debugReflowDumpFrameCounts.label        "Dump de contagem de frames">
+<!ENTITY debugReflowDumpFrameCounts.accesskey    "D">
+<!ENTITY debugReflowDumpFrameByFrameCounts.label "Dump de contagem frame a frame">
+<!ENTITY debugReflowDumpFrameByFrameCounts.accesskey "u">

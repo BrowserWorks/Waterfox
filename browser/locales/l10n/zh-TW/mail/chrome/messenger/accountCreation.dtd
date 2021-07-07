@@ -1,0 +1,110 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "設定現有的電子郵件地址">
+<!ENTITY emailWizard.caption             "使用目前的電子郵件地址">
+<!ENTITY name.label                      "您的大名:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "您的全名">
+<!ENTITY name.text                       "您的名字，用於顯示在您的郵件上">
+<!ENTITY name.error                      "請輸入您的大名">
+<!ENTITY email.label                     "電子郵件地址:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "您的電子郵件地址">
+<!ENTITY email.text                      "您目前的電子郵件地址">
+<!ENTITY email.error                     "電子郵件地址無效">
+<!ENTITY password.label                  "密碼:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "密碼">
+<!ENTITY password.text                   "非必填，只用來驗證使用者名稱是否正確">
+<!ENTITY password.toggle                 "顯示 / 隱藏密碼">
+<!ENTITY rememberPassword.label          "記住密碼">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "您的登入資訊:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "登入網域">
+
+<!ENTITY protocol.label                  "通訊協定:">
+<!ENTITY imapLong.label                  "IMAP（遠端資料夾）">
+<!ENTITY pop3Long.label                  "POP3（將郵件保留在您的電腦上）">
+
+<!ENTITY manualConfigTable.summary       "伺服器設定">
+<!ENTITY incoming.label                  "收件:">
+<!ENTITY incomingColumn.label            "收件">
+<!ENTITY outgoing.label                  "寄件:">
+<!ENTITY outgoingColumn.label            "寄件">
+<!ENTITY username.label                  "使用者名稱:">
+<!ENTITY serverRow.label                 "伺服器:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "認證">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "自動偵測">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "無">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange 伺服器:">
+
+<!ENTITY advancedSetup.label             "進階設定">
+<!ENTITY advancedSetup.accesskey         "A">
+<!ENTITY cancel.label                    "取消">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "繼續">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "停止">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "重新測試">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY manual-config.label             "手動設定…">
+<!ENTITY manual-config.accesskey         "M">
+<!ENTITY open-provisioner.label          "註冊新信箱…">
+<!ENTITY open-provisioner.accesskey      "g">
+<!ENTITY get-help.label                  "取得幫助">
+<!ENTITY get-help.accesskey              "H">
+
+
+<!ENTITY warning.label                   "警告！">
+<!ENTITY incomingSettings.label          "收件設定:">
+<!ENTITY outgoingSettings.label          "寄件設定:">
+<!ENTITY technicaldetails.label          "技術細節">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "我了解危險性。">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "完成">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "變更設定">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; 可以讓您使用既有的設定值來收取您的郵件。然而您應該要連絡您的系統管理者或電子郵件提供者關於這些不正確的連線。請參閱 Thunderbird 的問與答來取得更多資訊。">
+
+<!ENTITY insecureServer.tooltip.title    "警告！這是個不安全的伺服器。">
+<!ENTITY insecureServer.tooltip.details  "請點選圈圈來取得詳細資訊。">
+
+<!ENTITY insecureUnencrypted.description "E-mail 與登入資訊送出時未經加密，因此您的密碼（與郵件）很容易遭人側錄。&brandShortName; 還是會讓您收發信件，但建議您要求電子郵件供應商開放可透過安全方式連線的伺服器。">
+<!ENTITY insecureSelfSigned.description  "伺服器使用了我們無法信任的憑證，所以我們無法確認是不是有人會中途擷取伺服器與 &brandShortName; 之間的通訊內容。 &brandShortName; 將會讓您傳送郵件，但您應該告知您的電子郵件提供者使用受信任的憑證。">
+<!ENTITY secureServer.description        "恭喜！ 這是個安全的伺服器。">

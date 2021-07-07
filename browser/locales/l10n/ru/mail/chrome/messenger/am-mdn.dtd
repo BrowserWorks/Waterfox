@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Уведомления о прочтении">
+<!ENTITY useGlobalPrefs.label         "Использовать глобальные настройки уведомлений о прочтении">
+<!ENTITY useGlobalPrefs.accesskey     "л">
+<!ENTITY globalReceipts.label         "Глобальные настройки…">
+<!ENTITY globalReceipts.accesskey     "б">
+<!ENTITY useCustomPrefs.label         "Настроить использование уведомлений о прочтении">
+<!ENTITY useCustomPrefs.accesskey     "а">
+<!ENTITY requestReceipt.label         "Всегда запрашивать уведомление о прочтении при отправке сообщений">
+<!ENTITY requestReceipt.accesskey     "с">
+<!ENTITY receiptArrive.label          "При получении уведомления о прочтении:">
+<!ENTITY leaveIt.label                "Оставлять его в папке «Входящие»">
+<!ENTITY leaveIt.accesskey            "т">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Перемещать его в папку «Отправленные»">
+<!ENTITY moveToSent.accesskey         "м">
+<!ENTITY requestMDN.label             "При получении запроса на уведомление о прочтении:">
+<!ENTITY returnSome.label             "Отправлять уведомления о прочтении для некоторых сообщений">
+<!ENTITY returnSome.accesskey         "у">
+<!ENTITY never.label                  "Никогда не отправлять уведомление о прочтении">
+<!ENTITY never.accesskey              "и">
+<!ENTITY notInToCc.label              "Если я не в списке «Кому» или «Копия»:">
+<!ENTITY notInToCc.accesskey          "н">
+<!ENTITY outsideDomain.label          "Если отправитель не в моём домене:">
+<!ENTITY outsideDomain.accesskey      "о">
+<!ENTITY otherCases.label             "В остальных случаях:">
+<!ENTITY otherCases.accesskey         "ч">
+<!ENTITY askMe.label                  "Спрашивать">
+<!ENTITY alwaysSend.label             "Отправлять">
+<!ENTITY neverSend.label              "Никогда не отправлять">

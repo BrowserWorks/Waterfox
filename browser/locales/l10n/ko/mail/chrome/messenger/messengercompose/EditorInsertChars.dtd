@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "문자 삽입">
+<!ENTITY category.label "분류">
+<!ENTITY letter.label "글자:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "문자:">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "강세 대문자">
+<!ENTITY accentLower.label "강세 소문자">
+<!ENTITY otherUpper.label "외국어 대문자">
+<!ENTITY otherLower.label "외국어 소문자">
+<!ENTITY commonSymbols.label "일반 기호">
+<!ENTITY insertButton.label "삽입">
+<!ENTITY closeButton.label "닫기">

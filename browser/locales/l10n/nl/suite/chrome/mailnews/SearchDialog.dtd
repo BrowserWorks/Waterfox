@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Berichten zoeken in:">
+<!ENTITY searchHeading.accesskey     "k">
+<!ENTITY searchSubfolders.label      "Submappen doorzoeken">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnHeading.label       "Zoekbewerkingen uitvoeren op:">
+<!ENTITY searchOnHeading.accesskey   "r">
+<!ENTITY searchOnRemote.label        "Externe server">
+<!ENTITY searchOnLocal.label         "Lokaal systeem">
+<!ENTITY resetButton.label           "Wissen">
+<!ENTITY resetButton.accesskey       "W">
+<!ENTITY openButton.label            "Openen">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "Verwijderen">
+<!ENTITY deleteButton.accesskey      "V">
+<!ENTITY searchDialogTitle.label     "Berichten zoeken">
+<!ENTITY results.label               "Resultaten">
+<!ENTITY moveHereMenu.label          "Hierheen verplaatsen">
+<!ENTITY moveHereMenu.accesskey      "H">
+<!ENTITY moveButton.label            "Verplaatsen naar">
+<!ENTITY moveButton.accesskey        "n">
+<!ENTITY goToFolderButton.label      "Openen in map">
+<!ENTITY goToFolderButton.accesskey  "m">
+<!ENTITY saveAsVFButton.label        "Opslaan als zoekmap">
+<!ENTITY saveAsVFButton.accesskey    "s">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Zoeken in:">
+<!ENTITY abSearchHeading.accesskey   "k">
+<!ENTITY propertiesButton.label      "Eigenschappen">
+<!ENTITY propertiesButton.accesskey  "E">
+<!ENTITY composeButton.label         "Opstellen">
+<!ENTITY composeButton.accesskey     "O">
+<!ENTITY abSearchDialogTitle.label   "Adresboek uitgebreid doorzoeken">

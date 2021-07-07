@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "Версии протоколов SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption             "Предупреждения SSL/TLS">
+<!ENTITY SSLMixedContent.caption            "Смешанное содержимое">
+<!ENTITY SSLClientAuthMethod.caption        "Выбор сертификата клиента">
+
+<!ENTITY pref.ssltls.title                  "Безопасность транспортного уровня (SSL/TLS)">
+<!ENTITY limit.description                  "Вы можете ограничить набор протоколов шифрования, используемый для защищённых соединений. Выберите одну версию или непрерывный диапазон версий.">
+<!ENTITY limit.enable.label                 "Включить:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; может уведомлять о степени защиты просматриваемой вами страницы. &brandShortName; будет выводить предупреждение перед:">
+<!ENTITY warn.enteringsecure                "загрузкой страницы, поддерживающей шифрование">
+<!ENTITY warn.enteringsecure.accesskey      "о">
+<!ENTITY warn.insecurepost                  "отправкой данных формы с незашифрованной страницы на незашифрованную">
+<!ENTITY warn.insecurepost.accesskey        "ф">
+<!ENTITY warn.leavingsecure                 "уходом со страницы, поддерживающей шифрование">
+<!ENTITY warn.leavingsecure.accesskey       "у">
+
+<!ENTITY mixed.description                  "Зашифрованные страницы могут содержать незашифрованное содержимое, для которого существует угроза перехвата или подделки. &brandShortName; может его обнаружить и заблокировать:">
+<!ENTITY warn.mixedactivecontent            "Предупреждать, когда зашифрованные страницы содержат небезопасное содержимое">
+<!ENTITY warn.mixedactivecontent.accesskey  "е">
+<!ENTITY block.activecontent                "Не загружать небезопасное содержимое на зашифрованных страницах">
+<!ENTITY block.activecontent.accesskey      "ж">
+<!ENTITY warn.mixeddisplaycontent           "Предупреждать, когда зашифрованные страницы содержат другие типы смешанного содержимого">
+<!ENTITY warn.mixeddisplaycontent.accesskey "а">
+<!ENTITY block.displaycontent               "Не загружать другие типы смешанного содержимого на зашифрованных страницах">
+<!ENTITY block.displaycontent.accesskey     "и">
+
+<!ENTITY certselect.description             "Определите, как &brandShortName; будет выбирать сертификат при его запросе веб-сайтом:">
+<!ENTITY certselect.auto                    "Автоматически">
+<!ENTITY certselect.auto.accesskey          "в">
+<!ENTITY certselect.ask                     "Спрашивать каждый раз">
+<!ENTITY certselect.ask.accesskey           "к">

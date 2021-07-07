@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title "Limpiar historial reciente">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!ENTITY clearTimeDuration.label "Intervalo de tiempo a limpiar: ">
+<!ENTITY clearTimeDuration.accesskey "I">
+<!ENTITY clearTimeDuration.lastHour "La última hora">
+<!ENTITY clearTimeDuration.last2Hours "Las últimas dos horas">
+<!ENTITY clearTimeDuration.last4Hours "Las últimas cuatro horas">
+<!ENTITY clearTimeDuration.today "Hoy">
+<!ENTITY clearTimeDuration.everything "Todo">
+<!ENTITY clearTimeDuration.suffix "">
+
+<!ENTITY detailsProgressiveDisclosure.label "Detalles">
+<!ENTITY detailsProgressiveDisclosure.accesskey "D">
+
+
+<!ENTITY itemHistory.label "Historial de navegación">
+<!ENTITY itemHistory.accesskey "H">
+<!ENTITY itemCookies.label "Cookies">
+<!ENTITY itemCookies.accesskey "C">
+<!ENTITY itemCache.label "Caché">
+<!ENTITY itemCache.accesskey "a">
+
+<!ENTITY sanitizeEverythingUndoWarning "Esta acción no puede ser deshecha.">
+
+<!ENTITY dialog.width "28em">

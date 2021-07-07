@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Nouvelle fenêtre de navigation privée">
+<!ENTITY privatebrowsingpage.title.normal        "Voulez-vous démarrer la navigation privée ?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; ne conservera aucun historique pour cette fenêtre.">
+<!ENTITY privatebrowsingpage.status.normal       "Ceci n’est pas une fenêtre de navigation privée.">
+
+<!ENTITY privatebrowsingpage.common.description  "Dans une fenêtre de navigation privée, &brandShortName; ne conservera aucun historique de navigation, de recherche, de téléchargement, de formulaire web, de cookies ou de fichiers temporaires Internet. Cependant, les fichiers téléchargés ou les marque-pages ajoutés seront conservés.">
+<!ENTITY privatebrowsingpage.track.warn          "Bien que cet ordinateur ne conserve aucun enregistrement de votre historique de navigation, votre fournisseur d’accès à Internet ou votre employeur peuvent toujours connaître les pages que vous visitez.">
+<!ENTITY privatebrowsingpage.learnmore.label     "En savoir plus">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "E">
+
+<!ENTITY privatebrowsingpage.close.info          "Une fois terminé, fermez cette fenêtre pour arrêter la navigation privée.">
+<!ENTITY privatebrowsingpage.close.label         "Fermer cette fenêtre">
+<!ENTITY privatebrowsingpage.close.accesskey     "F">
+
+<!ENTITY privatebrowsingpage.start.info          "Pour démarrer la navigation privée, cliquez sur le bouton ci-dessous ou sélectionnez Fichier ▶ Nouveau ▶ Fenêtre de navigation privée depuis le menu.">
+<!ENTITY privatebrowsingpage.private.label       "Ouvrir une nouvelle fenêtre de navigation privée">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

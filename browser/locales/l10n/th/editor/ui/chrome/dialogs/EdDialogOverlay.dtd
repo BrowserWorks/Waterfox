@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "การแก้ไขขั้นสูง…">
+<!ENTITY AdvancedEditButton.accessKey "ก">
+<!ENTITY AdvancedEditButton.tooltip "เพิ่มหรือเปลี่ยนแปลงแอตทริบิวต์ HTML, แอตทริบิวต์ลักษณะ และ JavaScript">
+<!ENTITY chooseFileButton.label "เลือกไฟล์...">
+<!ENTITY chooseFileButton.accessKey "ล">
+<!ENTITY chooseFileLinkButton.label "เลือกไฟล์...">
+<!ENTITY chooseFileLinkButton.accessKey "อ">
+<!ENTITY makeUrlRelative.label "URL สัมพันธ์กับตำแหน่งที่ตั้งของหน้า">
+<!ENTITY makeUrlRelative.accessKey "ส">
+<!ENTITY makeUrlRelative.tooltip "เปลี่ยนระหว่าง URL แบบย่อและแบบเต็ม โดยคุณจะต้องบันทึกหน้าก่อนจึงจะสามารถเปลี่ยนแปลงตัวเลือกนี้ได้">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "ป้อนตำแหน่งที่ตั้งของเว็บ ไฟล์ภายในเครื่อง หรือเลือกจุดยึดที่มีชื่อหรือหัวเรื่องจากเมนูบริบทของช่องกรอก:">
+<!ENTITY LinkURLEditField2.accessKey "ว">

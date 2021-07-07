@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Warna dan Latar Belakang Laman">
+<!ENTITY pageColors.label "Warna Laman">
+<!ENTITY defaultColorsRadio.label "Warna default pemirsa/pembaca (tidak mengatur warna untuk laman)">
+<!ENTITY defaultColorsRadio.accessKey "d">
+<!ENTITY defaultColorsRadio.tooltip "Gunakan pengaturan warna hanya dari program peramban pemirsa (pembaca)">
+<!ENTITY customColorsRadio.label "Gunakan warna suka-suka:">
+<!ENTITY customColorsRadio.accessKey "s">
+<!ENTITY customColorsRadio.tooltip "Pengaturan warna ini akan mengganti pengaturan program peramban pemirsa">
+
+<!ENTITY normalText.label "Teks normal">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Teks bertaut">
+<!ENTITY linkText.accessKey "t">
+<!ENTITY activeLinkText.label "Teks bertaut aktif">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Teks bertaut yang telah dikunjungi">
+<!ENTITY visitedLinkText.accessKey "t">
+<!ENTITY background.label "Latar Belakang:">
+<!ENTITY background.accessKey "L">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Gambar Latar Belakang:">
+<!ENTITY backgroundImage.accessKey "G">
+<!ENTITY backgroundImage.tooltip "Gunakan berkas gambar untuk latar belakang laman Anda">
+<!ENTITY backgroundImage.shortenedDataURI "URl data disingkat (menyalin akan menempatkan URI lengkap pada papan klip)">

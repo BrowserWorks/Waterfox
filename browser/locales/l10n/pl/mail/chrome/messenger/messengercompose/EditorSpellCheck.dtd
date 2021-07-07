@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Sprawdź pisownię">
+
+<!ENTITY misspelledWord.label "Błędne słowo:">
+<!ENTITY wordEditField.label "Zamień na:">
+<!ENTITY wordEditField.accessKey "m">
+<!ENTITY checkwordButton.label "Sprawdź słowo">
+<!ENTITY checkwordButton.accessKey "S">
+<!ENTITY suggestions.label "Sugestie:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "Ignoruj">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignoruj wszystkie">
+<!ENTITY ignoreAllButton.accessKey "g">
+<!ENTITY replaceButton.label "Zamień">
+<!ENTITY replaceButton.accessKey "a">
+<!ENTITY replaceAllButton.label "Zamień wszystkie">
+<!ENTITY replaceAllButton.accessKey "w">
+<!ENTITY stopButton.label "Nie wysyłaj">
+<!ENTITY stopButton.accessKey "N">
+<!ENTITY userDictionary.label "Osobisty słownik:">
+<!ENTITY moreDictionaries.label "Pobierz więcej">
+<!ENTITY addToUserDictionaryButton.label "Dodaj słowo">
+<!ENTITY addToUserDictionaryButton.accessKey "D">
+<!ENTITY editUserDictionaryButton.label      "Edytuj…">
+<!ENTITY editUserDictionaryButton.accessKey  "E">
+<!ENTITY recheckButton2.label "Sprawdź ponownie">
+<!ENTITY recheckButton2.accessKey "p">
+<!ENTITY closeButton.label "Zamknij">
+<!ENTITY closeButton.accessKey "Z">
+<!ENTITY sendButton.label "Wyślij">
+<!ENTITY sendButton.accessKey "l">
+<!ENTITY languagePopup.label "Język:">
+<!ENTITY languagePopup.accessKey "J">

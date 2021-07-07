@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Opzioni di archiviazione">
+<!ENTITY archiveGranularityPrefix.label "Quando si archiviano i messaggi metterli in:">
+<!ENTITY archiveFlat.label "Una singola cartella">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "Cartelle per archiviazione annuale">
+<!ENTITY archiveYearly.accesskey "a">
+<!ENTITY archiveMonthly.label "Cartelle per archiviazione mensile">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "Mantenere la struttura delle cartelle esistente per messaggi archiviati">
+<!ENTITY keepFolderStructure.accesskey "M">
+<!ENTITY archiveExample.label "Esempio">
+<!ENTITY archiveFolderName.label "Archivi">
+<!ENTITY inboxFolderName.label "Posta in arrivo">

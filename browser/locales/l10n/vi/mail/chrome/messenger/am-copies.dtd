@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Bản sao &amp; thư mục">
+<!ENTITY sendingPrefix.label "Khi gửi thư, tự động: ">
+<!ENTITY fccMailFolder.label "Đặt một bản sao trong:">
+<!ENTITY fccMailFolder.accesskey "s">
+<!ENTITY fccReplyFollowsParent.label "Đặt các thư trả lời trong thư mục chứa thư đang được bạn trả lời">
+<!ENTITY fccReplyFollowsParent.accesskey "r">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc những địa chỉ email này:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Ngăn cách các địa chỉ bằng dấu phẩy">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc những địa chỉ email này:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Ngăn cách các địa chỉ bằng dấu phẩy">
+<!ENTITY saveMessageDlg.label "Hiện hộp thoại xác nhận khi thư được lưu">
+<!ENTITY saveMessageDlg.accesskey "o">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Thư mục &quot;Thư đã gửi&quot; trên:">
+<!ENTITY sentFolderOn.accesskey "g">
+<!ENTITY sentInOtherFolder.label "Khác:">
+<!ENTITY sentInOtherFolder.accesskey "K">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Thư Lưu Trữ">
+<!ENTITY keepArchives.label "Giữ thư lưu trữ trong:">
+<!ENTITY keepArchives.accesskey "G">
+<!ENTITY archiveHierarchyButton.label "Tùy chọn lưu trữ…">
+<!ENTITY archiveHierarchyButton.accesskey "y">
+<!ENTITY archivesFolderOn.label "Thư mục &quot;Lưu trữ&quot; trên:">
+<!ENTITY archivesFolderOn.accesskey "L">
+<!ENTITY archiveInOtherFolder.label "Khác:">
+<!ENTITY archiveInOtherFolder.accesskey "h">
+<!ENTITY specialFolders.label "Nháp và Mẫu">
+<!ENTITY keepDrafts2.label "Giữ tin nhắn nháp trong:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Thư mục &quot;Thư nháp&quot; trên:">
+<!ENTITY draftsFolderOn.accesskey "n">
+<!ENTITY draftInOtherFolder.label "Khác:">
+<!ENTITY draftInOtherFolder.accesskey "h">
+<!ENTITY keepTemplates.label "Giữ thư mẫu trong:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Thư mục &quot;Thư mẫu&quot; trên:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Khác:">
+<!ENTITY templateInOtherFolder.accesskey "c">

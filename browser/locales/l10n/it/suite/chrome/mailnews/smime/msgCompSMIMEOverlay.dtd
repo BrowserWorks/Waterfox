@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY menu_securityEncryptRequire.label "Richiede cifratura">
+<!ENTITY menu_securityEncryptRequire.accesskey "R">
+<!ENTITY menu_securitySign.label "Apponi firma digitale">
+<!ENTITY menu_securitySign.accesskey "A">
+<!ENTITY menu_securityStatus.label "Visualizza informazioni sicurezza">
+<!ENTITY menu_securityStatus.accesskey "S">
+<!ENTITY securityButton.label "Sicurezza">
+<!ENTITY securityButton.tooltip "Visualizza o modifica le impostazioni di sicurezza">
+<!ENTITY menu_viewSecurityStatus.label "Informazioni sicurezza messaggio">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

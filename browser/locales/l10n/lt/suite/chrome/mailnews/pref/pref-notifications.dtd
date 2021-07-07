@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Signalai">
+<!ENTITY notifications.caption            "Signalai">
+<!ENTITY newMessagesArrive.label          "Kai atsiunčiami laiškai:">
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+
+<!ENTITY showAlertFor.label               "Įspėjimus apie naujus laiškus rodyti">
+<!ENTITY showAlertFor.accesskey           "r">
+<!ENTITY showAlertTimeEnd.label           "sek.">
+
+<!ENTITY showAlertPreviewText.label       "Rodyti laiško teksto ištrauką">
+<!ENTITY showAlertPreviewText.accesskey   "i">
+<!ENTITY showAlertSubject.label           "Rodyti temą">
+<!ENTITY showAlertSubject.accesskey       "t">
+<!ENTITY showAlertSender.label            "Rodyti siuntėją">
+<!ENTITY showAlertSender.accesskey        "n">
+
+
+
+
+
+<!ENTITY showTrayIcon.label               "rodyti piktogramą pranešimų srityje">
+<!ENTITY showTrayIcon.accesskey           "p">
+<!ENTITY showBalloon.label                "rodyti iškylantį įspėjimą">
+<!ENTITY showBalloon.accesskey            "s">
+<!ENTITY bounceSystemDockIcon.label       "animuoti pritvirtinamą piktogramą">
+<!ENTITY bounceSystemDockIcon.accesskey   "a">
+
+<!ENTITY playSound.label                  "įspėti garsu">
+<!ENTITY playSound.accesskey              "g">
+<!ENTITY playButton.label                 "Perklausyti">
+<!ENTITY playButton.accesskey             "k">
+<!ENTITY systemsound.label                "naudoti sistemoje numatytą garsą">
+<!ENTITY systemsound.accesskey            "s">
+<!ENTITY customsound.label                "parinkti kitą garso failą">
+<!ENTITY customsound.accesskey            "f">
+<!ENTITY browse.label                     "Parinkti…">
+<!ENTITY browse.accesskey                 "r">
+<!ENTITY browse.title                     "Failo parinkimas">

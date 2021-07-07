@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Сеть и хранилище">
+<!ENTITY pref.offline.caption             "Автономная работа">
+<!ENTITY textStartUp                      "При запуске:">
+<!ENTITY textStartUp.accesskey            "з">
+<!ENTITY menuitemRememberPrevState        "Использовать режим работы предыдущего сеанса">
+<!ENTITY menuitemAskMe                    "Спрашивать о подключении при запуске">
+<!ENTITY menuitemAlwaysOnline             "Всегда подключаться при запуске">
+<!ENTITY menuitemAlwaysOffline            "Всегда запускаться в автономном режиме">
+<!ENTITY menuitemAutomatic                "Определять автоматически (если возможно)">
+<!ENTITY textGoingOnline                  "Отправить неотправленные сообщения при подключении?">
+<!ENTITY radioAutoSend                    "Да">
+<!ENTITY radioAutoSend.accesskey          "а">
+<!ENTITY radioNotSend                     "Нет">
+<!ENTITY radioNotSend.accesskey           "е">
+<!ENTITY radioAskUnsent                   "Спрашивать">
+<!ENTITY radioAskUnsent.accesskey         "С">
+<!ENTITY textGoingOffline                 "Загружать сообщения для автономной работы при переходе в режим автономной работы?">
+<!ENTITY radioAutoDownload                "Да">
+<!ENTITY radioAutoDownload.accesskey      "а">
+<!ENTITY radioNotDownload                 "Нет">
+<!ENTITY radioNotDownload.accesskey       "е">
+<!ENTITY radioAskDownload                 "Спрашивать">
+<!ENTITY radioAskDownload.accesskey       "С">
+<!ENTITY mailConnections.caption          "Почтовые соединения">
+<!ENTITY mailnewsTimeout.label            "Время ожидания соединения:">
+<!ENTITY mailnewsTimeout.accesskey        "ж">
+<!ENTITY mailnewsTimeoutSeconds.label     "секунд">
+<!ENTITY Diskspace                        "Дисковое пространство">
+<!ENTITY offlineCompactFolders.label      "Сжимать все папки, если при этом высвободится всего более">
+<!ENTITY offlineCompactFolders.accesskey  "м">
+<!ENTITY offlineCompactFoldersMB.label    "МБ">

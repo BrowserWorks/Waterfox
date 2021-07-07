@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Geavanceerde proxyvoorkeuren">
+<!ENTITY  protocols.caption           "Protocolspecifieke proxy’s">
+<!ENTITY  protocols.description       "Doorgaans kan dezelfde proxy alle hier genoemde protocollen verwerken.">
+<!ENTITY  http.label                  "HTTP-proxy:">
+<!ENTITY  http.accesskey              "x">
+<!ENTITY  ssl.label                   "SSL-proxy:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "FTP-proxy:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "HTTP-proxyinstellingen gebruiken voor alle protocollen">
+<!ENTITY  reuseProxy.accesskey        "u">
+<!ENTITY  port.label                  "Poort:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "Algemene proxy">
+<!ENTITY  socks.description           "Een SOCKS-proxy is een algemene proxy die soms wordt gebruikt in zakelijke of vergelijkbare omgevingen.">
+<!ENTITY  socks.label                 "SOCKS-proxy:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Gebruiken voor het ophalen van hostnamen (aanbevolen voor SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "网站导航栏">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "网站导航栏">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "一直显示">
+<!ENTITY linkToolbarAlways.accesskey "S">
+<!ENTITY linkToolbarAsNeeded.label "仅需要时显示">
+<!ENTITY linkToolbarAsNeeded.accesskey "O">
+<!ENTITY linkToolbarNever.label "一律隐藏">
+<!ENTITY linkToolbarNever.accesskey "H">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "根站点">
+<!ENTITY upButton.label "向上">
+<!ENTITY firstButton.label "首个">
+<!ENTITY prevButton.label "上一个">
+<!ENTITY nextButton.label "下一个">
+<!ENTITY lastButton.label "末个">
+
+<!ENTITY documentButton.label "文档">
+
+<!ENTITY tocButton.label "目录">
+<!ENTITY chapterButton.label "段落">
+<!ENTITY sectionButton.label "片段">
+<!ENTITY subSectionButton.label "小节">
+<!ENTITY appendixButton.label "附录">
+<!ENTITY glossaryButton.label "术语">
+<!ENTITY indexButton.label "索引">
+
+<!ENTITY moreButton.label "更多">
+
+<!ENTITY helpButton.label "帮助">
+<!ENTITY searchButton.label "搜索">
+
+<!ENTITY authorButton.label "作者">
+<!ENTITY copyrightButton.label "版权">
+
+<!ENTITY bookmarkButton.label "书签">
+
+<!ENTITY alternateButton.label "其他版本">
+
+<!ENTITY feedButton.label "订阅">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "E-post &amp; Grupper">
+<!ENTITY generalSettings.caption          "Allmänna inställningar">
+<!ENTITY confirmMove.label                "Bekräfta när mappar flyttas till papperskorgen">
+<!ENTITY confirmMove.accesskey            "B">
+<!ENTITY preserveThreading.label          "Bevara trådningen vid sortering av meddelanden">
+<!ENTITY preserveThreading.accesskey      "t">
+<!ENTITY loadInBackground.label           "Byt till nya flikar när du öppnar dem">
+<!ENTITY loadInBackground.accesskey       "n">
+<!ENTITY mailBiffOnNewWindow.label        "Leta efter nya meddelanden bara om fönstret E-post &amp; grupper har öppnats">
+<!ENTITY mailBiffOnNewWindow.accesskey    "y">
+
+<!ENTITY defaultMailSettings.description  "Gör &brandShortName; E-post &amp; Grupper till förvalt program för:">
+<!ENTITY setDefaultMail.label             "E-post">
+<!ENTITY setDefaultMail.accesskey         "E">
+<!ENTITY setDefaultNews.label             "Grupper">
+<!ENTITY setDefaultNews.accesskey         "G">
+<!ENTITY setDefaultFeed.label             "Flöden">
+<!ENTITY setDefaultFeed.accesskey         "F">
+
+<!ENTITY useInternalSettings.description  "Använd &brandShortName; E-post &amp; Grupper när webbläsaren öppnar länkar för:">
+<!ENTITY useInternalMail.label            "E-post (mailto:)">
+<!ENTITY useInternalMail.accesskey        "p">
+<!ENTITY useInternalNews.label            "Grupper (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "u">
+
+<!ENTITY messengerStartPage.caption       "Startsida för E-post">
+<!ENTITY enableStartPage.label            "När e-postklienten startas visas startsidan i meddelandeytan">
+<!ENTITY enableStartPage.accesskey        "ä">
+<!ENTITY location.label                   "Adress:">
+<!ENTITY location.accesskey               "d">
+<!ENTITY useDefault.label                 "Återställ förvalet">
+<!ENTITY useDefault.accesskey             "r">
+<!ENTITY rememberLastMsg.label            "Kom ihåg det sist valda meddelandet">
+<!ENTITY rememberLastMsg.accesskey        "K">

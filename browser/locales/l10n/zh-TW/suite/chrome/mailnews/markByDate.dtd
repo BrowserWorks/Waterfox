@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "依日期將訊息標示為已讀">
+<!ENTITY markByDateLower.label "由此時間開始將訊息標示為已讀:">
+<!ENTITY markByDateLower.accesskey "f">
+<!ENTITY markByDateUpper.accesskey "T">
+<!ENTITY markByDateUpper.label "到:">
+

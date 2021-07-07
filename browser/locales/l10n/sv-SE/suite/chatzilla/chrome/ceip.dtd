@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZillas program för kundupplevelsens förbättring">
+<!ENTITY window.size   "width: 42em;">
+
+<!ENTITY intro.label "ChatZillas program för kundupplevelsens förbättring insamlar uppgifter om hur du använder ChatZilla utan att avbryta dig. Det hjälper utvecklarna att identifiera vilka funktioner som bör förbättras i ChatZilla. Inga uppgifter används för att identifiera eller kontakta dig.">
+
+<!ENTITY groupSend.label        "Skicka följande data:">
+<!ENTITY sendClient.label       "När ChatZilla öppnas och stängs">
+<!ENTITY sendClient.accesskey   "ö">
+<!ENTITY sendCommand.label      "Vilka kommandon, menyer och dialoger som används">
+<!ENTITY sendCommand.accesskey  "k">
+<!ENTITY sendID.label           "Ditt unika ID:">
+<!ENTITY sendIDSrc.label        "(slumpgenererat)">
+
+<!ENTITY groupNotSent.label     "Data som aldrig skickas:">
+<!ENTITY notsentNickname.label  "Ditt smeknamn">
+<!ENTITY notsentMessages.label  "Meddelandeinnehåll med actions och notiser">
+<!ENTITY notsentArguments.label "Argument och data delgivna alla kommandon, menyer och dialoger">
+<!ENTITY notsentURLs.label      "Namn på och URL:er för nätverk, servrar, kanaler och användare">
+<!ENTITY notsentFiles.label     "Namn på och innehåll i skickade och mottagna filer">

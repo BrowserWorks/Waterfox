@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!ENTITY dialogTitle.label "備存選項">
+<!ENTITY archiveGranularityPrefix.label "備存郵件時，把它們放到:">
+<!ENTITY archiveFlat.label "單一資料夾">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "每年一個資料夾">
+<!ENTITY archiveYearly.accesskey "Y">
+<!ENTITY archiveMonthly.label "每月一個資料夾">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "為備存郵件保留目前資料夾結構">
+<!ENTITY keepFolderStructure.accesskey "K">
+<!ENTITY archiveExample.label "範例">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "備存">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "收件匣">
+

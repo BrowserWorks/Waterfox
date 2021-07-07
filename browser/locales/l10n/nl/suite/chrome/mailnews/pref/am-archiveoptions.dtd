@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!ENTITY dialogTitle.label "Archiveringsopties">
+<!ENTITY archiveGranularityPrefix.label "Bij het archiveren van berichten, deze plaatsen in:">
+<!ENTITY archiveFlat.label "Een enkele map">
+<!ENTITY archiveFlat.accesskey "e">
+<!ENTITY archiveYearly.label "Archiefmappen per jaar">
+<!ENTITY archiveYearly.accesskey "j">
+<!ENTITY archiveMonthly.label "Archiefmappen per maand">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Bestaande mapstructuur van gearchiveerde berichten behouden">
+<!ENTITY keepFolderStructure.accesskey "B">
+<!ENTITY archiveExample.label "Voorbeeld">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Archieven">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Postvak IN">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "下载进度">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "暂停">
+<!ENTITY cmd.resume.tooltip              "恢复">
+<!ENTITY cmd.retry.tooltip               "重试">
+<!ENTITY cmd.cancel.tooltip              "取消">
+<!ENTITY cmd.open.label                  "打开">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "打开所在文件夹">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "转至下载页面">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "复制下载链接">
+<!ENTITY cmd.copyDownloadLink.accesskey  "L">
+<!ENTITY closeWhenDone.label             "下载完毕关闭此窗口.">
+<!ENTITY closeWhenDone.accesskey         "w">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Prisijungę adresatai">
+<!ENTITY offlineContactsHeader.label   "Neprisijungę adresatai">
+<!ENTITY conversationsHeader.label     "Pokalbiai">
+<!ENTITY searchResultConversation.label "Paieškos rezultatai">
+<!ENTITY chat.noConv.title             "Čia bus rodomi pokalbiai.">
+<!ENTITY chat.noConv.description       "Jeigu norite pradėti pokalbį, pasirinkite adresatą iš sąrašo kairėje.">
+<!ENTITY chat.noPreviousConv.description       "Programoje „&brandShortName;“ nėra įrašytų pokalbių su šiuo adresatu.">
+<!ENTITY chat.noAccount.title             "Jūs dar nesusikūrėte pokalbių paskyros.">
+<!ENTITY chat.noAccount.description       "Kad programoje „&brandShortName;“ galėtumėte kalbėtis, turite pirma susikurti pokalbių paskyrą.">
+<!ENTITY chat.accountWizard.button       "Kurti paskyrą">
+<!ENTITY chat.noConnectedAccount.title             "Jūsų paskyros nėra prisijungusios prie tinklo.">
+<!ENTITY chat.noConnectedAccount.description       "Prisijungti prie jų galite, naudodamiesi tikralaikių pokalbių būsenos langu:">
+<!ENTITY chat.showAccountManager.button       "Rodyti tikralaikių pokalbių būseną">
+
+<!ENTITY chat.participants             "Dalyviai:">
+<!ENTITY chat.previousConversations    "Ankstesni pokalbiai:">
+<!ENTITY chat.ongoingConversation      "Vykstantis pokalbis">
+
+<!ENTITY openConversationCmd.label     "Pradėti pokalbį">
+<!ENTITY openConversationCmd.accesskey "k">
+<!ENTITY closeConversationCmd.label    "Užbaigti pokalbį">
+<!ENTITY closeConversationCmd.accesskey "b">
+<!ENTITY aliasCmd.label                "Pervardyti">
+<!ENTITY aliasCmd.accesskey            "v">
+<!ENTITY deleteCmd.label               "Pašalinti adresatą">
+<!ENTITY deleteCmd.accesskey           "š">
+
+<!ENTITY openConversationButton.tooltip  "Pradėti pokalbį">
+<!ENTITY closeConversationButton.tooltip "Užbaigti pokalbį">
+
+<!ENTITY addBuddyButton.label          "Pridėti adresatą">
+<!ENTITY joinChatButton.label          "Eiti į kambarį">
+<!ENTITY chatAccountsButton.label      "Rodyti paskyras">
+
+<!ENTITY status.available          "Esu">
+<!ENTITY status.unavailable        "Netrukdyti">
+<!ENTITY status.offline            "Neprisijungęs(-usi)">
+
+<!ENTITY openLinkCmd.label            "Atverti saitą…">
+<!ENTITY openLinkCmd.accesskey        "t">

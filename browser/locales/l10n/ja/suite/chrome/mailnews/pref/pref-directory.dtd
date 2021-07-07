@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "LDAP サーバー">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP サーバー:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "LDAP サーバーを選択してください:">
+<!ENTITY directoriesText.accesskey "S">
+<!ENTITY addDirectory.label        "追加">
+<!ENTITY addDirectory.accesskey    "a">
+<!ENTITY editDirectory.label       "編集">
+<!ENTITY editDirectory.accesskey   "e">
+<!ENTITY deleteDirectory.label     "削除">
+<!ENTITY deleteDirectory.accesskey "d">

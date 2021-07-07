@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "메일">
+<!ENTITY readMsgsLink.label           "메시지 읽기">
+<!ENTITY composeMsgLink.label         "새 메시지 작성">
+
+<!ENTITY newsSectionHdr.label         "뉴스 그룹">
+<!ENTITY subscribeNewsLink.label      "뉴스 그룹 구독">
+
+<!ENTITY feedsSectionHdr.label        "피드">
+<!ENTITY subscribeFeeds.label         "구독 관리">
+
+<!ENTITY chat.label                   "대화">
+<!ENTITY movemail.label               "메일이동">
+
+<!ENTITY accountsSectionHdr.label     "계정">
+<!ENTITY subscribeImapFolders.label   "폴더 구독 관리">
+<!ENTITY settingsLink.label           "계정 설정 보기">
+<!ENTITY setupNewAcct.label           "계정 설정:">
+
+<!ENTITY advFeaturesSectionHdr.label  "고급 기능">
+<!ENTITY searchMsgsLink.label         "메시지 찾기">
+<!ENTITY filtersLink.label            "메시지 필터 만들기">
+<!ENTITY junkSettings.label           "스팸 메일 설정">
+<!ENTITY offlineLink.label            "오프라인 설정">
