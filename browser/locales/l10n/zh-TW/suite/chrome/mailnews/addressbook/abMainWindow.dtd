@@ -1,0 +1,122 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "通訊錄">
+<!ENTITY blankResultsPaneMessage.label                  "進行搜尋後才會顯示此通訊錄的聯絡人">
+<!ENTITY localResultsOnlyMessage.label                  "在您進行搜尋前將不會顯示遠端通訊錄中的聯絡人">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "聯絡人…">
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "群組名單…">
+<!ENTITY newListCmd.accesskey                           "l">
+<!ENTITY newAddressBookCmd.label                        "通訊錄…">
+<!ENTITY newAddressBookCmd.accesskey                    "o">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP 目錄…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "列印連絡人…">
+<!ENTITY printContactViewCmd.accesskey                  "P">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "預覽列印連絡人">
+<!ENTITY printPreviewContactViewCmd.accesskey           "v">
+<!ENTITY printAddressBook.label                         "列印通訊錄…">
+<!ENTITY printAddressBook.accesskey                     "A">
+<!ENTITY printPreviewAddressBook.label                  "預覽列印通訊錄">
+<!ENTITY printPreviewAddressBook.accesskey              "B">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "刪除通訊錄">
+<!ENTITY deleteContactCmd.label                         "刪除連絡人">
+<!ENTITY deleteContactsCmd.label                        "刪除所選擇的聯絡人">
+<!ENTITY deleteListCmd.label                            "刪除清單">
+<!ENTITY deleteListsCmd.label                           "刪除所選擇的清單">
+<!ENTITY deleteItemsCmd.label                           "刪除所選擇的項目">
+<!ENTITY swapFirstNameLastNameCmd.label                 "交換姓／名的顯示位置">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "w">
+<!ENTITY propertiesCmd.label                            "屬性…">
+<!ENTITY propertiesCmd.accesskey                        "i">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "通訊錄工具列">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY layoutMenu.label                               "視窗配置方式">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "資料夾窗格">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "聯絡人窗格">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "姓名顯示方式">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!ENTITY firstLastCmd.label                             "[名] [姓]（英式）">
+<!ENTITY firstLastCmd.accesskey                         "F">
+<!ENTITY lastFirstCmd.label                             "[姓][名]（中式）">
+<!ENTITY lastFirstCmd.accesskey                         "L">
+<!ENTITY displayNameCmd.label                           "顯示名稱">
+<!ENTITY displayNameCmd.accesskey                       "D">
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "匯入…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "匯出…">
+<!ENTITY exportCmd.accesskey                            "E">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "新連絡人">
+<!ENTITY newContactButton.accesskey                     "C">
+<!ENTITY newlistButton.label                            "新增群組名單">
+<!ENTITY newlistButton.accesskey                        "L">
+<!ENTITY editItemButton.label                           "屬性">
+<!ENTITY editItemButton.accesskey                       "P">
+<!ENTITY newmsgButton.label                             "發新信件">
+<!ENTITY newmsgButton.accesskey                         "C">
+<!ENTITY deleteItemButton.label                         "刪除">
+<!ENTITY deleteItemButton.accesskey                     "D">
+<!ENTITY newimButton.label                              "即時訊息">
+<!ENTITY newimButton.accesskey                          "I">
+<!ENTITY printButton.label                              "列印">
+<!ENTITY printButton.accesskey                          "r">
+<!ENTITY searchNameAndEmail.placeholder                 "搜尋名稱與電子郵件">
+<!ENTITY searchBox.title                                "搜尋">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "通訊錄工具列">
+<!ENTITY newContactButton.tooltip                       "建立新的通訊錄連絡人">
+<!ENTITY newlistButton.tooltip                          "新增群組寄信名單">
+<!ENTITY editItemButton.tooltip                         "編輯選取的項目">
+<!ENTITY newmsgButton.tooltip                           "寄送新郵件">
+<!ENTITY newIM.tooltip                                  "傳送即時訊息或聊天">
+<!ENTITY printButton.tooltip                            "列印選取的項目">
+<!ENTITY deleteItemButton.tooltip                       "刪除選取的項目">
+<!ENTITY advancedButton.tooltip                         "進階地址搜尋">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "通訊錄">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "聯絡資訊">
+<!ENTITY home.heading                                   "住家">
+<!ENTITY other.heading                                  "其他">
+<!ENTITY chat.heading                                   "聊天">
+<!ENTITY phone.heading                                  "電話">
+<!ENTITY work.heading                                   "商務">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "描述">
+<!ENTITY addresses.heading                              "地址">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "顯示地圖">
+<!ENTITY mapIt.tooltip                                  "顯示此地址的網路地圖">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "false">

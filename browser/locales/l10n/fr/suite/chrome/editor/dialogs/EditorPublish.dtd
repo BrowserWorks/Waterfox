@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Publier la page">
+<!ENTITY windowTitleSettings.label    "Paramètres de publication">
+<!ENTITY publishTab.label             "Publier">
+<!ENTITY settingsTab.label            "Paramètres">
+<!ENTITY publishButton.label          "Publier">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Nom du site :">
+<!ENTITY siteList.accesskey           "N">
+<!ENTITY siteList.tooltip             "Sélectionner le site vers lequel vous voulez publier">
+<!ENTITY newSiteButton.label          "Nouveau site">
+<!ENTITY newSiteButton.accesskey      "s">
+<!ENTITY docDirList.label             "Répertoire pour la page web :">
+<!ENTITY docDirList.accesskey         "R">
+<!ENTITY docDirList.tooltip           "Sélectionner ou saisir le nom du sous-répertoire distant pour cette page">
+<!ENTITY publishImgCheckbox.label     "Inclure les images et autres fichiers">
+<!ENTITY publishImgCheckbox.accesskey "n">
+<!ENTITY publishImgCheckbox.tooltip   "Publier les images et les autres fichiers référencés par cette page">
+<!ENTITY sameLocationRadio.label      "Utiliser la même adresse que la page">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Publier les fichiers au même endroit que la page">
+<!ENTITY useSubdirRadio.label         "Utiliser ce sous-répertoire du site :">
+<!ENTITY useSubdirRadio.accesskey     "c">
+<!ENTITY useSubdirRadio.tooltip       "Publier les fichiers vers le sous-répertoire distant sélectionné">
+<!ENTITY otherDirList.tooltip         "Sélectionner ou saisir le nom du sous-répertoire distant où les fichiers seront publiés">
+<!ENTITY pageTitle.label              "Titre de la page :">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Saisir un titre pour identifier la page dans sa fenêtre et dans les marque-pages">
+<!ENTITY pageTitleExample.label       "exemple : « Ma page web »">
+<!ENTITY filename.label               "Nom du fichier :">
+<!ENTITY filename.accesskey           "o">
+<!ENTITY filename.tooltip             "Saisir un nom pour ce fichier, en incluant « .html » pour une page web">
+<!ENTITY filenameExample.label        "exemple : « ma_page.html »">
+<!ENTITY setDefaultButton.label       "Définir par défaut">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "Supprimer le site">
+<!ENTITY removeButton.accesskey       "S">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Publication des sites">
+<!ENTITY serverInfo.label             "Informations du serveur">
+<!ENTITY loginInfo.label              "Informations de connexion">
+<!ENTITY siteName.label               "Nom du site :">
+<!ENTITY siteName.accesskey           "N">
+<!ENTITY siteName.tooltip             "Un nom qui identifie ce site de publication (exemple : « MonSite »)">
+<!ENTITY siteUrl.label                "Adresse de publication (exemple : ftp://ftp.monfai.com/monnom/) :">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "Adresse FTP ou HTTP fournie par votre FAI ou votre service d’hébergement web">
+<!ENTITY browseUrl.label              "Adresse HTTP de la page initiale (exemple : http://www.monfai.com/monnom/) :">
+<!ENTITY browseUrl.accesskey          "H">
+<!ENTITY browseUrl.tooltip            "Adresse HTTP de votre répertoire initial (n’incluez pas de nom de fichier)">
+<!ENTITY username.label               "Nom d’utilisateur :">
+<!ENTITY username.accesskey           "u">
+<!ENTITY username.tooltip             "Le nom d’utilisateur que vous utilisez pour vous connecter à votre FAI ou votre service d’hébergement web">
+<!ENTITY password.label               "Mot de passe :">
+<!ENTITY password.accesskey           "M">
+<!ENTITY password.tooltip             "Le mot de passe associé à votre nom d’utilisateur">
+<!ENTITY savePassword.label           "Enregistrer le mot de passe">
+<!ENTITY savePassword.accesskey       "E">
+<!ENTITY savePassword.tooltip         "Cocher cette option pour enregistrer votre mot de passe de façon sécurisée à l’aide du gestionnaire de mots de passe">

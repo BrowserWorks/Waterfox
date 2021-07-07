@@ -1,0 +1,146 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Browser-Tab">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Web-Adresse öffnen…">
+<!ENTITY openCmd.accesskey "f">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Datei öffnen…">
+<!ENTITY openFileCmd.accesskey "ö">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Andere Tabs schließen">
+<!ENTITY closeOtherTabs.accesskey "d">
+
+<!ENTITY uploadFile.label "Datei hochladen…">
+<!ENTITY uploadFile.accesskey "h">
+
+<!ENTITY printSetupCmd.label "Seite einrichten…">
+<!ENTITY printSetupCmd.accesskey "t">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Seite durchsuchen…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Anzeigen/Verstecken">
+<!ENTITY toolbarsCmd.accesskey "A">
+<!ENTITY tabbarCmd.label "Tab-Leiste">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "Statusleiste">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Komponentenleiste">
+<!ENTITY componentbarCmd.accesskey "K">
+
+<!ENTITY fullScreenCmd.label "Vollbild">
+<!ENTITY fullScreenCmd.accesskey "V">
+
+<!ENTITY useStyleSheetMenu.label "Style verwenden">
+<!ENTITY useStyleSheetMenu.accesskey "y">
+<!ENTITY useStyleSheetNone.label "Keines">
+<!ENTITY useStyleSheetNone.accesskey "K">
+<!ENTITY useStyleSheetPersistentOnly.label "Standard-Style">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "S">
+<!ENTITY bidiSwitchPageDirectionItem.label "Seitenrichtung umschalten">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "u">
+<!ENTITY pageSourceCmd.label "Seitenquelltext">
+<!ENTITY pageSourceCmd.accesskey "u">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Seiteninformationen">
+<!ENTITY pageInfoCmd.accesskey "i">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Gehe">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goHomeCmd.label "Startseite">
+<!ENTITY goHomeCmd.accesskey "a">
+<!ENTITY historyCmd.label "Chronik">
+<!ENTITY historyCmd.accesskey "C">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Zuletzt geschlossene Tabs">
+<!ENTITY recentTabs.accesskey "Z">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Zuletzt geschlossene Fenster">
+<!ENTITY recentWindows.accesskey "e">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Vorherige Sitzung wiederherstellen">
+<!ENTITY historyRestoreLastSession.accesskey "V">
+<!ENTITY syncTabsMenu.label "Tabs von anderen Computern">
+<!ENTITY syncTabsMenu.accesskey "T">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Lesezeichen">
+<!ENTITY bookmarksMenu.accesskey "L">
+<!ENTITY addCurPageCmd.label "Lesezeichen für diese Seite hinzufügen">
+<!ENTITY addCurPageCmd.accesskey "L">
+<!ENTITY addCurPageAsCmd.label "Lesezeichen ablegen…">
+<!ENTITY addCurPageAsCmd.accesskey "h">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Lesezeichen für diese Gruppe von Tabs ablegen…">
+<!ENTITY addCurTabsAsCmd.accesskey "G">
+<!ENTITY manBookmarksCmd.label "Lesezeichen bearbeiten…">
+<!ENTITY manBookmarksCmd.accesskey "b">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Das Web durchsuchen">
+<!ENTITY searchInternetCmd.accesskey "u">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Seite übersetzen">
+<!ENTITY translateMenu.accesskey "b">
+
+<!ENTITY cookieMessageTitle.label "Cookieberechtigungen wurden geändert">
+<!ENTITY cookieDisplayCookiesCmd.label "Gespeicherte Cookies verwalten">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "G">
+<!ENTITY cookieAllowCookiesCmd.label "Cookies von dieser Website erlauben">
+<!ENTITY cookieAllowCookiesCmd.accesskey "k">
+<!ENTITY cookieAllowCookiesMsg.label "Cookies von dieser Website werden immer erlaubt.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Cookies für diese Sitzung (&quot;Session Cookies&quot;) erlauben">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "o">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Diese Website kann nur Cookies setzen, die innerhalb der Sitzung gültig sind.">
+<!ENTITY cookieCookiesDefaultCmd.label "Standard-Cookieberechtigungen verwenden">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "S">
+<!ENTITY cookieCookiesDefaultMsg.label "Cookies von dieser Website werden auf Grund der Standard-Einstellungen angenommen oder abgelehnt.">
+<!ENTITY cookieBlockCookiesCmd.label "Cookies von dieser Website blockieren">
+<!ENTITY cookieBlockCookiesCmd.accesskey "C">
+<!ENTITY cookieBlockCookiesMsg.label "Cookies von dieser Website werden immer abgelehnt.">
+
+<!ENTITY cookieImageMessageTitle.label "Grafikberechtigungen wurden geändert">
+<!ENTITY cookieDisplayImagesCmd.label "Grafik-Berechtigungen verwalten">
+<!ENTITY cookieDisplayImagesCmd.accesskey "B">
+<!ENTITY cookieAllowImagesCmd.label "Grafiken von dieser Website erlauben">
+<!ENTITY cookieAllowImagesCmd.accesskey "a">
+<!ENTITY cookieAllowImagesMsg.label "Grafiken von dieser Website werden immer heruntergeladen.">
+<!ENTITY cookieImagesDefaultCmd.label "Standard-Grafikberechtigungen verwenden">
+<!ENTITY cookieImagesDefaultCmd.accesskey "S">
+<!ENTITY cookieImagesDefaultMsg.label "Grafiken von dieser Website werden auf Grund der Standard-Einstellungen heruntergeladen.">
+<!ENTITY cookieBlockImagesCmd.label "Grafiken von dieser Website blockieren">
+<!ENTITY cookieBlockImagesCmd.accesskey "G">
+<!ENTITY cookieBlockImagesMsg.label "Grafiken von dieser Website werden nie heruntergeladen.">
+
+<!ENTITY popupsMessageChangeTitle.label "Pop-up-Berechtigungen wurden geändert">
+<!ENTITY popupAllowCmd.label "Pop-ups von dieser Website erlauben">
+<!ENTITY popupAllowCmd.accesskey "P">
+<!ENTITY popupAllowMsg.label "Pop-ups von dieser Website werden immer angezeigt.">
+<!ENTITY popupDefaultCmd.label "Standard-Pop-up-Berechtigungen verwenden">
+<!ENTITY popupDefaultCmd.accesskey "S">
+<!ENTITY popupDefaultMsg.label "Pop-ups von dieser Website werden basierend auf Standard-Einstellungen angezeigt.">
+<!ENTITY popupBlockCmd.label "Pop-ups von dieser Website blockieren">
+<!ENTITY popupBlockCmd.accesskey "o">
+<!ENTITY popupBlockMsg.label "Pop-ups von dieser Website werden nicht angezeigt.">
+<!ENTITY popupsManage.label "Pop-ups verwalten">
+<!ENTITY popupsManage.accesskey "v">
+
+<!ENTITY cookieCookieManager.label "Cookie-Verwaltung">
+<!ENTITY cookieCookieManager.accesskey "C">
+<!ENTITY cookieImageManager.label "Grafikverwaltung">
+<!ENTITY cookieImageManager.accesskey "G">
+<!ENTITY popupsManager.label "Pop-up-Verwaltung">
+<!ENTITY popupsManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Private Daten löschen…">
+<!ENTITY clearPrivateDataCmd.accesskey "v">

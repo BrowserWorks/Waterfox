@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+
+<!ENTITY privatebrowsingpage.title.private       "Jūs esate privačiojo naršymo lange">
+<!ENTITY privatebrowsingpage.title.normal        "Ar norėtumėte pradėti privatųjį naršymą?">
+
+<!ENTITY privatebrowsingpage.status.private      "Šiame lange programa „&brandShortName;“ nieko neįsimins.">
+<!ENTITY privatebrowsingpage.status.normal       "Šiuo metu jūs nesate privačiojo naršymo lange.">
+
+<!ENTITY privatebrowsingpage.common.description  "Privačiojo naršymo lange programa „&brandShortName;“ nepildo naršymo ir atsisiuntimų žurnalų, neįsimena formų ir paieškos duomenų, slapukų, nepildo podėlio. Vis dėlto, visi parsiųsti failai ir sukurti adresyno įrašai išliks.">
+<!ENTITY privatebrowsingpage.track.warn          "Nors šiame kompiuteryje ir neišliks duomenų apie jūsų naršytus tinklalapius, jūsų interneto paslaugų teikėjas ar darbdavys vis tiek gali sekti, ką naršote.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Sužinoti daugiau">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "S">
+
+<!ENTITY privatebrowsingpage.close.info          "Norėdami baigti privatųjį naršymą, tiesiog užverkite šį langą.">
+<!ENTITY privatebrowsingpage.close.label         "Užverti šį langą dabar">
+<!ENTITY privatebrowsingpage.close.accesskey     "U">
+
+<!ENTITY privatebrowsingpage.start.info          "Norėdami pradėti privatųjį naršymą, spustelėkite žemiau esantį mygtuką arba pasirinkite meniu punktą „Failas → Naujas → Privataus naršymo langas“.">
+<!ENTITY privatebrowsingpage.private.label       "Atverti naują privatųjį langą">
+<!ENTITY privatebrowsingpage.private.accesskey   "n">

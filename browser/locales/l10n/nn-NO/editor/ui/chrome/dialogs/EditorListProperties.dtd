@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Listeeigenskapar">
+
+<!ENTITY ListType.label "Listetype">
+<!ENTITY bulletStyle.label "Punktstil:">
+<!ENTITY startingNumber.label "Start med:">
+<!ENTITY startingNumber.accessKey "m">
+<!ENTITY none.value "Ingen">
+<!ENTITY bulletList.value "Punktmerka (unummerert) liste">
+<!ENTITY numberList.value "Nummerert liste">
+<!ENTITY definitionList.value "Definisjonsliste">
+<!ENTITY changeEntireListRadio.label "Endra heile lista">
+<!ENTITY changeEntireListRadio.accessKey "h">
+<!ENTITY changeSelectedRadio.label "Endra berre merkte element">
+<!ENTITY changeSelectedRadio.accessKey "E">

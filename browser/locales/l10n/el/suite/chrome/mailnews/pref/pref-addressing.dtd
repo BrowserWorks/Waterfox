@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Διευθυνσιοδότηση">
+<!ENTITY emailCollectiontitle.label            "Συλλογή διευθύνσεων email">
+<!ENTITY emailCollectionPicker.label           "Προσθήκη διευθύνσεων email στο:">
+<!ENTITY emailCollectionPicker.accesskey       "σ">
+<!ENTITY emailCollectiontext.label             "Οι διευθύνσεις email από τα εξερχόμενα μηνύματα μπορούν να προστεθούν αυτόματα σε ένα τοπικό ευρετήριο.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Αυτόματη συμπλήρωση διευθύνσεων">
+<!ENTITY highlightNonMatches.label             "Επισήμανση διευθύνσεων που δεν συμπληρώνονται αυτόματα">
+<!ENTITY highlightNonMatches.accesskey         "δ">
+<!ENTITY addressingEnable.label                "Τοπικά ευρετήρια">
+<!ENTITY addressingEnable.accesskey            "Τ">
+<!ENTITY autocompleteText.label                "Κατά τη διευθυνσιοδότηση μηνυμάτων, αναζήτηση για αντίστοιχες καταχωρήσεις σε:">
+<!ENTITY directories.label                     "Διακομιστής καταλόγου:">
+<!ENTITY directories.accesskey                 "Δ">
+<!ENTITY directoriesNone.label                 "Κανένας">
+<!ENTITY editDirectories.label                 "Επεξεργασία καταλόγων…">
+<!ENTITY editDirectories.accesskey             "Ε">

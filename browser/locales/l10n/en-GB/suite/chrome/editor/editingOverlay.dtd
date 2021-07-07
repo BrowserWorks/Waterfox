@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Open File…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Open Web Location…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Recent Pages">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "Save">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Save As…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "Save And Change Text Encoding">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "Publish">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publish As…">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "Revert">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Publishing Site Settings…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Insert menu items -->
+<!ENTITY insertFormMenu.label "Form">
+<!ENTITY insertFormMenu.accesskey "F">
+<!ENTITY insertFormCmd.label "Define Form…">
+<!ENTITY insertFormCmd.accesskey "D">
+<!ENTITY insertInputTagCmd.label "Form Field…">
+<!ENTITY insertInputTagCmd.accesskey "e">
+<!ENTITY insertInputImageCmd.label "Form Image…">
+<!ENTITY insertInputImageCmd.accesskey "I">
+<!ENTITY insertTextAreaCmd.label "Text Area…">
+<!ENTITY insertTextAreaCmd.accesskey "T">
+<!ENTITY insertSelectCmd.label "Selection List…">
+<!ENTITY insertSelectCmd.accesskey "S">
+<!ENTITY insertButtonCmd.label "Define Button…">
+<!ENTITY insertButtonCmd.accesskey "B">
+<!ENTITY insertLabelCmd.label "Define Label">
+<!ENTITY insertLabelCmd.accesskey "L">
+<!ENTITY insertFieldSetCmd.label "Define Field Set…">
+<!ENTITY insertFieldSetCmd.accesskey "F">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "New">
+<!ENTITY newToolbarCmd.tooltip "Create a new Composer page">
+<!ENTITY openToolbarCmd.label "Open">
+<!ENTITY openToolbarCmd.tooltip "Open a local file">
+<!ENTITY saveToolbarCmd.tooltip "Save file to a local location">
+<!ENTITY publishToolbarCmd.tooltip "Upload file to a remote location">
+<!ENTITY printToolbarCmd.label "Print">
+<!ENTITY printToolbarCmd.tooltip "Print this page">
+<!ENTITY formToolbarCmd.label "Form">
+<!ENTITY formToolbarCmd.tooltip "Insert new form or edit selected form's properties">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Приватность и защита">
+
+<!ENTITY tracking.label                   "Отслеживание пользователя">
+<!ENTITY trackingIntro.label              "Веб-сайты могут отслеживать то, как вы их используете, что влияет на вашу приватность.">
+
+<!ENTITY doNotTrack.label                 "Сообщать веб-сайтам, что я не хочу, чтобы меня отслеживали">
+<!ENTITY doNotTrack.accesskey             "о">
+<!ENTITY trackProtect.label               "Предотвращать отслеживания действий со стороны известных сайтов">
+<!ENTITY trackProtect.accesskey           "е">
+<!ENTITY warnTrackContent.label           "Предупреждать меня, когда обнаружены известные нам отслеживания действий">
+<!ENTITY warnTrackContent.accesskey       "ж">
+
+<!ENTITY geoLocation.label                "Определение местоположения при веб-серфинге">
+<!ENTITY geoIntro.label                   "Веб-сайты могут запрашивать дополнительную информацию о вашем текущем местоположении.">
+
+<!ENTITY geoEnabled.label                 "Запрашивать у меня разрешение, если сделан запрос">
+<!ENTITY geoEnabled.accesskey             "ш">
+<!ENTITY geoDisabled.label                "Отключить эту функцию и отклонять все запросы">
+<!ENTITY geoDisabled.accesskey            "ю">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Безопасный веб-сёрфинг">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; может блокировать веб-сайты, подозреваемые в наличии зловредного содержимого.">
+
+<!ENTITY blockAttackSites.label           "Блокировать сайты, подозреваемые в атаках (вредоносные программы, вирусы)">
+<!ENTITY blockAttackSites.accesskey       "к">
+
+<!ENTITY blockWebForgeries.label          "Блокировать сайты, подозреваемые в мошенничестве (фишинге)">
+<!ENTITY blockWebForgeries.accesskey      "и">

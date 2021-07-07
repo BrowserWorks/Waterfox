@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "مِن خصائص الحقل">
+<!ENTITY windowTitleImage.label "مِن خصائص الصورة">
+
+<!ENTITY InputType.label "نوع الحقل">
+<!ENTITY InputType.accesskey "ن">
+<!ENTITY text.value "نص">
+<!ENTITY password.value "كلمة سر">
+<!ENTITY checkbox.value "صندوق اختيار">
+<!ENTITY radio.value "زر راديو">
+<!ENTITY submit.value "زر إرسال">
+<!ENTITY reset.value "زر تصفير">
+<!ENTITY file.value "ملف">
+<!ENTITY hidden.value "مخفي">
+<!ENTITY image.value "صورة">
+<!ENTITY button.value "زر">
+
+<!ENTITY InputSettings.label "إعدادات الحقل">
+<!ENTITY InputName.label "اسم الحقل:">
+<!ENTITY InputName.accesskey "س">
+<!ENTITY GroupName.label "اسم المجموعة:">
+<!ENTITY GroupName.accesskey "س">
+<!ENTITY InputValue.label "قيمة الحقل:">
+<!ENTITY InputValue.accesskey "ق">
+<!ENTITY InitialValue.label "القيمة الأوليّة:">
+<!ENTITY InitialValue.accesskey "ق">
+<!ENTITY InputChecked.label "الاختيار الأولي">
+<!ENTITY InputChecked.accesskey "خ">
+<!ENTITY InputSelected.label "التحديد الأولي">
+<!ENTITY InputSelected.accesskey "ت">
+<!ENTITY InputReadOnly.label "للقراءة فقط">
+<!ENTITY InputReadOnly.accesskey "ق">
+<!ENTITY InputDisabled.label "معطّل">
+<!ENTITY InputDisabled.accesskey "م">
+<!ENTITY tabIndex.label "فهرس الشريط:">
+<!ENTITY tabIndex.accesskey "ف">
+<!ENTITY TextSize.label "حجم الحقل:">
+<!ENTITY TextSize.accesskey "ح">
+<!ENTITY TextLength.label "أقصى طول:">
+<!ENTITY TextLength.accesskey "ق">
+<!ENTITY AccessKey.label "مفتاح الوصول:">
+<!ENTITY AccessKey.accesskey "م">
+<!ENTITY Accept.label "اقبل الأنواع:">
+<!ENTITY Accept.accesskey "ق">
+
+<!ENTITY ImageProperties.label "خصائص الصورة…">
+<!ENTITY ImageProperties.accesskey "ص">

@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Böngészőlap">
+<!ENTITY tabCmd.accesskey "l">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Webcím megnyitása…">
+<!ENTITY openCmd.accesskey "W">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Fájl megnyitása…">
+<!ENTITY openFileCmd.accesskey "F">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Többi böngészőlap bezárása">
+<!ENTITY closeOtherTabs.accesskey "b">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Jobbra lévő lapok bezárása">
+<!ENTITY  closeTabsToTheEnd.accesskey "J">
+
+<!ENTITY uploadFile.label "Fájl feltöltése…">
+<!ENTITY uploadFile.accesskey "F">
+
+<!ENTITY printSetupCmd.label "Oldalbeállítás…">
+<!ENTITY printSetupCmd.accesskey "O">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Keresés ezen az oldalon…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Megjelenítés/Elrejtés">
+<!ENTITY toolbarsCmd.accesskey "E">
+<!ENTITY tabbarCmd.label "Fülek sávja">
+<!ENTITY tabbarCmd.accesskey "F">
+<!ENTITY taskbarCmd.label "Állapotsor">
+<!ENTITY taskbarCmd.accesskey "l">
+<!ENTITY componentbarCmd.label "Mozilla-komponensek">
+<!ENTITY componentbarCmd.accesskey "M">
+
+<!ENTITY fullScreenCmd.label "Teljes képernyős üzemmód">
+<!ENTITY fullScreenCmd.accesskey "n">
+
+<!ENTITY useStyleSheetMenu.label "Stíluslapok használata">
+<!ENTITY useStyleSheetMenu.accesskey "u">
+<!ENTITY useStyleSheetNone.label "Nincs">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "Alapértelmezett stílus">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "A">
+<!ENTITY bidiSwitchPageDirectionItem.label "Oldal irányának átváltása">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "l">
+<!ENTITY pageSourceCmd.label "Oldal forrása">
+<!ENTITY pageSourceCmd.accesskey "f">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Oldal adatai">
+<!ENTITY pageInfoCmd.accesskey "a">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Ugrás">
+<!ENTITY goMenu.accesskey "U">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "Kezdőlap">
+<!ENTITY goHomeCmd.accesskey "K">
+<!ENTITY historyCmd.label "Előzmények">
+<!ENTITY historyCmd.accesskey "l">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Nemrég bezárt lapok">
+<!ENTITY recentTabs.accesskey "N">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Nemrég bezárt ablakok">
+<!ENTITY recentWindows.accesskey "r">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Előző munkamenet helyreállítása">
+<!ENTITY historyRestoreLastSession.accesskey "r">
+<!ENTITY syncTabsMenu.label "Lapok más számítógépekről">
+<!ENTITY syncTabsMenu.accesskey "m">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Könyvjelzők">
+<!ENTITY bookmarksMenu.accesskey "K">
+<!ENTITY addCurPageCmd.label "Oldal hozzáadása a könyvjelzőkhöz">
+<!ENTITY addCurPageCmd.accesskey "k">
+<!ENTITY addCurPageAsCmd.label "Könyvjelző felvétele mint…">
+<!ENTITY addCurPageAsCmd.accesskey "f">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Böngészőlapcsoport könyvjelzőzése…">
+<!ENTITY addCurTabsAsCmd.accesskey "k">
+<!ENTITY manBookmarksCmd.label "Könyvjelzők kezelése…">
+<!ENTITY manBookmarksCmd.accesskey "z">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Keresés a weben">
+<!ENTITY searchInternetCmd.accesskey "K">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Oldal fordítása">
+<!ENTITY translateMenu.accesskey "f">
+
+<!ENTITY cookieMessageTitle.label "A sütiengedélyek megváltoztak">
+<!ENTITY cookieDisplayCookiesCmd.label "Tárolt sütik kezelése">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "T">
+<!ENTITY cookieAllowCookiesCmd.label "Sütik engedélyezése erről a webhelyről">
+<!ENTITY cookieAllowCookiesCmd.accesskey "e">
+<!ENTITY cookieAllowCookiesMsg.label "Az erről a webhelyről érkező sütik mindig engedélyezve lesznek.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Munkamenet-sütik engedélyezése erről a webhelyről">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "M">
+<!ENTITY cookieAllowSessionCookiesMsg.label "A webhely csak az aktuális munkamenet idejére állíthat be sütiket.">
+<!ENTITY cookieCookiesDefaultCmd.label "Alapértelmezett sütiengedélyek használata">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "A">
+<!ENTITY cookieCookiesDefaultMsg.label "A webhelyről érkező sütik kezelése az alapbeállításoknak megfelelően fog történni.">
+<!ENTITY cookieBlockCookiesCmd.label "Sütik blokkolása erről a webhelyről">
+<!ENTITY cookieBlockCookiesCmd.accesskey "b">
+<!ENTITY cookieBlockCookiesMsg.label "Az erről a webhelyről érkező sütik mindig vissza lesznek utasítva.">
+
+<!ENTITY cookieImageMessageTitle.label "A képengedélyek megváltoztak">
+<!ENTITY cookieDisplayImagesCmd.label "Képengedélyezés kezelése">
+<!ENTITY cookieDisplayImagesCmd.accesskey "K">
+<!ENTITY cookieAllowImagesCmd.label "Képek engedélyezése erről a webhelyről">
+<!ENTITY cookieAllowImagesCmd.accesskey "e">
+<!ENTITY cookieAllowImagesMsg.label "Az erről a webhelyről érkező képek mindig le lesznek töltve.">
+<!ENTITY cookieImagesDefaultCmd.label "Alapértelmezett képengedélyek használata">
+<!ENTITY cookieImagesDefaultCmd.accesskey "A">
+<!ENTITY cookieImagesDefaultMsg.label "A webhelyről érkező képek kezelése az alapbeállításoknak megfelelően fog történni.">
+<!ENTITY cookieBlockImagesCmd.label "Képek blokkolása erről a webhelyről">
+<!ENTITY cookieBlockImagesCmd.accesskey "b">
+<!ENTITY cookieBlockImagesMsg.label "Az erről a webhelyről érkező képek soha nem lesznek letöltve.">
+
+<!ENTITY popupsMessageChangeTitle.label "A felugró ablakok engedélyei megváltoztak">
+<!ENTITY popupAllowCmd.label "Felugró ablakok engedélyezése erről a webhelyről">
+<!ENTITY popupAllowCmd.accesskey "F">
+<!ENTITY popupAllowMsg.label "Az erről a webhelyről érkező felugró ablakok mindig megjelenítésre kerülnek.">
+<!ENTITY popupDefaultCmd.label "Alapértelmezett felugró ablak engedélyek használata">
+<!ENTITY popupDefaultCmd.accesskey "U">
+<!ENTITY popupDefaultMsg.label "A webhelyről érkező felugró ablakok megjelenítése az alapbeállításoknak megfelelően fog történni.">
+<!ENTITY popupBlockCmd.label "Felugró ablakok blokkolása erről a webhelyről">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "Az erről a webhelyről érkező felugró ablakok nem lesznek megjelenítve.">
+<!ENTITY popupsManage.label "Felugró ablakok kezelése">
+<!ENTITY popupsManage.accesskey "k">
+
+<!ENTITY cookieCookieManager.label "Sütikezelő">
+<!ENTITY cookieCookieManager.accesskey "S">
+<!ENTITY cookieImageManager.label "Képkezelő">
+<!ENTITY cookieImageManager.accesskey "K">
+<!ENTITY popupsManager.label "Felugró ablakok kezelése">
+<!ENTITY popupsManager.accesskey "F">
+
+<!ENTITY clearPrivateDataCmd.label "Személyes adatok törlése…">
+<!ENTITY clearPrivateDataCmd.accesskey "S">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

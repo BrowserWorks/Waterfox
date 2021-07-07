@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Insertar tabla">
+<!ENTITY size.label "Tamaño">
+<!ENTITY numRowsEditField.label "Filas:">
+<!ENTITY numRowsEditField.accessKey "F">
+<!ENTITY numColumnsEditField.label "Columnas:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "Anchura:">
+<!ENTITY widthEditField.accessKey "A">
+<!ENTITY borderEditField.label "Borde:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "Teclea un número para el borde de la tabla, o bien cero (0) para omitir el borde">
+<!ENTITY pixels.label "píxeles">

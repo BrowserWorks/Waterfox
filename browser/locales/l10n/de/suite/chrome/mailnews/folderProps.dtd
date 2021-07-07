@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Eigenschaften">
+
+<!ENTITY generalInfo.label                       "Allgemeine Informationen">
+<!ENTITY folderCharsetFallback2.label            "Rückfall-Textkodierung:">
+<!ENTITY folderCharsetFallback2.accesskey        "R">
+<!ENTITY folderCharsetEnforce2.label             "Kodierung auf alle Nachrichten im Ordner anwenden (individuelle Nachrichtentext-Kodierungseinstellungen und automatische Erkennung wird ignoriert)">
+<!ENTITY folderCharsetEnforce2.accesskey         "K">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Zusammenfassungsdatei neu erstellen">
+<!ENTITY folderRebuildSummaryFile2.label         "Ordner reparieren">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "O">
+<!ENTITY folderRebuildSummaryFile.explanation    "Manchmal wird die Ordner-Index-Datei (.msf) beschädigt und Nachrichten können verloren erscheinen oder gelöschte Dateien noch aufscheinen; den Ordner zu reparieren könnte diese Probleme lösen.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Nachrichten dieses Ordners in globalen Suchergebnissen einschließen.">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "N">
+
+<!ENTITY retention.label "Regeln für Lebensdauer">
+<!ENTITY retentionUseAccount.label "Account-Einstellungen verwenden">
+<!ENTITY retentionUseAccount.accesskey "o">
+<!ENTITY daysOld.label "Tage sind">
+<!ENTITY message.label "Nachrichten">
+<!ENTITY retentionCleanup.label "Nachrichten behalten:">
+<!ENTITY retentionCleanupImap.label "Nachrichten behalten, sowohl die lokalen Kopien als auch ihre Originale am Server:">
+<!ENTITY retentionCleanupPop.label "Nachrichten behalten, inklusive ihrer Originale am Server:">
+<!ENTITY retentionDeleteMsg.label "Nachrichten löschen, die älter sind als">
+<!ENTITY retentionDeleteMsg.accesskey "c">
+<!ENTITY retentionKeepAll.label "Alle Nachrichten">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "Die neuesten">
+<!ENTITY retentionKeepRecent.accesskey "e">
+<!ENTITY retentionApplyToFlagged.label "Gekennzeichnete Nachrichten immer behalten">
+<!ENTITY retentionApplyToFlagged.accesskey "G">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronisation">
+<!ENTITY folderCheckForNewMessages2.label        "Diesen Ordner immer prüfen, wenn Nachrichten für diesen Account abgefragt werden">
+<!ENTITY folderCheckForNewMessages2.accesskey    "w">
+
+<!ENTITY offlineFolder.check.label               "Diesen Ordner für Offline-Gebrauch auswählen">
+<!ENTITY offlineFolder.check.accesskey           "D">
+<!ENTITY offlineFolder.button.label              "Jetzt herunterladen">
+<!ENTITY offlineFolder.button.accesskey          "J">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Diese Newsgroup für Offline-Gebrauch auswählen">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "D">
+<!ENTITY offlineNewsgroup.button.label           "Jetzt herunterladen">
+<!ENTITY offlineNewsgroup.button.accesskey       "J">
+
+<!ENTITY folderProps.name.label                  "Name:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Adresse:">
+<!ENTITY folderProps.location.accesskey          "A">
+
+<!ENTITY folderSharingTab.label                  "Freigabe">
+<!ENTITY privileges.button.label                 "Berechtigungen…">
+<!ENTITY privileges.button.accesskey             "B">
+<!ENTITY permissionsDesc.label                   "Sie haben folgende Berechtigungen:">
+<!ENTITY folderType.label                        "Ordnertyp:">
+
+<!ENTITY folderQuotaTab.label                    "Kontingent">
+<!ENTITY folderQuotaRoot.label                   "Kontigent-Hauptverzeichnis:">
+<!ENTITY folderQuotaUsage.label                  "Verwendung:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Anzahl der Nachrichten:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "unbekannt">
+<!ENTITY sizeOnDisk.label                        "Speichergröße:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "unbekannt">

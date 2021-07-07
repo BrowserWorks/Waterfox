@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Νέα λίστα αλληλογραφίας">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Προσθήκη σε:">
+<!ENTITY addToAddressBook.accesskey     "θ">
+<!ENTITY ListName.label                 "Όνομα λίστας: ">
+<!ENTITY ListName.accesskey             "Λ">
+<!ENTITY ListNickName.label             "Ψευδώνυμο λίστας: ">
+<!ENTITY ListNickName.accesskey         "ν">
+<!ENTITY ListDescription.label          "Περιγραφή:">
+<!ENTITY ListDescription.accesskey      "ε">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Εισαγάγετε διευθύνσεις email για προσθήκη στη λίστα αλληλογραφίας:">
+<!ENTITY AddressTitle.accesskey         "τ">
+<!ENTITY UpButton.label                 "Μετακίνηση πάνω">
+<!ENTITY DownButton.label               "Μετακίνηση κάτω">

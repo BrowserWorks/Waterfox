@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityEncryptRequire.label "Zašifrovat zprávu">
+<!ENTITY menu_securityEncryptRequire.accesskey "Z">
+
+<!ENTITY menu_securitySign.label "Elektronicky podepsat zprávu">
+<!ENTITY menu_securitySign.accesskey "E">
+
+<!ENTITY menu_securityStatus.label "Zobrazit informace o zabezpečení">
+<!ENTITY menu_securityStatus.accesskey "o">
+
+<!ENTITY securityButton.label "Zabezpečení">
+<!ENTITY securityButton.tooltip "Zobrazí nebo změní nastavení zabezpečení">
+
+<!ENTITY menu_viewSecurityStatus.label "Zabezpečení zprávy">
+<!ENTITY menu_viewSecurityStatus.accesskey "b">

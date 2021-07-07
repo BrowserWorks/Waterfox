@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "ابحث عن الرّسائل في:">
+<!ENTITY searchHeading.accesskey     "ث">
+<!ENTITY searchSubfolders.label      "ابحث في المجلدات الفرعيّة">
+<!ENTITY searchSubfolders.accesskey  "ب">
+<!ENTITY searchOnServer.label        "شغّل البحث في الخادوم">
+<!ENTITY searchOnServer.accesskey    "خ">
+<!ENTITY resetButton.label           "امسح">
+<!ENTITY resetButton.accesskey       "م">
+<!ENTITY openButton.label            "افتح">
+<!ENTITY openButton.accesskey        "ف">
+<!ENTITY deleteButton.label          "احذف">
+<!ENTITY deleteButton.accesskey      "ذ">
+<!ENTITY searchDialogTitle.label     "ابحث في الرّسائل">
+<!ENTITY results.label               "النتائج">
+<!ENTITY moveButton.label            "انقل إلى">
+<!ENTITY moveButton.accesskey        "ل">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "افتح في مجلد">
+<!ENTITY openInFolder.accesskey      "د">
+<!ENTITY saveAsVFButton.label        "احفظ كمجلد بحث">
+<!ENTITY saveAsVFButton.accesskey    "ح">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "ابحث في:">
+<!ENTITY abSearchHeading.accesskey   "ث">
+<!ENTITY propertiesButton.label      "الخصائص">
+<!ENTITY propertiesButton.accesskey  "خ">
+<!ENTITY composeButton.label         "اكتب">
+<!ENTITY composeButton.accesskey     "ك">
+<!ENTITY deleteCardButton.label      "احذف">
+<!ENTITY deleteCardButton.accesskey  "ذ">
+<!ENTITY abSearchDialogTitle.label   "بحث متقدّم في دفتر العناوين">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

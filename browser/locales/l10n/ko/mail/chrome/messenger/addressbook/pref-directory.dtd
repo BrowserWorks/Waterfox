@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "LDAP 디렉터리 서비스">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP 디렉터리 서버:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "LDAP 디렉터리 서버 선택:">
+<!ENTITY directoriesText.accesskey "S">
+<!ENTITY addDirectory.label        "추가">
+<!ENTITY addDirectory.accesskey    "a">
+<!ENTITY editDirectory.label       "편집">
+<!ENTITY editDirectory.accesskey   "e">
+<!ENTITY deleteDirectory.label     "삭제">
+<!ENTITY deleteDirectory.accesskey "d">

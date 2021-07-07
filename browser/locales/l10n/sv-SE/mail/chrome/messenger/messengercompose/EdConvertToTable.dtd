@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+ 
+<!-- Window title -->
+<!ENTITY windowTitle.label "Konvertera till tabell">
+<!ENTITY instructions1.label   "Composer skapar en ny tabellrad för varje stycke i markeringen.">
+<!ENTITY instructions2.label   "Välj ett tecken som delar kolumner:">
+<!ENTITY commaRadio.label      "Komma">
+<!ENTITY spaceRadio.label      "Mellanslag">
+<!ENTITY otherRadio.label      "Annat tecken:">
+<!ENTITY deleteCharCheck.label "Ta bort delningstecknen">
+<!ENTITY collapseSpaces.label  "Ta bort extra mellanslag">
+<!ENTITY collapseSpaces.tooltip "Tar bort de mellanslag som finns före och efter delningstecknet">

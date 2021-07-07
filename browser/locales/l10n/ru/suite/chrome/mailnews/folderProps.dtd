@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Свойства">
+
+<!ENTITY generalInfo.label                       "Основная информация">
+<!ENTITY folderCharsetFallback2.label            "Резервная кодировка текста:">
+<!ENTITY folderCharsetFallback2.accesskey        "е">
+<!ENTITY folderCharsetEnforce2.label             "Использовать как кодировку для всех сообщений в папке (игнорировать кодировки текста, определённые для отдельных сообщений, и автоопределение)">
+<!ENTITY folderCharsetEnforce2.accesskey         "л">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Перестроить файл индекса">
+<!ENTITY folderRebuildSummaryFile2.label         "Починить папку">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "ч">
+<!ENTITY folderRebuildSummaryFile.explanation    "Иногда файл с индексом папки (.msf) становится повреждённым, и сообщения могут казаться пропавшими, либо могут появляться удалённые сообщения; починка папки может решить эти проблемы.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Включать сообщения в этой папке в результаты Глобального Поиска">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "ю">
+
+<!ENTITY retention.label "Настройки хранения сообщений">
+<!ENTITY retentionUseAccount.label "Использовать параметры моей учётной записи">
+<!ENTITY retentionUseAccount.accesskey "п">
+<!ENTITY daysOld.label "дней">
+<!ENTITY message.label "сообщений">
+<!ENTITY retentionCleanup.label "Хранить сообщения:">
+<!ENTITY retentionCleanupImap.label "Хранить сообщения (как локальные копии, так и их оригиналы на сервере):">
+<!ENTITY retentionCleanupPop.label "Хранить сообщения (в том числе их оригиналы на сервере):">
+<!ENTITY retentionDeleteMsg.label "Удалять сообщения старше">
+<!ENTITY retentionDeleteMsg.accesskey "с">
+<!ENTITY retentionKeepAll.label "Все сообщения">
+<!ENTITY retentionKeepAll.accesskey "я">
+<!ENTITY retentionKeepRecent.label "Последние">
+<!ENTITY retentionKeepRecent.accesskey "л">
+<!ENTITY retentionApplyToFlagged.label "Всегда хранить сообщения, отмеченные флагом">
+<!ENTITY retentionApplyToFlagged.accesskey "х">
+
+<!ENTITY folderSynchronizationTab.label          "Синхронизация">
+<!ENTITY folderCheckForNewMessages2.label        "При получении новых сообщений для этой учётной записи всегда проверять эту папку">
+<!ENTITY folderCheckForNewMessages2.accesskey    "о">
+
+<!ENTITY offlineFolder.check.label               "Выбрать эту папку для автономной работы">
+<!ENTITY offlineFolder.check.accesskey           "ы">
+<!ENTITY offlineFolder.button.label              "Загрузить">
+<!ENTITY offlineFolder.button.accesskey          "а">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Выбрать эту группу новостей для автономной работы">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "э">
+<!ENTITY offlineNewsgroup.button.label           "Загрузить">
+<!ENTITY offlineNewsgroup.button.accesskey       "а">
+
+<!ENTITY folderProps.name.label                  "Имя:">
+<!ENTITY folderProps.name.accesskey              "м">
+<!ENTITY folderProps.location.label              "Адрес:">
+<!ENTITY folderProps.location.accesskey          "д">
+
+<!ENTITY folderSharingTab.label                  "Совместное использование">
+<!ENTITY privileges.button.label                 "Привилегии…">
+<!ENTITY privileges.button.accesskey             "и">
+<!ENTITY permissionsDesc.label                   "У вас есть следующие права:">
+<!ENTITY folderType.label                        "Тип папки:">
+
+<!ENTITY folderQuotaTab.label                    "Квота">
+<!ENTITY folderQuotaRoot.label                   "Квота:">
+<!ENTITY folderQuotaUsage.label                  "Использовано:">
+<!ENTITY folderQuotaStatus.label                 "Состояние:">
+
+<!ENTITY numberOfMessages.label                  "Число сообщений:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "неизвестно">
+<!ENTITY sizeOnDisk.label                        "Размер на диске:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "неизвестен">

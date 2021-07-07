@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS 协议版本">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS 警告">
+<!ENTITY SSLMixedContent.caption            "混合内容">
+<!ENTITY SSLClientAuthMethod.caption        "客户证书选择">
+
+<!ENTITY pref.ssltls.title                  "传输层安全 (SSL/TLS)">
+<!ENTITY limit.description                  "您可以限制安全连接所使用的加密协议。选择单个版本或连续的版本范围。">
+<!ENTITY limit.enable.label                 "启用：">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; 可以提醒你正在浏览的网页的安全状态。设置 &brandShortName; 显示警告的条件：">
+<!ENTITY warn.enteringsecure                "载入支持加密的页">
+<!ENTITY warn.enteringsecure.accesskey      "L">
+<!ENTITY warn.insecurepost                  "从加密页发送表单信息到未加密页">
+<!ENTITY warn.insecurepost.accesskey        "S">
+<!ENTITY warn.leavingsecure                 "离开支持加密页">
+<!ENTITY warn.leavingsecure.accesskey       "a">
+
+<!ENTITY mixed.description                  "加密的页面可能包含未加密的内容，这可能引发窃听或伪造攻击。&brandShortName; 可以检测和禁用它：">
+<!ENTITY warn.mixedactivecontent            "加密页面包含不安全内容时提醒我">
+<!ENTITY warn.mixedactivecontent.accesskey  "W">
+<!ENTITY block.activecontent                "不要读取加密页面上的不安全内容">
+<!ENTITY block.activecontent.accesskey      "D">
+<!ENTITY warn.mixeddisplaycontent           "加密页面包含其他类型混合内容时提醒我">
+<!ENTITY warn.mixeddisplaycontent.accesskey "c">
+<!ENTITY block.displaycontent               "不要读取加密页面上的其他类型混合内容">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "用于决定 &brandShortName; 如何为那些请求证书的网站选择安全证书:">
+<!ENTITY certselect.auto                    "自动选择">
+<!ENTITY certselect.auto.accesskey          "A">
+<!ENTITY certselect.ask                     "每次都问我">
+<!ENTITY certselect.ask.accesskey           "E">

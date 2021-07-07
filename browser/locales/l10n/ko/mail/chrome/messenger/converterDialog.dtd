@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "메시지 저장소 형식 변환기">
+<!ENTITY converterDialog.continueButton "계속">
+<!ENTITY converterDialog.cancelButton "취소">
+<!ENTITY converterDialog.finishButton "완료">
+<!ENTITY converterDialog.complete "변환이 종료되었습니다. &brandShortName;가 재시작 됩니다.">
+<!ENTITY converterDialog.error "변환에 실패했습니다.">
+

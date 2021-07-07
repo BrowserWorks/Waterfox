@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "스팸 차단 설정">
+<!ENTITY trainingDescription.label "필터를 활성화하면, 어떤 메일을 스팸으로 표시할 지 &brandShortName; 프로그램을 학습시켜야 합니다. 스팸 메일을 받았다면 스팸 툴바에서 스팸인지 아닌지 표시해 주십시오. 스팸 메일과 정상 메일을 학습시킨 후 &brandShortName;가 자동적으로 스팸 메일을 표시합니다.">
+<!ENTITY level.label "이 계정에서 지능형 스팸 메일 처리 기능 사용">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "새 스팸 메시지 이동:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "&quot;스팸&quot; 폴더:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "기타:">
+<!ENTITY otherFolder.accesskey "O">
+
+<!ENTITY purge1.label "스팸 메일 자동 삭제">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "일 이전">
+
+<!ENTITY whitelistHeader.label "보낸 사람이 아래의 리스트에 있으면 스팸 메일 표시하지 않음:">
+<!ENTITY whitelistHeader.accesskey	"D">
+
+<!ENTITY ispHeadersWarning.label	"활성화하면, &brandShortName; 프로그램을 통해 스팸 메일로 분류된 메일을 자동적으로 표시합니다.">
+<!ENTITY ispHeaders.label "다음 스팸 메일 헤더는 신뢰함: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label	"선택">
+<!ENTITY junkActions.label		"이동처와 저장 기간">
+
+<!ENTITY globalJunkPrefs.label "전역 스팸 설정…">
+<!ENTITY globalJunkPrefs.accesskey "G">

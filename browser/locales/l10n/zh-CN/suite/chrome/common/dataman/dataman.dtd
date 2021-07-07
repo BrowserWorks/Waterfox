@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "数据管理器">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "所有数据类型">
+<!ENTITY select.cookies.label "仅 Cookie">
+<!ENTITY select.permissions.label "仅权限">
+<!ENTITY select.preferences.label "仅首选项">
+<!ENTITY select.passwords.label "仅密码">
+<!ENTITY select.storage.label "仅存储">
+
+<!ENTITY domain.search.placeholder "搜索域">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "域名">
+
+<!ENTITY domain.ctx.forgetdomain.label "忽略这个域">
+<!ENTITY domain.ctx.forgetdomain.accesskey "F">
+<!ENTITY domain.ctx.forgetglobal.label "忽略全局数据">
+<!ENTITY domain.ctx.forgetglobal.accesskey "F">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookie">
+<!ENTITY tab.permissions.label "权限">
+<!ENTITY tab.preferences.label "首选项">
+<!ENTITY tab.passwords.label "密码">
+<!ENTITY tab.storage.label "存储">
+<!ENTITY tab.formdata.label "表单数据">
+<!ENTITY tab.forget.label "忽略">
+
+<!-- cookies -->
+<!ENTITY cookies.description "此域名已存储在您计算机上的 Cookie 如下：">
+
+<!ENTITY cookies.tree.host.label "网站">
+<!ENTITY cookies.tree.name.label "Cookie 名称">
+<!ENTITY cookies.tree.expires.label "过期">
+
+<!ENTITY cookies.infobox.label "已选定 Cookie 的信息">
+
+<!ENTITY cookies.info.name.label "名称:">
+<!ENTITY cookies.info.value.label "内容：">
+<!ENTITY cookies.info.host.label "主机名：">
+<!ENTITY cookies.info.domain.label "域：">
+<!ENTITY cookies.info.path.label "路径：">
+<!ENTITY cookies.info.sendtype.label "发送条件：">
+<!ENTITY cookies.info.expires.label "过期时间：">
+
+<!ENTITY cookies.ctx.remove.label "移除">
+<!ENTITY cookies.ctx.remove.accesskey "R">
+<!ENTITY cookies.ctx.selectAll.label "全部选定">
+<!ENTITY cookies.ctx.selectAll.accesskey "A">
+
+<!ENTITY cookies.button.remove.label "移除">
+<!ENTITY cookies.button.remove.accesskey "R">
+
+<!ENTITY cookies.blockOnRemove.label "移除时，阻止列出的网站再次设置 Cookie">
+<!ENTITY cookies.blockOnRemove.accesskey "W">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "使用默认设置">
+<!ENTITY perm.AskAlways "每次都问我">
+<!ENTITY perm.NeverSave "总不保存">
+<!ENTITY perm.Allow "允许">
+<!ENTITY perm.AllowSameDomain "允许同域">
+<!ENTITY perm.AllowSession "在当前会话中允许">
+<!ENTITY perm.Block "阻止">
+
+<!ENTITY perm.host.placeholder "输入一个主机名称">
+<!ENTITY perm.button.add.label "添加">
+<!ENTITY perm.button.add.accesskey "A">
+
+<!-- preferences -->
+<!ENTITY prefs.description "&brandShortName; 可以通过内容首选项保存它的设置，例如针对特定网站的缩放级别。">
+
+<!ENTITY prefs.tree.host.label "网站">
+<!ENTITY prefs.tree.name.label "首选项名称">
+<!ENTITY prefs.tree.value.label "值">
+
+<!ENTITY prefs.ctx.remove.label "移除">
+<!ENTITY prefs.ctx.remove.accesskey "R">
+<!ENTITY prefs.ctx.selectAll.label "全部选定">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+
+<!ENTITY prefs.button.remove.label "移除">
+<!ENTITY prefs.button.remove.accesskey "R">
+
+<!-- passwords -->
+<!ENTITY pwd.description "您已存储此域的下列密码：">
+
+<!ENTITY pwd.tree.host.label "网站">
+<!ENTITY pwd.tree.username.label "用户名">
+<!ENTITY pwd.tree.password.label "密码">
+
+<!ENTITY pwd.ctx.remove.label "移除">
+<!ENTITY pwd.ctx.remove.accesskey "R">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "复制密码">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY pwd.ctx.selectAll.label "全部选定">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "移除">
+<!ENTITY pwd.button.remove.accesskey "R">
+
+<!-- storage -->
+<!ENTITY storage.description "在你的计算机上该域使用以下网页存储：">
+
+<!ENTITY storage.tree.host.label "网站">
+<!ENTITY storage.tree.type.label "类型">
+<!ENTITY storage.tree.size.label "大小">
+
+<!ENTITY storage.ctx.remove.label "移除">
+<!ENTITY storage.ctx.remove.accesskey "R">
+<!ENTITY storage.ctx.selectAll.label "全选">
+<!ENTITY storage.ctx.selectAll.accesskey "A">
+
+<!ENTITY storage.button.remove.label "移除">
+<!ENTITY storage.button.remove.accesskey "R">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "搜索字段数据">
+
+<!ENTITY fdata.tree.fieldname.label "字段名">
+<!ENTITY fdata.tree.value.label "输入的值">
+<!ENTITY fdata.tree.usecount.label "使用次数">
+<!ENTITY fdata.tree.firstused.label "首次使用">
+<!ENTITY fdata.tree.lastused.label "最后使用">
+
+<!ENTITY fdata.ctx.remove.label "移除">
+<!ENTITY fdata.ctx.remove.accesskey "R">
+<!ENTITY fdata.ctx.selectAll.label "全部选定">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+
+<!ENTITY fdata.button.remove.label "移除">
+<!ENTITY fdata.button.remove.accesskey "R">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookie">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "权限">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "内容首选项">
+<!ENTITY forget.preferences.accesskey "o">
+<!ENTITY forget.passwords.label "密码">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "存储">
+<!ENTITY forget.storage.accesskey "S">
+<!ENTITY forget.formdata.label "表单数据">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "忽略此数据">
+<!ENTITY forget.button.accesskey "F">

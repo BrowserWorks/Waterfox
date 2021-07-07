@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Chování odkazů">
+<!ENTITY newWindow.label "Odkazy otevírající nové okno">
+<!ENTITY newWindowDescription.label "Odkazy otevírající nové okno otevírat v:">
+<!ENTITY newWindowRestriction.label "Pokud skript požaduje otevření nového okna:">
+<!ENTITY external.label "Odkazy z ostatních aplikací">
+<!ENTITY externalDescription.label "Odkazy otevírané z jiných aplikací otevírat v:">
+
+<!ENTITY openCurrent.label "Aktuální panel/okno">
+<!ENTITY newWindowGroupCurrent.accesskey "A">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "Nový panel v aktuálním okně">
+<!ENTITY newWindowGroupTab.accesskey "N">
+<!ENTITY externalGroupTab.accesskey "p">
+
+<!ENTITY openWindow.label "Nové okno">
+<!ENTITY newWindowGroupWindow.accesskey "o">
+<!ENTITY externalGroupWindow.accesskey "k">
+
+<!ENTITY divertAll.label "Vždy otevřít do nového panelu">
+<!ENTITY divertAll.accesskey "d">
+<!ENTITY divertNoFeatures.label "Přizpůsobená okna neotevírat do panelu">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "Vždy otevřít nové okno">
+<!ENTITY dontDivert.accesskey "t">

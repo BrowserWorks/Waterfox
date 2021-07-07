@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are generic to all or most of the editor's dialogs. -->
+
+<!-- This button is for the progressive disclosure of additional editing functionality -->
+
+<!-- These strings are for use specifically in the editor's link dialog. -->
+<!ENTITY windowTitle2.label "Simpan dan Ubah Teks Pengodean Karakter">
+<!ENTITY documentTitleTitle.label "Judul Laman">
+<!ENTITY documentCharsetTitle2.label "Pengodean Teks">
+<!ENTITY documentCharsetDesc2.label "Pilih pengkodean teks yang ingin Anda simpan di sebuah dokumen:">
+<!ENTITY documentExportToText.label "Ekspor Menjadi Teks">

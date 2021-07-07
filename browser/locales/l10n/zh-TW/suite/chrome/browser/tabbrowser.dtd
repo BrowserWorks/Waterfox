@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(未命名)">
+<!ENTITY  newTab.label           "新分頁">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "關閉分頁">
+<!ENTITY  closeTab.accesskey         "C">
+<!ENTITY  closeOtherTabs.label   "關閉其他分頁">
+<!ENTITY  closeOtherTabs.accesskey         "o">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "關閉右方分頁">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "重新載入所有分頁">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "重新載入分頁">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "將此分頁群組加入書籤">
+<!ENTITY  bookmarkGroup.accesskey  "B">
+<!ENTITY  closeTabButton.tooltip   "關閉目前分頁">
+<!ENTITY  newTabButton.tooltip   "開啟新分頁">
+<!ENTITY  listAllTabs.tooltip    "列出所有分頁">
+<!ENTITY  undoCloseTab.label    "復原已關閉分頁">
+<!ENTITY  undoCloseTab.accesskey  "U">

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Προς: ">
+<!ENTITY fromField.label "Από: ">
+<!ENTITY senderField.label "Αποστολέας: ">
+<!ENTITY organizationField.label "Οργανισμός: ">
+<!ENTITY replyToField.label "Απάντηση-σε:">
+
+<!ENTITY subjectField.label "Θέμα: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Κρ. Κοιν:">
+<!ENTITY newsgroupsField.label "Ομάδες συζήτησης: ">
+<!ENTITY followupToField.label "Συνέχεια-σε:">
+
+<!ENTITY tagsHdr.label "Ετικέτες: ">
+<!ENTITY dateField.label "Ημερομηνία: ">
+<!ENTITY userAgentField.label "Πλατφόρμα-χρήστη: ">
+<!ENTITY referencesField.label "Αναφορές: ">
+<!ENTITY messageIdField.label "ID-μηνύματος:">
+<!ENTITY inReplyToField.label "Σε-απάντηση-σε:">
+<!ENTITY originalWebsite.label "Ιστοσελίδα: ">
+
+<!ENTITY editMessage.label                 "Επεξεργασία προσχεδίου…">
+<!ENTITY editMessage.accesskey             "π">
+
+<!ENTITY attachmentsTree.label             "Συνημμένα:">
+<!ENTITY attachmentsTree.accesskey         "μ">
+<!ENTITY openAttachmentCmd.label           "Άνοιγμα">
+<!ENTITY openAttachmentCmd.accesskey       "Ά">
+<!ENTITY viewAttachmentCmd.label           "Προβολή πηγής">
+<!ENTITY viewAttachmentCmd.accesskey       "Π">
+<!ENTITY saveAsAttachmentCmd.label         "Αποθήκευση ως…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "Α">
+<!ENTITY detachAttachmentCmd.label         "Απόσπαση…">
+<!ENTITY detachAttachmentCmd.accesskey     "π">
+<!ENTITY deleteAttachmentCmd.label         "Διαγραφή">
+<!ENTITY deleteAttachmentCmd.accesskey     "φ">
+<!ENTITY saveAllAttachmentsCmd.label       "Αποθήκευση όλων…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "Α">
+<!ENTITY detachAllAttachmentsCmd.label     "Απόσπαση όλων…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "Α">
+<!ENTITY deleteAllAttachmentsCmd.label     "Διαγραφή όλων…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "γ">

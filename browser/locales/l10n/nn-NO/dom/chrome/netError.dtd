@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Sidelastingsfeil">
+<!ENTITY retry.label "Prøv igjen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Tilkoplingsfeil">
+<!ENTITY connectionFailure.longDesc "<p>Nettlesaren kunne ikkje kopla til den spesifiserte nettstaden, sjølv om han finst.</p><ul><li>Kan det vera at tenesta er utilgjengeleg nett no? Prøv igjen seinare.</li><li>Kan du ikkje lesa andre sider? Kontroller nettverkskoplinga til datamaskina di.</li><li>Er datamaskina di bak ein brannmur eller mellomtenar? Feil i innstillingar kan verka inn på nettlesinga.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Avrensa tilgang til port av tryggingsårsaker">
+<!ENTITY deniedPortAccess.longDesc "<p>Den førespurde adressa spesifiserte ein port (t.d. <q>mozilla.org:80</q> for port 80 på mozilla.org) som normalt vert brukt til eit <em>anna</em> formål enn nettlesing. Nettlesaren har avbrote førespurnaden av tryggingsårsaker.</p>">
+
+<!ENTITY dnsNotFound.title "Fann ikkje adressa">
+<!ENTITY dnsNotFound.longDesc "<p>Nettlesaren klarte ikkje å finne tenarverten for den uspesifiserte adressa.</p><ul><li>Skreiv du inn adressa rett? (t.d. <q><strong>ww</strong>.mozilla.org</q> i staden for <q><strong>www</strong>.mozilla.org</q>)</li><li>Er du sikker på at adressa finst?  Det kan vere at nettstaden er stengt.</li><li>Kan du surfe på andre nettsider?  Kontroller nettverkstilkoplinga di og  innstillingane for DNS- tenaren.</li><li>Er datamaskina di eller nettverket ditt verna av ein brannmur eller proxy?  Feil innstillingar kan påverke nettlesinga.</li></ul>">
+
+<!ENTITY fileNotFound.title "Fann ikkje fila">
+<!ENTITY fileNotFound.longDesc "<ul><li>Kan elementet ha fått nytt namn, vera fjerna, eller flytta?</li><li>Er det feil i staving, store bokstavar, eller andre typografiske feil i adressa?</li><li>Har du tilstrekkjeleg tilgangsløyve til det førespurde elementet?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Tilgang til fila vart nekta">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Ho kan vera fjerna, flytta eller filrettane hindrar tilgang.</li></ul>">
+
+<!ENTITY generic.title "Klarte ikkje å fullføra førespurnaden">
+<!ENTITY generic.longDesc "<p>Meir informasjon om dette problemet eller denne feilen er ikkje tilgjengeleg no.</p>">
+
+<!ENTITY malformedURI.title "Ugyldig adresse">
+<!ENTITY malformedURI.longDesc "<p>Adressa er ikkje i eit gyldig forma.Kontroller adresselinja for feil og prøv igjen.</p>">
+
+<!ENTITY netInterrupt.title "Dataoverføring avbroten">
+<!ENTITY netInterrupt.longDesc "<p>Nettlesaren klarte å kopla til tenaren, men tilkoplinga vart avbroten ved overføring av informasjon. Prøv igjen.</p><ul><li>Klarer du ikkje å lesa andre nettsider? Kontroller nettverkstilkoplinga åt datamaskina.</li><li>Har du framleis problem? Vend deg til nettverksansvarleg eller Internettleverandøren din for meir hjelp.</li></ul>">
+
+<!ENTITY notCached.title "Dokumentet er utgått på dato">
+<!ENTITY notCached.longDesc "<p>Det førespurde dokumentet er ikkje tilgjengeleg i nettlesarens snøgglager.</p><ul><li>Av tryggingshomsyn sender ikkje nettlesaren automatisk førespurnader etter sensitive dokument på nytt.</li><li>Trykk Prøv igjen for å lasta inn dokumentet frå nettstaden på nytt.</li></ul>">
+
+<!ENTITY netOffline.title "Fråkopla tilstand">
+<!ENTITY netOffline.longDesc2 "<p>Nettlesaren er i fråkopla modus, og kan ikkje kopla til tenaren.</p><ul><li>Er datamaskina kopla til eit aktivt nettverk?</li><li>Sett nettlesaren i tilkopla modus og prøv igjen.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Feil med tegnkoding">
+<!ENTITY contentEncodingError.longDesc "<p>Nettsida du prøver å opne,kan ikkje visast fordi ho brukar ein ukjend eller ugyldig komprimeringsmetode.</p><ul><li>Kontakt eigarane av nettstaden og informer dei om problemet.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Utrygg filtype">
+<!ENTITY unsafeContentType.longDesc "<ul>  <li>Kontakt eigarane av nettsida for å informere dei om dette problemet.</li> </ul> ">
+
+<!ENTITY netReset.title "Brot i sambandet">
+<!ENTITY netReset.longDesc "<p>Tilkoplinga til nettstaden vart avbroten under dataoverføring. Prøv igjen.</p>">
+
+<!ENTITY netTimeout.title "Tidsavbrot">
+<!ENTITY netTimeout.longDesc "<p>Nettlesaren brukte for lang tid på å kople til den spesifiserte adressa.</p><ul><li>Kan tenaren ha høg førespurnad eller eit mellombels utfall? Prøv igjen seinare.</li><li>Klarer du ikkje å lese andre nettsider? Kontroller nettverkstilkoplinga åt datamaskina.</li><li>Er datamaskina di bak ein brannmur eller mellomtenar? Feil i innstillingar kan verka inn på nettlesinga.</li><li>Har du framleis problem? Vend deg til nettverksansvarleg eller Internettleverandøren din for meir hjelp.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Ukjend protokoll">
+<!ENTITY unknownProtocolFound.longDesc "<p>Adressa spesifiserer ein protokoll (f.eks. <q>wxyz://</q>) som nettlesaren ikkje forstår, slik at han ikkje kan kople skikkeleg til tenaren.</p><ul><li>Prøver du å få tilgang til multimedia eller ei anna ikkje-tekstleg kjelde? Sjekk om nettstaden spesifiserer ekstra krav.</li><li>Nokre protokollar krev at tredjeparts programvare eller programtillegg er tilgjengelege, før nettlesaren kan kjenne dei att.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxyserveren avslo tilkoplinga">
+<!ENTITY proxyConnectFailure.longDesc "<p>Nettlesaren er innstilt på å bruka ein proxyserver, men proxyen avslo tilkoplinga.</p><ul><li>Er proxy-innstillingane i nettlesaren korrekte? Kontroller innstillingane, og prøv igjen.</li><li>Tillèt proxyen tilkoplingar frå dette nettverket?</li><li>Har du framleis problem? Kontakt nettverksansvarleg eller internettleverandøren din for meir hjelp.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Mellomtener ikkje funnen">
+<!ENTITY proxyResolveFailure.longDesc "<p>Nettlesaren er innstilt på å bruke ein proxyserver, men nettlesaren klarte ikkje å finne proxyen.</p><ul><li>Er proxy-innstillingane i nettlesaren korrekte? Kontroller innstillingane og prøv på nytt.</li><li>Er datamaskina tilkopla eit aktivt nettverk?</li><li>Har du framleis problem? Kontakt nettverksansvarleg eller Internettleverandøren din for meir hjelp.</li></ul>">
+
+<!ENTITY redirectLoop.title "Vidarekoplingsløkke">
+<!ENTITY redirectLoop.longDesc "<p>Nettlesaren har stoppa freistnaden på å henta det førspurde elementet. Nettsida vidaresender førespurnader på ein måte som gjer at han aldri vil fullføre.</p><ul><li>Har du slått av eller blokkert infokapslar eller blokkert infokapslar som er påkravde for denne nettstaden?</li><li><em>MERK</em>: Om godtaking av infokapslar frå sida ikkje løyser problemet, er det sannsynlegvis eit tenarinnstillingsproblem og ikkje datamaskina di.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Ugyldig svar">
+<!ENTITY unknownSocketType.longDesc "<p>Denne nettstaden svarte på ein førespurnad på ein uventa måte og nettlesaren kan ikkje halda fram.</p>">
+
+<!ENTITY nssFailure2.title "Trygt samband feila">
+<!ENTITY nssFailure2.longDesc2 "<p>Nettsida du freistar å opne kan ikkje visast, fordi det ikkje kunne stadfestast at mottekne data er autentiske.</p><ul><li>Kontakt den ansvarlige for nettstaden og informer om problemet.</li></ul>">
+
+<!ENTITY nssBadCert.title "Trygt samband feila">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Dette kan vera eit problem med tenaroppsettet,  eller det kan vera nokon som prøvser å gje seg ut for å vera tenaren.</li> <li>Om du har kopla til denne tenaren tidlegare, kan feilen vera mellombels og du kan prøva igjen seinare.</li> </ul> ">
+
+<!ENTITY securityOverride.linkText "Eller du kan laga eit unntak…">
+<!ENTITY securityOverride.warningContent "<p>Du bør ikkje laga eit unntak dersom du brukar eit Internett-samband som du ikkje stolar heilt på, eller om du ikkje er van med å sjå ei slik åtvaring for denne tenaren.</p> <p>Dersom du framleis ynskjer å laga eit unntak for denne nettstaden, kan du gjera det i dei avanserte krypterings-innstillingane.</p>">
+
+<!ENTITY cspBlocked.title "Blokkerrt av tryggingspraksisen for innhald">
+<!ENTITY cspBlocked.longDesc "<p>Nettlesaren hindra denne sida frå å lasta inn på denne måten, fordi nettsida har ein tryggingspraksis for sider som forbyr det.</p>">
+
+<!ENTITY xfoBlocked.title "Blokkert av X-Frame-Options-policy">
+<!ENTITY xfoBlocked.longDesc "<p>Nettlesaren hindra denne nettsida i å laste i denne konteksten fordi nettsida har ein X-Frame-Options-policy som ikkje tillèt det.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Feil - øydelagt innhald">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Sida du freistar å visa kan ikkje opnast fordi ein feil i dataoverføringa vart oppdaga.</p><ul><li>Kontakt eigarane av nettstaden og informer dei om problemet.</li></ul>">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakt nettstadeigarane og informer dei om dette problemet.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Tilkoplinga di er ikkje trygg">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> brukar tryggingsteknologi som er forelda og sårbar for åtak. Ein angripar kan lett avsløra informasjon som du trudde skulle vera sikker. Administrator på nettstaden må fiksa tenaren før du kan vitja nettsida.</p><p>Feilkode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokkert side">
+
+<!ENTITY networkProtocolError.title "Nettverksprotokollfeil">
+<!ENTITY networkProtocolError.longDesc "<p>Siden du prøver å vise kan ikkje opnast fordi ein feil i nettverksprotokollen vart oppdaga.</p><ul><li>Kontakt nettstadeigarane og informer dei om dette problemet.</li></ul>">

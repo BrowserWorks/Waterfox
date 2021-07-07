@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Anda memutuskan untuk membuka:">
+<!ENTITY  from.label                  "dari:">
+<!ENTITY  actionQuestion.label        "Apa yang sebaiknya &brandShortName; lakukan dengan berkas ini?">
+
+<!ENTITY  openWith.label              "Buka dengan">
+<!ENTITY  openWith.accesskey          "d">
+<!ENTITY  other.label                 "Lainnya…">
+
+<!ENTITY  saveFile.label              "Simpan Berkas">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "Lakukan secara otomatis untuk berkas seperti ini mulai sekarang.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "adalah sebuah:">
+
+<!ENTITY  chooseHandlerMac.label      "Pilih…">
+<!ENTITY  chooseHandlerMac.accesskey  "P">
+<!ENTITY  chooseHandler.label         "Telusuri…">
+<!ENTITY  chooseHandler.accesskey     "T">
+
+<!ENTITY  unknownPromptText.label     "Ingin menyimpan berkas ini?">

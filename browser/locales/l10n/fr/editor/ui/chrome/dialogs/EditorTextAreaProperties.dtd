@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propriétés des zones de texte">
+
+<!ENTITY Settings.label "Paramètres">
+
+<!ENTITY TextAreaName.label "Nom du champ :">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Lignes :">
+<!ENTITY TextAreaRows.accessKey "g">
+<!ENTITY TextAreaCols.label "Colonnes :">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "En lecture seule">
+<!ENTITY TextAreaReadOnly.accessKey "s">
+<!ENTITY TextAreaDisabled.label "Désactivé">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "Index de tabulation :">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "Touche d’accès :">
+<!ENTITY TextAreaAccessKey.accessKey "u">
+<!ENTITY InitialText.label "Texte initial :">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Mode d’affichage :">
+<!ENTITY TextAreaWrap.accessKey "M">
+<!ENTITY WrapDefault.value "Par défaut">
+<!ENTITY WrapOff.value "Inactif">
+<!ENTITY WrapHard.value "Dur">
+<!ENTITY WrapSoft.value "Léger">
+<!ENTITY WrapPhysical.value "Physique">
+<!ENTITY WrapVirtual.value "Virtuel">

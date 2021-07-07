@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Αλληλογραφία &amp; ομάδες συζήτησης">
+<!ENTITY generalSettings.caption          "Γενικές ρυθμίσεις">
+<!ENTITY confirmMove.label                "Επιβεβαίωση κατά τη μετακίνηση φακέλων στα Απορρίμματα">
+<!ENTITY confirmMove.accesskey            "Ε">
+<!ENTITY preserveThreading.label          "Διατήρηση νημάτων κατά την ταξινόμηση μηνυμάτων">
+<!ENTITY preserveThreading.accesskey      "ν">
+<!ENTITY loadInBackground.label           "Εναλλαγή σε νέες καρτέλες όταν ανοίγουν">
+<!ENTITY loadInBackground.accesskey       "γ">
+<!ENTITY mailBiffOnNewWindow.label        "Έλεγχος για νέα email μόνο μετά το άνοιγμα της Αλληλογραφίας &amp; ομάδων συζητήσεων">
+<!ENTITY mailBiffOnNewWindow.accesskey    "Έ">
+
+<!ENTITY defaultMailSettings.description  "Ορισμός του &brandShortName; ως προεπιλογής για:">
+<!ENTITY setDefaultMail.label             "Αλληλογραφία">
+<!ENTITY setDefaultMail.accesskey         "Α">
+<!ENTITY setDefaultNews.label             "Ειδήσεις">
+<!ENTITY setDefaultNews.accesskey         "Ε">
+<!ENTITY setDefaultFeed.label             "Ροές">
+<!ENTITY setDefaultFeed.accesskey         "έ">
+
+<!ENTITY useInternalSettings.description  "Χρήση αλληλογραφίας &amp; ομάδων ειδήσεων του &brandShortName; κατά το άνοιγμα συνδέσμων για:">
+<!ENTITY useInternalMail.label            "Αλληλογραφία (mailto:)">
+<!ENTITY useInternalMail.accesskey        "λ">
+<!ENTITY useInternalNews.label            "Ειδήσεις (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "δ">
+
+<!ENTITY messengerStartPage.caption       "Αρχική σελίδα αλληλογραφίας">
+<!ENTITY enableStartPage.label            "Όταν ανοίγει η προβολή αλληλογραφίας, να εμφανίζεται η αρχική σελίδα στην περιοχή μηνυμάτων">
+<!ENTITY enableStartPage.accesskey        "Ό">
+<!ENTITY location.label                   "Τοποθεσία:">
+<!ENTITY location.accesskey               "Τ">
+<!ENTITY useDefault.label                 "Επαναφορά προεπιλογής">
+<!ENTITY useDefault.accesskey             "π">
+<!ENTITY rememberLastMsg.label            "Αποθήκευση του τελευταίου επιλεγμένου μηνύματος">
+<!ENTITY rememberLastMsg.accesskey        "Α">

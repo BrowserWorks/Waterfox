@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Conexão direta">
+<!ENTITY prefProxy.label                     "Conexão com proxy">
+<!ENTITY prefEnableHTTP10.label              "Usar HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "H">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "U">
+<!ENTITY prefEnableHTTP11.label              "Usar HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "T">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "s">
+<!ENTITY prefPara                            "Estas opções permitem aumentar o desempenho e a compatibilidade das conexões HTTP . Alguns servidores, por exemplo, são conhecidos por exigirem HTTP 1.0 (veja detalhes nas notas de atualização).">
+<!ENTITY prefUseragent.label                 "Agente do usuário">
+<!ENTITY prefFirefoxStrict.label             "Identificar como Firefox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "Identificar como SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Identificar como SeaMonkey e anunciar compatibilidade com o Firefox">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "AVISO: Alterar esta configuração pode resultar em sites ou serviços não funcionarem corretamente.">

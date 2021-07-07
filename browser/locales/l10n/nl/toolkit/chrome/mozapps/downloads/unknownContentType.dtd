@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "U hebt gekozen om het volgende bestand te openen:">
+<!ENTITY  from.label                  "vanaf:">
+<!ENTITY  actionQuestion.label        "Wat moet &brandShortName; met dit bestand doen?">
+
+<!ENTITY  openWith.label              "Openen met">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Ander…">
+
+<!ENTITY  saveFile.label              "Bestand opslaan">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "Dit vanaf nu automatisch doen voor dit type bestanden">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "van het type:">
+
+<!ENTITY  chooseHandlerMac.label      "Kiezen…">
+<!ENTITY  chooseHandlerMac.accesskey  "K">
+<!ENTITY  chooseHandler.label         "Bladeren…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "Wilt u dit bestand opslaan?">

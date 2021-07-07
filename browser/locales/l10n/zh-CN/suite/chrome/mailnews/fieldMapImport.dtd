@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "导入通讯录">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "已导入记录的数据：">
+<!ENTITY fieldMapImport.next.label "前进">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "后退">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "使用“上移”和“下移”来使左边的通讯录字段和右边要导入的数据吻合。取消选择您不想导入的项。">
+<!ENTITY fieldMapImport.up.label "上移">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "下移">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "通讯录字段：">
+<!ENTITY fieldMapImport.dataTitle "要导入的记录数据：">
+<!ENTITY fieldMapImport.skipFirstRecord.label "第一条包含字段名的记录">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">
+

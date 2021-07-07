@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+
+<!ENTITY  pref.proxies.advanced.title "Speciális proxybeállítások">
+<!ENTITY  protocols.caption           "Protokollspecifikus proxyk">
+<!ENTITY  protocols.description       "Általában ugyanaz a proxy képes kezelni az összes felsorolt protokollt.">
+<!ENTITY  http.label                  "HTTP-proxy:">
+<!ENTITY  http.accesskey              "T">
+<!ENTITY  ssl.label                   "SSL-proxy:">
+<!ENTITY  ssl.accesskey               "S">
+<!ENTITY  ftp.label                   "FTP-proxy:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "A HTTP-proxy beállításainak használata minden protokollhoz">
+<!ENTITY  reuseProxy.accesskey        "A">
+<!ENTITY  port.label                  "Port:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "Általános proxy">
+<!ENTITY  socks.description           "A SOCKS proxy egy általános proxy, amelyet vállalati vagy hasonló környezetben szoktak használni.">
+<!ENTITY  socks.label                 "SOCKS proxy:">
+<!ENTITY  socks.accesskey             "O">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Használat gépnevek feloldására (javasolt a SOCKS v5-nél)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

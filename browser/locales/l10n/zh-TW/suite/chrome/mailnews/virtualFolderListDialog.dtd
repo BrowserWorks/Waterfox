@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY server.label "帳號: ">
+<!ENTITY server.accesskey "A">
+
+<!ENTITY virtualFolderListTitle.title        "選擇資料夾">
+<!ENTITY virtualFolderDesc.label       "選取要搜尋的資料夾:">
+
+
+<!ENTITY folderName.label "資料夾名稱">
+<!ENTITY folderSearch.label "搜尋">

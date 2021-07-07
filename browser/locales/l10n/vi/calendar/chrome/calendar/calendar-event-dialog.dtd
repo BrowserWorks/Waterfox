@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Chỉnh sửa Mục" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Giữ thời lượng khi thay đổi ngày kết thúc">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Từ" >
+<!ENTITY newevent.to.label                  "Tới" >
+
+<!ENTITY newevent.status.label                    "Trạng thái" >
+<!ENTITY newevent.status.accesskey                "r" >
+<!ENTITY newevent.eventStatus.none.label          "Không xác định" >
+<!ENTITY newevent.eventStatus.none.accesskey      "K" >
+<!ENTITY newevent.todoStatus.none.label           "Không xác định" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Đã hủy" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Đã hủy" >
+<!ENTITY newevent.status.tentative.label          "Phân vân" >
+<!ENTITY newevent.status.tentative.accesskey      "P" >
+<!ENTITY newevent.status.confirmed.label          "Đã xác nhận" >
+<!ENTITY newevent.status.confirmed.accesskey      "c" >
+<!ENTITY newevent.status.needsaction.label        "Cần thao tác" >
+<!ENTITY newevent.status.inprogress.label         "Đang xử lí" >
+<!ENTITY newevent.status.completed.label          "Xong vào" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; hoàn tất">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Thông báo cho người tham dự">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "Lời mời riêng cho mỗi người tham dự">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Tùy chọn này sẽ gửi một email mời cho mỗi người tham dự. Mỗi lời mời chỉ chứa người tham dự người nhận để các danh tính người tham dự khác không được tiết lộ.">
+<!ENTITY event.attendees.disallowcounter.label       "Không cho phép truy cập">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Cho biết rằng bạn sẽ không chấp nhận phản đối">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Mới">
+<!ENTITY  event.menu.item.new.accesskey                   "M">
+<!ENTITY  event.menu.item.new.event.label                 "Sự kiện">
+<!ENTITY  event.menu.item.new.event.accesskey             "S">
+<!ENTITY  event.menu.item.new.task.label                  "Tác vụ">
+<!ENTITY  event.menu.item.new.task.accesskey              "T">
+<!ENTITY  event.menu.item.new.message.label               "Thông điệp">
+<!ENTITY  event.menu.item.new.message.accesskey           "i">
+<!ENTITY  event.menu.item.new.contact.label               "Sổ địa chỉ liên hệ">
+<!ENTITY  event.menu.item.new.contact.accesskey           "a">
+<!ENTITY  event.menu.item.close.label                     "Đóng">
+<!ENTITY  event.menu.item.close.accesskey                 "g">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Lưu">
+<!ENTITY  event.menu.item.save.accesskey                  "L">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Lưu và Đóng">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "v">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Xóa…">
+<!ENTITY  event.menu.item.delete.accesskey                "X">
+<!ENTITY  event.menu.item.page.setup.label                "Thiết lập Trang">
+<!ENTITY  event.menu.item.page.setup.accesskey            "p">
+<!ENTITY  event.menu.item.print.label                     "In">
+<!ENTITY  event.menu.item.print.accesskey                 "I">
+
+<!ENTITY  event.menu.edit.label                           "Chỉnh sửa">
+<!ENTITY  event.menu.edit.accesskey                       "C">
+<!ENTITY  event.menu.edit.undo.label                      "Hoàn tác">
+<!ENTITY  event.menu.edit.undo.accesskey                  "H">
+<!ENTITY  event.menu.edit.redo.label                      "Làm lại">
+<!ENTITY  event.menu.edit.redo.accesskey                  "L">
+<!ENTITY  event.menu.edit.cut.label                       "Cắt">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "Sao chép">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "Dán">
+<!ENTITY  event.menu.edit.paste.accesskey                 "D">
+<!ENTITY  event.menu.edit.select.all.label                "Chọn Toàn Bộ">
+<!ENTITY  event.menu.edit.select.all.accesskey            "B">
+
+<!ENTITY  event.menu.view.label                           "Hiển thị">
+<!ENTITY  event.menu.view.accesskey                       "H">
+<!ENTITY  event.menu.view.toolbars.label                  "Thanh Công Cụ">
+<!ENTITY  event.menu.view.toolbars.accesskey              "C">
+<!ENTITY  event.menu.view.toolbars.event.label            "Thanh Sự Kiện">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "S">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Tùy biến…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "y">
+<!ENTITY  event.menu.view.showlink.label                  "Hiển thị Liên kết Liên quan">
+<!ENTITY  event.menu.view.showlink.accesskey              "H">
+
+<!ENTITY  event.menu.options.label                            "Tùy chọn">
+<!ENTITY  event.menu.options.accesskey                        "y">
+<!ENTITY  event.menu.options.attendees.label                  "Mời khách Tham dự…">
+<!ENTITY  event.menu.options.attendees.accesskey              "M">
+<!ENTITY  event.menu.options.timezone2.label                  "Hiển thị múi giờ">
+<!ENTITY  event.menu.options.timezone2.accesskey              "z">
+<!ENTITY  event.menu.options.priority2.label                  "Ưu tiên">
+<!ENTITY  event.menu.options.priority2.accesskey              "u">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Không xác định">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "K">
+<!ENTITY  event.menu.options.priority.low.label               "Thấp">
+<!ENTITY  event.menu.options.priority.low.accesskey           "T">
+<!ENTITY  event.menu.options.priority.normal.label            "Bình thường">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "B">
+<!ENTITY  event.menu.options.priority.high.label              "Cao">
+<!ENTITY  event.menu.options.priority.high.accesskey          "C">
+<!ENTITY  event.menu.options.privacy.label                    "Riêng tư">
+<!ENTITY  event.menu.options.privacy.accesskey                "R">
+<!ENTITY  event.menu.options.privacy.public.label             "Sự kiện Công khai">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "S">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Chỉ hiện Ngày và Giờ">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "N">
+<!ENTITY  event.menu.options.privacy.private.label            "Sự kiện Cá nhân">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "C">
+<!ENTITY  event.menu.options.show.time.label                  "Hiện tình trạng lịch trình là">
+<!ENTITY  event.menu.options.show.time.accesskey              "t">
+<!ENTITY  event.menu.options.show.time.busy.label             "Bận">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "B">
+<!ENTITY  event.menu.options.show.time.free.label             "Rảnh">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "F">
+
+<!ENTITY event.invite.attendees.label                     "Mời khách Tham dự…">
+<!ENTITY event.invite.attendees.accesskey                 "M">
+<!ENTITY event.email.attendees.label                      "Gửi Email cho Tất cả Khách tham dự…">
+<!ENTITY event.email.attendees.accesskey                  "a">
+<!ENTITY event.email.tentative.attendees.label            "Gửi Email cho các Khách tham dự Chưa quyết định…">
+<!ENTITY event.email.tentative.attendees.accesskey        "u">
+<!ENTITY event.remove.attendees.label2                    "Xóa tất cả những người tham dự">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Xóa người tham dự">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Lưu">
+<!ENTITY  event.toolbar.saveandclose.label                "Lưu và đóng">
+<!ENTITY  event.toolbar.delete.label                      "Xóa">
+<!ENTITY  event.toolbar.attendees.label                   "Mời khách Tham dự">
+<!ENTITY  event.toolbar.privacy.label                     "Riêng tư">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Lưu">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Lưu và đóng">
+<!ENTITY  event.toolbar.delete.tooltip                    "Xóa">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Mời khách tham dự">
+<!ENTITY  event.toolbar.attachments.tooltip               "Thêm đính kèm">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Thay đổi quyền riêng tư">
+<!ENTITY  event.toolbar.priority.tooltip                  "Thay đổi ưu tiên">
+<!ENTITY  event.toolbar.status.tooltip                    "Thay đổi trạng thái">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Thay đổi thời gian rảnh/bận">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Áp dụng đề xuất">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Các trường sự kiện sẽ được điền vào bằng cách sử dụng các giá trị từ phản hồi, chỉ lưu có hoặc không có thay đổi bổ sung sẽ thông báo cho tất cả người tham dự theo đó">
+<!ENTITY counter.button.original.label                    "Áp dụng dữ liệu gốc">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Các trường sẽ được đặt thành các giá trị từ sự kiện ban đầu, trước khi phản hồi được thực hiện">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Tiêu đề:" >
+<!ENTITY event.title.textbox.accesskey                    "u">
+<!ENTITY event.location.label                             "Địa chỉ:" >
+<!ENTITY event.location.accesskey                         "L">
+<!ENTITY event.categories.label                           "Phân mục:">
+<!ENTITY event.categories.accesskey                       "n">
+<!ENTITY event.categories.textbox.label                   "Thêm một danh mục mới" >
+<!ENTITY event.calendar.label                             "Lịch:" >
+<!ENTITY event.calendar.accesskey                         "L">
+<!ENTITY event.attendees.label                            "Khách tham dự:" >
+<!ENTITY event.attendees.accesskey                        "a">
+<!ENTITY event.alldayevent.label                          "Sự kiện Cả ngày" >
+<!ENTITY event.alldayevent.accesskey                      "S">
+<!ENTITY event.from.label                                 "Bắt đầu:" >
+<!ENTITY event.from.accesskey                             "B">
+<!ENTITY task.from.label                                  "Bắt đầu:" >
+<!ENTITY task.from.accesskey                              "B">
+<!ENTITY event.to.label                                   "Kết thúc:" >
+<!ENTITY event.to.accesskey                               "K">
+<!ENTITY task.to.label                                    "Ngày đến hạn:" >
+<!ENTITY task.to.accesskey                                "N">
+<!ENTITY task.status.label                                "Trạng thái:" >
+<!ENTITY task.status.accesskey                            "r">
+<!ENTITY event.repeat.label                               "Lặp lại:" >
+<!ENTITY event.repeat.accesskey                           "i">
+<!ENTITY event.until.label                                "Cho đến khi:">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "Nhắc việc:" >
+<!ENTITY event.reminder.accesskey                         "v">
+<!ENTITY event.description.label                          "Mô tả:" >
+<!ENTITY event.description.accesskey                      "M">
+<!ENTITY event.attachments.label                          "Đính kèm:" >
+<!ENTITY event.attachments.accesskey                      "k" >
+<!ENTITY event.attachments.menubutton.label               "Đính kèm">
+<!ENTITY event.attachments.menubutton.accesskey           "A">
+<!ENTITY event.attachments.url.label                      "Trang web…">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "Xóa" >
+<!ENTITY event.attachments.popup.remove.accesskey         "X" >
+<!ENTITY event.attachments.popup.open.label               "Mở" >
+<!ENTITY event.attachments.popup.open.accesskey           "M" >
+<!ENTITY event.attachments.popup.removeAll.label          "Xóa tất cả" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "a" >
+<!ENTITY event.attachments.popup.attachPage.label         "Đính kèm Trang web…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "w" >
+<!ENTITY event.url.label                                  "Liên kết Liên quan:" >
+<!ENTITY event.priority2.label                            "Ưu tiên:">
+
+<!ENTITY event.reminder.none.label                        "Không có nhắc việc " >
+<!ENTITY event.reminder.0minutes.before.label             "0 phút trước" >
+<!ENTITY event.reminder.5minutes.before.label             "5 phút trước lúc đó" >
+<!ENTITY event.reminder.15minutes.before.label            "15 phút trước lúc đó" >
+<!ENTITY event.reminder.30minutes.before.label            "30 phút trước lúc đó" >
+<!ENTITY event.reminder.1hour.before.label                "1 tiếng trước lúc đó" >
+<!ENTITY event.reminder.2hours.before.label               "2 tiếng trước lúc đó" >
+<!ENTITY event.reminder.12hours.before.label              "12 giờ trước" >
+<!ENTITY event.reminder.1day.before.label                 "1 ngày trước lúc đó" >
+<!ENTITY event.reminder.2days.before.label                "2 ngày trước lúc đó" >
+<!ENTITY event.reminder.1week.before.label                "1 tuần trước lúc đó" >
+<!ENTITY event.reminder.custom.label                      "Tùy biến…" >
+
+<!ENTITY event.reminder.multiple.label                    "Nhiều lời Nhắc việc…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Tình trạng lịch trình:">
+<!ENTITY event.statusbarpanel.privacy.label               "Riêng tư:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Chỉnh sửa Việc tái diễn">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Không lặp lại">
+<!ENTITY event.repeat.daily.label                       "Hàng ngày">
+<!ENTITY event.repeat.weekly.label                      "Hàng tuần">
+<!ENTITY event.repeat.every.weekday.label               "Mỗi ngày-làm-việc">
+<!ENTITY event.repeat.bi.weekly.label                   "Mỗi hai tuần">
+<!ENTITY event.repeat.monthly.label                     "Hàng tháng">
+<!ENTITY event.repeat.yearly.label                      "Hàng năm">
+<!ENTITY event.repeat.custom.label                      "Tùy biến…">
+
+<!ENTITY event.recurrence.pattern.label                 "Khuôn mẫu cho việc tái diễn">
+<!ENTITY event.recurrence.occurs.label                  "Lặp lại" >
+<!ENTITY event.recurrence.day.label                     "hàng ngày" >
+<!ENTITY event.recurrence.week.label                    "hàng tuần" >
+<!ENTITY event.recurrence.month.label                   "hàng tháng" >
+<!ENTITY event.recurrence.year.label                    "hàng năm" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Mỗi" >
+<!ENTITY repeat.units.days.both                         "Ngày" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Mỗi ngày-làm-việc" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Mỗi" >
+<!ENTITY repeat.units.weeks.both                        "Tuần" >
+<!ENTITY event.recurrence.on.label                      "Vào:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Mỗi" >
+<!ENTITY repeat.units.months.both                       "Tháng" >
+<!ENTITY event.recurrence.monthly.every.label           "Mỗi" >
+<!ENTITY event.recurrence.monthly.first.label           "Tuần Đầu">
+<!ENTITY event.recurrence.monthly.second.label          "Tuần Hai">
+<!ENTITY event.recurrence.monthly.third.label           "Tuần Ba">
+<!ENTITY event.recurrence.monthly.fourth.label          "Tuần Bốn">
+<!ENTITY event.recurrence.monthly.fifth.label           "Tuần Năm">
+<!ENTITY event.recurrence.monthly.last.label            "Tuần Cuối">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Chủ nhật" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Thứ Hai" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Thứ Ba" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Thứ Tư" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Thứ Năm" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Thứ Sáu" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Thứ Bảy" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Ngày của tháng">
+<!ENTITY event.recurrence.repeat.recur.label            "Tái diễn vào ngày">
+
+<!ENTITY event.recurrence.every.label                        "Mỗi:" >
+<!ENTITY repeat.units.years.both                             "Năm" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Mỗi" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Tháng Một" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Tháng Hai" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Tháng Ba" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Tháng Tư" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Tháng Năm" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Tháng Sáu" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Tháng Bảy" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Tháng Tám" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Tháng Chín" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Tháng Mười" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Tháng Mười Một" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Tháng Mười Hai" >
+<!ENTITY event.recurrence.yearly.every.label                 "Mỗi">
+<!ENTITY event.recurrence.yearly.first.label                 "Tuần Đầu">
+<!ENTITY event.recurrence.yearly.second.label                "Tuần Hai">
+<!ENTITY event.recurrence.yearly.third.label                 "Tuần Ba">
+<!ENTITY event.recurrence.yearly.fourth.label                "Tuần Bốn">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Tuần Năm">
+<!ENTITY event.recurrence.yearly.last.label                  "Tuần Cuối">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Chủ nhật" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Thứ Hai" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Thứ Ba" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Thứ Tư" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Thứ Năm" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Thứ Sáu" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Thứ Bảy" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "ngày" >
+<!ENTITY event.recurrence.of.label                           "của" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Tháng Một" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Tháng Hai" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Tháng Ba" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Tháng Tư" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Tháng Năm" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Tháng Sáu" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Tháng Bảy" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Tháng Tám" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Tháng Chín" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Tháng Mười" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Tháng Mười Một" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Tháng Mười Hai" >
+
+<!ENTITY event.recurrence.range.label                   "Khoảng thời gian tái diễn">
+<!ENTITY event.recurrence.forever.label                 "Không có ngày kết thúc" >
+<!ENTITY event.recurrence.repeat.for.label              "Tạo" >
+<!ENTITY event.recurrence.appointments.label            "Cuộc hẹn" >
+<!ENTITY event.repeat.until.label                       "Lặp lại cho tới khi" >
+<!ENTITY event.recurrence.preview.label                 "Xem trước">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Mời khách Tham dự">
+<!ENTITY event.organizer.label                  "Người tổ chức">
+<!ENTITY event.freebusy.suggest.slot            "Đề xuất khung thời gian:">
+<!ENTITY event.freebusy.button.next.slot        "Khe tiếp theo">
+<!ENTITY event.freebusy.button.previous.slot    "Khe trước">
+<!ENTITY event.freebusy.zoom                    "Thu phóng:">
+<!ENTITY event.freebusy.legend.free             "Rảnh" >
+<!ENTITY event.freebusy.legend.busy             "Bận" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Phân vân" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Ra khỏi văn phòng" >
+<!ENTITY event.freebusy.legend.unknown          "Không có thông tin" >
+<!ENTITY event.attendee.role.required           "Người tham dự Quan trọng">
+<!ENTITY event.attendee.role.optional           "Người tham dự Phụ">
+<!ENTITY event.attendee.role.chair              "Chủ tọa">
+<!ENTITY event.attendee.role.nonparticipant     "Không có Người tham dự">
+<!ENTITY event.attendee.usertype.individual     "Cá nhân">
+<!ENTITY event.attendee.usertype.group          "Nhóm">
+<!ENTITY event.attendee.usertype.resource       "Tài nguyên">
+<!ENTITY event.attendee.usertype.room           "Phòng">
+<!ENTITY event.attendee.usertype.unknown        "Không rõ">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Vui lòng Xác định Múi giờ">
+<!ENTITY event.timezone.custom.label     "Hiện thêm múi giờ…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Tổng quát">
+<!ENTITY read.only.title.label           "Tiêu đề:">
+<!ENTITY read.only.calendar.label        "Lịch:">
+<!ENTITY read.only.event.start.label     "Ngày bắt đầu:">
+<!ENTITY read.only.task.start.label      "Ngày bắt đầu:">
+<!ENTITY read.only.event.end.label       "Ngày kết thúc:">
+<!ENTITY read.only.task.due.label        "Ngày đến hạn:">
+<!ENTITY read.only.repeat.label          "Lặp lại:">
+<!ENTITY read.only.location.label        "Địa chỉ:">
+<!ENTITY read.only.category.label        "Phân mục:">
+<!ENTITY read.only.organizer.label       "Người tổ chức:">
+<!ENTITY read.only.reminder.label        "Nhắc việc:">
+<!ENTITY read.only.attachments.label     "Đính kèm:">
+<!ENTITY read.only.attendees.label       "Khách tham dự">
+<!ENTITY read.only.description.label     "Mô tả">
+<!ENTITY read.only.link.label            "Liên kết Liên quan">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Lưu và đóng">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Lưu các thay đổi và đóng cửa sổ mà không thay đổi trạng thái tham gia và gửi phản hồi">
+<!ENTITY summary.dialog.accept.label            "Chấp nhận">
+<!ENTITY summary.dialog.accept.tooltiptext      "Chấp nhận lời mời">
+<!ENTITY summary.dialog.tentative.label         "Phân vân">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Dự kiến chấp nhận lời mời">
+<!ENTITY summary.dialog.decline.label           "Từ chối">
+<!ENTITY summary.dialog.decline.tooltiptext     "Từ chối lời mời">
+<!ENTITY summary.dialog.dontsend.label          "Không gửi phản hồi">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Thay đổi trạng thái tham gia của bạn mà không gửi trả lời cho người tổ chức và đóng cửa sổ">
+<!ENTITY summary.dialog.send.label              "Gửi phản hồi ngay">
+<!ENTITY summary.dialog.send.tooltiptext        "Gửi phản hồi cho người tổ chức  và đóng cửa sổ">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "목차">
+<!ENTITY buildToc.label      "목차 만들기 : ">
+<!ENTITY tag.label           "태그:">
+<!ENTITY class.label         "클래스:">
+<!ENTITY header1.label       "1단계">
+<!ENTITY header2.label       "2단계">
+<!ENTITY header3.label       "3단계">
+<!ENTITY header4.label       "4단계">
+<!ENTITY header5.label       "5단계">
+<!ENTITY header6.label       "6단계">
+<!ENTITY makeReadOnly.label  "읽기 전용 목차 만들기">
+<!ENTITY orderedList.label   "목차 내의 모든 항목수">

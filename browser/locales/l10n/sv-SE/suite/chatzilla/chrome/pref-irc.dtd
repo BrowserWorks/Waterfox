@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref-irc.window.title "Chatt på IRC">
+
+<!ENTITY pref-irc.open.title     "ChatZillas inställningar">
+<!ENTITY pref-irc.open.desc      "ChatZillas inställningar är för många för att rymmas i det här fönstret, så i stället kan du öppna dess inställningsfönster här.">
+<!ENTITY pref-irc.open.label     "Öppna ChatZillas inställningar">
+<!ENTITY pref-irc.open.accesskey "Ö">
+<!ENTITY startup.chat.label "Chatt på IRC">
+<!ENTITY startup.chat.accesskey "R">

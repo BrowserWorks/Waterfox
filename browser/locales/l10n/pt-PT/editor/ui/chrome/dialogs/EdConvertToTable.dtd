@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Converter para tabela">
+<!ENTITY instructions1.label   "O compositor cria uma nova tabela de linhas para cada parágrafo da seleção.">
+<!ENTITY instructions2.label   "Escolha o caractere utilizado para separar a seleção em colunas:">
+<!ENTITY commaRadio.label      "Vírgula">
+<!ENTITY spaceRadio.label      "Espaço">
+<!ENTITY otherRadio.label      "Outro:">
+<!ENTITY deleteCharCheck.label "Apagar caractere separador">
+<!ENTITY collapseSpaces.label  "Ignorar espaços extra">
+<!ENTITY collapseSpaces.tooltip "Converter espaços adjacentes num separador">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Параметры учётной записи">
+<!ENTITY accountName.label "Имя учётной записи:">
+<!ENTITY accountName.accesskey "И">
+<!ENTITY identityTitle.label "Личные данные">
+<!ENTITY identityDesc.label "Для каждой учётной записи имеются персональные данные, которые смогут увидеть читающие ваши письма адресаты.">
+<!ENTITY name.label "Имя отправителя:">
+<!ENTITY name.accesskey "о">
+<!ENTITY email.label "Адрес электронной почты:">
+<!ENTITY email.accesskey "А">
+<!ENTITY catchAll.label "Адрес для ответа, когда заголовки доставки совпадают:">
+<!ENTITY catchAll.accesskey "в">
+<!ENTITY replyTo.label "Адрес для ответа:">
+<!ENTITY replyTo.accesskey "д">
+<!ENTITY replyTo.placeholder "Получатели будут отвечать по этому адресу">
+<!ENTITY organization.label "Организация:">
+<!ENTITY organization.accesskey "я">
+<!ENTITY signatureText.label "Текст подписи:">
+<!ENTITY signatureText.accesskey "т">
+<!ENTITY signatureHtml.label "Использовать HTML (например &lt;b&gt;жирный&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "п">
+<!ENTITY signatureFile.label "Вставлять подпись из файла (текст, HTML или картинку):">
+<!ENTITY signatureFile.accesskey "с">
+<!ENTITY edit.label "Изменить…">
+<!ENTITY choose.label "Выбрать…">
+<!ENTITY choose.accesskey "ы">
+<!ENTITY editVCard.label "Редактировать визитную карточку…">
+<!ENTITY editVCard.accesskey "Р">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Прикреплять визитную карточку к сообщениям">
+<!ENTITY attachVCard.accesskey "з">
+
+<!ENTITY manageIdentities.label "Дополнительные адреса электронной почты …">
+<!ENTITY manageIdentities.accesskey "Д">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Сервер исходящей почты (SMTP)">
+<!ENTITY smtpName.accesskey "и">
+<!ENTITY smtpDefaultServer.label "Использовать сервер по умолчанию">
+
+<!ENTITY smtpServerEdit.label "Изменить SMTP-сервер…">
+<!ENTITY smtpServerEdit.accesskey "м">

@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Barre d’adresse">
+
+<!ENTITY autoComplete.label                    "Auto-complétion">
+<!ENTITY autoCompleteMatchHistory.label        "Suggérer automatiquement les sites web à partir de l’historique">
+<!ENTITY autoCompleteMatchHistory.accesskey    "S">
+<!ENTITY autoCompleteMatchBookmarks.label      "Suggérer automatiquement les sites web à partir des marque-pages">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "u">
+<!ENTITY autoCompleteAutoFill.label            "L’auto-complétion essaie de compléter au mieux au cours de la saisie.">
+<!ENTITY autoCompleteAutoFill.accesskey        "L">
+<!ENTITY autoCompleteShowPopup.label           "Afficher la liste des résultats possibles.">
+<!ENTITY autoCompleteShowPopup.accesskey       "h">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Rechercher les correspondances seulement dans les adresses saisies précédemment.">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "R">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Correspondance">
+<!ENTITY autoCompleteMatch.accesskey           "o">
+<!ENTITY autoCompleteMatchAnywhere             "N’importe où dans l’adresse ou le titre de page">
+<!ENTITY autoCompleteMatchWordsFirst           "N’importe où mais en préférant les extrémités de mot">
+<!ENTITY autoCompleteMatchWords                "Seulement sur les extrémités de mots">
+<!ENTITY autoCompleteMatchStart                "Seulement au début de l’adresse ou du titre de page">
+<!ENTITY showInternetSearch.label              "Afficher le moteur de recherche par défaut">
+<!ENTITY showInternetSearch.accesskey          "m">
+
+<!ENTITY formatting.label                      "Formatage">
+<!ENTITY domainFormatting.label                "Mettre en valeur le nom de domaine pour les sites web et les serveurs FTP">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Mettre en valeur les pages web avec une connexion sécurisée de haut niveau">
+<!ENTITY highlightSecure.accesskey             "v">
+
+<!ENTITY unknownLocations.label                "Adresses inconnues">
+<!ENTITY domainGuessing.label                  "Ajouter automatiquement « www. » et « .com » à l’adresse si une page web n’est pas trouvée.">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "Lancer une recherche Internet lorsque le texte saisi n’est pas une adresse web.">
+<!ENTITY keywords.accesskey                    "n">

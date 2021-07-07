@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nieuwe virtuele zoekmap">
+<!ENTITY name.label                 "Naam:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Maken als een submap van:">
+<!ENTITY description.accesskey      "M">
+
+<!ENTITY searchTermCaption.label "Configureer de gebruikte zoekcriteria voor deze virtuele zoekmap: ">
+
+<!ENTITY folderSelectionCaption.label "Selecteer de te doorzoeken mappen: ">
+<!ENTITY chooseFoldersButton.label "Kiezen…">
+<!ENTITY chooseFoldersButton.accesskey "K">
+
+<!ENTITY searchOnline.label "Online zoeken (Geeft up-to-date resultaten voor IMAP- en nieuwsmappen, maar het duurt langer om de map te openen)">
+<!ENTITY searchOnline.accesskey "O">
+<!ENTITY newFolderButton.label       "Maken">
+<!ENTITY newFolderButton.accesskey   "k">
+<!ENTITY editFolderButton.label      "Bijwerken">
+<!ENTITY editFolderButton.accesskey  "B">

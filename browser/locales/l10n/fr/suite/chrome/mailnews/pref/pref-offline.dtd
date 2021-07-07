@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Réseau et stockage">
+<!ENTITY pref.offline.caption             "Hors connexion">
+<!ENTITY textStartUp                      "Au lancement :">
+<!ENTITY textStartUp.accesskey            "c">
+<!ENTITY menuitemRememberPrevState        "Reprendre l’état de connexion précédent">
+<!ENTITY menuitemAskMe                    "Me demander l’état de connexion voulu au lancement">
+<!ENTITY menuitemAlwaysOnline             "Toujours démarrer en mode en ligne">
+<!ENTITY menuitemAlwaysOffline            "Toujours démarrer en mode hors connexion">
+<!ENTITY menuitemAutomatic                "Détecter automatiquement (si disponible)">
+<!ENTITY textGoingOnline                  "À la connexion, envoyer les messages non envoyés ?">
+<!ENTITY radioAutoSend                    "Oui">
+<!ENTITY radioAutoSend.accesskey          "O">
+<!ENTITY radioNotSend                     "Non">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Me demander">
+<!ENTITY radioAskUnsent.accesskey         "M">
+<!ENTITY textGoingOffline                 "À la déconnexion, télécharger les messages pour une utilisation hors connexion ?">
+<!ENTITY radioAutoDownload                "Oui">
+<!ENTITY radioAutoDownload.accesskey      "u">
+<!ENTITY radioNotDownload                 "Non">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "Me demander">
+<!ENTITY radioAskDownload.accesskey       "e">
+<!ENTITY mailConnections.caption          "Connexions messagerie">
+<!ENTITY mailnewsTimeout.label            "Délai d’attente de connexion :">
+<!ENTITY mailnewsTimeout.accesskey        "D">
+<!ENTITY mailnewsTimeoutSeconds.label     "secondes">
+<!ENTITY Diskspace                        "Espace disque">
+<!ENTITY offlineCompactFolders.label      "Compacter les dossiers quand cela économise au moins">
+<!ENTITY offlineCompactFolders.accesskey  "m">
+<!ENTITY offlineCompactFoldersMB.label    "Mo au total">

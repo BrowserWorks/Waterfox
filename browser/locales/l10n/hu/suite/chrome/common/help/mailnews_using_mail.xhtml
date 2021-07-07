@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>A &brandShortName; Levelező és hírolvasó használata</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+<link rel="stylesheet" href="chrome://communicator/skin/smileys.css"
+      type="text/css"/>
+</head>
+<body>
+<h1 id="reading_messages">Üzenetek olvasása</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#getting_new_messages">Új levelek letöltése</a></li>
+    <li><a href="#choosing_how_you_view_the_mail_window">A Levelező ablak beállítása</a></li>
+    <li><a href="#sorting_and_threading_messages">Üzenetek rendezése és csoportosítása</a></li>
+    <li><a href="#saving_and_printing_messages">Üzenetek mentése és nyomtatása</a></li>
+    <li><a href="#controlling_images_scripts_and_plugins">Képek, parancsfájlok és bővítmények kezelése</a></li>
+  </ul>
+</div>
+
+<h2 id="getting_new_messages">Új levelek letöltése</h2>
+
+<p>IMAP-fiók esetén az új üzenetek automatikusan megjelennek a Beérkezett üzenetek mappában, miután elindítottuk a Levelező és hírolvasó programot, és kiválasztottuk az IMAP-fiókhoz tartozó Beérkezett üzenetek mappát.</p>
+
+<p>POP típusú fióknál az üzenetek letöltéséhez ki kell választanunk a Beérkezett üzenetek mappát, és a Letöltés gombra kell kattintani. Amikor POP-fiókból letöltjük az üzeneteket, ezek alapértelmezés szerint törlődnek a POP-kiszolgálóról. <a href="#pop_server_settings">A POP-kiszolgáló beállításai</a> módosíthatók úgy, hogy az üzenetek helyi gépre letöltése mellett ezek másolata a levelezőkiszolgálón is megmaradjon.</p>
+
+<p>Az is beállítható, hogy a Levelező és hírolvasó indításkor kérje le az új üzeneteket, és adott időközönként ismételje ezt meg.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_mail.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Levelező és hírolvasó ikon</strong></td>
+  </tr>
+</table>
+
+<p>Az állapotsoron a Levelező és hírolvasó ikonja zöld nyíl megjelenítésével figyelmeztet az új üzenetek érkezésére.</p>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/task_newmail.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Értesítés új üzenetekről</strong></td>
+  </tr>
+</table>
+
+<p>Az új üzenetek automatikus ellenőrzésének beállítását kezdjük a Levelező ablakban.</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Ha több postafiókkal rendelkezünk, jelöljünk ki egy fiókot, és kattintsunk az ehhez tartozó Kiszolgáló beállításai kategóriára.</li>
+  <li>Válasszuk ki a következő beállítások egyikét vagy mindkettőt a Kiszolgáló beállításai párbeszédablakban.
+    <ul>
+      <li><strong>Új üzenetek ellenőrzése indításkor</strong>: jelöljük be, ha ennél a postafióknál a Levelező és hírolvasó minden indításakor automatikusan ellenőrizni szeretnénk az új leveleket. POP-fiókoknál a Levelező és hírolvasó csak akkor tölti le az új üzeneteket, ha a Letöltés gombra kattintunk, vagy bejelöljük az <q>Új üzenetek automatikus letöltése</q> beállítást.</li>
+      <li><strong>Új üzenetek ellenőrzése [__] percenként</strong>: jelöljük be, ha szeretnénk megadni a levélellenőrzések között eltelt időt. Bármikor ellenőrizhetjük az új leveleinket a Levelező ablakban a Letöltés gombra kattintva.</li>
+    </ul>
+  </li>
+  <li>Kattintsunk az OK gombra. A beállítások a &brandShortName; Levelező és hírolvasó következő indításakor lépnek érvénybe.</li>
+</ol>
+
+<p>A &brandShortName; Levelező és hírolvasó hangjelzéssel vagy figyelmeztető párbeszédpanellel is felhívhatja figyelmünket, ha új üzenetet kapunk. Ennek beállításához lásd: <a href="#notifications">Levelező és hírolvasó beállításai – Értesítések</a>.</p>
+
+<p>Az új üzeneteket kézzel bármikor lekérhetjük. A kijelölt postafiók vagy hírcsoport új üzeneteinek lekéréshez hajtsuk végre a megfelelő műveletet:</p>
+
+<ul>
+  <li>Kattintsunk a Levelező eszköztáron a Letöltés gombra.</li>
+  <li>A Levelező ablakban válasszuk a Fájl menü Új levelek letöltése parancsát.</li>
+</ul>
+
+<p>Az összes levelező-postafiók új üzeneteinek lekéréséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>A Levelező eszköztáron kattintsunk a Letöltés gombon lévő háromszögre.</li>
+  <li>Válasszuk az Összes új levél letöltése parancsot. A &brandShortName; Levelező és hírolvasó ekkor az összes levelező-postafiókunk új üzeneteit lekéri.
+
+    <p>Ha valamelyik levelező-postafiókba nem jelentkeztünk be, a Levelező és hírolvasó az adott postafiók üzeneteinek lekérése előtt a felhasználói név és a jelszó megadását kéri. (Ha a felhasználónevet és a jelszót tároltuk a jelszókezelő segítségével, a Levelező és hírolvasó nem kéri be ezeket az adatokat.)</p>
+  </li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: választhatjuk a Levelező ablakban a Fájl menü <q>Új levelek letöltése</q> parancsát is.</p>
+
+<p>Adott levelező-postafiók új üzeneteinek lekéréséhez induljunk ki a Levelező ablakból:</p>
+
+<ol>
+  <li>A Levelező eszköztáron kattintsunk a Letöltés gombon lévő háromszögre.</li>
+  <li>Jelöljük ki azt a postafiókot, amelynek leveleit le szeretnénk kérni.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: a Levelező és hírolvasó a fiók üzeneteinek első lekérésekor a jelszó megadását kéri. Ekkor beállíthatjuk, hogy a program a Jelszókezelőben tárolja a jelszót.</p>
+
+<p>A Jelszókezelő minden felhasználói nevet és jelszót ment a saját számítógépünkre, és szükség esetén automatikusan beírja azokat. A részletes leírás a <a href="using_priv_help.xhtml#using_the_password_manager">Jelszókezelő használata</a> fejezetben található.</p>
+
+<p>[ <a href="#reading_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="choosing_how_you_view_the_mail_window">A Levelező ablak beállítása</h2>
+
+<p>Saját igényünk szerint megadhatjuk a Levelező ablak elrendezését (ez az ablak jelenik meg, amikor az Ablak menü Levelező és hírolvasó parancsát választjuk).</p>
+
+<ul>
+  <li>A Levelező eszköztár, a keresősáv és az állapotsor megjelenítéséhez vagy elrejtéséhez válasszuk a Nézet menü Eszköztárak parancsát.</li>
+  <li>Válasszuk a Nézet menü Eszköztárak parancsát, és válasszuk az Oldalsáv elemet az Oldalsáv eltüntetéséhez.</li>
+  <li>Tetszőleges ablaktábla lenyitásával vagy becsukásával válasszunk a két és a három ablaktáblás elrendezés között.</li>
+</ul>
+
+<p>[ <a href="#reading_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="sorting_and_threading_messages">Üzenetek rendezése és csoportosítása</h2>
+
+<p>Az üzenetek kategóriák (például tárgy, feladó, dátum vagy sürgősség) szerinti rendezéséhez induljunk ki a Levelező ablakból.</p>
+
+<ul>
+  <li>Kattintsunk a kívánt oszlopfejlécre az üzeneteket listázó ablakban. Választhatjuk a Nézet menü Rendezés parancsát, majd a kívánt oszlopot is.</li>
+</ul>
+
+<p>Az oszlopfejlécek átrendezéséhez induljunk ki a Levelező ablakból:</p>
+
+<ul>
+  <li>Egy oszlop áthelyezéséhez kattintsunk fejlécére, és húzzuk azt balra vagy jobbra.</li>
+</ul>
+
+<p>A megjelenítendő oszlopok megváltoztatásához induljunk ki a Levelező ablakból:</p>
+
+<ul>
+  <li>Kattintsunk az oszlopok megjelenítésére, illetve elrejtésére szolgáló <img src="images/columns.png" /> gombra, és jelöljük ki a szükséges oszlopokat a listán.</li>
+</ul>
+
+<p>Az üzenetek téma (tárgy) szerinti csoportosítása (így minden üzenet a válaszokkal együtt azonos csoportba kerül):</p>
+
+<ul>
+  <li>Kattintsunk a Tárgy, a Feladó és a Dátum oszlopfejléc melletti témacsoport gombra. Választhatjuk a Nézet menü Rendezés parancsát, majd a Témacsoport szerint beállítást is.</li>
+</ul>
+
+<table>
+  <tr>
+    <td colspan="2"><img src="images/threadbutton.png" alt=""/></td>
+  </tr>
+  <tr>
+    <td style="width: 20px;"></td>
+    <td><strong>Témacsoport gomb</strong></td>
+  </tr>
+</table>
+
+<p><strong>Tipp</strong>: A témacsoport gomb automatikusan rendezi a szálat elindító üzenet alá dátum szerint rendezve a válaszokat. Ha a témacsoportokon belül másféle rendezést szeretne, válassza a Nézet menü Rendezés almenüjéből a kívánt beállítást.</p>
+
+<p><strong>Tipp</strong>: Válassza ki a <q>Témacsoportok megőrzése az üzenetek rendezésekor</q> beállítást a <a href="#mail_and_newsgroups">Levelező és hírolvasó</a> Beállítások panelján, ha azt szeretné, hogy a &brandShortName; megtartsa a téma szerinti csoportosítást, amikor az üzenetek az oszlopok fejlécére történő kattintással kerülnek sorbarendezésre. A témacsoport gomb átvált a témacsoport szerinti és a témacsoportok nélküli csoportosítás között ebben az üzemmódban. Ha a <q>Témacsoportok megőrzése az üzenetek rendezésekor</q> beállítás nincsen kiválasztva akkor a &brandShortName; automatikusan témacsoportok nélküli csoportosítás szerint jeleníti meg az üzeneteket, amikor az oszlopok fejlécére történő kattintással kerülnek sorbarendezésre.</p>
+
+<p><strong>Tipp</strong>: az összecsukott témacsoportban lévő olvasatlan üzenetek egyszerűbb megkülönböztetése érdekében a &brandShortName; Levelező és hírcsoport aláhúzza a kiinduló üzenetet.</p>
+
+<p>[ <a href="#reading_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="saving_and_printing_messages">Üzenetek mentése és nyomtatása</h2>
+
+<p>Üzenet mentése szöveges, HTML-, vagy Outlook Express-fájlként:</p>
+
+<ol>
+  <li>A Levelező ablakában jelöljük ki az üzenetet.</li>
+  <li>Válasszuk a Fájl menüből a Mentés, majd a Fájl parancsot.</li>
+  <li>A <q>Fájl típusa</q>, listából válasszuk ki a fájltípust (HTML-fájlok, Szövegfájl vagy Levélfájlok). Válasszuk a Levélfájlok elemet, ha az üzenetet a Microsoft Outlook vagy az Outlook Express által megnyitható formátumban szeretnénk menteni.</li>
+  <li>A fájlnév kiterjesztését változtassuk a .html, .txt vagy .eml lehetőségek valamelyikére, attól függően, hogy melyik fájltípust választottuk a 3. lépésben.</li>
+  <li>Válasszuk ki a fájl helyét, majd kattintsunk a Mentés gombra.</li>
+</ol>
+
+<p>A kijelölt üzenet nyomtatása:</p>
+
+<ul>
+  <li>Kattintsunk a Nyomtatás gombra.</li>
+</ul>
+
+<p>[ <a href="#reading_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="controlling_images_scripts_and_plugins">Képek, parancsfájlok és bővítmények kezelése</h2>
+
+<p>Alapértelmezés szerint a kapott üzenetekben hivatkozott távoli képek és egyéb tartalmak nem jelennek meg, kivéve, ha az a feladó számára engedélyezve van a Címjegyzékben. Ezen beállítások megváltoztatásához:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk az Üzenet megjelenítése elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)</li>
+  <li>Távolísuk el a jelölést a <q>Távoli képek és tartalmak blokkolása az üzenetekben</q> jelölőnégyzetből.</li>
+  <li>A változtatás érvényesítéséhez kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: További tudnivalók a <q>Távoli képek engedélyezése a HTML levelekben</q> beállítással kapcsolatban az <a href="#creating_a_new_address_book_card">Új névjegykártya létrehozása</a> témakörben található, amelyből kiderül, hogy hogyan váltaszthatjuk meg, hogy melyik küldőtől származó levél jeleníthet meg távoli tartalmakat.</p>
+
+<p>Alapértelmezés szerint a JavaScript és a bővítmények használata nem engedélyezett a kapott üzenetekre. A beállítások megváltoztatásához:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Haladó kategóriában kattintsunk a Parancsfájlok és bővítmények elemre. (Ha nem láthatóak a kategória beállításai, a lista kibontásához kattintsunk duplán a Haladó kategóriára.)</li>
+  <li>A levélüzenetekben előforduló weboldalak JavaScript-parancsfájljainak engedélyezéséhez a <q>JavaScript engedélyezése</q> résznél jelöljük be a <q>Levelező és hírolvasó</q> négyzetet.</li>
+  <li>A levélüzenetekben előforduló weboldalak bővítmények használatának engedélyezéséhez a <q>Bővítmények engedélyezése</q> résznél jelöljük be a <q>Levelező és hírolvasó</q> négyzetet.</li>
+  <li>A változtatások érvényesítéséhez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[ <a href="#reading_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h1 id="sending_messages">Üzenetek küldése</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#composing_mail_and_newsgroup_messages">Levelek és hírcsoportüzenetek szerkesztése</a></li>
+    <li><a href="#using_the_message_composition_window">Az Üzenetszerkesztő ablak használata</a></li>
+    <li><a href="#addressing_a_message">Üzenet címzése</a></li>
+    <li><a href="#selecting_message_sending_options">Üzenetküldési beállítások és műveletek</a></li>
+    <li><a href="#replying_to_a_message">Üzenet megválaszolása</a></li>
+    <li><a href="#forwarding_a_message">Üzenet továbbítása</a></li>
+    <li><a href="#confirming_that_your_message_was_opened">Visszajelzés az üzenetünk megnyitásáról</a></li>
+    <li><a href="#saving_and_editing_a_message_draft">Piszkozat mentése és szerkesztése</a></li>
+    <li><a href="#creating_and_using_templates">Sablonok létrehozása és használata</a></li>
+  </ul>
+</div>
+
+<h2 id="composing_mail_and_newsgroup_messages">Levelek és hírcsoportüzenetek szerkesztése</h2>
+
+<p>Új vagy válaszüzenet címzését, szerkesztését és elküldését több módon is végrehajthatjuk:</p>
+
+<ul>
+  <li>Tetszőleges &brandShortName;-ablakban válasszuk a Fájl menüből az Új, majd az Üzenet parancsot.</li>
+  <li>Kattintsunk a Levelező eszköztáron az Új üzenet gombra.</li>
+  <li>Amikor egy beérkezett üzenet látható, kattintsunk a Levelező eszköztáron a Válasz, a Továbbítás vagy a Válasz mindenkinek gombra.</li>
+  <li>A Címjegyzék ablakban jelöljünk ki egy címet, és kattintsunk az Új üzenet gombra.</li>
+</ul>
+
+<p><strong>Tipp</strong>: a Postafiókok beállításai – <a href="#addressing">Levélírás és címzés</a> párbeszédpanel segítségével megadhatjuk, hogy az adott postafiókból elküldött üzenetek szerkesztéséhez használjuk-e a HTML-szövegszerkesztőt.
+  (Ez a beállítás minden postafióknál eltérő lehet.) További tudnivalók: <a href="#changing_the_settings_for_an_account"> Fiókok beállításainak módosítása</a>.</p>
+
+<p>A HTML formátum lehetővé teszi különböző betűkészletek, szövegstílusok (például félkövér vagy dőlt) és szövegszínek, táblázatok, számozott és számozatlan listák és képek használatát az üzenetek szerkesztésénél. Néhány címzett azonban esetleg csak egyszerű szöveges formátumú levelet tud elolvasni. Ha egy üzenetnél mégis az egyszerű szöveges szerkesztőt szeretnénk használni, tartsuk lenyomva a Shift billentyűt, és így kattintsunk az Új üzenet vagy a Válasz gombra.</p>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="using_the_message_composition_window">Az Üzenetszerkesztő ablak használata</h2>
+
+<p>Az Új üzenet ablak levelek és hírcsoportüzenetek címzéséhez, szerkesztéséhez és elküldéséhez használható. Ehhez először a <a href="#addressing">Levélírás és címzés</a> párbeszédpanelen adjuk meg, hogy egyszerű szöveges vagy formázott üzeneteket szeretnénk-e szerkeszteni (a párbeszédpanel a Szerkesztés menü Postafiókok beállításai parancsával érhető el).</p>
+
+<p>Az Új üzenet ablak a Levelező eszköztár Új üzenet gombjával nyitható meg.</p>
+
+<p>Az Új üzenet ablak a következő elemeket tartalmazza:</p>
+
+<ul>
+  <li>Levelező eszköztár
+
+    <p>Ezen a következő gombok találhatók:</p>
+    <ul>
+      <li><strong>Küldés</strong>: az elkészített üzenet elküldésére szolgál.</li>
+      <li><strong>Címzés</strong>: nevek keresése a címjegyzékben.</li>
+      <li><strong>Melléklet</strong>: fájl csatolása az üzenethez. További tudnivalók: <a href="#using_attachments">Mellékletek használata</a>.</li>
+      <li><strong>Helyesírás</strong>: Az üzenet szövegének helyesírás-ellenőrzése:</li>
+      <li><strong>Biztonság</strong>: információ megjelenítése az üzenet titkosításáról, illetve digitális aláírásáról.</li>
+      <li><strong>Mentés</strong>: az üzenet mentése piszkozatként.</li>
+    </ul>
+  </li>
+  <li>Címzés mező: ide kell beírni a címzettek e-mail címét.</li>
+  <li>Mellékletek mező: amikor fájlokat csatolunk az üzenethez (erre a mezőre vagy a Melléklet gombra kattintva), a fájlnevek megjelennek a Címzés mező melletti Mellékletek mezőben.</li>
+  <li>Üzenettörzs mező: ide kell beírni az üzenetünket.</li>
+</ul>
+
+<p>Ha az üzeneteket szerkesztéséhez HTML-szerkesztőt használunk, egy másik eszköztár is megjelenik, amely a &brandShortName; HTML-szerkesztőhöz hasonló szövegformázó gombokat tartalmaz.</p>
+
+<p>A HTML-szerkesztő használatáról a <a href="composer_help.xhtml#formatting_your_web_pages">A weboldal formázása</a> fejezetben olvashatunk.</p>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="addressing_a_message">Üzenet címzése</h2>
+
+<p>Levélüzenet címzése:</p>
+
+<ol>
+  <li>Írjuk be a nevet a Címzés mezőbe.
+
+    <p>Ha az <a href="#address_autocompletion">automatikus címkiegészítés</a> engedélyezve van (ez az alapbeállítás), a név néhány betűjének beírása után a Levelező és hírolvasó kiegészíti a címet, ha az szerepel a címjegyzékekben. (A név egy részének bírása után az <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> billentyű megnyomásával is kérhetjük a címkiegészítést.)</p>
+  </li>
+  <li>Ha több azonos kezdetű cím jelenik meg, jelöljük ki a kívánt címzettet, és nyomjuk meg az <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> billentyűt.
+
+    <p><strong>Megjegyzés</strong>: több címzettnél ezeket vesszővel válasszuk el. A név megadásakor ne használjuk vesszőt az utónév és a vezetéknév között Így írhatunk be több címzettet:</p>
+
+    <p><tt>valaki1@valahol.hu,valaki2@valahol.hu</tt></p>
+  </li>
+  <li>Ha az üzenetet másik postafiókról szeretnénk elküldeni, kattintsunk a <q>Feladó</q> mezőbe, és jelöljük ki a kívánt postafiókot. További tudnivalók: <a href="#changing_the_account_from_which_a_message_is_sent">Az üzenetet küldő postafiók megadása</a>.</li>
+  <li>Ha szükséges, a <q>Címzett </q> mezőbe kattintva másik címzett-típust választhatunk:
+    <ul>
+      <li><strong>Címzett</strong>: az üzenet elsődleges címzettjei.</li>
+      <li><strong>Másolat</strong>: a másodlagos címzettek.</li>
+      <li><strong>Bcc</strong>: másodlagos címzettek, ám nevük nem jelenik meg a többi címzettnél.</li>
+      <li><strong>Válaszcím</strong>: válasz az eredeti üzenet küldési helyétől eltérő e-mail címre.</li>
+      <li><strong>Hírcsoport</strong>: küldés hírcsoportba.</li>
+      <li><strong>Hírcsop.vál.</strong>: hírcsoportba feladás átirányítása, így az ezt követő válaszok az eredeti helyett közvetlenül az átirányított hírcsoportba kerülnek.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Tipp</strong>:  üzenet gyors címzéséhez kattintsunk az egér jobb oldali gombjával az éppen látható levél e-mail címére, és válasszuk a helyi menü Levél írása parancsát.</p>
+
+<p id="changing_the_account_from_which_a_message_is_sent"><strong>Az üzenetet küldő postafiók megadása</strong></p>
+
+<p>Ha több levelező-postafiókkal rendelkezünk, a Feladó mezőben megjelenő postafiók az új üzenet létrehozásának választásakor kijelölt postafiók (vagy kiszolgáló) lesz. A &brandShortName; Levelező és hírolvasó azonban az üzenet szerkesztésekor lehetővé teszi az üzenetet küldő postafiók megadását. Kattintsunk a Feladó mezőbe, és a megjelenő listán jelöljük ki a kívánt postafiókot. A küldés után az üzenet másolata a megfelelő fiók Elküldött elemek mappájába kerül.</p>
+
+<p><strong>Az automatikus címkiegészítés</strong></p>
+
+<p>Az automatikus címkiegészítés a levelek egyszerűbb és gyorsabb címzését biztosítja, amelynél nem kell neveket keresni vagy teljesen beírni. A Levelező és hírolvasó automatikusan ellenőrzi a címjegyzékeket és az <a href="glossary.xhtml#ldap">LDAP</a>-címtárkiszolgálót (ha rendelkezésre áll), és a név beírt részletét egyedi egyezésnél kiegészíti. A hibás beírás lehetőségét segít kiküszöbölni azzal, hogy több találatnál megjeleníti ezek listáját. Az automatikus címkiegészítés alaphelyzetben engedélyezve van.</p>
+
+<p>Ha a Levelező és hírolvasó automatikus címkiegészítésekor kapott eredmény nem megfelelő, törléséhez nyomjuk meg a Backspace vagy a Delete billentyűt, és írjuk be a kívánt címet.</p>
+
+<p>Az automatikus címkiegészítés tiltása:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk a Címjegyzék elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)</li>
+  <li>Az Automatikus címkiegészítés csoportban töröljük a <q>Helyi címjegyzék</q> és a <q>Címtárkiszolgáló</q> négyzet jelölését.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="selecting_message_sending_options">Üzenetküldési beállítások és műveletek</h2>
+
+<p>Az üzenet írásakor a Beállítások menü segítségével a következő üzenetküldési beállítások adhatók meg:</p>
+
+<ul>
+  <li><strong>Címek kiválasztása</strong>: a paranccsal az üzenet címzettjei a Címjegyzékből vagy egy távoli címtárból jelölhetők ki. A címet úgy lehet kikeresni egy címjegyzékből vagy távoli címtárból, hogy a címzett vezetéknevének vagy utónevének első pár betűjét beírjuk. Ekkor a keresés elindul. Jelöljünk ki egy címet, és kattintsunk a Címzett, a Másolat vagy a Rejtett másolat gombra az üzenet címzéséhez.</li>
+  <li><strong>Helyesírás-ellenőrzés</strong>: Elküldés előtt ellenőrzi az üzenet szövegének helyesírását. Megnyomhatjuk a Helyesírás gombot is.</li>
+  <li><strong>Helyesírás-ellenőrzés beírás közben</strong>: már az üzenet beírása közben helyesírás-ellenőrzést végez a program.</li>
+  <li><strong>Üzenet idézése</strong>: a parancs alkalmazásával a kiválasztott szöveg idézett szövegként jelenik meg.</li>
+  <li><strong>Tértivevény</strong>: válasszuk ezt a beállítást, ha visszajelzést szeretnénk kérni a címzettől, miután megnyitotta az üzenetünket. Ne feledjük, hogy a címzett dönthet úgy is, hogy nem küld visszajelzést. A beállítással a tértivény engedélyezését vagy tiltását üzenetenként szabályozhatjuk. Ha minden általunk küldött üzenetről szeretnénk visszajelzést kérni, állítsuk be a tértvivevények beállításainál. További tudnivalók: <a href="#return_receipts_preferences">Levelező és hírolvasó beállításai – Tértivevények</a>.</li>
+  <li><strong>Formátum</strong>: az üzenet elküldhető egyszerű szöveges, HTML (formázott) vagy mindkét formátumban. Az <q>Automatikus felismerés</q> választásakor a Levelező és hírolvasó megkérdezi a kívánt formátumot, ha nem ismert, hogy a címzett levelezőprogramja megfelelően meg tudja-e jeleníteni a HTML-üzeneteket. Az itt választott formátum felülbírálja a <span class="mac">&brandShortName;</span><span class="noMac">Szerkesztés</span> Beállítások parancsának választása után megadott beállítást.</li>
+  <li><strong>Sürgősség</strong>: válasszunk beállítást annak megadására, hogy az üzenet egyáltalán nem sürgős, nem sürgős, normál, sürgős vagy rendkívül sürgős.</li>
+  <li><strong>Karakterkódolás</strong>: válasszuk ki az üzenethez alkalmazott karakterkódolást.</li>
+  <li><strong>Elküldött üzenet iktatása</strong>: akkor válasszuk, ha az elküldött üzenet másolatát nem az alapértelmezett Elküldött elemek mappában szeretnénk elhelyezni. Ezután adjuk meg a kívánt mappát.</li>
+  <li><strong>Biztonság</strong>: akkor válasszuk, ha az üzenet alapértelmezett biztonsági beállításain változtatni szeretnénk.</li>
+
+<p>További üzenetformázási beállítás érhető el a Szerkesztés menün keresztül:</p>
+
+  <li><strong>Újratördelés</strong>: ha egyszerű szöveges szerkesztőben írjuk az üzenetet, ezzel a paranccsal az idézett szöveg hosszú sorait tördelhetjük úgy, hogy láthatók legyenek az ablakban. A parancs az <a href="#composition">Üzenet szerkesztése</a> panelen megadott számú karakter szélességűre tördeli a kijelölt idézetszöveget. Ez akkor lehet hasznos, ha a válaszban az eredeti üzenet idézését állítottuk be, és ez hosszú sorokat tartalmaz.
+
+    <p>A Szerkesztés menü Postafiókok beállításai parancsával adhatjuk meg, hogy az üzenetek szerkesztéséhez egyszerű szöveges szerkesztőt kívánunk használni. A postafiók Levélírás és címzés paneljén töröljük a <q>Levelek írása HTML formátumban</q> négyzet jelölését, ha az összes üzenetnél egyszerű szöveges szerkesztőt szeretnénk használni. Ha az egyszerű szöveges szerkesztőt csak alkalmanként használjuk, tartsuk lenyomva a Shift billentyűt, és így kattintsunk az Új üzenet vagy a Válasz gombra.</p>
+  </li>
+  <li><strong>Check Spelling</strong>: Checks the spelling of the message text
+    before you send it. You can also click Spell.</li>
+  <li><strong>Spellcheck As You Type</strong>: Choose this option to have the
+    spelling of the message text checked as you type.</li>
+</ul>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="replying_to_a_message">Üzenet megválaszolása</h2>
+
+<p>Levélüzenet megválaszolása:</p>
+
+<ul>
+  <li>Jelöljük ki az üzenetet.</li>
+  <li>Kattintsunk a Válasz gombra, ha csak a feladónak szeretnénk válaszolni.</li>
+  <li>Kattintsunk a Válasz mindenkinek gombra, ha az üzenet összes címzettjének is válaszolni szeretnénk.</li>
+</ul>
+
+<p>Válaszoláskor az eredeti üzenetet beilleszthetjük a válaszba, és megadhatjuk, hogy az hol helyezkedjen el.</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Ha több postafiókkal rendelkezünk, jelöljünk ki egy fiókot, és kattintsunk az ehhez tartozó <a href="#addressing">Levélírás és címzés</a> kategóriára.</li>
+  <li>Jelöljük be a <q>Válaszoláskor az eredeti szöveg automatikus idézése</q> négyzetet.</li>
+  <li>Adjuk meg a válaszunk helyzetét az üzeneten belül. A <q> válasz kezdése az idézett szöveg alatt</q> az alapértelmezett beállítás.</li>
+  <li>Ha <a href="#account_settings">aláírást is teszünk</a> minden kimenő levélre, és itt azt választottuk, hogy az idézet fölött kezdjük meg a választ, akkor beállíthatjuk, hogy az aláírás hová kerüljön.
+    <ul>
+      <li>Válasszuk <q>a válasz kezdése az idézett szöveg alatt (ajánlott)</q> beállítást, hogy az aláírás az üzenet legvégére, az idézet szövege alá kerüljön.</li>
+      <li>Válasszuk <q>a válasz kezdése az idézett szöveg felett</q> beállítást, hogy az aláírás a válasz és az idézet szövege közé kerüljön.</li>
+    </ul>
+
+    <p><strong>Note</strong>: If you have created a signature, you can
+      optionally <a href="mailnews_account_settings.xhtml#addressing">omit
+      it</a> when replying to a message.</p>
+  </li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="forwarding_a_message">Üzenet továbbítása</h2>
+
+<p>Üzenet továbbításakor megadhatjuk, hogyan kívánjuk elhelyezni azt a saját üzenetben: <em>beágyazva</em> az üzenet törzsébe (ez az alapbeállítás) vagy mellékletként.</p>
+
+<p>Üzenet továbbítása:</p>
+
+<ol>
+  <li>Jelöljük ki az üzenetet, és kattintsunk a Továbbítás gombra.</li>
+  <li>Írjuk be a címzett nevét vagy e-mail címét.</li>
+  <li>Kattintsunk a Küldés gombra.</li>
+</ol>
+
+<p>Üzenettovábbítás alapbeállításának megadása:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk az <a href="#composition">Üzenet szerkesztése</a> elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)</li>
+  <li>A Levél továbbítása beállításnál válasszuk a Beágyazva (az üzenet törzsébe) vagy a Mellékletként lehetőséget.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Tipp</strong>: az alapértelmezett továbbítási mód felülbírálható. Jelöljük ki az üzenetet, válasszuk az Üzenet menü Továbbítás módja almenüjét, majd válasszuk a Beágyazva vagy a Mellékletként lehetőséget.</p>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="confirming_that_your_message_was_opened">Visszajelzés az üzenetünk megnyitásáról</h2>
+
+<p>A tértivevény segítségével értesülhetünk arról, hogy a címzett megjelenítette (megnyitotta) az üzenetünket. A címzett levelezőprogramjának támogatnia kell az MDN (Message Disposition Notification) szabványt. Ne feledjük, hogy a címzett dönthet úgy is, hogy nem küld visszajelzést, hiába kérjük.</p>
+
+<p>A globális <a href="#return_receipts_preferences">Levelező és hírolvasó beállításai – Tértivevény</a> beállítópanelen azt is megadhatjuk, hogyan kezeljük a nekünk küldött tértivevényeket. Ezeket a globális beállításokat felülbírálhatjuk az egyes postafiókoknál. A hírcsoportokba küldött üzeneteinkhez nem lesz mellékelve tértivevény, mert a hírcsoport-kiszolgálók nem támogatják ezt a funkciót.</p>
+
+<p>Ha egy adott üzenetet szeretnénk tértivevénnyel elküldeni:</p>
+
+<ul>
+  <li>Az üzenetszerkesztő ablak Beállítások menüjéből válasszuk a Tértivevény parancsot.</li>
+</ul>
+
+<p>Ha egy adott postafiókból elküldött minden üzenetet automatikusan tértivevénnyel szeretnénk feladni:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk a <a href="#return_receipts_preferences">Levelező és hírolvasó beállításai – Tértivevények</a> elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)</li>
+  <li>Jelöljük be a <q>Mindig tértivevénnyel küldje az üzenetet</q> négyzetet.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>A tértivevényekkel kapcsolatos további tudnivalók: <a href="#return_receipts_preferences">Levelező és hírolvasó beállításai – Tértivevények</a>.</p>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="saving_and_editing_a_message_draft">Piszkozat mentése és szerkesztése</h2>
+
+<p>Az éppen írt üzenetet piszkozatként menthetjük, így később folytathatjuk a levélírást:</p>
+
+<ul>
+  <li>Az Új üzenet ablakban kattintsunk a Mentés gombra, vagy válasszuk a Fájl menüből a Mentés másként, majd a Piszkozat parancsot. Ekkor alapértelmezés szerint az üzenet az aktuális fiók Piszkozatok mappájába kerül.
+
+    <p><strong>Megjegyzés</strong>: a mentés után az üzenet megnyitva marad.</p>
+  </li>
+</ul>
+
+<p>Üzenet piszkozatának szerkesztését vagy elküldését kezdjük a Levelező ablakban:</p>
+
+<ol>
+  <li>Kattintsunk a Piszkozatok mappára abban a postafiókban, amelyben a piszkozatot létrehoztuk.</li>
+  <li>Kattintsunk a szerkeszteni kívánt üzenetre.</li>
+  <li>Kattintsunk az üzenet jobb felső sarkában a Piszkozat szerkesztése gombra.</li>
+  <li>Szerkesszük az üzenetet.</li>
+  <li>Az üzenet elküldéséhez kattintsunk a Küldés gombra, vagy ha később még folytatni szeretnénk a szerkesztést, kattintsunk a Mentés gombra.
+
+    <p><strong>Megjegyzés</strong>: az üzenet elküldésekor törlődik a Piszkozatok mappából.</p>
+  </li>
+</ol>
+
+<p><strong>Tipp</strong>: a szerkeszteni kívánt piszkozat dupla kattintással is megnyitható. Ez különösen akkor hasznos, ha az üzenetek ablaktáblája be van zárva.</p>
+
+<p>Egy vagy több feleslegessé vált piszkozat törlését kezdjük a Levelező ablakban.</p>
+
+<ol>
+  <li>Kattintsunk a Piszkozatok mappára abban a postafiókban, amelyben a piszkozatokat létrehoztuk.</li>
+  <li>Válasszuk ki a törölni kívánt piszkozatokat.</li>
+  <li>A Levelező eszköztáron kattintsunk a Törlés gombra.</li>
+</ol>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="creating_and_using_templates">Sablonok létrehozása és használata</h2>
+
+<p>A sablonok a gyakran használt üzenettípusok formázásánál lehetnek hasznosak, ilyen például a hetente küldött állapotjelentés. Tetszőleges ablakban megjelenített üzenetet menthetünk sablonként, így ezt végrehajthatjuk a levél szerkesztéséhez használt ablakból is.</p>
+
+<p>Üzenet mentése sablonként:</p>
+
+<ol>
+  <li>A Levelező ablakban hozzunk létre egy új üzenetet az Új üzenet gombra történő kattintással, majd állítsuk be az alapértelmezett betűkészletet, betűméretet, szövegszínt, háttérszínt és a többi kívánt alapértelmezett formázást.
+
+    <p>A másik megoldás, hogy egy létező üzenetet nyitunk meg, amely már a kívánt módon van formázva.</p>
+  </li>
+  <li>Az üzenet nyitva tartása mellett válasszuk a Fájl menüből a Mentés, majd a Sablon parancsot. Az üzenet az aktuális postafiók Sablonok mappájába kerül sablonként.</li>
+</ol>
+
+<p>Üzenet szerkesztése sablon használatával:</p>
+
+<ol>
+  <li>A Levelező ablakban kattintsunk a megfelelő fiók Sablonok mappájára.</li>
+  <li>Kattintsunk duplán a megnyitni kívánt üzenetsablonra.</li>
+  <li>Szerkesszük az üzenetet, majd mentsük (ekkor a Piszkozatok mappába kerül), vagy küldjük el.
+
+    <p><strong>Megjegyzés</strong>: Az üzenet elküldésekor a sablon nem törlődik a Sablonok mappából. A sablont még később is felhasználhatjuk.</p>
+  </li>
+</ol>
+
+<p>Egy vagy több feleslegessé vált sablon törlését kezdjük a Levelező ablakban.</p>
+
+<ol>
+  <li>Kattintsunk a Sablonok mappára abban a postafiókban, amelyben a sablonokat létrehoztuk.</li>
+  <li>Válasszuk ki a törölni kívánt sablonokat.</li>
+  <li>A Levelező eszköztáron kattintsunk a Törlés gombra.</li>
+</ol>
+
+<p>[ <a href="#sending_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h1 id="creating_html_mail_messages">HTML formátumú levélüzenetek létrehozása</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#using_html_in_your_messages">A HTML használata az üzenetekben</a></li>
+    <li><a href="#choosing_html_mail_sending_options">HTML-üzenetek küldési beállításai</a></li>
+    <li><a href="#specifying_recipients_for_html_messages">HTML-üzenetek címzettjeinek megadása</a></li>
+    <li><a href="#viewing_the_message_source_for_html_messages">HTML-üzenetek forrásának megtekintése</a></li>
+    <li><a href="#using_the_html_mail_question_dialog_box">A Küldés HTML formátumban párbeszédpanel használata</a></li>
+  </ul>
+</div>
+
+<h2 id="using_html_in_your_messages">A HTML használata az üzenetekben</h2>
+
+<p>A HTML-üzenetek, a weboldalakhoz hasonlóan, formázott szöveget, hivatkozást, képet és táblázatot is tartalmazhatnak. Előfordulhat, hogy nem minden címzett tudja fogadni a HTML-üzeneteket. A &brandShortName; Levelező és hírolvasó az összes fióknál lehetővé teszi a levelek és a hírcsoportüzenetek elkészítését HTML vagy egyszerű szöveges szerkesztőben. Emellett megadható, hogy alapértelmezés szerint az egyes címzettek HTML vagy egyszerű szöveges formátumban kapják-e az üzeneteket, illetve hogyan kezelje a Levelező és hírolvasó az üzeneteket, ha egy címzettről nem tudható, hogy képes-e fogadni formázott levelet.</p>
+
+<p>Az üzenetek alapértelmezett szerkesztési formátumának megadásához induljunk ki a Levelező ablakból.</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljük ki a használni kívánt levelező vagy hírcsoportfiókot.</li>
+  <li> Címzés és szerkesztés panelen válasszuk a <q>Levelek írása HTML formátumban</q>. Ekkor a Formázó eszköztár is meg fog jelenni az Új üzenet ablakban. A fióknál az egyszerű szöveges szerkesztő használatához hagyjuk üresen a négyzetet.</li>
+</ol>
+
+<p>[ <a href="#creating_html_mail_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h3 id="editing_or_inserting_html_elements">HTML-elemek szerkesztése vagy beszúrása</h3>
+
+<p>Ha ismerjük a HTML-forráskód működését, további HTML-kódelemeket, stílusattribútumokat és JavaScript-kódot is beszúrhatunk az üzenetbe. Ha bizonytalanok vagyunk a változtatások eredményében, leghelyesebb, ha nem módosítjuk a forráskódot. A HTML kóddal való munkánál a következő módszereket használhatjuk:</p>
+
+<ul>
+  <li>Helyezzük a beszúrási pontot oda, ahol a HTML kódot szeretnénk beszúrni, és válasszuk a Beszúrás menü HTML parancsát. A HTML beszúrása párbeszédpanelen írjuk be a HTML-kódelemeket és a szöveget, majd kattintsunk a Beszúrás gombra.</li>
+  <li>Válasszuk ki a szerkeszteni kívánt HTML-forráskódot, majd válasszuk a Beszúrás menü HTML parancsát. A HTML beszúrása párbeszédpanelen írjuk be a HTML-kódelemeket és a szöveget, majd kattintsunk a Beszúrás gombra.</li>
+  <li>Jelöljünk ki egy elemet, például táblázatot, horgonyt, képet, hivatkozást vagy vízszintes vonalat. Az elemhez tartozó tulajdonságbeállító párbeszédpanel megnyitásához kattintsunk duplán az elemre. A Haladó tulajdonságok szerkesztése párbeszédpanel megnyitásához kattintsunk a Haladó szerkesztés gombra. Ezen a párbeszédpanelen HTML attribútumok és JavaScript kód vehető fel az objektumokhoz.</li>
+</ul>
+
+<p>További tudnivalók a HTML-forráskód szerkesztéséről: <a href="composer_help.xhtml#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a>.</p>
+
+<p>[ <a href="#creating_html_mail_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="choosing_html_mail_sending_options">HTML-üzenetek küldési beállításai</h2>
+
+<p>Alapértelmezés szerint a Levelező és hírolvasó megerősítést kér a HTML-üzenetek elküldése előtt, ha nem ismert, hogy a címzett levelezőprogramja megfelelően meg tudja-e jeleníteni az ilyen üzeneteket.</p>
+
+<p>A küldési beállítások megadását kezdjük a Levelező ablakban:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>A Levelező és hírolvasó kategória alatt kattintsunk a <a href="#send_format">Küldés formátuma</a> elemre. (Ha nem láthatók az alkategóriák, a kibontásukhoz kattintsunk duplán a Levelező és hírolvasó kategóriára.)
+
+    <p><strong>Megjegyzés</strong>: ezek a beállítások csak levelekre érvényesek, hírcsoportüzenetekre nem.</p>
+  </li>
+  <li>Adjuk meg a kívánt beállítást, majd kattintsunk az OK gombra.</li>
+</ol>
+
+<p>Ha az üzenet szerkesztése közben rájövünk, hogy nem minden címzett képes fogadni formázott leveleket, az üzenet formátumát az elküldés előtt még megváltoztathatjuk:</p>
+
+<ol>
+  <li>Az Új üzenet ablakban válasszuk a Beállítások menü Formátum parancsát.</li>
+  <li>Adjuk meg, hogy milyen formátumban szeretnénk elküldeni az üzenetet:
+    <ul>
+      <li><strong>Automatikus felismerés</strong>: a Levelező és hírolvasó a megfelelő szövegformátumot választja. Ha nem tudja eldönteni, megkérdezi tőlünk.</li>
+      <li><strong>Csak sima szöveg</strong>: az üzenet formázása (például félkövér szöveg) elvész, de minden levelezőprogram képes megjeleníteni.</li>
+      <li><strong>Csak Rich Text (HTML)</strong>: nem biztos, hogy minden címzett levelezőprogramja megfelelően meg tudja jeleníteni a HTML formátumú üzenetet. Csak akkor válasszuk ezt a beállítást, ha biztosak vagyunk abban, hogy a címzett levelezőprogramja meg tudja jeleníteni a HTML formátumú leveleket.</li>
+      <li><strong>Sima és Rich Text (HTML) szöveg</strong>: ez a megoldás több lemezhelyet foglal, de talán a legjobb választás, ha nem vagyunk biztosak abban, hogy a címzett levelezőprogramja meg tudja jeleníteni a HTML formátumú levelet.</li>
+    </ul>
+  </li>
+  <li>Az üzenet beírása és szerkesztése után kattintsunk a Küldés gombra.</li>
+</ol>
+
+<p>[ <a href="#creating_html_mail_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="specifying_recipients_for_html_messages">HTML-üzenetek címzettjeinek megadása</h2>
+
+<p>Időt takaríthatunk meg, ha a címjegyzék szereplőknél megadjuk, hogy képesek-e fogadni HTML-üzeneteket.</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü Címjegyzék parancsát.</li>
+  <li>A bal oldalon jelöljük ki a címjegyzéket, míg a jobb oldalon a kívánt nevet.</li>
+  <li>Kattintsunk a Tulajdonságok gombra a címzett <q>névjegykártyájának szerkesztése</q> párbeszédablak megjelenítéséhez.</li>
+  <li>A Név panellapon <q>Az üzeneteket a következő formátumban szereti megkapni</q> lenyitható listán válasszuk a HTML elemet, ha tudjuk, hogy a címzett képes fogadni formázott üzeneteket (azaz ezekben hivatkozások, képek és táblázatok is szerepelhetnek).
+
+    <p>Ha ez a címzett csak egyszerű szöveges (formázás nélküli) üzeneteket fogadhat, a Sima szöveg elemet válasszuk. Ha nem vagyunk ebben biztosak, válasszuk az Ismeretlen elemet.</p>
+
+    <p>Ekkor a &brandShortName; Levelező és hírolvasó a küldési formátumot a Beállítások párbeszédpanel Küldés formátuma beállítása alapján határozza meg. Ha még ebből sem állapítható meg a megfelelő formátum, a Levelező és hírolvasó megkérdezi ezt az üzenet elküldésekor.</p>
+  </li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[ <a href="#creating_html_mail_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="viewing_the_message_source_for_html_messages">HTML-üzenetek forrásának megtekintése</h2>
+
+<p>A beérkezett HTML-üzenetekben lévő különféle kódok egyszerűen megjeleníthetők:</p>
+
+<ol>
+  <li>Nyissuk meg az üzenetet az üzenetlista-ablakból.</li>
+  <li>Válasszuk a Nézet menü Üzenet forrása parancsát.</li>
+</ol>
+
+<p>[ <a href="#creating_html_mail_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="using_the_html_mail_question_dialog_box">A Küldés HTML formátumban párbeszédpanel használata</h2>
+
+<p>A Küldés HTML formátumban párbeszédpanel akkor jelenik meg, ha olyan címzettnek próbálunk meg formázott üzenetet küldeni, aki nem képes ilyet megjeleníteni, vagy amikor a Levelező és hírolvasó nem tudja megállapítani, hogy egy címzett tud-e fogadni HTML-üzenetet. Ha kétségek merülnek fel, küldjük el az üzenetet egyszerű szöveges formátumban és HTML-ben is.</p>
+
+<p>[ <a href="#creating_html_mail_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h1 id="using_attachments">Mellékletek használata</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#attaching_a_file_or_web_page">Fájl vagy weboldal csatolása</a></li>
+    <li><a href="#viewing_and_opening_attachments">Mellékletek megtekintése és megnyitása</a></li>
+    <li><a href="#saving_attachments">Mellékletek mentése</a></li>
+  </ul>
+</div>
+
+<h2 id="attaching_a_file_or_web_page">Fájl vagy weboldal csatolása</h2>
+
+<p>Fájl csatolása elküldendő üzenethez:</p>
+
+<ol>
+  <li>Az Új üzenet ablakban kattintsunk a Melléklet gombra, vagy válasszuk a Fájl menü Fájl csatolása parancsát. A <q>Fájl csatolása</q> párbeszédpanel jelenik meg.
+
+    <p><strong>Tipp</strong>: fájl csatolásához a Mellékletek mezőn belülre is kattinthatunk.</p>
+  </li>
+  <li>Írjuk be a mellékelni kívánt fájl nevét, vagy keressük azt meg a merevlemezen.</li>
+  <li>Kattintsunk a Megnyitás gombra. A fájlnév megjelenik a Mellékletek mezőben.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a mellékelni kívánt fájlokat az egérrel is áthúzhatjuk az Új üzenet ablak Mellékletek mezőjébe.</p>
+
+<p>Weboldal csatolása elküldendő üzenethez:</p>
+
+<ol>
+  <li>Az Új üzenet ablakban válasszuk a Fájl menü Weboldal csatolása parancsát.</li>
+  <li>A megjelenő párbeszédpanelen írjuk be az oldal webcímét, majd kattintsunk az OK gombra. A weboldal URL-címe megjelenik a Mellékletek mezőben.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a Böngészőben pillanatnyilag megtekintett weboldalt elküldhetjük másnak is. Válasszuk a Fájl menü Oldal küldése parancsát.</p>
+
+<p>[ <a href="#using_attachments">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="viewing_and_opening_attachments">Mellékletek megtekintése és megnyitása</h2>
+
+<p>Ha a beérkezett üzenet melléklete olyan típusú fájlt tartalmaz, amelyet a &brandShortName; meg tud jeleníteni (például grafikus vagy HTML fájl), a melléklet az üzenet törzsébe <em>beágyazva</em> jelenik meg. Az egyéb fájltípusoknál a Levelező és hírolvasó lehetővé teszi, hogy más alkalmazásokban megnyissuk a mellékletet, vagy azt a merevlemezre mentsük.</p>
+
+<p>Melléklet megnyitásakor ügyeljünk arra, hogy az adott fájltípust kezelő alkalmazás telepítve legyen a számítógépen. Például DOC formátumú fájlnál legyen olyan program, amely ezt meg tudja nyitni.</p>
+
+<p>Melléklet megnyitása:</p>
+
+<ol>
+  <li>Kattintsunk duplán a mellékletre (ha több van, a megnyitni kívánt fájlra).</li>
+  <li>A megjelenő Letöltés párbeszédpanelen adjuk meg a kívánt műveletet:
+    <ul>
+      <li>Ha a &brandShortName; a számítógépen talál olyan alkalmazást, amely meg tudja nyitni a mellékletet, az megnyitható abban. Ha másik alkalmazást szeretnénk használni, kattintsunk a <q>Tallózás</q> gombra.</li>
+      <li>Ha a Mozilla nem talál a számítógépen olyan alkalmazást, amely meg tudja nyitni a mellékletet, lemezre menthetjük azt. Bár ekkor nem tudjuk megnyitni a mellékletet, de legalább a merevlemezen tárolható addig, míg telepítjük a megfelelő alkalmazást.</li>
+      <li>A <q>Haladó</q> gombra kattintva új fájltípus adható a segédalkalmazások listájához. &brandShortName; segédalkalmazásokat használ annak eldöntéséhez, hogy a különböző fájltípusokat hogyan nyitják meg más alkalmazások &brandShortName; programból. További tudnivalók: <a href="nav_help.html#nav_helperapps">Különböző fájltípusok kezelése</a>.</li>
+    </ul>
+  </li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: ha IMAP-kiszolgálót használunk a levelek fogadásához, valamennyi melléklet a kiszolgálón tárolódik.</p>
+
+<p>[ <a href="#using_attachments">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="saving_attachments">Mellékletek mentése</h2>
+
+<p>Melléklet mentése:</p>
+
+<ol>
+  <li>Az üzenet jobb oldalán a Mellékletek mezőben jelöljük ki a menteni kívánt mellékletet.</li>
+  <li>Kattintsunk az egér jobb oldali gombjával <span class="mac">(Macintosh számítógépen <kbd>Ctrl</kbd>-click</span> a mellékletre, és válasszuk a helyi menü Mentés másként parancsát.</li>
+  <li>Adjuk meg a fájlnevet és a mentés helyét, majd kattintsunk az OK gombra. A Levelező és hírolvasó letölti a mellékletet, és a megadott helyre menti.</li>
+</ol>
+
+<p><strong>Tip</strong>: az összes melléklet mentéséhez kattintsunk az egér jobb oldali gombjával<span class="mac">(Macintosh számítógépen <kbd>Ctrl</kbd>-click</span>  egy mellékletre, és válasszuk a helyi menü Összes mentése parancsát. Ezután meg kell adni a mellékletek mentési helyét.</p>
+
+<p>[ <a href="#using_attachments">Vissza a fejezet elejére</a> ]</p>
+
+<h1 id="deleting_messages">Üzenetek törlése</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#deleting_pop_or_imap_messages">POP- vagy IMAP-üzenetek törlése</a></li>
+    <li><a href="#moving_messages_to_and_from_the_trash">Üzenetek áthelyezése a Törölt elemek mappába és mappából</a></li>
+  </ul>
+</div>
+
+<h2 id="deleting_pop_or_imap_messages">POP- vagy IMAP-üzenetek törlése</h2>
+
+<p>Az üzenetek törlési módja függ a levelezőkiszolgáló típusától: POP vagy IMAP.
+  A törölt POP-üzenetek automatikusan a Törölt elemek mappába kerülnek. A IMAP-kiszolgálót használók különféle beállításokat adhatnak meg az üzenetek törléséhez.</p>
+
+<p>A Beérkezett üzenetek vagy más mappa üzenetének törlését kezdjük a Levelező ablakban:</p>
+
+<ol>
+  <li>Az üzenetlistán jelöljük ki a kívánt üzeneteket, és nyomjuk meg a Delete billentyűt. Alapértelmezés szerint a Levelező és hírolvasó ekkor a kijelölt üzeneteket a Törölt elemek mappába helyezi át.</li>
+  <li>Az üzenetek végleges törléséhez válasszuk a Fájl menü Törölt elemek mappa ürítése parancsát.</li>
+</ol>
+
+<p>Üzenetek megnyitás nélkül történő törlését kezdjük a Levelező ablakban.</p>
+
+<ol>
+  <li>Válasszuk a Nézet menü Eszköztárak parancsát, és töröljük az Üzenetablak jelölését.
+
+    <p>Azt is megtehetjük, hogy az Üzenetablak fogantyújára (a recés rész az üzenetlista alatt, középen) kattintva bezárjuk ezt az ablaktáblát.</p>
+  </li>
+  <li>Az üzenetlistán jelöljük ki a kívánt üzeneteket, és nyomjuk meg a Delete billentyűt.</li>
+</ol>
+
+<p>Törlési beállítások IMAP üzenetekhez:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Postafiókok beállításai parancsát. A Postafiókok beállításai párbeszédpanel jelenik meg.</li>
+  <li>Jelöljük ki a kívánt IMAP postafiókot, és kattintsunk alatta a Kiszolgáló beállításai kategóriára.</li>
+  <li>Adjuk meg a kívánt törlési <a href="#when_i_delete_a_message">beállításokat</a>, majd kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[ <a href="#deleting_messages">Vissza a fejezet elejére</a> ]</p>
+
+<h2 id="moving_messages_to_and_from_the_trash">Üzenetek áthelyezése a Törölt elemek mappába és mappából</h2>
+
+<p>Ha POP típusú kiszolgálót használunk az üzenetek fogadásához, illetve IMAP-kiszolgálónál a Törölt elemek mappa használatát állítottuk be, a következő lépésekkel törölhetünk üzeneteket a Beérkezett üzenetek és a többi mappából:</p>
+
+<ol>
+  <li>Az üzenetlistán jelöljük ki a törölni kívánt üzeneteket.</li>
+  <li>Nyomjuk meg a Delete billentyűt. A Levelező és hírolvasó a Törölt elemek mappába helyezi át az üzeneteket.</li>
+</ol>
+
+<p>Üzenetek helyreállítása a Törölt elemek mappából:</p>
+
+<ol>
+  <li>Kattintsunk a Törölt elemek mappára.</li>
+  <li>Jelöljük ki a helyreállítani kívánt üzeneteket, és húzzuk át azokat egy másik mappába.</li>
+</ol>
+
+<p>Üzenetek végleges törlése:</p>
+
+<ul>
+  <li>Válasszuk a Fájl menü Törölt elemek mappa ürítése parancsát.</li>
+</ul>
+
+<p>[ <a href="#deleting_messages">Vissza a fejezet elejére</a> ]</p>
+</body>
+</html>

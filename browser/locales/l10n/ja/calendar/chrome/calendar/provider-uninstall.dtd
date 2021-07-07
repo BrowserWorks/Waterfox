@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title			"プロバイダーアドオンのアンインストール">
+<!ENTITY providerUninstall.accept.label			"カレンダーを登録解除"> <!-- en-US: "Unsubscribe Selected" -->
+<!ENTITY providerUninstall.accept.accesskey		"U">
+<!ENTITY providerUninstall.cancel.label			"アドオンを無効化"><!-- en-US: "Keep Addon" -->
+<!ENTITY providerUninstall.cancel.accesskey		"K">
+<!ENTITY providerUninstall.preName.label		"次のアドオンをアンインストールまたは無効にします:">
+<!ENTITY providerUninstall.postName.label		"以下のカレンダーが無効になります。">
+<!ENTITY providerUninstall.reinstallNote.label		"このプロバイダーアドオンを再インストールするのでなければ、このプロバイダーのカレンダーを登録解除してください。">

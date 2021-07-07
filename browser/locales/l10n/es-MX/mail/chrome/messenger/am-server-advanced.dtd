@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Ajuste de cuenta avanzados">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Directorio del servidor IMAP:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Mostrar sólo las carpetas suscritas">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "El servidor soporta carpetas que contienen sub-carpetas y mensajes">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Número máximo de conexiones del servidor a caché">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Estas preferencias especifican los espacios de nombres en tu servidor IMAP">
+<!ENTITY personalNamespace.label "Espacio de nombres personal:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Público (compartido):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Otros usuarios:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Permitir que el servidor reemplace estos espacios de nombres">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "Cuando se descargue correo desde esta cuenta del servidor, usa la siguiente carpeta para almacenar nuevos mensajes:" >
+<!ENTITY accountInbox.label "Bandeja de entrada para esta cuenta">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Bandeja de entrada para diferente cuenta">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Incluir este servidor al recibir correo nuevo">
+<!ENTITY deferGetNewMail.accesskey "I">

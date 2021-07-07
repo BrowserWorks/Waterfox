@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Propriétés des listes">
+
+<!ENTITY ListType.label "Type de liste :">
+<!ENTITY bulletStyle.label "Type des puces :">
+<!ENTITY startingNumber.label "Premier numéro :">
+<!ENTITY startingNumber.accessKey "P">
+<!ENTITY none.value "Aucun (paragraphe normal)">
+<!ENTITY bulletList.value "Liste à puces (sans nombre)">
+<!ENTITY numberList.value "Liste numérotée">
+<!ENTITY definitionList.value "Liste de définitions">
+<!ENTITY changeEntireListRadio.label "Changer toute la liste">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "Changer uniquement les éléments sélectionnés">
+<!ENTITY changeSelectedRadio.accessKey "i">

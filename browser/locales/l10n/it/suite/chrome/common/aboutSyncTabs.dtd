@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabs.otherComputers.label "Schede da altri computer">
+<!ENTITY tabs.searchText.label "Cerca una scheda…">
+<!ENTITY tabs.context.openTab.label "Apri questa scheda">
+<!ENTITY tabs.context.openTab.accesskey "s">
+<!ENTITY tabs.context.openMultipleTabs.label "Apri schede selezionate">
+<!ENTITY tabs.context.openMultipleTabs.accesskey "s">
+<!ENTITY tabs.context.bookmarkSingleTab.label "Aggiungi questa scheda ai segnalibri…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey "A">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label "Aggiungi le schede selezionate ai segnalibri…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey "A">
+<!ENTITY tabs.context.refreshList.label "Aggiorna elenco">
+<!ENTITY tabs.context.refreshList.accesskey "e">

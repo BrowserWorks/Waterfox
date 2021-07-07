@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Uw &syncBrand.fullName.label;-sleutel">
+<!ENTITY syncKey.page.description         "Deze sleutel wordt gebruikt om de gegevens in uw &syncBrand.fullName.label;-account te versleutelen. U zult de sleutel telkens wanneer u &syncBrand.fullName.label; op een nieuwe computer of apparaat instelt moeten invoeren.">
+<!ENTITY syncKey.keepItSecret.heading     "Hou deze geheim">
+<!ENTITY syncKey.keepItSecret.description "Om uw privacy te beschermen, is uw &syncBrand.fullName.label;-account versleuteld. Zonder deze sleutel zou het jaren duren voordat iemand uw persoonlijke gegevens kan ontcijferen. U bent de enige die over deze sleutel beschikt. Dit betekent dat u de enige bent die toegang tot uw &syncBrand.fullName.label;-gegevens heeft.">
+<!ENTITY syncKey.keepItSafe.heading       "Hou het veilig">
+<!ENTITY syncKey.keepItSafe1.description  "Verlies deze sleutel niet.">
+<!ENTITY syncKey.keepItSafe2.description  " We hebben geen kopie van uw sleutel (dan zou deze niet geheim zijn!), dus ">
+<!ENTITY syncKey.keepItSafe3.description  "we kunnen u niet helpen bij het terughalen ervan">
+<!ENTITY syncKey.keepItSafe4.description  " als u deze verliest. U zult deze sleutel telkens wanneer u een nieuwe computer of apparaat met &syncBrand.fullName.label; verbindt moeten gebruiken.">
+<!ENTITY syncKey.findOutMore1.label       "Meer informatie over &syncBrand.fullName.label; en uw privacy kunt u vinden op ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "De servicevoorwaarden van &syncBrand.fullName.label; zijn beschikbaar op ">
+<!ENTITY syncKey.footer2.label            ". Het privacybeleid is beschikbaar op ">
+<!ENTITY syncKey.footer3.label            ".">

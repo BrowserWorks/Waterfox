@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Subscrições de fontes">
+<!ENTITY learnMore.label             "Saber mais sobre fontes">
+
+<!ENTITY feedTitle.label             "Título:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL da fonte:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Introduza um url de fonte válido">
+<!ENTITY locationValidate.label      "Validar">
+<!ENTITY validateText.label          "Verificar a validação e obter um url válido.">
+
+<!ENTITY feedFolder.label            "Guardar artigos em:">
+<!ENTITY feedFolder.accesskey        "G">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Procurar novos artigos a cada ">
+<!ENTITY biffStart.accesskey         "P">
+<!ENTITY biffMinutes.label           "minutos">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dias">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "O publicador recomenda:">
+
+<!ENTITY quickMode.label             "Mostrar o sumário do artigo em vez de carregar a página web">
+<!ENTITY quickMode.accesskey         "M">
+
+<!ENTITY autotagEnable.label         "Criar etiquetas automaticamente de nomes de &lt;categorias&gt; da fonte">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "Prefixar etiquetas com:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Introduza um prefixo de etiqueta">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Adicionar">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.verifyFeed.label     "Verificar">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Atualizar">
+<!ENTITY button.updateFeed.accesskey "u">
+<!ENTITY button.removeFeed.label     "Remover">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportar">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Exportar fontes com a estrutura da pasta. Ctrl+clique ou Ctrl+enter para exportar fontes como lista">
+
+<!ENTITY cmd.close.commandKey        "W">
+<!ENTITY button.close.label          "Fechar">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Delete">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "Name:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Email:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Address Book:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "Done">
+<!ENTITY editContactPanelDone.accesskey "D">
+
+<!ENTITY contactMoveDisabledWarning.description "You can't change the address book because the contact is in a mailing list.">

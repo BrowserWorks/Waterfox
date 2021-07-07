@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "خصائص حقل التحرير">
+
+<!ENTITY Legend.label "مفتاح">
+<!ENTITY Legend.accesskey "م">
+
+<!ENTITY EditLegendText.label "حرر المفتاح:">
+<!ENTITY EditLegendText.accesskey "ح">
+<!ENTITY LegendAlign.label "حاذ المفتاح:">
+<!ENTITY LegendAlign.accesskey "ذ">
+<!ENTITY AlignDefault.label "مبدئي">
+<!ENTITY AlignLeft.label "يسارًا">
+<!ENTITY AlignCenter.label "منتصفًا">
+<!ENTITY AlignRight.label "يمينًا">
+
+<!ENTITY RemoveFieldSet.label "احذف حقل التحرير">
+<!ENTITY RemoveFieldSet.accesskey "ح">

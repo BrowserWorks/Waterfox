@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Fájl">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Új">
+<!ENTITY newMenu.accesskey          "Ú">
+
+<!ENTITY editMenu.label          "Szerkesztés">
+<!ENTITY editMenu.accesskey        "z">
+<!ENTITY undoCmd.label            "Visszavonás">
+<!ENTITY undoCmd.accesskey          "V">
+<!ENTITY redoCmd.label            "Újra">
+<!ENTITY redoCmd.accesskey          "r">
+<!ENTITY deleteCmd.label          "Törlés">
+<!ENTITY deleteCmd.accesskey        "s">
+<!ENTITY preferencesCmd2.label "Beállítások">
+<!ENTITY preferencesCmd2.accesskey "B">
+<!ENTITY preferencesCmdUnix.label       "Beállítások">
+<!ENTITY preferencesCmdUnix.accesskey     "B">
+
+<!ENTITY customizeCmd.label "Testreszabás">
+<!ENTITY customizeCmd.accesskey "T">
+
+<!ENTITY viewMenu.label          "Nézet">
+<!ENTITY viewMenu.accesskey        "N">
+<!ENTITY viewToolbarsMenu.label        "Eszköztárak">
+<!ENTITY viewToolbarsMenu.accesskey      "E">
+<!ENTITY showTaskbarCmd.label          "Állapotsor">
+<!ENTITY showTaskbarCmd.accesskey        "o">
+
+<!ENTITY closeCmd.label      "Bezárás">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "B">
+
+<!ENTITY quitApplicationCmd.label  "Kilépés">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "K">
+
+<!ENTITY quitApplicationCmdUnix.label  "Kilépés">
+<!ENTITY quitApplicationCmdUnix.accesskey  "K">
+
+<!ENTITY quitApplicationCmdMac.label  "Kilépés a &brandShortName;ből">
+<!ENTITY quitApplicationCmdMac.accesskey  "K">

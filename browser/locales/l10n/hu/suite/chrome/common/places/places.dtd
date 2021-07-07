@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Könyvtár">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Rendszerezés">
+<!ENTITY organize.accesskey    "R">
+<!ENTITY organize.tooltip      "Könyvjelzők rendszerezése">
+
+<!ENTITY file.close.label               "Bezárás">
+<!ENTITY file.close.accesskey           "B">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Nézetek">
+<!ENTITY views.accesskey                "N">
+<!ENTITY views.tooltip                  "A nézet megváltoztatása">
+<!ENTITY view.columns.label             "Oszlopok megjelenítése">
+<!ENTITY view.columns.accesskey         "O">
+<!ENTITY view.sort.label                "Rendezés">
+<!ENTITY view.sort.accesskey            "e">
+<!ENTITY view.unsorted.label            "Rendezetlen">
+<!ENTITY view.unsorted.accesskey        "l">
+<!ENTITY view.sortAscending.label       "A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Könyvjelzők importálása HTML-ből…">
+<!ENTITY importBookmarksFromHTML.accesskey "i">
+<!ENTITY exportBookmarksToHTML.label       "Könyvjelzők exportálása HTML-be…">
+<!ENTITY exportBookmarksToHTML.accesskey   "e">
+<!ENTITY importOtherBrowser.label          "Adatok importálása másik böngészőből…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "Mentés…">
+<!ENTITY cmd.backup.accesskey           "M">
+<!ENTITY cmd.restore2.label             "Visszaállítás">
+<!ENTITY cmd.restore2.accesskey         "V">
+<!ENTITY cmd.restoreFromFile.label      "Tallózás…">
+<!ENTITY cmd.restoreFromFile.accesskey  "T">
+
+<!ENTITY cmd.deleteDomainData.label     "Webhely elfelejtése">
+<!ENTITY cmd.deleteDomainData.accesskey "e">
+
+<!ENTITY cmd.open.label                  "Megnyitás">
+<!ENTITY cmd.open.accesskey              "M">
+<!ENTITY cmd.open_window.label           "Megnyitás új ablakban">
+<!ENTITY cmd.open_window.accesskey       "a">
+<!ENTITY cmd.open_private_window.label     "Hivatkozás megnyitása új privát ablakban">
+<!ENTITY cmd.open_private_window.accesskey "p">
+<!ENTITY cmd.open_tab.label              "Megnyitás új lapon">
+<!ENTITY cmd.open_tab.accesskey          "l">
+<!ENTITY cmd.open_all_in_tabs.label      "Mindegyik megnyitása külön lapon">
+<!ENTITY cmd.open_all_in_tabs.accesskey  "M">
+
+<!ENTITY cmd.properties.label      "Tulajdonságok">
+<!ENTITY cmd.properties.accesskey  "T">
+
+<!ENTITY cmd.sortby_name.label              "Rendezés név szerint">
+<!ENTITY cmd.sortby_name.accesskey          "R">
+<!ENTITY cmd.context_sortby_name.accesskey  "r">
+
+<!ENTITY cmd.new_bookmark.label            "Új könyvjelző…">
+<!ENTITY cmd.new_bookmark.accesskey        "k">
+<!ENTITY cmd.new_folder.label              "Új mappa…">
+<!ENTITY cmd.new_folder.accesskey          "m">
+<!ENTITY cmd.context_new_folder.accesskey  "m">
+<!ENTITY cmd.new_separator.label           "Új elválasztó">
+<!ENTITY cmd.new_separator.accesskey       "e">
+
+<!ENTITY cmd.reloadLivebookmark.label      "Élő könyvjelző frissítése">
+<!ENTITY cmd.reloadLivebookmark.accesskey  "f">
+
+<!ENTITY col.name.label          "Név">
+<!ENTITY col.tags.label          "Címkék">
+<!ENTITY col.url.label           "Hely">
+<!ENTITY col.mostrecentvisit.label "Legutóbbi látogatás">
+<!ENTITY col.visitcount.label    "Látogatások száma">
+<!ENTITY col.description.label   "Leírás">
+<!ENTITY col.dateadded.label     "Hozzáadva">
+<!ENTITY col.lastmodified.label  "Utoljára módosítva">
+
+<!ENTITY search.placeholder  "Keresés">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY detailsPane.more.label "Több">
+<!ENTITY detailsPane.more.accesskey "T">
+<!ENTITY detailsPane.less.label "Kevesebb">
+<!ENTITY detailsPane.less.accesskey "K">
+<!ENTITY detailsPane.selectAnItemText.description "Jelöljön ki egy elemet megtekintésre, és szerkessze tulajdonságait">
+
+<!ENTITY view.label               "Nézet">
+<!ENTITY view.accesskey           "N">
+<!ENTITY byDate.label             "Dátum szerint">
+<!ENTITY byDate.accesskey         "D">
+<!ENTITY bySite.label             "Kiszolgáló szerint">
+<!ENTITY bySite.accesskey         "K">
+<!ENTITY byMostVisited.label      "Látogatottság szerint">
+<!ENTITY byMostVisited.accesskey  "L">
+<!ENTITY byLastVisited.label      "Utolsó látogatás ideje szerint">
+<!ENTITY byLastVisited.accesskey  "U">
+<!ENTITY byDayAndSite.label       "Dátum és kiszolgáló szerint">
+<!ENTITY byDayAndSite.accesskey   "t">

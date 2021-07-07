@@ -1,0 +1,71 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "属性">
+
+<!ENTITY generalInfo.label                       "基本信息">
+<!ENTITY folderCharsetFallback2.label            "后备文字编码：">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "应用编码到该文件夹中的所有消息（个别消息的文字编码设置和自动检测将被忽略）">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "重建概要文件索引">
+<!ENTITY folderRebuildSummaryFile2.label         "修复文件夹">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "有时候文件夹索引文件(.msf)被损坏并且出现邮件丢失或者已删除的邮件又重新出现的现象，修复此文件夹可以修复这类问题。">
+<!ENTITY folderIncludeInGlobalSearch.label       "在全局搜索结果中包含这个文件夹的邮件">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "保留策略">
+<!ENTITY retentionUseAccount.label "使用我的账户设置">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "天">
+<!ENTITY message.label "条时询问我">
+<!ENTITY retentionCleanup.label "保留消息：">
+<!ENTITY retentionCleanupImap.label "保存信件，包括本地副本和在服务器上的原件：">
+<!ENTITY retentionCleanupPop.label "保存信件，包括在服务器上的原件：">
+<!ENTITY retentionDeleteMsg.label "删除超过">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "所有消息">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "最新的">
+<!ENTITY retentionKeepRecent.accesskey "n">
+<!ENTITY retentionApplyToFlagged.label "一律保留带标记消息">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "同步">
+<!ENTITY folderCheckForNewMessages2.label        "当获取此账户的新邮件时，一律查收此文件夹">
+<!ENTITY folderCheckForNewMessages2.accesskey    "c">
+
+<!ENTITY offlineFolder.check.label               "选择此文件夹供脱机使用">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "立即下载">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "选择要脱机使用的新闻组">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "立即下载">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "名称:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "地址：">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "共享">
+<!ENTITY privileges.button.label                 "权限…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "您拥有如下的权限：">
+<!ENTITY folderType.label                        "文件夹类型：">
+
+<!ENTITY folderQuotaTab.label                    "配额">
+<!ENTITY folderQuotaRoot.label                   "根配额：">
+<!ENTITY folderQuotaUsage.label                  "使用量：">
+<!ENTITY folderQuotaStatus.label                 "状态：">
+
+<!ENTITY numberOfMessages.label                  "消息数目：">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "未知">
+<!ENTITY sizeOnDisk.label                        "磁盘上的大小：">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "未知">

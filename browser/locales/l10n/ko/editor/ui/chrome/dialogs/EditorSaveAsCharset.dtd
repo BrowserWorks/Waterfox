@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are generic to all or most of the editor's dialogs. -->
+
+<!-- This button is for the progressive disclosure of additional editing functionality -->
+
+<!-- These strings are for use specifically in the editor's link dialog. -->
+<!ENTITY windowTitle2.label "다른 문자 인코딩으로 변환 후 저장">
+<!ENTITY documentTitleTitle.label "페이지 제목">
+<!ENTITY documentCharsetTitle2.label "문자 인코딩">
+<!ENTITY documentCharsetDesc2.label "저장할 때 사용할 문자 인코딩 선택:">
+<!ENTITY documentExportToText.label "텍스트 파일로 내보내기">
+
+
+

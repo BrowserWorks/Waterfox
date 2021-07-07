@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Conversor do tipo de armazenamento de mensagens">
+<!ENTITY converterDialog.continueButton "Continuar">
+<!ENTITY converterDialog.cancelButton "Cancelar">
+<!ENTITY converterDialog.finishButton "Concluir">
+<!ENTITY converterDialog.complete "A conversão está completa. O &brandShortName; irá agora reiniciar.">
+<!ENTITY converterDialog.error "A conversão falhou">
+

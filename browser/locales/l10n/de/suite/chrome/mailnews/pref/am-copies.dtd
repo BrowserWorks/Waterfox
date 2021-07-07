@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Kopien &amp; Ordner">
+<!ENTITY sendingPrefix.label "Beim Senden von Nachrichten automatisch ">
+<!ENTITY fccMailFolder.label "Eine Kopie behalten in:">
+<!ENTITY fccMailFolder.accesskey "K">
+<!ENTITY fccReplyFollowsParent.label "Antworten im Ordner der beantworteten Nachricht ablegen">
+<!ENTITY fccReplyFollowsParent.accesskey "w">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "CC an diese E-Mail-Adressen:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Trennen Sie Adressen mit Kommas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "BCC an diese E-Mail-Adressen:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Trennen Sie Adressen mit Kommas">
+<!ENTITY saveMessageDlg.label "Beim Speichern von Nachrichten Bestätigungsdialog anzeigen">
+<!ENTITY saveMessageDlg.accesskey "S">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Gesendete Nachrichten&quot;-Ordner auf:">
+<!ENTITY sentFolderOn.accesskey "G">
+<!ENTITY sentInOtherFolder.label "Anderer Ordner:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Nachrichtenarchive">
+<!ENTITY keepArchives.label "Nachrichten-Archiv behalten in:">
+<!ENTITY keepArchives.accesskey "h">
+<!ENTITY archiveHierarchyButton.label "Archivoptionen…">
+<!ENTITY archiveHierarchyButton.accesskey "o">
+<!ENTITY archivesFolderOn.label "&quot;Archive&quot;-Ordner auf:">
+<!ENTITY archivesFolderOn.accesskey "u">
+<!ENTITY archiveInOtherFolder.label "Anderer Ordner:">
+<!ENTITY archiveInOtherFolder.accesskey "r">
+<!ENTITY specialFolders.label "Entwürfe und Vorlagen">
+<!ENTITY keepDrafts2.label "Nachrichten-Entwürfe behalten in:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Entwürfe&quot;-Ordner auf:">
+<!ENTITY draftsFolderOn.accesskey "E">
+<!ENTITY draftInOtherFolder.label "Anderer Ordner:">
+<!ENTITY draftInOtherFolder.accesskey "n">
+<!ENTITY keepTemplates.label "Nachrichtenvorlagen behalten in:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Vorlagen&quot;-Ordner auf:">
+<!ENTITY templatesFolderOn.accesskey "V">
+<!ENTITY templateInOtherFolder.label "Anderer Ordner:">
+<!ENTITY templateInOtherFolder.accesskey "d">

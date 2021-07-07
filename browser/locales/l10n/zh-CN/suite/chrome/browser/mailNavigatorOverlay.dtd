@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "消息">
+<!ENTITY newMessageCmd.accesskey         "M">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "联系...">
+<!ENTITY newContactCmd.accesskey         "C">
+
+<!ENTITY sendPage.label                  "发送页面…">
+<!ENTITY sendPage.accesskey              "S">
+
+<!ENTITY contextSendThisPage.label       "发送页面…">
+<!ENTITY contextSendThisPage.accesskey   "d">
+<!ENTITY contextSendThisLink.label       "发送链接…">
+<!ENTITY contextSendThisLink.accesskey   "k">
+<!ENTITY contextSendImage.label          "发送图片…">
+<!ENTITY contextSendImage.accesskey      "n">
+<!ENTITY contextSendVideo.label          "发送视频…">
+<!ENTITY contextSendVideo.accesskey      "n">
+<!ENTITY contextSendAudio.label          "发送音频…">
+<!ENTITY contextSendAudio.accesskey      "n">
+<!ENTITY contextSendFrame.label          "发送框架…">
+<!ENTITY contextSendFrame.accesskey      "d">
+
+<!ENTITY sendLinkCmd.label               "发送链接…"> 
+<!ENTITY sendLinkCmd.accesskey           "d">
+

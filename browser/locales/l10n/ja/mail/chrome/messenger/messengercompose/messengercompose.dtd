@@ -1,0 +1,346 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- create by matsuba -->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title		"作成: (件名なし)">
+
+<!-- File menu items -->
+<!ENTITY fileMenu.label			"ファイル">
+<!ENTITY fileMenu.accesskey		"f">
+<!ENTITY newMenu.label			"新規作成">
+<!ENTITY newMenu.accesskey		"N">
+<!ENTITY newMessage.label		"メッセージ">
+<!ENTITY newMessage.key			"M">
+<!ENTITY newMessageCmd2.key		"N">
+<!ENTITY newMessage.accesskey		"M">
+<!ENTITY newContact.label		"連絡先...">
+<!ENTITY newContact.accesskey		"C">
+<!ENTITY attachMenu.label		"添付">
+<!ENTITY attachMenu.accesskey		"h">
+<!ENTITY attachFileCmd.label		"ファイル...">
+<!ENTITY attachFileCmd.accesskey	"F">
+<!ENTITY attachFileCmd.key		"A">
+<!ENTITY attachCloudCmd.label		"Filelink">
+<!ENTITY attachCloudCmd.accesskey	"i">
+<!ENTITY attachPageCmd.label		"ウェブページ...">
+<!ENTITY attachPageCmd.accesskey	"W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label		"vCard">
+<!ENTITY attachVCardCmd.accesskey	"P">
+<!ENTITY remindLater.label		"添付忘れを通知">
+<!ENTITY remindLater.accesskey		"L">
+<!ENTITY closeCmd.label			"閉じる">
+<!ENTITY closeCmd.key			"W">
+<!ENTITY closeCmd.accesskey		"c">
+<!ENTITY saveCmd.label			"保存">
+<!ENTITY saveCmd.key			"S">
+<!ENTITY saveCmd.accesskey		"s">
+<!ENTITY saveAsCmd.label		"選択して保存">
+<!ENTITY saveAsCmd.accesskey		"A">
+<!ENTITY saveAsFileCmd.label		"ファイル...">
+<!ENTITY saveAsFileCmd.accesskey	"F">
+<!ENTITY saveAsDraftCmd.label		"下書き">
+<!ENTITY saveAsDraftCmd.accesskey	"D">
+<!ENTITY saveAsTemplateCmd.label	"テンプレート">
+<!ENTITY saveAsTemplateCmd.accesskey	"T">
+<!ENTITY sendNowCmd.label		"今すぐ送信">
+<!ENTITY sendCmd.keycode		"VK_RETURN">
+<!ENTITY sendNowCmd.accesskey		"d">
+<!ENTITY sendLaterCmd.label		"後で送信">
+<!ENTITY sendLaterCmd.keycode		"VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey		"L">
+<!ENTITY printSetupCmd.label		"ページ設定...">
+<!ENTITY printSetupCmd.accesskey	"u">
+<!ENTITY printPreviewCmd.label		"印刷プレビュー">
+<!ENTITY printPreviewCmd.accesskey	"v">
+<!ENTITY printCmd.label			"印刷...">
+<!ENTITY printCmd.key			"P">
+<!ENTITY printCmd.accesskey		"P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label			"編集">
+<!ENTITY editMenu.accesskey		"e">
+<!ENTITY undoCmd.label			"元に戻す">
+<!ENTITY undoCmd.key			"Z">
+<!ENTITY undoCmd.accesskey		"u">
+<!ENTITY redoCmd.label			"やり直し">
+<!ENTITY redoCmd.key			"Y">
+<!ENTITY redoCmd.accesskey		"r">
+<!ENTITY cutCmd.key			"X">
+<!ENTITY copyCmd.key			"C">
+<!ENTITY pasteCmd.key			"V">
+<!ENTITY pasteNoFormattingCmd.key	"V">
+<!ENTITY pasteAsQuotationCmd.key	"o">
+<!ENTITY deleteCmd.label		"削除">
+<!ENTITY deleteCmd.accesskey		"d">
+<!ENTITY editRewrapCmd.label		"再改行">
+<!ENTITY editRewrapCmd.key		"R">
+<!ENTITY editRewrapCmd.accesskey	"w">
+<!ENTITY renameAttachmentCmd.label	"添付ファイルを名前変更...">
+<!ENTITY renameAttachmentCmd.accesskey	"e">
+<!ENTITY reorderAttachmentsCmd.label	"添付ファイルを並べ替え...">
+<!ENTITY reorderAttachmentsCmd.accesskey	"s">
+<!ENTITY reorderAttachmentsCmd.key	"x">
+<!ENTITY toggleAttachmentPaneCmd.label	"添付ペイン">
+<!ENTITY toggleAttachmentPaneCmd.accesskey	"m">
+<!ENTITY selectAllCmd.accesskey		"a">
+<!ENTITY findBarCmd.label		"検索...">
+<!ENTITY findBarCmd.accesskey		"F">
+<!ENTITY findBarCmd.key			"F">
+<!ENTITY findReplaceCmd.label		"検索と置換...">
+<!ENTITY findReplaceCmd.accesskey	"l">
+<!ENTITY findReplaceCmd.key		"H">
+<!ENTITY findAgainCmd.label		"次を検索">
+<!ENTITY findAgainCmd.accesskey		"g">
+<!ENTITY findAgainCmd.key		"G">
+<!ENTITY findAgainCmd.key2		"VK_F3">
+<!ENTITY findPrevCmd.label		"前を検索">
+<!ENTITY findPrevCmd.accesskey		"v">
+<!ENTITY findPrevCmd.key		"G">
+<!ENTITY findPrevCmd.key2		"VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label			"添付ファイルの並べ替え">
+<!ENTITY moveAttachmentTopPanelBtn.label		"最上部へ移動">
+<!ENTITY moveAttachmentUpPanelBtn.label			"上へ移動">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label		"一緒に移動">
+<!ENTITY moveAttachmentDownPanelBtn.label		"下へ移動">
+<!ENTITY moveAttachmentBottomPanelBtn.label		"最下部へ移動">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label		"並べ替え: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label		"並べ替え: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "選択項目を並べ替え: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "選択項目を並べ替え: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key			"y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label				"表示">
+<!ENTITY viewMenu.accesskey			"v">
+<!ENTITY viewToolbarsMenuNew.label		"ツールバー">
+<!ENTITY viewToolbarsMenuNew.accesskey		"T">
+<!ENTITY menubarCmd.label			"メニューバー">
+<!ENTITY menubarCmd.accesskey			"M">
+<!ENTITY showCompositionToolbarCmd.label	"編集ツールバー">
+<!ENTITY showCompositionToolbarCmd.accesskey	"o">
+<!ENTITY showFormattingBarCmd.label		"書式バー">
+<!ENTITY showFormattingBarCmd.accesskey		"F">
+<!ENTITY showTaskbarCmd.label			"ステータスバー">
+<!ENTITY showTaskbarCmd.accesskey		"S">
+<!ENTITY customizeToolbar.label			"カスタマイズ...">
+<!ENTITY customizeToolbar.accesskey		"C">
+
+<!ENTITY addressSidebar.label		"アドレスサイドバー"><!-- (^^; Contacts Sidebar -->
+<!ENTITY addressSidebar.accesskey	"o">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label		"書式">
+<!ENTITY formatMenu.accesskey		"o">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label		"オプション">
+<!ENTITY optionsMenu.accesskey		"p">
+<!ENTITY checkSpellingCmd2.label	"スペルチェック...">
+<!ENTITY checkSpellingCmd2.key		"p">
+<!ENTITY checkSpellingCmd2.key2		"VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey	"h">
+<!ENTITY enableInlineSpellChecker.label	"自動スペルチェック"><!-- en-US: Spellcheck As You Type -->
+<!ENTITY enableInlineSpellChecker.accesskey	"S">
+<!ENTITY quoteCmd.label			"メッセージを引用">
+<!ENTITY quoteCmd.accesskey		"Q">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label		"vCard を添付">
+<!ENTITY attachVCard.accesskey		"v">
+
+<!ENTITY returnReceiptMenu.label	"開封確認の返送を求める"><!-- en-US: Return Receipt -->
+<!ENTITY returnReceiptMenu.accesskey	"t">
+<!ENTITY dsnMenu.label			"配信状態通知の返送を求める"><!-- en-US: Delivery Status Notification -->
+<!ENTITY dsnMenu.accesskey		"N">
+<!ENTITY deliveryFormatMenu.label	"送信形式">
+<!ENTITY deliveryFormatMenu.accesskey	"F">
+<!ENTITY autoFormatCmd.label		"自動判別">
+<!ENTITY autoFormatCmd.accesskey	"a">
+<!ENTITY plainTextFormatCmd.label	"プレーンテキスト">
+<!ENTITY plainTextFormatCmd.accesskey	"p">
+<!ENTITY htmlFormatCmd.label		"HTML のみ">
+<!ENTITY htmlFormatCmd.accesskey	"r">
+<!ENTITY bothFormatCmd.label		"テキストと HTML">
+<!ENTITY bothFormatCmd.accesskey	"l">
+<!ENTITY priorityMenu.label		"重要度">
+<!ENTITY priorityMenu.accesskey		"p">
+<!ENTITY priorityButton.title		"重要度">
+<!ENTITY priorityButton.tooltiptext	"メッセージの重要度を変更します">
+<!ENTITY priorityButton.label		"重要度:">
+<!ENTITY lowestPriorityCmd.label	"最低">
+<!ENTITY lowestPriorityCmd.accesskey	"l">
+<!ENTITY lowPriorityCmd.label		"低">
+<!ENTITY lowPriorityCmd.accesskey	"o">
+<!ENTITY normalPriorityCmd.label	"標準">
+<!ENTITY normalPriorityCmd.accesskey	"n">
+<!ENTITY highPriorityCmd.label		"高">
+<!ENTITY highPriorityCmd.accesskey	"i">
+<!ENTITY highestPriorityCmd.label	"最高">
+<!ENTITY highestPriorityCmd.accesskey	"H">
+<!ENTITY fileCarbonCopyCmd.label	"送信メッセージをコピー">
+<!ENTITY fileCarbonCopyCmd.accesskey	"d">
+<!ENTITY fileHereMenu.label		"ここへ">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label		"ツール">
+<!ENTITY tasksMenu.accesskey		"T">
+<!ENTITY messengerCmd.label		"メールとニュースグループ">
+<!ENTITY messengerCmd.accesskey		"m">
+<!ENTITY messengerCmd.commandkey	"1">
+<!ENTITY addressBookCmd.label		"アドレス帳">
+<!ENTITY addressBookCmd.accesskey	"a">
+<!ENTITY addressBookCmd.key		"B">
+<!ENTITY accountManagerCmd2.label	"アカウント設定">
+<!ENTITY accountManagerCmd2.accesskey	"S">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label		"オプション">
+<!ENTITY preferencesCmd2.accesskey	"O">
+<!ENTITY preferencesCmdUnix.label	"設定">
+<!ENTITY preferencesCmdUnix.accesskey	"n">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key		"m">
+<!ENTITY minimizeWindow.label		"最小化">
+<!ENTITY bringAllToFront.label		"すべてを前面に移動">
+<!ENTITY zoomWindow.label		"拡大/縮小">
+<!ENTITY windowMenu.label		"ウィンドウ">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label		"送信">
+<!ENTITY quoteButton.label		"引用">
+<!ENTITY addressButton.label		"アドレス"><!-- (^^; Contacts -->
+<!ENTITY attachButton.label		"添付">
+<!ENTITY spellingButton.label		"スペル">
+<!ENTITY saveButton.label		"保存">
+<!ENTITY printButton.label		"印刷">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip		"このメッセージを今すぐ送信します">
+<!ENTITY sendlaterButton.tooltip	"このメッセージを後で送信します">
+<!ENTITY quoteButton.tooltip		"前のメッセージを引用します">
+<!ENTITY addressButton.tooltip		"アドレス帳から宛先を選択します">
+<!ENTITY attachButton.tooltip2		"ファイルを添付します">
+<!ENTITY spellingButton.tooltip		"選択したテキストまたはメッセージ全体のスペルチェックをします">
+<!ENTITY saveButton.tooltip		"このメッセージを保存します">
+<!ENTITY cutButton.tooltip		"切り取り">
+<!ENTITY copyButton.tooltip		"コピー">
+<!ENTITY pasteButton.tooltip		"貼り付け">
+<!ENTITY printButton.tooltip		"このメッセージを印刷します">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style		"width: 8em;"><!-- (^m^) 以下の項目名が判別できればよい en-US: "width:8em" -->
+<!ENTITY extraRecipients.tooltip	"他の種類の宛先入力">
+<!ENTITY fromAddr2.label		"差出人">
+<!ENTITY fromAddr.accesskey		"r">
+<!ENTITY toAddr2.label			"宛先">
+<!ENTITY ccAddr2.label			"Cc">
+<!ENTITY bccAddr2.label			"Bcc">
+<!ENTITY replyAddr2.label		"Reply-To">
+<!ENTITY newsgroupsAddr2.label		"Newsgroup">
+<!ENTITY followupAddr2.label		"Followup-To">
+<!ENTITY subject2.label			"件名">
+<!ENTITY subject.accesskey		"S">
+<!ENTITY attachmentBucketCloseButton.tooltip	"添付ペインを隠す">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip		"顔文字を挿入します">
+<!ENTITY smiley1Cmd.label		"スマイル">
+<!ENTITY smiley2Cmd.label		"しかめっ面">
+<!ENTITY smiley3Cmd.label		"ウィンク">
+<!ENTITY smiley4Cmd.label		"アッカンベー">
+<!ENTITY smiley5Cmd.label		"大笑い">
+<!ENTITY smiley6Cmd.label		"困った">
+<!ENTITY smiley7Cmd.label		"迷った">
+<!ENTITY smiley8Cmd.label		"びっくり">
+<!ENTITY smiley9Cmd.label		"キス">
+<!ENTITY smiley10Cmd.label		"エール">
+<!ENTITY smiley11Cmd.label		"クール">
+<!ENTITY smiley12Cmd.label		"きもち悪い">
+<!ENTITY smiley13Cmd.label		"しまった">
+<!ENTITY smiley14Cmd.label		"無邪気">
+<!ENTITY smiley15Cmd.label		"しくしく">
+<!ENTITY smiley16Cmd.label		"口にチャック">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label		"候補が見つかりません">
+<!ENTITY spellCheckIgnoreWord.label		"単語を無視">
+<!ENTITY spellCheckIgnoreWord.accesskey		"I">
+<!ENTITY spellCheckAddToDictionary.label	"辞書に追加">
+<!ENTITY spellCheckAddToDictionary.accesskey	"n">
+<!ENTITY undo.label				"元に戻す">
+<!ENTITY undo.accesskey				"U">
+<!ENTITY cut.label				"切り取り">
+<!ENTITY cut.accesskey				"t">
+<!ENTITY copy.label				"コピー">
+<!ENTITY copy.accesskey				"C">
+<!ENTITY paste.label				"貼り付け">
+<!ENTITY paste.accesskey			"P">
+<!ENTITY pasteQuote.label			"引用として貼り付け">
+<!ENTITY pasteQuote.accesskey			"Q">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label		"開く">
+<!ENTITY openAttachment.accesskey	"O">
+<!ENTITY delete.label			"削除">
+<!ENTITY delete.accesskey		"D">
+<!ENTITY removeAttachment.label		"添付ファイルを削除">
+<!ENTITY removeAttachment.accesskey	"M">
+<!ENTITY renameAttachment.label		"名前を変更...">
+<!ENTITY renameAttachment.accesskey	"R">
+<!ENTITY reorderAttachments.label	"添付ファイルを並べ替え...">
+<!ENTITY reorderAttachments.accesskey	"s">
+<!ENTITY removeAllAttachments.label	"すべての添付ファイルを削除">
+<!ENTITY removeAllAttachments.accesskey	"v">
+<!ENTITY selectAll.label		"すべて選択">
+<!ENTITY selectAll.accesskey		"A">
+<!ENTITY attachFile.label		"ファイルを添付...">
+<!ENTITY attachFile.accesskey		"F">
+<!ENTITY attachCloud.label		"Filelink...">
+<!ENTITY attachCloud.accesskey		"i">
+<!ENTITY convertCloud.label		"添付転換...">
+<!ENTITY convertCloud.accesskey		"C">
+<!ENTITY cancelUpload.label		"アップロードをキャンセル">
+<!ENTITY cancelUpload.accesskey		"n">
+<!ENTITY convertRegularAttachment.label	"通常の添付">
+<!ENTITY convertRegularAttachment.accesskey	"A">
+<!ENTITY attachPage.label		"ウェブページを添付...">
+<!ENTITY attachPage.accesskey		"W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label	"添付ペインを初めから表示する">
+<!ENTITY initiallyShowAttachmentPane.accesskey	"S">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label	"辞書を追加...">
+<!ENTITY spellAddDictionaries.accesskey	"A">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label	"アドレス"><!-- (^^; Contacts -->
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label	"差出人アドレスをカスタマイズ...">
+<!ENTITY customizeFromAddress.accesskey	"A">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName		"メッセージ本文">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip	"スペルチェックの言語">
+<!ENTITY encodingStatusPanel.tooltip	"テキストエンコーディング">

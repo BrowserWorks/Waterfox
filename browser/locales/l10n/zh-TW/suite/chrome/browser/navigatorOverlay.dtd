@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "瀏覽器分頁">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "開啟網址…">
+<!ENTITY openCmd.accesskey "L">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "開啟檔案…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "關閉其他分頁">
+<!ENTITY closeOtherTabs.accesskey "t">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "關閉右方分頁">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+
+<!ENTITY uploadFile.label "上傳檔案…">
+<!ENTITY uploadFile.accesskey "F">
+
+<!ENTITY printSetupCmd.label "頁面設定…">
+<!ENTITY printSetupCmd.accesskey "u">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "尋找文字…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "顯示／隱藏">
+<!ENTITY toolbarsCmd.accesskey "w">
+<!ENTITY tabbarCmd.label "分頁控制列">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "狀態列">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "元件列">
+<!ENTITY componentbarCmd.accesskey "C">
+
+<!ENTITY fullScreenCmd.label "全螢幕">
+<!ENTITY fullScreenCmd.accesskey "F">
+
+<!ENTITY useStyleSheetMenu.label "使用其它樣式表">
+<!ENTITY useStyleSheetMenu.accesskey "U">
+<!ENTITY useStyleSheetNone.label "無">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "基本頁面樣式">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "D">
+<!ENTITY bidiSwitchPageDirectionItem.label "切換頁面方向">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "g">
+<!ENTITY pageSourceCmd.label "頁面原始碼">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "頁面資訊">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "衝">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "首頁">
+<!ENTITY goHomeCmd.accesskey "H">
+<!ENTITY historyCmd.label "歷史">
+<!ENTITY historyCmd.accesskey "s">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "最近關閉的分頁">
+<!ENTITY recentTabs.accesskey "c">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "最近關閉的視窗">
+<!ENTITY recentWindows.accesskey "W">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "回復先前的瀏覽狀態">
+<!ENTITY historyRestoreLastSession.accesskey "R">
+<!ENTITY syncTabsMenu.label "來自其他電腦的分頁">
+<!ENTITY syncTabsMenu.accesskey "o">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "書籤">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY addCurPageCmd.label "將本頁加入書籤">
+<!ENTITY addCurPageCmd.accesskey "B">
+<!ENTITY addCurPageAsCmd.label "存入書籤到…">
+<!ENTITY addCurPageAsCmd.accesskey "F">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "將此分頁群組存入書籤…">
+<!ENTITY addCurTabsAsCmd.accesskey "G">
+<!ENTITY manBookmarksCmd.label "管理書籤…">
+<!ENTITY manBookmarksCmd.accesskey "M">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "搜尋 Web">
+<!ENTITY searchInternetCmd.accesskey "b">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "翻譯此頁">
+<!ENTITY translateMenu.accesskey "T">
+
+<!ENTITY cookieMessageTitle.label "已變更 Cookie 權限">
+<!ENTITY cookieDisplayCookiesCmd.label "管理已儲存的 Cookies">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "M">
+<!ENTITY cookieAllowCookiesCmd.label "允許此網頁使用 Cookie">
+<!ENTITY cookieAllowCookiesCmd.accesskey "A">
+<!ENTITY cookieAllowCookiesMsg.label "此網站可使用Cookie">
+<!ENTITY cookieAllowSessionCookiesCmd.label "允許此網站使用 Session Cookie">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "S">
+<!ENTITY cookieAllowSessionCookiesMsg.label "此網站只能在此次連線設定 cookie。">
+<!ENTITY cookieCookiesDefaultCmd.label "使用預設 Cookie 權限">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "此網站的Cookie會依預設值來決定接受與否。">
+<!ENTITY cookieBlockCookiesCmd.label "禁止此網頁使用 Cookie">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "此網站不能使用Cookie">
+
+<!ENTITY cookieImageMessageTitle.label "已變更圖片權限">
+<!ENTITY cookieDisplayImagesCmd.label "管理圖片權限">
+<!ENTITY cookieDisplayImagesCmd.accesskey "M">
+<!ENTITY cookieAllowImagesCmd.label "管理圖片權限">
+<!ENTITY cookieAllowImagesCmd.accesskey "A">
+<!ENTITY cookieAllowImagesMsg.label "此網站可使用圖片">
+<!ENTITY cookieImagesDefaultCmd.label "使用預設的圖片權限">
+<!ENTITY cookieImagesDefaultCmd.accesskey "U">
+<!ENTITY cookieImagesDefaultMsg.label "此網站的圖片會依預設值來決定下載與否。">
+<!ENTITY cookieBlockImagesCmd.label "禁止此網頁使用圖片">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "此網站不能使用圖片">
+
+<!ENTITY popupsMessageChangeTitle.label "彈出視窗權限已變更">
+<!ENTITY popupAllowCmd.label "允許來自此網站的彈出型視窗">
+<!ENTITY popupAllowCmd.accesskey "A">
+<!ENTITY popupAllowMsg.label "將總是顯示來自此網站的彈出視窗。">
+<!ENTITY popupDefaultCmd.label "使用預設彈出視窗權限">
+<!ENTITY popupDefaultCmd.accesskey "U">
+<!ENTITY popupDefaultMsg.label "將依照預設設定顯示來自此網站的彈出視窗。">
+<!ENTITY popupBlockCmd.label "封鎖此網站的彈出視窗">
+<!ENTITY popupBlockCmd.accesskey "B">
+<!ENTITY popupBlockMsg.label "將不顯示來自此網站的彈出視窗">
+<!ENTITY popupsManage.label "管理彈出型視窗">
+<!ENTITY popupsManage.accesskey "M">
+
+<!ENTITY cookieCookieManager.label "Cookie 管理員">
+<!ENTITY cookieCookieManager.accesskey "C">
+<!ENTITY cookieImageManager.label "圖片管理員">
+<!ENTITY cookieImageManager.accesskey "I">
+<!ENTITY popupsManager.label "彈出型視窗管理員">
+<!ENTITY popupsManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "清除隱私資料…">
+<!ENTITY clearPrivateDataCmd.accesskey "e">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

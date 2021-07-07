@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Xóa tài khoản và dữ liệu">
+<!ENTITY removeButton.label           "Xóa">
+<!ENTITY removeButton.accesskey       "R">
+<!ENTITY removeAccount.label          "Xóa thông tin tài khoản">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Chỉ xóa kiến thức &brandShortName; của tài khoản này. Không ảnh hưởng đến chính tài khoản trên máy chủ.">
+<!ENTITY removeData.label             "Xóa dữ liệu thư">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Xóa dữ liệu hội thoại">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Xóa tất cả các thư, thư mục và bộ lọc được liên kết với tài khoản này khỏi đĩa cục bộ của bạn. Điều này không ảnh hưởng đến một số thư vẫn có thể được lưu trên máy chủ. Không chọn điều này nếu bạn có kế hoạch lưu trữ dữ liệu cục bộ hoặc sử dụng lại nó sau trong &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Xóa tất cả thư, thư mục và bộ lọc được liên kết với tài khoản này khỏi đĩa cục bộ của bạn. Thư và thư mục của bạn vẫn được giữ trên máy chủ.">
+<!ENTITY removeDataChatAccount.desc   "Xóa tất cả nhật ký của các cuộc hội thoại được lưu trữ cho tài khoản này trên đĩa cục bộ của bạn.">
+<!ENTITY showData.label               "Hiển thị vị trí dữ liệu">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "Đang xóa dữ liệu đã chọn…">
+<!ENTITY progressSuccess              "Xóa bỏ thành công.">
+<!ENTITY progressFailure              "Xóa bỏ thất bại.">

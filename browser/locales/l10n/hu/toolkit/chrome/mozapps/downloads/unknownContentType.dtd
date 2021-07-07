@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Megnyitotta a következőt:">
+<!ENTITY  from.label                  "forrás:">
+<!ENTITY  actionQuestion.label        "Mit tegyen a &brandShortName; ezzel a fájllal?">
+
+<!ENTITY  openWith.label              "Megnyitás">
+<!ENTITY  openWith.accesskey          "n">
+<!ENTITY  other.label                 "Másik…">
+
+<!ENTITY  saveFile.label              "Fájl mentése">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "Mostantól minden hasonló fájllal tegyen ugyanígy.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "ami egy:">
+
+<!ENTITY  chooseHandlerMac.label      "Tallózás…">
+<!ENTITY  chooseHandlerMac.accesskey  "T">
+<!ENTITY  chooseHandler.label         "Tallózás…">
+<!ENTITY  chooseHandler.accesskey     "T">
+
+<!ENTITY  unknownPromptText.label     "Szeretné menteni ezt a fájlt?">

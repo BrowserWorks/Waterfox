@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filterregler">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Namn på filterregeln:">
+<!ENTITY filterName.accesskey "N">
+
+<!ENTITY recentFolders.label "Senaste">
+
+<!ENTITY junk.label "Skräppost">
+<!ENTITY notJunk.label "Ej skräppost">
+
+<!ENTITY lowestPriorityCmd.label "Lägsta">
+<!ENTITY lowPriorityCmd.label "Låg">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Hög">
+<!ENTITY highestPriorityCmd.label "Högsta">
+
+<!ENTITY contextDesc.label "Använd filter vid:">
+<!ENTITY contextIncomingMail.label "Ny E-post kommer:">
+<!ENTITY contextIncomingMail.accesskey "N">
+<!ENTITY contextManual.label "Manuell körning">
+<!ENTITY contextManual.accesskey "M">
+<!ENTITY contextBeforeCls.label "Filtrera före skräppostklassificering">
+<!ENTITY contextAfterCls.label "Filterera efter skräppostklassificering">
+<!ENTITY contextOutgoing.label "Efter att ha skickat">
+<!ENTITY contextOutgoing.accesskey "E">
+<!ENTITY contextArchive.label "Arkivering">
+<!ENTITY contextArchive.accesskey "A">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Gör följande:">
+<!ENTITY filterActionDesc.accesskey "G">
+
+<!ENTITY filterActionOrderWarning.label "Notera: Filterregler kommer att köras i en annan ordning.">
+<!ENTITY filterActionOrder.label "Se körordning">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Flytta meddelande till">
+<!ENTITY copyMessage.label "Kopiera meddelande till">
+<!ENTITY forwardTo.label "Vidarebefordra meddelande till">
+<!ENTITY replyWithTemplate.label "Besvara i enlighet med mall">
+<!ENTITY markMessageRead.label "Märk som läst">
+<!ENTITY markMessageUnread.label "Märk som oläst">
+<!ENTITY markMessageStarred.label "Märk som flaggat">
+<!ENTITY setPriority.label "Sätt prioritet till">
+<!ENTITY addTag.label "Förse med etikett">
+<!ENTITY setJunkScore.label "Sätt skräppoststatus till:">
+<!ENTITY deleteMessage.label "Ta bort meddelandet">
+<!ENTITY deleteFromPOP.label "Ta bort från POP-server">
+<!ENTITY fetchFromPOP.label "Hämta från POP-server">
+<!ENTITY ignoreThread.label "Ignorera tråd">
+<!ENTITY ignoreSubthread.label "Ignorera deltråd">
+<!ENTITY watchThread.label "Bevaka tråd">
+<!ENTITY stopExecution.label "Avbryt filtreringen">
+
+<!ENTITY addAction.tooltip "Lägg till ett nytt steg">
+<!ENTITY removeAction.tooltip "Ta bort detta steg">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

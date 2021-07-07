@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "ไม่ต้องเข้ารหัส">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "ม">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "ต้องการการเข้ารหัส">
+<!ENTITY menu_securityEncryptRequire.accesskey "ข">
+
+<!ENTITY menu_securitySign.label "ลงลายเซ็นข้อความนี้แบบดิจิทัล">
+<!ENTITY menu_securitySign.accesskey "ล">
+
+<!ENTITY menu_securityAttachMyKey.label "แนบคีย์สาธารณะของฉัน">
+<!ENTITY menu_securityAttachMyKey.accesskey "น">
+
+<!ENTITY menu_securityTech.label "เทคโนโลยีการเข้ารหัส">
+<!ENTITY menu_securityTech.accesskey "ท">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "ดูข้อมูลความปลอดภัย">
+<!ENTITY menu_securityStatus.accesskey "ด">
+
+<!ENTITY securityButton.label "ความปลอดภัย">
+<!ENTITY securityButton.tooltip "ดูหรือเปลี่ยนแปลงการตั้งค่าความปลอดภัย">
+
+<!ENTITY menu_viewSecurityStatus.label "ข้อมูลความปลอดภัยของข้อความ">
+<!ENTITY menu_viewSecurityStatus.accesskey "อ">

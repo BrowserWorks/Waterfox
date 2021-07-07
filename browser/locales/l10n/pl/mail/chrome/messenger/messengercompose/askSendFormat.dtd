@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Pytanie o pocztę w formacie HTML">
+
+<!ENTITY recipient.label "Niektórzy adresaci wiadomości wymienieni są jako preferujący format tekstowy.">
+
+<!ENTITY question.label "Wysłać wiadomość w formacie HTML, czy przekształcić ją na format tekstowy?">
+
+<!ENTITY plainTextAndHtml.label "Wyślij zwykły tekst oraz HTML">
+<!ENTITY plainTextAndHtml.accesskey "o">
+<!ENTITY plainTextOnly.label "Wyślij tylko zwykły tekst">
+<!ENTITY plainTextOnly.accesskey "t">
+<!ENTITY htmlOnly.label "Wyślij tylko HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Wyślij">
+<!ENTITY send.accesskey "W">

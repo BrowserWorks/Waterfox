@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Nätverk &amp; Diskutrymme">
+<!ENTITY pref.offline.caption             "Nedkopplat läge">
+<!ENTITY textStartUp                      "Vid start:">
+<!ENTITY textStartUp.accesskey            "V">
+<!ENTITY menuitemRememberPrevState        "Kom ihåg föregående uppkopplingsläge">
+<!ENTITY menuitemAskMe                    "Fråga om uppkoppling vid start">
+<!ENTITY menuitemAlwaysOnline             "Starta alltid i uppkopplat läge">
+<!ENTITY menuitemAlwaysOffline            "Starta alltid i nedkopplat läge">
+<!ENTITY menuitemAutomatic                "Avgör automatiskt (om möjligt)">
+<!ENTITY textGoingOnline                  "Skicka utgående meddelanden vid uppkoppling?">
+<!ENTITY radioAutoSend                    "Ja">
+<!ENTITY radioAutoSend.accesskey          "J">
+<!ENTITY radioNotSend                     "Nej">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Fråga">
+<!ENTITY radioAskUnsent.accesskey         "r">
+<!ENTITY textGoingOffline                 "Hämta meddelanden för läsning i nedkopplat läge vid nedkoppling?">
+<!ENTITY radioAutoDownload                "Ja">
+<!ENTITY radioAutoDownload.accesskey      "a">
+<!ENTITY radioNotDownload                 "Nej">
+<!ENTITY radioNotDownload.accesskey       "e">
+<!ENTITY radioAskDownload                 "Fråga">
+<!ENTITY radioAskDownload.accesskey       "å">
+<!ENTITY mailConnections.caption          "E-post uppkoppling">
+<!ENTITY mailnewsTimeout.label            "Avbryt uppkopplingsförsök efter:">
+<!ENTITY mailnewsTimeout.accesskey        "b">
+<!ENTITY mailnewsTimeoutSeconds.label     "sekunder">
+<!ENTITY Diskspace                        "Diskutrymme">
+<!ENTITY offlineCompactFolders.label      "Komprimera alla mappar när det sparar mer än">
+<!ENTITY offlineCompactFolders.accesskey  "m">
+<!ENTITY offlineCompactFoldersMB.label    "MB tillsammans">

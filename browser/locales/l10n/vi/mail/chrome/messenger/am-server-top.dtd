@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Lưu trữ thư">
+<!ENTITY securitySettings.label "Cài đặt bảo mật">
+<!ENTITY serverSettings.label "Cài đặt máy chủ">
+<!ENTITY serverType.label "Kiểu máy chủ:">
+<!ENTITY serverName.label "Tên máy chủ:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "Tên đăng nhập:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Cổng:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Mặc định:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Kiểm tra thư mới mỗi ">
+<!ENTITY biffStart.accesskey "y">
+<!ENTITY biffEnd.label "phút">
+<!ENTITY useIdleNotifications.label "Cho phép thông báo máy chủ ngay lập tức khi có thư mới đến">
+<!ENTITY useIdleNotifications.accesskey "w">
+<!ENTITY connectionSecurity.label "Bảo mật kết nối:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "Không có">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, nếu có">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Phương thức xác thực:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Để lại thư trên máy chủ">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "Chỉ lấy tiêu đề">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "Trong nhiều nhất">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "ngày">
+<!ENTITY deleteOnServer2.label "Cho đến khi tôi xóa chúng">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Tự động tải thư mới">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Khi tôi xóa một thư:">
+<!ENTITY modelMoveToTrash.label "Di chuyển nó vào thư mục này:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Chỉ đánh dấu nó là đã bị xóa">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Xóa nó ngay lập tức">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Dọn dẹp (&quot;Xóa&quot;) hộp thư khi thoát">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "Dọn sạch thùng rác khi thoát">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "Kiểm tra thư mới khi khởi động">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Hỏi tôi trước khi tải nhiều hơn">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "thư">
+<!ENTITY alwaysAuthenticate.label "Luôn yêu cầu xác thực khi kết nối đến máy chủ này">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY newsrcFilePath1.label "Tập tin News.rc:">
+<!ENTITY newsrcPicker1.label "Chọn tập tin News.rc">
+<!ENTITY abbreviate.label "Hiện tên nhóm tin trong bảng thư mục thư dưới dạng:">
+<!ENTITY abbreviateOn.label "Tên đầy đủ (ví dụ, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Tên viết tắt chữ đầu (ví dụ, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Nâng cao…">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY serverDefaultCharset2.label "Bảng mã văn bản mặc định:">
+<!ENTITY localPath1.label "Thư mục nội bộ:">
+<!ENTITY localFolderPicker.label "Chọn thư mục cục bộ">
+<!ENTITY browseFolder.label "Duyệt…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "Duyệt…">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "Cài đặt tài khoản">
+<!ENTITY accountSettingsDesc.label "Sau đây là một tài khoản đặc biệt.  Không có danh tính liên quan đến nó.">
+<!ENTITY storeType.label "Loại lưu trữ thư:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "Tập tin trên mỗi thư mục (mbox)">
+<!ENTITY maildirStore.label "Tập tin trên mỗi thư (maildir)">

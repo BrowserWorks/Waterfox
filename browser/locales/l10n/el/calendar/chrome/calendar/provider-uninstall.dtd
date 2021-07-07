@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Απεγκατάσταση υπηρεσίας παροχής">
+<!ENTITY providerUninstall.accept.label                    "Απεγγραφή συνδρομής από τα επιλεγμένα">
+<!ENTITY providerUninstall.accept.accesskey                "γ">
+<!ENTITY providerUninstall.cancel.label                    "Διατήρηση προσθέτου">
+<!ENTITY providerUninstall.cancel.accesskey                "θ">
+<!ENTITY providerUninstall.preName.label                   "Έχετε ζητήσει να απεγκαταστήσετε ή να απενεργοποιήσετε:">
+<!ENTITY providerUninstall.postName.label                  "Αυτό θα έχει ως αποτέλεσμα τα παρακάτω ημερολόγια να απενεργοποιηθούν.">
+<!ENTITY providerUninstall.reinstallNote.label             "Εκτός αν σχεδιάζετε να εγκαταστήσετε ξανά αυτήν την υπηρεσία παροχής, μπορείτε να επιλέξετε να καταργήσετε τη συνδρομή σας από τα ημερολόγια αυτής της υπηρεσίας παροχής.">

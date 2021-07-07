@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Ne titkosítsa">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "N">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Titkosítás megkövetelése">
+<!ENTITY menu_securityEncryptRequire.accesskey "i">
+
+<!ENTITY menu_securitySign.label "Üzenet digitális aláírása">
+<!ENTITY menu_securitySign.accesskey "d">
+
+<!ENTITY menu_securityAttachMyKey.label "Saját nyilvános kulcs mellékelése">
+<!ENTITY menu_securityAttachMyKey.accesskey "m">
+
+<!ENTITY menu_securityTech.label "Titkosítási technológia">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Biztonsági adatok megtekintése">
+<!ENTITY menu_securityStatus.accesskey "z">
+
+<!ENTITY securityButton.label "Biztonság">
+<!ENTITY securityButton.tooltip "Biztonsági beállítások megtekintése vagy módosítása">
+
+<!ENTITY menu_viewSecurityStatus.label "Üzenet biztonsági adatai">
+<!ENTITY menu_viewSecurityStatus.accesskey "e">

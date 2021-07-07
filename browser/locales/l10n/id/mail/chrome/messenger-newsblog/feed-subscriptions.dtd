@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Langganan Feed">
+<!ENTITY learnMore.label             "Pelajari lebih lanjut tentang Feed">
+
+<!ENTITY feedTitle.label             "Judul:">
+<!ENTITY feedTitle.accesskey         "J">
+
+<!ENTITY feedLocation.label          "URL Feed:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Masukkan url umpan yang valid">
+<!ENTITY locationValidate.label      "Validasi">
+<!ENTITY validateText.label          "Memeriksa validasi dan mengambil URL yang valid.">
+
+<!ENTITY feedFolder.label            "Simpan Artikel di:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Periksa artikel baru setiap ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "menit">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "hari">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Rekomendasi Penerbit:">
+
+<!ENTITY quickMode.label             "Tampilkan ringkasan artikel, jangan memuat laman webnya">
+<!ENTITY quickMode.accesskey         "r">
+
+<!ENTITY autotagEnable.label         "Secara otomatis membuat tag dari umpan &lt; kategori &gt; nama">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Tag awalan dengan:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Masukkan awalan tag">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Tambah">
+<!ENTITY button.addFeed.accesskey    "T">
+<!ENTITY button.verifyFeed.label     "Verifikasi">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Ubah">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "Hapus">
+<!ENTITY button.removeFeed.accesskey "H">
+<!ENTITY button.importOPML.label     "Impor">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Ekspor">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Ekspor Umpan dengan struktur folder; ctrl klik atau ctrl enter untuk mengekspor Umpan sebagai daftar">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Tutup">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Trình chỉnh sửa thuộc tính nâng cao">
+<!ENTITY AttName.label                  "Thuộc tính: ">
+<!ENTITY AttValue.label                 "Giá trị: ">
+<!ENTITY PropertyName.label             "Thuộc tính (Property): ">
+<!ENTITY currentattributesfor.label     "Thuộc tính hiện tại của: ">
+<!ENTITY tree.attributeHeader.label     "Thuộc tính">
+<!ENTITY tree.propertyHeader.label      "Thuộc tính">
+<!ENTITY tree.valueHeader.label         "Giá trị">
+<!ENTITY tabHTML.label                  "Thuộc tính HTML">
+<!ENTITY tabCSS.label                   "Phong cách bên trong">
+<!ENTITY tabJSE.label                   "Sự kiện JavaScript">
+
+<!ENTITY editAttribute.label    "Nhấn lên một mục ở trên để chỉnh sửa giá trị của nó">
+<!ENTITY removeAttribute.label  "Xóa">

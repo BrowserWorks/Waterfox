@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propriedades do formulário">
+
+<!ENTITY Settings.label "Configurações">
+
+<!ENTITY FormName.label "Nome do formulário:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL da ação:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Método:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Codificação:">
+<!ENTITY FormEncType.accesskey "C">
+<!ENTITY FormTarget.label "Quadro de destino:">
+<!ENTITY FormTarget.accesskey "F">
+
+<!ENTITY RemoveForm.label "Remover formulário">
+<!ENTITY RemoveForm.accesskey "R">

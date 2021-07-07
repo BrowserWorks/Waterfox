@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Certaines pages web sont disponibles en plusieurs langues. Choisissez les langues à utiliser par ordre de préférence.">
+<!ENTITY languages.customize.title                      "Langues">
+<!ENTITY langtitle.label                                "Langue des pages web">
+<!ENTITY languages.customize.prefAddLangDescript        "Sélectionner les langues que vous voulez ajouter.">
+<!ENTITY languages.customize.addButton.label            "Ajouter…">
+<!ENTITY languages.customize.addButton.accesskey        "o">
+<!ENTITY languages.customize.deleteButton.label         "Supprimer">
+<!ENTITY languages.customize.deleteButton.accesskey     "S">
+<!ENTITY languages.customize.add.title.label            "Ajouter des langues">
+<!ENTITY languages.customize.available.label            "Langues :">
+<!ENTITY languages.customize.active.label               "Langues par ordre de préférence :">
+<!ENTITY languages.customize.active.accesskey           "L">
+<!ENTITY languages.customize.others.label               "Autres :">
+<!ENTITY languages.customize.others.accesskey           "u">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Encodage de texte pour le contenu obsolète">
+<!ENTITY languages.customize.Fallback2.label            "Encodage de texte de dernier recours :">
+<!ENTITY languages.customize.Fallback2.accesskey        "c">
+<!ENTITY languages.customize.Fallback2.desc             "Cet encodage de texte est utilisé pour le contenu obsolète qui ne déclare pas correctement son encodage.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "Exemples : fr-FR, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Monter">
+<!ENTITY languages.customize.moveUp.accesskey           "M">
+<!ENTITY languages.customize.moveDown.label             "Descendre">
+<!ENTITY languages.customize.moveDown.accesskey         "D">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Сценарии и плагины">
+
+<!ENTITY navigator.label                 "Браузера">
+<!ENTITY navigator.accesskey             "а">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Использовать JavaScript для:">
+<!ENTITY allowScripts.label              "Разрешить сценариям:">
+<!ENTITY allowScripts.accesskey          "с">
+<!ENTITY allowWindowMoveResize.label     "Перемещать существующие окна и изменять их размеры">
+<!ENTITY allowWindowFlip.label           "Помещать окна поверх других окон или под них">
+<!ENTITY allowWindowStatusChange.label   "Менять текст в строке состояния">
+<!ENTITY allowContextmenuDisable.label   "Отключать или замещать контекстные меню">
+<!ENTITY allowHideStatusBar.label        "Скрывать строку состояния">
+
+<!ENTITY debugging.label                  "Отладка JavaScript">
+<!ENTITY debugEnableDump.label            "Включить вывод JavaScript dump()">
+<!ENTITY debugEnableDump.accesskey        "л">
+<!ENTITY debugStrictJavascript.label      "Показывать строгие предупреждения JavaScript">
+<!ENTITY debugStrictJavascript.accesskey  "J">
+<!ENTITY debugConsoleJavascript.label     "Показывать ошибки и предупреждения chrome JavaScript">
+<!ENTITY debugConsoleJavascript.accesskey "c">
+
+<!ENTITY enablePlugins.label             "Включить плагины для">
+<!ENTITY enablePluginForSuite.label      "SeaMonkey">
+<!ENTITY enablePluginForSuite.accesskey  "e">
+
+<!ENTITY whenPageRequiresPlugins.label   "Когда странице потребуются плагины">
+<!ENTITY activateAllPlugins.label        "Активировать все плагины по умолчанию">
+<!ENTITY activateAllPlugins.accesskey    "в">
+<!ENTITY warnPluginsRequired.label       "Предупрежать меня, если необходимо установить дополнительные плагины">
+<!ENTITY warnPluginsRequired.accesskey   "ж">

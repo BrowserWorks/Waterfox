@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label         "Joindre cette image au message">
+<!ENTITY attachImageSource.accesskey     "J">
+
+<!ENTITY attachLinkSource.label          "Joindre le code source de ce lien au message">
+<!ENTITY attachLinkSource.accesskey      "o">

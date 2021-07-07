@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title             "Személyes adatok törlése">
+
+<!-- LOCALIZATION NOTE (sanitizeDialog.width): width of the Clear Recent
+     History dialog -->
+<!ENTITY sanitizeDialog.width             "34em">
+
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear"
+     dropdown. -->
+<!ENTITY clearTimeDuration.label          "Törlendő időtartomány: ">
+<!ENTITY clearTimeDuration.accesskey      "">
+<!ENTITY clearTimeDuration.lastHour       "Utolsó egy óra">
+<!ENTITY clearTimeDuration.last2Hours     "Utolsó két óra">
+<!ENTITY clearTimeDuration.last4Hours     "Utolsó négy óra">
+<!ENTITY clearTimeDuration.today          "Ma">
+<!ENTITY clearTimeDuration.everything     "Minden">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for
+     languages that require it. -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!--  LOCALIZATION NOTE (sanitizeSelectedWarning): Warning that appears
+      when not all items are selected in the in Clear Private data dialog. -->
+<!ENTITY sanitizeSelectedWarning          "Minden kijelölt elem törölve lesz.">
+
+<!-- LOCALIZATION NOTE (sanitizeUndoWarning): Second warning
+     paragraph that always appears. -->
+<!ENTITY sanitizeUndoWarning              "Ez a művelet nem vonható vissza.">
+
+<!ENTITY sanitizeItems.label              "A következő elemek azonnali törlése:">
+
+<!-- LOCALIZATION NOTE : Try to make sure to not have overlapped  accesskeys
+     with pref-privatedata.dtd. These entities are also used in the private
+     data preferences dialog. -->
+<!ENTITY itemHistory.label                "Böngészési előzmények">
+<!ENTITY itemHistory.accesskey            "B">
+<!ENTITY itemHistoryS.accesskey           "g">
+<!ENTITY itemUrlBar.label                 "Címsor előzményei">
+<!ENTITY itemUrlBar.accesskey             "C">
+<!ENTITY itemUrlBarS.accesskey            "e">
+<!ENTITY itemDownloads.label              "Letöltési előzmények">
+<!ENTITY itemDownloads.accesskey          "L">
+<!ENTITY itemDownloadsS.accesskey         "l">
+<!ENTITY itemFormSearchHistory.label      "Mentett űrlapadatok és keresési előzmények">
+<!ENTITY itemFormSearchHistory.accesskey  "M">
+<!ENTITY itemFormSearchHistoryS.accesskey "k">
+<!ENTITY itemCache.label                  "Gyorsítótár">
+<!ENTITY itemCache.accesskey              "G">
+<!ENTITY itemCacheS.accesskey             "s">
+<!ENTITY itemCookies.label                "Sütik">
+<!ENTITY itemCookies.accesskey            "S">
+<!ENTITY itemCookiesS.accesskey           "t">
+<!ENTITY itemOfflineApps.label            "Kapcsolat nélküli webhelyadatok">
+<!ENTITY itemOfflineApps.accesskey        "p">
+<!ENTITY itemOfflineAppsS.accesskey       "n">
+<!ENTITY itemPasswords.label              "Mentett jelszavak">
+<!ENTITY itemPasswords.accesskey          "j">
+<!ENTITY itemPasswordsS.accesskey         "v">
+<!ENTITY itemSessions.label               "Hitelesített munkamenetek">
+<!ENTITY itemSessions.accesskey           "H">
+
+<!ENTITY itemSessionsS.accesskey          "u">
+
+<!ENTITY sanitizeButton.label            "Személyes adatok törlése">
+<!ENTITY itemSitePreferences.label        "Webhely beállításai">
+<!ENTITY itemSitePreferences.accesskey    "b">
+<!ENTITY itemSitePreferencesS.accesskey   "t">

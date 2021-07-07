@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "主題">
+<!ENTITY fromColumn.label "從">
+<!ENTITY recipientColumn.label "收件者">
+<!ENTITY attachmentColumn.label "附件">
+<!ENTITY subjectColumn.label "主旨">
+<!ENTITY dateColumn.label "日期">
+<!ENTITY priorityColumn.label "重要性">
+<!ENTITY tagsColumn.label "標籤">
+<!ENTITY accountColumn.label "帳號">
+<!ENTITY statusColumn.label "狀態">
+<!ENTITY sizeColumn.label "大小">
+<!ENTITY junkStatusColumn.label "垃圾信狀態">
+<!ENTITY unreadColumn.label "未讀主題">
+<!ENTITY totalColumn.label "全部主題">
+<!ENTITY readColumn.label "讀取">
+<!ENTITY receivedColumn.label "接收時間">
+<!ENTITY flagColumn.label "標示">
+<!ENTITY locationColumn.label "位置">
+<!ENTITY idColumn.label "收件順序">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "選擇要顯示的欄位">
+<!ENTITY threadColumn2.tooltip "顯示訊息討論串">
+<!ENTITY fromColumn2.tooltip "依照寄件者排序">
+<!ENTITY recipientColumn2.tooltip "依照收件者排序">
+<!ENTITY attachmentColumn2.tooltip "依照附件排序">
+<!ENTITY subjectColumn2.tooltip "依照主旨排序">
+<!ENTITY dateColumn2.tooltip "依照日期排序">
+<!ENTITY priorityColumn2.tooltip "依照重要性排序">
+<!ENTITY tagsColumn2.tooltip "依照標籤排序">
+<!ENTITY accountColumn2.tooltip "依照帳號排序">
+<!ENTITY statusColumn2.tooltip "依照狀態排序">
+<!ENTITY sizeColumn2.tooltip "依照大小排序">
+<!ENTITY junkStatusColumn2.tooltip "依照垃圾信狀態排序">
+<!ENTITY unreadColumn2.tooltip "討論串中未讀訊息數量">
+<!ENTITY totalColumn2.tooltip "討論串中所有訊息數量">
+<!ENTITY readColumn2.tooltip "依照是否已讀排序">
+<!ENTITY receivedColumn2.tooltip "依照接收日期排序">
+<!ENTITY flagColumn2.tooltip "依照標示排序">
+<!ENTITY locationColumn2.tooltip "依照位置">
+<!ENTITY idColumn2.tooltip "依照接收順序排序">
+

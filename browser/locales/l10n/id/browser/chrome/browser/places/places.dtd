@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Pustaka">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Kelola">
+<!ENTITY organize.accesskey    "K">
+<!ENTITY organize.tooltip      "Kelola markah Anda">
+
+<!ENTITY file.close.label               "Tutup">
+<!ENTITY file.close.accesskey           "T">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Tampilan">
+<!ENTITY views.accesskey                "T">
+<!ENTITY views.tooltip                  "Atur tampilan">
+<!ENTITY view.columns.label             "Tampilkan Kolom">
+<!ENTITY view.columns.accesskey         "K">
+<!ENTITY view.sort.label                "Urutan">
+<!ENTITY view.sort.accesskey            "U">
+<!ENTITY view.unsorted.label            "Tidak Diurut">
+<!ENTITY view.unsorted.accesskey        "T">
+<!ENTITY view.sortAscending.label       "Urutan A ke Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Urutan Z ke A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Impor Markah dari HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Ekspor Markah ke HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Impor Data dari Peramban Lain…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Buat Cadangan…">
+<!ENTITY cmd.backup.accesskey           "C">
+<!ENTITY cmd.restore2.label             "Kembalikan">
+<!ENTITY cmd.restore2.accesskey         "K">
+<!ENTITY cmd.restoreFromFile.label      "Pilih Berkas…">
+<!ENTITY cmd.restoreFromFile.accesskey  "B">
+
+<!ENTITY col.name.label          "Nama">
+<!ENTITY col.tags.label          "Tag">
+<!ENTITY col.url.label           "Lokasi">
+<!ENTITY col.mostrecentvisit.label "Kunjungan Terakhir">
+<!ENTITY col.visitcount.label    "Jumlah Kunjungan">
+<!ENTITY col.dateadded.label     "Ditambahkan pada">
+<!ENTITY col.lastmodified.label  "Modifikasi Terakhir">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Impor dan Cadangan">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Impor dan cadangkan markah Anda‚">
+
+<!ENTITY backButton.tooltip  "Mundur">
+
+<!ENTITY forwardButton.tooltip  "Maju">
+
+<!ENTITY detailsPane.selectAnItemText.description "Pilih item untuk ditampilkan dan diubah propertinya">
+

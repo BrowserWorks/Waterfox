@@ -1,0 +1,203 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Probleem bij het laden van de pagina">
+<!ENTITY retry.label "Opnieuw proberen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Kan geen verbinding maken">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Dit adres heeft beperkte toegang">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server niet gevonden">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Controleer het adres op typefouten, zoals
+    <strong>ww</strong>.example.com in plaats van
+    <strong>www</strong>.example.com</li>
+  <li>Als u geen enkele pagina kunt laden, controleer dan de netwerkverbinding
+    van uw computer.</li>
+  <li>Als uw computer of netwerk wordt beveiligd door een firewall of proxy,
+    zorg er dan voor dat &brandShortName; toegang heeft tot het web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Bestand niet gevonden">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Controleer de bestandsnaam op grote/kleine letters of andere typefouten.</li>
+  <li>Controleer of het bestand is verplaatst, hernoemd of verwijderd.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Toegang tot het bestand is geweigerd">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Het kan zijn verwijderd, verplaatst, of bestandsmachtigingen kunnen toegang tegengaan.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Oeps.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; kan deze pagina om de een of andere reden niet laden.</p>
+">
+
+<!ENTITY malformedURI.title "Het adres is niet geldig">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Webadressen worden doorgaans geschreven als
+    <strong>http://www.example.com/</strong></li>
+  <li>Let erop dat u voorwaartse slashes gebruikt (d.i.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "De verbinding werd onderbroken">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Document verlopen">
+<!ENTITY notCached.longDesc "<p>Het opgevraagde document is niet beschikbaar in de buffer.</p><ul><li>Als beveiligingsmaatregel vraagt &brandShortName; gevoelige documenten niet automatisch opnieuw op.</li><li>Klik op Opnieuw proberen om het document opnieuw van de website op te vragen.</li></ul>">
+
+<!ENTITY netOffline.title "Offlinemodus">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Klik op ‘Opnieuw proberen’ om naar de onlinemodus over te schakelen en de pagina opnieuw te laden.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Inhoudcoderingsfout">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Onveilig bestandstype">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "De verbinding werd geherinitialiseerd">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "De wachttijd voor de verbinding is verstreken">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Het adres werd niet begrepen">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Misschien moet u andere software installeren om dit adres te openen.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "De proxyserver weigert verbindingen">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Controleer of uw proxyinstellingen juist zijn.</li>
+  <li>Neem contact op met uw netwerkbeheerder om te controleren of de proxyserver
+    werkt.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Kan de proxyserver niet vinden">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Controleer of uw proxyinstellingen juist zijn.</li>
+  <li>Controleer of uw computer een werkende netwerkverbinding heeft.</li>
+  <li>Als uw computer of netwerk wordt beveiligd door een firewall of proxy,
+    zorg er dan voor dat &brandShortName; toegang heeft tot het web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "De pagina verwijst niet op een juiste manier door">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dit probleem kan soms worden veroorzaakt door het uitschakelen of weigeren
+    van cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Onverwacht antwoord van server">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Zorg ervoor dat de persoonlijke beveiligingsbeheerder op uw systeem
+    is geïnstalleerd.</li>
+  <li>Dit kan het gevolg zijn van een niet-standaard configuratie van de server.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Beveiligde verbinding mislukt">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>De pagina die u wilt bekijken kan niet worden weergegeven, omdat de echtheid van de ontvangen gegevens niet kon worden geverifieerd.</li>
+  <li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Beveiligde verbinding mislukt">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Dit kan een probleem met de serverconfiguratie zijn, of iemand probeert de
+    server na te bootsen.</li>
+  <li>Als u in het verleden met succes verbinding met deze server hebt gemaakt, kan
+    de fout van tijdelijke aard zijn en kunt u het later nogmaals proberen.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Misschien is de website tijdelijk niet beschikbaar of overbelast. Probeer het
+    over enkele ogenblikken opnieuw.</li>
+  <li>Als u geen enkele pagina kunt laden, controleer dan de netwerkverbinding
+    van uw computer.</li>
+  <li>Als uw computer of netwerk wordt beveiligd door een firewall of proxy,
+    zorg er dan voor dat &brandShortName; toegang heeft tot het web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Geblokkeerd door inhoudsbeveiligingsbeleid">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; heeft voorkomen dat de pagina op deze manier werd geladen, omdat de pagina een inhoudsbeveiligingsbeleid heeft dat dit niet toestaat.</p>">
+
+<!ENTITY xfoBlocked.title "Geblokkeerd door beleid voor X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; heeft voorkomen dat de pagina in deze context werd geladen, omdat de pagina een beleid voor X-Frame-Options heeft dat dit niet toestaat.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Beschadigde-inhoudsfout">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>De pagina die u wilt bekijken kan niet worden weergegeven, omdat er een fout in de gegevensoverdracht is gedetecteerd.</p><ul><li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Of u kunt een uitzondering toevoegen…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Haal me hier vandaan!">
+<!ENTITY securityOverride.exceptionButtonLabel "Uitzondering toevoegen…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>U kunt beter geen uitzondering toevoegen als u een internetverbinding gebruikt die u niet volledig vertrouwt, of als u normaal gesproken geen waarschuwing krijgt voor deze server.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Uw verbinding is niet beveiligd">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> gebruikt verouderde beveiligingstechnologie die kwetsbaar is voor aanvallen. Een aanvaller kan eenvoudig gegevens onthullen waarvan u dacht dat deze veilig waren. De websitebeheerder dient eerst de server in orde te maken voordat u de website kunt bezoeken.</p><p>Foutcode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Geblokkeerde pagina">
+
+<!ENTITY networkProtocolError.title "Netwerkprotocolfout">
+<!ENTITY networkProtocolError.longDesc "<p>De pagina die u wilt bekijken kan niet worden weergegeven, omdat er een fout in het netwerkprotocol is gedetecteerd.</p><ul><li>Neem contact op met de website-eigenaars om ze over dit probleem te informeren.</li></ul>">

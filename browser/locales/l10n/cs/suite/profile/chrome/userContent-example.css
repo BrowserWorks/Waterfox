@@ -1,0 +1,47 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Ulozte kopii tohoto souboru jako userContent.css do adresare chrome 
+ * v adresari s uzivatelskym profilem a upravte dle svych predstav.
+ */
+
+/*
+ * Tento soubor se pouziva k nastaveni uzivatelskych kaskadovych stylu
+ * na webovych strankach. Pravidla bez deklarace !important budou prepsana
+ * kaskadovymi styly webove stranky, pokud takova jsou. Pravidla s deklaraci
+ * !important prevazi nad pravidly na webove strance.
+ */
+
+/*
+ * Priklad: odstranit blikajici prvky
+ *
+ * blink { text-decoration: none !important; }
+ *
+ */
+
+/*
+ * Priklad: nastavit vsem tabulkam 2px siroky ramecek
+ *
+ * table { border: 2px solid; }
+ */
+
+/*
+ * Priklad: vypnout pohybujici se texty
+ *
+ * marquee { -moz-binding: none; }
+ *
+ */
+
+/*
+ * Priklad: nastavit pro vyhledavaci pole na www.mozilla.org bile pozadi a cerny text
+ *
+ * @-moz-document url-prefix(http://www.mozilla.org/) {
+ *   #q { background: white !important; color: black !important; }
+ * }
+ */
+ 
+/* 
+ * Vice prikladu najdete na http://www.mozilla.org/unix/customizing.html
+ */

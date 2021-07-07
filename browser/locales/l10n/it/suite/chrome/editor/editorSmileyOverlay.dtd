@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smile">
+<!ENTITY insertSmiley.accesskey "m">
+
+<!ENTITY smiley1Cmd.label "Sorriso">
+<!ENTITY smiley1Cmd.accesskey "o">
+<!ENTITY smiley1Cmd.tooltip "Inserisci una faccina sorridente">
+<!ENTITY smiley2Cmd.label "Broncio">
+<!ENTITY smiley2Cmd.accesskey "n">
+<!ENTITY smiley2Cmd.tooltip "Inserisci una faccina dispiaciuta">
+<!ENTITY smiley3Cmd.label "Ammicco">
+<!ENTITY smiley3Cmd.accesskey "A">
+<!ENTITY smiley3Cmd.tooltip "Inserisci una faccina che fa l'occhiolino">
+<!ENTITY smiley4Cmd.label "Linguaccia">
+<!ENTITY smiley4Cmd.accesskey "L">
+<!ENTITY smiley4Cmd.tooltip "Inserisci una faccina che fa una linguaccia">
+<!ENTITY smiley5Cmd.label "Risata">
+<!ENTITY smiley5Cmd.accesskey "R">
+<!ENTITY smiley5Cmd.tooltip "Inserisci una faccina che ride">
+<!ENTITY smiley6Cmd.label "Imbarazzo">
+<!ENTITY smiley6Cmd.accesskey "m">
+<!ENTITY smiley6Cmd.tooltip "Inserisci una faccina imbarazzata">
+<!ENTITY smiley7Cmd.label "Dubbio">
+<!ENTITY smiley7Cmd.accesskey "D">
+<!ENTITY smiley7Cmd.tooltip "Inserisci una faccina indecisa">
+<!ENTITY smiley8Cmd.label "Sorpresa">
+<!ENTITY smiley8Cmd.accesskey "e">
+<!ENTITY smiley8Cmd.tooltip "Inserisci una faccina sorpresa">
+<!ENTITY smiley9Cmd.label "Bacio">
+<!ENTITY smiley9Cmd.accesskey "c">
+<!ENTITY smiley9Cmd.tooltip "Inserisci una faccina che bacia">
+<!ENTITY smiley10Cmd.label "Urlo">
+<!ENTITY smiley10Cmd.accesskey "U">
+<!ENTITY smiley10Cmd.tooltip "Inserisci una faccina che urla">
+<!ENTITY smiley11Cmd.label "Fico">
+<!ENTITY smiley11Cmd.accesskey "F">
+<!ENTITY smiley11Cmd.tooltip "Inserisci una faccina con gli occhiali">
+<!ENTITY smiley12Cmd.label "Bocca a dollaro">
+<!ENTITY smiley12Cmd.accesskey "B">
+<!ENTITY smiley12Cmd.tooltip "Inserisci una faccina avara">
+<!ENTITY smiley13Cmd.label "Scarpa in bocca">
+<!ENTITY smiley13Cmd.accesskey "S">
+<!ENTITY smiley13Cmd.tooltip "Inserisci una faccina desolata">
+<!ENTITY smiley14Cmd.label "Innocenza">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "Inserisci una faccina innocente">
+<!ENTITY smiley15Cmd.label "Pianto">
+<!ENTITY smiley15Cmd.accesskey "P">
+<!ENTITY smiley15Cmd.tooltip "Inserisci una faccina che piange">
+<!ENTITY smiley16Cmd.label "Bocca sigillata">
+<!ENTITY smiley16Cmd.accesskey "t">
+<!ENTITY smiley16Cmd.tooltip "Inserisci una faccina con la bocca chiusa">
+<!ENTITY SmileButton.label "Inserisci faccina">
+<!ENTITY SmileButton.tooltip "Inserisce uno smile">

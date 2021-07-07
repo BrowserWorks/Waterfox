@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Firefox" and "version" is used to mean "the specific
+ revision number of a given Firefox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Vigtige nyheder">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Log ind med din &syncBrand.fxAccount.label; for at synkronisere oplysninger, du allerede har gemt til Firefox, med denne installation af &brandShortName;.">
+<!ENTITY continue-button "Fortsæt">
+
+<!ENTITY mainText "Denne installation af &brandShortName; har en ny profil. Profilen deler ikke bogmærker, adgangskoder og bruger-indstillinger med andre Firefox-installationer på denne computer (inklusive Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition og Firefox Nightly).">

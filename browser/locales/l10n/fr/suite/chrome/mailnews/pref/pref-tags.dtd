@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Étiquettes">
+<!ENTITY pref.tags.caption          "Personnaliser les étiquettes">
+<!ENTITY pref.tags.description      "Les étiquettes sont utilisées afin de classer vos messages par catégories et leur donner une priorité. Vous pouvez modifier l’apparence des étiquettes en utilisant les réglages ci-dessous. L’ordre d’importance des étiquettes va de haut en bas.">
+<!ENTITY tagColumn.label            "Étiquette">
+<!ENTITY colorColumn.label          "Couleur">
+<!ENTITY defaultTagName.label       "Sans titre">
+<!ENTITY addTagButton.label         "Ajouter">
+<!ENTITY addTagButton.accesskey     "o">
+<!ENTITY deleteTagButton.label      "Supprimer">
+<!ENTITY deleteTagButton.accesskey  "S">
+<!ENTITY raiseTagButton.label       "Augmenter l’importance">
+<!ENTITY raiseTagButton.accesskey   "g">
+<!ENTITY lowerTagButton.label       "Diminuer l’importance">
+<!ENTITY lowerTagButton.accesskey   "l">
+<!ENTITY restoreButton.label        "Réinitialiser">
+<!ENTITY restoreButton.accesskey    "R">

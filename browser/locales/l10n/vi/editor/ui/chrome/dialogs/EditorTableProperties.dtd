@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Thuộc tính bảng">
+<!ENTITY applyButton.label                "Áp dụng">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Đóng">
+<!ENTITY tableTab.label                   "Bảng">
+<!ENTITY cellTab.label                    "Ô">
+<!ENTITY tableRows.label                  "Hàng:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Cột:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "Cao:">
+<!ENTITY tableHeight.accessKey            "G">
+<!ENTITY tableWidth.label                 "Rộng:">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "Viền và khoảng cách">
+<!ENTITY tableBorderWidth.label           "Viền:">
+<!ENTITY tableBorderWidth.accessKey       "V">
+<!ENTITY tableSpacing.label               "Khoảng cách:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "Khoảng đệm:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "điểm ảnh giữa các ô">
+<!ENTITY tablePxBetwBrdrCellContent.label "điểm ảnh giữa viền ô và nội dung">
+<!ENTITY tableAlignment.label             "Căn chỉnh bảng:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Tiêu đề:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "Trên bảng">
+<!ENTITY tableCaptionBelow.label          "Dưới bảng">
+<!ENTITY tableCaptionLeft.label           "Bên trái bảng">
+<!ENTITY tableCaptionRight.label          "Bên phải bảng">
+<!ENTITY tableCaptionNone.label           "Không có">
+<!ENTITY tableInheritColor.label           "(Để cho màu trang hiện xuyên suốt)">
+
+<!ENTITY cellSelection.label              "Phần được chọn">
+<!ENTITY cellSelectCell.label             "Ô">
+<!ENTITY cellSelectRow.label              "Hàng">
+<!ENTITY cellSelectColumn.label           "Cột">
+<!ENTITY cellSelectNext.label             "Sau">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "Trước">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "Thay đổi hiện tại sẽ được áp dụng sau khi thay đổi phần được chọn.">
+<!ENTITY cellContentAlignment.label       "Căn chỉnh nội dung">
+<!ENTITY cellHorizontal.label             "Ngang:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "Dọc:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Kiểu ô:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "Bình thường">
+<!ENTITY cellHeader.label                 "Header">
+<!ENTITY cellTextWrap.label               "Ngắt dòng văn bản:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "Ngắt dòng">
+<!ENTITY cellNoWrap.label                 "Không ngắt dòng">
+<!ENTITY cellAlignTop.label               "Trên cùng">
+<!ENTITY cellAlignMiddle.label            "Giữa">
+<!ENTITY cellAlignBottom.label            "Dưới cùng">
+<!ENTITY cellAlignJustify.label           "Hai Bên">
+<!ENTITY cellInheritColor.label           "(Để màu bảng hiện xuyên suốt)">
+<!ENTITY cellUseCheckboxHelp.label        "Sử dụng hộp kiểm để xác định thuộc tính nào sẽ được áp dụng cho tất cả các ô được chọn">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Kích thước">
+<!ENTITY pixels.label                     "điểm ảnh">
+<!ENTITY backgroundColor.label            "Màu nền:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "Trái">
+<!ENTITY AlignCenter.label                "Giữa">
+<!ENTITY AlignRight.label                 "Phải">

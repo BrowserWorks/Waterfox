@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Websitenavigatiebalk">
+<!ENTITY linkToolbar.accesskey "W">
+<!ENTITY linkToolbar.tooltip "Websitenavigatiebalk">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Altijd weergeven">
+<!ENTITY linkToolbarAlways.accesskey "A">
+<!ENTITY linkToolbarAsNeeded.label "Alleen weergeven indien nodig">
+<!ENTITY linkToolbarAsNeeded.accesskey "w">
+<!ENTITY linkToolbarNever.label "Altijd verbergen">
+<!ENTITY linkToolbarNever.accesskey "v">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Bovenkant">
+<!ENTITY upButton.label "Omhoog">
+<!ENTITY firstButton.label "Eerste">
+<!ENTITY prevButton.label "Vorige">
+<!ENTITY nextButton.label "Volgende">
+<!ENTITY lastButton.label "Laatste">
+
+<!ENTITY documentButton.label "Document">
+
+<!ENTITY tocButton.label "Inhoudsopgave">
+<!ENTITY chapterButton.label "Hoofdstukken">
+<!ENTITY sectionButton.label "Delen">
+<!ENTITY subSectionButton.label "Subsecties">
+<!ENTITY appendixButton.label "Appendices">
+<!ENTITY glossaryButton.label "Verklarende woordenlijst">
+<!ENTITY indexButton.label "Index">
+
+<!ENTITY moreButton.label "Meer">
+
+<!ENTITY helpButton.label "Help">
+<!ENTITY searchButton.label "Zoeken">
+
+<!ENTITY authorButton.label "Auteur(s)">
+<!ENTITY copyrightButton.label "Auteursrecht">
+
+<!ENTITY bookmarkButton.label "Bladwijzers">
+
+<!ENTITY alternateButton.label "Andere versies">
+
+<!ENTITY feedButton.label "Abonneren">

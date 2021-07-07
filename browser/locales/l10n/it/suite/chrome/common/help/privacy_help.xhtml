@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>La privacy in Internet</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="using_privacy_features">Usare le funzionalit&agrave; di privacy</h1>
+
+<p>Questo browser possiede funzioni con le quali si pu&ograve; aumentare il grado di riservatezza 
+  e di sicurezza delle informazioni personali. Le sezioni che seguono spiegano come il browser 
+  permetta di controllare i cookie, gestire le password e la ricezione delle immagini
+  durante la navigazione in Internet.</p>
+
+<p>Per informazioni ulteriori circa le funzionalit&agrave; di privacy offerte da Mozilla, 
+  vedere <a href="mail_sec_help.xhtml">Firmare e cifrare i messaggi</a> e 
+  <a href="using_certs_help.xhtml">Usare i certificati</a>.</p>
+
+<div class="contentsBox">Commenti sulla privacy:
+  <ul>
+    <li><a href="#privacy_on_the_internet">La privacy in Internet</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_cookie_manager">Usare Gestione 
+      cookie</a></li>
+    <li><a href="using_priv_help.xhtml#using_the_password_manager">Usare Gestione 
+      password</a></li>
+    <li><a href="using_priv_help.xhtml#encrypting_stored_sensitive_information">Cifrare 
+      le informazioni sensibili memorizzate</a></li>
+    <li><a href="using_priv_help.xhtml#managing_images">Gestire le immagini</a></li>
+    <li><a href="cs_priv_prefs_popup.xhtml#controlling_popups">Controllare i pop-up</a></li>
+    <li><a href="privsec_help.xhtml">Preferenze Privacy e sicurezza</a></li>
+  </ul>
+</div>
+
+<h1 id="privacy_on_the_internet">La privacy in Internet</h1>
+
+<p>Questa sezione riassume le informazioni di base sulla privacy in Internet. 
+  Descrive anche alcuni utili accorgimenti per salvaguardare la propria privacy. 
+  Non si intende fornire una descrizione completa dei problemi di privacy su 
+  Internet.</p>
+
+<div class="contentsBox">In questa sezione:
+  <ul>
+    <li><a href="#what_information_does_my_browser_give_to_a_web_site">Quali informazioni 
+      fornisce il browser ai siti web?</a></li>
+    <li><a href="#what_are_cookies_and_how_do_they_work">Cosa sono i cookie e come 
+      funzionano?</a></li>
+    <li><a href="#how_can_i_control_web_pages_in_e-mail_messages">Come controllare le pagine 
+      web nei messaggi di posta?</a></li>
+    <li><a href="#how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">Come 
+      assicurarsi che persone non autorizzate non possano utilizzare informazioni sul
+      nostro conto?</a></li>
+  </ul>
+</div>
+
+<h2 id="what_information_does_my_browser_give_to_a_web_site">Quali informazioni fornisce il 
+  browser ai siti web?</h2>
+
+<p>Quando il browser visualizza una pagina web &mdash;ad esempio ogni volta che 
+  scriviamo un indirizzo web o facciamo clic su un collegamento&mdash; esso invia 
+  certi tipi di informazione al sito. Queste informazioni possono comprendere (ma 
+  non limitarsi a) l&apos;ambiente operativo, il proprio indirizzo Internet, e la 
+  pagina web da cui si proviene.</p>
+
+<h3>Ambiente di lavoro</h3>
+
+<p>Il sito viene informato sull&apos;ambiente operativo, come ad esempio il tipo di browser ed 
+  il sistema operativo. Ci&ograve; permette al sito di mostrare al meglio la pagina sullo 
+  schermo. Ad esempio, il sito viene a sapere in tale modo che stiamo usando una versione 
+  italiana di &brandShortName; 1.0 su un computer funzionante con il sistema operativo Linux.</p>
+
+<h3>Indirizzo Internet</h3>
+
+<p>Il browser comunica al sito l&apos;indirizzo Internet corrente (noto anche come indirizzo 
+  Internet Protocol, o indirizzo IP), affinch&egrave; il sito sappia dove inviare la 
+  pagina richiesta. Il sito non pu&ograve; presentare la pagina richiesta senza conoscere 
+  l&apos;indirizzo IP.</p>
+
+<p>L&apos;indirizzo Internet pu&ograve; essere o temporaneo o fisso (statico).</p>
+
+<p>Se ci si collega attraverso un normale modem via linea telefonica, allora il 
+  fornitore di accesso ad Internet (ISP) assegna un indirizzo IP temporaneo per 
+  ciascun collegamento. L&apos;indirizzo IP temporaneo viene usato per tutta la durata 
+  della sessione Internet&mdash;ad esempio, finch&egrave; non ci si scollega o 
+  cade la linea, o si termini in qualche altro modo la propria connessione ad 
+  Internet. Ogni ISP ha molti indirizzi IP, che vengono assegnati agli utenti 
+  in modo casuale.</p>
+
+<p>Se si possiede un modem DSL, o via cavo, o una connessione a fibra ottica, si potrebbe 
+  avere a disposizione un indirizzo IP statico da usare per tutte le connessioni.</p>
+
+<p>L&apos;indirizzo IP &egrave; diverso dall&apos;indirizzo di posta elettronica.</p>
+
+<h3>Pagina referente</h3>
+
+<p>Il sito viene inoltre informato su quale pagina si stava leggendo al momento di 
+  fare clic sul collegamento per vedere una proprie delle pagine. Questo permette al sito 
+  di conoscere quale altro sito vi ha fatto da referente. Oppure, nella navigazione del 
+  sito stesso, consente al sito di sapere quale &egrave; stata l&apos;ultima pagina visitata.</p>
+
+<p>[<a href="#privacy_on_the_internet">Torna all&apos;inizio della sezione</a>]</p>
+
+<h2 id="what_are_cookies_and_how_do_they_work">Cosa sono i cookie e come 
+  funzionano?</h2>
+
+<p>Un cookie &egrave; una piccola quantit&agrave; di informazione, usata da alcuni siti. 
+  Quando visitiamo un sito che utilizza i cookie, esso chiede al nostro browser di 
+  memorizzare uno o pi&ugrave; cookie sul disco fisso locale.</p>
+
+<p>In un secondo momento, quando rivisitiamo quel sito o chiediamo una nuova pagina a tale 
+  sito, il nostro browser invia nuovamente i cookie che aveva memorizzato a suo nome.</p>
+
+<p>Usando le impostazioni predefinite per i cookie, la suddetta attivit&aacute; &egrave; 
+  invisibile, e non ci si accorge quando un sito sta ricevendo un cookie o quando il 
+  browser sta rinviando il cookie di un sito. Tuttavia &egrave; possibile modificare 
+  le preferenze affinch&eacute; il browser chieda se pu&ograve; ricevere un cookie. 
+  Per maggiori informazioni vedere
+  <a href="using_priv_help.xhtml#cookies">Preferenze Privacy e Sicurezza - 
+  Cookie</a>.</p>
+
+<h3>Come utilizzano i siti le informazioni dei cookie?</h3>
+
+<p>I cookie permettono ad un sito di sapere qualcosa delle visite precedenti. Ad esempio, 
+  se di solito si esegue una ricerca sul meteo locale o si acquistano libri in un sito web, 
+  il sito pu&ograve; usare i cookie per ricordare in quale citt&agrave; vivete o quali 
+  autori vi piacciono, per rendere la vostra prossima visita pi&ugrave; semplice ed utile.</p>
+
+<p>Alcuni siti pubblicano le politiche sulla privacy che descrivono l&apos;uso che viene fatto 
+  delle informazioni che raccolgono.</p>
+
+<h3 id="what_are_third-party_cookies">Cosa sono i cookie di terze parti?</h3>
+
+<p>Quando il browser memorizza il cookie di un sito, lo restituir&agrave; esclusivamente a 
+  tale sito. Il browser non invia ad un sito i cookie memorizzati da un altro sito. Poich&egrave; 
+  ogni sito pu&ograve; ricevere esclusivamente i suoi cookie, esso pu&ograve; costruire un 
+  profilo del nostro comportamento durante la nostra permanenza in esso, ma non un profilo 
+  generale sulle nostre abitudini di navigazione.</p>
+
+<p>Talvolta per&ograve; un sito web mostra dei contenuti memorizzati su un sito diverso.
+  Tali contenuti possono essere di ogni tipo: una immagine, un testo o una pubblicit&agrave;.
+  Il sito che ha memorizzati tali elementi ha anch&apos;esso la possibilit&agrave; di
+  memorizzare un cookie nel browser, anche se non si &egrave; visitato il sito
+  direttamente.</p>
+
+<p>Cookie memorizzati da parte di siti diversi da quello attuale, vengono detti 
+  <strong>cookie di terze parti</strong> o <strong>cookie esterni</strong>. I siti 
+  web a volte usano i cookie di terze parti con <strong>GIF trasparenti</strong>, 
+  ovvero immagini speciali che aiutano i siti a contare gli utenti, tracciare le 
+  risposte e-mail, imparare altre cose sull&apos;utilizzo del sito da parte dei 
+  visitatori, o a personalizzare la navigazione. (Le GIF trasparenti sono dette 
+  anche fari o errori del web).</p>
+
+<p>&Egrave; possibile aggiustare le preferenze dei cookie al fine di autorizzare i siti a 
+  memorizzare soltanto i cookie normali, e non quelli esterni.</p>
+
+<p>[<a href="#privacy_on_the_internet">Torna all&apos;inizio della sezione</a>]</p>
+
+<h2 id="how_can_i_control_web_pages_in_e-mail_messages">Come controllare le pagine web nei 
+  messaggi di posta?</h2>
+
+<p>&Egrave; possibile disattivare completamente i cookie, le immagini ed i plugin
+  (JavaScript &egrave; sempre disattivato), per le pagine web ricevute come parte
+  di messaggi di posta.</p>
+
+<p>Mentre pu&ograve; essere utile attivare alcune o tutte queste funzionalit&agrave; 
+  quando si naviga sulla rete, pu&ograve; non essere necessario nelle singole pagine web 
+  spedite come allegati ai messaggi.</p>
+
+<p>Per informazioni su come attivare o disattivare i cookies, le immagini, 
+  ed i plugin nei messaggi di posta, vedere le seguenti sezioni:</p>
+
+<ul>
+  <li><a href = "using_priv_help.xhtml#cookies">Preferenze Privacy e sicurezza 
+    - Cookie</a></li>
+  <li><a href = "using_priv_help.xhtml#images">Preferenze Privacy e sicurezza 
+    - Immagini</a></li>
+  <li><a href = "cs_nav_prefs_advanced.xhtml#scripts_and_plugins">Preferenze 
+    Avanzate - Script e plugin</a></li>
+</ul>
+
+<p>[<a href="#privacy_on_the_internet">Torna all&apos;inizio della sezione</a>]</p>
+
+<h2 id="how_can_i_make_sure_unauthorized_people_dont_use_information_about_me">Come assicurarsi 
+  che persone non autorizzate non possano utilizzare informazioni sul nostro conto?</h2>
+
+<p>Il miglior modo per salvaguardare la proprie informazioni private &egrave; leggere 
+  la politica di privacy dei siti web visitati e dei servizi Internet usati, ed essere 
+  cauti nel fornire online informazioni sul proprio conto.</p>
+
+<p>Internet &egrave; una rete pubblica. Quando si spedisce il proprio nome, numero di 
+  telefono, indirizzo o altre informazioni personali attraverso la rete (tramite una 
+  pagina web, una e-mail o con altri metodi), &egrave; possibile che qualcun altro possa 
+  essere in grado di intercettarle.</p>
+
+<p>Ecco alcune domande da farsi riguardo la politica di privacy di un sito
+  web:</p>
+
+<ul>
+  <li>Che tipo di informazioni personali vengono raccolte?</li>
+  <li>Come il sito user&agrave; tali informazioni?</li>
+  <li>Il sito condivider&agrave; le informazioni con altri siti, e quali scelte vengono 
+    date riguardo l&apos;utilizzo delle informazioni condivise?</li>
+  <li>&Egrave; possibile accedere a tutte o alcune delle informazioni raccolte dal sito 
+    sul proprio conto, al fine di controllarle o aggiornarle?</li>
+  <li>In che modo il sito protegge le informazioni?</li>
+  <li>Come si pu&ograve; contattare il sito, in caso di domande o problemi?</li>
+</ul>
+
+<p>[<a href="#privacy_on_the_internet">Torna all&apos;inizio della sezione</a>]</p>
+
+</body>
+</html>

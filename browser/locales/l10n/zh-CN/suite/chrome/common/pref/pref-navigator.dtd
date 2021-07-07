@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "浏览器">
+
+<!ENTITY navRadio.label                 "显示在">
+<!ENTITY navRadio.accesskey             "n">
+<!ENTITY navStartPageMenu.label         "浏览器的启动">
+<!ENTITY newWinPageMenu.label           "新建浏览器窗口">
+<!ENTITY newTabPageMenu.label           "新建标签页">
+
+<!ENTITY blankPageRadio.label           "空白页">
+<!ENTITY blankPageRadio.accesskey       "B">
+<!ENTITY homePageRadio.label            "主页">
+<!ENTITY homePageRadio.accesskey        "m">
+<!ENTITY lastPageRadio.label            "上一个浏览页">
+<!ENTITY lastPageRadio.accesskey        "L">
+<!ENTITY restoreSessionRadio.label      "恢复上一次会话">
+<!ENTITY restoreSessionRadio.accesskey  "P">
+
+<!ENTITY restoreSessionIntro.label      "恢复会话和窗口时">
+<!ENTITY restoreImmediately.label       "立即恢复所有标签页">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "恢复">
+<!ENTITY restoreTabs.accesskey          "s">
+<!ENTITY restoreTabsAtATime.label       "一次恢复X个标签页">
+<!ENTITY restoreDeferred.label          "仅在需要时恢复标签页">
+<!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY homePageIntro.label            "点击 主页 按钮打开此组页面：">
+<!ENTITY useCurrent.label               "使用当前页面">
+<!ENTITY useCurrent.accesskey           "U">
+<!ENTITY useCurrentGroup.label          "用户当前所在组">
+<!ENTITY useCurrentGroup.accesskey      "G">
+<!ENTITY browseFile.label               "选择文件…">
+<!ENTITY browseFile.accesskey           "C">
+<!ENTITY useDefault.label               "恢复默认值">
+<!ENTITY useDefault.accesskey           "R">
+
+<!ENTITY defaultBrowserGroup.label      "默认浏览器">
+<!ENTITY defaultBrowserButton.label     "设为默认浏览器">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText             "&brandShortName; 已经是您的默认浏览器了。">
+<!ENTITY defaultPendingText             "当你单击确定时，&brandShortName; 将被设为默认浏览器。">
+<!ENTITY wasMadeDefaultText             "&brandShortName; 已设置为你的默认浏览器。">
+<!ENTITY makeDefaultText                "设置 &brandShortName; 为默认浏览器。">

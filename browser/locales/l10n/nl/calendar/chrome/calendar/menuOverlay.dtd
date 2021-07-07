@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Nieuwe gebeurtenis…">
+<!ENTITY event.new.event.accesskey              "b">
+
+<!ENTITY event.new.task                         "Nieuwe taak…">
+<!ENTITY event.new.task.accesskey               "t">
+
+<!ENTITY calendar.import.label                  "Importeren…">
+<!ENTITY calendar.import.accesskey              "m">
+
+<!ENTITY calendar.export.label                  "Exporteren…">
+<!ENTITY calendar.export.accesskey              "x">
+
+<!ENTITY calendar.publish.label                 "Publiceren…">
+<!ENTITY calendar.publish.accesskey             "u">
+
+<!ENTITY calendar.deletecalendar.label          "Geselecteerde agenda wissen…">
+<!ENTITY calendar.deletecalendar.accesskey      "G">
+<!ENTITY calendar.unsubscribecalendar.label     "Geselecteerde agenda afmelden…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "a">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Geselecteerde agenda verwijderen…">
+<!ENTITY calendar.removecalendar.accesskey      "v">
+
+
+<!ENTITY calendar.menu.customize.label          "Aanpassen…">
+<!ENTITY calendar.menu.customize.accesskey      "A">
+
+<!ENTITY showUnifinderCmd.label                 "Gebeurtenissen zoeken">
+<!ENTITY showUnifinderCmd.accesskey             "z">
+<!ENTITY showUnifinderCmd.tooltip               "Het paneel Gebeurtenissen zoeken in-/uitschakelen">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Taken in agenda tonen">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "Vandaag">
+<!ENTITY goTodayCmd.accesskey                   "a">
+
+<!ENTITY showCurrentView.label                  "Huidige weergave">
+<!ENTITY showCurrentView.accesskey              "H">
+
+<!ENTITY calendar.properties.label              "Agenda-eigenschappen…">
+<!ENTITY calendar.properties.accesskey          "d">

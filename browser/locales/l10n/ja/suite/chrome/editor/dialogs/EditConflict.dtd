@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "編集変更の選択">
+<!ENTITY conflictWarning.label "このページは他のプログラムによって変更されていますが、Composer にも未保存の変更があります。">
+<!ENTITY conflictResolve.label "どちらを使用するか、次から選択してください:">
+<!ENTITY keepCurrentPageButton.label "現在のページの変更を保存する">
+<!ENTITY useOtherPageButton.label "現在のページを保存されているものに置き換える">

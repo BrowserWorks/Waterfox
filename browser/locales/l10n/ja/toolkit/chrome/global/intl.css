@@ -1,0 +1,61 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * This file contains all localizable skin settings such as
+ *   font, layout, and geometry
+ */
+window { 
+  font: 3mm tahoma,arial,helvetica,sans-serif;
+}
+
+/* see bug-jp 4303 */
+#autoSelectLastProfile {
+  white-space: nowrap;
+}
+
+/* not to show scroll bar in the reporter form */
+#reportForm #description {
+  max-height: 6.8em;
+}
+
+/* Workaround for SeaMonkey's Preferences dialog */
+@-moz-document url(chrome://communicator/content/pref/preferences.xul) {
+  #prefsTree {
+  width: 17em !important;
+  }
+}
+
+
+/* make Account Settings's height 46.6em or lower */
+@-moz-document url(chrome://messenger/content/AccountManager.xul) {
+  .dialog-button {
+    margin-top: 0px;
+  }
+}
+@-moz-document url(chrome://messenger/content/am-main.xul) {
+  separator.thin:not([orient="vertical"]) {
+    max-height: 1px;
+  }
+  #identity\.htmlSigText {
+    height: 5em;
+  }
+}
+@-moz-document url(chrome://messenger/content/am-server.xul) {
+  :root {
+    line-height: 1.2;
+  }
+}
+@-moz-document url(chrome://messenger/content/am-copies.xul) {
+  :root {
+    line-height: 1.0;
+  }
+}
+
+/* Workaround for master password dialog with Meiryo */
+#changemp {
+  min-width: 39em;
+}
+
+

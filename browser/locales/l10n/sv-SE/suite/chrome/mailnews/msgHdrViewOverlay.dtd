@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Till: ">
+<!ENTITY fromField.label "Från: ">
+<!ENTITY senderField.label "Avsändare: ">
+<!ENTITY organizationField.label "Organisation: ">
+<!ENTITY replyToField.label "Svar till: ">
+
+<!ENTITY subjectField.label "Ämne: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Dold kopia: ">
+<!ENTITY newsgroupsField.label "Grupper: ">
+<!ENTITY followupToField.label "Uppföljning: ">
+
+<!ENTITY tagsHdr.label "Etiketter: ">
+<!ENTITY dateField.label "Datum: ">
+<!ENTITY userAgentField.label "Användaragent: ">
+<!ENTITY referencesField.label "Hänvisar till: ">
+<!ENTITY messageIdField.label "Meddelandeadress: ">
+<!ENTITY inReplyToField.label "Som svar till: ">
+<!ENTITY originalWebsite.label "Webbplats: ">
+
+<!ENTITY editMessage.label "Redigera utkast…">
+<!ENTITY editMessage.accesskey             "u">
+
+<!ENTITY attachmentsTree.label "Bilagor:">
+<!ENTITY attachmentsTree.accesskey         "i">
+<!ENTITY openAttachmentCmd.label           "Öppna">  
+<!ENTITY openAttachmentCmd.accesskey       "Ö">  
+<!ENTITY viewAttachmentCmd.label           "Visa källkoden">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "Spara som…">  
+<!ENTITY saveAsAttachmentCmd.accesskey     "S"> 
+<!ENTITY detachAttachmentCmd.label         "Avskilj…">
+<!ENTITY detachAttachmentCmd.accesskey     "A">
+<!ENTITY deleteAttachmentCmd.label         "Ta bort">  
+<!ENTITY deleteAttachmentCmd.accesskey     "T">
+<!ENTITY saveAllAttachmentsCmd.label       "Spara alla…">  
+<!ENTITY saveAllAttachmentsCmd.accesskey   "r">  
+<!ENTITY detachAllAttachmentsCmd.label     "Avskilj alla…">  
+<!ENTITY detachAllAttachmentsCmd.accesskey "k">  
+<!ENTITY deleteAllAttachmentsCmd.label     "Ta bort alla…">  
+<!ENTITY deleteAllAttachmentsCmd.accesskey "b">  

@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "เพื่อเป็นการประหยัดเนื้อที่ในดิสก์ ไม่ต้องดาวน์โหลด:">
+<!ENTITY doNotDownloadNntp.label "เพื่อเป็นการประหยัดเนื้อที่ในดิสก์ ไม่ต้องดาวน์โหลดสำหรับใช้ออฟไลน์:">
+<!ENTITY doNotDownloadImap.label "เพื่อเป็นการประหยัดเนื้อที่ในดิสก์ สามารถจำกัดการดาวน์โหลดข้อความจากเซิร์ฟเวอร์และเก็บสำเนาในเครื่องสำหรับใช้ออฟไลน์ตามอายุหรือขนาดได้">
+<!ENTITY allFoldersOffline2.label "เก็บข้อความในโฟลเดอร์ทั้งหมดสำหรับบัญชีนี้บนคอมพิวเตอร์นี้">
+<!ENTITY allFoldersOffline2.accesskey "ก">
+<!ENTITY allFoldersOfflineNote.label "หมายเหตุ: การเปลี่ยนแปลงสิ่งนี้จะส่งผลต่อโฟลเดอร์ทั้งหมดในบัญชีนี้ หากต้องการตั้งค่าแต่ละโฟลเดอร์ ให้ใช้ปุ่ม ขั้นสูง…">
+<!ENTITY offlineNotDownload.label "ข้อความที่ใหญ่กว่า">
+<!ENTITY offlineNotDownload.accesskey "ข">
+<!ENTITY autosyncNotDownload.label "ไม่ต้องดาวน์โหลดข้อความที่ใหญ่กว่า">
+<!ENTITY autosyncNotDownload.accesskey "ข">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "วัน">
+<!ENTITY message.label "ข้อความ">
+<!ENTITY nntpNotDownloadRead.label "ข้อความที่อ่านแล้ว">
+<!ENTITY nntpNotDownloadRead.accesskey "อ">
+<!ENTITY nntpDownloadMsg.label "ข้อความที่เก่ากว่า">
+<!ENTITY nntpDownloadMsg.accesskey "เ">
+<!ENTITY retentionCleanup.label "เพื่อกู้คืนเนื้อที่ดิสก์ สามารถลบข้อความเก่าอย่างถาวรได้">
+<!ENTITY retentionCleanupImap.label "เพื่อกู้คืนเนื้อที่ดิสก์ สามารถลบข้อความเก่าอย่างถาวรได้ทั้งสำเนาภายในและต้นฉบับที่อยู่บนเซิร์ฟเวอร์ระยะไกล">
+<!ENTITY retentionCleanupPop.label "เพื่อกู้คืนเนื้อที่ดิสก์ สามารถลบข้อความเก่าอย่างถาวรได้รวมถึงต้นฉบับที่อยู่บนเซิร์ฟเวอร์ระยะไกล">
+<!ENTITY retentionKeepMsg.label "ลบข้อความที่เก่ากว่า">
+<!ENTITY retentionKeepMsg.accesskey "า">
+<!ENTITY retentionKeepAll.label "ไม่ต้องลบข้อความใด ๆ">
+<!ENTITY retentionKeepAll.accesskey "ม">
+<!ENTITY retentionKeepRecent.label "ลบทั้งหมดยกเว้นรายการล่าสุด">
+<!ENTITY retentionKeepRecent.accesskey "ล">
+<!ENTITY retentionApplyToFlagged.label "เก็บข้อความที่ติดดาวไว้เสมอ">
+<!ENTITY retentionApplyToFlagged.accesskey "บ">
+<!ENTITY nntpRemoveMsgBody.label "ลบเนื้อความออกจากข้อความที่เก่ากว่า">
+<!ENTITY nntpRemoveMsgBody.accesskey "น">
+<!ENTITY offlineSelectNntp.label "เลือกกลุ่มข่าวสำหรับการใช้งานออฟไลน์…">
+<!ENTITY offlineSelectNntp.accesskey "ข">
+<!ENTITY offlineImapAdvancedOffline.label "ขั้นสูง…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "ส">
+<!ENTITY syncGroupTitle.label "การประสานข้อความ">
+<!ENTITY diskspaceGroupTitle.label "เนื้อที่ดิสก์">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "ประสานข้อความทั้งหมดที่อยู่ภายในโดยไม่คำนึงถึงระยะเวลาที่เก็บ">
+<!ENTITY allAutosync.accesskey           "ป">
+<!ENTITY ageAutosyncBefore.label         "ประสานข้อความล่าสุด">
+<!ENTITY ageAutosync.accesskey           "ร">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "วัน">
+<!ENTITY weekAgeInterval.label           "สัปดาห์">
+<!ENTITY monthAgeInterval.label          "เดือน">
+<!ENTITY yearAgeInterval.label           "ปี">
+<!ENTITY ageAutosyncAfter.label          "">

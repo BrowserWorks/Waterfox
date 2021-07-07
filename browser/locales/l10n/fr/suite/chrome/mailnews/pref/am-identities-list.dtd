@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Gérer les identités pour ce compte. La première identité est utilisée par défaut.">
+<!ENTITY identitiesListAdd.label  "Ajouter…">
+<!ENTITY identitiesListAdd.accesskey  "j">
+<!ENTITY identitiesListEdit.label "Modifier…">
+<!ENTITY identitiesListEdit.accesskey "d">
+<!ENTITY identitiesListDefault.label "Définir par défaut">
+<!ENTITY identitiesListDefault.accesskey "p">
+<!ENTITY identitiesListDelete.label "Supprimer">
+<!ENTITY identitiesListDelete.accesskey "S">
+<!ENTITY identitiesListClose.label "Fermer">
+<!ENTITY identitiesListClose.accesskey "F">

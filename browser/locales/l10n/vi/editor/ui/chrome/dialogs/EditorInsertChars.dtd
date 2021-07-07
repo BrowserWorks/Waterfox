@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Chèn ký tự">
+<!ENTITY category.label "Phân mục">
+<!ENTITY letter.label "Chữ cái:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Kí tự:">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "Dấu HOA">
+<!ENTITY accentLower.label "Dấu thường">
+<!ENTITY otherUpper.label "Chữ HOA khác">
+<!ENTITY otherLower.label "Chữ thường khác">
+<!ENTITY commonSymbols.label "Biểu tượng phổ biến">
+<!ENTITY insertButton.label "Chèn">
+<!ENTITY closeButton.label "Đóng">

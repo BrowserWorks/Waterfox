@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title "Potwierdzenia dostarczenia wiadomości">
+<!ENTITY prefReceipts.caption "Potwierdzenia dostarczenia wiadomości">
+<!ENTITY requestReceipt.label "Podczas wysyłania wiadomości, zawsze żądaj potwierdzenia dostarczenia.">
+<!ENTITY requestReceipt.accesskey "W">
+<!ENTITY receiptArrive.label "Otrzymane potwierdzenia dostarczenia wiadomości:">
+<!ENTITY leaveIt.label "Pozostaw w folderze Odebrane">
+<!ENTITY leaveIt.accesskey "O">
+<!ENTITY moveToSent.label "Przenieś do folderu Wysłane">
+<!ENTITY moveToSent.accesskey "W">
+<!ENTITY requestMDN.label "Po otrzymaniu żądania potwierdzenia dostarczenia wiadomości:">
+<!ENTITY returnSome.label "Wysyłaj potwierdzenia dostarczenia wiadomości tylko w poniższych przypadkach:">
+<!ENTITY returnSome.accesskey "r">
+<!ENTITY never.label "Nigdy nie wysyłaj potwierdzenia dostarczenia wiadomości">
+<!ENTITY never.accesskey "n">
+<!ENTITY notInToCc.label "Jeżeli mój adres e-mail nie znajduje się w polu „Do” lub „Kopia”:">
+<!ENTITY notInToCc.accesskey "J">
+<!ENTITY outsideDomain.label "Jeżeli nadawca jest spoza mojej domeny:">
+<!ENTITY outsideDomain.accesskey "t">
+<!ENTITY otherCases.label "W innych przypadkach:">
+<!ENTITY otherCases.accesskey "a">
+<!ENTITY askMe.label "Wyświetl pytanie">
+<!ENTITY alwaysSend.label "Zawsze wysyłaj">
+<!ENTITY neverSend.label "Nigdy nie wysyłaj">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "プロキシー">
+<!ENTITY  pref.proxies.desc             "プロキシーは、インターネット接続を高速化したり、あるいは有害なページが表示されることを防ぐためなどに使用されます。">
+<!ENTITY  proxyTitle.label              "インターネットにアクセスするためのプロキシーの設定">
+<!ENTITY  directTypeRadio.label         "インターネットに直接接続する">
+<!ENTITY  directTypeRadio.accesskey     "D">
+<!ENTITY  systemTypeRadio.label         "システムのプロキシー設定を使用する">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  manualTypeRadio.label         "手動でプロキシーを設定する:">
+<!ENTITY  manualTypeRadio.accesskey     "M">
+<!ENTITY  wpadTypeRadio.label           "プロキシーを自動検出する">
+<!ENTITY  wpadTypeRadio.accesskey       "A">
+<!ENTITY  autoTypeRadio.label           "自動でプロキシーを設定する (URL):">
+<!ENTITY  autoTypeRadio.accesskey       "c">
+<!ENTITY  reload.label                  "再読み込み">
+<!ENTITY  reload.accesskey              "R">
+<!ENTITY  http.label                    "プロキシー:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "ポート番号:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "詳細...">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "プロキシーなしの接続:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "例: .mozilla.org, .net.nz, 192.168.1.0/24">

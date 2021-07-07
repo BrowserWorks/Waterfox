@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!ENTITY pref.network.title "Sieć i miejsce na dysku">
+<!ENTITY pref.offline.caption "Tryb offline">
+<!ENTITY textStartUp "Uruchamiając program:">
+<!ENTITY textStartUp.accesskey "U">
+<!ENTITY menuitemRememberPrevState "Zapamiętaj ostatnio używany tryb">
+<!ENTITY menuitemAskMe "Zapytaj w jakim trybie rozpocząć pracę">
+<!ENTITY menuitemAlwaysOnline "Zawsze startuj w trybie online">
+<!ENTITY menuitemAlwaysOffline "Zawsze startuje w trybie offline">
+<!ENTITY menuitemAutomatic "Rozpoznaj automatycznie (jeżeli dostępne)">
+<!ENTITY textGoingOnline "Wysyłać niewysłane wiadomości po nawiązaniu połączenia?">
+<!ENTITY radioAutoSend "Tak">
+<!ENTITY radioAutoSend.accesskey "k">
+<!ENTITY radioNotSend "Nie">
+<!ENTITY radioNotSend.accesskey "e">
+<!ENTITY radioAskUnsent "Zapytaj">
+<!ENTITY radioAskUnsent.accesskey "Z">
+<!ENTITY textGoingOffline "Pobierać treść wiadomości podczas przechodzenia w tryb offline?">
+<!ENTITY radioAutoDownload "Tak">
+<!ENTITY radioAutoDownload.accesskey "T">
+<!ENTITY radioNotDownload "Nie">
+<!ENTITY radioNotDownload.accesskey "N">
+<!ENTITY radioAskDownload "Zapytaj">
+<!ENTITY radioAskDownload.accesskey "p">
+<!ENTITY mailConnections.caption "Połączenia pocztowe">
+<!ENTITY mailnewsTimeout.label "Limit czasu połączenia:">
+<!ENTITY mailnewsTimeout.accesskey "L">
+<!ENTITY mailnewsTimeoutSeconds.label "sekund">
+<!ENTITY Diskspace "Miejsce na dysku">
+<!ENTITY offlineCompactFolders.label "Automatycznie porządkuj wszystkie foldery, gdy zaoszczędzi to w sumie ponad">
+<!ENTITY offlineCompactFolders.accesskey "A">
+<!ENTITY offlineCompactFoldersMB.label "MB">

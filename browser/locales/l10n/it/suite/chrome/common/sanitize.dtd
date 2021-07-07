@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "Svuota dati personali">
+<!ENTITY sanitizeItems.label             "Cancella adesso i seguenti elementi:">
+
+<!--LOCALIZATION NOTE : Make sure to not have overlapped  accesskeys with
+    pref-privatedata.dtd. These entities are also used in the private data
+    preferences dialog.
+-->
+<!ENTITY itemHistory.label               "Cronologia di navigazione">
+<!ENTITY itemHistory.accesskey           "C">
+<!ENTITY itemHistoryS.accesskey          "r">
+<!ENTITY itemUrlBar.label                "Cronologia barra degli indirizzi">
+<!ENTITY itemUrlBar.accesskey            "b">
+<!ENTITY itemUrlBarS.accesskey           "z">
+<!ENTITY itemDownloads.label             "Cronologia dei download">
+<!ENTITY itemDownloads.accesskey         "d">
+<!ENTITY itemDownloadsS.accesskey        "w">
+<!ENTITY itemFormSearchHistory.label     "Cronologia moduli salvati e ricerca">
+<!ENTITY itemFormSearchHistory.accesskey "m">
+<!ENTITY itemFormSearchHistoryS.accesskey "u">
+<!ENTITY itemCache.label                 "Cache">
+<!ENTITY itemCache.accesskey             "h">
+<!ENTITY itemCacheS.accesskey            "e">
+<!ENTITY itemCookies.label               "Cookie">
+<!ENTITY itemCookies.accesskey           "k">
+<!ENTITY itemCookiesS.accesskey          "i">
+<!ENTITY itemOfflineApps.label           "Dati non in linea dei siti web">
+<!ENTITY itemOfflineApps.accesskey       "n">
+<!ENTITY itemOfflineAppsS.accesskey      "t">
+<!ENTITY itemPasswords.label             "Password salvate">
+<!ENTITY itemPasswords.accesskey         "P">
+<!ENTITY itemPasswordsS.accesskey        "v">
+<!ENTITY itemSessions.label              "Sessioni con autenticazione">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY itemSessionsS.accesskey         "a">
+
+<!ENTITY sanitizeButton.label            "Svuota dati personali ora">

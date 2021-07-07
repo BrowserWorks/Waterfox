@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.history.title "Historial">
+<!ENTITY pref.history.caption "Historial de navegación">
+<!ENTITY historyPages.label "El historial es una lista de páginas visitadas anteriormente.">
+<!ENTITY enableHistory.label "Recordar páginas visitadas">
+<!ENTITY enableHistory.accesskey "R">
+<!ENTITY clearHistory.label "Vaciar historial">
+<!ENTITY clearHistory.accesskey "s">
+<!ENTITY locationBarHistory.caption "Historial de la barra de direcciones">
+<!ENTITY urlBarHistoryEnabled.caption "Activar historial de la barra de direcciones">
+<!ENTITY urlBarHistoryEnabled.accesskey "c">
+<!ENTITY clearLocationBar.label "Vaciar la lista de sitios web guardados en la barra de direcciones.">
+<!ENTITY clearLocationBarButton.label "Vaciar barra de direcciones">
+<!ENTITY clearLocationBarButton.accesskey "d">
+<!ENTITY formfillHistory.caption "Historial de formularios y búsquedas">
+<!ENTITY enableFormfill.label "Activar historial de formulario y búsquedas">
+<!ENTITY enableFormfill.accesskey "A">
+<!ENTITY formfillExpire.label "Recordar historial de formulario y búsquedas hasta">
+<!ENTITY formfillExpire.accesskey "b">
+<!ENTITY formfillDays.label "días">

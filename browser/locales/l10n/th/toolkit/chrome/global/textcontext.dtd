@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "เพิ่มลงในพจนานุกรม">
+<!ENTITY spellAddToDictionary.accesskey "พ">
+<!ENTITY spellUndoAddToDictionary.label "ยกเลิกการเพิ่มลงในพจนานุกรม">
+<!ENTITY spellUndoAddToDictionary.accesskey "ย">
+<!ENTITY spellCheckToggle.label "ตรวจสอบการสะกดคำ">
+<!ENTITY spellCheckToggle.accesskey "ร">
+<!ENTITY spellNoSuggestions.label "(ไม่มีข้อเสนอแนะการสะกดคำ)">
+<!ENTITY spellDictionaries.label "ภาษา">
+<!ENTITY spellDictionaries.accesskey "ภ">
+
+<!ENTITY searchTextBox.clear.label "ล้าง">
+
+<!ENTITY fillLoginMenu.label          "กรอกการเข้าสู่ระบบ">
+<!ENTITY fillLoginMenu.accesskey      "ก">
+<!ENTITY fillPasswordMenu.label       "กรอกรหัสผ่าน">
+<!ENTITY fillPasswordMenu.accesskey   "ก">
+<!ENTITY fillUsernameMenu.label       "กรอกชื่อผู้ใช้">
+<!ENTITY fillUsernameMenu.accesskey   "ก">
+<!ENTITY noLoginSuggestions.label     "(ไม่มีข้อเสนอแนะการเข้าสู่ระบบ)">
+<!ENTITY viewSavedLogins.label        "ดูการเข้าสู่ระบบที่บันทึกไว้">

@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Gặp vấn đề khi tải trang">
+<!ENTITY retry.label "Thử lại">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Không thể kết nối">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Địa chỉ này đã bị chặn">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Không tìm thấy máy chủ">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul>
+  <li>Kiểm tra xem địa chỉ bạn nhập có lỗi không, ví dụ như
+    <strong>ww</strong>.example.com thay vì
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Tìm kiếm</button>
+    </div>
+  <li>Nếu bạn không thể tải bất kỳ trang nào, hãy kiểm tra dữ liệu trên thiết bị hoặc kết nối Wi-Fi của bạn.
+    <button id='wifi'>Mở  Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Không tìm thấy tập tin">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kiểm tra tên xem có lỗi gõ HOA-thường hay lỗi nào khác không.</li> <li>Kiểm tra xem tập tin có bị chuyển, đổi tên hay bị xóa không.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Truy cập tập tin đã bị từ chối">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Nó có thể đã được gỡ bỏ, di chuyển, hoặc quyền truy cập tập tin có thể đã bị từ chối.</li> </ul>">
+
+<!ENTITY generic.title "Ôi không">
+<!ENTITY generic.longDesc "<p>&brandShortName; không thể tải trang này vì nào một vài lý do đó.</p>‌">
+
+<!ENTITY malformedURI.title "Địa chỉ không hợp lệ">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 " <ul>
+  <li>Địa chỉ web thường được viết như
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Tìm kiếm</button>
+    </div>
+  <li>Hãy chắc chắn rằng bạn đang sử dụng dấu gạch chéo (tức là
+    <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Kết nối bị ngắt">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Tài liệu đã hết hạn">
+<!ENTITY notCached.longDesc "<p>Các tài liệu được yêu cầu không có sẵn trong bộ nhớ tạm của &brandShortName;.</p><ul><li>Để bảo mật, &brandShortName; không tự động yêu cầu lại tài liệu nhạy cảm.</li><li>Bấm thử lần nữa để yêu cầu lại tài liệu từ trang web.</li></ul>">
+
+<!ENTITY netOffline.title "Chế độ ngoại tuyến">
+
+<!ENTITY contentEncodingError.title "Lỗi Bảng Mã">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Vui lòng liên hệ với chủ trang web để báo họ vấn đề này.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Kiểu tập tin Không an toàn">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Vui lòng liên hệ với chủ trang web để báo họ vấn đề này.</li> </ul>">
+
+<!ENTITY netReset.title "Kết nối bị khởi tạo lại">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Kết nối bị hết thời gian">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Địa chỉ không hiểu được">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Có lẽ bạn cần phải cài đặt phần mềm khác để mở địa chỉ này.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Máy chủ proxy từ chối kết nối">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kiểm tra thiết lập proxy để chắc chắn rằng mọi thứ đều đúng.</li> <li>Liên hệ với quản trị mạng của bạn để chắc chắn rằng máy chủ proxy vẫn đang hoạt động.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Không thể tìm thấy máy chủ proxy">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Kiểm tra thiết lập proxy để chắc chắn rằng chúng đã hoạt động.</li> <li>Kiểm tra để chắc chắn rằng thiết bị có một kết nối dữ liệu mạng hoặc Wi-Fi. <button id='wifi'>Bật Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Trang không chuyển hướng đúng cách">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Vấn đề này thỉnh thoảng có thể xảy ra do vô hiệu hóa hoặc từ chối cookie.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Phản hồi không mong muốn từ máy chủ">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kiểm tra để chắc chắn rằng hệ thống của bạn có Trình quản lí Bảo mật Cá nhân.</li> <li>Điều này có thể là do cấu hình không chuẩn trên máy chủ.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Kết nối An toàn bị Thất bại">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Trang bạn đang cố gắng xem không thể hiển thị vì không được kiểm chứng tính xác thực của các dữ liệu đã nhận.</li>
+  <li>Xin vui lòng liên hệ với chủ sở hữu trang web để thông báo cho họ về vấn đề này.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Kết nối An toàn bị Thất bại">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Điều này có thể là một vấn đề với cấu hình của máy chủ, hoặc có thể ai đó đang cố gắng mạo danh máy chủ.</li>
+  <li>Nếu bạn đã kết nối với máy chủ này thành công trong quá khứ, các lỗi có thể là tạm thời, và bạn có thể thử lại sau.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Các trang web có thể tạm thời không sẵn sàng hoặc quá tải. Thử lại sau ít phút.</li>
+  <li>Nếu bạn không thể tải trang bất kỳ, hãy kiểm tra dữ liệu di động hoặc kết nối mạng không dây.
+    <button id='wifi'>Kích hoạt mạng không dây</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Bị chặn bởi Chính sách Bảo vệ Nội dung">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; không tải trang này vì nó có một chính sách bảo vệ nội dung không cho phép việc tải theo cách này.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Lỗi nội dung không toàn vẹn">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Trang mà bạn đang cố xem không thể hiển thị được vì một lỗi trong truyền tải dữ liệu.</p><ul><li>Vui lòng liên hệ chủ trang web để báo họ về vấn đề này.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Hoặc bạn có thể thêm một ngoại lệ…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Đưa tôi ra khỏi đây!">
+<!ENTITY securityOverride.exceptionButtonLabel "Thêm Ngoại Lệ…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Bạn không nên thêm ngoại lệ nếu bạn đang dùng một kết nối mạng mà bạn không tin tưởng hoàn toàn hoặc bạn không quen thấy cảnh báo cho máy chủ này.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL từ xa">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Vui lòng liên hệ với chủ trang web để báo họ vấn đề này.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Không thể kết nối an toàn">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Thông tin bổ sung: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Kết nối của bạn không an toàn">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Thông tin bổ sung: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Kết nối của bạn không an toàn">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> sử dụng công nghệ bảo mật là lỗi thời và dễ bị tấn công. Một kẻ tấn công có thể dễ dàng tiết lộ thông tin mà bạn nghĩ là an toàn. Quản trị trang web sẽ cần phải sửa chữa các máy chủ đầu tiên trước khi bạn có thể truy cập vào các trang web.</p><p>Mã lỗi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Lỗi giao thức mạng">
+<!ENTITY networkProtocolError.longDesc "<p>Trang bạn đang cố xem không thể hiển thị vì lỗi trong giao thức mạng đã được phát hiện.</p><ul><li>Vui lòng liên hệ với chủ sở hữu trang web để thông báo cho họ về sự cố này.</li></ul>">

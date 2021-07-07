@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY places.library.title "Catálogo">
+<!ENTITY places.library.width "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label "Organizar">
+<!ENTITY organize.accesskey "O">
+<!ENTITY organize.tooltip "Organice sus marcadores">
+<!ENTITY file.close.label "Cerrar">
+<!ENTITY file.close.accesskey "C">
+<!ENTITY cmd.close.key "w">
+<!ENTITY views.label "Vistas">
+<!ENTITY views.accesskey "i">
+<!ENTITY views.tooltip "Cambiar su vista">
+<!ENTITY view.columns.label "Mostrar columnas">
+<!ENTITY view.columns.accesskey "M">
+<!ENTITY view.sort.label "Ordenar">
+<!ENTITY view.sort.accesskey "O">
+<!ENTITY view.unsorted.label "Sin ordenar">
+<!ENTITY view.unsorted.accesskey "S">
+<!ENTITY view.sortAscending.label "Ordenar A > Z">
+<!ENTITY view.sortAscending.accesskey "A">
+<!ENTITY view.sortDescending.label "Ordenar Z > A">
+<!ENTITY view.sortDescending.accesskey "Z">
+<!ENTITY importBookmarksFromHTML.label "Importar marcadores desde HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "H">
+<!ENTITY exportBookmarksToHTML.label "Exportar marcadores a HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey "E">
+<!ENTITY importOtherBrowser.label "Importar datos de otro navegador…">
+<!ENTITY importOtherBrowser.accesskey "I">
+<!ENTITY cmd.backup.label "Copiar…">
+<!ENTITY cmd.backup.accesskey "C">
+<!ENTITY cmd.restore2.label "Restaurar">
+<!ENTITY cmd.restore2.accesskey "t">
+<!ENTITY cmd.restoreFromFile.label "Elegir archivo…">
+<!ENTITY cmd.restoreFromFile.accesskey "E">
+<!ENTITY cmd.deleteDomainData.label "Olvidar este sitio web">
+<!ENTITY cmd.deleteDomainData.accesskey "O">
+<!ENTITY cmd.open.label "Abrir">
+<!ENTITY cmd.open.accesskey "A">
+<!ENTITY cmd.open_window.label "Abrir en una ventana nueva">
+<!ENTITY cmd.open_window.accesskey "i">
+<!ENTITY cmd.open_private_window.label "Abrir en una nueva ventana privada">
+<!ENTITY cmd.open_private_window.accesskey "u">
+<!ENTITY cmd.open_tab.label "Abrir en una pestaña nueva">
+<!ENTITY cmd.open_tab.accesskey "v">
+<!ENTITY cmd.open_all_in_tabs.label "Abrir todo en pestañas">
+<!ENTITY cmd.open_all_in_tabs.accesskey "b">
+<!ENTITY cmd.properties.label "Propiedades">
+<!ENTITY cmd.properties.accesskey "P">
+<!ENTITY cmd.sortby_name.label "Ordenar por nombre">
+<!ENTITY cmd.sortby_name.accesskey "m">
+<!ENTITY cmd.context_sortby_name.accesskey "N">
+<!ENTITY cmd.new_bookmark.label "Nuevo marcador…">
+<!ENTITY cmd.new_bookmark.accesskey "d">
+<!ENTITY cmd.new_folder.label "Nueva carpeta…">
+<!ENTITY cmd.new_folder.accesskey "N">
+<!ENTITY cmd.context_new_folder.accesskey "C">
+<!ENTITY cmd.new_separator.label "Nuevo separador">
+<!ENTITY cmd.new_separator.accesskey "s">
+<!ENTITY cmd.reloadLivebookmark.label "Recargar marcadores dinámicos">
+<!ENTITY cmd.reloadLivebookmark.accesskey "R">
+<!ENTITY col.name.label "Nombre">
+<!ENTITY col.tags.label "Etiquetas">
+<!ENTITY col.url.label "Dirección">
+<!ENTITY col.mostrecentvisit.label "Visita más reciente">
+<!ENTITY col.visitcount.label "Número de visitas">
+<!ENTITY col.description.label "Descripción">
+<!ENTITY col.dateadded.label "Añadida">
+<!ENTITY col.lastmodified.label "Última modificación">
+<!ENTITY search.placeholder "Buscar">
+<!ENTITY cmd.find.key "f">
+<!ENTITY detailsPane.more.label "Más">
+<!ENTITY detailsPane.more.accesskey "s">
+<!ENTITY detailsPane.less.label "Menos">
+<!ENTITY detailsPane.less.accesskey "M">
+<!ENTITY detailsPane.selectAnItemText.description "Seleccione un elemento para ver y editar sus propiedades">
+<!ENTITY view.label "Ver">
+<!ENTITY view.accesskey "V">
+<!ENTITY byDate.label "Por fecha">
+<!ENTITY byDate.accesskey "f">
+<!ENTITY bySite.label "Por sitio">
+<!ENTITY bySite.accesskey "s">
+<!ENTITY byMostVisited.label "Por más visitas">
+<!ENTITY byMostVisited.accesskey "m">
+<!ENTITY byLastVisited.label "Por última visita">
+<!ENTITY byLastVisited.accesskey "v">
+<!ENTITY byDayAndSite.label "Por fecha y sitio">
+<!ENTITY byDayAndSite.accesskey "P">

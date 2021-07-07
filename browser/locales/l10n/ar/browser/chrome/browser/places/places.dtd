@@ -1,0 +1,62 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "المكتبة">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "نظّم">
+<!ENTITY organize.accesskey    "ظ">
+<!ENTITY organize.tooltip      "نظّم علاماتك">
+
+<!ENTITY file.close.label               "أغلق">
+<!ENTITY file.close.accesskey           "غ">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "المناظير">
+<!ENTITY views.accesskey                "ظ">
+<!ENTITY views.tooltip                  "غيّر المنظور">
+<!ENTITY view.columns.label             "أظهر الأعمدة">
+<!ENTITY view.columns.accesskey         "ع">
+<!ENTITY view.sort.label                "رتّب">
+<!ENTITY view.sort.accesskey            "ر">
+<!ENTITY view.unsorted.label            "غير مرتّبة">
+<!ENTITY view.unsorted.accesskey        "غ">
+<!ENTITY view.sortAscending.label       "ترتيب أ > ي">
+<!ENTITY view.sortAscending.accesskey   "أ">
+<!ENTITY view.sortDescending.label      "ترتيب ي > أ">
+<!ENTITY view.sortDescending.accesskey  "ي">
+
+<!ENTITY importBookmarksFromHTML.label     "استورد العلامات من HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "و">
+<!ENTITY exportBookmarksToHTML.label       "صدّر العلامات إلى HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "ر">
+<!ENTITY importOtherBrowser.label          "استورد البيانات من متصفح آخر…">
+<!ENTITY importOtherBrowser.accesskey      "خ">
+
+<!ENTITY cmd.backup.label               "احفظ احتياطيًا…">
+<!ENTITY cmd.backup.accesskey           "ط">
+<!ENTITY cmd.restore2.label             "استعِد">
+<!ENTITY cmd.restore2.accesskey         "ت">
+<!ENTITY cmd.restoreFromFile.label      "اختر ملفًا…">
+<!ENTITY cmd.restoreFromFile.accesskey  "خ">
+
+<!ENTITY col.name.label          "الاسم">
+<!ENTITY col.tags.label          "الوسوم">
+<!ENTITY col.url.label           "المكان">
+<!ENTITY col.mostrecentvisit.label "آخر زيارة">
+<!ENTITY col.visitcount.label    "عدد الزيارات">
+<!ENTITY col.dateadded.label     "مُضاف">
+<!ENTITY col.lastmodified.label  "آخر تعديل">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "الاستيراد والحفظ الاحتياطي">
+<!ENTITY maintenance.accesskey  "ط">
+<!ENTITY maintenance.tooltip    "استورد علاماتك واحفظ نسخًا احتياطية منها">
+
+<!ENTITY backButton.tooltip  "انتقل للخلف">
+
+<!ENTITY forwardButton.tooltip  "انتقل إلى الأمام">
+
+<!ENTITY detailsPane.selectAnItemText.description "اختر عنصرًا لعرضه وتحرير خصائصه">

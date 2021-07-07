@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Cores e fundo da página">
+<!ENTITY pageColors.label "Cores da página">
+<!ENTITY defaultColorsRadio.label "Padrão de cores do Leitor (Não definir as cores na página)">
+<!ENTITY defaultColorsRadio.accessKey "N">
+<!ENTITY defaultColorsRadio.tooltip "Usar as configurações de cor somente do visualizador (do leitor) do navegador">
+<!ENTITY customColorsRadio.label "Usar cores personalizadas:">
+<!ENTITY customColorsRadio.accessKey "U">
+<!ENTITY customColorsRadio.tooltip "Estas configurações de cores anulam as do navegador do visitante">
+
+<!ENTITY normalText.label "Texto normal">
+<!ENTITY normalText.accessKey "T">
+<!ENTITY linkText.label "Texto do link">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "Texto do link ativo">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Texto do link visitado">
+<!ENTITY visitedLinkText.accessKey "v">
+<!ENTITY background.label "Fundo:">
+<!ENTITY background.accessKey "P">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Imagem de fundo:">
+<!ENTITY backgroundImage.accessKey "I">
+<!ENTITY backgroundImage.tooltip "Usar um arquivo de imagem como fundo da sua página">
+<!ENTITY backgroundImage.shortenedDataURI "URI encurtada (cópia substituirá a URI completa na área de transferência)">

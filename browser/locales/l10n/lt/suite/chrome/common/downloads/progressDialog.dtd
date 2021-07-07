@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Vykdomas siuntimas…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Pristabdyti">
+<!ENTITY cmd.resume.tooltip              "Tęsti">
+<!ENTITY cmd.retry.tooltip               "Iš naujo">
+<!ENTITY cmd.cancel.tooltip              "Atsisakyti">
+<!ENTITY cmd.open.label                  "Atverti">
+<!ENTITY cmd.open.accesskey              "A">
+<!ENTITY cmd.show.label                  "Atverti aplanką">
+<!ENTITY cmd.show.accesskey              "v">
+<!ENTITY cmd.goToDownloadPage.label      "Eiti į atsisiuntimo tinklalapį">
+<!ENTITY cmd.goToDownloadPage.accesskey  "E">
+<!ENTITY cmd.copyDownloadLink.label      "Kopijuoti šaltinio adresą">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY closeWhenDone.label             "Atsiuntus užverti šį langą.">
+<!ENTITY closeWhenDone.accesskey         "u">

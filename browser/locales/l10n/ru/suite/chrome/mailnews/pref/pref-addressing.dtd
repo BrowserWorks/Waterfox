@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Адресация">
+<!ENTITY emailCollectiontitle.label            "Сбор адресов электронной почты">
+<!ENTITY emailCollectionPicker.label           "Добавить адреса электронной почты в:">
+<!ENTITY emailCollectionPicker.accesskey       "Д">
+<!ENTITY emailCollectiontext.label             "Адреса электронной почты из исходящих сообщений могут автоматически добавляться в локальную адресную книгу.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Автоподстановка адреса">
+<!ENTITY highlightNonMatches.label             "Подсвечивать адреса, которые не дополняются автоматически">
+<!ENTITY highlightNonMatches.accesskey         "а">
+<!ENTITY addressingEnable.label                "Локальных адресных книгах">
+<!ENTITY addressingEnable.accesskey            "л">
+<!ENTITY autocompleteText.label                "При адресации сообщений искать соответствия в:">
+<!ENTITY directories.label                     "Каталогах на сервере:">
+<!ENTITY directories.accesskey                 "н">
+<!ENTITY directoriesNone.label                 "Нет">
+<!ENTITY editDirectories.label                 "Изменить каталоги…">
+<!ENTITY editDirectories.accesskey             "з">

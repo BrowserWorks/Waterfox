@@ -1,0 +1,87 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "プライベートブラウジング">
+
+<!ENTITY editPageCmd.label "ページを編集">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "ナビゲーションツールバー">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "ブックマークツールバー">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+
+<!ENTITY closeWindow.label "ウィンドウを閉じる">
+<!ENTITY closeWindow.accesskey "W">
+
+<!ENTITY minimizeButton.tooltip       "最小化">
+<!ENTITY restoreButton.tooltip        "元のサイズに戻す">
+
+<!ENTITY feedsMenu.label "このページを購読する">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip                  "メニューバー">
+<!ENTITY bookmarksToolbar.tooltip         "ブックマークツールバー">
+<!ENTITY navigationToolbar.tooltip        "ナビゲーションツールバー">
+
+<!ENTITY editBookmark.done.label "完了">
+<!ENTITY editBookmark.cancel.label "キャンセル">
+<!ENTITY editBookmark.removeBookmark.accessKey "R">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "戻る">
+<!ENTITY backButton.tooltip           "前のページへ戻る">
+<!ENTITY forwardButton.label          "進む">
+<!ENTITY forwardButton.tooltip        "次のページへ進む">
+<!ENTITY reloadButton.label           "再読み込み">
+<!ENTITY reloadButton.tooltip         "現在のページを再読み込みする">
+<!ENTITY stopButton.label             "中止">
+<!ENTITY stopButton.tooltip           "ページの読み込みを中止">
+<!ENTITY searchButton.label           "検索">
+<!ENTITY searchButton.tooltip         "アドレスバーに単語を入力し、[検索] をクリックしてください">
+<!ENTITY goButton.label               "移動">
+<!ENTITY goButton.tooltip             "アドレスバーに URL を入力し、[移動] をクリックしてください">
+<!ENTITY printButton.label            "印刷">
+<!ENTITY printButton.tooltip          "このページを印刷する">
+
+<!ENTITY locationBar.tooltip          "検索する用語、キーワード、またはウェブアドレスを入力">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "アドレス (URL)">
+<!ENTITY proxyIcon.tooltip            "このアイコンをドラッグアンドドロップすると、このページへのリンクが作成されます">
+
+<!ENTITY searchItem.title             "検索">
+
+<!ENTITY bookmarksButton.label        "ブックマーク">
+<!ENTITY bookmarksButton.tooltip      "ブックマークリスト">
+<!ENTITY homeButton.label             "ホーム">
+<!ENTITY bookmarksToolbarItem.label   "ブックマークツールバーの項目">
+<!ENTITY bookmarksToolbarChevron.tooltip "他のブックマークを表示">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label		"完了">
+
+<!ENTITY popupIcon.tooltiptext		"このサイトのポップアップはブロックされません">
+
+<!ENTITY viewSecurityInfo.label		"セキュリティ情報を表示">
+<!ENTITY viewSecurityInfo.accesskey	"S">
+<!ENTITY viewCertificate.label		"証明書を表示">
+<!ENTITY viewCertificate.accesskey	"C">
+<!ENTITY viewCertManager.label		"証明書マネージャーを開く">
+<!ENTITY viewCertManager.accesskey	"M">
+
+<!ENTITY zoomIn.tooltiptext		"拡大します">
+<!ENTITY zoomOut.tooltiptext		"縮小します">

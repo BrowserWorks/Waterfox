@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Barva">
+<!ENTITY lastPickedColor.label "Naposledy použitá barva">
+<!ENTITY lastPickedColor.accessKey "N">
+<!ENTITY chooseColor1.label "Vyberte barvu:">
+<!ENTITY chooseColor2.label "Zadejte definici HTML barvy">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(např.: „#0000ff“ nebo „blue“):">
+<!ENTITY default.label "Výchozí">
+<!ENTITY default.accessKey "V">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Standardní">
+<!ENTITY webPalette.label "Všechny webové barvy">
+<!ENTITY background.label "Pozadí">
+<!ENTITY background.accessKey "P">
+<!ENTITY table.label "Tabulka">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Buňka(y)">
+<!ENTITY cell.accessKey "B">

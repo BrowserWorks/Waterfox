@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label	"フィードの購読">
+<!ENTITY learnMore.label		"フィードについて">
+
+<!ENTITY feedTitle.label		"タイトル:">
+<!ENTITY feedTitle.accesskey		"T">
+
+<!ENTITY feedLocation.label		"フィードの URL:">
+<!ENTITY feedLocation.accesskey		"F">
+<!ENTITY feedLocation2.placeholder	"フィードの正しい URL を入力してください">
+<!ENTITY locationValidate.label		"フィードを検証">
+<!ENTITY validateText.label		"フィードが有効か確認して正しい URL を取得します。">
+
+
+<!ENTITY feedFolder.label		"記事の保存先:">
+<!ENTITY feedFolder.accesskey		"S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label		"新着記事の確認間隔:">
+<!ENTITY biffStart.accesskey		"k">
+<!ENTITY biffMinutes.label		"分">
+<!ENTITY biffMinutes.accesskey		"n">
+<!ENTITY biffDays.label			"日">
+<!ENTITY biffDays.accesskey		"d">
+<!ENTITY recommendedUnits.label		"発行者指定の間隔:"><!-- en-US: "Publisher recommends:" -->
+
+<!ENTITY quickMode.label		"ウェブページを読み込まずに記事の要約を表示する">
+<!ENTITY quickMode.accesskey		"h">
+
+<!ENTITY autotagEnable.label		"フィードの &lt;カテゴリー&gt; 名から自動的にタグを作成する">
+<!ENTITY autotagEnable.accesskey	"o">
+<!ENTITY autotagUsePrefix.label		"タグの接頭辞:">
+<!ENTITY autotagUsePrefix.accesskey	"P">
+<!ENTITY autoTagPrefix.placeholder	"タグの接頭辞を入力してください">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label		"追加">
+<!ENTITY button.addFeed.accesskey	"A">
+<!ENTITY button.verifyFeed.label	"検証">
+<!ENTITY button.verifyFeed.accesskey	"V">
+<!ENTITY button.updateFeed.label	"更新">
+<!ENTITY button.updateFeed.accesskey	"U">
+<!ENTITY button.removeFeed.label	"削除">
+<!ENTITY button.removeFeed.accesskey	"R">
+<!ENTITY button.importOPML.label	"インポート">
+<!ENTITY button.importOPML.accesskey	"I">
+<!ENTITY button.exportOPML.label	"エクスポート">
+<!ENTITY button.exportOPML.accesskey	"X">
+<!ENTITY button.exportOPML.tooltip	"フィードをフォルダー構成でエクスポートします。フィードをリストでエクスポートするには、Ctrl キーを押しながらクリックするか Enter キーを押します">
+
+<!ENTITY cmd.close.commandKey		"w">
+<!ENTITY button.close.label		"閉じる">

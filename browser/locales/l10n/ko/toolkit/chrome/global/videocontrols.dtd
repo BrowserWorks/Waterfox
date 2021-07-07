@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "재생">
+<!ENTITY playButton.pauseLabel "정지">
+<!ENTITY muteButton.muteLabel "음소거">
+<!ENTITY muteButton.unmuteLabel "음소거 해제">
+<!ENTITY fullscreenButton.enterfullscreenlabel "전체 화면 표시">
+<!ENTITY fullscreenButton.exitfullscreenlabel "전체 화면 종료">
+<!ENTITY castingButton.castingLabel "화면으로 출력">
+<!ENTITY closedCaption.off "끔">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "볼륨 슬라이더">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "화면 속 화면">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "화면 속 화면에서 보기">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "&brandShortName;에서 다른 작업을 수행하는 동안 전경에서 동영상을 재생합니다">
+
+<!ENTITY error.aborted "동영상 로드가 중지되었습니다.">
+<!ENTITY error.network "네트워크 오류로 인해 동영상 재생이 중단되었습니다.">
+<!ENTITY error.decode "파일이 깨져서 동영상을 재생할 수 없습니다.">
+<!ENTITY error.srcNotSupported "동영상 형식 또는 MIME 유형을 지원하지 않습니다.">
+<!ENTITY error.noSource2 "지원되는 형식 및 MIME 유형의 동영상를 찾을 수 없습니다.">
+<!ENTITY error.generic "알 수 없는 오류로 인해 동영상 재생이 중단되었습니다.">
+
+<!ENTITY status.pictureInPicture "이 동영상은 화면 속 화면 모드에서 재생 중입니다.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

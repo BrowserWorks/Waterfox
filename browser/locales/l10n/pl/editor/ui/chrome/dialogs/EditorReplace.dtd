@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY replaceDialog.title "Znajdź i zamień">
+<!ENTITY findField.label "Znajdź tekst:">
+<!ENTITY findField.accesskey "t">
+<!ENTITY replaceField.label "Zamień na:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Uwzględniaj wielkość liter">
+<!ENTITY caseSensitiveCheckbox.accesskey "l">
+<!ENTITY wrapCheckbox.label "W całym dokumencie">
+<!ENTITY wrapCheckbox.accesskey "c">
+<!ENTITY backwardsCheckbox.label "Szukaj wstecz">
+<!ENTITY backwardsCheckbox.accesskey "w">
+<!ENTITY findNextButton.label "Znajdź następny">
+<!ENTITY findNextButton.accesskey "Z">
+<!ENTITY replaceButton.label "Zamień">
+<!ENTITY replaceButton.accesskey "m">
+<!ENTITY replaceAndFindButton.label "Znajdź i zamień">
+<!ENTITY replaceAndFindButton.accesskey "a">
+<!ENTITY replaceAllButton.label "Zamień wszystko">
+<!ENTITY replaceAllButton.accesskey "s">
+<!ENTITY closeButton.label "Zamknij">
+<!ENTITY closeButton.accesskey "k">

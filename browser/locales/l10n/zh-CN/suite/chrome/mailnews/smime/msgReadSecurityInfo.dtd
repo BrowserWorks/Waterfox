@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+
+<!ENTITY status.label "消息安全">
+<!ENTITY signatureCert.label "查看签名证书">
+<!ENTITY encryptionCert.label "查看加密证书">
+
+<!ENTITY signer.name "签名者：">
+<!ENTITY recipient.name "加密：">
+<!ENTITY email.address "电子邮件地址：">
+<!ENTITY issuer.name "证书颁发者：">

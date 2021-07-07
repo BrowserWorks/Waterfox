@@ -1,0 +1,2294 @@
+<?xml version="1.0"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE rdf:RDF SYSTEM "chrome://branding/locale/brand.dtd" >
+
+
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+
+         xmlns:nc="http://home.netscape.com/NC-rdf#">
+
+
+
+  <rdf:Description about="urn:root">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="welcome" nc:name="Pomoc i wsparcie" nc:link="welcome_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="help-help" nc:name="Używanie okna pomocy" nc:link="help_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="ieusers"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav" nc:name="Przeglądanie stron WWW" nc:link="nav_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail" nc:name="Kurier Poczty" nc:link="mailnews_getting_started.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp" nc:name="Tworzenie stron WWW"  nc:link="composer_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust" nc:name="Dostosowywanie &brandShortName;"  nc:link="customize_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="using-priv-help" nc:name="Ustawienia dotyczące prywatności" nc:link="privacy_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="using-help-certs" nc:name="Używanie certyfikatów" nc:link="using_certs_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="profile-help" nc:name="Zarządzanie profilami" nc:link="profiles_help.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="shortcuts" nc:name="Skróty klawiaturowe" nc:link="shortcuts.xhtml"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="tools" nc:name="Narzędzia programistyczne" nc:link="developer_tools.xhtml"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="glossary" nc:name="Słowniczek" nc:link="glossary.xhtml"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#help-help">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="help-help-window" nc:name="Wyszukiwanie tematu" nc:link="help_help.xhtml#finding_the_topic_you_want"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="help-help-retrace" nc:name="Powrót do poprzednich tematów i drukowanie" nc:link="help_help.xhtml#retracing_your_steps"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="help-help-buttons" nc:name="Używanie przycisków pomocy" nc:link="help_help.xhtml#using_help_buttons"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="help-help-tips" nc:name="Porady dotyczące przeszukiwania zawartości pomocy" nc:link="help_help.xhtml#search_tips"/></rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="nav-doc" nc:name="Przeglądanie stron WWW" nc:link="nav_help.xhtml#navigating_web_pages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-search" nc:name="Wyszukiwanie w sieci Internet" nc:link="nav_help.xhtml#searching_the_web"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-printsave" nc:name="Kopiowanie, zapisywanie i drukowanie stron" nc:link="nav_help.xhtml#copying_saving_and_printing_pages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-language" nc:name="Ustawienia językowe i regionalne" nc:link="nav_help.xhtml#using_languages_and_international_content"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-pluginsdownloads" nc:name="Wtyczki i pobieranie plików" 
+
+nc:link="nav_help.xhtml#plugins_and_downloads"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-ses" nc:name="Optymalizacja szybkości i wydajności" nc:link="nav_help.xhtml#improving_speed_and_efficiency"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-proxies" nc:name="Serwery proxy" nc:link="nav_help.xhtml#proxies"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-page-info" nc:name="Informacje o stronie" nc:link="page_info_help.xhtml"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav-doc">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="nav-doc-view" nc:name="Wyświetlanie strony domowej" nc:link="nav_help.xhtml#viewing_your_home_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-move" nc:name="Przechodzenie do innej strony WWW" nc:link="nav_help.xhtml#moving_to_another_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-link" nc:name="Otwieranie odnośników" nc:link="nav_help.xhtml#clicking_a_link"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-steps" nc:name="Cofanie się do poprzednio odwiedzonych stron" nc:link="nav_help.xhtml#retracing_your_steps"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-reopen" nc:name="Przywracanie zamkniętych kart i okien" nc:link="nav_help.xhtml#reopening_closed_tabs_windows"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-reload" nc:name="Zatrzymywanie wczytywania i odświeżanie stron"  nc:link="nav_help.xhtml#stopping_and_reloading"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-bmark" nc:name="Otwieranie stron z Zakładek"  nc:link="nav_help.xhtml#visiting_bookmarked_pages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-tabbed" nc:name="Przeglądanie stron w kartach"  nc:link="nav_help.xhtml#using_tabbed_browsing"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-sidebar" nc:name="Korzystanie z panelu bocznego"  nc:link="nav_help.xhtml#using_sidebar"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav-doc-search">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="nav-doc-searchweb" nc:name="Szybkie wyszukiwanie" nc:link="nav_help.xhtml#fast_searches"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-smartsearch" nc:name="Zaawansowane wyszukiwanie w panelu bocznym" nc:link="nav_help.xhtml#sidebar_advanced_search_mode"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-searchprefs" nc:name="Konfiguracja wyszukiwania" nc:link="nav_help.xhtml#setting_search_preferences"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-searchpage" nc:name="Wyszukiwanie w obrębie strony" nc:link="nav_help.xhtml#searching_within_a_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-find_as_you_type" nc:name="Funkcja Znajdź wprowadzając" nc:link="nav_help.xhtml#using_find_as_you_type"/></rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-searchbookmark" nc:name="Wyszukiwanie w Zakładkach lub Historii" nc:link="nav_help.xhtml#searching_the_bookmarks_or_history_list"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav-doc-printsave">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="nav-doc-copy" nc:name="Kopiowanie części strony" nc:link="nav_help.xhtml#copying_part_of_a_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-save" nc:name="Zapisywanie całości bądź części strony" nc:link="nav_help.xhtml#saving_all_or_part_of_a_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-print" nc:name="Drukowanie strony" nc:link="nav_help.xhtml#printing_a_page"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav-doc-language">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="nav-doc-charencode" nc:name="Wybieranie czcionek i kodowania znaków" nc:link="nav_help.xhtml#selecting_character_encodings_and_fonts"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-languagepref" nc:name="Konfiguracja ustawień językowych" nc:link="nav_help.xhtml#setting_language_preferences"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-webcontent" nc:name="&brandShortName; w Twoim języku" nc:link="nav_help.xhtml#finding_localized_version"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav-doc-pluginsdownloads">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="nav-doc-plugins" nc:name="Wtyczki" nc:link="nav_help.xhtml#plugins"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-helperapps" nc:name="Aplikacje pomocnicze" nc:link="nav_help.xhtml#helper_applications"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-dlmanager" nc:name="Menedżer pobierania plików" nc:link="nav_help.xhtml#download_manager"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav-doc-ses">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="nav-doc-autoload" nc:name="Automatyczne wczytywanie" nc:link="nav_help.xhtml#automatic_loading"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-keywords" nc:name="Słowa kluczowe Zakładek" nc:link="nav_help.xhtml#custom_keywords"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-cache" nc:name="Konfiguracja pamięci podręcznej" nc:link="nav_help.xhtml#changing_cache_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-smartup" nc:name="Automatyczna aktualizacja oprogramowania" nc:link="nav_help.xhtml#getting_the_latest_software_automatically"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="nav-doc-mousewheel" nc:name="Używanie rolki myszy" nc:link="nav_help.xhtml#using_a_mouse_wheel"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#nav-page-info">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="pageinfo_general" nc:name="Karta ogólne" nc:link="page_info_help.xhtml#general_tab"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="pageinfo_forms" nc:name="Karta Formularze" nc:link="page_info_help.xhtml#forms_tab"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="pageinfo_links" nc:name="Karta Odnośniki" nc:link="page_info_help.xhtml#links_tab"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="pageinfo_media" nc:name="Karta Media" nc:link="page_info_help.xhtml#media_tab"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="pageinfo_security" nc:name="Karta Zabezpieczenia" nc:link="page_info_help.xhtml#security_tab"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+<!-- MAIL HELP SECTION -->
+
+
+
+<rdf:Description about="#mail">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc" nc:name="Wprowadzenie do Kuriera Poczty" nc:link="mailnews_getting_started.xhtml#getting_started_with_mozilla_mail_and_newsgroups" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-importing-other" nc:name="Importowanie poczty z innych programów" nc:link="mailnews_getting_started.xhtml#importing_mail_from_other_programs" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-read"    nc:name="Czytanie wiadomości" nc:link="mailnews_using_mail.xhtml#reading_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send"    nc:name="Wysyłanie wiadomości" nc:link="mailnews_using_mail.xhtml#sending_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-html"    nc:name="Tworzenie wiadomości w formacie HTML" nc:link="mailnews_using_mail.xhtml#creating_html_mail_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-attach"  nc:name="Załączniki" nc:link="mailnews_using_mail.xhtml#using_attachments" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-delete" nc:name="Usuwanie wiadomości" nc:link="mailnews_using_mail.xhtml#deleting_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-address" nc:name="Praca z książkami adresowymi" nc:link="mailnews_addressbooks.xhtml#using_address_books" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-folders" nc:name="Porządkowanie wiadomości" nc:link="mailnews_organizing.xhtml#organizing_your_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-junk" nc:name="Kontrolowanie niechcianej poczty" nc:link="mailnews_organizing.xhtml#controlling_junk_mail" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-news" nc:name="Wprowadzenie do grup dyskusyjnych" nc:link="mailnews_newsgroups.xhtml#getting_started_with_newsgroups" /> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-doc-blogs" nc:name="Wprowadzenie do aktualności i blogów" nc:link="mailnews_blogs_and_feeds.xhtml#getting_started_with_blogs_and_news_feeds" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-offline" nc:name="Praca w trybie offline" nc:link="mailnews_offline.xhtml#working_offline" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt" nc:name="Podpisywanie i szyfrowanie wiadomości" nc:link="mailnews_security.xhtml#signing_and_encrypting_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-account-settings" nc:name="Ustawienia kont pocztowych i grup dyskusyjnych" nc:link="mailnews_account_settings.xhtml#mail_and_newsgroups_account_settings" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-mailprefs" nc:name="Preferencje Kuriera Poczty" nc:link="mailnews_preferences.xhtml#mail_and_newsgroup_preferences" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+ <rdf:Description about="#mail-doc">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-setup" nc:name="Używanie Kreatora kont pocztowych"  nc:link="mailnews_getting_started.xhtml#using_the_mail_account_setup_wizard"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add" nc:name="Tworzenie dodatkowych kont pocztowych i grup dyskusyjnych"  nc:link="mailnews_getting_started.xhtml#setting_up_additional_mail_and_news_accounts"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-change" nc:name="Zmiana ustawień istniejącego konta"  nc:link="mailnews_getting_started.xhtml#changing_the_settings_for_an_account"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-importing-other">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-importing-mail-messages" nc:name="Importowanie wiadomości" nc:link="mailnews_getting_started.xhtml#importing_mail_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-importing-mail-settings" nc:name="Importowanie ustawień kont" nc:link="mailnews_getting_started.xhtml#importing_mail_settings" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+ <rdf:Description about="#mail-doc-read">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-notify" nc:name="Pobieranie nowych wiadomości"  nc:link="mailnews_using_mail.xhtml#getting_new_messages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-view" nc:name="Zmiana wyglądu głównego okna Kuriera Poczty"  nc:link="mailnews_using_mail.xhtml#choosing_how_you_view_the_mail_window"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-thread" nc:name="Sortowanie oraz grupowanie wiadomości w wątki"  nc:link="mailnews_using_mail.xhtml#sorting_and_threading_messages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-printsave" nc:name="Zapisywanie oraz drukowanie wiadomości"  nc:link="mailnews_using_mail.xhtml#saving_and_printing_messages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-scripts" nc:name="Kontrola obrazków, skryptów i wtyczek"  nc:link="mailnews_using_mail.xhtml#controlling_images_scripts_and_plugins"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#mail-doc-send">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-compose" nc:name="Tworzenie nowych wiadomości pocztowych i grup dyskusyjnych" nc:link="mailnews_using_mail.xhtml#composing_mail_and_newsgroup_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-new" nc:name="Korzystanie z okna tworzenia wiadomości" nc:link="mailnews_using_mail.xhtml#using_the_message_composition_window" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-address" nc:name="Adresowanie wiadomości" nc:link="mailnews_using_mail.xhtml#addressing_a_message" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-options" nc:name="Opcje wysyłania wiadomości" nc:link="mailnews_using_mail.xhtml#selecting_message_sending_options" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-reply" nc:name="Tworzenie odpowiedzi na wiadomość" nc:link="mailnews_using_mail.xhtml#replying_to_a_message" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-forward" nc:name="Przesyłanie wiadomości" nc:link="mailnews_using_mail.xhtml#forwarding_a_message" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-receipt" nc:name="Potwierdzenia otwarcia (dostarczenia) wiadomości" nc:link="mailnews_using_mail.xhtml#confirming_that_your_message_was_opened" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-edit" nc:name="Zapisywanie i edycja szkiców wiadomości" nc:link="mailnews_using_mail.xhtml#saving_and_editing_a_message_draft" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-send-template" nc:name="Tworzenie i korzystanie z szablonów" nc:link="mailnews_using_mail.xhtml#creating_and_using_templates" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#mail-doc-html">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-html-use" nc:name="Używanie HTML w wiadomościach" nc:link="mailnews_using_mail.xhtml#using_html_in_your_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-html-options" nc:name="Opcje wysyłania wiadomości w formacie HTML" nc:link="mailnews_using_mail.xhtml#choosing_html_mail_sending_options" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-html-address" nc:name="Określanie adresatów wiadomości w formacie HTML" nc:link="mailnews_using_mail.xhtml#specifying_recipients_for_html_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-html-source" nc:name="Wyświetlanie kodu źródłowego wiadomości w HTML" nc:link="mailnews_using_mail.xhtml#viewing_the_message_source_for_html_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-html-question" nc:name="Okno dialogowe wiadomości w formacie HTML" nc:link="mailnews_using_mail.xhtml#using_the_html_mail_question_dialog_box" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-doc-html-use">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-html-edit" nc:name="Edycja lub wstawianie elementów HTML" nc:link="mailnews_using_mail.xhtml#editing_or_inserting_html_elements" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#mail-doc-attach">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-attach-file" nc:name="Załączanie pliku lub strony WWW" nc:link="mailnews_using_mail.xhtml#attaching_a_file_or_web_page" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-attach-view" nc:name="Przeglądanie i otwieranie załączników" nc:link="mailnews_using_mail.xhtml#viewing_and_opening_attachments" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-attach-save" nc:name="Zapisywanie załączników" nc:link="mailnews_using_mail.xhtml#saving_attachments" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-doc-delete">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-delete-server" nc:name="Usuwanie wiadomości z kont POP i IMAP" nc:link="mailnews_using_mail.xhtml#deleting_pop_or_imap_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-delete-trash" nc:name="Przenoszenie wiadomości do i z foldera Kosz" nc:link="mailnews_using_mail.xhtml#moving_messages_to_and_from_the_trash" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#mail-doc-address">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-about" nc:name="Książki adresowe - wprowadzenie" nc:link="mailnews_addressbooks.xhtml#about_address_books" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-names" nc:name="Dodawanie wpisów do Książki adresowej" nc:link="mailnews_addressbooks.xhtml#adding_entries_to_your_address_books" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-book" nc:name="Tworzenie nowej książki adresowej" nc:link="mailnews_addressbooks.xhtml#creating_a_new_address_book" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-card" nc:name="Tworzenie nowej wizytówki w książce adresowej" nc:link="mailnews_addressbooks.xhtml#creating_a_new_address_book_card" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-list" nc:name="Tworzenie listy dystrybucyjnej" nc:link="mailnews_addressbooks.xhtml#creating_a_mailing_list" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-listedit" nc:name="Edycja listy dystrybucyjnej" nc:link="mailnews_addressbooks.xhtml#editing_a_mailing_list" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_ab_search" nc:name="Przeszukiwanie książek adresowych i katalogów" nc:link="mailnews_addressbooks.xhtml#searching_address_books_and_directories" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-import" nc:name="Importowanie książek adresowych" nc:link="mailnews_addressbooks.xhtml#importing_address_books" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-export" nc:name="Eksportowanie książki adresowej" nc:link="mailnews_addressbooks.xhtml#exporting_address_books" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-add-sync-LDAP-add" nc:name="Dodawanie i usuwanie katalogów LDAP" nc:link="mailnews_addressbooks.xhtml#adding_and_removing_ldap_directories" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+<rdf:Description about="#mail-doc-add-card">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-card-properties" nc:name="Podgląd i edycja wizytówek" nc:link="mailnews_addressbooks.xhtml#viewing_or_editing_card_properties" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail_ab_search">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail_advanced_ab_search" nc:name="Wyszukiwanie zaawansowane" nc:link="mailnews_addressbooks.xhtml#searching_for_specific_entries" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-doc-add-sync-LDAP-add">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-ldap-properties" nc:name="Ustawienia serwera katalogów" nc:link="mailnews_addressbooks.xhtml#directory_server_settings" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#mail-doc-folders">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="folder-creating" nc:name="Tworzenie folderu" nc:link="mailnews_organizing.xhtml#creating_a_folder"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="folder-renaming" nc:name="Zmiana nazwy folderu" nc:link="mailnews_organizing.xhtml#renaming_a_folder"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="folder-copying" nc:name="Przenoszenie lub kopiowanie folderu" nc:link="mailnews_organizing.xhtml#moving_or_copying_a_folder"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="folder-opening" nc:name="Umieszczanie wiadomości w folderach" nc:link="mailnews_organizing.xhtml#filing_messages_in_folders"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="folder-sharing" nc:name="Współdzielenie folderów z innymi użytkownikami (tylko IMAP)" nc:link="mailnews_organizing.xhtml#sharing_folders_with_other_users"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="tagging-messages" nc:name="Etykietowanie wiadomości" nc:link="mailnews_organizing.xhtml#tagging_messages"/> </rdf:li>
+
+		<rdf:li> <rdf:Description ID="mail-flagging" nc:name="Zaznaczanie lub flagowanie wiadomości" nc:link="mailnews_organizing.xhtml#marking_or_flagging_messages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="message-views-using" nc:name="Używanie widoków wiadomości" nc:link="mailnews_organizing.xhtml#using_message_views"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-filters" nc:name="Tworzenie filtrów wiadomości" nc:link="mailnews_organizing.xhtml#creating_message_filters"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="search-mailnews" nc:name="Wyszukiwanie w wiadomościach" nc:link="mailnews_organizing.xhtml#searching_through_messages"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#folder-sharing">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="folder-subscribing" nc:name="Subskrybowanie współdzielonego folderu" nc:link="mailnews_organizing.xhtml#subscribing_to_a_shared_folder"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#labeling-messages">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="tag-apply" nc:name="Nadawanie etykiety" nc:link="mailnews_organizing.xhtml#applying_a_tag"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="tag-customize" nc:name="Dostosowywanie etykiet" nc:link="mailnews_organizing.xhtml#customizing_tags"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="tag-sort" nc:name="Sortowanie wiadomości według etykiet" nc:link="mailnews_organizing.xhtml#sorting_messages_by_tag"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="tag-remove" nc:name="Usuwanie etykiet" nc:link="mailnews_organizing.xhtml#removing_tag"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#message-views-using">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="message-views-create-new" nc:name="Dostosowywanie widoku" nc:link="mailnews_organizing.xhtml#creating_a_custom_view"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-filters">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="send-filter" nc:name="Filtrowanie wiadomości na podstawie nadawcy" nc:link="mailnews_organizing.xhtml#filtering_messages_from_a_specific_sender"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#search-mailnews">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="search_messages" nc:name="Wyszukiwanie konkretnych wiadomości" nc:link="mailnews_organizing.xhtml#searching_for_specific_messages"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-junk">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-junk-controls" nc:name="Filtr niechcianej poczty" nc:link="mailnews_organizing.xhtml#using_junk_mail_controls" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-junk-options" nc:name="Ustawienia filtru niechcianej poczty" nc:link="mailnews_organizing.xhtml#junk_controls_options" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-junk-filters" nc:name="Filtr niechcianej poczty a filtry wiadomości" nc:link="mailnews_organizing.xhtml#junk_controls_and_filters" /> </rdf:li>
+
+		<rdf:li> <rdf:Description ID="mail-junk-phishing" nc:name="Wykrywanie oszustw" nc:link="mailnews_organizing.xhtml#phishing_detection" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#mail-doc-news">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-subscribe" nc:name="Subskrybowanie grup dyskusyjnych" nc:link="mailnews_newsgroups.xhtml#subscribing_to_newsgroups"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-reading-news" nc:name="Czytanie wiadomości z grup dyskusyjnych" nc:link="mailnews_newsgroups.xhtml#reading_newsgroup_messages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-posting" nc:name="Wysyłanie wiadomości na grupy dyskusyjne" nc:link="mailnews_newsgroups.xhtml#posting_newsgroup_messages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-replying-news" nc:name="Uczestniczenie w aktywnych dyskusjach" nc:link="mailnews_newsgroups.xhtml#contributing_to_ongoing_discussions"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-monitoring" nc:name="Śledzenie wątków" nc:link="mailnews_newsgroups.xhtml#monitoring_threads"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-delete-news" nc:name="Usuwanie subskrypcji grupy dyskusyjnej" nc:link="mailnews_newsgroups.xhtml#removing_a_newsgroup"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-add-newsserver" nc:name="Dodawanie serwera grup dyskusyjnych" nc:link="mailnews_newsgroups.xhtml#adding_a_newsgroup_server"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+<!-- TODO: start localizing -->
+
+<rdf:Description about="#mail-doc-blogs">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li> <rdf:Description ID="mail-blogs-subscribe" nc:name="Subscribing to blogs &amp; news feeds" nc:link="mailnews_blogs_and_feeds.xhtml#subscribing_to_blogs_and_news_feeds"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-subscribe-from-browser" nc:name="Subscribing to blogs &amp; news feeds from a browser window" nc:link="mailnews_blogs_and_feeds.xhtml#subscribing_to_blogs_and_news_feeds_from_browser"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-reading" nc:name="Reading blogs &amp; news feed messages" nc:link="mailnews_blogs_and_feeds.xhtml#reading_blogs_and_news_feed_messages"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-posting" nc:name="Posting blog messages" nc:link="mailnews_blogs_and_feeds.xhtml#posting_blog_messages"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-comments" nc:name="Adding comments to a blog post" nc:link="mailnews_blogs_and_feeds.xhtml#adding_comments_to_a_blog_post"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-exporting-importing" nc:name="Exporting and importing feeds" nc:link="mailnews_blogs_and_feeds.xhtml#exporting_and_importing_feeds"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-editing" nc:name="Editing a feed" nc:link="mailnews_blogs_and_feeds.xhtml#editing_a_feed"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-removing" nc:name="Removing a feed" nc:link="mailnews_blogs_and_feeds.xhtml#removing_a_feed"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-using-different-accounts" nc:name="Using different blogs &amp; news feeds accounts" nc:link="mailnews_blogs_and_feeds.xhtml#using_different_blogs_and_news_feeds_accounts"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-organizing" nc:name="Organizing your feeds" nc:link="mailnews_blogs_and_feeds.xhtml#organizing_your_feeds"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+
+<rdf:Description about="#mail-blogs-organizing">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li> <rdf:Description ID="mail-blogs-feeds-folders" nc:name="Feeds versus folders" nc:link="mailnews_blogs_and_feeds.xhtml#feeds_vs_folders"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-folders-in-blogs" nc:name="Organizing folders in Blogs &amp; News Feeds accounts" nc:link="mailnews_blogs_and_feeds.xhtml#organizing_folders_in_blogs_and_news_feeds_accounts"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-multiple-feeds" nc:name="Downloading multiple feeds in a single folder" nc:link="mailnews_blogs_and_feeds.xhtml#downloading_multiple_feeds_in_a_single_folder"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-blogs-moving-feeds" nc:name="Moving a feed to another folder" nc:link="mailnews_blogs_and_feeds.xhtml#moving_a_feed_to_another_folder"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+
+<!-- TODO: stop localizing -->
+
+
+<rdf:Description about="#mail-doc-offline">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-offline-setup" nc:name="Przygotowywanie Kuriera Poczty do pracy w trybie offline" nc:link="mailnews_offline.xhtml#setting_up_mozilla_mail_and_newsgroups_to_work_offline"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-inbox" nc:name="Pobieranie wszystkich wiadomości do pracy w trybie offline" nc:link="mailnews_offline.xhtml#downloading_all_messages_for_offline_use"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-folder" nc:name="Pobieranie wybranego folderu do pracy w trybie offline" nc:link="mailnews_offline.xhtml#downloading_an_individual_folder_for_offline_use"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-flagged" nc:name="Pobieranie wybranych lub oflagowanych wiadomości do pracy w trybie offline" nc:link="mailnews_offline.xhtml#downloading_selected_or_flagged_messages_for_offline_use"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-directory" nc:name="Pobieranie wpisów z katalogu (LDAP) do pracy w trybie offline" nc:link="mailnews_offline.xhtml#downloading_directory_entries_for_offline_use"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-accounts" nc:name="Konfiguracja kont do pracy w trybie offline" nc:link="mailnews_offline.xhtml#setting_up_your_accounts_for_working_offline"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-items" nc:name="Wybór elementów dostępnych w trybie offline" nc:link="mailnews_offline.xhtml#selecting_items_for_offline_viewing"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-sync" nc:name="Pobieranie i synchronizacja wiadomości" nc:link="mailnews_offline.xhtml#downloading_and_synchronizing_your_messages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-offline-go" nc:name="Praca w trybie offline i późniejsze ponowne łączenie" nc:link="mailnews_offline.xhtml#working_offline_and_reconnecting_later"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#sign-encrypt">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt-about" nc:name="O podpisach cyfrowych i szyfrowaniu" nc:link="mailnews_security.xhtml#about_digital_signatures_and_encryption" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt-get" nc:name="Uzyskiwanie certyfikatów osób trzecich" nc:link="mailnews_security.xhtml#getting_other_peoples_certificates" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt-config" nc:name="Konfigurowanie ustawień zabezpieczeń" nc:link="mailnews_security.xhtml#configuring_security_settings" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt-signing" nc:name="Podpisywanie i szyfrowanie nowej wiadomości" nc:link="mailnews_security.xhtml#signing_and_encrypting_a_new_message" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt-read" nc:name="Odczytywanie podpisanych i zaszyfrowanych wiadomości" nc:link="mailnews_security.xhtml#reading_signed_and_encrypted_messages" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="compose_security" nc:name="Zabezpieczenia wiadomości - komponowanie wiadomości" nc:link="mailnews_security.xhtml#message_security_compose_window" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="received_security" nc:name="Zabezpieczenia wiadomości - odebrana wiadomość" nc:link="mailnews_security.xhtml#message_security_received_message" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#sign-encrypt-about">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt-about-sig" nc:name="Jak działają podpisy cyfrowe" nc:link="mailnews_security.xhtml#how_digital_signatures_work" /> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="sign-encrypt-about-encrypt" nc:name="Jak działa szyfrowanie" nc:link="mailnews_security.xhtml#how_encryption_works" /> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+<rdf:Description about="#mail-doc-account-settings">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail_account_identity" nc:name="Konfiguracja kont"  nc:link="mailnews_account_settings.xhtml#account_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-choose" nc:name="Konfiguracja serwerów"  nc:link="mailnews_account_settings.xhtml#server_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_copies" nc:name="Kopie i foldery"  nc:link="mailnews_account_settings.xhtml#copies_and_folders"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_addressing_settings" nc:name="Komponowanie"  nc:link="mailnews_account_settings.xhtml#addressing"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-offline-space" nc:name="Synchronizacja i miejsce na dysku"  nc:link="mailnews_account_settings.xhtml#synchronization_and_storage"/> </rdf:li>
+
+		<rdf:li> <rdf:Description ID="mail-account-junk" nc:name="Ustawienia niechcianej poczty" nc:link="mailnews_account_settings.xhtml#junk_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-account-receipts" nc:name="Potwierdzenia odbioru" nc:link="mailnews_account_settings.xhtml#return_receipts"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_security_settings" nc:name="Zabezpieczenia"  nc:link="mailnews_account_settings.xhtml#security"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_local_folders_settings" nc:name="Foldery lokalne"  nc:link="mailnews_account_settings.xhtml#local_folders"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_smtp" nc:name="Serwer poczty wychodzącej (SMTP)"  nc:link="mailnews_account_settings.xhtml#outgoing_server"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-doc-choose">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail-doc-choose-IMAP" nc:name="IMAP - Internet Message Access Protocol"  nc:link="mailnews_account_settings.xhtml#about_internet_message_access_protocol"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-choose-POP" nc:name="POP - Post Office Protocol"  nc:link="mailnews_account_settings.xhtml#about_post_office_protocol"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_server_imap" nc:name="Konfiguracja serwera IMAP"  nc:link="mailnews_account_settings.xhtml#imap_server_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-doc-imap-advanced" nc:name="Zaawansowana konfiguracja serwera IMAP"  nc:link="mailnews_account_settings.xhtml#advanced_imap_server_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_server_pop3" nc:name="Konfiguracja serwera POP"  nc:link="mailnews_account_settings.xhtml#pop_server_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_server_nntp" nc:name="Konfiguracja serwera grup dyskusyjnych"  nc:link="mailnews_account_settings.xhtml#news_server_settings"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-doc-offline-space">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail_offline_imap" nc:name="Ustawienia dla konta IMAP"  nc:link="mailnews_account_settings.xhtml#synchronization_and_storage_settings_imap"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_offline_pop3" nc:name="Ustawienia dla konta POP"  nc:link="mailnews_account_settings.xhtml#disk_space_settings_pop"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail_offline_blogs" nc:name="Ustawienia dla konta aktualności i blogów"  nc:link="mailnews_account_settings.xhtml#disk_space_settings_blogs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_offline_nntp" nc:name="Ustawienia dla konta grup dyskusyjnych"  nc:link="mailnews_account_settings.xhtml#synchronization_and_storage_settings_nntp"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail_security_settings">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail_security_settings_certs" nc:name="Certyfikaty"  nc:link="mailnews_account_settings.xhtml#about_certificates"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_security_settings_sign" nc:name="Podpis cyfrowy"  nc:link="mailnews_account_settings.xhtml#digital_signing"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_security_settings_encrypt" nc:name="Szyfrowanie"  nc:link="mailnews_account_settings.xhtml#encryption"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#mail-doc-mailprefs">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="mail_prefs_general" nc:name="Preferencje Kuriera Poczty" nc:link="mailnews_preferences.xhtml#mail_and_newsgroups"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_prefs_display" nc:name="Wiadomości" nc:link="mailnews_preferences.xhtml#message_display"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_prefs_notifications" nc:name="Powiadomienia" nc:link="mailnews_preferences.xhtml#notifications"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_prefs_messages" nc:name="Komponowanie" nc:link="mailnews_preferences.xhtml#composition"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_prefs_formatting" nc:name="Formatowanie" nc:link="mailnews_preferences.xhtml#send_format"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_prefs_addressing" nc:name="Adresowanie" nc:link="mailnews_preferences.xhtml#addressing_preferences"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-prefs-junk" nc:name="Niechciane i podejrzane wiadomości" nc:link="mailnews_preferences.xhtml#junk_and_suspect_preferences"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail-prefs-tags" nc:name="Etykiety" nc:link="mailnews_preferences.xhtml#tags"/> </rdf:li>
+
+	<rdf:li> <rdf:Description ID="mail-prefs-receipts" nc:name="Potwierdzenia odbioru" nc:link="mailnews_preferences.xhtml#return_receipts_preferences"/> </rdf:li>
+
+	<rdf:li> <rdf:Description ID="character_encoding" nc:name="Kodowanie znaków" nc:link="mailnews_preferences.xhtml#character_encoding"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="mail_prefs_offline" nc:name="Sieć i miejsce na dysku" nc:link="mailnews_preferences.xhtml#network_and_storage_preferences"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<!-- COMPOSER HELP SECTION -->
+
+
+
+<rdf:Description about="#comp">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc"	nc:name="Tworzenie nowej strony"  nc:link="composer_help.xhtml#starting_a_new_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="page_change" nc:name="Formatowanie stron"  nc:link="composer_help.xhtml#formatting_your_web_pages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-table" nc:name="Tabele"  nc:link="composer_help.xhtml#adding_tables_to_your_web_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-image" nc:name="Obrazki"  nc:link="composer_help.xhtml#adding_images_to_your_web_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-page" nc:name="Ustawianie właściwości strony"  nc:link="composer_help.xhtml#setting_page_properties"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="link_properties" nc:name="Tworzenie odnośników"  nc:link="composer_help.xhtml#creating_links_in_composer"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish" nc:name="Publikowanie stron WWW"  nc:link="composer_help.xhtml#publishing_your_pages_on_the_web"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-prefs" nc:name="Preferencje Kompozytora Stron"  nc:link="composer_help.xhtml#composer_preferences"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#comp-doc">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-create" nc:name="Tworzenie nowej strony"  nc:link="composer_help.xhtml#creating_a_new_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-save" nc:name="Zapisywanie i przeglądanie utworzonej strony"  nc:link="composer_help.xhtml#saving_and_browsing_your_new_page"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#page_change">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="props-para" nc:name="Formatowanie akapitów, nagłówków i list"  nc:link="composer_help.xhtml#formatting_paragraphs_headings_and_lists"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="lists" nc:name="Praca z listami"  nc:link="composer_help.xhtml#working_with_lists"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="char" nc:name="Zmiana koloru, stylu i czcionki tekstu"  nc:link="composer_help.xhtml#changing_text_color_style_and_font"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="style-remove" nc:name="Usuwanie styli tekstu"  nc:link="composer_help.xhtml#removing_or_discontinuing_text_styles"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="find-text" nc:name="Szukanie i zamiana tekstu"  nc:link="composer_help.xhtml#finding_and_replacing_text"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="props-hrule" nc:name="Wstawianie linii poziomych"  nc:link="composer_help.xhtml#inserting_horizontal_lines"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="special-chars" nc:name="Wstawianie symboli i znaków specjalnych"  nc:link="composer_help.xhtml#inserting_special_characters"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="html-tag" nc:name="Wstawianie elementów HTML"  nc:link="composer_help.xhtml#inserting_html_elements_and_attributes"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="validate-html" nc:name="Sprawdzanie poprawności kodu HTML"  nc:link="composer_help.xhtml#validating_the_html"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-choose" nc:name="Wybór właściwego trybu edycji"  nc:link="composer_help.xhtml#choosing_the_right_editing_mode"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#props-hrule">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="props-hrule-horiz" nc:name="Ustawianie właściwości linii poziomej"  nc:link="composer_help.xhtml#setting_horizontal_line_properties"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#html-tag">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="advanced_property_editor" nc:name="Korzystanie z Zaawansowanego edytora właściwości"  nc:link="composer_help.xhtml#using_the_advanced_property_editor"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#comp-doc-table">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-table-insert" nc:name="Wstawianie tabeli"  nc:link="composer_help.xhtml#inserting_a_table"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="table_properties" nc:name="Zmiana właściwości tabeli"  nc:link="composer_help.xhtml#changing_a_tables_properties"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-table-add" nc:name="Dodawanie i usuwanie wierszy, kolumn i komórek"  nc:link="composer_help.xhtml#adding_and_deleting_rows_columns_and_cells"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-table-select" nc:name="Zaznaczanie fragmentów tabeli"  nc:link="composer_help.xhtml#selecting_table_elements"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-table-copy" nc:name="Przenoszenie, kopiowanie i usuwanie tabel"  nc:link="composer_help.xhtml#moving_copying_and_deleting_tables"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-tableize" nc:name="Przekształcanie tekstu w tabelę"  nc:link="composer_help.xhtml#converting_text_into_a_table"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#comp-doc-table-add">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-table-change-default" nc:name="Zmiana domyślnego zachowania tabeli podczas edycji"  nc:link="composer_help.xhtml#changing_the_default_table_editing_behavior"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#comp-doc-image">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-image-insert" nc:name="Wstawianie obrazka do dokumentu"  nc:link="composer_help.xhtml#inserting_an_image_into_your_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="image_properties" nc:name="Edycja właściwości obrazka"  nc:link="composer_help.xhtml#editing_image_properties"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#comp-doc-page">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-page-props" nc:name="Ustawianie właściwości stron i znaczników meta"  nc:link="composer_help.xhtml#setting_page_properties_and_meta_tags"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-page-appear" nc:name="Kolory i tło strony"  nc:link="composer_help.xhtml#setting_page_colors_and_backgrounds"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#link_properties">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-links-inpage" nc:name="Wewnątrz strony"  nc:link="composer_help.xhtml#creating_links_within_the_same_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-links-others" nc:name="Do innych stron"  nc:link="composer_help.xhtml#creating_links_to_other_pages"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-links-images" nc:name="Obrazki jako odnośniki"  nc:link="composer_help.xhtml#using_images_as_links"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-links-remove" nc:name="Usuwanie i kończenie wprowadzania odnośników"  nc:link="composer_help.xhtml#removing_or_discontinuing_links"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#comp-doc-publish">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-prepare" nc:name="Publikacja dokumentu"  nc:link="composer_help.xhtml#publishing_a_document"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-update" nc:name="Aktualizacja opublikowanego dokumentu"  nc:link="composer_help.xhtml#updating_a_published_document"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-as" nc:name="Zmiana nazwy pliku lub adresu publikacji"  nc:link="composer_help.xhtml#changing_the_filename_or_publishing_location"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-newsite" nc:name="Tworzenie nowej witryny publikacji"  nc:link="composer_help.xhtml#creating_a_new_publishing_site"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-default" nc:name="Zmiana domyślnej witryny publikacji"  nc:link="composer_help.xhtml#choosing_the_default_publishing_site"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-delete" nc:name="Usuwanie witryny publikacji"  nc:link="composer_help.xhtml#deleting_a_publishing_site"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-troubleshooting" nc:name="Rozwiązywanie typowych problemów publikacji"  nc:link="composer_help.xhtml#solving_common_publishing_problems"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-settings" nc:name="Ustawienia publikacji"  nc:link="composer_help.xhtml#publishing_settings"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#comp-doc-publish-prepare">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-tips" nc:name="Podpowiedzi"  nc:link="composer_help.xhtml#tips_for_avoiding_broken_links_or_missing_images"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#comp-doc-publish-troubleshooting">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-troubleshooting-settings" nc:name="Sprawdzanie ustawień publikacji"  nc:link="composer_help.xhtml#verifying_your_publishing_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-troubleshooting-files" nc:name="Sprawdzanie nazw plików"  nc:link="composer_help.xhtml#checking_your_filenames"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-troubleshooting-errors" nc:name="Naprawianie błędów publikacji"  nc:link="composer_help.xhtml#fixing_publishing_errors"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#comp-doc-publish-settings">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-publishtab" nc:name="Opublikuj stronę - Opublikuj"  nc:link="composer_help.xhtml#publish_page_publish"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-settingstab" nc:name="Opublikuj stronę - Ustawienia"  nc:link="composer_help.xhtml#publish_page_settings"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="comp-doc-publish-site-settings" nc:name="Ustawienia publikowanej witryny"  nc:link="composer_help.xhtml#publish_settings"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+  <rdf:Description about="#comp-doc-prefs">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="composer_prefs_general" nc:name="Kompozytor Stron"  nc:link="composer_help.xhtml#composer"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="composer_prefs_newpage" nc:name="Nowe strony" nc:link="composer_help.xhtml#new_page_settings"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<!-- CUSTOMIZATION HELP CONTENT -->
+
+
+
+<rdf:Description about="#cust">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="cust-doc" nc:name="Panel boczny"  nc:link="customize_help.xhtml#sidebar"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-tabbed" nc:name="Przeglądanie stron w kartach"  nc:link="customize_help.xhtml#tabbed_browsing"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-font" nc:name="Zmiana czcionek, kolorów i motywów"  nc:link="customize_help.xhtml#changing_fonts_colors_and_themes"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-toolbar" nc:name="Paski narzędziowe"  nc:link="customize_help.xhtml#toolbars"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk" nc:name="Zakładki"  nc:link="customize_help.xhtml#bookmarks"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="cust-addons" nc:name="Dodatki"  nc:link="customize_help.xhtml#add-ons"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-page" nc:name="Definiowanie sposobu uruchomienia &brandShortName;"  nc:link="customize_help.xhtml#specifying_how_mozilla_starts_up"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="appearance_pref" nc:name="Preferencje wyglądu" nc:link="cs_nav_prefs_appearance.xhtml"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="navigator_pref_navigator" nc:name="Preferencje przeglądarki" nc:link="cs_nav_prefs_navigator.xhtml"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="advanced_pref_advanced" nc:name="Zaawansowane preferencje" nc:link="cs_nav_prefs_advanced.xhtml"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+ <rdf:Description about="#cust-doc">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="cust-sidebar-define" nc:name="Czym jest panel boczny?"  nc:link="customize_help.xhtml#what_is_sidebar"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-sidebar-openclose" nc:name="Otwieranie, zamykanie i zmiana rozmiaru panelu bocznego"  nc:link="customize_help.xhtml#opening_closing_and_resizing_sidebar"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-sidebar-using" nc:name="Przeglądanie kart panelu bocznego"  nc:link="customize_help.xhtml#viewing_sidebar_tabs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-sidebar-adding" nc:name="Dodawanie kart do panelu bocznego"  nc:link="customize_help.xhtml#adding_sidebar_tabs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-sidebar-indiv" nc:name="Dostosowywanie pojedynczych kart"  nc:link="customize_help.xhtml#customizing_individual_sidebar_tabs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-sidebar-reorg" nc:name="Zmiana kolejności kart"  nc:link="customize_help.xhtml#reorganizing_sidebar_tabs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-sidebar-removing" nc:name="Usuwanie kart z panelu bocznego"  nc:link="customize_help.xhtml#removing_sidebar_tabs"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#cust-tabbed">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="cust-tabbed-whatis" nc:name="Czym jest przeglądanie stron w kartach?"  nc:link="customize_help.xhtml#what_is_tabbed_browsing"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-tabbed-tabbedsetting" nc:name="Ustawianie przeglądania w kartach"  nc:link="customize_help.xhtml#setting_up_tabbed_browsing"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-tabbed-tabbedopening" nc:name="Otwieranie kart"  nc:link="customize_help.xhtml#opening_tabs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-tabbed-tabbedmoving" nc:name="Przenoszenie kart"  nc:link="customize_help.xhtml#moving_tabs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-tabbed-tabbedbookmarking" nc:name="Dodawanie kart do zakładek"  nc:link="customize_help.xhtml#bookmarking_tabs"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-tabbed-tabbedclosing" nc:name="Zamykanie kart"  nc:link="customize_help.xhtml#closing_tabs"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#cust-font">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="cust-fonts" nc:name="Zmiana domyślnych czcionek"  nc:link="customize_help.xhtml#changing_the_default_fonts"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-colors" nc:name="Zmiana domyślnych kolorów"  nc:link="customize_help.xhtml#changing_the_default_colors"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-themes" nc:name="Zmiana motywu"  nc:link="customize_help.xhtml#changing_the_theme"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#cust-toolbar">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="cust-main" nc:name="Pasek narzędzi nawigacyjnych"  nc:link="customize_help.xhtml#navigation_toolbar"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-personal" nc:name="Osobisty pasek narzędzi"  nc:link="customize_help.xhtml#personal_toolbar"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-status" nc:name="Pasek stanu"  nc:link="customize_help.xhtml#status_bar"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-taskbar" nc:name="Pasek komponentów"  nc:link="customize_help.xhtml#component_bar"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-hide" nc:name="Ukrywanie paska narzędzi"  nc:link="customize_help.xhtml#hiding_a_toolbar"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#cust-bkmk">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk-intro" nc:name="Czym są zakładki?"  nc:link="customize_help.xhtml#what_are_bookmarks"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk-use" nc:name="Używanie zakładek"  nc:link="customize_help.xhtml#using_bookmarks"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk-create" nc:name="Tworzenie nowych zakładek"  nc:link="customize_help.xhtml#creating_new_bookmarks"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk-organize" nc:name="Porządkowanie zakładek"  nc:link="customize_help.xhtml#organizing_your_bookmarks"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk-change" nc:name="Zmiana pojedynczych zakładek"  nc:link="customize_help.xhtml#changing_individual_bookmarks"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk-search" nc:name="Przeszukiwanie zakładek	"  nc:link="customize_help.xhtml#searching_your_bookmarks"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-bkmk-multiple" nc:name="Eksportowanie lub importowanie listy zakładek"  nc:link="customize_help.xhtml#exporting_or_importing_a_bookmark_list"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+<rdf:Description about="#cust-addons">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li> <rdf:Description ID="cust-addons-about" nc:name="O dodatkach"  nc:link="customize_help.xhtml#about_add-ons"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="cust-addons-installing" nc:name="Instalowanie dodatków"  nc:link="customize_help.xhtml#installing_add-ons"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="cust-addons-manager" nc:name="Używanie Menedżera dodatków"  nc:link="customize_help.xhtml#using_the_add-ons_manager"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+
+
+<rdf:Description about="#cust-page">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li> <rdf:Description ID="cust-startpage" nc:name="Określanie strony startowej"  nc:link="customize_help.xhtml#specifying_a_starting_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-home" nc:name="Zmiana strony domowej"  nc:link="customize_help.xhtml#changing_your_home_page"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="cust-start" nc:name="Określanie komponentów włączanych podczas startu"  nc:link="customize_help.xhtml#specifying_which_components_open_at_launch"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+</rdf:Description>
+
+
+
+<rdf:Description about="#appearance_pref">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+        <rdf:li><rdf:Description ID="appearance_pref_content" nc:name="Zawartość" nc:link="cs_nav_prefs_appearance.xhtml#content"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="appearance_pref_fonts" nc:name="Czcionki" nc:link="cs_nav_prefs_appearance.xhtml#fonts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="appearance_pref_colors" nc:name="Kolory" nc:link="cs_nav_prefs_appearance.xhtml#colors"/> </rdf:li>
+
+        <rdf:li> <rdf:Description ID="appearance_pref_spelling" nc:name="Pisownia" nc:link="cs_nav_prefs_appearance.xhtml#spelling"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#navigator_pref_navigator">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="navigator_pref_history" nc:name="Historia" nc:link="cs_nav_prefs_navigator.xhtml#history"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="navigator_pref_languages" nc:name="Języki" nc:link="cs_nav_prefs_navigator.xhtml#languages"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="navigator_pref_helper_applications" nc:name="Aplikacje" nc:link="cs_nav_prefs_navigator.xhtml#helper_applications"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="navigator_pref_location_bar" nc:name="Pasek adresu" nc:link="cs_nav_prefs_navigator.xhtml#location_bar"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="navigator_pref_internet_searching" nc:name="Wyszukiwanie" nc:link="cs_nav_prefs_navigator.xhtml#internet_search"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="navigator_pref_tabbed_browsing" nc:name="Karty" nc:link="cs_nav_prefs_navigator.xhtml#tabbed_browsing"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="navigator_pref_link_behavior" nc:name="Zachowanie odnośników" nc:link="cs_nav_prefs_navigator.xhtml#link_behavior"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="navigator_pref_downloads" nc:name="Pobieranie plików" nc:link="cs_nav_prefs_navigator.xhtml#downloads"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#advanced_pref_advanced">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="advanced_pref_scripts" nc:name="Skrypty i wtyczki" nc:link="cs_nav_prefs_advanced.xhtml#scripts_and_plugins"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_keyboard_nav" nc:name="Nawigacja" nc:link="cs_nav_prefs_advanced.xhtml#keyboard_navigation"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_find_as_you_type" nc:name="Znajdź wprowadzając" nc:link="cs_nav_prefs_advanced.xhtml#fayt"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_cache" nc:name="Pamięć podręczna" nc:link="cs_nav_prefs_advanced.xhtml#cache"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_offlineapps" nc:name="Aplikacje trybu offline" nc:link="cs_nav_prefs_advanced.xhtml#offline_apps"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_proxies" nc:name="Serwery proxy" nc:link="cs_nav_prefs_advanced.xhtml#proxies"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_http_networking" nc:name="Protokół HTTP" nc:link="cs_nav_prefs_advanced.xhtml#http_networking"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_installation" nc:name="Instalacja" nc:link="cs_nav_prefs_advanced.xhtml#software_installation"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_mouse_wheel" nc:name="Przewijanie" nc:link="cs_nav_prefs_advanced.xhtml#mouse_wheel"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="advanced_pref_dom_inspector" nc:name="Inspektor DOM" nc:link="cs_nav_prefs_advanced.xhtml#dom_inspector"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<!-- To load Advanced Proxy Preferences Help content from prefs -->
+
+<rdf:Description ID="nav-prefs-advanced-proxy-advanced" nc:link="cs_nav_prefs_advanced.xhtml#advanced_proxy_preferences"/>
+
+
+
+<!-- USING PRIVACY FEATURES CONTENT -->
+
+<rdf:Description about="#using-priv-help">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="privacy-doc" nc:name="Prywatność w sieci Internet" nc:link="privacy_help.xhtml#privacy_on_the_internet"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-cookies" nc:name="Zarządzanie ciasteczkami" nc:link="using_priv_help.xhtml#using_the_cookie_manager"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-password" nc:name="Zarządzanie hasłami i nazwami użytkowników" nc:link="using_priv_help.xhtml#using_the_password_manager"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-private-data" nc:name="Czyszczenie prywatnych danych" nc:link="using_priv_help.xhtml#clearing_private_data"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="private-browsing" nc:name="Przeglądanie w prywatnym oknie" nc:link="using_priv_help.xhtml#browsing_in_a_private_window"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-encrypt" nc:name="Szyfrowanie zachowanych poufnych danych" nc:link="using_priv_help.xhtml#encrypting_stored_sensitive_information"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="images-help-managing" nc:name="Zarządzanie obrazkami" nc:link="using_priv_help.xhtml#managing_images"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="pop_up_blocking" nc:name="Kontrola wyskakujących okien" nc:link="cs_priv_prefs_popup.xhtml"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="sec_gen" nc:name="Preferencje prywatności i zabezpieczeń" nc:link="privsec_help.xhtml"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#privacy-doc">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="privacy-doc-visit" nc:name="Jakie informacje są przekazywane przez przeglądarkę do witryny internetowej?"  		nc:link="privacy_help.xhtml#what_information_does_my_browser_give_to_a_website"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="privacy-doc-cookies" nc:name="Czym są ciasteczka i jak działają?"  		nc:link="privacy_help.xhtml#what_are_cookies_and_how_do_they_work"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="privacy-doc-tracking" nc:name="Jak i dlaczego śledzą mnie striny?"  		nc:link="privacy_help.xhtml#why_and_how_are_websites_tracking_me"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="privacy-doc-email" nc:name="Jak kontrolować wyświetlanie i pobieranie stron WWW zawartych w wiadomościach?"  		nc:link="privacy_help.xhtml#how_can_i_control_web_pages_in_email_messages"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="privacy-doc-unauth" nc:name="Jak upewnić się, że osoby trzecie nie będą używać informacji osobistych użytkownika?"  		nc:link="privacy_help.xhtml#how_can_i_make_sure_unauthorized_people_dont_use_information_about_me"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#using-priv-help-cookies">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="using-priv-help-cookies-manage" nc:name="Akceptowanie i blokowanie ciasteczek" nc:link="using_priv_help.xhtml#enabling_and_disabling_cookies"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-cookies-site" nc:name="Ustawienia ciasteczek dla witryn" nc:link="using_priv_help.xhtml#managing_cookies_site-by-site"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-cookies-view" nc:name="Przeglądanie ciasteczek" nc:link="using_priv_help.xhtml#viewing_cookies"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-cookies-remove" nc:name="Usuwanie ciasteczek" nc:link="using_priv_help.xhtml#removing_cookies"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-cookies-settings" nc:name="Ustawienia Menedżera ciasteczek" nc:link="using_priv_help.xhtml#cookie_manager_settings"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#using-priv-help-cookies-settings">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="cookies_prefs" nc:name="Preferencje ciasteczek" nc:link="using_priv_help.xhtml#cookies"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="cookies_stored" nc:name="Zachowane ciasteczka" nc:link="using_priv_help.xhtml#stored_cookies"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="cookie_sites" nc:name="Witryny z ciasteczkami" nc:link="using_priv_help.xhtml#cookie_sites"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#using-priv-help-password">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="using-priv-help-password-manage" nc:name="Zapamiętywanie nazw użytkowników i haseł" nc:link="using_priv_help.xhtml#using_password_manager_to_remember_user_names_and_passwords"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-password-auto" nc:name="Automatyczne wstawianie nazw użytkowników i haseł" nc:link="using_priv_help.xhtml#entering_user_names_and_passwords_automatically"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-password-onoff" nc:name="Włączanie i wyłączanie zapamiętywania haseł" nc:link="using_priv_help.xhtml#turning_password_manager_on_and_off"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-password-view" nc:name="Przeglądanie i zarządzanie zapisanymi hasłami" nc:link="using_priv_help.xhtml#viewing_and_managing_stored_passwords"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-password-settings" nc:name="Ustawienia haseł" nc:link="passwords_help.xhtml#password_settings"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#using-priv-help-password-settings">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="passwords_prefs" nc:name="Preferencje haseł" nc:link="passwords_help.xhtml#passwords"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="password_mgr" nc:name="Menedżer haseł" nc:link="passwords_help.xhtml#password_manager"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="passwords_master" nc:name="Preferencje głównego hasła" nc:link="passwords_help.xhtml#master_passwords"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="master-prefs-change" nc:name="Zmiana głównego hasła" nc:link="passwords_help.xhtml#change_master_password"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="master-prefs-timeout" nc:name="Limit czasu" nc:link="passwords_help.xhtml#master_password_timeout"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="master-prefs-reset" nc:name="Resetowanie głównego hasła" nc:link="passwords_help.xhtml#reset_master_password"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="choosing-good-password" nc:name="Wybór dobrego hasła" nc:link="passwords_help.xhtml#choosing_a_good_password"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+<!-- TODO: start localizing -->
+<rdf:Description about="#using-priv-help-private-data">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li><rdf:Description ID="types_of_private_data" nc:name="Types of Private Data" nc:link="using_priv_help.xhtml#types_of_private_data"/> </rdf:li>
+        <rdf:li><rdf:Description ID="privatedata_prefs" nc:name="Private Data Preferences" nc:link="using_priv_help.xhtml#private_data_prefs"/> </rdf:li>
+        <rdf:li><rdf:Description ID="clear_private_data_now" nc:name="Clear Private Data Now" nc:link="using_priv_help.xhtml#clear_private_data_now"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+
+<rdf:Description about="#private-browsing">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li><rdf:Description ID="opening_a_private_window" nc:name="Opening a Private Window" nc:link="using_priv_help.xhtml#opening_a_private_window"/> </rdf:li>
+        <rdf:li><rdf:Description ID="behavior_of_a_private_window" nc:name="Behavior of a Private Window" nc:link="using_priv_help.xhtml#behavior_of_a_private_window"/> </rdf:li>
+        <rdf:li><rdf:Description ID="leaving_the_private_browsing_mode" nc:name="Leaving the Private Browsing Mode" nc:link="using_priv_help.xhtml#leaving_the_private_browsing_mode"/> </rdf:li>
+      </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+<!-- TODO: stop localizing -->
+
+<rdf:Description about="#using-priv-help-encrypt">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="using-priv-help-encrypt-master" nc:name="Ustawianie głównego hasła" nc:link="using_priv_help.xhtml#setting_a_master_password"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-encrypt-change" nc:name="Zmiana głównego hasła" nc:link="using_priv_help.xhtml#changing_your_master_password"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-encrypt-logout" nc:name="Wylogowywanie z głównego hasła" nc:link="using_priv_help.xhtml#logging_out_of_your_master_password"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-priv-help-encrypt-forget" nc:name="Co zrobić po zagubieniu głównego hasła" nc:link="using_priv_help.xhtml#what_to_do_if_you_forget_your_master_password"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#pop_up_blocking">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="pop_up_blocking_prefs" nc:name="Preferencje wyskakujących okien" nc:link="cs_priv_prefs_popup.xhtml#privacy_and_security_preferences_popup_windows"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+<rdf:Description about="#images-help-managing">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="images_prefs" nc:name="Preferencje obrazków" nc:link="using_priv_help.xhtml#images"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+<!-- TODO: start localizing -->
+<rdf:Description about="#sec_gen">
+    <nc:subheadings>
+      <rdf:Seq>
+        <rdf:li><rdf:Description ID="sec_gen_private_data" nc:name="Private Data" nc:link="using_priv_help.xhtml#private_data_prefs"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_gen_cookies" nc:name="Cookies" nc:link="using_priv_help.xhtml#cookies"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_gen_images" nc:name="Images" nc:link="using_priv_help.xhtml#images"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_gen_popup_windows" nc:name="Popup Windows" nc:link="cs_priv_prefs_popup.xhtml#privacy_and_security_preferences_popup_windows"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_gen_passwords" nc:name="Passwords" nc:link="passwords_help.xhtml#passwords"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_gen_master_passwords" nc:name="Master Passwords" nc:link="passwords_help.xhtml#master_passwords"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_gen_ssl" nc:name="SSL" nc:link="ssl_help.xhtml#privacy_and_security_preferences_ssl"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_gen_certificates" nc:name="Certificates" nc:link="certs_prefs_help.xhtml#privacy_and_security_preferences_certificates"/> </rdf:li>
+     </rdf:Seq>
+    </nc:subheadings>
+  </rdf:Description>
+<!-- TODO: stop localizing -->
+
+
+<!-- USING CERTIFICATES CONTENT -->
+
+<rdf:Description about="#using-help-certs">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="using-help-certs-get" nc:name="Uzyskiwanie własnego certyfikatu" nc:link="using_certs_help.xhtml#getting_your_own_certificate"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-info" nc:name="Sprawdzanie poziomu zabezpieczeń strony WWW" nc:link="using_certs_help.xhtml#checking_security_for_a_web_page"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-manage" nc:name="Zarządzanie certyfikatami" nc:link="using_certs_help.xhtml#managing_certificates"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-devices" nc:name="Zarządzanie kartami inteligentnymi i innymi urządzeniami zabezpieczającym" nc:link="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-ssl" nc:name="Zarządzanie ostrzeżeniami i ustawieniami SSL" nc:link="using_certs_help.xhtml#managing_ssl_warnings_and_settings"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-validation" nc:name="Kontrola ważności" nc:link="using_certs_help.xhtml#controlling_validation"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-context-help" nc:name="Ustawienia certyfikatów" nc:link="certs_prefs_help.xhtml#certificate_settings"/> </rdf:li>
+
+
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+<rdf:Description about="#using-help-certs-manage">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="using-help-certs-manage-my" nc:name="Zarządzanie własnymi certyfikatami" nc:link="using_certs_help.xhtml#managing_certificates_that_identify_you"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-manage-others" nc:name="Zarządzanie certyfikatami osób trzecich" nc:link="using_certs_help.xhtml#managing_certificates_that_identify_people"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-manage-sites" nc:name="Zarządzanie certyfikatami serwerów" nc:link="using_certs_help.xhtml#managing_certificates_that_identify_servers"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-manage-cas" nc:name="Zarządzanie certyfikatami organów certyfikacji" nc:link="using_certs_help.xhtml#managing_certificates_that_identify_certificate_authorities"/> </rdf:li>
+        <rdf:li><rdf:Description ID="using-help-certs-manage-orphans" nc:name="Zarządzanie certyfikatami innych" nc:link="using_certs_help.xhtml#managing_certificates_that_identify_others"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#using-help-certs-devices">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="using-help-certs-devices-about" nc:name="O urządzeniach i modułach zabezpieczeń" nc:link="using_certs_help.xhtml#about_security_devices_and_modules"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-devices-devices" nc:name="Używanie urządzeń zabezpieczających" nc:link="using_certs_help.xhtml#using_security_devices"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-devices-modules" nc:name="Używanie modułów zabezpieczających" nc:link="using_certs_help.xhtml#using_security_modules"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-devices-fips" nc:name="Uaktywnianie trybu FIPS" nc:link="using_certs_help.xhtml#enable_fips_mode"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#using-help-certs-ssl">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="ssl-settings" nc:name="Ustawienia SSL" nc:link="ssl_help.xhtml"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#ssl-settings">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="ssl_prefs" nc:name="Preferencje SSL" nc:link="ssl_help.xhtml#privacy_and_security_preferences_ssl"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#using-help-certs-validation">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="using-help-certs-validation-how" nc:name="Jak działa kontrola ważności" nc:link="using_certs_help.xhtml#how_validation_works"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="using-help-certs-validation-ocsp" nc:name="Konfigurowanie OCSP" nc:link="using_certs_help.xhtml#configuring_ocsp"/> </rdf:li>
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+<rdf:Description about="#using-help-certs-context-help">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="certs_prefs" nc:name="Preferencje certyfikatów" nc:link="certs_prefs_help.xhtml#privacy_and_security_preferences_certificates"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="certs-help" nc:name="Menedżer certyfikatów" nc:link="certs_help.xhtml"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="sec_devices" nc:name="Menedżer urządzeń zabezpieczających" nc:link="certs_help.xhtml#device_manager"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="cert-dialog-help" nc:name="Certyfikaty - informacje i decyzje" nc:link="cert_dialog_help.xhtml"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<!-- YOUR CERTIFICATES CONTENT -->
+
+
+
+<rdf:Description about="#certs-help">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="my_certs" nc:name="Twoje certyfikaty" nc:link="certs_help.xhtml#your_certificates"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="others_certs" nc:name="Osoby" nc:link="certs_help.xhtml#people"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="web_certs" nc:name="Serwery" nc:link="certs_help.xhtml#servers"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="ca_certs" nc:name="Organy certyfikacji" nc:link="certs_help.xhtml#authorities"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="orphan_certs" nc:name="Inne" nc:link="certs_help.xhtml#others"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#my_certs">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="cert_backup_pwd" nc:name="Wybór hasła kopii zapasowej certyfikatu" nc:link="certs_help.xhtml#choose_a_certificate_backup_password"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="delete_my_certs" nc:name="Usuwanie własnych certyfikatów" nc:link="certs_help.xhtml#delete_your_certificates"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#others_certs">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="delete_email_certs" nc:name="Usuwanie certyfikatów osób trzecich" nc:link="certs_help.xhtml#delete_email_certificates"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#web_certs">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="edit_web_certs" nc:name="Edycja ustawień zaufania certyfikatu serwerów WWW" nc:link="certs_help.xhtml#edit_website_certificate_trust_settings"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="delete_web_certs" nc:name="Usuwanie certyfikatów serwerów WWW" nc:link="certs_help.xhtml#delete_website_certificates"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#ca_certs">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="edit_ca_certs" nc:name="Edycja ustawień zaufania certyfikatu" nc:link="certs_help.xhtml#edit_ca_certificate_trust_settings"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="delete_ca_certs" nc:name="Usuwanie certyfikatów organów certyfikacji" nc:link="certs_help.xhtml#delete_ca_certificates"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+<rdf:Description about="#cert-dialog-help">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="cert_details" nc:name="Podgląd certyfikatu" nc:link="cert_dialog_help.xhtml#certificate_viewer"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="which_token" nc:name="Wybór urządzenia zabezpieczającego" nc:link="cert_dialog_help.xhtml#choose_security_device"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="priv_key_copy" nc:name="Kopia klucza szyfrującego" nc:link="cert_dialog_help.xhtml#encryption_key_copy"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="backup_your_cert" nc:name="Kopia zapasowa certyfikatu" nc:link="cert_dialog_help.xhtml#certificate_backup"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="which_cert" nc:name="Żądanie identyfikacji użytkownika" nc:link="cert_dialog_help.xhtml#user_identification_request"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="new_ca" nc:name="Nowy organ certyfikacji" nc:link="cert_dialog_help.xhtml#new_certificate_authority"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="cert-dialog-help-website" nc:name="Certyfikaty serwerów WWW" nc:link="cert_dialog_help.xhtml#website_certificates"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#cert_details">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="cert-dialog-help-details-general" nc:name="Zakładka Ogólne" nc:link="cert_dialog_help.xhtml#general_tab"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="cert-dialog-help-details-details" nc:name="Zakładka Szczegóły" nc:link="cert_dialog_help.xhtml#details_tab"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#cert-dialog-help-website">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+        <rdf:li><rdf:Description ID="sec_con_failed_page" nc:name="Strona: Nie udało się nawiązać bezpiecznego połączenia" nc:link="cert_dialog_help.xhtml#secure_connection_failed_page"/> </rdf:li>
+        <rdf:li><rdf:Description ID="untrusted_con_page" nc:name="Strona: Niezaufane połączenie" nc:link="cert_dialog_help.xhtml#untrusted_connection_page"/> </rdf:li>
+        <rdf:li><rdf:Description ID="sec_con_failed_dialog" nc:name="Dialog: Nie udało się nawiązać bezpiecznego połączenia" nc:link="cert_dialog_help.xhtml#secure_connection_failed_dialog"/> </rdf:li>
+        <rdf:li><rdf:Description ID="exp_web_cert" nc:name="Wygasły certyfikat" nc:link="cert_dialog_help.xhtml#certificate_expired"/> </rdf:li>
+        <rdf:li><rdf:Description ID="not_yet_web_cert" nc:name="Jeszcze nieważny certyfikat" nc:link="cert_dialog_help.xhtml#certificate_not_yet_valid"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="bad_name_web_cert" nc:name="Niezgodność nazw domen" nc:link="cert_dialog_help.xhtml#domain_name_mismatch"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+
+
+<!-- PROFILE HELP CONTENT STARTS-->
+
+<rdf:Description about="#profile-help">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="profile-help-create" nc:name="Tworzenie nowego profilu" nc:link="profiles_help.xhtml#creating_a_new_profile"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="profile-help-delete" nc:name="Usuwanie lub zmiana nazwy profilu" nc:link="profiles_help.xhtml#deleting_or_renaming_a_profile"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<!-- TOOLS AND DEVELOPMENT CONTENT STARTS -->
+
+ 
+
+<rdf:Description about="#tools">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="tools-js_console" nc:name="Konsola błędów" nc:link="developer_tools.xhtml#js_console"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="tools-inspector" nc:name="Inspektor DOM " nc:link="developer_tools.xhtml#inspector"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="tools-venkman" nc:name="Debugger JavaScript" nc:link="developer_tools.xhtml#venkman"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+</rdf:Description>
+
+
+
+<!-- KEYBOARD SHORTCUTS CONTENT STARTS -->
+
+<rdf:Description about="#shortcuts">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="shortcuts_using" nc:name="Używanie skrótów" nc:link="shortcuts.xhtml#using_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_general" nc:name="Skróty dostępne we wszystkich oknach &brandShortName;" nc:link="shortcuts.xhtml#general_mozilla_shortcuts"/> </rdf:li>
+<!-- TODO: start localizing -->
+        <rdf:li><rdf:Description ID="shortcuts-text-field" nc:name="Text Field Shortcuts" nc:link="shortcuts.xhtml#text_field_shortcuts"/> </rdf:li>
+<!-- TODO: stop localizing -->
+        <rdf:li><rdf:Description ID="shortcuts_navigator" nc:name="Skróty klawiaturowe dostępne w przeglądarce" nc:link="shortcuts_navigator.xhtml"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_mail" nc:name="Skróty klawiaturowe dostępne w Kurierze Poczty" nc:link="shortcuts_mailnews.xhtml"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_composer" nc:name="Skróty klawiaturowe dostępne w Kompozytorze Stron" nc:link="shortcuts_composer.xhtml"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_help" nc:name="Skróty dostępne w oknie Pomocy" nc:link="shortcuts.xhtml#help_window_shortcuts"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#shortcuts_navigator">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="shortcuts_navigator_bookmarks" nc:name="Skróty związane z obsługą zakładek" nc:link="shortcuts_navigator.xhtml#bookmarks_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_navigator_page_navigation" nc:name="Skróty związane z poruszaniem się po stronach WWW" nc:link="shortcuts_navigator.xhtml#page_navigation_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_navigator_page_viewing" nc:name="Skróty związane z oglądaniem stron WWW" nc:link="shortcuts_navigator.xhtml#page_viewing_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_navigator_tabbed_browsing" nc:name="Skróty związane z oglądaniem stron WWW przy użyciu kart" nc:link="shortcuts_navigator.xhtml#tabbed_browsing_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_navigator_sidebar" nc:name="Skróty związane z obsługą panelu bocznego" nc:link="shortcuts_navigator.xhtml#sidebar_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_navigator_forms" nc:name="Skróty związane z obsługą formularzy" nc:link="shortcuts_navigator.xhtml#forms_shortcuts"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+<rdf:Description about="#shortcuts_mail">
+
+    <nc:subheadings>
+
+      <rdf:Seq>
+
+        <rdf:li><rdf:Description ID="shortcuts_mail_general" nc:name="Ogólne skróty używane w Kurierze Poczty" nc:link="shortcuts_mailnews.xhtml#general_mail_and_newsgroups_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_mail_message_list" nc:name="Skróty związane z obsługą wiadomości" nc:link="shortcuts_mailnews.xhtml#message_list_shortcuts"/> </rdf:li>
+
+        <rdf:li><rdf:Description ID="shortcuts_mail_message_compose" nc:name="Skróty związane z pisaniem wiadomości" nc:link="shortcuts_mailnews.xhtml#message_compose_shortcuts"/> </rdf:li>
+
+      </rdf:Seq>
+
+    </nc:subheadings>
+
+  </rdf:Description>
+
+
+
+</rdf:RDF>
+

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY quota.dialogTitle.label    "伺服器配額">
+<!ENTITY quota.retrievingInfo.label "正在取得配額資訊…">
+<!ENTITY quota.typeColumn.label     "類型">
+<!ENTITY quota.sizeColumn.label     "大小">
+

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla-Einstellungen">
+
+<!ENTITY loading.label  "Bitte warten, lade…">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZilla-Homepage">
+
+<!ENTITY object.add.label       "Hinzufügen…">
+<!ENTITY object.add.hint        "Hinzufügen eines neuen Netzwerkes, Channels oder Benutzers, für das/den Einstellungen gesetzt werden sollen">
+<!ENTITY object.add.accesskey   "H">
+
+<!ENTITY object.del.label       "Entfernen">
+<!ENTITY object.del.hint        "Entfernen des aktuellen Objekts und zurücksetzen aller Einstellungen">
+<!ENTITY object.del.accesskey   "E">
+
+<!ENTITY object.reset.label     "Zurücksetzen">
+<!ENTITY object.reset.hint      "Zurücksetzen der Einstellungen dieses Objekts auf die Standards">
+<!ENTITY object.reset.accesskey "Z">
+
+<!ENTITY dialog.apply   "Anwenden">
+
+<!ENTITY network "Netzwerk">
+<!ENTITY channel "Channel">
+<!ENTITY user    "Benutzer">
+
+<!ENTITY config.add.title "Einstellungsobjekt hinzufügen">
+
+<!ENTITY config.type.label        "Typ:">
+<!ENTITY config.type.hint         "Typ des Objekts, für das Einstellungen hinzugefügt werden sollen">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "Netzwerk:">
+<!ENTITY config.network.hint      "Bekannter Netzwerk- oder Servername">
+<!ENTITY config.network.accesskey "N">
+<!ENTITY config.target.label      "Ziel:">
+<!ENTITY config.target.hint       "Ziel-Channel oder Benutzername">
+<!ENTITY config.target.accesskey  "Z">

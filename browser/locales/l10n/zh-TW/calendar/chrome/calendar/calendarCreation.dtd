@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "建立新的行事曆" >
+<!ENTITY wizard.label             "建立新的行事曆" >
+<!ENTITY wizard.description       "搜尋您的行事曆" >
+
+<!ENTITY initialpage.description    "您的行事曆可以存放在電腦或伺服器上，便於從遠端存取或與親朋好友分享。" >
+<!ENTITY initialpage.computer.label  "存放於本機電腦">
+<!ENTITY initialpage.network.label  "存放於網際網路">
+
+<!ENTITY locationpage.description         "提供存取您遠端行事曆時所需的資訊" >
+<!ENTITY locationpage.login.description   "選用: 輸入使用者名稱和密碼" >
+<!ENTITY locationpage.username.label      "使用者名稱:" >
+<!ENTITY locationpage.password.label      "密碼:" >
+
+<!ENTITY custompage.shortdescription  "自訂行事曆" >
+<!ENTITY custompage.longdescription   "您可以為行事曆取一個暱稱，並將此行事曆的事件用色彩標記" >
+
+<!ENTITY finishpage.shortdescription  "已建立行事曆" >
+<!ENTITY finishpage.longdescription   "您的行事曆已經建立" >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "其他">
+
+<!ENTITY buttons.create.label "建立行事曆">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "尋找行事曆">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "返回">
+<!ENTITY buttons.back.accesskey "B">
+
+<!ENTITY buttons.subscribe.label "訂閱">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "行事曆類型:">
+<!ENTITY location.label "位置:">
+<!ENTITY location.placeholder "行事曆伺服器的網址或主機名稱">
+
+<!ENTITY network.nocredentials.label "此網址不需輸入帳號密碼">
+<!ENTITY network.loading.description "請稍等，我們正在尋找您的行事曆。">
+<!ENTITY network.notfound.description "無法在此位置找到行事曆，請檢查設定。">
+<!ENTITY network.authfail.description "您輸入的帳號密碼未被接受，請檢查設定。">
+
+<!ENTITY network.subscribe.single.description "請選擇您要訂閱的行事曆。">
+<!ENTITY network.subscribe.multiple.description "此位置有多種不同的行事曆。請先選擇要訂閱的類型，再勾選想要訂閱的行事曆。">

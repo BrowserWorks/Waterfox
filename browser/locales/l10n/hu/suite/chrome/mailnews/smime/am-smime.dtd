@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Biztonság">
+<!ENTITY securityTab.label "Biztonság">
+<!ENTITY securityHeading.label "Az aláírt vagy titkosított üzenetek küldéséhez és fogadásához meg kell adnia a digitális aláírási és a titkosítási tanúsítványokat.">
+<!ENTITY encryptionGroupTitle.label "Titkosítás">
+<!ENTITY encryptionChoiceLabel.label "Titkosítás használata üzenetek küldésekor:">
+<!ENTITY neverEncrypt.label "Soha (ne használjon titkosítást)">
+<!ENTITY neverEncrypt.accesskey "S">
+<!ENTITY alwaysEncryptMessage.label "Mindig (ne engedje feladni az üzenetet, ha nincs minden címzettnek tanúsítványa)">
+<!ENTITY alwaysEncryptMessage.accesskey "M">
+<!ENTITY encryptionCert.message "Az alábbi tanúsítvány használata az Önnek küldött levelek titkosításához és visszafejtéséhez:">
+<!ENTITY digitalSign.certificate.button "Kiválasztás…">
+<!ENTITY digitalSign.certificate.accesskey "K">
+<!ENTITY digitalSign.certificate_clear.button "Törlés">
+<!ENTITY digitalSign.certificate_clear.accesskey "T">
+<!ENTITY encryption.certificate.button "Kiválasztás…">
+<!ENTITY encryption.certificate.accesskey "i">
+<!ENTITY encryption.certificate_clear.button "Törlés">
+<!ENTITY encryption.certificate_clear.accesskey "r">
+<!ENTITY signingGroupTitle.label "Digitális aláírás">
+<!ENTITY signMessage.label "Üzenetek digitális aláírása">
+<!ENTITY signMessage.accesskey "d">
+<!ENTITY signingCert.message "Az alábbi tanúsítvány használata az Ön által küldött levelek aláírásához:">
+
+<!ENTITY certificates.label "Tanúsítványok">
+<!ENTITY manageCerts2.label "Tanúsítványok kezelése…">
+<!ENTITY manageCerts2.accesskey "k">
+<!ENTITY manageDevices.label "Biztonsági eszközök kezelése…">
+<!ENTITY manageDevices.accesskey "e">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Tanúsítvány kiválasztása">
+<!ENTITY certPicker.info  "Tanúsítvány:">
+<!ENTITY certPicker.detailsLabel "A kijelölt tanúsítvány részletei:">

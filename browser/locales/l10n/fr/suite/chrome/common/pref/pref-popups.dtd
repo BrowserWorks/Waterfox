@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Fenêtres popup">
+
+<!ENTITY pref.popups.caption            "Fenêtres popup">
+
+<!ENTITY popupBlock.label               "Bloquer les fenêtres popup non désirées">
+<!ENTITY popupBlock.accesskey           "o">
+
+<!ENTITY viewPermissions.label          "Gérer les permissions">
+<!ENTITY viewPermissions.accesskey      "m">
+
+<!ENTITY whenBlock.description          "Lorsqu’une fenêtre popup a été bloquée :">
+<!ENTITY playSound.label                "Jouer un son :">
+<!ENTITY playSound.accesskey            "J">
+<!ENTITY systemSound.label              "Bip système">
+<!ENTITY systemSound.accesskey          "B">
+<!ENTITY customSound.label              "Fichier audio personnalisé">
+<!ENTITY customSound.accesskey          "F">
+
+<!ENTITY selectSound.label              "Parcourir…">
+<!ENTITY selectSound.accesskey          "P">
+<!ENTITY playSoundButton.label          "Jouer le son">
+<!ENTITY playSoundButton.accesskey      "u">
+
+<!ENTITY displayIcon.label              "Afficher une icône dans la barre d’état du navigateur">
+<!ENTITY displayIcon.accesskey          "c">
+
+<!ENTITY displayNotification.label      "Afficher une barre de notification en haut de la zone d’affichage">
+<!ENTITY displayNotification.accesskey  "h">
+
+<!ENTITY popupNote.description          "Note : bloquer toutes les fenêtres popup peut empêcher l’ouverture de fenêtres utiles, telles que les fenêtres de connexion à des sites marchands ou bancaires. Cliquez sur Aide pour savoir comment autoriser certains sites à ouvrir de telles fenêtres tout en bloquant les autres. Même bloqués, certains sites peuvent utiliser d’autres méthodes pour afficher des fenêtres popup.">
+

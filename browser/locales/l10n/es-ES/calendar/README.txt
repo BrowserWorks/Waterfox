@@ -1,0 +1,2 @@
+Para información sobre cómo instalar, ejecutar y configurar Lightning,
+incluyendo una lista de problemas conocidos e información sobre resolución de problemas, visite: http://www.mozilla.org/projects/calendar/

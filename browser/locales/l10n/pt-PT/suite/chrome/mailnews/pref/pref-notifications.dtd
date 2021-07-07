@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Notificações">
+<!ENTITY notifications.caption            "Notificações">
+<!ENTITY newMessagesArrive.label          "Ao chegarem novas mensagens:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Mostrar um alerta após">
+<!ENTITY showAlertFor.accesskey           "s">
+<!ENTITY showAlertTimeEnd.label           "segundos">
+
+<!ENTITY showAlertPreviewText.label       "Mostrar pré-visualização do texto da mensagem">
+<!ENTITY showAlertPreviewText.accesskey   "v">
+<!ENTITY showAlertSubject.label           "Mostrar o assunto">
+<!ENTITY showAlertSubject.accesskey       "u">
+<!ENTITY showAlertSender.label            "Mostrar o remetente">
+<!ENTITY showAlertSender.accesskey        "n">
+<!ENTITY useSystemAlert.label             "Utilizar as notificações do ambiente de trabalho do sistema operativo">
+<!ENTITY useSystemAlert.accesskey         "d">
+<!ENTITY useBuiltInAlert.label            "Utilizar as janelas de notificação do &brandShortName;">
+<!ENTITY useBuiltInAlert.accesskey        "n">
+
+<!ENTITY showTrayIcon.label               "Mostrar um ícone">
+<!ENTITY showTrayIcon.accesskey           "t">
+<!ENTITY showBalloon.label                "Mostrar um balão de alerta">
+<!ENTITY showBalloon.accesskey            "o">
+<!ENTITY bounceSystemDockIcon.label       "Animar o ícone da doca">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "Reproduzir um som">
+<!ENTITY playSound.accesskey              "R">
+<!ENTITY playButton.label                 "Reproduzir">
+<!ENTITY playButton.accesskey             "z">
+<!ENTITY systemsound.label                "Som predefinido do sistema">
+<!ENTITY systemsound.accesskey            "m">
+<!ENTITY customsound.label                "Ficheiro áudio personalizado">
+<!ENTITY customsound.accesskey            "F">
+<!ENTITY browse.label                     "Navegar...">
+<!ENTITY browse.accesskey                 "N">
+<!ENTITY browse.title                     "Escolher ficheiro">

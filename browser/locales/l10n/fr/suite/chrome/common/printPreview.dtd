@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY print.label          "Imprimer…">
+<!ENTITY print.accesskey      "I">
+<!ENTITY pageSetup.label      "Mise en page…">
+<!ENTITY pageSetup.accesskey  "M">
+<!ENTITY page.label           "Page :">
+<!ENTITY page.accesskey       "a">
+<!ENTITY of.label             "sur">
+<!ENTITY scale.label          "Échelle :">
+<!ENTITY scale.accesskey      "l">
+<!ENTITY portrait.label       "Portrait">
+<!ENTITY portrait.accesskey   "P">
+<!ENTITY landscape.label      "Paysage">
+<!ENTITY landscape.accesskey  "y">
+<!ENTITY close.label          "Fermer">
+<!ENTITY close.accesskey      "F">
+<!ENTITY p30.label            "30&#037;">
+<!ENTITY p40.label            "40&#037;">
+<!ENTITY p50.label            "50&#037;">
+<!ENTITY p60.label            "60&#037;">
+<!ENTITY p70.label            "70&#037;">
+<!ENTITY p80.label            "80&#037;">
+<!ENTITY p90.label            "90&#037;">
+<!ENTITY p100.label           "100&#037;">
+<!ENTITY p125.label           "125&#037;">
+<!ENTITY p150.label           "150&#037;">
+<!ENTITY p175.label           "175&#037;">
+<!ENTITY p200.label           "200&#037;">
+<!ENTITY Custom.label         "Personnaliser…">
+<!ENTITY ShrinkToFit.label    "Adapter à la page">
+<!ENTITY customPrompt.title   "Échelle personnalisée…">
+
+<!ENTITY homearrow.tooltip    "Première page">
+<!ENTITY endarrow.tooltip     "Dernière page">
+<!ENTITY rightarrow.tooltip   "Page suivante">
+<!ENTITY leftarrow.tooltip    "Page précédente">

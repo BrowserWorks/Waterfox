@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Labels">
+<!ENTITY pref.tags.caption          "Labels aanpassen">
+<!ENTITY pref.tags.description      "Labels kunnen worden gebruikt voor het categoriseren en prioriteren van uw berichten. Pas de kleur en het belang aan met de instellingen hieronder. Labels hoger in de lijst zijn belangrijker dan die eronder.">
+<!ENTITY tagColumn.label            "Label">
+<!ENTITY colorColumn.label          "Kleur">
+<!ENTITY defaultTagName.label       "Label zonder titel">
+<!ENTITY addTagButton.label         "Toevoegen">
+<!ENTITY addTagButton.accesskey     "T">
+<!ENTITY deleteTagButton.label      "Verwijderen">
+<!ENTITY deleteTagButton.accesskey  "V">
+<!ENTITY raiseTagButton.label       "Belang verhogen">
+<!ENTITY raiseTagButton.accesskey   "o">
+<!ENTITY lowerTagButton.label       "Belang verlagen">
+<!ENTITY lowerTagButton.accesskey   "a">
+<!ENTITY restoreButton.label        "Standaardwaarden herstellen">
+<!ENTITY restoreButton.accesskey    "S">

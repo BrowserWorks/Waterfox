@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "次の中からメッセージを検索:">
+<!ENTITY searchHeading.accesskey     "e">
+<!ENTITY searchSubfolders.label      "サブフォルダーも検索する">
+<!ENTITY searchSubfolders.accesskey  "u">
+<!ENTITY searchOnHeading.label       "検索対象:">
+<!ENTITY searchOnHeading.accesskey   "P">
+<!ENTITY searchOnRemote.label        "リモートサーバー">
+<!ENTITY searchOnLocal.label         "ローカルシステム">
+<!ENTITY resetButton.label           "リセット">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "開く">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "削除">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "メッセージ検索">
+<!ENTITY results.label               "検索結果">
+<!ENTITY moveHereMenu.label          "ここへ移動">
+<!ENTITY moveHereMenu.accesskey      "H">
+<!ENTITY moveButton.label            "移動">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY goToFolderButton.label      "フォルダーを開く">
+<!ENTITY goToFolderButton.accesskey  "n">
+<!ENTITY saveAsVFButton.label        "検索フォルダーとして保存">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "次の中から連絡先を検索:">
+<!ENTITY abSearchHeading.accesskey   "e">
+<!ENTITY propertiesButton.label      "プロパティ">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "新しいメッセージ">
+<!ENTITY composeButton.accesskey     "o">
+<!ENTITY abSearchDialogTitle.label   "アドレス検索">
+

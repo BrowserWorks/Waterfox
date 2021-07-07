@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "次のメッセージはダウンロードしない:">
+<!ENTITY doNotDownloadNntp.label "次のメッセージはオフライン表示用にダウンロードしない:">
+<!ENTITY doNotDownloadImap.label "指定したサイズまたは期間のメッセージをオフライン表示用にダウンロードしてローカルにコピーを保存します。">
+<!ENTITY allFoldersOffline2.label "このコンピューターのこのアカウントのすべてのフォルダーを保存する">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "注意: この設定の変更は、このアカウントのすべてのフォルダーに影響します。フォルダーごとに設定するには [詳細...] ボタンをクリックしてください。">
+<!ENTITY offlineNotDownload.label "メッセージのサイズが">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "次のサイズのメッセージはダウンロードしない:">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "KB 以上">
+<!ENTITY daysOld.label				"日"><!-- (^^; "days old" -->
+<!ENTITY message.label				"通"><!-- (^^; "messages" -->
+<!ENTITY nntpNotDownloadRead.label "既読メッセージ">
+<!ENTITY nntpNotDownloadRead.accesskey "d">
+<!ENTITY nntpDownloadMsg.label "送信日時から次の日数以上経過したメッセージ">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "古いメッセージを完全に削除してディスク領域を開放できます。">
+<!ENTITY retentionCleanupImap.label "ローカルのコピーとリモートサーバー上の古いメッセージを完全に削除してディスク領域を開放できます。">
+<!ENTITY retentionCleanupPop.label		"このコンピューターとリモートサーバー上の古いメッセージを完全に削除してディスク領域を開放できます。">
+<!ENTITY retentionKeepMsg.label			"送信日時から次の日数以上経過したメッセージを削除する"><!-- (^^; Delete messages more than ... days.label -->
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "メッセージを自動削除しない">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "最近のメッセージを次の数だけ残して削除する">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "フラグ付きのメッセージは残す">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "送信日時から次の日数以上経過したメッセージの本文を削除する">
+<!ENTITY nntpRemoveMsgBody.accesskey "o">
+<!ENTITY offlineSelectNntp.label "オフラインで使用するニュースグループを選択してください...">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "詳細...">
+<!ENTITY offlineImapAdvancedOffline.accesskey "v">
+<!ENTITY syncGroupTitle.label "メッセージの同期">
+<!ENTITY diskspaceGroupTitle.label "ディスク領域">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label		"すべてのメッセージをローカルに同期する"><!-- en-US: Synchronize all messages locally regardless of age -->
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label	"最近"><!-- en-US: Synchronize the most recent -->
+<!ENTITY ageAutosync.accesskey           "S">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "日">
+<!ENTITY weekAgeInterval.label           "週">
+<!ENTITY monthAgeInterval.label          "カ月">
+<!ENTITY yearAgeInterval.label           "カ年">
+<!ENTITY ageAutosyncAfter.label          "分のメッセージをローカルに同期する">

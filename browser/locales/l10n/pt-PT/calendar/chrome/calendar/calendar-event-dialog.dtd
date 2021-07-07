@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Editar item" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Manter duração ao alterar a data de fim">
+<!ENTITY event.dialog.keepDurationButton.accesskey "M">
+
+<!ENTITY newevent.from.label                "De" >
+<!ENTITY newevent.to.label                  "Para" >
+
+<!ENTITY newevent.status.label                    "Estado" >
+<!ENTITY newevent.status.accesskey                "s" >
+<!ENTITY newevent.eventStatus.none.label          "Não especificado" >
+<!ENTITY newevent.eventStatus.none.accesskey      "o" >
+<!ENTITY newevent.todoStatus.none.label           "Não especificado" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Cancelado" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Cancelado" >
+<!ENTITY newevent.status.tentative.label          "Tentativa" >
+<!ENTITY newevent.status.tentative.accesskey      "T" >
+<!ENTITY newevent.status.confirmed.label          "Confirmado" >
+<!ENTITY newevent.status.confirmed.accesskey      "C" >
+<!ENTITY newevent.status.needsaction.label        "Requer ação" >
+<!ENTITY newevent.status.inprogress.label         "Em curso" >
+<!ENTITY newevent.status.completed.label          "Concluído a" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; concluído">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Notificar participantes">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "Separar convite por participante">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "x">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Esta opção envia um convite de email por pessoa. Cada convite apenas contém um destinatário pelo que outros convidados não serão identificados.">
+<!ENTITY event.attendees.disallowcounter.label       "Desativar contraproposta">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Indica que não irá aceitar contrapropostas">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Novo">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Evento">
+<!ENTITY  event.menu.item.new.event.accesskey             "E">
+<!ENTITY  event.menu.item.new.task.label                  "Tarefa">
+<!ENTITY  event.menu.item.new.task.accesskey              "T">
+<!ENTITY  event.menu.item.new.message.label               "Mensagem">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "Contacto do livro de endereços">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "Fechar">
+<!ENTITY  event.menu.item.close.accesskey                 "F">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Guardar">
+<!ENTITY  event.menu.item.save.accesskey                  "G">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Guardar e fechar">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "f">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Apagar…">
+<!ENTITY  event.menu.item.delete.accesskey                "A">
+<!ENTITY  event.menu.item.page.setup.label                "Configurar página">
+<!ENTITY  event.menu.item.page.setup.accesskey            "u">
+<!ENTITY  event.menu.item.print.label                     "Imprimir">
+<!ENTITY  event.menu.item.print.accesskey                 "I">
+
+<!ENTITY  event.menu.edit.label                           "Editar">
+<!ENTITY  event.menu.edit.accesskey                       "E">
+<!ENTITY  event.menu.edit.undo.label                      "Desfazer">
+<!ENTITY  event.menu.edit.undo.accesskey                  "u">
+<!ENTITY  event.menu.edit.redo.label                      "Refazer">
+<!ENTITY  event.menu.edit.redo.accesskey                  "R">
+<!ENTITY  event.menu.edit.cut.label                       "Cortar">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "Copiar">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "Colar">
+<!ENTITY  event.menu.edit.paste.accesskey                 "o">
+<!ENTITY  event.menu.edit.select.all.label                "Selecionar tudo">
+<!ENTITY  event.menu.edit.select.all.accesskey            "t">
+
+<!ENTITY  event.menu.view.label                           "Ver">
+<!ENTITY  event.menu.view.accesskey                       "V">
+<!ENTITY  event.menu.view.toolbars.label                  "Barras de ferramentas">
+<!ENTITY  event.menu.view.toolbars.accesskey              "t">
+<!ENTITY  event.menu.view.toolbars.event.label            "Barra de eventos">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "e">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Personalizar…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "P">
+<!ENTITY  event.menu.view.showlink.label                  "Mostrar ligações relacionadas">
+<!ENTITY  event.menu.view.showlink.accesskey              "r">
+
+<!ENTITY  event.menu.options.label                            "Opções">
+<!ENTITY  event.menu.options.accesskey                        "O">
+<!ENTITY  event.menu.options.attendees.label                  "Convidar participantes…">
+<!ENTITY  event.menu.options.attendees.accesskey              "i">
+<!ENTITY  event.menu.options.timezone2.label                  "Mostrar fusos horários">
+<!ENTITY  event.menu.options.timezone2.accesskey              "s">
+<!ENTITY  event.menu.options.priority2.label                  "Prioridade">
+<!ENTITY  event.menu.options.priority2.accesskey              "d">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Não especificada">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "o">
+<!ENTITY  event.menu.options.priority.low.label               "Baixa">
+<!ENTITY  event.menu.options.priority.low.accesskey           "B">
+<!ENTITY  event.menu.options.priority.normal.label            "Normal">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Alta">
+<!ENTITY  event.menu.options.priority.high.accesskey          "A">
+<!ENTITY  event.menu.options.privacy.label                    "Privacidade">
+<!ENTITY  event.menu.options.privacy.accesskey                "P">
+<!ENTITY  event.menu.options.privacy.public.label             "Evento público">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "v">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Mostrar apenas data e hora">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "s">
+<!ENTITY  event.menu.options.privacy.private.label            "Evento privado">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Mostrar hora como">
+<!ENTITY  event.menu.options.show.time.accesskey              "h">
+<!ENTITY  event.menu.options.show.time.busy.label             "Ocupado">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "O">
+<!ENTITY  event.menu.options.show.time.free.label             "Livre">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "i">
+
+<!ENTITY event.invite.attendees.label                     "Convidar participantes…">
+<!ENTITY event.invite.attendees.accesskey                 "i">
+<!ENTITY event.email.attendees.label                      "Criar e-mail para todos participantes…">
+<!ENTITY event.email.attendees.accesskey                  "a">
+<!ENTITY event.email.tentative.attendees.label            "Criar e-mail para os participantes indecisos…">
+<!ENTITY event.email.tentative.attendees.accesskey        "m">
+<!ENTITY event.remove.attendees.label2                    "Remover todos os participantes">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Remover participante">
+<!ENTITY event.remove.attendee.accesskey                  "e">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Guardar">
+<!ENTITY  event.toolbar.saveandclose.label                "Guardar e fechar">
+<!ENTITY  event.toolbar.delete.label                      "Apagar">
+<!ENTITY  event.toolbar.attendees.label                   "Convidar participantes">
+<!ENTITY  event.toolbar.privacy.label                     "Privacidade">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Guardar">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Guardar e fechar">
+<!ENTITY  event.toolbar.delete.tooltip                    "Apagar">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Convidar participantes">
+<!ENTITY  event.toolbar.attachments.tooltip               "Adicionar anexos">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Alterar privacidade">
+<!ENTITY  event.toolbar.priority.tooltip                  "Alterar prioridade">
+<!ENTITY  event.toolbar.status.tooltip                    "Alterar estado">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Alterar hora de ocupado/livre">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Aplicar proposta">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Os campos do evento serão preenchidos com os valores da contra-proposta. A penas a gravação com ou sem alterações adicionais notificarão os participante envolvidos">
+<!ENTITY counter.button.original.label                    "Aplicar dados originais">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Os campos serão preenchidos com os valores do evento original, antes da contra-proposta ter sido efetuada">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Título:" >
+<!ENTITY event.title.textbox.accesskey                    "T">
+<!ENTITY event.location.label                             "Localização:" >
+<!ENTITY event.location.accesskey                         "L">
+<!ENTITY event.categories.label                           "Categoria:">
+<!ENTITY event.categories.accesskey                       "i">
+<!ENTITY event.categories.textbox.label                   "Adicionar uma categoria" >
+<!ENTITY event.calendar.label                             "Calendário:" >
+<!ENTITY event.calendar.accesskey                         "C">
+<!ENTITY event.attendees.label                            "Participantes:" >
+<!ENTITY event.attendees.accesskey                        "n">
+<!ENTITY event.alldayevent.label                          "Evento de dia completo" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "Início:" >
+<!ENTITY event.from.accesskey                             "c">
+<!ENTITY task.from.label                                  "Início:" >
+<!ENTITY task.from.accesskey                              "c">
+<!ENTITY event.to.label                                   "Fim:" >
+<!ENTITY event.to.accesskey                               "u">
+<!ENTITY task.to.label                                    "Fim previsto:" >
+<!ENTITY task.to.accesskey                                "v">
+<!ENTITY task.status.label                                "Estado:" >
+<!ENTITY task.status.accesskey                            "a">
+<!ENTITY event.repeat.label                               "Repetir:" >
+<!ENTITY event.repeat.accesskey                           "R">
+<!ENTITY event.until.label                                "Até:">
+<!ENTITY event.until.accesskey                            "B">
+<!ENTITY event.reminder.label                             "Lembrete:" >
+<!ENTITY event.reminder.accesskey                         "m">
+<!ENTITY event.description.label                          "Descrição:" >
+<!ENTITY event.description.accesskey                      "c">
+<!ENTITY event.attachments.label                          "Anexos:" >
+<!ENTITY event.attachments.accesskey                      "x" >
+<!ENTITY event.attachments.menubutton.label               "Anexar">
+<!ENTITY event.attachments.menubutton.accesskey           "A">
+<!ENTITY event.attachments.url.label                      "Página web…">
+<!ENTITY event.attachments.url.accesskey                  "w">
+<!ENTITY event.attachments.popup.remove.label             "Remover" >
+<!ENTITY event.attachments.popup.remove.accesskey         "R" >
+<!ENTITY event.attachments.popup.open.label               "Abrir" >
+<!ENTITY event.attachments.popup.open.accesskey           "A" >
+<!ENTITY event.attachments.popup.removeAll.label          "Remover tudo" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "t" >
+<!ENTITY event.attachments.popup.attachPage.label         "Anexar página Web…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "g" >
+<!ENTITY event.url.label                                  "Ligação relacionada:" >
+<!ENTITY event.priority2.label                            "Prioridade:">
+
+<!ENTITY event.reminder.none.label                        "Sem lembrete " >
+<!ENTITY event.reminder.0minutes.before.label             "0 minutos antes" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minutos antes" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minutos antes" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minutos antes" >
+<!ENTITY event.reminder.1hour.before.label                "1 hora antes" >
+<!ENTITY event.reminder.2hours.before.label               "2 horas antes" >
+<!ENTITY event.reminder.12hours.before.label              "12 horas antes" >
+<!ENTITY event.reminder.1day.before.label                 "1 dia antes" >
+<!ENTITY event.reminder.2days.before.label                "2 dias antes" >
+<!ENTITY event.reminder.1week.before.label                "1 semana antes" >
+<!ENTITY event.reminder.custom.label                      "Personalizar…" >
+
+<!ENTITY event.reminder.multiple.label                    "Múltiplos lembretes…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Hora como:">
+<!ENTITY event.statusbarpanel.privacy.label               "Privacidade:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Editar recorrência">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Sem repetição">
+<!ENTITY event.repeat.daily.label                       "Diariamente">
+<!ENTITY event.repeat.weekly.label                      "Semanalmente">
+<!ENTITY event.repeat.every.weekday.label               "Todos os dias úteis">
+<!ENTITY event.repeat.bi.weekly.label                   "Bissemanalmente">
+<!ENTITY event.repeat.monthly.label                     "Mensalmente">
+<!ENTITY event.repeat.yearly.label                      "Anualmente">
+<!ENTITY event.repeat.custom.label                      "Personalizar…">
+
+<!ENTITY event.recurrence.pattern.label                 "Padrão de recorrência">
+<!ENTITY event.recurrence.occurs.label                  "Repetir" >
+<!ENTITY event.recurrence.day.label                     "diariamente" >
+<!ENTITY event.recurrence.week.label                    "semanalmente" >
+<!ENTITY event.recurrence.month.label                   "mensalmente" >
+<!ENTITY event.recurrence.year.label                    "anualmente" >
+
+<!ENTITY event.recurrence.pattern.every.label           "A cada" >
+<!ENTITY repeat.units.days.both                         "Dia(s)" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Todos os dias da semana" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "A cada" >
+<!ENTITY repeat.units.weeks.both                        "Semana(s)" >
+<!ENTITY event.recurrence.on.label                      "Em:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "A cada" >
+<!ENTITY repeat.units.months.both                       "Mês(es)" >
+<!ENTITY event.recurrence.monthly.every.label           "A cada" >
+<!ENTITY event.recurrence.monthly.first.label           "Primeiro">
+<!ENTITY event.recurrence.monthly.second.label          "Segundo">
+<!ENTITY event.recurrence.monthly.third.label           "Terceiro">
+<!ENTITY event.recurrence.monthly.fourth.label          "Quarto">
+<!ENTITY event.recurrence.monthly.fifth.label           "Quinto">
+<!ENTITY event.recurrence.monthly.last.label            "Último">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "domingo" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "segunda" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "terça" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "quarta" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "quinta" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "sexta" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "sábado" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Dia do mês">
+<!ENTITY event.recurrence.repeat.recur.label            "Ocorre no(s) dia(s)">
+
+<!ENTITY event.recurrence.every.label                        "A cada:" >
+<!ENTITY repeat.units.years.both                             "Ano(s)" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "A cada" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            " de " >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "janeiro" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "fevereiro" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "março" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "abril" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "maio" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "junho" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "julho" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "agosto" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "setembro" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "outubro" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "novembro" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "dezembro" >
+<!ENTITY event.recurrence.yearly.every.label                 "A cada">
+<!ENTITY event.recurrence.yearly.first.label                 "Primeiro">
+<!ENTITY event.recurrence.yearly.second.label                "Segundo">
+<!ENTITY event.recurrence.yearly.third.label                 "Terceiro">
+<!ENTITY event.recurrence.yearly.fourth.label                "Quarto">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Quinto">
+<!ENTITY event.recurrence.yearly.last.label                  "Último">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "domingo" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "segunda" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "terça" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "quarta" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "quinta" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "sexta" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "sábado" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "dia" >
+<!ENTITY event.recurrence.of.label                           "de" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "janeiro" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "fevereiro" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "março" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "abril" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "maio" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "junho" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "julho" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "agosto" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "setembro" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "outubro" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "novembro" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "dezembro" >
+
+<!ENTITY event.recurrence.range.label                   "Período de recorrência">
+<!ENTITY event.recurrence.forever.label                 "Sem data de fim" >
+<!ENTITY event.recurrence.repeat.for.label              "Criar" >
+<!ENTITY event.recurrence.appointments.label            "Compromissos(s)" >
+<!ENTITY event.repeat.until.label                       "Repetir até" >
+<!ENTITY event.recurrence.preview.label                 "Pré-visualizar">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Convidar participantes">
+<!ENTITY event.organizer.label                  "Agenda">
+<!ENTITY event.freebusy.suggest.slot            "Sugerir hora livre:">
+<!ENTITY event.freebusy.button.next.slot        "Seguinte">
+<!ENTITY event.freebusy.button.previous.slot    "Anterior">
+<!ENTITY event.freebusy.zoom                    "Zoom:">
+<!ENTITY event.freebusy.legend.free             "Livre" >
+<!ENTITY event.freebusy.legend.busy             "Ocupado" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Tentativa" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Fora do escritório" >
+<!ENTITY event.freebusy.legend.unknown          "Sem informação" >
+<!ENTITY event.attendee.role.required           "Requer participante">
+<!ENTITY event.attendee.role.optional           "Participante facultativo">
+<!ENTITY event.attendee.role.chair              "Presidente">
+<!ENTITY event.attendee.role.nonparticipant     "Não participante">
+<!ENTITY event.attendee.usertype.individual     "Individual">
+<!ENTITY event.attendee.usertype.group          "Grupo">
+<!ENTITY event.attendee.usertype.resource       "Recurso">
+<!ENTITY event.attendee.usertype.room           "Quarto">
+<!ENTITY event.attendee.usertype.unknown        "Desconhecido">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Por favor especifique o fuso horário">
+<!ENTITY event.timezone.custom.label     "Mais fusos horários…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Geral">
+<!ENTITY read.only.title.label           "Título:">
+<!ENTITY read.only.calendar.label        "Calendário:">
+<!ENTITY read.only.event.start.label     "Data de início:">
+<!ENTITY read.only.task.start.label      "Data de início:">
+<!ENTITY read.only.event.end.label       "Data de fim:">
+<!ENTITY read.only.task.due.label        "Data de fim:">
+<!ENTITY read.only.repeat.label          "Repetir:">
+<!ENTITY read.only.location.label        "Localização:">
+<!ENTITY read.only.category.label        "Categoria:">
+<!ENTITY read.only.organizer.label       "Agenda:">
+<!ENTITY read.only.reminder.label        "Lembrete:">
+<!ENTITY read.only.attachments.label     "Anexos:">
+<!ENTITY read.only.attendees.label       "Participantes">
+<!ENTITY read.only.description.label     "Descrição">
+<!ENTITY read.only.link.label            "Ligação relacionada">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Guardar e fechar">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Guardar alterações e fechar a janela sem alterar o estado de participação e enviar uma resposta">
+<!ENTITY summary.dialog.accept.label            "Aceitar">
+<!ENTITY summary.dialog.accept.tooltiptext      "Aceitar o convite">
+<!ENTITY summary.dialog.tentative.label         "Tentativa">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Aceitar o convite provisoriamente">
+<!ENTITY summary.dialog.decline.label           "Recusar">
+<!ENTITY summary.dialog.decline.tooltiptext     "Recusar o convite">
+<!ENTITY summary.dialog.dontsend.label          "Não enviar uma resposta">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Alterar a sua participação sem enviar uma resposta para o organizador e fechar a janela">
+<!ENTITY summary.dialog.send.label              "Enviar uma resposta agora">
+<!ENTITY summary.dialog.send.tooltiptext        "Enviar uma resposta para o organizador  e fechar a janela">

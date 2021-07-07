@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Bestand">
+<!ENTITY fileMenu.accesskey        "B">
+<!ENTITY newMenu.label            "Nieuw">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Bewerken">
+<!ENTITY editMenu.accesskey        "w">
+<!ENTITY undoCmd.label            "Ongedaan maken">
+<!ENTITY undoCmd.accesskey          "O">
+<!ENTITY redoCmd.label            "Opnieuw uitvoeren">
+<!ENTITY redoCmd.accesskey          "u">
+<!ENTITY deleteCmd.label          "Verwijderen">
+<!ENTITY deleteCmd.accesskey        "V">
+<!ENTITY preferencesCmd2.label "Opties">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Voorkeuren">
+<!ENTITY preferencesCmdUnix.accesskey     "r">
+
+<!ENTITY customizeCmd.label "Aanpassen">
+<!ENTITY customizeCmd.accesskey "p">
+
+<!ENTITY viewMenu.label          "Beeld">
+<!ENTITY viewMenu.accesskey        "l">
+<!ENTITY viewToolbarsMenu.label        "Werkbalken">
+<!ENTITY viewToolbarsMenu.accesskey      "W">
+<!ENTITY showTaskbarCmd.label          "Statusbalk">
+<!ENTITY showTaskbarCmd.accesskey        "b">
+
+<!ENTITY closeCmd.label      "Sluiten">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "S">
+
+<!ENTITY quitApplicationCmd.label  "Afsluiten">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "A">
+
+<!ENTITY quitApplicationCmdUnix.label  "Afsluiten">
+<!ENTITY quitApplicationCmdUnix.accesskey  "A">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; afsluiten">
+<!ENTITY quitApplicationCmdMac.accesskey  "a">

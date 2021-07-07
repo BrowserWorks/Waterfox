@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used by SeaMonkey's custom about:certerror page,
+a replacement for the standard security certificate errors produced
+by NSS/PSM via netError.xhtml. -->
+
+<!ENTITY certerror.pagetitle			"信頼できない接続">
+<!ENTITY certerror.longpagetitle		"接続の安全性を確認できません">
+
+<!-- Localization note (certerror.introPara1a) - The text content of the span
+tag will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara1a			"<span class='hostname'/> に安全に接続するように求められましたが、接続の安全性が確認できませんでした。">
+<!ENTITY certerror.introPara2			"通常は安全に接続しようとする場合、適切な相手と通信していることを立証するための信頼できる証明書がウェブサイトにより提供されます。しかし、このサイトの証明書は信頼性を検証できません。">
+
+<!ENTITY certerror.whatShouldIDo.heading	"どうすればよいのか？">
+<!ENTITY certerror.whatShouldIDo.content	"これまでこのサイトに問題なく接続できていた場合、このエラーが表示されるのは誰かがこのサイトになりすましている可能性があるということであり、接続すべきではありません。">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "このサイトは、HSTS (HTTP Strict Transport Security) を使用して &brandShortName; のみが安全に接続できるように指定されています。その結果、この証明書の例外を追加することができません。">
+<!ENTITY certerror.getMeOutOfHere.label		"スタートページに戻る">
+
+<!ENTITY certerror.expert.heading		"危険性を理解した上で接続するには">
+<!ENTITY certerror.expert.content		"何が起きていて何が問題なのか理解できているのであれば、このサイトの証明書を信頼するよう &brandShortName; にセキュリティ例外を追加することもできます。<b>ただし、たとえこのサイトが信頼できるサイトであっても、誰かが通信を不正に改変してこのエラーが表示されている可能性があるので十分に注意してください。</b>">
+<!ENTITY certerror.expert.contentPara2		"信頼できる証明書をこのサイトが使用しない正当な理由がない限り、例外として追加しないでください。">
+<!ENTITY certerror.addException.label		"例外を追加...">
+
+<!ENTITY certerror.technical.heading		"技術的詳細を表示">
+
+<!ENTITY dnsNotFound.pageTitle			"サーバーが見つかりませんでした">
+<!ENTITY malformedURI.pageTitle			"不正な URL">

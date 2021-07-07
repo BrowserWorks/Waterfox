@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Tipos de letra">
+
+<!ENTITY  language.label                          "Tipos de letra para:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  typefaces.label                         "Tipo de fonte">
+<!ENTITY  sizes.label                             "Tamanho (pixeis)">
+
+<!ENTITY  proportional.label                      "Proporcional:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Serifa:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sem serifa:">
+<!ENTITY  sans-serif.accesskey                    "e">
+<!ENTITY  monospace.label                         "Mono-espaçada:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasia:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "Cursiva:">
+<!ENTITY  cursive.accesskey                       "C">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latino">
+<!ENTITY  font.langGroup.japanese                 "Japonês">
+<!ENTITY  font.langGroup.trad-chinese             "Chinês Tradicional(Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Chinês Simplificado">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Chinês Tradicional(Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Coreano">
+<!ENTITY  font.langGroup.cyrillic                 "Cirílico">
+<!ENTITY  font.langGroup.el                       "Grego">
+<!ENTITY  font.langGroup.thai                     "Tailandês">
+<!ENTITY  font.langGroup.hebrew                   "Hebreu">
+<!ENTITY  font.langGroup.arabic                   "Arábico">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamil">
+<!ENTITY  font.langGroup.armenian                 "Arménio">
+<!ENTITY  font.langGroup.bengali                  "Bengali">
+<!ENTITY  font.langGroup.canadian                 "Silabário Canadense Unificado">
+<!ENTITY  font.langGroup.ethiopic                 "Etíope">
+<!ENTITY  font.langGroup.georgian                 "Georgiano">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malaio">
+<!ENTITY  font.langGroup.math                     "Matemáticas">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Cingalês">
+<!ENTITY  font.langGroup.tibetan                  "Tibetano">
+<!ENTITY  font.langGroup.other                    "Outros sistemas de escrita">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Tamanho mínimo da letra:">
+<!ENTITY minSize.accesskey                        "m">
+<!ENTITY minSize.none                             "Nenhum">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serifa">
+<!ENTITY  useDefaultFontSansSerif.label           "Sem serifa">
+
+<!ENTITY  useDocumentFonts.label                  "Permitir que o documento use outros tipos de letra">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Quando uma página web escolhe o seu próprio tipo de letra">
+<!ENTITY  useDefaultFont.label                    "Utilizar os meus tipos de letra predefinidos, ignorando os tipos de letra que a página escolheu">
+<!ENTITY  useDefaultFont.accesskey                "U">

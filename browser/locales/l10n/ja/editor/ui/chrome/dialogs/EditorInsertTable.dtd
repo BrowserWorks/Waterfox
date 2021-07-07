@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "表の挿入">
+
+<!ENTITY size.label "大きさ">
+<!ENTITY numRowsEditField.label "行数:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "列数:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "幅:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY borderEditField.label "枠線:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "表の枠線の番号を入力するか、枠線なしはゼロ(0)を入力してください">
+<!ENTITY pixels.label "px">

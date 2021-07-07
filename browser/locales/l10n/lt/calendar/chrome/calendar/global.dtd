@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Vidurnaktis" >
+<!ENTITY time.noon "Vidurdienis" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Sk" >
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "Pr" >
+<!ENTITY day.2.Ddd.accesskey "P">
+<!ENTITY day.3.Ddd "An" >
+<!ENTITY day.3.Ddd.accesskey "A">
+<!ENTITY day.4.Ddd "Tr" >
+<!ENTITY day.4.Ddd.accesskey "T">
+<!ENTITY day.5.Ddd "Kt" >
+<!ENTITY day.5.Ddd.accesskey "K">
+<!ENTITY day.6.Ddd "Pn" >
+<!ENTITY day.6.Ddd.accesskey "n">
+<!ENTITY day.7.Ddd "Št" >
+<!ENTITY day.7.Ddd.accesskey "Š">
+
+<!ENTITY day.1.name "Sekmadienis" >
+<!ENTITY day.2.name "Pirmadienis" >
+<!ENTITY day.3.name "Antradienis" >
+<!ENTITY day.4.name "Trečiadienis" >
+<!ENTITY day.5.name "Ketvirtadienis" >
+<!ENTITY day.6.name "Penktadienis" >
+<!ENTITY day.7.name "Šeštadienis" >
+
+<!ENTITY month.1.name "sausis" >
+<!ENTITY month.2.name "vasaris" >
+<!ENTITY month.3.name "kovas" >
+<!ENTITY month.4.name "balandis" >
+<!ENTITY month.5.name "gegužė" >
+<!ENTITY month.6.name "birželis" >
+<!ENTITY month.7.name "liepa" >
+<!ENTITY month.8.name "rugpjūtis" >
+<!ENTITY month.9.name "rugsėjis" >
+<!ENTITY month.10.name "spalis" >
+<!ENTITY month.11.name "lapkritis" >
+<!ENTITY month.12.name "gruodis" >
+
+<!ENTITY onemonthbackward.tooltip "Ankstesnis mėnuo" >
+<!ENTITY onemonthforward.tooltip "Kitas mėnuo" >
+<!ENTITY oneyearbackward.tooltip "Vienerius metai atgal" >
+<!ENTITY oneyearforward.tooltip "Vienerius metus pirmyn" >
+<!ENTITY showToday.tooltip "Ši diena">
+<!ENTITY onedayforward.tooltip "Kita diena">
+<!ENTITY onedaybackward.tooltip "Ankstesnė diena">
+<!ENTITY showselectedday.tooltip "Rodyti parinktos dienos įvykius">

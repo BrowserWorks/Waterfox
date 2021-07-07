@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Elimina">
+<!ENTITY editContactPanelDeleteContact.accesskey "m">
+
+<!ENTITY editContactName.label "Nome:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Email:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Rubrica:">
+<!ENTITY editContactAddressBook.accesskey "R">
+
+<!ENTITY editContactPanelDone.label "Fatto">
+<!ENTITY editContactPanelDone.accesskey "F">
+
+<!ENTITY contactMoveDisabledWarning.description "Non è possibile modificare la rubrica, perché il contatto è in una mailing list.">

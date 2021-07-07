@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Join Channel">
+
+<!ENTITY network.label     "Network:">
+<!ENTITY network.accesskey "N">
+
+<!ENTITY channel.label     "Channel:">
+<!ENTITY channel.accesskey "C">
+
+<!ENTITY topics.label     "Search topics as well as channel names">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label     "Join">
+<!ENTITY join.accesskey "J">
+
+<!ENTITY minusers.label     "Min users:">
+<!ENTITY minusers.accesskey "M">
+
+<!ENTITY maxusers.label     "Max users:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "Refresh Now">
+<!ENTITY refresh.accesskey "R">
+
+<!ENTITY network.hint.label "Enter any network or server name (you can include a port) and a channel to join.">
+
+<!ENTITY col.network "Network">
+<!ENTITY col.name  "Name">
+<!ENTITY col.users "Users">
+<!ENTITY col.topic "Topic">

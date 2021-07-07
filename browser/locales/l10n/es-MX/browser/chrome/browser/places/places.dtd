@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Biblioteca">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizar">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organizar los marcadores">
+
+<!ENTITY file.close.label               "Cerrar">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vista">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Cambiar la vista">
+<!ENTITY view.columns.label             "Mostrar columnas">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Ordenar">
+<!ENTITY view.sort.accesskey            "r">
+<!ENTITY view.unsorted.label            "Sin ordenar">
+<!ENTITY view.unsorted.accesskey        "n">
+<!ENTITY view.sortAscending.label       "Ordenar A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Ordenar Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importar marcadores desde HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportar marcadores a HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importar datos de otro navegador…">
+<!ENTITY importOtherBrowser.accesskey      "o">
+
+<!ENTITY cmd.backup.label               "Respaldar…">
+<!ENTITY cmd.backup.accesskey           "R">
+<!ENTITY cmd.restore2.label             "Restaurar">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Elegir archivo…">
+<!ENTITY cmd.restoreFromFile.accesskey  "E">
+
+<!ENTITY col.name.label          "Nombre">
+<!ENTITY col.tags.label          "Etiquetas">
+<!ENTITY col.url.label           "Dirección">
+<!ENTITY col.mostrecentvisit.label "Visita más reciente">
+<!ENTITY col.visitcount.label    "Contador de visitas">
+<!ENTITY col.dateadded.label     "Añadido">
+<!ENTITY col.lastmodified.label  "Última modificación">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importar y respaldar">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importar y respaldar tus marcadores">
+
+<!ENTITY backButton.tooltip  "Regresar">
+
+<!ENTITY forwardButton.tooltip  "Ir adelante">
+
+<!ENTITY detailsPane.selectAnItemText.description "Selecciona un elemento para ver y editar sus propiedades">
+

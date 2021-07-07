@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; Veilige modus">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; werkt nu in veilige modus, waardoor uw persoonlijke instellingen, thema’s en extensies tijdelijk zijn uitgeschakeld.">
+<!ENTITY safeModeDescription2.label       "U kunt alle of enkele van deze wijzigingen permanent maken:">
+
+<!ENTITY disableAddons.label              "Alle add-ons uitschakelen">
+<!ENTITY disableAddons.accesskey          "A">
+
+<!ENTITY resetToolbars.label              "Werkbalken en bedieningselementen herinitialiseren">
+<!ENTITY resetToolbars.accesskey          "W">
+
+<!ENTITY changeAndRestartButton.label     "Wijzigingen doorvoeren en herstarten">
+<!ENTITY changeAndRestartButton.accesskey "h">
+
+<!ENTITY continueButton.label             "Doorgaan in veilige modus">
+<!ENTITY continueButton.accesskey         "D">

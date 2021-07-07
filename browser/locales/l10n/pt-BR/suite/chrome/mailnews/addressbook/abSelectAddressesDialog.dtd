@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Selecionar destinatários">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Para->">
+<!ENTITY toButton.accesskey                  "P">
+<!ENTITY ccButton.label                      "CC->">
+<!ENTITY ccButton.accesskey                  "C">
+<!ENTITY bccButton.label                     "BCC->">
+<!ENTITY bccButton.accesskey                 "B">
+<!ENTITY newButton.label                     "Novo...">
+<!ENTITY newButton.accesskey                 "N">
+<!ENTITY editButton.label                    "Editar...">
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "Remover">
+<!ENTITY removeButton.accesskey              "R">
+<!ENTITY lookIn.label                        "Exibir:">
+<!ENTITY lookIn.accesskey                    "x">
+<!ENTITY for.label                           "para:">
+<!ENTITY for.accesskey                       "z">
+<!ENTITY for.placeholder                     "Nome ou email">
+<!ENTITY addressMessageTo.label              "Enviar para:">
+
+<!-- Tooltips items -->
+<!ENTITY addressPickerNewButton.tooltip      "Criar um novo contato do catálogo de endereços">
+<!ENTITY addressPickerEditButton.tooltip     "Editar o contato selecionado">

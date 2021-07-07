@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "가로선 설정">
+
+<!ENTITY dimensionsBox.label "차원">
+<!ENTITY heightEditField.label "높이:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "폭:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "픽셀">
+<!ENTITY alignmentBox.label "방향">
+<!ENTITY leftRadio.label "왼쪽">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "가운데">
+<!ENTITY centerRadio.accessKey "C">
+<!ENTITY rightRadio.label "오른쪽">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3차원 형태">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "기본 설정으로 저장">
+<!ENTITY saveSettings.accessKey "D">
+<!ENTITY saveSettings.tooltip "새 가로선을 삽입할 때마다 이 설정을 사용합니다.">
