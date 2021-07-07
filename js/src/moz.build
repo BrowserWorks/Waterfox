@@ -4,6 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+include('js-config.mozbuild')
 include('js-cxxflags.mozbuild')
 
 # Directory metadata
@@ -638,26 +639,6 @@ DIRS += [
 
 FINAL_LIBRARY = 'js'
 
-if CONFIG['NIGHTLY_BUILD']:
-    DEFINES['ENABLE_BINARYDATA'] = True
-    DEFINES['ENABLE_SIMD'] = True
-
-if CONFIG['MOZ_DEBUG'] or CONFIG['NIGHTLY_BUILD']:
-    DEFINES['JS_CACHEIR_SPEW'] = True
-
-# Also set in shell/moz.build
-DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
-
-DEFINES['EXPORT_JS_API'] = True
-
-if CONFIG['JS_HAS_CTYPES']:
-    DEFINES['JS_HAS_CTYPES'] = True
-    for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
-        DEFINES[var] = '"%s"' % CONFIG[var]
-
-if CONFIG['MOZ_LINKER']:
-    DEFINES['MOZ_LINKER'] = True
-
 if CONFIG['_MSC_VER']:
     if CONFIG['CPU_ARCH'] == 'x86':
         SOURCES['builtin/RegExp.cpp'].no_pgo = True # Bug 772303
@@ -701,11 +682,6 @@ selfhosted.inputs = [
     'builtin/WeakMap.js',
     'builtin/WeakSet.js'
 ]
-
-if CONFIG['JS_HAS_CTYPES']:
-    if not CONFIG['MOZ_SYSTEM_FFI']:
-        # Windows needs this to be linked with a static library.
-        DEFINES['FFI_BUILDING'] = True
 
 # Suppress warnings in third-party code.
 # We are keeping this in the main moz.build because it is file specific
