@@ -107,6 +107,7 @@ DIRS += [
     'devtools',
     'ds',
     'frontend',
+    'gc',
 ]
 
 if CONFIG['JS_BUNDLED_EDITLINE']:
@@ -116,21 +117,6 @@ if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']
 
 UNIFIED_SOURCES += [
-    'gc/Allocator.cpp',
-    'gc/AtomMarking.cpp',
-    'gc/Barrier.cpp',
-    'gc/GCTrace.cpp',
-    'gc/Iteration.cpp',
-    'gc/Marking.cpp',
-    'gc/Memory.cpp',
-    'gc/MemoryProfiler.cpp',
-    'gc/Nursery.cpp',
-    'gc/RootMarking.cpp',
-    'gc/Statistics.cpp',
-    'gc/Tracer.cpp',
-    'gc/Verifier.cpp',
-    'gc/Zone.cpp',
-    'gc/ZoneGroup.cpp',
     'irregexp/NativeRegExpMacroAssembler.cpp',
     'irregexp/RegExpAST.cpp',
     'irregexp/RegExpCharacters.cpp',
@@ -338,13 +324,9 @@ UNIFIED_SOURCES += [
 # RtlGenRandom declaration's calling convention in <ntsecapi.h> on Windows.
 # jsutil.cpp cannot be built in unified mode because it is needed for
 # check-vanilla-allocations.
-# StoreBuffer.cpp cannot be built in unified because its template
-# instantiations may or may not be needed depending on what it gets bundled
-# with.
 # vm/Interpreter.cpp is gigantic and destroys incremental build times for any
 # files unlucky enough to be unified with it.
 SOURCES += [
-    'gc/StoreBuffer.cpp',
     'jsarray.cpp',
     'jsatom.cpp',
     'jsdtoa.cpp',
@@ -568,11 +550,3 @@ if CONFIG['_MSC_VER']:
 # We are keeping this in the main moz.build because it is file specific
 if CONFIG['CLANG_CXX']:
     SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
-
-# Generate GC statistics phase data.
-GENERATED_FILES += ['gc/StatsPhasesGenerated.h']
-StatsPhasesGeneratedHeader = GENERATED_FILES['gc/StatsPhasesGenerated.h']
-StatsPhasesGeneratedHeader.script = 'gc/GenerateStatsPhases.py:generateHeader'
-GENERATED_FILES += ['gc/StatsPhasesGenerated.cpp']
-StatsPhasesGeneratedCpp = GENERATED_FILES['gc/StatsPhasesGenerated.cpp']
-StatsPhasesGeneratedCpp.script = 'gc/GenerateStatsPhases.py:generateCpp'
