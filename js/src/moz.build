@@ -142,6 +142,30 @@ UNIFIED_SOURCES += [
     'jsscript.cpp',
     'jsstr.cpp',
     'jsweakmap.cpp',
+]
+
+# jsarray.cpp and jsatom.cpp cannot be built in unified mode because
+# xpcshell is broken during packaging when compiled with gcc-4.8.2
+# jsdtoa.cpp cannot be built in unified mode because we want to suppress
+# compiler warnings in third-party dtoa.c.
+# jsmath.cpp cannot be built in unified mode because it needs to re-#define the
+# RtlGenRandom declaration's calling convention in <ntsecapi.h> on Windows.
+# jsutil.cpp cannot be built in unified mode because it is needed for
+# check-vanilla-allocations.
+SOURCES += [
+    'jsarray.cpp',
+    'jsatom.cpp',
+    'jsdtoa.cpp',
+    'jsmath.cpp',
+    'jsutil.cpp',
+]
+
+# Suppress warnings in third-party code.
+# We are keeping this in the main moz.build because it is file specific
+if CONFIG['CLANG_CXX']:
+    SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
+
+UNIFIED_SOURCES += [
     'vm/ArgumentsObject.cpp',
     'vm/ArrayBufferObject.cpp',
     'vm/AsyncFunction.cpp',
@@ -203,22 +227,9 @@ UNIFIED_SOURCES += [
     'vm/Xdr.cpp',
 ]
 
-# jsarray.cpp and jsatom.cpp cannot be built in unified mode because
-# xpcshell is broken during packaging when compiled with gcc-4.8.2
-# jsdtoa.cpp cannot be built in unified mode because we want to suppress
-# compiler warnings in third-party dtoa.c.
-# jsmath.cpp cannot be built in unified mode because it needs to re-#define the
-# RtlGenRandom declaration's calling convention in <ntsecapi.h> on Windows.
-# jsutil.cpp cannot be built in unified mode because it is needed for
-# check-vanilla-allocations.
 # vm/Interpreter.cpp is gigantic and destroys incremental build times for any
 # files unlucky enough to be unified with it.
 SOURCES += [
-    'jsarray.cpp',
-    'jsatom.cpp',
-    'jsdtoa.cpp',
-    'jsmath.cpp',
-    'jsutil.cpp',
     'vm/Interpreter.cpp',
 ]
 
@@ -263,8 +274,3 @@ FINAL_LIBRARY = 'js'
 if CONFIG['_MSC_VER']:
      if CONFIG['CPU_ARCH'] == 'x86_64' and CONFIG['JS_HAS_CTYPES']:
         SOURCES['ctypes/CTypes.cpp'].no_pgo = True # Bug 810661
-
-# Suppress warnings in third-party code.
-# We are keeping this in the main moz.build because it is file specific
-if CONFIG['CLANG_CXX']:
-    SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
