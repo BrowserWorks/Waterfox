@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title     "聊天網路編輯器">
+<!ENTITY networksEditDialog.size      "width: 75ch; height: 28em;">
+
+<!ENTITY restoreButton.label          "回復為預設值">
+<!ENTITY restoreButton.accesskey      "f">
+
+<!ENTITY networkListAdd.label         "新增網路…">
+<!ENTITY networkListAdd.accesskey     "A">
+<!ENTITY networkListAdd.tooltip       "新增網路">
+<!ENTITY networkListEdit.label        "編輯網路…">
+<!ENTITY networkListEdit.accesskey    "E">
+<!ENTITY networkListEdit.tooltip      "編輯選取的網路">
+<!ENTITY networkListRemove.label      "移除網路">
+<!ENTITY networkListRemove.accesskey  "R">
+<!ENTITY networkListRemove.tooltip    "移除選取的網路">
+
+<!ENTITY serverListUp.label           "上移">
+<!ENTITY serverListUp.accesskey       "U">
+<!ENTITY serverListUp.tooltip         "在清單中將選擇的伺服器向上移動">
+<!ENTITY serverListDown.label         "下移">
+<!ENTITY serverListDown.accesskey     "D">
+<!ENTITY serverListDown.tooltip       "在清單中將選擇的伺服器向下移動">
+<!ENTITY serverListAdd.label          "新增伺服器…">
+<!ENTITY serverListAdd.accesskey      "S">
+<!ENTITY serverListAdd.tooltip        "新增伺服器">
+<!ENTITY serverListEdit.label         "編輯伺服器…">
+<!ENTITY serverListEdit.accesskey     "i">
+<!ENTITY serverListEdit.tooltip       "編輯選取的伺服器">
+<!ENTITY serverListRemove.label       "移除伺服器">
+<!ENTITY serverListRemove.accesskey   "m">
+<!ENTITY serverListRemove.tooltip     "移除選取的伺服器">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label          "選取的伺服器的詳細資訊:">
+<!ENTITY serverName.label             "伺服器:">
+<!ENTITY serverName.accesskey         "S">
+<!ENTITY serverPort.label             "通訊埠:">
+<!ENTITY serverPort.accesskey         "P">
+<!ENTITY connectionSecurity.label     "連線安全性:">
+<!ENTITY connectionSecurity.accesskey "n">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title       "IRC 伺服器">
+<!ENTITY settings.caption             "選項">
+<!ENTITY security.caption             "安全性">
+<!ENTITY serverPortDefault.label      "預設值:">

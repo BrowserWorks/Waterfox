@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!ENTITY sidebar.customize.title                "Sidebar anpassen">
+<!ENTITY sidebar.customize.current2.label       "Tabs in Sidebar:">
+<!ENTITY sidebar.customize.current2.accesskey   "T">
+<!ENTITY sidebar.customize.customize.label      "Tab anpassen…">
+<!ENTITY sidebar.customize.customize.accesskey  "a">
+<!ENTITY sidebar.customize.remove.label         "Entfernen">
+<!ENTITY sidebar.customize.remove.accesskey     "n">
+<!ENTITY sidebar.customize.additional.label     "verfügbare Tabs:">
+<!ENTITY sidebar.customize.additional.accesskey "e">
+<!ENTITY sidebar.customize.add.label            "Hinzufügen">
+<!ENTITY sidebar.customize.add.accesskey        "z">
+<!ENTITY sidebar.customize.preview.label        "Vorschau…">
+<!ENTITY sidebar.customize.preview.accesskey    "v">
+<!ENTITY sidebar.customize.up.label             "Nach oben">
+<!ENTITY sidebar.customize.up.accesskey         "o">
+<!ENTITY sidebar.customize.down.label           "Nach unten">
+<!ENTITY sidebar.customize.down.accesskey       "u">
+<!ENTITY sidebar.more.label                     "Mehr Tabs suchen…">
+<!ENTITY sidebar.more.accesskey                 "m">

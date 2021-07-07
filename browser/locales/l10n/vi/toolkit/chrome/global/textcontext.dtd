@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Thêm vào từ điển">
+<!ENTITY spellAddToDictionary.accesskey "v">
+<!ENTITY spellUndoAddToDictionary.label "Hoàn tác thêm vào từ điển">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Kiểm tra chính tả">
+<!ENTITY spellCheckToggle.accesskey "K">
+<!ENTITY spellNoSuggestions.label "(Không có gợi ý sửa chính tả)">
+<!ENTITY spellDictionaries.label "Ngôn ngữ">
+<!ENTITY spellDictionaries.accesskey "N">
+
+<!ENTITY searchTextBox.clear.label "Xóa trắng">
+

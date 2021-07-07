@@ -1,0 +1,1606 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Weboldalak létrehozása a &brandShortName;val</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<h1 id="creating_web_pages_with_mozilla_composer">Weboldalak létrehozása a &brandShortName;val</h1>
+
+<p>A &brandShortName; segítségével saját magunk is készíthetünk weboldalakat, és közzétehetjük azokat a weben. A HTML-szerkesztő használatához nem kell ismernünk a HTML nyelvet, a program olyan könnyen használható, mint egy szövegszerkesztő.</p>
+
+<p>Az eszköztár gombjai segítségével felsorolások, képek, más oldalra mutató hivatkozások adhatók a dokumentumhoz, illetve ezekkel állíthatóak be a használt betűkészletek és színek is. A dokumentum készítése közben azonnal láthatjuk, hogy hogyan fog kinézni a weben, és könnyedén megoszthatjuk bárkivel, függetlenül attól, hogy milyen böngészőt vagy HTML megjelenítésére képes levelezőprogramot használ.</p>
+
+<p>A &brandShortName; HTML-Szerkesztő elindításához:</p>
+
+<ul>
+  <li>Kattintsunk a HTML-szerkesztő ikonjára bármelyik &brandShortName;-ablak bal alsó sarkában.</li>
+</ul>
+
+<div><img src="images/composer_icon.png" width="128" height="23"
+  alt="" /></div>
+<div style="-moz-margin-start: 80px;"><strong>HTML-szerkesztő ikon</strong></div>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#starting_a_new_page">Új weboldal létrehozása</a></li>
+    <li><a href="#formatting_your_web_pages">A weboldal formázása</a></li>
+    <li><a href="#adding_tables_to_your_web_page">Táblázatok használata a weboldalakon</a></li>
+    <li><a href="#adding_images_to_your_web_page">Képek felvétele a weboldalra</a></li>
+    <li><a href="#setting_page_properties">Oldaltulajdonságok beállítása</a></li>
+    <li><a href="#creating_links_in_composer">Hivatkozások létrehozása</a></li>
+    <li><a href="#publishing_your_pages_on_the_web">Oldalak közzététele a weben</a></li>
+    <li><a href="#composer_preferences">A HTML-szerkesztő beállításai</a></li>
+  </ul>
+</div>
+
+<h1 id="starting_a_new_page" style="margin-top: 50px;">Új weboldal létrehozása</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#creating_a_new_page">Új weboldal létrehozása</a></li>
+    <li><a href="#saving_and_browsing_your_new_page">Az új weboldal mentése és megtekintése</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_a_new_page">Új weboldal létrehozása</h2>
+
+<p>A &brandShortName; HTML-szerkesztő segítségével weboldalak létrehozása és szerkesztése hajtható végre. A HTML-szerkesztőben a munka során a később a böngészőben is látható módon jeleníthetők meg az oldalak, azaz ez úgynevezett <em>WYSIWYG</em> (azt kapod, amit látsz) szerkesztő. A szerkesztő használatához nem szükséges ismerni a HTML nyelvet, hiszen az alapvető funkciók parancsok vagy gombok formájában állnak rendelkezésre.</p>
+
+<p>Természetesen a nyelvben járatosak számára lehetőség van a forráskód szerkesztésére is. A HTML forráskód szerkesztéséhez válasszuk a Nézet menü HTML forrás parancsát, vagy a HTML-szerkesztő ablak alján a Szerkesztő mód eszköztáron váltsunk át a &lt;HTML&gt; forrás panellapra.</p>
+
+<p>Weboldal létrehozásához az alább ismertetett módszerek használhatók. Az elkezdett oldalon a szöveg felvétele és szerkesztése a szövegszerkesztőkhöz hasonló módon történik.</p>
+
+<p><strong>Új oldal létrehozása a Böngészőből</strong>:</p>
+
+<ul>
+  <li>Válasszuk a Fájl menün az Új, majd az Üres oldal szerkesztése parancsot. Ekkor megnyílik a HTML-szerkesztő ablaka egy üres oldallal.</li>
+</ul>
+
+<p><strong>A Böngészőben megjelenített oldal szerkesztése</strong>:</p>
+
+<ul>
+  <li>A kívánt oldalhoz tartozó Böngésző ablakban válasszuk a Fájl menü Oldal szerkesztése parancsát. Megjelenik a HTML-szerkesztő ablaka és benne a kérdéses oldal.</li>
+</ul>
+
+<p><strong>Új oldal létrehozása a HTML-szerkesztőben</strong>:</p>
+
+<ul>
+  <li>A HTML-szerkesztő eszköztárán kattintsunk az Új gombra.</li>
+</ul>
+
+<p><strong>A helyi merevlemezen tárolt HTML-fájl szerkesztése</strong>:</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü HTML-szerkesztő parancsát. Megjelenik a HTML-szerkesztő ablaka.</li>
+  <li>Válasszuk a Fájl menü Fájl megnyitása parancsát. A HTML-fájl megnyitása párbeszédpanel jelenik meg.</li>
+  <li>A merevlemezen keressük meg és jelöljük ki a szerkeszteni kívánt fájlt.</li>
+  <li>A fájl megjelenítéséhez a HTML-szerkesztőben kattintsunk a Megnyitás gombra.</li>
+</ol>
+
+<p><strong>Weboldal szerkesztése</strong>:</p>
+
+<ol>
+  <li>Válasszuk az Ablak menü Böngésző parancsát.</li>
+  <li>Hívjuk be a weboldalt, azaz írjuk az URL-jét (például,
+    <tt>http://www.mozilla.org</tt>) a címmezőbe, és nyomjuk meg az
+    <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd>.</li>
+  <li>Válasszuk a Fájl menü Oldal szerkesztése parancsát.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a HTML-szerkesztőben gyorsan megnyithatjuk a legutóbb használt fájlokat: ehhez válasszuk a Fájl menü Legutóbb szerkesztett oldalak parancsát, és kattintsunk a listán a kívánt névre.</p>
+
+<p>[<a href="#starting_a_new_page">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="saving_and_browsing_your_new_page">Az új weboldal mentése és megtekintése</h2>
+
+<p>A HTML-szerkesztő dokumentumait HTML vagy szöveges formátumban menthetjük. A HTML formátumban mentett dokumentumban megmaradnak a formázások (például félkövér vagy dőlt karakterek), a táblázatok, a hivatkozások és a képek. A szöveges formátumban mentett dokumentumoknál a HTML kódelemek elvesznek, csak a dokumentum szövege marad meg.</p>
+
+<p>Dokumentum mentése HTML fájlként:</p>
+
+<ul>
+  <li>A Fájl menüből válasszuk a Mentés parancsot, vagy kattintsunk a Szerkesztés eszköztár Mentés gombjára.
+
+    <p>Ha még nem adtunk címet az oldalnak, a HTML-szerkesztő ennek beírását kéri. Ez az oldalcím a böngésző ablakának címsorában jelenik meg az oldal megtekintésekor. Ugyancsak a dokumentum oldalcíme jelenik meg a könyvjelzők listáján, ha megjelöljük az oldalt.</p>
+
+    <p>A HTML-szerkesztő ezután a fájlnév és a fájl tárolási helyének megadását kéri. A fájl .html kiterjesztését ne változtassuk meg.</p>
+  </li>
+</ul>
+
+<p>Meglévő HTML fájl nevének vagy helyének módosítása:</p>
+
+<ul>
+  <li>Válasszuk a Mentés másként parancsot, adjunk meg másik fájlnevet vagy helyet.</li>
+</ul>
+
+<p>Amikor egy oldalt mentünk a HTML-szerkesztőben, annak minden része (HTML, képek és egyéb fájlok, például hang vagy stíluslap) a helyi merevlemezre kerül. Ha csak az oldal HTML részét szeretnénk menteni, módosítani kell a HTML-szerkesztő mentési beállítását. További tudnivalók a beállítás módosításáról:
+  <a href="#composer">HTML-szerkesztő beállításai - HTML-szerkesztő</a>.</p>
+
+<p>Ha a kép helye abszolút (<q>http://</q> megadással kezdődik) és kapcsolódunk az internetre, a dokumentumban a kép továbbra is látható lesz a HTML-szerkesztőben és a Böngészőben. Ha viszont a kép helye relatív az oldal helyéhez képest (a <q>file:///</q> megadással kezdődik), akkor nem fogjuk látni a képet a dokumentum helyi verziójában.</p>
+
+<p>Dokumentum mentése szöveges fájlként:</p>
+
+<ol>
+  <li>Válasszuk a Fájl menü Exportálás szövegként parancsát.</li>
+  <li>Írjuk be a fájlnevet, és adjuk meg a fájl mentési helyét.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: a szöveg formátumban mentett dokumentumok képei nem jelennek meg.</p>
+
+<p><strong>Tip</strong>: a munka során a dokumentum legutóbb mentett példányához térhetünk vissza a Fájl menü Visszatérés az utoljára mentett állapothoz parancsával. Ekkor az adott munkamenetben a fájlon végrehajtott változtatások elvesznek.</p>
+
+<p>Az oldal megtekintése böngészőben a hivatkozások ellenőrzéséhez:</p>
+
+<ul>
+  <li>Válasszuk a Fájl menü Oldal megtekintése parancsát (vagy kattintsunk a Szerkesztés eszköztáron az Előnézet gombra). Ha még nem mentettük a dokumentumot, a HTML-szerkesztő az oldalcím, a fájlnév és a mentési hely megadását kéri. A HTML-szerkesztő ablaka nyitva marad a Böngésző ablaka mögött.</li>
+</ul>
+
+<p>[<a href="#starting_a_new_page">Vissza a fejezet elejére</a>]</p>
+
+<h1 id="formatting_your_web_pages">A weboldal formázása</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#formatting_paragraphs_headings_and_lists">Bekezdések, címsorok és listák formázása</a></li>
+    <li><a href="#working_with_lists">Felsorolások és listák kezelése</a></li>
+    <li><a href="#changing_text_color_style_and_font">A szöveg színének, stílusának és betűkészletének megadása</a></li>
+    <li><a href="#removing_or_discontinuing_text_styles">Szövegformázás eltávolítása vagy befejezése</a></li>
+    <li><a href="#finding_and_replacing_text">Szöveg keresése és cseréje</a></li>
+    <li><a href="#inserting_horizontal_lines">Vízszintes vonal beszúrása</a></li>
+    <li><a href="#inserting_special_characters">Különleges karakterek beszúrása</a></li>
+    <li><a href="#inserting_html_elements_and_attributes">HTML elemek és attribútumok beszúrása</a></li>
+    <li><a href="#validating_the_html">A HTML érvényesítése</a></li>
+    <li><a href="#choosing_the_right_editing_mode">A megfelelő szerkesztési mód választása</a></li>
+  </ul>
+</div>
+
+<h2 id="formatting_paragraphs_headings_and_lists">Bekezdések, címsorok és listák formázása</h2>
+
+<p>Bekezdés formázásához induljunk ki a HTML-szerkesztő ablakából:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot a formázás kívánt kezdőhelyére, vagy jelöljük ki a formázni kívánt szöveget.</li>
+  <li>Válasszunk bekezdésformátumot a Formázó eszköztár lenyitható listáján:
+    <ul>
+      <li><strong>Szövegtörzs</strong>: az alkalmazás alapértelmezett betűkészletével és -stílusával formázza a szöveget, a szöveg előtti és utáni térköz változatlan marad.</li>
+      <li><strong>Bekezdés</strong>: bekezdés kódelemet szúr be (ezzel új bekezdés kezdhető). A bekezdéshez felső és alsó margó tartozik.</li>
+      <li><strong>Címsor 1</strong> - <strong>Címsor 6</strong>: címsorként formázza a bekezdést. A Címsor 1 a legfelső, míg a Címsor 6 a legalsó szintű címet jelenti.</li>
+      <li><strong>Címzés</strong>: a weboldal <q>aláírásaként</q>
+        használható, amely az oldal szerzőjét és a további felvilágosítást nyújtó személyt tartalmazhatja, például: <tt>valaki@valahol.com</tt> 
+
+        <p>Itt adható meg a dátum és a szerzői jogi megjegyzés is. Az így formázott szöveget általában a weboldal alján, egy vízszintes vonal alatt helyezik el. A Böngésző dőlten jeleníti meg az ilyen bekezdéseket.</p>
+      </li>
+      <li><strong>Előformázott</strong>: ez a formátum kódpéldáknál, oszlopos adatoknál és leveleknél lehet hasznos, ahol a szöveget fix szélességű betűkészlettel szeretnénk megjeleníteni. Normál szövegnél a böngészők általában eltávolítják a fölösleges szóközöket, a tabulátorokat és a soremeléseket. Az Előformázott stílussal formázott szövegnél viszont megtartják az eredeti elrendezést (az összes üres hellyel együtt).</li>
+    </ul>
+  </li>
+</ol>
+
+<p>Szöveg formázása címsorként:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot a formázni kívánt szöveg tetszőleges helyére.</li>
+  <li>A Formázó eszköztár lenyitható listáján válasszuk a kívánt szintű címsorformátumot, az első szintű címeknél ez legyen a Címsor 1, a következő szintűnél Címsor 2 és így tovább.</li>
+</ol>
+
+<p>Felsorolások vagy listák elemeinek formázása:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot a formázni kívánt szöveg tetszőleges helyére.</li>
+  <li>Válasszuk a Formátum menü Felsorolás parancsát.</li>
+  <li>Válasszunk stílust:
+    <ul>
+      <li><strong>Számozatlan (felsorolás)</strong>: az elemek elé egy felsorolásjel kerül (hasonlóan ehhez).</li>
+      <li><strong>Számozott</strong>: az elemek elé szám kerül.</li>
+      <li><strong>Kifejezés</strong> és <strong>Definíció</strong>: ez a két stílust együtt használjuk, és így a fogalomtárak stílusának megfelelő formázás alakítható ki. A Kifejezés (DT) kódelemet az ismertetni kívánt fogalom, míg a Definíció (DD) kódelemet a magyarázat szövegének formázására alkalmazzuk. A Kifejezés (DT) stílussal formázott szöveg balra zárt, míg a Definíció (DD) stílusú behúzott lesz.</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Tipp</strong>: a felsorolások formázása egyszerűen végrehajtható, ha kijelöljük a szöveget, és a Formázó eszköztáron a Számozott lista
+  <img src="images/numbers.gif" width="21" height="21" alt="" />
+  vagy a Számozatlan (felsorolás)
+  <img src="images/bullets.gif" width="20" height="20" alt="" />
+  gombra kattintunk.</p>
+
+<p>Felsorolások vagy számozott listák stílusának módosítása:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot a módosítani kívánt elem szövegébe, vagy jelöljünk ki egy vagy több listaelemet, ha az új stílust a teljes listára szeretnénk alkalmazni.</li>
+  <li>Válasszuk a Formátum menü Felsorolás pontját, majd itt a Felsorolás tulajdonságai parancsot.</li>
+  <li>A lenyitható listán válasszunk felsorolásjeles vagy számozott stílust. Számozott listáknál megadható a kezdőszám is. A felsorolásoknál a felsorolásjel módosítható.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a Felsorolás tulajdonságai párbeszédpanel megjeleníthető úgy is, hogy duplán kattintunk egy felsorolásjelre vagy számra.</p>
+
+<p>Bekezdés vagy szöveg igazítása az oldalon, például középre, balra vagy jobbra zárás:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot az igazítani kívánt bekezdés vagy szövegsor tetszőleges helyére.</li>
+  <li>Válasszuk a Formátum menü Igazítás parancsát, és adjuk meg a kívánt beállítást.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: a szöveg igazításához a Formázó eszköztár is használható.</p>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="working_with_lists">Felsorolások és listák kezelése</h2>
+
+<p>Felsorolás vagy lista befejezése, és a szöveg folytatása szövegtörzsként:</p>
+
+<ul>
+  <li>Helyezzük a beszúrási pontot az utolsó listaelem végére, és a felsorolás befejezéséhez nyomjuk meg <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> billentyűt.</li>
+</ul>
+
+<p>Egy vagy több listaelem átalakítása szövegtörzzsé:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot a listaelemen belülre, vagy jelöljük ki a kívánt elemeket.</li>
+  <li>Számozott listánál kattintsunk a Formázó eszköztár számozott lista gombjára, míg felsorolásnál a felsorolás gombra.</li>
+</ol>
+
+<p>Szöveg behúzása listaelem alatt:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot a listaelem szövegébe.</li>
+  <li>Függő behúzás létrehozásához nyomjuk meg <kbd>Shift</kbd>+<kbd class="mac">Return</kbd><kbd
+    class="noMac">Enter</kbd>billentyűkombinációt.</li>
+  <li>Írjuk be a behúzott bekezdés szövegét.</li>
+  <li>Újabb behúzott bekezdés létrehozásához nyomjuk meg a <kbd>Shift</kbd>+<kbd class="mac">Return</kbd><kbd
+    class="noMac">Enter</kbd> billentyűkombinációt, illetve a következő listaelemhez az
+    <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> billentyűt.</li>
+</ol>
+
+<p><strong>Tip</strong>: a listaelemek behúzása megváltoztatható: kattintsunk egy listaelembe, majd a Formázó eszköztáron a Behúzás növelése vagy Behúzás csökkentése gombra. Ugyanez lesz az eredmény, ha a listaelembe kattintunk, megnyomjuk a <kbd>Tab</kbd> billentyűt a behúzás növeléséhez, vagy a
+  <kbd>Shift</kbd>+<kbd>Tab</kbd> billentyűkombinációt a behúzás csökkentéséhez.</p>
+
+<p>Két szomszédos lista egyesítése:</p>
+
+<ol>
+  <li>Jelöljük ki az egyesíteni kívánt listákat. Ügyeljünk arra, hogy mindkét lista összes eleme szerepeljen a kijelölésben. A két lista közötti szöveg is az egyesített lista része lesz.</li>
+  <li>A listák egyesítéséhez kattintsunk a Formázó eszköztáron a számozott lista vagy a felsorolás gombjára.</li>
+</ol>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="changing_text_color_style_and_font">A szöveg színének, stílusának és betűkészletének megadása</h2>
+
+<p>A kijelölt szöveg stílusának, színének vagy betűkészletének módosítása:</p>
+
+<ol>
+  <li>Jelöljük ki a formázni kívánt szöveget.</li>
+  <li>Válasszuk a Formátum menü megfelelő parancsát:
+    <ul>
+      <li><strong>Betűkészlet</strong>: a betűkészlet megadására szolgál. Ha az olvasó böngészőjével megadott betűkészletet szeretnénk használni, válasszuk a Proporcionális vagy a Fix szélességű beállítást.
+
+        <p><strong>Megjegyzés</strong>: itt nem jelenik meg a számítógépre telepített összes betűkészlet. Érdemes olyan betűkészletet választani, amely várhatóan a weboldalt megtekintők gépén is rendelkezésre áll, ezért ez a lista ilyeneket tartalmaz. Például a Helvetica, az Arial, a Times és a Courier általában azonos módon jelenik meg a különböző számítógépeken. Más betűkészlet megadásakor ez nem feltétlenül biztosítható.</p>
+      </li>
+      <li><strong>Méret</strong>: a <em>relatív</em> betűméret beállítására szolgál, illetve a környező szövegnél nagyobb vagy kisebb betűméret adható itt meg.</li>
+      <li><strong>Szöveg stílusa</strong>: a szöveg stílusának beállítására szolgál, ilyen a dőlt, a félkövér és az aláhúzott formázás, illetve összetett stílus is megadható itt, például a Kód.</li>
+      <li><strong>Szövegszín</strong>: a szöveg színének beállítására szolgál. Ha ismerjük a HTML hexadecimális színkódjait, megadhatjuk a színkódot, de beírhatjuk a szín nevét is. Jól használható színkód-átalakító található
+        <a href="http://www.w3.org/TR/CSS21/syndata.html#color-units">itt</a>,
+        és 
+        <a href="http://www.w3schools.com/html/html_colornames.asp">itt</a>.
+      </li>
+    </ul>
+  </li>
+</ol>
+
+<p>Az oldal háttérszínének megváltoztatása:</p>
+
+<ol>
+  <li>Kattintsunk bárhol az oldalon.</li>
+  <li>Kattintsunk a Formázó eszköztáron a háttér színválasztójára.</li>
+  <li>Oldal háttérszíne párbeszédpanelen válasszunk háttérszínt.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a legutóbb használt szövegszín egyszerűen alkalmazható: jelöljük ki a szöveget, tartsuk lenyomva a Shift billentyűt, és kattintsunk a Formázó eszköztáron a szövegszín választójára. Ez akkor lehet hasznos, ha különböző szövegsoroknál ugyanazt a színt szeretnénk használni.</p>
+
+<p>Háttérként képet is használhatunk. Erről lásd
+  <a href="#setting_page_colors_and_backgrounds">Az oldal színeinek és hátterének beállítása</a>.</p>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="removing_or_discontinuing_text_styles">Szövegformázás eltávolítása vagy befejezése</h2>
+
+<p>A kijelölt szöveg összes stílusbeállításának (félkövér, dőlt stb.) eltávolítása:</p>
+
+<ol>
+  <li>Jelöljük ki a kívánt szöveget.</li>
+  <li>Válasszuk a Formátum menü Szövegformázás törlése parancsát.</li>
+  <li>Folytassuk a szöveg beírását.</li>
+</ol>
+
+<p>A szövegbevitel folytatása stílusformázás nélkül:</p>
+
+<ol>
+  <li>Helyezzük oda a beszúrási pontot, ahol le szeretnénk állítani a szövegformázást.</li>
+  <li>Válasszuk a Formátum menü Szövegformázás befejezése parancsát.</li>
+  <li>Folytassuk a szöveg beírását.</li>
+</ol>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="finding_and_replacing_text">Szöveg keresése és cseréje</h2>
+
+<p>Szöveg keresése az aktuális oldalon:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a keresést kezdeni szeretnénk.</li>
+  <li>Válasszuk a Szerkesztés menü Keresés és csere parancsát, vagy nyomjuk meg a Ctrl+F billentyűkombinációt. A Keresése és csere párbeszédpanel jelenik meg.</li>
+  <li>A Keresés mezőbe írjuk be a keresett szöveget. A keresés szűkítéséhez megadhatjuk a következő beállításokat is:
+    <ul>
+      <li><strong>Kis- és nagybetűk különböznek</strong>: a beállítással a kis- és a nagybetűk kezelése adható meg.</li>
+      <li><strong>Folytatás az elejéről</strong>: ezzel a beállítással az oldal végének vagy elejének elérése után a keresés folytatható az elejétől vagy a végétől, attól függően, hogy előre vagy visszafelé keresünk-e.</li>
+      <li><strong>Keresés visszafelé</strong>: bejelölésekor a keresés a beszúrási pont és az oldal kezdete között történik.</li>
+    </ul>
+  </li>
+  <li>A keresés elindításához kattintsunk a Következő találat gombra. Amikor a HTML-szerkesztő megtalálta a keresett szöveg első előfordulását, a keresés a Következő találat gombbal folytatható.</li>
+  <li>Ha befejeztük a műveletet, kattintsunk a Bezárás gombra.</li>
+</ol>
+
+<p>Szöveg keresése és cseréje az aktuális oldalon:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a keresést kezdeni szeretnénk.</li>
+  <li>Válasszuk a Szerkesztés menü Keresés és csere parancsát, vagy nyomjuk meg a Ctrl+F billentyűkombinációt. A Keresése és csere párbeszédpanel jelenik meg.</li>
+  <li>Írjuk be a keresett szöveget, majd azt, amire ezt cserélni szeretnénk.</li>
+  <li>A keresés szűkítéséhez megadhatjuk a következő beállításokat is:
+    <ul>
+      <li><strong>Kis- és nagybetűk különböznek</strong>: a beállítással a kis- és a nagybetűk kezelése adható meg. Ha üresen hagyjuk a négyzetet, a keresés a találatok megállapításánál egyezőnek tekinti a kis- és a nagybetűket.</li>
+      <li><strong>Folytatás az elejéről</strong>: a beállítással a dokumentum végének vagy elejének elérésekor folytatódik a keresés.</li>
+      <li><strong>Keresés visszafelé</strong>: bejelölésekor a keresés a beszúrási pont és az oldal kezdete között történik.</li>
+    </ul>
+  </li>
+  <li>A megadott szöveg következő előfordulásának kereséséhez kattintsunk a Következő találat gombra. A HTML-szerkesztő kijelöli a következő előfordulást.</li>
+  <li>Ha itt végre szeretnénk hajtani a cserét, kattintsunk a Csere gombra.
+    Itt a cseréhez és a következő előfordulás kereséséhez kattintsunk a Csere és keresés gombra. A dokumentumban az összes előfordulás cseréjéhez kattintsunk a Mindet cseréli gombra.</li>
+  <li>Ha befejeztük a műveletet, kattintsunk a Bezárás gombra.</li>
+</ol>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="inserting_horizontal_lines">Vízszintes vonal beszúrása</h2>
+
+<p>Vízszintes vonalakkal a dokumentum különböző szakaszai választhatók el egymástól. Vízszintes vona (tipográfiai elnevezése <em>lénia</em>)
+  beszúrásához induljunk ki a HTML-szerkesztő ablakából:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a vonalat szeretnénk megjeleníteni.</li>
+  <li>Válasszuk a Beszúrás menü Vízszintes vonal parancsát.</li>
+</ol>
+
+<h3 id="setting_horizontal_line_properties">A vízszintes vonal tulajdonságainak beállítása</h3>
+
+<p>A vonal hosszúsága, vastagsága, igazítása és árnyékolása adható meg.</p>
+
+<ol>
+  <li>A Vízszintes vonal tulajdonságai párbeszédpanel megjelenítéséhez kattintsunk duplán a vonalra.</li>
+  <li>Ezen a következő tulajdonságok módosíthatók:
+    <ul>
+      <li><strong>Szélesség</strong>: írjuk be a szélességet, és válasszunk mértékegységet: ez az ablakméret százaléka vagy képpont lehet. A szélesség százalékos megadásánál a megjelenített vonal szélessége a böngészőablak méretével együtt változni fog.</li>
+      <li><strong>Magasság</strong>: írjuk be a vonal magasságát (képpontban).</li>
+      <li><strong>3D-s árnyékolás</strong>: választásakor árnyékolással térhatású vonal jeleníthető meg.</li>
+      <li><strong>Igazítás</strong>: itt a vonal igazítását állíthatjuk be (balra, középre vagy jobbra).</li>
+    </ul>
+  </li>
+  <li>A Legyen ez az alapbeállítás választásával a megadott beállítások az ezután beszúrt vízszintes vonalakra is érvényesek lesznek.</li>
+  <li>A vízszintes vonal tulajdonságainak kézi szerkesztéséhez kattintsunk a Haladó szerkesztés gombra. További tudnivalók,
+    <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a>.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a Nézet menü Minden HTML tag megjelenítése parancsával a HTML elemeket sárga színű keretben jeleníthetjük meg. Egy ilyenre kattintva a HTML elemen belüli összes részt kijelölhetjük. Dupla kattintással a
+  <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a>
+  párbeszédpanel jeleníthető meg.</p>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="inserting_special_characters">Különleges karakterek beszúrása</h2>
+
+<p>Különleges karakterek beszúrása (ilyen például a copyright szimbólum vagy a pénznemek jelei:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a különleges karaktert szeretnénk megjeleníteni.</li>
+  <li>Válasszuk a Beszúrás menü Karakterek és szimbólumok parancsát. A Karakter beillesztése párbeszédpanel jelenik meg.</li>
+  <li>Válasszunk kategóriát.
+    <ul>
+      <li>Az Ékezetes nagybetű vagy az Ékezetes kisbetű választásakor a Betű lista lenyitása után kijelölhető a kívánt betű. (Megjegyzés: nem minden betűre kerülhet ékezet.) Az Általános szimbólumok választásakor a szokásos különleges karakterek szúrhatók be.</li>
+    </ul>
+  </li>
+  <li>A Karakter lenyitható listán jelöljük ki a beszúrni kívánt karaktert.</li>
+  <li>Kattintsunk a Beszúrás gombra. 
+
+    <p>A párbeszédpanel nyitva hagyható, folytatható a szöveg beírása, így bármikor egyszerűen beszúrható különleges karakter.</p>
+  </li>
+  <li>Ha már nincs szükség különleges karakter beszúrására, kattintsunk a Bezárás gombra.</li>
+</ol>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="inserting_html_elements_and_attributes">HTML elemek és attribútumok beszúrása</h2>
+
+<p>Ha ismerjük a HTML forráskód működését, további kódelemeket, stílusattribútumokat és JavaScript kódot is beszúrhatunk az oldalra. Ha bizonytalanok vagyunk a változtatások eredményében, leghelyesebb, ha nem módosítjuk a forráskódot. A HTML kóddal való munkánál a következő módszereket használhatjuk:</p>
+
+<ul>
+  <li>Helyezzük a beszúrási pontot oda, ahol a HTML kódot szeretnénk beszúrni, vagy jelöljük ki a szerkeszteni kívánt szöveget, majd válasszuk a Beszúrás menü HTML parancsát. A HTML beszúrása párbeszédpanelen írjuk be a HTML kódelemeket és a szöveget, majd kattintsunk a Beszúrás gombra.</li>
+  <li>Select an element such as a table, named anchor, image, link, Jelöljünk ki egy elemet, például táblázatot, horgonyt, képet, hivatkozást vagy vízszintes vonalat. Az elemhez tartozó tulajdonságbeállító párbeszédpanel megnyitásához kattintsunk duplán az elemre. A Haladó tulajdonságok szerkesztése párbeszédpanel megnyitásához kattintsunk a Haladó szerkesztés gombra. Ezen a párbeszédpanelen HTML-attribútum, JavaScript-kód és stíluslap vehető fel az objektumokhoz.</li>
+  <li>Válasszuk a Nézet menü HTML forrás parancsát, vagy a HTML-szerkesztő ablak alján a Szerkesztő mód eszköztáron váltsunk át a &lt;HTML&gt; forrás panellapra.
+    (Ha nem látható a Szerkesztő mód eszköztár, válasszuk a Nézet menü Eszköztárak parancsát, és jelöljük be az eszköztárat.)</li>
+</ul>
+
+<h3 id="using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</h3>
+
+<p>Az objektumokhoz, ilyen lehet a táblázat, a kép vagy a vízszintes vonal, HTML attribútumok és JavaScript kód felvételéhez használhatjuk a Haladó tulajdonságok szerkesztése párbeszédpanelt.</p>
+
+<p><strong>Megjegyzés</strong>: csak akkor válasszuk ezt a szolgáltatást, ha tisztában vagyunk a HTML attribútumok és kapcsolódó értékeik megadásával, törlésével vagy módosításával.</p>
+
+<p>A Haladó tulajdonságok szerkesztése párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Nézet menü Minden HTML tag megjelenítése parancsát (a megfelelő gomb a Szerkesztő mód eszköztáron is elérhető).</li>
+  <li>A módosítani kívánt objektumra duplán kattintva megjelenik a Tulajdonságok párbeszédpanel.</li>
+  <li>Az objektum Haladó tulajdonságok szerkesztés párbeszédpaneljének megnyitásához kattintsunk a Haladó szerkesztés gombra. Ezen három panellap található, amelyeken a kijelölt objektum aktuális tulajdonságai láthatók:
+    <ul>
+      <li><strong>HTML attribútumok</strong>: ezen a panellapon a HTML attribútumok jelennek meg, és továbbiak is beírhatók.</li>
+      <li><strong>Beágyazott stílus</strong>: ezen a panellapon a
+        &lt;style&gt; attribútummal megadott stíluslap (CSS) tulajdonságai tekinthetők meg, és újabbak is megadhatók. További tudnivalók a stíluslapok használatáról
+        <a href="#composer">A HTML-szerkesztő beállításai – HTML-szerkesztő</a>.</li>
+      <li><strong>JavaScript események</strong>: ezen a panellapon a JavaScript események láthatók, és továbbiak is beírhatók.</li>
+    </ul>
+  </li>
+  <li>A három lista bármelyikén lévő tulajdonság vagy attribútum szerkesztéséhez jelöljük ki a kívánt elemet. Ekkor az attribútum neve és értéke a párbeszédpanel alján lévő Attribútum és Érték mezőben szerkeszthető. Új attribútum szerkesztéséhez írjuk be azt az Attribútum mezőbe. Az új attribútum automatikusan felkerül a listára, amikor az Érték mezőbe kattintunk. Attribútum eltávolításához jelöljük azt ki a listán, és kattintsunk az Eltávolítás gombra.
+
+    <p><strong>Megjegyzés</strong>: a kötelező attribútumok kiemelve jelennek meg a listán.</p>
+  </li>
+  <li>A módosítások érvénybe léptetéséhez kattintsunk az OK gombra.</li>
+  <li>A Tulajdonságok párbeszédpanel bezárásához ismét kattintsunk az OK gombra.</li>
+</ol>
+
+<p>A HTML-szerkesztő automatikusan elhelyezi az idézőjeleket az attribútumok szövegénél.</p>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="validating_the_html">A HTML érvényesítése</h2>
+
+<p>Mielőtt egy kiszolgálón elhelyeznénk az elkészített dokumentumot, hogy így mások is megtekinthessék a weboldalakat, ellenőrizni kell a dokumentum HTML formázásait, hogy az megfelel-e a webes szabványoknak. Az érvényesített HTML kódot tartalmazó dokumentumoknál sokkal kisebb a valószínűsége, hogy problémát okoznak más böngészőkben. Önmagában a Böngészőben végrehajtott vizuális ellenőrzés nem biztosítja, hogy a dokumentum más böngészőkben is megfelelően megjelenik.</p>
+
+<p>A HTML-szerkesztővel egyszerűen ellenőrizhető, hogy a dokumentum megfelel-e a W3C (World Wide Web Consortium) szabványainak. A HTML-szerkesztő a W3C HTML érvényesítő szolgáltatását használja, amely a HTML 4.01 szabványok szerint ellenőrzi a dokumentum HTML szintaxisát. A szolgáltatás javaslatokat tesz az esetleges hibák javítására is.</p>
+
+<p><strong>Megjegyzés</strong>: a szolgáltatás használatához internetkapcsolat szükséges.</p>
+
+<p>A dokumentum HTML szintaxisának ellenőrzése:</p>
+
+<ol>
+  <li>Válasszuk a Feladatok menü HTML ellenőrzése parancsát. Ha nem mentett változtatások találhatók a dokumentumban, a HTML-szerkesztő a folytatás előtt ezek mentését kéri.</li>
+  <li>Amikor megjelenik a W3C HTML Validation Service oldal, kattintsunk a <q>Browse</q> (Tallózás) gombra, és a merevlemezen keressük meg az ellenőrizni kívánt fájlt.</li>
+  <li>Kattintsunk az <q>Check</q> (Ellenőrzés) gombra.</li>
+</ol>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="choosing_the_right_editing_mode">A megfelelő szerkesztési mód választása</h2>
+
+<p>Általában nem szükséges megváltoztatni az alapértelmezett (Normál) szerkesztési üzemmódot. Ha viszont a dokumentum HTML forráskódjával szeretnénk dolgozni, erre is sor kerülhet.</p>
+
+<p>A HTML-szerkesztőben nagyon egyszerűen válthatunk a négy szerkesztési üzemmód (vagy nézet) között.
+  Valamennyi üzemmódban folytathatjuk a munkát a dokumentumon, azonban a HTML kódelemek (és ikonok) különböző szintjeit látjuk.</p>
+
+<p>A szerkesztési üzemmód választása előtt:</p>
+
+<ul>
+  <li>Válasszuk a Nézet menü Eszköztárak parancsát, és ellenőrizzük a Szerkesztő mód eszköztár bejelölését.</li>
+</ul>
+
+<p>A Szerkesztő mód eszköztáron négy fül található:</p>
+
+<ul>
+  <li><strong>Normál</strong>: ebben a szerkesztési üzemmódban a dokumentum készítése közben is úgy tekinthető meg, ahogy majd a böngészőben fog megjelenni. Ebben az üzemmódban láthatók a táblázatok szegélyei és a horgonyikonok, de az összes többi HTML kódelem rejtett.</li>
+  <li><strong>Minden HTML tag megjelenítése</strong>: ebben az üzemmódban az összes HTML kódelem ikonja látható.</li>
+  <li><strong>&lt;HTML&gt; forrás</strong>: ezt az üzemmódot akkor érdemes választani, ha a formázás nélküli HTML forráskódot szeretnénk megtekinteni és szerkeszteni. Amikor mentjük a dokumentumot, az újból Normál üzemmódban jelenik meg.</li>
+  <li><strong>Előnézet</strong>: ebben az üzemmódban a dokumentum pontosan úgy jelenik meg, ahogy a böngésző ablakában is látszani fog, a különbség annyi, hogy a JavaScript funkciók nem működnek.</li>
+</ul>
+
+<p><strong>Megjegyzés</strong>: a JavaScript-kód, a keretek, a hivatkozások, a Java, a beágyazptt objektumok és az animált GIF-fájlok egyik szerkesztési üzemmódban sem aktívak. Ezeknek az elemeknek a működése a böngésző ablakában ellenőrizhető: ehhez kattintsunk a Szerkesztés eszköztáron a Megtekintés gombra.</p>
+
+<p>[<a href="#formatting_your_web_pages">Vissza a fejezet elejére</a>]</p>
+
+<h1 id="adding_tables_to_your_web_page">Táblázatok használata a weboldalakon</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#inserting_a_table">Táblázat beszúrása</a></li>
+    <li><a href="#changing_a_tables_properties">A táblázat tulajdonságainak módosítása</a></li>
+    <li><a href="#adding_and_deleting_rows_columns_and_cells">Sorok, oszlopok és cellák beszúrása és törlése</a></li>
+    <li><a href="#selecting_table_elements">Táblázatelemek kijelölése</a></li>
+    <li><a href="#moving_copying_and_deleting_tables">Táblázatok áthelyezése, másolása és törlése</a></li>
+    <li><a href="#converting_text_into_a_table">Szöveg átalakítása táblázattá</a></li>
+  </ul>
+</div>
+
+<h2 id="inserting_a_table">Táblázat beszúrása</h2>
+
+<p>A táblázatok segítségével a szöveg, a képek és az egyéb adatok sorokba és oszlopokba rendezhetők. Táblázat beszúrása:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a táblázatot szeretnénk megjeleníteni.</li>
+  <li>A Szerkesztés eszköztáron kattintsunk a Táblázat
+    <img src="images/table.gif" width="25" height="26" alt="" /> gombra. A Táblázat beszúrása párbeszédpanel jelenik meg.</li>
+  <li>Adjuk meg a sorok és az oszlopok számát.
+    <ul>
+      <li>(Választható) Adjuk meg a táblázat szélességét, és jelöljük ki a mértékegységet (képpont vagy az ablak százaléka).</li>
+    </ul>
+  </li>
+  <li>Írjuk be a szegély vastagságát (képpontban), nulla érték megadásakor nem lesz szegély.
+  
+    <p><strong>Megjegyzés</strong>: a HTML-szerkesztő piros pontozott vonallal jelöli a szegély nélküli táblázatokat, ez azonban a böngészőben nem jelenik meg.</p>
+  </li>
+  <li>További attribútumok vagy JavaScript kód adható meg a
+    <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a>.
+  </li>
+  <li>párbeszédpanelen, ha a Haladó szerkesztés gombra kattintunk.</li>
+</ol>
+
+<p>Az új táblázat további tulajdonságainak beállításáról lásd
+  <a href="#changing_a_tables_properties">A táblázat tulajdonságainak módosítása</a>.
+</p>
+
+<p><strong>Tipp</strong>: táblázatot másik táblázatba is beszúrhatunk, ehhez válasszuk a Beszúrás menü Táblázat parancsát.</p>
+
+<p>[<a href="#adding_tables_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="changing_a_tables_properties">A táblázat tulajdonságainak módosítása</h2>
+
+<p>Ez a fejezet a táblázat, valamint a sorok, az oszlopok és az egyes cellák tulajdonságainak beállításait ismerteti. A Táblázat tulajdonságai párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Jelöljük ki a táblázatot, vagy kattintsunk bárhol azon belül.</li>
+  <li>Kattintsunk az eszköztáron a Táblázat
+    <img src="images/table.gif" width="25" height="26" alt="" /> gombra, vagy válasszuk a Táblázat menü Táblázat tulajdonságai parancsát. A Táblázat tulajdonságai párbeszédpanel két panellapból áll: Táblázat és Cellák.</li>
+  <li>A Táblázat panellapon a következő tulajdonságok állíthatók be:
+    <ul>
+      <li><strong>Méret</strong>: a sorok és az oszlopok száma adható itt meg. Emellett beállítható a táblázat szélessége is, valamint ennek mértékegysége: ez az ablakméret százaléka vagy képpont lehet. A szélesség százalékos megadásánál a megjelenített táblázat a böngészőablak méretével együtt változni fog.</li>
+      <li><strong>Szegély és térköz</strong>: a szegélyvonal vastagsága, a cellák közötti térköz, valamint a cellák szegélye és a szöveg közötti távolság adható itt meg.
+
+        <p><strong>Megjegyzés</strong>: a HTML-szerkesztő pontozott vonallal jelöli a szegély nélküli táblázatokat, ez azonban a böngészőben nem jelenik meg.</p>
+      </li>
+      <li><strong>Táblázat igazítása</strong>: a táblázat oldalon elfoglalt helyének megadására szolgál. A kívánt beállítás a lenyitható listán választható.</li>
+      <li><strong>Cím</strong>: a kívánt elhelyezés a lenyitható listán választható.</li>
+      <li><strong>Háttérszín</strong>: a táblázat hátterének színe adható itt meg.</li>
+    </ul>
+  </li>
+  <li>További attribútumok vagy JavaScript események adhatók meg a <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a>.
+  </li>
+  <li>Az Alkalmaz gombra kattintva a beállítások érvénybe léptethetők a párbeszédpanel bezárása nélkül, míg az OK gombbal a beállítások érvénybe léptetése után a párbeszédpanel bezáródik.</li>
+</ol>
+
+<p>Egy vagy több cella tulajdonságainak megtekintése, módosítása vagy felvétele:</p>
+
+<ol>
+  <li>Jelöljük ki a kívánt sort, oszlopot vagy cellát, majd válasszuk a Táblázat menü Táblázat tulajdonságai parancsát. A Táblázat tulajdonságai párbeszédpanel jelenik meg.</li>
+  <li>A Cellák panellapon a következő tulajdonságok állíthatók be:
+    <ul>
+      <li><strong>Kijelölés</strong>: válasszuk a lenyitható lista Cella, Sor vagy Oszlop elemét. Az Előző és a Következő gombbal bejárhatjuk a sorokat, az oszlopokat vagy a cellákat.</li>
+      <li><strong>Méret</strong>: adjuk meg a Magasság és a Szélesség értékét, valamint a mértékegységet (táblázat százaléka vagy képpont).</li>
+      <li><strong>Tartalom igazítása</strong>: a cellák tartalmának függőleges és vízszintes igazítása állítható itt be.</li>
+      <li><strong>Cella stílusa</strong>: a Fejléc választásával az oszlopok vagy a sorok fejlécei adhatók meg (középre zárt és félkövér formázás), a Normál a szokásos cellákat jelöli.</li>
+      <li><strong>Szövegtörés</strong>: válasszuk a Ne törjön beállítást, ha a szöveget nem szeretnénk sorokra törni, ekkor csak az új bekezdés kerül új sorba. A másik választási lehetőség a Törjön.</li>
+      <li><strong>Háttérszín</strong>: itt jelölhető ki a cellák háttérszíne, vagy átlátszónak hagyása.
+
+        <p><strong>Megjegyzés</strong>: További attribútumok vagy JavaScript események adhatók meg a
+          <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a> párbeszédpanelen, ha a Haladó szerkesztés gombra kattintunk
+        </p>
+      </li>
+    </ul>
+  </li>
+  <li>Az Alkalmaz gombra kattintva a beállítások érvénybe léptethetők a párbeszédpanel bezárása nélkül, míg az OK gombbal a beállítások érvénybe léptetése után a párbeszédpanel bezáródik.</li>
+</ol>
+
+<p><strong>Tipp</strong>: egy vagy több kijelölt cella, illetve a teljes táblázat szövegszínének vagy háttérszínének megadásához jelöljük ki a kívánt cellákat, illetve kattintsunk bárhol a táblázatba, majd kattintsunk a Formázó eszköztár szövegszín vagy háttérszín ikonjára.</p>
+
+<p><strong>Tipp</strong>: a legutóbb használt cellaszín egyszerűen alkalmazható: jelöljük ki a cellát, tartsuk lenyomva a Shift billentyűt, és kattintsunk a színválasztóra.
+  Ez akkor lehet hasznos, ha különböző celláknál ugyanazt a színt szeretnénk használni.</p>
+
+<p>[<a href="#adding_tables_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="adding_and_deleting_rows_columns_and_cells">Sorok, oszlopok és cellák beszúrása és törlése</h2>
+
+<p>A HTML-szerkesztőben egyszerűen bővíthetjük új cellákkal, oszlopokkal vagy sorokkal a táblázatot, illetve törölhetjük is ezeket. Emellett ezeknél a műveleteknél megfelelő beállításokkal megtarthatjuk a táblázat eredeti alakját vagy elrendezését.</p>
+
+<p>Cella, sor vagy oszlop felvétele a táblázatba:</p>
+
+<ol>
+  <li>A táblázatban kattintsunk arra a helyre, ahol az új cellát vagy cellákat szeretnénk elhelyezni.</li>
+  <li>Válasszuk a Táblázat menü Beszúrás parancsát.</li>
+  <li>Válasszunk a lehetséges cellacsoportosítások közül. (Egy táblázatcellába új táblázatot is beszúrhatunk.)</li>
+</ol>
+
+<p>Cella, sor vagy oszlop törlése:</p>
+
+<ol>
+  <li>Kattintsunk a kívánt sorba, oszlopba vagy cellába. Egynél több sor törléséhez kijelölhetünk szomszédos cellákat is. Szomszédos cellák kijelöléséhez húzzuk végig az egeret a kívánt cellákon.
+    Egyedi cellák kijelöléséhez tartsuk lenyomva a
+    <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd> billentyűt, és így kattintsunk sorban a kívánt cellákra.</li>
+  <li>Válasszuk a Táblázat menü Törlés parancsát.</li>
+  <li>Adjuk meg a törölni kívánt elemet.</li>
+</ol>
+
+<p>Cella egyesítése a jobbra lévő cellával:</p>
+
+<ul>
+  <li>Kattintsunk a kívánt cellába, és válasszuk a Táblázat menü Egyesítés a jobbra lévő cellával parancsát.</li>
+</ul>
+
+<p>Szomszédos cellák egyesítése:</p>
+
+<ul>
+  <li>Az egér húzásával jelöljük ki a kívánt szomszédos cellákat.</li>
+  <li>Válasszuk a Táblázat menü Kijelölt cellák egyesítése parancsát.</li>
+</ul>
+
+<p>Egyesített cella felosztása két vagy több cellára:</p>
+
+<ul>
+  <li>Kattintsunk az egyesített cellába, és válasszuk a Táblázat menü Cella felosztása parancsát. A HTML-szerkesztő az egyesített cella tartalmát az első cellában helyezi el.</li>
+</ul>
+
+<p>További tudnivalók nem szomszédos cellák, sorok és oszlopok kijelöléséről lásd <a href="#selecting_table_elements">Táblázatelemek kijelölése</a></p>
+
+<h3 id="changing_the_default_table_editing_behavior">A táblázatszerkesztési műveletek alapértelmezett hatásának beállítása</h3>
+
+<p>Amikor egy vagy több cellát törlünk, a HTML-szerkesztő alapértelmezés szerint megtartja a táblázat eredeti felépítését, ehhez cellákat vesz fel a kívánt helyen. Így lehetővé válik, hogy cellák törlése után is megmaradjon az eredeti, téglalap alakú elrendezés. Ellenkező esetben a cellák törlése nyomán üres helyek alakulhatnak ki a táblázatban, illetve páratlan számú cellánál az szabálytalan körvonalú lesz.</p>
+
+<p>A táblázatszerkesztési műveletek hatásának megadásához induljunk ki a HTML-szerkesztő ablakából:</p>
+
+<ol>
+  <li>Válasszunk a <span class="mac">&brandShortName;</span><span class="noMac">Szerkesztés</span> menün a Beállítások, majd a HTML-szerkesztő parancsot.</li>
+  <li>A Szerkesztés csoportban adjuk meg a következő beállítást:
+    <ul>
+      <li>Cellák beszúrásakor vagy törlésekor megtartja a táblázat szerkezetét négyzet legyen bejelölve, hogy ne kaphassunk szabálytalan alakú táblázatot.</li>
+    </ul>
+  </li>
+  <li class="win">Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>Lásd még <a href="#composer">A HTML-szerkesztő beállításai – HTML-szerkesztő</a>.</p>
+
+<p>[<a href="#adding_tables_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="selecting_table_elements">Táblázatelemek kijelölése</h2>
+
+<p>Táblázat, cella vagy cellacsoport kijelölése két módon történhet:</p>
+
+<ul>
+  <li>Kattintsunk a táblázatba, válasszuk a Táblázat menü Kijelölés parancsát, majd az almenün a kívánt elemet. Például táblázat kijelöléséhez kattintsunk bárhol a táblázatba, és válasszuk a Táblázat menün a Kijelölés, majd a Táblázat parancsot.</li>
+  <li>A másik módszernél az egeret használjuk kijelölőeszközként:
+    <ul>
+      <li>Szomszédos cellák kijelölése: kattintsunk egy cellába, és húzzuk végig az egeret a kívánt cellákon. Sor kijelöléséhez balra vagy jobbra, oszlop kijelöléséhez felfelé vagy lefelé húzzuk az egeret.</li>
+      <li>Nem szomszédos cellák kijelölése: nyomjuk le a <kbd class="mac">Cmd</kbd>
+        <kbd class="noMac">Ctrl</kbd> billentyűt, és kattintsunk egy cellába. Tartsuk lenyomva a <kbd class="mac">Cmd</kbd> <kbd class="noMac">Ctrl</kbd>
+        billentyűt, és kattintsunk sorban a kívánt cellákra.</li>
+      <li>A kijelölés kiterjesztése a szomszédos cellákra: kattintsunk egy cellába, és húzzuk végig az egeret a kívánt cellákon.</li>
+      <li>Egy, illetve több szomszédos oszlop vagy sor kijelölése: az egér húzásával jelöljük ki az első oszlopot vagy sort, majd az egér megfelelő irányú húzásával bővítsük a kijelölést a szomszédos oszlopokkal vagy sorokkal. Teljes sor kijelöléséhez tartsuk lenyomva a <kbd>Shift</kbd>
+        billentyűt, és húzzuk az egeret jobbra vagy balra. Teljes oszlop kijelöléséhez tartsuk lenyomva a <kbd>Shift</kbd>
+        billentyűt, és húzzuk az egeret felfelé vagy lefelé.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>[<a href="#adding_tables_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="moving_copying_and_deleting_tables">Táblázatok áthelyezése, másolása és törlése</h2>
+
+<p>Táblázat áthelyezése:</p>
+
+<ol>
+  <li>Kattintsunk a táblázatba.</li>
+  <li>Válasszuk a Táblázat menün a Kijelölés, majd a Táblázat parancsot.</li>
+</ol>
+
+<ul>
+  <li>A táblázat másolása vagy áthelyezése: használjuk a Szerkesztés menü Kivágás, Másolás és Beillesztés parancsát.</li>
+  <li>A táblázat törlése: válasszuk a Táblázat menün a Törlés, majd a Táblázat parancsot.</li>
+</ul>
+
+<p>[<a href="#adding_tables_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="converting_text_into_a_table">Szöveg átalakítása táblázattá</h2>
+
+<p>A művelet végrehajtásának lépései:</p>
+
+<ol>
+  <li>Jelöljük ki az átalakítani kívánt szöveget. Ügyeljünk arra, hogy a HTML-szerkesztő új táblázatsort hoz létre a kijelölés minden egyes bekezdéséhez.</li>
+  <li>Válasszuk a Táblázat menü Szövegből táblázat parancsát. A Táblázattá alakítás párbeszédpanel jelenik meg.</li>
+  <li>Válasszunk a HTML-szerkesztő oszlopelválasztó karakterei közül, vagy adjunk meg másikat. A szóköz választásakor adjuk meg azt is, hogy az ismétlődő szóközök egynek számítsanak-e.</li>
+  <li>Hagyjuk bejelölve az <q>Elválasztó karakter törlése</q> négyzetet, ha azt szeretnénk, hogy a HTML-szerkesztő az átalakítás után törölje ezeket. Ha az elválasztó karakterek törlésére nincs szükség, töröljük a négyzet jelölését.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: a szövegformázás elveszik, amikor a kijelölt szöveget táblázattá alakítjuk.</p>
+
+<p>[<a href="#adding_tables_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h1 id="adding_images_to_your_web_page">Képek felvétele a weboldalra</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#inserting_an_image_into_your_page">Kép beszúrása az oldalra</a></li>
+    <li><a href="#editing_image_properties">Kép tulajdonságainak szerkesztése</a></li>
+  </ul>
+</div>
+
+<h2 id="inserting_an_image_into_your_page">Kép beszúrása az oldalra</h2>
+
+<p>A weboldalra GIF, JPEG, BMP és PNG (Portable Network Graphics) formátumú képeket szúrhatunk be. Ezek
+  <a href="#using_images_as_links">hivatkozások létrehozásához</a>. is használhatók. Amikor képet szúrunk be, a HTML-szerkesztő a kép hivatkozását menti a weboldalon.</p>
+
+<p><strong>Megjegyzés</strong>: ha az oldalakat webkiszolgálón kívánjuk közzétenni, ne használjunk BMP formátumú képeket.</p>
+
+<p><strong>Tipp</strong>: képek beszúrása előtt érdemes menteni az oldalt. Ez lehetővé teszi a HTML-szerkesztő számára, hogy automatikusan a képek relatív hivatkozását használja.</p>
+
+<p>Kép beszúrása:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a képet szeretnénk megjeleníteni.</li>
+  <li>Kattintsunk az eszköztáron a Kép
+    <img src="images/image.gif" width="23" height="25" alt="" />
+    gombra, vagy válasszuk a Beszúrás menü Kép parancsát. A Kép tulajdonságai párbeszédpanel jelenik meg.</li>
+  <li>Adjuk meg a képfájl helyét és nevét, vagy kattintsunk a Tallózás gombra, és keressük meg a fájlt a merevlemezen vagy a hálózaton.</li>
+  <li>Adjuk meg a kép rövid leírását, ez a szöveges böngészőkben a kép helyett, illetve a többi böngészőben a kép betöltésének idején vagy betöltési hibánál jelenik meg. 
+
+    <p>A magyarázó szöveg megadása nem kötelező.</p>
+  </li>
+  <li>Ha szükséges, váltsunk át a többi panellapra is, így további tulajdonságok (például igazítás) is beállíthatók a
+    <a href="#editing_image_properties">Kép tulajdonságai</a> párbeszédpanelen.</li>
+</ol>
+
+<p><strong>Tipp</strong>: kép gyors beszúrásához az egérrel húzzuk át a képet a weboldalra.</p>
+
+<p><strong>Tipp</strong>: ha egy bekezdés összes képe után sortörést szeretnénk elhelyezni, válasszuk a Beszúrás menü Sortörés a képek alatt parancsát.</p>
+
+<p>[<a href="#adding_images_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="editing_image_properties">Kép tulajdonságainak szerkesztése</h2>
+
+<p>Miután beszúrtuk a képet az oldalra, tulajdonságainak szerkesztésével megadhatjuk elhelyezkedését az oldalon: így magasságát, szélességét, a térközöket és a szövegigazítást. A Kép tulajdonságai párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>A Kép tulajdonságai párbeszédpanel megjelenítéséhez kattintsunk duplán a képre, vagy jelöljük azt ki, és kattintsunk az eszköztáron a Kép
+    <img src="images/image.gif" width="23" height="25" alt="" /> gombra.</li>
+  <li>A Hely panellapon a következő tulajdonságok állíthatók be:
+    <ul>
+      <li><strong>Kép URL</strong>: írjuk be a képfájl helyét és nevét. A Tallózás gombra kattintva a fájlt megkereshetjük a merevlemezen vagy a hálózaton.</li>
+      <li><strong>Az URL relatív az oldal elhelyezkedéséhez képest</strong>: ha bejelöljük, a HTML-szerkesztő az oldal helyéhez viszonyított relatív címmé alakítja a megadott webcímet. Ez különösen akkor hasznos, ha az oldalakat webkiszolgálón szeretnénk majd közzétenni. Relatív webcímek használatakor az összes csatolt fájlt a merevlemezen vagy a webkiszolgálón elfoglalt tényleges helyüktől függetlenül egymáshoz képest azonos helyen tarthatjuk.
+
+        <p>A négyzet jelölésének törlésekor a HTML-szerkesztő teljes (abszolút) címmé alakítja a megadott webcímet. Általában akkor használunk abszolút webcímeket, amikor más webkiszolgálókon (nem a helyi merevlemezen tárolt) lévő képeket csatolunk).</p>
+
+        <p>Ha nem mentett változtatások találhatók a weboldalon, a négyzet csak mentés után jelölhető be. (A négyzet nem áll rendelkezésre, ha a Kép tulajdonságai párbeszédpanelt üzenetszerkesztési ablakból nyitottuk meg.)</p>
+      </li>
+      <li><strong>Képcsatolása az üzenethez</strong>: Amennyiben ez a jelölőnégyzet ki van választva a kép csatolva lesz az üzenethez. Ha ez a lehetőség nincs kiválasztva a képre mutató hivatkozás kerül beillesztésre. (Ez a jelölőnégyzet csak akkor jelenik meg, ha a Kép tulajdonságai párbeszédablak meg van nyitva az üzenetszerkesztő ablakban.)</li>
+      <li><strong>Magyarázó szöveg</strong>: itt adhatjuk meg a kép helyén megjelenő szöveget, amely címfelirat vagy rövid leírás lehet. Érdemes ezt beírni a szöveges webböngészőt használók számára, illetve azoknak, akik kikapcsolták a képek letöltését.</li>
+      <li><strong>Ne használjon magyarázó szöveget</strong>: választásával azt jelezzük, hogy a kép nem igényel magyarázó szöveget, illetve nem akarunk ilyet megadni.</li>
+    </ul>
+  </li>
+  <li>CA Méretek panellapon a következő tulajdonságok állíthatók be:
+    <ul>
+      <li><strong>Valódi méret</strong>: a beállítással a végrehajtott változtatások elvetésével a kép eredeti méretei állíthatók vissza.</li>
+      <li><strong>Egyéni méret</strong>: választása után adjuk meg a kívánt magasságot és szélességet képpontban vagy százalékértékkel. A beállítás nem érinti az eredeti képfájlt, csak az oldalra beszúrt képre van hatással.</li>
+      <li><strong>Rögzített méretarány</strong>: ha módosítjuk a kép méretét, érdemes bejelölni ezt a négyzetet a kép méretarányának fenntartásához (így nem válhat torzítottá). Bekapcsolásakor elegendő megadni az egyik méretet (a magasságot vagy a szélességet).</li>
+    </ul>
+  </li>
+  <li>A Megjelenés panellapon a következő tulajdonságok állíthatók be:
+    <ul>
+      <li><strong>Kép körüli térköz</strong>: adjuk meg a kép és a környező szöveg közötti térköz mértékét. A képhez fekete szegély rendelhető, és megadhatjuk ennek vonalvastagságát. Nulla érték megadásakor nem lesz szegély a kép körül.</li>
+      <li><strong>Szöveg a kép körül</strong>: ha a képet szöveg közelében helyeztük el, itt megadhatjuk a szöveg képhez viszonyított igazítását.</li>
+      <li><strong>Hivatkozástérkép</strong>: az Eltávolítás gombra kattintva az esetleges ilyen beállítások törölhetők.</li>
+    </ul>
+  </li>
+  <li>A Hivatkozás panellapon a következő tulajdonságok állíthatók be:
+    <ul>
+      <li><strong>Weboldal megadása</strong>: ha a képhez hivatkozást szeretnénk megadni, írjuk be a távoli vagy a helyi weboldal URL-címét, illetve jelöljünk ki horgonyt vagy címsort a lenyitható listán. A Tallózás gombra kattintva a fájlt megkereshetjük a merevlemezen vagy a hálózaton.</li>
+      <li><strong>Az URL relatív az oldal elhelyezkedéséhez képest</strong>: alakítja a megadott webcímet. Ez különösen akkor hasznos, ha az oldalakat webkiszolgálón szeretnénk majd elhelyezni. Relatív webcímek használatakor az összes csatolt fájlt a merevlemezen vagy a webkiszolgálón elfoglalt tényleges helyüktől függetlenül egymáshoz képest azonos helyen tarthatjuk.
+
+        <p>A négyzet jelölésének törlésekor a HTML-szerkesztő teljes (abszolút) címmé alakítja a megadott webcímet. Általában akkor használunk abszolút webcímeket, amikor más webkiszolgálókon (nem a helyi merevlemezen tárolt) lévő képeket csatolunk.</p>
+
+        <p>Ha nem mentett változtatások találhatók a weboldalon, a négyzet csak mentés után jelölhető be. (A négyzet nem áll rendelkezésre, ha a Kép tulajdonságai párbeszédpanelt üzenetszerkesztési ablakból nyitottuk meg.)</p>
+      </li>
+      <li><strong>Szegély megjelenítése a kép körül</strong>: bejelölésekor a hivatkozások kiemelési színének megfelelő szegély jelenik meg a kép körül.</li>
+    </ul>
+  </li>
+  <li>További attribútumok vagy JavaScript események adhatók meg a <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a> párbeszédpanelen, ha a Haladó szerkesztés gombra kattintunk.
+  </li>
+  <li>A változtatások érvényesítéséhez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[<a href="#adding_images_to_your_web_page">Vissza a fejezet elejére</a>]</p>
+
+<h1 id="setting_page_properties">Oldaltulajdonságok beállítása</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#setting_page_properties_and_meta_tags">Oldaltulajdonságok és metakódelemek beállítása</a></li>
+    <li><a href="#setting_page_colors_and_backgrounds">Az oldal színeinek és hátterének beállítása</a></li>
+  </ul>
+</div>
+
+<h2 id="setting_page_properties_and_meta_tags">Oldaltulajdonságok és metakódelemek beállítása</h2>
+
+<p>Az Oldal tulajdonságai párbeszédpanelen az oldal különféle jellemzői adhatók meg, ilyen a cím, a szerző és a dokumentum leírása. Ezek az adatok hasznosak lehetnek, ha az oldalt webhelyen kívánjuk elhelyezni, hiszen a keresők ezeket használják az oldal indexeléséhez. A böngészőablakban ezek az adatok a Nézet menü Oldal adatai parancsával tekinthetők meg.</p>
+
+<ol>
+  <li>ehhez válasszuk a Formátum menü Oldal címe és tulajdonságai parancsát.</li>
+  <li>A következő tulajdonságok adhatók meg:
+    <ul>
+      <li><strong>Cím</strong>: írjuk be azt a szöveget, amelyet az oldal megtekintésekor a böngészőablak címsorában szeretnénk megjeleníteni. A keresők általában ez alapján keresik meg a weboldalakat, így érdemes az oldal témáját ismertető címet megadni.</li>
+      <li><strong>Szerző</strong>: írjuk be a dokumentum készítőjének nevét. Ez hasznos lehet azoknak az olvasóknak a számára, akik név alapján keresik a weboldalakat. 
+
+        <p><strong>Tipp</strong>: ha a szerző nevét megadjuk a <a href="#new_page_settings">HTML-szerkesztő beállításainál</a>, akkor azt nem kell mindig beírni az új oldalak létrehozásánál.</p>
+      </li>
+      <li><strong>Leírás</strong>: adjuk meg a dokumentum rövid ismertetését.</li>
+    </ul>
+  </li>
+</ol>
+
+<p>[<a href="#setting_page_properties">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="setting_page_colors_and_backgrounds">Az oldal színeinek és hátterének beállítása</h2>
+
+<p>Beállíthatjuk az oldal színeit, illetve háttérként képet is megadhatunk. Ezek a beállítások a böngészőben megtekintett oldal szövegének és hivatkozásainak megjelenítési módját határozzák meg.</p>
+
+<p>A színek és a háttérkép beállításához induljunk ki a HTML-szerkesztő ablakából:</p>
+
+<ol>
+  <li>ehhez válasszuk a Formátum menü Oldal színei és háttere parancsát.</li>
+  <li>A következő tulajdonságok adhatók meg:
+    <ul>
+      <li><strong>A látogató böngészőjének alapértelmezett színei</strong>: választásakor az oldal megtekintéséhez használt böngésző beállításai határozzák meg a szöveg és a hivatkozások színeit.</li>
+      <li><strong>Egyéni színek használata</strong>: akkor válasszuk, ha magunk szeretnénk megadni a szöveg és a hivatkozások színeit. A lenyitható listán válasszunk színt minden elemhez. A jobb oldali mintamezőben példát láthatunk az egyes hivatkozástípusokra.</li>
+      <li><strong>Háttérkép</strong>: választásakor képet helyezhetünk el az oldal hátterébe. Adjuk meg a képfájl helyét és nevét, vagy kattintsunk a Tallózás gombra, és keressük meg a fájlt a merevlemezen vagy a hálózaton. 
+
+        <p><strong>Megjegyzés</strong>: a háttérkép mozaikszerűen helyezkedik el, és felülírja a háttérszín beállítását.</p>
+      </li>
+      <li><strong>Az URL relatív az oldal elhelyezkedéséhez képest</strong>: ha bejelöljük, a HTML-szerkesztő az oldal helyéhez viszonyított relatív címmé alakítja a megadott webcímet. Ez különösen akkor hasznos, ha az oldalakat webkiszolgálón szeretnénk majd közzétenni. 
+
+        <p>Relatív webcímek használatakor az összes csatolt fájlt a merevlemezen vagy a webkiszolgálón elfoglalt tényleges helyüktől függetlenül egymáshoz képest azonos helyen tarthatjuk.</p>
+
+        <p>A beállítás kikapcsolásakor a HTML-szerkesztő teljes (abszolút) címmé alakítja a megadott webcímet. Általában akkor használunk abszolút webcímeket, amikor más webkiszolgálókon (nem a helyi merevlemezen tárolt) lévő képeket csatolunk.</p>
+
+        <p>Ha nem mentett változtatások találhatók a weboldalon, a négyzet csak mentés után jelölhető be.</p>
+      </li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: További attribútumok vagy JavaScript események adhatók meg a
+  <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a> párbeszédpanelen, ha a Haladó szerkesztés gombra kattintunk.</p>
+
+<p>A HTML-szerkesztőben létrehozott új oldalakhoz <a href="#new_page_settings">alapértelmezett hátteret és színeket</a> is beállíthatunk.</p>
+
+<p>[<a href="#setting_page_properties">Vissza a fejezet elejére</a>]</p>
+
+<h1 id="creating_links_in_composer">Hivatkozások létrehozása</h1>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#creating_links_within_the_same_page">Ugyanazon oldalra mutató hivatkozások létrehozása</a></li>
+    <li><a href="#creating_links_to_other_pages">Más oldalra mutató hivatkozások létrehozása</a></li>
+    <li><a href="#using_images_as_links">Kép használata hivatkozásként</a></li>
+    <li><a href="#removing_or_discontinuing_links">Hivatkozások eltávolítása vagy befejezése</a></li>
+  </ul>
+</div>
+
+<h2 id="creating_links_within_the_same_page">Ugyanazon oldalra mutató hivatkozások létrehozása</h2>
+
+<p>Az ugyanazon oldalra, például az oldal címsorára mutató hivatkozás készítéséhez <em>horgonyt</em> kell létrehoznunk (meg kell jelölni a célhelyet), majd erre kell hivatkoznunk. A horgony szokásos neve <em>elnevezett horgony</em>:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot a horgony kívánt sorának elejére, vagy jelöljünk ki szöveget.</li>
+  <li>Válasszuk a Beszúrás menü Horgony parancsát. A Horgony tulajdonságai párbeszédpanel jelenik meg.</li>
+  <li>A mezőbe írjuk be a horgony egyedi nevét (ez legfeljebb 30 karakterből állhat). A szóközöket a program aláhúzás karakterré (_) alakítja. Ha az 1. lépésben szöveget jelöltünk ki, névként ez jelenik meg a mezőben.</li>
+  <li>Kattintsunk az OK gombra. A dokumentumban a horgony helyének jelölésére egy horgony ikon jelenik meg:
+    <img src="images/anchor-in-doc.gif" width="20" height="17" alt="" /></li>
+</ol>
+
+<p>Hivatkozás létrehozása a felvett horgonyhoz (az olvasók erre kattintva juthatnak a horgonnyal jelölt részhez):</p>
+
+<ol>
+  <li>Jelöljük ki a horgonyra mutató hivatkozásként használni kívánt szöveget vagy képet.</li>
+  <li>Kattintsunk a Hivatkozás gombra, vagy válasszuk a Beszúrás menü Hivatkozás parancsát. A Hivatkozás tulajdonságai párbeszédpanel jelenik meg.
+    <ul>
+      <li>Ha a számítógépen lévő HTML fájlhoz készítünk hivatkozást, megkereséséhez kattintsunk a Tallózás gombra.</li>
+      <li>Ha horgonyhoz hozunk létre hivatkozást, jelöljük ki a horgony nevét az oldalon rendelkezésre álló horgonyok közül.</li>
+      <li>Ha címsorhoz (például Címsor 1 - Címsor 6 formázású szöveg) készítünk hivatkozást, jelöljük azt ki az oldalon található címsorok közül.</li>
+    </ul>
+  </li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p><strong>Megjegyzés</strong>: a hivatkozás működésének ellenőrzéséhez válasszuk a Fájl menü Oldal megtekintése parancsát, és kattintsunk a hivatkozásra.</p>
+
+<p><strong>Tipp</strong>: ha előzőleg nem hozunk létre horgonyokat, a Hivatkozás párbeszédpanelen az oldalon előforduló címsorokra mutató hivatkozásokat készíthetünk.</p>
+
+<p>[<a href="#creating_links_in_composer">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="creating_links_to_other_pages">Más oldalra mutató hivatkozások létrehozása</h2>
+
+<p>Az oldalon hivatkozásokat hozhatunk létre a helyi számítógépen vagy a vállalati hálózaton található más oldalakhoz, de az interneten lévő távoli oldalakhoz is.</p>
+
+<p><strong>Tipp</strong>: más oldalakra mutató hivatkozások létrehozása előtt érdemes menteni az oldalt. Ez lehetővé teszi a HTML-szerkesztő számára, hogy automatikusan relatív hivatkozásokat használjon.</p>
+
+<p>Más oldalra mutató hivatkozás létrehozása:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a hivatkozást szeretnénk létrehozni, vagy jelöljük ki a hivatkozásként használni kívánt szöveget vagy képet.</li>
+  <li>Kattintsunk a Hivatkozás gombra. A Hivatkozás tulajdonságai párbeszédpanel jelenik meg.</li>
+  <li>Adjuk meg a hivatkozás beállításait:
+    <ul>
+      <li><strong>Hivatkozás szövege</strong>: ha a Hivatkozás gombra kattintás előtt szöveget vagy képet jelöltünk ki, a kijelölt szöveg vagy a kép fájlneve jelenik itt meg. Ha nem ez a helyzet, írjuk be a hivatkozásként használni kívánt szöveget.</li>
+      <li><strong>Hivatkozás címe</strong>: írjuk be a hivatkozni kívánt oldal helyi elérési útvonalát és fájlnevét vagy távoli webcímét. Ha nem vagyunk biztosak a helyi fájl pontos elérési útvonalában vagy fájlnevében, kattintsunk a Tallózás gombra, és keressük meg a merevlemezen vagy a hálózaton. A távoli URL kimásolható a böngésző címmezőjéből. Ezen a párbeszédpanelen az adott oldalon lévő horgonyra vagy címsorra is létrehozhatunk hivatkozást.</li>
+      <li><strong>Az URL relatív az oldal elhelyezkedéséhez képest</strong>: ha bejelöljük, a HTML-szerkesztő az oldal helyéhez viszonyított relatív címmé alakítja a megadott webcímet. Ez különösen akkor hasznos, ha az oldalakat webkiszolgálón szeretnénk majd elhelyezni. Relatív webcímek használatakor az összes csatolt fájlt a merevlemezen vagy a webkiszolgálón elfoglalt tényleges helyüktől függetlenül egymáshoz képest azonos helyen tarthatjuk.
+
+        <p>A beállítás kikapcsolásakor a HTML-szerkesztő teljes (abszolút) címmé alakítja a megadott webcímet. Általában akkor használunk abszolút webcímeket, amikor más webkiszolgálókon (nem a helyi merevlemezen tárolt) lévő oldalakat csatolunk.</p>
+
+        <p>Ha nem mentett változtatások találhatók a weboldalon, a négyzet csak mentés után jelölhető be.)</p>
+      </li>
+      <li><strong>Hivatkozás forrásának csatolása mellékletként</strong>: bejelölése esetén a megadott hivatkozás ez elküldött üzenethez lesz csatolva. Amennyiben ez a lehetőség nincs kijelölve csek egy hivatkozás kerül beszúrásra. (Ez a jelölőnégyzet csak a Hivatkozás tulajdonságai között érhető el a üzenetszerkesztési ablakból.)</li>
+    </ul>
+  </li>
+  <li>További attribútumok vagy JavaScript események adhatók meg a
+    <a href="#using_the_advanced_property_editor">Haladó tulajdonságok szerkesztése</a> párbeszédpanelen, ha a Haladó szerkesztés gombra kattintunk.
+  </li>
+  <li>Kattintsunk az OK gombra.</li>
+  <li>A hivatkozás működésének ellenőrzéséhez kattintsunk a Megtekintés gombra, majd a hivatkozásra.</li>
+</ol>
+
+<p><strong>Tipp</strong>: a hivatkozásokat egyszerűen át is húzhatunk más ablakokból a weboldalra. Például kijelölhetünk egy hivatkozást egy weboldalról, egy könyvjelzőből vagy a Levelező ablakból, és azt áthúzhatjuk az oldalra. Azt is megtehetjük, hogy egy weboldalon az egér jobb oldali gombjával <span class="mac">
+  <kbd>Ctrl</kbd>-kattintunk</span> egy hivatkozásra, majd a helyi menü Hivatkozás címének másolása parancsát választjuk. Ezután a hivatkozás a Hivatkozás tulajdonságai párbeszédpanel Hivatkozás címe mezőjében beilleszthetjük.</p>
+
+<p>[<a href="#creating_links_in_composer">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="using_images_as_links">Kép használata hivatkozásként</h2>
+
+<p>Az oldalon lévő képek, azaz JPEG, GIF vagy PNG formátumú fájlok is használhatók hivatkozásként. Amikor az olvasó ilyen képre kattint, a böngésző a hivatkozott oldalt jeleníti meg.</p>
+
+<p>Kép hivatkozásként történő használatához tegyük az az alábbiakat:</p>
+
+<ol>
+  <li>Jelöljünk ki egy képet az oldalon.</li>
+  <li>Kattintsunk az eszköztáron a Hivatkozás
+    <img src="images/link.gif" width="22" height="20" alt="" />
+    gombra, vagy válasszuk a Beszúrás menü Hivatkozás parancsát.</li>
+  <li>A Hivatkozás tulajdonságai párbeszédpanelen a hivatkozást állíthatunk be
+    <a href="#creating_links_within_the_same_page">az oldalon lévő horgonyra vagy címsorra</a>, illetve
+    <a href="#creating_links_to_other_pages">helyi vagy távoli másik oldalra</a>.
+  </li>
+</ol>
+
+<p><strong>Tipp</strong>: kép és hivatkozásának másolásához húzzuk át a hivatkozott képet a Böngésző ablakából a HTML-szerkesztő ablakába.</p>
+
+<p><strong>Megjegyzés</strong>: a hivatkozásként használt képek kék színű szegélyének eltávolításához kövessük az alábbi lépéseket:</p>
+
+<ol>
+  <li>Válasszik ki a linket használó képet.</li>
+  <li>Nyissuk meg a Formátum menüből a Kép és hivatkozás tulajdonságai… almenüt.</li>
+  <li>A hivatkozás fülön töröljük a <q>Szegély megjelenítése a kép körül</q> négyzet jelölését.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+nyissuk meg a Hivatkozás tulajdonságai párbeszédpanelen a Hivatkozás panellapot, és 
+
+<p>[<a href="#creating_links_in_composer">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="removing_or_discontinuing_links">Hivatkozások eltávolítása vagy befejezése</h2>
+
+<p>Hivatkozás eltávolítása:</p>
+
+<ol>
+  <li>Jelöljük ki a hivatkozásként használt szöveget (általában kék színű és aláhúzott) vagy képet.</li>
+  <li>Válasszuk a Formátum menü Hivatkozások törlése parancsát.</li>
+</ol>
+
+<p>Hivatkozás befejezése, hogy a hivatkozás után beírt szöveg ne legyen része a hivatkozásnak:</p>
+
+<ol>
+  <li>Helyezzük a beszúrási pontot oda, ahol a hivatkozást be szeretnénk fejezni.</li>
+  <li>Válasszuk a Formátum menü Hivatkozások befejezése parancsát.</li>
+</ol>
+
+<p>[<a href="#creating_links_in_composer">Vissza a fejezet elejére</a>]</p>
+ 
+<h1 id="publishing_your_pages_on_the_web">Oldalak közzététele a weben</h1>
+
+<p>Ha az elkészített oldalak csak a saját számítógépen léteznek, mi ugyan böngészhetjük ezeket, de mások nem. A HTML-szerkesztő lehetővé teszi az oldalak közzétételét, azaz feltöltését távoli webkiszolgálókra.</p>
+
+<p>Amikor webkiszolgálón közzétesszük az oldalakat, a HTML-szerkesztő olyan számítógépre másolja (tölti fel) az oldalakat, amelyen mások is böngészhetik azokat. Számos internetszolgáltató biztosít helyet a webkiszolgálóin weboldalak közzétételéhez. A megfelelő webkiszolgálóról az internetszolgáltató vagy a rendszergazda nyújt tájékoztatást.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#publishing_a_document">Dokumentum közzététele</a></li>
+    <li><a href="#updating_a_published_document">Közzétett dokumentum frissítése</a></li>
+    <li><a href="#changing_the_filename_or_publishing_location">A fájlnév vagy a közzétételi hely módosítása</a></li>
+    <li><a href="#creating_a_new_publishing_site">Új közzétételi hely létrehozása</a></li>
+    <li><a href="#choosing_the_default_publishing_site">Az alapértelmezett közzétételi hely megadása</a></li>
+    <li><a href="#deleting_a_publishing_site">Közzétételi hely törlése</a></li>
+    <li><a href="#solving_common_publishing_problems">Általános közzétételi problémák megoldása</a></li>
+    <li><a href="#publishing_settings">A közzététel beállításai</a></li>
+  </ul>
+</div>
+
+<h2 id="publishing_a_document">Dokumentum közzététele</h2>
+
+<p><strong>Tipp</strong>: képek vagy hivatkozások beszúrása előtt érdemes menteni az oldalt. Ez lehetővé teszi a HTML-szerkesztő számára, hogy automatikusan a hivatkozások vagy a képek relatív hivatkozását használja.</p>
+
+<p>Dokumentum közzététele:</p>
+
+<ol>
+  <li>Nyissuk meg a kívánt HTML dokumentumot, vagy a HTML-szerkesztőben hozzunk létre egyet.</li>
+  <li>Ha készen állunk a dokumentum közzétételére, kattintsunk a Közzététel gombra.
+
+    <p>Ha a dokumentumot korábban már közzétettük, a HTML-szerkesztő emlékezni fog a közzétételi beállításokra, és elindítja a dokumentum feltöltését. A művelet alatt a HTML-szerkesztő állapotjelző panelt jelenít meg.</p>
+    <ul>
+      <li>Ha korábban még nem tettük közzé a dokumentumot, a HTML-szerkesztő az Oldal közzététele párbeszédpanel Beállítások lapját jeleníti meg, amelyen megadhatjuk a távoli hely adatait. További tudnivalók
+        <a href="#publish_page_settings">Oldal közzététele - Beállítások</a>. Az adatok megadása után kattintsunk a Közzététel gombra.
+      </li>
+      <li>Ha korábban még nem mentettük a dokumentumot, a HTML-szerkesztő az Oldal közzététele párbeszédpanel Közzététel lapját jeleníti meg, amelyen megadhatjuk a dokumentum fájlnevét. További tudnivalók
+        <a href="#publish_page_publish">Oldal közzététele - Közzététel</a>. A fájlnév megadása után kattintsunk a Közzététel gombra.</li>
+    </ul>
+  </li>
+  <li>A közzétett oldal böngészéséhez kattintsunk a Megtekintés gombra. Ellenőrizzük a hivatkozások működését és a képek megfelelő megjelenítését.</li>
+  <li>Folytassuk a dokumentum szerkesztését. Amikor készen állunk a távoli oldal frissítésére, kattintsunk a Közzététel gombra.</li>
+</ol>
+
+<p>dokumentum első közzététele után a HTML-szerkesztő a dokumentum URL-címében a <tt>file:///</tt> helyére a <tt>http://</tt> megadást írja, ez jelzi, hogy közzétett dokumentumot szerkesztünk. Ha a dokumentum helyben (a számítógép merevlemezére) szeretnénk menteni, kattintsunk a Mentés gombra. Ekkor meg kell adni a dokumentum fájlnevét és tárolási helyét a merevlemezen.</p>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="tips_for_avoiding_broken_links_or_missing_images">Megszakadt hivatkozások és hiányzó képek elkerülése</h3>
+
+<ul>
+  <li>Ügyeljünk arra, hogy a HTML-szerkesztőben a fájlnevek kiterjesztése .html vagy .htm legyen. A képfájlok kiterjesztése .JPG, .GIF vagy .PNG lehet. A fájlnevekben ne használjunk szóközt vagy különleges karaktert. A fájlnevek lehetőleg rövidek legyenek, csak kis- és nagybetűk, valamint számok szerepeljenek benne.</li>
+  <li>Ha a webkiszolgálón elhelyezett dokumentum megtekintésekor valamelyik kép megszakadt hivatkozásként jelenik meg, valószínűleg elfeledkeztünk a képek közzétételéről. Az Oldal közzététele párbeszédpanel megnyitásához válasszuk a Fájl menü Közzététel parancsát. A Közzététel panellapon jelöljük be a Képekkel és egyéb fájlokkal négyzetet, majd kattintsunk a Közzététel gombra.</li>
+</ul>
+
+<p>További tudnivalók
+  <a href="#solving_common_publishing_problems">Általános közzétételi problémák megoldása</a>.
+</p>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="updating_a_published_document">Közzétett dokumentum frissítése</h2>
+
+<p>Közzétett dokumentum frissítése:</p>
+
+<ol>
+  <li>A HTML-szerkesztő ablakban válasszuk a Fájl menü Legutóbb szerkesztett oldalak parancsát, majd a kívánt dokumentumot a listán. <p>Azt is megtehetjük, hogy megkeressük a frissíteni kívánt dokumentum helyét: ehhez írjuk be a Böngészőben HTTP-címét (a dokumentum webcímét).</p></li>
+  <li>Szerkesszük a dokumentumot.</li>
+  <li>Amikor készen állunk a távoli oldal frissítésére, kattintsunk a HTML-szerkesztő eszköztárán a Közzététel gombra.</li>
+</ol>
+
+<p><strong>Tip</strong>: a webkiszolgálón közzétett oldal vagy kép törléséhez <a href="glossary.xhtml#ftp">FTP (File Transfer
+  Protocol)</a> programot kell használnunk. Ugyancsak erre van szükség a webkiszolgálón alkönyvtárak létrehozásához vagy fájlok átnevezéséhez. A megfelelő program kiválasztásában a szolgáltató nyújthat segítséget. Az FTP-programokról a szolgáltató webhelyén tájékozódhatunk, de ilyen programok rendelkezésre állnak az ingyenes szoftverek letöltési helyein is.</p>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="changing_the_filename_or_publishing_location">A fájlnév vagy a közzétételi hely módosítása</h2>
+
+<p>A dokumentum fájlnevének vagy közzétételi helyének módosítása:</p>
+
+<ol>
+  <li>A HTML-szerkesztő ablakban válasszuk a Fájl menü Legutóbb szerkesztett oldalak parancsát, majd a kívánt dokumentumot a listán.
+
+    <p>Azt is megtehetjük, hogy megkeressük a frissíteni kívánt dokumentum helyét: ehhez írjuk be a Böngészőben HTTP-címét (a dokumentum webcímét).</p>
+  </li>
+  <li>Szerkesszük a dokumentumot.</li>
+  <li>Válasszuk a Fájl menü Közzététel parancsát. A HTML-szerkesztő az Oldal közzététele párbeszédpanel Közzététel lapját jeleníti meg.</li>
+  <li>Ha szükséges, adjunk meg másik oldalcímet.</li>
+  <li>Ha szükséges, adjunk meg másik fájlnevet az oldalhoz.</li>
+  <li>A Webhely neve listán jelöljük ki a használni kívánt közzétételi helyet.
+    Új közzétételi hely beállításához kattintsunk az Új webhely gombra. További tudnivalók
+    <a href="#publish_page_settings">Oldal közzététele - Beállítások</a>.</li>
+  <li>A dokumentum új helyre mentéséhez kattintsunk a Közzététel gombra.</li>
+</ol>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="creating_a_new_publishing_site">Új közzétételi hely létrehozása</h2>
+
+<p>Ha a dokumentumokat több távoli helyen kívánjuk közzétenni, a HTML-szerkesztőt beállíthatjuk úgy, hogy mentse az egyes helyek adatait, így nem kell azokat mindig beírni a közzétételnél.</p>
+
+<p>Új közzétételi hely létrehozásához induljunk ki a HTML-szerkesztő ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Webhely beállításai parancsát. A HTML-szerkesztő a Közzététel beállításai párbeszédpanelt jeleníti meg.</li>
+  <li>Kattintsunk az Új webhely gombra.</li>
+  <li>A <q>Webhely neve</q> mezőben adjuk meg azt a becenevet, amellyel erre a helyre szeretnénk hivatkozni. 
+
+    <p>Ha például az új helyen a <q>Meteor</q> projekttel kapcsolatos dokumentumokat szeretnénk közzétenni, választhatjuk a <q>Meteor</q> nevet. A webhely neve emlékeztetni fog bennünket a közzétett dokumentumok típusára.</p>
+  </li>
+  <li>A <q>Közzétételi cím</q> mezőben írjuk be a teljes URL-címet, ezt az internetszolgáltatótól vagy a rendszergazdától kérdezhetjük meg. Az URL-cím elején <tt>ftp://</tt> vagy <tt>http://</tt> áll. 
+
+    <p>A közzétételi cím azt a helyet jelöli, ahová a dokumentumokat feltöltjük. Ha nem vagyunk biztosak, a megfelelő adatokat kérdezzük meg az internetszolgáltatótól vagy a rendszergazdától.</p>
+  </li>
+  <li>Az <q>Ön honlapjának HTTP-címe</q> mezőben adjuk meg azt a teljes URL-címet, amelyet a böngészőben kell beírni az oldalak megtekintéséhez. Fájlnevet vagy alkönyvtárat ne vegyünk be az URL-címbe.
+
+    <p>Ennek az URL-címnek az elején <tt>http://</tt> áll. Bizonyos esetekben ez megegyezik a közzétételi címmel. Ha nem vagyunk biztosak, a megfelelő adatokat kérdezzük meg az internetszolgáltatótól vagy a rendszergazdától, illetve hagyjuk üresen.</p>
+  </li>
+  <li><q>Felhasználói névként</q> azt írjuk be, amelyet a szolgáltatóhoz való bejelentkezésnél használunk.</li>
+  <li>Ezután írjuk be a <q>jelszót</q>, ami a felhasználó névhez tartozik.</li>
+  <li>A <q>Jelszó mentése</q> beállítással a jelszót biztonságosan tárolhatjuk a Jelszókezelővel, így nem kell azt mindig beírni az újabb közzétételkor.</li>
+  <li>Kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="choosing_the_default_publishing_site">Az alapértelmezett közzétételi hely megadása</h2>
+
+<p>Ha több közzétételi hellyel rendelkezünk, de általában egyet használunk, ezt kijelölhetjük alapértelmezett közzétételi helyként. A HTML-szerkesztő ezt fogja használni a dokumentumok közzétételekor, ha nem adunk meg másikat.</p>
+
+<p>Függetlenül a beállított közzétételi helyek számától a Fájl menü Közzététel parancsának választásával bármikor másik helyre küldhetjük a dokumentumokat. További tudnivalók
+  <a href="#changing_the_filename_or_publishing_location">A fájlnév vagy a közzétételi hely módosítása</a>.</p>
+
+<p>Az alapértelmezett közzétételi hely megadásához induljunk ki a HTML-szerkesztő ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Webhely beállításai parancsát.
+    A HTML-szerkesztő a Közzététel beállításai párbeszédpanelt jeleníti meg.</li>
+  <li>Jelöljünk ki egy közzétételi helyet a listán. 
+
+    <p>Ha csak egy beállított közzétételi helyünk van, a HTML-szerkesztő ezt fogja alapértelmezett helyként használni.</p>
+  </li>
+  <li>Kattintsunk az Alapértelmezett gombra.</li>
+  <li>A változtatások érvényesítéséhez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="deleting_a_publishing_site">Közzétételi hely törlése</h2>
+
+<p>Közzétételi hely törlése a hely beállításait távolítja el a HTML-szerkesztőből. Ha később mégis erre a helyre szeretnénk közzétenni dokumentumokat, újból be kell írnunk a beállításokat.</p>
+
+<p>Közzétételi hely törléséhez induljunk ki a HTML-szerkesztő ablakból:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Webhely beállításai parancsát. A HTML-szerkesztő a Közzététel beállításai párbeszédpanelt jeleníti meg.</li>
+  <li>Jelöljünk ki egy közzétételi helyet a listán.</li>
+  <li>Kattintsunk a Webhely eltávolítása gombra.
+
+    <p>A HTML-szerkesztő csak a hely beállításait távolítja el, maga a távoli hely természetesen változatlan marad.</p>
+  </li>
+  <li>A változtatások érvényesítéséhez kattintsunk az OK gombra.</li>
+</ol>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="solving_common_publishing_problems">Általános közzétételi problémák megoldása</h2>
+
+<p>Ha egy vagy több fájl feltöltése sikertelen, a Közzététel állapota párbeszédpanel hibaüzenetet jelenít meg, amely segíthet a hiba meghatározásában és javításában. A probléma megoldásához kaphatunk segítséget, ha a Hibaelhárítás gombra kattintunk.</p>
+
+<p>Ha egy fájl feltöltése továbbra sem sikerül, a HTML-szerkesztő Fájl menüjén a Mentés parancs választásával mentsük a fájlt a helyi merevlemezre. Később innen megnyitható a fájl, és újból megkísérelhető közzététele. A fájl megkeresésében segíthet a HTML-szerkesztő Fájl menüjének Legutóbb szerkesztett oldalak parancsa.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#verifying_your_publishing_settings">A közzétételi beállítások ellenőrzése</a></li>
+    <li><a href="#checking_your_filenames">A fájlnevek ellenőrzése</a></li>
+    <li><a href="#fixing_publishing_errors">Közzétételi hibák javítása</a></li>
+  </ul>
+</div>
+
+<h3 id="verifying_your_publishing_settings">A közzétételi beállítások ellenőrzése</h3>
+
+<p>A közzétételi beállítások ellenőrzése:</p>
+
+<ol>
+  <li>Zárjuk be a Közzététel állapota párbeszédpanelt, ha az meg van nyitva.</li>
+  <li>Válasszuk a Szerkesztés menü Webhely beállításai parancsát.</li>
+  <li>A Közzététel beállításai párbeszédpanelen ellenőrizzük a hely beállításait. Ha nem vagyunk biztosak, a megfelelő beállításról kérdezzük meg a szolgáltatót.
+    <ul>
+      <li><strong>Ellenőrizzük a beállítások pontos beírását</strong>: Előfordulhat, hogy véletlenül elírtunk egy adatot.</li>
+      <li><strong>Ellenőrizzük a helyes közzétételi cím beírását</strong>: A szolgáltatók a közzétételi címre <q>kiszolgálónévként</q>, the <q>gépnévként</q>, vagy <q>kiszolgáló/gépnévként</q> hivatkozhatnak. A közzétételi hely megadását gyakran az
+        <tt>ftp.saját_isp.hu/felhasználói név</tt> alakban adják meg, ahol  <tt>felhasználói név</tt> a mi nevünk. 
+
+        <p>A közzétételi cím elején <tt>ftp://</tt> vagy <tt>http://</tt> áll.
+          Az előbbi példánál maradva a helyes cím a következő <tt>ftp://ftp.saját_isp.hu/felhasználói név</tt>.</p>
+      </li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="checking_your_filenames">A fájlnevek ellenőrzése</h3>
+
+<p>Ellenőrizzük azoknak a fájloknak a nevét, amelyeket nem sikerült feltölteni. A fájlneveknél ügyeljünk a következőkre:</p>
+
+<ul>
+  <li>A fájlnevek csak kis- és nagybetűket, illetve számokat tartalmazzanak. Bár a fájlnevek tartalmazhatnak nagybetűket is, de később a feltöltött fájlok azonosításánál számos lehetséges hibát elkerülhetünk, ha csak kisbetűket használunk. 
+
+    <p>Amikor fájlokat töltünk fel egy webkiszolgálóra, a rendszer a fájlnevekben megkülönbözteti a kis- és a nagybetűket. Nehezebben jegyezhetők meg azok a fájlnevek, amelyek csak nagybetűket vagy vegyesen kis- és nagybetűket tartalmaznak.</p>
+
+    <p>Ha például úgy próbáljuk megkeresni a közzétett fájlt, hogy a Böngésző Címmezőjébe beírjuk a fájl webcímét, a fájlnevet pontosan a létrehozásakor használt alakban kell megadni, azaz a megfelelő helyeken kis- és nagybetűket írva.</p>
+  </li>
+  <li>Ne használjunk írásjeleket és szóközt. Az aláhúzás karakter ( _ )
+    és a kötőjel ( - ) megengedett.</li>
+  <li>A kiterjesztés legyen .html vagy .htm (a HTML-szerkesztő fájlneveinél).</li>
+  <li>Legfeljebb 32 karaktert használjunk.</li>
+</ul>
+
+<h3 id="fixing_publishing_errors">Közzétételi hibák javítása</h3>
+
+<p>Ha egy vagy több fájlt nem sikerül feltölteni, nézzük meg a hibaüzenetet a Közzététel párbeszédpanel Közzététel állapota mezőjében.
+  Ezek a hibaüzenetek segíthetnek a hiba meghatározásában és a probléma megoldásában.</p>
+
+<div class="contentsBox" style="background-color: #ebebeb;">
+  <p>Hibaüzenetek:</p>
+  <p><a href="#file_not_found"><tt><var>Fájlnév</var> nem található.</tt></a></p>
+  <p><a href="#file_not_found"><tt><var>X</var> / <var>Y</var> fájl közzététele nem sikerült.</tt></a></p>
+  <p><a href="#subdir_not_found"><tt>A <var>könyvtár neve</var>
+    alkönyvtár nem létezik ezen a webhelyen, vagy a(z) <var>fájlnév</var> fájlnevet már használja egy alkönyvtár.</tt></a></p>
+  <p><a href="#subdir_not_found"><tt>A <var>fájlnév</var> fájlnevet már használja egy alkönyvtár.</tt></a></p>
+  <p><a href="#server_not_found"><tt>A kiszolgáló nem elérhető. Ellenőrizze a kapcsolatot, és próbálja újra.</tt></a></p>
+  <p><a href="#no_permission"><tt>Önnek nincs jogosultsága ezen a webhelyen közzétenni.</tt></a></p>
+  <p><a href="#offline_error"><tt>Jelenleg kapcsolat nélküli üzemmódban van. A kapcsolódáshoz kattintson az ikonra bármelyik ablak jobb alsó sarkában.</tt></a></p>
+  <p><a href="#no_disk_space"><tt>Nincs elegendő hely a lemezen a következő fájl mentéséhez <var>fájlnév</var>.</tt></a></p>
+  <p><a href="#name_too_long"><tt>fájl vagy az alkönyvtár neve túl hosszú.</tt></a></p>
+</div>
+
+<div class="errorMessage">
+  <p id="file_not_found"><strong>Hibaüzenet</strong>:</p>
+
+  <div class="contentsBox" style="background-color: #ebebeb;">
+    <tt><var>Fájlnév</var> nem található.</tt> 
+    <p>vagy</p>
+    <tt><var>X</var> / <var>Y</var> fájl közzététele nem sikerült.</tt>
+  </div>
+
+  <p><strong>Hiba leírása</strong>: egy vagy több képfájl vagy CSS fájl nem tölthető fel, mivel a HTML-szerkesztő nem találja ezeket. A hiba oka lehet:</p>
+
+  <ul>
+    <li>Helytelen a fájl beírt helye.</li>
+    <li>A fájl megadott helye nem érhető el a weben.</li>
+    <li>fájl helye megváltozott, illetve a fájlt törölték vagy áthelyezték.</li>
+  </ul>
+
+  <p><strong>Lehetséges megoldások</strong>:</p>
+
+  <ul>
+    <li>Nézzük meg a weboldalon a közzétenni kívánt képet. A megszakadt hivatkozású képek az
+      <img src="images/broken.gif" width="20" height="20" alt="" /> ikonnal jelennek meg az oldalon. A helyes cím megadásához kattintsunk duplán a képre, és a Kép tulajdonságai párbeszédpanelen javíthatjuk a címet.</li>
+    <li>Távolítsuk el a képet az oldalról: kattintással jelöljük ki, és nyomjuk meg a   <kbd>Backspace</kbd> vagy a <kbd>Delete</kbd>
+      billentyűt.</li>
+    <li>Ha a feltöltés azért nem sikerült, mert a képet tároló kiszolgáló nem érhető el, próbáljuk meg később közzétenni az oldalt.</li>
+    <li>Ha a hiányzó fájl stíluslap (CSS), először ellenőrizzük megfelelő helyét. A fájl címét javíthatjuk a HTML-szerkesztőben: váltsunk át a HTML forrás panellapra, és adjuk meg a fájl pontos tárolási helyét. A HTML forrás szerkesztéséhez a HTML kódelemek ismerete szükséges.</li>
+  </ul>
+</div>
+
+<div class="errorMessage">
+  <p id="subdir_not_found"><strong>Hibaüzenet</strong>:</p>
+
+  <div class="contentsBox" style="background-color: #ebebeb;">
+    <tt>A <var>könyvtár neve</var> alkönyvtár nem létezik ezen a webhelyen, vagy a(z) <var>fájlnév</var> fájlnevet már használja egy alkönyvtár</tt>
+    <p>vagy</p>
+    <tt>A(z) <var>fájlnév</var> fájlnevet már használja egy alkönyvtár</tt>
+  </div>
+
+  <p><strong>Hiba leírása</strong>: olyan távoli alkönyvtárat adtunk meg, amely nem létezik a közzététel helyén. A HTML-szerkesztő csak létező alkönyvtárakba tud fájlokat feltölteni. Az is előfordulhat, hogy egy megadott fájlnév megegyezik egy létező alkönyvtár nevével a közzétételi helyen.</p>
+
+  <p>Például a HTML-szerkesztőben az Oldal közzététele párbeszédpanel Közzététel lapján:</p>
+
+  <ul>
+    <li>a <q>Honlap könyvtára</q>, you may have typed the name
+      mezőbe olyan távoli alkönyvtárat adtunk meg, amely nem létezik a közzététel helyén.</li>
+    <li>bejelöltük a <q>Képekkel és egyéb fájlokkal</q> négyzetet, és olyan távoli alkönyvtárat adtunk meg, amely nem létezik a közzététel helyén.</li>
+    <li>a közzétenni kívánt fájl neve megegyezik egy létező alkönyvtár nevével a közzétételi helyen.</li>
+  </ul>
+
+  <p><strong>Lehetséges megoldások</strong>:</p>
+
+  <ul>
+    <li>Használjunk megfelelő FTP-programot alkönyvtárak létrehozásához átnevezéséhez vagy törléséhez a webkiszolgálón. A megfelelő program kiválasztásában a szolgáltató nyújthat segítséget. Az FTP-programokról a szolgáltató webhelyén tájékozódhatunk, de ilyen programok rendelkezésre állnak az ingyenes szoftverek letöltési helyein is.</li>
+    <li>Ne használjunk <q>.html</q> vagy <q>.htm</q> kiterjesztésű alkönyvtárakat. Csak a HTML-szerkesztő fájlneveinek kiterjesztése legyen <q>.html</q>
+      vagy <q>.htm</q>.</li>
+    <li>Az alkönyvtárak nevében a rendszer megkülönbözteti a kis- és a nagybetűket, így ezt pontos írásmóddal kell megadni.</li>
+  </ul>
+</div>
+
+<div class="errorMessage">
+  <p id="server_not_found"><strong>Hibaüzenet</strong>:</p>
+
+  <div class="contentsBox" style="background-color: #ebebeb;">
+    <tt>A kiszolgáló nem elérhető. Ellenőrizze a kapcsolatot, és próbálja újra.</tt>
+  </div>
+
+  <p><strong>Hiba leírása</strong>: a hibának számos oka lehet. Például:</p>
+
+  <ul>
+    <li>Helytelenek a közzétételi hely beállításai.</li>
+    <li>Megszakadt az internetkapcsolat.</li>
+    <li>Helytelenül működik az internetcsatlakozáshoz használt modem vagy más berendezés.</li>
+    <li>A használni kívánt webkiszolgáló műszaki problémák vagy egyéb ismeretlen ok miatt nem érhető el.</li>
+    <li>A szolgáltató műszaki problémákat tapasztalt.</li>
+  </ul>
+
+  <p><strong>Lehetséges megoldások</strong>:</p>
+
+  <ul>
+    <li>Ellenőrizzük a közzétételi beállítások helyességét és pontos beírását. További tudnivalók
+      <a href="#verifying_your_publishing_settings">A közzétételi beállítások ellenőrzése</a>.</li>
+    <li>Ellenőrizzük az internetkapcsolat működését: a böngészővel látogassunk meg egy webhelyet, például nézzük meg, hogy meg tudjuk-e nyitni a <tt>http://www.mozilla.org</tt> helyet.</li>
+    <li>Ha nincs internetkapcsolat, ellenőrizzük a hardvert, a telefonkapcsolatot, a modemet és a hálózat elérését.</li>
+    <li>A Böngészővel keressünk fel egy oldalt azon a webkiszolgálón, amelyre a feltöltést szeretnénk végrehajtani. Ha más webhelyek megfelelően megjelennek, de a közzétételi hely weboldalai nem láthatók, akkor műszaki probléma lehet a szolgáltatónál.</li>
+    <li>Kíséreljük meg a feltöltést később,  ha a szolgáltatónál vagy a webkiszolgálónál átmeneti műszaki problémák jelentkeztek.</li>
+  </ul>
+</div>
+
+<div class="errorMessage">
+  <p id="no_permission"><strong>Hibaüzenet</strong>:</p>
+
+  <div class="contentsBox" style="background-color: #ebebeb;">
+    <tt>Önnek nincs jogosultsága ezen a webhelyen közzétenni.</tt>
+  </div>
+
+  <p><strong>Hiba leírása</strong>: olyan helyre kíséreltük meg a feltöltést, amelyhez nincs engedélyünk. Csak olyan helyeken tehetjük közzé a dokumentumokat, amelyekhez hozzáférési jogosultságot adott a szolgáltató.</p>
+
+  <p><strong>Lehetséges megoldások</strong>:</p>
+
+  <ul>
+    <li>Ellenőrizzük a megfelelő felhasználói név és jelszó megadását a Webhely beállításai párbeszédpanelen és a Közzététel párbeszédpanel Beállítások lapján.</li>
+    <li>Kérdezzük meg a szolgáltatótól a pontos közzétételi helyet.</li>
+    <li>Keressünk megfelelő szolgáltatót, ahol közzétehetjük oldalainkat. Ehhez például a Böngésző segítségével keressünk rá az <q>ingyenes tárhely</q> szóra.</li>
+    <li>A Netscape My Webpage <a href="http://mywebpage.netscape.com/">
+      <tt>http://mywebpage.netscape.com/</tt></a> szolgáltatás használatával ingyenesen helyezhetünk el weboldalt az interneten 20 megabyte méretkorlátig.</li>
+  </ul>
+</div>
+
+<div class="errorMessage">
+  <p id="offline_error"><strong>Hibaüzenet</strong>:</p>
+
+  <div class="contentsBox" style="background-color: #ebebeb;">
+    <tt>Jelenleg kapcsolat nélküli üzemmódban van. A kapcsolódáshoz kattintson az ikonra bármelyik ablak jobb alsó sarkában.</tt>
+  </div>
+
+  <p><strong>Hiba leírása</strong>: feltöltést kísérelt meg, de jelenleg kapcsolat nélküli üzemmódban dolgozik. A közzétételhez internetkapcsolat szükséges.</p>
+
+  <p>Ellenőrizzük az internetkapcsolat állapotát: ezt a &brandShortName;-ablak jobb alsó sarkában lévő ikon jelzi. Kapcsolat nélküli üzemmódban ez az ikon látható
+    <img src="images/offline.png" width="32" height="21" alt="" />.</p>
+
+  <p><strong>Lehetséges megoldások</strong>:</p>
+
+  <ul>
+    <li>Kattintsunk az ikonra a &brandShortName; jobb alsó sarkában. Internetkapcsolatnál ennek az ikonnak kell megjelennie:
+      <img src="images/online.png" width="32" height="20" alt="" />.</li>
+    <li>Ellenőrizzük az internetkapcsolat működését: a böngészővel látogassunk meg egy webhelyet, például nézzük meg, hogy meg tudjuk-e nyitni a <tt>http://www.mozilla.org</tt> helyet.</li>
+  </ul>
+</div>
+
+<div class="errorMessage">
+  <p id="no_disk_space"><strong>Hibaüzenet</strong>:</p>
+
+  <div class="contentsBox" style="background-color: #ebebeb;">
+    <tt>Nincs elegendő hely a lemezen a következő fájl mentéséhez <var>fájlnév</var>.</tt>
+  </div>
+
+  <p><strong>Hiba leírása</strong>: Megtelt a távoli webkiszolgáló merevlemeze, vagy túlléptük a szolgáltatótól számunkra kiutalt lemezterületet.</p>
+
+  <p><strong>Lehetséges megoldások</strong>:</p>
+
+  <ul>
+    <li>Megfelelő FTP-programmal töröljük a szükségtelen fájlokat a közzétételi helyről. A megfelelő program kiválasztásában a szolgáltató nyújthat segítséget. Az FTP-programokról a szolgáltató webhelyén tájékozódhatunk, de ilyen programok rendelkezésre állnak az ingyenes szoftverek letöltési helyein is.</li>
+    <li>A szolgáltatótól kérjünk nagyobb tárhelyet, vagy forduljunk másik szolgáltatóhoz, aki igényeinket ki tudja elégíteni.</li>
+    <li>Saját vállalati vagy szervezeti webkiszolgálónál kérjük meg a rendszergazdát, hogy adjon meg másik közzétételi helyet, vagy növelje a kiutalt tárterületet.</li>
+  </ul>
+</div>
+
+<div class="errorMessage">
+  <p id="name_too_long"><strong>Hibaüzenet</strong>:</p>
+
+  <div class="contentsBox" style="background-color: #ebebeb;">
+    <tt>A fájl vagy az alkönyvtár neve túl hosszú.</tt>
+  </div>
+
+  <p><strong>Hiba leírása</strong>: túl sok karaktert használtunk egy fájl vagy egy alkönyvtár nevében, így az az adott webkiszolgálón nem használható.</p>
+
+  <p><strong>Lehetséges megoldások</strong>:</p>
+
+  <ul>
+    <li>A fájlok és az alkönyvtárak neve legfeljebb 32 karakterből álljon. Néhány operációs rendszerben nem használhatók a 32 karakternél hosszabb nevek.</li>
+  </ul>
+</div>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="publishing_settings">A közzététel beállításai</h2>
+
+<p>Ez a fejezet a HTML-szerkesztő közzétételi beállításait ismerteti. További tudnivalók a HTML-szerkesztő általános és új oldalra vonatkozó beállításairól
+  <a href="#composer_preferences">A HTML-szerkesztő beállításai</a>.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#publish_page_publish">Oldal közzététele – Közzététel</a></li>
+    <li><a href="#publish_page_settings">Oldal közzététele – Beállítások</a></li>
+    <li><a href="#publish_settings">A közzététel beállításai</a></li>
+  </ul>
+</div>
+
+<h3 id="publish_page_publish">Oldal közzététele – Közzététel</h3>
+
+<p>Az Oldal közzététele - Közzététel panellapon a dokumentum közzétételének helye adható meg. Ezek a beállítások az aktuális dokumentumra vonatkoznak.</p>
+
+<p>A panellap a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Fájl menü Közzététel parancsát. Az Oldal közzététele párbeszédpanel jelenik meg.</li>
+  <li>Váltsunk át a Közzététel panellapra.</li>
+</ol>
+
+<ul>
+  <li><strong>Webhely neve</strong>: a létrehozott közzétételi helyeket listázza, így kiválasztható a használni kívánt hely. Új közzétételi hely létrehozásához kattintsunk az Új webhely gombra	.</li>
+  <li><strong>Oldal címe</strong>: a dokumentum oldalcímét adja meg: ez a böngésző ablakának címsorában jelenik meg az oldal megtekintésekor. Ugyancsak a dokumentum oldalcíme jelenik meg a könyvjelzők listáján, ha megjelöljük az oldalt.</li>
+  <li><strong>Fájlnév</strong>: a dokumentum fájlnevét adja meg. Ügyeljünk a .html vagy a .htm kiterjesztés megadására.
+
+    <p><strong>Figyelmeztetés</strong>: ha a távoli helyen egy fájl neve megegyezik a feltöltött fájl nevével, az újonnan feltöltött fájl felülírja a meglévőt. A rendszer nem figyelmeztet a felülírásra.</p>
+  </li>
+  <li><strong>Honlap könyvtára</strong>: ha üresen hagyjuk a mezőt, a HTML-szerkesztő a közzétételi hely gyökérkönyvtárába tölti az oldalt. Ha az oldalt a közzétételi hely alkönyvtárába szeretnénk tölteni, adjuk meg az alkönyvtár nevét vagy jelöljük ki a listán. A HTML-szerkesztő nyomon követi az itt beírt helyeket, így a korábban használt távoli helyek listából választhatók. Ügyeljünk arra, hogy az alkönyvtárak nevében a kis- és a nagybetűk eltérőnek számítanak.
+
+    <p><strong>Megjegyzés</strong>: a megadott alkönyvtárnak már léteznie kell a távoli kiszolgálón.</p>
+  </li>
+  <li><strong>Képekkel és egyéb fájlokkal</strong>: bejelölésekor a HTML-szerkesztő az oldalon hivatkozott képeket és egyéb fájlokat is feltölti. Ezeket a fájlokat feltölthetjük az oldallal azonos könyvtárba, de választhatunk a fő közzétételi könyvtár alatti létező alkönyvtárat is.</li>
+</ul>
+
+<p><strong>Tipp</strong>: távoli alkönyvtárak létrehozásához, illetve közzétett oldalak vagy képek törléséhez FTP-programot kell használnunk. A megfelelő program kiválasztásában a szolgáltató nyújthat segítséget. Az FTP-programokról a szolgáltató webhelyén tájékozódhatunk, de ilyen programok rendelkezésre állnak az ingyenes szoftverek letöltési helyein is</p>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="publish_page_settings">Oldal közzététele - Beállítások</h3>
+
+<p>Az Oldal közzététele - Beállítások panellapon a távoli hely bejelentkezési adatai és a közzétételi beállítások adhatók meg. Ezek a beállítások az aktuális dokumentumra és a kapcsolódó fájlokra vonatkoznak.</p>
+
+<p>A panellap a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Fájl menü Közzététel parancsát. Az Oldal közzététele párbeszédpanel jelenik meg.</li>
+  <li>Váltsunk át a Beállítások panellapra.</li>
+</ol>
+
+<ul>
+  <li><strong>Webhely neve</strong>: a közzétételi helyhez használni kívánt becenév. Rövid nevet adjunk meg, amely segít a hely azonosításában.</li>
+  <li><strong>Közzététel helyének címe</strong>: a teljes URL-cím (a szolgáltatótól vagy a rendszergazdától kérdezhetjük meg). Az URL-cím elején <tt>ftp://</tt> vagy <tt>http://</tt> áll. Erre gyakran <q>kiszolgálónévként</q> vagy <q>gépnévként</q> hivatkoznak.
+
+    <p>A közzétételi cím azt a helyet jelöli, ahová a dokumentumokat feltöltjük. Ha nem vagyunk biztosak, a megfelelő adatokat kérdezzük meg az internetszolgáltatótól vagy a rendszergazdától.</p>
+  </li>
+  <li><strong>Az Ön honlapjának HTTP-címe</strong>: a közzétételi könyvtár teljes címe. Ez a webhelyünk honlapjának webcíme. Fájlnevet vagy alkönyvtárat ne vegyünk be az URL-címbe.
+
+    <p>Ennek az URL-címnek az elején <tt>http://</tt> áll. Bizonyos esetekben ez megegyezik a közzétételi címmel. Ha nem vagyunk biztosak, a megfelelő adatokat kérdezzük meg az internetszolgáltatótól vagy a rendszergazdától, illetve hagyjuk üresen.</p>
+  </li>
+  <li><strong>Felhasználói név</strong>: a szolgáltatóhoz vagy a hálózatba való bejelentkezésnél használt felhasználói név.</li>
+  <li><strong>Jelszó</strong>: a felhasználói névhez tartozó jelszó.</li>
+  <li><strong>Jelszó mentése</strong>: bejelölésével a jelszót biztonságosan tárolhatjuk a Jelszókezelővel, így nem kell azt mindig beírni az újabb közzétételkor.</li>
+</ul>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h3 id="publish_settings">A közzététel beállításai</h3>
+
+<p>A Közzététel beállításai párbeszédpanel a közzétételi hely beállításainak létrehozására, szerkesztésére és törlésére szolgál, emellett az alapértelmezett közzétételi helyet is megadhatjuk.</p>
+
+<p>A párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a Szerkesztés menü Webhely beállításai parancsát. A HTML-szerkesztő a Közzététel beállításai párbeszédpanelt jeleníti meg</li>
+</ol>
+
+<ul>
+  <li><strong>Új webhely</strong>: új közzétételi hely beállításainak megadását teszi lehetővé. A HTML-szerkesztő felveszi ezt a nevet a választható közzétételi helyek listájára.</li>
+  <li><strong>Alapértelmezett</strong>: a kijelölt közzétételi helyet alapértelmezettként állítja be. Olyan helyet érdemes választani, amelyet a leggyakrabban használunk a dokumentumok közzétételére. Valamennyi létrehozott vagy szerkesztett dokumentum az alapértelmezett közzétételi helyre kerül, ha nem jelölünk ki másikat az Oldal közzététele párbeszédpanelen.
+
+    <p>Ha másik helyre szeretnénk feltölteni egy dokumentumot, válasszuk a Fájl menü Közzététel parancsát.</p>
+  </li>
+  <li><strong>Webhely eltávolítása</strong>: eltávolítja a HTML-szerkesztőből eltávolítja a kijelölt helyet és beállításait.</li>
+  <li><strong>Webhely neve</strong>: azt a becenevet jelenti, amellyel erre a közzétételi helyre szeretnénk hivatkozni.</li>
+  <li><strong>Közzététel helyének címe</strong>: a teljes URL-cím (a szolgáltatótól vagy a rendszergazdától kérdezhetjük meg). Az URL-cím elején <tt>ftp://</tt> vagy <tt>http://</tt> áll.
+
+    <p>A közzétételi cím azt a helyet jelöli, ahová a dokumentumokat feltöltjük. Ha nem vagyunk biztosak, a megfelelő adatokat kérdezzük meg az internetszolgáltatótól vagy a rendszergazdától.</p>
+  </li>
+  <li><strong>Az Ön honlapjának HTTP-címe</strong>: a közzétételi könyvtár teljes címe. Fájlnevet vagy alkönyvtárat ne vegyünk be az URL-címbe.
+
+    <p>Ennek az URL-címnek az elején <tt>http://</tt> áll. Bizonyos esetekben ez megegyezik a közzétételi címmel. Ha nem vagyunk biztosak, a megfelelő adatokat kérdezzük meg az internetszolgáltatótól vagy a rendszergazdától, illetve hagyjuk üresen.</p>
+  </li>
+  <li><strong>Felhasználói név</strong>: a szolgáltatóhoz vagy a hálózatba való bejelentkezésnél használt felhasználói név.</li>
+  <li><strong>Jelszó</strong>: a felhasználói névhez tartozó jelszó.</li>
+  <li><strong>Jelszó mentése</strong>: bejelölésével a jelszót biztonságosan tárolhatjuk a Jelszókezelővel, így nem kell azt mindig beírni az újabb közzétételkor.</li>
+</ul>
+
+<p>[<a href="#publishing_your_pages_on_the_web">Vissza a fejezet elejére</a>]</p>
+
+<h1 id="composer_preferences">A HTML-szerkesztő beállításai</h1>
+
+<p>Ez a fejezet a HTML-szerkesztő beállításait ismerteti. A megfelelő párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>lista kibontásához kattintsunk duplán a HTML-szerkesztő kategóriára.</li>
+</ol>
+
+<p>További tudnivalók a HTML-szerkesztő közzétételi beállításairól
+  <a href="#publishing_settings">A közzététel beállításai</a>.</p>
+
+<div class="contentsBox">A fejezet témakörei:
+  <ul>
+    <li><a href="#composer">HTML-szerkesztő</a></li>
+    <li><a href="#new_page_settings">Új oldal beállításai</a></li>
+  </ul>
+</div>
+
+<h2 id="composer">A HTML-szerkesztő beállításai – HTML-szerkesztő</h2>
+
+<p>Itt a fájlok mentésére és a táblázatok szerkesztésére vonatkozó beállítások adhatók meg. Ezek az összes létrehozott dokumentumra érvényesek lesznek.</p>
+
+<p>A megfelelő párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Kattintsunk a HTML-szerkesztő kategóriára.</li>
+</ol>
+
+<ul>
+  <li><strong>A listában megjelenő oldalak maximális száma</strong>: adjuk meg a Fájl menü Legutóbb szerkesztett oldalak parancsának választásakor megjelenő dokumentumok számát.</li>
+  <li><strong>Megtartja az eredeti HTML forrás formázásait</strong>: ez a beállítás megőrzi a HTML forráskód eredeti sortöréseit és formázásait. Akkor érdemes választani, ha meg szeretnénk tartani a HTML forráskód jobb olvashatóságát biztosító üres helyeket (üres sorok, tabulátorok stb.). <em>A beállítás nincs hatással az oldalak böngészőben való megjelenítési módjára.</em></li>
+  <li><strong>Képek és más csatolt fájlok mentése az oldalak mentésekor</strong>: bejelölésekor az összes kép, JavaScript (JS), stíluslap (CSS) és egyéb kapcsolódó fájl is mentésre kerül a dokumentummal azonos helyre, amikor először vagy új helyre mentjük a dokumentumot. Ha üresen hagyjuk a négyzetet, csak a HTML fájlt menti a rendszer.
+
+    <p>Ha például távoli oldalt szerkesztünk, ez a beállítás biztosítja, hogy a kapcsolódó fájlok helyi mentése is megtörténjék, amikor a merevlemezre mentjük az oldalt.</p>
+  </li>
+  <li><strong>A Közzététel párbeszédpanel megjelenítése minden közzététel alkalmával</strong>: bejelölésekor a HTML-szerkesztő megjeleníti az Oldal közzététele párbeszédpanelt, amikor a Közzététel gombra kattintunk vagy a Fájl menü Közzététel parancsát választjuk. Ha üresen hagyjuk a négyzetet, a HTML-szerkesztő csak akkor jeleníti meg az Oldal közzététele párbeszédpanelt, ha további adatokra van szüksége az oldal feltöltésénél.</li>
+  <li><strong>Cellák beszúrásakor vagy törlésekor megtartja a táblázat szerkezetét</strong>:
+    akkor jelöljük be, ha minden műveletnél meg szeretnénk őrizni a táblázat eredeti (azaz téglalap alakú) elrendezését. Ha kikapcsoljuk a beállítást, a cellák törlésekor a HTML-szerkesztő a cellaszegélyeket is eltávolítja, így üres helyek alakulhatnak ki a táblázatban, illetve páratlan számú cellánál az szabálytalan körvonalú lesz.</li>
+  <li><strong>Stílusok használata HTML elemek és attribútumok helyett</strong>:
+    stíluslapok (CSS) használatát teszi lehetővé a dokumentumok formázásához. Engedélyezésekor a HTML-szerkesztő HTML 4.01 verziójú, stíluslapokat használó formázást állít elő az elemekhez.
+
+    <p>A beállítás tiltásakor a HTML-szerkesztő HTML 4.01 verziójú formázást állít elő, de nem használ stíluslapokat.</p>
+
+    <p>A stíluslapokat használó formázás jobban átvihető a rendszerek között, karbantartása egyszerűbb és kompatibilis a különböző böngészőkkel. A beállítás engedélyezésekor a stíluslapok nélkül létrehozott dokumentum módosításakor a HTML-szerkesztő stílusokkal helyettesíti a szerkesztett elemeket.</p>
+
+    <p>A stílusok engedélyezésekor a kijelölt szöveg kiemeléséhez a Formázó eszköztár szövegkiemelésre szolgáló gombja használható. Ugyanígy színes háttér is választható az oldal tetszőleges eleméhez. (Ezek a szolgáltatások a beállítás tiltásakor nem állnak rendelkezésre.)</p>
+  </li>
+  <li><strong><kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> billentyű lenyomása a bekezdésben mindig új bekezdést eredményez</strong>: amennyiben ez a lehetőség ki van választva, minden bekezdésen belüli <kbd class="mac">Return
+     </kbd><kbd class="noMac">Enter</kbd> billentyű lenyomással új bekezdés lesz beszúrva. Ha ez a lehetőség nincsen kiválasztva, akkor új sor kerül beszúrásra minden <kbd class="mac">Return</kbd><kbd class="noMac">Enter</kbd> billentyű lenyomásánál.</li>
+</ul>
+
+<p>[<a href="#composer_preferences">Vissza a fejezet elejére</a>]</p>
+
+<h2 id="new_page_settings">A HTML-szerkesztő beállításai – Új oldal beállításai</h2>
+
+<p>Az itt megadott beállítások minden újonnan létrehozott dokumentumra érvényesek lesznek.</p>
+
+<p>A megfelelő párbeszédpanel a következő lépésekkel jeleníthető meg:</p>
+
+<ol>
+  <li>Válasszuk a <span class="mac">&brandShortName;</span>
+    <span class="noMac">Szerkesztés</span> menüjéből a Beállítások parancsot.</li>
+  <li>Nyissuk meg a HTML-szerkesztő kategóriát, és kattintsunk az Új oldal beállításai elemre.</li>
+</ol>
+
+<ul>
+  <li><strong>Szerző</strong>: írjuk be nevünket. Ekkor a nevünk bekerül az újonnan létrehozott oldalak HTML forráskódjába.</li>
+  <li><strong>A látogató böngészőjének alapértelmezett színei</strong>: választásakor az oldalak megtekintéséhez használt böngésző beállításai határozzák meg a szöveg és a hivatkozások színeit.</li>
+  <li><strong>Egyéni színek használata</strong>: akkor jelöljük be, ha a szöveg és a hivatkozások színeit magunk szeretnénk megadni. Ezután az egyes elemekhez adjunk meg színt a megfelelő színválasztón.</li>
+  <li><strong>Háttérkép</strong>: adjuk meg a képfájl helyét és nevét, vagy kattintsunk a Tallózás gombra, és keressük meg a fájlt a merevlemezen vagy a hálózaton. 
+
+    <p><strong>Megjegyzés</strong>: a háttérkép mozaikszerűen helyezkedik el, és felülírja a háttérszín beállítását.</p>
+  </li>
+</ul>
+
+<p>Adott oldalaknál megváltoztatható a szerző neve: ehhez válasszuk a Formátum menü Oldal címe és tulajdonságai parancsát.</p>
+
+<p>Adott oldalaknál megváltoztathatók az oldal színei és a háttérkép: ehhez válasszuk a Formátum menü Oldal színei és háttere parancsát.</p>
+
+<p>[<a href="#composer_preferences">Vissza a fejezet elejére</a>]</p>
+
+</body>
+</html>

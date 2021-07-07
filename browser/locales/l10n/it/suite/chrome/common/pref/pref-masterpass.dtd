@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Password principale">
+
+<!ENTITY  changepassword.caption                 "Modifica password principale">
+<!ENTITY  changepassword.text                    "La password principale protegge informazioni personali quali ad esempio password per siti web e certificati.">
+<!ENTITY  changepassword.button                  "Modifica password…">
+<!ENTITY  changepassword.accesskey               "M">
+
+<!ENTITY  resetpassword.caption                  "Cancellazione password principale">
+<!ENTITY  resetpassword.text                     "Se si cancella la password principale, andranno perse tutte le password di posta e dei siti web, i dati dei moduli, i certificati personali, e le chiavi private memorizzate.">
+<!ENTITY  resetpassword.button                   "Cancella password">
+<!ENTITY  resetpassword.accesskey                "C">
