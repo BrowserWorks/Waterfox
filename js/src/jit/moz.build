@@ -1,0 +1,239 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+include('../js-config.mozbuild')
+include('../js-cxxflags.mozbuild')
+
+FINAL_LIBRARY = "js"
+
+# Includes should be relative to parent path
+LOCAL_INCLUDES += ["!..", ".."]
+
+UNIFIED_SOURCES += [
+    'AliasAnalysis.cpp',
+    'AliasAnalysisShared.cpp',
+    'AlignmentMaskAnalysis.cpp',
+    'BacktrackingAllocator.cpp',
+    'Bailouts.cpp',
+    'BaselineBailouts.cpp',
+    'BaselineCacheIRCompiler.cpp',
+    'BaselineCompiler.cpp',
+    'BaselineDebugModeOSR.cpp',
+    'BaselineFrame.cpp',
+    'BaselineFrameInfo.cpp',
+    'BaselineIC.cpp',
+    'BaselineInspector.cpp',
+    'BaselineJIT.cpp',
+    'BitSet.cpp',
+    'BytecodeAnalysis.cpp',
+    'C1Spewer.cpp',
+    'CacheIR.cpp',
+    'CacheIRCompiler.cpp',
+    'CacheIRSpewer.cpp',
+    'CodeGenerator.cpp',
+    'CompileWrappers.cpp',
+    'EagerSimdUnbox.cpp',
+    'EdgeCaseAnalysis.cpp',
+    'EffectiveAddressAnalysis.cpp',
+    'ExecutableAllocator.cpp',
+    'FlowAliasAnalysis.cpp',
+    'FoldLinearArithConstants.cpp',
+    'InstructionReordering.cpp',
+    'Ion.cpp',
+    'IonAnalysis.cpp',
+    'IonBuilder.cpp',
+    'IonCacheIRCompiler.cpp',
+    'IonCaches.cpp',
+    'IonControlFlow.cpp',
+    'IonIC.cpp',
+    'IonOptimizationLevels.cpp',
+    'JitcodeMap.cpp',
+    'JitFrames.cpp',
+    'JitOptions.cpp',
+    'JitSpewer.cpp',
+    'JSJitFrameIter.cpp',
+    'JSONSpewer.cpp',
+    'LICM.cpp',
+    'Linker.cpp',
+    'LIR.cpp',
+    'LoopUnroller.cpp',
+    'Lowering.cpp',
+    'MacroAssembler.cpp',
+    'MCallOptimize.cpp',
+    'MIR.cpp',
+    'MIRGraph.cpp',
+    'MoveResolver.cpp',
+    'OptimizationTracking.cpp',
+    'PerfSpewer.cpp',
+    'ProcessExecutableMemory.cpp',
+    'RangeAnalysis.cpp',
+    'Recover.cpp',
+    'RegisterAllocator.cpp',
+    'RematerializedFrame.cpp',
+    'Safepoints.cpp',
+    'ScalarReplacement.cpp',
+    'shared/BaselineCompiler-shared.cpp',
+    'shared/CodeGenerator-shared.cpp',
+    'shared/Lowering-shared.cpp',
+    'SharedIC.cpp',
+    'Sink.cpp',
+    'Snapshots.cpp',
+    'StupidAllocator.cpp',
+    'TypedObjectPrediction.cpp',
+    'TypePolicy.cpp',
+    'ValueNumbering.cpp',
+    'VMFunctions.cpp',
+    'WasmBCE.cpp',
+]
+
+if CONFIG['MOZ_DEBUG']:
+    UNIFIED_SOURCES += ['Disassembler.cpp']
+
+if not CONFIG['ENABLE_ION']:
+    UNIFIED_SOURCES += [
+        'none/Trampoline-none.cpp'
+    ]
+elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
+    UNIFIED_SOURCES += [
+        'x86-shared/Architecture-x86-shared.cpp',
+        'x86-shared/Assembler-x86-shared.cpp',
+        'x86-shared/AssemblerBuffer-x86-shared.cpp',
+        'x86-shared/BaselineCompiler-x86-shared.cpp',
+        'x86-shared/BaselineIC-x86-shared.cpp',
+        'x86-shared/CodeGenerator-x86-shared.cpp',
+        'x86-shared/Lowering-x86-shared.cpp',
+        'x86-shared/MacroAssembler-x86-shared.cpp',
+        'x86-shared/MoveEmitter-x86-shared.cpp',
+    ]
+    SOURCES += [
+        'x86-shared/Disassembler-x86-shared.cpp',  # using namespace js::jit::X86Encoding;
+    ]
+    if CONFIG['JS_CODEGEN_X64']:
+        UNIFIED_SOURCES += [
+            'x64/Assembler-x64.cpp',
+            'x64/Bailouts-x64.cpp',
+            'x64/BaselineCompiler-x64.cpp',
+            'x64/BaselineIC-x64.cpp',
+            'x64/CodeGenerator-x64.cpp',
+            'x64/Lowering-x64.cpp',
+            'x64/MacroAssembler-x64.cpp',
+            'x64/SharedIC-x64.cpp',
+            'x64/Trampoline-x64.cpp',
+        ]
+    else:
+        UNIFIED_SOURCES += [
+            'x86/Assembler-x86.cpp',
+            'x86/Bailouts-x86.cpp',
+            'x86/BaselineCompiler-x86.cpp',
+            'x86/BaselineIC-x86.cpp',
+            'x86/CodeGenerator-x86.cpp',
+            'x86/Lowering-x86.cpp',
+            'x86/MacroAssembler-x86.cpp',
+            'x86/SharedIC-x86.cpp',
+            'x86/Trampoline-x86.cpp',
+        ]
+elif CONFIG['JS_CODEGEN_ARM']:
+    UNIFIED_SOURCES += [
+        'arm/Architecture-arm.cpp',
+        'arm/Assembler-arm.cpp',
+        'arm/Bailouts-arm.cpp',
+        'arm/BaselineCompiler-arm.cpp',
+        'arm/BaselineIC-arm.cpp',
+        'arm/CodeGenerator-arm.cpp',
+        'arm/disasm/Constants-arm.cpp',
+        'arm/disasm/Disasm-arm.cpp',
+        'arm/Lowering-arm.cpp',
+        'arm/MacroAssembler-arm.cpp',
+        'arm/MoveEmitter-arm.cpp',
+        'arm/SharedIC-arm.cpp',
+        'arm/Trampoline-arm.cpp',
+    ]
+    if CONFIG['JS_SIMULATOR_ARM']:
+        UNIFIED_SOURCES += [
+            'arm/Simulator-arm.cpp'
+        ]
+    elif CONFIG['OS_ARCH'] == 'Darwin':
+        SOURCES += [
+            'arm/llvm-compiler-rt/arm/aeabi_idivmod.S',
+            'arm/llvm-compiler-rt/arm/aeabi_uidivmod.S',
+        ]
+elif CONFIG['JS_CODEGEN_ARM64']:
+    UNIFIED_SOURCES += [
+        'arm64/Architecture-arm64.cpp',
+        'arm64/Assembler-arm64.cpp',
+        'arm64/Bailouts-arm64.cpp',
+        'arm64/BaselineIC-arm64.cpp',
+        'arm64/CodeGenerator-arm64.cpp',
+        'arm64/Lowering-arm64.cpp',
+        'arm64/MacroAssembler-arm64.cpp',
+        'arm64/MoveEmitter-arm64.cpp',
+        'arm64/SharedIC-arm64.cpp',
+        'arm64/Trampoline-arm64.cpp',
+        'arm64/vixl/Assembler-vixl.cpp',
+        'arm64/vixl/Cpu-vixl.cpp',
+        'arm64/vixl/Decoder-vixl.cpp',
+        'arm64/vixl/Disasm-vixl.cpp',
+        'arm64/vixl/Instructions-vixl.cpp',
+        'arm64/vixl/Instrument-vixl.cpp',
+        'arm64/vixl/MacroAssembler-vixl.cpp',
+        'arm64/vixl/MozAssembler-vixl.cpp',
+        'arm64/vixl/MozInstructions-vixl.cpp',
+        'arm64/vixl/Utils-vixl.cpp'
+    ]
+    if CONFIG['JS_SIMULATOR_ARM64']:
+        UNIFIED_SOURCES += [
+            'arm64/vixl/Debugger-vixl.cpp',
+            'arm64/vixl/Logic-vixl.cpp',
+            'arm64/vixl/MozSimulator-vixl.cpp',
+            'arm64/vixl/Simulator-vixl.cpp'
+        ]
+elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
+    UNIFIED_SOURCES += [
+        'mips-shared/Architecture-mips-shared.cpp',
+        'mips-shared/Assembler-mips-shared.cpp',
+        'mips-shared/Bailouts-mips-shared.cpp',
+        'mips-shared/BaselineCompiler-mips-shared.cpp',
+        'mips-shared/BaselineIC-mips-shared.cpp',
+        'mips-shared/CodeGenerator-mips-shared.cpp',
+        'mips-shared/Lowering-mips-shared.cpp',
+        'mips-shared/MacroAssembler-mips-shared.cpp',
+        'mips-shared/MoveEmitter-mips-shared.cpp',
+    ]
+    if CONFIG['JS_CODEGEN_MIPS32']:
+        UNIFIED_SOURCES += [
+            'mips32/Architecture-mips32.cpp',
+            'mips32/Assembler-mips32.cpp',
+            'mips32/Bailouts-mips32.cpp',
+            'mips32/BaselineCompiler-mips32.cpp',
+            'mips32/BaselineIC-mips32.cpp',
+            'mips32/CodeGenerator-mips32.cpp',
+            'mips32/Lowering-mips32.cpp',
+            'mips32/MacroAssembler-mips32.cpp',
+            'mips32/MoveEmitter-mips32.cpp',
+            'mips32/SharedIC-mips32.cpp',
+            'mips32/Trampoline-mips32.cpp',
+        ]
+        if CONFIG['JS_SIMULATOR_MIPS32']:
+            UNIFIED_SOURCES += [
+                'mips32/Simulator-mips32.cpp'
+            ]
+    elif CONFIG['JS_CODEGEN_MIPS64']:
+        UNIFIED_SOURCES += [
+            'mips64/Architecture-mips64.cpp',
+            'mips64/Assembler-mips64.cpp',
+            'mips64/Bailouts-mips64.cpp',
+            'mips64/BaselineCompiler-mips64.cpp',
+            'mips64/BaselineIC-mips64.cpp',
+            'mips64/CodeGenerator-mips64.cpp',
+            'mips64/Lowering-mips64.cpp',
+            'mips64/MacroAssembler-mips64.cpp',
+            'mips64/MoveEmitter-mips64.cpp',
+            'mips64/SharedIC-mips64.cpp',
+            'mips64/Trampoline-mips64.cpp',
+        ]
+        if CONFIG['JS_SIMULATOR_MIPS64']:
+            UNIFIED_SOURCES += [
+                'mips64/Simulator-mips64.cpp'
+            ]

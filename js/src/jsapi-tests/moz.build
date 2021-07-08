@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+include('../js-cxxflags.mozbuild')
+
 GeckoProgram('jsapi-tests', linkage=None)
 
 UNIFIED_SOURCES += [
@@ -147,13 +149,6 @@ USE_LIBS += [
 ]
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wno-shadow', '-Werror=format', '-fno-strict-aliasing']
-
-# This is intended as a temporary workaround to enable VS2015.
-if CONFIG['_MSC_VER']:
-    CXXFLAGS += ['-wd4312']
 
 DEFINES['topsrcdir'] = '%s/js/src' % TOPSRCDIR
 OBJDIR_PP_FILES.js.src['jsapi-tests'] += ['jsapi-tests-gdb.py.in']

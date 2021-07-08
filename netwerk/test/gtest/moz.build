@@ -6,7 +6,6 @@
 
 UNIFIED_SOURCES += [
     'TestBase64Stream.cpp',
-    'TestBufferedInputStream.cpp',
     'TestHeaders.cpp',
     'TestHttpAuthUtils.cpp',
     'TestProtocolProxyService.cpp',

@@ -6,6 +6,8 @@
 
 GeckoProgram('gdb-tests', linkage=None)
 
+include('../js-cxxflags.mozbuild')
+
 UNIFIED_SOURCES += [
     'gdb-tests.cpp',
     'tests/test-asmjs.cpp',
@@ -40,13 +42,6 @@ if CONFIG['ENABLE_INTL_API'] and CONFIG['MOZ_ICU_DATA_ARCHIVE']:
     USE_LIBS += ['icudata']
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wno-shadow', '-fno-strict-aliasing']
-
-# This is intended as a temporary workaround to enable VS2015.
-if CONFIG['_MSC_VER']:
-    CXXFLAGS += ['-wd4312']
 
 DEFINES['topsrcdir'] = '%s/js/src' % TOPSRCDIR
 FINAL_TARGET_PP_FILES += ['gdb-tests-gdb.py.in']

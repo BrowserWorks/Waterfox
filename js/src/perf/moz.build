@@ -1,0 +1,29 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+include('../js-config.mozbuild')
+include('../js-cxxflags.mozbuild')
+
+FINAL_LIBRARY = "js"
+
+# Includes should be relative to parent path
+LOCAL_INCLUDES += ["!..", ".."]
+
+EXPORTS += ['jsperf.h']
+
+UNIFIED_SOURCES += [
+    'jsperf.cpp',
+]
+
+if CONFIG['HAVE_LINUX_PERF_EVENT_H']:
+    SOURCES += [
+        'pm_linux.cpp'
+    ]
+    if CONFIG['LINUX_HEADERS_INCLUDES']:
+        SOURCES['pm_linux.cpp'].flags += [CONFIG['LINUX_HEADERS_INCLUDES']]
+else:
+    SOURCES += [
+        'pm_stub.cpp'
+    ]

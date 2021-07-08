@@ -1,0 +1,27 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Also set in shell/moz.build
+DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
+
+if CONFIG['NIGHTLY_BUILD']:
+    DEFINES['ENABLE_BINARYDATA'] = True
+    DEFINES['ENABLE_SIMD'] = True
+
+if CONFIG['MOZ_DEBUG'] or CONFIG['NIGHTLY_BUILD']:
+    DEFINES['JS_CACHEIR_SPEW'] = True
+
+if CONFIG['JS_HAS_CTYPES']:
+    DEFINES['JS_HAS_CTYPES'] = True
+    for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
+        DEFINES[var] = '"%s"' % CONFIG[var]
+
+if CONFIG['MOZ_LINKER']:
+    DEFINES['MOZ_LINKER'] = True
+
+if CONFIG['JS_HAS_CTYPES']:
+    if not CONFIG['MOZ_SYSTEM_FFI']:
+        # Windows needs this to be linked with a static library.
+        DEFINES['FFI_BUILDING'] = True

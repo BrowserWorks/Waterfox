@@ -4,55 +4,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Directory metadata
-component_engine = ('Core', 'JavaScript Engine')
-component_gc     = ('Core', 'JavaScript: GC')
-component_intl   = ('Core', 'JavaScript: Internationalization API')
-component_jit    = ('Core', 'JavaScript Engine: JIT')
-component_stl    = ('Core', 'JavaScript: Standard Library')
+include('js-config.mozbuild')
+include('js-cxxflags.mozbuild')
+include('js-testing.mozbuild')
 
 FILES_PER_UNIFIED_FILE = 6
 
-with Files('*'):
-    BUG_COMPONENT = component_engine
+# Prevent redefining FILES_PER_UNIFIED_FILE in each sub-directory of js. This
+# will not escape this directory.
+export('FILES_PER_UNIFIED_FILE')
 
-with Files('wasm/**'):
-    BUG_COMPONENT = component_jit
-with Files('builtin/**'):
-    BUG_COMPONENT = component_stl
-with Files('ctypes/**'):
-    BUG_COMPONENT = ('Core', 'js-ctypes')
-with Files('gc/**'):
-    BUG_COMPONENT = component_gc
-with Files('jit/**'):
-    BUG_COMPONENT = component_jit
-
-# File-specific metadata
-for gcfile in ['jsgc*', 'devtools/rootAnalysis', 'devtools/gc-ubench', 'devtools/gctrace']:
-    with Files(gcfile):
-        BUG_COMPONENT = component_gc
-
-for stlfile in ['jsarray.*', 'jsbool*', 'jsdate.*', 'jsnum.*', 'json.*', 'jsstr.*']:
-    with Files(stlfile):
-        BUG_COMPONENT = component_stl
-
-with Files('builtin/Intl*'):
-    BUG_COMPONENT = component_intl
-with Files('builtin/make_intl_data.py'):
-    BUG_COMPONENT = component_intl
-
-
-if CONFIG['JS_BUNDLED_EDITLINE']:
-    DIRS += ['editline']
-
-if not CONFIG['JS_DISABLE_SHELL']:
-    DIRS += ['shell']
-
-TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']
-
-CONFIGURE_SUBST_FILES += [
-    'devtools/rootAnalysis/Makefile',
-]
 CONFIGURE_DEFINE_FILES += [
     'js-confdefs.h',
 ]
@@ -89,7 +50,6 @@ EXPORTS += [
     'jstypes.h',
     'jsversion.h',
     'jswrapper.h',
-    'perf/jsperf.h',
 ]
 
 # If you add a header here, add it to js/src/jsapi-tests/testIntTypesABI.cpp so
@@ -145,133 +105,33 @@ EXPORTS.js += [
     '../public/WeakMapPtr.h',
 ]
 
+DIRS += [
+    'builtin',
+    'devtools',
+    'ds',
+    'frontend',
+    'gc',
+    'irregexp',
+    'jit',
+    'perf',
+    'proxy',
+    'threading',
+    'wasm',
+]
+
+if CONFIG['JS_HAS_CTYPES']:
+    DIRS += ['ctypes']
+
+if CONFIG['JS_BUNDLED_EDITLINE']:
+    DIRS += ['editline']
+
+if not CONFIG['JS_DISABLE_SHELL']:
+    DIRS += ['shell']
+
+if CONFIG['MOZ_VTUNE']:
+    DIRS += ['vtune']
+
 UNIFIED_SOURCES += [
-    'builtin/AtomicsObject.cpp',
-    'builtin/DataViewObject.cpp',
-    'builtin/Eval.cpp',
-    'builtin/Intl.cpp',
-    'builtin/MapObject.cpp',
-    'builtin/ModuleObject.cpp',
-    'builtin/Object.cpp',
-    'builtin/Profilers.cpp',
-    'builtin/Promise.cpp',
-    'builtin/Reflect.cpp',
-    'builtin/ReflectParse.cpp',
-    'builtin/SIMD.cpp',
-    'builtin/Stream.cpp',
-    'builtin/SymbolObject.cpp',
-    'builtin/TestingFunctions.cpp',
-    'builtin/TypedObject.cpp',
-    'builtin/WeakMapObject.cpp',
-    'builtin/WeakSetObject.cpp',
-    'devtools/sharkctl.cpp',
-    'ds/Bitmap.cpp',
-    'ds/LifoAlloc.cpp',
-    'ds/MemoryProtectionExceptionHandler.cpp',
-    'frontend/BytecodeCompiler.cpp',
-    'frontend/BytecodeEmitter.cpp',
-    'frontend/FoldConstants.cpp',
-    'frontend/NameFunctions.cpp',
-    'frontend/ParseNode.cpp',
-    'frontend/TokenStream.cpp',
-    'gc/Allocator.cpp',
-    'gc/AtomMarking.cpp',
-    'gc/Barrier.cpp',
-    'gc/GCTrace.cpp',
-    'gc/Iteration.cpp',
-    'gc/Marking.cpp',
-    'gc/Memory.cpp',
-    'gc/MemoryProfiler.cpp',
-    'gc/Nursery.cpp',
-    'gc/RootMarking.cpp',
-    'gc/Statistics.cpp',
-    'gc/Tracer.cpp',
-    'gc/Verifier.cpp',
-    'gc/Zone.cpp',
-    'gc/ZoneGroup.cpp',
-    'irregexp/NativeRegExpMacroAssembler.cpp',
-    'irregexp/RegExpAST.cpp',
-    'irregexp/RegExpCharacters.cpp',
-    'irregexp/RegExpEngine.cpp',
-    'irregexp/RegExpInterpreter.cpp',
-    'irregexp/RegExpMacroAssembler.cpp',
-    'irregexp/RegExpParser.cpp',
-    'irregexp/RegExpStack.cpp',
-    'jit/AliasAnalysis.cpp',
-    'jit/AliasAnalysisShared.cpp',
-    'jit/AlignmentMaskAnalysis.cpp',
-    'jit/BacktrackingAllocator.cpp',
-    'jit/Bailouts.cpp',
-    'jit/BaselineBailouts.cpp',
-    'jit/BaselineCacheIRCompiler.cpp',
-    'jit/BaselineCompiler.cpp',
-    'jit/BaselineDebugModeOSR.cpp',
-    'jit/BaselineFrame.cpp',
-    'jit/BaselineFrameInfo.cpp',
-    'jit/BaselineIC.cpp',
-    'jit/BaselineInspector.cpp',
-    'jit/BaselineJIT.cpp',
-    'jit/BitSet.cpp',
-    'jit/BytecodeAnalysis.cpp',
-    'jit/C1Spewer.cpp',
-    'jit/CacheIR.cpp',
-    'jit/CacheIRCompiler.cpp',
-    'jit/CacheIRSpewer.cpp',
-    'jit/CodeGenerator.cpp',
-    'jit/CompileWrappers.cpp',
-    'jit/Disassembler.cpp',
-    'jit/EagerSimdUnbox.cpp',
-    'jit/EdgeCaseAnalysis.cpp',
-    'jit/EffectiveAddressAnalysis.cpp',
-    'jit/ExecutableAllocator.cpp',
-    'jit/FlowAliasAnalysis.cpp',
-    'jit/FoldLinearArithConstants.cpp',
-    'jit/InstructionReordering.cpp',
-    'jit/Ion.cpp',
-    'jit/IonAnalysis.cpp',
-    'jit/IonBuilder.cpp',
-    'jit/IonCacheIRCompiler.cpp',
-    'jit/IonCaches.cpp',
-    'jit/IonControlFlow.cpp',
-    'jit/IonIC.cpp',
-    'jit/IonOptimizationLevels.cpp',
-    'jit/JitcodeMap.cpp',
-    'jit/JitFrames.cpp',
-    'jit/JitOptions.cpp',
-    'jit/JitSpewer.cpp',
-    'jit/JSJitFrameIter.cpp',
-    'jit/JSONSpewer.cpp',
-    'jit/LICM.cpp',
-    'jit/Linker.cpp',
-    'jit/LIR.cpp',
-    'jit/LoopUnroller.cpp',
-    'jit/Lowering.cpp',
-    'jit/MacroAssembler.cpp',
-    'jit/MCallOptimize.cpp',
-    'jit/MIR.cpp',
-    'jit/MIRGraph.cpp',
-    'jit/MoveResolver.cpp',
-    'jit/OptimizationTracking.cpp',
-    'jit/PerfSpewer.cpp',
-    'jit/ProcessExecutableMemory.cpp',
-    'jit/RangeAnalysis.cpp',
-    'jit/Recover.cpp',
-    'jit/RegisterAllocator.cpp',
-    'jit/RematerializedFrame.cpp',
-    'jit/Safepoints.cpp',
-    'jit/ScalarReplacement.cpp',
-    'jit/shared/BaselineCompiler-shared.cpp',
-    'jit/shared/CodeGenerator-shared.cpp',
-    'jit/shared/Lowering-shared.cpp',
-    'jit/SharedIC.cpp',
-    'jit/Sink.cpp',
-    'jit/Snapshots.cpp',
-    'jit/StupidAllocator.cpp',
-    'jit/TypedObjectPrediction.cpp',
-    'jit/TypePolicy.cpp',
-    'jit/ValueNumbering.cpp',
-    'jit/VMFunctions.cpp',
-    'jit/WasmBCE.cpp',
     'jsalloc.cpp',
     'jsapi.cpp',
     'jsbool.cpp',
@@ -292,17 +152,30 @@ UNIFIED_SOURCES += [
     'jsscript.cpp',
     'jsstr.cpp',
     'jsweakmap.cpp',
-    'perf/jsperf.cpp',
-    'proxy/BaseProxyHandler.cpp',
-    'proxy/CrossCompartmentWrapper.cpp',
-    'proxy/DeadObjectProxy.cpp',
-    'proxy/OpaqueCrossCompartmentWrapper.cpp',
-    'proxy/Proxy.cpp',
-    'proxy/ScriptedProxyHandler.cpp',
-    'proxy/SecurityWrapper.cpp',
-    'proxy/Wrapper.cpp',
-    'threading/Mutex.cpp',
-    'threading/ProtectedData.cpp',
+]
+
+# jsarray.cpp and jsatom.cpp cannot be built in unified mode because
+# xpcshell is broken during packaging when compiled with gcc-4.8.2
+# jsdtoa.cpp cannot be built in unified mode because we want to suppress
+# compiler warnings in third-party dtoa.c.
+# jsmath.cpp cannot be built in unified mode because it needs to re-#define the
+# RtlGenRandom declaration's calling convention in <ntsecapi.h> on Windows.
+# jsutil.cpp cannot be built in unified mode because it is needed for
+# check-vanilla-allocations.
+SOURCES += [
+    'jsarray.cpp',
+    'jsatom.cpp',
+    'jsdtoa.cpp',
+    'jsmath.cpp',
+    'jsutil.cpp',
+]
+
+# Suppress warnings in third-party code.
+# We are keeping this in the main moz.build because it is file specific
+if CONFIG['CLANG_CXX']:
+    SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
+
+UNIFIED_SOURCES += [
     'vm/ArgumentsObject.cpp',
     'vm/ArrayBufferObject.cpp',
     'vm/AsyncFunction.cpp',
@@ -362,69 +235,17 @@ UNIFIED_SOURCES += [
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
     'vm/Xdr.cpp',
-    'wasm/AsmJS.cpp',
-    'wasm/WasmBaselineCompile.cpp',
-    'wasm/WasmBinaryIterator.cpp',
-    'wasm/WasmBinaryToAST.cpp',
-    'wasm/WasmBinaryToExperimentalText.cpp',
-    'wasm/WasmBinaryToText.cpp',
-    'wasm/WasmBuiltins.cpp',
-    'wasm/WasmCode.cpp',
-    'wasm/WasmCompartment.cpp',
-    'wasm/WasmCompile.cpp',
-    'wasm/WasmDebug.cpp',
-    'wasm/WasmFrameIter.cpp',
-    'wasm/WasmGenerator.cpp',
-    'wasm/WasmInstance.cpp',
-    'wasm/WasmIonCompile.cpp',
-    'wasm/WasmJS.cpp',
-    'wasm/WasmModule.cpp',
-    'wasm/WasmSignalHandlers.cpp',
-    'wasm/WasmStubs.cpp',
-    'wasm/WasmTable.cpp',
-    'wasm/WasmTextToBinary.cpp',
-    'wasm/WasmTextUtils.cpp',
-    'wasm/WasmTypes.cpp',
-    'wasm/WasmValidate.cpp'
 ]
 
-# jsarray.cpp and jsatom.cpp cannot be built in unified mode because
-# xpcshell is broken during packaging when compiled with gcc-4.8.2
-# builtin/RegExp.cpp cannot be built in unified mode because it is built
-# without PGO
-# frontend/Parser.cpp cannot be built in unified mode because of explicit
-# template instantiations.
-# jsdtoa.cpp cannot be built in unified mode because we want to suppress
-# compiler warnings in third-party dtoa.c.
-# jsmath.cpp cannot be built in unified mode because it needs to re-#define the
-# RtlGenRandom declaration's calling convention in <ntsecapi.h> on Windows.
-# jsutil.cpp cannot be built in unified mode because it is needed for
-# check-vanilla-allocations.
-# StoreBuffer.cpp cannot be built in unified because its template
-# instantiations may or may not be needed depending on what it gets bundled
-# with.
 # vm/Interpreter.cpp is gigantic and destroys incremental build times for any
 # files unlucky enough to be unified with it.
 SOURCES += [
-    'builtin/RegExp.cpp',
-    'frontend/Parser.cpp',
-    'gc/StoreBuffer.cpp',
-    'jsarray.cpp',
-    'jsatom.cpp',
-    'jsdtoa.cpp',
-    'jsmath.cpp',
-    'jsutil.cpp',
     'vm/Interpreter.cpp',
 ]
 
 if CONFIG['JS_POSIX_NSPR']:
     UNIFIED_SOURCES += [
         'vm/PosixNSPR.cpp',
-    ]
-
-if CONFIG['MOZ_INSTRUMENTS']:
-    SOURCES += [
-        'devtools/Instruments.cpp',
     ]
 
 if CONFIG['ENABLE_TRACE_LOGGING']:
@@ -434,315 +255,8 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
         'vm/TraceLoggingTypes.cpp',
     ]
 
-if not CONFIG['ENABLE_ION']:
-    UNIFIED_SOURCES += [
-        'jit/none/Trampoline-none.cpp'
-    ]
-elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
-    UNIFIED_SOURCES += [
-        'jit/x86-shared/Architecture-x86-shared.cpp',
-        'jit/x86-shared/Assembler-x86-shared.cpp',
-        'jit/x86-shared/AssemblerBuffer-x86-shared.cpp',
-        'jit/x86-shared/BaselineCompiler-x86-shared.cpp',
-        'jit/x86-shared/BaselineIC-x86-shared.cpp',
-        'jit/x86-shared/CodeGenerator-x86-shared.cpp',
-        'jit/x86-shared/Lowering-x86-shared.cpp',
-        'jit/x86-shared/MacroAssembler-x86-shared.cpp',
-        'jit/x86-shared/MoveEmitter-x86-shared.cpp',
-    ]
-    SOURCES += [
-        'jit/x86-shared/Disassembler-x86-shared.cpp',  # using namespace js::jit::X86Encoding;
-    ]
-    if CONFIG['JS_CODEGEN_X64']:
-        UNIFIED_SOURCES += [
-            'jit/x64/Assembler-x64.cpp',
-            'jit/x64/Bailouts-x64.cpp',
-            'jit/x64/BaselineCompiler-x64.cpp',
-            'jit/x64/BaselineIC-x64.cpp',
-            'jit/x64/CodeGenerator-x64.cpp',
-            'jit/x64/Lowering-x64.cpp',
-            'jit/x64/MacroAssembler-x64.cpp',
-            'jit/x64/SharedIC-x64.cpp',
-            'jit/x64/Trampoline-x64.cpp',
-        ]
-    else:
-        UNIFIED_SOURCES += [
-            'jit/x86/Assembler-x86.cpp',
-            'jit/x86/Bailouts-x86.cpp',
-            'jit/x86/BaselineCompiler-x86.cpp',
-            'jit/x86/BaselineIC-x86.cpp',
-            'jit/x86/CodeGenerator-x86.cpp',
-            'jit/x86/Lowering-x86.cpp',
-            'jit/x86/MacroAssembler-x86.cpp',
-            'jit/x86/SharedIC-x86.cpp',
-            'jit/x86/Trampoline-x86.cpp',
-        ]
-elif CONFIG['JS_CODEGEN_ARM']:
-    UNIFIED_SOURCES += [
-        'jit/arm/Architecture-arm.cpp',
-        'jit/arm/Assembler-arm.cpp',
-        'jit/arm/Bailouts-arm.cpp',
-        'jit/arm/BaselineCompiler-arm.cpp',
-        'jit/arm/BaselineIC-arm.cpp',
-        'jit/arm/CodeGenerator-arm.cpp',
-        'jit/arm/disasm/Constants-arm.cpp',
-        'jit/arm/disasm/Disasm-arm.cpp',
-        'jit/arm/Lowering-arm.cpp',
-        'jit/arm/MacroAssembler-arm.cpp',
-        'jit/arm/MoveEmitter-arm.cpp',
-        'jit/arm/SharedIC-arm.cpp',
-        'jit/arm/Trampoline-arm.cpp',
-    ]
-    if CONFIG['JS_SIMULATOR_ARM']:
-        UNIFIED_SOURCES += [
-            'jit/arm/Simulator-arm.cpp'
-        ]
-    elif CONFIG['OS_ARCH'] == 'Darwin':
-        SOURCES += [
-            'jit/arm/llvm-compiler-rt/arm/aeabi_idivmod.S',
-            'jit/arm/llvm-compiler-rt/arm/aeabi_uidivmod.S',
-        ]
-elif CONFIG['JS_CODEGEN_ARM64']:
-    UNIFIED_SOURCES += [
-        'jit/arm64/Architecture-arm64.cpp',
-        'jit/arm64/Assembler-arm64.cpp',
-        'jit/arm64/Bailouts-arm64.cpp',
-        'jit/arm64/BaselineIC-arm64.cpp',
-        'jit/arm64/CodeGenerator-arm64.cpp',
-        'jit/arm64/Lowering-arm64.cpp',
-        'jit/arm64/MacroAssembler-arm64.cpp',
-        'jit/arm64/MoveEmitter-arm64.cpp',
-        'jit/arm64/SharedIC-arm64.cpp',
-        'jit/arm64/Trampoline-arm64.cpp',
-        'jit/arm64/vixl/Assembler-vixl.cpp',
-        'jit/arm64/vixl/Cpu-vixl.cpp',
-        'jit/arm64/vixl/Decoder-vixl.cpp',
-        'jit/arm64/vixl/Disasm-vixl.cpp',
-        'jit/arm64/vixl/Instructions-vixl.cpp',
-        'jit/arm64/vixl/Instrument-vixl.cpp',
-        'jit/arm64/vixl/MacroAssembler-vixl.cpp',
-        'jit/arm64/vixl/MozAssembler-vixl.cpp',
-        'jit/arm64/vixl/MozInstructions-vixl.cpp',
-        'jit/arm64/vixl/Utils-vixl.cpp'
-    ]
-    if CONFIG['JS_SIMULATOR_ARM64']:
-        UNIFIED_SOURCES += [
-            'jit/arm64/vixl/Debugger-vixl.cpp',
-            'jit/arm64/vixl/Logic-vixl.cpp',
-            'jit/arm64/vixl/MozSimulator-vixl.cpp',
-            'jit/arm64/vixl/Simulator-vixl.cpp'
-        ]
-elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
-    UNIFIED_SOURCES += [
-        'jit/mips-shared/Architecture-mips-shared.cpp',
-        'jit/mips-shared/Assembler-mips-shared.cpp',
-        'jit/mips-shared/Bailouts-mips-shared.cpp',
-        'jit/mips-shared/BaselineCompiler-mips-shared.cpp',
-        'jit/mips-shared/BaselineIC-mips-shared.cpp',
-        'jit/mips-shared/CodeGenerator-mips-shared.cpp',
-        'jit/mips-shared/Lowering-mips-shared.cpp',
-        'jit/mips-shared/MacroAssembler-mips-shared.cpp',
-        'jit/mips-shared/MoveEmitter-mips-shared.cpp',
-    ]
-    if CONFIG['JS_CODEGEN_MIPS32']:
-        UNIFIED_SOURCES += [
-            'jit/mips32/Architecture-mips32.cpp',
-            'jit/mips32/Assembler-mips32.cpp',
-            'jit/mips32/Bailouts-mips32.cpp',
-            'jit/mips32/BaselineCompiler-mips32.cpp',
-            'jit/mips32/BaselineIC-mips32.cpp',
-            'jit/mips32/CodeGenerator-mips32.cpp',
-            'jit/mips32/Lowering-mips32.cpp',
-            'jit/mips32/MacroAssembler-mips32.cpp',
-            'jit/mips32/MoveEmitter-mips32.cpp',
-            'jit/mips32/SharedIC-mips32.cpp',
-            'jit/mips32/Trampoline-mips32.cpp',
-        ]
-        if CONFIG['JS_SIMULATOR_MIPS32']:
-            UNIFIED_SOURCES += [
-                'jit/mips32/Simulator-mips32.cpp'
-            ]
-    elif CONFIG['JS_CODEGEN_MIPS64']:
-        UNIFIED_SOURCES += [
-            'jit/mips64/Architecture-mips64.cpp',
-            'jit/mips64/Assembler-mips64.cpp',
-            'jit/mips64/Bailouts-mips64.cpp',
-            'jit/mips64/BaselineCompiler-mips64.cpp',
-            'jit/mips64/BaselineIC-mips64.cpp',
-            'jit/mips64/CodeGenerator-mips64.cpp',
-            'jit/mips64/Lowering-mips64.cpp',
-            'jit/mips64/MacroAssembler-mips64.cpp',
-            'jit/mips64/MoveEmitter-mips64.cpp',
-            'jit/mips64/SharedIC-mips64.cpp',
-            'jit/mips64/Trampoline-mips64.cpp',
-        ]
-        if CONFIG['JS_SIMULATOR_MIPS64']:
-            UNIFIED_SOURCES += [
-                'jit/mips64/Simulator-mips64.cpp'
-            ]
-
-if CONFIG['OS_ARCH'] == 'WINNT':
-    UNIFIED_SOURCES += [
-        'threading/windows/CpuCount.cpp',
-        'threading/windows/Thread.cpp',
-    ]
-else:
-    UNIFIED_SOURCES += [
-        'threading/posix/CpuCount.cpp',
-        'threading/posix/Thread.cpp',
-    ]
-
-if CONFIG['JS_HAS_CTYPES']:
-    SOURCES += [
-        'ctypes/CTypes.cpp',
-        'ctypes/Library.cpp',
-    ]
-    if not CONFIG['MOZ_SYSTEM_FFI']:
-        LOCAL_INCLUDES += [
-            '!ctypes/libffi/include',
-            'ctypes/libffi/src/%s' % CONFIG['FFI_TARGET_DIR'],
-        ]
-
-if CONFIG['MOZ_VTUNE']:
-    SOURCES += [
-        'vtune/ittnotify_static.c',
-        'vtune/jitprofiling.c',
-        'vtune/VTuneWrapper.cpp',
-    ]
-    if CONFIG['CC_TYPE'] != 'msvc':
-        SOURCES['vtune/ittnotify_static.c'].flags += ['-Wno-varargs', '-Wno-unknown-pragmas']
-
-if CONFIG['HAVE_LINUX_PERF_EVENT_H']:
-    SOURCES += [
-        'perf/pm_linux.cpp'
-    ]
-    if CONFIG['LINUX_HEADERS_INCLUDES']:
-        SOURCES['perf/pm_linux.cpp'].flags += [CONFIG['LINUX_HEADERS_INCLUDES']]
-else:
-    SOURCES += [
-        'perf/pm_stub.cpp'
-    ]
-
-GENERATED_FILES += ['frontend/ReservedWordsGenerated.h']
-ReservedWordsGenerated = GENERATED_FILES['frontend/ReservedWordsGenerated.h']
-ReservedWordsGenerated.script = 'frontend/GenerateReservedWords.py'
-ReservedWordsGenerated.inputs += [
-    'frontend/ReservedWords.h'
-]
-
 DIRS += [
     'build',
 ]
 
 FINAL_LIBRARY = 'js'
-
-if CONFIG['NIGHTLY_BUILD']:
-    DEFINES['ENABLE_BINARYDATA'] = True
-    DEFINES['ENABLE_SIMD'] = True
-
-if CONFIG['MOZ_DEBUG'] or CONFIG['NIGHTLY_BUILD']:
-    DEFINES['JS_CACHEIR_SPEW'] = True
-
-# Also set in shell/moz.build
-DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
-
-DEFINES['EXPORT_JS_API'] = True
-
-if CONFIG['JS_HAS_CTYPES']:
-    DEFINES['JS_HAS_CTYPES'] = True
-    for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
-        DEFINES[var] = '"%s"' % CONFIG[var]
-
-if CONFIG['MOZ_LINKER']:
-    DEFINES['MOZ_LINKER'] = True
-
-if CONFIG['_MSC_VER']:
-    if CONFIG['CPU_ARCH'] == 'x86':
-        SOURCES['builtin/RegExp.cpp'].no_pgo = True # Bug 772303
-    elif CONFIG['CPU_ARCH'] == 'x86_64' and CONFIG['JS_HAS_CTYPES']:
-        SOURCES['ctypes/CTypes.cpp'].no_pgo = True # Bug 810661
-    # Prevent floating point errors caused by VC++ optimizations
-    # XXX We should add this to CXXFLAGS, too?
-    CFLAGS += ['-fp:precise']
-    # C4805 warns mixing bool with other integral types in computation.
-    # But given the conversion from bool is specified, and this is a
-    # pattern widely used in code in js/src, suppress this warning here.
-    CXXFLAGS += ['-wd4805']
-    # C4661 ("no suitable definition provided for explicit template
-    # instantiation request") is emitted for all Parser methods that
-    # have a Parser<FullParseHandler> definition but no
-    # Parser<SyntaxParseHandler> definition, see bug 1167030.
-    CXXFLAGS += ['-wd4661']
-    CXXFLAGS += ['-we4067', '-we4258', '-we4275']
-    CXXFLAGS += ['-wd4146'] # FIXME: unary minus operator applied to unsigned type (bug 1229189)
-
-    # This is intended as a temporary hack to support building with VS2015.
-    # 'noexcept' used with no exception handling mode specified;
-    # termination on exception is not guaranteed. Specify /EHsc
-    CXXFLAGS += ['-wd4577']
-    CXXFLAGS += ['-wd4312']
-
-CFLAGS += CONFIG['MOZ_ICU_CFLAGS']
-CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
-
-# Prepare self-hosted JS code for embedding
-GENERATED_FILES += [('selfhosted.out.h', 'selfhosted.js')]
-selfhosted = GENERATED_FILES[('selfhosted.out.h', 'selfhosted.js')]
-selfhosted.script = 'builtin/embedjs.py:generate_selfhosted'
-selfhosted.inputs = [
-    'js.msg',
-    'builtin/TypedObjectConstants.h',
-    'builtin/SelfHostingDefines.h',
-    'builtin/Utilities.js',
-    'builtin/Array.js',
-    'builtin/AsyncIteration.js',
-    'builtin/Classes.js',
-    'builtin/Date.js',
-    'builtin/Error.js',
-    'builtin/Function.js',
-    'builtin/Generator.js',
-    'builtin/Intl.js',
-    'builtin/IntlCurrency.js',
-    'builtin/IntlData.js',
-    'builtin/Iterator.js',
-    'builtin/Map.js',
-    'builtin/Module.js',
-    'builtin/Number.js',
-    'builtin/Object.js',
-    'builtin/Promise.js',
-    'builtin/Reflect.js',
-    'builtin/RegExp.js',
-    'builtin/RegExpGlobalReplaceOpt.h.js',
-    'builtin/RegExpLocalReplaceOpt.h.js',
-    'builtin/String.js',
-    'builtin/Set.js',
-    'builtin/Sorting.js',
-    'builtin/TypedArray.js',
-    'builtin/TypedObject.js',
-    'builtin/WeakMap.js',
-    'builtin/WeakSet.js'
-]
-
-if CONFIG['JS_HAS_CTYPES']:
-    if CONFIG['MOZ_SYSTEM_FFI']:
-        CXXFLAGS += CONFIG['MOZ_FFI_CFLAGS']
-    else:
-        # Windows needs this to be linked with a static library.
-        DEFINES['FFI_BUILDING'] = True
-
-if CONFIG['GNU_CXX']:
-    # Also disable strict-aliasing for GCC compiler, that is enabled by default
-    # starting with version 7.1, see Bug 1363009
-    CXXFLAGS += ['-Wno-shadow', '-Werror=format', '-fno-strict-aliasing']
-
-# Suppress warnings in third-party code.
-if CONFIG['CLANG_CXX']:
-    SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
-
-# Generate GC statistics phase data.
-GENERATED_FILES += ['gc/StatsPhasesGenerated.h']
-StatsPhasesGeneratedHeader = GENERATED_FILES['gc/StatsPhasesGenerated.h']
-StatsPhasesGeneratedHeader.script = 'gc/GenerateStatsPhases.py:generateHeader'
-GENERATED_FILES += ['gc/StatsPhasesGenerated.cpp']
-StatsPhasesGeneratedCpp = GENERATED_FILES['gc/StatsPhasesGenerated.cpp']
-StatsPhasesGeneratedCpp.script = 'gc/GenerateStatsPhases.py:generateCpp'
