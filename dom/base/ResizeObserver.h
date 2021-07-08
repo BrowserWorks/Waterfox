@@ -6,7 +6,10 @@
 #ifndef mozilla_dom_ResizeObserver_h
 #define mozilla_dom_ResizeObserver_h
 
+#include "mozilla/AppUnits.h"
+#include "mozilla/WritingModes.h"
 #include "mozilla/dom/ResizeObserverBinding.h"
+#include "nsCoord.h"
 
 namespace mozilla {
 namespace dom {
@@ -47,7 +50,7 @@ public:
     return mOwner;
   }
 
-  void Observe(Element* aTarget, ErrorResult& aRv);
+  void Observe(Element* aTarget, const ResizeObserverOptions& aOptions, ErrorResult& aRv);
 
   void Unobserve(Element* aTarget, ErrorResult& aRv);
 
@@ -77,9 +80,10 @@ public:
   /*
    * Deliver the callback function in JavaScript for all active observations
    * and pass the sequence of ResizeObserverEntry so JavaScript can access them.
-   * The broadcast size of observations will be updated and mActiveTargets will
-   * be cleared. It also returns the shallowest depth of elements from active
-   * observations or UINT32_MAX if there is no any active observations.
+   * The active observations' mLastReportedSize fields will be updated, and
+   * mActiveTargets will be cleared. It also returns the shallowest depth of
+   * elements from active observations or numeric_limits<uint32_t>::max() if
+   * there are not any active observations.
   */
   uint32_t BroadcastActiveObservations();
 
@@ -92,6 +96,10 @@ protected:
   nsCOMPtr<nsPIDOMWindowInner> mOwner;
   RefPtr<ResizeObserverCallback> mCallback;
   nsTArray<RefPtr<ResizeObservation>> mActiveTargets;
+  // The spec uses a list to store the skipped targets. However, it seems what
+  // we want is to check if there are any skipped targets (i.e. existence).
+  // Therefore, we use a boolean value to represent the existence of skipped
+  // targets.
   bool mHasSkippedTargets;
 
   // Combination of HashTable and LinkedList so we can iterate through
@@ -153,14 +161,67 @@ public:
     return mContentRect;
   }
 
-  void SetContentRect(nsRect aRect);
+  /**
+   * Returns target's logical border-box size and content-box size as
+   * ResizeObserverSize.
+   */
+  ResizeObserverSize* BorderBoxSize() const { 
+    return mBorderBoxSize;
+  }
+  ResizeObserverSize* ContentBoxSize() const { 
+    return mContentBoxSize;
+  }
+
+  // Set borderBoxSize.
+  void SetBorderBoxSize(const nsSize& aSize);
+  // Set contentRect and contentBoxSize.
+  void SetContentRectAndSize(const nsSize& aSize);
 
 protected:
   ~ResizeObserverEntry();
 
   nsCOMPtr<nsISupports> mOwner;
   nsCOMPtr<Element> mTarget;
+
   RefPtr<DOMRectReadOnly> mContentRect;
+  RefPtr<ResizeObserverSize> mBorderBoxSize;
+  RefPtr<ResizeObserverSize> mContentBoxSize;
+};
+
+class ResizeObserverSize final : public nsISupports, public nsWrapperCache {
+public:
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(ResizeObserverSize)
+
+  // Note: the unit of |aSize| is app unit, and we convert it into css pixel in
+  // the public JS APIs.
+  ResizeObserverSize(nsISupports* aOwner, const nsSize& aSize,
+                     const WritingMode aWM)
+      : mOwner(aOwner), mSize(aWM, aSize), mWM(aWM) {
+    MOZ_ASSERT(mOwner, "Need a non-null owner");
+  }
+
+  nsISupports* GetParentObject() const { return mOwner; }
+
+  JSObject* WrapObject(JSContext* aCx,
+                       JS::Handle<JSObject*> aGivenProto) override {
+    return ResizeObserverSizeBinding::Wrap(aCx, this, aGivenProto);
+  }
+
+  double InlineSize() const {
+    return NSAppUnitsToDoublePixels(mSize.ISize(mWM), AppUnitsPerCSSPixel());
+  }
+
+  double BlockSize() const {
+    return NSAppUnitsToDoublePixels(mSize.BSize(mWM), AppUnitsPerCSSPixel());
+  }
+
+protected:
+  ~ResizeObserverSize() = default;
+
+  nsCOMPtr<nsISupports> mOwner;
+  const LogicalSize mSize;
+  const WritingMode mWM;
 };
 
 /**
@@ -177,11 +238,15 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(ResizeObservation)
 
-  ResizeObservation(nsISupports* aOwner, Element* aTarget)
+  ResizeObservation(nsISupports* aOwner,
+                    Element* aTarget,
+                    ResizeObserverBoxOptions aBox,
+                    const WritingMode aWM)
     : mOwner(aOwner)
     , mTarget(aTarget)
-    , mBroadcastWidth(0)
-    , mBroadcastHeight(0)
+    , mObservedBox(aBox)
+    , mLastReportedSize(aWM)
+    , mLastReportedWM(aWM)
   {
     MOZ_ASSERT(mOwner, "Need a non-null owner");
     MOZ_ASSERT(mTarget, "Need a non-null target element");
@@ -208,32 +273,21 @@ public:
     return mTarget;
   }
 
-  nscoord BroadcastWidth() const
-  {
-    return mBroadcastWidth;
-  }
-
-  nscoord BroadcastHeight() const
-  {
-    return mBroadcastHeight;
+  ResizeObserverBoxOptions BoxOptions() const
+  { 
+    return mObservedBox;
   }
 
   /*
-   * Returns whether the observed target element size differs from current
-   * BroadcastWidth and BroadcastHeight
+   * Returns whether the observed target element size differs from the saved
+   * mLastReportedSize.
   */
   bool IsActive() const;
 
   /*
-   * Update current BroadcastWidth and BroadcastHeight with size from aRect.
+   * Update current mLastReportedSize with size from aSize.
   */
-  void UpdateBroadcastSize(nsRect aRect);
-
-  /*
-   * Returns the target's rect in the form of nsRect.
-   * If the target is SVG, width and height are determined from bounding box.
-  */
-  nsRect GetTargetRect() const;
+  void UpdateLastReportedSize(const nsSize& aSize);
 
 protected:
   ~ResizeObservation();
@@ -241,10 +295,14 @@ protected:
   nsCOMPtr<nsISupports> mOwner;
   nsCOMPtr<Element> mTarget;
 
-  // Broadcast width and broadcast height are the latest recorded size
-  // of observed target.
-  nscoord mBroadcastWidth;
-  nscoord mBroadcastHeight;
+  const ResizeObserverBoxOptions mObservedBox;
+
+  // The latest recorded size of observed target.
+  // Per the spec, observation.lastReportedSize should be entry.borderBoxSize
+  // or entry.contentBoxSize (i.e. logical size), instead of entry.contentRect
+  // (i.e. physical rect), so we store this as LogicalSize.
+  LogicalSize mLastReportedSize;
+  WritingMode mLastReportedWM;
 };
 
 } // namespace dom

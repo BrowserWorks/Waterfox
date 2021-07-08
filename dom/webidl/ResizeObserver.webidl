@@ -7,12 +7,21 @@
  * https://wicg.github.io/ResizeObserver/
  */
 
+enum ResizeObserverBoxOptions {
+    "border-box",
+    "content-box"
+};
+
+dictionary ResizeObserverOptions {
+    ResizeObserverBoxOptions box = "content-box";
+};
+
 [Constructor(ResizeObserverCallback callback),
  Exposed=Window,
  Pref="layout.css.resizeobserver.enabled"]
 interface ResizeObserver {
     [Throws]
-    void observe(Element? target);
+    void observe(Element? target, optional ResizeObserverOptions options);
     [Throws]
     void unobserve(Element? target);
     void disconnect();
@@ -21,19 +30,23 @@ interface ResizeObserver {
 callback ResizeObserverCallback = void (sequence<ResizeObserverEntry> entries, ResizeObserver observer);
 
 [Constructor(Element? target),
- ChromeOnly,
  Pref="layout.css.resizeobserver.enabled"]
 interface ResizeObserverEntry {
     readonly attribute Element target;
     readonly attribute DOMRectReadOnly? contentRect;
+    readonly attribute ResizeObserverSize borderBoxSize;
+    readonly attribute ResizeObserverSize contentBoxSize;
 };
 
-[Constructor(Element? target),
- ChromeOnly,
+[Pref="layout.css.resizeobserver.enabled"]
+interface ResizeObserverSize {
+    readonly attribute unrestricted double inlineSize;
+    readonly attribute unrestricted double blockSize;
+};
+
+[ChromeOnly,
  Pref="layout.css.resizeobserver.enabled"]
 interface ResizeObservation {
     readonly attribute Element target;
-    readonly attribute long broadcastWidth;
-    readonly attribute long broadcastHeight;
     boolean isActive();
 };
