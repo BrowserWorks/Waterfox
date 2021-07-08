@@ -2838,7 +2838,11 @@ nsTextEditorState::UpdatePlaceholderText(bool aNotify)
 
   nsCOMPtr<nsIContent> content = do_QueryInterface(mTextCtrlElement);
   content->GetAttr(kNameSpaceID_None, nsGkAtoms::placeholder, placeholderValue);
-  nsContentUtils::RemoveNewlines(placeholderValue);
+  if (mTextCtrlElement->IsTextArea()) { // <textarea>s preserve newlines...
+    nsContentUtils::PlatformToDOMLineBreaks(placeholderValue);
+  } else { // ...<input>s don't
+    nsContentUtils::RemoveNewlines(placeholderValue);
+  }
   NS_ASSERTION(mPlaceholderDiv->GetFirstChild(), "placeholder div has no child");
   mPlaceholderDiv->GetFirstChild()->SetText(placeholderValue, aNotify);
 }
