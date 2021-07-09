@@ -787,6 +787,27 @@ nsImageFrame::PredictedDestRect(const nsRect& aFrameContentBox)
                                               StylePosition());
 }
 
+bool
+nsImageFrame::ShouldShowBrokenImageIcon() const
+{
+  // check for broken images. valid null images (eg. img src="") are
+  // not considered broken because they have no image requests
+  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
+  if (imageLoader) {
+    nsCOMPtr<imgIRequest> currentRequest;
+    imageLoader->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
+                            getter_AddRefs(currentRequest));
+    if (currentRequest) {
+      uint32_t imageStatus;
+      return NS_SUCCEEDED(currentRequest->GetImageStatus(&imageStatus)) &&
+        (imageStatus & imgIRequest::STATUS_ERROR);
+    }
+    return imageLoader->GetImageBlockingStatus() != nsIContentPolicy::ACCEPT;
+  } else {
+    return false;
+  }
+}
+
 void
 nsImageFrame::EnsureIntrinsicSizeAndRatio()
 {
@@ -801,32 +822,11 @@ nsImageFrame::EnsureIntrinsicSizeAndRatio()
       UpdateIntrinsicSize(mImage);
       UpdateIntrinsicRatio(mImage);
     } else {
-      // image request is null or image size not known, probably an
-      // invalid image specified
+      // Image request is null or image size not known.
       if (!(GetStateBits() & NS_FRAME_GENERATED_CONTENT)) {
-        bool imageInvalid = false;
-        // check for broken images. valid null images (eg. img src="") are
-        // not considered broken because they have no image requests
-        nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
-        if (imageLoader) {
-          nsCOMPtr<imgIRequest> currentRequest;
-          imageLoader->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
-                                  getter_AddRefs(currentRequest));
-          if (currentRequest) {
-            uint32_t imageStatus;
-            imageInvalid =
-              NS_SUCCEEDED(currentRequest->GetImageStatus(&imageStatus)) &&
-              (imageStatus & imgIRequest::STATUS_ERROR);
-          } else {
-            // check if images are user-disabled (or blocked for other
-            // reasons)
-            int16_t imageBlockingStatus;
-            imageLoader->GetImageBlockingStatus(&imageBlockingStatus);
-            imageInvalid = imageBlockingStatus != nsIContentPolicy::ACCEPT;
-          }
-        }
-        // invalid image specified. make the image big enough for the "broken" icon
-        if (imageInvalid) {
+        // Likely an invalid image. Check if we should display it as broken.
+        if (ShouldShowBrokenImageIcon()) {
+          // Invalid image specified. make the image big enough for the "broken" icon
           nscoord edgeLengthToUse =
             nsPresContext::CSSPixelsToAppUnits(
               ICON_SIZE + (2 * (ICON_PADDING + ALT_BORDER_WIDTH)));
@@ -1406,8 +1406,9 @@ nsImageFrame::DisplayAltFeedback(gfxContext& aRenderingContext,
   DrawResult result = DrawResult::NOT_READY;
 
   // Check if we should display image placeholders
-  if (!gIconLoad->mPrefShowPlaceholders ||
-      (isLoading && !gIconLoad->mPrefShowLoadingPlaceholder)) {
+  if (!ShouldShowBrokenImageIcon() ||
+      !gIconLoad->mPrefShowPlaceholders ||
+       (isLoading && !gIconLoad->mPrefShowLoadingPlaceholder)) {
     result = DrawResult::SUCCESS;
   } else {
     nscoord size = nsPresContext::CSSPixelsToAppUnits(ICON_SIZE);
