@@ -33,6 +33,9 @@ libcore_neon = []
 paste = "^0.1.3"
 arrayvec = { version = "^0.5", default-features = false }
 
+[build-dependencies]
+rustc_version = "0.2"
+
 [target.'cfg(target_arch = "x86_64")'.dependencies.sleef-sys]
 version = "0.1.2"
 optional = true

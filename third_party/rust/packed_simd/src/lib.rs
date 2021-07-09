@@ -199,10 +199,11 @@
 //!   Numeric casts are not very "precise": sometimes lossy, sometimes value
 //!   preserving, etc.
 
+#![cfg_attr(use_const_generics, feature(const_generics))]
+#![cfg_attr(use_const_generics, allow(incomplete_features, clippy::from_over_into))]
 #![feature(
     repr_simd,
     rustc_attrs,
-    const_fn,
     platform_intrinsics,
     stdsimd,
     aarch64_target_feature,
