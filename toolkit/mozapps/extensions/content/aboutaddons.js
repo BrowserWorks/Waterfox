@@ -2895,6 +2895,10 @@ class AddonCard extends HTMLElement {
         case "remove":
           {
             this.panel.hide();
+            if (!hasPermission(addon, "uninstall")) {
+              this.sendEvent("remove-disabled");
+              return;
+            }
             let {
               remove,
               report,
