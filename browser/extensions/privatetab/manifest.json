@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Private Tab",
+  "description": "Additional built-in features for Waterfox",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "hidden": true,
+
+  "applications": {
+    "gecko": {
+      "id": "privatetab@waterfox.net",
+      "strict_min_version": "72.0a1"
+    }
+  },
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "permissions": ["tabs", "menus"],
+
+  "experiment_apis": {
+    "privatetab": {
+      "schema": "schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "api.js",
+        "paths": [["privatetab"]]
+      }
+    }
+  }
+}

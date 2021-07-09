@@ -1,0 +1,23 @@
+{
+  "newPrivateTab": {
+    "message": "New Private Tab"
+  },
+  "newPrivateTooltip": {
+    "message": "Open a new private tab"
+  },
+  "openAllPrivate": {
+    "message": "Open All in Private Tabs"
+  },
+  "openPrivateTab": {
+    "message": "Open in a New Private Tab"
+  },
+  "openLinkPrivate": {
+    "message": "Open Link in New Private Tab"
+  },
+  "privateTab": {
+    "message": "Private Tab"
+  },
+  "containerName": {
+    "message": "Private"
+  }
+}
