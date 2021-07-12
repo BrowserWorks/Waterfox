@@ -103,6 +103,10 @@ var UpdateUtils = {
             return Services.appinfo.OS + "_" + this.ABI;
           case "OS_VERSION":
             return this.OSVersion;
+          case "OS":
+            return Services.appinfo.OS;
+          case "ARCH":
+            return UpdateUtils.ABI.substring(0, UpdateUtils.ABI.indexOf("-"));
           case "LOCALE":
             return locale;
           case "CHANNEL":
