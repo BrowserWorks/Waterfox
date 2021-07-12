@@ -14,7 +14,7 @@
 #include "nsString.h"
 #include "xpcpublic.h" // For xpc::NativeGlobal
 #include "mozilla/EffectSet.h"
-#include "mozilla/dom/KeyframeEffectReadOnly.h"
+#include "mozilla/dom/KeyframeEffect.h"
 #include "mozilla/Preferences.h"
 
 namespace mozilla {
@@ -49,6 +49,16 @@ AnimationUtils::GetCurrentRealmDocument(JSContext* aCx)
   return win->GetDoc();
 }
 
+/* static */ nsIDocument*
+AnimationUtils::GetDocumentFromGlobal(JSObject* aGlobalObject)
+{
+  nsGlobalWindow* win = xpc::WindowOrNull(aGlobalObject);
+  if (!win) {
+    return nullptr;
+  }
+  return win->GetDoc();
+}
+
 /* static */ bool
 AnimationUtils::IsOffscreenThrottlingEnabled()
 {
@@ -65,31 +75,10 @@ AnimationUtils::IsOffscreenThrottlingEnabled()
 }
 
 /* static */ bool
-AnimationUtils::IsCoreAPIEnabled()
-{
-  static bool sCoreAPIEnabled;
-  static bool sPrefCached = false;
-
-  if (!sPrefCached) {
-    sPrefCached = true;
-    Preferences::AddBoolVarCache(&sCoreAPIEnabled,
-                                 "dom.animations-api.core.enabled");
-  }
-
-  return sCoreAPIEnabled;
-}
-
-/* static */ bool
-AnimationUtils::IsCoreAPIEnabledForCaller(dom::CallerType aCallerType)
-{
-  return IsCoreAPIEnabled() || aCallerType == dom::CallerType::System;
-}
-
-/* static */ bool
 AnimationUtils::EffectSetContainsAnimatedScale(EffectSet& aEffects,
                                                const nsIFrame* aFrame)
 {
-  for (const dom::KeyframeEffectReadOnly* effect : aEffects) {
+  for (const dom::KeyframeEffect* effect : aEffects) {
     if (effect->ContainsAnimatedScale(aFrame)) {
       return true;
     }

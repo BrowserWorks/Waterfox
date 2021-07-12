@@ -6,9 +6,10 @@
 
 #include "AnimationHelper.h"
 #include "mozilla/ComputedTimingFunction.h" // for ComputedTimingFunction
-#include "mozilla/dom/AnimationEffectReadOnlyBinding.h" // for dom::FillMode
+#include "mozilla/dom/Animation.h"
+#include "mozilla/dom/AnimationEffectBinding.h" // for dom::FillMode
 #include "mozilla/dom/KeyframeEffectBinding.h" // for dom::IterationComposite
-#include "mozilla/dom/KeyframeEffectReadOnly.h" // for dom::KeyFrameEffectReadOnly
+#include "mozilla/dom/KeyframeEffect.h" // for dom::KeyFrameEffectReadOnly
 #include "mozilla/layers/CompositorThread.h" // for CompositorThreadHolder
 #include "mozilla/layers/LayerAnimationUtils.h" // for TimingFunctionToComputedTimingFunction
 #include "mozilla/StyleAnimationValue.h" // for StyleAnimationValue, etc
@@ -150,12 +151,12 @@ SampleValue(double aPortion, const layers::Animation& aAnimation,
                "Must have same unit");
 
   StyleAnimationValue startValue =
-    dom::KeyframeEffectReadOnly::CompositeValue(aAnimation.property(),
+    dom::KeyframeEffect::CompositeValue(aAnimation.property(),
                                                 aStart.mValue,
                                                 aUnderlyingValue,
                                                 aStart.mComposite);
   StyleAnimationValue endValue =
-    dom::KeyframeEffectReadOnly::CompositeValue(aAnimation.property(),
+    dom::KeyframeEffect::CompositeValue(aAnimation.property(),
                                                 aEnd.mValue,
                                                 aUnderlyingValue,
                                                 aEnd.mComposite);
@@ -242,7 +243,7 @@ AnimationHelper::SampleAnimationForEachNode(TimeStamp aTime,
     };
 
     ComputedTiming computedTiming =
-      dom::AnimationEffectReadOnly::GetComputedTimingAt(
+      dom::AnimationEffect::GetComputedTimingAt(
         Nullable<TimeDuration>(elapsedDuration), timing,
         animation.playbackRate());
 

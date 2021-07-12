@@ -1730,6 +1730,7 @@ class IDLInterface(IDLInterfaceOrNamespace):
                   identifier == "LegacyEventInit" or
                   identifier == "ProbablyShortLivingWrapper" or
                   identifier == "LegacyUnenumerableNamedProperties" or
+                  identifier == "RunConstructorInCallerCompartment" or
                   identifier == "NonOrdinaryGetPrototypeOf"):
                 # Known extended attributes that do not take values
                 if not attr.noArguments():

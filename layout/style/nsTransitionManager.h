@@ -13,7 +13,7 @@
 #include "mozilla/EffectCompositor.h" // For EffectCompositor::CascadeLevel
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/Animation.h"
-#include "mozilla/dom/KeyframeEffectReadOnly.h"
+#include "mozilla/dom/KeyframeEffect.h"
 #include "AnimationCommon.h"
 #include "nsCSSProps.h"
 
@@ -36,7 +36,7 @@ class ServoStyleContext;
 
 namespace mozilla {
 
-struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
+struct ElementPropertyTransition : public dom::KeyframeEffect
 {
   ElementPropertyTransition(nsIDocument* aDocument,
                             Maybe<OwningAnimationTarget>& aTarget,
@@ -44,7 +44,7 @@ struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
                             AnimationValue aStartForReversingTest,
                             double aReversePortion,
                             const KeyframeEffectParams& aEffectOptions)
-    : dom::KeyframeEffectReadOnly(aDocument, aTarget, aTiming, aEffectOptions)
+    : dom::KeyframeEffect(aDocument, aTarget, aTiming, aEffectOptions)
     , mStartForReversingTest(aStartForReversingTest)
     , mReversePortion(aReversePortion)
   { }
@@ -138,8 +138,9 @@ public:
   void GetTransitionProperty(nsString& aRetVal) const;
 
   // Animation interface overrides
-  virtual AnimationPlayState PlayStateFromJS() const override;
-  virtual void PlayFromJS(ErrorResult& aRv) override;
+  AnimationPlayState PlayStateFromJS() const override;
+  bool PendingFromJS() const override;
+  void PlayFromJS(ErrorResult& aRv) override;
 
   // A variant of Play() that avoids posting style updates since this method
   // is expected to be called whilst already updating style.
@@ -172,7 +173,7 @@ public:
     mOwningElement = OwningElementRef();
   }
 
-  void SetEffectFromStyle(AnimationEffectReadOnly* aEffect);
+  void SetEffectFromStyle(AnimationEffect* aEffect);
 
   void Tick() override;
 

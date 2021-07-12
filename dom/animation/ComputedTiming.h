@@ -15,7 +15,7 @@
 #ifdef None
 #undef None
 #endif
-#include "mozilla/dom/AnimationEffectReadOnlyBinding.h" // FillMode
+#include "mozilla/dom/AnimationEffectBinding.h" // FillMode
 
 namespace mozilla {
 

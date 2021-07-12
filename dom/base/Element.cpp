@@ -142,8 +142,8 @@
 #include "nsISupportsImpl.h"
 #include "mozilla/dom/CSSPseudoElement.h"
 #include "mozilla/dom/DocumentFragment.h"
-#include "mozilla/dom/KeyframeEffect.h"
 #include "mozilla/dom/KeyframeEffectBinding.h"
+#include "mozilla/dom/KeyframeEffect.h"
 #include "mozilla/dom/WindowBinding.h"
 #include "mozilla/dom/ElementBinding.h"
 #include "mozilla/dom/VRDisplay.h"
@@ -3698,22 +3698,23 @@ Element::Animate(const Nullable<ElementOrCSSPseudoElement>& aTarget,
   GlobalObject global(aContext, ownerGlobal->GetGlobalJSObject());
   MOZ_ASSERT(!global.Failed());
 
-  // Wrap the aKeyframes object for the cross-compartment case.
-  JS::Rooted<JSObject*> keyframes(aContext);
-  keyframes = aKeyframes;
+  // KeyframeEffect constructor doesn't follow the standard Xray calling
+  // convention and needs to be called in caller's compartment.
+  // This should match to RunConstructorInCallerCompartment attribute in
+  // KeyframeEffect.webidl.
+  RefPtr<KeyframeEffect> effect =
+    KeyframeEffect::Constructor(global, aTarget, aKeyframes, aOptions,
+                                aError);
+  if (aError.Failed()) {
+    return nullptr;
+  }
+
+  // Animation constructor follows the standard Xray calling convention and
+  // needs to be called in the target element's compartment.
   Maybe<JSAutoCompartment> ac;
   if (js::GetContextCompartment(aContext) !=
       js::GetObjectCompartment(ownerGlobal->GetGlobalJSObject())) {
     ac.emplace(aContext, ownerGlobal->GetGlobalJSObject());
-    if (!JS_WrapObject(aContext, &keyframes)) {
-      return nullptr;
-    }
-  }
-
-  RefPtr<KeyframeEffect> effect =
-    KeyframeEffect::Constructor(global, aTarget, keyframes, aOptions, aError);
-  if (aError.Failed()) {
-    return nullptr;
   }
 
   AnimationTimeline* timeline = referenceElement->OwnerDoc()->Timeline();
@@ -3800,7 +3801,7 @@ Element::GetAnimationsUnsorted(Element* aElement,
     return;
   }
 
-  for (KeyframeEffectReadOnly* effect : *effects) {
+  for (KeyframeEffect* effect : *effects) {
     MOZ_ASSERT(effect && effect->GetAnimation(),
                "Only effects associated with an animation should be "
                "added to an element's effect set");

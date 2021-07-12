@@ -20,7 +20,7 @@
  *
  * References:
  * - WebAnimation spec:
- *   http://w3c.github.io/web-animations/
+ *   http://drafts.csswg.org/web-animations/
  * - WebAnimation WebIDL files:
  *   /dom/webidl/Animation*.webidl
  */
@@ -244,7 +244,7 @@ var AnimationPlayerActor = protocol.ActorClassWithSpec(animationPlayerSpec, {
    * @return {String}
    */
   getEasing: function () {
-    return this.player.effect.timing.easing;
+    return this.player.effect.getComputedTiming().easing;
   },
 
   /**

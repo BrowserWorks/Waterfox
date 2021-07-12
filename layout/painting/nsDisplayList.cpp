@@ -19,7 +19,7 @@
 #include "gfxContext.h"
 #include "gfxUtils.h"
 #include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/KeyframeEffectReadOnly.h"
+#include "mozilla/dom/KeyframeEffect.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/layers/PLayerTransaction.h"
 #include "nsCSSRendering.h"
@@ -700,7 +700,7 @@ AddAnimationsForProperty(nsIFrame* aFrame, nsDisplayListBuilder* aBuilder,
       continue;
     }
 
-    dom::KeyframeEffectReadOnly* keyframeEffect =
+    dom::KeyframeEffect* keyframeEffect =
       anim->GetEffect() ? anim->GetEffect()->AsKeyframeEffect() : nullptr;
     MOZ_ASSERT(keyframeEffect,
                "A playing animation should have a keyframe effect");
@@ -731,9 +731,8 @@ AddAnimationsForProperty(nsIFrame* aFrame, nsDisplayListBuilder* aBuilder,
     // Currently this only happens when the timeline is driven by a refresh
     // driver under test control. In this case, the next time the refresh
     // driver is advanced it will trigger any pending animations.
-    if (anim->PlayState() == AnimationPlayState::Pending &&
-        (anim->GetTimeline() &&
-         !anim->GetTimeline()->TracksWallclockTime())) {
+    if (anim->Pending() &&
+        (anim->GetTimeline() && !anim->GetTimeline()->TracksWallclockTime())) {
       continue;
     }
 
@@ -7519,21 +7518,6 @@ nsDisplayTransform::CanUseAsyncAnimations(nsDisplayListBuilder* aBuilder)
   return mAllowAsyncAnimation;
 }
 
-static void
-RecordAnimationFrameSizeTelemetry(nsIFrame* aFrame, const nsSize& overflow)
-{
-  gfxSize scale = nsLayoutUtils::GetTransformToAncestorScale(aFrame);
-  nsSize frameSize = nsSize(overflow.width * scale.width,
-                            overflow.height * scale.height);
-  uint32_t pixelArea = uint32_t(nsPresContext::AppUnitsToIntCSSPixels(frameSize.width))
-                     * nsPresContext::AppUnitsToIntCSSPixels(frameSize.height);
-  if (EffectSet* effects = EffectSet::GetEffectSet(aFrame)) {
-    for (KeyframeEffectReadOnly* effect : *effects) {
-      effect->RecordFrameSizeTelemetry(pixelArea);
-    }
-  }
-}
-
 /* static */ auto
 nsDisplayTransform::ShouldPrerenderTransformedContent(nsDisplayListBuilder* aBuilder,
                                                       nsIFrame* aFrame,
@@ -7580,17 +7564,9 @@ nsDisplayTransform::ShouldPrerenderTransformedContent(nsDisplayListBuilder* aBui
     }
   }
 
-  nsRect overflow = aFrame->GetVisualOverflowRectRelativeToSelf();
-
-  // Record telemetry about the size of the animated content.
-  // Check CanRecordExtended() so we don't do any processing if the
-  // telemetry won't be recorded anyways.
-  if (Telemetry::CanRecordExtended()) {
-    RecordAnimationFrameSizeTelemetry(aFrame, overflow.Size());
-  }
-
   // If the incoming dirty rect already contains the entire overflow area,
   // we are already rendering the entire content.
+  nsRect overflow = aFrame->GetVisualOverflowRectRelativeToSelf();
   if (aDirtyRect->Contains(overflow)) {
     return FullPrerender;
   }

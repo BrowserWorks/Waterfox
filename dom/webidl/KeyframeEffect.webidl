@@ -4,7 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * https://w3c.github.io/web-animations/#the-keyframeeffect-interfaces
+ * https://drafts.csswg.org/web-animations/#the-keyframeeffect-interfaces
  *
  * Copyright © 2015 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
@@ -15,24 +15,27 @@ enum IterationCompositeOperation {
   "accumulate"
 };
 
-dictionary KeyframeEffectOptions : AnimationEffectTimingProperties {
+dictionary KeyframeEffectOptions : EffectTiming {
   IterationCompositeOperation iterationComposite = "replace";
   CompositeOperation          composite = "replace";
 };
 
+// KeyframeEffect should run in the caller's compartment to do custom
+// processing on the `keyframes` object.
 [Func="nsDocument::IsWebAnimationsEnabled",
+ RunConstructorInCallerCompartment,
  Constructor ((Element or CSSPseudoElement)? target,
               object? keyframes,
               optional (unrestricted double or KeyframeEffectOptions) options),
- Constructor (KeyframeEffectReadOnly source)]
-interface KeyframeEffectReadOnly : AnimationEffectReadOnly {
-  readonly attribute (Element or CSSPseudoElement)?  target;
-  readonly attribute IterationCompositeOperation iterationComposite;
-  readonly attribute CompositeOperation          composite;
-
-  // We use object instead of ComputedKeyframe so that we can put the
-  // property-value pairs on the object.
-  [Throws] sequence<object> getKeyframes();
+ Constructor (KeyframeEffect source)]
+interface KeyframeEffect : AnimationEffect {
+  attribute (Element or CSSPseudoElement)?  target;
+  [Pref="dom.animations-api.compositing.enabled"]
+  attribute IterationCompositeOperation     iterationComposite;
+  [Pref="dom.animations-api.compositing.enabled"]
+  attribute CompositeOperation              composite;
+  [Throws] sequence<object> getKeyframes ();
+  [Throws] void             setKeyframes (object? keyframes);
 };
 
 // Non-standard extensions
@@ -50,20 +53,6 @@ dictionary AnimationPropertyDetails {
   required sequence<AnimationPropertyValueDetails> values;
 };
 
-partial interface KeyframeEffectReadOnly {
+partial interface KeyframeEffect {
   [ChromeOnly, Throws] sequence<AnimationPropertyDetails> getProperties();
-};
-
-[Func="nsDocument::IsWebAnimationsEnabled",
- Constructor ((Element or CSSPseudoElement)? target,
-              object? keyframes,
-              optional (unrestricted double or KeyframeEffectOptions) options),
- Constructor (KeyframeEffectReadOnly source)]
-interface KeyframeEffect : KeyframeEffectReadOnly {
-  inherit attribute (Element or CSSPseudoElement)? target;
-  [NeedsCallerType]
-  inherit attribute IterationCompositeOperation    iterationComposite;
-  inherit attribute CompositeOperation          composite;
-  [Throws]
-  void setKeyframes (object? keyframes);
 };

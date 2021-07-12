@@ -48,7 +48,7 @@ headers = [
     "gfxFontConstants.h",
     "nsThemeConstants.h",
     "mozilla/css/Loader.h",
-    "mozilla/dom/AnimationEffectReadOnlyBinding.h",
+    "mozilla/dom/AnimationEffectBinding.h",
     "mozilla/dom/KeyframeEffectBinding.h",
     "mozilla/AnimationPropertySegment.h",
     "mozilla/ComputedTiming.h",

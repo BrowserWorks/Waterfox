@@ -17,7 +17,7 @@
 #include "mozilla/LinkedList.h"
 #include "mozilla/TimeStamp.h" // for TimeStamp, TimeDuration
 #include "mozilla/dom/AnimationBinding.h" // for AnimationPlayState
-#include "mozilla/dom/AnimationEffectReadOnly.h"
+#include "mozilla/dom/AnimationEffect.h"
 #include "mozilla/dom/AnimationTimeline.h"
 #include "mozilla/dom/Promise.h"
 #include "nsCSSPropertyID.h"
@@ -96,13 +96,13 @@ public:
   // Animation interface methods
   static already_AddRefed<Animation>
   Constructor(const GlobalObject& aGlobal,
-              AnimationEffectReadOnly* aEffect,
+              AnimationEffect* aEffect,
               const Optional<AnimationTimeline*>& aTimeline,
               ErrorResult& aRv);
   void GetId(nsAString& aResult) const { aResult = mId; }
   void SetId(const nsAString& aId);
-  AnimationEffectReadOnly* GetEffect() const { return mEffect; }
-  void SetEffect(AnimationEffectReadOnly* aEffect);
+  AnimationEffect* GetEffect() const { return mEffect; }
+  void SetEffect(AnimationEffect* aEffect);
   AnimationTimeline* GetTimeline() const { return mTimeline; }
   void SetTimeline(AnimationTimeline* aTimeline);
   Nullable<TimeDuration> GetStartTime() const { return mStartTime; }
@@ -112,6 +112,7 @@ public:
   double PlaybackRate() const { return mPlaybackRate; }
   void SetPlaybackRate(double aPlaybackRate);
   AnimationPlayState PlayState() const;
+  bool Pending() const { return mPendingState != PendingState::NotPending; }
   virtual Promise* GetReady(ErrorResult& aRv);
   virtual Promise* GetFinished(ErrorResult& aRv);
   void Cancel();
@@ -135,6 +136,7 @@ public:
   void SetCurrentTimeAsDouble(const Nullable<double>& aCurrentTime,
                               ErrorResult& aRv);
   virtual AnimationPlayState PlayStateFromJS() const { return PlayState(); }
+  virtual bool PendingFromJS() const { return Pending(); }
   virtual void PlayFromJS(ErrorResult& aRv)
   {
     Play(aRv, LimitBehavior::AutoRewind);
@@ -150,14 +152,12 @@ public:
 
   virtual void CancelFromStyle() { CancelNoUpdate(); }
   void SetTimelineNoUpdate(AnimationTimeline* aTimeline);
-  void SetEffectNoUpdate(AnimationEffectReadOnly* aEffect);
+  void SetEffectNoUpdate(AnimationEffect* aEffect);
 
   virtual void Tick();
   bool NeedsTicks() const
   {
-    AnimationPlayState playState = PlayState();
-    return playState == AnimationPlayState::Running ||
-           playState == AnimationPlayState::Pending;
+    return Pending() || PlayState() == AnimationPlayState::Running;
   }
 
   /**
@@ -265,6 +265,12 @@ public:
 
   bool IsPausedOrPausing() const
   {
+    // FIXME: Once we drop the dom.animations-api.pending-member.enabled pref we
+    // can simplify the following check to just:
+    //
+    //   return PlayState() == AnimationPlayState::Paused;
+    //
+    // And at that point we might not need this method at all.
     return PlayState() == AnimationPlayState::Paused ||
            mPendingState == PendingState::PausePending;
   }
@@ -280,8 +286,13 @@ public:
 
   bool IsPlaying() const
   {
+    // FIXME: Once we drop the dom.animations-api.pending-member.enabled pref we
+    // can simplify the last two conditions to just:
+    //
+    //   PlayState() == AnimationPlayState::Running
     return mPlaybackRate != 0.0 &&
            mTimeline &&
+           !mTimeline->GetCurrentTime().IsNull() &&
            (PlayState() == AnimationPlayState::Running ||
             mPendingState == PendingState::PlayPending);
   }
@@ -318,7 +329,7 @@ public:
   /**
    * Updates various bits of state that we need to update as the result of
    * running ComposeStyle().
-   * See the comment of KeyframeEffectReadOnly::WillComposeStyle for more detail.
+   * See the comment of KeyframeEffect::WillComposeStyle for more detail.
    */
   void WillComposeStyle();
 
@@ -423,7 +434,7 @@ protected:
   nsIDocument* GetRenderedDocument() const;
 
   RefPtr<AnimationTimeline> mTimeline;
-  RefPtr<AnimationEffectReadOnly> mEffect;
+  RefPtr<AnimationEffect> mEffect;
   // The beginning of the delay period.
   Nullable<TimeDuration> mStartTime; // Timeline timescale
   Nullable<TimeDuration> mHoldTime;  // Animation timescale
@@ -434,14 +445,14 @@ protected:
   // A Promise that is replaced on each call to Play()
   // and fulfilled when Play() is successfully completed.
   // This object is lazily created by GetReady.
-  // See http://w3c.github.io/web-animations/#current-ready-promise
+  // See http://drafts.csswg.org/web-animations/#current-ready-promise
   RefPtr<Promise> mReady;
 
   // A Promise that is resolved when we reach the end of the effect, or
   // 0 when playing backwards. The Promise is replaced if the animation is
   // finished but then a state change makes it not finished.
   // This object is lazily created by GetFinished.
-  // See http://w3c.github.io/web-animations/#current-finished-promise
+  // See http://drafts.csswg.org/web-animations/#current-finished-promise
   RefPtr<Promise> mFinished;
 
   // Indicates if the animation is in the pending state (and what state it is

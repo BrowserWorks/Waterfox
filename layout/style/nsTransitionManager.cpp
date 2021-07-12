@@ -43,7 +43,6 @@ using mozilla::TimeDuration;
 using mozilla::dom::Animation;
 using mozilla::dom::AnimationPlayState;
 using mozilla::dom::CSSTransition;
-using mozilla::dom::KeyframeEffectReadOnly;
 
 using namespace mozilla;
 using namespace mozilla::css;
@@ -174,6 +173,19 @@ CSSTransition::PlayStateFromJS() const
 {
   FlushStyle();
   return Animation::PlayStateFromJS();
+}
+
+bool
+CSSTransition::PendingFromJS() const
+{
+  // Transitions don't become pending again after they start running but, if
+  // while the transition is still pending, style is updated in such a way
+  // that the transition will be canceled, we need to report false here.
+  // Hence we need to flush, but only when we're pending.
+  if (Pending()) {
+    FlushStyle();
+  }
+  return Animation::PendingFromJS();
 }
 
 void
@@ -413,7 +425,7 @@ CSSTransition::GetCurrentTimeAt(const dom::DocumentTimeline& aTimeline,
 }
 
 void
-CSSTransition::SetEffectFromStyle(dom::AnimationEffectReadOnly* aEffect)
+CSSTransition::SetEffectFromStyle(dom::AnimationEffect* aEffect)
 {
   Animation::SetEffectNoUpdate(aEffect);
 

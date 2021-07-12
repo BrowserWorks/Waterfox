@@ -4,7 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://w3c.github.io/web-animations/#the-animation-interface
+ * https://drafts.csswg.org/web-animations/#animation
  *
  * Copyright © 2015 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
@@ -13,13 +13,13 @@
 enum AnimationPlayState { "idle", "pending", "running", "paused", "finished" };
 
 [Func="nsDocument::IsElementAnimateEnabled",
- Constructor (optional AnimationEffectReadOnly? effect = null,
+ Constructor (optional AnimationEffect? effect = null,
               optional AnimationTimeline? timeline)]
 interface Animation : EventTarget {
   attribute DOMString id;
   [Func="nsDocument::IsWebAnimationsEnabled", Pure]
-  attribute AnimationEffectReadOnly? effect;
-  [Func="nsDocument::IsWebAnimationsEnabled"]
+  attribute AnimationEffect? effect;
+  [Func="nsDocument::AreWebAnimationsTimelinesEnabled"]
   attribute AnimationTimeline? timeline;
   [BinaryName="startTimeAsDouble"]
   attribute double? startTime;
@@ -29,6 +29,8 @@ interface Animation : EventTarget {
            attribute double             playbackRate;
   [BinaryName="playStateFromJS"]
   readonly attribute AnimationPlayState playState;
+  [Pref="dom.animations-api.pending-member.enabled", BinaryName="pendingFromJS"]
+  readonly attribute boolean            pending;
   [Func="nsDocument::IsWebAnimationsEnabled", Throws]
   readonly attribute Promise<Animation> ready;
   [Func="nsDocument::IsWebAnimationsEnabled", Throws]

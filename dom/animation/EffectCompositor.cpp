@@ -6,9 +6,12 @@
 
 #include "EffectCompositor.h"
 
+#include <bitset>
+#include <initializer_list>
+
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/Element.h"
-#include "mozilla/dom/KeyframeEffectReadOnly.h"
+#include "mozilla/dom/KeyframeEffect.h"
 #include "mozilla/AnimationComparator.h"
 #include "mozilla/AnimationPerformanceWarning.h"
 #include "mozilla/AnimationTarget.h"
@@ -36,12 +39,11 @@
 #include "nsRuleProcessorData.h" // For ElementRuleProcessorData etc.
 #include "nsStyleContextInlines.h"
 #include "nsTArray.h"
-#include <bitset>
-#include <initializer_list>
+#include "PendingAnimationTracker.h"
 
 using mozilla::dom::Animation;
 using mozilla::dom::Element;
-using mozilla::dom::KeyframeEffectReadOnly;
+using mozilla::dom::KeyframeEffect;
 
 namespace mozilla {
 
@@ -84,7 +86,7 @@ enum class MatchForCompositor {
 }
 
 static MatchForCompositor
-IsMatchForCompositor(const KeyframeEffectReadOnly& aEffect,
+IsMatchForCompositor(const KeyframeEffect& aEffect,
                      nsCSSPropertyID aProperty,
                      const nsIFrame* aFrame)
 {
@@ -205,7 +207,7 @@ FindAnimationsForCompositor(const nsIFrame* aFrame,
   }
 
   bool foundRunningAnimations = false;
-  for (KeyframeEffectReadOnly* effect : *effects) {
+  for (KeyframeEffect* effect : *effects) {
     MatchForCompositor matchResult =
       IsMatchForCompositor(*effect, aProperty, aFrame);
 
@@ -377,7 +379,7 @@ EffectCompositor::UpdateEffectProperties(StyleType* aStyleType,
   // result.
   effectSet->MarkCascadeNeedsUpdate();
 
-  for (KeyframeEffectReadOnly* effect : *effectSet) {
+  for (KeyframeEffect* effect : *effectSet) {
     effect->UpdateProperties(aStyleType);
   }
 }
@@ -459,14 +461,14 @@ EffectCompositor::GetAnimationRule(dom::Element* aElement,
 namespace {
   class EffectCompositeOrderComparator {
   public:
-    bool Equals(const KeyframeEffectReadOnly* a,
-                const KeyframeEffectReadOnly* b) const
+    bool Equals(const KeyframeEffect* a,
+                const KeyframeEffect* b) const
     {
       return a == b;
     }
 
-    bool LessThan(const KeyframeEffectReadOnly* a,
-                  const KeyframeEffectReadOnly* b) const
+    bool LessThan(const KeyframeEffect* a,
+                  const KeyframeEffect* b) const
     {
       MOZ_ASSERT(a->GetAnimation() && b->GetAnimation());
       MOZ_ASSERT(
@@ -499,8 +501,8 @@ EffectCompositor::GetServoAnimationRule(
   }
 
   // Get a list of effects sorted by composite order.
-  nsTArray<KeyframeEffectReadOnly*> sortedEffectList(effectSet->Count());
-  for (KeyframeEffectReadOnly* effect : *effectSet) {
+  nsTArray<KeyframeEffect*> sortedEffectList(effectSet->Count());
+  for (KeyframeEffect* effect : *effectSet) {
     sortedEffectList.AppendElement(effect);
   }
   sortedEffectList.Sort(EffectCompositeOrderComparator());
@@ -512,7 +514,7 @@ EffectCompositor::GetServoAnimationRule(
     aCascadeLevel == CascadeLevel::Animations
       ? effectSet->PropertiesForAnimationsLevel().Inverse()
       : effectSet->PropertiesForAnimationsLevel();
-  for (KeyframeEffectReadOnly* effect : sortedEffectList) {
+  for (KeyframeEffect* effect : sortedEffectList) {
     effect->GetAnimation()->ComposeStyle(*aAnimationValues, propertiesToSkip);
   }
 
@@ -653,7 +655,7 @@ EffectCompositor::ClearIsRunningOnCompositor(const nsIFrame *aFrame,
     return;
   }
 
-  for (KeyframeEffectReadOnly* effect : *effects) {
+  for (KeyframeEffect* effect : *effects) {
     effect->SetIsRunningOnCompositor(aProperty, false);
   }
 }
@@ -727,8 +729,8 @@ EffectCompositor::ComposeAnimationRule(dom::Element* aElement,
              "Animation cascade out of date when composing animation rule");
 
   // Get a list of effects sorted by composite order.
-  nsTArray<KeyframeEffectReadOnly*> sortedEffectList(effects->Count());
-  for (KeyframeEffectReadOnly* effect : *effects) {
+  nsTArray<KeyframeEffect*> sortedEffectList(effects->Count());
+  for (KeyframeEffect* effect : *effects) {
     sortedEffectList.AppendElement(effect);
   }
   sortedEffectList.Sort(EffectCompositeOrderComparator());
@@ -743,7 +745,7 @@ EffectCompositor::ComposeAnimationRule(dom::Element* aElement,
     aCascadeLevel == CascadeLevel::Animations
     ? effects->PropertiesForAnimationsLevel().Inverse()
     : effects->PropertiesForAnimationsLevel();
-  for (KeyframeEffectReadOnly* effect : sortedEffectList) {
+  for (KeyframeEffect* effect : sortedEffectList) {
     effect->GetAnimation()->WillComposeStyle();
     effect->GetAnimation()->ComposeStyle(animRule, propertiesToSkip);
   }
@@ -784,7 +786,7 @@ EffectCompositor::GetOverriddenProperties(StyleBackendType aBackendType,
   AutoTArray<nsCSSPropertyID, LayerAnimationInfo::kRecords> propertiesToTrack;
   {
     nsCSSPropertyIDSet propertiesToTrackAsSet;
-    for (KeyframeEffectReadOnly* effect : aEffectSet) {
+    for (KeyframeEffect* effect : aEffectSet) {
       for (const AnimationProperty& property : effect->Properties()) {
         if (nsCSSProps::PropHasFlags(property.mProperty,
                                      CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR) &&
@@ -839,8 +841,8 @@ EffectCompositor::UpdateCascadeResults(StyleBackendType aBackendType,
   }
 
   // Get a list of effects sorted by composite order.
-  nsTArray<KeyframeEffectReadOnly*> sortedEffectList(aEffectSet.Count());
-  for (KeyframeEffectReadOnly* effect : aEffectSet) {
+  nsTArray<KeyframeEffect*> sortedEffectList(aEffectSet.Count());
+  for (KeyframeEffect* effect : aEffectSet) {
     sortedEffectList.AppendElement(effect);
   }
   sortedEffectList.Sort(EffectCompositeOrderComparator());
@@ -890,7 +892,7 @@ EffectCompositor::UpdateCascadeResults(StyleBackendType aBackendType,
 
   nsCSSPropertyIDSet propertiesForTransitionsLevel;
 
-  for (const KeyframeEffectReadOnly* effect : sortedEffectList) {
+  for (const KeyframeEffect* effect : sortedEffectList) {
     MOZ_ASSERT(effect->GetAnimation(),
                "Effects on a target element should have an Animation");
     CascadeLevel cascadeLevel = effect->GetAnimation()->CascadeLevel();
@@ -961,7 +963,7 @@ EffectCompositor::SetPerformanceWarning(
     return;
   }
 
-  for (KeyframeEffectReadOnly* effect : *effects) {
+  for (KeyframeEffect* effect : *effects) {
     effect->SetPerformanceWarning(aProperty, aWarning);
   }
 }
@@ -1091,7 +1093,7 @@ EffectCompositor::PreTraverseInSubtree(ServoTraversalFlags aFlags,
         continue;
       }
 
-      for (KeyframeEffectReadOnly* effect : *effects) {
+      for (KeyframeEffect* effect : *effects) {
         effect->GetAnimation()->WillComposeStyle();
       }
 
@@ -1170,7 +1172,7 @@ EffectCompositor::PreTraverse(dom::Element* aElement,
                                 aElement, aPseudoType,
                                 nullptr);
 
-      for (KeyframeEffectReadOnly* effect : *effects) {
+      for (KeyframeEffect* effect : *effects) {
         effect->GetAnimation()->WillComposeStyle();
       }
     }

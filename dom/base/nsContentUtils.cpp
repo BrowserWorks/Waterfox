@@ -302,6 +302,7 @@ bool nsContentUtils::sSendPerformanceTimingNotifications = false;
 bool nsContentUtils::sUseActivityCursor = false;
 bool nsContentUtils::sAnimationsAPICoreEnabled = false;
 bool nsContentUtils::sAnimationsAPIElementAnimateEnabled = false;
+bool nsContentUtils::sAnimationsAPIPendingMemberEnabled = false;
 bool nsContentUtils::sGetBoxQuadsEnabled = false;
 bool nsContentUtils::sSkipCursorMoveForSameValueSet = false;
 bool nsContentUtils::sRequestIdleCallbackEnabled = false;
@@ -748,6 +749,10 @@ nsContentUtils::Init()
 
   Preferences::AddBoolVarCache(&sAnimationsAPIElementAnimateEnabled,
                                "dom.animations-api.element-animate.enabled", false);
+
+  Preferences::AddBoolVarCache(&sAnimationsAPIPendingMemberEnabled,
+                               "dom.animations-api.pending-member.enabled",
+                               false);
 
   Preferences::AddBoolVarCache(&sGetBoxQuadsEnabled,
                                "layout.css.getBoxQuads.enabled", false);

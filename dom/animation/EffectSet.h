@@ -12,7 +12,7 @@
 #include "mozilla/EffectCompositor.h"
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/TimeStamp.h"
-#include "mozilla/dom/KeyframeEffectReadOnly.h"
+#include "mozilla/dom/KeyframeEffect.h"
 #include "nsHashKeys.h" // For nsPtrHashKey
 #include "nsTHashtable.h" // For nsTHashtable
 
@@ -67,8 +67,8 @@ public:
   static void DestroyEffectSet(dom::Element* aElement,
                                CSSPseudoElementType aPseudoType);
 
-  void AddEffect(dom::KeyframeEffectReadOnly& aEffect);
-  void RemoveEffect(dom::KeyframeEffectReadOnly& aEffect);
+  void AddEffect(dom::KeyframeEffect& aEffect);
+  void RemoveEffect(dom::KeyframeEffect& aEffect);
 
   void SetMayHaveOpacityAnimation() { mMayHaveOpacityAnim = true; }
   bool MayHaveOpacityAnimation() const { return mMayHaveOpacityAnim; }
@@ -76,7 +76,7 @@ public:
   bool MayHaveTransformAnimation() const { return mMayHaveTransformAnim; }
 
 private:
-  typedef nsTHashtable<nsRefPtrHashKey<dom::KeyframeEffectReadOnly>>
+  typedef nsTHashtable<nsRefPtrHashKey<dom::KeyframeEffect>>
     OwningEffectSet;
 
 public:
@@ -137,7 +137,7 @@ public:
       return *this;
     }
 
-    dom::KeyframeEffectReadOnly* operator* ()
+    dom::KeyframeEffect* operator* ()
     {
       MOZ_ASSERT(!Done());
       return mHashIterator.Get()->GetKey();

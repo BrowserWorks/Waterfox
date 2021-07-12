@@ -10,6 +10,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/Nullable.h"
+#include "nsRFPService.h"
 #include "nsStringFwd.h"
 
 class nsIContent;
@@ -31,7 +32,9 @@ public:
     dom::Nullable<double> result;
 
     if (!aTime.IsNull()) {
-      result.SetValue(aTime.Value().ToMilliseconds());
+      result.SetValue(
+        nsRFPService::ReduceTimePrecisionAsMSecs(aTime.Value().ToMilliseconds())
+      );
     }
 
     return result;
@@ -59,22 +62,18 @@ public:
   GetCurrentRealmDocument(JSContext* aCx);
 
   /**
+   * Get the document from the global object, or nullptr if the document has
+   * no window, to use when constructing DOM object without entering the
+   * target window's compartment (see KeyframeEffect constructor).
+   */
+  static nsIDocument*
+  GetDocumentFromGlobal(JSObject* aGlobalObject);
+
+  /**
    * Checks if offscreen animation throttling is enabled.
    */
   static bool
   IsOffscreenThrottlingEnabled();
-
-  /**
-   * Returns true if the preference to enable the core Web Animations API is
-   * true.
-   */
-  static bool IsCoreAPIEnabled();
-
-  /**
-   * Returns true if the preference to enable the core Web Animations API is
-   * true or the caller is chrome.
-   */
-  static bool IsCoreAPIEnabledForCaller(dom::CallerType aCallerType);
 
   /**
    * Returns true if the given EffectSet contains a current effect that animates

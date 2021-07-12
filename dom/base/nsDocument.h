@@ -438,6 +438,14 @@ public:
 
   static bool IsElementAnimateEnabled(JSContext* aCx, JSObject* aObject);
   static bool IsWebAnimationsEnabled(JSContext* aCx, JSObject* aObject);
+  static bool IsWebAnimationsEnabled(mozilla::dom::CallerType aCallerType);
+  static bool IsWebAnimationsGetAnimationsEnabled(JSContext* aCx,
+                                                  JSObject* aObject);
+  static bool AreWebAnimationsImplicitKeyframesEnabled(JSContext* aCx,
+                                                       JSObject* aObject);
+  static bool AreWebAnimationsTimelinesEnabled(JSContext* aCx,
+                                               JSObject* aObject);
+
   virtual mozilla::dom::DocumentTimeline* Timeline() override;
   virtual void GetAnimations(
       nsTArray<RefPtr<mozilla::dom::Animation>>& aAnimations) override;

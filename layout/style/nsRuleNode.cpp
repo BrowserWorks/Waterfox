@@ -17,7 +17,7 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/dom/AnimationEffectReadOnlyBinding.h" // for PlaybackDirection
+#include "mozilla/dom/AnimationEffectBinding.h" // for PlaybackDirection
 #include "mozilla/Likely.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/Maybe.h"

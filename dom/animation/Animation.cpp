@@ -88,7 +88,7 @@ namespace {
 // ---------------------------------------------------------------------------
 /* static */ already_AddRefed<Animation>
 Animation::Constructor(const GlobalObject& aGlobal,
-                       AnimationEffectReadOnly* aEffect,
+                       AnimationEffect* aEffect,
                        const Optional<AnimationTimeline*>& aTimeline,
                        ErrorResult& aRv)
 {
@@ -125,15 +125,15 @@ Animation::SetId(const nsAString& aId)
 }
 
 void
-Animation::SetEffect(AnimationEffectReadOnly* aEffect)
+Animation::SetEffect(AnimationEffect* aEffect)
 {
   SetEffectNoUpdate(aEffect);
   PostUpdate();
 }
 
-// https://w3c.github.io/web-animations/#setting-the-target-effect
+// https://drafts.csswg.org/web-animations/#setting-the-target-effect
 void
-Animation::SetEffectNoUpdate(AnimationEffectReadOnly* aEffect)
+Animation::SetEffectNoUpdate(AnimationEffect* aEffect)
 {
   RefPtr<Animation> kungFuDeathGrip(this);
 
@@ -159,7 +159,7 @@ Animation::SetEffectNoUpdate(AnimationEffectReadOnly* aEffect)
     }
 
     // Break links with the old effect and then drop it.
-    RefPtr<AnimationEffectReadOnly> oldEffect = mEffect;
+    RefPtr<AnimationEffect> oldEffect = mEffect;
     mEffect = nullptr;
     oldEffect->SetAnimation(nullptr);
 
@@ -169,7 +169,7 @@ Animation::SetEffectNoUpdate(AnimationEffectReadOnly* aEffect)
 
   if (aEffect) {
     // Break links from the new effect to its previous animation, if any.
-    RefPtr<AnimationEffectReadOnly> newEffect = aEffect;
+    RefPtr<AnimationEffect> newEffect = aEffect;
     Animation* prevAnim = aEffect->GetAnimation();
     if (prevAnim) {
       prevAnim->SetEffect(nullptr);
@@ -223,7 +223,7 @@ Animation::SetTimeline(AnimationTimeline* aTimeline)
   PostUpdate();
 }
 
-// https://w3c.github.io/web-animations/#setting-the-timeline
+// https://drafts.csswg.org/web-animations/#setting-the-timeline
 void
 Animation::SetTimelineNoUpdate(AnimationTimeline* aTimeline)
 {
@@ -251,7 +251,7 @@ Animation::SetTimelineNoUpdate(AnimationTimeline* aTimeline)
   UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 }
 
-// https://w3c.github.io/web-animations/#set-the-animation-start-time
+// https://drafts.csswg.org/web-animations/#set-the-animation-start-time
 void
 Animation::SetStartTime(const Nullable<TimeDuration>& aNewStartTime)
 {
@@ -296,7 +296,7 @@ Animation::SetStartTime(const Nullable<TimeDuration>& aNewStartTime)
   PostUpdate();
 }
 
-// https://w3c.github.io/web-animations/#current-time
+// https://drafts.csswg.org/web-animations/#current-time
 Nullable<TimeDuration>
 Animation::GetCurrentTime() const
 {
@@ -316,7 +316,7 @@ Animation::GetCurrentTime() const
   return result;
 }
 
-// https://w3c.github.io/web-animations/#set-the-current-time
+// https://drafts.csswg.org/web-animations/#set-the-current-time
 void
 Animation::SetCurrentTime(const TimeDuration& aSeekTime)
 {
@@ -351,7 +351,7 @@ Animation::SetCurrentTime(const TimeDuration& aSeekTime)
   PostUpdate();
 }
 
-// https://w3c.github.io/web-animations/#set-the-animation-playback-rate
+// https://drafts.csswg.org/web-animations/#set-the-animation-playback-rate
 void
 Animation::SetPlaybackRate(double aPlaybackRate)
 {
@@ -382,25 +382,27 @@ Animation::SetPlaybackRate(double aPlaybackRate)
   PostUpdate();
 }
 
-// https://w3c.github.io/web-animations/#play-state
+// https://drafts.csswg.org/web-animations/#play-state
 AnimationPlayState
 Animation::PlayState() const
 {
-  if (mPendingState != PendingState::NotPending) {
+  if (!nsContentUtils::AnimationsAPIPendingMemberEnabled() && Pending()) {
     return AnimationPlayState::Pending;
   }
 
   Nullable<TimeDuration> currentTime = GetCurrentTime();
-  if (currentTime.IsNull()) {
+  if (currentTime.IsNull() && !Pending()) {
     return AnimationPlayState::Idle;
   }
 
-  if (mStartTime.IsNull()) {
+  if (mPendingState == PendingState::PausePending ||
+      (mStartTime.IsNull() && !Pending())) {
     return AnimationPlayState::Paused;
   }
 
-  if ((mPlaybackRate > 0.0 && currentTime.Value() >= EffectEnd()) ||
-      (mPlaybackRate < 0.0 && currentTime.Value() <= TimeDuration()))  {
+  if (!currentTime.IsNull() &&
+      ((mPlaybackRate > 0.0 && currentTime.Value() >= EffectEnd()) ||
+       (mPlaybackRate < 0.0 && currentTime.Value() <= TimeDuration())))  {
     return AnimationPlayState::Finished;
   }
 
@@ -418,7 +420,7 @@ Animation::GetReady(ErrorResult& aRv)
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
-  if (PlayState() != AnimationPlayState::Pending) {
+  if (!Pending()) {
     mReady->MaybeResolve(this);
   }
   return mReady;
@@ -448,7 +450,7 @@ Animation::Cancel()
   PostUpdate();
 }
 
-// https://w3c.github.io/web-animations/#finish-an-animation
+// https://drafts.csswg.org/web-animations/#finish-an-animation
 void
 Animation::Finish(ErrorResult& aRv)
 {
@@ -518,7 +520,7 @@ Animation::Pause(ErrorResult& aRv)
   PostUpdate();
 }
 
-// https://w3c.github.io/web-animations/#reverse-an-animation
+// https://drafts.csswg.org/web-animations/#reverse-an-animation
 void
 Animation::Reverse(ErrorResult& aRv)
 {
@@ -624,7 +626,7 @@ Animation::Tick()
   }
 
   // Update layers if we are newly finished.
-  KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
+  KeyframeEffect* keyframeEffect = mEffect->AsKeyframeEffect();
   if (keyframeEffect &&
       !keyframeEffect->Properties().IsEmpty() &&
       !mFinishedAtLastComposeStyle &&
@@ -640,7 +642,7 @@ Animation::TriggerOnNextTick(const Nullable<TimeDuration>& aReadyTime)
   // due to the handling of possibly orphaned animations in Tick(), this
   // animation got started whilst still being in another document's pending
   // animation map.
-  if (PlayState() != AnimationPlayState::Pending) {
+  if (!Pending()) {
     return;
   }
 
@@ -656,7 +658,7 @@ Animation::TriggerNow()
   // is cancelled and its rendered document can't be reached, we can end up
   // with the animation still in a pending player tracker even after it is
   // no longer pending.
-  if (PlayState() != AnimationPlayState::Pending) {
+  if (!Pending()) {
     return;
   }
 
@@ -751,7 +753,7 @@ Animation::ElapsedTimeToTimeStamp(
   return AnimationTimeToTimeStamp(aElapsedTime + delay);
 }
 
-// https://w3c.github.io/web-animations/#silently-set-the-current-time
+// https://drafts.csswg.org/web-animations/#silently-set-the-current-time
 void
 Animation::SilentlySetCurrentTime(const TimeDuration& aSeekTime)
 {
@@ -782,18 +784,20 @@ Animation::SilentlySetPlaybackRate(double aPlaybackRate)
   }
 }
 
-// https://w3c.github.io/web-animations/#cancel-an-animation
+// https://drafts.csswg.org/web-animations/#cancel-an-animation
 void
 Animation::CancelNoUpdate()
 {
-  ResetPendingTasks();
+  if (PlayState() != AnimationPlayState::Idle) {
+    ResetPendingTasks();
 
-  if (mFinished) {
-    mFinished->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+    if (mFinished) {
+      mFinished->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+    }
+    ResetFinishedPromise();
+
+    DispatchPlaybackEvent(NS_LITERAL_STRING("cancel"));
   }
-  ResetFinishedPromise();
-
-  DispatchPlaybackEvent(NS_LITERAL_STRING("cancel"));
 
   StickyTimeDuration activeTime = mEffect
                                   ? mEffect->GetComputedTiming().mActiveTime
@@ -835,9 +839,9 @@ Animation::ShouldBeSynchronizedWithMainThread(
     return false;
   }
 
-  KeyframeEffectReadOnly* keyframeEffect = mEffect
-                                           ? mEffect->AsKeyframeEffect()
-                                           : nullptr;
+  KeyframeEffect* keyframeEffect = mEffect
+                                   ? mEffect->AsKeyframeEffect()
+                                   : nullptr;
   if (!keyframeEffect) {
     return false;
   }
@@ -947,7 +951,7 @@ Animation::WillComposeStyle()
 
   MOZ_ASSERT(mEffect);
 
-  KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
+  KeyframeEffect* keyframeEffect = mEffect->AsKeyframeEffect();
   if (keyframeEffect) {
     keyframeEffect->WillComposeStyle();
   }
@@ -996,13 +1000,11 @@ Animation::ComposeStyle(ComposeAnimationResult&& aComposeResult,
   // immediately before updating the style rule and then restore it immediately
   // afterwards. This is purely to prevent visual flicker. Other behavior
   // such as dispatching events continues to rely on the regular timeline time.
-  AnimationPlayState playState = PlayState();
+  bool pending = Pending();
   {
     AutoRestore<Nullable<TimeDuration>> restoreHoldTime(mHoldTime);
 
-    if (playState == AnimationPlayState::Pending &&
-        mHoldTime.IsNull() &&
-        !mStartTime.IsNull()) {
+    if (pending && mHoldTime.IsNull() && !mStartTime.IsNull()) {
       Nullable<TimeDuration> timeToUse = mPendingReadyTime;
       if (timeToUse.IsNull() &&
           mTimeline &&
@@ -1015,15 +1017,15 @@ Animation::ComposeStyle(ComposeAnimationResult&& aComposeResult,
       }
     }
 
-    KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
+    KeyframeEffect* keyframeEffect = mEffect->AsKeyframeEffect();
     if (keyframeEffect) {
       keyframeEffect->ComposeStyle(Forward<ComposeAnimationResult>(aComposeResult),
                                    aPropertiesToSkip);
     }
   }
 
-  MOZ_ASSERT(playState == PlayState(),
-             "Play state should not change during the course of compositing");
+  MOZ_ASSERT(pending == Pending(),
+             "Pending state should not change during the course of compositing");
 }
 
 void
@@ -1046,7 +1048,7 @@ Animation::NotifyGeometricAnimationsStartingThisFrame()
   mSyncWithGeometricAnimations = true;
 }
 
-// https://w3c.github.io/web-animations/#play-an-animation
+// https://drafts.csswg.org/web-animations/#play-an-animation
 void
 Animation::PlayNoUpdate(ErrorResult& aRv, LimitBehavior aLimitBehavior)
 {
@@ -1131,7 +1133,7 @@ Animation::PlayNoUpdate(ErrorResult& aRv, LimitBehavior aLimitBehavior)
   }
 }
 
-// https://w3c.github.io/web-animations/#pause-an-animation
+// https://drafts.csswg.org/web-animations/#pause-an-animation
 void
 Animation::PauseNoUpdate(ErrorResult& aRv)
 {
@@ -1244,7 +1246,7 @@ Animation::UpdateTiming(SeekFlag aSeekFlag, SyncNotifyFlag aSyncNotifyFlag)
   }
 }
 
-// https://w3c.github.io/web-animations/#update-an-animations-finished-state
+// https://drafts.csswg.org/web-animations/#update-an-animations-finished-state
 void
 Animation::UpdateFinishedState(SeekFlag aSeekFlag,
                                SyncNotifyFlag aSyncNotifyFlag)
@@ -1304,7 +1306,7 @@ Animation::UpdateEffect()
   if (mEffect) {
     UpdateRelevance();
 
-    KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
+    KeyframeEffect* keyframeEffect = mEffect->AsKeyframeEffect();
     if (keyframeEffect) {
       keyframeEffect->NotifyAnimationTimingUpdated();
     }
@@ -1327,7 +1329,7 @@ Animation::PostUpdate()
     return;
   }
 
-  KeyframeEffectReadOnly* keyframeEffect = mEffect->AsKeyframeEffect();
+  KeyframeEffect* keyframeEffect = mEffect->AsKeyframeEffect();
   if (!keyframeEffect) {
     return;
   }
@@ -1357,7 +1359,7 @@ Animation::CancelPendingTasks()
   mPendingReadyTime.SetNull();
 }
 
-// https://w3c.github.io/web-animations/#reset-an-animations-pending-tasks
+// https://drafts.csswg.org/web-animations/#reset-an-animations-pending-tasks
 void
 Animation::ResetPendingTasks()
 {
