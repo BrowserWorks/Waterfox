@@ -120,6 +120,23 @@ SelectionManager::RemoveDocSelectionListener(nsIPresShell* aPresShell)
   // selection.
   Selection* spellSel = frameSel->GetSelection(SelectionType::eSpellCheck);
   spellSel->RemoveSelectionListener(this);
+
+  // Remove 'this' registered as selection listener for the normal selection.
+  if (normalSel) {
+    if (normalSel->GetPresShell() == aPresShell) {
+      normalSel->AsSelection()->RemoveSelectionListener(this);
+      mCurrCtrlNormalSel = nullptr;
+    }
+  }
+
+  // Remove 'this' registered as selection listener for the spellcheck
+  // selection.
+  if (spellSel) {
+    if (spellSel->GetPresShell() == aPresShell) {
+      spellSel->AsSelection()->RemoveSelectionListener(this);
+      mCurrCtrlSpellSel = nullptr;
+    }
+  }
 }
 
 void
