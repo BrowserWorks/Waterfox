@@ -55,10 +55,40 @@ class ExtensibleUtils {
     }
   }
 
+  loadInCurrentAndFutureWindows(aCallback, aArgs) {
+    this.loadInAllWindows(aCallback, aArgs);
+    this.addWindowListener(aCallback, aArgs);
+  }
+
   amendBrowserElementVisibility(aWindow, aId, aPref) {
     const { document } = aWindow;
     let el = document.getElementById(aId);
     let visible = !this.getPrefVal(aPref);
-    el.hidden = visible;
+    if (el) {
+      el.hidden = visible;
+    }
+  }
+
+  amendMultipleBrowserElementVisibility(aWindow, aItems) {
+    for (let [id, pref] of aItems) {
+      try {
+        this.amendBrowserElementVisibility(aWindow, id, pref);
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+    }
+  }
+
+  adjustElementStateFromPref(aId, aPref) {
+    let enumerator = Services.wm.getEnumerator("navigator:browser");
+    var preference = Services.prefs.getBoolPref(aPref);
+    while (enumerator.hasMoreElements()) {
+      let win = enumerator.getNext();
+      let { document } = win;
+      let el = document.getElementById(aId);
+      if (el) {
+        el.hidden = !preference;
+      }
+    }
   }
 }

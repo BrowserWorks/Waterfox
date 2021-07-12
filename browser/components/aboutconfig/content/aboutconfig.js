@@ -10,6 +10,12 @@ const { Preferences } = ChromeUtils.import(
   "resource://gre/modules/Preferences.jsm"
 );
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "Extensibles",
+  "resource:///modules/extensibles.js"
+);
+
 const SEARCH_TIMEOUT_MS = 100;
 const SEARCH_AUTO_MIN_CRARACTERS = 3;
 
@@ -539,6 +545,8 @@ function loadPrefs() {
       pref.editButton.focus();
     }
   });
+
+  Extensibles.init_configListener();
 
   window.addEventListener("keypress", event => {
     if (event.target != search && event.key == "Escape" && gPrefInEdit) {

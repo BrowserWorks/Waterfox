@@ -26,24 +26,22 @@ class ContextMenuExtension extends ExtensibleUtils {
     super();
     this.overlayURI = "resource://extensibles/tabfeatures.xhtml";
     try {
-      // ensure overlay loaded into all active windows at startup
-      this.loadInAllWindows(OverlayHelper.loadOverlayInWindow, [
+      // ensure overlay loaded into all windows
+      this.loadInCurrentAndFutureWindows(OverlayHelper.loadOverlayInWindow, [
         this.overlayURI,
       ]);
-      // ensure overlay loaded into any new windows after startup
-      this.addWindowListener(OverlayHelper.loadOverlayInWindow, [
-        this.overlayURI,
-      ]);
-      // add context menu functions to all active windows at startup
-      this.loadInAllWindows(this._loadContextFunctions.bind(this), []);
-      // add context menu functions to any new windows after startup
-      this.addWindowListener(this._loadContextFunctions.bind(this), []);
-      // ensure on load all windows have the correct hidden param for each item
-      this.loadInAllWindows(this._setContextItemVisibility.bind(this), []);
-      // ensure all new windows set correctly
-      this.addWindowListener(this._setContextItemVisibility.bind(this), []);
-    } catch (ex) {
-      // something went wrong
+      // add context menu functions to all windows
+      this.loadInCurrentAndFutureWindows(
+        this._loadContextFunctions.bind(this),
+        []
+      );
+      // ensure all windows have the correct hidden param for each item
+      this.loadInCurrentAndFutureWindows(
+        this._setContextItemVisibility.bind(this),
+        []
+      );
+    } catch (e) {
+      Cu.reportError(e);
     }
   }
 
@@ -52,13 +50,7 @@ class ContextMenuExtension extends ExtensibleUtils {
       ["context_copyCurrentTabUrl", "browser.tabs.copyurl"],
       ["context_copyAllTabUrls", "browser.tabs.copyallurls"],
     ];
-    for (let [id, pref] of contextItems) {
-      try {
-        this.amendBrowserElementVisibility(aWindow, id, pref);
-      } catch (ex) {
-        Cu.reportError(ex);
-      }
-    }
+    this.amendMultipleBrowserElementVisibility(aWindow, contextItems);
   }
 
   _loadContextFunctions(aWindow) {
