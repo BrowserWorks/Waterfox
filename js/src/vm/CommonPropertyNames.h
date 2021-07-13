@@ -378,6 +378,7 @@
     macro(startTimestamp, startTimestamp, "startTimestamp") \
     macro(state, state, "state") \
     macro(static, static_, "static") \
+    macro(status, status, "status") \
     macro(std_Function_apply, std_Function_apply, "std_Function_apply") \
     macro(sticky, sticky, "sticky") \
     macro(StringIterator, StringIterator, "String Iterator") \
