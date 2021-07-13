@@ -1101,7 +1101,7 @@ Function SendPing
       ${If} $R3 == $INSTDIR
         StrCpy $R2 "1" ; This Firefox install is set as default.
       ${Else}
-        StrCpy $R2 "$R2" "" -11 # length of firefox.exe
+        StrCpy $R2 "$R2" "" -12 # length of firefox.exe
         ${If} "$R2" == "${FileMainEXE}"
           StrCpy $R2 "2" ; Another Firefox install is set as default.
         ${Else}
@@ -1122,7 +1122,7 @@ Function SendPing
         ${If} $R3 == $INSTDIR
           StrCpy $R2 "1" ; This Firefox install is set as default.
         ${Else}
-          StrCpy $R2 "$R2" "" -11 # length of firefox.exe
+          StrCpy $R2 "$R2" "" -12 # length of firefox.exe
           ${If} "$R2" == "${FileMainEXE}"
             StrCpy $R2 "2" ; Another Firefox install is set as default.
           ${Else}
