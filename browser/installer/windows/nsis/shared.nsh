@@ -558,7 +558,7 @@ ${RemoveDefaultBrowserAgentShortcut}
   ${GetLongPath} "$INSTDIR\${FileMainEXE}" $8
   ${GetLongPath} "$INSTDIR\uninstall\helper.exe" $7
 
-  ; If we already have keys at the old FIREFOX.EXE path, then just update those.
+  ; If we already have keys at the old WATERFOX.EXE path, then just update those.
   ; We have to be careful to update the existing keys in place so that we don't
   ; create duplicate keys for the same installation, or cause Windows to think
   ; something "suspicious" has happened and it should reset the default browser.
