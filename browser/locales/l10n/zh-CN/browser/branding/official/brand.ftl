@@ -27,11 +27,11 @@
 ## For further details, consult:
 ## https://mozilla-l10n.github.io/styleguides/mozilla_general/#brands-copyright-and-trademark
 
--brand-shorter-name = Firefox
--brand-short-name = Firefox
--brand-full-name = Mozilla Firefox
+-brand-shorter-name = Waterfox
+-brand-short-name = Waterfox
+-brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
--brand-product-name = Firefox
+-brand-product-name = Waterfox
 -vendor-short-name = Mozilla
-trademarkInfo = Firefox 以及 Firefox 标志均为 Mozilla 基金会所有的商标。
+trademarkInfo = Waterfox 以及 Firefox 标志均为 Mozilla 基金会所有的商标。

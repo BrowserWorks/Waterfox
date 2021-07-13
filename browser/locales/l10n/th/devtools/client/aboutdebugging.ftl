@@ -224,7 +224,7 @@ about-debugging-browser-version-too-old = เบราว์เซอร์ท�
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
 # from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Firefox รุ่นนี้ไม่สามารถดีบั๊ก Firefox สำหรับ Android (68) ได้ เราแนะนำให้ติดตั้ง Firefox สำหรับ Android Nightly บนโทรศัพท์ของคุณเพื่อทำการทดสอบ <a>รายละเอียดเพิ่มเติม</a>
+about-debugging-browser-version-too-old-fennec = Waterfox รุ่นนี้ไม่สามารถดีบั๊ก Firefox สำหรับ Android (68) ได้ เราแนะนำให้ติดตั้ง Firefox สำหรับ Android Nightly บนโทรศัพท์ของคุณเพื่อทำการทดสอบ <a>รายละเอียดเพิ่มเติม</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting

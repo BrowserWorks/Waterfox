@@ -27,11 +27,11 @@
 ## For further details, consult:
 ## https://mozilla-l10n.github.io/styleguides/mozilla_general/#brands-copyright-and-trademark
 
--brand-shorter-name = Firefox
--brand-short-name = Firefox
--brand-full-name = Mozilla Firefox
+-brand-shorter-name = Waterfox
+-brand-short-name = Waterfox
+-brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
--brand-product-name = Firefox
+-brand-product-name = Waterfox
 -vendor-short-name = Mozilla
-trademarkInfo = Firefox và logo Firefox là thương hiệu của Tổ chức Mozilla.
+trademarkInfo = Waterfox và logo Firefox là thương hiệu của Tổ chức Mozilla.

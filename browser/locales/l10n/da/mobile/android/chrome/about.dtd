@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Tak til">
 <!ENTITY aboutPage.license.label                "Licensinformation">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 <!ENTITY aboutPage.logoTrademark                "Firefox og de forskellige Firefox-logoer er varemærker tilhørende Mozilla Foundation.">

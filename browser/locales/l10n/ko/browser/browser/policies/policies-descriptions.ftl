@@ -34,7 +34,7 @@ policy-DisableDeveloperTools = 개발자 도구 접근을 차단합니다.
 policy-DisableFeedbackCommands = 도움말 메뉴의 사용자 의견 보내기 명령 (사용자 의견 보내기 및 가짜 사이트 신고)을 사용 안 합니다.
 policy-DisableFirefoxAccounts = 동기화를 포함한 { -fxaccount-brand-name } 기반의 서비스를 사용 안 합니다.
 # Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Firefox 스크린샷 기능을 사용 안 합니다.
+policy-DisableFirefoxScreenshots = Waterfox 스크린샷 기능을 사용 안 합니다.
 policy-DisableFirefoxStudies = { -brand-short-name } 연구 실행을 막습니다.
 policy-DisableForgetButton = Forget 버튼 접근을 막습니다.
 policy-DisableFormHistory = 검색과 양식 기록을 기억하지 않습니다.
@@ -65,7 +65,7 @@ policy-EncryptedMediaExtensions = 암호화된 미디어 확장 기능을 사용
 policy-Extensions = 확장 기능을 설치하거나 제거, 잠급니다. 설치 옵션은 URL이나 경로를 파라미터로 받습니다. 설치 제거와 잠금 옵션은 확장 기능의 ID를 받습니다.
 policy-ExtensionSettings = 확장 기능 설치의 모든 측면을 관리합니다.
 policy-ExtensionUpdate = 확장 기능 자동 업데이트를 사용하거나 사용하지 않게 합니다.
-policy-FirefoxHome = Firefox 홈을 구성합니다.
+policy-FirefoxHome = Waterfox 홈을 구성합니다.
 policy-FlashPlugin = 플래시 플러그인의 사용을 허용하거나 거부합니다.
 policy-Handlers = 기본 애플리케이션 핸들러를 구성합니다.
 policy-HardwareAcceleration = False 값이면 하드웨어 가속 기능을 끕니다.
