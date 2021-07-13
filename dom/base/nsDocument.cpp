@@ -1389,6 +1389,8 @@ nsDocument::nsDocument(const char* aContentType)
   , mStackRefCnt(0)
   , mNeedsReleaseAfterStackRefCntRelease(false)
   , mMaybeServiceWorkerControlled(false)
+  , mLoadEventFiring(false)
+  , mSkipLoadEventAfterClose(false)
 #ifdef DEBUG
   , mWillReparent(false)
 #endif
@@ -2081,20 +2083,10 @@ nsDocument::Reset(nsIChannel* aChannel, nsILoadGroup* aLoadGroup)
 }
 
 void
-nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
-                       nsIPrincipal* aPrincipal)
-{
-  NS_PRECONDITION(aURI, "Null URI passed to ResetToURI");
-
-  MOZ_LOG(gDocumentLeakPRLog, LogLevel::Debug,
-          ("DOCUMENT %p ResetToURI %s", this, aURI->GetSpecOrDefault().get()));
-
-  mSecurityInfo = nullptr;
-
-  mDocumentLoadGroup = nullptr;
-
+nsDocument::DisconnectNodeTree() {
   // Delete references to sub-documents and kill the subdocument map,
-  // if any. It holds strong references
+  // if any. This is not strictly needed, but makes the node tree
+  // teardown a bit faster.
   delete mSubDocuments;
   mSubDocuments = nullptr;
 
@@ -2129,6 +2121,20 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
                "After removing all children, there should be no root elem");
   }
   mInUnlinkOrDeletion = oldVal;
+}
+
+void
+nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
+                       nsIPrincipal* aPrincipal)
+{
+  NS_PRECONDITION(aURI, "Null URI passed to ResetToURI");
+
+  MOZ_LOG(gDocumentLeakPRLog, LogLevel::Debug,
+          ("DOCUMENT %p ResetToURI %s", this, aURI->GetSpecOrDefault().get()));
+
+  mSecurityInfo = nullptr;
+
+  mDocumentLoadGroup = nullptr;
 
   // Reset our stylesheets
   ResetStylesheetsToURI(aURI);
@@ -2138,6 +2144,8 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
     mListenerManager->Disconnect();
     mListenerManager = nullptr;
   }
+
+  DisconnectNodeTree();
 
   // Release the stylesheets list.
   mDOMStyleSheets = nullptr;
@@ -8968,7 +8976,8 @@ nsDocument::CloneDocHelper(nsDocument* clone, bool aPreallocateChildren) const
 }
 
 void
-nsDocument::SetReadyStateInternal(ReadyState rs)
+nsDocument::SetReadyStateInternal(ReadyState rs,
+                                  bool updateTimingInformation)
 {
   mReadyState = rs;
   if (rs == READYSTATE_UNINITIALIZED) {
@@ -8977,7 +8986,12 @@ nsDocument::SetReadyStateInternal(ReadyState rs)
     // transition undetectable by Web content.
     return;
   }
-  if (mTiming) {
+
+  if (updateTimingInformation && READYSTATE_LOADING == rs) {
+    mLoadingTimeStamp = mozilla::TimeStamp::Now();
+  }
+
+  if (updateTimingInformation && mTiming) {
     switch (rs) {
       case READYSTATE_LOADING:
         mTiming->NotifyDOMLoading(nsIDocument::GetDocumentURI());
@@ -8992,10 +9006,6 @@ nsDocument::SetReadyStateInternal(ReadyState rs)
         NS_WARNING("Unexpected ReadyState value");
         break;
     }
-  }
-  // At the time of loading start, we don't have timing object, record time.
-  if (READYSTATE_LOADING == rs) {
-    mLoadingTimeStamp = mozilla::TimeStamp::Now();
   }
 
   RefPtr<AsyncEventDispatcher> asyncDispatcher =

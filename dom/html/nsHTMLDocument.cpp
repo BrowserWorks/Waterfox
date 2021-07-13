@@ -15,6 +15,7 @@
 #include "nsPrintfCString.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
+#include "nsIDocumentLoader.h"
 #include "nsIHTMLContentSink.h"
 #include "nsIXMLContentSink.h"
 #include "nsHTMLParts.h"
@@ -84,6 +85,7 @@
 
 #include "mozilla/dom/FallbackEncoding.h"
 #include "mozilla/Encoding.h"
+#include "mozilla/EventListenerManager.h"
 #include "mozilla/LoadInfo.h"
 #include "nsIEditingSession.h"
 #include "nsIEditor.h"
@@ -106,12 +108,14 @@
 #include "nsIImageDocument.h"
 #include "mozilla/dom/HTMLBodyElement.h"
 #include "mozilla/dom/HTMLDocumentBinding.h"
+#include "mozilla/dom/SimpleTreeIterator.h"
 #include "nsCharsetSource.h"
 #include "nsIStringBundle.h"
 #include "nsDOMClassInfo.h"
 #include "nsFocusManager.h"
 #include "nsIFrame.h"
 #include "nsIContent.h"
+#include "nsIStructuredCloneContainer.h"
 #include "nsLayoutStylesheetCache.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
@@ -861,6 +865,24 @@ nsHTMLDocument::EndLoad()
   if (turnOnEditing) {
     EditingStateChanged();
   }
+
+  if (!GetWindow()) {
+    // This is a document that's not in a window.  For example, this could be an
+    // XMLHttpRequest responseXML document, or a document created via DOMParser
+    // or DOMImplementation.  We don't reach this code normally for such
+    // documents (which is not obviously correct), but can reach it via
+    // document.open()/document.close().
+    //
+    // Such documents don't fire load events, but per spec should set their
+    // readyState to "complete" when parsing and all loading of subresources is
+    // done.  Parsing is done now, and documents not in a window don't load
+    // subresources, so just go ahead and mark ourselves as complete.
+    SetReadyStateInternal(nsIDocument::READYSTATE_COMPLETE,
+                          /* updateTimingInformation = */ false);
+
+    // Reset mSkipLoadEventAfterClose just in case.
+    mSkipLoadEventAfterClose = false;
+  }
 }
 
 void
@@ -1504,13 +1526,13 @@ nsHTMLDocument::Open(JSContext* cx,
                      const nsAString& aReplace,
                      ErrorResult& aError)
 {
-  // Implements the "When called with two arguments (or fewer)" steps here:
-  // https://html.spec.whatwg.org/multipage/webappapis.html#opening-the-input-stream
+  // Implements
+  // <https://html.spec.whatwg.org/multipage/dynamic-markup-insertion.html#document-open-steps>
 
   NS_ASSERTION(nsContentUtils::CanCallerAccess(static_cast<nsIDOMHTMLDocument*>(this)),
                "XOW should have caught this!");
+  // Step 1 - Throw if we're the wrong type of document.
   if (!IsHTMLDocument() || mDisableDocWrite) {
-    // No calling document.open() on XHTML
     aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return nullptr;
   }
@@ -1520,6 +1542,7 @@ nsHTMLDocument::Open(JSContext* cx,
     return nullptr;
   }
 
+  // Set up the content type for insertion
   nsAutoCString contentType;
   contentType.AssignLiteral("text/html");
 
@@ -1532,51 +1555,7 @@ nsHTMLDocument::Open(JSContext* cx,
     contentType.AssignLiteral("text/plain");
   }
 
-  // If we already have a parser we ignore the document.open call.
-  if (mParser || mParserAborted) {
-    // The WHATWG spec says: "If the document has an active parser that isn't
-    // a script-created parser, and the insertion point associated with that
-    // parser's input stream is not undefined (that is, it does point to
-    // somewhere in the input stream), then the method does nothing. Abort
-    // these steps and return the Document object on which the method was
-    // invoked."
-    // Note that aborting a parser leaves the parser "active" with its
-    // insertion point "not undefined". We track this using mParserAborted,
-    // because aborting a parser nulls out mParser.
-    nsCOMPtr<nsIDocument> ret = this;
-    return ret.forget();
-  }
-
-  // No calling document.open() without a script global object
-  if (!mScriptGlobalObject) {
-    nsCOMPtr<nsIDocument> ret = this;
-    return ret.forget();
-  }
-
-  nsPIDOMWindowOuter* outer = GetWindow();
-  if (!outer || (GetInnerWindow() != outer->GetCurrentInnerWindow())) {
-    nsCOMPtr<nsIDocument> ret = this;
-    return ret.forget();
-  }
-
-  // check whether we're in the middle of unload.  If so, ignore this call.
-  nsCOMPtr<nsIDocShell> shell(mDocumentContainer);
-  if (!shell) {
-    // We won't be able to create a parser anyway.
-    nsCOMPtr<nsIDocument> ret = this;
-    return ret.forget();
-  }
-
-  bool inUnload;
-  shell->GetIsInUnload(&inUnload);
-  if (inUnload) {
-    nsCOMPtr<nsIDocument> ret = this;
-    return ret.forget();
-  }
-
-  // Note: We want to use GetEntryDocument here because this document
-  // should inherit the security information of the document that's opening us,
-  // (since if it's secure, then it's presumably trusted).
+  // Step 3 - Get the entryDocument for security checks
   nsCOMPtr<nsIDocument> callerDoc = GetEntryDocument();
   if (!callerDoc) {
     // If we're called from C++ or in some other way without an originating
@@ -1590,258 +1569,167 @@ nsHTMLDocument::Open(JSContext* cx,
     return nullptr;
   }
 
-  // Grab a reference to the calling documents security info (if any)
-  // and URIs as they may be lost in the call to Reset().
-  nsCOMPtr<nsISupports> securityInfo = callerDoc->GetSecurityInfo();
-  nsCOMPtr<nsIURI> uri = callerDoc->GetDocumentURI();
-  nsCOMPtr<nsIURI> baseURI = callerDoc->GetBaseURI();
-  nsCOMPtr<nsIPrincipal> callerPrincipal = callerDoc->NodePrincipal();
-  nsCOMPtr<nsIChannel> callerChannel = callerDoc->GetChannel();
-
-  // We're called from script. Make sure the script is from the same
-  // origin, not just that the caller can access the document. This is
-  // needed to keep document principals from ever changing, which is
-  // needed because of the way we use our XOW code, and is a sane
-  // thing to do anyways.
-
-  bool equals = false;
-  if (NS_FAILED(callerPrincipal->Equals(NodePrincipal(), &equals)) ||
-      !equals) {
-
-#ifdef DEBUG
-    nsCOMPtr<nsIURI> callerDocURI = callerDoc->GetDocumentURI();
-    nsCOMPtr<nsIURI> thisURI = nsIDocument::GetDocumentURI();
-    printf("nsHTMLDocument::Open callerDoc %s this %s\n",
-           callerDocURI ? callerDocURI->GetSpecOrDefault().get() : "",
-           thisURI ? thisURI->GetSpecOrDefault().get() : "");
-#endif
-
+  // Step 4 -- make sure we're same-origin (not just same origin-domain) with
+  // the entry document.
+  if (!callerDoc->NodePrincipal()->Equals(NodePrincipal())) {
     aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return nullptr;
   }
 
-  // Stop current loads targeted at the window this document is in.
-  if (mScriptGlobalObject) {
-    nsCOMPtr<nsIContentViewer> cv;
-    shell->GetContentViewer(getter_AddRefs(cv));
+  // Step 5 - If we have an active parser, abort with no-op
+  if (mParser || mParserAborted) {
+    nsCOMPtr<nsIDocument> ret = this;
+    return ret.forget();
+  }
 
-    if (cv) {
-      bool okToUnload;
-      if (NS_SUCCEEDED(cv->PermitUnload(&okToUnload)) && !okToUnload) {
-        // We don't want to unload, so stop here, but don't throw an
-        // exception.
-        nsCOMPtr<nsIDocument> ret = this;
-        return ret.forget();
-      }
-
-      // Now double-check that our invariants still hold.
-      if (!mScriptGlobalObject) {
-        nsCOMPtr<nsIDocument> ret = this;
-        return ret.forget();
-      }
-
-      nsPIDOMWindowOuter* outer = GetWindow();
-      if (!outer || (GetInnerWindow() != outer->GetCurrentInnerWindow())) {
-        nsCOMPtr<nsIDocument> ret = this;
-        return ret.forget();
-      }
+  // Step 6 - Check if document.open() is called during unload
+  nsCOMPtr<nsIDocShell> shell(mDocumentContainer);
+  if (shell) {
+    bool inUnload;
+    shell->GetIsInUnload(&inUnload);
+    if (inUnload) {
+      nsCOMPtr<nsIDocument> ret = this;
+      return ret.forget();
     }
+  }
 
+  // Step 7 - Stop existing navigation of our browsing context (and all
+  // other loads it's doing) if we're the active document of our browsing
+  // context. If there's no existing navigation, we don't want to stop
+  // anything.
+  if (shell && IsCurrentActiveDocument() &&
+      mScriptGlobalObject) {
     nsCOMPtr<nsIWebNavigation> webnav(do_QueryInterface(shell));
     webnav->Stop(nsIWebNavigation::STOP_NETWORK);
 
-    // The Stop call may have cancelled the onload blocker request or prevented
-    // it from getting added, so we need to make sure it gets added to the
-    // document again otherwise the document could have a non-zero onload block
-    // count without the onload blocker request being in the loadgroup.
+    // The Stop call may have cancelled the onload blocker request or
+    // prevented it from getting added, so we need to make sure it gets added
+    // to the document again otherwise the document could have a non-zero
+    // onload block count without the onload blocker request being in the
+    // loadgroup.
     EnsureOnloadBlocker();
 
     // Throw away loaded modules created for the previous global.
     ScriptLoader()->ClearModuleMap();
   }
 
-  // The open occurred after the document finished loading.
-  // So we reset the document and then reinitialize it.
-  nsCOMPtr<nsIChannel> channel;
-  nsCOMPtr<nsILoadGroup> group = do_QueryReferent(mDocumentLoadGroup);
-  aError = NS_NewChannel(getter_AddRefs(channel),
-                         uri,
-                         callerDoc,
-                         nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
-                         nsIContentPolicy::TYPE_OTHER,
-                         group);
-
-  if (aError.Failed()) {
-    return nullptr;
-  }
-
-  if (callerChannel) {
-    nsLoadFlags callerLoadFlags;
-    aError = callerChannel->GetLoadFlags(&callerLoadFlags);
-    if (aError.Failed()) {
-      return nullptr;
-    }
-
-    nsLoadFlags loadFlags;
-    aError = channel->GetLoadFlags(&loadFlags);
-    if (aError.Failed()) {
-      return nullptr;
-    }
-
-    loadFlags |= callerLoadFlags & nsIRequest::INHIBIT_PERSISTENT_CACHING;
-
-    aError = channel->SetLoadFlags(loadFlags);
-    if (aError.Failed()) {
-      return nullptr;
-    }
-
-    // If the user has allowed mixed content on the rootDoc, then we should propogate it
-    // down to the new document channel.
-    bool rootHasSecureConnection = false;
-    bool allowMixedContent = false;
-    bool isDocShellRoot = false;
-    nsresult rvalue = shell->GetAllowMixedContentAndConnectionData(&rootHasSecureConnection, &allowMixedContent, &isDocShellRoot);
-    if (NS_SUCCEEDED(rvalue) && allowMixedContent && isDocShellRoot) {
-       shell->SetMixedContentChannel(channel);
+  // Step 8 - Clear all event listeners out of our DOM tree
+  for (nsINode* node : SimpleTreeIterator(*this)) {
+    if (EventListenerManager* elm = node->GetExistingListenerManager()) {
+      elm->RemoveAllListeners();
     }
   }
 
-  // Before we reset the doc notify the globalwindow of the change,
-  // but only if we still have a window (i.e. our window object the
-  // current inner window in our outer window).
-
-  // Hold onto ourselves on the offchance that we're down to one ref
-  nsCOMPtr<nsIDocument> kungFuDeathGrip = this;
-
-  if (nsPIDOMWindowInner *window = GetInnerWindow()) {
-    // Remember the old scope in case the call to SetNewDocument changes it.
-    nsCOMPtr<nsIScriptGlobalObject> oldScope(do_QueryReferent(mScopeObject));
-
-#ifdef DEBUG
-    bool willReparent = mWillReparent;
-    mWillReparent = true;
-
-    nsDocument* templateContentsOwner =
-      static_cast<nsDocument*>(mTemplateContentsOwner.get());
-
-    if (templateContentsOwner) {
-      templateContentsOwner->mWillReparent = true;
+  // Step 9 - Clear event listeners from our window, if we have one.
+  //
+  // Note that we explicitly want the inner window, and only if we're its
+  // document.  We want to do this (per spec) even when we're not the "active
+  // document", so we can't go through GetWindow(), because it might forward to
+  // the wrong inner.
+  if (nsPIDOMWindowInner* win = GetInnerWindow()) {
+    if (win->GetExtantDoc() == this) {
+      if (EventListenerManager* elm =
+              nsGlobalWindow::Cast(win)->GetExistingListenerManager()) {
+        elm->RemoveAllListeners();
+      }
     }
-#endif
+  }
 
-    // Per spec, we pass false here so that a new Window is created.
-    aError = window->SetNewDocument(this, nullptr,
-                                    /* aForceReuseInnerWindow */ false);
-    if (aError.Failed()) {
+  // Step 10 - Remove all of our DOM children without firing any mutation events.
+  DisconnectNodeTree();
+
+  // --- At this point our tree is clean and we can switch to the new URI ---
+
+  // Step 11 - If we're the current document in our docshell, do the
+  // equivalent of pushState() with the new URL we should have.
+  if (shell && IsCurrentActiveDocument()) {
+    nsCOMPtr<nsIURI> newURI = callerDoc->GetDocumentURI();
+
+    // UpdateURLAndHistory might do various member-setting, so make sure we're
+    // holding strong refs to all the refcounted args on the stack. We can
+    // assume that our caller is holding on to "this" already.
+    nsCOMPtr<nsIURI> currentURI = nsIDocument::GetDocumentURI();
+    bool equalURIs;
+    nsresult rv = currentURI->Equals(newURI, &equalURIs);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aError.Throw(rv);
       return nullptr;
     }
 
-#ifdef DEBUG
-    if (templateContentsOwner) {
-      templateContentsOwner->mWillReparent = willReparent;
+    nsCOMPtr<nsIStructuredCloneContainer> stateContainer(mStateObjectContainer);
+    rv = shell->UpdateURLAndHistory(this, newURI, stateContainer, EmptyString(),
+                                    /* aReplace = */ true, currentURI,
+                                    equalURIs);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aError.Throw(rv);
+      return nullptr;
     }
 
-    mWillReparent = willReparent;
-#endif
+    // And use the security info of the caller document as well, since
+    // it's the thing providing our data.
+    mSecurityInfo = callerDoc->GetSecurityInfo();
 
-    // Now make sure we're not flagged as the initial document anymore, now
-    // that we've had stuff done to us.  From now on, if anyone tries to
-    // document.open() us, they get a new inner window.
+    // This is not mentioned in the spec, but that's probably a spec bug.
+    // See <https://github.com/whatwg/html/issues/4299>.
+    // Since our URL may be changing away from about:blank here, we really want
+    // to unset this flag on any document.open(), since only about:blank can be
+    // an initial document.
     SetIsInitialDocument(false);
 
-    nsCOMPtr<nsIScriptGlobalObject> newScope(do_QueryReferent(mScopeObject));
-    JS::Rooted<JSObject*> wrapper(cx, GetWrapper());
-    if (oldScope && newScope != oldScope && wrapper) {
-      JSAutoCompartment ac(cx, wrapper);
-      mozilla::dom::ReparentWrapper(cx, wrapper, aError);
-      if (aError.Failed()) {
-        return nullptr;
-      }
-
-      // Also reparent the template contents owner document
-      // because its global is set to the same as this document.
-      if (mTemplateContentsOwner) {
-        JS::Rooted<JSObject*> contentsOwnerWrapper(cx,
-          mTemplateContentsOwner->GetWrapper());
-        if (contentsOwnerWrapper) {
-          mozilla::dom::ReparentWrapper(cx, contentsOwnerWrapper, aError);
-          if (aError.Failed()) {
-            return nullptr;
-          }
-        }
-      }
-    }
+    // And let our docloader know that it will need to track our load event.
+    nsDocShell::Cast(shell)->SetDocumentOpenedButNotLoaded();
   }
+
+  // Step 12
+  mSkipLoadEventAfterClose = mLoadEventFiring;
+
+  // Preliminary to steps 13-16.  Set our ready state to uninitialized before
+  // we do anything else, so we can then proceed to later ready state levels.
+  SetReadyStateInternal(READYSTATE_UNINITIALIZED,
+                        /* updateTimingInformation = */ false);
 
   mDidDocumentOpen = true;
 
-  // Call Reset(), this will now do the full reset
-  Reset(channel, group);
-  if (baseURI) {
-    mDocumentBaseURI = baseURI;
-  }
+  // Step 13 - Set our compatibility mode to standards.
+  SetCompatibilityMode(eCompatibility_FullStandards);
 
-  // Store the security info of the caller now that we're done
-  // resetting the document.
-  mSecurityInfo = securityInfo;
-
+  // Step 14 - Create a new parser associated with document.
+  // This also does step 16 implicitly.
   mParserAborted = false;
   mParser = nsHtml5Module::NewHtml5Parser();
-  nsHtml5Module::Initialize(mParser, this, uri, shell, channel);
+  nsHtml5Module::Initialize(mParser, this, nsIDocument::GetDocumentURI(), shell, nullptr);
   if (mReferrerPolicySet) {
     // CSP may have set the referrer policy, so a speculative parser should
     // start with the new referrer policy.
     nsHtml5TreeOpExecutor* executor = nullptr;
-    executor = static_cast<nsHtml5TreeOpExecutor*> (mParser->GetContentSink());
+    executor = static_cast<nsHtml5TreeOpExecutor*>(mParser->GetContentSink());
     if (executor && mReferrerPolicySet) {
-      executor->SetSpeculationReferrerPolicy(static_cast<ReferrerPolicy>(mReferrerPolicy));
+            executor->SetSpeculationReferrerPolicy(
+          static_cast<ReferrerPolicy>(mReferrerPolicy));
     }
   }
 
-  // This will be propagated to the parser when someone actually calls write()
-  SetContentTypeInternal(contentType);
+  if (shell) {
+    // Prepare the docshell and the document viewer for the impending
+    // out-of-band document.write()
+    shell->PrepareForNewContentModel();
 
-  // Prepare the docshell and the document viewer for the impending
-  // out of band document.write()
-  shell->PrepareForNewContentModel();
-
-  // Now check whether we were opened with a "replace" argument.  If
-  // so, we need to tell the docshell to not create a new history
-  // entry for this load. Otherwise, make sure that we're doing a normal load,
-  // not whatever type of load was previously done on this docshell.
-  shell->SetLoadType(aReplace.LowerCaseEqualsLiteral("replace") ?
-                       LOAD_NORMAL_REPLACE : LOAD_NORMAL);
-
-  nsCOMPtr<nsIContentViewer> cv;
-  shell->GetContentViewer(getter_AddRefs(cv));
-  if (cv) {
-    cv->LoadStart(this);
+    nsCOMPtr<nsIContentViewer> cv;
+    shell->GetContentViewer(getter_AddRefs(cv));
+    if (cv) {
+      cv->LoadStart(this);
+    }
   }
 
-  // Add a wyciwyg channel request into the document load group
-  NS_ASSERTION(!mWyciwygChannel, "nsHTMLDocument::Open(): wyciwyg "
-               "channel already exists!");
+  // Step 15.
+  SetReadyStateInternal(nsIDocument::READYSTATE_LOADING,
+                        /* updateTimingInformation = */ false);
 
-  // In case the editor is listening and will see the new channel
-  // being added, make sure mWriteLevel is non-zero so that the editor
-  // knows that document.open/write/close() is being called on this
-  // document.
-  ++mWriteLevel;
+  // Step 16 happened with step 14 above.
 
-  CreateAndAddWyciwygChannel();
-
-  --mWriteLevel;
-
-  SetReadyStateInternal(nsIDocument::READYSTATE_LOADING);
-
-  // After changing everything around, make sure that the principal on the
-  // document's compartment exactly matches NodePrincipal().
-  DebugOnly<JSObject*> wrapper = GetWrapperPreserveColor();
-  MOZ_ASSERT_IF(wrapper,
-                JS_GetCompartmentPrincipals(js::GetObjectCompartment(wrapper)) ==
-                nsJSPrincipals::get(NodePrincipal()));
-
-  return kungFuDeathGrip.forget();
+  // Step 17.
+  nsCOMPtr<nsIDocument> ret = this;
+  return ret.forget();
 }
 
 NS_IMETHODIMP
@@ -1911,15 +1799,6 @@ nsHTMLDocument::Close(ErrorResult& rv)
   if (GetShell()) {
     FlushPendingNotifications(FlushType::Layout);
   }
-
-  // Removing the wyciwygChannel here is wrong when document.close() is
-  // called from within the document itself. However, legacy requires the
-  // channel to be removed here. Otherwise, the load event never fires.
-  NS_ASSERTION(mWyciwygChannel, "nsHTMLDocument::Close(): Trying to remove "
-               "nonexistent wyciwyg channel!");
-  RemoveWyciwygChannel();
-  NS_ASSERTION(!mWyciwygChannel, "nsHTMLDocument::Close(): "
-               "nsIWyciwygChannel could not be removed!");
 }
 
 void

@@ -1585,7 +1585,7 @@ public:
   virtual void EndLoad() = 0;
 
   enum ReadyState { READYSTATE_UNINITIALIZED = 0, READYSTATE_LOADING = 1, READYSTATE_INTERACTIVE = 3, READYSTATE_COMPLETE = 4};
-  virtual void SetReadyStateInternal(ReadyState rs) = 0;
+  virtual void SetReadyStateInternal(ReadyState rs, bool updateTimingInformation = true) = 0;
   ReadyState GetReadyStateEnum()
   {
     return mReadyState;
@@ -2315,6 +2315,19 @@ public:
   void ForceEnableXULXBL() {
     mAllowXULXBL = eTriTrue;
   }
+
+  /**
+   * Flag whether we're about to fire the window's load event for this document.
+   */
+  virtual void SetLoadEventFiring(bool aFiring) = 0;
+
+  /**
+   * Test whether we should be firing a load event for this document after a
+   * document.close().
+   * This method should only be called at the point when the load event is about
+   * to be fired, since it resets `skip`.
+   */
+  virtual bool SkipLoadEventAfterClose() = 0;
 
   /**
    * Returns the template content owner document that owns the content of
