@@ -484,10 +484,10 @@ home-newtabs-mode-label = 新分頁
 home-restore-defaults =
     .label = 回復為預設值
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox 首頁（預設值）
+    .label = Waterfox 首頁（預設值）
 home-mode-choice-custom =
     .label = 自訂網址…
 home-mode-choice-blank =
@@ -511,7 +511,7 @@ choose-bookmark =
 
 ## Home Section - Firefox Home Content Customization
 
-home-prefs-content-header = Firefox 首頁內容
+home-prefs-content-header = Waterfox 首頁內容
 home-prefs-content-description = 選擇要在您的 Firefox 首頁顯示哪些內容。
 home-prefs-search-header =
     .label = 網頁搜尋
@@ -759,7 +759,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = 附加元件
-    .tooltiptext = Firefox 桌機版的擴充套件與佈景主題
+    .tooltiptext = Waterfox 桌機版的擴充套件與佈景主題
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -869,8 +869,8 @@ history-header = 瀏覽紀錄
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } 將
     .accesskey = w

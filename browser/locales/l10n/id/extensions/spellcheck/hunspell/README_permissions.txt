@@ -274,7 +274,7 @@ baru ingat kalau READMEnya sudah ada GPL versi 2-nya . Saya-nya saja
 yang kelupaan :D
 
 O iya, saya juga menambah beberapa entri agar selaras dengan perangkat
-lunak firefox sendiri, seperti merk "firefox", "webmaster", "blog".
+lunak firefox sendiri, seperti merk "Waterfox", "webmaster", "blog".
 Nanti saya sertakan juga berkas "diff"-nya dalam distribusi
 perangkatnya.
 
@@ -368,7 +368,7 @@ On Mon, 2008-02-04 at 03:31 +0100, Romi Hardiyanto wrote:
 > yang kelupaan :D
 > 
 > O iya, saya juga menambah beberapa entri agar selaras dengan perangkat
-> lunak firefox sendiri, seperti merk "firefox", "webmaster", "blog".
+> lunak firefox sendiri, seperti merk "Waterfox", "webmaster", "blog".
 > Nanti saya sertakan juga berkas "diff"-nya dalam distribusi
 > perangkatnya.
 > 

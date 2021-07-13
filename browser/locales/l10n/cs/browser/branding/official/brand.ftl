@@ -49,7 +49,7 @@
         [ins] Firefoxem
     }
     .gender = masculine
--brand-full-name = Mozilla Firefox
+-brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name =
@@ -74,4 +74,4 @@
         [ins] Mozillou
     }
     .gender = feminine
-trademarkInfo = Firefox a jeho logo jsou ochrannými známkami organizace Mozilla Foundation.
+trademarkInfo = Waterfox a jeho logo jsou ochrannými známkami organizace Mozilla Foundation.

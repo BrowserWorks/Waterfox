@@ -24,7 +24,7 @@ newsletter-subscribe-button = Berlangganan
 newsletter-thanks-title = Trims!
 newsletter-thanks-message = Jika sebelumnya Anda belum pernah mengonfirmasi langganan nawala terkait Mozilla, Anda mungkin harus melakukannya. Silakan cek surel dari kami di kotak masuk atau filter spam Anda.
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = Mencari lebih dari sekadar Alat Pengembang? Cobalah peramban Firefox yang dibuat secara khusus untuk pengembang dan alur kerja modern.
 footer-learn-more-link = Pelajari lebih lanjut
 
