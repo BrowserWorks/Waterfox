@@ -10,8 +10,7 @@ DIRS += [
     "webcompat",
     "report-site-issue",
     "pictureinpicture",
-    "privatetab",
-    "statusbar",
+    "extensibles"
 ]
 
 if CONFIG["NIGHTLY_BUILD"]:

@@ -10,7 +10,7 @@ const PrivateTab = {
   openTab: "placesContext_open:newtab",
 
   get privateTooltip() {
-    let key = "(Ctrl+Alt+P)" // add a key getter to determine key based on OS
+    let key = "(Ctrl+Alt+P)"; // add a key getter to determine key based on OS
     let tooltip = browser.i18n.getMessage("newPrivateTooltip") + key;
     return tooltip;
   },
@@ -29,19 +29,19 @@ const PrivateTab = {
   },
 
   async getPlacesContextAttrs() {
-    this.openAllOncommand = await browser.privatetab.getElementAttr(
+    this.openAllOncommand = await browser.extensibles.utils.getElementAttr(
       this.openAll,
       "oncommand"
     );
-    this.openAllOnclick = await browser.privatetab.getElementAttr(
+    this.openAllOnclick = await browser.extensibles.utils.getElementAttr(
       this.openAll,
       "onclick"
     );
-    this.openAllLinksOncommand = await browser.privatetab.getElementAttr(
+    this.openAllLinksOncommand = await browser.extensibles.utils.getElementAttr(
       this.openAllLinks,
       "oncommand"
     );
-    this.openAllLinksOnclick = await browser.privatetab.getElementAttr(
+    this.openAllLinksOnclick = await browser.extensibles.utils.getElementAttr(
       this.openAllLinks,
       "onclick"
     );
@@ -214,25 +214,30 @@ const PrivateTab = {
 
   async init() {
     // init privatetab helper in window object
-    browser.privatetab.registerPrivateTab(this.containerName, this.widgetAttrs);
+    browser.extensibles.privatetab.registerPrivateTab(
+      this.containerName,
+      this.widgetAttrs
+    );
     // init privatetab in window
-    if (browser.privatetab.isTopWindowPrivate()) {
+    if (browser.extensibles.utils.isTopWindowPrivate()) {
       return;
     }
-    this.container = await browser.privatetab.getContainer(this.containerName);
+    this.container = await browser.extensibles.utils.getContainer(
+      this.containerName
+    );
     // init placesContext
     await this.getPlacesContextAttrs();
     this.placesContextItems.forEach(item => {
       this.createAdjacentElement(item);
     });
 
-    browser.privatetab.addElementListener(
+    browser.extensibles.utils.addElementListener(
       "placesContext",
       "popupshowing",
       "places"
     );
 
-    if (!browser.privatetab.windowIsChromeWindow()) {
+    if (!browser.extensibles.utils.windowIsChromeWindow()) {
       return;
     }
     // init keyset
@@ -249,17 +254,17 @@ const PrivateTab = {
       this.createAdjacentElement(item);
     });
 
-    browser.privatetab.addElementListener(
+    browser.extensibles.utils.addElementListener(
       "contentAreaContextMenu",
       "popupshowing",
       "showContent"
     );
-    browser.privatetab.addElementListener(
+    browser.extensibles.utils.addElementListener(
       "contentAreaContextMenu",
       "popuphidden",
       "hideContent"
     );
-    browser.privatetab.addElementListener(
+    browser.extensibles.utils.addElementListener(
       "openLinkInPrivateTab",
       "command",
       "openLink"
@@ -270,36 +275,36 @@ const PrivateTab = {
       this.createAdjacentElement(item);
     });
 
-    browser.privatetab.addElementListener(
+    browser.extensibles.utils.addElementListener(
       "tabContextMenu",
       "popupshowing",
       "toggleTab"
     );
 
     // init privateMask
-    browser.privatetab.updatePrivateMaskId("private-mask");
+    browser.extensibles.privatetab.updatePrivateMaskId("private-mask");
 
     // init toolbarbutton
     this.toolbarItems.forEach(item => {
       this.createAdjacentElement(item);
     });
 
-    browser.privatetab.addElementListener(
+    browser.extensibles.utils.addElementListener(
       "newPrivateTab-button",
       "click",
       "toolbarClick"
     );
 
     // init privateTab listeners
-    browser.privatetab.initPrivateTabListeners();
+    browser.extensibles.privatetab.initPrivateTabListeners();
 
     // register additional functions
-    browser.privatetab.initCustomFunctions();
+    browser.extensibles.privatetab.initCustomFunctions();
   },
 
   createAdjacentElement(item) {
     const { tag, attrs, adjacentTo, position } = item;
-    browser.privatetab.createAndPositionElement(
+    browser.extensibles.utils.createAndPositionElement(
       tag,
       attrs,
       adjacentTo,
@@ -309,7 +314,7 @@ const PrivateTab = {
 
   createAppendElement(item) {
     const { tag, attrs, appendTo } = item;
-    browser.privatetab.createAndPositionElement(tag, attrs, appendTo);
+    browser.extensibles.utils.createAndPositionElement(tag, attrs, appendTo);
   },
 };
 
@@ -318,7 +323,10 @@ const PrivateTab = {
   await PrivateTab.init();
   // init in window on created if not already initialized
   browser.windows.onCreated.addListener(async windowId => {
-    if (!(await browser.privatetab.initialized()) && windowId) {
+    if (
+      !(await browser.extensibles.utils.initialized("privateTab")) &&
+      windowId
+    ) {
       await PrivateTab.init();
     }
   });

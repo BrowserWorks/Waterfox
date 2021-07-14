@@ -6,17 +6,24 @@
 
 EXTRA_JS_MODULES += [
   'content/PrefUtils.jsm',
-  'content/StatusBar.jsm'
-
+  'privatetab/PrivateTab.jsm',
+  'statusbar/StatusBar.jsm'
 ]
 
-FINAL_TARGET_FILES.features['statusbar@waterfox.net'] += [
+FINAL_TARGET_FILES.features['extensibles@waterfox.net'] += [
   'api.js',
-  'background.js',
   'manifest.json',
   'schema.json'
 ]
 
-FINAL_TARGET_FILES.features['statusbar@waterfox.net']['_locales']['en'] += [
+FINAL_TARGET_FILES.features['extensibles@waterfox.net']['privatetab'] += [
+  'privatetab/background.js'
+]
+
+FINAL_TARGET_FILES.features['extensibles@waterfox.net']['statusbar'] += [
+  'statusbar/background.js'
+]
+
+FINAL_TARGET_FILES.features['extensibles@waterfox.net']['_locales']['en'] += [
   '_locales/en/messages.json'
 ]

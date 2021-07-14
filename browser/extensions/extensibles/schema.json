@@ -1,7 +1,7 @@
 [
   {
-    "namespace": "statusbar",
-    "description": "API implementing status bar features",
+    "namespace": "extensibles.utils",
+    "description": "API implementing utility features",
     "functions": [
       {
         "name": "createAndPositionElement",
@@ -113,7 +113,7 @@
           {
             "name": "aAttrs",
             "type": "object",
-            "description": "The attribute of the element to retrieve.",
+            "description": "The attributes of the element.",
             "properties": {
               "id": {
                 "type": "string",
@@ -123,27 +123,27 @@
               "customizable": {
                 "type": "string",
                 "optional": true,
-                "description": "The access key for the element."
+                "description": "Whether the element is customizable or not."
               },
               "context": {
                 "type": "string",
                 "optional": true,
-                "description": "The access key for the element."
+                "description": "The element context."
               },
               "mode": {
                 "type": "string",
                 "optional": true,
-                "description": "The access key for the element."
+                "description": "The element mode."
               },
               "flex": {
                 "type": "string",
                 "optional": true,
-                "description": "The access key for the element."
+                "description": "Is the element a flex container."
               },
               "width": {
                 "type": "string",
                 "optional": true,
-                "description": "The access key for the element."
+                "description": "The element width."
               }
             }
           },
@@ -154,6 +154,93 @@
           }
         ]
       },
+      {
+        "name": "getElementAttr",
+        "type": "function",
+        "async": true,
+        "description": "Get the specified attribute from the given element id.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          },
+          {
+            "name": "aAttr",
+            "type": "string",
+            "description": "The attribute of the element to retrieve."
+          }
+        ]
+      },
+      {
+        "name": "isTopWindowPrivate",
+        "type": "function",
+        "async": false,
+        "description": "Returns bool val of top window privacy state.",
+        "parameters": []
+      },
+      {
+        "name": "getContainer",
+        "type": "function",
+        "async": true,
+        "description": "Get the container with name aName.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "The name of the container to retrieve."
+          }
+        ]
+      },
+      {
+        "name": "addElementListener",
+        "type": "function",
+        "async": true,
+        "description": "Add an event listener to the given element for the given event type.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The Id of the element to add a listener to."
+          },
+          {
+            "name": "aEvent",
+            "type": "string",
+            "description": "The event to listen for."
+          },
+          {
+            "name": "aSubject",
+            "type": "string",
+            "description": "The subject used to determine function."
+          }
+        ]
+      },
+      {
+        "name": "windowIsChromeWindow",
+        "type": "function",
+        "async": true,
+        "description": "Returns whether the current window is a ChromeWindow",
+        "parameters": []
+      },
+      {
+        "name": "initialized",
+        "type": "function",
+        "async": true,
+        "description": "Returns a boolean indicating if aId is initialized in the current window.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the object to search for in the current top window."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.statusbar",
+    "description": "API implementing status bar features",
+    "functions": [
       {
         "name": "registerStatusBar",
         "type": "function",
@@ -185,21 +272,92 @@
         "name": "overrideStatusPanelLabel",
         "type": "function",
         "async": false,
-        "description": "Register StatusBar.jsm with the current top window.",
+        "description": "Override StatusPanel.label.",
         "parameters": []
       },
       {
         "name": "configureBottomBox",
         "type": "function",
         "async": false,
-        "description": "Register StatusBar.jsm with the current top window.",
+        "description": "Configure the bottom box.",
+        "parameters": []
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.privatetab",
+    "description": "API implementing private tab features",
+    "functions": [
+      {
+        "name": "registerPrivateTab",
+        "type": "function",
+        "async": true,
+        "description": "Register PrivateTab.jsm with the current top window.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "The name of the container to retrieve."
+          },
+          {
+            "name": "aAttrs",
+            "type": "object",
+            "description": "The attributes of the custom private tab widget.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "optional": false,
+                "description": "The id of the element being created."
+              },
+              "class": {
+                "type": "string",
+                "optional": true,
+                "description": "The class of the element being created."
+              },
+              "oncommand": {
+                "type": "string",
+                "optional": true,
+                "description": "The name of the function to execute oncommand."
+              },
+              "label": {
+                "type": "string",
+                "optional": true,
+                "description": "The label of the element being created."
+              },
+              "tooltiptext": {
+                "type": "string",
+                "optional": true,
+                "description": "The element tooltip text."
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "updatePrivateMaskId",
+        "type": "function",
+        "async": true,
+        "description": "Updates the private-browsing-indicator id.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The updated id value."
+          }
+        ]
+      },
+      {
+        "name": "initPrivateTabListeners",
+        "type": "function",
+        "async": true,
+        "description": "Initialize ancillary privateTab listeners.",
         "parameters": []
       },
       {
-        "name": "initialized",
+        "name": "initCustomFunctions",
         "type": "function",
         "async": true,
-        "description": "Returns a boolean indicating if statusBar is initialized in the current window.",
+        "description": "Initialize custom functions.",
         "parameters": []
       }
     ]

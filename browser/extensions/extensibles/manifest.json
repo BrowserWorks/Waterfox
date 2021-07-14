@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "name": "Status Bar",
+  "name": "Extensibles",
   "description": "Additional built-in features for Waterfox",
   "version": "1.0.0",
   "default_locale": "en",
@@ -8,24 +8,28 @@
 
   "applications": {
     "gecko": {
-      "id": "statusbar@waterfox.net",
+      "id": "extensibles@waterfox.net",
       "strict_min_version": "72.0a1"
     }
   },
 
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["privatetab/background.js", "statusbar/background.js"]
   },
 
   "permissions": ["tabs", "menus"],
 
   "experiment_apis": {
-    "statusbar": {
+    "extensibles": {
       "schema": "schema.json",
       "parent": {
         "scopes": ["addon_parent"],
         "script": "api.js",
-        "paths": [["statusbar"]]
+        "paths": [
+          ["extensibles", "utils"],
+          ["extensibles", "privatetab"],
+          ["extensibles", "statusbar"]
+        ]
       }
     }
   }
