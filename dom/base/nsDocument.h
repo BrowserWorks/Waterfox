@@ -1391,11 +1391,6 @@ private:
   // with mapped attributes in Servo mode. This list contains all elements which
   // need lazy resolution
   nsTHashtable<nsPtrHashKey<nsSVGElement>> mLazySVGPresElements;
-
-#ifdef DEBUG
-public:
-  bool mWillReparent;
-#endif
 };
 
 class nsDocumentOnStack
