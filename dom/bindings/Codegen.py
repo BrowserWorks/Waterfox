@@ -11473,6 +11473,9 @@ class CGProxyIndexedOperation(CGProxySpecialOperation):
     resultVar: See the docstring for CGCallGenerator.
 
     foundVar: See the docstring for CGProxySpecialOperation.
+
+    tailCode: if we end up with a non-symbol string id, run this code after
+              we do all our other work.
     """
     def __init__(self, descriptor, name, doUnwrap=True, checkFound=True,
                  argumentHandleValue=None, resultVar=None, foundVar=None):
@@ -11553,12 +11556,13 @@ class CGProxyNamedOperation(CGProxySpecialOperation):
     foundVar: See the docstring for CGProxySpecialOperation.
     """
     def __init__(self, descriptor, name, value=None, argumentHandleValue=None,
-                 resultVar=None, foundVar=None):
+                 resultVar=None, foundVar=None, tailCode=""):
         CGProxySpecialOperation.__init__(self, descriptor, name,
                                          argumentHandleValue=argumentHandleValue,
                                          resultVar=resultVar,
                                          foundVar=foundVar)
         self.value = value
+        self.tailCode = tailCode
 
     def define(self):
         # Our first argument is the id we're getting.
@@ -11577,9 +11581,11 @@ class CGProxyNamedOperation(CGProxySpecialOperation):
             """
             ${nativeType}* self = UnwrapProxy(proxy);
             $*{op}
+            $*{tailCode}
             """,
             nativeType=self.descriptor.nativeType,
-            op=CGProxySpecialOperation.define(self))
+            op=CGProxySpecialOperation.define(self),
+            tailCode=self.tailCode)
 
         if self.value is None:
             return fill(
@@ -11653,9 +11659,10 @@ class CGProxyNamedSetter(CGProxyNamedOperation):
     """
     Class to generate a call to a named setter.
     """
-    def __init__(self, descriptor, argumentHandleValue=None):
+    def __init__(self, descriptor, tailCode, argumentHandleValue=None):
         CGProxyNamedOperation.__init__(self, descriptor, 'NamedSetter',
-                                       argumentHandleValue=argumentHandleValue)
+                                       argumentHandleValue=argumentHandleValue,
+                                       tailCode=tailCode)
 
 
 class CGProxyNamedDeleter(CGProxyNamedOperation):
@@ -11869,16 +11876,13 @@ class CGDOMJSProxyHandler_defineProperty(ClassMethod):
                                 "should work!")
             if self.descriptor.operations['NamedCreator'] is not namedSetter:
                 raise TypeError("Can't handle creator that's different from the setter")
-            # If we support indexed properties, we won't get down here for
-            # indices, so we can just do our setter unconditionally here.
-            set += fill(
+            tailCode = dedent(
                 """
                 *defined = true;
-                $*{callSetter}
 
                 return opresult.succeed();
-                """,
-                callSetter=CGProxyNamedSetter(self.descriptor).define())
+                """)
+            set += CGProxyNamedSetter(self.descriptor, tailCode).define()
         else:
             # We allow untrusted content to prevent Xrays from setting a
             # property if that property is already a named property on the
@@ -11897,7 +11901,10 @@ class CGDOMJSProxyHandler_defineProperty(ClassMethod):
                     }
                     """,
                     presenceChecker=CGProxyNamedPresenceChecker(self.descriptor, foundVar="found").define())
-            set += ("return mozilla::dom::DOMProxyHandler::defineProperty(%s);\n" %
+
+        # In all cases we want to tail-call to our base class; we can
+        # always land here for symbols.
+        set += ("return mozilla::dom::DOMProxyHandler::defineProperty(%s);\n" %
                     ", ".join(a.name for a in self.args))
         return set
 
@@ -12354,11 +12361,21 @@ class CGDOMJSProxyHandler_setCustom(ClassMethod):
                 raise ValueError("In interface " + self.descriptor.name + ": " +
                                  "Can't cope with [OverrideBuiltins] and unforgeable members")
 
-            callSetter = CGProxyNamedSetter(self.descriptor, argumentHandleValue="v")
-            return (assertion +
-                    callSetter.define() +
-                    "*done = true;\n"
-                    "return true;\n")
+            tailCode = dedent(
+                """
+                *done = true;
+                return true;
+                """)
+            callSetter = CGProxyNamedSetter(self.descriptor, tailCode, argumentHandleValue="v")
+            return fill(
+                """
+                $*{assertion}
+                $*{callSetter}
+                *done = false;
+                return true;
+                """,
+                assertion=assertion,
+                callSetter=callSetter.define())
 
         # As an optimization, if we are going to call an IndexedSetter, go
         # ahead and call it and have done.
