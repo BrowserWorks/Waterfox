@@ -1560,24 +1560,6 @@ AdoptNodeIntoOwnerDoc(nsINode *aParent, nsINode *aNode, ErrorResult& aError)
 #endif // DEBUG
 }
 
-static void
-CheckForOutdatedParent(nsINode* aParent, nsINode* aNode, ErrorResult& aError)
-{
-  if (JSObject* existingObjUnrooted = aNode->GetWrapper()) {
-    JS::Rooted<JSObject*> existingObj(RootingCx(), existingObjUnrooted);
-
-    AutoJSContext cx;
-    nsIGlobalObject* global = aParent->OwnerDoc()->GetScopeObject();
-    MOZ_ASSERT(global);
-
-    if (js::GetGlobalForObjectCrossCompartment(existingObj) !=
-        global->GetGlobalJSObject()) {
-      JSAutoCompartment ac(cx, existingObj);
-      ReparentWrapper(cx, existingObj, aError);
-    }
-  }
-}
-
 static nsresult
 ReparentWrappersInSubtree(nsIContent* aRoot)
 {
@@ -1627,17 +1609,6 @@ nsINode::doInsertChildAt(nsIContent* aKid, uint32_t aIndex,
   if (OwnerDoc() != aKid->OwnerDoc()) {
     ErrorResult error;
     AdoptNodeIntoOwnerDoc(this, aKid, error);
-
-    // Need to WouldReportJSException() if our callee can throw a JS
-    // exception (which it can) and we're neither propagating the
-    // error out nor unconditionally suppressing it.
-    error.WouldReportJSException();
-    if (NS_WARN_IF(error.Failed())) {
-      return error.StealNSResult();
-    }
-  } else if (OwnerDoc()->DidDocumentOpen()) {
-    ErrorResult error;
-    CheckForOutdatedParent(this, aKid, error);
 
     // Need to WouldReportJSException() if our callee can throw a JS
     // exception (which it can) and we're neither propagating the
@@ -2487,11 +2458,6 @@ nsINode::ReplaceOrInsertBefore(bool aReplace, nsINode* aNewChild,
   nsIDocument* doc = OwnerDoc();
   if (doc != newContent->OwnerDoc()) {
     AdoptNodeIntoOwnerDoc(this, aNewChild, aError);
-    if (aError.Failed()) {
-      return nullptr;
-    }
-  } else if (doc->DidDocumentOpen()) {
-    CheckForOutdatedParent(this, aNewChild, aError);
     if (aError.Failed()) {
       return nullptr;
     }

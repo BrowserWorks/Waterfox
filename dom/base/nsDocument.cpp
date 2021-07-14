@@ -1290,7 +1290,6 @@ nsIDocument::nsIDocument()
     mHasHadDefaultView(false),
     mStyleSheetChangeEventsEnabled(false),
     mIsSrcdocDocument(false),
-    mDidDocumentOpen(false),
     mHasDisplayDocument(false),
     mFontFaceSetDirty(true),
     mGetUserFontSetCalled(false),

@@ -1688,8 +1688,6 @@ nsHTMLDocument::Open(JSContext* cx,
   SetReadyStateInternal(READYSTATE_UNINITIALIZED,
                         /* updateTimingInformation = */ false);
 
-  mDidDocumentOpen = true;
-
   // Step 13 - Set our compatibility mode to standards.
   SetCompatibilityMode(eCompatibility_FullStandards);
 
