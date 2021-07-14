@@ -5,12 +5,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DIRS += [
-    "doh-rollout",
     "formautofill",
     "screenshots",
     "webcompat",
     "report-site-issue",
     "pictureinpicture",
+    "privatetab",
 ]
 
 if CONFIG["NIGHTLY_BUILD"]:
