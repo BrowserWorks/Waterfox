@@ -206,8 +206,14 @@ HTMLSharedObjectElement::AfterMaybeChangeAttr(int32_t aNamespaceID,
       // attributes before inserting the node into the document.
       if (aNotify && IsInComposedDoc() && mIsDoneAddingChildren &&
           !BlockEmbedOrObjectContentLoading()) {
-        nsresult rv = LoadObject(aNotify, true);
-        NS_ENSURE_SUCCESS(rv, rv);
+        nsContentUtils::AddScriptRunner(NS_NewRunnableFunction(
+            "HTMLSharedObjectElement::LoadObject",
+            [self = RefPtr<HTMLSharedObjectElement>(this), aNotify]() {
+              if (self->IsInComposedDoc()) {
+                self->LoadObject(aNotify, true);
+              }
+            }));
+        return NS_OK;
       }
     }
   }
