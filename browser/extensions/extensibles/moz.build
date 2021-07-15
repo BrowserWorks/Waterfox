@@ -4,10 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+DIRS += ['locales']
+
 EXTRA_JS_MODULES += [
+  'content/BrowserUtils.jsm',
   'content/PrefUtils.jsm',
   'privatetab/PrivateTab.jsm',
-  'statusbar/StatusBar.jsm'
+  'statusbar/StatusBar.jsm',
+  'tabfeatures/TabFeatures.jsm'
 ]
 
 FINAL_TARGET_FILES.features['extensibles@waterfox.net'] += [
@@ -22,6 +26,10 @@ FINAL_TARGET_FILES.features['extensibles@waterfox.net']['privatetab'] += [
 
 FINAL_TARGET_FILES.features['extensibles@waterfox.net']['statusbar'] += [
   'statusbar/background.js'
+]
+
+FINAL_TARGET_FILES.features['extensibles@waterfox.net']['tabfeatures'] += [
+  'tabfeatures/background.js'
 ]
 
 FINAL_TARGET_FILES.features['extensibles@waterfox.net']['_locales']['en'] += [

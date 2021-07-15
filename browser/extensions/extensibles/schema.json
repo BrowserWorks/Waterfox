@@ -83,6 +83,11 @@
                 "type": "string",
                 "optional": true,
                 "description": "The name of the toolbar."
+              },
+              "preference": {
+                "type": "string",
+                "optional": true,
+                "description": "The preference that controls visibility of the element."
               }
             }
           },
@@ -173,6 +178,24 @@
         ]
       },
       {
+        "name": "registerPref",
+        "type": "function",
+        "async": false,
+        "description": "Register the given preference with the default branch.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "The name of the preferences being registered."
+          },
+          {
+            "name": "aValue",
+            "type": "boolean",
+            "description": "The value of the preferences being registered."
+          }
+        ]
+      },
+      {
         "name": "isTopWindowPrivate",
         "type": "function",
         "async": false,
@@ -220,6 +243,13 @@
         "type": "function",
         "async": true,
         "description": "Returns whether the current window is a ChromeWindow",
+        "parameters": []
+      },
+      {
+        "name": "getPlatform",
+        "type": "function",
+        "async": true,
+        "description": "Returns the current platform.",
         "parameters": []
       },
       {
@@ -358,6 +388,19 @@
         "type": "function",
         "async": true,
         "description": "Initialize custom functions.",
+        "parameters": []
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.tabfeatures",
+    "description": "API implementing additional tab features",
+    "functions": [
+      {
+        "name": "registerTabFeatures",
+        "type": "function",
+        "async": false,
+        "description": "Register TabFeatures.jsm with the current top window.",
         "parameters": []
       }
     ]

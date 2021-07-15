@@ -22,5 +22,14 @@
   },
   "statusBar": {
     "message": "Status Bar"
+  },
+  "copyUrl": {
+    "message": "Copy URL"
+  },
+  "copyAllUrls": {
+    "message": "Copy All URLs"
+  },
+  "restartBrowser": {
+    "message": "Restart"
   }
 }

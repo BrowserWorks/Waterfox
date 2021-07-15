@@ -4,7 +4,23 @@
 
 "use strict";
 
-/* globals ExtensionAPI */
+/* globals ExtensionAPI Services */
+
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "BrowserUtils",
+  "resource:///modules/BrowserUtils.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "PrefUtils",
+  "resource:///modules/PrefUtils.jsm"
+);
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -16,6 +32,12 @@ ChromeUtils.defineModuleGetter(
   this,
   "PrivateTab",
   "resource:///modules/PrivateTab.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "TabFeatures",
+  "resource:///modules/TabFeatures.jsm"
 );
 
 this.extensibles = class extends ExtensionAPI {
@@ -131,8 +153,19 @@ this.extensibles = class extends ExtensionAPI {
               case "toolbarClick":
                 func = PrivateTab.toolbarClick;
                 break;
+              case "tabContext":
+                func = TabFeatures.tabContext;
+                break;
             }
             this.document.getElementById(aId).addEventListener(aEvent, func);
+          },
+
+          registerPref(aName, aValue) {
+            PrefUtils.set(aName, aValue, true);
+          },
+
+          async getPlatform() {
+            return AppConstants.platform;
           },
 
           async initialized(aName) {
@@ -239,6 +272,25 @@ this.extensibles = class extends ExtensionAPI {
           async initCustomFunctions() {
             let win = this.mostRecentWindow;
             win.privateTab.initCustomFunctions(win);
+          },
+        },
+        tabfeatures: {
+          // internal functions/props
+          get mostRecentWindow() {
+            return Services.wm.getMostRecentWindow("navigator:browser");
+          },
+
+          get document() {
+            return Services.wm.getMostRecentWindow("navigator:browser")
+              .document;
+          },
+          registerTabFeatures() {
+            let win = this.mostRecentWindow;
+            if (!win.tabFeatures) {
+              win.tabFeatures = TabFeatures;
+              win.tabFeatures.setPrefs();
+              BrowserUtils.setStyle(TabFeatures.style);
+            }
           },
         },
       },

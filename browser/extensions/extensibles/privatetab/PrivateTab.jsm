@@ -18,9 +18,7 @@ const PrivateTab = {
   config: {
     neverClearData: false, // TODO: change to pref controlled value; if you want to not record history but don"t care about other data, maybe even want to keep private logins
     restoreTabsOnRestart: true,
-    doNotClearDataUntilFxIsClosed: true,
-    deleteContainerOnDisable: false,
-    clearDataOnDisable: false,
+    doNotClearDataUntilFxIsClosed: false,
   },
 
   openTabs: new Set(),

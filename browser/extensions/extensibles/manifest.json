@@ -14,7 +14,7 @@
   },
 
   "background": {
-    "scripts": ["privatetab/background.js", "statusbar/background.js"]
+    "scripts": ["privatetab/background.js", "statusbar/background.js", "tabfeatures/background.js"]
   },
 
   "permissions": ["tabs", "menus"],
@@ -28,7 +28,8 @@
         "paths": [
           ["extensibles", "utils"],
           ["extensibles", "privatetab"],
-          ["extensibles", "statusbar"]
+          ["extensibles", "statusbar"],
+          ["extensibles", "tabfeatures"]
         ]
       }
     }
