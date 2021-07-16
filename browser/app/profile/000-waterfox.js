@@ -23,7 +23,11 @@ pref("browser.uidensity", 1, locked);
 pref("browser.download.autohideButton", false);
 pref("browser.urlbar.trimURLs", false);
 pref("extensions.activeThemeID", "lepton@waterfox.net");
+pref("browser.urlbar.showSearchSuggestionsFirst", false);
 pref("browser.uiCustomization.state", "{\"placements\":{\"widget-overflow-fixed-list\":[],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"urlbar-container\",\"save-to-pocket-button\",\"downloads-button\",\"library-button\",\"fxa-toolbar-menu-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"PersonalToolbar\":[\"import-button\",\"personal-bookmarks\"]},\"seen\":[\"profiler-button\",\"developer-button\"],\"dirtyAreaCache\":[\"nav-bar\",\"PersonalToolbar\"],\"currentVersion\":17,\"newElementCount\":3}");
+
+pref("xpinstall.signatures.required", false);
+pref("general.useragent.compatMode.firefox", true);
 
 // Experimental preferences
 pref("fission.autostart", true);
