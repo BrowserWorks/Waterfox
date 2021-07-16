@@ -37,6 +37,7 @@ elif [[ $(uname -s) == *Linux* ]]; then
 	fi
 fi
 
+ac_add_options --disable-bootstrap
 ac_add_options --disable-crashreporter
 ac_add_options --disable-debug
 ac_add_options --disable-dmd
