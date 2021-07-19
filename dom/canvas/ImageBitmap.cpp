@@ -353,45 +353,14 @@ private:
   const Maybe<IntRect>& mCropRect;
 };
 
-static bool
-CheckSecurityForHTMLElements(bool aIsWriteOnly, bool aCORSUsed, nsIPrincipal* aPrincipal)
-{
-  MOZ_ASSERT(aPrincipal);
-
-  if (aIsWriteOnly) {
-    return false;
-  }
-
-  if (!aCORSUsed) {
-    nsIGlobalObject* incumbentSettingsObject = GetIncumbentGlobal();
-    if (NS_WARN_IF(!incumbentSettingsObject)) {
-      return false;
-    }
-
-    nsIPrincipal* principal = incumbentSettingsObject->PrincipalOrNull();
-    if (NS_WARN_IF(!principal) || !(principal->Subsumes(aPrincipal))) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-static bool
-CheckSecurityForHTMLElements(const nsLayoutUtils::SurfaceFromElementResult& aRes)
-{
-  return CheckSecurityForHTMLElements(aRes.mIsWriteOnly, aRes.mCORSUsed, aRes.mPrincipal);
-}
-
 /*
  * A wrapper to the nsLayoutUtils::SurfaceFromElement() function followed by the
  * security checking.
  */
-template<class HTMLElementType>
-static already_AddRefed<SourceSurface>
-GetSurfaceFromElement(nsIGlobalObject* aGlobal, HTMLElementType& aElement,
-                      bool* aWriteOnly, ErrorResult& aRv)
-{
+template<class ElementType>
+static already_AddRefed<SourceSurface> GetSurfaceFromElement(
+    nsIGlobalObject* aGlobal, ElementType& aElement, bool* aWriteOnly,
+    ErrorResult& aRv) {
   nsLayoutUtils::SurfaceFromElementResult res =
     nsLayoutUtils::SurfaceFromElement(&aElement, nsLayoutUtils::SFE_WANT_FIRST_FRAME_IF_IMAGE);
 
@@ -403,7 +372,7 @@ GetSurfaceFromElement(nsIGlobalObject* aGlobal, HTMLElementType& aElement,
   }
 
   // Check origin-clean and pass back
-  *aWriteOnly = !CheckSecurityForHTMLElements(res);
+  *aWriteOnly = res.mIsWriteOnly;
 
   return surface.forget();
 }
@@ -823,8 +792,7 @@ ImageBitmap::CreateInternal(nsIGlobalObject* aGlobal, HTMLVideoElement& aVideoEl
   // Check security.
   nsCOMPtr<nsIPrincipal> principal = aVideoEl.GetCurrentVideoPrincipal();
   bool CORSUsed = aVideoEl.GetCORSMode() != CORS_NONE;
-
-  bool writeOnly = !CheckSecurityForHTMLElements(false, CORSUsed, principal);
+  bool writeOnly = CheckWriteOnlySecurity(CORSUsed, principal);
 
   // Create ImageBitmap.
   RefPtr<layers::Image> data = aVideoEl.GetCurrentImage();
