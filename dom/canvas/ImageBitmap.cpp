@@ -1515,17 +1515,5 @@ ImageBitmap::WriteStructuredClone(JSStructuredCloneWriter* aWriter,
   return true;
 }
 
-/*static*/ bool
-ImageBitmap::ExtensionsEnabled(JSContext* aCx, JSObject*)
-{
-  if (NS_IsMainThread()) {
-    return Preferences::GetBool("canvas.imagebitmap_extensions.enabled");
-  } else {
-    WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(aCx);
-    MOZ_ASSERT(workerPrivate);
-    return workerPrivate->ImageBitmapExtensionsEnabled();
-  }
-}
-
 } // namespace dom
 } // namespace mozilla
