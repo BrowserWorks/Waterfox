@@ -66,6 +66,7 @@ struct ImageBitmapCloneData final
   gfx::IntRect mPictureRect;
   gfxAlphaType mAlphaType;
   bool mIsCroppingAreaOutSideOfSourceImage;
+  bool mWriteOnly;
 };
 
 /*
@@ -165,6 +166,10 @@ public:
   template<typename T>
   friend class MapDataIntoBufferSource;
 
+  bool IsWriteOnly() const {
+    return mWriteOnly;
+  }
+
   // Mozilla Extensions
   ImageBitmapFormat
   FindOptimalFormat(const Optional<Sequence<ImageBitmapFormat>>& aPossibleFormats,
@@ -201,6 +206,7 @@ protected:
    * CreateInternal(from ImageData) method.
    */
   ImageBitmap(nsIGlobalObject* aGlobal, layers::Image* aData,
+              bool aWriteOnly,
               gfxAlphaType aAlphaType = gfxAlphaType::Premult);
 
   virtual ~ImageBitmap();
@@ -284,6 +290,12 @@ protected:
    */
   bool mIsCroppingAreaOutSideOfSourceImage;
 
+  /*
+   * Write-Only flag is set to true if this image has been generated from a
+   * cross-origin source. This is the opposite of what is called 'origin-clean'
+   * in the spec.
+   */
+  bool mWriteOnly;
 };
 
 } // namespace dom

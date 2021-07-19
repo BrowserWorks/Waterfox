@@ -1111,6 +1111,7 @@ CanvasRenderingContext2D::CanvasRenderingContext2D(layers::LayersBackend aCompos
   , mIsCapturedFrameInvalid(false)
   , mPathTransformWillUpdate(false)
   , mInvalidateCount(0)
+  , mWriteOnly(false) // == !origin-clean
 {
   if (!sMaxContextsInitialized) {
     sMaxContexts = gfxPrefs::CanvasAzureAcceleratedLimit();
@@ -2615,7 +2616,8 @@ CanvasRenderingContext2D::CreatePattern(const CanvasImageSource& aSource,
     // nullptr and set CORSUsed to true for passing the security check in
     // CanvasUtils::DoDrawImageSecurityCheck().
     RefPtr<CanvasPattern> pat =
-      new CanvasPattern(this, srcSurf, repeatMode, nullptr, false, true);
+      new CanvasPattern(this, srcSurf, repeatMode, nullptr,
+                        imgBitmap.IsWriteOnly(), true);
 
     return pat.forget();
   }
@@ -5169,12 +5171,20 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
       aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
       return;
     }
+
+    if (canvas->IsWriteOnly()) {
+      SetWriteOnly();
+    }
   } else if (aImage.IsImageBitmap()) {
     ImageBitmap& imageBitmap = aImage.GetAsImageBitmap();
     srcSurf = imageBitmap.PrepareForDrawTarget(mTarget);
 
     if (!srcSurf) {
       return;
+    }
+
+    if (imageBitmap.IsWriteOnly()) {
+      SetWriteOnly();
     }
 
     imgSize = gfx::IntSize(imageBitmap.Width(), imageBitmap.Height());
@@ -5699,12 +5709,12 @@ CanvasRenderingContext2D::GetImageData(JSContext* aCx, double aSx,
 
   // Check only if we have a canvas element; if we were created with a docshell,
   // then it's special internal use.
-  if (mCanvasElement && mCanvasElement->IsWriteOnly() &&
+  if (IsWriteOnly() || (mCanvasElement && mCanvasElement->IsWriteOnly() &&
       // We could ask bindings for the caller type, but they already hand us a
       // JSContext, and we're at least _somewhat_ perf-sensitive (so may not
       // want to compute the caller type in the common non-write-only case), so
       // let's just use what we have.
-      !nsContentUtils::CallerHasPermission(aCx, NS_LITERAL_STRING("<all_urls>")))
+      !nsContentUtils::CallerHasPermission(aCx, NS_LITERAL_STRING("<all_urls>"))))
   {
     // XXX ERRMSG we need to report an error to developers here! (bug 329026)
     aError.Throw(NS_ERROR_DOM_SECURITY_ERR);

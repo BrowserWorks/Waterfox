@@ -66,6 +66,11 @@ ImageBitmapRenderingContext::TransferFromImageBitmap(ImageBitmap& aImageBitmap)
   if (!mImage) {
     return;
   }
+  
+  // Check if ImageBitmap is tainted, and if so flag the canvas tainted too.
+  if (aImageBitmap.IsWriteOnly() && mCanvasElement) {
+    mCanvasElement->SetWriteOnly();
+  }
 
   Redraw(gfxRect(0, 0, mWidth, mHeight));
 }
