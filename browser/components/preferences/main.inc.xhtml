@@ -61,7 +61,7 @@
 </groupbox>
 
 <!-- Tab preferences -->
-<groupbox id="tabGroup" data-category="paneGeneral"
+<groupbox data-category="paneGeneral"
           hidden="true">
     <label><html:h2 data-l10n-id="tabs-group-header"/></label>
 
@@ -284,6 +284,21 @@
     <checkbox id="browser.theme.auto" data-l10n-id="theme-auto-change"
               preference="browser.theme.auto" hidden="true"/>
   </groupbox>
+
+<!-- Restart Menu Item preferences -->
+<groupbox id="restartGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <label><html:h2 data-l10n-id="restart-header"/></label>
+#ifndef XP_MACOSX
+  <checkbox id="browser.restart_menu.showpanelmenubtn" data-l10n-id="restart-paneluibtn"
+              preference="browser.restart_menu.showpanelmenubtn"/>
+#endif
+  <checkbox id="browser.restart_menu.purgecache" data-l10n-id="clean-fast-restart-cache"
+            preference="browser.restart_menu.purgecache"/>
+  <checkbox id="browser.restart_menu.requireconfirm" data-l10n-id="restart-reqconfirmation"
+            preference="browser.restart_menu.requireconfirm"/>
+ </groupbox>
 
 <!-- Status Bar preferences -->
 <groupbox id="statusBarGroup"

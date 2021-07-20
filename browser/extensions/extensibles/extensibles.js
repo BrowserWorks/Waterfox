@@ -1,8 +1,11 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 var EXPORTED_SYMBOLS = ["Extensibles"];
+
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
 ChromeUtils.defineModuleGetter(
   this,
   "ContextMenuExtension",
@@ -15,16 +18,6 @@ ChromeUtils.defineModuleGetter(
 );
 ChromeUtils.defineModuleGetter(
   this,
-  "AboutConfigExtension",
-  "resource://extensibles/AboutConfigExtension.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "MenuBarExtension",
-  "resource://extensibles/MenuBarExtension.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
   "ExtensibleUtils",
   "resource://extensibles/ExtensibleUtils.jsm"
 );
@@ -33,6 +26,7 @@ ChromeUtils.defineModuleGetter(
   "Overlays",
   "resource:///modules/Overlays.jsm"
 );
+
 var Extensibles = {
   loadContextOverlays() {
     new ContextMenuExtension();
@@ -40,12 +34,5 @@ var Extensibles = {
   // called in browser/components/preferences/main.js init
   init_prefToggles() {
     new AboutPreferencesExtension().init_prefTogglesInAllWindows();
-  },
-  // called in browser/components/aboutconfig/content/aboutconfig.js
-  init_configListener() {
-    new AboutConfigExtension().waitForUnload();
-  },
-  loadMenuBarOverlays() {
-    new MenuBarExtension();
   },
 };

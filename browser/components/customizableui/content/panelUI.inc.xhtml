@@ -220,7 +220,7 @@
                   viewCacheId="appMenu-viewCache">
     <panelview id="appMenu-mainView" class="PanelUI-subView"
                descriptionheightworkaround="true">
-      <vbox id="appMenu-mainBox" class="panel-subview-body">
+      <vbox class="panel-subview-body">
         <vbox id="appMenu-addon-banners"/>
         <toolbarbutton id="appMenu-update-banner" class="panel-banner-item"
                        label-update-available="&updateAvailable.panelUI.label;"
@@ -422,6 +422,10 @@
                        oncommand="PanelUI.showSubView('PanelUI-helpView', this)"/>
 #ifndef XP_MACOSX
         <toolbarseparator/>
+        <toolbarbutton id="appMenu-restart-button"
+        class="subviewbutton subviewbutton-iconic"
+        label="&restartMenu.label;"
+        oncommand="restartBrowser();"/>
         <toolbarbutton id="appMenu-quit-button"
                        class="subviewbutton subviewbutton-iconic"
 #ifdef XP_WIN

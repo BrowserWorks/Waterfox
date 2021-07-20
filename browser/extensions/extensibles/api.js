@@ -20,7 +20,6 @@ this.extensibles = class extends ExtensionAPI {
       extensibles: {
         init() {
           Extensibles.loadContextOverlays();
-          Extensibles.loadMenuBarOverlays();
         },
       },
     };

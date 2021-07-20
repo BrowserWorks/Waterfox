@@ -2,15 +2,12 @@
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!DOCTYPE overlay [ <!ENTITY % overlayDTD SYSTEM "resource://extensibles/extensibles.dtd">
-%overlayDTD;
-]>
 <overlay id="TabContextMenu_overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     <menupopup id="tabContextMenu">
-        <menuitem id="context_copyCurrentTabUrl" label="&copyTabUrl.label;"
+        <menuitem id="context_copyCurrentTabUrl" data-lazy-l10n-id="copy-tab-url"
             oncommand="TabContextMenu.copyCurrentTabUrl(TabContextMenu.contextTab.linkedBrowser.currentURI.spec);"
             insertafter="context_duplicateTabs" />
-        <menuitem id="context_copyAllTabUrls" label="&copyAllTabUrls.label;"
+        <menuitem id="context_copyAllTabUrls" data-lazy-l10n-id="copy-all-tab-urls"
             oncommand="TabContextMenu.copyAllTabUrls();" insertafter="context_copyCurrentTabUrl" />
     </menupopup>
 </overlay>

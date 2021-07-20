@@ -108,7 +108,11 @@ Preferences.addAll([
 
   // Theme
   { id: "browser.theme.auto", type: "bool" },
-  
+
+  // Restart Menu Item
+  { id: "browser.restart_menu.purgecache", type: "bool" },
+  { id: "browser.restart_menu.requireconfirm", type: "bool" },
+  { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
   // Status Bar
   { id: "browser.statusbar.mode", type: "int" },
   { id: "browser.statusbar.showbtn", type: "bool" },
