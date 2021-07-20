@@ -35,6 +35,18 @@ const TabFeatures = {
     ];
   },
 
+  get updateItems() {
+    return [
+      {
+        id: "context_duplicateTab",
+        attrs: {
+          class: "tabFeature",
+          preference: "browser.tabs.duplicateTab",
+        },
+      },
+    ];
+  },
+
   get menuBarItems() {
     return [
       {
@@ -79,6 +91,10 @@ const TabFeatures = {
         this.setPref(item);
       }
     });
+    // add additional attributes to existing elements for functionality
+    this.updateItems.forEach(item => {
+      this.setAttributes(item);
+    });
     // add on popupshowing listener to display elements if prefs allow
     browser.extensibles.utils.addElementListener(
       "tabContextMenu",
@@ -87,7 +103,6 @@ const TabFeatures = {
     );
     // get platform as restart button location differs based on platform
     let platform = await browser.extensibles.utils.getPlatform();
-    console.log(platform);
     // create required appmenu/menubar elements
     if (platform == "macosx") {
       this.menuBarItems.forEach(item => {
@@ -129,6 +144,11 @@ const TabFeatures = {
   createAppendElement(item) {
     const { tag, attrs, appendTo } = item;
     browser.extensibles.utils.createAndPositionElement(tag, attrs, appendTo);
+  },
+
+  setAttributes(item) {
+    const { id, attrs } = item;
+    browser.extensibles.utils.setAttributes(id, attrs);
   },
 
   setPref(item) {

@@ -88,6 +88,11 @@
                 "type": "string",
                 "optional": true,
                 "description": "The preference that controls visibility of the element."
+              },
+              "data-category": {
+                "type": "string",
+                "optional": true,
+                "description": "The data-category of the element."
               }
             }
           },
@@ -100,6 +105,12 @@
             "name": "aPosition",
             "type": "string",
             "description": "The position relative to the target element. If no position is given the new element will be appeneded.",
+            "optional": true
+          },
+          {
+            "name": "aContent",
+            "type": "boolean",
+            "description": "True if elements should be created in window content document rather than window document.",
             "optional": true
           }
         ]
@@ -160,6 +171,19 @@
         ]
       },
       {
+        "name": "elementExistsInContent",
+        "type": "function",
+        "async": true,
+        "description": "Attempt to retrieve the given element Id from the current content document.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          }
+        ]
+      },
+      {
         "name": "getElementAttr",
         "type": "function",
         "async": true,
@@ -178,6 +202,36 @@
         ]
       },
       {
+        "name": "setAttributes",
+        "type": "function",
+        "async": false,
+        "description": "Set the specified attributes for the given element id.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          },
+          {
+            "name": "aAttrs",
+            "type": "object",
+            "description": "The attributes of the element to set.",
+            "properties": {
+              "class": {
+                "type": "string",
+                "optional": true,
+                "description": "The class attribute to add to the element."
+              },
+              "preference": {
+                "type": "string",
+                "optional": true,
+                "description": "The preference that controls the elements action/visibility."
+              }
+            }
+          }
+        ]
+      },
+      {
         "name": "registerPref",
         "type": "function",
         "async": false,
@@ -192,6 +246,24 @@
             "name": "aValue",
             "type": "boolean",
             "description": "The value of the preferences being registered."
+          }
+        ]
+      },
+      {
+        "name": "addPreference",
+        "type": "function",
+        "async": false,
+        "description": "Add preferences to the Preferences object in the window content.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "Preference id."
+          },
+          {
+            "name": "aType",
+            "type": "string",
+            "description": "Preference type."
           }
         ]
       },
@@ -251,6 +323,24 @@
         "async": true,
         "description": "Returns the current platform.",
         "parameters": []
+      },
+      {
+        "name": "append",
+        "type": "function",
+        "async": true,
+        "description": "Append text to given element.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          },
+          {
+            "name": "aText",
+            "type": "string",
+            "description": "The text to append."
+          }
+        ]
       },
       {
         "name": "initialized",
@@ -401,6 +491,19 @@
         "type": "function",
         "async": false,
         "description": "Register TabFeatures.jsm with the current top window.",
+        "parameters": []
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.prefsext",
+    "description": "API implementing about:preferences features",
+    "functions": [
+      {
+        "name": "setStyle",
+        "type": "function",
+        "async": false,
+        "description": "Set additional css rules for about:preferences.",
         "parameters": []
       }
     ]

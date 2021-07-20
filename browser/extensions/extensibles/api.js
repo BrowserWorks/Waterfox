@@ -40,6 +40,12 @@ ChromeUtils.defineModuleGetter(
   "resource:///modules/TabFeatures.jsm"
 );
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "PrefsExt",
+  "resource:///modules/AboutPreferencesExtension.jsm"
+);
+
 this.extensibles = class extends ExtensionAPI {
   getAPI(context) {
     return {
@@ -54,6 +60,12 @@ this.extensibles = class extends ExtensionAPI {
             return Services.wm.getMostRecentWindow("navigator:browser")
               .document;
           },
+
+          get content() {
+            return Services.wm.getMostRecentWindow("navigator:browser").content
+              .document;
+          },
+
           createElement(aDoc, aTag, aAttrs) {
             // Create element
             let el = aDoc.createXULElement(aTag);
@@ -67,8 +79,17 @@ this.extensibles = class extends ExtensionAPI {
           },
 
           // api endpoints
-          createAndPositionElement(aTag, aAttrs, aAdjacentTo, aPosition) {
+          createAndPositionElement(
+            aTag,
+            aAttrs,
+            aAdjacentTo,
+            aPosition,
+            aContent = false
+          ) {
             let doc = this.document;
+            if (aContent) {
+              doc = this.content;
+            }
             // Create element
             let el = this.createElement(doc, aTag, aAttrs);
             // Place it in certain location
@@ -100,10 +121,21 @@ this.extensibles = class extends ExtensionAPI {
             }
           },
 
+          async elementExistsInContent(aId) {
+            return this.content.getElementById(aId);
+          },
+
           async getElementAttr(aId, aAttr) {
             let doc = this.document;
             let el = doc.getElementById(aId);
             return el.getAttribute(aAttr);
+          },
+
+          setAttributes(aId, aAttrs) {
+            let el = this.document.getElementById(aId);
+            Object.entries(aAttrs).forEach(([id, val]) => {
+              el.setAttribute(id, val);
+            });
           },
 
           isTopWindowPrivate() {
@@ -164,8 +196,19 @@ this.extensibles = class extends ExtensionAPI {
             PrefUtils.set(aName, aValue, true);
           },
 
+          addPreference(aId, aType) {
+            this.mostRecentWindow.content.Preferences.add({
+              id: aId,
+              type: aType,
+            });
+          },
+
           async getPlatform() {
             return AppConstants.platform;
+          },
+
+          async append(aId, aText) {
+            this.content.getElementById(aId).append(aText);
           },
 
           async initialized(aName) {
@@ -291,6 +334,11 @@ this.extensibles = class extends ExtensionAPI {
               win.tabFeatures.setPrefs();
               BrowserUtils.setStyle(TabFeatures.style);
             }
+          },
+        },
+        prefsext: {
+          setStyle() {
+            BrowserUtils.setStyle(PrefsExt.style);
           },
         },
       },
