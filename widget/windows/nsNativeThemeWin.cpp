@@ -141,14 +141,6 @@ GetCheckboxMargins(HANDLE theme, HDC hdc)
     return checkboxContent;
 }
 
-static COLORREF
-GetTextfieldFillColor(HANDLE theme, int32_t part, int32_t state)
-{
-    COLORREF color = {0};
-    GetThemeColor(theme, part, state, TMT_FILLCOLOR, &color);
-    return color;
-}
-
 static SIZE
 GetCheckboxBGSize(HANDLE theme, HDC hdc)
 {
@@ -720,7 +712,6 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(uint8_t aWidgetTy
     case NS_THEME_CHECKBOX:
     case NS_THEME_GROUPBOX:
       return Some(eUXButton);
-    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE:
@@ -941,7 +932,6 @@ nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame, uint8_t aWidgetType,
       // same as GBS_NORMAL don't bother supporting GBS_DISABLED.
       return NS_OK;
     }
-    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TEXTFIELD_MULTILINE: {
@@ -1856,24 +1846,11 @@ RENDER_AGAIN:
     DrawThemeBGRTLAware(theme, hdc, part, state,
                         &widgetRect, &clipRect, IsFrameRTL(aFrame));
   }
-  else if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
-           aWidgetType == NS_THEME_NUMBER_INPUT ||
+  else if (aWidgetType == NS_THEME_NUMBER_INPUT ||
            aWidgetType == NS_THEME_TEXTFIELD ||
            aWidgetType == NS_THEME_TEXTFIELD_MULTILINE) {
-    if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
-        state != TFS_EDITBORDER_FOCUSED) {
-      // We want 'menulist-textfield' to behave like 'textfield', except we
-      // don't want a border unless it's focused.  We have to handle the
-      // non-focused case manually here.
-      COLORREF color = GetTextfieldFillColor(theme, part, state);
-      HBRUSH brush = CreateSolidBrush(color);
-      ::FillRect(hdc, &widgetRect, brush);
-      DeleteObject(brush);
-    } else {
-      DrawThemeBackground(theme, hdc, part, state, &widgetRect, &clipRect);
-    }
-
-    if (state == TFS_EDITBORDER_DISABLED) {
+    DrawThemeBackground(theme, hdc, part, state, &widgetRect, &clipRect);
+     if (state == TFS_EDITBORDER_DISABLED) {
       InflateRect(&widgetRect, -1, -1);
       ::FillRect(hdc, &widgetRect, reinterpret_cast<HBRUSH>(COLOR_BTNFACE+1));
     }
@@ -2069,8 +2046,7 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
       aResult->left = 0;
   }
 
-  if (aFrame && (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
-                 aWidgetType == NS_THEME_NUMBER_INPUT ||
+  if (aFrame && (aWidgetType == NS_THEME_NUMBER_INPUT ||
                  aWidgetType == NS_THEME_TEXTFIELD ||
                  aWidgetType == NS_THEME_TEXTFIELD_MULTILINE)) {
     nsIContent* content = aFrame->GetContent();
@@ -2157,8 +2133,7 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
     return ok;
   }
 
-  if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
-      aWidgetType == NS_THEME_NUMBER_INPUT ||
+  if (aWidgetType == NS_THEME_NUMBER_INPUT ||
       aWidgetType == NS_THEME_TEXTFIELD ||
       aWidgetType == NS_THEME_TEXTFIELD_MULTILINE ||
       aWidgetType == NS_THEME_MENULIST)
@@ -2175,8 +2150,7 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
    * Instead, we add 2px padding for the contents and fix this. (Used to be 1px
    * added, see bug 430212)
    */
-  if (aWidgetType == NS_THEME_MENULIST_TEXTFIELD ||
-      aWidgetType == NS_THEME_NUMBER_INPUT ||
+  if (aWidgetType == NS_THEME_NUMBER_INPUT ||
       aWidgetType == NS_THEME_TEXTFIELD ||
       aWidgetType == NS_THEME_TEXTFIELD_MULTILINE) {
     aResult->top = aResult->bottom = 2;
@@ -2320,7 +2294,6 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
 
   switch (aWidgetType) {
     case NS_THEME_GROUPBOX:
-    case NS_THEME_MENULIST_TEXTFIELD:
     case NS_THEME_NUMBER_INPUT:
     case NS_THEME_TEXTFIELD:
     case NS_THEME_TOOLBOX:
@@ -3767,12 +3740,8 @@ RENDER_AGAIN:
     case NS_THEME_LISTBOX:
     case NS_THEME_MENULIST:
     case NS_THEME_MENULIST_TEXTFIELD: {
-      // Paint the border, except for 'menulist-textfield' that isn't focused:
-      if (aWidgetType != NS_THEME_MENULIST_TEXTFIELD || focused) {
-        // Draw inset edge
-        ::DrawEdge(hdc, &widgetRect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
-      }
-
+      // Draw inset edge
+      ::DrawEdge(hdc, &widgetRect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
       EventStates eventState = GetContentState(aFrame, aWidgetType);
 
       // Fill in background
