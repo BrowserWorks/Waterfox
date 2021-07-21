@@ -27,7 +27,7 @@ const StatusBar = {
   },
 
   initPrefListeners() {
-    PrefUtils.set(this.PREF_ENABLED, true, true);
+    PrefUtils.set(this.PREF_ENABLED, false, true);
     PrefUtils.set(this.PREF_STATUSTEXT, true, true);
     this.enabledListener = PrefUtils.addListener(
       this.PREF_ENABLED,
