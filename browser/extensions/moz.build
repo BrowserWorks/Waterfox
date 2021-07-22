@@ -10,9 +10,7 @@ DIRS += [
     "webcompat",
     "report-site-issue",
     "pictureinpicture",
-    "extensibles"
-    "privatetab",
-    "statusbar",
+    "extensibles",
     "addon-stores",
 ]
 
