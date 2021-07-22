@@ -10,7 +10,7 @@
 # instead of BrandFullName and typically should not be modified.
 !define BrandFullNameInternal "Waterfox"
 !define BrandFullName         "Waterfox"
-!define CompanyName           "Waterfox Ltd."
+!define CompanyName           "Waterfox Limited"
 !define URLInfoAbout          "https://www.waterfox.net"
 !define HelpLink              "https://support.waterfox.net"
 

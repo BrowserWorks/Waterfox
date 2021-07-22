@@ -41,7 +41,7 @@ Var BrandFullName
 ; And anyone that wants to run tests themselves should already have 
 ; this installed.
 !define FallbackKey \
-  "Software\Waterfox Ltd.\MaintenanceService\3932ecacee736d366d6436db0f55bce4"
+  "Software\Waterfox Limited\MaintenanceService\3932ecacee736d366d6436db0f55bce4"
 
 !define CompanyName "Mozilla Corporation"
 !define BrandFullNameInternal ""
@@ -66,7 +66,7 @@ Name "${MaintFullName}"
 OutFile "maintenanceservice_installer.exe"
 
 ; Get installation folder from registry if available
-InstallDirRegKey HKLM "Software\Waterfox Ltd.\MaintenanceService" ""
+InstallDirRegKey HKLM "Software\Waterfox Limited\MaintenanceService" ""
 
 SetOverwrite on
 
@@ -197,9 +197,9 @@ Section "MaintenanceService"
   ${OrIf} ${IsNativeARM64}
     SetRegView 64
   ${EndIf}
-  WriteRegDWORD HKLM "Software\Waterfox Ltd.\MaintenanceService" "Attempted" 1
-  WriteRegDWORD HKLM "Software\Waterfox Ltd.\MaintenanceService" "Installed" 1
-  DeleteRegValue HKLM "Software\Waterfox Ltd.\MaintenanceService" "FFPrefetchDisabled"
+  WriteRegDWORD HKLM "Software\Waterfox Limited\MaintenanceService" "Attempted" 1
+  WriteRegDWORD HKLM "Software\Waterfox Limited\MaintenanceService" "Installed" 1
+  DeleteRegValue HKLM "Software\Waterfox Limited\MaintenanceService" "FFPrefetchDisabled"
 
   ; Included here for debug purposes only.  
   ; These keys are used to bypass the installation dir is a valid installation
@@ -258,8 +258,8 @@ Section "Uninstall"
   ${OrIf} ${IsNativeARM64}
     SetRegView 64
   ${EndIf}
-  DeleteRegValue HKLM "Software\Waterfox Ltd.\MaintenanceService" "Installed"
-  DeleteRegValue HKLM "Software\Waterfox Ltd.\MaintenanceService" "FFPrefetchDisabled"
+  DeleteRegValue HKLM "Software\Waterfox Limited\MaintenanceService" "Installed"
+  DeleteRegValue HKLM "Software\Waterfox Limited\MaintenanceService" "FFPrefetchDisabled"
   DeleteRegKey HKLM "${FallbackKey}\"
   ${If} ${RunningX64}
   ${OrIf} ${IsNativeARM64}

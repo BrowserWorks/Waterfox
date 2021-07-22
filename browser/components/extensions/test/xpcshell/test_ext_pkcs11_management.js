@@ -70,7 +70,7 @@ async function setupManifests(modules) {
       break;
 
     case "win":
-      const REGKEY = String.raw`Software\Waterfox Ltd.\PKCS11Modules`;
+      const REGKEY = String.raw`Software\Waterfox Limited\PKCS11Modules`;
 
       let registry = new MockRegistry();
       registerCleanupFunction(() => {

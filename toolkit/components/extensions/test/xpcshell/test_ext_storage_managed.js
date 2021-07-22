@@ -51,7 +51,7 @@ add_task(async function setup() {
     registry = new MockRegistry();
     registry.setValue(
       Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-      `Software\\\Waterfox Ltd.\\\ManagedStorage\\${MANIFEST.name}`,
+      `Software\\\Waterfox Limited\\\ManagedStorage\\${MANIFEST.name}`,
       "",
       path
     );

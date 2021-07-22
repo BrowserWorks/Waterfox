@@ -702,7 +702,7 @@ var gMainPane = {
           );
           wrk.open(
             wrk.ROOT_KEY_LOCAL_MACHINE,
-            "SOFTWARE\\Waterfox Ltd.\\MaintenanceService",
+            "SOFTWARE\\Waterfox Limited\\MaintenanceService",
             wrk.ACCESS_READ | wrk.WOW64_64
           );
           installed = wrk.readIntValue("Installed");
