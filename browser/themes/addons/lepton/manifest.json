@@ -1,20 +1,16 @@
 {
   "manifest_version": 2,
-
   "applications": {
     "gecko": {
       "id": "lepton@waterfox.net"
     }
   },
-
   "name": "Lepton",
   "description": "Improved Photon theme.",
   "author": "black7375",
   "homepage_url":  "https://github.com/black7375/Firefox-UI-Fix",
-  "version": "1.0",
-
+  "version": "2.2.3",
   "icons": {"32": "icon.svg"},
-
   "theme": {
     "colors": {
       "tab_background_text": "rgb(21,20,26)",
@@ -66,7 +62,6 @@
       "input_border_color": "color-mix(in srgb, currentColor 41%, transparent)"
     }
   },
-
   "dark_theme": {
     "colors": {
       "tab_background_text": "#fbfbfe",
@@ -119,7 +114,6 @@
       "toolbar_field_icon_opacity": "1"
     }
   },
-
   "theme_experiment": {
     "stylesheet": "experiment.css",
     "colors": {

@@ -1386,7 +1386,7 @@ BrowserGlue.prototype = {
 
     AddonManager.maybeInstallBuiltinAddon(
       "lepton@waterfox.net",
-      "1.0",
+      "2.2.3",
       "resource://builtin-themes/lepton/"
     );
 
