@@ -1671,12 +1671,12 @@ BrowserGlue.prototype = {
       if (updateChannel) {
         let uninstalledValue = WindowsRegistry.readRegKey(
           Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-          "Software\\Waterfox Ltd.\\Waterfox",
+          "Software\\Waterfox Limited\\Waterfox",
           `Uninstalled-${updateChannel}`
         );
         let removalSuccessful = WindowsRegistry.removeRegKey(
           Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-          "Software\\Waterfox Ltd.\\Waterfox",
+          "Software\\Waterfox Limited\\Waterfox",
           `Uninstalled-${updateChannel}`
         );
         if (removalSuccessful && uninstalledValue == "True") {
