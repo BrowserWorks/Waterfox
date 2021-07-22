@@ -422,7 +422,7 @@ this.AppConstants = Object.freeze({
 #ifdef MOZ_THUNDERBIRD
     false,
 #else
-    true,
+    false,
 #endif
 
   MOZ_GLEAN_ANDROID:
