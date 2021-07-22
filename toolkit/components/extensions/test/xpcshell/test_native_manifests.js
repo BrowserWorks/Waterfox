@@ -30,7 +30,7 @@ if (AppConstants.platform == "win") {
   });
 }
 
-const REGPATH = "Software\\Waterfox Ltd.\\NativeMessagingHosts";
+const REGPATH = "Software\\Waterfox Limited\\NativeMessagingHosts";
 
 const BASE_SCHEMA = "chrome://extensions/content/schemas/manifest.json";
 

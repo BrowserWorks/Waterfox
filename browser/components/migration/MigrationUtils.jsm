@@ -856,7 +856,7 @@ var MigrationUtils = Object.seal({
         key = gPreviousDefaultBrowserKey;
       } else {
         // We didn't have a saved value, so check the registry.
-        const kRegPath = "Software\\Waterfox Ltd.\\Waterfox";
+        const kRegPath = "Software\\Waterfox Limited\\Waterfox";
         let oldDefault = WindowsRegistry.readRegKey(
           Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
           kRegPath,

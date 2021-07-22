@@ -7,7 +7,7 @@
  */
 
 const nsIWindowsRegKey = Ci.nsIWindowsRegKey;
-const BASE_PATH = "SOFTWARE\\Waterfox Ltd.\\Waterfox";
+const BASE_PATH = "SOFTWARE\\Waterfox Limited\\Waterfox";
 
 function idump(indent, str) {
   for (var j = 0; j < indent; ++j) {
