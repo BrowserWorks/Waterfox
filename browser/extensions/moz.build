@@ -11,6 +11,9 @@ DIRS += [
     "report-site-issue",
     "pictureinpicture",
     "extensibles"
+    "privatetab",
+    "statusbar",
+    "addon-stores",
 ]
 
 if CONFIG["NIGHTLY_BUILD"]:

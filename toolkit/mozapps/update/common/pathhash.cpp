@@ -119,7 +119,7 @@ BOOL CalculateRegistryPathFromFilePath(const LPCWSTR filePath,
   delete[] lowercasePath;
 
   LPCWSTR baseRegPath =
-      L"SOFTWARE\\Waterfox Ltd.\\"
+      L"SOFTWARE\\Waterfox Limited\\"
       L"MaintenanceService\\";
   wcsncpy(registryPath, baseRegPath, MAX_PATH);
   BinaryDataToHexString(hash, hashSize, registryPath + wcslen(baseRegPath));
