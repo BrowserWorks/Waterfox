@@ -45,27 +45,27 @@ const StatusBar = {
 
   async init() {
     // init statusbar helper in window object
-    browser.statusbar.registerStatusBar();
+    browser.extensibles.statusbar.registerStatusBar();
     // init dummy bar
     this.dummyItems.forEach(item => {
       this.createAppendElement(item);
     });
-    browser.statusbar.configureStatusBar("status-dummybar");
+    browser.extensibles.statusbar.configureStatusBar("status-dummybar");
     // init statusbar nodes
     this.barItems.forEach(item => {
       this.createElementAs(item);
     });
-    browser.statusbar.configureStatusBar("status-bar");
+    browser.extensibles.statusbar.configureStatusBar("status-bar");
     // init resizer
-    browser.statusbar.configureResizer();
+    browser.extensibles.statusbar.configureResizer();
     // override status panel
-    browser.statusbar.overrideStatusPanelLabel();
-    browser.statusbar.configureBottomBox();
+    browser.extensibles.statusbar.overrideStatusPanelLabel();
+    browser.extensibles.statusbar.configureBottomBox();
   },
 
   createAdjacentElement(item) {
     const { tag, attrs, adjacentTo, position } = item;
-    browser.statusbar.createAndPositionElement(
+    browser.extensibles.utils.createAndPositionElement(
       tag,
       attrs,
       adjacentTo,
@@ -75,12 +75,12 @@ const StatusBar = {
 
   createAppendElement(item) {
     const { tag, attrs, appendTo } = item;
-    browser.statusbar.createAndPositionElement(tag, attrs, appendTo);
+    browser.extensibles.utils.createAndPositionElement(tag, attrs, appendTo);
   },
 
   createElementAs(item) {
     const { tag, attrs, setAs } = item;
-    browser.statusbar.createElementAs(tag, attrs, setAs);
+    browser.extensibles.utils.createElementAs(tag, attrs, setAs);
   },
 };
 
@@ -89,7 +89,10 @@ const StatusBar = {
   await StatusBar.init();
   // init in window on created if not already initialized
   browser.windows.onCreated.addListener(async windowId => {
-    if (!(await browser.statusbar.initialized()) && windowId) {
+    if (
+      !(await browser.extensibles.utils.initialized("statusBar")) &&
+      windowId
+    ) {
       await StatusBar.init();
     }
   });

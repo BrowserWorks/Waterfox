@@ -18,9 +18,7 @@ const PrivateTab = {
   config: {
     neverClearData: false, // TODO: change to pref controlled value; if you want to not record history but don"t care about other data, maybe even want to keep private logins
     restoreTabsOnRestart: true,
-    doNotClearDataUntilFxIsClosed: true,
-    deleteContainerOnDisable: false,
-    clearDataOnDisable: false,
+    doNotClearDataUntilFxIsClosed: false,
   },
 
   openTabs: new Set(),
@@ -200,6 +198,9 @@ const PrivateTab = {
 
   contentContext(aEvent) {
     let win = aEvent.view;
+    if (!win) {
+      return;
+    }
     let { gContextMenu, gBrowser, privateTab } = win;
     let tab = gBrowser.getTabForBrowser(gContextMenu.browser);
     gContextMenu.showItem(
@@ -213,6 +214,9 @@ const PrivateTab = {
   },
 
   hideContext(aEvent) {
+    if (!aEvent.view) {
+      return;
+    }
     if (aEvent.target == this) {
       aEvent.view.document.getElementById("openLinkInPrivateTab").hidden = true;
     }
@@ -220,6 +224,9 @@ const PrivateTab = {
 
   tabContext(aEvent) {
     let win = aEvent.view;
+    if (!win) {
+      return;
+    }
     let { document, privateTab } = win;
     document
       .getElementById("toggleTabPrivateState")
@@ -232,6 +239,9 @@ const PrivateTab = {
 
   openLink(aEvent) {
     let win = aEvent.view;
+    if (!win) {
+      return;
+    }
     let { gContextMenu, privateTab, document } = win;
     win.openLinkIn(
       gContextMenu.linkURL,
@@ -245,6 +255,9 @@ const PrivateTab = {
 
   toolbarClick(aEvent) {
     let win = aEvent.view;
+    if (!win) {
+      return;
+    }
     let { privateTab, document } = win;
     if (aEvent.button == 0) {
       privateTab.BrowserOpenTabPrivate(win);
@@ -374,6 +387,9 @@ const PrivateTab = {
 
   onTabSelect(aEvent) {
     let tab = aEvent.target;
+    if (!tab) {
+      return;
+    }
     let win = tab.ownerGlobal;
     let { privateTab } = win;
     let prevTab = aEvent.detail.previousTab;
@@ -384,6 +400,9 @@ const PrivateTab = {
 
   onTabClose(aEvent) {
     let tab = aEvent.target;
+    if (!tab) {
+      return;
+    }
     let { privateTab } = tab.ownerGlobal;
     if (privateTab.isPrivate(tab)) {
       privateTab.openTabs.delete(tab);
