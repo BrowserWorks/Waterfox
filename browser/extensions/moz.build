@@ -12,6 +12,7 @@ DIRS += [
     "pictureinpicture",
     "privatetab",
     "statusbar",
+    "addon-stores",
 ]
 
 if CONFIG["NIGHTLY_BUILD"]:
