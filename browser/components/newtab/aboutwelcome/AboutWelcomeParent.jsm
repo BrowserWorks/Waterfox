@@ -52,6 +52,7 @@ const LIGHT_WEIGHT_THEMES = {
   LIGHT: "firefox-compact-light@mozilla.org",
   AUTOMATIC: "default-theme@mozilla.org",
   ALPENGLOW: "firefox-alpenglow@mozilla.org",
+  LEPTON: "lepton@waterfox.net",
 };
 
 async function getImportableSites() {
