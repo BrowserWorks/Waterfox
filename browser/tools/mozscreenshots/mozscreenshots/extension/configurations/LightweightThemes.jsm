@@ -53,5 +53,15 @@ var LightweightThemes = {
         await addon.enable();
       },
     },
+
+    lepton: {
+      selectors: [],
+      async applyConfig() {
+        let addon = await AddonManager.getAddonByID(
+          "lepton@waterfox.net"
+        );
+        await addon.enable();
+      },
+    },
   },
 };
