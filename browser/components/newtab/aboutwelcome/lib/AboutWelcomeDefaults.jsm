@@ -172,6 +172,18 @@ const DEFAULT_WELCOME_CONTENT = {
             },
           ],
         },
+        {
+          theme: "lepton",
+          label: {
+            string_id: "onboarding-multistage-theme-label-light",
+          },
+          tooltip: {
+            string_id: "onboarding-multistage-theme-tooltip-light-2",
+          },
+          description: {
+            string_id: "onboarding-multistage-theme-description-light",
+          },
+        },
         primary_button: {
           label: {
             string_id: "onboarding-multistage-theme-primary-button-label2",
@@ -369,6 +381,18 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
               },
               description: {
                 string_id: "mr1-onboarding-theme-description-alpenglow",
+              },
+            },
+            {
+              theme: "lepton",
+              label: {
+                string_id: "mr1-onboarding-theme-label-light",
+              },
+              tooltip: {
+                string_id: "mr1-onboarding-theme-tooltip-light",
+              },
+              description: {
+                string_id: "mr1-onboarding-theme-description-light",
               },
             },
           ],
