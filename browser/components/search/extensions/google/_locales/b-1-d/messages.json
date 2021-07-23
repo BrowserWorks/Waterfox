@@ -3,19 +3,19 @@
     "message": "Google"
   },
   "extensionDescription": {
-    "message": "Google Search"
+    "message": "Search the world's information, including webpages, images, videos and more."
   },
   "searchUrl": {
     "message": "https://www.google.com/search"
   },
   "searchForm": {
-    "message": "https://www.google.com/search?client=firefox-b-1-d&q={searchTerms}"
+    "message": "https://www.google.com/search?q={searchTerms}"
   },
   "suggestUrl": {
-    "message": "https://www.google.com/complete/search?client=firefox&q={searchTerms}"
+    "message": "https://www.google.com/complete/search?q={searchTerms}"
   },
   "searchUrlGetParams": {
-    "message": "client=firefox-b-1-d&q={searchTerms}"
+    "message": "q={searchTerms}"
   },
   "channelPref": {
     "message": "google_channel_us"

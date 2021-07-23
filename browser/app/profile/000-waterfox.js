@@ -124,7 +124,7 @@ pref("security.pki.crlite_mode", 0, locked);
 pref("security.protectionspopup.recordEventTelemetry", false, locked);
 pref("security.ssl.enable_false_start", true);
 pref("security.ssl.errorReporting.enabled", false, locked);
-pref("services.settings.poll_interval", 0, locked); // 24H
+pref("services.settings.server", "", locked); // 24H
 pref("services.sync.engine.prefs", false, locked); // Never sync prefs, addons, or tabs with other browsers
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", false, locked);
