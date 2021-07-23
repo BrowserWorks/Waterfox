@@ -9,6 +9,7 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const DEFAULT_THEME_ID = "default-theme@mozilla.org";
 const LIGHT_THEME_ID = "firefox-compact-light@mozilla.org";
 const DARK_THEME_ID = "firefox-compact-dark@mozilla.org";
+const LEPTON_THEME_ID = "lepton@waterfox.net";
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -292,7 +293,8 @@ LightweightThemeConsumer.prototype = {
       "lwtheme-mozlightdark",
       theme.id == DEFAULT_THEME_ID ||
         theme.id == LIGHT_THEME_ID ||
-        theme.id == DARK_THEME_ID
+        theme.id == DARK_THEME_ID ||
+        theme.id == LEPTON_THEME_ID
     );
     this._setExperiment(active, themeData.experiment, theme.experimental);
     _setImage(root, active, "--lwt-header-image", theme.headerURL);
