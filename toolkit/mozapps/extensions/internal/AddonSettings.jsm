@@ -128,7 +128,7 @@ if (
 if (AppConstants.MOZ_DEV_EDITION) {
   makeConstant("DEFAULT_THEME_ID", "firefox-compact-dark@mozilla.org");
 } else {
-  makeConstant("DEFAULT_THEME_ID", "default-theme@mozilla.org");
+  makeConstant("DEFAULT_THEME_ID", "lepton@waterfox.net");
 }
 
 // SCOPES_SIDELOAD is a bitflag for what scopes we will load new extensions from when we scan the directories.
