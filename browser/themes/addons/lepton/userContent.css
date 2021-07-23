@@ -1,0 +1,1116 @@
+@media (-moz-proton) {
+  @-moz-document url("about:home"), url("about:newtab") {
+    /** Activity Stream - Search Focus Border: like URL ***********************/
+    /* At DarkMode, Color */
+    body[style*="--newtab-background-color:rgba(28, 27, 34, 1);"],
+    body[style*="--newtab-background-color:rgba(42, 42, 46, 1);"],
+    body[style*="--newtab-background-color: rgba(42, 42, 46, 1);"],
+    body[style*="--newtab-background-color: rgba(43, 42, 51, 1);"] {
+      /* inner */
+      --newtab-focus-border: rgba(
+        0,
+        221,
+        255,
+        0.5
+      ) !important; /* Original: #B5D3FF, Better color-mix(in srgb, #B5D3FF 70%, transparent) */
+      --newtab-focus-border-selected: rgba(0, 221, 255, 0.5) !important; /* Original: #B5D3FF */
+    }
+
+    /** Activity Stream - Web Site Icon: full size ****************************/
+    .top-site-outer .tile .icon-wrapper {
+      width: 100% !important; /* Original: 48px */
+      height: 100% !important; /* Original: 48px */
+    }
+
+    /** Activity Stream - Home Search Bar looks like proton *******************/
+    /* Dropdown Colors */
+    #root {
+      --newtab-search-background-color: rgba(255, 255, 255, 1); /* Same as light theme's --panel-background */
+
+      /* Set search dropdown background */
+      --newtab-search-dropdown-header-color: var(--newtab-search-background-color) !important;
+      --newtab-search-dropdown-color: var(--newtab-search-background-color) !important;
+      --newtab-element-hover-color: color-mix(in srgb, currentColor 9%, transparent) !important;
+    }
+
+    @media (-moz-toolbar-prefers-color-scheme: dark) {
+      #root {
+        /* Default Dark Mode */
+        --newtab-search-background-color: rgba(66, 65, 77, 1); /* Same as dark theme's --panel-background */
+      }
+    }
+    .activity-stream[lwt-sidebar]:not([style*="--newtab-background-color: rgba(43, 42, 51, 1);"]) #root {
+      /* Light weight theme */
+      --newtab-search-background-color: var(--lwt-sidebar-background-color);
+    }
+
+    /* Padding */
+    #searchSuggestionTable {
+      border-radius: 4px !important;
+      -moz-window-shadow: cliprounded;
+    }
+
+    .contentSearchSuggestionTable .contentSearchOneOffItem {
+      width: 32px !important;
+      height: 32px !important;
+
+      /* Margin */
+      margin-block: 5px !important;
+      margin-inline-start: 5px !important;
+      margin-inline-end: 8px !important;
+
+      /* Border */
+      border-radius: 4px !important;
+      border-image: none !important; /* Original: linear-gradient(transparent 18%, var(--newtab-border-secondary-color) 18%, var(--newtab-border-secondary-color) 82%, transparent 82%) 1; */
+      border-inline-end: none !important; /* Original: 1px solid; */
+    }
+
+    #contentSearchSettingsButton::before {
+      content: url(chrome://global/skin/icons/settings.svg) !important;
+      display: -moz-inline-box;
+
+      /* Color */
+      -moz-context-properties: fill, fill-opacity !important;
+      fill: currentColor !important;
+
+      /* Align */
+      margin-inline-end: 5px;
+      vertical-align: -25%;
+    }
+
+    /* Pointer */
+    .contentSearchSuggestionTable .contentSearchOneOffItem,
+    #contentSearchSettingsButton {
+      cursor: pointer;
+    }
+  }
+
+  /** Error Page - Restore illustrations **************************************/
+  @-moz-document url-prefix("about:neterror"),
+  url("about:restartrequired"), url("chrome://browser/content/aboutRestartRequired.xhtml"),
+  url("about:sessionrestore"),  url(chrome://browser/content/aboutSessionRestore.xhtml)
+  {
+    /* Illustrations Position */
+    #errorPageContainer,
+    .description-wrapper {
+      min-height: 300px;
+      background-position: left center;
+      background-repeat: no-repeat;
+      background-size: 38%;
+    }
+
+    #errorPageContainer {
+      display: flex;
+      flex-direction: column;
+    }
+    .description-wrapper {
+      padding-inline-start: 38%;
+    }
+
+    /* Container */
+    .container {
+      min-width: var(--in-content-container-min-width); /* 13em */
+      max-width: var(--in-content-container-max-width); /* 52em */
+    }
+
+    /* Text Position */
+    #text-container {
+      margin: auto;
+      padding-inline-start: 38%;
+    }
+  }
+
+  @-moz-document url-prefix("about:neterror?e=connectionFailure"),
+  url-prefix("about:neterror?e=netInterrupt"),
+  url-prefix("about:neterror?e=netTimeout"),
+  url-prefix("about:neterror?e=netReset"),
+  url-prefix("about:neterror?e=netOffline"),
+  url("about:restartrequired"), url("chrome://browser/content/aboutRestartRequired.xhtml")
+  {
+    #errorPageContainer {
+      background-image: url("chrome://browser/skin/lepton//error-connection-failure.svg");
+    }
+  }
+  @-moz-document url-prefix("about:neterror?e=dnsNotFound") {
+    #errorPageContainer {
+      background-image: url("chrome://browser/skin/lepton//error-server-not-found.svg");
+    }
+  }
+  @-moz-document url-prefix("about:neterror?e=malformedURI") {
+    #errorPageContainer {
+      background-image: url("chrome://browser/skin/illustrations/error-malformed-url.svg");
+    }
+  }
+  @-moz-document url-prefix("about:neterror?e=clockSkewError"),
+  url-prefix("about:neterror?e=nssFailure") {
+    #errorPageContainer {
+      background-image: url("chrome://browser/skin/lepton//blue-berror.svg");
+      background-size: 18.5em;
+    }
+  }
+
+  @-moz-document url("about:sessionrestore"), url(chrome://browser/content/aboutSessionRestore.xhtml)
+  {
+    .description-wrapper {
+      background-image: url("chrome://browser/skin/lepton//error-session-restore.svg");
+    }
+  }
+
+  @-moz-document url-prefix("about:neterror?e=fileNotFound") {
+    @media (min-width: 970px) {
+      .title {
+        background-image: url("chrome://global/skin/icons/info.svg") !important;
+      }
+    }
+
+    #text-container {
+      padding-inline-start: 0;
+    }
+  }
+  @-moz-document url-prefix("about:tabcrashed") {
+    @media (min-width: 970px) {
+      .title {
+        background-image: url("chrome://browser/skin/tab-crashed.svg") !important;
+      }
+    }
+  }
+  @-moz-document url("about:robots"), url("chrome://browser/content/aboutRobots.xhtml")
+  {
+    @media (min-width: 970px) {
+      .title {
+        background-image: url("chrome://browser/content/aboutRobots-icon.png") !important;
+      }
+    }
+  }
+  @-moz-document url("about:welcomeBack"), url("chrome://browser/content/aboutWelcomeBack.xhtml")
+  {
+    @media (min-width: 970px) {
+      .title {
+        background-image: url("chrome://browser/skin/lepton//welcome-back.svg") !important;
+      }
+    }
+  }
+
+  /** Fully Dark Mode *********************************************************/
+  /*= Fully Dark Mode - Dark Mode Colors =====================================*/
+  /* Based on chrome://global/skin/in-content/common.css */
+  :host,
+  :root {
+    --in-content-page-color: rgb(21, 20, 26);
+    --in-content-page-background: #fff;
+    --in-content-text-color: var(--in-content-page-color);
+    --in-content-deemphasized-text: rgb(91, 91, 102);
+    --in-content-box-background: #fff;
+    --in-content-box-background-odd: rgba(12, 12, 13, 0.05); /* grey 90 a05 */
+    --in-content-box-border-color: color-mix(in srgb, currentColor 41%, transparent);
+    --in-content-box-info-background: #f0f0f4;
+    --in-content-item-hover: color-mix(in srgb, var(--in-content-primary-button-background) 20%, transparent);
+    --in-content-item-hover-text: var(--in-content-page-color);
+    --in-content-item-selected: var(--in-content-primary-button-background);
+    --in-content-item-selected-text: var(--in-content-primary-button-text-color);
+    --in-content-icon-color: rgb(91, 91, 102);
+    --in-content-accent-color: #0a84ff;
+    --in-content-accent-color-active: #0060df;
+    --in-content-border-hover: var(--grey-90-a50);
+    --in-content-border-invalid: var(--red-50);
+    --in-content-border-color: #d7d7db;
+    --in-content-error-text-color: #c50042;
+    --in-content-link-color: var(--blue-60);
+    --in-content-link-color-hover: var(--blue-70);
+    --in-content-link-color-active: var(--blue-80);
+    --in-content-link-color-visited: var(--blue-60);
+    /* button background states are also used for checkboxes and radiobuttons */
+    --in-content-button-text-color: var(--in-content-text-color);
+    --in-content-button-text-color-hover: var(--in-content-text-color);
+    --in-content-button-background: rgba(207, 207, 216, 0.33);
+    --in-content-button-background-hover: rgba(207, 207, 216, 0.66);
+    --in-content-button-background-active: rgb(207, 207, 216);
+    --in-content-primary-button-text-color: rgb(251, 251, 254);
+    --in-content-primary-button-text-color-hover: var(--in-content-primary-button-text-color);
+    --in-content-primary-button-background: #0061e0;
+    --in-content-primary-button-background-hover: #0250bb;
+    --in-content-primary-button-background-active: #053e94;
+    --in-content-danger-button-background: #e22850;
+    --in-content-danger-button-background-hover: #c50042;
+    --in-content-danger-button-background-active: #810220;
+    --in-content-focus-outline-color: var(--in-content-primary-button-background);
+
+    /* Note: 1px smaller than we want because we have a 1px transparent border. */
+    /* Once proton ships, these can probably stop being variables. */
+    --in-content-button-border-radius: 4px;
+    --in-content-button-horizontal-padding: 15px;
+    --in-content-button-vertical-padding: 7px;
+
+    --in-content-table-background: #f8f8fa;
+    --in-content-table-border-dark-color: #d1d1d1;
+    --in-content-table-header-background: #0a84ff;
+    --in-content-table-header-color: #ffffff;
+    --in-content-sidebar-width: 240px;
+
+    --dialog-warning-text-color: var(--red-60);
+
+    --checkbox-border-color: var(--in-content-box-border-color);
+    --checkbox-unchecked-bgcolor: var(--in-content-button-background);
+    --checkbox-unchecked-hover-bgcolor: var(--in-content-button-background-hover);
+    --checkbox-unchecked-active-bgcolor: var(--in-content-button-background-active);
+    --checkbox-checked-bgcolor: var(--in-content-primary-button-background);
+    --checkbox-checked-color: var(--in-content-primary-button-text-color);
+    --checkbox-checked-border-color: transparent;
+    --checkbox-checked-hover-bgcolor: var(--in-content-primary-button-background-hover);
+    --checkbox-checked-active-bgcolor: var(--in-content-primary-button-background-active);
+
+    --blue-40: #45a1ff;
+    --blue-50: #0a84ff;
+    --blue-60: #0060df;
+    --blue-70: #003eaa;
+    --blue-80: #002275;
+    --grey-30: #d7d7db;
+    --grey-60: #4a4a4f;
+    --grey-90-a10: rgba(12, 12, 13, 0.1);
+    --grey-90-a20: rgba(12, 12, 13, 0.2);
+    --grey-90-a30: rgba(12, 12, 13, 0.3);
+    --grey-90-a50: rgba(12, 12, 13, 0.5);
+    --grey-90-a60: rgba(12, 12, 13, 0.6);
+    --green-50: #30e60b;
+    --green-60: #12bc00;
+    --green-70: #058b00;
+    --green-80: #006504;
+    --green-90: #003706;
+    --orange-50: #ff9400;
+    --red-40: #ff4f5e;
+    --red-50: #ff0039;
+    --red-60: #d70022;
+    --red-70: #a4000f;
+    --red-80: #5a0002;
+    --red-90: #3e0200;
+    --yellow-50: #ffe900;
+    --yellow-60: #d7b600;
+    --yellow-60-a30: rgba(215, 182, 0, 0.3);
+    --yellow-70: #a47f00;
+    --yellow-80: #715100;
+    --yellow-90: #3e2800;
+
+    --shadow-10: 0 1px 4px var(--grey-90-a10);
+    --shadow-30: 0 4px 16px var(--grey-90-a10);
+
+    --card-padding: 16px;
+    --card-shadow: var(--shadow-10);
+    --card-outline-color: var(--grey-30);
+    --card-shadow-hover: var(--card-shadow), 0 0 0 5px var(--card-outline-color);
+  }
+
+  @media (-moz-toolbar-prefers-color-scheme: dark) {
+    :host,
+    :root {
+      /* Keep these in sync with layout/base/PresShell.cpp, and plaintext.css */
+      --in-content-page-background: rgb(28, 27, 34);
+      --in-content-page-color: rgb(251, 251, 254);
+      --in-content-deemphasized-text: rgb(191, 191, 201);
+
+      --in-content-box-background: rgb(35, 34, 43);
+      --in-content-box-background-odd: rgba(249, 249, 250, 0.05);
+      --in-content-box-info-background: rgba(249, 249, 250, 0.15);
+
+      --in-content-border-color: rgba(249, 249, 250, 0.2);
+      --in-content-border-hover: rgba(249, 249, 250, 0.3);
+      --in-content-border-invalid: rgb(255, 132, 139);
+
+      --in-content-error-text-color: #ff9aa2;
+
+      --in-content-button-background: rgb(43, 42, 51);
+      --in-content-button-background-hover: rgb(82, 82, 94);
+      --in-content-button-background-active: rgb(91, 91, 102);
+      --in-content-icon-color: rgb(251, 251, 254);
+
+      --in-content-primary-button-text-color: rgb(43, 42, 51);
+      --in-content-primary-button-background: rgb(0, 221, 255);
+      --in-content-primary-button-background-hover: rgb(128, 235, 255);
+      --in-content-primary-button-background-active: rgb(170, 242, 255);
+
+      --in-content-danger-button-background: #ff848b;
+      --in-content-danger-button-background-hover: #ffbdc5;
+      --in-content-danger-button-background-active: #ffdfe7;
+
+      --in-content-table-background: rgb(35, 34, 43);
+      --in-content-table-border-dark-color: rgba(249, 249, 250, 0.2);
+      --in-content-table-header-background: rgb(5, 64, 150);
+      --in-content-table-header-color: var(--in-content-page-color);
+
+      --in-content-accent-color: var(--in-content-primary-button-background);
+      --in-content-accent-color-active: var(--in-content-primary-button-background-hover);
+      --in-content-link-color: var(--in-content-primary-button-background);
+      --in-content-link-color-hover: var(--in-content-primary-button-background-hover);
+      --in-content-link-color-active: var(--in-content-primary-button-background-active);
+      --in-content-link-color-visited: var(--in-content-link-color);
+
+      --card-outline-color: var(--grey-60);
+
+      --dialog-warning-text-color: var(--red-40);
+    }
+
+    /*= Addons.org ===========================================================*/
+    @-moz-document url-prefix("https://addons.mozilla.org")
+    {
+      /* Basic */
+      .Page-content,
+      .SecondaryHero,
+      main[aria-label="Content"] {
+        color: var(--in-content-page-color) !important;
+        background: var(--in-content-page-background) !important;
+      }
+
+      /* Text */
+      .AutoSearchInput-query,
+      .AutoSearchInput-suggestions-list,
+      .Page-content h1,
+      .Page-content h2,
+      .SearchResult-link,
+      .Home-SubjectShelf-link:link,
+      .Home-SubjectShelf-link:visited,
+      .DropdownMenuItem-link a,
+      .Select,
+      .Badge,
+      .Notice-generic,
+      .Notice-genericWarning,
+      .Notice-button,
+      .Paginate .Button.Paginate-item:first-child,
+      .Paginate .Button.Paginate-item:last-child,
+      .Paginate .Button.Paginate-item--current-page,
+      .Button--neutral,
+      .blog-entry-title,
+      .blogpost-nav * {
+        color: var(--in-content-text-color) !important;
+      }
+      .AutoSearchInput-suggestions-item:is(:active, :focus, :hover),
+      .AutoSearchInput-suggestions-item--highlighted,
+      .SecondaryHero-message-link,
+      .SecondaryHero-module-link,
+      .Card-contents a:not(.Button),
+      .Card-footer-link a,
+      .Card-shelf-footer-in-header a,
+      .SearchResult-link:is(:active, :focus, :hover),
+      .SearchResult:hover .SearchResult-link,
+      .Home-SubjectShelf-link:is(:active, :focus, :hover),
+      .DropdownMenuItem-link a:is(:active, :focus, :hover),
+      .AddonMeta .MetadataCard-title a:is(:active, :hover),
+      .AddonMeta .MetadataCard-title a.AddonMeta-reviews-content-link:is(:active, :hover),
+      .AddonMeta .MetadataCard-content a:is(:active, :hover),
+      .AddonMeta .MetadataCard-content a.AddonMeta-reviews-content-link:is(:active, :hover),
+      .Addon-summary a,
+      .RatingsByStar-count a:hover,
+      .RatingsByStar-star a:hover,
+      .Paginate .Button.Paginate-item:not(:first-child, :last-child, .Paginate-item--current-page),
+      .AddonTitle-author a,
+      .PermissionsCard-learn-more,
+      .DefinitionList a,
+      .ShowMoreCard-contents a,
+      .AddonDescription-contents a,
+      .AddonTitle a,
+      .TooltipMenu-opener,
+      .LanguageTools .Card-contents a,
+      .blog-entry-read-more-link,
+      .blogpost-nav-next.blogpost-nav-no-prev:hover p,
+      .blogpost-content-wrapper p a,
+      .blogpost-nav-prev:hover p,
+      .blogpost-nav-next:hover p {
+        color: var(--in-content-link-color) !important;
+      }
+      .SearchResult--meta-section,
+      .MetadataCard-title,
+      .MetadataCard-title a,
+      .MetadataCard-content a,
+      .CollectionSort-label,
+      .SearchResult-summary,
+      .AddonMeta .MetadataCard-content a.AddonMeta-reviews-content-link,
+      .AddonMeta .MetadataCard-title a.AddonMeta-reviews-content-link,
+      .PermissionsCard-subhead--optional,
+      .PermissionsCard-subhead--required,
+      .Definition-dt,
+      .RatingsByStar-count a,
+      .RatingsByStar-star a,
+      .Paginate-page-number,
+      .AddonSummaryCard-addonAverage,
+      .AddonReviewCard-authorByLine,
+      .Home-heroHeader-subtitle,
+      .blog-entry-date,
+      .blogpost-breadcrumb *,
+      .AddonTitle-author,
+      .ExpandableCard-ToggleLink,
+      .SearchFilters-label,
+      .PromotedBadge-label--line {
+        color: var(--in-content-deemphasized-text) !important;
+      }
+      .PromotedBadge-label--recommended {
+        color: color-mix(in srgb, #712b00 15%, #ff9400) !important;
+      }
+
+      /* Background */
+      .Button--action {
+        color: var(--in-content-primary-button-text-color) !important;
+        background: var(--in-content-primary-button-background) !important;
+      }
+      .Select,
+      .Button--neutral,
+      .Button--neutral:link,
+      .Notice-button,
+      .AMInstallButton .AMInstallButton-loading-button {
+        background-color: var(--in-content-button-background) !important;
+      }
+      .Button--neutral.Button--micro:not(.Button--disabled):hover,
+      .Button--neutral:not(.Button--disabled):hover,
+      .Notice-button:hover {
+        background: var(--in-content-button-background-hover) !important;
+      }
+      .Button--action.Button--micro:not(.Button--disabled):hover,
+      .Button--action:not(.Button--disabled):hover {
+        background: var(--in-content-primary-button-background-hover) !important;
+      }
+      .ShowMoreCard-contents::after {
+        background: linear-gradient(hsla(0, 0%, 100%, 0), var(--in-content-table-background)) !important;
+      }
+      .AutoSearchInput-query,
+      .AutoSearchInput-suggestions-list,
+      .SecondaryHero-module,
+      .Card-header,
+      .Card-contents,
+      .CardList ul > li,
+      .AddonsCard--horizontal ul.AddonsCard-list .SearchResult-wrapper:is(:focus, :hover),
+      .Paginate,
+      .LandingPage-header,
+      .DropdownMenu-items,
+      .DropdownMenu-items::after,
+      .MetadataCard,
+      .AddonsCard-list,
+      .Card-footer,
+      .StaticAddonCard,
+      .blogpost-nav * {
+        background: var(--in-content-table-background) !important;
+      }
+
+      .Paginate .Button.Paginate-item:is(:active, :hover) {
+        background: var(--in-content-button-background-hover) !important;
+      }
+      .Notice-generic,
+      .Notice-genericWarning {
+        background: color-mix(
+          in srgb,
+          var(--in-content-page-background) 40%,
+          var(--in-content-table-background)
+        ) !important;
+      }
+
+      .LanguageTools-header-row {
+        color: var(--in-content-table-header-color) !important;
+        background: var(--in-content-table-header-background) !important;
+      }
+      .LanguageTools-table.responsiveTable tbody tr:nth-child(2n) {
+        background-color: var(--in-content-box-background-odd) !important;
+      }
+
+      /* Fill */
+      .Icon-arrow-blue.SearchSuggestion-icon-arrow {
+        filter: hue-rotate(330deg) brightness(1.3) !important;
+      }
+      .SecondaryHero-module-icon {
+        -moz-context-properties: fill, fill-opacity !important;
+        fill: currentColor !important;
+      }
+      .Icon-magnifying-glass,
+      .Notice-icon {
+        filter: invert(65%) !important;
+      }
+      .PermissionsCard-learn-more .Icon,
+      .Permission .Icon {
+        filter: invert(100%) !important;
+      }
+      .Icon-heart {
+        filter: brightness(0) !important;
+      }
+
+      /* Others */
+      .DropdownMenu-items {
+        box-shadow: 0 0 2px var(--in-content-border-color) !important;
+      }
+
+      .AutoSearchInput-query {
+        border: 1px solid var(--in-content-table-background) !important;
+      }
+      .AutoSearchInput-query:is(:hover, :focus) {
+        border-color: var(--in-content-primary-button-background) !important;
+      }
+
+      .PromotedBadge-link--line {
+        border-color: var(--in-content-deemphasized-text) !important;
+      }
+      .PromotedBadge-link--line:hover {
+        border-color: var(--in-content-button-background-hover) !important;
+      }
+
+      .blog-entry-read-more-link {
+        border-color: var(--in-content-link-color) !important;
+      }
+
+      .blogpost-nav-arrow-left .cls-1,
+      .blogpost-nav-arrow-right .cls-1 {
+        stroke: var(--in-content-text-color) !important;
+      }
+    }
+
+    /*= Support.org ==========================================================*/
+    @-moz-document url-prefix("https://support.mozilla.org")
+    {
+      /* Basic */
+      :root {
+        --color-blue-06: var(--in-content-link-color) !important;
+        --color-blue-07: var(--in-content-link-color-hover) !important;
+
+        --page-bg: var(--in-content-page-background) !important;
+        --color-white: var(--in-content-page-background) !important;
+        --color-shade-bg: var(--in-content-page-background) !important;
+        --color-marketing-gray-02: var(--card-outline-color) !important;
+        --color-inverse-bg: var(--in-content-page-color) !important;
+        --color-inverse: var(--in-content-page-background) !important;
+        --color-text: var(--in-content-page-color) !important;
+        --color-moz-text: var(--in-content-page-color) !important;
+        --color-moz-heading: var(--in-content-page-color) !important;
+        --color-text-light: var(--in-content-deemphasized-text) !important;
+        --color-link: var(--in-content-link-color) !important;
+        --color-success: var(--green-70) !important;
+        --color-warning: var(--yellow-70) !important;
+        --color-error: var(--red-60) !important;
+        --color-error-hover: var(--red-50) !important;
+        --color-moz-heading: #fff;
+        --color-moz-inverse-bg: var(red) !important;
+        --focus-shadow: 0 0 0 4px color-mix(in srgb, var(--in-content-primary-button-background) 30%, transparent),
+          0 0 0 2px var(--in-content-primary-button-background-active);
+      }
+      body,
+      #main-content,
+      #instant-search-content,
+      #mzp-c-menu-panel-help,
+      .mzp-c-navigation {
+        color: var(--in-content-page-color) !important;
+        background: var(--in-content-page-background) !important;
+      }
+
+      /* Text */
+      .mzp-c-menu-category .mzp-c-menu-title,
+      .mzp-c-menu-item .mzp-c-menu-item-link,
+      .mzp-c-menu-item .mzp-c-menu-item-link > *,
+      .mzp-c-menu-item .mzp-c-menu-item-list a,
+      #doc-content .menu,
+      .document--content .menu,
+      .forum--entry-content .menu {
+        color: var(--in-content-page-color) !important;
+      }
+
+      .ts-select-trigger,
+      input[type="date"],
+      input[type="email"],
+      input[type="number"],
+      input[type="password"],
+      input[type="search"],
+      input[type="tel"],
+      input[type="text"],
+      input[type="time"],
+      input[type="url"],
+      select,
+      textarea,
+      #doc-content .button,
+      #doc-content .key,
+      .document--content .button,
+      .document--content .key,
+      .forum--entry-content .button,
+      .forum--entry-content .key {
+        color: var(--in-content-deemphasized-text) !important;
+      }
+
+      /* Background */
+      .sidebar-nav.topics,
+      .sidebar-nav.topics > li {
+        background: var(--in-content-page-background) !important;
+      }
+
+      /* Fill */
+      .sumo-nav--logo,
+      .sumo-nav--search-button,
+      .sumo-nav--toggle-button,
+      .card:not(.is-inverse) .card--icon-sm,
+      .mzp-c-menu-item-icon,
+      .mzp-c-menu-button-close,
+      .topic-article--icon,
+      .card--topic > .card--icon,
+      .mzp-c-details .is-summary button::before,
+      details .is-summary button::before,
+      summary::before,
+      .icon-button > button,
+      .search-button {
+        filter: invert(95%) !important;
+      }
+
+      /* Others */
+      .support-callouts > .card.is-inverse {
+        background: #20133a !important;
+      }
+      .support-callouts > .card.is-inverse :is(h1, h2, h3, h4, h5, h6, li, p) {
+        color: var(--in-content-page-color) !important;
+      }
+
+      .sumo-button.secondary-button {
+        border-color: none !important;
+      }
+      .mzp-c-menu-panel {
+        border-color: var(--in-content-button-background-hover) !important;
+      }
+      .mzp-c-menu-item:is(:focus, :hover, :active) .mzp-c-menu-item-link .mzp-c-menu-item-title {
+        border-color: var(--in-content-page-color) !important;
+      }
+
+      @media screen and (min-width: 768px) {
+        .mzp-c-menu-panel {
+          box-shadow: 0 16px 16px -16px rgba(255, 255, 255, 0.3) !important;
+        }
+      }
+      .card--product,
+      .card--topic,
+      .card--article {
+        box-shadow: 0 5px 10px -3px rgba(249, 249, 250, 0.12), 0 3px 16px 2px rgba(91, 91, 102, 0.12),
+          0 8px 12px 1px rgba(82, 82, 94, 0.04) !important;
+      }
+    }
+
+    /*= Accounts.com ===========================================================*/
+    @-moz-document url-prefix("https://accounts.firefox.com")
+    {
+      /* Basic */
+      body {
+        color: var(--in-content-page-color) !important;
+        background: var(--in-content-page-background) !important;
+      }
+      .button.primary-button,
+      .button[type="submit"]:not(.secondary-button),
+      .settings-button.primary-button,
+      .settings-button[type="submit"]:not(.secondary-button),
+      button.primary-button,
+      button[type="submit"]:not(.secondary-button) {
+        color: var(--in-content-primary-button-text-color) !important;
+        background: var(--in-content-primary-button-background) !important;
+      }
+
+      /* Text */
+      header h1,
+      .info,
+      .info a,
+      .faint a:hover,
+      .cta-neutral:hover {
+        color: var(--in-content-page-color) !important;
+      }
+      #main-content.panel a,
+      .links a,
+      .link-blue,
+      .text-blue-500 {
+        color: var(--in-content-link-color) !important;
+      }
+      .link-blue:hover {
+        color: var(--in-content-link-color-hover) !important;
+      }
+
+      .signed-in-email-message,
+      .verification-email-message,
+      .verification-message,
+      .verification-recovery-code-message,
+      .verification-totp-message,
+      .input-row input[type="email"],
+      .input-row input[type="number"],
+      .input-row input[type="password"],
+      .input-row input[type="tel"],
+      .input-row input[type="text"],
+      .input-row input::placeholder,
+      .firefox-family-services > ul > .firefox-service,
+      .faint,
+      .faint a,
+      .text-grey-400 {
+        color: var(--in-content-deemphasized-text) !important;
+      }
+
+      /* Background */
+      .password-row .show-password-label {
+        background-color: unset !important;
+      }
+      #main-content,
+      .modal,
+      .firefox-family-services,
+      .input-row input[type="email"],
+      .input-row input[type="number"],
+      .input-row input[type="password"],
+      .input-row input[type="tel"],
+      .input-row input[type="text"],
+      header,
+      .bg-white:not(nav) {
+        background: var(--in-content-box-background) !important;
+      }
+      #suggest-sync,
+      .cta-neutral {
+        background: var(--in-content-button-background) !important;
+      }
+      .cta-neutral:hover,
+      .bg-grey-50:hover,
+      .hover\:bg-grey-100:hover {
+        background: var(--in-content-button-background-hover) !important;
+      }
+      .hover\:bg-grey-200:hover {
+        background: var(--in-content-button-background-active) !important;
+      }
+      .button.primary-button:hover:enabled,
+      .button[type="submit"]:not(.secondary-button):hover:enabled,
+      .settings-button.primary-button:hover:enabled,
+      .settings-button[type="submit"]:not(.secondary-button):hover:enabled,
+      button.primary-button:hover:enabled,
+      button[type="submit"]:not(.secondary-button):hover:enabled {
+        background: var(--in-content-primary-button-background-hover) !important;
+      }
+      .tooltip,
+      .tooltip::before {
+        background: var(--in-content-danger-button-background) !important;
+      }
+
+      /* Fill */
+      .dismiss,
+      #about-mozilla,
+      .show-password-label,
+      footer a[data-testid="link-mozilla"] {
+        filter: invert(95%) !important;
+      }
+      header button svg,
+      header .rounded svg,
+      #service svg {
+        filter: brightness(15) !important;
+      }
+      button.relative,
+      #fxa-settings nav svg {
+        filter: brightness(2) !important;
+      }
+
+      /* Others */
+      .input-row input[type="email"],
+      .input-row input[type="number"],
+      .input-row input[type="password"],
+      .input-row input[type="tel"],
+      .input-row input[type="text"],
+      .unit-row-hr .border-grey-100 {
+        border-color: var(--in-content-border-color) !important;
+      }
+      .input-row input[type="email"]:hover,
+      .input-row input[type="number"]:hover,
+      .input-row input[type="password"]:hover,
+      .input-row input[type="tel"]:hover,
+      .input-row input[type="text"]:hover {
+        border-color: var(--in-content-border-hover) !important;
+      }
+      #main-content {
+        box-shadow: 0 12px 18px 2px rgba(249, 249, 250, 0.12), 0 6px 22px 4px rgba(91, 91, 102, 0.12),
+          0 6px 10px -4px rgba(82, 82, 94, 0.04) !important;
+      }
+      .input-row input[type="email"]:focus,
+      .input-row input[type="number"]:focus,
+      .input-row input[type="password"]:focus,
+      .input-row input[type="tel"]:focus,
+      .input-row input[type="text"]:focus {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--in-content-primary-button-background-hover) 80%, transparent) !important;
+      }
+    }
+  }
+
+  /** Fully Proton Mode *******************************************************/
+  /*= abouts' common =========================================================*/
+  @-moz-document url-prefix("about:plugins"),
+                 url-prefix("about:cache"),
+                 url-prefix("about:checkerboard"),
+                 url-prefix("about:sync-log"),
+                 url-prefix("about:memory"),
+                 regexp("^[file:///].*[^(html|svg|pdf|json)]$")
+  {
+    /* Base */
+    html,
+    body {
+      font: message-box !important;
+      appearance: none !important;
+      background-color: var(--in-content-page-background) !important;
+      color: var(--in-content-page-color) !important;
+    }
+    body {
+      font-size: 15px !important;
+      font-weight: normal !important;
+      margin: 0 !important;
+    }
+
+    h1 {
+      line-height: 1.2 !important;
+    }
+    h2 {
+      line-height: 1.4em !important;
+    }
+
+    /* Link */
+    a {
+      color: var(--in-content-link-color) !important;
+    }
+    a:hover,
+    .text-link:hover {
+      color: var(--in-content-link-color-hover) !important;
+      text-decoration: underline !important;
+    }
+    a:visited {
+      color: var(--in-content-link-color-visited) !important;
+    }
+    a:hover:active,
+    .text-link:hover:active {
+      color: var(--in-content-link-color-active) !important;
+    }
+    a:-moz-focusring,
+    .text-link:-moz-focusring {
+      outline: 2px solid var(--in-content-focus-outline-color) !important;
+      outline-offset: 1px !important;
+      border-radius: 4px !important;
+    }
+
+    /* Button */
+    button {
+      font: inherit;
+    }
+    button,
+    select,
+    input[type="color"] {
+      appearance: none !important;
+      min-height: 32px !important;
+      color: var(--in-content-button-text-color, inherit) !important;
+      border: 1px solid transparent !important; /* shows up in high-contrast mode */
+      border-radius: var(--in-content-button-border-radius) !important;
+      background-color: var(--in-content-button-background) !important;
+      font-weight: 400 !important;
+      padding: var(--in-content-button-vertical-padding) var(--in-content-button-horizontal-padding) !important;
+      text-decoration: none !important;
+      margin: 4px 8px !important;
+      /* Ensure font-size isn't overridden by widget styling (e.g. in forms.css) */
+      font-size: 1em !important;
+    }
+    button {
+      font-weight: 600 !important;
+      /* Use the same margin of other elements for the alignment */
+      margin-inline: 4px !important;
+      min-width: 6.3em !important;
+    }
+    /* Medium and small buttons get sized to 7/14 and 6/12px padding (when adding
+     * the 1px border): */
+    button.medium {
+      --in-content-button-vertical-padding: 6px;
+      --in-content-button-horizontal-padding: 13px;
+      min-height: 28px !important;
+      font-size: 0.95em !important;
+    }
+    button.small {
+      --in-content-button-vertical-padding: 5px;
+      --in-content-button-horizontal-padding: 11px;
+      min-height: 24px !important;
+      font-size: 0.9em !important;
+    }
+    ::-moz-focus-inner {
+      border: none !important;
+    }
+    button:-moz-focusring {
+      box-shadow: none !important;
+      outline: 2px solid var(--in-content-focus-outline-color) !important;
+      outline-offset: 2px !important;
+    }
+    button:enabled:hover,
+    input[type="color"]:hover {
+      background-color: var(--in-content-button-background-hover) !important;
+      color: var(--in-content-button-text-color-hover) !important;
+      border-color: transparent !important;
+    }
+    button:enabled:hover:active,
+    input[type="color"]:enabled:hover:active {
+      background-color: var(--in-content-button-background-active) !important;
+    }
+    button:disabled,
+    input[type="color"]:disabled {
+      opacity: 0.4 !important;
+    }
+    button[autofocus],
+    button[type="submit"],
+    button.primary {
+      background-color: var(--in-content-primary-button-background) !important;
+      color: var(--in-content-primary-button-text-color) !important;
+    }
+    button[autofocus]:enabled:hover,
+    button[type="submit"]:enabled:hover,
+    button.primary:enabled:hover {
+      background-color: var(--in-content-primary-button-background-hover) !important;
+      color: var(--in-content-primary-button-text-color-hover) !important;
+    }
+    button[autofocus]:enabled:hover:active,
+    button[type="submit"]:enabled:hover:active,
+    button.primary:enabled:hover:active {
+      background-color: var(--in-content-primary-button-background-active) !important;
+    }
+
+    /* Checkbox */
+    input[type="checkbox"] {
+      margin-block: 2px !important;
+    }
+    input[type="checkbox"] {
+      appearance: none !important;
+      height: 16px !important;
+      width: 16px !important;
+      border: 1px solid var(--checkbox-border-color) !important;
+      background-color: var(--checkbox-unchecked-bgcolor) !important;
+      border-radius: 2px !important;
+      margin-inline: 0 6px !important;
+      flex-shrink: 0 !important; /* avoid shrinking inside flex container */
+    }
+    input[type="checkbox"]:enabled:hover {
+      background-color: var(--checkbox-unchecked-hover-bgcolor) !important;
+    }
+    input[type="checkbox"]:enabled:hover:active {
+      background-color: var(--checkbox-unchecked-active-bgcolor) !important;
+    }
+    input[type="checkbox"]:checked {
+      border-color: var(--checkbox-checked-border-color) !important;
+      background-color: var(--checkbox-checked-bgcolor) !important;
+      background-image: url("chrome://global/skin/icons/check.svg") !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      -moz-context-properties: fill !important;
+      fill: currentColor !important;
+      color: var(--checkbox-checked-color) !important;
+      /* Style the button also when printing with "Print Backgrounds" unchecked */
+      color-adjust: exact !important;
+    }
+    input[type="checkbox"]:enabled:checked:hover {
+      background-color: var(--checkbox-checked-hover-bgcolor) !important;
+    }
+    input[type="checkbox"]:enabled:checked:hover:active {
+      background-color: var(--checkbox-checked-active-bgcolor) !important;
+    }
+
+    /* Textarea */
+    input:is([type="email"], [type="tel"], [type="text"], [type="password"], [type="url"], [type="number"]),
+    textarea {
+      appearance: none !important;
+      border: 1px solid var(--in-content-box-border-color) !important;
+      border-radius: 4px !important;
+      color: inherit !important;
+      background-color: var(--in-content-box-background) !important;
+    }
+    input:is([type="email"], [type="tel"], [type="text"], [type="password"], [type="url"], [type="number"]),
+    textarea {
+      font-family: inherit !important;
+      font-size: inherit !important;
+      padding: 8px !important;
+      margin: 2px 4px !important;
+    }
+    input:is([type="email"], [type="tel"], [type="text"], [type="password"], [type="url"], [type="number"]):focus,
+    textarea:focus,
+    search-textbox[focused],
+    tree:focus-visible,
+    richlistbox:focus-visible {
+      border-color: transparent !important;
+      outline: 2px solid var(--in-content-focus-outline-color) !important;
+      outline-offset: -1px !important; /* Prevents antialising around the corners */
+    }
+    input:is([type="email"], [type="tel"], [type="text"], [type="password"], [type="url"], [type="number"]):-moz-ui-invalid,
+    textarea:-moz-ui-invalid {
+      border-color: transparent !important;
+      outline: 2px solid var(--in-content-border-invalid) !important;
+      outline-offset: -1px !important; /* Prevents antialising around the corners */
+    }
+    input:is([type="email"], [type="tel"], [type="text"], [type="password"], [type="url"], [type="number"]):disabled,
+    textarea:disabled,
+    search-textbox[disabled="true"] {
+      opacity: 0.4 !important;
+    }
+
+    /* Table */
+    table {
+      width: 100% !important;
+    }
+  }
+
+  @-moz-document url-prefix("about:plugins"),
+                 url-prefix("about:cache"),
+                 url-prefix("about:checkerboard") {
+    table {
+      border: 1px solid var(--in-content-border-color) !important;
+      border-radius: 0 !important;
+    }
+  }
+  @-moz-document url-prefix("about:cache"),
+                 url-prefix("about:checkerboard") {
+    th,
+    td {
+      border: 1px solid var(--in-content-border-color) !important;
+    }
+    th {
+      background-color: var(--in-content-table-header-background) !important;
+      color: var(--in-content-table-header-color) !important;
+    }
+  }
+
+  /*= Directory View =========================================================*/
+  @-moz-document url-prefix("about:sync-log"),
+                 regexp("^[file:///].*[^(html|svg|pdf|json)]$")
+  {
+    body {
+      background-color: var(--in-content-box-background) !important;
+    }
+    thead a {
+      color: var(--in-content-page-color) !important;
+    }
+    td ::before {
+      vertical-align: top !important;
+    }
+  }
+
+  /*= about:plugins ==========================================================*/
+  @-moz-document url-prefix("about:plugins") {
+    .notice {
+      background: var(--in-content-box-background) !important;
+      border: 1px solid var(--in-content-border-color) !important;
+    }
+  }
+
+  /*= about:cache ============================================================*/
+  @-moz-document url-prefix("about:cache") {
+    table {
+      padding: 0 !important;
+    }
+
+    th,
+    td {
+      padding: 4px !important;
+      text-align: match-parent !important;
+    }
+  }
+
+  /*= about:checkerboard =====================================================*/
+  @-moz-document url-prefix("about:checkerboard") {
+    #canvas {
+      border: 1px solid var(--in-content-border-color) !important;
+    }
+    #excludePageFromZoom {
+      vertical-align: bottom !important;
+    }
+  }
+
+  /*= about:memory ===========================================================*/
+  @-moz-document url-prefix("about:memory") {
+    .opsRow,
+    .section {
+      background-color: var(--in-content-box-background) !important;
+      color: var(--in-content-page-color) !important;
+    }
+    .opsRowLabel input {
+      vertical-align: bottom !important;
+    }
+  }
+}
