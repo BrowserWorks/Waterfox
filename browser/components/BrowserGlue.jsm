@@ -1377,6 +1377,12 @@ BrowserGlue.prototype = {
       "resource://builtin-themes/alpenglow/"
     );
 
+    AddonManager.maybeInstallBuiltinAddon(
+      "lepton@waterfox.net",
+      "2.2.3",
+      "resource://builtin-themes/lepton/"
+    );
+
     if (AppConstants.MOZ_NORMANDY) {
       Normandy.init();
     }
