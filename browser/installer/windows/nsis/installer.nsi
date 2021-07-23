@@ -308,7 +308,7 @@ Section "-InstallStartCleanup"
   ${InitHashAppModelId} "$INSTDIR" "Software\Waterfox Limited\${AppName}\TaskBarIDs"
 
   ; Remove the updates directory
-  ${CleanUpdateDirectories} "Mozilla\Firefox" "Mozilla\updates"
+  ${CleanUpdateDirectories} "Waterfox Limited\Waterfox" "Waterfox Limited\updates"
 
   ${RemoveDeprecatedFiles}
   ${RemovePrecompleteEntries} "false"
@@ -410,7 +410,7 @@ Section "-Application" APP_IDX
     StrCpy $AddDesktopSC "1"
   ${EndIf}
 
-  ${CreateUpdateDir} "Mozilla"
+  ${CreateUpdateDir} "Waterfox Limited"
   ${If} ${Errors}
     Pop $0
     ${LogMsg} "** ERROR Failed to create update directory: $0"
@@ -434,9 +434,9 @@ Section "-Application" APP_IDX
     ${RegCleanUninstall}
     ${UpdateProtocolHandlers}
 
-    ReadRegStr $0 HKLM "Software\Waterfox Limited\Mozilla" "CurrentVersion"
+    ReadRegStr $0 HKLM "Software\Waterfox Limited\Waterfox" "CurrentVersion"
     ${If} "$0" != "${GREVersion}"
-      WriteRegStr HKLM "Software\Waterfox Limited\Mozilla" "CurrentVersion" "${GREVersion}"
+      WriteRegStr HKLM "Software\Waterfox Limited\Waterfox" "CurrentVersion" "${GREVersion}"
     ${EndIf}
   ${EndIf}
 
@@ -467,9 +467,9 @@ Section "-Application" APP_IDX
 
   ; In Win8, the delegate execute handler picks up the value in FirefoxURL and
   ; FirefoxHTML to launch the desktop browser when it needs to.
-  ${AddDisabledDDEHandlerValues} "FirefoxHTML-$AppUserModelID" "$2" "$8,1" \
+  ${AddDisabledDDEHandlerValues} "WaterfoxHTML-$AppUserModelID" "$2" "$8,1" \
                                  "${AppRegName} Document" ""
-  ${AddDisabledDDEHandlerValues} "FirefoxURL-$AppUserModelID" "$2" "$8,1" \
+  ${AddDisabledDDEHandlerValues} "WaterfoxURL-$AppUserModelID" "$2" "$8,1" \
                                  "${AppRegName} URL" "true"
 
   ; For pre win8, the following keys should only be set if we can write to HKLM.
@@ -798,7 +798,7 @@ Section "-InstallEndCleanup"
       ; If we have something other than empty string now, write the value.
       ${If} "$0" != ""
         ClearErrors
-        WriteRegStr HKCU "Software\Waterfox Limited\Firefox" "OldDefaultBrowserCommand" "$0"
+        WriteRegStr HKCU "Software\Waterfox Limited\Waterfox" "OldDefaultBrowserCommand" "$0"
       ${EndIf}
 
       ${LogHeader} "Setting as the default browser"
@@ -815,7 +815,7 @@ Section "-InstallEndCleanup"
       StrCpy $SetAsDefault false
       ${LogHeader} "Writing default-browser opt-out"
       ClearErrors
-      WriteRegStr HKCU "Software\Waterfox Limited\Firefox" "DefaultBrowserOptOut" "True"
+      WriteRegStr HKCU "Software\Waterfox Limited\Waterfox" "DefaultBrowserOptOut" "True"
       ${If} ${Errors}
         ${LogMsg} "Error writing default-browser opt-out"
       ${EndIf}
@@ -1262,7 +1262,7 @@ Function WriteInstallationTelemetryData
 
   ; Check for top-level profile directory
   ; Note: This is the same check used to set $ExistingProfile in stub.nsi
-  ${If} ${FileExists} "$LOCALAPPDATA\Mozilla\Firefox"
+  ${If} ${FileExists} "$LOCALAPPDATA\Waterfox Limited\Waterfox"
     StrCpy $1 "true"
   ${Else}
     StrCpy $1 "false"

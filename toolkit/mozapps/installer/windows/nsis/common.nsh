@@ -8001,11 +8001,11 @@ end:
   StrCpy $R0 ""
   ; Look for an install-specific profile, which might be listed as
   ; either a relative or an absolute path (installs.ini doesn't say which).
-  ${If} ${FileExists} "$APPDATA\Mozilla\Firefox\installs.ini"
+  ${If} ${FileExists} "$APPDATA\Waterfox\installs.ini"
     ClearErrors
-    ReadINIStr $1 "$APPDATA\Mozilla\Firefox\installs.ini" "$AppUserModelID" "Default"
+    ReadINIStr $1 "$APPDATA\Waterfox\installs.ini" "$AppUserModelID" "Default"
     ${IfNot} ${Errors}
-      ${${_MOZFUNC_UN}GetLongPath} "$APPDATA\Mozilla\Firefox\$1" $2
+      ${${_MOZFUNC_UN}GetLongPath} "$APPDATA\Waterfox\$1" $2
       ${If} ${FileExists} $2
         StrCpy $R0 $2
       ${Else}
@@ -8048,8 +8048,8 @@ end:
         ClearErrors
         StrCpy $0 "0"
       ${Else}
-        CreateDirectory "$LOCALAPPDATA\Mozilla\Firefox"
-        CopyFiles /SILENT "$EXEDIR\postSigningData" "$LOCALAPPDATA\Mozilla\Firefox"
+        CreateDirectory "$LOCALAPPDATA\Waterfox"
+        CopyFiles /SILENT "$EXEDIR\postSigningData" "$LOCALAPPDATA\Waterfox"
       ${Endif}
 
       Exch $0   ; Stack: postSigningData
