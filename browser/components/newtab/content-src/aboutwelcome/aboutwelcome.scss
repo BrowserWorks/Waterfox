@@ -218,6 +218,10 @@ body {
         &.alpenglow {
           background-image: url('chrome://mozapps/content/extensions/firefox-alpenglow.svg');
         }
+
+        &.lepton {
+          background-image: url('chrome://mozapps/content/extensions/firefox-compact-light.svg');
+        }
       }
 
       .text {
@@ -721,6 +725,10 @@ body {
 
         &.automatic {
           background-image: url('resource://default-theme/icon.svg');
+        }
+
+        &.lepton {
+          background-image: url('resource://builtin-themes/light/icon.svg');
         }
       }
     }

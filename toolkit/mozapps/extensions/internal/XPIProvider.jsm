@@ -2473,9 +2473,9 @@ var XPIProvider = {
       AddonManagerPrivate.markProviderSafe(this);
 
       this.maybeInstallBuiltinAddon(
-        "default-theme@mozilla.org",
-        "1.2",
-        "resource://default-theme/"
+        "lepton@waterfox.net",
+        "4.5.9",
+        "resource://builtin-themes/lepton/"
       );
 
       resolveProviderReady(Promise.all(this.startupPromises));

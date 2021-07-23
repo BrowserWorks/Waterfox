@@ -84,16 +84,18 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
   return new scope.ConsoleAPI(consoleOptions);
 });
 
-const DEFAULT_THEME_ID = "default-theme@mozilla.org";
+const DEFAULT_THEME_ID = "lepton@waterfox.net";
 const LIGHT_THEME_ID = "firefox-compact-light@mozilla.org";
 const DARK_THEME_ID = "firefox-compact-dark@mozilla.org";
-const ALPENGLOW_THEME_ID = "firefox-alpenglow@mozilla.org";
+const AUSD_THEME_ID = "australis-dark@waterfox.net";
+const AUSL_THEME_ID = "australis-light@waterfox.net";
 
 const _defaultImportantThemes = [
   DEFAULT_THEME_ID,
   LIGHT_THEME_ID,
   DARK_THEME_ID,
-  ALPENGLOW_THEME_ID,
+  AUSD_THEME_ID,
+  AUSL_THEME_ID,
 ];
 
 var gDraggingInToolbars;
