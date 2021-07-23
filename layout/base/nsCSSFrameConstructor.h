@@ -369,8 +369,6 @@ class nsCSSFrameConstructor final : public nsFrameManager {
     AllowTextPathChild,
     // The item is content created by an nsIAnonymousContentCreator frame.
     IsAnonymousContentCreatorContent,
-    // This will be an outside ::marker.
-    IsForOutsideMarker,
   };
 
   using ItemFlags = mozilla::EnumSet<ItemFlag>;
@@ -459,8 +457,7 @@ class nsCSSFrameConstructor final : public nsFrameManager {
                                   nsContainerFrame* aParentFrame,
                                   Element& aOriginatingElement, ComputedStyle&,
                                   PseudoStyleType aPseudoElement,
-                                  FrameConstructionItemList& aItems,
-                                  ItemFlags aExtraFlags = {});
+                                  FrameConstructionItemList& aItems);
 
   // This method is called by ContentAppended() and ContentRangeInserted() when
   // appending flowed frames to a parent's principal child list. It handles the
