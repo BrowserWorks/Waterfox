@@ -4808,8 +4808,8 @@ struct LengthPercentNumberCalcOps : public css::FloatCoeffsAlreadyNormalizedOps
   MergeMultiplicativeR(nsCSSUnit aCalcFunction,
                        result_type aValue1, float aValue2)
   {
-    MOZ_ASSERT(aCalcFunction == eCSSUnit_Calc_TimesR ||
-               aCalcFunction == eCSSUnit_Divided,
+    MOZ_ASSERT(aCalcFunction == eCSSUnit_Calc_Times_R ||
+               aCalcFunction == eCSSUnit_Calc_Divided,
                "unexpected unit");
     result_type result;
     if (aCalcFunction == eCSSUnit_Calc_Divided) {
