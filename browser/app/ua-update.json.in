@@ -1,3 +1,8 @@
+#filter substitution
+#define APP_SLICE Waterfox/@APP_VERSION@
+#define GK_VERSION 56.0
+#define GK_SLICE Gecko/20100101
+#define FX_SLICE Firefox/@GK_VERSION@
 #filter slashslash
 // Everything after the first // on a line will be removed by the preproccesor.
 // Send these sites a custom user-agent. Bugs should be included with an entry.
@@ -7,44 +12,36 @@
 // NOTE: trailing commas are not valid JSON and will prevent the CDN from syncing.
 // %OS_SLICE% macro is resolved at runtime.
 {
-  "addons.mozilla.org": "Mozilla/5.0 (%OS_SLICE% rv:57.0) Gecko/20100101 Firefox/57.0",
-  "studio.youtube.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "netflix.com": "Mozilla/5.0 (%OS_SLICE% rv:78.0) Gecko/20100101 Firefox/78.0",
-  "internet.xfinity.com": "Mozilla/5.0 (%OS_SLICE% rv:78.0) Gecko/20100101 Firefox/78.0",
-  "xfinity.com": "Mozilla/5.0 (%OS_SLICE% rv:78.0) Gecko/20100101 Firefox/78.0",
-  "chase.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "web.whatsapp.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "spotify.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.co.uk": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.de": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.co.jp": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "cosmicshambles.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "volunteerlogin.org": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "polar.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "eon.tv": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "slack.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "wire.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "trello.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "tresorit.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "discord.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "hoopladigital.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "ucf.org.au": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "westpac.com.au": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "gizmodo.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "zoho.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
+  "accounts.firefox.com": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@",
+  "addons.mozilla.org": "Mozilla/5.0 (%OS_SLICE% rv:57.0) @GK_SLICE@ Firefox/57.0",
+  "amazon.com": "Mozilla/5.0 (%OS_SLICE% rv:68.9.0) @GK_SLICE@ Firefox/68.9.0",
+  "amazon.co.uk": "Mozilla/5.0 (%OS_SLICE% rv:68.9.0) @GK_SLICE@ Firefox/68.9.0",
+  "amazon.co.jp": "Mozilla/5.0 (%OS_SLICE% rv:68.9.0) @GK_SLICE@ Firefox/68.9.0",
+  "amazon.de": "Mozilla/5.0 (%OS_SLICE% rv:68.9.0) @GK_SLICE@ Firefox/68.9.0",
   "att.tv": "Mozilla/5.0 (%OS_SLICE%) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
-  "primevideo.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
-  "meet.google.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
-  "lexiacore5.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
+  "calendar.yahoo.com": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@ @APP_SLICE@",
+  "cdn.polyfill.io": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@",
+  "chase.com": "Mozilla/5.0 (%OS_SLICE% rv:79.0) @GK_SLICE@ Firefox/79.0",
+  "citi.com": "Mozilla/5.0 (%OS_SLICE% rv:88.0) @GK_SLICE@ Firefox/88.0",
+  "dailymotion.com": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@",
+  "eon.tv": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@",
+  "gaming.youtube.com": "Mozilla/5.0 (%OS_SLICE% rv:71.0) @GK_SLICE@ Firefox/71.0 @APP_SLICE@",
+  "google.com": "Mozilla/5.0 (%OS_SLICE% rv:71.0) @GK_SLICE@ Firefox/71.0 @APP_SLICE@",
+  "googlevideos.com": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@",
+  "gstatic.com": "Mozilla/5.0 (%OS_SLICE% rv:71.0) @GK_SLICE@ Firefox/71.0 @APP_SLICE@",
+  "hoopladigital.com": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@",
+  "kb.vmware.com": "Mozilla/5.0 (%OS_SLICE% Trident/8.0; rv:11.0) like Gecko",
+  "lexiacore5.com": "Mozilla/5.0 (%OS_SLICE% rv:78.0) @GK_SLICE@ Firefox/78.0",
+  "netflix.com": "Mozilla/5.0 (%OS_SLICE% rv:78.0) @GK_SLICE@ Firefox/78.0",
+  "patientaccess.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) @GK_SLICE@ Firefox/60.0",
+  "primevideo.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) @GK_SLICE@ Firefox/60.0",
+  "slack.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) @GK_SLICE@ Firefox/68.0",
   "steamcommunity.com": "Mozilla/5.0 (%OS_SLICE%) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
-  "codex.wordpress.org": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
-  "answers.unrealengine.com": "Mozilla/5.0 (%OS_SLICE% rv:60.0) Gecko/20100101 Firefox/60.0",
-  "cdn.polyfill.io": "Mozilla/5.0 (%OS_SLICE% rv:56.0) Gecko/20100101 Firefox/56.0",
-  "swedbank.se": "Mozilla/5.0 (%OS_SLICE% rv:68.0) Gecko/20100101 Firefox/68.0",
-  "yahoo.com": "Mozilla/5.0 (%OS_SLICE% rv:99.9) Gecko/20100101 Firefox/99.9",
-  "sakugabooru.com": "Mozilla/5.0 (%OS_SLICE% rv:99.0) Gecko/20100101 Firefox/99.0",
-  "securityboulevard.com": "Mozilla/5.0 (%OS_SLICE% rv:99.0) Gecko/20100101 Firefox/99.0",
-  "kb.vmware.com": "Mozilla/5.0 (%OS_SLICE% Trident/7.0; rv:11.0) like Gecko",
-  "weathersa.co.za": "Mozilla/5.0 (%OS_SLICE% rv:56.0) Gecko/20100101 Firefox/56.0"
+  "trello.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) @GK_SLICE@ Firefox/68.0",
+  "weathersa.co.za": "Mozilla/5.0 (%OS_SLICE% rv:@GK_VERSION@) @GK_SLICE@ @FX_SLICE@",
+  "whatsapp.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) @GK_SLICE@ Firefox/68.0",
+  "wire.com": "Mozilla/5.0 (%OS_SLICE% rv:68.0) @GK_SLICE@ Firefox/68.0",
+  "xfinity.com": "Mozilla/5.0 (%OS_SLICE% rv:78.0) @GK_SLICE@ Firefox/78.0",
+  "yahoo.com": "Mozilla/5.0 (%OS_SLICE% rv:99.9) @GK_SLICE@ Firefox/99.9",
+  "youtube.com": "Mozilla/5.0 (%OS_SLICE% rv:62.0) @GK_SLICE@ Firefox/62.0"
 }
