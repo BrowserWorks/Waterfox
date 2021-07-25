@@ -136,3 +136,5 @@ if CONFIG['OS_TARGET'] == 'Darwin':
         DEFINES.update(
             HAS_CONNECTX=True,
         )
+
+DEFINES['MOZ_APP_VERSION_DISPLAY'] = CONFIG['MOZ_APP_VERSION_DISPLAY']

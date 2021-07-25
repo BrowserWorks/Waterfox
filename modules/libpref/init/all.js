@@ -24,8 +24,8 @@ pref("preferences.allow.omt-write", false);
 pref("keyword.enabled", false);
 pref("general.useragent.locale", "chrome://global/locale/intl.properties");
 pref("general.useragent.compatMode.firefox", true);
-pref("general.useragent.compatMode.version", "52.9");
-pref("general.useragent.appVersionIsBuildID", true);
+pref("general.useragent.compatMode.version", "56.0");
+pref("general.useragent.appVersionIsLong", true);
 
 pref("general.useragent.updates.enabled", true);
 pref("general.useragent.updates.url", "");

@@ -505,9 +505,7 @@ private:
     nsXPIDLCString mProductSub;
     nsXPIDLCString mAppName;
     nsXPIDLCString mAppVersion;
-    bool           mAppVersionIsBuildID;
-    nsCString      mCompatGecko;
-    bool           mCompatGeckoEnabled;
+    bool           mAppVersionIsLong;
     nsCString      mCompatFirefox;
     nsCString      mCompatFirefoxVersion;
     bool           mCompatFirefoxEnabled;

@@ -208,7 +208,7 @@ nsHttpHandler::nsHttpHandler()
     , mLegacyAppVersion("5.0")
     , mProduct("Gecko")
     , mCompatFirefoxEnabled(false)
-    , mCompatFirefoxVersion("52.9")
+    , mCompatFirefoxVersion("56.0")
     , mUserAgentIsDirty(true)
     , mAcceptLanguagesIsDirty(true)
     , mPromptTempRedirect(true)
@@ -441,7 +441,6 @@ nsHttpHandler::Init()
     mMisc.AssignLiteral("rv:");
     mMisc += mCompatFirefoxVersion;
 
-    mCompatGecko.AssignLiteral("Gecko/20100101");
     mCompatFirefox.AssignLiteral("Firefox/");
     mCompatFirefox += mCompatFirefoxVersion;
 
@@ -487,18 +486,8 @@ nsHttpHandler::Init()
     mRequestContextService =
         do_GetService("@mozilla.org/network/request-context-service;1");
 
-    // Goanna slice version
-    mProductSub.AssignLiteral(MOZILLA_UAVERSION);
-
-    if (mProductSub.IsEmpty()) {
-      nsCString dynamicBuildID;
-      if (appInfo) {
-        appInfo->GetPlatformBuildID(dynamicBuildID);
-        if (dynamicBuildID.Length() > 8 )
-          dynamicBuildID.Left(dynamicBuildID, 8);
-      }
-      mProductSub.Assign(dynamicBuildID);
-    }
+    // Gecko slice version
+    mProductSub.AssignLiteral("20100101");
 
 #if DEBUG
     // dump user agent prefs
@@ -512,7 +501,6 @@ nsHttpHandler::Init()
     LOG(("> app-name = %s\n", mAppName.get()));
     LOG(("> app-version = %s\n", mAppVersion.get()));
     LOG(("> compat-firefox = %s\n", mCompatFirefox.get()));
-    LOG(("> compat-gecko = %s\n", mCompatGecko.get()));
     LOG(("> user-agent = %s\n", UserAgent().get()));
 #endif
 
@@ -836,29 +824,24 @@ nsHttpHandler::BuildAppVersion()
 {
     nsCOMPtr<nsIXULAppInfo> appInfo = do_GetService("@mozilla.org/xre/app-info;1");
 
-    nsCString dynamicBuildID;
-    if (appInfo) {
-      appInfo->GetPlatformBuildID(dynamicBuildID);
-      if (dynamicBuildID.Length() > 8 )
-        dynamicBuildID.Left(dynamicBuildID, 8);
+    if(appInfo) {
+        appInfo->GetVersion(mAppVersion);
+    } else {
+        mAppVersion = MOZILLA_UAVERSION;
     }
 
-    if (mAppVersionIsBuildID) {
-      // Override BuildID
-      mAppVersion.Assign(dynamicBuildID);
-    } else if (appInfo) {
-      appInfo->GetVersion(mAppVersion);
+    if (mAppVersionIsLong) {
+        mAppVersion.Assign(nsPrintfCString("%s.%s", (const char*) mAppVersion, NS_STRINGIFY(MOZ_APP_VERSION_DISPLAY)));
     } else {
-      // Fall back to platform if appInfo is unavailable
-      mAppVersion.AssignLiteral(MOZILLA_UAVERSION);
+        mAppVersion.Assign(nsPrintfCString("%s", NS_STRINGIFY(MOZ_APP_VERSION_DISPLAY)));
     }
 
     // If there's still no version set, set it to a fixed BuildID
     if (mAppVersion.IsEmpty()) {
-      mAppVersion.AssignLiteral(MOZ_UA_BUILDID);
+        mAppVersion.AssignLiteral(MOZ_UA_BUILDID);
     }
     if (mAppVersion.IsEmpty()) {
-      mAppVersion.AssignLiteral("20200101");
+        mAppVersion.AssignLiteral("20200101");
     }
 }
 
@@ -907,10 +890,9 @@ nsHttpHandler::BuildUserAgent()
                            mAppName.Length() +
                            mAppVersion.Length() +
                            mCompatFirefox.Length() +
-                           mCompatGecko.Length() +
                            mCompatDevice.Length() +
                            mDeviceModelId.Length() +
-                           14);
+                           13);
 
     // Application portion
     mUserAgent.Assign(mLegacyAppName);
@@ -940,12 +922,6 @@ nsHttpHandler::BuildUserAgent()
     }
     mUserAgent += mMisc;
     mUserAgent += ')';
-
-    if(mCompatGeckoEnabled) {
-      // Provide frozen Gecko/20100101 slice
-      mUserAgent += ' ';
-      mUserAgent += mCompatGecko;
-    }
 
     // Product portion
     mUserAgent += ' ';
@@ -1171,9 +1147,9 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
 
     bool cVar = false;
 
-    if (PREF_CHANGED(UA_PREF("appVersionIsBuildID"))) {
-        rv = prefs->GetBoolPref(UA_PREF("appVersionIsBuildID"), &cVar);
-        mAppVersionIsBuildID = (NS_SUCCEEDED(rv) && cVar);
+    if (PREF_CHANGED(UA_PREF("appVersionIsLong"))) {
+        rv = prefs->GetBoolPref(UA_PREF("appVersionIsLong"), &cVar);
+        mAppVersionIsLong = (NS_SUCCEEDED(rv) && cVar);
 
         // Rebuild application version string.
         BuildAppVersion();
@@ -1181,12 +1157,6 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         mUserAgentIsDirty = true;
     }
     
-    if (PREF_CHANGED(UA_PREF("compatMode.gecko"))) {
-        rv = prefs->GetBoolPref(UA_PREF("compatMode.gecko"), &cVar);
-        mCompatGeckoEnabled = (NS_SUCCEEDED(rv) && cVar);
-        mUserAgentIsDirty = true;
-    }
-
     if (PREF_CHANGED(UA_PREF("compatMode.firefox"))) {
         rv = prefs->GetBoolPref(UA_PREF("compatMode.firefox"), &cVar);
         mCompatFirefoxEnabled = (NS_SUCCEEDED(rv) && cVar);
