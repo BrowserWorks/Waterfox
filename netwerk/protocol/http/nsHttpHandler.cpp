@@ -831,17 +831,14 @@ nsHttpHandler::BuildAppVersion()
     }
 
     if (mAppVersionIsLong) {
-        mAppVersion.Assign(nsPrintfCString("%s.%s", (const char*) mAppVersion, NS_STRINGIFY(MOZ_APP_VERSION_DISPLAY)));
+        mAppVersion.Assign(nsPrintfCString("%s.%s", (const char*) mAppVersion, MOZ_APP_UA_VERSION_DISPLAY));
     } else {
-        mAppVersion.Assign(nsPrintfCString("%s", NS_STRINGIFY(MOZ_APP_VERSION_DISPLAY)));
+        mAppVersion.Assign(nsPrintfCString("%s", MOZ_APP_UA_VERSION_DISPLAY));
     }
 
-    // If there's still no version set, set it to a fixed BuildID
+    // If there's still no version set, set it to Gecko version
     if (mAppVersion.IsEmpty()) {
-        mAppVersion.AssignLiteral(MOZ_UA_BUILDID);
-    }
-    if (mAppVersion.IsEmpty()) {
-        mAppVersion.AssignLiteral("20200101");
+        mAppVersion.AssignLiteral("56.0");
     }
 }
 

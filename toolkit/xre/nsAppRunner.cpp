@@ -1751,7 +1751,7 @@ DumpVersion()
       printf("%s ", (const char*) gAppData->vendor);
     }
   }
-  printf("%s %s", NS_STRINGIFY(MOZ_APP_DISPLAYNAME), NS_STRINGIFY(MOZ_APP_VERSION_DISPLAY));
+  printf("%s %s", NS_STRINGIFY(MOZ_APP_DISPLAYNAME), MOZ_APP_UA_VERSION_DISPLAY);
   if (gAppData->copyright)
       printf(", %s", (const char*) gAppData->copyright);
   printf("\n");
