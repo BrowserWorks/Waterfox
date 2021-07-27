@@ -1613,7 +1613,8 @@ already_AddRefed<nsIContent> nsCSSFrameConstructor::CreateGeneratedContent(
 void nsCSSFrameConstructor::CreateGeneratedContentItem(
     nsFrameConstructorState& aState, nsContainerFrame* aParentFrame,
     Element& aOriginatingElement, ComputedStyle& aStyle,
-    PseudoStyleType aPseudoElement, FrameConstructionItemList& aItems) {
+    PseudoStyleType aPseudoElement, FrameConstructionItemList& aItems,
+    ItemFlags aExtraFlags) {
   MOZ_ASSERT(aPseudoElement == PseudoStyleType::before ||
                  aPseudoElement == PseudoStyleType::after ||
                  aPseudoElement == PseudoStyleType::marker,
@@ -1719,10 +1720,9 @@ void nsCSSFrameConstructor::CreateGeneratedContentItem(
       mPresShell->StyleSet()->StyleNewSubtree(element);
     }
   }
-
+  auto flags = ItemFlags{ItemFlag::IsGeneratedContent} + aExtraFlags;
   AddFrameConstructionItemsInternal(aState, container, aParentFrame, true,
-                                    pseudoStyle, {ItemFlag::IsGeneratedContent},
-                                    aItems);
+                                    pseudoStyle, flags, aItems);
 }
 
 /****************************************************
@@ -5272,6 +5272,16 @@ nsCSSFrameConstructor::FindElementData(const Element& aElement,
     return &sImgData;
   }
 
+  const bool shouldBlockify = aFlags.contains(ItemFlag::IsForOutsideMarker);
+  if (shouldBlockify && !aStyle.StyleDisplay()->IsBlockOutsideStyle()) {
+    // Make a temp copy of StyleDisplay and blockify its mDisplay value.
+    auto display = *aStyle.StyleDisplay();
+    bool isRootElement = false;
+    uint16_t rawDisplayValue =
+        Servo_ComputedValues_BlockifiedDisplay(&aStyle, isRootElement);
+    display.mDisplay = StyleDisplay(rawDisplayValue);
+    return FindDisplayData(display, aElement);
+  }
   const auto& display = *aStyle.StyleDisplay();
   return FindDisplayData(display, aElement);
 }
@@ -9523,9 +9533,13 @@ void nsCSSFrameConstructor::ProcessChildren(
           !styleParentFrame->IsFieldSetFrame()) {
         isOutsideMarker = computedStyle->StyleList()->mListStylePosition ==
                           NS_STYLE_LIST_STYLE_POSITION_OUTSIDE;
+        ItemFlags extraFlags;
+        if (isOutsideMarker) {
+          extraFlags += ItemFlag::IsForOutsideMarker;
+        }
         CreateGeneratedContentItem(aState, aFrame, *aContent->AsElement(),
                                    *computedStyle, PseudoStyleType::marker,
-                                   itemsToConstruct);
+                                   itemsToConstruct, extraFlags);
       }
       // Probe for generated content before
       CreateGeneratedContentItem(aState, aFrame, *aContent->AsElement(),
