@@ -7,7 +7,7 @@
 "use strict";
 
 /*
- * Migrates from a Firefox profile in a lossy manner in order to clean up a
+ * Imports from a Waterfox profile in a lossy manner in order to clean up a
  * user's profile.  Data is only migrated where the benefits outweigh the
  * potential problems caused by importing undesired/invalid configurations
  * from the source profile.
@@ -22,6 +22,11 @@ ChromeUtils.defineModuleGetter(
   this,
   "PlacesBackups",
   "resource://gre/modules/PlacesBackups.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "PlacesUtils",
+  "resource://gre/modules/PlacesUtils.jsm"
 );
 ChromeUtils.defineModuleGetter(
   this,
@@ -40,24 +45,23 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/ProfileAge.jsm"
 );
 
-function FirefoxProfileMigrator() {
+function WaterfoxClassicProfileMigrator() {
   this.wrappedJSObject = this; // for testing...
 }
 
-FirefoxProfileMigrator.prototype = Object.create(MigratorPrototype);
+WaterfoxClassicProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-FirefoxProfileMigrator.prototype._getAllProfiles = function() {
+WaterfoxClassicProfileMigrator.prototype._getAllProfiles = function() {
   let allProfiles = new Map();
   let profileService = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
     Ci.nsIToolkitProfileService
   );
   for (let profile of profileService.profiles) {
     let rootDir = profile.rootDir;
-
     if (
       rootDir.exists() &&
       rootDir.isReadable() &&
-      !rootDir.equals(MigrationUtils.profileStartup.directory)
+      !rootDir.path.includes("68-edition")
     ) {
       allProfiles.set(profile.name, rootDir);
     }
@@ -69,13 +73,16 @@ function sorter(a, b) {
   return a.id.toLocaleLowerCase().localeCompare(b.id.toLocaleLowerCase());
 }
 
-FirefoxProfileMigrator.prototype.getSourceProfiles = function() {
+WaterfoxClassicProfileMigrator.prototype.getSourceProfiles = function() {
   return [...this._getAllProfiles().keys()]
     .map(x => ({ id: x, name: x }))
     .sort(sorter);
 };
 
-FirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
+WaterfoxClassicProfileMigrator.prototype._getFileObject = function(
+  dir,
+  fileName
+) {
   let file = dir.clone();
   file.append(fileName);
 
@@ -85,7 +92,7 @@ FirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
   return file.exists() ? file : null;
 };
 
-FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
+WaterfoxClassicProfileMigrator.prototype.getResources = function(aProfile) {
   let sourceProfileDir = aProfile
     ? this._getAllProfiles().get(aProfile.id)
     : Cc["@mozilla.org/toolkit/profile-service;1"].getService(
@@ -99,9 +106,22 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
     return null;
   }
 
-  // Being a startup-only migrator, we can rely on
-  // MigrationUtils.profileStartup being set.
-  let currentProfileDir = MigrationUtils.profileStartup.directory;
+  let profile = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
+    Ci.nsIToolkitProfileService
+  ).defaultProfile;
+
+  if (!profile) {
+    profile = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
+      Ci.nsIToolkitProfileService
+    ).currentProfile;
+  }
+
+  if (!profile) {
+    // no profile in use, nowhere to migrate data
+    return null;
+  }
+
+  let currentProfileDir = profile.rootDir;
 
   // Surely data cannot be imported from the current profile.
   if (sourceProfileDir.equals(currentProfileDir)) {
@@ -111,14 +131,14 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
   return this._getResourcesInternal(sourceProfileDir, currentProfileDir);
 };
 
-FirefoxProfileMigrator.prototype.getLastUsedDate = function() {
+WaterfoxClassicProfileMigrator.prototype.getLastUsedDate = function() {
   // We always pretend we're really old, so that we don't mess
   // up the determination of which browser is the most 'recent'
   // to import from.
   return Promise.resolve(new Date(0));
 };
 
-FirefoxProfileMigrator.prototype._getResourcesInternal = function(
+WaterfoxClassicProfileMigrator.prototype._getResourcesInternal = function(
   sourceProfileDir,
   currentProfileDir
 ) {
@@ -137,7 +157,11 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
       type: aMigrationType,
       migrate(aCallback) {
         for (let file of files) {
-          file.copyTo(currentProfileDir, "");
+          try {
+            file.copyTo(currentProfileDir, "");
+          } catch (ex) {
+            // failed to copy
+          }
         }
         aCallback(true);
       },
@@ -151,6 +175,60 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     let newPrefsFile = currentProfileDir.clone();
     newPrefsFile.append("prefs.js");
     Services.prefs.savePrefFile(newPrefsFile);
+  }
+
+  function convertBookmarks(rows) {
+    let unsortedItems = {};
+    let itemsToInsert = {};
+    // set up initial parent/child structure from unstructured data
+    rows.forEach(row => {
+      let item = {
+        type: row.getResultByName("type"),
+        url: row.getResultByName("url"),
+        parentGuid: row.getResultByName("parentGuid"),
+        guid: row.getResultByName("guid"),
+        title: row.getResultByName("title"),
+      };
+      // set up folder item
+      if (item.type == PlacesUtils.bookmarks.TYPE_FOLDER) {
+        delete item.url;
+        // if folder has already been initialized (child in db before parent) then merge
+        if (unsortedItems[item.guid]) {
+          unsortedItems[item.guid] = {
+            ...unsortedItems[item.guid],
+            ...item,
+          };
+        } else {
+          item.children = [];
+          unsortedItems[item.guid] = item;
+        }
+      }
+      // set up bookmark item
+      if (
+        item.type == PlacesUtils.bookmarks.TYPE_BOOKMARK &&
+        unsortedItems[item.parentGuid]
+      ) {
+        // if the parent exists, add as a child
+        unsortedItems[item.parentGuid].children.push(item);
+      } else if (item.type == PlacesUtils.bookmarks.TYPE_BOOKMARK) {
+        // if parent doesn't exist yet, initialize
+        unsortedItems[item.parentGuid] = {
+          guid: item.parentGuid,
+          children: [item],
+        };
+      }
+    });
+    // ensure correct heirarchy, separate for loop as the db rows are unstructured
+    Object.entries(unsortedItems).forEach(([guid, item]) => {
+      // don't import bookmarks with a parent that we cannot identify
+      if (item.parentGuid && unsortedItems[item.parentGuid]) {
+        unsortedItems[item.parentGuid].children.push(item);
+      } else if (!item.parentGuid) {
+        itemsToInsert[item.guid] = item;
+      }
+    });
+
+    return itemsToInsert;
   }
 
   let types = MigrationUtils.resourceTypes;
@@ -176,6 +254,60 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     "formhistory.sqlite",
     "autofill-profiles.json",
   ]);
+  let bookmarks;
+  // don't try to import if places.sqlite doesn't exist
+  if (this._getFileObject(sourceProfileDir, "places.sqlite")) {
+    bookmarks = {
+      name: "bookmarks", // name is used only by tests.
+      type: types.BOOKMARKS,
+      migrate: async aCallback => {
+        try {
+          // get bookmarks from places.sqlite
+          let sourceDir = sourceProfileDir.clone();
+          sourceDir.append("places.sqlite");
+          // get raw rows from db
+          let rows = await MigrationUtils.getRowsFromDBWithoutLocks(
+            sourceDir.path,
+            "bookmarks",
+            `SELECT 
+                b.type, 
+                b.position, 
+                (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid, 
+                b.parent, 
+                b.title, 
+                b.guid,
+                p.url,
+                p.hidden
+              FROM moz_bookmarks b
+              LEFT JOIN moz_places p 
+              ON b.fk = p.id 
+              WHERE 
+                parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
+          );
+          let itemsToInsert = convertBookmarks(rows);
+          // insert bookmarks
+          Object.entries(itemsToInsert).forEach(
+            async ([parentGuid, parent]) => {
+              // do not attempt to insert if empty
+              if (parent.children.length) {
+                try {
+                  await MigrationUtils.insertManyBookmarksWrapper(
+                    parent.children,
+                    parentGuid
+                  );
+                } catch (ex) {
+                  // catching duplicate guid errors, in case people try to import the same profile multiple times
+                }
+              }
+            }
+          );
+          aCallback(true);
+        } catch (ex) {
+          aCallback(false);
+        }
+      },
+    };
+  }
   let bookmarksBackups = getFileResource(types.OTHERDATA, [
     PlacesBackups.profileRelativeFolderPath,
   ]);
@@ -366,18 +498,16 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
     times,
     telemetry,
     favicons,
+    bookmarks,
   ].filter(r => r);
 };
 
-Object.defineProperty(FirefoxProfileMigrator.prototype, "startupOnlyMigrator", {
-  get: () => true,
-});
-
-FirefoxProfileMigrator.prototype.classDescription = "Firefox Profile Migrator";
-FirefoxProfileMigrator.prototype.contractID =
-  "@mozilla.org/profile/migrator;1?app=browser&type=firefox";
-FirefoxProfileMigrator.prototype.classID = Components.ID(
-  "{849265D1-20D6-4F19-950F-4B24546B9046}"
+WaterfoxClassicProfileMigrator.prototype.classDescription =
+  "Waterfox Classic Profile Migrator";
+WaterfoxClassicProfileMigrator.prototype.contractID =
+  "@mozilla.org/profile/migrator;1?app=browser&type=waterfoxclassic";
+WaterfoxClassicProfileMigrator.prototype.classID = Components.ID(
+  "{971AAC44-A66D-4BA6-B406-D75FCB3B3D15}"
 );
 
-var EXPORTED_SYMBOLS = ["FirefoxProfileMigrator"];
+var EXPORTED_SYMBOLS = ["WaterfoxClassicProfileMigrator"];
