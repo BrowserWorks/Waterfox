@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream> // needed for gcc 10
 
 #include "jit/Label.h"
 #include "jit/shared/Assembler-shared.h"
@@ -1165,7 +1166,7 @@ extern bool FLAG_trace_regexp_bytecodes;
 extern bool FLAG_trace_regexp_parser;
 extern bool FLAG_trace_regexp_peephole_optimization;
 
-#define V8_USE_COMPUTED_GOTO 1
+// #define V8_USE_COMPUTED_GOTO 1
 #define COMPILING_IRREGEXP_FOR_EXTERNAL_EMBEDDER
 
 }  // namespace internal

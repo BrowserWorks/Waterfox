@@ -9,11 +9,16 @@
 // found in the LICENSE file.
 
 #include "jit/Linker.h"
+#include "gc/Zone.h"
 #include "regexp/regexp-macro-assembler-arch.h"
 #include "regexp/regexp-stack.h"
 #include "vm/MatchPairs.h"
 
 #include "jit/MacroAssembler-inl.h"
+
+using namespace js;
+using namespace js::irregexp;
+using namespace js::jit;
 
 namespace v8 {
 namespace internal {
@@ -84,19 +89,20 @@ void SMRegExpMacroAssembler::AdvanceRegister(int reg, int by) {
 }
 
 void SMRegExpMacroAssembler::Backtrack() {
-  // Check for an interrupt. We have to restart from the beginning if we
-  // are interrupted, so we only check for urgent interrupts.
-  js::jit::Label noInterrupt;
-  masm_.branchTest32(
-      Assembler::Zero, AbsoluteAddress(cx_->addressOfInterruptBits()),
-      Imm32(uint32_t(js::InterruptReason::CallbackUrgent)), &noInterrupt);
-  masm_.movePtr(ImmWord(js::RegExpRunStatus_Error), temp0_);
-  masm_.jump(&exit_label_);
-  masm_.bind(&noInterrupt);
-
-  // Pop code location from backtrack stack and jump to location.
-  Pop(temp0_);
-  masm_.jump(temp0_);
+    // Check for an interrupt.
+    /*Label noInterrupt;
+    Address lhs = Address(cx_->runtime()->addressOfInterruptUint32());
+    masm_.branchtest32(Assembler::Zero,
+                       lhs,
+                       Imm32(0),
+                       &noInterrupt);
+    masm_.movePtr(ImmWord(RegExpRunStatus_Error), temp0_);
+    masm_.jump(&exit_label_);
+    masm_.bind(&noInterrupt);
+*/
+    // Pop code location from backtrack stack and jump to location.
+    Pop(temp0_);
+    masm_.jump(temp0_);
 }
 
 void SMRegExpMacroAssembler::Bind(Label* label) {
@@ -546,7 +552,8 @@ bool SMRegExpMacroAssembler::CheckSpecialCharacterClass(uc16 type,
         masm_.branch32(Assembler::Above, current_character_, Imm32('z'),
                        no_match);
       }
-      static_assert(arraysize(word_character_map) > unibrow::Latin1::kMaxChar);
+      static_assert(arraysize(word_character_map) > unibrow::Latin1::kMaxChar,
+                    "regex: arraysize(word_character_map) > unibrow::Latin1::kMaxChar");
       masm_.movePtr(ImmPtr(word_character_map), temp0_);
       masm_.load8ZeroExtend(
           BaseIndex(temp0_, current_character_, js::jit::TimesOne), temp0_);
@@ -558,7 +565,8 @@ bool SMRegExpMacroAssembler::CheckSpecialCharacterClass(uc16 type,
       if (mode_ != LATIN1) {
         masm_.branch32(Assembler::Above, current_character_, Imm32('z'), &done);
       }
-      static_assert(arraysize(word_character_map) > unibrow::Latin1::kMaxChar);
+      static_assert(arraysize(word_character_map) > unibrow::Latin1::kMaxChar,
+                    "regex: arraysize(word_character_map) > unibrow::Latin1::kMaxChar");
       masm_.movePtr(ImmPtr(word_character_map), temp0_);
       masm_.load8ZeroExtend(
           BaseIndex(temp0_, current_character_, js::jit::TimesOne), temp0_);
@@ -824,7 +832,7 @@ static Handle<HeapObject> DummyCode() {
 // Finalize code. This is called last, so that we know how many
 // registers we need.
 Handle<HeapObject> SMRegExpMacroAssembler::GetCode(Handle<String> source) {
-  if (!cx_->realm()->ensureJitRealmExists(cx_)) {
+  if (!cx_->compartment()->ensureJitCompartmentExists(cx_)) {
     return DummyCode();
   }
 
@@ -841,8 +849,9 @@ Handle<HeapObject> SMRegExpMacroAssembler::GetCode(Handle<String> source) {
   stackOverflowHandler();
 
   Linker linker(masm_);
-  JitCode* code = linker.newCode(cx_, js::jit::CodeKind::RegExp);
+  JitCode* code = linker.newCode<NoGC>(cx_, REGEXP_CODE);
   if (!code) {
+    ReportOutOfMemory(cx_);
     return DummyCode();
   }
 
@@ -1161,7 +1170,7 @@ SMRegExpMacroAssembler::Implementation() {
 /*static */
 uint32_t SMRegExpMacroAssembler::CaseInsensitiveCompareStrings(
     const char16_t* substring1, const char16_t* substring2, size_t byteLength) {
-  js::AutoUnsafeCallWithABI unsafe;
+  JS::AutoCheckCannotGC nogc;
 
   MOZ_ASSERT(byteLength % sizeof(char16_t) == 0);
   size_t length = byteLength / sizeof(char16_t);
@@ -1184,7 +1193,7 @@ uint32_t SMRegExpMacroAssembler::CaseInsensitiveCompareStrings(
 /*static */
 uint32_t SMRegExpMacroAssembler::CaseInsensitiveCompareUCStrings(
     const char16_t* substring1, const char16_t* substring2, size_t byteLength) {
-  js::AutoUnsafeCallWithABI unsafe;
+  JS::AutoCheckCannotGC nogc;
 
   MOZ_ASSERT(byteLength % sizeof(char16_t) == 0);
   size_t length = byteLength / sizeof(char16_t);
@@ -1206,7 +1215,7 @@ uint32_t SMRegExpMacroAssembler::CaseInsensitiveCompareUCStrings(
 
 /* static */
 bool SMRegExpMacroAssembler::GrowBacktrackStack(RegExpStack* regexp_stack) {
-  js::AutoUnsafeCallWithABI unsafe;
+  JS::AutoCheckCannotGC nogc;
   size_t size = regexp_stack->stack_capacity();
   return !!regexp_stack->EnsureCapacity(size * 2);
 }

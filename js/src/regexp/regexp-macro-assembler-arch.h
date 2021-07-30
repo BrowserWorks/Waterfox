@@ -186,7 +186,7 @@ class SMRegExpMacroAssembler final : public NativeRegExpMacroAssembler {
     if (num_registers_ <= register_index) {
       num_registers_ = register_index + 1;
     }
-    static_assert(alignof(uintptr_t) <= alignof(FrameData));
+    static_assert(alignof(uintptr_t) <= alignof(FrameData),"Regexp: Alignment of uintptr_t and FrameData mismatch");
     return sizeof(FrameData) + register_index * sizeof(uintptr_t*);
   }
 

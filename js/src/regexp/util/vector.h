@@ -45,9 +45,9 @@ void DeleteArray(T* array) {
 template <typename T>
 class Vector {
  public:
-  constexpr Vector() : start_(nullptr), length_(0) {}
+  Vector() : start_(nullptr), length_(0) {}
 
-  constexpr Vector(T* data, size_t length) : start_(data), length_(length) {
+  Vector(T* data, size_t length) : start_(data), length_(length) {
     MOZ_ASSERT_IF(length != 0, data != nullptr);
   }
 

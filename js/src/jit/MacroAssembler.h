@@ -2212,6 +2212,15 @@ class MacroAssembler : public MacroAssemblerSpecific
     inline void assertStackAlignment(uint32_t alignment, int32_t offset = 0);
 };
 
+// StackMacroAssembler checks no GC will happen while it's on the stack.
+class MOZ_RAII StackMacroAssembler : public MacroAssembler {
+  JS::AutoCheckCannotGC nogc;
+
+public:
+  StackMacroAssembler() : MacroAssembler() {}
+  explicit StackMacroAssembler(JSContext* cx) : MacroAssembler(cx) {}
+};
+
 static inline Assembler::DoubleCondition
 JSOpToDoubleCondition(JSOp op)
 {

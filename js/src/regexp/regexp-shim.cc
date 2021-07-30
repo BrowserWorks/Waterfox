@@ -13,6 +13,8 @@
 #include "regexp/regexp-shim.h"
 #include "regexp/regexp-stack.h"
 
+#include "mozilla/Sprintf.h" // for SprintfLiteral
+
 namespace v8 {
 namespace internal {
 
@@ -125,7 +127,7 @@ PseudoHandle<ByteArrayData> ByteArray::takeOwnership(Isolate* isolate) {
 }
 
 void Isolate::trace(JSTracer* trc) {
-  js::gc::AssertRootMarkingPhase(trc);
+  //js::gc::AssertRootMarkingPhase(trc);
 
   for (auto iter = handleArena_.Iter(); !iter.Done(); iter.Next()) {
     auto& elem = iter.Get();

@@ -327,7 +327,9 @@ class V8_EXPORT_PRIVATE RegExpParser {
     bool operator()(const RegExpCapture* lhs, const RegExpCapture* rhs) const {
       DCHECK_NOT_NULL(lhs);
       DCHECK_NOT_NULL(rhs);
-      return *lhs->name() < *rhs->name();
+      ZoneVector<uc16> lhname = *lhs->name();
+      ZoneVector<uc16> rhname = *rhs->name();
+      return lhname < rhname;
     }
   };
 
