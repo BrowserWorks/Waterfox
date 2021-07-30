@@ -362,7 +362,11 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
             aSuggestedDriverVersion.AssignLiteral("Mesa 8.1");
           }
         }
-
+        else if (mIsNouveau && version(mMajorVersion, mMinorVersion) < version(11,0)) {
+          *aStatus = nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION;
+          aFailureId = "FEATURE_FAILURE_OLD_NOUVEAU";
+          aSuggestedDriverVersion.AssignLiteral("Mesa 11.0");
+        }
       } else if (mIsNVIDIA) {
         if (version(mMajorVersion, mMinorVersion, mRevisionVersion) < version(257,21)) {
           *aStatus = nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION;
