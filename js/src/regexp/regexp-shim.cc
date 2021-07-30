@@ -127,8 +127,6 @@ PseudoHandle<ByteArrayData> ByteArray::takeOwnership(Isolate* isolate) {
 }
 
 void Isolate::trace(JSTracer* trc) {
-  //js::gc::AssertRootMarkingPhase(trc);
-
   for (auto iter = handleArena_.Iter(); !iter.Done(); iter.Next()) {
     auto& elem = iter.Get();
     JS::GCPolicy<JS::Value>::trace(trc, &elem, "Isolate handle arena");

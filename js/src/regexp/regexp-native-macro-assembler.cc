@@ -89,17 +89,6 @@ void SMRegExpMacroAssembler::AdvanceRegister(int reg, int by) {
 }
 
 void SMRegExpMacroAssembler::Backtrack() {
-    // Check for an interrupt.
-    /*Label noInterrupt;
-    Address lhs = Address(cx_->runtime()->addressOfInterruptUint32());
-    masm_.branchtest32(Assembler::Zero,
-                       lhs,
-                       Imm32(0),
-                       &noInterrupt);
-    masm_.movePtr(ImmWord(RegExpRunStatus_Error), temp0_);
-    masm_.jump(&exit_label_);
-    masm_.bind(&noInterrupt);
-*/
     // Pop code location from backtrack stack and jump to location.
     Pop(temp0_);
     masm_.jump(temp0_);
