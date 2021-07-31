@@ -5061,25 +5061,12 @@ IsLatin1(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-// Set the profiling stack for each cooperating context in a runtime.
-static bool
-EnsureAllContextProfilingStacks(JSContext* cx)
-{
-    for (const CooperatingContext& target : cx->runtime()->cooperatingContexts()) {
-        ShellContext* sc = GetShellContext(target.context());
-        if (!EnsureGeckoProfilingStackInstalled(target.context(), sc))
-            return false;
-    }
-
-    return true;
-}
-
 static bool
 EnableGeckoProfiling(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    if (!EnsureAllContextProfilingStacks(cx))
+    if (!EnsureGeckoProfilingStackInstalled(cx, GetShellContext(cx)))
         return false;
 
     cx->runtime()->geckoProfiler().enableSlowAssertions(false);
@@ -5106,7 +5093,7 @@ EnableGeckoProfilingWithSlowAssertions(JSContext* cx, unsigned argc, Value* vp)
         cx->runtime()->geckoProfiler().enable(false);
     }
 
-    if (!EnsureAllContextProfilingStacks(cx))
+    if (!EnsureGeckoProfilingStackInstalled(cx, GetShellContext(cx)))
         return false;
 
     cx->runtime()->geckoProfiler().enableSlowAssertions(true);

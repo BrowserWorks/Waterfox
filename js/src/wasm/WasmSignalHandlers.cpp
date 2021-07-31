@@ -1442,9 +1442,8 @@ wasm::InInterruptibleCode(JSContext* cx, uint8_t* pc, const CodeSegment** cs)
 static bool
 RedirectJitCodeToInterruptCheck(JSContext* cx, CONTEXT* context)
 {
-    // Jitcode may only be modified on the runtime's active thread.
-    if (cx != cx->runtime()->activeContext())
-        return false;
+    // Jitcode may only be modified on the runtime's main thread.
+    MOZ_ASSERT(cx == cx->runtime()->mainContextFromAnyThread());
 
     // The faulting thread is suspended so we can access cx fields that can
     // normally only be accessed by the cx's active thread.

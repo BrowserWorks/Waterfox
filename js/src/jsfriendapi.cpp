@@ -1223,7 +1223,7 @@ js::GetAnyCompartmentInZone(JS::Zone* zone)
 void
 JS::ObjectPtr::finalize(JSRuntime* rt)
 {
-    if (IsIncrementalBarrierNeeded(rt->activeContextFromOwnThread()))
+    if (IsIncrementalBarrierNeeded(rt->mainContextFromOwnThread()))
         IncrementalPreWriteBarrier(value);
     value = nullptr;
 }
@@ -1497,6 +1497,5 @@ js::SetCooperativeYieldCallback(JSContext* cx, YieldCallback callback)
 JS_FRIEND_API(bool)
 js::SystemZoneAvailable(JSContext* cx)
 {
-    CooperatingContext& owner = cx->runtime()->gc.systemZoneGroup->ownerContext();
-    return owner.context() == nullptr;
+    return true;
 }

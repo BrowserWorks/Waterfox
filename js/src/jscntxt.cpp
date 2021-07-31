@@ -174,39 +174,6 @@ js::NewContext(uint32_t maxBytes, uint32_t maxNurseryBytes, JSRuntime* parentRun
     return cx;
 }
 
-JSContext*
-js::NewCooperativeContext(JSContext* siblingContext)
-{
-    MOZ_RELEASE_ASSERT(!TlsContext.get());
-
-    JSRuntime* runtime = siblingContext->runtime();
-
-    JSContext* cx = js_new<JSContext>(runtime, JS::ContextOptions());
-    if (!cx || !cx->init(ContextKind::Cooperative)) {
-        js_delete(cx);
-        return nullptr;
-    }
-
-    runtime->setNewbornActiveContext(cx);
-    return cx;
-}
-
-void
-js::YieldCooperativeContext(JSContext* cx)
-{
-    MOZ_ASSERT(cx == TlsContext.get());
-    MOZ_ASSERT(cx->runtime()->activeContext() == cx);
-    cx->runtime()->setActiveContext(nullptr);
-}
-
-void
-js::ResumeCooperativeContext(JSContext* cx)
-{
-    MOZ_ASSERT(cx == TlsContext.get());
-    MOZ_ASSERT(cx->runtime()->activeContext() == nullptr);
-    cx->runtime()->setActiveContext(cx);
-}
-
 static void
 FreeJobQueueHandling(JSContext* cx)
 {
@@ -239,26 +206,11 @@ js::DestroyContext(JSContext* cx)
 
     FreeJobQueueHandling(cx);
 
-    if (cx->runtime()->cooperatingContexts().length() == 1) {
-        // Destroy the runtime along with its last context.
-        cx->runtime()->destroyRuntime();
-        js_delete(cx->runtime());
+    // Destroy the runtime along with its last context.
+    cx->runtime()->destroyRuntime();
+    js_delete(cx->runtime());
 
-        js_delete_poison(cx);
-    } else {
-        DebugOnly<bool> found = false;
-        for (size_t i = 0; i < cx->runtime()->cooperatingContexts().length(); i++) {
-            CooperatingContext& target = cx->runtime()->cooperatingContexts()[i];
-            if (cx == target.context()) {
-                cx->runtime()->cooperatingContexts().erase(&target);
-                found = true;
-                break;
-            }
-        }
-        MOZ_ASSERT(found);
-
-        cx->runtime()->deleteActiveContext(cx);
-    }
+    js_delete_poison(cx);
 }
 
 void
