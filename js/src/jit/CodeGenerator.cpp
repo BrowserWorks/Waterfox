@@ -9769,7 +9769,7 @@ CodeGenerator::link(JSContext* cx, CompilerConstraintList* constraints)
         for (size_t i = 0; i < graph.numConstants(); i++) {
             const Value& v = vp[i];
             if (v.isObject() && IsInsideNursery(&v.toObject())) {
-                cx->zone()->group()->storeBuffer().putWholeCell(script);
+                cx->runtime()->gc.storeBuffer().putWholeCell(script);
                 break;
             }
         }

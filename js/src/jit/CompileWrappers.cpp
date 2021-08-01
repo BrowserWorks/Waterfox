@@ -195,14 +195,15 @@ bool
 CompileZone::nurseryExists()
 {
     MOZ_ASSERT(CurrentThreadCanAccessZone(zone()));
-    return zone()->group()->nursery().exists();
+    return zone()->runtimeFromAnyThread()->gc.nursery().exists();
 }
 
 void
 CompileZone::setMinorGCShouldCancelIonCompilations()
 {
     MOZ_ASSERT(CurrentThreadCanAccessZone(zone()));
-    zone()->group()->storeBuffer().setShouldCancelIonCompilations();
+    JSRuntime* rt = zone()->runtimeFromActiveCooperatingThread();
+    rt->gc.storeBuffer().setShouldCancelIonCompilations();
 }
 
 JSCompartment*
