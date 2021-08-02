@@ -403,6 +403,7 @@ private:
     //
     // Useragent/prefs helper methods
     //
+    void     BuildAppVersion();
     void     BuildUserAgent();
     void     InitUserAgentComponents();
     void     PrefsChanged(nsIPrefBranch *prefs, const char *pref);
@@ -504,7 +505,9 @@ private:
     nsXPIDLCString mProductSub;
     nsXPIDLCString mAppName;
     nsXPIDLCString mAppVersion;
+    bool           mAppVersionIsLong;
     nsCString      mCompatFirefox;
+    nsCString      mCompatFirefoxVersion;
     bool           mCompatFirefoxEnabled;
     nsXPIDLCString mCompatDevice;
     nsCString      mDeviceModelId;
