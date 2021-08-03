@@ -66,7 +66,7 @@ class JitcodeGlobalTable;
 // if signal handlers are being used to implement interrupts.
 class PatchableBackedge : public InlineListNode<PatchableBackedge>
 {
-    friend class JitZoneGroup;
+    friend class JitRuntime;
 
     CodeLocationJump backedge;
     CodeLocationLabel loopHeader;
@@ -82,6 +82,12 @@ class PatchableBackedge : public InlineListNode<PatchableBackedge>
 
 class JitRuntime
 {
+  public:
+    enum BackedgeTarget {
+        BackedgeLoopHeader,
+        BackedgeInterruptCheck
+    };
+
   private:
     friend class JitCompartment;
 
@@ -150,6 +156,17 @@ class JitRuntime
     // If true, the signal handler to interrupt Ion code should not attempt to
     // patch backedges, as some thread is busy modifying data structures.
     mozilla::Atomic<bool> preventBackedgePatching_;
+
+    // Whether patchable backedges currently jump to the loop header or the
+    // interrupt check.
+    ActiveThreadData<BackedgeTarget> backedgeTarget_;
+
+    // List of all backedges in all Ion code. The backedge edge list is accessed
+    // asynchronously when the main thread is paused and preventBackedgePatching_
+    // is false. Thus, the list must only be mutated while preventBackedgePatching_
+    // is true.
+    ActiveThreadData<InlineList<PatchableBackedge>> backedgeList_;
+    InlineList<PatchableBackedge>& backedgeList() { return backedgeList_.ref(); }
 
     // Global table of jitcode native address => bytecode address mappings.
     UnprotectedData<JitcodeGlobalTable*> jitcodeGlobalTable_;
@@ -247,6 +264,20 @@ class JitRuntime
     bool preventBackedgePatching() const {
         return preventBackedgePatching_;
     }
+
+    BackedgeTarget backedgeTarget() const {
+        return backedgeTarget_;
+    }
+    void addPatchableBackedge(PatchableBackedge* backedge) {
+        MOZ_ASSERT(preventBackedgePatching());
+        backedgeList().pushFront(backedge);
+    }
+    void removePatchableBackedge(PatchableBackedge* backedge) {
+        MOZ_ASSERT(preventBackedgePatching());
+        backedgeList().remove(backedge);
+    }
+
+    void patchIonBackedges(JSContext* cx, BackedgeTarget target);
 
     JitCode* getVMWrapper(const VMFunction& f) const;
     JitCode* debugTrapHandler(JSContext* cx);
@@ -356,44 +387,6 @@ class JitRuntime
 
     void ionLazyLinkListRemove(JSRuntime* rt, js::jit::IonBuilder* builder);
     void ionLazyLinkListAdd(JSRuntime* rt, js::jit::IonBuilder* builder);
-};
-
-class JitZoneGroup
-{
-  public:
-    enum BackedgeTarget {
-        BackedgeLoopHeader,
-        BackedgeInterruptCheck
-    };
-
-  private:
-    // Whether patchable backedges currently jump to the loop header or the
-    // interrupt check.
-    ZoneGroupData<BackedgeTarget> backedgeTarget_;
-
-    // List of all backedges in all Ion code. The backedge edge list is accessed
-    // asynchronously when the active thread is paused and preventBackedgePatching_
-    // is false. Thus, the list must only be mutated while preventBackedgePatching_
-    // is true.
-    ZoneGroupData<InlineList<PatchableBackedge>> backedgeList_;
-    InlineList<PatchableBackedge>& backedgeList() { return backedgeList_.ref(); }
-
-  public:
-    explicit JitZoneGroup(ZoneGroup* group);
-
-    BackedgeTarget backedgeTarget() const {
-        return backedgeTarget_;
-    }
-    void addPatchableBackedge(JitRuntime* jrt, PatchableBackedge* backedge) {
-        MOZ_ASSERT(jrt->preventBackedgePatching());
-        backedgeList().pushFront(backedge);
-    }
-    void removePatchableBackedge(JitRuntime* jrt, PatchableBackedge* backedge) {
-        MOZ_ASSERT(jrt->preventBackedgePatching());
-        backedgeList().remove(backedge);
-    }
-
-    void patchIonBackedges(JSContext* cx, BackedgeTarget target);
 };
 
 enum class CacheKind : uint8_t;

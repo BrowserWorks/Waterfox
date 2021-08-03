@@ -205,6 +205,7 @@ JitRuntime::JitRuntime(JSRuntime* rt)
     baselineDebugModeOSRHandler_(nullptr),
     functionWrappers_(nullptr),
     preventBackedgePatching_(false),
+    backedgeTarget_(BackedgeLoopHeader),
     jitcodeGlobalTable_(nullptr),
 #ifdef DEBUG
     ionBailAfter_(0),
@@ -418,7 +419,7 @@ JSContext::freeOsrTempData()
 }
 
 void
-JitZoneGroup::patchIonBackedges(JSContext* cx, BackedgeTarget target)
+JitRuntime::patchIonBackedges(JSContext* cx, BackedgeTarget target)
 {
     if (target == BackedgeLoopHeader) {
         // We must be on the active thread. The caller must use
@@ -456,11 +457,6 @@ JitZoneGroup::patchIonBackedges(JSContext* cx, BackedgeTarget target)
 
     cx->runtime()->jitRuntime()->backedgeExecAlloc().makeAllExecutable();
 }
-
-JitZoneGroup::JitZoneGroup(ZoneGroup* group)
-  : backedgeTarget_(group, BackedgeLoopHeader),
-    backedgeList_(group)
-{}
 
 JitCompartment::JitCompartment()
   : stubCodes_(nullptr),
@@ -1101,7 +1097,7 @@ IonScript::copyPatchableBackedges(JSContext* cx, JitCode* code,
                                   PatchableBackedgeInfo* backedges,
                                   MacroAssembler& masm)
 {
-    JitZoneGroup* jzg = cx->zone()->group()->jitZoneGroup;
+    JitRuntime* jrt = cx->runtime()->jitRuntime();
     JitRuntime::AutoPreventBackedgePatching apbp(cx->runtime());
 
     for (size_t i = 0; i < backedgeEntries_; i++) {
@@ -1116,12 +1112,12 @@ IonScript::copyPatchableBackedges(JSContext* cx, JitCode* code,
 
         // Point the backedge to either of its possible targets, matching the
         // other backedges in the runtime.
-        if (jzg->backedgeTarget() == JitZoneGroup::BackedgeInterruptCheck)
-            PatchBackedge(backedge, interruptCheck, JitZoneGroup::BackedgeInterruptCheck);
+        if (jrt->backedgeTarget() == JitRuntime::BackedgeInterruptCheck)
+            PatchBackedge(backedge, interruptCheck, JitRuntime::BackedgeInterruptCheck);
         else
-            PatchBackedge(backedge, loopHeader, JitZoneGroup::BackedgeLoopHeader);
+            PatchBackedge(backedge, loopHeader, JitRuntime::BackedgeLoopHeader);
 
-        jzg->addPatchableBackedge(cx->runtime()->jitRuntime(), patchableBackedge);
+        jrt->addPatchableBackedge(patchableBackedge);
     }
 }
 
@@ -1337,10 +1333,10 @@ IonScript::unlinkFromRuntime(FreeOp* fop)
     // The writes to the executable buffer below may clobber backedge jumps, so
     // make sure that those backedges are unlinked from the runtime and not
     // reclobbered with garbage if an interrupt is requested.
-    JitZoneGroup* jzg = method()->zone()->group()->jitZoneGroup;
+    JitRuntime* jrt = fop->runtime()->jitRuntime();
     JitRuntime::AutoPreventBackedgePatching apbp(fop->runtime());
     for (size_t i = 0; i < backedgeEntries_; i++)
-        jzg->removePatchableBackedge(fop->runtime()->jitRuntime(), &backedgeList()[i]);
+        jrt->removePatchableBackedge(&backedgeList()[i]);
 
     // Clear the list of backedges, so that this method is idempotent. It is
     // called during destruction, and may be additionally called when the

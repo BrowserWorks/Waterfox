@@ -133,7 +133,7 @@ jit::PatchJump(CodeLocationJump& jump_, CodeLocationLabel label, ReprotectCode r
 // MacroAssemblerMIPSCompat::backedgeJump()
 void
 jit::PatchBackedge(CodeLocationJump& jump, CodeLocationLabel label,
-                   JitZoneGroup::BackedgeTarget target)
+                   JitRuntime::BackedgeTarget target)
 {
     uint32_t sourceAddr = (uint32_t)jump.raw();
     uint32_t targetAddr = (uint32_t)label.raw();

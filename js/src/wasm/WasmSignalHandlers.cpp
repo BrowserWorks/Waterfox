@@ -1418,8 +1418,7 @@ RedirectIonBackedgesToInterruptCheck(JSContext* cx)
         // checked at least once before entering JIT code (if not, no big deal;
         // the browser will just request another interrupt in a second).
         if (!jitRuntime->preventBackedgePatching()) {
-            jit::JitZoneGroup* jzg = zone->group()->jitZoneGroup;
-            jzg->patchIonBackedges(cx, jit::JitZoneGroup::BackedgeInterruptCheck);
+            jitRuntime->patchIonBackedges(cx, jit::JitRuntime::BackedgeInterruptCheck);
         }
     }
 }

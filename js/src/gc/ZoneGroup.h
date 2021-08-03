@@ -15,8 +15,6 @@
 
 namespace js {
 
-namespace jit { class JitZoneGroup; }
-
 class AutoKeepAtoms;
 
 typedef Vector<JS::Zone*, 4, SystemAllocPolicy> ZoneVector;
@@ -88,8 +86,6 @@ class ZoneGroup
 
     // Delete an empty zone after its contents have been merged.
     void deleteEmptyZone(Zone* zone);
-
-    ZoneGroupData<jit::JitZoneGroup*> jitZoneGroup;
 };
 
 } // namespace js

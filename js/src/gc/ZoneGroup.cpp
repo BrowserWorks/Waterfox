@@ -19,8 +19,7 @@ ZoneGroup::ZoneGroup(JSRuntime* runtime)
   : runtime(runtime),
     helperThreadOwnerContext_(nullptr),
     zones_(this),
-    helperThreadUse(HelperThreadUse::None),
-    jitZoneGroup(this, nullptr)
+    helperThreadUse(HelperThreadUse::None)
 {}
 
 bool
@@ -28,18 +27,12 @@ ZoneGroup::init()
 {
     AutoLockGC lock(runtime);
 
-    jitZoneGroup = js_new<jit::JitZoneGroup>(this);
-    if (!jitZoneGroup)
-        return false;
-
     return true;
 }
 
 ZoneGroup::~ZoneGroup()
 {
     MOZ_ASSERT(helperThreadUse == HelperThreadUse::None);
-
-    js_delete(jitZoneGroup.ref());
 
     if (this == runtime->gc.systemZoneGroup)
         runtime->gc.systemZoneGroup = nullptr;
