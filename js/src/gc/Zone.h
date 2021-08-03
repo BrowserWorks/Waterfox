@@ -344,7 +344,7 @@ struct Zone : public JS::shadow::Zone,
 
   private:
     // The set of compartments in this zone.
-    js::ActiveThreadOrGCTaskData<CompartmentVector> compartments_;
+    js::MainThreadOrGCTaskData<CompartmentVector> compartments_;
   public:
     CompartmentVector& compartments() { return compartments_.ref(); }
 
@@ -689,7 +689,7 @@ struct Zone : public JS::shadow::Zone,
   private:
     js::ZoneData<js::jit::JitZone*> jitZone_;
 
-    js::ActiveThreadData<bool> gcScheduled_;
+    js::MainThreadData<bool> gcScheduled_;
     js::ZoneData<bool> gcPreserveCode_;
     js::ZoneData<bool> keepShapeTables_;
 

@@ -93,10 +93,10 @@ class JitRuntime
 
     // Executable allocator for all code except wasm code and Ion code with
     // patchable backedges (see below).
-    ActiveThreadData<ExecutableAllocator> execAlloc_;
+    MainThreadData<ExecutableAllocator> execAlloc_;
 
     // Executable allocator for Ion scripts with patchable backedges.
-    ActiveThreadData<ExecutableAllocator> backedgeExecAlloc_;
+    MainThreadData<ExecutableAllocator> backedgeExecAlloc_;
 
     // Shared exception-handler tail.
     ExclusiveAccessLockWriteOnceData<JitCode*> exceptionTail_;
@@ -159,13 +159,13 @@ class JitRuntime
 
     // Whether patchable backedges currently jump to the loop header or the
     // interrupt check.
-    ActiveThreadData<BackedgeTarget> backedgeTarget_;
+    MainThreadData<BackedgeTarget> backedgeTarget_;
 
     // List of all backedges in all Ion code. The backedge edge list is accessed
     // asynchronously when the main thread is paused and preventBackedgePatching_
     // is false. Thus, the list must only be mutated while preventBackedgePatching_
     // is true.
-    ActiveThreadData<InlineList<PatchableBackedge>> backedgeList_;
+    MainThreadData<InlineList<PatchableBackedge>> backedgeList_;
     InlineList<PatchableBackedge>& backedgeList() { return backedgeList_.ref(); }
 
     // Global table of jitcode native address => bytecode address mappings.
@@ -174,7 +174,7 @@ class JitRuntime
 #ifdef DEBUG
     // The number of possible bailing places encounters before forcefully bailing
     // in that place. Zero means inactive.
-    ActiveThreadData<uint32_t> ionBailAfter_;
+    MainThreadData<uint32_t> ionBailAfter_;
 #endif
 
     // Number of Ion compilations which were finished off thread and are
@@ -184,8 +184,8 @@ class JitRuntime
 
     // List of Ion compilation waiting to get linked.
     using IonBuilderList = mozilla::LinkedList<js::jit::IonBuilder>;
-    ActiveThreadData<IonBuilderList> ionLazyLinkList_;
-    ActiveThreadData<size_t> ionLazyLinkListSize_;
+    MainThreadData<IonBuilderList> ionLazyLinkList_;
+    MainThreadData<size_t> ionLazyLinkListSize_;
 
   private:
     JitCode* generateLazyLinkStub(JSContext* cx);

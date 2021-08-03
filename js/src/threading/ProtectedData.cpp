@@ -51,7 +51,7 @@ CheckThreadLocal::check() const
 
 template <AllowedHelperThread Helper>
 void
-CheckActiveThread<Helper>::check() const
+CheckMainThread<Helper>::check() const
 {
     // When interrupting a thread on Windows, changes are made to the runtime
     // and active thread's state from another thread while the active thread is
@@ -66,9 +66,9 @@ CheckActiveThread<Helper>::check() const
 #endif // XP_WIN
 }
 
-template class CheckActiveThread<AllowedHelperThread::None>;
-template class CheckActiveThread<AllowedHelperThread::GCTask>;
-template class CheckActiveThread<AllowedHelperThread::IonCompile>;
+template class CheckMainThread<AllowedHelperThread::None>;
+template class CheckMainThread<AllowedHelperThread::GCTask>;
+template class CheckMainThread<AllowedHelperThread::IonCompile>;
 
 template <AllowedHelperThread Helper>
 void
