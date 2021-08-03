@@ -59,7 +59,7 @@ namespace oom {
  */
 enum ThreadType {
     THREAD_TYPE_NONE = 0,       // 0
-    THREAD_TYPE_COOPERATING,    // 1
+    THREAD_TYPE_MAIN,    // 1
     THREAD_TYPE_WASM,           // 2
     THREAD_TYPE_ION,            // 3
     THREAD_TYPE_PARSE,          // 4
