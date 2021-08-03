@@ -1432,7 +1432,7 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
         // Make the default XPCShell global use a fresh zone (rather than the
         // System Zone) to improve cross-zone test coverage.
         JS::CompartmentOptions options;
-        options.creationOptions().setNewZoneInSystemZoneGroup();
+        options.creationOptions().setNewZone();
         if (xpc::SharedMemoryEnabled())
             options.creationOptions().setSharedMemoryAndAtomicsEnabled(true);
         options.behaviors().setVersion(JSVERSION_LATEST);

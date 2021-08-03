@@ -2872,36 +2872,19 @@ nsGlobalWindow::ComputeIsSecureContext(nsIDocument* aDocument, SecureContextFlag
 }
 
 static JS::CompartmentCreationOptions&
-SelectZoneGroup(nsGlobalWindow* aNewInner,
-                JS::CompartmentCreationOptions& aOptions)
+SelectZone(nsGlobalWindow* aNewInner,
+           JS::CompartmentCreationOptions& aOptions)
 {
-  JS::CompartmentCreationOptions options;
-
   if (aNewInner->GetOuterWindow()) {
     nsGlobalWindow *top = aNewInner->GetTopInternal();
 
-    // If we have a top-level window, use its zone (and zone group).
+    // If we have a top-level window, use its zone.
     if (top && top->GetGlobalJSObject()) {
       return aOptions.setExistingZone(top->GetGlobalJSObject());
     }
   }
 
-  // If we're in the parent process, don't bother with zone groups.
-  if (XRE_IsParentProcess()) {
-    return aOptions.setNewZoneInSystemZoneGroup();
-  }
-
-  // Otherwise, find a zone group from the TabGroup. Typically we only have to
-  // go through one iteration of this loop.
-  RefPtr<TabGroup> tabGroup = aNewInner->TabGroup();
-  for (nsPIDOMWindowOuter* outer : tabGroup->GetWindows()) {
-    nsGlobalWindow* window = nsGlobalWindow::Cast(outer);
-    if (JSObject* global = window->GetGlobalJSObject()) {
-      return aOptions.setNewZoneInExistingZoneGroup(global);
-    }
-  }
-
-  return aOptions.setNewZoneInNewZoneGroup();
+  return aOptions.setNewZone();
 }
 
 /**
@@ -2929,7 +2912,7 @@ CreateNativeGlobalForInner(JSContext* aCx,
 
   JS::CompartmentOptions options;
 
-  SelectZoneGroup(aNewInner, options.creationOptions());
+  SelectZone(aNewInner, options.creationOptions());
 
   // Sometimes add-ons load their own XUL windows, either as separate top-level
   // windows or inside a browser element. In such cases we want to tag the

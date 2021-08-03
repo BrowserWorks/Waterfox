@@ -183,22 +183,10 @@ struct Zone : public JS::shadow::Zone,
               public js::gc::GraphNodeBase<JS::Zone>,
               public js::MallocProvider<JS::Zone>
 {
-    explicit Zone(JSRuntime* rt, js::ZoneGroup* group);
+    explicit Zone(JSRuntime* rt);
     ~Zone();
     MOZ_MUST_USE bool init(bool isSystem);
     void destroy(js::FreeOp *fop);
-
-  private:
-    js::ZoneGroup* const group_;
-  public:
-    js::ZoneGroup* group() const {
-        return group_;
-    }
-
-    // For JIT use.
-    static size_t offsetOfGroup() {
-        return offsetof(Zone, group_);
-    }
 
     void findOutgoingEdges(js::gc::ZoneComponentFinder& finder);
 
@@ -532,8 +520,46 @@ struct Zone : public JS::shadow::Zone,
 
     js::ZoneGroupData<bool> isSystem;
 
+  private:
+    // The helper thread context with exclusive access to this zone, if
+    // usedByHelperThread(), or nullptr when on the main thread.
+    js::UnprotectedData<JSContext*> helperThreadOwnerContext_;
+
+  public:
+    bool ownedByCurrentHelperThread();
+    void setHelperThreadOwnerContext(JSContext* cx);
+
+  private:
+    enum class HelperThreadUse : uint32_t
+    {
+        None,
+        Pending,
+        Active
+    };
+
+    mozilla::Atomic<HelperThreadUse> helperThreadUse;
+
+  public:
+    // Whether this zone was created for use by a helper thread.
+    bool createdForHelperThread() const {
+        return helperThreadUse != HelperThreadUse::None;
+    }
+    // Whether this zone is currently in use by a helper thread.
     bool usedByHelperThread() {
-        return !isAtomsZone() && group()->usedByHelperThread();
+        MOZ_ASSERT_IF(isAtomsZone(), helperThreadUse == HelperThreadUse::None);
+        return helperThreadUse == HelperThreadUse::Active;
+    }
+    void setCreatedForHelperThread() {
+        MOZ_ASSERT(helperThreadUse == HelperThreadUse::None);
+        helperThreadUse = HelperThreadUse::Pending;
+    }
+    void setUsedByHelperThread() {
+        MOZ_ASSERT(helperThreadUse == HelperThreadUse::Pending);
+        helperThreadUse = HelperThreadUse::Active;
+    }
+    void clearUsedByHelperThread() {
+        MOZ_ASSERT(helperThreadUse != HelperThreadUse::None);
+        helperThreadUse = HelperThreadUse::None;
     }
 
 #ifdef DEBUG
@@ -682,41 +708,6 @@ struct Zone : public JS::shadow::Zone,
 
 namespace js {
 
-// Iterate over all zone groups except those which may be in use by helper
-// thread parse tasks.
-class ZoneGroupsIter
-{
-    gc::AutoEnterIteration iterMarker;
-    ZoneGroup** it;
-    ZoneGroup** end;
-
-  public:
-    explicit ZoneGroupsIter(JSRuntime* rt) : iterMarker(&rt->gc) {
-        it = rt->gc.groups().begin();
-        end = rt->gc.groups().end();
-
-        if (!done() && (*it)->usedByHelperThread())
-            next();
-    }
-
-    bool done() const { return it == end; }
-
-    void next() {
-        MOZ_ASSERT(!done());
-        do {
-            it++;
-        } while (!done() && (*it)->usedByHelperThread());
-    }
-
-    ZoneGroup* get() const {
-        MOZ_ASSERT(!done());
-        return *it;
-    }
-
-    operator ZoneGroup*() const { return get(); }
-    ZoneGroup* operator->() const { return get(); }
-};
-
 // Using the atoms zone without holding the exclusive access lock is dangerous
 // because worker threads may be using it simultaneously. Therefore, it's
 // better to skip the atoms zone when iterating over zones. If you need to
@@ -726,78 +717,49 @@ enum ZoneSelector {
     SkipAtoms
 };
 
-// Iterate over all zones in one zone group.
-class ZonesInGroupIter
-{
-    gc::AutoEnterIteration iterMarker;
-    JS::Zone** it;
-    JS::Zone** end;
-
-  public:
-    explicit ZonesInGroupIter(ZoneGroup* group) : iterMarker(&group->runtime->gc) {
-        it = group->zones().begin();
-        end = group->zones().end();
-    }
-
-    bool done() const { return it == end; }
-
-    void next() {
-        MOZ_ASSERT(!done());
-        it++;
-    }
-
-    JS::Zone* get() const {
-        MOZ_ASSERT(!done());
-        return *it;
-    }
-
-    operator JS::Zone*() const { return get(); }
-    JS::Zone* operator->() const { return get(); }
-};
-
 // Iterate over all zones in the runtime, except those which may be in use by
 // parse threads.
 class ZonesIter
 {
-    ZoneGroupsIter group;
-    Maybe<ZonesInGroupIter> zone;
+    gc::AutoEnterIteration iterMarker;
     JS::Zone* atomsZone;
+    JS::Zone** it;
+    JS::Zone** end;
 
   public:
     ZonesIter(JSRuntime* rt, ZoneSelector selector)
-      : group(rt), atomsZone(selector == WithAtoms ? rt->gc.atomsZone.ref() : nullptr)
+      : iterMarker(&rt->gc),
+        atomsZone(selector == WithAtoms ? rt->gc.atomsZone.ref() : nullptr),
+        it(rt->gc.zones().begin()),
+        end(rt->gc.zones().end())
     {
-        if (!atomsZone && !done())
-            next();
+        if (!atomsZone)
+            skipHelperThreadZones();
     }
 
     bool atAtomsZone(JSRuntime* rt) const {
         return !!atomsZone;
     }
 
-    bool done() const { return !atomsZone && group.done(); }
+    bool done() const { return !atomsZone && it == end; }
 
     void next() {
         MOZ_ASSERT(!done());
         if (atomsZone)
             atomsZone = nullptr;
-        while (!group.done()) {
-            if (zone.isSome())
-                zone.ref().next();
-            else
-                zone.emplace(group);
-            if (zone.ref().done()) {
-                zone.reset();
-                group.next();
-            } else {
-                break;
-            }
-        }
+        else
+            it++;
+        skipHelperThreadZones();
+    }
+
+    void skipHelperThreadZones() {
+        while (!done() && get()->usedByHelperThread())
+            it++;
     }
 
     JS::Zone* get() const {
         MOZ_ASSERT(!done());
-        return atomsZone ? atomsZone : zone.ref().get();
+        return atomsZone ? atomsZone : *it;
     }
 
     operator JS::Zone*() const { return get(); }

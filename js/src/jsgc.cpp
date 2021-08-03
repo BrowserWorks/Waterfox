@@ -826,7 +826,6 @@ GCRuntime::releaseArena(Arena* arena, const AutoLockGC& lock)
 GCRuntime::GCRuntime(JSRuntime* rt) :
     rt(rt),
     systemZone(nullptr),
-    systemZoneGroup(nullptr),
     atomsZone(nullptr),
     stats_(rt),
     marker(rt),
@@ -1166,7 +1165,7 @@ GCRuntime::finish()
         }
     }
 
-    groups().clear();
+    zones().clear();
 
     FreeChunkPool(rt, fullChunks_.ref());
     FreeChunkPool(rt, availableChunks_.ref());
@@ -2717,20 +2716,20 @@ GCRuntime::releaseHeldRelocatedArenasWithoutUnlocking(const AutoLockGC& lock)
 #endif
 }
 
-ArenaLists::ArenaLists(JSRuntime* rt, ZoneGroup* group)
+ArenaLists::ArenaLists(JSRuntime* rt, Zone* zone)
   : runtime_(rt),
-    freeLists_(group),
-    arenaLists_(group),
+    freeLists_(zone),
+    arenaLists_(zone),
     backgroundFinalizeState_(),
     arenaListsToSweep_(),
-    incrementalSweptArenaKind(group, AllocKind::LIMIT),
-    incrementalSweptArenas(group),
-    gcShapeArenasToUpdate(group, nullptr),
-    gcAccessorShapeArenasToUpdate(group, nullptr),
-    gcScriptArenasToUpdate(group, nullptr),
-    gcObjectGroupArenasToUpdate(group, nullptr),
-    savedObjectArenas_(group),
-    savedEmptyObjectArenas(group, nullptr)
+    incrementalSweptArenaKind(zone, AllocKind::LIMIT),
+    incrementalSweptArenas(zone),
+    gcShapeArenasToUpdate(zone, nullptr),
+    gcAccessorShapeArenasToUpdate(zone, nullptr),
+    gcScriptArenasToUpdate(zone, nullptr),
+    gcObjectGroupArenasToUpdate(zone, nullptr),
+    savedObjectArenas_(zone),
+    savedEmptyObjectArenas(zone, nullptr)
 {
     for (auto i : AllAllocKinds())
         freeLists(i) = &placeholder;
@@ -3534,12 +3533,33 @@ Zone::sweepCompartments(FreeOp* fop, bool keepAtleastOne, bool destroyingRuntime
 }
 
 void
-GCRuntime::sweepZones(FreeOp* fop, ZoneGroup* group, bool destroyingRuntime)
+GCRuntime::deleteEmptyZone(Zone* zone)
 {
-    MOZ_ASSERT(!group->zones().empty());
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt));
+    MOZ_ASSERT(zone->compartments().empty());
+    for (auto& i : zones()) {
+        if (i == zone) {
+            zones().erase(&i);
+            zone->destroy(rt->defaultFreeOp());
+            return;
+        }
+    }
+    MOZ_CRASH("Zone not found");
+}
 
-    Zone** read = group->zones().begin();
-    Zone** end = group->zones().end();
+void
+GCRuntime::sweepZones(FreeOp* fop, bool destroyingRuntime)
+{
+    MOZ_ASSERT_IF(destroyingRuntime, numActiveZoneIters == 0);
+    MOZ_ASSERT_IF(destroyingRuntime, arenasEmptyAtShutdown);
+
+    if (rt->gc.numActiveZoneIters)
+        return;
+
+    assertBackgroundSweepingFinished();
+
+    Zone** read = zones().begin();
+    Zone** end = zones().end();
     Zone** write = read;
 
     while (read < end) {
@@ -3573,36 +3593,7 @@ GCRuntime::sweepZones(FreeOp* fop, ZoneGroup* group, bool destroyingRuntime)
         }
         *write++ = zone;
     }
-    group->zones().shrinkTo(write - group->zones().begin());
-}
-
-void
-GCRuntime::sweepZoneGroups(FreeOp* fop, bool destroyingRuntime)
-{
-    MOZ_ASSERT_IF(destroyingRuntime, numActiveZoneIters == 0);
-    MOZ_ASSERT_IF(destroyingRuntime, arenasEmptyAtShutdown);
-
-    if (rt->gc.numActiveZoneIters)
-        return;
-
-    assertBackgroundSweepingFinished();
-
-    ZoneGroup** read = groups().begin();
-    ZoneGroup** end = groups().end();
-    ZoneGroup** write = read;
-
-    while (read < end) {
-        ZoneGroup* group = *read++;
-        sweepZones(fop, group, destroyingRuntime);
-
-        if (group->zones().empty()) {
-            MOZ_ASSERT(numActiveZoneIters == 0);
-            fop->delete_(group);
-        } else {
-            *write++ = group;
-        }
-    }
-    groups().shrinkTo(write - groups().begin());
+    zones().shrinkTo(write - zones().begin());
 }
 
 #ifdef DEBUG
@@ -6690,7 +6681,7 @@ GCRuntime::incrementalCollectSlice(SliceBudget& budget, JS::gcreason::Reason rea
             gcstats::AutoPhase ap2(stats(), gcstats::PhaseKind::DESTROY);
             AutoSetThreadIsSweeping threadIsSweeping;
             FreeOp fop(rt);
-            sweepZoneGroups(&fop, destroyingRuntime);
+            sweepZones(&fop, destroyingRuntime);
         }
 
         MOZ_ASSERT(!startedCompacting);
@@ -7389,52 +7380,25 @@ js::NewCompartment(JSContext* cx, JSPrincipals* principals,
     JSRuntime* rt = cx->runtime();
     JS_AbortIfWrongThread(cx);
 
-    ScopedJSDeletePtr<ZoneGroup> groupHolder;
     ScopedJSDeletePtr<Zone> zoneHolder;
 
     Zone* zone = nullptr;
-    ZoneGroup* group = nullptr;
     JS::ZoneSpecifier zoneSpec = options.creationOptions().zoneSpecifier();
     switch (zoneSpec) {
       case JS::SystemZone:
-        // systemZone and possibly systemZoneGroup might be null here, in which
-        // case we'll make a zone/group and set these fields below.
+        // systemZone might be null here, in which case we'll make a zone and
+        // set this field below.
         zone = rt->gc.systemZone;
-        group = rt->gc.systemZoneGroup;
         break;
       case JS::ExistingZone:
-        zone = static_cast<Zone*>(options.creationOptions().zonePointer());
+        zone = options.creationOptions().zone();
         MOZ_ASSERT(zone);
-        group = zone->group();
+      case JS::NewZone:
         break;
-      case JS::NewZoneInNewZoneGroup:
-        break;
-      case JS::NewZoneInSystemZoneGroup:
-        // As above, systemZoneGroup might be null here.
-        group = rt->gc.systemZoneGroup;
-        break;
-      case JS::NewZoneInExistingZoneGroup:
-        group = static_cast<ZoneGroup*>(options.creationOptions().zonePointer());
-        MOZ_ASSERT(group);
-        break;
-    }
-
-    if (!group) {
-        MOZ_ASSERT(!zone);
-        group = cx->new_<ZoneGroup>(rt);
-        if (!group)
-            return nullptr;
-
-        groupHolder.reset(group);
-
-        if (!group->init()) {
-            ReportOutOfMemory(cx);
-            return nullptr;
-        }
     }
 
     if (!zone) {
-        zone = cx->new_<Zone>(cx->runtime(), group);
+        zone = cx->new_<Zone>(cx->runtime());
         if (!zone)
             return nullptr;
 
@@ -7463,7 +7427,7 @@ js::NewCompartment(JSContext* cx, JSPrincipals* principals,
     }
 
     if (zoneHolder) {
-        if (!group->zones().append(zone)) {
+        if (!rt->gc.zones().append(zone)) {
             ReportOutOfMemory(cx);
             return nullptr;
         }
@@ -7476,21 +7440,7 @@ js::NewCompartment(JSContext* cx, JSPrincipals* principals,
         }
     }
 
-    if (groupHolder) {
-        if (!rt->gc.groups().append(group)) {
-            ReportOutOfMemory(cx);
-            return nullptr;
-        }
-
-        // Lazily set the runtime's system zone group.
-        if (zoneSpec == JS::SystemZone || zoneSpec == JS::NewZoneInSystemZoneGroup) {
-            MOZ_RELEASE_ASSERT(!rt->gc.systemZoneGroup);
-            rt->gc.systemZoneGroup = group;
-        }
-    }
-
     zoneHolder.forget();
-    groupHolder.forget();
     return compartment.forget();
 }
 
@@ -7514,7 +7464,6 @@ GCRuntime::mergeCompartments(JSCompartment* source, JSCompartment* target)
 
     MOZ_ASSERT(!source->hasBeenEntered());
     MOZ_ASSERT(source->zone()->compartments().length() == 1);
-    MOZ_ASSERT(source->zone()->group()->zones().length() == 1);
 
     JSContext* cx = rt->mainContextFromOwnThread();
 
@@ -7617,25 +7566,8 @@ GCRuntime::mergeCompartments(JSCompartment* source, JSCompartment* target)
     // a full GC.
 
     Zone* sourceZone = source->zone();
-    ZoneGroup* sourceGroup = sourceZone->group();
     sourceZone->deleteEmptyCompartment(source);
-    sourceGroup->deleteEmptyZone(sourceZone);
-    deleteEmptyZoneGroup(sourceGroup);
-}
-
-void
-GCRuntime::deleteEmptyZoneGroup(ZoneGroup* group)
-{
-    MOZ_ASSERT(group->zones().empty());
-    MOZ_ASSERT(groups().length() > 1);
-    for (auto& i : groups()) {
-        if (i == group) {
-            groups().erase(&i);
-            js_delete(group);
-            return;
-        }
-    }
-    MOZ_CRASH("ZoneGroup not found");
+    deleteEmptyZone(sourceZone);
 }
 
 void

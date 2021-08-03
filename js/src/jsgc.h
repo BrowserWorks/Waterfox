@@ -677,7 +677,7 @@ class ArenaLists
     ZoneGroupData<Arena*> savedEmptyObjectArenas;
 
   public:
-    explicit ArenaLists(JSRuntime* rt, ZoneGroup* group);
+    explicit ArenaLists(JSRuntime* rt, JS::Zone* zone);
     ~ArenaLists();
 
     const void* addressOfFreeList(AllocKind thingKind) const {

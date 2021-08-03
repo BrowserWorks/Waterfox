@@ -31,8 +31,8 @@ class VerifyPreTracer;
 
 namespace gc {
 
-typedef Vector<ZoneGroup*, 4, SystemAllocPolicy> ZoneGroupVector;
 using BlackGrayEdgeVector = Vector<TenuredCell*, 0, SystemAllocPolicy>;
+using ZoneVector = Vector<JS::Zone*, 4, SystemAllocPolicy>;
 
 class AutoMaybeStartBackgroundAllocation;
 class AutoRunParallelTask;
@@ -946,8 +946,8 @@ class GCRuntime
         Ok
     };
 
-    // Delete an empty zone group after its contents have been merged.
-    void deleteEmptyZoneGroup(ZoneGroup* group);
+    // Delete an empty zone after its contents have been merged.
+    void deleteEmptyZone(Zone* zone);
 
     // For ArenaLists::allocateFromArena()
     friend class ArenaLists;
@@ -1054,8 +1054,7 @@ class GCRuntime
                                               Zone* zone);
     void endSweepPhase(bool lastGC, AutoLockForExclusiveAccess& lock);
     bool allCCVisibleZonesWereCollected() const;
-    void sweepZones(FreeOp* fop, ZoneGroup* group, bool lastGC);
-    void sweepZoneGroups(FreeOp* fop, bool destroyingRuntime);
+    void sweepZones(FreeOp* fop, bool destroyingRuntime);
     void decommitAllWithoutUnlocking(const AutoLockGC& lock);
     void startDecommit();
     void queueZonesForBackgroundSweep(ZoneList& zones);
@@ -1098,15 +1097,14 @@ class GCRuntime
 
     /* Embedders can use this zone and group however they wish. */
     UnprotectedData<JS::Zone*> systemZone;
-    UnprotectedData<ZoneGroup*> systemZoneGroup;
 
-    // List of all zone groups (protected by the GC lock).
+    // All zones in the runtime, except the atoms zone.
   private:
-    ActiveThreadOrGCTaskData<ZoneGroupVector> groups_;
+    ActiveThreadOrGCTaskData<ZoneVector> zones_;
   public:
-    ZoneGroupVector& groups() { return groups_.ref(); }
+    ZoneVector& zones() { return zones_.ref(); }
 
-    // The unique atoms zone, which has no zone group.
+    // The unique atoms zone.
     WriteOnceData<Zone*> atomsZone;
 
   private:

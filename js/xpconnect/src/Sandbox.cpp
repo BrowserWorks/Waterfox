@@ -1075,7 +1075,7 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
     if (options.sameZoneAs)
         creationOptions.setExistingZone(js::UncheckedUnwrap(options.sameZoneAs));
     else if (options.freshZone)
-        creationOptions.setNewZoneInSystemZoneGroup();
+        creationOptions.setNewZone();
     else
         creationOptions.setSystemZone();
 

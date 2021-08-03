@@ -637,20 +637,20 @@ EnsureParserCreatedClasses(JSContext* cx, ParseTaskKind kind)
 
 class AutoClearUsedByHelperThread
 {
-    ZoneGroup* group;
+    Zone* zone;
 
   public:
     explicit AutoClearUsedByHelperThread(JSObject* global)
-      : group(global->zone()->group())
+      : zone(global->zone())
     {}
 
     void forget() {
-        group = nullptr;
+        zone = nullptr;
     }
 
     ~AutoClearUsedByHelperThread() {
-        if (group)
-            group->clearUsedByHelperThread();
+        if (zone)
+            zone->clearUsedByHelperThread();
     }
 };
 
@@ -668,7 +668,7 @@ CreateGlobalForOffThreadParse(JSContext* cx, ParseTaskKind kind,
 
     creationOptions.setInvisibleToDebugger(true)
                    .setMergeable(true)
-                   .setNewZoneInNewZoneGroup();
+                   .setNewZone();
 
     // Don't falsely inherit the host's global trace hook.
     creationOptions.setTrace(nullptr);
@@ -682,8 +682,8 @@ CreateGlobalForOffThreadParse(JSContext* cx, ParseTaskKind kind,
 
     // Mark this zone group as created for a helper thread. This prevents it
     // from being collected until clearUsedByHelperThread() is called.
-    ZoneGroup* group = global->zone()->group();
-    group->setCreatedForHelperThread();
+    Zone* zone = global->zone();
+    zone->setCreatedForHelperThread();
     clearUseGuard.emplace(global);
 
     // Initialize all classes required for parsing while still on the active
@@ -1947,10 +1947,10 @@ HelperThread::handleParseWorkload(AutoLockHelperThreadState& locked)
 
         JSContext* cx = TlsContext.get();
 
-        ZoneGroup* zoneGroup = task->parseGlobal->zoneFromAnyThread()->group();
-        zoneGroup->setHelperThreadOwnerContext(cx);
+        Zone* zone = task->parseGlobal->zoneFromAnyThread();
+        zone->setHelperThreadOwnerContext(cx);
         auto resetOwnerContext = mozilla::MakeScopeExit([&] {
-            zoneGroup->setHelperThreadOwnerContext(nullptr);
+            zone->setHelperThreadOwnerContext(nullptr);
         });
 
         AutoCompartment ac(cx, task->parseGlobal);

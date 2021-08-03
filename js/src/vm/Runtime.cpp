@@ -212,7 +212,7 @@ JSRuntime::init(JSContext* cx, uint32_t maxbytes, uint32_t maxNurseryBytes)
     if (!gc.init(maxbytes, maxNurseryBytes))
         return false;
 
-    ScopedJSDeletePtr<Zone> atomsZone(new_<Zone>(this, nullptr));
+    ScopedJSDeletePtr<Zone> atomsZone(new_<Zone>(this));
     if (!atomsZone || !atomsZone->init(true))
         return false;
 
@@ -787,17 +787,17 @@ JSRuntime::destroyAtomsAddedWhileSweepingTable()
 void
 JSRuntime::setUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(!zone->group()->usedByHelperThread());
+    MOZ_ASSERT(!zone->usedByHelperThread());
     MOZ_ASSERT(!zone->wasGCStarted());
-    zone->group()->setUsedByHelperThread();
+    zone->setUsedByHelperThread();
     numActiveHelperThreadZones++;
 }
 
 void
 JSRuntime::clearUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(zone->group()->usedByHelperThread());
-    zone->group()->clearUsedByHelperThread();
+    MOZ_ASSERT(zone->usedByHelperThread());
+    zone->clearUsedByHelperThread();
     numActiveHelperThreadZones--;
     JSContext* cx = mainContextFromOwnThread();
     if (gc.fullGCForAtomsRequested() && cx->canCollectAtoms())
@@ -817,7 +817,7 @@ js::CurrentThreadCanAccessZone(Zone* zone)
         return true;
 
     // Only zones marked for use by a helper thread can be used off thread.
-    return zone->usedByHelperThread() && zone->group()->ownedByCurrentHelperThread();
+    return zone->usedByHelperThread() && zone->ownedByCurrentHelperThread();
 }
 
 #ifdef DEBUG
