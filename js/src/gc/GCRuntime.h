@@ -965,7 +965,7 @@ class GCRuntime
     static void checkIncrementalZoneState(JSContext* cx, T* t);
     static TenuredCell* refillFreeListFromAnyThread(JSContext* cx, AllocKind thingKind,
                                                     size_t thingSize);
-    static TenuredCell* refillFreeListFromActiveCooperatingThread(JSContext* cx, AllocKind thingKind,
+    static TenuredCell* refillFreeListFromMainThread(JSContext* cx, AllocKind thingKind,
                                                                   size_t thingSize);
     static TenuredCell* refillFreeListFromHelperThread(JSContext* cx, AllocKind thingKind);
 

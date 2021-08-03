@@ -1036,7 +1036,7 @@ js::intl_Collator(JSContext* cx, unsigned argc, Value* vp)
 void
 CollatorObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(fop->onActiveCooperatingThread());
+    MOZ_ASSERT(fop->onMainThread());
 
     const Value& slot = obj->as<CollatorObject>().getReservedSlot(CollatorObject::UCOLLATOR_SLOT);
     if (UCollator* coll = static_cast<UCollator*>(slot.toPrivate()))
@@ -1606,7 +1606,7 @@ js::intl_NumberFormat(JSContext* cx, unsigned argc, Value* vp)
 void
 NumberFormatObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(fop->onActiveCooperatingThread());
+    MOZ_ASSERT(fop->onMainThread());
 
     const Value& slot =
         obj->as<NumberFormatObject>().getReservedSlot(NumberFormatObject::UNUMBER_FORMAT_SLOT);
@@ -2480,7 +2480,7 @@ js::intl_DateTimeFormat(JSContext* cx, unsigned argc, Value* vp)
 void
 DateTimeFormatObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(fop->onActiveCooperatingThread());
+    MOZ_ASSERT(fop->onMainThread());
 
     const Value& slot =
         obj->as<DateTimeFormatObject>().getReservedSlot(DateTimeFormatObject::UDATE_FORMAT_SLOT);
@@ -3556,7 +3556,7 @@ PluralRules(JSContext* cx, unsigned argc, Value* vp)
 void
 PluralRulesObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(fop->onActiveCooperatingThread());
+    MOZ_ASSERT(fop->onMainThread());
 
     const Value& slot =
         obj->as<PluralRulesObject>().getReservedSlot(PluralRulesObject::UPLURAL_RULES_SLOT);

@@ -100,7 +100,7 @@ class OptimizationInfo
     // value if off-thread compilation is not available, to avoid stalling the
     // active thread.
     uint32_t inlineMaxBytecodePerCallSiteHelperThread_;
-    uint32_t inlineMaxBytecodePerCallSiteActiveCooperatingThread_;
+    uint32_t inlineMaxBytecodePerCallSiteMainThread_;
 
     // The maximum value we allow for baselineScript->inlinedBytecodeLength_
     // when inlining.
@@ -249,7 +249,7 @@ class OptimizationInfo
     uint32_t inlineMaxBytecodePerCallSite(bool offThread) const {
         return (offThread || !JitOptions.limitScriptSize)
                ? inlineMaxBytecodePerCallSiteHelperThread_
-               : inlineMaxBytecodePerCallSiteActiveCooperatingThread_;
+               : inlineMaxBytecodePerCallSiteMainThread_;
     }
 
     uint16_t inlineMaxCalleeInlinedBytecodeLength() const {

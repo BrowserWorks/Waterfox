@@ -145,8 +145,8 @@ GetSelectorRuntime(const CompilationSelector& selector)
 {
     struct Matcher
     {
-        JSRuntime* match(JSScript* script)    { return script->runtimeFromActiveCooperatingThread(); }
-        JSRuntime* match(JSCompartment* comp) { return comp->runtimeFromActiveCooperatingThread(); }
+        JSRuntime* match(JSScript* script)    { return script->runtimeFromMainThread(); }
+        JSRuntime* match(JSCompartment* comp) { return comp->runtimeFromMainThread(); }
         JSRuntime* match(ZonesInState zbs)    { return zbs.runtime; }
         JSRuntime* match(JSRuntime* runtime)  { return runtime; }
         JSRuntime* match(AllCompilations all) { return nullptr; }
@@ -245,7 +245,7 @@ js::CancelOffThreadIonCompile(const CompilationSelector& selector, bool discardL
     for (size_t i = 0; i < finished.length(); i++) {
         jit::IonBuilder* builder = finished[i];
         if (IonBuilderMatches(selector, builder)) {
-            builder->script()->runtimeFromActiveCooperatingThread()->jitRuntime()->numFinishedBuildersRef(lock)--;
+            builder->script()->runtimeFromMainThread()->jitRuntime()->numFinishedBuildersRef(lock)--;
             jit::FinishOffThreadBuilder(nullptr, builder, lock);
             HelperThreadState().remove(finished, &i);
         }
@@ -293,7 +293,7 @@ js::HasOffThreadIonCompile(JSCompartment* comp)
             return true;
     }
 
-    JSRuntime* rt = comp->runtimeFromActiveCooperatingThread();
+    JSRuntime* rt = comp->runtimeFromMainThread();
     jit::IonBuilder* builder = rt->jitRuntime()->ionLazyLinkList(rt).getFirst();
     while (builder) {
         if (builder->script()->compartment() == comp)
@@ -1373,7 +1373,7 @@ TimeSince(TimeStamp prev)
 }
 
 void
-js::GCParallelTask::runFromActiveCooperatingThread(JSRuntime* rt)
+js::GCParallelTask::runFromMainThread(JSRuntime* rt)
 {
     MOZ_ASSERT(state == NotStarted);
     MOZ_ASSERT(js::CurrentThreadCanAccessRuntime(rt));

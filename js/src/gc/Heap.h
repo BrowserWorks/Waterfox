@@ -39,7 +39,7 @@ class AutoLockGC;
 class FreeOp;
 
 extern bool
-RuntimeFromActiveCooperatingThreadIsHeapMajorCollecting(JS::shadow::Zone* shadowZone);
+RuntimeFromMainThreadIsHeapMajorCollecting(JS::shadow::Zone* shadowZone);
 
 #ifdef DEBUG
 
@@ -260,7 +260,7 @@ struct Cell
     MOZ_ALWAYS_INLINE bool isMarkedBlack() const;
     MOZ_ALWAYS_INLINE bool isMarkedGray() const;
 
-    inline JSRuntime* runtimeFromActiveCooperatingThread() const;
+    inline JSRuntime* runtimeFromMainThread() const;
 
     // Note: Unrestricted access to the runtime of a GC thing from an arbitrary
     // thread can easily lead to races. Use this method very carefully.
@@ -1221,7 +1221,7 @@ Cell::isMarkedGray() const
 }
 
 inline JSRuntime*
-Cell::runtimeFromActiveCooperatingThread() const
+Cell::runtimeFromMainThread() const
 {
     JSRuntime* rt = chunk()->trailer.runtime;
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt));
@@ -1390,7 +1390,7 @@ TenuredCell::readBarrier(TenuredCell* thing)
     JS::shadow::Zone* shadowZone = thing->shadowZoneFromAnyThread();
     if (shadowZone->needsIncrementalBarrier()) {
         // Barriers are only enabled on the active thread and are disabled while collecting.
-        MOZ_ASSERT(!RuntimeFromActiveCooperatingThreadIsHeapMajorCollecting(shadowZone));
+        MOZ_ASSERT(!RuntimeFromMainThreadIsHeapMajorCollecting(shadowZone));
         Cell* tmp = thing;
         TraceManuallyBarrieredGenericPointerEdge(shadowZone->barrierTracer(), &tmp, "read barrier");
         MOZ_ASSERT(tmp == thing);
@@ -1399,7 +1399,7 @@ TenuredCell::readBarrier(TenuredCell* thing)
     if (thing->isMarkedGray()) {
         // There shouldn't be anything marked grey unless we're on the active thread.
         MOZ_ASSERT(CurrentThreadCanAccessRuntime(thing->runtimeFromAnyThread()));
-        if (!RuntimeFromActiveCooperatingThreadIsHeapMajorCollecting(shadowZone))
+        if (!RuntimeFromMainThreadIsHeapMajorCollecting(shadowZone))
             JS::UnmarkGrayGCThingRecursively(JS::GCCellPtr(thing, thing->getTraceKind()));
     }
 }
@@ -1432,7 +1432,7 @@ TenuredCell::writeBarrierPre(TenuredCell* thing)
 
     JS::shadow::Zone* shadowZone = thing->shadowZoneFromAnyThread();
     if (shadowZone->needsIncrementalBarrier()) {
-        MOZ_ASSERT(!RuntimeFromActiveCooperatingThreadIsHeapMajorCollecting(shadowZone));
+        MOZ_ASSERT(!RuntimeFromMainThreadIsHeapMajorCollecting(shadowZone));
         Cell* tmp = thing;
         TraceManuallyBarrieredGenericPointerEdge(shadowZone->barrierTracer(), &tmp, "pre barrier");
         MOZ_ASSERT(tmp == thing);

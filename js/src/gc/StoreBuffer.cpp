@@ -126,7 +126,7 @@ ArenaCellSet*
 js::gc::AllocateWholeCellSet(Arena* arena)
 {
     Zone* zone = arena->zone;
-    JSRuntime* rt = zone->runtimeFromActiveCooperatingThread();
+    JSRuntime* rt = zone->runtimeFromMainThread();
     if (!rt->gc.nursery().isEnabled())
         return nullptr;
 

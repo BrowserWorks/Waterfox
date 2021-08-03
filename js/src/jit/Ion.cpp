@@ -385,7 +385,7 @@ JitRuntime::ionLazyLinkListRemove(JSRuntime* rt, jit::IonBuilder* builder)
 {
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt),
                "Should only be mutated by the active thread.");
-    MOZ_ASSERT(rt == builder->script()->runtimeFromActiveCooperatingThread());
+    MOZ_ASSERT(rt == builder->script()->runtimeFromMainThread());
     MOZ_ASSERT(ionLazyLinkListSize_ > 0);
 
     builder->removeFrom(ionLazyLinkList(rt));
@@ -399,7 +399,7 @@ JitRuntime::ionLazyLinkListAdd(JSRuntime* rt, jit::IonBuilder* builder)
 {
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt),
                "Should only be mutated by the active thread.");
-    MOZ_ASSERT(rt == builder->script()->runtimeFromActiveCooperatingThread());
+    MOZ_ASSERT(rt == builder->script()->runtimeFromMainThread());
     ionLazyLinkList(rt).insertFront(builder);
     ionLazyLinkListSize_++;
 }

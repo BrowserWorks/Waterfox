@@ -202,7 +202,7 @@ void
 CompileZone::setMinorGCShouldCancelIonCompilations()
 {
     MOZ_ASSERT(CurrentThreadCanAccessZone(zone()));
-    JSRuntime* rt = zone()->runtimeFromActiveCooperatingThread();
+    JSRuntime* rt = zone()->runtimeFromMainThread();
     rt->gc.storeBuffer().setShouldCancelIonCompilations();
 }
 
