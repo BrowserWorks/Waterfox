@@ -94,8 +94,11 @@ extern MOZ_THREAD_LOCAL(JSContext*) TlsContext;
 
 enum class ContextKind
 {
-    Cooperative,
-    Background
+    // Context for the main thread of a JSRuntime.
+    MainThread,
+
+    // Context for a helper thread.
+    HelperThread
 };
 
 } /* namespace js */
@@ -131,7 +134,7 @@ struct JSContext : public JS::RootingContext,
     // currently operating on.
     void setRuntime(JSRuntime* rt);
 
-    bool isCooperativelyScheduled() const { return kind_ == js::ContextKind::Cooperative; }
+    bool isMainThreadContext() const { return kind_ == js::ContextKind::MainThread; }
     size_t threadNative() const { return threadNative_; }
 
     inline js::gc::ArenaLists* arenas() const { return arenas_; }

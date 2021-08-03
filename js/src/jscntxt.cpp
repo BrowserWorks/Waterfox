@@ -102,7 +102,7 @@ bool
 JSContext::init(ContextKind kind)
 {
     // Skip most of the initialization if this thread will not be running JS.
-    if (kind == ContextKind::Cooperative) {
+    if (kind == ContextKind::MainThread) {
         // Get a platform-native handle for this thread, used by js::InterruptRunningJitCode.
 #ifdef XP_WIN
         size_t openFlags = THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME |
@@ -164,7 +164,7 @@ js::NewContext(uint32_t maxBytes, uint32_t maxNurseryBytes, JSRuntime* parentRun
         return nullptr;
     }
 
-    if (!cx->init(ContextKind::Cooperative)) {
+    if (!cx->init(ContextKind::MainThread)) {
         runtime->destroyRuntime();
         js_delete(cx);
         js_delete(runtime);
@@ -1269,7 +1269,7 @@ JSContext::alreadyReportedError()
 
 JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
   : runtime_(runtime),
-    kind_(ContextKind::Background),
+    kind_(ContextKind::HelperThread),
     threadNative_(0),
     helperThread_(nullptr),
     options_(options),
@@ -1368,7 +1368,7 @@ JSContext::~JSContext()
 {
     // Clear the ContextKind first, so that ProtectedData checks will allow us to
     // destroy this context even if the runtime is already gone.
-    kind_ = ContextKind::Background;
+    kind_ = ContextKind::HelperThread;
 
 #ifdef XP_WIN
     if (threadNative_)
