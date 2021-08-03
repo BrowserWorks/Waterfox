@@ -885,7 +885,7 @@ XPCJSRuntime::WeakPointerZonesCallback(JSContext* cx, void* data)
 /* static */ void
 XPCJSRuntime::WeakPointerCompartmentCallback(JSContext* cx, JSCompartment* comp, void* data)
 {
-    // Called immediately after the ZoneGroup weak pointer callback, but only
+    // Called immediately after the Zone weak pointer callback, but only
     // once for each compartment that is being swept.
     CompartmentPrivate* xpcComp = CompartmentPrivate::Get(comp);
     if (xpcComp)

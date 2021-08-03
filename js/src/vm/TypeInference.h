@@ -1374,7 +1374,7 @@ class TypeZone
 
   public:
     // Current generation for sweeping.
-    ZoneGroupOrGCTaskOrIonCompileData<uint32_t> generation;
+    ZoneOrGCTaskOrIonCompileData<uint32_t> generation;
 
     /*
      * All Ion compilations that have occured in this zone, for indexing via

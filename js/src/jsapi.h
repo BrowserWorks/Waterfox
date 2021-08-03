@@ -1723,7 +1723,7 @@ JS_RemoveFinalizeCallback(JSContext* cx, JSFinalizeCallback cb);
  *
  * To handle this, any part of the system that maintain weak pointers to
  * JavaScript GC things must register a callback with
- * JS_(Add,Remove)WeakPointer{ZoneGroup,Compartment}Callback(). This callback
+ * JS_(Add,Remove)WeakPointer{Zone,Compartment}Callback(). This callback
  * must then call JS_UpdateWeakPointerAfterGC() on all weak pointers it knows
  * about.
  *

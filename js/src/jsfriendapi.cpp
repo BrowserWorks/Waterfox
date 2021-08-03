@@ -1488,12 +1488,6 @@ js::SetCompartmentValidAccessPtr(JSContext* cx, JS::HandleObject global, bool* a
     global->compartment()->setValidAccessPtr(accessp);
 }
 
-JS_FRIEND_API(void)
-js::SetCooperativeYieldCallback(JSContext* cx, YieldCallback callback)
-{
-    cx->setYieldCallback(callback);
-}
-
 JS_FRIEND_API(bool)
 js::SystemZoneAvailable(JSContext* cx)
 {

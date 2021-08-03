@@ -680,7 +680,7 @@ CreateGlobalForOffThreadParse(JSContext* cx, ParseTaskKind kind,
 
     JS_SetCompartmentPrincipals(global->compartment(), currentCompartment->principals());
 
-    // Mark this zone group as created for a helper thread. This prevents it
+    // Mark this zone as created for a helper thread. This prevents it
     // from being collected until clearUsedByHelperThread() is called.
     Zone* zone = global->zone();
     zone->setCreatedForHelperThread();

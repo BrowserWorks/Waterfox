@@ -198,8 +198,8 @@ js::DestroyContext(JSContext* cx)
 
     cx->checkNoGCRooters();
 
-    // Cancel all off thread Ion compiles before destroying a cooperative
-    // context. Completed Ion compiles may try to interrupt arbitrary
+    // Cancel all off thread Ion compiles.
+    // Completed Ion compiles may try to interrupt arbitrary
     // cooperative contexts which they have read off the owner context of a
     // zone group. See HelperThread::handleIonWorkload.
     CancelOffThreadIonCompile(cx->runtime());
