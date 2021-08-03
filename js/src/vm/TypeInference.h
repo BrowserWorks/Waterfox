@@ -1367,7 +1367,7 @@ class TypeZone
 
     /* Pool for type information in this zone. */
     static const size_t TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE = 8 * 1024;
-    ZoneGroupData<LifoAlloc> typeLifoAlloc_;
+    ZoneData<LifoAlloc> typeLifoAlloc_;
 
     TypeZone(const TypeZone&) = delete;
     void operator=(const TypeZone&) = delete;
@@ -1382,26 +1382,26 @@ class TypeZone
      * invalidated compilations are swept on GC.
      */
     typedef Vector<CompilerOutput, 4, SystemAllocPolicy> CompilerOutputVector;
-    ZoneGroupData<CompilerOutputVector*> compilerOutputs;
+    ZoneData<CompilerOutputVector*> compilerOutputs;
 
     // During incremental sweeping, allocator holding the old type information
     // for the zone.
-    ZoneGroupData<LifoAlloc> sweepTypeLifoAlloc;
+    ZoneData<LifoAlloc> sweepTypeLifoAlloc;
 
     // During incremental sweeping, the old compiler outputs for use by
     // recompile indexes with a stale generation.
-    ZoneGroupData<CompilerOutputVector*> sweepCompilerOutputs;
+    ZoneData<CompilerOutputVector*> sweepCompilerOutputs;
 
     // During incremental sweeping, whether to try to destroy all type
     // information attached to scripts.
-    ZoneGroupData<bool> sweepReleaseTypes;
+    ZoneData<bool> sweepReleaseTypes;
 
-    ZoneGroupData<bool> sweepingTypes;
+    ZoneData<bool> sweepingTypes;
 
-    ZoneGroupData<bool> keepTypeScripts;
+    ZoneData<bool> keepTypeScripts;
 
     // The topmost AutoEnterAnalysis on the stack, if there is one.
-    ZoneGroupData<AutoEnterAnalysis*> activeAnalysis;
+    ZoneData<AutoEnterAnalysis*> activeAnalysis;
 
     explicit TypeZone(JS::Zone* zone);
     ~TypeZone();

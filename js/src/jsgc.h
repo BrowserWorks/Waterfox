@@ -629,7 +629,7 @@ class ArenaLists
      * GC we only move the head of the of the list of spans back to the arena
      * only for the arena that was not fully allocated.
      */
-    ZoneGroupData<AllAllocKindArray<FreeSpan*>> freeLists_;
+    ZoneData<AllAllocKindArray<FreeSpan*>> freeLists_;
     FreeSpan*& freeLists(AllocKind i) { return freeLists_.ref()[i]; }
     FreeSpan* freeLists(AllocKind i) const { return freeLists_.ref()[i]; }
 
@@ -663,18 +663,18 @@ class ArenaLists
 
     // Arena lists which have yet to be swept, but need additional foreground
     // processing before they are swept.
-    ZoneGroupData<Arena*> gcShapeArenasToUpdate;
-    ZoneGroupData<Arena*> gcAccessorShapeArenasToUpdate;
-    ZoneGroupData<Arena*> gcScriptArenasToUpdate;
-    ZoneGroupData<Arena*> gcObjectGroupArenasToUpdate;
+    ZoneData<Arena*> gcShapeArenasToUpdate;
+    ZoneData<Arena*> gcAccessorShapeArenasToUpdate;
+    ZoneData<Arena*> gcScriptArenasToUpdate;
+    ZoneData<Arena*> gcObjectGroupArenasToUpdate;
 
     // While sweeping type information, these lists save the arenas for the
     // objects which have already been finalized in the foreground (which must
     // happen at the beginning of the GC), so that type sweeping can determine
     // which of the object pointers are marked.
-    ZoneGroupData<ObjectAllocKindArray<ArenaList>> savedObjectArenas_;
+    ZoneData<ObjectAllocKindArray<ArenaList>> savedObjectArenas_;
     ArenaList& savedObjectArenas(AllocKind i) { return savedObjectArenas_.ref()[i]; }
-    ZoneGroupData<Arena*> savedEmptyObjectArenas;
+    ZoneData<Arena*> savedEmptyObjectArenas;
 
   public:
     explicit ArenaLists(JSRuntime* rt, JS::Zone* zone);
