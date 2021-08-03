@@ -545,7 +545,7 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
     bool activeThreadHasExclusiveAccess;
 #endif
 
-    /* Number of zones which may be operated on by non-cooperating helper threads. */
+    // Number of zones which may be operated on by helper threads.
     js::UnprotectedData<size_t> numActiveHelperThreadZones;
 
     friend class js::AutoLockForExclusiveAccess;
