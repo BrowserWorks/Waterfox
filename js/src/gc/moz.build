@@ -26,7 +26,6 @@ UNIFIED_SOURCES += [
     'Tracer.cpp',
     'Verifier.cpp',
     'Zone.cpp',
-    'ZoneGroup.cpp',
 ]
 
 # StoreBuffer.cpp cannot be built in unified because its template
