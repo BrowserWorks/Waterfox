@@ -35,7 +35,7 @@ const TabFeatures = {
   },
 
   setPrefs() {
-    PrefUtils.set(this.PREF_ACTIVETAB, true, true);
+    PrefUtils.set(this.PREF_ACTIVETAB, false, true);
     PrefUtils.set(this.PREF_REQUIRECONFIRM, true, true);
     PrefUtils.set(this.PREF_PURGECACHE, true, true);
   },
