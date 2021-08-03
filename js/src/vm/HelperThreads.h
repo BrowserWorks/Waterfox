@@ -256,7 +256,7 @@ class GlobalHelperThreadState
         return Move(firstWasmError);
     }
     void noteWasmFailure(const AutoLockHelperThreadState&) {
-        // Be mindful to signal the active thread after calling this function.
+        // Be mindful to signal the main thread after calling this function.
         numWasmFailedJobs++;
     }
     void setWasmError(const AutoLockHelperThreadState&, UniqueChars error) {
@@ -291,7 +291,7 @@ class GlobalHelperThreadState
   private:
     /*
      * Number of wasm jobs that encountered failure for the active module.
-     * Their parent is logically the active thread, and this number serves for harvesting.
+     * Their parent is logically the main thread, and this number serves for harvesting.
      */
     uint32_t numWasmFailedJobs;
     /*

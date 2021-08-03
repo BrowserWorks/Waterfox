@@ -153,7 +153,7 @@ class FreeOp : public JSFreeOp
     }
 
     bool maybeOnHelperThread() const {
-        // Sometimes background finalization happens on the active thread so
+        // Sometimes background finalization happens on the main thread so
         // runtime_ being null doesn't always mean we are off thread.
         return !runtime_;
     }
@@ -538,7 +538,7 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
      * be accessed simultaneously by multiple threads.
      *
      * Locking this only occurs if there is actually a thread other than the
-     * active thread which could access such data.
+     * main thread which could access such data.
      */
     js::Mutex exclusiveAccessLock;
 #ifdef DEBUG

@@ -376,7 +376,7 @@ JitRuntime::IonBuilderList&
 JitRuntime::ionLazyLinkList(JSRuntime* rt)
 {
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt),
-               "Should only be mutated by the active thread.");
+               "Should only be mutated by the main thread.");
     return ionLazyLinkList_.ref();
 }
 
@@ -384,7 +384,7 @@ void
 JitRuntime::ionLazyLinkListRemove(JSRuntime* rt, jit::IonBuilder* builder)
 {
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt),
-               "Should only be mutated by the active thread.");
+               "Should only be mutated by the main thread.");
     MOZ_ASSERT(rt == builder->script()->runtimeFromMainThread());
     MOZ_ASSERT(ionLazyLinkListSize_ > 0);
 
@@ -398,7 +398,7 @@ void
 JitRuntime::ionLazyLinkListAdd(JSRuntime* rt, jit::IonBuilder* builder)
 {
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt),
-               "Should only be mutated by the active thread.");
+               "Should only be mutated by the main thread.");
     MOZ_ASSERT(rt == builder->script()->runtimeFromMainThread());
     ionLazyLinkList(rt).insertFront(builder);
     ionLazyLinkListSize_++;
@@ -422,7 +422,7 @@ void
 JitRuntime::patchIonBackedges(JSContext* cx, BackedgeTarget target)
 {
     if (target == BackedgeLoopHeader) {
-        // We must be on the active thread. The caller must use
+        // We must be on the main thread. The caller must use
         // AutoPreventBackedgePatching to ensure we don't reenter.
         MOZ_ASSERT(cx->runtime()->jitRuntime()->preventBackedgePatching());
         MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
@@ -2492,9 +2492,9 @@ bool
 jit::OffThreadCompilationAvailable(JSContext* cx)
 {
     // Even if off thread compilation is enabled, compilation must still occur
-    // on the active thread in some cases.
+    // on the main thread in some cases.
     //
-    // Require cpuCount > 1 so that Ion compilation jobs and active-thread
+    // Require cpuCount > 1 so that Ion compilation jobs and main-thread
     // execution are not competing for the same resources.
     return cx->runtime()->canUseOffthreadIonCompilation()
         && HelperThreadState().cpuCount > 1

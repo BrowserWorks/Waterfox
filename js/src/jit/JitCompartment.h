@@ -581,7 +581,7 @@ class JitCompartment
     }
 
     // This function is used to call the read barrier, to mark the SIMD template
-    // type as used. This function can only be called from the active thread.
+    // type as used. This function can only be called from the main thread.
     void registerSimdTemplateObjectFor(SimdType type) {
         ReadBarrieredObject& tpl = simdTemplateObjects_[type];
         MOZ_ASSERT(tpl.unbarrieredGet());

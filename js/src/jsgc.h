@@ -172,7 +172,7 @@ CanBeFinalizedInBackground(AllocKind kind, const Class* clasp)
     MOZ_ASSERT(IsObjectAllocKind(kind));
     /* If the class has no finalizer or a finalizer that is safe to call on
      * a different thread, we change the alloc kind. For example,
-     * AllocKind::OBJECT0 calls the finalizer on the active thread,
+     * AllocKind::OBJECT0 calls the finalizer on the main thread,
      * AllocKind::OBJECT0_BACKGROUND calls the finalizer on the gcHelperThread.
      * IsBackgroundFinalized is called to prevent recursively incrementing
      * the alloc kind; kind may already be a background finalize kind.
@@ -859,7 +859,7 @@ NotifyGCPostSwap(JSObject* a, JSObject* b, unsigned preResult);
  * that can be swept and allocated off thread.
  *
  * In non-threadsafe builds, all actual sweeping and allocation is performed
- * on the active thread, but GCHelperState encapsulates this from clients as
+ * on the main thread, but GCHelperState encapsulates this from clients as
  * much as possible.
  */
 class GCHelperState
@@ -872,7 +872,7 @@ class GCHelperState
     // Associated runtime.
     JSRuntime* const rt;
 
-    // Condvar for notifying the active thread when work has finished. This is
+    // Condvar for notifying the main thread when work has finished. This is
     // associated with the runtime's GC lock --- the worker thread state
     // condvars can't be used here due to lock ordering issues.
     js::ConditionVariable done;
