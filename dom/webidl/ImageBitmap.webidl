@@ -10,25 +10,10 @@
  * http://w3c.github.io/mediacapture-worker/#imagebitmap-extensions
  */
 
-// Extensions
-// Bug 1141979 - [FoxEye] Extend ImageBitmap with interfaces to access its
-// underlying image data
-//
-// Note:
-// Our overload resolution implementation doesn't deal with a union as the
-// distinguishing argument which means we cannot overload functions via union
-// types, a.k.a. we cannot overload createImageBitmap() via ImageBitmapSource
-// and BufferSource. Here, we work around this issue by adding the BufferSource
-// into ImageBitmapSource.
-
-typedef (HTMLImageElement or
-         HTMLVideoElement or
-         HTMLCanvasElement or
+typedef (CanvasImageSource or
          Blob or
-         ImageData or
-         CanvasRenderingContext2D or
-         ImageBitmap or
-         BufferSource) ImageBitmapSource;
+         CanvasRenderingContext2D or // This is out of spec.
+         ImageData) ImageBitmapSource;
 
 [Exposed=(Window,Worker)]
 interface ImageBitmap {
@@ -401,12 +386,3 @@ dictionary ChannelPixelLayout {
 };
 
 typedef sequence<ChannelPixelLayout> ImagePixelLayout;
-
-partial interface ImageBitmap {
-    [Throws, Func="mozilla::dom::ImageBitmap::ExtensionsEnabled"]
-    ImageBitmapFormat               findOptimalFormat (optional sequence<ImageBitmapFormat> aPossibleFormats);
-    [Throws, Func="mozilla::dom::ImageBitmap::ExtensionsEnabled"]
-    long                            mappedDataLength (ImageBitmapFormat aFormat);
-    [Throws, Func="mozilla::dom::ImageBitmap::ExtensionsEnabled"]
-    Promise<ImagePixelLayout> mapDataInto (ImageBitmapFormat aFormat, BufferSource aBuffer, long aOffset);
-};

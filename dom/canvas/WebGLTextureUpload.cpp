@@ -12,6 +12,7 @@
 #include "GLBlitHelper.h"
 #include "GLContext.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/dom/HTMLCanvasElement.h"
 #include "mozilla/dom/HTMLVideoElement.h"
 #include "mozilla/dom/ImageBitmap.h"
 #include "mozilla/dom/ImageData.h"
@@ -214,9 +215,18 @@ FromPboOffset(WebGLContext* webgl, const char* funcName, TexImageTarget target,
 static UniquePtr<webgl::TexUnpackBlob>
 FromImageBitmap(WebGLContext* webgl, const char* funcName, TexImageTarget target,
               uint32_t width, uint32_t height, uint32_t depth,
-              const dom::ImageBitmap& imageBitmap)
+              const dom::ImageBitmap& imageBitmap, ErrorResult* aRv)
 {
+    if (imageBitmap.IsWriteOnly()) {
+        aRv->Throw(NS_ERROR_DOM_SECURITY_ERR);
+        return nullptr;
+    }
+
     UniquePtr<dom::ImageBitmapCloneData> cloneData = Move(imageBitmap.ToCloneData());
+    if (!cloneData) {
+        return nullptr;
+    }
+    
     const RefPtr<gfx::DataSourceSurface> surf = cloneData->mSurface;
 
     if (!width) {
@@ -288,6 +298,14 @@ WebGLContext::FromDomElem(const char* funcName, TexImageTarget target, uint32_t 
                           uint32_t height, uint32_t depth, const dom::Element& elem,
                           ErrorResult* const out_error)
 {
+    if (elem.IsHTMLElement(nsGkAtoms::canvas)) {
+        const dom::HTMLCanvasElement* canvas = static_cast<const dom::HTMLCanvasElement*>(&elem);
+        if (canvas->IsWriteOnly()) {
+            out_error->Throw(NS_ERROR_DOM_SECURITY_ERR);
+            return nullptr;
+        }
+    }
+
     // The canvas spec says that drawImage should draw the first frame of
     // animated images. The webgl spec doesn't mention the issue, so we do the
     // same as drawImage.
@@ -409,7 +427,7 @@ WebGLContext::From(const char* funcName, TexImageTarget target, GLsizei rawWidth
 
     if (src.mImageBitmap) {
         return FromImageBitmap(this, funcName, target, width, height, depth,
-                               *(src.mImageBitmap));
+                               *(src.mImageBitmap), src.mOut_error);
     }
 
     if (src.mImageData) {

@@ -220,9 +220,9 @@ public:
   nsIntSize GetSize();
 
   /**
-   * Determine whether the canvas is write-only.
+   * Determine whether the canvas is write-only (tainted).
    */
-  bool IsWriteOnly();
+  bool IsWriteOnly() const;
 
   /**
    * Force the canvas to be write-only.
