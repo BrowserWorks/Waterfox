@@ -35,24 +35,14 @@ class ZoneGroup
     JSRuntime* const runtime;
 
   private:
-    // The context with exclusive access to this zone group.
-    UnprotectedData<CooperatingContext> ownerContext_;
-
-    // The number of times the context has entered this zone group.
-    UnprotectedData<size_t> enterCount;
-
-    // If this flag is true, then we may need to block before entering this zone
-    // group. Blocking happens using JSContext::yieldToEmbedding.
-    UnprotectedData<bool> useExclusiveLocking;
+    // The helper thread context with exclusive access to this zone group, if
+    // usedByHelperThread(), or nullptr when on the main thread.
+    UnprotectedData<JSContext*> helperThreadOwnerContext_;
 
   public:
-    CooperatingContext& ownerContext() { return ownerContext_.ref(); }
-    void* addressOfOwnerContext() { return &ownerContext_.ref().cx; }
-
-    void enter(JSContext* cx);
-    void leave();
-    bool ownedByCurrentThread();
-
+    bool ownedByCurrentHelperThread();
+    void setHelperThreadOwnerContext(JSContext* cx);
+  
     // All zones in the group.
   private:
     ZoneGroupOrGCTaskData<ZoneVector> zones_;
@@ -101,9 +91,6 @@ class ZoneGroup
 
     inline bool isCollecting();
     inline bool isGCScheduled();
-
-    // See the useExclusiveLocking field above.
-    void setUseExclusiveLocking() { useExclusiveLocking = true; }
 
     // Delete an empty zone after its contents have been merged.
     void deleteEmptyZone(Zone* zone);

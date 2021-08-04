@@ -80,7 +80,7 @@ CheckZoneGroup<Helper>::check() const
     JSContext* cx = TlsContext.get();
     if (group) {
         if (group->usedByHelperThread()) {
-            MOZ_ASSERT(group->ownedByCurrentThread());
+            MOZ_ASSERT(group->ownedByCurrentHelperThread());
         } else {
             // This check is disabled on windows for the same reason as in
             // CheckActiveThread.

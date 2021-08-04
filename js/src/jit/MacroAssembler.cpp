@@ -1181,19 +1181,7 @@ MacroAssembler::typeOfObject(Register obj, Register scratch, Label* slow,
 void
 MacroAssembler::loadJSContext(Register dest)
 {
-    CompileCompartment* compartment = GetJitContext()->compartment;
-    if (compartment->zone()->isAtomsZone()) {
-        // If we are in the atoms zone then we are generating a runtime wide
-        // trampoline which can run in any zone. Load the context which is
-        // currently running using cooperative scheduling in the runtime.
-        // (This will need to be fixed when we have preemptive scheduling,
-        // bug 1323066).
-        loadPtr(AbsoluteAddress(GetJitContext()->runtime->addressOfActiveJSContext()), dest);
-    } else {
-        // If we are in a specific zone then the current context will be stored
-        // in the containing zone group.
-        loadPtr(AbsoluteAddress(GetJitContext()->compartment->zone()->addressOfJSContext()), dest);
-    }
+    movePtr(ImmPtr(GetJitContext()->runtime->mainContextPtr()), dest);
 }
 
 void
@@ -1804,7 +1792,7 @@ MacroAssembler::outOfLineTruncateSlow(FloatRegister src, Register dest, bool wid
         passABIArg(src, MoveOp::DOUBLE);
         callWithABI(mozilla::BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
     }
-    storeCallWordResult(dest);
+    storeCallInt32Result(dest);
 
 #if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64) || \
     defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
@@ -2815,10 +2803,8 @@ MacroAssembler::wasmAssertNonExitInvariants(Register activation)
 void
 MacroAssembler::wasmEmitStackCheck(Register sp, Register scratch, Label* onOverflow)
 {
-    loadPtr(Address(WasmTlsReg, offsetof(wasm::TlsData, addressOfContext)), scratch);
-    loadPtr(Address(scratch, 0), scratch);
     branchPtr(Assembler::AboveOrEqual,
-              Address(scratch, offsetof(JSContext, jitStackLimitNoInterrupt)),
+              Address(WasmTlsReg, offsetof(wasm::TlsData, stackLimit)),
               sp,
               onOverflow);
 }

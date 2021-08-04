@@ -182,8 +182,7 @@ gc::GCRuntime::startVerifyPreBarriers()
 
     if (IsIncrementalGCUnsafe(rt) != AbortReason::None ||
         TlsContext.get()->keepAtoms ||
-        rt->hasHelperThreadZones() ||
-        rt->cooperatingContexts().length() != 1)
+        rt->hasHelperThreadZones())
     {
         return;
     }
@@ -331,7 +330,7 @@ gc::GCRuntime::endVerifyPreBarriers()
 
     MOZ_ASSERT(!JS::IsGenerationalGCEnabled(rt));
 
-    AutoPrepareForTracing prep(rt->activeContextFromOwnThread(), SkipAtoms);
+    AutoPrepareForTracing prep(rt->mainContextFromOwnThread(), SkipAtoms);
 
     bool compartmentCreated = false;
 

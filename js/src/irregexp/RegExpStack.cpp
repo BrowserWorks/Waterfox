@@ -44,7 +44,7 @@ RegExpStackScope::~RegExpStackScope()
     regexp_stack->reset();
 }
 
-int
+bool
 irregexp::GrowBacktrackStack(JSRuntime* rt)
 {
     return TlsContext.get()->regexpStack.ref().grow();

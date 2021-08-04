@@ -1605,12 +1605,13 @@ class MacroAssembler : public MacroAssemblerSpecific
             storeTypedOrValue(src.reg(), dest);
     }
 
-    void storeCallWordResult(Register reg) {
+    void storeCallPointerResult(Register reg) {
         if (reg != ReturnReg)
             mov(ReturnReg, reg);
     }
 
     inline void storeCallBoolResult(Register reg);
+    inline void storeCallInt32Result(Register reg);
 
     void storeCallFloatResult(FloatRegister reg) {
         if (reg != ReturnDoubleReg)
@@ -2210,6 +2211,15 @@ class MacroAssembler : public MacroAssemblerSpecific
     void alignJitStackBasedOnNArgs(uint32_t nargs);
 
     inline void assertStackAlignment(uint32_t alignment, int32_t offset = 0);
+};
+
+// StackMacroAssembler checks no GC will happen while it's on the stack.
+class MOZ_RAII StackMacroAssembler : public MacroAssembler {
+  JS::AutoCheckCannotGC nogc;
+
+public:
+  StackMacroAssembler() : MacroAssembler() {}
+  explicit StackMacroAssembler(JSContext* cx) : MacroAssembler(cx) {}
 };
 
 static inline Assembler::DoubleCondition

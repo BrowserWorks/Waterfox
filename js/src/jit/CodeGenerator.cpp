@@ -1610,7 +1610,7 @@ CreateDependentString::generateFallback(MacroAssembler& masm, LiveRegisterSet re
         masm.callWithABI(kind == FallbackKind::FatInlineString
                          ? JS_FUNC_TO_DATA_PTR(void*, AllocateFatInlineString)
                          : JS_FUNC_TO_DATA_PTR(void*, AllocateString));
-        masm.storeCallWordResult(string_);
+        masm.storeCallPointerResult(string_);
 
         masm.PopRegsInMask(regsToSave);
 
@@ -1648,7 +1648,7 @@ CreateMatchResultFallback(MacroAssembler& masm, LiveRegisterSet regsToSave,
     masm.move32(Imm32(int32_t(templateObj->as<NativeObject>().numDynamicSlots())), temp5);
     masm.passABIArg(temp5);
     masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, CreateMatchResultFallbackFunc));
-    masm.storeCallWordResult(object);
+    masm.storeCallPointerResult(object);
 
     masm.PopRegsInMask(regsToSave);
 
@@ -4866,13 +4866,9 @@ CodeGenerator::visitCheckOverRecursed(LCheckOverRecursed* lir)
     CheckOverRecursedFailure* ool = new(alloc()) CheckOverRecursedFailure(lir);
     addOutOfLineCode(ool, lir->mir());
 
-    Register temp = ToRegister(lir->temp());
-
     // Conditional forward (unlikely) branch to failure.
-    const void* contextAddr = GetJitContext()->compartment->zone()->addressOfJSContext();
-    masm.loadPtr(AbsoluteAddress(contextAddr), temp);
-    masm.branchStackPtrRhs(Assembler::AboveOrEqual,
-                           Address(temp, offsetof(JSContext, jitStackLimit)), ool->entry());
+    const void* limitAddr = GetJitContext()->runtime->addressOfJitStackLimit();
+    masm.branchStackPtrRhs(Assembler::AboveOrEqual, AbsoluteAddress(limitAddr), ool->entry());
     masm.bind(ool->rejoin());
 }
 
@@ -7847,7 +7843,7 @@ JitRuntime::generateMallocStub(JSContext* cx)
     masm.passABIArg(regRuntime);
     masm.passABIArg(regNBytes);
     masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, MallocWrapper));
-    masm.storeCallWordResult(regReturn);
+    masm.storeCallPointerResult(regReturn);
 
     masm.PopRegsInMask(save);
     masm.ret();
@@ -9242,7 +9238,7 @@ CodeGenerator::emitRest(LInstruction* lir, Register array, Register numActuals,
     callVM(InitRestParameterInfo, lir);
 
     if (saveAndRestore) {
-        storeResultTo(resultreg);
+        storePointerResultTo(resultreg);
         restoreLive(lir);
     }
 }
@@ -10465,8 +10461,8 @@ CodeGenerator::visitOutOfLineTypeOfV(OutOfLineTypeOfV* ool)
     masm.passABIArg(obj);
     masm.movePtr(ImmPtr(GetJitContext()->runtime), output);
     masm.passABIArg(output);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, TypeOfObject));
-    masm.storeCallWordResult(output);
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, jit::TypeOfObject));
+    masm.storeCallPointerResult(output);
     restoreVolatile(output);
 
     masm.jump(ool->rejoin());
@@ -12117,12 +12113,8 @@ CodeGenerator::visitInterruptCheck(LInterruptCheck* lir)
 
     OutOfLineCode* ool = oolCallVM(InterruptCheckInfo, lir, ArgList(), StoreNothing());
 
-    Register temp = ToRegister(lir->temp());
-
-    const void* contextAddr = GetJitContext()->compartment->zone()->addressOfJSContext();
-    masm.loadPtr(AbsoluteAddress(contextAddr), temp);
-    masm.branch32(Assembler::NotEqual, Address(temp, offsetof(JSContext, interrupt_)),
-                  Imm32(0), ool->entry());
+    const void* interruptAddr = GetJitContext()->runtime->addressOfInterrupt();
+    masm.branch32(Assembler::NotEqual, AbsoluteAddress(interruptAddr), Imm32(0), ool->entry());
     masm.bind(ool->rejoin());
 }
 

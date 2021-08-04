@@ -43,7 +43,6 @@ class MOZ_RAII AutoSuppressProfilerSampling
   private:
     JSContext* cx_;
     bool previouslyEnabled_;
-    JSRuntime::AutoProhibitActiveContextChange prohibitContextChange_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 

@@ -123,8 +123,6 @@ class AutoTraceSession;
 class StoreBuffer;
 } // namespace gc
 
-class CooperatingContext;
-
 inline JSCompartment* GetContextCompartment(const JSContext* cx);
 inline JS::Zone* GetContextZone(const JSContext* cx);
 
@@ -226,8 +224,8 @@ class JS_PUBLIC_API(AutoGCRooter)
 
     /* Implemented in gc/RootMarking.cpp. */
     inline void trace(JSTracer* trc);
-    static void traceAll(const js::CooperatingContext& target, JSTracer* trc);
-    static void traceAllWrappers(const js::CooperatingContext& target, JSTracer* trc);
+    static void traceAll(JSContext* cx, JSTracer* trc);
+    static void traceAllWrappers(JSContext* cx, JSTracer* trc);
 
   protected:
     AutoGCRooter * const down;
