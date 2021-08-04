@@ -24,12 +24,39 @@
     "message": "Status Bar"
   },
   "copyUrl": {
-    "message": "Copy URL"
+    "message": "Copy Tab Link"
   },
   "copyAllUrls": {
-    "message": "Copy All URLs"
+    "message": "Copy All Tab Links"
   },
   "restartBrowser": {
     "message": "Restart"
+  },
+  "tabHeader": {
+    "message": "Tab Context Menu"
+  },
+  "showDuplicateTab": {
+    "message": "Show duplicate tab menu item"
+  },
+  "showCopyTab": {
+    "message": "Show copy tab link menu item"
+  },
+  "showCopyActiveTab": {
+    "message": "Copy link only from active tab"
+  },
+  "showCopyAllTab": {
+    "message": "Show copy all tab links menu item"
+  },
+  "restartHeader": {
+    "message": "Restart Menu Item"
+  },
+  "showRestartButton": {
+    "message": "Show restart button in PanelUI/Menu bar"
+  },
+  "restartClearCache": {
+    "message": "Clear fast restart cache on browser restart"
+  },
+  "confirmRestart": {
+    "message": "Require restart confirmation"
   }
 }

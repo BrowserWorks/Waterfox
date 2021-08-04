@@ -19,6 +19,7 @@ const TabFeatures = {
         },
         adjacentTo: "context_duplicateTabs",
         position: "afterend",
+        defaultPref: true,
       },
       {
         tag: "menuitem",
@@ -31,6 +32,19 @@ const TabFeatures = {
         },
         adjacentTo: "context_copyTabUrl",
         position: "afterend",
+      },
+    ];
+  },
+
+  get updateItems() {
+    return [
+      {
+        id: "context_duplicateTab",
+        attrs: {
+          class: "tabFeature",
+          preference: "browser.tabs.duplicateTab",
+        },
+        defaultPref: true,
       },
     ];
   },
@@ -75,9 +89,10 @@ const TabFeatures = {
     // create required tab context menu elements
     this.contextItems.forEach(item => {
       this.createAdjacentElement(item);
-      if (item.attrs.preference) {
-        this.setPref(item);
-      }
+    });
+    // add additional attributes to existing elements for functionality
+    this.updateItems.forEach(item => {
+      this.setAttributes(item);
     });
     // add on popupshowing listener to display elements if prefs allow
     browser.extensibles.utils.addElementListener(
@@ -87,7 +102,6 @@ const TabFeatures = {
     );
     // get platform as restart button location differs based on platform
     let platform = await browser.extensibles.utils.getPlatform();
-    console.log(platform);
     // create required appmenu/menubar elements
     if (platform == "macosx") {
       this.menuBarItems.forEach(item => {
@@ -129,13 +143,25 @@ const TabFeatures = {
   createAppendElement(item) {
     const { tag, attrs, appendTo } = item;
     browser.extensibles.utils.createAndPositionElement(tag, attrs, appendTo);
+    if (attrs.preference) {
+      this.setPref(item);
+    }
+  },
+
+  setAttributes(item) {
+    const { id, attrs } = item;
+    browser.extensibles.utils.setAttributes(id, attrs);
+    if (attrs.preference) {
+      this.setPref(item);
+    }
   },
 
   setPref(item) {
     const { attrs } = item;
-    var { defaultPref } = item;
+    let { defaultPref } = item;
     if (!defaultPref) {
-      defaultPref = true;
+      // Don't show added features by default
+      defaultPref = false;
     }
     browser.extensibles.utils.registerPref(attrs.preference, defaultPref);
   },
