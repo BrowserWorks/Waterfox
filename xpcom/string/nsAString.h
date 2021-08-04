@@ -59,19 +59,37 @@ enum class StringDataFlags : uint16_t
   //   points to char_traits::sEmptyBuffer.  Therefore, VOIDED is
   //   mutually exclusive with SHARED, OWNED, and FIXED.
 
-  TERMINATED   = 1 << 0,  // IsTerminated returns true
-  VOIDED       = 1 << 1,  // IsVoid returns true
-  SHARED       = 1 << 2,  // mData points to a heap-allocated, shared buffer
-  OWNED        = 1 << 3,  // mData points to a heap-allocated, raw buffer
-  FIXED        = 1 << 4,  // mData points to a fixed-size writable, dependent buffer
-  LITERAL      = 1 << 5   // mData points to a string literal; DataFlags::TERMINATED will also be set
+  // IsTerminated returns true
+  TERMINATED   = 1 << 0,
+
+  // IsVoid returns true
+  VOIDED       = 1 << 1,
+
+  // mData points to a heap-allocated, shared buffer
+  SHARED       = 1 << 2,
+
+  // mData points to a heap-allocated, raw buffer
+  OWNED        = 1 << 3,
+
+  // mData points to a fixed-size writable, dependent buffer
+  FIXED        = 1 << 4,
+
+  // mData points to a string literal; DataFlags::TERMINATED will also be set
+  LITERAL      = 1 << 5,
+
+  // used to check for invalid flags -- all bits above the last item
+  INVALID_MASK = (uint16_t) ~((LITERAL << 1) - 1)
 };
 
 // bits for mClassFlags
 enum class StringClassFlags : uint16_t
 {
-  FIXED           = 1 << 0, // |this| is of type nsTFixedString
-  NULL_TERMINATED = 1 << 1  // |this| requires its buffer is null-terminated
+  // |this| is of type nsTFixedString
+  FIXED           = 1 << 0,
+  // |this| requires its buffer is null-terminated
+  NULL_TERMINATED = 1 << 1,
+  // used to check for invalid flags -- all bits above the last item
+  INVALID_MASK = (uint16_t) ~((NULL_TERMINATED << 1) - 1)
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(StringDataFlags)

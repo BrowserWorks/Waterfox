@@ -4301,8 +4301,8 @@ Element::SetCustomElementData(CustomElementData* aData)
   nsExtendedDOMSlots *slots = ExtendedDOMSlots();
   MOZ_ASSERT(!slots->mCustomElementData, "Custom element data may not be changed once set.");
   #if DEBUG
-    nsAtom* name = NodeInfo()->NameAtom();
-    nsAtom* type = aData->GetCustomElementType();
+    nsIAtom* name = NodeInfo()->NameAtom();
+    nsIAtom* type = aData->GetCustomElementType();
     if (nsContentUtils::IsCustomElementName(name)) {
       MOZ_ASSERT(type == name);
     } else {
