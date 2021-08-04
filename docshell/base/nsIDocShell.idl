@@ -33,6 +33,7 @@ interface nsIChannel;
 interface nsIContentViewer;
 interface nsIDOMEventTarget;
 interface nsIDocShellLoadInfo;
+interface nsIDocument;
 interface nsIEditor;
 interface nsIEditingSession;
 interface nsISimpleEnumerator;
@@ -42,6 +43,7 @@ interface nsISHEntry;
 interface nsILayoutHistoryState;
 interface nsISecureBrowserUI;
 interface nsIScriptGlobalObject;
+interface nsIStructuredCloneContainer;
 interface nsIDOMStorage;
 interface nsIPrincipal;
 interface nsIWebBrowserPrint;
@@ -214,6 +216,30 @@ interface nsIDocShell : nsIDocShellTreeItem
   [implicit_jscontext]
   void addState(in jsval aData, in DOMString aTitle,
                 in DOMString aURL, in boolean aReplace);
+
+  /**
+   * Helper for addState and document.open that does just the
+   * history-manipulation guts.
+   *
+   * Arguments the spec defines:
+   *
+   * @param aDocument the document we're manipulating.  This will get the new URI.
+   * @param aNewURI the new URI.
+   * @param aData The serialized state data.  May be null.
+   * @param aTitle The new title.  May be empty.
+   * @param aReplace whether this should replace the exising SHEntry.
+   *
+   * Arguments we need internally because deriving them from the
+   * others is a bit complicated:
+   *
+   * @param aCurrentURI the current URI we're working with.  Might be null.
+   * @param aEqualURIs whether the two URIs involved are equal.
+   */
+  [nostdcall]
+  void updateURLAndHistory(in nsIDocument aDocument, in nsIURI aNewURI,
+                           in nsIStructuredCloneContainer aData, in AString aTitle,
+                           in boolean aReplace, in nsIURI aCurrentURI,
+                           in boolean aEqualURIs);
 
   /**
    * Creates a DocShellLoadInfo object that you can manipulate and then pass

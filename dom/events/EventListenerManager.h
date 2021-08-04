@@ -476,6 +476,12 @@ public:
   bool IsApzAwareListener(Listener* aListener);
   bool IsApzAwareEvent(nsIAtom* aEvent);
 
+  /**
+   * Remove all event listeners from the event target this EventListenerManager
+   * is for.
+   */
+  void RemoveAllListeners();
+
 protected:
   void HandleEventInternal(nsPresContext* aPresContext,
                            WidgetEvent* aEvent,
@@ -608,7 +614,7 @@ protected:
                                    const nsAString& aTypeString,
                                    const EventListenerFlags& aFlags,
                                    bool aAllEvents = false);
-  void RemoveAllListeners();
+  void RemoveAllListenersSilently();
   void NotifyEventListenerRemoved(nsIAtom* aUserType,
                                   const nsAString& aTypeString);
   const EventTypeData* GetTypeDataForIID(const nsIID& aIID);

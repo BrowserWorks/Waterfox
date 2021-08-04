@@ -433,6 +433,21 @@ nsIdentifierMapEntry::FireChangeCallbacks(Element* aOldElement,
   }
 }
 
+void
+nsIdentifierMapEntry::ClearAndNotify()
+{
+  Element* currentElement = mIdContentList.SafeElementAt(0);
+  mIdContentList.Clear();
+  if (currentElement) {
+    FireChangeCallbacks(currentElement, nullptr);
+  }
+  mNameContentList = nullptr;
+  if (mImageElement) {
+    SetImageElement(nullptr);
+  }
+  mChangeCallbacks = nullptr;
+}
+
 namespace {
 
 struct PositionComparator
@@ -1290,7 +1305,6 @@ nsIDocument::nsIDocument()
     mHasHadDefaultView(false),
     mStyleSheetChangeEventsEnabled(false),
     mIsSrcdocDocument(false),
-    mDidDocumentOpen(false),
     mHasDisplayDocument(false),
     mFontFaceSetDirty(true),
     mGetUserFontSetCalled(false),
@@ -1389,9 +1403,8 @@ nsDocument::nsDocument(const char* aContentType)
   , mStackRefCnt(0)
   , mNeedsReleaseAfterStackRefCntRelease(false)
   , mMaybeServiceWorkerControlled(false)
-#ifdef DEBUG
-  , mWillReparent(false)
-#endif
+  , mLoadEventFiring(false)
+  , mSkipLoadEventAfterClose(false)
 {
   SetContentTypeInternal(nsDependentCString(aContentType));
 
@@ -1539,11 +1552,11 @@ nsDocument::~nsDocument()
   delete mSubDocuments;
   mSubDocuments = nullptr;
 
+  nsAutoScriptBlocker scriptBlocker;
+
   // Destroy link map now so we don't waste time removing
   // links one by one
   DestroyElementMaps();
-
-  nsAutoScriptBlocker scriptBlocker;
 
   for (uint32_t indx = mChildren.ChildCount(); indx-- != 0; ) {
     mChildren.ChildAt(indx)->UnbindFromTree();
@@ -2081,32 +2094,23 @@ nsDocument::Reset(nsIChannel* aChannel, nsILoadGroup* aLoadGroup)
 }
 
 void
-nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
-                       nsIPrincipal* aPrincipal)
-{
-  NS_PRECONDITION(aURI, "Null URI passed to ResetToURI");
-
-  MOZ_LOG(gDocumentLeakPRLog, LogLevel::Debug,
-          ("DOCUMENT %p ResetToURI %s", this, aURI->GetSpecOrDefault().get()));
-
-  mSecurityInfo = nullptr;
-
-  mDocumentLoadGroup = nullptr;
-
+nsDocument::DisconnectNodeTree() {
   // Delete references to sub-documents and kill the subdocument map,
-  // if any. It holds strong references
+  // if any. This is not strictly needed, but makes the node tree
+  // teardown a bit faster.
   delete mSubDocuments;
   mSubDocuments = nullptr;
-
-  // Destroy link map now so we don't waste time removing
-  // links one by one
-  DestroyElementMaps();
 
   bool oldVal = mInUnlinkOrDeletion;
   mInUnlinkOrDeletion = true;
   uint32_t count = mChildren.ChildCount();
   { // Scope for update
     MOZ_AUTO_DOC_UPDATE(this, UPDATE_CONTENT_MODEL, true);
+
+    // Destroy link map now so we don't waste time removing
+    // links one by one
+    DestroyElementMaps();
+
     for (int32_t i = int32_t(count) - 1; i >= 0; i--) {
       nsCOMPtr<nsIContent> content = mChildren.ChildAt(i);
 
@@ -2129,6 +2133,20 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
                "After removing all children, there should be no root elem");
   }
   mInUnlinkOrDeletion = oldVal;
+}
+
+void
+nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
+                       nsIPrincipal* aPrincipal)
+{
+  NS_PRECONDITION(aURI, "Null URI passed to ResetToURI");
+
+  MOZ_LOG(gDocumentLeakPRLog, LogLevel::Debug,
+          ("DOCUMENT %p ResetToURI %s", this, aURI->GetSpecOrDefault().get()));
+
+  mSecurityInfo = nullptr;
+
+  mDocumentLoadGroup = nullptr;
 
   // Reset our stylesheets
   ResetStylesheetsToURI(aURI);
@@ -2138,6 +2156,8 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
     mListenerManager->Disconnect();
     mListenerManager = nullptr;
   }
+
+  DisconnectNodeTree();
 
   // Release the stylesheets list.
   mDOMStyleSheets = nullptr;
@@ -4764,18 +4784,6 @@ nsDocument::SetScriptGlobalObject(nsIScriptGlobalObject *aScriptGlobalObject)
     mLayoutHistoryState = nullptr;
     SetScopeObject(aScriptGlobalObject);
     mHasHadDefaultView = true;
-#ifdef DEBUG
-    if (!mWillReparent) {
-      // We really shouldn't have a wrapper here but if we do we need to make sure
-      // it has the correct parent.
-      JSObject *obj = GetWrapperPreserveColor();
-      if (obj) {
-        JSObject *newScope = aScriptGlobalObject->GetGlobalJSObject();
-        NS_ASSERTION(js::GetGlobalForObjectCrossCompartment(obj) == newScope,
-                     "Wrong scope, this is really bad!");
-      }
-    }
-#endif
 
     if (mAllowDNSPrefetch) {
       nsCOMPtr<nsIDocShell> docShell(mDocumentContainer);
@@ -6499,6 +6507,49 @@ nsIDocument::GetHtmlChildElement(nsIAtom* aTag)
       return child->AsElement();
   }
   return nullptr;
+}
+
+nsGenericHTMLElement*
+nsIDocument::GetBody()
+{
+  Element* html = GetHtmlElement();
+  if (!html) {
+    return nullptr;
+  }
+
+  for (nsIContent* child = html->GetFirstChild();
+       child;
+       child = child->GetNextSibling()) {
+    if (child->IsHTMLElement(nsGkAtoms::body) ||
+        child->IsHTMLElement(nsGkAtoms::frameset)) {
+      return static_cast<nsGenericHTMLElement*>(child);
+    }
+  }
+
+  return nullptr;
+}
+
+void
+nsIDocument::SetBody(nsGenericHTMLElement* newBody, ErrorResult& rv)
+{
+  nsCOMPtr<Element> root = GetRootElement();
+
+  // The body element must be either a body tag or a frameset tag. And we must
+  // have a root element to be able to add kids to it.
+  if (!newBody ||
+      !newBody->IsAnyOfHTMLElements(nsGkAtoms::body, nsGkAtoms::frameset) ||
+      !root) {
+    rv.Throw(NS_ERROR_DOM_HIERARCHY_REQUEST_ERR);
+    return;
+  }
+
+  // Use DOM methods so that we pass through the appropriate security checks.
+  nsCOMPtr<Element> currentBody = GetBody();
+  if (currentBody) {
+    root->ReplaceChild(*newBody, *currentBody, rv);
+  } else {
+    root->AppendChild(*newBody, rv);
+  }
 }
 
 Element*
@@ -8859,6 +8910,10 @@ nsDocument::DestroyElementMaps()
   mStyledLinksCleared = true;
 #endif
   mStyledLinks.Clear();
+  // Notify ID change listeners before clearing the identifier map.
+  for (auto iter = mIdentifierMap.Iter(); !iter.Done(); iter.Next()) {
+    iter.Get()->ClearAndNotify();
+  }
   mIdentifierMap.Clear();
   ++mExpandoAndGeneration.generation;
 }
@@ -8968,7 +9023,8 @@ nsDocument::CloneDocHelper(nsDocument* clone, bool aPreallocateChildren) const
 }
 
 void
-nsDocument::SetReadyStateInternal(ReadyState rs)
+nsDocument::SetReadyStateInternal(ReadyState rs,
+                                  bool updateTimingInformation)
 {
   mReadyState = rs;
   if (rs == READYSTATE_UNINITIALIZED) {
@@ -8977,7 +9033,12 @@ nsDocument::SetReadyStateInternal(ReadyState rs)
     // transition undetectable by Web content.
     return;
   }
-  if (mTiming) {
+
+  if (updateTimingInformation && READYSTATE_LOADING == rs) {
+    mLoadingTimeStamp = mozilla::TimeStamp::Now();
+  }
+
+  if (updateTimingInformation && mTiming) {
     switch (rs) {
       case READYSTATE_LOADING:
         mTiming->NotifyDOMLoading(nsIDocument::GetDocumentURI());
@@ -8992,10 +9053,6 @@ nsDocument::SetReadyStateInternal(ReadyState rs)
         NS_WARNING("Unexpected ReadyState value");
         break;
     }
-  }
-  // At the time of loading start, we don't have timing object, record time.
-  if (READYSTATE_LOADING == rs) {
-    mLoadingTimeStamp = mozilla::TimeStamp::Now();
   }
 
   RefPtr<AsyncEventDispatcher> asyncDispatcher =

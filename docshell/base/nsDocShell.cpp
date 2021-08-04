@@ -12100,35 +12100,45 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 {
   // Implements History.pushState and History.replaceState
 
-  // Here's what we do, roughly in the order specified by HTML5:
-  // 1. Serialize aData using structured clone.
-  // 2. If the third argument is present,
-  //     a. Resolve the url, relative to the first script's base URL
-  //     b. If (a) fails, raise a SECURITY_ERR
-  //     c. Compare the resulting absolute URL to the document's address.  If
-  //        any part of the URLs difer other than the <path>, <query>, and
-  //        <fragment> components, raise a SECURITY_ERR and abort.
-  // 3. If !aReplace:
+  // Here's what we do, roughly in the order specified by HTML5.  The specific
+  // steps we are executing are at
+  // <https://html.spec.whatwg.org/multipage/history.html#dom-history-pushstate>
+  // and
+  // <https://html.spec.whatwg.org/multipage/history.html#url-and-history-update-steps>.
+  // This function basically implements #dom-history-pushstate and
+  // UpdateURLAndHistory implements #url-and-history-update-steps.
+  //
+  // A. Serialize aData using structured clone.  This is #dom-history-pushstate
+  //    step 5.
+  // B. If the third argument is present, #dom-history-pushstate step 7.
+  //     7.1. Resolve the url, relative to our document.
+  //     7.2. If (a) fails, raise a SECURITY_ERR
+  //     7.4. Compare the resulting absolute URL to the document's address.  If
+  //          any part of the URLs difer other than the <path>, <query>, and
+  //          <fragment> components, raise a SECURITY_ERR and abort.
+  // C. If !aReplace, #url-and-history-update-steps steps 2.1-2.3:
   //     Remove from the session history all entries after the current entry,
   //     as we would after a regular navigation, and save the current
   //     entry's scroll position (bug 590573).
-  // 4. As apropriate, either add a state object entry to the session history
-  //    after the current entry with the following properties, or modify the
-  //    current session history entry to set
+  // D. #url-and-history-update-steps step 2.4 or step 3.  As apropriate,
+  //    either add a state object entry to the session history after the
+  //    current entry with the following properties, or modify the current
+  //    session history entry to set
   //      a. cloned data as the state object,
   //      b. if the third argument was present, the absolute URL found in
   //         step 2
   //    Also clear the new history entry's POST data (see bug 580069).
-  // 5. If aReplace is false (i.e. we're doing a pushState instead of a
+  // E. If aReplace is false (i.e. we're doing a pushState instead of a
   //    replaceState), notify bfcache that we've navigated to a new page.
-  // 6. If the third argument is present, set the document's current address
-  //    to the absolute URL found in step 2.
+  // F. If the third argument is present, set the document's current address
+  //    to the absolute URL found in step B.  This is
+  //    #url-and-history-update-steps step 4.
   //
-  // It's important that this function not run arbitrary scripts after step 1
-  // and before completing step 5.  For example, if a script called
-  // history.back() before we completed step 5, bfcache might destroy an
+  // It's important that this function not run arbitrary scripts after step A
+  // and before completing step E.  For example, if a script called
+  // history.back() before we completed step E, bfcache might destroy an
   // active content viewer.  Since EvictOutOfRangeContentViewers at the end of
-  // step 5 might run script, we can't just put a script blocker around the
+  // step E might run script, we can't just put a script blocker around the
   // critical section.
   //
   // Note that we completely ignore the aTitle parameter.
@@ -12148,7 +12158,9 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   nsCOMPtr<nsIDocument> document = GetDocument();
   NS_ENSURE_TRUE(document, NS_ERROR_FAILURE);
 
-  // Step 1: Serialize aData using structured clone.
+  // Step A: Serialize aData using structured clone.
+  // https://html.spec.whatwg.org/multipage/history.html#dom-history-pushstate
+  // step 5.
   nsCOMPtr<nsIStructuredCloneContainer> scContainer;
 
   // scContainer->Init might cause arbitrary JS to run, and this code might
@@ -12191,7 +12203,9 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 
   NS_ENSURE_TRUE(scSize <= (uint32_t)maxStateObjSize, NS_ERROR_ILLEGAL_VALUE);
 
-  // Step 2: Resolve aURL
+  // Step B: Resolve aURL.
+  // https://html.spec.whatwg.org/multipage/history.html#dom-history-pushstate
+  // step 7.
   bool equalURIs = true;
   nsCOMPtr<nsIURI> currentURI;
   if (sURIFixup && mCurrentURI) {
@@ -12200,12 +12214,11 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   } else {
     currentURI = mCurrentURI;
   }
-  nsCOMPtr<nsIURI> oldURI = currentURI;
   nsCOMPtr<nsIURI> newURI;
   if (aURL.Length() == 0) {
     newURI = currentURI;
   } else {
-    // 2a: Resolve aURL relative to mURI
+    // 7.1: Resolve aURL relative to mURI
 
     nsIURI* docBaseURI = document->GetDocBaseURI();
     if (!docBaseURI) {
@@ -12221,12 +12234,12 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 
     rv = NS_NewURI(getter_AddRefs(newURI), aURL, charset.get(), docBaseURI);
 
-    // 2b: If 2a fails, raise a SECURITY_ERR
+    // 7.2: If 7.1 fails, raise a SECURITY_ERR
     if (NS_FAILED(rv)) {
       return NS_ERROR_DOM_SECURITY_ERR;
     }
 
-    // 2c: Same-origin check.
+    // 7.4 and 7.5: Same-origin check.
     if (!nsContentUtils::URIIsLocalFile(newURI)) {
       // In addition to checking that the security manager says that
       // the new URI has the same origin as our current URI, we also
@@ -12277,18 +12290,36 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 
   } // end of same-origin check
 
-  // Step 3: Create a new entry in the session history. This will erase
-  // all SHEntries after the new entry and make this entry the current
-  // one.  This operation may modify mOSHE, which we need later, so we
-  // keep a reference here.
-  NS_ENSURE_TRUE(mOSHE, NS_ERROR_FAILURE);
+  // Step 8: call "URL and history update steps"
+  rv = UpdateURLAndHistory(document, newURI, scContainer, aTitle, aReplace,
+                           currentURI, equalURIs);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return NS_OK;
+}
+
+nsresult
+nsDocShell::UpdateURLAndHistory(nsIDocument* aDocument, nsIURI* aNewURI,
+                                nsIStructuredCloneContainer* aData,
+                                const nsAString& aTitle, bool aReplace,
+                                nsIURI* aCurrentURI, bool aEqualURIs)
+{
+  // Implements
+  // https://html.spec.whatwg.org/multipage/history.html#url-and-history-update-steps
+
+  // Step 2, if aReplace is false: Create a new entry in the session
+  // history. This will erase all SHEntries after the new entry and make this
+  // entry the current one.  This operation may modify mOSHE, which we need
+  // later, so we keep a reference here.
+  NS_ENSURE_TRUE(mOSHE || aReplace, NS_ERROR_FAILURE);
   nsCOMPtr<nsISHEntry> oldOSHE = mOSHE;
 
   mLoadType = LOAD_PUSHSTATE;
 
   nsCOMPtr<nsISHEntry> newSHEntry;
   if (!aReplace) {
-    // Save the current scroll position (bug 590573).
+    // Step 2.
+    // Save the current scroll position (bug 590573).  Step 2.3.
     nscoord cx = 0, cy = 0;
     GetCurScrollPos(ScrollOrientation_X, &cx);
     GetCurScrollPos(ScrollOrientation_Y, &cy);
@@ -12299,10 +12330,10 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
 
     // Since we're not changing which page we have loaded, pass
     // true for aCloneChildren.
-    rv = AddToSessionHistory(newURI, nullptr,
-                             document->NodePrincipal(), // triggeringPrincipal
-                             nullptr, true,
-                             getter_AddRefs(newSHEntry));
+    nsresult rv = AddToSessionHistory(aNewURI, nullptr,
+                                      aDocument->NodePrincipal(), // triggeringPrincipal
+                                      nullptr, true,
+                                      getter_AddRefs(newSHEntry));
     NS_ENSURE_SUCCESS(rv, rv);
 
     NS_ENSURE_TRUE(newSHEntry, NS_ERROR_FAILURE);
@@ -12325,15 +12356,26 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
     mOSHE = newSHEntry;
 
   } else {
+    // Step 3.
     newSHEntry = mOSHE;
-    newSHEntry->SetURI(newURI);
-    newSHEntry->SetOriginalURI(newURI);
+
+    // Since we're not changing which page we have loaded, pass
+    if (!newSHEntry) {
+      nsresult rv = AddToSessionHistory(
+          aNewURI, nullptr,
+          aDocument->NodePrincipal(),  // triggeringPrincipal
+          nullptr, true, getter_AddRefs(newSHEntry));
+      NS_ENSURE_SUCCESS(rv, rv);
+      mOSHE = newSHEntry;
+    }
+    newSHEntry->SetURI(aNewURI);
+    newSHEntry->SetOriginalURI(aNewURI);
     newSHEntry->SetLoadReplace(false);
   }
 
-  // Step 4: Modify new/original session history entry and clear its POST
-  // data, if there is any.
-  newSHEntry->SetStateData(scContainer);
+  // Step 2.4 and 3: Modify new/original session history entry and clear its
+  // POST data, if there is any.
+  newSHEntry->SetStateData(aData);
   newSHEntry->SetPostData(nullptr);
 
   // If this push/replaceState changed the document's current URI and the new
@@ -12341,15 +12383,20 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   // SHEntry's URI was modified in this way by a push/replaceState call
   // set URIWasModified to true for the current SHEntry (bug 669671).
   bool sameExceptHashes = true, oldURIWasModified = false;
-  newURI->EqualsExceptRef(currentURI, &sameExceptHashes);
-  oldOSHE->GetURIWasModified(&oldURIWasModified);
+  aNewURI->EqualsExceptRef(aCurrentURI, &sameExceptHashes);
+  // mOSHE might be null on replace. Only check if we're not replacing.
+  if (oldOSHE) {
+    oldOSHE->GetURIWasModified(&oldURIWasModified);
+  }
   newSHEntry->SetURIWasModified(!sameExceptHashes || oldURIWasModified);
 
-  // Step 5: If aReplace is false, indicating that we're doing a pushState
-  // rather than a replaceState, notify bfcache that we've added a page to
-  // the history so it can evict content viewers if appropriate. Otherwise
-  // call ReplaceEntry so that we notify nsIHistoryListeners that an entry
-  // was replaced.
+  // Step E as described at the top of AddState: If aReplace is false,
+  // indicating that we're doing a pushState rather than a replaceState, notify
+  // bfcache that we've added a page to the history so it can evict content
+  // viewers if appropriate. Otherwise call ReplaceEntry so that we notify
+  // nsIHistoryListeners that an entry was replaced.  We may not have a root
+  // session history if this call is coming from a document.open() in a docshell
+  // subtree that disables session history.
   nsCOMPtr<nsISHistory> rootSH;
   GetRootSessionHistory(getter_AddRefs(rootSH));
   NS_ENSURE_TRUE(rootSH, NS_ERROR_UNEXPECTED);
@@ -12357,23 +12404,26 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   nsCOMPtr<nsISHistoryInternal> internalSH = do_QueryInterface(rootSH);
   NS_ENSURE_TRUE(internalSH, NS_ERROR_UNEXPECTED);
 
-  if (!aReplace) {
-    int32_t curIndex = -1;
-    rv = rootSH->GetIndex(&curIndex);
-    if (NS_SUCCEEDED(rv) && curIndex > -1) {
-      internalSH->EvictOutOfRangeContentViewers(curIndex);
-    }
-  } else {
-    nsCOMPtr<nsISHEntry> rootSHEntry = GetRootSHEntry(newSHEntry);
+  nsresult rv;
 
-    int32_t index = -1;
-    rv = rootSH->GetIndexOfEntry(rootSHEntry, &index);
-    if (NS_SUCCEEDED(rv) && index > -1) {
-      internalSH->ReplaceEntry(index, rootSHEntry);
+  if (rootSH) {
+    if (!aReplace) {
+      int32_t curIndex = -1;
+      rv = rootSH->GetIndex(&curIndex);
+      if (NS_SUCCEEDED(rv) && curIndex > -1) {
+        internalSH->EvictOutOfRangeContentViewers(curIndex);
+      }
+    } else {
+      nsCOMPtr<nsISHEntry> rootSHEntry = GetRootSHEntry(newSHEntry);
+      int32_t index = -1;
+      rv = rootSH->GetIndexOfEntry(rootSHEntry, &index);
+      if (NS_SUCCEEDED(rv) && index > -1) {
+        internalSH->ReplaceEntry(index, rootSHEntry);
+      }
     }
   }
 
-  // Step 6: If the document's URI changed, update document's URI and update
+  // Step 4: If the document's URI changed, update document's URI and update
   // global history.
   //
   // We need to call FireOnLocationChange so that the browser's address bar
@@ -12386,28 +12436,28 @@ nsDocShell::AddState(JS::Handle<JS::Value> aData, const nsAString& aTitle,
   // notification is allowed only when we know docshell is not loading a new
   // document and it requires LOCATION_CHANGE_SAME_DOCUMENT flag. Otherwise,
   // FireOnLocationChange(...) breaks security UI.
-  if (!equalURIs) {
-    document->SetDocumentURI(newURI);
+  if (!aEqualURIs) {
+    aDocument->SetDocumentURI(aNewURI);
     // We can't trust SetCurrentURI to do always fire locationchange events
     // when we expect it to, so we hack around that by doing it ourselves...
-    SetCurrentURI(newURI, nullptr, false, LOCATION_CHANGE_SAME_DOCUMENT);
+    SetCurrentURI(aNewURI, nullptr, false, LOCATION_CHANGE_SAME_DOCUMENT);
     if (mLoadType != LOAD_ERROR_PAGE) {
       FireDummyOnLocationChange();
     }
 
-    AddURIVisit(newURI, oldURI, oldURI, 0);
+    AddURIVisit(aNewURI, aCurrentURI, aCurrentURI, 0);
 
     // AddURIVisit doesn't set the title for the new URI in global history,
     // so do that here.
-    UpdateGlobalHistoryTitle(newURI);
+    UpdateGlobalHistoryTitle(aNewURI);
 
     // Inform the favicon service that our old favicon applies to this new
     // URI.
-    CopyFavicon(oldURI, newURI, document->NodePrincipal(), UsePrivateBrowsing());
+    CopyFavicon(aCurrentURI, aNewURI, aDocument->NodePrincipal(), UsePrivateBrowsing());
   } else {
     FireDummyOnLocationChange();
   }
-  document->SetStateObject(scContainer);
+  aDocument->SetStateObject(aData);
 
   return NS_OK;
 }

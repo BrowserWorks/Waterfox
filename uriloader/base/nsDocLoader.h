@@ -109,6 +109,8 @@ public:
       unsigned long mNotifyMask;
     };
 
+    void SetDocumentOpenedButNotLoaded() { mDocumentOpenedButNotLoaded = true; }
+
 protected:
     virtual ~nsDocLoader();
 
@@ -302,6 +304,15 @@ protected:
     bool mIsFlushingLayout;
 
 private:
+    /**
+     * This flag indicates that the loader is waiting for completion of
+     * a document.open-triggered "document load".  This is set when
+     * document.open() happens and sets up a new parser and cleared out
+     * when we go to fire our load event or end up with a new document
+     * channel.
+     */
+    bool mDocumentOpenedButNotLoaded;
+
     static const PLDHashTableOps sRequestInfoHashOps;
 
     // A list of kids that are in the middle of their onload calls and will let
@@ -324,10 +335,20 @@ private:
     nsRequestInfo *GetRequestInfo(nsIRequest* aRequest);
     void ClearRequestInfoHash();
     int64_t CalculateMaxProgress();
-///    void DumpChannelInfo(void);
+    ///     void DumpChannelInfo(void);
 
     // used to clear our internal progress state between loads...
     void ClearInternalProgress();
+
+    /**
+     * Used to test whether we might need to fire a load event.  This
+     * can happen when we have a document load going on, or when we've
+     * had document.open() called and haven't fired the corresponding
+     * load event yet.
+     */
+    bool IsBlockingLoadEvent() const {
+      return mIsLoadingDocument || mDocumentOpenedButNotLoaded;
+    }
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsDocLoader, NS_THIS_DOCLOADER_IMPL_CID)

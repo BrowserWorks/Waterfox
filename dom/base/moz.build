@@ -204,6 +204,7 @@ EXPORTS.mozilla.dom += [
     'ScreenOrientation.h',
     'Selection.h',
     'ShadowRoot.h',
+    'SimpleTreeIterator.h',
     'StructuredCloneBlob.h',
     'StructuredCloneHolder.h',
     'StructuredCloneTags.h',
