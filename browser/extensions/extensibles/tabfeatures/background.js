@@ -19,6 +19,7 @@ const TabFeatures = {
         },
         adjacentTo: "context_duplicateTabs",
         position: "afterend",
+        defaultPref: true,
       },
       {
         tag: "menuitem",
