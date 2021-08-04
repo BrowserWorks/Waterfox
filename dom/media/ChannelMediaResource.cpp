@@ -640,6 +640,15 @@ already_AddRefed<BaseMediaResource> ChannelMediaResource::CloneData(
 void ChannelMediaResource::CloseChannel() {
   NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
 
+  // Revoking listener should be done before canceling the channel, because
+  // canceling the channel might cause the input stream to release its buffer.
+  // If we don't do revoke first, it's possible that `OnDataAvailable` would be
+  // called later and then incorrectly access that released buffer.
+  if (mListener) {
+    mListener->Revoke();
+    mListener = nullptr;
+  }
+
   if (mChannel) {
     mSuspendAgent.Revoke();
     // The status we use here won't be passed to the decoder, since
@@ -651,11 +660,6 @@ void ChannelMediaResource::CloseChannel() {
     // at the moment.
     mChannel->Cancel(NS_ERROR_PARSED_DATA_CACHED);
     mChannel = nullptr;
-  }
-
-  if (mListener) {
-    mListener->Revoke();
-    mListener = nullptr;
   }
 }
 
