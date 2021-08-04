@@ -71,8 +71,10 @@ protected:
   void HandleFatalError(const char* aName, const char* aMsg) const override;
 
   PVideoDecoderChild* AllocPVideoDecoderChild(const VideoInfo& aVideoInfo,
+                                              const float& aFramerate,
                                               const layers::TextureFactoryIdentifier& aIdentifier,
-                                              bool* aSuccess) override;
+                                              bool* aSuccess,
+                                              nsCString* aErrorDescription) override;
   bool DeallocPVideoDecoderChild(PVideoDecoderChild* actor) override;
 
 private:

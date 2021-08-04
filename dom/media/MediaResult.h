@@ -41,6 +41,13 @@ public:
   MediaResult& operator=(MediaResult&& aOther) = default;
 
   nsresult Code() const { return mCode; }
+  nsCString ErrorName() const
+  {
+    nsCString name;
+    GetErrorName(mCode, name);
+    return name;
+  }
+
   const nsCString& Message() const { return mMessage; }
 
   // Interoperations with nsresult.
@@ -54,7 +61,7 @@ public:
       return nsCString();
     }
     nsCString name;
-    GetErrorName(mCode, static_cast<nsACString&>(name));
+    GetErrorName(mCode, name);
     return nsPrintfCString("%s (0x%08" PRIx32 ")%s%s",
                            name.get(),
                            static_cast<uint32_t>(mCode),

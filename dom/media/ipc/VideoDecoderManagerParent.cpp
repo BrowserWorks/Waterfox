@@ -49,10 +49,11 @@ class VideoDecoderManagerThreadHolder
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VideoDecoderManagerThreadHolder)
 
 public:
-  VideoDecoderManagerThreadHolder() {}
+  VideoDecoderManagerThreadHolder() { }
 
 private:
-  ~VideoDecoderManagerThreadHolder() {
+  ~VideoDecoderManagerThreadHolder()
+  {
     NS_DispatchToMainThread(NS_NewRunnableFunction(
       "dom::VideoDecoderManagerThreadHolder::~VideoDecoderManagerThreadHolder",
       []() -> void {
@@ -67,7 +68,7 @@ class ManagerThreadShutdownObserver : public nsIObserver
 {
   virtual ~ManagerThreadShutdownObserver() = default;
 public:
-  ManagerThreadShutdownObserver() {}
+  ManagerThreadShutdownObserver() { }
 
   NS_DECL_ISUPPORTS
 
@@ -195,16 +196,18 @@ VideoDecoderManagerParent::ActorDestroy(mozilla::ipc::IProtocol::ActorDestroyRea
 
 PVideoDecoderParent*
 VideoDecoderManagerParent::AllocPVideoDecoderParent(const VideoInfo& aVideoInfo,
+                                                    const float& aFramerate,
                                                     const layers::TextureFactoryIdentifier& aIdentifier,
-                                                    bool* aSuccess)
+                                                    bool* aSuccess,
+                                                    nsCString* aErrorDescription)
 {
   RefPtr<TaskQueue> decodeTaskQueue = new TaskQueue(
     SharedThreadPool::Get(NS_LITERAL_CSTRING("VideoDecoderParent"), 4),
     "VideoDecoderParent::mDecodeTaskQueue");
 
   return new VideoDecoderParent(
-    this, aVideoInfo, aIdentifier,
-    sManagerTaskQueue, decodeTaskQueue, aSuccess);
+    this, aVideoInfo, aFramerate, aIdentifier,
+    sManagerTaskQueue, decodeTaskQueue, aSuccess, aErrorDescription);
 }
 
 bool

@@ -28,10 +28,12 @@ public:
 
   VideoDecoderParent(VideoDecoderManagerParent* aParent,
                      const VideoInfo& aVideoInfo,
+                     float aFramerate,
                      const layers::TextureFactoryIdentifier& aIdentifier,
                      TaskQueue* aManagerTaskQueue,
                      TaskQueue* aDecodeTaskQueue,
-                     bool* aSuccess);
+                     bool* aSuccess,
+                     nsCString* aErrorDescription);
 
   void Destroy();
 

@@ -148,8 +148,9 @@ VideoDecoderChild::ActorDestroy(ActorDestroyReason aWhy)
   mCanSend = false;
 }
 
-bool
+MediaResult
 VideoDecoderChild::InitIPDL(const VideoInfo& aVideoInfo,
+                            float aFramerate,
                             const layers::TextureFactoryIdentifier& aIdentifier)
 {
   RefPtr<VideoDecoderManagerChild> manager =
@@ -159,7 +160,8 @@ VideoDecoderChild::InitIPDL(const VideoInfo& aVideoInfo,
   // initialized with null end points and we don't want to decode video on GPU
   // process anymore. Return false here so that we can fallback to other PDMs.
   if (!manager) {
-    return false;
+    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                       RESULT_DETAIL("VideoDecoderManager is not available."));
   }
 
   // The manager doesn't support sending messages because we've just crashed
@@ -169,16 +171,23 @@ VideoDecoderChild::InitIPDL(const VideoInfo& aVideoInfo,
   // manager is ready, or we've notified the caller of it being no longer
   // available. If not, then the cycle repeats until we're ready.
   if (!manager->CanSend()) {
-    return true;
+    return NS_OK;
   }
 
   mIPDLSelfRef = this;
   bool success = false;
-  if (manager->SendPVideoDecoderConstructor(this, aVideoInfo, aIdentifier,
-                                            &success)) {
+  nsCString errorDescription;
+  if (manager->SendPVideoDecoderConstructor(this,
+                                            aVideoInfo,
+                                            aFramerate,
+                                            aIdentifier,
+                                            &success,
+                                            &errorDescription)) {
     mCanSend = true;
   }
-  return success;
+
+  return success ? MediaResult(NS_OK) :
+                   MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR, errorDescription);
 }
 
 void

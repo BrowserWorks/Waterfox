@@ -142,16 +142,18 @@ GetCompositorBackendType(layers::KnowsCompositor* aKnowsCompositor)
 }
 
 WMFVideoMFTManager::WMFVideoMFTManager(
-                            const VideoInfo& aConfig,
-                            layers::KnowsCompositor* aKnowsCompositor,
-                            layers::ImageContainer* aImageContainer,
-                            bool aDXVAEnabled)
+  const VideoInfo& aConfig,
+  layers::KnowsCompositor* aKnowsCompositor,
+  layers::ImageContainer* aImageContainer,
+  float aFramerate,
+  bool aDXVAEnabled)
   : mVideoInfo(aConfig)
   , mImageSize(aConfig.mImage)
   , mVideoStride(0)
   , mImageContainer(aImageContainer)
   , mDXVAEnabled(aDXVAEnabled)
   , mKnowsCompositor(aKnowsCompositor)
+  , mFramerate(aFramerate)
   // mVideoStride, mVideoWidth, mVideoHeight, mUseHwAccel are initialized in
   // Init().
 {
@@ -564,8 +566,16 @@ WMFVideoMFTManager::Init()
 MediaResult
 WMFVideoMFTManager::InitInternal()
 {
+  // The H264 SanityTest uses a 132x132 videos to determine if DXVA can be used.
+  // so we want to use the software decoder for videos with lower resolutions.
+  static const int MIN_H264_HW_WIDTH = 132;
+  static const int MIN_H264_HW_HEIGHT = 132;
+
   mUseHwAccel = false; // default value; changed if D3D setup succeeds.
-  bool useDxva = InitializeDXVA();
+  bool useDxva = (mStreamType != H264 ||
+                  (mVideoInfo.ImageRect().width > MIN_H264_HW_WIDTH &&
+                   mVideoInfo.ImageRect().height > MIN_H264_HW_HEIGHT)) &&
+                 InitializeDXVA();
 
   RefPtr<MFTDecoder> decoder(new MFTDecoder());
 
@@ -601,7 +611,6 @@ WMFVideoMFTManager::InitInternal()
       if (SUCCEEDED(hr)) {
         mUseHwAccel = true;
       } else {
-        DeleteOnMainThread(mDXVA2Manager);
         mDXVAFailureReason = nsPrintfCString(
           "MFT_MESSAGE_SET_D3D_MANAGER failed with code %X", hr);
       }
@@ -613,6 +622,12 @@ WMFVideoMFTManager::InitInternal()
   }
 
   if (!mUseHwAccel) {
+    if (mDXVA2Manager) {
+      // Either mDXVAEnabled was set to false prior the second call to
+      // InitInternal() due to CanUseDXVA() returning false, or
+      // MFT_MESSAGE_SET_D3D_MANAGER failed
+      DeleteOnMainThread(mDXVA2Manager);
+    }
     if (mStreamType == VP9 || mStreamType == VP8) {
       return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                          RESULT_DETAIL("Use VP8/9 MFT only if HW acceleration "
@@ -634,7 +649,7 @@ WMFVideoMFTManager::InitInternal()
                  MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                             RESULT_DETAIL("Fail to get the output media type.")));
 
-  if (mUseHwAccel && !CanUseDXVA(outputType)) {
+  if (mUseHwAccel && !CanUseDXVA(outputType, mFramerate)) {
     mDXVAEnabled = false;
     // DXVA initialization actually failed, re-do initialisation.
     return InitInternal();
@@ -643,7 +658,7 @@ WMFVideoMFTManager::InitInternal()
   LOG("Video Decoder initialized, Using DXVA: %s",
       (mUseHwAccel ? "Yes" : "No"));
 
-  if (mDXVA2Manager) {
+  if (mUseHwAccel) {
     hr = mDXVA2Manager->ConfigureForSize(mVideoInfo.ImageRect().width,
                                          mVideoInfo.ImageRect().height);
     NS_ENSURE_TRUE(SUCCEEDED(hr),
@@ -756,7 +771,8 @@ WMFVideoMFTManager::Input(MediaRawData* aSample)
   return mDecoder->Input(inputSample);
 }
 
-class SupportsConfigEvent : public Runnable {
+class SupportsConfigEvent : public Runnable
+{
 public:
   SupportsConfigEvent(DXVA2Manager* aDXVA2Manager,
                       IMFMediaType* aMediaType,
@@ -777,7 +793,7 @@ public:
   }
   DXVA2Manager* mDXVA2Manager;
   IMFMediaType* mMediaType;
-  float mFramerate;
+  const float mFramerate;
   bool mSupportsConfig;
 };
 
@@ -797,7 +813,7 @@ public:
 // that new decoders are created if the resolution changes. Then we could move
 // this check into Init and consolidate the main thread blocking code.
 bool
-WMFVideoMFTManager::CanUseDXVA(IMFMediaType* aType)
+WMFVideoMFTManager::CanUseDXVA(IMFMediaType* aType, float aFramerate)
 {
   MOZ_ASSERT(mDXVA2Manager);
   // SupportsConfig only checks for valid h264 decoders currently.
@@ -805,14 +821,10 @@ WMFVideoMFTManager::CanUseDXVA(IMFMediaType* aType)
     return true;
   }
 
-  // Assume the current samples duration is representative for the
-  // entire video.
-  float framerate = 1000000.0 / mLastDuration.ToMicroseconds();
-
   // The supports config check must be done on the main thread since we have
   // a crash guard protecting it.
   RefPtr<SupportsConfigEvent> event =
-    new SupportsConfigEvent(mDXVA2Manager, aType, framerate);
+    new SupportsConfigEvent(mDXVA2Manager, aType, aFramerate);
 
   if (NS_IsMainThread()) {
     event->Run();

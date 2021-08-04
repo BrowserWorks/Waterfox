@@ -32,6 +32,7 @@ H264Converter::H264Converter(PlatformDecoderModule* aPDM,
   , mType(aParams.mType)
   , mOnWaitingForKeyEvent(aParams.mOnWaitingForKeyEvent)
   , mDecoderOptions(aParams.mOptions)
+  , mRate(aParams.mRate)
 {
   mLastError = CreateDecoder(mOriginalConfig, aParams.mDiagnostics);
   if (mDecoder) {
@@ -268,6 +269,7 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
                        RESULT_DETAIL("Invalid SPS NAL."));
   }
 
+  MediaResult error = NS_OK;
   mDecoder = mPDM->CreateVideoDecoder({
     aConfig,
     mTaskQueue,
@@ -278,14 +280,18 @@ H264Converter::CreateDecoder(const VideoInfo& aConfig,
     mType,
     mOnWaitingForKeyEvent,
     mDecoderOptions,
-    &mLastError
+    mRate,
+    &error
   });
 
   if (!mDecoder) {
-    MOZ_ASSERT(NS_FAILED(mLastError));
-    return MediaResult(mLastError.Code(),
-                       RESULT_DETAIL("Unable to create H264 decoder, reason = %s.",
-                                     mLastError.Description().get()));
+    if (NS_FAILED(error)) {
+      // The decoder supports CreateDecoderParam::mError, returns the value.
+      return error;
+    } else {
+      return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
+                         RESULT_DETAIL("Unable to create H264 decoder"));
+    }
   }
 
   mNeedKeyframe = true;
@@ -401,7 +407,7 @@ MediaResult
 H264Converter::CheckForSPSChange(MediaRawData* aSample)
 {
   RefPtr<MediaByteBuffer> extra_data =
-    H264::ExtractExtraData(aSample);
+    aSample->mKeyframe ? H264::ExtractExtraData(aSample) : nullptr;
   if (!H264::HasSPS(extra_data)) {
     MOZ_ASSERT(mCanRecycleDecoder.isSome());
     if (!*mCanRecycleDecoder) {
@@ -415,14 +421,12 @@ H264Converter::CheckForSPSChange(MediaRawData* aSample)
     // This scenario can only occur on Android with devices that can recycle a
     // decoder.
     if (!H264::HasSPS(aSample->mExtraData) ||
-        H264::CompareExtraData(aSample->mExtraData,
-                                            mOriginalExtraData)) {
+        H264::CompareExtraData(aSample->mExtraData, mOriginalExtraData)) {
       return NS_OK;
     }
     extra_data = mOriginalExtraData = aSample->mExtraData;
   }
-  if (H264::CompareExtraData(extra_data,
-                                          mCurrentConfig.mExtraData)) {
+  if (H264::CompareExtraData(extra_data, mCurrentConfig.mExtraData)) {
     return NS_OK;
   }
 
