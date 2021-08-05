@@ -264,16 +264,27 @@ var MigrationWizard = {
     let element = document.getElementById("importSourceGroup");
     var observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
-        if (mutation.attributeName == "value") {
+        if (
+          mutation.attributeName == "value" &&
+          mutation.oldValue == "import"
+        ) {
           let el = document.getElementById("selectedProfileFromFile");
           el.hidden = true;
           MigrationWizard._wiz.canAdvance = true;
+          // Add pageadvanced listener
+          document
+            .getElementById("importSource")
+            .addEventListener(
+              "pageadvanced",
+              MigrationWizard.onImportSourcePageAdvanced
+            );
         }
       });
     });
 
     observer.observe(element, {
       attributes: true, //configure it to listen to attribute changes
+      attributeOldValue: true,
     });
 
     // Advance to the next page if the caller told us to.
@@ -675,10 +686,12 @@ var MigrationWizard = {
 
   async importFromFile() {
     // unselect all radio buttons
-    document
-      .getElementById("importSourceGroup")
-      .childNodes.forEach(node => node.setAttribute("selected", "false"));
-    document.getElementById("importSourceGroup").selectedItem.id = "nothing";
+    let importGroup = document.getElementById("importSourceGroup");
+    importGroup.childNodes.forEach(node =>
+      node.setAttribute("selected", "false")
+    );
+    importGroup.selectedItem.id = "nothing";
+    importGroup.value = "import";
     document.getElementById("closeSourceBrowser").style.visibility = "hidden";
 
     // open the filePicker
