@@ -20,6 +20,7 @@
 #include "imgRequestProxy.h"
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "js/RegExp.h"
 #include "js/Value.h"
 #include "Layers.h"
 #include "MediaDecoder.h"
@@ -7291,9 +7292,9 @@ nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
   aPattern.AppendLiteral(")$");
 
   JS::Rooted<JSObject*> re(cx,
-    JS_NewUCRegExpObject(cx,
+    JS::NewUCRegExpObject(cx,
                          static_cast<char16_t*>(aPattern.BeginWriting()),
-                         aPattern.Length(), JSREG_UNICODE));
+                         aPattern.Length(), JS::RegExpFlags::Unicode));
   if (!re) {
     // Remove extra patterns added above to report with the original pattern.
     aPattern.Cut(0, 4);
@@ -7304,7 +7305,7 @@ nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
 
   JS::Rooted<JS::Value> rval(cx, JS::NullValue());
   size_t idx = 0;
-  if (!JS_ExecuteRegExpNoStatics(cx, re,
+  if (!JS::ExecuteRegExpNoStatics(cx, re,
                                  static_cast<char16_t*>(aValue.BeginWriting()),
                                  aValue.Length(), &idx, true, &rval)) {
     return true;
