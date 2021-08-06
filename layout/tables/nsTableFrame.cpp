@@ -3641,6 +3641,10 @@ nscoord nsTableFrame::GetLogicalBaseline(WritingMode aWM) const {
 bool nsTableFrame::GetNaturalBaselineBOffset(
     WritingMode aWM, BaselineSharingGroup aBaselineGroup,
     nscoord* aBaseline) const {
+  if (StyleDisplay()->IsContainLayout()) {
+    return false;
+  }
+
   RowGroupArray orderedRowGroups;
   OrderRowGroups(orderedRowGroups);
   // XXX not sure if this should be the size of the containing block instead.
