@@ -26,6 +26,7 @@
 #include "frontend/BytecodeCompiler.h"
 #include "frontend/ReservedWords.h"
 #include "js/CharacterEncoding.h"
+#include "js/RegExpFlags.h"  // JS::RegExpFlags
 #include "js/UniquePtr.h"
 #include "vm/HelperThreads.h"
 #include "vm/StringBuffer.h"
@@ -36,6 +37,9 @@ using mozilla::Maybe;
 using mozilla::PodAssign;
 using mozilla::PodCopy;
 using mozilla::PodZero;
+
+using JS::RegExpFlag;
+using JS::RegExpFlags;
 
 struct ReservedWordInfo
 {
@@ -1952,23 +1956,23 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
                     goto error;
             } while (true);
 
-            RegExpFlag reflags = NoFlags;
+            RegExpFlags reflags = RegExpFlag::NoFlags;
             unsigned length = tokenbuf.length() + 1;
             while (true) {
                 if (!peekChar(&c))
                     goto error;
-                if (c == 'g' && !(reflags & GlobalFlag))
-                    reflags = RegExpFlag(reflags | GlobalFlag);
-                else if (c == 'i' && !(reflags & IgnoreCaseFlag))
-                    reflags = RegExpFlag(reflags | IgnoreCaseFlag);
-                else if (c == 'm' && !(reflags & MultilineFlag))
-                    reflags = RegExpFlag(reflags | MultilineFlag);
-                else if (c == 'y' && !(reflags & StickyFlag))
-                    reflags = RegExpFlag(reflags | StickyFlag);
-                else if (c == 'u' && !(reflags & UnicodeFlag))
-                    reflags = RegExpFlag(reflags | UnicodeFlag);
-                else if (c == 's' && !(reflags & DotAllFlag))
-                    reflags = RegExpFlag(reflags | DotAllFlag);
+                if (c == 'g' && !(reflags & RegExpFlag::Global))
+                    reflags = RegExpFlags(reflags | RegExpFlag::Global);
+                else if (c == 'i' && !(reflags & RegExpFlag::IgnoreCase))
+                    reflags = RegExpFlags(reflags | RegExpFlag::IgnoreCase);
+                else if (c == 'm' && !(reflags & RegExpFlag::Multiline))
+                    reflags = RegExpFlags(reflags | RegExpFlag::Multiline);
+                else if (c == 's' && !(reflags & RegExpFlag::DotAll))
+                    reflags = RegExpFlags(reflags | RegExpFlag::DotAll);
+                else if (c == 'u' && !(reflags & RegExpFlag::Unicode))
+                    reflags = RegExpFlags(reflags | RegExpFlag::Unicode);
+                else if (c == 'y' && !(reflags & RegExpFlag::Sticky))
+                    reflags = RegExpFlags(reflags | RegExpFlag::Sticky);
                 else
                     break;
                 if (!getChar(&c))

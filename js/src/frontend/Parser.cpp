@@ -36,6 +36,7 @@
 #include "frontend/FoldConstants.h"
 #include "frontend/TokenStream.h"
 #include "irregexp/RegExpParser.h"
+#include "js/RegExpFlags.h"
 #include "vm/RegExpObject.h"
 #include "wasm/AsmJS.h"
 
@@ -56,6 +57,7 @@ using mozilla::PodZero;
 using mozilla::Some;
 
 using JS::AutoGCRooter;
+using JS::RegExpFlags;
 
 namespace js {
 namespace frontend {
@@ -9457,7 +9459,7 @@ Parser<FullParseHandler, char16_t>::newRegExp()
     // Create the regexp and check its syntax.
     const char16_t* chars = tokenStream.getTokenbuf().begin();
     size_t length = tokenStream.getTokenbuf().length();
-    RegExpFlag flags = tokenStream.currentToken().regExpFlags();
+    RegExpFlags flags = tokenStream.currentToken().regExpFlags();
 
     Rooted<RegExpObject*> reobj(context);
     reobj = RegExpObject::create(context, chars, length, flags, nullptr, &tokenStream, alloc,
@@ -9477,10 +9479,10 @@ Parser<SyntaxParseHandler, char16_t>::newRegExp()
     // Only check the regexp's syntax, but don't create a regexp object.
     const char16_t* chars = tokenStream.getTokenbuf().begin();
     size_t length = tokenStream.getTokenbuf().length();
-    RegExpFlag flags = tokenStream.currentToken().regExpFlags();
+    RegExpFlags flags = tokenStream.currentToken().regExpFlags();
 
     mozilla::Range<const char16_t> source(chars, length);
-    if (!js::irregexp::ParsePatternSyntax(tokenStream, alloc, source, flags & UnicodeFlag, flags & DotAllFlag))
+    if (!js::irregexp::ParsePatternSyntax(tokenStream, alloc, source, flags.unicode(), flags.dotAll()))
         return null();
 
     return handler.newRegExp(SyntaxParseHandler::NodeGeneric, pos(), *this);

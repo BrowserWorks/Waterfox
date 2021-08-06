@@ -6,6 +6,7 @@
 
 #include "builtin/RegExp.h"
 
+#include "mozilla/Casting.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/TypeTraits.h"
 
@@ -14,6 +15,7 @@
 #include "frontend/TokenStream.h"
 #include "irregexp/RegExpParser.h"
 #include "jit/InlinableNatives.h"
+#include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
 #include "vm/RegExpStatics.h"
 #include "vm/SelfHosting.h"
 #include "vm/StringBuffer.h"
@@ -27,8 +29,12 @@ using namespace js;
 using namespace js::unicode;
 
 using mozilla::ArrayLength;
+using mozilla::AssertedCast;
 using mozilla::CheckedInt;
 using mozilla::Maybe;
+
+using JS::RegExpFlag;
+using JS::RegExpFlags;
 
 /*
  * ES 2017 draft rev 6a13789aa9e7c6de4e96b7d3e24d9e6eba6584ad 21.2.5.2.2
@@ -175,12 +181,12 @@ js::ExecuteRegExpLegacy(JSContext* cx, RegExpStatics* res, Handle<RegExpObject*>
 }
 
 static bool
-CheckPatternSyntax(JSContext* cx, HandleAtom pattern, RegExpFlag flags)
+CheckPatternSyntax(JSContext* cx, HandleAtom pattern, RegExpFlags flags)
 {
     CompileOptions options(cx);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
     return irregexp::ParsePatternSyntax(dummyTokenStream, cx->tempLifoAlloc(), pattern,
-                                        flags & UnicodeFlag, flags & DotAllFlag);
+                                        flags.unicode(), flags.dotAll());
 }
 
 enum RegExpSharedUse {
@@ -220,7 +226,7 @@ RegExpInitializeIgnoringLastIndex(JSContext* cx, Handle<RegExpObject*> obj,
     }
 
     /* Step 3. */
-    RegExpFlag flags = RegExpFlag(0);
+    RegExpFlags flags = RegExpFlag::NoFlags;
     if (!flagsValue.isUndefined()) {
         /* Step 4. */
         RootedString flagStr(cx, ToString<CanGC>(cx, flagsValue));
@@ -332,12 +338,11 @@ regexp_compile_impl(JSContext* cx, const CallArgs& args)
         }
 
         // Beware!  |patternObj| might be a proxy into another compartment, so
-        // don't assume |patternObj.is<RegExpObject>()|.  For the same reason,
-        // don't reuse the RegExpShared below.
+        // don't assume |patternObj.is<RegExpObject>()|.
         RootedObject patternObj(cx, &patternValue.toObject());
 
         RootedAtom sourceAtom(cx);
-        RegExpFlag flags;
+        RegExpFlags flags = RegExpFlag::NoFlags;
         {
             // Step 3b.
             RegExpShared* shared = RegExpToShared(cx, patternObj);
@@ -432,7 +437,7 @@ js::regexp_construct(JSContext* cx, unsigned argc, Value* vp)
         RootedObject patternObj(cx, &patternValue.toObject());
 
         RootedAtom sourceAtom(cx);
-        RegExpFlag flags;
+        RegExpFlags flags;
         {
             // Step 4.a.
             RegExpShared* shared = RegExpToShared(cx, patternObj);
@@ -457,14 +462,14 @@ js::regexp_construct(JSContext* cx, unsigned argc, Value* vp)
         // Step 8.
         if (args.hasDefined(1)) {
             // Step 4.c / 21.2.3.2.2 RegExpInitialize step 4.
-            RegExpFlag flagsArg = RegExpFlag(0);
+            RegExpFlags flagsArg = RegExpFlag::NoFlags;
             RootedString flagStr(cx, ToString<CanGC>(cx, args[1]));
             if (!flagStr)
                 return false;
             if (!ParseRegExpFlags(cx, flagStr, &flagsArg))
                 return false;
 
-            if (!(flags & UnicodeFlag) && flagsArg & UnicodeFlag) {
+            if (!flags.unicode() && flagsArg.unicode()) {
                 // Have to check syntax again when adding 'u' flag.
 
                 // ES 2017 draft rev 9b49a888e9dfe2667008a01b2754c3662059ae56
@@ -539,7 +544,7 @@ js::regexp_construct_raw_flags(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Step 4.c.
-    int32_t flags = int32_t(args[1].toNumber());
+    RegExpFlags flags = AssertedCast<uint8_t>(int32_t(args[1].toNumber()));
 
     // Step 7.
     RegExpObject* regexp = RegExpAlloc(cx, GenericObject);
@@ -547,7 +552,7 @@ js::regexp_construct_raw_flags(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Step 8.
-    regexp->initAndZeroLastIndex(sourceAtom, RegExpFlag(flags), cx);
+    regexp->initAndZeroLastIndex(sourceAtom, flags, cx);
     args.rval().setObject(*regexp);
     return true;
 }

@@ -695,7 +695,7 @@ WrapperAnswer::RecvRegExpToShared(const ObjectId& objId, ReturnStatus* rs,
         return fail(jsapi, rs);
     source->Assign(sourceStr);
 
-    *flags = JS::GetRegExpFlags(cx, obj);
+    *flags = JS::GetRegExpFlags(cx, obj).value();
 
     return ok(rs);
 }

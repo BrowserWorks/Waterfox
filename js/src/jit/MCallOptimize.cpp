@@ -27,6 +27,7 @@
 #include "jit/Lowering.h"
 #include "jit/MIR.h"
 #include "jit/MIRGraph.h"
+#include "js/RegExpFlags.h"
 #include "vm/ArgumentsObject.h"
 #include "vm/ProxyObject.h"
 #include "vm/SelfHosting.h"
@@ -42,6 +43,8 @@ using mozilla::ArrayLength;
 using mozilla::AssertedCast;
 
 using JS::DoubleNaNValue;
+using JS::RegExpFlag;
+using JS::RegExpFlags;
 using JS::TrackedOutcome;
 using JS::TrackedStrategy;
 using JS::TrackedTypeSite;
@@ -424,7 +427,7 @@ IonBuilder::inlineNativeGetter(CallInfo& callInfo, JSFunction* target)
     }
 
     // Try to optimize RegExp getters.
-    RegExpFlag mask = NoFlags;
+    RegExpFlags mask = RegExpFlag::NoFlags;
     if (RegExpObject::isOriginalFlagGetter(native, &mask)) {
         const Class* clasp = thisTypes->getKnownClass(constraints());
         if (clasp != &RegExpObject::class_)
@@ -433,7 +436,7 @@ IonBuilder::inlineNativeGetter(CallInfo& callInfo, JSFunction* target)
         MLoadFixedSlot* flags = MLoadFixedSlot::New(alloc(), thisArg, RegExpObject::flagsSlot());
         current->add(flags);
         flags->setResultType(MIRType::Int32);
-        MConstant* maskConst = MConstant::New(alloc(), Int32Value(mask));
+        MConstant* maskConst = MConstant::New(alloc(), Int32Value(mask.value()));
         current->add(maskConst);
         MBitAnd* maskedFlag = MBitAnd::New(alloc(), flags, maskConst);
         maskedFlag->setInt32Specialization();
@@ -1945,7 +1948,7 @@ IonBuilder::inlineIsPossiblyWrappedRegExpObject(CallInfo& callInfo)
     }
 
     // Don't inline if the argument might be a wrapper.
-    if (types->forAllClasses(constraints(), IsProxyClass) != 
+    if (types->forAllClasses(constraints(), IsProxyClass) !=
         TemporaryTypeSet::ForAllResult::ALL_FALSE) {
         return InliningStatus_NotInlined;
     }

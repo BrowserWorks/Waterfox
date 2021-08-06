@@ -33,6 +33,7 @@
 #include "jit/InlinableNatives.h"
 #include "js/Debug.h"
 #include "js/HashTable.h"
+#include "js/RegExpFlags.h"
 #include "js/StructuredClone.h"
 #include "js/UbiNode.h"
 #include "js/UbiNodeBreadthFirst.h"
@@ -64,6 +65,9 @@ using namespace js;
 
 using mozilla::ArrayLength;
 using mozilla::Move;
+
+using JS::RegExpFlag;
+using JS::RegExpFlags;
 
 // If fuzzingSafe is set, remove functionality that could cause problems with
 // fuzzers. Set this via the environment variable MOZ_FUZZING_SAFE.
@@ -4231,7 +4235,7 @@ ParseRegExp(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RegExpFlag flags = RegExpFlag(0);
+    RegExpFlags flags = RegExpFlag::NoFlags;
     if (!args.get(1).isUndefined()) {
         if (!args.get(1).isString()) {
             ReportUsageErrorASCII(cx, callee, "Second argument, if present, must be a String");
@@ -4260,11 +4264,7 @@ ParseRegExp(JSContext* cx, unsigned argc, Value* vp)
 
     irregexp::RegExpCompileData data;
     if (!irregexp::ParsePattern(dummyTokenStream, cx->tempLifoAlloc(), pattern,
-                                flags & MultilineFlag, match_only,
-                                flags & UnicodeFlag, flags & IgnoreCaseFlag,
-                                flags & GlobalFlag, flags & StickyFlag,
-                                flags & DotAllFlag,
-                                &data))
+                                match_only, flags, &data))
     {
         return false;
     }

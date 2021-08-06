@@ -82,6 +82,7 @@ EXPORTS.js += [
     '../public/Realm.h',
     '../public/RefCounted.h',
     '../public/RegExp.h',
+    '../public/RegExpFlags.h',
     '../public/RequiredDefines.h',
     '../public/Result.h',
     '../public/RootingAPI.h',

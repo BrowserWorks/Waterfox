@@ -36,6 +36,7 @@
 #include <stdarg.h>
 
 #include "irregexp/RegExpAST.h"
+#include "js/RegExpFlags.h"
 
 namespace js {
 
@@ -46,9 +47,12 @@ namespace frontend {
 namespace irregexp {
 
 bool
-ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
-             bool multiline, bool match_only, bool unicode, bool ignore_case,
-             bool global, bool sticky, bool dotAll, RegExpCompileData* data);
+ParsePattern(frontend::TokenStream& ts,
+             LifoAlloc& alloc,
+             JSAtom* str,
+             bool multiline,
+             JS::RegExpFlags flags,
+             RegExpCompileData* data);
 
 bool
 ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
@@ -185,8 +189,7 @@ class RegExpParser
 {
   public:
     RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
-                 const CharT* chars, const CharT* end, bool multiline_mode, bool unicode,
-                 bool ignore_case, bool dotAll);
+                 JS::RegExpFlags flags, const CharT* chars, const CharT* end);
 
     RegExpTree* ParsePattern();
     RegExpTree* ParseDisjunction();

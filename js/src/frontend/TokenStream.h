@@ -25,10 +25,10 @@
 
 #include "frontend/ErrorReporter.h"
 #include "frontend/TokenKind.h"
+#include "js/RegExpFlags.h"
 #include "js/UniquePtr.h"
 #include "js/Vector.h"
 #include "vm/ErrorReporting.h"
-#include "vm/RegExpShared.h"
 #include "vm/String.h"
 #include "vm/Unicode.h"
 
@@ -179,7 +179,7 @@ struct Token
             double      value;          // floating point number
             DecimalPoint decimalPoint;  // literal contains '.'
         } number;
-        RegExpFlag      reflags;        // regexp flags; use tokenbuf to access
+        JS::RegExpFlags  reflags;       // regexp flags; use tokenbuf to access
                                         //   regexp chars
     } u;
 #ifdef DEBUG
@@ -201,9 +201,8 @@ struct Token
         u.atom = atom;
     }
 
-    void setRegExpFlags(RegExpFlag flags) {
+    void setRegExpFlags(JS::RegExpFlags flags) {
         MOZ_ASSERT(type == TOK_REGEXP);
-        MOZ_ASSERT((flags & AllFlags) == flags);
         u.reflags = flags;
     }
 
@@ -227,9 +226,8 @@ struct Token
         return u.atom;
     }
 
-    RegExpFlag regExpFlags() const {
+    JS::RegExpFlags regExpFlags() const {
         MOZ_ASSERT(type == TOK_REGEXP);
-        MOZ_ASSERT((u.reflags & AllFlags) == u.reflags);
         return u.reflags;
     }
 
