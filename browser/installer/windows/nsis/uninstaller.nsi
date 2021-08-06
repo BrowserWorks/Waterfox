@@ -241,7 +241,7 @@ Function un.UninstallServiceIfNotUsed
   ; Figure out the number of subkeys
   StrCpy $0 0
   ${Do}
-    EnumRegKey $1 HKLM "Software\Waterfox Limited\MaintenanceService" $0
+    EnumRegKey $1 HKLM "Software\WaterfoxLimited\MaintenanceService" $0
     ${If} "$1" == ""
       ${ExitDo}
     ${EndIf}
@@ -336,7 +336,7 @@ Function un.GetCommonDirectory
   System::Call "Shell32::SHGetSpecialFolderPathW(p 0, t.r0, i 0x23, i 0)"
   ; Add our subdirectory, this is hardcoded as grandparent of the update directory in
   ; several other places.
-  StrCpy $0 "$0\Waterfox Limited"
+  StrCpy $0 "$0\WaterfoxLimited"
 
   Exch $0   ; Restore original $0 and put our $0 on the stack.
 FunctionEnd
@@ -440,8 +440,8 @@ Section "Uninstall"
   ${EndIf}
 
   SetShellVarContext current  ; Set SHCTX to HKCU
-  ${un.RegCleanMain} "Software\Waterfox Limited"
-  ${un.RegCleanPrefs} "Software\Waterfox Limited\${AppName}"
+  ${un.RegCleanMain} "Software\WaterfoxLimited"
+  ${un.RegCleanPrefs} "Software\WaterfoxLimited\${AppName}"
   ${un.RegCleanUninstall}
   ${un.DeleteShortcuts}
 
@@ -459,21 +459,21 @@ Section "Uninstall"
   ${EndIf}
 
   ; Remove the updates directory
-  ${un.CleanUpdateDirectories} "Waterfox Limited\Waterfox" "Waterfox Limited\updates"
+  ${un.CleanUpdateDirectories} "WaterfoxLimited\Waterfox" "WaterfoxLimited\updates"
 
   ; Remove any app model id's stored in the registry for this install path
-  DeleteRegValue HKCU "Software\Waterfox Limited\${AppName}\TaskBarIDs" "$INSTDIR"
-  DeleteRegValue HKLM "Software\Waterfox Limited\${AppName}\TaskBarIDs" "$INSTDIR"
+  DeleteRegValue HKCU "Software\WaterfoxLimited\${AppName}\TaskBarIDs" "$INSTDIR"
+  DeleteRegValue HKLM "Software\WaterfoxLimited\${AppName}\TaskBarIDs" "$INSTDIR"
 
   ClearErrors
-  WriteRegStr HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     StrCpy $TmpVal "HKCU" ; used primarily for logging
   ${Else}
     SetShellVarContext all  ; Set SHCTX to HKLM
-    DeleteRegValue HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest"
     StrCpy $TmpVal "HKLM" ; used primarily for logging
-    ${un.RegCleanMain} "Software\Waterfox Limited"
+    ${un.RegCleanMain} "Software\WaterfoxLimited"
     ${un.RegCleanUninstall}
     ${un.DeleteShortcuts}
     ${un.SetAppLSPCategories}
@@ -498,10 +498,10 @@ Section "Uninstall"
   ${un.RegCleanFileHandler}  ".webp"  "WaterfoxHTML-$AppUserModelID"
 
   SetShellVarContext all  ; Set SHCTX to HKLM
-  ${un.GetSecondInstallPath} "Software\Waterfox Limited" $R9
+  ${un.GetSecondInstallPath} "Software\WaterfoxLimited" $R9
   ${If} $R9 == "false"
     SetShellVarContext current  ; Set SHCTX to HKCU
-    ${un.GetSecondInstallPath} "Software\Waterfox Limited" $R9
+    ${un.GetSecondInstallPath} "Software\WaterfoxLimited" $R9
   ${EndIf}
 
   DeleteRegKey HKLM "Software\Clients\StartMenuInternet\${AppRegName}-$AppUserModelID"
@@ -676,7 +676,7 @@ Section "Uninstall"
   ; subsequently deleted after checking. If the value is found during startup
   ; the browser will offer to Reset Firefox. We use the UpdateChannel to match
   ; uninstalls of Firefox-release with reinstalls of Firefox-release, for example.
-  WriteRegStr HKCU "Software\Waterfox Limited\Waterfox" "Uninstalled-${UpdateChannel}" "True"
+  WriteRegStr HKCU "Software\WaterfoxLimited\Waterfox" "Uninstalled-${UpdateChannel}" "True"
 
 !ifdef MOZ_MAINTENANCE_SERVICE
   ; Get the path the allowed cert is at and remove it
@@ -1004,7 +1004,7 @@ Function un.onInit
   ${un.UninstallUnOnInitCommon}
 
   ; setup the application model id registration value
-  ${un.InitHashAppModelId} "$INSTDIR" "Software\Waterfox Limited\${AppName}\TaskBarIDs"
+  ${un.InitHashAppModelId} "$INSTDIR" "Software\WaterfoxLimited\${AppName}\TaskBarIDs"
 
   ; Find a default profile for this install.
   SetShellVarContext current

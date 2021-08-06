@@ -722,7 +722,7 @@ def cleanup_pending_crash_reports():
     """
     if mozinfo.isWin:
         location = os.path.expanduser(
-            "~\\AppData\\Roaming\\Waterfox Limited\\Waterfox\\Crash Reports"
+            "~\\AppData\\Roaming\\WaterfoxLimited\\Waterfox\\Crash Reports"
         )
     elif mozinfo.isMac:
         location = os.path.expanduser(

@@ -93,7 +93,7 @@ async function setupHosts(scripts) {
       break;
 
     case "win":
-      const REGKEY = String.raw`Software\Waterfox Limited\NativeMessagingHosts`;
+      const REGKEY = String.raw`Software\WaterfoxLimited\NativeMessagingHosts`;
 
       let registry = new MockRegistry();
       registerCleanupFunction(() => {

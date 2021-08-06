@@ -41,7 +41,7 @@ Var BrandFullName
 ; And anyone that wants to run tests themselves should already have 
 ; this installed.
 !define FallbackKey \
-  "Software\Waterfox Limited\MaintenanceService\3932ecacee736d366d6436db0f55bce4"
+  "Software\WaterfoxLimited\MaintenanceService\3932ecacee736d366d6436db0f55bce4"
 
 !define CompanyName "Mozilla Corporation"
 !define BrandFullNameInternal ""
@@ -66,7 +66,7 @@ Name "${MaintFullName}"
 OutFile "maintenanceservice_installer.exe"
 
 ; Get installation folder from registry if available
-InstallDirRegKey HKLM "Software\Waterfox Limited\MaintenanceService" ""
+InstallDirRegKey HKLM "Software\WaterfoxLimited\MaintenanceService" ""
 
 SetOverwrite on
 
@@ -209,9 +209,9 @@ Section "MaintenanceService"
   ; want to install once on the first upgrade to maintenance service.
   ; Also write out that we are currently installed, preferences will check
   ; this value to determine if we should show the service update pref.
-  WriteRegDWORD HKLM "Software\Waterfox Limited\MaintenanceService" "Attempted" 1
-  WriteRegDWORD HKLM "Software\Waterfox Limited\MaintenanceService" "Installed" 1
-  DeleteRegValue HKLM "Software\Waterfox Limited\MaintenanceService" "FFPrefetchDisabled"
+  WriteRegDWORD HKLM "Software\WaterfoxLimited\MaintenanceService" "Attempted" 1
+  WriteRegDWORD HKLM "Software\WaterfoxLimited\MaintenanceService" "Installed" 1
+  DeleteRegValue HKLM "Software\WaterfoxLimited\MaintenanceService" "FFPrefetchDisabled"
 
   ; Included here for debug purposes only.  
   ; These keys are used to bypass the installation dir is a valid installation
@@ -333,8 +333,8 @@ Section "Uninstall"
     SetRegView 64
   ${EndIf}
   DeleteRegKey HKLM "${MaintUninstallKey}"
-  DeleteRegValue HKLM "Software\Waterfox Limited\MaintenanceService" "Installed"
-  DeleteRegValue HKLM "Software\Waterfox Limited\MaintenanceService" "FFPrefetchDisabled"
+  DeleteRegValue HKLM "Software\WaterfoxLimited\MaintenanceService" "Installed"
+  DeleteRegValue HKLM "Software\WaterfoxLimited\MaintenanceService" "FFPrefetchDisabled"
   DeleteRegKey HKLM "${FallbackKey}\"
   ${If} ${RunningX64}
   ${OrIf} ${IsNativeARM64}

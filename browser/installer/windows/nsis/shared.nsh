@@ -27,25 +27,25 @@
   ${CreateShortcutsLog}
 
   ; Remove registry entries for non-existent apps and for apps that point to our
-  ; install location in the Software\Waterfox Limited key and uninstall registry entries
+  ; install location in the Software\WaterfoxLimited key and uninstall registry entries
   ; that point to our install location for both HKCU and HKLM.
   SetShellVarContext current  ; Set SHCTX to the current user (e.g. HKCU)
-  ${RegCleanMain} "Software\Waterfox Limited"
+  ${RegCleanMain} "Software\WaterfoxLimited"
   ${RegCleanUninstall}
   ${UpdateProtocolHandlers}
 
   ; setup the application model id registration value
-  ${InitHashAppModelId} "$INSTDIR" "Software\Waterfox Limited\${AppName}\TaskBarIDs"
+  ${InitHashAppModelId} "$INSTDIR" "Software\WaterfoxLimited\${AppName}\TaskBarIDs"
 
   ClearErrors
-  WriteRegStr HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     StrCpy $TmpVal "HKCU"
   ${Else}
     SetShellVarContext all    ; Set SHCTX to all users (e.g. HKLM)
-    DeleteRegValue HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest"
     StrCpy $TmpVal "HKLM"
-    ${RegCleanMain} "Software\Waterfox Limited"
+    ${RegCleanMain} "Software\WaterfoxLimited"
     ${RegCleanUninstall}
     ${UpdateProtocolHandlers}
     ${FixShellIconHandler} "HKLM"
@@ -54,9 +54,9 @@
     ; Add the Firewall entries after an update
     Call AddFirewallEntries
 
-    ReadRegStr $0 HKLM "Software\Waterfox Limited\Waterfox" "CurrentVersion"
+    ReadRegStr $0 HKLM "Software\WaterfoxLimited\Waterfox" "CurrentVersion"
     ${If} "$0" != "${GREVersion}"
-      WriteRegStr HKLM "Software\Waterfox Limited\Waterfox" "CurrentVersion" "${GREVersion}"
+      WriteRegStr HKLM "Software\WaterfoxLimited\Waterfox" "CurrentVersion" "${GREVersion}"
     ${EndIf}
   ${EndIf}
 
@@ -130,7 +130,7 @@
     ${OrIf} ${IsNativeARM64}
       SetRegView 64
     ${EndIf}
-    ReadRegDWORD $5 HKLM "Software\Waterfox Limited\MaintenanceService" "Attempted"
+    ReadRegDWORD $5 HKLM "Software\WaterfoxLimited\MaintenanceService" "Attempted"
     ClearErrors
     ${If} ${RunningX64}
     ${OrIf} ${IsNativeARM64}
@@ -173,7 +173,7 @@
 !ifdef MOZ_DEFAULT_BROWSER_AGENT
 ${If} $TmpVal == "HKCU"
   ClearErrors
-  ReadRegDWORD $0 HKCU "Software\Waterfox Limited\${AppName}\Installer\$AppUserModelID" \
+  ReadRegDWORD $0 HKCU "Software\WaterfoxLimited\${AppName}\Installer\$AppUserModelID" \
                     "DidRegisterDefaultBrowserAgent"
   ${If} $0 != 0
   ${OrIf} ${Errors}
@@ -696,31 +696,31 @@ ${RemoveDefaultBrowserAgentShortcut}
 
   ; Running Firefox 64 bit on Windows 64 bit
   ClearErrors
-  ReadRegDWORD $2 HKLM "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1"
+  ReadRegDWORD $2 HKLM "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1"
   ; If there were no errors then the system was updated from Firefox 32 bit to
   ; Firefox 64 bit and if the value is already 1 then the registry value has
   ; already been updated in the HKLM registry.
   ${IfNot} ${Errors}
   ${AndIf} $2 != 1
     ClearErrors
-    WriteRegDWORD HKLM "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1" 1
+    WriteRegDWORD HKLM "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1" 1
     ${If} ${Errors}
       ; There was an error writing to HKLM so just write it to HKCU
-      WriteRegDWORD HKCU "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1" 1
+      WriteRegDWORD HKCU "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1" 1
     ${Else}
       ; This will delete the value from HKCU if it exists
-      DeleteRegValue HKCU "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1"
+      DeleteRegValue HKCU "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1"
     ${EndIf}
   ${EndIf}
 
   ClearErrors
-  ReadRegDWORD $2 HKCU "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1"
+  ReadRegDWORD $2 HKCU "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1"
   ; If there were no errors then the system was updated from Firefox 32 bit to
   ; Firefox 64 bit and if the value is already 1 then the registry value has
   ; already been updated in the HKCU registry.
   ${IfNot} ${Errors}
   ${AndIf} $2 != 1
-    WriteRegDWORD HKCU "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1" 1
+    WriteRegDWORD HKCU "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1" 1
   ${EndIf}
 
 !else
@@ -730,14 +730,14 @@ ${RemoveDefaultBrowserAgentShortcut}
   ${OrIf} ${IsNativeARM64}
     ; Running Firefox 32 bit on a Windows 64 bit system
     ClearErrors
-    ReadRegDWORD $2 HKLM "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1"
+    ReadRegDWORD $2 HKLM "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1"
     ; If there were errors the value doesn't exist yet.
     ${If} ${Errors}
       ClearErrors
-      WriteRegDWORD HKLM "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1" 0
+      WriteRegDWORD HKLM "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1" 0
       ; If there were errors write the value in HKCU.
       ${If} ${Errors}
-        WriteRegDWORD HKCU "Software\Waterfox Limited\${AppName}\32to64DidMigrate" "$1" 0
+        WriteRegDWORD HKCU "Software\WaterfoxLimited\${AppName}\32to64DidMigrate" "$1" 0
       ${EndIf}
     ${EndIf}
   ${EndIf}
@@ -774,7 +774,7 @@ ${RemoveDefaultBrowserAgentShortcut}
 !macroend
 !define FixShellIconHandler "!insertmacro FixShellIconHandler"
 
-; Add Software\Waterfox Limited\ registry entries (uses SHCTX).
+; Add Software\WaterfoxLimited\ registry entries (uses SHCTX).
 !macro SetAppKeys
   ; Check if this is an ESR release and if so add registry values so it is
   ; possible to determine that this is an ESR install (bug 726781).
@@ -787,14 +787,14 @@ ${RemoveDefaultBrowserAgentShortcut}
   ${EndIf}
 
   ${GetLongPath} "$INSTDIR" $8
-  StrCpy $0 "Software\Waterfox Limited\${BrandFullNameInternal}\${AppVersion}$3 (${ARCH} ${AB_CD})\Main"
+  StrCpy $0 "Software\WaterfoxLimited\${BrandFullNameInternal}\${AppVersion}$3 (${ARCH} ${AB_CD})\Main"
   ${WriteRegStr2} $TmpVal "$0" "Install Directory" "$8" 0
   ${WriteRegStr2} $TmpVal "$0" "PathToExe" "$8\${FileMainEXE}" 0
 
-  StrCpy $0 "Software\Waterfox Limited\${BrandFullNameInternal}\${AppVersion}$3 (${ARCH} ${AB_CD})\Uninstall"
+  StrCpy $0 "Software\WaterfoxLimited\${BrandFullNameInternal}\${AppVersion}$3 (${ARCH} ${AB_CD})\Uninstall"
   ${WriteRegStr2} $TmpVal "$0" "Description" "${BrandFullNameInternal} ${AppVersion}$3 (${ARCH} ${AB_CD})" 0
 
-  StrCpy $0 "Software\Waterfox Limited\${BrandFullNameInternal}\${AppVersion}$3 (${ARCH} ${AB_CD})"
+  StrCpy $0 "Software\WaterfoxLimited\${BrandFullNameInternal}\${AppVersion}$3 (${ARCH} ${AB_CD})"
   ${WriteRegStr2} $TmpVal  "$0" "" "${AppVersion}$3 (${ARCH} ${AB_CD})" 0
   ${If} "$3" == ""
     DeleteRegValue SHCTX "$0" "ESR"
@@ -802,14 +802,14 @@ ${RemoveDefaultBrowserAgentShortcut}
     ${WriteRegDWORD2} $TmpVal "$0" "ESR" 1 0
   ${EndIf}
 
-  StrCpy $0 "Software\Waterfox Limited\${BrandFullNameInternal} ${AppVersion}$3\bin"
+  StrCpy $0 "Software\WaterfoxLimited\${BrandFullNameInternal} ${AppVersion}$3\bin"
   ${WriteRegStr2} $TmpVal "$0" "PathToExe" "$8\${FileMainEXE}" 0
 
-  StrCpy $0 "Software\Waterfox Limited\${BrandFullNameInternal} ${AppVersion}$3\extensions"
+  StrCpy $0 "Software\WaterfoxLimited\${BrandFullNameInternal} ${AppVersion}$3\extensions"
   ${WriteRegStr2} $TmpVal "$0" "Components" "$8\components" 0
   ${WriteRegStr2} $TmpVal "$0" "Plugins" "$8\plugins" 0
 
-  StrCpy $0 "Software\Waterfox Limited\${BrandFullNameInternal} ${AppVersion}$3"
+  StrCpy $0 "Software\WaterfoxLimited\${BrandFullNameInternal} ${AppVersion}$3"
   ${WriteRegStr2} $TmpVal "$0" "GeckoVer" "${GREVersion}" 0
   ${If} "$3" == ""
     DeleteRegValue SHCTX "$0" "ESR"
@@ -817,7 +817,7 @@ ${RemoveDefaultBrowserAgentShortcut}
     ${WriteRegDWORD2} $TmpVal "$0" "ESR" 1 0
   ${EndIf}
 
-  StrCpy $0 "Software\Waterfox Limited\${BrandFullNameInternal}$3"
+  StrCpy $0 "Software\WaterfoxLimited\${BrandFullNameInternal}$3"
   ${WriteRegStr2} $TmpVal "$0" "" "${GREVersion}" 0
   ${WriteRegStr2} $TmpVal "$0" "CurrentVersion" "${AppVersion}$3 (${ARCH} ${AB_CD})" 0
 !macroend
@@ -869,7 +869,7 @@ ${RemoveDefaultBrowserAgentShortcut}
     ${WriteRegStr2} $1 "$0" "DisplayVersion" "${AppVersion}" 0
     ${WriteRegStr2} $1 "$0" "HelpLink" "${HelpLink}" 0
     ${WriteRegStr2} $1 "$0" "InstallLocation" "$8" 0
-    ${WriteRegStr2} $1 "$0" "Publisher" "Waterfox Limited" 0
+    ${WriteRegStr2} $1 "$0" "Publisher" "WaterfoxLimited" 0
     ${WriteRegStr2} $1 "$0" "UninstallString" "$\"$8\uninstall\helper.exe$\"" 0
     DeleteRegValue SHCTX "$0" "URLInfoAbout"
 ; Don't add URLUpdateInfo which is the release notes url except for the release
@@ -1059,7 +1059,7 @@ ${RemoveDefaultBrowserAgentShortcut}
     ; Setting the Attempted value will ensure that a new Maintenance Service
     ; install will never be attempted again after this from updates.  The value
     ; is used only to see if updates should attempt new service installs.
-    WriteRegDWORD HKLM "Software\Waterfox Limited\MaintenanceService" "Attempted" 1
+    WriteRegDWORD HKLM "Software\WaterfoxLimited\MaintenanceService" "Attempted" 1
 
     ; These values associate the allowed certificates for the current
     ; installation.
@@ -1246,7 +1246,7 @@ ${RemoveDefaultBrowserAgentShortcut}
       ClearErrors
       WriteIniStr "$0" "TASKBAR" "Migrated" "true"
       WriteRegDWORD HKCU \
-        "Software\Waterfox Limited\${AppName}\Installer\$AppUserModelID" \
+        "Software\WaterfoxLimited\${AppName}\Installer\$AppUserModelID" \
         "WasPinnedToTaskbar" 1
       ${If} ${AtLeastWin7}
         ; If we didn't run the stub installer, AddTaskbarSC will be empty.
@@ -1271,7 +1271,7 @@ ${RemoveDefaultBrowserAgentShortcut}
         ${EndIf}
       ${EndIf}
     ${ElseIf} ${AtLeastWin10}
-      ${GetInstallerRegistryPref} "Software\Waterfox Limited\${AppName}" \
+      ${GetInstallerRegistryPref} "Software\WaterfoxLimited\${AppName}" \
         "installer.taskbarpin.win10.enabled" $2
       ${If} $2 == "true"
         ; On Windows 10, we may have previously tried to make a taskbar pin
@@ -1281,11 +1281,11 @@ ${RemoveDefaultBrowserAgentShortcut}
         ; registry value, so that we don't continue to do this repeatedly.
         ClearErrors
         ReadRegDWORD $2 HKCU \
-            "Software\Waterfox Limited\${AppName}\Installer\$AppUserModelID" \
+            "Software\WaterfoxLimited\${AppName}\Installer\$AppUserModelID" \
             "WasPinnedToTaskbar"
         ${If} ${Errors}
           WriteRegDWORD HKCU \
-            "Software\Waterfox Limited\${AppName}\Installer\$AppUserModelID" \
+            "Software\WaterfoxLimited\${AppName}\Installer\$AppUserModelID" \
             "WasPinnedToTaskbar" 1
           ${If} $AddTaskbarSC != "0"
             ${PinToTaskBar}
@@ -1559,7 +1559,7 @@ Function SetAsDefaultAppUserHKCU
   StrCpy $0 $0 -2
   ${If} $0 != $8
     ${If} $AppUserModelID == ""
-      ${InitHashAppModelId} "$INSTDIR" "Software\Waterfox Limited\${AppName}\TaskBarIDs"
+      ${InitHashAppModelId} "$INSTDIR" "Software\WaterfoxLimited\${AppName}\TaskBarIDs"
     ${EndIf}
     StrCpy $R9 "${AppRegName}-$AppUserModelID"
   ${EndIf}

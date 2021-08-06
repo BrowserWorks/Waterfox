@@ -1227,7 +1227,7 @@ function isServiceInstalled() {
     );
     wrk.open(
       wrk.ROOT_KEY_LOCAL_MACHINE,
-      "SOFTWARE\\Waterfox Limited\\MaintenanceService",
+      "SOFTWARE\\WaterfoxLimited\\MaintenanceService",
       wrk.ACCESS_READ | wrk.WOW64_64
     );
     installed = wrk.readIntValue("Installed");
@@ -4597,7 +4597,7 @@ Checker.prototype = {
     );
 
     let regPath =
-      "SOFTWARE\\Waterfox Limited\\" + Services.appinfo.name + "\\32to64DidMigrate";
+      "SOFTWARE\\WaterfoxLimited\\" + Services.appinfo.name + "\\32to64DidMigrate";
     let regValHKCU = WindowsRegistry.readRegKey(
       wrk.ROOT_KEY_CURRENT_USER,
       regPath,

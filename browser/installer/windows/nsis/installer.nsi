@@ -305,10 +305,10 @@ Section "-InstallStartCleanup"
   ${EndIf}
 
   ; setup the application model id registration value
-  ${InitHashAppModelId} "$INSTDIR" "Software\Waterfox Limited\${AppName}\TaskBarIDs"
+  ${InitHashAppModelId} "$INSTDIR" "Software\WaterfoxLimited\${AppName}\TaskBarIDs"
 
   ; Remove the updates directory
-  ${CleanUpdateDirectories} "Waterfox Limited\Waterfox" "Waterfox Limited\updates"
+  ${CleanUpdateDirectories} "WaterfoxLimited\Waterfox" "WaterfoxLimited\updates"
 
   ${RemoveDeprecatedFiles}
   ${RemovePrecompleteEntries} "false"
@@ -410,7 +410,7 @@ Section "-Application" APP_IDX
     StrCpy $AddDesktopSC "1"
   ${EndIf}
 
-  ${CreateUpdateDir} "Waterfox Limited"
+  ${CreateUpdateDir} "WaterfoxLimited"
   ${If} ${Errors}
     Pop $0
     ${LogMsg} "** ERROR Failed to create update directory: $0"
@@ -418,25 +418,25 @@ Section "-Application" APP_IDX
 
   ${LogHeader} "Adding Registry Entries"
   SetShellVarContext current  ; Set SHCTX to HKCU
-  ${RegCleanMain} "Software\Waterfox Limited"
+  ${RegCleanMain} "Software\WaterfoxLimited"
   ${RegCleanUninstall}
   ${UpdateProtocolHandlers}
 
   ClearErrors
-  WriteRegStr HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     StrCpy $TmpVal "HKCU" ; used primarily for logging
   ${Else}
     SetShellVarContext all  ; Set SHCTX to HKLM
-    DeleteRegValue HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest"
     StrCpy $TmpVal "HKLM" ; used primarily for logging
-    ${RegCleanMain} "Software\Waterfox Limited"
+    ${RegCleanMain} "Software\WaterfoxLimited"
     ${RegCleanUninstall}
     ${UpdateProtocolHandlers}
 
-    ReadRegStr $0 HKLM "Software\Waterfox Limited\Waterfox" "CurrentVersion"
+    ReadRegStr $0 HKLM "Software\WaterfoxLimited\Waterfox" "CurrentVersion"
     ${If} "$0" != "${GREVersion}"
-      WriteRegStr HKLM "Software\Waterfox Limited\Waterfox" "CurrentVersion" "${GREVersion}"
+      WriteRegStr HKLM "Software\WaterfoxLimited\Waterfox" "CurrentVersion" "${GREVersion}"
     ${EndIf}
   ${EndIf}
 
@@ -745,7 +745,7 @@ Section "-Application" APP_IDX
   ${EndIf}
   ; Remember whether we were told to skip registering the agent, so that updates
   ; won't try to create a registration when they don't find an existing one.
-  WriteRegDWORD HKCU "Software\Waterfox Limited\${AppName}\Installer\$AppUserModelID" \
+  WriteRegDWORD HKCU "Software\WaterfoxLimited\${AppName}\Installer\$AppUserModelID" \
                      "DidRegisterDefaultBrowserAgent" $RegisterDefaultAgent
 !endif
 SectionEnd
@@ -798,7 +798,7 @@ Section "-InstallEndCleanup"
       ; If we have something other than empty string now, write the value.
       ${If} "$0" != ""
         ClearErrors
-        WriteRegStr HKCU "Software\Waterfox Limited\Waterfox" "OldDefaultBrowserCommand" "$0"
+        WriteRegStr HKCU "Software\WaterfoxLimited\Waterfox" "OldDefaultBrowserCommand" "$0"
       ${EndIf}
 
       ${LogHeader} "Setting as the default browser"
@@ -815,7 +815,7 @@ Section "-InstallEndCleanup"
       StrCpy $SetAsDefault false
       ${LogHeader} "Writing default-browser opt-out"
       ClearErrors
-      WriteRegStr HKCU "Software\Waterfox Limited\Waterfox" "DefaultBrowserOptOut" "True"
+      WriteRegStr HKCU "Software\WaterfoxLimited\Waterfox" "DefaultBrowserOptOut" "True"
       ${If} ${Errors}
         ${LogMsg} "Error writing default-browser opt-out"
       ${EndIf}
@@ -1105,12 +1105,12 @@ Function SendPing
   ${EndIf}
 
   ClearErrors
-  WriteRegStr HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest" \
                    "Write Test"
   ${If} ${Errors}
     nsJSON::Set /tree ping "Data" "admin_user" /value false
   ${Else}
-    DeleteRegValue HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest"
     nsJSON::Set /tree ping "Data" "admin_user" /value true
   ${EndIf}
 
@@ -1243,12 +1243,12 @@ Function WriteInstallationTelemetryData
   ; Check for write access to HKLM, if successful then report this user
   ; as an (elevated) admin.
   ClearErrors
-  WriteRegStr HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest" \
                    "Write Test"
   ${If} ${Errors}
     StrCpy $1 "false"
   ${Else}
-    DeleteRegValue HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest"
     StrCpy $1 "true"
   ${EndIf}
   ${JSONSet} "admin_user" /value $1
@@ -1262,7 +1262,7 @@ Function WriteInstallationTelemetryData
 
   ; Check for top-level profile directory
   ; Note: This is the same check used to set $ExistingProfile in stub.nsi
-  ${If} ${FileExists} "$LOCALAPPDATA\Waterfox Limited\Waterfox"
+  ${If} ${FileExists} "$LOCALAPPDATA\WaterfoxLimited\Waterfox"
     StrCpy $1 "true"
   ${Else}
     StrCpy $1 "false"
@@ -1480,13 +1480,13 @@ Function preComponents
 
   ; Only show the maintenance service page if we have write access to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\Waterfox Limited" \
+  WriteRegStr HKLM "Software\WaterfoxLimited" \
               "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     ClearErrors
     Abort
   ${Else}
-    DeleteRegValue HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest"
   ${EndIf}
 
   StrCpy $PageName "Components"
@@ -1665,9 +1665,9 @@ Function preSummary
 
   ; Check if it is possible to write to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest" "Write Test"
   ${Unless} ${Errors}
-    DeleteRegValue HKLM "Software\Waterfox Limited" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxLimited" "${BrandShortName}InstallerTest"
     ; Check if Firefox is the http handler for this user.
     SetShellVarContext current ; Set SHCTX to the current user
     ${IsHandlerForInstallDir} "http" $R9
@@ -1840,10 +1840,10 @@ Function .onInit
 !endif
 
   SetShellVarContext all
-  ${GetFirstInstallPath} "Software\Waterfox Limited\${BrandFullNameInternal}" $0
+  ${GetFirstInstallPath} "Software\WaterfoxLimited\${BrandFullNameInternal}" $0
   ${If} "$0" == "false"
     SetShellVarContext current
-    ${GetFirstInstallPath} "Software\Waterfox Limited\${BrandFullNameInternal}" $0
+    ${GetFirstInstallPath} "Software\WaterfoxLimited\${BrandFullNameInternal}" $0
     ${If} "$0" == "false"
       StrCpy $HadOldInstall false
     ${Else}
