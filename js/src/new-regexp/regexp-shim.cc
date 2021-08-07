@@ -1,5 +1,4 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: set ts=8 sts=2 et sw=2 tw=80:
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -151,6 +150,14 @@ void Isolate::trace(JSTracer* trc) {
 // empty string and don't print anything.
 std::unique_ptr<char[]> String::ToCString() {
   return std::unique_ptr<char[]>();
+}
+
+bool Isolate::init() {
+  regexpStack_ = js_new<RegExpStack>();
+  if (!regexpStack_) {
+    return false;
+  }
+  return true;
 }
 
 byte* Isolate::top_of_regexp_stack() const {

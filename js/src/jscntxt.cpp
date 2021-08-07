@@ -49,6 +49,9 @@
 #include "jit/Ion.h"
 #include "jit/PcScriptCache.h"
 #include "js/CharacterEncoding.h"
+#ifdef JS_NEW_REGEXP
+#  include "new-regexp/RegExpAPI.h"
+#endif
 #include "vm/ErrorReporting.h"
 #include "vm/HelperThreads.h"
 #include "vm/Shape.h"
@@ -118,7 +121,12 @@ JSContext::init(ContextKind kind)
         threadNative_ = (size_t)pthread_self();
 #endif
 
-#ifndef JS_NEW_REGEXP
+#ifdef JS_NEW_REGEXP
+        isolate = irregexp::CreateIsolate(this);
+        if (!isolate) {
+            return false;
+        }
+#else
         if (!regexpStack.ref().init())
             return false;
 #endif
