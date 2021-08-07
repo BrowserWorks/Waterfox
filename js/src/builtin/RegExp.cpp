@@ -13,7 +13,9 @@
 #include "jscntxt.h"
 
 #include "frontend/TokenStream.h"
-#include "irregexp/RegExpParser.h"
+#ifndef JS_NEW_REGEXP
+#  include "irregexp/RegExpParser.h"
+#endif
 #include "jit/InlinableNatives.h"
 #include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
 #include "vm/RegExpStatics.h"
@@ -185,8 +187,12 @@ CheckPatternSyntax(JSContext* cx, HandleAtom pattern, RegExpFlags flags)
 {
     CompileOptions options(cx);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
+#ifdef JS_NEW_REGEXP
+  MOZ_CRASH("TODO");
+#else
     return irregexp::ParsePatternSyntax(dummyTokenStream, cx->tempLifoAlloc(), pattern,
                                         flags.unicode(), flags.dotAll());
+#endif
 }
 
 enum RegExpSharedUse {

@@ -27,7 +27,9 @@
 #include "builtin/TypedObject.h"
 #include "gc/Nursery.h"
 #include "gc/StoreBuffer-inl.h"
-#include "irregexp/NativeRegExpMacroAssembler.h"
+#ifndef JS_NEW_REGEXP
+#  include "irregexp/NativeRegExpMacroAssembler.h"
+#endif
 #include "jit/AtomicOperations.h"
 #include "jit/BaselineCompiler.h"
 #include "jit/IonBuilder.h"
@@ -1186,24 +1188,56 @@ CodeGenerator::visitRegExp(LRegExp* lir)
     masm.bind(ool->rejoin());
 }
 
+#ifdef JS_NEW_REGEXP
+static const size_t InputOutputDataSize = 0;
+#else
+static const size_t InputOutputDataSize = sizeof(irregexp::InputOutputData);
+#endif
+
 // Amount of space to reserve on the stack when executing RegExps inline.
-static const size_t RegExpReservedStack = sizeof(irregexp::InputOutputData)
+static const size_t RegExpReservedStack = InputOutputDataSize
                                         + sizeof(MatchPairs)
                                         + RegExpObject::MaxPairCount * sizeof(MatchPair);
 
 static size_t
 RegExpPairsVectorStartOffset(size_t inputOutputDataStartOffset)
 {
-    return inputOutputDataStartOffset + sizeof(irregexp::InputOutputData) + sizeof(MatchPairs);
+    return inputOutputDataStartOffset + InputOutputDataSize + sizeof(MatchPairs);
 }
 
 static Address
 RegExpPairCountAddress(MacroAssembler& masm, size_t inputOutputDataStartOffset)
 {
     return Address(masm.getStackPointer(), inputOutputDataStartOffset
-                                           + sizeof(irregexp::InputOutputData)
+                                           + InputOutputDataSize
                                            + MatchPairs::offsetOfPairCount());
 }
+
+#ifdef JS_NEW_REGEXP
+
+// Prepare an InputOutputData and optional MatchPairs which space has been
+// allocated for on the stack, and try to execute a RegExp on a string input.
+// If the RegExp was successfully executed and matched the input, fallthrough,
+// otherwise jump to notFound or failure.
+static bool
+PrepareAndExecuteRegExp(JSContext* cx,
+                        MacroAssembler& masm,
+                        Register regexp,
+                        Register input,
+                        Register lastIndex,
+                        Register temp1,
+                        Register temp2,
+                        Register temp3,
+                        size_t inputOutputDataStartOffset,
+                        RegExpShared::CompilationMode mode,
+                        // bool stringsCanBeInNursery,
+                        Label* notFound,
+                        Label* failure)
+{
+    MOZ_CRASH("TODO");
+}
+
+#else
 
 // Prepare an InputOutputData and optional MatchPairs which space has been
 // allocated for on the stack, and try to execute a RegExp on a string input.
@@ -1426,6 +1460,8 @@ PrepareAndExecuteRegExp(JSContext* cx, MacroAssembler& masm, Register regexp, Re
 
     return true;
 }
+
+#endif  // !JS_NEW_REGEXP
 
 static void
 CopyStringChars(MacroAssembler& masm, Register to, Register from, Register len,
@@ -1932,7 +1968,7 @@ CodeGenerator::visitOutOfLineRegExpMatcher(OutOfLineRegExpMatcher* ool)
     Register temp = regs.takeAny();
 
     masm.computeEffectiveAddress(Address(masm.getStackPointer(),
-        sizeof(irregexp::InputOutputData)), temp);
+        InputOutputDataSize), temp);
 
     pushArg(temp);
     pushArg(lastIndex);
@@ -2089,7 +2125,7 @@ CodeGenerator::visitOutOfLineRegExpSearcher(OutOfLineRegExpSearcher* ool)
     Register temp = regs.takeAny();
 
     masm.computeEffectiveAddress(Address(masm.getStackPointer(),
-        sizeof(irregexp::InputOutputData)), temp);
+        InputOutputDataSize), temp);
 
     pushArg(temp);
     pushArg(lastIndex);
@@ -2155,7 +2191,7 @@ JitCompartment::generateRegExpTesterStub(JSContext* cx)
     Register temp2 = regs.takeAny();
     Register temp3 = regs.takeAny();
 
-    masm.reserveStack(sizeof(irregexp::InputOutputData));
+    masm.reserveStack(InputOutputDataSize);
 
     Label notFound, oolEntry;
     if (!PrepareAndExecuteRegExp(cx, masm, regexp, input, lastIndex,
@@ -2179,7 +2215,7 @@ JitCompartment::generateRegExpTesterStub(JSContext* cx)
     masm.move32(Imm32(RegExpTesterResultFailed), result);
 
     masm.bind(&done);
-    masm.freeStack(sizeof(irregexp::InputOutputData));
+    masm.freeStack(InputOutputDataSize);
     masm.ret();
 
     Linker linker(masm);

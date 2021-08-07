@@ -118,8 +118,10 @@ JSContext::init(ContextKind kind)
         threadNative_ = (size_t)pthread_self();
 #endif
 
+#ifndef JS_NEW_REGEXP
         if (!regexpStack.ref().init())
             return false;
+#endif
 
         if (!fx.initInstance())
             return false;
