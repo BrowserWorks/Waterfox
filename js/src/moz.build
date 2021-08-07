@@ -180,6 +180,10 @@ SOURCES += [
 if CONFIG['CLANG_CXX']:
     SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
 
+SOURCES += [
+    'util/Text.cpp',
+]
+
 UNIFIED_SOURCES += [
     'vm/ArgumentsObject.cpp',
     'vm/ArrayBufferObject.cpp',
