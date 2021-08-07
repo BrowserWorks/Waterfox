@@ -932,8 +932,8 @@ class JSRegExp : public HeapObject {
   // **************************************************
 
   struct FlagShiftBit {
-    static constexpr int kGlobal = 0;
-    static constexpr int kIgnoreCase = 1;
+    static constexpr int kGlobal = 1;
+    static constexpr int kIgnoreCase = 0;
     static constexpr int kMultiline = 2;
     static constexpr int kSticky = 3;
     static constexpr int kUnicode = 4;
@@ -950,7 +950,7 @@ class JSRegExp : public HeapObject {
     kDotAll = 1 << FlagShiftBit::kDotAll,
     kInvalid = 1 << FlagShiftBit::kInvalid,  // Not included in FlagCount.
   };
-  using Flags = base::Flags<Flag>;
+  using Flags = base::Flags<Flag, uint8_t>;
   static constexpr int kFlagCount = 6;
 
   static constexpr int kNoBacktrackLimit = 0;

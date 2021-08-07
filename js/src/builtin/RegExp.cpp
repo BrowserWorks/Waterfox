@@ -18,6 +18,9 @@
 #endif
 #include "jit/InlinableNatives.h"
 #include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
+#ifdef JS_NEW_REGEXP
+#  include "new-regexp/RegExpAPI.h"
+#endif
 #include "vm/RegExpStatics.h"
 #include "vm/SelfHosting.h"
 #include "vm/StringBuffer.h"
@@ -188,7 +191,7 @@ CheckPatternSyntax(JSContext* cx, HandleAtom pattern, RegExpFlags flags)
     CompileOptions options(cx);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
 #ifdef JS_NEW_REGEXP
-  MOZ_CRASH("TODO");
+    return irregexp::CheckPatternSyntax(cx, dummyTokenStream, pattern, flags);
 #else
     return irregexp::ParsePatternSyntax(dummyTokenStream, cx->tempLifoAlloc(), pattern,
                                         flags.unicode(), flags.dotAll());

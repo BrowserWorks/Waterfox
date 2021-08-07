@@ -39,6 +39,9 @@
 #  include "irregexp/RegExpParser.h"
 #endif
 #include "js/RegExpFlags.h"
+#ifdef JS_NEW_REGEXP
+#  include "new-regexp/RegExpAPI.h"
+#endif
 #include "vm/RegExpObject.h"
 #include "wasm/AsmJS.h"
 
@@ -9485,7 +9488,9 @@ Parser<SyntaxParseHandler, char16_t>::newRegExp()
 
     mozilla::Range<const char16_t> source(chars, length);
 #ifdef JS_NEW_REGEXP
-    MOZ_CRASH("TODO");
+    if (!irregexp::CheckPatternSyntax(context, tokenStream, source, flags)) {
+      return null();
+    }
 #else
     if (!js::irregexp::ParsePatternSyntax(tokenStream, alloc, source, flags.unicode(), flags.dotAll()))
         return null();

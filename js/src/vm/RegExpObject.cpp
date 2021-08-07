@@ -24,7 +24,9 @@
 #  endif
 #  include "irregexp/RegExpParser.h"
 #endif
-#include "irregexp/RegExpParser.h"
+#ifdef JS_NEW_REGEXP
+#  include "new-regexp/RegExpAPI.h"
+#endif
 #include "vm/MatchPairs.h"
 #include "vm/RegExpStatics.h"
 #include "vm/StringBuffer.h"
@@ -285,9 +287,12 @@ RegExpObject::create(JSContext* cx,
     }
 
 #ifdef JS_NEW_REGEXP
-    MOZ_CRASH("TODO");
+    if (!irregexp::CheckPatternSyntax(cx, *tokenStream, source, flags)) {
+        return nullptr;
+    }
 #else
-    if (!irregexp::ParsePatternSyntax(*tokenStream, alloc, source, flags.unicode(), flags.dotAll()))
+    if (!irregexp::ParsePatternSyntax(
+          *tokenStream, alloc, source, flags.unicode(), flags.dotAll()))
         return nullptr;
 #endif
     Rooted<RegExpObject*> regexp(cx, RegExpAlloc(cx, newKind));
