@@ -8041,6 +8041,9 @@ end:
     !define CopyPostSigningData "Call CopyPostSigningData"
 
     Function CopyPostSigningData
+      ; Make sure $LOCALAPPDATA is the user's LocalAppData and not ProgramData.
+      ; We'll set this back to all at the end of the function.
+      SetShellVarContext current
       Push $0   ; Stack: old $0
 
       ${LineRead} "$EXEDIR\postSigningData" "1" $0
@@ -8053,6 +8056,7 @@ end:
       ${Endif}
 
       Exch $0   ; Stack: postSigningData
+      SetShellVarContext all
     FunctionEnd
 
     !verbose pop

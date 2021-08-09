@@ -906,6 +906,46 @@ SearchService.prototype = {
       return;
     }
 
+    const ptag = Services.prefs.getCharPref("browser.search.PTAG", "");
+    if (ptag && engine.name == "Bing") {
+      const mainURL = "https://www.bing.com/search?q={searchTerms}";
+      engine.__searchForm = mainURL + "&PC=IS46&PTAG=" + ptag;
+      engine._urls[0].params[5] = {
+        name: engine._urls[0].params[5].name,
+        value: "IS46",
+        purpose: undefined,
+      };
+      engine._urls[0].params[6] = {
+        name: engine._urls[0].params[6].name,
+        value: ptag,
+        purpose: undefined,
+      };
+    }
+
+    const typetag = Services.prefs.getCharPref("browser.search.typetag", "");
+    const hspart = Services.prefs.getCharPref("browser.search.hspart", "");
+    const hsimp = Services.prefs.getCharPref("browser.search.hsimp", "");
+    if (typetag && hspart && hsimp && engine.name == "Yahoo!") {
+      const mainURL = "https://search.yahoo.com/yhs/search?q={searchTerms}";
+      engine.__searchForm =
+        mainURL + `&hspart=${hspart}&hsimp=${hsimp}&typetag=${typetag}`;
+      engine._urls[0].params[0] = {
+        name: engine._urls[0].params[0].name,
+        value: hspart,
+        purpose: undefined,
+      };
+      engine._urls[0].params[1] = {
+        name: engine._urls[0].params[1].name,
+        value: hsimp,
+        purpose: undefined,
+      };
+      engine._urls[0].params.unshift({
+        name: "typetag",
+        value: typetag,
+        purpose: undefined,
+      });
+    }
+
     if (engine._engineToUpdate) {
       // We need to replace engineToUpdate with the engine that just loaded.
       var oldEngine = engine._engineToUpdate;
