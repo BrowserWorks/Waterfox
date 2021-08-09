@@ -14,6 +14,10 @@ const { CustomizableUI } = ChromeUtils.import(
 
 const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
 
+const { BrowserUtils } = ChromeUtils.import(
+  "resource:///modules/BrowserUtils.jsm"
+);
+
 const StatusBar = {
   PREF_ENABLED: "browser.statusbar.enabled",
   PREF_STATUSTEXT: "browser.statusbar.appendStatusText",
@@ -55,18 +59,6 @@ const StatusBar = {
         });
       }
     );
-  },
-
-  executeInAllWindows(aFunc) {
-    let windows = Services.wm.getEnumerator("navigator:browser");
-    while (windows.hasMoreElements()) {
-      let win = windows.getNext();
-      if (!win.statusBar) {
-        continue;
-      }
-      let { document } = win;
-      aFunc(document, win);
-    }
   },
 
   setStyle() {
@@ -128,14 +120,12 @@ const StatusBar = {
           PrefUtils.set(aWindow.statusBar.PREF_ENABLED, false);
           aWindow.statusbar.node.setAttribute("collapsed", true);
           StatusPanel.panel.firstChild.appendChild(StatusPanel._labelElement);
-          aWindow.statusbar.node.parentNode.collapsed = true;
         } else {
           PrefUtils.set(aWindow.statusBar.PREF_ENABLED, true);
           aWindow.statusbar.node.setAttribute("collapsed", false);
           if (aWindow.statusBar.textInBar) {
             aWindow.statusbar.textNode.appendChild(StatusPanel._labelElement);
           }
-          aWindow.statusbar.node.parentNode.collapsed = false;
         }
       }
 
@@ -149,6 +139,7 @@ const StatusBar = {
       aWindow.statusbar.textNode.appendChild(StatusPanel._labelElement);
     }
     aWindow.statusbar.node.appendChild(aWindow.statusbar.textNode);
+    aWindow.statusbar.node.setAttribute("collapsed", !this.enabled);
   },
 
   overrideStatusPanelLabel(aWindow) {
@@ -170,10 +161,10 @@ const StatusBar = {
   configureBottomBox(aWindow) {
     let { document } = aWindow;
     let bottomBox = document.getElementById("browser-bottombox");
-    if (!this.enabled) {
-      bottomBox.collapsed = true;
-    }
     CustomizableUI.registerToolbarNode(aWindow.statusbar.node);
     bottomBox.appendChild(aWindow.statusbar.node);
   },
 };
+
+// Inherited props
+StatusBar.executeInAllWindows = BrowserUtils.executeInAllWindows;
