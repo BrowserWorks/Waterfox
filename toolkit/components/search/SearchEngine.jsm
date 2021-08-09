@@ -970,6 +970,46 @@ class SearchEngine {
       }
     }
     this._setUrls(searchProvider, configuration);
+    // Perform overrides here
+    const ptag = Services.prefs.getCharPref("browser.search.PTAG", "");
+    if (ptag && this._name == "Bing") {
+      const mainURL = "https://www.bing.com/search?q={searchTerms}";
+      this.__searchForm = mainURL + "&PC=IS46&PTAG=" + ptag;
+      this._urls[0].params[5] = {
+        name: this._urls[0].params[5].name,
+        value: "IS46",
+        purpose: undefined,
+      };
+      this._urls[0].params[6] = {
+        name: this._urls[0].params[6].name,
+        value: ptag,
+        purpose: undefined,
+      };
+    }
+
+    const typetag = Services.prefs.getCharPref("browser.search.typetag", "");
+    const hspart = Services.prefs.getCharPref("browser.search.hspart", "");
+    const hsimp = Services.prefs.getCharPref("browser.search.hsimp", "");
+    if (typetag && hspart && hsimp && this._name == "Yahoo!") {
+      const mainURL = "https://search.yahoo.com/yhs/search?q={searchTerms}";
+      this.__searchForm =
+        mainURL + `&hspart=${hspart}&hsimp=${hsimp}&typetag=${typetag}`;
+      this._urls[0].params[0] = {
+        name: this._urls[0].params[0].name,
+        value: hspart,
+        purpose: undefined,
+      };
+      this._urls[0].params[1] = {
+        name: this._urls[0].params[1].name,
+        value: hsimp,
+        purpose: undefined,
+      };
+      this._urls[0].params.unshift({
+        name: "typetag",
+        value: typetag,
+        purpose: undefined,
+      });
+    }
   }
 
   /**

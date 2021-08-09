@@ -33,6 +33,8 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/Subprocess.jsm"
 );
 
+XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
+
 /**
  * Get the location of the user's macOS quarantine database.
  * @return {String} path.
@@ -93,7 +95,7 @@ async function queryQuarantineDatabase(
   guid,
   path = getQuarantineDatabasePath()
 ) {
-  let query = `SELECT COUNT(*), LSQuarantineOriginURLString
+  let query = `SELECT COUNT(*), LSQuarantineOriginURLString, LSQuarantineDataURLString
        FROM LSQuarantineEvent
        WHERE LSQuarantineEventIdentifier = '${guid}'
        ORDER BY LSQuarantineTimeStamp DESC LIMIT 1`;
@@ -124,6 +126,9 @@ async function queryQuarantineDatabase(
     );
   }
 
+  // Get Data URL string for PTAG
+  let dataURL = stdout.split("|")[2];
+
   if (parts[0].trim() == "0") {
     throw new Components.Exception(
       `Quarantine database does not contain URL for guid ${guid}`,
@@ -131,7 +136,7 @@ async function queryQuarantineDatabase(
     );
   }
 
-  return parts[1].trim();
+  return [parts[1].trim(), dataURL];
 }
 
 var MacAttribution = {
@@ -170,8 +175,15 @@ var MacAttribution = {
 
     // Second, fish the relevant record from the quarantine database.
     let url = "";
+    let dataURL = "";
     try {
-      url = await queryQuarantineDatabase(guid);
+      [url, dataURL] = await queryQuarantineDatabase(guid);
+      // Bing vals
+      await this.setPartnerCode(dataURL, "PTAG", "browser.search.PTAG");
+      // YHS vals
+      await this.setPartnerCode(dataURL, "hspart", "browser.search.hspart");
+      await this.setPartnerCode(dataURL, "hsimp", "browser.search.hsimp");
+      await this.setPartnerCode(dataURL, "typetag", "browser.search.typetag");
       log.debug(`getReferrerUrl: url: ${url}`);
     } catch (ex) {
       // This path is known to macOS but we failed to extract a referrer -- be noisy.
@@ -180,7 +192,13 @@ var MacAttribution = {
         Cr.NS_ERROR_UNEXPECTED
       );
     }
+    return dataURL;
+  },
 
-    return url;
+  async setPartnerCode(dataURL, key, pref) {
+    let params = new URL(dataURL).searchParams;
+    if (params.has(key)) {
+      Services.prefs.setCharPref(pref, params.get(key));
+    }
   },
 };
