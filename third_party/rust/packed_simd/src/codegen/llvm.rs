@@ -6,6 +6,83 @@ use crate::sealed::Shuffle;
 use crate::sealed::Simd;
 
 // Shuffle intrinsics: expanded in users' crates, therefore public.
+#[cfg(use_const_generics)]
+extern "platform-intrinsic" {
+    pub fn simd_shuffle2<T, U>(x: T, y: T, idx: [u32; 2]) -> U;
+    pub fn simd_shuffle4<T, U>(x: T, y: T, idx: [u32; 4]) -> U;
+    pub fn simd_shuffle8<T, U>(x: T, y: T, idx: [u32; 8]) -> U;
+    pub fn simd_shuffle16<T, U>(x: T, y: T, idx: [u32; 16]) -> U;
+    pub fn simd_shuffle32<T, U>(x: T, y: T, idx: [u32; 32]) -> U;
+    pub fn simd_shuffle64<T, U>(x: T, y: T, idx: [u32; 64]) -> U;
+}
+
+#[cfg(use_const_generics)]
+#[allow(clippy::missing_safety_doc)]
+#[inline]
+pub unsafe fn __shuffle_vector2<const IDX: [u32; 2], T, U>(x: T, y: T) -> U
+where
+    T: Simd,
+    <T as Simd>::Element: Shuffle<[u32; 2], Output = U>,
+{
+    simd_shuffle2(x, y, IDX)
+}
+
+#[cfg(use_const_generics)]
+#[allow(clippy::missing_safety_doc)]
+#[inline]
+pub unsafe fn __shuffle_vector4<const IDX: [u32; 4], T, U>(x: T, y: T) -> U
+where
+    T: Simd,
+    <T as Simd>::Element: Shuffle<[u32; 4], Output = U>,
+{
+    simd_shuffle4(x, y, IDX)
+}
+
+#[cfg(use_const_generics)]
+#[allow(clippy::missing_safety_doc)]
+#[inline]
+pub unsafe fn __shuffle_vector8<const IDX: [u32; 8], T, U>(x: T, y: T) -> U
+where
+    T: Simd,
+    <T as Simd>::Element: Shuffle<[u32; 8], Output = U>,
+{
+    simd_shuffle8(x, y, IDX)
+}
+
+#[cfg(use_const_generics)]
+#[allow(clippy::missing_safety_doc)]
+#[inline]
+pub unsafe fn __shuffle_vector16<const IDX: [u32; 16], T, U>(x: T, y: T) -> U
+where
+    T: Simd,
+    <T as Simd>::Element: Shuffle<[u32; 16], Output = U>,
+{
+    simd_shuffle16(x, y, IDX)
+}
+
+#[cfg(use_const_generics)]
+#[allow(clippy::missing_safety_doc)]
+#[inline]
+pub unsafe fn __shuffle_vector32<const IDX: [u32; 32], T, U>(x: T, y: T) -> U
+where
+    T: Simd,
+    <T as Simd>::Element: Shuffle<[u32; 32], Output = U>,
+{
+    simd_shuffle32(x, y, IDX)
+}
+
+#[cfg(use_const_generics)]
+#[allow(clippy::missing_safety_doc)]
+#[inline]
+pub unsafe fn __shuffle_vector64<const IDX: [u32; 64], T, U>(x: T, y: T) -> U
+where
+    T: Simd,
+    <T as Simd>::Element: Shuffle<[u32; 64], Output = U>,
+{
+    simd_shuffle64(x, y, IDX)
+}
+
+#[cfg(not(use_const_generics))]
 extern "platform-intrinsic" {
     // FIXME: Passing this intrinsics an `idx` array with an index that is
     // out-of-bounds will produce a monomorphization-time error.
@@ -47,11 +124,17 @@ extern "platform-intrinsic" {
         <T as Simd>::Element: Shuffle<[u32; 64], Output = U>;
 }
 
+#[cfg(not(use_const_generics))]
 pub use self::simd_shuffle16 as __shuffle_vector16;
+#[cfg(not(use_const_generics))]
 pub use self::simd_shuffle2 as __shuffle_vector2;
+#[cfg(not(use_const_generics))]
 pub use self::simd_shuffle32 as __shuffle_vector32;
+#[cfg(not(use_const_generics))]
 pub use self::simd_shuffle4 as __shuffle_vector4;
+#[cfg(not(use_const_generics))]
 pub use self::simd_shuffle64 as __shuffle_vector64;
+#[cfg(not(use_const_generics))]
 pub use self::simd_shuffle8 as __shuffle_vector8;
 
 extern "platform-intrinsic" {
