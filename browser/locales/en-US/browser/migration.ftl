@@ -46,11 +46,21 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Waterfox
+    .label = Firefox
     .accesskey = x
+import-from-classic =
+    .label = Waterfox Classic
+    .accesskey = W
+import-from-current =
+    .label = Waterfox Current
+    .accesskey = X
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
+import-from-file = 
+    .label = Import from file
+
+profile-select-folder = Select a Profile Folder to Import
 
 no-migration-sources = No programs that contain bookmarks, history or password data could be found.
 
@@ -94,6 +104,8 @@ source-name-chrome-beta = Google Chrome Beta
 source-name-chrome-dev = Google Chrome Dev
 source-name-chromium = Chromium
 source-name-firefox = Mozilla Firefox
+source-name-classic = Waterfox Classic
+source-name-current = Waterfox Current
 source-name-360se = 360 Secure Browser
 
 imported-safari-reading-list = Reading List (From Safari)

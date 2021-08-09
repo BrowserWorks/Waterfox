@@ -7,7 +7,7 @@
 "use strict";
 
 /*
- * Migrates from a Firefox profile in a lossy manner in order to clean up a
+ * Imports from a Waterfox profile in a lossy manner in order to clean up a
  * user's profile.  Data is only migrated where the benefits outweigh the
  * potential problems caused by importing undesired/invalid configurations
  * from the source profile.
@@ -40,13 +40,13 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/ProfileAge.jsm"
 );
 
-function FirefoxProfileMigrator() {
+function WaterfoxProfileMigrator() {
   this.wrappedJSObject = this; // for testing...
 }
 
-FirefoxProfileMigrator.prototype = Object.create(MigratorPrototype);
+WaterfoxProfileMigrator.prototype = Object.create(MigratorPrototype);
 
-FirefoxProfileMigrator.prototype._getAllProfiles = function() {
+WaterfoxProfileMigrator.prototype._getAllProfiles = function() {
   let allProfiles = new Map();
   let profileService = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
     Ci.nsIToolkitProfileService
@@ -69,13 +69,13 @@ function sorter(a, b) {
   return a.id.toLocaleLowerCase().localeCompare(b.id.toLocaleLowerCase());
 }
 
-FirefoxProfileMigrator.prototype.getSourceProfiles = function() {
+WaterfoxProfileMigrator.prototype.getSourceProfiles = function() {
   return [...this._getAllProfiles().keys()]
     .map(x => ({ id: x, name: x }))
     .sort(sorter);
 };
 
-FirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
+WaterfoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
   let file = dir.clone();
   file.append(fileName);
 
@@ -85,7 +85,7 @@ FirefoxProfileMigrator.prototype._getFileObject = function(dir, fileName) {
   return file.exists() ? file : null;
 };
 
-FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
+WaterfoxProfileMigrator.prototype.getResources = function(aProfile) {
   let sourceProfileDir = aProfile
     ? this._getAllProfiles().get(aProfile.id)
     : Cc["@mozilla.org/toolkit/profile-service;1"].getService(
@@ -111,14 +111,14 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
   return this._getResourcesInternal(sourceProfileDir, currentProfileDir);
 };
 
-FirefoxProfileMigrator.prototype.getLastUsedDate = function() {
+WaterfoxProfileMigrator.prototype.getLastUsedDate = function() {
   // We always pretend we're really old, so that we don't mess
   // up the determination of which browser is the most 'recent'
   // to import from.
   return Promise.resolve(new Date(0));
 };
 
-FirefoxProfileMigrator.prototype._getResourcesInternal = function(
+WaterfoxProfileMigrator.prototype._getResourcesInternal = function(
   sourceProfileDir,
   currentProfileDir
 ) {
@@ -369,15 +369,20 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(
   ].filter(r => r);
 };
 
-Object.defineProperty(FirefoxProfileMigrator.prototype, "startupOnlyMigrator", {
-  get: () => true,
-});
-
-FirefoxProfileMigrator.prototype.classDescription = "Firefox Profile Migrator";
-FirefoxProfileMigrator.prototype.contractID =
-  "@mozilla.org/profile/migrator;1?app=browser&type=firefox";
-FirefoxProfileMigrator.prototype.classID = Components.ID(
-  "{849265D1-20D6-4F19-950F-4B24546B9046}"
+Object.defineProperty(
+  WaterfoxProfileMigrator.prototype,
+  "startupOnlyMigrator",
+  {
+    get: () => true,
+  }
 );
 
-var EXPORTED_SYMBOLS = ["FirefoxProfileMigrator"];
+WaterfoxProfileMigrator.prototype.classDescription =
+  "Waterfox Profile Migrator";
+WaterfoxProfileMigrator.prototype.contractID =
+  "@mozilla.org/profile/migrator;1?app=browser&type=waterfox";
+WaterfoxProfileMigrator.prototype.classID = Components.ID(
+  "{91185366-ba97-4438-acba-48deaca63386}"
+);
+
+var EXPORTED_SYMBOLS = ["WaterfoxProfileMigrator"];
