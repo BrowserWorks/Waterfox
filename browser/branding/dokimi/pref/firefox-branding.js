@@ -4,9 +4,9 @@
 
 // This file contains branding-specific prefs.
 
-pref("startup.homepage_override_url", "");
-pref("startup.homepage_welcome_url", "");
-pref("startup.homepage_welcome_url.additional", "");
+pref("startup.homepage_override_url", "https://www.waterfox.net/blog/waterfox-%VERSION%/?update");
+pref("startup.homepage_welcome_url", "about:welcome");
+pref("startup.homepage_welcome_url.additional", "https://www.waterfox.net/blog/waterfox-%VERSION%/?new");
 // The time interval between checks for a new version (in seconds)
 pref("app.update.interval", 86400); // 24 hours
 // Give the user x seconds to react before showing the big UI. default=24 hours
