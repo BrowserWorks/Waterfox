@@ -1167,7 +1167,7 @@ add_test(
       () => {
         stringToURL("https://b%9a/");
       },
-      /NS_ERROR_UNEXPECTED/,
+      /NS_ERROR_MALFORMED_URI/,
       "bad URI"
     );
 
