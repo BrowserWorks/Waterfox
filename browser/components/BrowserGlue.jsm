@@ -32,6 +32,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   ASRouterNewTabHook: "resource://activity-stream/lib/ASRouterNewTabHook.jsm",
   ASRouter: "resource://activity-stream/lib/ASRouter.jsm",
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
+  AttributionCode: "resource:///modules/AttributionCode.jsm",
   BackgroundUpdate: "resource://gre/modules/BackgroundUpdate.jsm",
   Blocklist: "resource://gre/modules/Blocklist.jsm",
   BookmarkHTMLUtils: "resource://gre/modules/BookmarkHTMLUtils.jsm",
@@ -1007,9 +1008,11 @@ BrowserGlue.prototype = {
   observe: async function BG_observe(subject, topic, data) {
     switch (topic) {
       case "app-startup":
-        const { BootstrapLoader } = ChromeUtils.import("resource:///modules/BootstrapLoader.jsm");
+        const { BootstrapLoader } = ChromeUtils.import(
+          "resource:///modules/BootstrapLoader.jsm"
+        );
         AddonManager.addExternalExtensionLoader(BootstrapLoader);
-	    	break;
+        break;
       case "notifications-open-settings":
         this._openPreferences("privacy-permissions");
         break;
@@ -1251,6 +1254,9 @@ BrowserGlue.prototype = {
 
     // This value is to limit collecting Places telemetry once per session.
     this._placesTelemetryGathered = false;
+
+    // update startup pages with attribution data
+    this._setAttributionData();
   },
 
   // cleanup (called on application shutdown)
@@ -2491,6 +2497,16 @@ BrowserGlue.prototype = {
               }
             });
           }
+        },
+      },
+      {
+        task: () => {
+          AttributionCode.deleteFileAsync();
+          // reset prefs
+          Services.prefs.clearUserPref(
+            "startup.homepage_welcome_url.additional"
+          );
+          Services.prefs.clearUserPref("startup.homepage_override_url");
         },
       },
 
@@ -3848,6 +3864,47 @@ BrowserGlue.prototype = {
 
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
+  },
+
+  async _setAttributionData() {
+    // kick off async process to set attribution code preference
+    try {
+      let attrData = await AttributionCode.getAttrDataAsync();
+      let attributionStr = "";
+      for (const [key, value] of Object.entries(attrData)) {
+        // if PTAG/TypeTag we only want to set the relevant pref
+        if (["PTAG", "hspart", "hsimp", "typetag"].includes(key)) {
+          Services.prefs.setCharPref("browser.search." + key, value);
+          continue;
+        }
+        // if mtm_source we want to set the distribution source pref & attribution data
+        if (key == "mtm_source") {
+          Services.prefs.setCharPref("distribution.source", value);
+        }
+        // only add to postSigningData if this hasn't been called previously
+        attributionStr += `&${key}=${value}`;
+      }
+      // add install param
+      if (attributionStr != "") {
+        attributionStr += "&status=install";
+      }
+      let additionalPage = Services.urlFormatter.formatURLPref(
+        "startup.homepage_welcome_url.additional"
+      );
+      Services.prefs.setCharPref(
+        "startup.homepage_welcome_url.additional",
+        additionalPage + attributionStr
+      );
+      let overridePage = Services.urlFormatter.formatURLPref(
+        "startup.homepage_override_url"
+      );
+      Services.prefs.setCharPref(
+        "startup.homepage_override_url",
+        overridePage + attributionStr
+      );
+    } catch (ex) {
+      Services.console.logStringMessage(ex + "error setting attr data");
+    }
   },
 
   _showUpgradeDialog() {
