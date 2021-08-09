@@ -22,6 +22,9 @@ EXTRA_JS_MODULES += [
     "FirefoxProfileMigrator.jsm",
     "MigrationUtils.jsm",
     "ProfileMigrator.jsm",
+    "SelectedDirProfileMigrator.jsm",
+    "WaterfoxClassicProfileMigrator.jsm",
+    "WaterfoxProfileMigrator.jsm",
 ]
 
 if CONFIG["OS_ARCH"] == "WINNT":
