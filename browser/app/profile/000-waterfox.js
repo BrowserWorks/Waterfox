@@ -101,6 +101,7 @@ pref("image.avif.enabled", true);
 pref("image.jxl.enabled", true);
 pref("layout.css.backdrop-filter.enabled", true, locked);
 pref("media.eme.enabled", false);
+pref("media.gmp-manager.url", "data:text/plain,", locked);
 pref("media.webrtc.hw.h264.enabled", true);
 pref("media.webrtc.platformencoder", true);
 pref("messaging-system.rsexperimentloader.enabled", false, locked);
@@ -122,9 +123,10 @@ pref("security.family_safety.mode", 0, locked);
 pref("security.identitypopup.recordEventTelemetry", false, locked);
 pref("security.pki.crlite_mode", 0, locked);
 pref("security.protectionspopup.recordEventTelemetry", false, locked);
+pref("security.sandbox.content.win32k-disable", true);
 pref("security.ssl.enable_false_start", true);
 pref("security.ssl.errorReporting.enabled", false, locked);
-pref("services.settings.server", "", locked); // 24H
+pref("services.settings.server", "data:text/plain,", locked); // 24H
 pref("services.sync.engine.prefs", false, locked); // Never sync prefs, addons, or tabs with other browsers
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", false, locked);
