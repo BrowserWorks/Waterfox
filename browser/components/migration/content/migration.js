@@ -147,11 +147,11 @@ var MigrationWizard = {
       .addEventListener("pageadvanced", function(e) {
         MigrationWizard.onImportPermissionsPageAdvanced(e);
       });
-    document
-      .getElementById("importSource")
-      .addEventListener("pageadvanced", function(e) {
-        MigrationWizard.onImportSourcePageAdvanced(e);
-      });
+    document.getElementById("importSource").addEventListener(
+      "pageadvanced",
+      // we need to be able to remove this listener if a user imports from file
+      MigrationWizard.onImportSourcePageAdvanced
+    );
 
     this.onImportSourcePageShow();
   },
@@ -259,6 +259,33 @@ var MigrationWizard = {
 
       document.getElementById("importAll").hidden = true;
     }
+
+    // Set observer to hide selected profile text if radio button selected
+    let element = document.getElementById("importSourceGroup");
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (
+          mutation.attributeName == "value" &&
+          mutation.oldValue == "import"
+        ) {
+          let el = document.getElementById("selectedProfileFromFile");
+          el.hidden = true;
+          MigrationWizard._wiz.canAdvance = true;
+          // Add pageadvanced listener
+          document
+            .getElementById("importSource")
+            .addEventListener(
+              "pageadvanced",
+              MigrationWizard.onImportSourcePageAdvanced
+            );
+        }
+      });
+    });
+
+    observer.observe(element, {
+      attributes: true, //configure it to listen to attribute changes
+      attributeOldValue: true,
+    });
 
     // Advance to the next page if the caller told us to.
     if (this._migrator && this._skipImportSourcePage) {
@@ -655,5 +682,92 @@ var MigrationWizard = {
       );
       usedRecentBrowser.add(this._source, usedMostRecentBrowser);
     });
+  },
+
+  async importFromFile() {
+    // unselect all radio buttons
+    let importGroup = document.getElementById("importSourceGroup");
+    importGroup.childNodes.forEach(node =>
+      node.setAttribute("selected", "false")
+    );
+    importGroup.selectedItem.id = "nothing";
+    importGroup.value = "import";
+    document.getElementById("closeSourceBrowser").style.visibility = "hidden";
+
+    // open the filePicker
+    const { nsIFile, nsIFilePicker } = Ci;
+    let titleText = await document.l10n.formatValue("profile-select-folder");
+    let fp = Cc["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+
+    fp.init(window, titleText, nsIFilePicker.modeGetFolder);
+    fp.appendFilters(nsIFilePicker.filterAll);
+    try {
+      let initialDir = Cc["@mozilla.org/toolkit/profile-service;1"].getService(
+        Ci.nsIToolkitProfileService
+      ).defaultProfile.rootDir;
+      if (initialDir) {
+        fp.displayDirectory = initialDir;
+      }
+    } catch (ex) {}
+    fp.open(async result => {
+      if (result != nsIFilePicker.returnOK) {
+        // Display message saying profile could not be opened
+        this.showImportError(
+          "Unable to open the selected directory. Please select another directory."
+        );
+        return;
+      }
+      let dir = fp.file.QueryInterface(nsIFile).clone();
+      let name = dir.leafName;
+
+      this._selectedProfile = { id: "import", name: "import", rootDir: dir };
+      // Get the SelectedDir migrator to use as a base
+      this._migrator = Cc[
+        "@mozilla.org/profile/migrator;1?app=browser&type=selecteddir"
+      ].createInstance(Ci.nsIBrowserProfileMigrator);
+      // Make sure we have some data, 64 indicates other data only i.e. no data worth importing
+      let hasData = this.spinResolve(
+        this._migrator.getMigrateData(this._selectedProfile)
+      );
+      // If we have a migrator and a profile, continue
+      if (!hasData) {
+        // Show that the target profile could not be identified
+        this.showImportError(
+          "Unable to identify target profile. Please go to about:profiles and ensure a default is set."
+        );
+        return;
+      }
+      if (this._migrator && this._selectedProfile && hasData > 64) {
+        // Skip profile selection page, as we have just selected the profile
+        this._wiz.currentPage.next = "importItems";
+        this._wiz.canAdvance = true;
+        this._wiz.canRewind = false;
+        // Remove pageadvanced listener
+        document
+          .getElementById("importSource")
+          .removeEventListener(
+            "pageadvanced",
+            MigrationWizard.onImportSourcePageAdvanced
+          );
+        // Show selected profile from dir.leafName
+        let el = document.getElementById("selectedProfileFromFile");
+        el.hidden = false;
+        el.textContent = "Selected profile: " + name;
+        el.style.color = "";
+      } else {
+        // Show that the profile had no data to import
+        this.showImportError(
+          "Unable to identify any data to import from: " + name
+        );
+      }
+    });
+  },
+
+  showImportError(msg) {
+    let el = document.getElementById("selectedProfileFromFile");
+    el.hidden = false;
+    el.textContent = msg;
+    el.style.color = "red";
+    this._wiz.canAdvance = false;
   },
 };
