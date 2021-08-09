@@ -10,10 +10,15 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const { PrefUtils } = ChromeUtils.import("resource:///modules/PrefUtils.jsm");
 
+const { BrowserUtils } = ChromeUtils.import(
+  "resource:///modules/BrowserUtils.jsm"
+);
+
 const TabFeatures = {
   PREF_ACTIVETAB: "browser.tabs.copyurl.activetab",
   PREF_REQUIRECONFIRM: "browser.restart_menu.requireconfirm",
   PREF_PURGECACHE: "browser.restart_menu.purgecache",
+  PREF_TOOLBARPOS: "browser.tabs.toolbarposition",
   get browserBundle() {
     return Services.strings.createBundle(
       "chrome://extensibles/locale/extensibles.properties"
@@ -38,6 +43,18 @@ const TabFeatures = {
     PrefUtils.set(this.PREF_ACTIVETAB, false, true);
     PrefUtils.set(this.PREF_REQUIRECONFIRM, true, true);
     PrefUtils.set(this.PREF_PURGECACHE, true, true);
+  },
+
+  initPrefListeners() {
+    PrefUtils.set(this.PREF_TOOLBARPOS, "topabove", true);
+    this.toolbarPositionListener = PrefUtils.addListener(
+      this.PREF_TOOLBARPOS,
+      value => {
+        TabFeatures.executeInAllWindows((doc, win) => {
+          TabFeatures.moveTabBar(win, value);
+        });
+      }
+    );
   },
 
   tabContext(aEvent) {
@@ -140,6 +157,7 @@ const TabFeatures = {
       );
     }
   },
+
   _attemptRestart() {
     if (Services.prefs.getBoolPref(this.PREF_PURGECACHE)) {
       Services.appinfo.invalidateCachesOnRestart();
@@ -148,4 +166,64 @@ const TabFeatures = {
       Services.startup.eRestart | Services.startup.eAttemptQuit
     );
   },
+
+  moveTabBar(aWindow, aValue) {
+    let bottomBookmarksBar = aWindow.document.querySelector(
+      "#browser-bottombox #PersonalToolbar"
+    );
+    let bottomBox = aWindow.document.querySelector("#browser-bottombox");
+    let tabsToolbar = aWindow.document.querySelector("#TabsToolbar");
+    let titlebar = aWindow.document.querySelector("#titlebar");
+
+    if (!aValue) {
+      aValue = PrefUtils.get(this.PREF_TOOLBARPOS);
+    }
+
+    switch (aValue) {
+      case "topabove":
+        titlebar.insertAdjacentElement("beforeend", tabsToolbar);
+        aWindow.gBrowser.setTabTitle(
+          aWindow.document.querySelector(".tabbrowser-tab[first-visible-tab]")
+        );
+        break;
+      case "topbelow":
+        aWindow.document
+          .querySelector("#navigator-toolbox")
+          .appendChild(tabsToolbar);
+        aWindow.gBrowser.setTabTitle(
+          aWindow.document.querySelector(".tabbrowser-tab[first-visible-tab]")
+        );
+        break;
+      case "bottomabove":
+        // Above status bar
+        bottomBox.collapsed = false;
+        if (bottomBookmarksBar) {
+          bottomBookmarksBar.insertAdjacentElement("afterend", tabsToolbar);
+        } else {
+          bottomBox.insertAdjacentElement("afterbegin", tabsToolbar);
+        }
+        aWindow.gBrowser.setTabTitle(
+          aWindow.document.querySelector(".tabbrowser-tab[first-visible-tab]")
+        );
+        break;
+      case "bottombelow":
+        // Below status bar
+        bottomBox.collapsed = false;
+        bottomBox.insertAdjacentElement("afterend", tabsToolbar);
+        aWindow.gBrowser.setTabTitle(
+          aWindow.document.querySelector(".tabbrowser-tab[first-visible-tab]")
+        );
+        break;
+    }
+
+    // Set title on top bar when title bar is disabled and tab bar position is different than default
+    const topBar = aWindow.document.querySelector("#toolbar-menubar-pagetitle");
+    const activeTab = aWindow.document.querySelector('tab[selected="true"]');
+    if (topBar && activeTab) {
+      topBar.textContent = activeTab.getAttribute("label");
+    }
+  },
 };
+
+// Inherited props
+TabFeatures.executeInAllWindows = BrowserUtils.executeInAllWindows;

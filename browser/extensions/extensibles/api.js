@@ -193,6 +193,10 @@ this.extensibles = class extends ExtensionAPI {
           },
 
           registerPref(aName, aValue) {
+            // Add the below if we move from boolean to string aValue type
+            // if (aValue === "true" || aValue === "false") {
+            //   aValue = aValue === "true";
+            // }
             PrefUtils.set(aName, aValue, true);
           },
 
@@ -332,6 +336,8 @@ this.extensibles = class extends ExtensionAPI {
             if (!win.tabFeatures) {
               win.tabFeatures = TabFeatures;
               win.tabFeatures.setPrefs();
+              win.tabFeatures.initPrefListeners();
+              win.tabFeatures.moveTabBar(win);
               BrowserUtils.setStyle(TabFeatures.style);
             }
           },
