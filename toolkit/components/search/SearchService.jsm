@@ -906,6 +906,22 @@ SearchService.prototype = {
       return;
     }
 
+    const ptag = Services.prefs.getCharPref("browser.search.ptag", "");
+    if (ptag && engine.name == "Bing") {
+      const mainURL = "https://www.bing.com/search?q={searchTerms}";
+      engine.__searchForm = mainURL + "&PC=IS46&PTAG=" + ptag;
+      engine._urls[0].params[6] = {
+        name: engine._urls[0].params[6].name,
+        value: "IS46",
+        purpose: undefined,
+      };
+      engine._urls[0].params[7] = {
+        name: engine._urls[0].params[7].name,
+        value: ptag,
+        purpose: undefined,
+      };
+    }
+
     if (engine._engineToUpdate) {
       // We need to replace engineToUpdate with the engine that just loaded.
       var oldEngine = engine._engineToUpdate;
