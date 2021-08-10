@@ -19,7 +19,9 @@ CacheIndexIterator::CacheIndexIterator(CacheIndex* aIndex, bool aAddNew)
 CacheIndexIterator::~CacheIndexIterator() {
   LOG(("CacheIndexIterator::~CacheIndexIterator() [this=%p]", this));
 
-  Close();
+  StaticMutexAutoLock lock(CacheIndex::sLock);
+  ClearRecords(lock);
+  CloseInternal(NS_ERROR_NOT_AVAILABLE);
 }
 
 nsresult CacheIndexIterator::GetNextHash(SHA1Sum::Hash* aHash) {
@@ -36,7 +38,8 @@ nsresult CacheIndexIterator::GetNextHash(SHA1Sum::Hash* aHash) {
     return mStatus;
   }
 
-  memcpy(aHash, mRecords[mRecords.Length() - 1]->mHash, sizeof(SHA1Sum::Hash));
+  memcpy(aHash, mRecords[mRecords.Length() - 1]->Get()->mHash,
+         sizeof(SHA1Sum::Hash));
   mRecords.RemoveLastElement();
 
   return NS_OK;
@@ -71,28 +74,35 @@ nsresult CacheIndexIterator::CloseInternal(nsresult aStatus) {
   return NS_OK;
 }
 
-void CacheIndexIterator::AddRecord(CacheIndexRecord* aRecord) {
+void CacheIndexIterator::ClearRecords(const StaticMutexAutoLock& aProofOfLock) {
+  mRecords.Clear();
+}
+
+void CacheIndexIterator::AddRecord(CacheIndexRecordWrapper* aRecord,
+                                   const StaticMutexAutoLock& aProofOfLock) {
   LOG(("CacheIndexIterator::AddRecord() [this=%p, record=%p]", this, aRecord));
 
   mRecords.AppendElement(aRecord);
 }
 
-bool CacheIndexIterator::RemoveRecord(CacheIndexRecord* aRecord) {
+bool CacheIndexIterator::RemoveRecord(CacheIndexRecordWrapper* aRecord,
+                                      const StaticMutexAutoLock& aProofOfLock) {
   LOG(("CacheIndexIterator::RemoveRecord() [this=%p, record=%p]", this,
        aRecord));
 
   return mRecords.RemoveElement(aRecord);
 }
 
-bool CacheIndexIterator::ReplaceRecord(CacheIndexRecord* aOldRecord,
-                                       CacheIndexRecord* aNewRecord) {
+bool CacheIndexIterator::ReplaceRecord(
+    CacheIndexRecordWrapper* aOldRecord, CacheIndexRecordWrapper* aNewRecord,
+    const StaticMutexAutoLock& aProofOfLock) {
   LOG(
       ("CacheIndexIterator::ReplaceRecord() [this=%p, oldRecord=%p, "
        "newRecord=%p]",
        this, aOldRecord, aNewRecord));
 
-  if (RemoveRecord(aOldRecord)) {
-    AddRecord(aNewRecord);
+  if (RemoveRecord(aOldRecord, aProofOfLock)) {
+    AddRecord(aNewRecord, aProofOfLock);
     return true;
   }
 

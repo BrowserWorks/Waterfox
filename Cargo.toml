@@ -66,7 +66,7 @@ panic = "abort"
 
 [patch.crates-io]
 libudev-sys = { path = "dom/webauthn/libudev-sys" }
-packed_simd = { git = "https://github.com/hsivonen/packed_simd", rev="0917fe780032a6bbb23d71be545f9c1834128d75" }
+packed_simd = { git = "https://github.com/hsivonen/packed_simd", rev="07d285ba65d9a4e3b9d76eacbf4c6489e125127d" }
 rlbox_lucet_sandbox = { git = "https://github.com/PLSysSec/rlbox_lucet_sandbox/", rev="d510da5999a744c563b0acd18056069d1698273f" }
 nix = { git = "https://github.com/shravanrn/nix/", rev="4af6c367603869a30fddb5ffb0aba2b9477ba92e" }
 spirv_cross = { git = "https://github.com/kvark/spirv_cross", branch = "wgpu3" }

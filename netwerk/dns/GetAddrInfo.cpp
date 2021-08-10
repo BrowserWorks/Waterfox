@@ -349,7 +349,14 @@ nsresult GetAddrInfo(const nsACString& aHost, uint16_t aAddressFamily,
     return NS_OK;
   }
 
-  nsAutoCString host(aHost);
+  nsAutoCString host;
+  if (StaticPrefs::network_dns_copy_string_before_call()) {
+    host = Substring(aHost.BeginReading(), aHost.Length());
+    MOZ_ASSERT(aHost.BeginReading() != host.BeginReading());
+  } else {
+    host = aHost;
+  }
+
   if (gNativeIsLocalhost) {
     // pretend we use the given host but use IPv4 localhost instead!
     host = NS_LITERAL_CSTRING("localhost");

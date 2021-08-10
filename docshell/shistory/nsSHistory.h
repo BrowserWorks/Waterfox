@@ -162,6 +162,10 @@ class nsSHistory : public mozilla::LinkedListElement<nsSHistory>,
                      int32_t* aOutEndIndex);
   void NotifyListenersContentViewerEvicted(uint32_t aNumEvicted);
 
+  void SetBrowsingContext(mozilla::dom::BrowsingContext* aRootBC) {
+    mRootBC = aRootBC;
+  }
+
  protected:
   virtual ~nsSHistory();
 

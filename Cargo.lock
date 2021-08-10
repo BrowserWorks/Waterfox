@@ -3426,9 +3426,10 @@ dependencies = [
 [[package]]
 name = "packed_simd"
 version = "0.3.4"
-source = "git+https://github.com/hsivonen/packed_simd?rev=0917fe780032a6bbb23d71be545f9c1834128d75#0917fe780032a6bbb23d71be545f9c1834128d75"
+source = "git+https://github.com/hsivonen/packed_simd?rev=07d285ba65d9a4e3b9d76eacbf4c6489e125127d#07d285ba65d9a4e3b9d76eacbf4c6489e125127d"
 dependencies = [
  "cfg-if",
+ "rustc_version",
 ]
 
 [[package]]

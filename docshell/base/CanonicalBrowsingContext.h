@@ -174,7 +174,7 @@ class CanonicalBrowsingContext final : public BrowsingContext {
  private:
   friend class BrowsingContext;
 
-  ~CanonicalBrowsingContext() = default;
+  ~CanonicalBrowsingContext();
 
   class PendingRemotenessChange {
    public:
