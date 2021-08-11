@@ -56,6 +56,9 @@ const ATTR_CODE_KEYS = [
   "mtm_cid",
   "msclkid",
   "PTAG",
+  "typetag",
+  "hsimp",
+  "hspart",
 ];
 
 let gCachedAttrData = null;
