@@ -910,7 +910,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
         add_old_configure_assignment(
             '%s_VERSION' % var, valid_compiler.version)
 
-    valid_compiler = compiler_class(valid_compiler)
+    valid_compiler = compiler_class(valid_compiler, host_or_target)
 
     def compiler_error():
         raise FatalCheckError('Failed compiling a simple %s source with %s'
@@ -1137,6 +1137,44 @@ set_define('HAVE_VISIBILITY_ATTRIBUTE',
 set_config('WRAP_SYSTEM_INCLUDES', wrap_system_includes)
 set_config('VISIBILITY_FLAGS', visibility_flags)
 
+@depends(c_compiler)
+@imports('multiprocessing')
+@imports(_from='__builtin__', _import='min')
+def pgo_flags(compiler):
+    if compiler.type in ('gcc', 'clang'):
+        return namespace(
+            gen_cflags=['-fprofile-generate'],
+            gen_ldflags=['-fprofile-generate'],
+            use_cflags=['-fprofile-use', '-fprofile-correction',
+                        '-Wcoverage-mismatch'],
+            use_ldflags=['-fprofile-use'],
+        )
+
+    if compiler.type == 'msvc':
+        num_cores = min(8, multiprocessing.cpu_count())
+        cgthreads = '-CGTHREADS:%s' % num_cores
+
+        return namespace(
+            gen_cflags=['-GL'],
+            gen_ldflags=['-LTCG:PGINSTRUMENT', '-PogoSafeMode', cgthreads],
+            # XXX: PGO builds can fail with warnings treated as errors,
+            # specifically "no profile data available" appears to be
+            # treated as an error sometimes. This might be a consequence
+            # of using WARNINGS_AS_ERRORS in some modules, combined
+            # with the linker doing most of the work in the whole-program
+            # optimization/PGO case. I think it's probably a compiler bug,
+            # but we work around it here.
+            use_cflags=['-GL', '-wd4624', '-wd4952'],
+            # XXX: should be -LTCG:PGOPTIMIZE, but that fails on libxul.
+            # Probably also a compiler bug, but what can you do?
+            use_ldflags=['-LTCG:PGUPDATE', cgthreads],
+        )
+
+set_config('PROFILE_GEN_CFLAGS', pgo_flags.gen_cflags)
+set_config('PROFILE_GEN_LDFLAGS', pgo_flags.gen_ldflags)
+set_config('PROFILE_USE_CFLAGS', pgo_flags.use_cflags)
+set_config('PROFILE_USE_LDFLAGS', pgo_flags.use_ldflags)
+
 # We only want to include windows.configure when we are compiling on
 # Windows, for Windows.
 @depends(target, host)
@@ -1274,10 +1312,13 @@ imply_option('--enable-linker',
 
 @imports('os')
 @imports('shutil')
-def enable_gnu_linker(enable_gold_option, c_compiler, developer_options, build_env, linker_name):
+def enable_gnu_linker(enable_gold_option, c_compiler, developer_options, build_env,
+                      toolchain_flags, linker_name):
     # Used to check the kind of linker
     version_check = ['-Wl,--version']
     cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
+    if toolchain_flags:
+        cmd_base += toolchain_flags
 
     def resolve_gold():
         # Try to force the usage of gold
@@ -1345,12 +1386,14 @@ js_option('--enable-linker', nargs=1,
           help='Select the linker',
           when=build_not_win_mac)
 
-@depends('--enable-linker', c_compiler, developer_options, check_build_environment, when=build_not_win_mac)
+@depends('--enable-linker', c_compiler, developer_options, check_build_environment,
+         extra_toolchain_flags, when=build_not_win_mac)
 @checking('for linker', lambda x: x.KIND)
-def select_linker(linker, c_compiler, developer_options, build_env):
+def select_linker(linker, c_compiler, developer_options, build_env, toolchain_flags):
     linker = linker[0] if linker else 'other'
     if linker in ('gold', 'bfd', 'other'):
-        return enable_gnu_linker(linker == 'gold', c_compiler, developer_options, build_env, linker)
+        return enable_gnu_linker(linker == 'gold', c_compiler, developer_options,
+                                 build_env, toolchain_flags, linker)
     if linker == 'lld':
         version_check = ['-Wl,--version']
         cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
