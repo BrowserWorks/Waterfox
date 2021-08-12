@@ -280,7 +280,7 @@ private:
   ReferencePtr mScaledFont;
   PatternStorage mPattern;
   DrawOptions mOptions;
-  Glyph *mGlyphs;
+  Glyph *mGlyphs = nullptr;
   uint32_t mNumGlyphs;
 };
 
@@ -879,7 +879,6 @@ public:
   explicit RecordedFontData(UnscaledFont *aUnscaledFont)
     : RecordedEventDerived(FONTDATA)
     , mType(aUnscaledFont->GetType())
-    , mData(nullptr)
   {
     mGetFontFileDataSucceeded = aUnscaledFont->GetFontFileData(&FontDataProc, this);
   }
@@ -904,7 +903,7 @@ private:
   friend class RecordedEvent;
 
   FontType mType;
-  uint8_t* mData;
+  uint8_t* mData = nullptr;
   RecordedFontDetails mFontDetails;
 
   bool mGetFontFileDataSucceeded;
@@ -2739,7 +2738,6 @@ template<class S>
 RecordedFontData::RecordedFontData(S &aStream)
   : RecordedEventDerived(FONTDATA)
   , mType(FontType::SKIA)
-  , mData(nullptr)
 {
   ReadElement(aStream, mType);
   ReadElement(aStream, mFontDetails.fontDataKey);
