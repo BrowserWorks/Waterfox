@@ -169,7 +169,7 @@ JS_SetCompartmentPrincipals(JSCompartment* compartment, JSPrincipals* principals
 
     // Any compartment with the trusted principals -- and there can be
     // multiple -- is a system compartment.
-    const JSPrincipals* trusted = compartment->runtimeFromActiveCooperatingThread()->trustedPrincipals();
+    const JSPrincipals* trusted = compartment->runtimeFromMainThread()->trustedPrincipals();
     bool isSystem = principals && principals == trusted;
 
     // Clear out the old principals, if any.
@@ -396,7 +396,7 @@ js::NotifyAnimationActivity(JSObject* obj)
 {
     int64_t timeNow = PRMJ_Now();
     obj->compartment()->lastAnimationTime = timeNow;
-    obj->runtimeFromActiveCooperatingThread()->lastAnimationTime = timeNow;
+    obj->runtimeFromMainThread()->lastAnimationTime = timeNow;
 }
 
 JS_FRIEND_API(uint32_t)
@@ -1166,7 +1166,7 @@ void
 js::DumpHeap(JSContext* cx, FILE* fp, js::DumpHeapNurseryBehaviour nurseryBehaviour)
 {
     if (nurseryBehaviour == js::CollectNurseryBeforeDump)
-        EvictAllNurseries(cx->runtime(), JS::gcreason::API);
+        cx->runtime()->gc.evictNursery(JS::gcreason::API);
 
     DumpHeapTracer dtrc(fp, cx);
 
@@ -1486,12 +1486,6 @@ JS_FRIEND_API(void)
 js::SetCompartmentValidAccessPtr(JSContext* cx, JS::HandleObject global, bool* accessp)
 {
     global->compartment()->setValidAccessPtr(accessp);
-}
-
-JS_FRIEND_API(void)
-js::SetCooperativeYieldCallback(JSContext* cx, YieldCallback callback)
-{
-    cx->setYieldCallback(callback);
 }
 
 JS_FRIEND_API(bool)

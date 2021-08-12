@@ -163,7 +163,7 @@ CompileZone::isAtomsZone()
 const void*
 CompileZone::addressOfIonBailAfter()
 {
-    return zone()->group()->addressOfIonBailAfter();
+    return zone()->runtimeFromAnyThread()->jitRuntime()->addressOfIonBailAfter();
 }
 #endif
 
@@ -195,14 +195,15 @@ bool
 CompileZone::nurseryExists()
 {
     MOZ_ASSERT(CurrentThreadCanAccessZone(zone()));
-    return zone()->group()->nursery().exists();
+    return zone()->runtimeFromAnyThread()->gc.nursery().exists();
 }
 
 void
 CompileZone::setMinorGCShouldCancelIonCompilations()
 {
     MOZ_ASSERT(CurrentThreadCanAccessZone(zone()));
-    zone()->group()->storeBuffer().setShouldCancelIonCompilations();
+    JSRuntime* rt = zone()->runtimeFromMainThread();
+    rt->gc.storeBuffer().setShouldCancelIonCompilations();
 }
 
 JSCompartment*

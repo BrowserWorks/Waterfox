@@ -148,7 +148,7 @@ struct Zone
         return barrierTracer_;
     }
 
-    JSRuntime* runtimeFromActiveCooperatingThread() const {
+    JSRuntime* runtimeFromMainThread() const {
         MOZ_ASSERT(js::CurrentThreadCanAccessRuntime(runtime_));
         return runtime_;
     }

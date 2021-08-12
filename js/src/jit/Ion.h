@@ -64,7 +64,7 @@ class JitContext
     JitContext();
     ~JitContext();
 
-    // Running context when executing on the active thread. Not available during
+    // Running context when executing on the main thread. Not available during
     // compilation.
     JSContext* cx;
 
@@ -157,7 +157,7 @@ LIRGraph* GenerateLIR(MIRGenerator* mir);
 CodeGenerator* GenerateCode(MIRGenerator* mir, LIRGraph* lir);
 CodeGenerator* CompileBackEnd(MIRGenerator* mir);
 
-void AttachFinishedCompilations(ZoneGroup* group, JSContext* maybecx);
+void AttachFinishedCompilations(JSContext* cx);
 void FinishOffThreadBuilder(JSRuntime* runtime, IonBuilder* builder,
                             const AutoLockHelperThreadState& lock);
 void FreeIonBuilder(IonBuilder* builder);

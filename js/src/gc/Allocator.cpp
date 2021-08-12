@@ -284,15 +284,15 @@ GCRuntime::refillFreeListFromAnyThread(JSContext* cx, AllocKind thingKind, size_
     cx->arenas()->checkEmptyFreeList(thingKind);
 
     if (!cx->helperThread())
-        return refillFreeListFromActiveCooperatingThread(cx, thingKind, thingSize);
+        return refillFreeListFromMainThread(cx, thingKind, thingSize);
 
     return refillFreeListFromHelperThread(cx, thingKind);
 }
 
 /* static */ TenuredCell*
-GCRuntime::refillFreeListFromActiveCooperatingThread(JSContext* cx, AllocKind thingKind, size_t thingSize)
+GCRuntime::refillFreeListFromMainThread(JSContext* cx, AllocKind thingKind, size_t thingSize)
 {
-    // It should not be possible to allocate on the active thread while we are
+    // It should not be possible to allocate on the main thread while we are
     // inside a GC.
     Zone *zone = cx->zone();
     MOZ_ASSERT(!JS::CurrentThreadIsHeapBusy(), "allocating while under GC");
@@ -304,7 +304,7 @@ GCRuntime::refillFreeListFromActiveCooperatingThread(JSContext* cx, AllocKind th
 /* static */ TenuredCell*
 GCRuntime::refillFreeListFromHelperThread(JSContext* cx, AllocKind thingKind)
 {
-    // A GC may be happening on the active thread, but zones used by off thread
+    // A GC may be happening on the main thread, but zones used by off thread
     // tasks are never collected.
     Zone* zone = cx->zone();
     MOZ_ASSERT(!zone->wasGCStarted());
@@ -321,7 +321,7 @@ GCRuntime::refillFreeListInGC(Zone* zone, AllocKind thingKind)
      */
 
     zone->arenas.checkEmptyFreeList(thingKind);
-    mozilla::DebugOnly<JSRuntime*> rt = zone->runtimeFromActiveCooperatingThread();
+    mozilla::DebugOnly<JSRuntime*> rt = zone->runtimeFromMainThread();
     MOZ_ASSERT(JS::CurrentThreadIsHeapCollecting());
     MOZ_ASSERT_IF(!JS::CurrentThreadIsHeapMinorCollecting(), !rt->gc.isBackgroundSweeping());
 

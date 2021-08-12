@@ -39,19 +39,14 @@ CheckThreadLocal::check() const
 {
     JSContext* cx = TlsContext.get();
     MOZ_ASSERT(cx);
-
-    // As for CheckZoneGroup, in a cooperatively scheduled runtime the active
-    // thread is permitted access to thread local state for other suspended
-    // threads in the same runtime.
-    if (cx->isCooperativelyScheduled())
-        MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
-    else
-        MOZ_ASSERT(id == ThisThread::GetId());
+    MOZ_ASSERT_IF(cx->isMainThreadContext(),
+                  CurrentThreadCanAccessRuntime(cx->runtime()));
+    MOZ_ASSERT(id == ThisThread::GetId());
 }
 
 template <AllowedHelperThread Helper>
 void
-CheckActiveThread<Helper>::check() const
+CheckMainThread<Helper>::check() const
 {
     // When interrupting a thread on Windows, changes are made to the runtime
     // and active thread's state from another thread while the active thread is
@@ -66,48 +61,35 @@ CheckActiveThread<Helper>::check() const
 #endif // XP_WIN
 }
 
-template class CheckActiveThread<AllowedHelperThread::None>;
-template class CheckActiveThread<AllowedHelperThread::GCTask>;
-template class CheckActiveThread<AllowedHelperThread::IonCompile>;
+template class CheckMainThread<AllowedHelperThread::None>;
+template class CheckMainThread<AllowedHelperThread::GCTask>;
+template class CheckMainThread<AllowedHelperThread::IonCompile>;
 
 template <AllowedHelperThread Helper>
 void
-CheckZoneGroup<Helper>::check() const
+CheckZone<Helper>::check() const
 {
     if (OnHelperThread<Helper>())
         return;
 
     JSContext* cx = TlsContext.get();
-    if (group) {
-        if (group->usedByHelperThread()) {
-            MOZ_ASSERT(group->ownedByCurrentHelperThread());
-        } else {
-            // This check is disabled on windows for the same reason as in
-            // CheckActiveThread.
-#ifndef XP_WIN
-            // In a cooperatively scheduled runtime the active thread is
-            // permitted access to all zone groups --- even those it has not
-            // entered --- for GC and similar purposes. Since all other
-            // cooperative threads are suspended, these accesses are threadsafe
-            // if the zone group is not in use by a helper thread.
-            //
-            // A corollary to this is that suspended cooperative threads may
-            // not access anything in a zone group, even zone groups they own,
-            // because they're not allowed to interact with the JS API.
-            MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
-#endif
-        }
-    } else {
-        // |group| will be null for data in the atoms zone. This is protected
-        // by the exclusive access lock.
+    if (zone->isAtomsZone()) {
+        // The atoms zone is protected by the exclusive access lock.
         MOZ_ASSERT(cx->runtime()->currentThreadHasExclusiveAccess());
+    } else if (zone->usedByHelperThread()) {
+        // This may only be accessed by the helper thread using this zone.
+        MOZ_ASSERT(zone->ownedByCurrentHelperThread());
+    } else {
+        // The main thread is permitted access to all zones. These accesses
+        // are threadsafe if the zone is not in use by a helper thread.
+        MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
     }
 }
 
-template class CheckZoneGroup<AllowedHelperThread::None>;
-template class CheckZoneGroup<AllowedHelperThread::GCTask>;
-template class CheckZoneGroup<AllowedHelperThread::IonCompile>;
-template class CheckZoneGroup<AllowedHelperThread::GCTaskOrIonCompile>;
+template class CheckZone<AllowedHelperThread::None>;
+template class CheckZone<AllowedHelperThread::GCTask>;
+template class CheckZone<AllowedHelperThread::IonCompile>;
+template class CheckZone<AllowedHelperThread::GCTaskOrIonCompile>;
 
 template <GlobalLock Lock, AllowedHelperThread Helper>
 void

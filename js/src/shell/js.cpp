@@ -3272,31 +3272,21 @@ WorkerMain(void* arg)
         js_delete(input);
     });
 
-    if (input->parentRuntime)
-        sc->isWorker = true;
+    sc->isWorker = true;
     JS_SetContextPrivate(cx, sc.get());
     SetWorkerContextOptions(cx);
 
-    Maybe<EnvironmentPreparer> environmentPreparer;
-    if (input->parentRuntime) {
-        JS_SetFutexCanWait(cx);
-        JS::SetWarningReporter(cx, WarningReporter);
-        js::SetPreserveWrapperCallback(cx, DummyPreserveWrapperCallback);
-        JS_InitDestroyPrincipalsCallback(cx, ShellPrincipals::destroy);
+    JS_SetFutexCanWait(cx);
+    JS::SetWarningReporter(cx, WarningReporter);
+    js::SetPreserveWrapperCallback(cx, DummyPreserveWrapperCallback);
+    JS_InitDestroyPrincipalsCallback(cx, ShellPrincipals::destroy);
 
-        js::UseInternalJobQueues(cx);
+    js::UseInternalJobQueues(cx);
 
-        if (!JS::InitSelfHostedCode(cx))
-            return;
+    if (!JS::InitSelfHostedCode(cx))
+        return;
 
-        environmentPreparer.emplace(cx);
-    } else {
-        JS_AddInterruptCallback(cx, ShellInterruptCallback);
-
-        // The Gecko Profiler requires that all cooperating contexts have
-        // profiling stacks installed.
-        MOZ_ALWAYS_TRUE(EnsureGeckoProfilingStackInstalled(cx, sc.get()));
-    }
+    EnvironmentPreparer environmentPreparer(cx);
 
     do {
         JSAutoRequest ar(cx);
@@ -4727,7 +4717,7 @@ NewGlobal(JSContext* cx, unsigned argc, Value* vp)
     JS::CompartmentBehaviors& behaviors = options.behaviors();
 
     SetStandardCompartmentOptions(options);
-    options.creationOptions().setNewZoneInExistingZoneGroup(cx->global());
+    options.creationOptions().setNewZone();
 
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.length() == 1 && args[0].isObject()) {
@@ -5335,7 +5325,7 @@ ReflectTrackedOptimizations(JSContext* cx, unsigned argc, Value* vp)
     RootedObject callee(cx, &args.callee());
     JSRuntime* rt = cx->runtime();
 
-    if (!rt->hasJitRuntime() || !rt->jitRuntime()->isOptimizationTrackingEnabled(cx->zone()->group())) {
+    if (!rt->hasJitRuntime() || !rt->jitRuntime()->isOptimizationTrackingEnabled(cx->runtime())) {
         JS_ReportErrorASCII(cx, "Optimization tracking is off.");
         return false;
     }
@@ -5955,8 +5945,6 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "      lineNumber: starting line number for error messages and debug info\n"
 "      columnNumber: starting column number for error messages and debug info\n"
 "      global: global in which to execute the code\n"
-"      zoneGroup: pick a global from another zone group with no current context\n"
-"         to execute the code in\n"
 "      newContext: if true, create and use a new cx (default: false)\n"
 "      catchTermination: if true, catch termination (failure without\n"
 "         an exception value, as for slow scripts or out-of-memory)\n"

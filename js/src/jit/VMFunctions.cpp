@@ -529,7 +529,7 @@ InterruptCheck(JSContext* cx)
     {
         JSRuntime* rt = cx->runtime();
         JitRuntime::AutoPreventBackedgePatching apbp(rt);
-        cx->zone()->group()->jitZoneGroup->patchIonBackedges(cx, JitZoneGroup::BackedgeLoopHeader);
+        rt->jitRuntime()->patchIonBackedges(cx, JitRuntime::BackedgeLoopHeader);
     }
 
     return CheckForInterrupt(cx);
@@ -552,7 +552,7 @@ NewCallObject(JSContext* cx, HandleShape shape, HandleObjectGroup group)
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
     if (!IsInsideNursery(obj))
-        cx->zone()->group()->storeBuffer().putWholeCell(obj);
+        cx->runtime()->gc.storeBuffer().putWholeCell(obj);
 
     return obj;
 }
@@ -569,7 +569,7 @@ NewSingletonCallObject(JSContext* cx, HandleShape shape)
     // the call object tenured, so barrier as needed before re-entering.
     MOZ_ASSERT(!IsInsideNursery(obj),
                "singletons are created in the tenured heap");
-    cx->zone()->group()->storeBuffer().putWholeCell(obj);
+    cx->runtime()->gc.storeBuffer().putWholeCell(obj);
 
     return obj;
 }
@@ -1315,7 +1315,7 @@ AssertValidObjectPtr(JSContext* cx, JSObject* obj)
     // Check what we can, so that we'll hopefully assert/crash if we get a
     // bogus object (pointer).
     MOZ_ASSERT(obj->compartment() == cx->compartment());
-    MOZ_ASSERT(obj->runtimeFromActiveCooperatingThread() == cx->runtime());
+    MOZ_ASSERT(obj->runtimeFromMainThread() == cx->runtime());
 
     MOZ_ASSERT_IF(!obj->hasLazyGroup() && obj->maybeShape(),
                   obj->group()->clasp() == obj->maybeShape()->getObjectClass());

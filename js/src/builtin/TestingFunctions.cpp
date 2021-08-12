@@ -337,7 +337,7 @@ MinorGC(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.get(0) == BooleanValue(true))
-        cx->zone()->group()->storeBuffer().setAboutToOverflow(JS::gcreason::FULL_GENERIC_BUFFER);
+        cx->runtime()->gc.storeBuffer().setAboutToOverflow(JS::gcreason::FULL_GENERIC_BUFFER);
 
     cx->minorGC(JS::gcreason::API);
     args.rval().setUndefined();
@@ -1413,7 +1413,7 @@ SetupOOMFailure(JSContext* cx, bool failAlways, unsigned argc, Value* vp)
         return false;
     }
 
-    uint32_t targetThread = js::oom::THREAD_TYPE_COOPERATING;
+    uint32_t targetThread = js::oom::THREAD_TYPE_MAIN;
     if (args.length() > 1 && !ToUint32(cx, args[1], &targetThread))
         return false;
 
@@ -1453,8 +1453,7 @@ static size_t
 CountCompartments(JSContext* cx)
 {
     size_t count = 0;
-    ZoneGroup* group = cx->compartment()->zone()->group();
-    for (auto zone : group->zones())
+    for (auto zone : cx->runtime()->gc.zones())
         count += zone->compartments().length();
     return count;
 }
@@ -1497,13 +1496,13 @@ OOMTest(JSContext* cx, unsigned argc, Value* vp)
 
     bool verbose = EnvVarIsDefined("OOM_VERBOSE");
 
-    unsigned threadStart = oom::THREAD_TYPE_COOPERATING;
+    unsigned threadStart = oom::THREAD_TYPE_MAIN;
     unsigned threadEnd = oom::THREAD_TYPE_MAX;
 
     // Test a single thread type if specified by the OOM_THREAD environment variable.
     int threadOption = 0;
     if (EnvVarAsInt("OOM_THREAD", &threadOption)) {
-        if (threadOption < oom::THREAD_TYPE_COOPERATING || threadOption > oom::THREAD_TYPE_MAX) {
+        if (threadOption < oom::THREAD_TYPE_MAIN || threadOption > oom::THREAD_TYPE_MAX) {
             JS_ReportErrorASCII(cx, "OOM_THREAD value out of range.");
             return false;
         }
@@ -2106,7 +2105,8 @@ testingFunc_bailAfter(JSContext* cx, unsigned argc, Value* vp)
     }
 
 #ifdef DEBUG
-    cx->zone()->group()->setIonBailAfter(args[0].toInt32());
+    if (auto* jitRuntime = cx->runtime()->jitRuntime())
+        jitRuntime->setIonBailAfter(args[0].toInt32());
 #endif
 
     args.rval().setUndefined();

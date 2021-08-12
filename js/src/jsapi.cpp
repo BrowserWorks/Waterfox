@@ -452,16 +452,6 @@ JS_GetBoundFunctionTarget(JSFunction* fun)
 
 /************************************************************************/
 
-#ifdef DEBUG
-JS_FRIEND_API(bool)
-JS::isGCEnabled()
-{
-    return !TlsContext.get()->suppressGC;
-}
-#else
-JS_FRIEND_API(bool) JS::isGCEnabled() { return true; }
-#endif
-
 JS_PUBLIC_API(JSContext*)
 JS_NewContext(uint32_t maxbytes, uint32_t maxNurseryBytes, JSRuntime* parentRuntime)
 {
@@ -1609,7 +1599,7 @@ JS_SetNativeStackQuota(JSContext* cx, size_t systemCodeStackSize, size_t trusted
     SetNativeStackQuotaAndLimit(cx, JS::StackForTrustedScript, trustedScriptStackSize);
     SetNativeStackQuotaAndLimit(cx, JS::StackForUntrustedScript, untrustedScriptStackSize);
 
-    if (cx->isCooperativelyScheduled())
+    if (cx->isMainThreadContext())
         cx->initJitStackLimit();
 }
 
@@ -1820,7 +1810,7 @@ JS::CompartmentCreationOptions&
 JS::CompartmentCreationOptions::setSystemZone()
 {
     zoneSpec_ = JS::SystemZone;
-    zonePointer_ = nullptr;
+    zone_ = nullptr;
     return *this;
 }
 
@@ -1828,31 +1818,15 @@ JS::CompartmentCreationOptions&
 JS::CompartmentCreationOptions::setExistingZone(JSObject* obj)
 {
     zoneSpec_ = JS::ExistingZone;
-    zonePointer_ = obj->zone();
+    zone_ = obj->zone();
     return *this;
 }
 
 JS::CompartmentCreationOptions&
-JS::CompartmentCreationOptions::setNewZoneInNewZoneGroup()
+JS::CompartmentCreationOptions::setNewZone()
 {
-    zoneSpec_ = JS::NewZoneInNewZoneGroup;
-    zonePointer_ = nullptr;
-    return *this;
-}
-
-JS::CompartmentCreationOptions&
-JS::CompartmentCreationOptions::setNewZoneInSystemZoneGroup()
-{
-    zoneSpec_ = JS::NewZoneInSystemZoneGroup;
-    zonePointer_ = nullptr;
-    return *this;
-}
-
-JS::CompartmentCreationOptions&
-JS::CompartmentCreationOptions::setNewZoneInExistingZoneGroup(JSObject* obj)
-{
-    zoneSpec_ = JS::NewZoneInExistingZoneGroup;
-    zonePointer_ = obj->zone()->group();
+    zoneSpec_ = JS::NewZone;
+    zone_ = nullptr;
     return *this;
 }
 
@@ -4198,13 +4172,13 @@ CanDoOffThread(JSContext* cx, const ReadOnlyCompileOptions& options, size_t leng
     // These are heuristics which the caller may choose to ignore (e.g., for
     // testing purposes).
     if (!options.forceAsync) {
-        // Compiling off the active thread inolves creating a new Zone and other
+        // Compiling off the main thread inolves creating a new Zone and other
         // significant overheads.  Don't bother if the script is tiny.
         if (length < TINY_LENGTH)
             return false;
 
         // If the parsing task would have to wait for GC to complete, it'll probably
-        // be faster to just start it synchronously on the active thread unless the
+        // be faster to just start it synchronously on the main thread unless the
         // script is huge.
         if (OffThreadParsingMustWaitForGC(cx->runtime())) {
             if (what == OffThread::Compile && length < HUGE_SRC_LENGTH)

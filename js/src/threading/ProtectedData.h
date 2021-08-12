@@ -9,6 +9,8 @@
 
 #include "threading/Thread.h"
 
+namespace JS { struct Zone; }
+
 namespace js {
 
 // This file provides classes for encapsulating pieces of data with a check
@@ -137,18 +139,16 @@ class ProtectedDataNoCheckArgs : public ProtectedData<Check, T>
     ThisType& operator=(const U& p) { this->ref() = p; return *this; }
 };
 
-class ZoneGroup;
-
-// Intermediate class for protected data whose checks take a ZoneGroup constructor argument.
+// Intermediate class for protected data whose checks take a Zone constructor argument.
 template <typename Check, typename T>
-class ProtectedDataZoneGroupArg : public ProtectedData<Check, T>
+class ProtectedDataZoneArg : public ProtectedData<Check, T>
 {
-    typedef ProtectedDataZoneGroupArg<Check, T> ThisType;
+    typedef ProtectedDataZoneArg<Check, T> ThisType;
 
   public:
     template <typename... Args>
-    explicit ProtectedDataZoneGroupArg(ZoneGroup* group, Args&&... args)
-      : ProtectedData<Check, T>(Check(group), mozilla::Forward<Args>(args)...)
+    explicit ProtectedDataZoneArg(JS::Zone* zone, Args&&... args)
+      : ProtectedData<Check, T>(Check(zone), mozilla::Forward<Args>(args)...)
     {}
 
     template <typename U>
@@ -188,7 +188,7 @@ template <typename T>
 using ThreadLocalData = ProtectedDataNoCheckArgs<CheckThreadLocal, T>;
 
 // Enum describing which helper threads (GC tasks or Ion compilations) may
-// access data even though they do not have exclusive access to any zone group.
+// access data even though they do not have exclusive access to any zone.
 enum class AllowedHelperThread
 {
     None,
@@ -198,60 +198,59 @@ enum class AllowedHelperThread
 };
 
 template <AllowedHelperThread Helper>
-class CheckActiveThread
+class CheckMainThread
 {
   public:
     void check() const;
 };
 
-// Data which may only be accessed by the runtime's cooperatively scheduled
-// active thread.
+// Data which may only be accessed by the runtime's main thread.
 template <typename T>
-using ActiveThreadData =
-    ProtectedDataNoCheckArgs<CheckActiveThread<AllowedHelperThread::None>, T>;
+using MainThreadData =
+    ProtectedDataNoCheckArgs<CheckMainThread<AllowedHelperThread::None>, T>;
 
-// Data which may only be accessed by the runtime's cooperatively scheduled
-// active thread, or by various helper thread tasks.
+// Data which may only be accessed by the runtime's main thread or by various
+// helper thread tasks.
 template <typename T>
-using ActiveThreadOrGCTaskData =
-    ProtectedDataNoCheckArgs<CheckActiveThread<AllowedHelperThread::GCTask>, T>;
+using MainThreadOrGCTaskData =
+    ProtectedDataNoCheckArgs<CheckMainThread<AllowedHelperThread::GCTask>, T>;
 template <typename T>
-using ActiveThreadOrIonCompileData =
-    ProtectedDataNoCheckArgs<CheckActiveThread<AllowedHelperThread::IonCompile>, T>;
+using MainThreadOrIonCompileData =
+    ProtectedDataNoCheckArgs<CheckMainThread<AllowedHelperThread::IonCompile>, T>;
 
 template <AllowedHelperThread Helper>
-class CheckZoneGroup
+class CheckZone
 {
 #ifdef JS_HAS_PROTECTED_DATA_CHECKS
-    ZoneGroup* group;
+    JS::Zone* zone;
 
   public:
-    explicit CheckZoneGroup(ZoneGroup* group) : group(group) {}
+    explicit CheckZone(JS::Zone* zone) : zone(zone) {}
     void check() const;
 #else
   public:
-    explicit CheckZoneGroup(ZoneGroup* group) {}
+    explicit CheckZone(JS::Zone* zone) {}
 #endif
 };
 
 // Data which may only be accessed by threads with exclusive access to the
-// associated zone group, or by the runtime's cooperatively scheduled
-// active thread for zone groups which are not in use by a helper thread.
+// associated zone, or by the runtime's main thread for zones which are not in
+// use by a helper thread.
 template <typename T>
-using ZoneGroupData =
-    ProtectedDataZoneGroupArg<CheckZoneGroup<AllowedHelperThread::None>, T>;
+using ZoneData =
+    ProtectedDataZoneArg<CheckZone<AllowedHelperThread::None>, T>;
 
 // Data which may only be accessed by threads with exclusive access to the
-// associated zone group, or by various helper thread tasks.
+// associated zone, or by various helper thread tasks.
 template <typename T>
-using ZoneGroupOrGCTaskData =
-    ProtectedDataZoneGroupArg<CheckZoneGroup<AllowedHelperThread::GCTask>, T>;
+using ZoneOrGCTaskData =
+    ProtectedDataZoneArg<CheckZone<AllowedHelperThread::GCTask>, T>;
 template <typename T>
-using ZoneGroupOrIonCompileData =
-    ProtectedDataZoneGroupArg<CheckZoneGroup<AllowedHelperThread::IonCompile>, T>;
+using ZoneOrIonCompileData =
+    ProtectedDataZoneArg<CheckZone<AllowedHelperThread::IonCompile>, T>;
 template <typename T>
-using ZoneGroupOrGCTaskOrIonCompileData =
-    ProtectedDataZoneGroupArg<CheckZoneGroup<AllowedHelperThread::GCTaskOrIonCompile>, T>;
+using ZoneOrGCTaskOrIonCompileData =
+    ProtectedDataZoneArg<CheckZone<AllowedHelperThread::GCTaskOrIonCompile>, T>;
 
 // Runtime wide locks which might protect some data.
 enum class GlobalLock

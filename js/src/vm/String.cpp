@@ -48,7 +48,7 @@ JSString::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
     // JSExternalString: Ask the embedding to tell us what's going on.  If it
     // doesn't want to say, don't count, the chars could be stored anywhere.
     if (isExternal()) {
-        if (auto* cb = runtimeFromActiveCooperatingThread()->externalStringSizeofCallback.ref()) {
+        if (auto* cb = runtimeFromMainThread()->externalStringSizeofCallback.ref()) {
             // Our callback isn't supposed to cause GC.
             JS::AutoSuppressGCAnalysis nogc;
             return cb(this, mallocSizeOf);

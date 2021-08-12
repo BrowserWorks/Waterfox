@@ -23,44 +23,47 @@ using namespace js::gc;
 
 Zone * const Zone::NotOnList = reinterpret_cast<Zone*>(1);
 
-JS::Zone::Zone(JSRuntime* rt, ZoneGroup* group)
+JS::Zone::Zone(JSRuntime* rt)
   : JS::shadow::Zone(rt, &rt->gc.marker),
-    group_(group),
-    debuggers(group, nullptr),
-    uniqueIds_(group),
-    suppressAllocationMetadataBuilder(group, false),
-    arenas(rt, group),
+    // Note: don't use |this| before initializing helperThreadUse_!
+    // ProtectedData checks in CheckZone::check may read this field.
+    helperThreadUse_(HelperThreadUse::None),
+    helperThreadOwnerContext_(nullptr),
+    debuggers(this, nullptr),
+    uniqueIds_(this),
+    suppressAllocationMetadataBuilder(this, false),
+    arenas(rt, this),
     types(this),
-    gcWeakMapList_(group),
+    gcWeakMapList_(this),
     compartments_(),
-    gcGrayRoots_(group),
-    gcWeakRefs_(group),
-    weakCaches_(group),
-    gcWeakKeys_(group, SystemAllocPolicy(), rt->randomHashCodeScrambler()),
-    gcSweepGroupEdges_(group),
-    typeDescrObjects_(group, this),
+    gcGrayRoots_(this),
+    gcWeakRefs_(this),
+    weakCaches_(this),
+    gcWeakKeys_(this, SystemAllocPolicy(), rt->randomHashCodeScrambler()),
+    gcSweepGroupEdges_(this),
+    typeDescrObjects_(this, this),
     regExps(this),
-    markedAtoms_(group),
-    atomCache_(group),
-    externalStringCache_(group),
-    functionToStringCache_(group),
+    markedAtoms_(this),
+    atomCache_(this),
+    externalStringCache_(this),
+    functionToStringCache_(this),
     usage(&rt->gc.usage),
     threshold(),
     gcDelayBytes(0),
-    propertyTree_(group, this),
-    baseShapes_(group, this),
-    initialShapes_(group, this),
-    nurseryShapes_(group),
-    data(group, nullptr),
-    isSystem(group, false),
+    propertyTree_(this, this),
+    baseShapes_(this, this),
+    initialShapes_(this, this),
+    nurseryShapes_(this),
+    data(this, nullptr),
+    isSystem(this, false),
 #ifdef DEBUG
-    gcLastSweepGroupIndex(group, 0),
+    gcLastSweepGroupIndex(this, 0),
 #endif
-    jitZone_(group, nullptr),
+    jitZone_(this, nullptr),
     gcScheduled_(false),
-    gcPreserveCode_(group, false),
-    keepShapeTables_(group, false),
-    listNext_(group, NotOnList)
+    gcPreserveCode_(this, false),
+    keepShapeTables_(this, false),
+    listNext_(this, NotOnList)
 {
     /* Ensure that there are no vtables to mess us up here. */
     MOZ_ASSERT(reinterpret_cast<JS::shadow::Zone*>(this) ==
@@ -74,6 +77,8 @@ JS::Zone::Zone(JSRuntime* rt, ZoneGroup* group)
 
 Zone::~Zone()
 {
+    MOZ_ASSERT(helperThreadUse_ == HelperThreadUse::None);
+
     JSRuntime* rt = runtimeFromAnyThread();
     if (this == rt->gc.systemZone)
         rt->gc.systemZone = nullptr;
@@ -130,7 +135,7 @@ Zone::getOrCreateDebuggers(JSContext* cx)
 void
 Zone::sweepBreakpoints(FreeOp* fop)
 {
-    if (!group() || group()->debuggerList().isEmpty())
+    if (fop->runtime()->debuggerList().isEmpty())
         return;
 
     /*
@@ -244,8 +249,8 @@ Zone::discardJitCode(FreeOp* fop, bool discardBaselineCode)
 
     /*
      * Free all control flow graphs that are cached on BaselineScripts.
-     * Assuming this happens on the active thread and all control flow
-     * graph reads happen on the active thread, this is safe.
+     * Assuming this happens on the main thread and all control flow
+     * graph reads happen on the main thread, this is safe.
      */
     jitZone()->cfgSpace()->lifoAlloc().freeAll();
 }
@@ -264,7 +269,7 @@ Zone::gcNumber()
 {
     // Zones in use by exclusive threads are not collected, and threads using
     // them cannot access the main runtime's gcNumber without racing.
-    return usedByHelperThread() ? 0 : runtimeFromActiveCooperatingThread()->gc.gcNumber();
+    return usedByHelperThread() ? 0 : runtimeFromMainThread()->gc.gcNumber();
 }
 
 js::jit::JitZone*
@@ -303,15 +308,17 @@ Zone::canCollect()
 
     // Zones that will be or are currently used by other threads cannot be
     // collected.
-    return !group()->createdForHelperThread();
+    return !createdForHelperThread();
 }
 
 void
 Zone::notifyObservingDebuggers()
 {
+    JSRuntime* rt = runtimeFromMainThread();
+    JSContext* cx = rt->mainContextFromOwnThread();
+
     for (CompartmentsInZoneIter comps(this); !comps.done(); comps.next()) {
-        JSRuntime* rt = runtimeFromAnyThread();
-        RootedGlobalObject global(TlsContext.get(), comps->unsafeUnbarrieredMaybeGlobal());
+        RootedGlobalObject global(cx, comps->unsafeUnbarrieredMaybeGlobal());
         if (!global)
             continue;
 
@@ -385,11 +392,26 @@ Zone::deleteEmptyCompartment(JSCompartment* comp)
     for (auto& i : compartments()) {
         if (i == comp) {
             compartments().erase(&i);
-            comp->destroy(runtimeFromActiveCooperatingThread()->defaultFreeOp());
+            comp->destroy(runtimeFromMainThread()->defaultFreeOp());
             return;
         }
     }
     MOZ_CRASH("Compartment not found");
+}
+
+void
+Zone::setHelperThreadOwnerContext(JSContext* cx)
+{
+    MOZ_ASSERT_IF(cx, TlsContext.get() == cx);
+    helperThreadOwnerContext_ = cx;
+}
+
+bool
+Zone::ownedByCurrentHelperThread()
+{
+    MOZ_ASSERT(usedByHelperThread());
+    MOZ_ASSERT(TlsContext.get());
+    return helperThreadOwnerContext_ == TlsContext.get();
 }
 
 ZoneList::ZoneList()

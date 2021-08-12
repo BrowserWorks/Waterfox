@@ -172,7 +172,7 @@ CanBeFinalizedInBackground(AllocKind kind, const Class* clasp)
     MOZ_ASSERT(IsObjectAllocKind(kind));
     /* If the class has no finalizer or a finalizer that is safe to call on
      * a different thread, we change the alloc kind. For example,
-     * AllocKind::OBJECT0 calls the finalizer on the active thread,
+     * AllocKind::OBJECT0 calls the finalizer on the main thread,
      * AllocKind::OBJECT0_BACKGROUND calls the finalizer on the gcHelperThread.
      * IsBackgroundFinalized is called to prevent recursively incrementing
      * the alloc kind; kind may already be a background finalize kind.
@@ -629,7 +629,7 @@ class ArenaLists
      * GC we only move the head of the of the list of spans back to the arena
      * only for the arena that was not fully allocated.
      */
-    ZoneGroupData<AllAllocKindArray<FreeSpan*>> freeLists_;
+    ZoneData<AllAllocKindArray<FreeSpan*>> freeLists_;
     FreeSpan*& freeLists(AllocKind i) { return freeLists_.ref()[i]; }
     FreeSpan* freeLists(AllocKind i) const { return freeLists_.ref()[i]; }
 
@@ -638,7 +638,7 @@ class ArenaLists
     // Arena) so the JITs can fall back gracefully.
     static FreeSpan placeholder;
 
-    ZoneGroupOrGCTaskData<AllAllocKindArray<ArenaList>> arenaLists_;
+    ZoneOrGCTaskData<AllAllocKindArray<ArenaList>> arenaLists_;
     ArenaList& arenaLists(AllocKind i) { return arenaLists_.ref()[i]; }
     const ArenaList& arenaLists(AllocKind i) const { return arenaLists_.ref()[i]; }
 
@@ -653,31 +653,31 @@ class ArenaLists
     const BackgroundFinalizeState& backgroundFinalizeState(AllocKind i) const { return backgroundFinalizeState_.ref()[i]; }
 
     /* For each arena kind, a list of arenas remaining to be swept. */
-    ActiveThreadOrGCTaskData<AllAllocKindArray<Arena*>> arenaListsToSweep_;
+    MainThreadOrGCTaskData<AllAllocKindArray<Arena*>> arenaListsToSweep_;
     Arena*& arenaListsToSweep(AllocKind i) { return arenaListsToSweep_.ref()[i]; }
     Arena* arenaListsToSweep(AllocKind i) const { return arenaListsToSweep_.ref()[i]; }
 
     /* During incremental sweeping, a list of the arenas already swept. */
-    ZoneGroupOrGCTaskData<AllocKind> incrementalSweptArenaKind;
-    ZoneGroupOrGCTaskData<ArenaList> incrementalSweptArenas;
+    ZoneOrGCTaskData<AllocKind> incrementalSweptArenaKind;
+    ZoneOrGCTaskData<ArenaList> incrementalSweptArenas;
 
     // Arena lists which have yet to be swept, but need additional foreground
     // processing before they are swept.
-    ZoneGroupData<Arena*> gcShapeArenasToUpdate;
-    ZoneGroupData<Arena*> gcAccessorShapeArenasToUpdate;
-    ZoneGroupData<Arena*> gcScriptArenasToUpdate;
-    ZoneGroupData<Arena*> gcObjectGroupArenasToUpdate;
+    ZoneData<Arena*> gcShapeArenasToUpdate;
+    ZoneData<Arena*> gcAccessorShapeArenasToUpdate;
+    ZoneData<Arena*> gcScriptArenasToUpdate;
+    ZoneData<Arena*> gcObjectGroupArenasToUpdate;
 
     // While sweeping type information, these lists save the arenas for the
     // objects which have already been finalized in the foreground (which must
     // happen at the beginning of the GC), so that type sweeping can determine
     // which of the object pointers are marked.
-    ZoneGroupData<ObjectAllocKindArray<ArenaList>> savedObjectArenas_;
+    ZoneData<ObjectAllocKindArray<ArenaList>> savedObjectArenas_;
     ArenaList& savedObjectArenas(AllocKind i) { return savedObjectArenas_.ref()[i]; }
-    ZoneGroupData<Arena*> savedEmptyObjectArenas;
+    ZoneData<Arena*> savedEmptyObjectArenas;
 
   public:
-    explicit ArenaLists(JSRuntime* rt, ZoneGroup* group);
+    explicit ArenaLists(JSRuntime* rt, JS::Zone* zone);
     ~ArenaLists();
 
     const void* addressOfFreeList(AllocKind thingKind) const {
@@ -859,7 +859,7 @@ NotifyGCPostSwap(JSObject* a, JSObject* b, unsigned preResult);
  * that can be swept and allocated off thread.
  *
  * In non-threadsafe builds, all actual sweeping and allocation is performed
- * on the active thread, but GCHelperState encapsulates this from clients as
+ * on the main thread, but GCHelperState encapsulates this from clients as
  * much as possible.
  */
 class GCHelperState
@@ -872,13 +872,13 @@ class GCHelperState
     // Associated runtime.
     JSRuntime* const rt;
 
-    // Condvar for notifying the active thread when work has finished. This is
+    // Condvar for notifying the main thread when work has finished. This is
     // associated with the runtime's GC lock --- the worker thread state
     // condvars can't be used here due to lock ordering issues.
     js::ConditionVariable done;
 
     // Activity for the helper to do, protected by the GC lock.
-    ActiveThreadOrGCTaskData<State> state_;
+    MainThreadOrGCTaskData<State> state_;
 
     // Whether work is being performed on some thread.
     GCLockData<bool> hasThread;
@@ -950,7 +950,7 @@ class GCParallelTask
     UnprotectedData<TaskState> state;
 
     // Amount of time this task took to execute.
-    ActiveThreadOrGCTaskData<mozilla::TimeDuration> duration_;
+    MainThreadOrGCTaskData<mozilla::TimeDuration> duration_;
 
     explicit GCParallelTask(const GCParallelTask&) = delete;
 
@@ -988,7 +988,7 @@ class GCParallelTask
     void joinWithLockHeld(AutoLockHelperThreadState& locked);
 
     // Instead of dispatching to a helper, run the task on the current thread.
-    void runFromActiveCooperatingThread(JSRuntime* rt);
+    void runFromMainThread(JSRuntime* rt);
 
     // Dispatch a cancelation request.
     enum CancelMode { CancelNoWait, CancelAndWait};

@@ -1400,7 +1400,7 @@ ScriptSourceObject::trace(JSTracer* trc, JSObject* obj)
 void
 ScriptSourceObject::finalize(FreeOp* fop, JSObject* obj)
 {
-    MOZ_ASSERT(fop->onActiveCooperatingThread());
+    MOZ_ASSERT(fop->onMainThread());
     ScriptSourceObject* sso = &obj->as<ScriptSourceObject>();
     sso->source()->decref();
     sso->setReservedSlot(SOURCE_SLOT, PrivateValue(nullptr));

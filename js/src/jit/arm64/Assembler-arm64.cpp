@@ -628,7 +628,7 @@ Assembler::FixupNurseryObjects(JSContext* cx, JitCode* code, CompactBufferReader
     }
 
     if (hasNurseryPointers)
-        cx->zone()->group()->storeBuffer().putWholeCell(code);
+        cx->runtime()->gc.storeBuffer().putWholeCell(code);
 }
 
 void

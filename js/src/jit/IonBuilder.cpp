@@ -7258,7 +7258,7 @@ static size_t
 NumFixedSlots(JSObject* object)
 {
     // Note: we can't use object->numFixedSlots() here, as this will read the
-    // shape and can race with the active thread if we are building off thread.
+    // shape and can race with the main thread if we are building off thread.
     // The allocation kind and object class (which goes through the type) can
     // be read freely, however.
     gc::AllocKind kind = object->asTenured().getAllocKind();
@@ -8680,7 +8680,7 @@ IonBuilder::addTypedArrayLengthAndData(MDefinition* obj,
         SharedMem<void*> data = tarr->as<TypedArrayObject>().viewDataEither();
         // Bug 979449 - Optimistically embed the elements and use TI to
         //              invalidate if we move them.
-        bool isTenured = !tarr->zone()->group()->nursery().isInside(data);
+        bool isTenured = !tarr->runtimeFromMainThread()->gc.nursery().isInside(data);
         if (isTenured && tarr->isSingleton()) {
             // The 'data' pointer of TypedArrayObject can change in rare circumstances
             // (ArrayBufferObject::changeContents).
@@ -9032,7 +9032,7 @@ IonBuilder::setElemTryTypedStatic(bool* emitted, MDefinition* object,
         return Ok();
 
     SharedMem<void*> viewData = tarrObj->as<TypedArrayObject>().viewDataEither();
-    if (tarrObj->zone()->group()->nursery().isInside(viewData))
+    if (tarrObj->runtimeFromMainThread()->gc.nursery().isInside(viewData))
         return Ok();
 
     Scalar::Type viewType = tarrObj->as<TypedArrayObject>().type();
@@ -13041,7 +13041,7 @@ JSObject*
 IonBuilder::checkNurseryObject(JSObject* obj)
 {
     // If we try to use any nursery pointers during compilation, make sure that
-    // the active thread will cancel this compilation before performing a minor
+    // the main thread will cancel this compilation before performing a minor
     // GC. All constants used during compilation should either go through this
     // function or should come from a type set (which has a similar barrier).
     if (obj && IsInsideNursery(obj)) {

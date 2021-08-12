@@ -212,7 +212,7 @@ JSRuntime::init(JSContext* cx, uint32_t maxbytes, uint32_t maxNurseryBytes)
     if (!gc.init(maxbytes, maxNurseryBytes))
         return false;
 
-    ScopedJSDeletePtr<Zone> atomsZone(new_<Zone>(this, nullptr));
+    ScopedJSDeletePtr<Zone> atomsZone(new_<Zone>(this));
     if (!atomsZone || !atomsZone->init(true))
         return false;
 
@@ -278,7 +278,7 @@ JSRuntime::destroyRuntime()
          * Finish any in-progress GCs first. This ensures the parseWaitingOnGC
          * list is empty in CancelOffThreadParses.
          */
-        JSContext* cx = TlsContext.get();
+        JSContext* cx = mainContextFromOwnThread();
         if (JS::IsIncrementalGCInProgress(cx))
             FinishGC(cx);
 
@@ -288,7 +288,7 @@ JSRuntime::destroyRuntime()
         /*
          * Cancel any pending, in progress or completed Ion compilations and
          * parse tasks. Waiting for wasm and compression tasks is done
-         * synchronously (on the active thread or during parse tasks), so no
+         * synchronously (on the main thread or during parse tasks), so no
          * explicit canceling is needed for these.
          */
         CancelOffThreadIonCompile(this);
@@ -419,7 +419,7 @@ InvokeInterruptCallback(JSContext* cx)
 
     // A worker thread may have requested an interrupt after finishing an Ion
     // compilation.
-    jit::AttachFinishedCompilations(cx->zone()->group(), cx);
+    jit::AttachFinishedCompilations(cx);
 
     // Important: Additional callbacks can occur inside the callback handler
     // if it re-enters the JS engine. The embedding must ensure that the
@@ -787,19 +787,19 @@ JSRuntime::destroyAtomsAddedWhileSweepingTable()
 void
 JSRuntime::setUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(!zone->group()->usedByHelperThread());
+    MOZ_ASSERT(!zone->usedByHelperThread());
     MOZ_ASSERT(!zone->wasGCStarted());
-    zone->group()->setUsedByHelperThread();
+    zone->setUsedByHelperThread();
     numActiveHelperThreadZones++;
 }
 
 void
 JSRuntime::clearUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(zone->group()->usedByHelperThread());
-    zone->group()->clearUsedByHelperThread();
+    MOZ_ASSERT(zone->usedByHelperThread());
+    zone->clearUsedByHelperThread();
     numActiveHelperThreadZones--;
-    JSContext* cx = TlsContext.get();
+    JSContext* cx = mainContextFromOwnThread();
     if (gc.fullGCForAtomsRequested() && cx->canCollectAtoms())
         gc.triggerFullGCForAtoms(cx);
 }
@@ -817,7 +817,7 @@ js::CurrentThreadCanAccessZone(Zone* zone)
         return true;
 
     // Only zones marked for use by a helper thread can be used off thread.
-    return zone->usedByHelperThread() && zone->group()->ownedByCurrentHelperThread();
+    return zone->usedByHelperThread() && zone->ownedByCurrentHelperThread();
 }
 
 #ifdef DEBUG

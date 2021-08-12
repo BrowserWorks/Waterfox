@@ -1005,7 +1005,7 @@ UpdateIonJSFrameForMinorGC(JSTracer* trc, const JSJitFrameIter& frame)
         ionScript = frame.ionScriptFromCalleeToken();
     }
 
-    Nursery& nursery = ionScript->method()->zone()->group()->nursery();
+    Nursery& nursery = trc->runtime()->gc.nursery();
 
     const SafepointIndex* si = ionScript->getSafepointIndex(frame.returnAddressToFp());
     SafepointReader safepoint(ionScript, si);
@@ -1339,7 +1339,7 @@ void
 UpdateJitActivationsForMinorGC(JSRuntime* rt, JSTracer* trc)
 {
     MOZ_ASSERT(JS::CurrentThreadIsHeapMinorCollecting());
-    JSContext* cx = TlsContext.get();
+    JSContext* cx = rt->mainContextFromOwnThread();
     for (JitActivationIterator activations(cx); !activations.done(); ++activations) {
         for (OnlyJSJitFrameIter iter(activations); !iter.done(); ++iter) {
             if (iter.frame().type() == JitFrame_IonJS)

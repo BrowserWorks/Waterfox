@@ -288,8 +288,8 @@ js::TraceRuntime(JSTracer* trc)
     MOZ_ASSERT(!trc->isMarkingTracer());
 
     JSRuntime* rt = trc->runtime();
-    EvictAllNurseries(rt);
-    AutoPrepareForTracing prep(TlsContext.get(), WithAtoms);
+    rt->gc.evictNursery();
+    AutoPrepareForTracing prep(rt->mainContextFromOwnThread(), WithAtoms);
     gcstats::AutoPhase ap(rt->gc.stats(), gcstats::PhaseKind::TRACE_HEAP);
     rt->gc.traceRuntime(trc, prep.session().lock);
 }

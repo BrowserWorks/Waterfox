@@ -105,7 +105,7 @@ JSCompartment::~JSCompartment()
     reportTelemetry();
 
     // Write the code coverage information in a file.
-    JSRuntime* rt = runtimeFromActiveCooperatingThread();
+    JSRuntime* rt = runtimeFromMainThread();
     if (rt->lcovOutput().isEnabled())
         rt->lcovOutput().writeLCovResult(lcovOutput);
 
@@ -1225,7 +1225,7 @@ JSCompartment::updateDebuggerObservesFlag(unsigned flag)
                flag == DebuggerObservesAsmJS ||
                flag == DebuggerObservesBinarySource);
 
-    GlobalObject* global = zone()->runtimeFromActiveCooperatingThread()->gc.isForegroundSweeping()
+    GlobalObject* global = zone()->runtimeFromMainThread()->gc.isForegroundSweeping()
                            ? unsafeUnbarrieredMaybeGlobal()
                            : maybeGlobal();
     const GlobalObject::DebuggerVector* v = global->getDebuggers();

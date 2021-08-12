@@ -1314,10 +1314,10 @@ FinishDefinitePropertiesAnalysis(JSContext* cx, CompilerConstraintList* constrai
 
 // Representation of a heap type property which may or may not be instantiated.
 // Heap properties for singleton types are instantiated lazily as they are used
-// by the compiler, but this is only done on the active thread. If we are
+// by the compiler, but this is only done on the main thread. If we are
 // compiling off thread and use a property which has not yet been instantiated,
 // it will be treated as empty and non-configured and will be instantiated when
-// rejoining to the active thread. If it is in fact not empty, the compilation
+// rejoining to the main thread. If it is in fact not empty, the compilation
 // will fail; to avoid this, we try to instantiate singleton property types
 // during generation of baseline caches.
 class HeapTypeSetKey
@@ -1367,14 +1367,14 @@ class TypeZone
 
     /* Pool for type information in this zone. */
     static const size_t TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE = 8 * 1024;
-    ZoneGroupData<LifoAlloc> typeLifoAlloc_;
+    ZoneData<LifoAlloc> typeLifoAlloc_;
 
     TypeZone(const TypeZone&) = delete;
     void operator=(const TypeZone&) = delete;
 
   public:
     // Current generation for sweeping.
-    ZoneGroupOrGCTaskOrIonCompileData<uint32_t> generation;
+    ZoneOrGCTaskOrIonCompileData<uint32_t> generation;
 
     /*
      * All Ion compilations that have occured in this zone, for indexing via
@@ -1382,26 +1382,26 @@ class TypeZone
      * invalidated compilations are swept on GC.
      */
     typedef Vector<CompilerOutput, 4, SystemAllocPolicy> CompilerOutputVector;
-    ZoneGroupData<CompilerOutputVector*> compilerOutputs;
+    ZoneData<CompilerOutputVector*> compilerOutputs;
 
     // During incremental sweeping, allocator holding the old type information
     // for the zone.
-    ZoneGroupData<LifoAlloc> sweepTypeLifoAlloc;
+    ZoneData<LifoAlloc> sweepTypeLifoAlloc;
 
     // During incremental sweeping, the old compiler outputs for use by
     // recompile indexes with a stale generation.
-    ZoneGroupData<CompilerOutputVector*> sweepCompilerOutputs;
+    ZoneData<CompilerOutputVector*> sweepCompilerOutputs;
 
     // During incremental sweeping, whether to try to destroy all type
     // information attached to scripts.
-    ZoneGroupData<bool> sweepReleaseTypes;
+    ZoneData<bool> sweepReleaseTypes;
 
-    ZoneGroupData<bool> sweepingTypes;
+    ZoneData<bool> sweepingTypes;
 
-    ZoneGroupData<bool> keepTypeScripts;
+    ZoneData<bool> keepTypeScripts;
 
     // The topmost AutoEnterAnalysis on the stack, if there is one.
-    ZoneGroupData<AutoEnterAnalysis*> activeAnalysis;
+    ZoneData<AutoEnterAnalysis*> activeAnalysis;
 
     explicit TypeZone(JS::Zone* zone);
     ~TypeZone();

@@ -675,8 +675,8 @@ void
 ConstraintTypeSet::postWriteBarrier(JSContext* cx, Type type)
 {
     if (type.isSingletonUnchecked() && IsInsideNursery(type.singletonNoBarrier())) {
-        cx->zone()->group()->storeBuffer().putGeneric(TypeSetRef(cx->zone(), this));
-        cx->zone()->group()->storeBuffer().setShouldCancelIonCompilations();
+        cx->runtime()->gc.storeBuffer().putGeneric(TypeSetRef(cx->zone(), this));
+        cx->runtime()->gc.storeBuffer().setShouldCancelIonCompilations();
     }
 }
 
@@ -1002,14 +1002,14 @@ TypeSet::intersectSets(TemporaryTypeSet* a, TemporaryTypeSet* b, LifoAlloc* allo
 // Constraints generated during Ion compilation capture assumptions made about
 // heap properties that will trigger invalidation of the resulting Ion code if
 // the constraint is violated. Constraints can only be attached to type sets on
-// the active thread, so to allow compilation to occur almost entirely off thread
+// the main thread, so to allow compilation to occur almost entirely off thread
 // the generation is split into two phases.
 //
 // During compilation, CompilerConstraint values are constructed in a list,
 // recording the heap property type set which was read from and its expected
 // contents, along with the assumption made about those contents.
 //
-// At the end of compilation, when linking the result on the active thread, the
+// At the end of compilation, when linking the result on the main thread, the
 // list of compiler constraints are read and converted to type constraints and
 // attached to the type sets. If the property type sets have changed so that the
 // assumptions no longer hold then the compilation is aborted and its result
@@ -1025,7 +1025,7 @@ class CompilerConstraint
 
     // Contents of the property at the point when the query was performed. This
     // may differ from the actual property types later in compilation as the
-    // active thread performs side effects.
+    // main thread performs side effects.
     TemporaryTypeSet* expected;
 
     CompilerConstraint(LifoAlloc* alloc, const HeapTypeSetKey& property)
@@ -1290,7 +1290,7 @@ TypeSet::ObjectKey::ensureTrackedProperty(JSContext* cx, jsid id)
 {
     // If we are accessing a lazily defined property which actually exists in
     // the VM and has not been instantiated yet, instantiate it now if we are
-    // on the active thread and able to do so.
+    // on the main thread and able to do so.
     if (!JSID_IS_VOID(id) && !JSID_IS_EMPTY(id)) {
         MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
         if (isSingleton()) {
@@ -1511,7 +1511,7 @@ js::FinishCompilation(JSContext* cx, HandleScript script, CompilerConstraintList
 static void
 CheckDefinitePropertiesTypeSet(JSContext* cx, TemporaryTypeSet* frozen, StackTypeSet* actual)
 {
-    // The definite properties analysis happens on the active thread, so no new
+    // The definite properties analysis happens on the main thread, so no new
     // types can have been added to actual. The analysis may have updated the
     // contents of |frozen| though with new speculative types, and these need
     // to be reflected in |actual| for AddClearDefiniteFunctionUsesInScript
@@ -4349,15 +4349,15 @@ Zone::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
 
 TypeZone::TypeZone(Zone* zone)
   : zone_(zone),
-    typeLifoAlloc_(zone->group(), (size_t) TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
-    generation(zone->group(), 0),
-    compilerOutputs(zone->group(), nullptr),
-    sweepTypeLifoAlloc(zone->group(), (size_t) TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
-    sweepCompilerOutputs(zone->group(), nullptr),
-    sweepReleaseTypes(zone->group(), false),
-    sweepingTypes(zone->group(), false),
-    keepTypeScripts(zone->group(), false),
-    activeAnalysis(zone->group(), nullptr)
+    typeLifoAlloc_(zone, (size_t) TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
+    generation(zone, 0),
+    compilerOutputs(zone, nullptr),
+    sweepTypeLifoAlloc(zone, (size_t) TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
+    sweepCompilerOutputs(zone, nullptr),
+    sweepReleaseTypes(zone, false),
+    sweepingTypes(zone, false),
+    keepTypeScripts(zone, false),
+    activeAnalysis(zone, nullptr)
 {
 }
 
@@ -4453,7 +4453,7 @@ AutoClearTypeInferenceStateOnOOM::~AutoClearTypeInferenceStateOnOOM()
     zone->types.setSweepingTypes(false);
 
     if (oom) {
-        JSRuntime* rt = zone->runtimeFromActiveCooperatingThread();
+        JSRuntime* rt = zone->runtimeFromMainThread();
         js::CancelOffThreadIonCompile(rt);
         zone->setPreservingCode(false);
         zone->discardJitCode(rt->defaultFreeOp(), /* discardBaselineCode = */ false);

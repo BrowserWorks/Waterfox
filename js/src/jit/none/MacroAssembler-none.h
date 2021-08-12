@@ -451,7 +451,7 @@ PatchJump(CodeLocationJump&, CodeLocationLabel, ReprotectCode reprotect = DontRe
 static inline bool GetTempRegForIntArg(uint32_t, uint32_t, Register*) { MOZ_CRASH(); }
 
 static inline
-void PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitZoneGroup::BackedgeTarget target)
+void PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target)
 {
     MOZ_CRASH();
 }

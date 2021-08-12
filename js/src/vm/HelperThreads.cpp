@@ -137,7 +137,7 @@ FinishOffThreadIonCompile(jit::IonBuilder* builder, const AutoLockHelperThreadSt
     AutoEnterOOMUnsafeRegion oomUnsafe;
     if (!HelperThreadState().ionFinishedList(lock).append(builder))
         oomUnsafe.crash("FinishOffThreadIonCompile");
-    builder->script()->zoneFromAnyThread()->group()->numFinishedBuilders++;
+    builder->script()->runtimeFromAnyThread()->jitRuntime()->numFinishedBuildersRef(lock)++;
 }
 
 static JSRuntime*
@@ -145,8 +145,8 @@ GetSelectorRuntime(const CompilationSelector& selector)
 {
     struct Matcher
     {
-        JSRuntime* match(JSScript* script)    { return script->runtimeFromActiveCooperatingThread(); }
-        JSRuntime* match(JSCompartment* comp) { return comp->runtimeFromActiveCooperatingThread(); }
+        JSRuntime* match(JSScript* script)    { return script->runtimeFromMainThread(); }
+        JSRuntime* match(JSCompartment* comp) { return comp->runtimeFromMainThread(); }
         JSRuntime* match(ZonesInState zbs)    { return zbs.runtime; }
         JSRuntime* match(JSRuntime* runtime)  { return runtime; }
         JSRuntime* match(AllCompilations all) { return nullptr; }
@@ -245,7 +245,7 @@ js::CancelOffThreadIonCompile(const CompilationSelector& selector, bool discardL
     for (size_t i = 0; i < finished.length(); i++) {
         jit::IonBuilder* builder = finished[i];
         if (IonBuilderMatches(selector, builder)) {
-            builder->script()->zone()->group()->numFinishedBuilders--;
+            builder->script()->runtimeFromMainThread()->jitRuntime()->numFinishedBuildersRef(lock)--;
             jit::FinishOffThreadBuilder(nullptr, builder, lock);
             HelperThreadState().remove(finished, &i);
         }
@@ -255,14 +255,12 @@ js::CancelOffThreadIonCompile(const CompilationSelector& selector, bool discardL
     if (discardLazyLinkList) {
         MOZ_ASSERT(!selector.is<AllCompilations>());
         JSRuntime* runtime = GetSelectorRuntime(selector);
-        for (ZoneGroupsIter group(runtime); !group.done(); group.next()) {
-            jit::IonBuilder* builder = group->ionLazyLinkList().getFirst();
-            while (builder) {
-                jit::IonBuilder* next = builder->getNext();
-                if (IonBuilderMatches(selector, builder))
-                    jit::FinishOffThreadBuilder(runtime, builder, lock);
-                builder = next;
-            }
+        jit::IonBuilder* builder = runtime->jitRuntime()->ionLazyLinkList(runtime).getFirst();
+        while (builder) {
+            jit::IonBuilder* next = builder->getNext();
+            if (IonBuilderMatches(selector, builder))
+                jit::FinishOffThreadBuilder(runtime, builder, lock);
+            builder = next;
         }
     }
 }
@@ -295,7 +293,8 @@ js::HasOffThreadIonCompile(JSCompartment* comp)
             return true;
     }
 
-    jit::IonBuilder* builder = comp->zone()->group()->ionLazyLinkList().getFirst();
+    JSRuntime* rt = comp->runtimeFromMainThread();
+    jit::IonBuilder* builder = rt->jitRuntime()->ionLazyLinkList(rt).getFirst();
     while (builder) {
         if (builder->script()->compartment() == comp)
             return true;
@@ -560,7 +559,7 @@ js::CancelOffThreadParses(JSRuntime* rt)
         HelperThreadState().wait(lock, GlobalHelperThreadState::CONSUMER);
     }
 
-    // Clean up any parse tasks which haven't been finished by the active thread.
+    // Clean up any parse tasks which haven't been finished by the main thread.
     GlobalHelperThreadState::ParseTaskVector& finished = HelperThreadState().parseFinishedList(lock);
     while (true) {
         bool found = false;
@@ -638,20 +637,20 @@ EnsureParserCreatedClasses(JSContext* cx, ParseTaskKind kind)
 
 class AutoClearUsedByHelperThread
 {
-    ZoneGroup* group;
+    Zone* zone;
 
   public:
     explicit AutoClearUsedByHelperThread(JSObject* global)
-      : group(global->zone()->group())
+      : zone(global->zone())
     {}
 
     void forget() {
-        group = nullptr;
+        zone = nullptr;
     }
 
     ~AutoClearUsedByHelperThread() {
-        if (group)
-            group->clearUsedByHelperThread();
+        if (zone)
+            zone->clearUsedByHelperThread();
     }
 };
 
@@ -669,7 +668,7 @@ CreateGlobalForOffThreadParse(JSContext* cx, ParseTaskKind kind,
 
     creationOptions.setInvisibleToDebugger(true)
                    .setMergeable(true)
-                   .setNewZoneInNewZoneGroup();
+                   .setNewZone();
 
     // Don't falsely inherit the host's global trace hook.
     creationOptions.setTrace(nullptr);
@@ -681,13 +680,13 @@ CreateGlobalForOffThreadParse(JSContext* cx, ParseTaskKind kind,
 
     JS_SetCompartmentPrincipals(global->compartment(), currentCompartment->principals());
 
-    // Mark this zone group as created for a helper thread. This prevents it
+    // Mark this zone as created for a helper thread. This prevents it
     // from being collected until clearUsedByHelperThread() is called.
-    ZoneGroup* group = global->zone()->group();
-    group->setCreatedForHelperThread();
+    Zone* zone = global->zone();
+    zone->setCreatedForHelperThread();
     clearUseGuard.emplace(global);
 
-    // Initialize all classes required for parsing while still on the active
+    // Initialize all classes required for parsing while still on the main
     // thread, for both the target and the new global so that prototype
     // pointers can be changed infallibly after parsing finishes.
     if (!EnsureParserCreatedClasses(cx, kind))
@@ -1374,7 +1373,7 @@ TimeSince(TimeStamp prev)
 }
 
 void
-js::GCParallelTask::runFromActiveCooperatingThread(JSRuntime* rt)
+js::GCParallelTask::runFromMainThread(JSRuntime* rt)
 {
     MOZ_ASSERT(state == NotStarted);
     MOZ_ASSERT(js::CurrentThreadCanAccessRuntime(rt));
@@ -1744,7 +1743,7 @@ HelperThread::handleWasmWorkload(AutoLockHelperThreadState& locked)
         HelperThreadState().setWasmError(locked, Move(error));
     }
 
-    // Notify the active thread in case it's waiting.
+    // Notify the main thread in case it's waiting.
     HelperThreadState().notifyAll(GlobalHelperThreadState::CONSUMER, locked);
     currentTask.reset();
 }
@@ -1773,7 +1772,7 @@ HelperThread::handlePromiseTaskWorkload(AutoLockHelperThreadState& locked)
         }
     }
 
-    // Notify the active thread in case it's waiting.
+    // Notify the main thread in case it's waiting.
     HelperThreadState().notifyAll(GlobalHelperThreadState::CONSUMER, locked);
     currentTask.reset();
 }
@@ -1836,7 +1835,7 @@ HelperThread::handleIonWorkload(AutoLockHelperThreadState& locked)
     currentTask.reset();
     pause = false;
 
-    // Notify the active thread in case it is waiting for the compilation to finish.
+    // Notify the main thread in case it is waiting for the compilation to finish.
     HelperThreadState().notifyAll(GlobalHelperThreadState::CONSUMER, locked);
 
     // When finishing Ion compilation jobs, we can start unpausing compilation
@@ -1948,10 +1947,10 @@ HelperThread::handleParseWorkload(AutoLockHelperThreadState& locked)
 
         JSContext* cx = TlsContext.get();
 
-        ZoneGroup* zoneGroup = task->parseGlobal->zoneFromAnyThread()->group();
-        zoneGroup->setHelperThreadOwnerContext(cx);
+        Zone* zone = task->parseGlobal->zoneFromAnyThread();
+        zone->setHelperThreadOwnerContext(cx);
         auto resetOwnerContext = mozilla::MakeScopeExit([&] {
-            zoneGroup->setHelperThreadOwnerContext(nullptr);
+            zone->setHelperThreadOwnerContext(nullptr);
         });
 
         AutoCompartment ac(cx, task->parseGlobal);
@@ -1972,7 +1971,7 @@ HelperThread::handleParseWorkload(AutoLockHelperThreadState& locked)
 
     currentTask.reset();
 
-    // Notify the active thread in case it is waiting for the parse/emit to finish.
+    // Notify the main thread in case it is waiting for the parse/emit to finish.
     HelperThreadState().notifyAll(GlobalHelperThreadState::CONSUMER, locked);
 }
 
@@ -2007,7 +2006,7 @@ HelperThread::handleCompressionWorkload(AutoLockHelperThreadState& locked)
 
     currentTask.reset();
 
-    // Notify the active thread in case it is waiting for the compression to finish.
+    // Notify the main thread in case it is waiting for the compression to finish.
     HelperThreadState().notifyAll(GlobalHelperThreadState::CONSUMER, locked);
 }
 
@@ -2119,8 +2118,9 @@ GlobalHelperThreadState::trace(JSTracer* trc)
         }
     }
 
-    for (ZoneGroupsIter group(trc->runtime()); !group.done(); group.next()) {
-        jit::IonBuilder* builder = group->ionLazyLinkList().getFirst();
+    JSRuntime* rt = trc->runtime();
+    if (auto* jitRuntime = rt->jitRuntime()) {
+        jit::IonBuilder* builder = jitRuntime->ionLazyLinkList(rt).getFirst();
         while (builder) {
             builder->trace(trc);
             builder = builder->getNext();
@@ -2172,7 +2172,7 @@ HelperThread::threadLoop()
     JSContext cx(nullptr, JS::ContextOptions());
     {
         AutoEnterOOMUnsafeRegion oomUnsafe;
-        if (!cx.init(ContextKind::Background))
+        if (!cx.init(ContextKind::HelperThread))
             oomUnsafe.crash("HelperThread cx.init()");
     }
     cx.setHelperThread(this);

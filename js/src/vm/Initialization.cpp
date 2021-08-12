@@ -98,7 +98,7 @@ JS::detail::InitWithFailureDiagnostic(bool isDebugBuild)
 
 #if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
     RETURN_IF_FAIL(js::oom::InitThreadType());
-    js::oom::SetThreadType(js::oom::THREAD_TYPE_COOPERATING);
+    js::oom::SetThreadType(js::oom::THREAD_TYPE_MAIN);
 #endif
 
     RETURN_IF_FAIL(js::Mutex::Init());
