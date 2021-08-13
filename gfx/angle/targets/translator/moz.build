@@ -40,10 +40,6 @@ LOCAL_INCLUDES += [
     "../../checkout/src/common/third_party/base/",
 ]
 
-CXXFLAGS += [
-    '-std=c++14',
-]
-
 SOURCES += [
     "../../checkout/src/compiler/translator/ASTMetadataHLSL.cpp",
     "../../checkout/src/compiler/translator/AtomicCounterFunctionHLSL.cpp",
