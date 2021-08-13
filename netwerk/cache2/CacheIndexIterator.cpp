@@ -47,7 +47,8 @@ CacheIndexIterator::GetNextHash(SHA1Sum::Hash *aHash)
 
   memcpy(aHash, mRecords[mRecords.Length() - 1]->Get()->mHash,
          sizeof(SHA1Sum::Hash));
-
+  mRecords.RemoveElementAt(mRecords.Length() - 1);
+  
   return NS_OK;
 }
 
