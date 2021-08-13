@@ -15,7 +15,7 @@ jobs:
 
         env:
             ENABLE_ARTIFACTS_MODE: "true"
-            MOZCONFIG: "./.mozconfig-ga-classic"
+            MOZCONFIG: "./.mozconfig-ga"
             SHELL: "/bin/bash"
 
         runs-on: ${{ matrix.os }}
