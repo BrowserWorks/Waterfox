@@ -127,7 +127,7 @@ async function queryQuarantineDatabase(
   }
 
   // Get Data URL string for PTAG
-  let dataURL = stdout.split("|")[2]
+  let dataURL = stdout.split("|")[2];
 
   if (parts[0].trim() == "0") {
     throw new Components.Exception(
@@ -178,7 +178,12 @@ var MacAttribution = {
     let dataURL = "";
     try {
       [url, dataURL] = await queryQuarantineDatabase(guid);
-      await this.setPTAG(dataURL);
+      // Bing vals
+      await this.setPartnerCode(dataURL, "PTAG", "browser.search.ptag");
+      // YHS vals
+      await this.setPartnerCode(dataURL, "hspart", "browser.search.hspart");
+      await this.setPartnerCode(dataURL, "hsimp", "browser.search.hsimp");
+      await this.setPartnerCode(dataURL, "typetag", "browser.search.typetag");
       log.debug(`getReferrerUrl: url: ${url}`);
     } catch (ex) {
       // This path is known to macOS but we failed to extract a referrer -- be noisy.
@@ -190,10 +195,10 @@ var MacAttribution = {
     return dataURL;
   },
 
-  async setPTAG(dataURL) {
+  async setPartnerCode(dataURL, key, pref) {
     let params = new URL(dataURL).searchParams;
-    if (params.has("PTAG")) {
-      Services.prefs.setCharPref("browser.search.ptag", params.get("PTAG"));
+    if (params.has(key)) {
+      Services.prefs.setCharPref(pref, params.get(key));
     }
   },
 };

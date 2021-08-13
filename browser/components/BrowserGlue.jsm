@@ -3872,9 +3872,9 @@ BrowserGlue.prototype = {
       let attrData = await AttributionCode.getAttrDataAsync();
       let attributionStr = "";
       for (const [key, value] of Object.entries(attrData)) {
-        // if PTAG we only want to set the ptag pref
-        if (key == "PTAG") {
-          Services.prefs.setCharPref("browser.search.ptag", value);
+        // if PTAG/TypeTag we only want to set the relevant pref
+        if (["PTAG", "hspart", "hsimp", "typetag"].includes(key)) {
+          Services.prefs.setCharPref("browser.search." + key, value);
           continue;
         }
         // only add to postSigningData if this hasn't been called previously
