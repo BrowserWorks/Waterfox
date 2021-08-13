@@ -4,6 +4,8 @@
 
 #include "nsHtml5StreamListener.h"
 
+#include "nsHtml5StreamParserReleaser.h"
+
 NS_IMPL_ADDREF(nsHtml5StreamListener)
 NS_IMPL_RELEASE(nsHtml5StreamListener)
 
@@ -15,20 +17,40 @@ NS_INTERFACE_MAP_BEGIN(nsHtml5StreamListener)
 NS_INTERFACE_MAP_END_THREADSAFE
 
 nsHtml5StreamListener::nsHtml5StreamListener(nsHtml5StreamParser* aDelegate)
- : mDelegate(aDelegate)
-{
+    : mDelegateMonitor("nsHtml5StreamListener mDelegateMonitor"),
+      mDelegate(aDelegate) {
+  MOZ_ASSERT(aDelegate, "Must have delegate");
+  aDelegate->AddRef();
 }
 
-nsHtml5StreamListener::~nsHtml5StreamListener()
-{
-}
+nsHtml5StreamListener::~nsHtml5StreamListener() { DropDelegateImpl(); }
 
-void
-nsHtml5StreamListener::DropDelegate()
-{
+void nsHtml5StreamListener::DropDelegate() {
   MOZ_ASSERT(NS_IsMainThread(),
              "Must not call DropDelegate from non-main threads.");
-  mDelegate = nullptr;
+  DropDelegateImpl();
+}
+
+void nsHtml5StreamListener::DropDelegateImpl() {
+  mozilla::ReentrantMonitorAutoEnter autoEnter(mDelegateMonitor);
+  if (mDelegate) {
+    nsCOMPtr<nsIRunnable> releaser = new nsHtml5StreamParserReleaser(mDelegate);
+    if (NS_FAILED(mDelegate->DispatchToMain(releaser.forget()))) {
+      NS_WARNING("Failed to dispatch releaser event.");
+    }
+    mDelegate = nullptr;
+  }
+}
+
+nsHtml5StreamParser* nsHtml5StreamListener::GetDelegate() {
+  MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
+  // Let's acquire the monitor in order to always access mDelegate
+  // with monitor held. Since this can be called only on the main
+  // thread and DropDelegate() can only be called on the main thread
+  // it's OK that the monitor here doesn't protect the use of the
+  // return value.
+  mozilla::ReentrantMonitorAutoEnter autoEnter(mDelegateMonitor);
+  return mDelegate;
 }
 
 NS_IMETHODIMP
@@ -41,9 +63,8 @@ nsHtml5StreamListener::CheckListenerChain()
 }
 
 NS_IMETHODIMP
-nsHtml5StreamListener::OnStartRequest(nsIRequest* aRequest,
-                                      nsISupports* aContext)
-{
+nsHtml5StreamListener::OnStartRequest(nsIRequest* aRequest, nsISupports* aContext) {
+  mozilla::ReentrantMonitorAutoEnter autoEnter(mDelegateMonitor);
   if (MOZ_UNLIKELY(!mDelegate)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -51,10 +72,8 @@ nsHtml5StreamListener::OnStartRequest(nsIRequest* aRequest,
 }
 
 NS_IMETHODIMP
-nsHtml5StreamListener::OnStopRequest(nsIRequest* aRequest,
-                                     nsISupports* aContext,
-                                     nsresult aStatus)
-{
+nsHtml5StreamListener::OnStopRequest(nsIRequest* aRequest, nsISupports* aContext, nsresult aStatus) {
+  mozilla::ReentrantMonitorAutoEnter autoEnter(mDelegateMonitor);
   if (MOZ_UNLIKELY(!mDelegate)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -68,8 +87,8 @@ nsHtml5StreamListener::OnDataAvailable(nsIRequest* aRequest,
                                        nsISupports* aContext,
                                        nsIInputStream* aInStream,
                                        uint64_t aSourceOffset,
-                                       uint32_t aLength)
-{
+                                       uint32_t aLength) {
+  mozilla::ReentrantMonitorAutoEnter autoEnter(mDelegateMonitor);
   if (MOZ_UNLIKELY(!mDelegate)) {
     return NS_ERROR_NOT_AVAILABLE;
   }

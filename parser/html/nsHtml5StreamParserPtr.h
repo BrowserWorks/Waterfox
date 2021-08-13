@@ -4,26 +4,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #ifndef nsHtml5StreamParserPtr_h
 #define nsHtml5StreamParserPtr_h
+
+#include "nsHtml5StreamParser.h"
+#include "nsHtml5StreamParserReleaser.h"
 #include "nsThreadUtils.h"
 #include "mozilla/dom/DocGroup.h"
 
-class nsHtml5StreamParserReleaser : public mozilla::Runnable
-{
-private:
-  nsHtml5StreamParser* mPtr;
-
-public:
-  explicit nsHtml5StreamParserReleaser(nsHtml5StreamParser* aPtr)
-    : mozilla::Runnable("nsHtml5StreamParserReleaser")
-    , mPtr(aPtr)
-  {
-  }
-  NS_IMETHOD Run() override
-  {
-    mPtr->Release();
-    return NS_OK;
-  }
-};
 /**
  * Like nsRefPtr except release is proxied to the main
  * thread. Mostly copied from nsRefPtr.
