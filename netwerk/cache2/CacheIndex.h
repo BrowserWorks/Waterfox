@@ -299,7 +299,7 @@ public:
   void ReadFromBuf(void *aBuf)
   {
     const uint8_t* ptr = static_cast<const uint8_t*>(aBuf);
-    MOZ_ASSERT(memcmp(&mRec->mHash, ptr, sizeof(SHA1Sum::Hash)) == 0); ptr += sizeof(SHA1Sum::Hash);
+    MOZ_ASSERT(memcmp(&mRec->Get()->mHash, ptr, sizeof(SHA1Sum::Hash)) == 0); ptr += sizeof(SHA1Sum::Hash);
     mRec->Get()->mFrecency = NetworkEndian::readUint32(ptr); ptr += sizeof(uint32_t);
     mRec->Get()->mOriginAttrsHash = NetworkEndian::readUint64(ptr); ptr += sizeof(uint64_t);
     mRec->Get()->mExpirationTime = NetworkEndian::readUint32(ptr); ptr += sizeof(uint32_t);
