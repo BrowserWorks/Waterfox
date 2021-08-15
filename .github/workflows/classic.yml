@@ -5,13 +5,14 @@ on:
         paths:
           - 'browser/config/version_display.txt'
     pull_request:
+    workflow_dispatch:
 
 jobs:
     build:
         strategy:
             fail-fast: false
             matrix:
-                os: [macos-10.15, ubuntu-20.04]
+                os: [macos-10.15, ubuntu-18.04]
 
         env:
             ENABLE_ARTIFACTS_MODE: "true"
@@ -25,11 +26,6 @@ jobs:
             with:
               xcode-version: '11.2.1'
             if: startsWith(matrix.os, 'macos')
-
-          - name: Set up Python version
-            uses: actions/setup-python@v2
-            with:
-              python-version: '3.8'
 
           - name: Checkout branch
             uses: actions/checkout@v2
@@ -70,7 +66,8 @@ jobs:
               sudo apt-get install autoconf2.13 ccache libasound2-dev \
               libdbus-glib-1-dev libdrm-dev libfreetype6-dev libgconf2-dev \
               libglib2.0-dev libgtk2.0-dev libgtk-3-dev libpangocairo-1.0-0 \
-              libpulse-dev libx11-xcb-dev libxkbcommon-dev nasm yasm
+              libpulse-dev libx11-xcb-dev libxkbcommon-dev nasm-mozilla \
+              python2.7 python3 yasm
             if: startsWith(matrix.os, 'ubuntu')
 
           - name: Get SDK
