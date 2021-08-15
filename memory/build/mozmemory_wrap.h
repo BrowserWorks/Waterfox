@@ -118,6 +118,13 @@
 #  define IMPL_MFBT
 #endif
 
+#ifdef __cplusplus
+#  include <cstdlib>
+#  include <cstring>
+#else
+#  include <stdlib.h>
+#  include <string.h>
+#endif
 #include "mozilla/Types.h"
 
 #ifndef MOZ_EXTERN_C
