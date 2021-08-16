@@ -303,7 +303,7 @@ InflateUTF8StringToBuffer(ContextT* cx, const UTF8Chars src, CharT* dst, size_t*
                     MOZ_CRASH("invalid UTF-8 string: " # report);       \
                 } else {                                                \
                     if (Action == Copy) {                               \
-                        if (std::is_same<decltype(dst[0]), Latin1Char>::value) \
+                        if (std::is_same_v<decltype(dst[0]), Latin1Char>) \
                             dst[j] = CharT(REPLACE_UTF8_LATIN1);        \
                         else                                            \
                             dst[j] = CharT(REPLACE_UTF8);               \

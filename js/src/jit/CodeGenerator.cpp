@@ -8534,7 +8534,7 @@ CodeGenerator::visitStoreElementV(LStoreElementV* lir)
 template <typename T> void
 CodeGenerator::emitStoreElementHoleT(T* lir)
 {
-    static_assert(std::is_same<T, LStoreElementHoleT>::value || std::is_same<T, LFallibleStoreElementT>::value,
+    static_assert(std::is_same_v<T, LStoreElementHoleT> || std::is_same_v<T, LFallibleStoreElementT>,
                   "emitStoreElementHoleT called with unexpected argument type");
 
     OutOfLineStoreElementHole* ool =
@@ -8567,7 +8567,7 @@ CodeGenerator::visitStoreElementHoleT(LStoreElementHoleT* lir)
 template <typename T> void
 CodeGenerator::emitStoreElementHoleV(T* lir)
 {
-    static_assert(std::is_same<T, LStoreElementHoleV>::value || std::is_same<T, LFallibleStoreElementV>::value,
+    static_assert(std::is_same_v<T, LStoreElementHoleV> || std::is_same_v<T, LFallibleStoreElementV>,
                   "emitStoreElementHoleV called with unexpected parameter type");
 
     OutOfLineStoreElementHole* ool =

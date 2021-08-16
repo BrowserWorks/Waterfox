@@ -21,7 +21,7 @@ namespace internal {
 
 template <typename T>
 T* NewArray(size_t size) {
-  static_assert(std::is_pod<T>::value, "");
+  static_assert(std::is_pod_v<T>, "");
   js::AutoEnterOOMUnsafeRegion oomUnsafe;
   T* result = static_cast<T*>(js_malloc(size * sizeof(T)));
   if (!result) {
