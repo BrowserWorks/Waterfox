@@ -47,6 +47,9 @@
         },
         "WINNT_x86_64-msvc-x64": {
           "alias": "WINNT_x86_64-msvc"
+        },
+        "WINNT_x86_64-gcc3-x64": {
+          "alias": "WINNT_x86_64-msvc"
         }
       },
       "version": "4.10.2209.1"
