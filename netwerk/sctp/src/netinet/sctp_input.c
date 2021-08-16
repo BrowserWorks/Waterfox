@@ -63,6 +63,10 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctp_input.c 362153 2020-06-13 18:38:59Z tu
 #include <sys/smp.h>
 #endif
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 static void
 sctp_stop_all_cookie_timers(struct sctp_tcb *stcb)
 {

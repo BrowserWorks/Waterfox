@@ -13,7 +13,7 @@
 
 #include "system_wrappers/include/rw_lock_wrapper.h"
 
-#include <Windows.h>
+#include <windows.h>
 
 namespace webrtc {
 

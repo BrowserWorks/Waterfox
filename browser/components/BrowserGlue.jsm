@@ -2150,6 +2150,23 @@ BrowserGlue.prototype = {
     Services.wm.addListener(windowListener);
   },
 
+  _monitorEME() {
+    const PREF = "media.eme.enabled";
+    const _checkEMEPref = async () => {
+      let env = Cc["@mozilla.org/process/environment;1"].getService(
+        Ci.nsIEnvironment
+      );
+      let disabled = Services.prefs.getBoolPref(PREF, false);
+      if (disabled) {
+        env.set("MOZ_DISABLE_GMP_SANDBOX", "1");
+      } else {
+        env.set("MOZ_DISABLE_GMP_SANDBOX", "0");
+      }
+    };
+    Services.prefs.addObserver(PREF, _checkEMEPref);
+    _checkEMEPref();
+  },
+
   // All initial windows have opened.
   _onWindowsRestored: function BG__onWindowsRestored() {
     if (this._windowsWereRestored) {
@@ -2222,6 +2239,9 @@ BrowserGlue.prototype = {
     this._monitorHTTPSOnlyPref();
     this._monitorIonPref();
     this._monitorIonStudies();
+    if (AppConstants.platform == "win") {
+      this._monitorEME();
+    }
     if (AppConstants.NIGHTLY_BUILD) {
       this._monitorTranslationsPref();
     }
