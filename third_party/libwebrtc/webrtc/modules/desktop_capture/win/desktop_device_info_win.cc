@@ -7,7 +7,7 @@
 #include "modules/desktop_capture/win/win_shared.h"
 #include <inttypes.h>
 #include <stdio.h>
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 
 // Duplicating declaration so that it always resolves in decltype use
 // typedef BOOL (WINAPI *QueryFullProcessImageNameProc)(HANDLE hProcess, DWORD dwFlags, LPTSTR lpExeName, PDWORD lpdwSize);
