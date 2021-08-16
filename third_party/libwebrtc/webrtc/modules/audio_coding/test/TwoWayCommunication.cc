@@ -17,7 +17,7 @@
 #include <memory>
 
 #ifdef WIN32
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"

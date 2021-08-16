@@ -6,6 +6,7 @@
 if CONFIG['MOZ_WEBRTC_SIGNALING']:
     if CONFIG['OS_TARGET'] == 'WINNT':
         DEFINES['SIP_OS_WINDOWS'] = True
+        DEFINES['WEBRTC_MOZILLA_BUILD'] = 1
         SOURCES += [
             'sdp_services_win32.c',
         ]
