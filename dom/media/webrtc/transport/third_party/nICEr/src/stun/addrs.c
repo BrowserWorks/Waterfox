@@ -82,7 +82,7 @@ nr_stun_filter_addrs(nr_local_addr addrs[], int remove_loopback, int remove_link
     for (i = 0; i < *count; ++i) {
       if (addrs[i].addr.ip_version == NR_IPV6) {
         if (nr_transport_addr_is_teredo(&addrs[i].addr)) {
-            addrs[i].interface.type |= NR_INTERFACE_TYPE_TEREDO;
+            addrs[i].Interface.type |= NR_INTERFACE_TYPE_TEREDO;
             /* Prefer teredo over mac-based address. Probably will never see
              * both. */
             filter_mac_ipv6 = 1;

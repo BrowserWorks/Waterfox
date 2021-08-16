@@ -10,7 +10,7 @@
 #ifndef TEST_WIN_D3D_RENDERER_H_
 #define TEST_WIN_D3D_RENDERER_H_
 
-#include <Windows.h>
+#include <windows.h>
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")       // located in DirectX SDK
 

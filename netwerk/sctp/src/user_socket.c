@@ -65,6 +65,10 @@ userland_cond_t accept_cond;
 #include <sys/timeb.h>
 #endif
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 MALLOC_DEFINE(M_PCB, "sctp_pcb", "sctp pcb");
 MALLOC_DEFINE(M_SONAME, "sctp_soname", "sctp soname");
 #define MAXLEN_MBUF_CHAIN  32

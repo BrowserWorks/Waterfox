@@ -44,7 +44,7 @@
 
 #include <assert.h>
 #include <string.h>
-#ifndef _MSC_VER
+#ifndef __MINGW32__
 #include <strings.h>
 #include <sys/param.h>
 #include <netinet/in.h>
