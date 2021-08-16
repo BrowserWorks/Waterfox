@@ -1,24 +1,79 @@
-name: Build Classic for Testing
+name: Build Classic for Release
 
 on:
-    push:
-        paths:
-          - 'browser/config/version_display.txt'
-    pull_request:
-    workflow_dispatch:
+  push:
+    tags:
+      - '*-classic'
 
 jobs:
+    build-windows:
+        name: 🪟 Build for Windows
+        runs-on: [self-hosted, windows, x64]
+        strategy:
+            fail-fast: false
+        env:
+            ENABLE_ARTIFACTS_MODE: "true"
+            MOZCONFIG: "./.mozconfig"
+            MOZ_NOSPAM: 1
+            JSIGN_PATH: /c/mozilla-build/bin/jsign-4.0.jar
+            JAVA_PATH: /c/PROGRA~2/COMMON~1/Oracle/Java/javapath/java.exe
+            AZURE_VAULT_ID: ${{ secrets.AZURE_VAULT_ID }}
+            AZURE_CRT: ${{ secrets.AZURE_CRT }}
+            AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+            AZURE_USER_ID: ${{ secrets.AZURE_USER_ID }}
+            AZURE_USER_PWD: ${{ secrets.AZURE_USER_PWD }}
+        steps:
+          - name: Checkout branch
+            uses: actions/checkout@v2
+          - name: Define cache
+            uses: actions/cache@v2
+            with:
+              path: |
+                $LOCALAPPDATA/ccache
+              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+
+          - name: Mach build
+            run: |
+              $pattern = '[\\]'
+              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+              Write-Output $env:BUILD_DIR
+              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/build.sh"
+
+          - name: Mach build installer
+            run: |
+              $pattern = '[\\]'
+              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+              Write-Output $env:BUILD_DIR
+              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/package.sh"
+
+          - name: Sign
+            run: |
+              $pattern = '[\\]'
+              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+              Write-Output $env:BUILD_DIR
+              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/sign.sh"
+
+          - name: Upload artifact
+            uses: actions/upload-artifact@v2
+            with:
+              name: Artifact Classic Windows ${{ github.run_id }}
+              path: ./objdir-*/dist/install/sea/*.exe
+
     build:
         strategy:
             fail-fast: false
             matrix:
                 os: [macos-10.15, ubuntu-18.04]
+                name: ["Build for MacOS", "Build for Linux"]
 
         env:
             ENABLE_ARTIFACTS_MODE: "true"
             MOZCONFIG: "./.mozconfig-ga"
             SHELL: "/bin/bash"
-
+        name: ${{ matrix.name }}
         runs-on: ${{ matrix.os }}
         steps:
           - name: Set up Xcode version
