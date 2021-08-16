@@ -69,6 +69,10 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctp_usrreq.c 362563 2020-06-23 23:05:05Z t
 #include <netinet/sctp_peeloff.h>
 #endif				/* HAVE_SCTP_PEELOFF_SOCKOPT */
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 extern const struct sctp_cc_functions sctp_cc_functions[];
 extern const struct sctp_ss_functions sctp_ss_functions[];
 

@@ -8,6 +8,10 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#define INITGUID
+#include <guiddef.h>
+DEFINE_GUID(KSCATEGORY_VIDEO_CAMERA, 0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44);
+
 #include "modules/video_capture/windows/device_info_ds.h"
 
 #include "modules/video_capture/video_capture_config.h"
@@ -16,7 +20,7 @@
 #include "rtc_base/stringutils.h"
 
 #include <dvdmedia.h>
-#include <Dbt.h>
+#include <dbt.h>
 #include <ks.h>
 #include <ksmedia.h>
 

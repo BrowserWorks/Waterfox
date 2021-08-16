@@ -11,7 +11,7 @@
 #ifndef MODULES_DESKTOP_CAPTURE_WIN_DXGI_DUPLICATOR_CONTROLLER_H_
 #define MODULES_DESKTOP_CAPTURE_WIN_DXGI_DUPLICATOR_CONTROLLER_H_
 
-#include <D3DCommon.h>
+#include <d3dcommon.h>
 
 #include <atomic>
 #include <string>
