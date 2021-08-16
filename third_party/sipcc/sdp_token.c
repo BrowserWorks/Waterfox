@@ -11,6 +11,10 @@
 #include "sdp_log.h"
 #include "prprf.h"
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 static const char *logTag = "sdp_token";
 
 #define MCAST_STRING_LEN 4

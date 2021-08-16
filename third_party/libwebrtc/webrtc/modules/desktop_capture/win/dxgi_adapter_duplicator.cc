@@ -11,7 +11,7 @@
 #include "modules/desktop_capture/win/dxgi_adapter_duplicator.h"
 
 #include <comdef.h>
-#include <DXGI.h>
+#include <dxgi.h>
 
 #include <algorithm>
 
