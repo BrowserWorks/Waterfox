@@ -6,6 +6,7 @@
 
 if CONFIG["OS_TARGET"] == "WINNT":
     DEFINES["SIP_OS_WINDOWS"] = True
+    DEFINES['WEBRTC_MOZILLA_BUILD'] = True
 elif CONFIG["OS_TARGET"] == "Darwin":
     DEFINES["SIP_OS_OSX"] = True
 else:

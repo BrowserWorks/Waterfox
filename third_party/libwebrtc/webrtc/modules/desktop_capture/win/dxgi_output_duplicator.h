@@ -13,8 +13,8 @@
 
 #include <comdef.h>
 #include <wrl/client.h>
-#include <DXGI.h>
-#include <DXGI1_2.h>
+#include <dxgi.h>
+#include <dxgi1_2.h>
 
 #include <memory>
 #include <string>
