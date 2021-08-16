@@ -56,3 +56,5 @@ if CONFIG['OS_TARGET'] in ('Linux', 'Android'):
     DEFINES['_GNU_SOURCE'] = 1
 elif CONFIG['OS_TARGET'] == 'Darwin':
     DEFINES['__APPLE_USE_RFC_2292'] = 1
+elif CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES['WEBRTC_MOZILLA_BUILD'] = 1
