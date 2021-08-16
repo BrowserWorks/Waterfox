@@ -80,6 +80,10 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctp_output.c 362178 2020-06-14 16:05:08Z t
 #include <netinet6/sctp6_var.h>
 #endif
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 #if defined(__APPLE__) && !defined(__Userspace__)
 #if !(defined(APPLE_LEOPARD) || defined(APPLE_SNOWLEOPARD))
 #define SCTP_MAX_LINKHDR 16
