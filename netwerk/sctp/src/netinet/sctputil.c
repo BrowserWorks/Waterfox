@@ -82,6 +82,10 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctputil.c 362462 2020-06-21 09:56:09Z tuex
 #endif
 #endif
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 extern const struct sctp_cc_functions sctp_cc_functions[];
 extern const struct sctp_ss_functions sctp_ss_functions[];
 
