@@ -217,7 +217,7 @@ if CONFIG["OS_TARGET"] == "WINNT":
     OS_LIBS += [
         "d3d11",
         "dxgi",
-        "Strmiids",
+        "strmiids",
         "winmm"
     ]
 
