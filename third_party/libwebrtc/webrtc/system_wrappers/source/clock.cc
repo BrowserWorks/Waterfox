@@ -15,7 +15,7 @@
 // Windows needs to be included before mmsystem.h
 #include "rtc_base/win32.h"
 
-#include <MMSystem.h>
+#include <mmsystem.h>
 
 #elif ((defined WEBRTC_LINUX) || (defined WEBRTC_MAC) || (defined WEBRTC_BSD))
 

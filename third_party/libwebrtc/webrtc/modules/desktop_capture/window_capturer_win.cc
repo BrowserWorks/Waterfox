@@ -21,7 +21,7 @@
 #include "rtc_base/constructormagic.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/win32.h"
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 
 namespace webrtc {
 
@@ -317,6 +317,7 @@ void WindowCapturerWin::CaptureFrame() {
     // Windows 8.0 this flag is not supported so the block below will fallback
     // to the other call to PrintWindow. It seems to be very tricky to detect
     // Windows 8.0 vs 8.1 so a try/fallback is more approriate here.
+    #define PW_RENDERFULLCONTENT    0x00000002 //tma
     const UINT flags = PW_RENDERFULLCONTENT;
     result = PrintWindow(window_, mem_dc, flags);
   }
