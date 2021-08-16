@@ -40,15 +40,19 @@ typedef uint8_t boolean;
  * NOTE: size_t should already be declared by both the MinGW and Microsoft
  * SDKs.
  */
+#ifndef __MINGW32__
 #ifndef _SSIZE_T_
 #define _SSIZE_T_
 typedef int ssize_t;
+#endif
 #endif
 
 /*
  * Define pid_t.
  */
+#ifndef __MINGW32__
 typedef int pid_t;
+#endif
 
 /*
  * Define min/max

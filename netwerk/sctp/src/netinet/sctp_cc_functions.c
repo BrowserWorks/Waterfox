@@ -54,6 +54,10 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctp_cc_functions.c 359405 2020-03-28 20:25
 #include <netinet/sctp_kdtrace.h>
 #endif
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 #define SHIFT_MPTCP_MULTI_N 40
 #define SHIFT_MPTCP_MULTI_Z 16
 #define SHIFT_MPTCP_MULTI 8
