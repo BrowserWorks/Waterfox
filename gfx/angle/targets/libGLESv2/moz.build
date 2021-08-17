@@ -436,6 +436,9 @@ OS_LIBS += [
     "ws2_32",
 ]
 
+if CONFIG["OS_ARCH"] == "WINNT" and CONFIG["CC_TYPE"] == "clang":
+    CXXFLAGS += ["-fno-lto"]
+
 # LDFLAGS += [
 #     "--color-diagnostics",
 #     "/call-graph-profile-sort:no",

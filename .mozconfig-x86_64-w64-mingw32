@@ -14,6 +14,7 @@ CXX="${TOOLTOOL_DIR}/clang/bin/x86_64-w64-mingw32-clang++"
 CXXFLAGS="-fms-extensions -Wno-incompatible-ms-struct"
 HOST_CC="${TOOLTOOL_DIR}/clang/bin/clang"
 HOST_CXX="${TOOLTOOL_DIR}/clang/bin/clang++"
+LINKER="${TOOLTOOL_DIR}/clang/bin/lld-link"
 LLVM_DLLTOOL="${TOOLTOOL_DIR}/clang/bin/llvm-dlltool"
 NASM="${TOOLTOOL_DIR}/nasm/nasm"
 RANLIB="${TOOLTOOL_DIR}/clang/bin/llvm-ranlib"
@@ -41,7 +42,7 @@ ac_add_options --enable-ccache="${TOOLTOOL_DIR}/sccache/sccache"
 ac_add_options --enable-default-toolkit=cairo-windows
 ac_add_options --enable-lto
 # Make sure LLVM 12 or equivalent is used here so the right x86_64 feature levels are set
-ac_add_options --enable-optimize="-O3 -march=x86-64-v2 -mtune=x86-64-v3 -w"
+ac_add_options --enable-optimize="-O3 -march=x86-64-v2 -mtune=haswell -w"
 ac_add_options --enable-rust-simd
 ac_add_options --enable-strip
 ac_add_options --target=x86_64-w64-mingw32
