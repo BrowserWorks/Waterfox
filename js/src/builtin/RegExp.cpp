@@ -133,19 +133,19 @@ CreateRegExpSearchResult(JSContext* cx, const MatchPairs& matches)
  * steps 3, 9-14, except 12.a.i, 12.c.i.1.
  */
 static RegExpRunStatus
-ExecuteRegExpImpl(JSContext* cx, RegExpStatics* res, MutableHandleRegExpShared re,
-                  HandleLinearString input, size_t searchIndex, MatchPairs* matches,
-                  size_t* endIndex)
+ExecuteRegExpImpl(JSContext* cx,
+                  RegExpStatics* res,
+                  MutableHandleRegExpShared re,
+                  HandleLinearString input,
+                  size_t searchIndex,
+                  MatchPairs* matches)
 {
-    RegExpRunStatus status = RegExpShared::execute(cx, re, input, searchIndex, matches, endIndex);
+    RegExpRunStatus status = RegExpShared::execute(cx, re, input, searchIndex, matches);
 
     /* Out of spec: Update RegExpStatics. */
     if (status == RegExpRunStatus_Success && res) {
-        if (matches) {
-            if (!res->updateFromMatchPairs(cx, input, *matches))
-                return RegExpRunStatus_Error;
-        } else {
-            res->updateLazily(cx, input, re, searchIndex);
+        if (!res->updateFromMatchPairs(cx, input, *matches)) {
+            return RegExpRunStatus_Error;
         }
     }
     return status;
@@ -164,7 +164,7 @@ js::ExecuteRegExpLegacy(JSContext* cx, RegExpStatics* res, Handle<RegExpObject*>
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
 
     RegExpRunStatus status = ExecuteRegExpImpl(cx, res, &shared, input, *lastIndex,
-                                               &matches, nullptr);
+                                               &matches);
     if (status == RegExpRunStatus_Error)
         return false;
 
@@ -952,7 +952,7 @@ IsTrailSurrogateWithLeadSurrogate(HandleLinearString input, int32_t index)
  */
 static RegExpRunStatus
 ExecuteRegExp(JSContext* cx, HandleObject regexp, HandleString string, int32_t lastIndex,
-              MatchPairs* matches, size_t* endIndex)
+              MatchPairs* matches)
 {
     /*
      * WARNING: Despite the presence of spec step comment numbers, this
@@ -1009,7 +1009,7 @@ ExecuteRegExp(JSContext* cx, HandleObject regexp, HandleString string, int32_t l
     }
 
     /* Steps 3, 11-14, except 12.a.i, 12.c.i.1. */
-    RegExpRunStatus status = ExecuteRegExpImpl(cx, res, &re, input, lastIndex, matches, endIndex);
+    RegExpRunStatus status = ExecuteRegExpImpl(cx, res, &re, input, lastIndex, matches);
     if (status == RegExpRunStatus_Error)
         return RegExpRunStatus_Error;
 
@@ -1030,7 +1030,7 @@ RegExpMatcherImpl(JSContext* cx, HandleObject regexp, HandleString string, int32
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
 
     /* Steps 3, 9-14, except 12.a.i, 12.c.i.1. */
-    RegExpRunStatus status = ExecuteRegExp(cx, regexp, string, lastIndex, &matches, nullptr);
+    RegExpRunStatus status = ExecuteRegExp(cx, regexp, string, lastIndex, &matches);
     if (status == RegExpRunStatus_Error)
         return false;
 
@@ -1099,7 +1099,7 @@ RegExpSearcherImpl(JSContext* cx, HandleObject regexp, HandleString string, int3
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
 
     /* Steps 3, 9-14, except 12.a.i, 12.c.i.1. */
-    RegExpRunStatus status = ExecuteRegExp(cx, regexp, string, lastIndex, &matches, nullptr);
+    RegExpRunStatus status = ExecuteRegExp(cx, regexp, string, lastIndex, &matches);
     if (status == RegExpRunStatus_Error)
         return false;
 
@@ -1181,15 +1181,15 @@ js::RegExpTester(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ALWAYS_TRUE(ToInt32(cx, args[2], &lastIndex));
 
     /* Steps 3, 9-14, except 12.a.i, 12.c.i.1. */
-    size_t endIndex = 0;
-    RegExpRunStatus status = ExecuteRegExp(cx, regexp, string, lastIndex, nullptr, &endIndex);
+    ScopedMatchPairs matches(&cx->tempLifoAlloc());
+    RegExpRunStatus status = ExecuteRegExp(cx, regexp, string, lastIndex, &matches);
 
     if (status == RegExpRunStatus_Error)
         return false;
 
     if (status == RegExpRunStatus_Success) {
-        MOZ_ASSERT(endIndex <= INT32_MAX);
-        args.rval().setInt32(int32_t(endIndex));
+        int32_t endIndex = matches[0].limit;
+        args.rval().setInt32(endIndex);
     } else {
         args.rval().setInt32(-1);
     }
@@ -1206,12 +1206,11 @@ js::RegExpTesterRaw(JSContext* cx, HandleObject regexp, HandleString input,
 {
     MOZ_ASSERT(lastIndex >= 0);
 
-    size_t endIndexTmp = 0;
-    RegExpRunStatus status = ExecuteRegExp(cx, regexp, input, lastIndex, nullptr, &endIndexTmp);
+    ScopedMatchPairs matches(&cx->tempLifoAlloc());
+    RegExpRunStatus status = ExecuteRegExp(cx, regexp, input, lastIndex, &matches);
 
     if (status == RegExpRunStatus_Success) {
-        MOZ_ASSERT(endIndexTmp <= INT32_MAX);
-        *endIndex = int32_t(endIndexTmp);
+        *endIndex = matches[0].limit;
         return true;
     }
     if (status == RegExpRunStatus_Success_NotFound) {

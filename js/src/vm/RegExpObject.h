@@ -177,8 +177,9 @@ class RegExpObject : public NativeObject
     void initAndZeroLastIndex(JSAtom* source, JS::RegExpFlags flags, JSContext* cx);
 
 #ifdef DEBUG
-    static MOZ_MUST_USE bool dumpBytecode(JSContext* cx, Handle<RegExpObject*> regexp,
-                                          bool match_only, HandleLinearString input);
+    static MOZ_MUST_USE bool dumpBytecode(JSContext* cx,
+                                          Handle<RegExpObject*> regexp,
+                                          HandleLinearString input);
 #endif
 
   private:
