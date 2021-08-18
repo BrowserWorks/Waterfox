@@ -26,7 +26,7 @@ jobs:
 
         - name: Download tooltool
           run: |
-            curl -O https://cdn.waterfox.net/tools/tooltool12.tar.xz
+            t
           if: steps.cache.outputs.cache-hit != 'true'
 
         - name: Setup tooltool
@@ -57,29 +57,29 @@ jobs:
             name: Artifact Classic Linux ${{ github.run_id }}
             path: ./objdir-*/dist/install/sea/*.exe
             
-    linux-x64:
-      name: 🐧 Linux X64
-      runs-on: [self-hosted, linux, X64]
-      env:
-        SHELL: /bin/sh
-        MOZCONFIG: ".mozconfig"
-      steps:
-        - uses: actions/checkout@v2
+    # linux-x64:
+    #   name: 🐧 Linux X64
+    #   runs-on: [self-hosted, linux, X64]
+    #   env:
+    #     SHELL: /bin/sh
+    #     MOZCONFIG: ".mozconfig"
+    #   steps:
+    #     - uses: actions/checkout@v2
 
-        - name: Bootstrap
-          run: |
-            ./mach --no-interactive bootstrap --application-choice=browser
+    #     - name: Bootstrap
+    #       run: |
+    #         ./mach --no-interactive bootstrap --application-choice=browser
 
-        - name: Build
-          run: |
-            ./mach build
+    #     - name: Build
+    #       run: |
+    #         ./mach build
             
-        - name: Package
-          run: |
-            ./mach package
+    #     - name: Package
+    #       run: |
+    #         ./mach package
             
-        - name: Upload Linux artifact
-          uses: actions/upload-artifact@v2
-          with:
-            name: Artifact Classic Linux ${{ github.run_id }}
-            path: ./objdir-*/dist/*.tar.bz2
+    #     - name: Upload Linux artifact
+    #       uses: actions/upload-artifact@v2
+    #       with:
+    #         name: Artifact Classic Linux ${{ github.run_id }}
+    #         path: ./objdir-*/dist/*.tar.bz2

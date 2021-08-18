@@ -2,7 +2,7 @@ CROSS_COMPILE=1
 
 # MinGW does not have (or need) makecab
 unset MAKECAB
-TOOLTOOL_DIR=/home/akontos/tooltool12
+TOOLTOOL_DIR=$HOME/tooltool12
 
 AR="${TOOLTOOL_DIR}/clang/bin/llvm-ar"
 CARGO="${TOOLTOOL_DIR}/rustc/bin/cargo"
