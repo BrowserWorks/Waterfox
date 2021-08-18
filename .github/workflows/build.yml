@@ -37,9 +37,9 @@ jobs:
         - name: Checkout branch
           uses: actions/checkout@v2
 
-        - name: Bootstrap
-          run: |
-            ./mach --no-interactive bootstrap --application-choice=browser
+        # - name: Bootstrap
+        #   run: |
+        #     ./mach --no-interactive bootstrap --application-choice=browser
 
         - name: Build
           run: |
