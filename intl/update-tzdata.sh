@@ -165,6 +165,6 @@ if [ $dry = false ]; then
   fi
 
   echo "INFO: Successfully updated tzdata!"
-  cd ./js/src/builtin
+  cd ./js/src/builtin/intl
   python ./make_intl_data.py tzdata
 fi
