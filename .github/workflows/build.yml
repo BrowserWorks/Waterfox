@@ -16,6 +16,7 @@ jobs:
       env:
           MOZCONFIG: ".mozconfig-x86_64-w64-mingw32"
           SHELL: /bin/sh
+          DISPLAY: ":0.0"
       steps:
         # - name: Cache
         #   uses: actions/cache@v2
