@@ -21,7 +21,7 @@ RANLIB="${TOOLTOOL_DIR}/clang/bin/llvm-ranlib"
 RUSTC="${TOOLTOOL_DIR}/rustc/bin/rustc"
 RUSTFMT="${TOOLTOOL_DIR}/rustc/bin/rustfmt"
 WINCHECKSEC="${TOOLTOOL_DIR}/winchecksec/winchecksec"
-WINE=wine64
+WINE=/usr/bin/wine64
 X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
 
 ac_add_options --disable-crashreporter
