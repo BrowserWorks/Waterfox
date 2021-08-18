@@ -43,8 +43,6 @@ jobs:
 
         - name: Build
           run: |
-            . taskcluster/docker/recipes/xvfb.sh
-            start_xvfb '1920x1080x24+32' 0
             ./mach build
 
         - name: Package
