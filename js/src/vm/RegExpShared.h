@@ -73,6 +73,13 @@ class RegExpShared : public gc::TenuredCell
         ForceByteCode
     };
 
+    enum class Kind
+    {
+        Unparsed,
+        Atom,
+        RegExp
+    };
+
     using JitCodeTable = UniquePtr<uint8_t[], JS::FreePolicy>;
     using JitCodeTables = Vector<JitCodeTable, 0, SystemAllocPolicy>;
 
@@ -96,7 +103,14 @@ class RegExpShared : public gc::TenuredCell
     HeapPtr<JSAtom*>   source;
 
     JS::RegExpFlags    flags;
-    bool               canStringMatch;
+
+#ifdef JS_NEW_REGEXP
+    RegExpShared::Kind kind_ = Kind::Unparsed;
+    GCPtrAtom patternAtom_;
+#else
+    bool canStringMatch = false;
+#endif
+
     size_t             parenCount;
 
     RegExpCompilation  compilationArray[2];
@@ -154,16 +168,31 @@ class RegExpShared : public gc::TenuredCell
     /* Accessors */
 
     size_t getParenCount() const {
+#ifdef JS_NEW_REGEXP
+        MOZ_ASSERT(kind() != Kind::Unparsed);
+#else
         MOZ_ASSERT(isCompiled());
+#endif
         return parenCount;
     }
+
+#ifdef JS_NEW_REGEXP
+  RegExpShared::Kind kind() const { return kind_; }
+
+  // Use simple string matching for this regexp.
+  void useAtomMatch(HandleAtom pattern);
+#endif
 
     /* Accounts for the "0" (whole match) pair. */
     size_t pairCount() const            { return getParenCount() + 1; }
 
     JSAtom* getSource() const           { return source; }
 
-    JSAtom* patternAtom() const         { return getSource(); }
+#ifdef JS_NEW_REGEXP
+    JSAtom* patternAtom() const { return patternAtom_; }
+#else
+    JSAtom* patternAtom() const { return getSource(); }
+#endif
 
     JS::RegExpFlags getFlags() const    { return flags; }
 
