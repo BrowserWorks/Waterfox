@@ -16,35 +16,33 @@ jobs:
       env:
           MOZCONFIG: ".mozconfig-x86_64-w64-mingw32"
           SHELL: /bin/sh
-          DISPLAY: ":0.0"
       steps:
-        # - name: Cache
-        #   uses: actions/cache@v2
-        #   with:
-        #     path: |
-        #       $HOME/tooltool12
-        #     key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+        - name: Cache
+          uses: actions/cache@v2
+          with:
+            path: |
+              $HOME/tooltool12
+            key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
 
-        # - name: Download tooltool
-        #   run: |
-        #     curl -O https://cdn.waterfox.net/tools/tooltool12.tar.xz
-        #   if: steps.cache.outputs.cache-hit != 'true'
+        - name: Download tooltool
+          run: |
+            curl -O https://cdn.waterfox.net/tools/tooltool12.tar.xz
+          if: steps.cache.outputs.cache-hit != 'true'
 
-        # - name: Setup tooltool
-        #   run: |
-        #     tar -xvf tooltool12.tar.xz -C $HOME/
-        #   if: steps.cache.outputs.cache-hit != 'true'
+        - name: Setup tooltool
+          run: |
+            tar -xvf tooltool12.tar.xz -C $HOME/
+          if: steps.cache.outputs.cache-hit != 'true'
 
         - name: Checkout branch
           uses: actions/checkout@v2
 
-        # - name: Bootstrap
-        #   run: |
-        #     ./mach --no-interactive bootstrap --application-choice=browser
+        - name: Bootstrap
+          run: |
+            ./mach --no-interactive bootstrap --application-choice=browser
 
         - name: Build
           run: |
-            ./mach create-mach-environment
             ./mach build
 
         - name: Package
