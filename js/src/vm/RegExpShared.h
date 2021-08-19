@@ -135,6 +135,12 @@ class RegExpShared : public gc::TenuredCell
   public:
     ~RegExpShared() = delete;
 
+    static RegExpRunStatus executeAtom(JSContext* cx,
+                                       MutableHandleRegExpShared re,
+                                       HandleLinearString input,
+                                       size_t start,
+                                       MatchPairs* matches);
+
     // Execute this RegExp on input starting from searchIndex, filling in matches.
     static RegExpRunStatus execute(JSContext* cx, MutableHandleRegExpShared res,
                                    HandleLinearString input, size_t searchIndex,
@@ -156,6 +162,9 @@ class RegExpShared : public gc::TenuredCell
     size_t pairCount() const            { return getParenCount() + 1; }
 
     JSAtom* getSource() const           { return source; }
+
+    JSAtom* patternAtom() const         { return getSource(); }
+
     JS::RegExpFlags getFlags() const    { return flags; }
 
     bool global() const                 { return flags.global(); }
