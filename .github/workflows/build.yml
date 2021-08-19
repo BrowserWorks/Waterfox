@@ -43,6 +43,7 @@ jobs:
 
         - name: Build
           run: |
+            ./mach create-mach-environment
             ./mach build
 
         - name: Package
