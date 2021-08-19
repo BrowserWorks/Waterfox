@@ -976,7 +976,7 @@ js::StringHasRegExpMetaChars(JSLinearString* str)
 RegExpShared::RegExpShared(JSAtom* source, RegExpFlags flags)
   : source(source)
   , flags(flags)
-  , parenCount(0)
+  , pairCount_(0)
 {}
 
 void
@@ -1097,7 +1097,7 @@ void RegExpShared::useAtomMatch(HandleAtom pattern) {
   MOZ_ASSERT(kind() == RegExpShared::Kind::Unparsed);
   kind_ = RegExpShared::Kind::Atom;
   patternAtom_ = pattern;
-  parenCount = 0;
+  pairCount_ = 1;
 }
 
 #else   // !JS_NEW_REGEXP
@@ -1127,7 +1127,8 @@ RegExpShared::compile(JSContext* cx,
         return false;
     }
 
-    re->parenCount = data.capture_count;
+    // Add one to account for the whole-match capture.
+    re->pairCount_ = data.capture_count + 1;
 
     JitCodeTables tables;
     irregexp::RegExpCode code = irregexp::CompilePattern(cx, re, &data, input,
