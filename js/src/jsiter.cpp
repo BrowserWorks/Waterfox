@@ -26,6 +26,7 @@
 
 #include "builtin/SelfHostingDefines.h"
 #include "ds/Sort.h"
+#include "gc/FreeOp.h"
 #include "gc/Marking.h"
 #include "js/Proxy.h"
 #include "vm/GeneratorObject.h"

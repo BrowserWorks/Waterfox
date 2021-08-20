@@ -32,9 +32,7 @@ for stlfile in ['jsarray.*', 'jsbool*', 'jsdate.*', 'jsnum.*', 'json.*', 'jsstr.
     with Files(stlfile):
         BUG_COMPONENT = component_stl
 
-with Files('builtin/Intl*'):
-    BUG_COMPONENT = component_intl
-with Files('builtin/make_intl_data.py'):
+with Files('builtin/intl/*'):
     BUG_COMPONENT = component_intl
 
 TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']

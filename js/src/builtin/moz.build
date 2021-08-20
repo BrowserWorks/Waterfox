@@ -1,7 +1,7 @@
 # -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/. 
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 include('../js-config.mozbuild')
 include('../js-cxxflags.mozbuild')
@@ -16,6 +16,13 @@ UNIFIED_SOURCES += [
     'DataViewObject.cpp',
     'Eval.cpp',
     'Intl.cpp',
+    'intl/Collator.cpp',
+    'intl/CommonFunctions.cpp',
+    'intl/DateTimeFormat.cpp',
+    'intl/NumberFormat.cpp',
+    'intl/PluralRules.cpp',
+    'intl/RelativeTimeFormat.cpp',
+    'intl/SharedIntlData.cpp',
     'MapObject.cpp',
     'ModuleObject.cpp',
     'Object.cpp',
@@ -58,9 +65,15 @@ selfhosted.inputs = [
     'Error.js',
     'Function.js',
     'Generator.js',
-    'Intl.js',
-    'IntlCurrency.js',
-    'IntlData.js',
+    'intl/Collator.js',
+    'intl/CommonFunctions.js',
+    'intl/CurrencyDataGenerated.js',
+    'intl/DateTimeFormat.js',
+    'intl/IntlObject.js',
+    'intl/LangTagMappingsGenerated.js',
+    'intl/NumberFormat.js',
+    'intl/PluralRules.js',
+    'intl/RelativeTimeFormat.js',
     'Iterator.js',
     'Map.js',
     'Module.js',

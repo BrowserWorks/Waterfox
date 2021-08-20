@@ -33,6 +33,8 @@
 #include "jstypes.h"
 #include "jsutil.h"
 
+#include "builtin/intl/CommonFunctions.h"
+#include "builtin/intl/ICUStubs.h"
 #include "builtin/RegExp.h"
 #include "jit/InlinableNatives.h"
 #include "js/Conversions.h"
@@ -943,10 +945,10 @@ ToLowerCase(JSContext* cx, JSLinearString* str)
         // Look for the first character that changes when lowercased.
         size_t i = 0;
         for (; i < length; i++) {
-            char16_t c = chars[i];
+            CharT c = chars[i];
             if (!IsSame<CharT, Latin1Char>::value) {
                 if (unicode::IsLeadSurrogate(c) && i + 1 < length) {
-                    char16_t trail = chars[i + 1];
+                    CharT trail = chars[i + 1];
                     if (unicode::IsTrailSurrogate(trail)) {
                         if (unicode::CanLowerCaseNonBMP(c, trail))
                             break;
@@ -988,11 +990,15 @@ ToLowerCase(JSContext* cx, JSLinearString* str)
 }
 
 JSString*
-js::StringToLowerCase(JSContext* cx, HandleLinearString string)
+js::StringToLowerCase(JSContext* cx, HandleString string)
 {
-    if (string->hasLatin1Chars())
-        return ToLowerCase<Latin1Char>(cx, string);
-    return ToLowerCase<char16_t>(cx, string);
+    JSLinearString* linear = string->ensureLinear(cx);
+    if (!linear)
+        return nullptr;
+
+    if (linear->hasLatin1Chars())
+        return ToLowerCase<Latin1Char>(cx, linear);
+    return ToLowerCase<char16_t>(cx, linear);
 }
 
 bool
@@ -1004,11 +1010,7 @@ js::str_toLowerCase(JSContext* cx, unsigned argc, Value* vp)
     if (!str)
         return false;
 
-    RootedLinearString linear(cx, str->ensureLinear(cx));
-    if (!linear)
-        return false;
-
-    JSString* result = StringToLowerCase(cx, linear);
+    JSString* result = StringToLowerCase(cx, str);
     if (!result)
         return false;
 
@@ -1016,7 +1018,85 @@ js::str_toLowerCase(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-#if !EXPOSE_INTL_API
+static const char*
+CaseMappingLocale(JSContext* cx, JSString* str)
+{
+    JSLinearString* locale = str->ensureLinear(cx);
+    if (!locale)
+        return nullptr;
+
+    MOZ_ASSERT(locale->length() >= 2, "locale is a valid language tag");
+
+    // Lithuanian, Turkish, and Azeri have language dependent case mappings.
+    static const char languagesWithSpecialCasing[][3] = { "lt", "tr", "az" };
+
+    // All strings in |languagesWithSpecialCasing| are of length two, so we
+    // only need to compare the first two characters to find a matching locale.
+    // ES2017 Intl, §9.2.2 BestAvailableLocale
+    if (locale->length() == 2 || locale->latin1OrTwoByteChar(2) == '-') {
+        for (const auto& language : languagesWithSpecialCasing) {
+            if (locale->latin1OrTwoByteChar(0) == language[0] &&
+                locale->latin1OrTwoByteChar(1) == language[1])
+            {
+                return language;
+            }
+        }
+    }
+
+    return ""; // ICU root locale
+}
+
+bool
+js::intl_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    MOZ_ASSERT(args.length() == 2);
+    MOZ_ASSERT(args[0].isString());
+    MOZ_ASSERT(args[1].isString());
+
+    RootedString string(cx, args[0].toString());
+
+    const char* locale = CaseMappingLocale(cx, args[1].toString());
+    if (!locale)
+        return false;
+
+    // Call String.prototype.toLowerCase() for language independent casing.
+    if (intl::StringsAreEqual(locale, "")) {
+        JSString* str = StringToLowerCase(cx, string);
+        if (!str)
+            return false;
+
+        args.rval().setString(str);
+        return true;
+    }
+
+    AutoStableStringChars inputChars(cx);
+    if (!inputChars.initTwoByte(cx, string))
+        return false;
+    mozilla::Range<const char16_t> input = inputChars.twoByteRange();
+
+    // Maximum case mapping length is three characters.
+    static_assert(JSString::MAX_LENGTH < INT32_MAX / 3,
+                  "Case conversion doesn't overflow int32_t indices");
+
+    JSString* str =
+      intl::CallICU(cx, [&input, locale](UChar* chars, int32_t size, UErrorCode* status) {
+          return u_strToLower(chars, size, input.begin().get(), input.length(), locale, status);
+      });
+    if (!str)
+        return false;
+
+    args.rval().setString(str);
+    return true;
+}
+
+#if EXPOSE_INTL_API
+
+// String.prototype.toLocaleLowerCase is self-hosted when Intl is exposed,
+// with core functionality performed by the intrinsic above.
+
+#else
+
 bool
 js::str_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -1050,7 +1130,8 @@ js::str_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp)
     args.rval().setString(result);
     return true;
 }
-#endif /* !EXPOSE_INTL_API */
+
+#endif // EXPOSE_INTL_API
 
 static inline bool
 CanUpperCaseSpecialCasing(Latin1Char charCode)
@@ -1253,10 +1334,10 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
         // Look for the first character that changes when uppercased.
         size_t i = 0;
         for (; i < length; i++) {
-            char16_t c = chars[i];
+            CharT c = chars[i];
             if (!IsSame<CharT, Latin1Char>::value) {
                 if (unicode::IsLeadSurrogate(c) && i + 1 < length) {
-                    char16_t trail = chars[i + 1];
+                    CharT trail = chars[i + 1];
                     if (unicode::IsTrailSurrogate(trail)) {
                         if (unicode::CanUpperCaseNonBMP(c, trail))
                             break;
@@ -1268,7 +1349,7 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
             }
             if (unicode::CanUpperCase(c))
                 break;
-            if (MOZ_UNLIKELY(c > 0x7f && CanUpperCaseSpecialCasing(static_cast<CharT>(c))))
+            if (MOZ_UNLIKELY(c > 0x7f && CanUpperCaseSpecialCasing(c)))
                 break;
         }
 
@@ -1325,11 +1406,15 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
 }
 
 JSString*
-js::StringToUpperCase(JSContext* cx, HandleLinearString string)
+js::StringToUpperCase(JSContext* cx, HandleString string)
 {
-    if (string->hasLatin1Chars())
-        return ToUpperCase<Latin1Char>(cx, string);
-    return ToUpperCase<char16_t>(cx, string);
+    JSLinearString* linear = string->ensureLinear(cx);
+    if (!linear)
+        return nullptr;
+
+    if (linear->hasLatin1Chars())
+        return ToUpperCase<Latin1Char>(cx, linear);
+    return ToUpperCase<char16_t>(cx, linear);
 }
 
 bool
@@ -1341,11 +1426,7 @@ js::str_toUpperCase(JSContext* cx, unsigned argc, Value* vp)
     if (!str)
         return false;
 
-    RootedLinearString linear(cx, str->ensureLinear(cx));
-    if (!linear)
-        return false;
-
-    JSString* result = StringToUpperCase(cx, linear);
+    JSString* result = StringToUpperCase(cx, str);
     if (!result)
         return false;
 
@@ -1353,7 +1434,57 @@ js::str_toUpperCase(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-#if !EXPOSE_INTL_API
+bool
+js::intl_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    MOZ_ASSERT(args.length() == 2);
+    MOZ_ASSERT(args[0].isString());
+    MOZ_ASSERT(args[1].isString());
+
+    RootedString string(cx, args[0].toString());
+
+    const char* locale = CaseMappingLocale(cx, args[1].toString());
+    if (!locale)
+        return false;
+
+    // Call String.prototype.toUpperCase() for language independent casing.
+    if (intl::StringsAreEqual(locale, "")) {
+        JSString* str = js::StringToUpperCase(cx, string);
+        if (!str)
+            return false;
+
+        args.rval().setString(str);
+        return true;
+    }
+
+    AutoStableStringChars inputChars(cx);
+    if (!inputChars.initTwoByte(cx, string))
+        return false;
+    mozilla::Range<const char16_t> input = inputChars.twoByteRange();
+
+    // Maximum case mapping length is three characters.
+    static_assert(JSString::MAX_LENGTH < INT32_MAX / 3,
+                  "Case conversion doesn't overflow int32_t indices");
+
+    JSString* str =
+      intl::CallICU(cx, [&input, locale](UChar* chars, int32_t size, UErrorCode* status) {
+          return u_strToUpper(chars, size, input.begin().get(), input.length(), locale, status);
+      });
+    if (!str)
+        return false;
+
+    args.rval().setString(str);
+    return true;
+}
+
+#if EXPOSE_INTL_API
+
+// String.prototype.toLocaleLowerCase is self-hosted when Intl is exposed,
+// with core functionality performed by the intrinsic above.
+
+#else
+
 bool
 js::str_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -1387,9 +1518,15 @@ js::str_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp)
     args.rval().setString(result);
     return true;
 }
-#endif /* !EXPOSE_INTL_API */
 
-#if !EXPOSE_INTL_API
+#endif // EXPOSE_INTL_API
+
+#if EXPOSE_INTL_API
+
+// String.prototype.localeCompare is self-hosted when Intl is exposed.
+
+#else
+
 bool
 js::str_localeCompare(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -1418,9 +1555,11 @@ js::str_localeCompare(JSContext* cx, unsigned argc, Value* vp)
     args.rval().setInt32(result);
     return true;
 }
-#endif
+
+#endif // EXPOSE_INTL_API
 
 #if EXPOSE_INTL_API
+
 // ES2017 draft rev 45e890512fd77add72cc0ee742785f9f6f6482de
 // 21.1.3.12 String.prototype.normalize ( [ form ] )
 bool
@@ -1554,7 +1693,8 @@ js::str_normalize(JSContext* cx, unsigned argc, Value* vp)
     args.rval().setString(ns);
     return true;
 }
-#endif
+
+#endif // EXPOSE_INTL_API
 
 bool
 js::str_charAt(JSContext* cx, unsigned argc, Value* vp)
@@ -3415,8 +3555,8 @@ static const JSFunctionSpec string_methods[] = {
     /* Java-like methods. */
     JS_FN(js_toString_str,     str_toString,          0,0),
     JS_FN(js_valueOf_str,      str_toString,          0,0),
-    JS_FN("toLowerCase",       str_toLowerCase,       0,0),
-    JS_FN("toUpperCase",       str_toUpperCase,       0,0),
+    JS_INLINABLE_FN("toLowerCase", str_toLowerCase,   0,0, StringToLowerCase),
+    JS_INLINABLE_FN("toUpperCase", str_toUpperCase,   0,0, StringToUpperCase),
     JS_INLINABLE_FN("charAt",  str_charAt,            1,0, StringCharAt),
     JS_INLINABLE_FN("charCodeAt", str_charCodeAt,     1,0, StringCharCodeAt),
     JS_SELF_HOSTED_FN("substring", "String_substring", 2,0),

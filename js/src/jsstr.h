@@ -373,19 +373,72 @@ str_trimStart(JSContext* cx, unsigned argc, Value* vp);
 extern bool
 str_trimEnd(JSContext* cx, unsigned argc, Value* vp);
 
-#if !EXPOSE_INTL_API
+/**
+ * Returns the input string converted to lower case based on the language
+ * specific case mappings for the input locale.
+ *
+ * This function only works #if EXPOSE_INTL_API; if not, it will *crash*.
+ * Govern yourself accordingly.
+ *
+ * Usage: lowerCase = intl_toLocaleLowerCase(string, locale)
+ */
+extern MOZ_MUST_USE bool
+intl_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp);
+
+/**
+ * Returns the input string converted to upper case based on the language
+ * specific case mappings for the input locale.
+ *
+ * This function only works #if EXPOSE_INTL_API; if not, it will *crash*.
+ * Govern yourself accordingly.
+ *
+ * Usage: upperCase = intl_toLocaleUpperCase(string, locale)
+ */
+extern MOZ_MUST_USE bool
+intl_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp);
+
+#if EXPOSE_INTL_API
+
+// When the Intl API is exposed, String.prototype.to{Lower,Upper}Case is
+// self-hosted.  The core functionality is provided by the intrinsics above.
+
+#else
+
+// When the Intl API is not exposed, String.prototype.to{Lower,Upper}Case are
+// implemented in C++.
+
 extern bool
 str_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
 str_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp);
 
-extern bool
-str_localeCompare(JSContext* cx, unsigned argc, Value* vp);
-#else
+#endif // EXPOSE_INTL_API
+
+#if EXPOSE_INTL_API
+
+// String.prototype.normalize is only implementable if ICU's normalization
+// functionality is available.
 extern bool
 str_normalize(JSContext* cx, unsigned argc, Value* vp);
-#endif
+
+#endif // EXPOSE_INTL_API
+
+#if EXPOSE_INTL_API
+
+// String.prototype.localeCompare is self-hosted when Intl functionality is
+// exposed, and the only intrinsics it requires are provided in the
+// implementation of Intl.Collator.
+
+#else
+
+// String.prototype.localeCompare is implemented in C++ (delegating to
+// JSLocaleCallbacks) when Intl functionality is not exposed.
+
+extern bool
+str_localeCompare(JSContext* cx, unsigned argc, Value* vp);
+
+#endif // EXPOSE_INTL_API
 
 extern bool
 str_concat(JSContext* cx, unsigned argc, Value* vp);
@@ -487,10 +540,10 @@ str_replace_string_raw(JSContext* cx, HandleString string, HandleString pattern,
                        HandleString replacement);
 
 extern JSString*
-StringToLowerCase(JSContext* cx, HandleLinearString string);
+StringToLowerCase(JSContext* cx, HandleString string);
 
 extern JSString*
-StringToUpperCase(JSContext* cx, HandleLinearString string);
+StringToUpperCase(JSContext* cx, HandleString string);
 
 JSString*
 str_replaceAll_string_raw(JSContext* cx, HandleString string, HandleString pattern,

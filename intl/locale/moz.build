@@ -46,7 +46,9 @@ EXPORTS.mozilla.intl += [
 ]
 
 UNIFIED_SOURCES += [
+    'DateTimeFormat.cpp',
     'LocaleService.cpp',
+    'nsCollation.cpp',
     'nsCollationFactory.cpp',
     'nsLanguageAtomService.cpp',
     'nsLocale.cpp',
@@ -63,17 +65,6 @@ UNIFIED_SOURCES += [
 SOURCES += [
     'nsLocaleService.cpp',
 ]
-
-if CONFIG['ENABLE_INTL_API']:
-    UNIFIED_SOURCES += [
-        'DateTimeFormat.cpp',
-        'nsCollation.cpp',
-    ]
-else:
-    UNIFIED_SOURCES += [
-        'DateTimeFormatAndroid.cpp',
-        'nsCollationAndroid.cpp',
-    ]
 
 EXTRA_JS_MODULES += [
     'PluralForm.jsm',

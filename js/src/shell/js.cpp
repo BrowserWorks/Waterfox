@@ -793,6 +793,9 @@ AddIntlExtras(JSContext* cx, unsigned argc, Value* vp)
     if (!js::AddMozDateTimeFormatConstructor(cx, intl))
         return false;
 
+    if (!js::AddRelativeTimeFormatConstructor(cx, intl))
+        return false;
+
     args.rval().setUndefined();
     return true;
 }
@@ -7983,9 +7986,7 @@ main(int argc, char** argv, char** envp)
 
     int result;
 
-#ifdef HAVE_SETLOCALE
     setlocale(LC_ALL, "");
-#endif
 
     // Special-case stdout and stderr. We bump their refcounts to prevent them
     // from getting closed and then having some printf fail somewhere.

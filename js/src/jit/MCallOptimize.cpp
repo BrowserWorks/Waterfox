@@ -12,6 +12,11 @@
 
 #include "builtin/AtomicsObject.h"
 #include "builtin/Intl.h"
+#include "builtin/intl/Collator.h"
+#include "builtin/intl/DateTimeFormat.h"
+#include "builtin/intl/NumberFormat.h"
+#include "builtin/intl/PluralRules.h"
+#include "builtin/intl/RelativeTimeFormat.h"
 #include "builtin/MapObject.h"
 #include "builtin/SIMD.h"
 #include "builtin/TestingFunctions.h"
@@ -123,6 +128,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineHasClass(callInfo, &NumberFormatObject::class_);
       case InlinableNative::IntlIsPluralRules:
         return inlineHasClass(callInfo, &PluralRulesObject::class_);
+      case InlinableNative::IntlIsRelativeTimeFormat:
+        return inlineHasClass(callInfo, &RelativeTimeFormatObject::class_);
 
       // Math natives.
       case InlinableNative::MathAbs:
@@ -229,6 +236,10 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineStrFromCodePoint(callInfo);
       case InlinableNative::StringCharAt:
         return inlineStrCharAt(callInfo);
+      case InlinableNative::StringToLowerCase:
+        return inlineStringConvertCase(callInfo, MStringConvertCase::LowerCase);
+      case InlinableNative::StringToUpperCase:
+        return inlineStringConvertCase(callInfo, MStringConvertCase::UpperCase);
 
       // String intrinsics.
       case InlinableNative::IntrinsicStringReplaceString:
@@ -1948,6 +1959,27 @@ IonBuilder::inlineIsPossiblyWrappedRegExpObject(CallInfo& callInfo)
     }
 
     callInfo.setImplicitlyUsedUnchecked();
+    return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningResult
+IonBuilder::inlineStringConvertCase(CallInfo& callInfo, MStringConvertCase::Mode mode)
+{
+    if (callInfo.argc() != 0 || callInfo.constructing()) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
+        return InliningStatus_NotInlined;
+    }
+
+    if (getInlineReturnType() != MIRType::String)
+        return InliningStatus_NotInlined;
+    if (callInfo.thisArg()->type() != MIRType::String)
+        return InliningStatus_NotInlined;
+
+    callInfo.setImplicitlyUsedUnchecked();
+
+    auto* ins = MStringConvertCase::New(alloc(), callInfo.thisArg(), mode);
+    current->add(ins);
+    current->push(ins);
     return InliningStatus_Inlined;
 }
 

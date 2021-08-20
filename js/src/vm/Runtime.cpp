@@ -33,6 +33,7 @@
 #include "jswrapper.h"
 
 #include "builtin/Promise.h"
+#include "gc/FreeOp.h"
 #include "gc/GCInternals.h"
 #include "jit/arm/Simulator-arm.h"
 #include "jit/arm64/vixl/Simulator-vixl.h"
@@ -535,12 +536,8 @@ JSRuntime::getDefaultLocale()
     if (defaultLocale)
         return defaultLocale;
 
-    const char* locale;
-#ifdef HAVE_SETLOCALE
-    locale = setlocale(LC_ALL, nullptr);
-#else
-    locale = getenv("LANG");
-#endif
+    const char* locale = setlocale(LC_ALL, nullptr);
+
     // convert to a well-formed BCP 47 language tag
     if (!locale || !strcmp(locale, "C"))
         locale = "und";

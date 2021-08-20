@@ -26,7 +26,7 @@
 # include "wasm/WasmSignalHandlers.h"
 #endif
 #include "builtin/AtomicsObject.h"
-#include "builtin/Intl.h"
+#include "builtin/intl/SharedIntlData.h"
 #include "builtin/Promise.h"
 #include "ds/FixedSizeHash.h"
 #include "frontend/NameCollections.h"
@@ -127,53 +127,6 @@ class Simulator;
 //   not cause observable changes in script behaviors. Activity on helper
 //   threads may be referred to as happening 'off thread' or on a background
 //   thread in some parts of the VM.
-
-/*
- * A FreeOp can do one thing: free memory. For convenience, it has delete_
- * convenience methods that also call destructors.
- *
- * FreeOp is passed to finalizers and other sweep-phase hooks so that we do not
- * need to pass a JSContext to those hooks.
- */
-class FreeOp : public JSFreeOp
-{
-    Vector<void*, 0, SystemAllocPolicy> freeLaterList;
-    jit::JitPoisonRangeVector jitPoisonRanges;
-
-  public:
-    static FreeOp* get(JSFreeOp* fop) {
-        return static_cast<FreeOp*>(fop);
-    }
-
-    explicit FreeOp(JSRuntime* maybeRuntime);
-    ~FreeOp();
-
-    bool onMainThread() const {
-        return runtime_ != nullptr;
-    }
-
-    bool maybeOnHelperThread() const {
-        // Sometimes background finalization happens on the main thread so
-        // runtime_ being null doesn't always mean we are off thread.
-        return !runtime_;
-    }
-
-    bool isDefaultFreeOp() const;
-
-    inline void free_(void* p);
-    inline void freeLater(void* p);
-
-    inline bool appendJitPoisonRange(const jit::JitPoisonRange& range);
-
-    template <class T>
-    inline void delete_(T* p) {
-        if (p) {
-            p->~T();
-            free_(p);
-        }
-    }
-};
-
 } /* namespace js */
 
 namespace JS {
@@ -847,7 +800,7 @@ struct JSRuntime : public js::MallocProvider<JSRuntime>
     js::WriteOnceData<js::WellKnownSymbols*> wellKnownSymbols;
 
     /* Shared Intl data for this runtime. */
-    js::MainThreadData<js::SharedIntlData> sharedIntlData;
+    js::MainThreadData<js::intl::SharedIntlData> sharedIntlData;
 
     void traceSharedIntlData(JSTracer* trc);
 
@@ -1099,34 +1052,6 @@ static inline bool
 VersionIsKnown(JSVersion version)
 {
     return VersionNumber(version) != JSVERSION_UNKNOWN;
-}
-
-inline void
-FreeOp::free_(void* p)
-{
-    js_free(p);
-}
-
-inline void
-FreeOp::freeLater(void* p)
-{
-    // FreeOps other than the defaultFreeOp() are constructed on the stack,
-    // and won't hold onto the pointers to free indefinitely.
-    MOZ_ASSERT(!isDefaultFreeOp());
-
-    AutoEnterOOMUnsafeRegion oomUnsafe;
-    if (!freeLaterList.append(p))
-        oomUnsafe.crash("FreeOp::freeLater");
-}
-
-inline bool
-FreeOp::appendJitPoisonRange(const jit::JitPoisonRange& range)
-{
-    // FreeOps other than the defaultFreeOp() are constructed on the stack,
-    // and won't hold onto the pointers to free indefinitely.
-    MOZ_ASSERT(!isDefaultFreeOp());
-
-    return jitPoisonRanges.append(range);
 }
 
 /*

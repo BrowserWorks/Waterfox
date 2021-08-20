@@ -25,14 +25,9 @@ UNIFIED_SOURCES += [
     'nsSaveAsCharset.cpp',
 ]
 
-if CONFIG['ENABLE_INTL_API']:
-    UNIFIED_SOURCES += [
-        'nsUnicodeNormalizer_ICU.cpp',
-    ]
-else:
-    UNIFIED_SOURCES += [
-        'nsUnicodeNormalizer.cpp',
-    ]
+UNIFIED_SOURCES += [
+    'nsUnicodeNormalizer.cpp',
+]
 
 FINAL_LIBRARY = 'xul'
 
