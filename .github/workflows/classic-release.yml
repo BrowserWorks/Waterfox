@@ -67,13 +67,11 @@ jobs:
             fail-fast: false
             matrix:
                 os: [macos-10.15, ubuntu-18.04]
-                name: ["Build for MacOS", "Build for Linux"]
 
         env:
             ENABLE_ARTIFACTS_MODE: "true"
             MOZCONFIG: "./.mozconfig-ga"
             SHELL: "/bin/bash"
-        name: ${{ matrix.name }}
         runs-on: ${{ matrix.os }}
         steps:
           - name: Set up Xcode version
