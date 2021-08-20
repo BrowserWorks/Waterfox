@@ -40,9 +40,6 @@ SOURCES += [
 
 FINAL_LIBRARY = 'xul'
 
-if CONFIG['MOZ_GONK_MEDIACODEC']:
-    DEFINES['MOZ_GONK_MEDIACODEC'] = True
-
 
 # Supress warnnings for now.
 if CONFIG['_MSC_VER']:

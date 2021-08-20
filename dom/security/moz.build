@@ -48,7 +48,3 @@ LOCAL_INCLUDES += [
     '/docshell/base',  # for nsDocShell.h
     '/netwerk/base',
 ]
-
-if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wformat-security']
-    CXXFLAGS += ['-Wformat-security']

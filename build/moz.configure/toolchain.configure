@@ -472,16 +472,24 @@ def check_compiler(compiler, language, target):
         if info.type in ('clang-cl', 'clang', 'gcc'):
             append_flag('-std=gnu99')
 
-    # Note: MSVC, while supporting C++11, still reports 199711L for __cplusplus.
+    # Note: MSVC, while supporting C++14, still reports 199711L for __cplusplus.
     # Note: this is a strict version check because we used to always add
-    # -std=gnu++11.
+    # -std=gnu++14.
+    draft_cxx14_version = 201300
+    cxx14_version = 201402
     if info.language == 'C++':
-        if info.type in ('clang', 'gcc') and info.language_version != 201103:
-            append_flag('-std=gnu++11')
+        if info.type == 'clang' and info.language_version != cxx14_version:
+            append_flag('-std=gnu++14')
         # MSVC 2015 headers include C++14 features, but don't guard them
         # with appropriate checks.
-        if info.type == 'clang-cl' and info.language_version != 201402:
+        elif info.type == 'clang-cl' and info.language_version != cxx14_version:
             append_flag('-std=c++14')
+        # GCC 4.9 indicates that it implements draft C++14 features
+        # instead of the full language.
+        elif info.type == 'gcc' and \
+                info.language_version not in (draft_cxx14_version,
+                                              cxx14_version):
+            append_flag('-std=gnu++14')
 
     # We force clang-cl to emulate Visual C++ 2017 version 15.4
     if info.type == 'clang-cl' and info.version != '19.11.25547':
@@ -803,11 +811,17 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                               host_or_target)
 
         # Check that the additional flags we got are enough to not require any
-        # more flags.
-        if info.flags:
-            flags += info.flags
-            info = check_compiler(wrapper + [compiler] + flags, language,
-                                  host_or_target)
+        # more flags. If we get an exception, just ignore it; it's liable to be
+        # invalid command-line flags, which means the compiler we're checking
+        # doesn't support those command-line flags and will fail one or more of
+        # the checks below.
+        try:
+            if info.flags:
+                flags += info.flags
+                info = check_compiler(wrapper + [compiler] + flags, language,
+                                      host_or_target)
+        except FatalCheckError:
+            pass
 
         if not info.target_cpu or info.target_cpu != host_or_target.cpu:
             raise FatalCheckError(
@@ -833,10 +847,6 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                    info.target_endianness or 'unknown', host_or_target_str,
                    host_or_target.endianness))
 
-        if info.flags:
-            raise FatalCheckError(
-                'Unknown compiler or compiler not supported.')
-
         # Compiler version checks
         # ===================================================
         # Check the compiler version here instead of in `compiler_version` so
@@ -848,7 +858,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                 % info.version)
 
         # If you want to bump the version check here search for
-        # __cpp_static_assert above, and see the associated comment.
+        # cxx_alignof above, and see the associated comment.
         if info.type == 'clang' and not info.version:
             raise FatalCheckError(
                 'Only clang/llvm 3.6 or newer is supported.')
@@ -862,6 +872,10 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                     'order to build.\n'
                     'See https://developer.mozilla.org/en/'
                     'Windows_Build_Prerequisites' % info.version)
+
+        if info.flags:
+            raise FatalCheckError(
+                'Unknown compiler or compiler not supported.')
 
         return namespace(
             wrapper=wrapper,

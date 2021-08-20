@@ -179,17 +179,18 @@ MFBT_API void* moz_xvalloc(size_t size)
 /*
  * Suppress build warning spam (bug 578546).
  */
+#if _MSC_VER < 1912
 #define MOZALLOC_THROW_IF_HAS_EXCEPTIONS
+#else
+#define MOZALLOC_THROW_IF_HAS_EXCEPTIONS throw()
+#endif
 #define MOZALLOC_THROW_BAD_ALLOC_IF_HAS_EXCEPTIONS
-#elif __cplusplus >= 201103
+#else
 /*
  * C++11 has deprecated exception-specifications in favour of |noexcept|.
  */
 #define MOZALLOC_THROW_IF_HAS_EXCEPTIONS noexcept(true)
 #define MOZALLOC_THROW_BAD_ALLOC_IF_HAS_EXCEPTIONS noexcept(false)
-#else
-#define MOZALLOC_THROW_IF_HAS_EXCEPTIONS throw()
-#define MOZALLOC_THROW_BAD_ALLOC_IF_HAS_EXCEPTIONS throw(std::bad_alloc)
 #endif
 
 #define MOZALLOC_THROW_BAD_ALLOC MOZALLOC_THROW_BAD_ALLOC_IF_HAS_EXCEPTIONS
@@ -248,6 +249,21 @@ void operator delete[](void* ptr, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_E
     return free_impl(ptr);
 }
 
+#if defined(XP_WIN)
+// We provide the global sized delete overloads unconditionally because the
+// MSVC runtime headers do, despite compiling with /Zc:sizedDealloc-
+MOZALLOC_EXPORT_NEW MOZ_ALWAYS_INLINE_EVEN_DEBUG
+void operator delete(void* ptr, size_t /*size*/) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
+{
+    return free_impl(ptr);
+}
+
+MOZALLOC_EXPORT_NEW MOZ_ALWAYS_INLINE_EVEN_DEBUG
+void operator delete[](void* ptr, size_t /*size*/) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
+{
+    return free_impl(ptr);
+}
+#endif
 
 /*
  * We also add a new allocator variant: "fallible operator new."

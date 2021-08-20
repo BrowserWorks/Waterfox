@@ -1809,7 +1809,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
         if (type == kWriteError) {
           // Attempt to write without sufficient permissions.
 #if defined(ANDROID)
-          // On Android (and Gonk), this means the SD card is present but
+          // On Android this means the SD card is present but
           // unavailable (read-only).
           msgId = "SDAccessErrorCardReadOnly";
 #else
@@ -1830,7 +1830,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
         }
 #if defined(ANDROID)
         else if (type == kWriteError) {
-          // On Android (and Gonk), this means the SD card is missing (not in
+          // On Android this means the SD card is missing (not in
           // SD slot).
           msgId = "SDAccessErrorCardMissing";
           break;
