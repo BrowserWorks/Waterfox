@@ -1,7 +1,6 @@
 name: Builds
 
 on:
-  # Triggers the workflow on push or pull request events but only for the future branch
   push:
     branches: [ future ]
   pull_request:
@@ -17,6 +16,9 @@ jobs:
           MOZCONFIG: ".mozconfig-x86_64-w64-mingw32"
           SHELL: /bin/sh
       steps:
+        # All the commented out parts are only needed when setting up on a VM that gets destroyed
+        # after each build. Since we are using a self hosted runner, this isn't necessary and affords
+        # us performance wins.
         # - name: Cache
         #   uses: actions/cache@v2
         #   with:
@@ -34,51 +36,74 @@ jobs:
         #     tar -xvf tooltool12.tar.xz -C $HOME/
         #   if: steps.cache.outputs.cache-hit != 'true'
 
-        - name: Checkout branch
+        - name: 📤 Checkout
           uses: actions/checkout@v2
 
         # - name: Bootstrap
         #   run: |
         #     ./mach --no-interactive bootstrap --application-choice=browser
+        #     Xvfb :2 -screen 0 1024x768x16 &
+        #     DISPLAY=:2
 
-        - name: Build
+        - name: 🏗 Build
           run: |
             ./mach create-mach-environment
             ./mach build
 
-        - name: Package
+        - name: 📦 Package
           run: |
             ./mach package
 
-        - name: Upload artifact
+        - name: ✍️ Sign
+          run: |
+            VERSION_DISPLAY=`cat browser/config/version_display.txt`
+            pushd objdir-current-mingw64/dist/install/sea/
+            7z x waterfox-$VERSION_DISPLAY.en-US.win64.installer.exe
+            rm -f waterfox-$VERSION_DISPLAY.en-US.win64.installer.exe
+            az login --service-principal --username ${{ secrets.AZURE_USER_ID }} --password ${{ secrets.AZURE_USER_PWD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+            find ./ -type f -name "*.exe" -exec jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
+            find ./ -type f -name "*.dll" -exec jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
+            7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
+            cp $GITHUB_WORKSPACE/browser/installer/windows/app.tag .
+            cp $GITHUB_WORKSPACE/other-licenses/7zstub/firefox/7zSD.sfx .
+            cat 7zSD.sfx app.tag app.7z > "Waterfox $VERSION_DISPLAY Setup.exe"
+            jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "Waterfox $VERSION_DISPLAY Setup.exe"
+            jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "Waterfox $VERSION_DISPLAY Setup.exe"
+            az logout
+            rm -rf core 7zSD.sfx app.tag app.7z setup.exe
+            popd 
+
+
+        - name: 🆙 Upload artifact
           uses: actions/upload-artifact@v2
           with:
-            name: Artifact Classic Linux ${{ github.run_id }}
+            name: Waterfox Windows Artifact ${{ github.run_id }}
             path: ./objdir-*/dist/install/sea/*.exe
             
-    # linux-x64:
-    #   name: 🐧 Linux X64
-    #   runs-on: [self-hosted, linux, X64]
-    #   env:
-    #     SHELL: /bin/sh
-    #     MOZCONFIG: ".mozconfig"
-    #   steps:
-    #     - uses: actions/checkout@v2
+    linux-x64:
+      name: 🐧 Linux X64
+      runs-on: [self-hosted, linux, X64]
+      env:
+        SHELL: /bin/sh
+        MOZCONFIG: ".mozconfig"
+      steps:
+        - name: 📤 Checkout
+        - uses: actions/checkout@v2
 
-    #     - name: Bootstrap
-    #       run: |
-    #         ./mach --no-interactive bootstrap --application-choice=browser
+        # - name: Bootstrap
+        #   run: |
+        #     ./mach --no-interactive bootstrap --application-choice=browser
 
-    #     - name: Build
-    #       run: |
-    #         ./mach build
+        - name: 🏗 Build
+          run: |
+            ./mach build
             
-    #     - name: Package
-    #       run: |
-    #         ./mach package
+        - name: 📦 Package
+          run: |
+            ./mach package
             
-    #     - name: Upload Linux artifact
-    #       uses: actions/upload-artifact@v2
-    #       with:
-    #         name: Artifact Classic Linux ${{ github.run_id }}
-    #         path: ./objdir-*/dist/*.tar.bz2
+        - name: 🆙 Upload artifact
+          uses: actions/upload-artifact@v2
+          with:
+            name: Waterfox Linux Artifact ${{ github.run_id }}
+            path: ./objdir-*/dist/*.tar.bz2
