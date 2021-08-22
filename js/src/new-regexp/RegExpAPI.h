@@ -29,6 +29,10 @@ bool CheckPatternSyntax(JSContext* cx, frontend::TokenStream& ts,
 bool CompilePattern(JSContext* cx, MutableHandleRegExpShared re,
                     HandleLinearString input);
 
+RegExpRunStatus Execute(JSContext* cx, MutableHandleRegExpShared re,
+                        HandleLinearString input, size_t start,
+                        MatchPairs* matches);
+
 }  // namespace irregexp
 }  // namespace js
 
