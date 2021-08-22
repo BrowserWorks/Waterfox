@@ -25,6 +25,9 @@
 #include "js/RegExpFlags.h"
 #include "js/UbiNode.h"
 #include "js/Vector.h"
+#ifdef JS_NEW_REGEXP
+#  include "new-regexp/RegExpTypes.h"
+#endif
 #include "vm/ArrayObject.h"
 
 struct JSContext;
@@ -80,7 +83,13 @@ class RegExpShared : public gc::TenuredCell
         RegExp
     };
 
+#ifdef JS_NEW_REGEXP
+    using ByteCode = js::irregexp::ByteArrayData;
+    using JitCodeTable = js::irregexp::ByteArray;
+#else
+    using ByteCode = uint8_t;
     using JitCodeTable = UniquePtr<uint8_t[], JS::FreePolicy>;
+#endif
     using JitCodeTables = Vector<JitCodeTable, 0, SystemAllocPolicy>;
 
   private:
@@ -90,7 +99,7 @@ class RegExpShared : public gc::TenuredCell
     struct RegExpCompilation
     {
         ReadBarriered<jit::JitCode*> jitCode;
-        uint8_t* byteCode;
+        ByteCode* byteCode;
 
         RegExpCompilation() : byteCode(nullptr) {}
 
@@ -181,6 +190,13 @@ class RegExpShared : public gc::TenuredCell
 
   // Use simple string matching for this regexp.
   void useAtomMatch(HandleAtom pattern);
+  void setByteCode(ByteCode* code, bool latin1) {
+    compilation(latin1).byteCode = code;
+  }
+  ByteCode* getByteCode(bool latin1) const {
+    return compilation(latin1).byteCode;
+  }
+
 #endif
 
     JSAtom* getSource() const           { return source; }
