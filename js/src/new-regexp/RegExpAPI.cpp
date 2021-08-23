@@ -230,8 +230,7 @@ static bool CheckPatternSyntaxImpl(JSContext* cx, FlatStringReader* pattern,
   Zone zone(allocScope.alloc());
 
   HandleScope handleScope(cx->isolate);
-  v8::internal::JSRegExp::Flags passflags = static_cast<uint8_t>(flags.value());
-  return RegExpParser::ParseRegExp(cx->isolate, &zone, pattern, passflags, result);
+  return RegExpParser::ParseRegExp(cx->isolate, &zone, pattern, flags, result);
 }
 
 bool CheckPatternSyntax(JSContext* cx, TokenStream& ts,
@@ -371,14 +370,13 @@ bool CompilePattern(JSContext* cx, MutableHandleRegExpShared re,
                     HandleLinearString input) {
   RootedAtom pattern(cx, re->getSource());
   JS::RegExpFlags flags = re->getFlags();
-  v8::internal::JSRegExp::Flags passflags = static_cast<uint8_t>(flags.value());
   LifoAllocScope allocScope(&cx->tempLifoAlloc());
   Zone zone(allocScope.alloc());
 
   RegExpCompileData data;
   {
     FlatStringReader patternBytes(pattern);
-    if (!RegExpParser::ParseRegExp(cx->isolate, &zone, &patternBytes, passflags,
+    if (!RegExpParser::ParseRegExp(cx->isolate, &zone, &patternBytes, flags,
                                    &data)) {
       MOZ_ASSERT(data.error == RegExpError::kStackOverflow);
       JS::CompileOptions options(cx);

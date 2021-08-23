@@ -94,13 +94,28 @@ public:
 
   bool operator!=(const RegExpFlags& other) const { return !(*this == other); }
 
+  RegExpFlags& operator&=(const RegExpFlags& rhs)
+  {
+    flags_ &= rhs.flags_;
+    return *this;
+  }
+
+  RegExpFlags& operator|=(const RegExpFlags& rhs)
+  {
+    flags_ |= rhs.flags_;
+    return *this;
+  }
+
   RegExpFlags operator&(Flag flag) const { return RegExpFlags(flags_ & flag); }
 
   RegExpFlags operator|(Flag flag) const { return RegExpFlags(flags_ | flag); }
 
   RegExpFlags operator^(Flag flag) const { return RegExpFlags(flags_ ^ flag); }
 
-  RegExpFlags operator~() const { return RegExpFlags(~flags_); }
+  RegExpFlags operator~() const
+  {
+    return RegExpFlags(~flags_ & RegExpFlag::AllFlags);
+  }
 
   bool global() const { return flags_ & RegExpFlag::Global; }
   bool ignoreCase() const { return flags_ & RegExpFlag::IgnoreCase; }
@@ -133,6 +148,22 @@ operator^=(RegExpFlags& flags, RegExpFlags::Flag flag)
 {
   flags = flags ^ flag;
   return flags;
+}
+
+inline RegExpFlags
+operator&(const RegExpFlags& lhs, const RegExpFlags& rhs)
+{
+  RegExpFlags result = lhs;
+  result &= rhs;
+  return lhs;
+}
+
+inline RegExpFlags
+operator|(const RegExpFlags& lhs, const RegExpFlags& rhs)
+{
+  RegExpFlags result = lhs;
+  result |= rhs;
+  return result;
 }
 
 } // namespace JS
