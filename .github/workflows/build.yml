@@ -66,7 +66,7 @@ jobs:
             7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
             cp $GITHUB_WORKSPACE/browser/installer/windows/app.tag .
             cp $GITHUB_WORKSPACE/other-licenses/7zstub/firefox/7zSD.Win32.sfx .
-            cat 7zSD.sfx app.tag app.7z > "Waterfox $VERSION_DISPLAY Setup.exe"
+            cat 7zSD.Win32.sfx app.tag app.7z > "Waterfox $VERSION_DISPLAY Setup.exe"
             jsign --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "Waterfox $VERSION_DISPLAY Setup.exe"
             jsign -s dummy.pfx --storepass=password --storetype=PKCS12 "Waterfox $VERSION_DISPLAY Setup.exe"
             az logout
