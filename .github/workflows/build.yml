@@ -80,30 +80,30 @@ jobs:
             name: Waterfox Windows Artifact ${{ github.run_id }}
             path: ./objdir-*/dist/install/sea/*.exe
             
-    linux-x64:
-      name: 🐧 Linux X64
-      runs-on: [self-hosted, linux, X64]
-      env:
-        SHELL: /bin/sh
-        MOZCONFIG: ".mozconfig"
-      steps:
-        - name: 📤 Checkout
-        - uses: actions/checkout@v2
+    # linux-x64:
+    #   name: 🐧 Linux X64
+    #   runs-on: [self-hosted, linux, X64]
+    #   env:
+    #     SHELL: /bin/sh
+    #     MOZCONFIG: ".mozconfig"
+    #   steps:
+    #     - name: 📤 Checkout
+    #     - uses: actions/checkout@v2
 
-        # - name: Bootstrap
-        #   run: |
-        #     ./mach --no-interactive bootstrap --application-choice=browser
+    #     # - name: Bootstrap
+    #     #   run: |
+    #     #     ./mach --no-interactive bootstrap --application-choice=browser
 
-        - name: 🏗 Build
-          run: |
-            ./mach build
+    #     - name: 🏗 Build
+    #       run: |
+    #         ./mach build
             
-        - name: 📦 Package
-          run: |
-            ./mach package
+    #     - name: 📦 Package
+    #       run: |
+    #         ./mach package
             
-        - name: 🆙 Upload artifact
-          uses: actions/upload-artifact@v2
-          with:
-            name: Waterfox Linux Artifact ${{ github.run_id }}
-            path: ./objdir-*/dist/*.tar.bz2
+    #     - name: 🆙 Upload artifact
+    #       uses: actions/upload-artifact@v2
+    #       with:
+    #         name: Waterfox Linux Artifact ${{ github.run_id }}
+    #         path: ./objdir-*/dist/*.tar.bz2
