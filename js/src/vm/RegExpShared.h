@@ -22,6 +22,7 @@
 #include "gc/Barrier.h"
 #include "gc/Heap.h"
 #include "gc/Marking.h"
+#include "jit/JitOptions.h"
 #include "js/RegExpFlags.h"
 #include "js/UbiNode.h"
 #include "js/Vector.h"
@@ -50,6 +51,17 @@ enum RegExpRunStatus : int32_t
     RegExpRunStatus_Success = 1,
     RegExpRunStatus_Success_NotFound = 0,
 };
+
+#ifdef JS_NEW_REGEXP
+
+inline bool IsNativeRegExpEnabled(JSContext* cx) {
+#  ifdef JS_CODEGEN_NONE
+  return false;
+#  else
+  return cx->options().nativeRegExp();
+#  endif
+}
+#endif  // JS_NEW_REGEXP
 
 /*
  * A RegExpShared is the compiled representation of a regexp. A RegExpShared is
@@ -128,6 +140,7 @@ class RegExpShared : public gc::TenuredCell
     RegExpShared::Kind kind_ = Kind::Unparsed;
     GCPtrAtom patternAtom_;
     uint32_t maxRegisters_ = 0;
+    uint32_t ticks_ = 0;
 #else
     bool canStringMatch = false;
 #endif
@@ -206,11 +219,20 @@ class RegExpShared : public gc::TenuredCell
   // Use the regular expression engine for this regexp.
   void useRegExpMatch(size_t parenCount);
 
+  void tierUpTick();
+  bool markedForTierUp(JSContext* cx);
+
   void setByteCode(ByteCode* code, bool latin1) {
     compilation(latin1).byteCode = code;
   }
   ByteCode* getByteCode(bool latin1) const {
     return compilation(latin1).byteCode;
+  }
+  void setJitCode(jit::JitCode* code, bool latin1) {
+    compilation(latin1).jitCode = code;
+  }
+  jit::JitCode* getJitCode(bool latin1) const {
+    return compilation(latin1).jitCode;
   }
   uint32_t getMaxRegisters() const { return maxRegisters_; }
   void updateMaxRegisters(uint32_t numRegisters) {
