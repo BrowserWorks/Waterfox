@@ -30,7 +30,6 @@ ac_add_options --disable-default-browser-agent # WinToast does not build on ming
 ac_add_options --disable-dmd
 ac_add_options --disable-geckodriver
 ac_add_options --disable-maintenance-service
-ac_add_options --disable-maintenance-service
 ac_add_options --disable-profiling
 ac_add_options --disable-tests
 ac_add_options --disable-update-agent # Bug 1561797
@@ -48,8 +47,10 @@ ac_add_options --enable-strip
 ac_add_options --target=x86_64-w64-mingw32
 ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-app-name=waterfox
+ac_add_options --with-branding=browser/branding/dokimi
 ac_add_options --with-clang-path="$CC"
 ac_add_options --with-distribution-id=net.waterfox
+ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
 ac_add_options --with-libclang-path="$TOOLTOOL_DIR/clang/lib"
 ac_add_options --with-toolchain-prefix=x86_64-w64-mingw32-
 
