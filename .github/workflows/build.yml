@@ -114,7 +114,7 @@ jobs:
         - name: 🆙 Upload artifact
           uses: actions/upload-artifact@v2
           with:
-            name: Waterfox Windows Artifact ${{ github.run_id }}
+            name: Waterfox Windows Artifact ${{ github.run_id }
             path: |
               ./objdir-*/dist/install/sea/*.exe
               ./objdir-*/dist/update/*.mar 
