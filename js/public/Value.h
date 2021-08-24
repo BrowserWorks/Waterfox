@@ -692,7 +692,7 @@ class MOZ_NON_PARAM alignas(8) Value
         return data.s.payload.u32;
     }
 
-    uint64_t asRawBits() const {
+    constexpr uint64_t asRawBits() const {
         return data.asBits;
     }
 
