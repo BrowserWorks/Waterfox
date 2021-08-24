@@ -20,6 +20,7 @@ jobs:
             MOZ_NOSPAM: 1
             JSIGN_PATH: /c/mozilla-build/bin/jsign-4.0.jar
             JAVA_PATH: /c/PROGRA~2/COMMON~1/Oracle/Java/javapath/java.exe
+            WINDOWSSDKDIR: C:\\Program Files (x86)\\Windows Kits\\10
         steps:
           - name: Checkout branch
             uses: actions/checkout@v2
