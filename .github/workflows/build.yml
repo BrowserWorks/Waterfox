@@ -76,7 +76,7 @@ jobs:
         - name: Update Package
           run: |
             VERSION_DISPLAY=`cat browser/config/version_display.txt`
-            pushd objdir-x86_64-w64-mingw32/dist/
+            pushd objdir-current-mingw64/dist/
             mkdir -p update
             cp $GITHUB_WORKSPACE/tools/update-packaging/make_full_update.sh update/
             cp $GITHUB_WORKSPACE/tools/update-packaging/common.sh update/
@@ -90,7 +90,7 @@ jobs:
             for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
             pushd update
             7z x "Waterfox $VERSION_DISPLAY Setup.exe" -otmp/
-            MAR=$GITHUB_WORKSPACE/objdir-x86_64-w64-mingw32/dist/host/bin/mar \
+            MAR=$GITHUB_WORKSPACE/objdir-current-mingw64/dist/host/bin/mar \
                 MOZ_PRODUCT_VERSION=$VERSION_DISPLAY MAR_CHANNEL_ID="default" \
                 ./make_full_update.sh \
                 waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar \
