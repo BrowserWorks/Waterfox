@@ -73,18 +73,59 @@ jobs:
             rm -rf core 7zSD.Win32.sfx app.tag app.7z setup.exe
             popd
 
+        - name: Update Package
+          run: |
+            VERSION_DISPLAY=`cat browser/config/version_display.txt`
+            pushd objdir-x86_64-w64-mingw32/dist/
+            mkdir -p update
+            cp $GITHUB_WORKSPACE/tools/update-packaging/make_full_update.sh update/
+            cp $GITHUB_WORKSPACE/tools/update-packaging/common.sh update/
+            cp -r "install/sea/Waterfox $VERSION_DISPLAY Setup.exe" update/
+            xml=('<?xml version="1.0"?>'
+            '<updates>'
+            '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
+            '        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-classic-BROWSER_VERSION.en-US.PLATFORM.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+            '    </update>'
+            '</updates>')
+            for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
+            pushd update
+            7z x "Waterfox $VERSION_DISPLAY Setup.exe" -otmp/
+            MAR=$GITHUB_WORKSPACE/objdir-x86_64-w64-mingw32/dist/host/bin/mar \
+                MOZ_PRODUCT_VERSION=$VERSION_DISPLAY MAR_CHANNEL_ID="default" \
+                ./make_full_update.sh \
+                waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar \
+                'tmp/core'
+            VERSION_DISPLAY=$(grep 'DisplayVersion=' tmp/core/application.ini | cut -d'=' -f2)
+            VERSION=$(grep '\<Version\>' tmp/core/application.ini | cut -d'=' -f2)
+            BUILDID=$(grep 'BuildID=' tmp/core/application.ini | cut -d'=' -f2)
+            SHA512=$(shasum -a 512 waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar | awk '{print $1}')
+            SIZE=$(ls -l waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar | awk '{print $5}')
+            echo "Display Version: $VERSION_DISPLAY, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
+            sed -i "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" update.xml
+            sed -i "s/BROWSER_VERSION/$VERSION_DISPLAY/g" update.xml
+            sed -i "s/VERSION/$VERSION/g" update.xml
+            sed -i "s/BUILDID/$BUILDID/g" update.xml
+            sed -i "s/SIZE/$SIZE/g" update.xml
+            sed -i "s/HASH/"$SHA512"/g" update.xml
+            popd
+            popd
+
+
         - name: 🆙 Upload artifact
           uses: actions/upload-artifact@v2
           with:
             name: Waterfox Windows Artifact ${{ github.run_id }}
-            path: ./objdir-*/dist/install/sea/*.exe
+            path: |
+              ./objdir-*/dist/install/sea/*.exe
+              ./objdir-*/dist/update/*.mar 
+              ./objdir-*/dist/update/*.xml
             
     linux-x64:
       name: 🐧 Linux X64
       runs-on: [self-hosted, linux, X64]
       env:
         shell: bash
-        MOZCONFIG: ".mozconfig"
+        MOZCONFIG: ".mozconfig-x86_64-pc-linux-gnu"
       steps:
         - name: 📤 Checkout
           uses: actions/checkout@v2
@@ -100,9 +141,43 @@ jobs:
         - name: 📦 Package
           run: |
             ./mach package
+            mkdir update
+            cp tools/update-packaging/make_full_update.sh update/
+            cp tools/update-packaging/common.sh update/
+            BROWSER_VERSION=`cat browser/config/version_display.txt`
+            cp obj-x86_64-pc-linux-gnu/dist/waterfox-$BROWSER_VERSION.en-US.linux-x86_64.tar.bz2 update/
+            xml=('<?xml version="1.0"?>'
+            '<updates>'
+            '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
+            '        <patch type="complete" URL="https://cdn.waterfox.net/releases/linux64/update/waterfox-BROWSER_VERSION.en-US.linux64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+            '    </update>'
+            '</updates>')
+
+            for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
+            cd update
+            tar -xvf waterfox-$BROWSER_VERSION.en-US.linux-x86_64.tar.bz2 
+            MAR=../obj-x86_64-pc-linux-gnu/dist/host/bin/mar \
+                MOZ_PRODUCT_VERSION=$BROWSER_VERSION MAR_CHANNEL_ID="default" \
+                ./make_full_update.sh \
+                waterfox-$BROWSER_VERSION.en-US.linux64.complete.xz.mar \
+                'waterfox'
+            VERSION=$(grep '\<Version\>' waterfox/application.ini | cut -d'=' -f2)
+            BUILDID=$(grep 'BuildID=' waterfox/application.ini | cut -d'=' -f2)
+            SHA512=$(shasum -a 512 waterfox-$BROWSER_VERSION.en-US.linux64.complete.xz.mar | awk '{print $1}')
+                SIZE=$(ls -l waterfox-$BROWSER_VERSION.en-US.linux64.complete.xz.mar | awk '{print $5}')
+            echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
+            sed -i "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" update.xml
+            sed -i "s/BROWSER_VERSION/$BROWSER_VERSION/g" update.xml
+            sed -i "s/VERSION/$VERSION/g" update.xml
+            sed -i "s/BUILDID/$BUILDID/g" update.xml
+            sed -i "s/SIZE/$SIZE/g" update.xml
+            sed -i "s/HASH/"$SHA512"/g" update.xml
             
         - name: 🆙 Upload artifact
           uses: actions/upload-artifact@v2
           with:
             name: Waterfox Linux Artifact ${{ github.run_id }}
-            path: ./objdir-*/dist/*.tar.bz2
+            path: |
+              ./objdir-*/dist/*.tar.bz2
+              ./update/*.mar
+              ./update/*.xml
