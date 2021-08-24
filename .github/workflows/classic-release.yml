@@ -33,12 +33,12 @@ jobs:
           - name: Mach build
             run: |
               ./mach build
-            shell: bash
+            shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
 
           - name: Mach build installer
             run: |
               ./mach build installer
-            shell: bash
+            shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
               
           - name: Sign
             run: |
@@ -58,7 +58,7 @@ jobs:
               az logout
               rm -rf core 7zSD.sfx app.tag app.7z setup.exe
               popd
-            shell: bash
+            shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
               
           - name: Upload artifact
             uses: actions/upload-artifact@v2
