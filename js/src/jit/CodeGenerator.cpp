@@ -46,6 +46,9 @@
 #include "jit/SharedICHelpers.h"
 #include "jit/StackSlotAllocator.h"
 #include "js/RegExpFlags.h"
+#ifdef JS_NEW_REGEXP
+#  include "new-regexp/RegExpTypes.h"
+#endif
 #include "vm/AsyncFunction.h"
 #include "vm/AsyncIteration.h"
 #include "vm/MatchPairs.h"
@@ -1188,11 +1191,7 @@ CodeGenerator::visitRegExp(LRegExp* lir)
     masm.bind(ool->rejoin());
 }
 
-#ifdef JS_NEW_REGEXP
-static const size_t InputOutputDataSize = 0;
-#else
 static const size_t InputOutputDataSize = sizeof(irregexp::InputOutputData);
-#endif
 
 // Amount of space to reserve on the stack when executing RegExps inline.
 static const size_t RegExpReservedStack = InputOutputDataSize
@@ -1303,8 +1302,8 @@ UpdateRegExpStatics(MacroAssembler& masm,
 
 // Prepare an InputOutputData and optional MatchPairs which space has been
 // allocated for on the stack, and try to execute a RegExp on a string input.
-// If the RegExp was successfully executed and matched the input, fallthrough,
-// otherwise jump to notFound or failure.
+// If the RegExp was successfully executed and matched the input, fallthrough.
+// Otherwise, jump to notFound or failure.
 static bool
 PrepareAndExecuteRegExp(JSContext* cx,
                         MacroAssembler& masm,
@@ -1319,7 +1318,162 @@ PrepareAndExecuteRegExp(JSContext* cx,
                         Label* notFound,
                         Label* failure)
 {
-    MOZ_CRASH("TODO");
+    using irregexp::InputOutputData;
+
+    size_t ioOffset = inputOutputDataStartOffset;
+    size_t matchPairsOffset = ioOffset + sizeof(InputOutputData);
+    size_t pairsArrayOffset = matchPairsOffset + sizeof(MatchPairs);
+
+    Address inputStartAddress(masm.getStackPointer(),
+                              ioOffset + offsetof(InputOutputData, inputStart));
+    Address inputEndAddress(masm.getStackPointer(),
+                            ioOffset + offsetof(InputOutputData, inputEnd));
+    Address startIndexAddress(masm.getStackPointer(),
+                              ioOffset + offsetof(InputOutputData, startIndex));
+    Address matchesAddress(masm.getStackPointer(), ioOffset + offsetof(InputOutputData, matches));
+
+    Address matchPairsAddress(masm.getStackPointer(), matchPairsOffset);
+    Address pairCountAddress(masm.getStackPointer(),
+                             matchPairsOffset + MatchPairs::offsetOfPairCount());
+    Address pairsPointerAddress(masm.getStackPointer(),
+                                matchPairsOffset + MatchPairs::offsetOfPairs());
+
+    Address pairsArrayAddress(masm.getStackPointer(), pairsArrayOffset);
+
+    // First, fill in a skeletal MatchPairs instance on the stack. This will be
+    // passed to the OOL stub in the caller if we aren't able to execute the
+    // RegExp inline, and that stub needs to be able to determine whether the
+    // execution finished successfully.
+
+    // Initialize MatchPairs::pairCount to 1. The correct value can only
+    // be determined after loading the RegExpShared.
+    masm.store32(Imm32(1), pairCountAddress);
+
+    // Initialize MatchPairs::pairs pointer
+    masm.store32(Imm32(-1), pairsArrayAddress);
+    masm.computeEffectiveAddress(pairsArrayAddress, temp1);
+    masm.storePtr(temp1, pairsPointerAddress);
+
+    // Check for a linear input string.
+    masm.branchIfRopeOrExternal(input, temp1, failure);
+
+    // Load the RegExpShared.
+    Register regexpReg = temp1;
+
+    // Get the RegExpShared for the RegExp.
+    masm.loadPtr(Address(regexp, NativeObject::getFixedSlotOffset(RegExpObject::PRIVATE_SLOT)),
+                 regexpReg);
+    masm.branchPtr(Assembler::Equal, regexpReg, ImmWord(0), failure);
+
+    // Don't handle regexps with too many capture pairs.
+    masm.load32(Address(regexpReg, RegExpShared::offsetOfPairCount()), temp2);
+    masm.branch32(Assembler::Above, temp2, Imm32(RegExpObject::MaxPairCount), failure);
+
+    // Fill in the pair count in the MatchPairs on the stack.
+    masm.store32(temp2, pairCountAddress);
+
+    // Update lastIndex if necessary.
+    StepBackToLeadSurrogate(masm, regexpReg, input, lastIndex, temp2, temp3);
+
+    // Load code pointer and length of input (in bytes).
+    // Store the input start in the InputOutputData.
+    Register codePointer = temp1; // Note: temp1 was previously regexpReg.
+    Register byteLength = temp3;
+    {
+        Label isLatin1, done;
+        masm.loadStringChars(input, temp2);
+        masm.storePtr(temp2, inputStartAddress);
+        masm.loadStringLength(input, byteLength);
+
+        masm.branchLatin1String(input, &isLatin1);
+
+        // Two-byte input
+        masm.loadPtr(Address(regexpReg, RegExpShared::offsetOfJitCode(/*latin1 =*/false)),
+                     codePointer);
+        masm.lshiftPtr(Imm32(1), byteLength);
+        masm.jump(&done);
+
+        // Latin1 input
+        masm.bind(&isLatin1);
+        masm.loadPtr(Address(regexpReg, RegExpShared::offsetOfJitCode(/*latin1 = */ true)),
+                     codePointer);
+
+        masm.bind(&done);
+
+        // Store end pointer
+        masm.addPtr(byteLength, temp2);
+        masm.storePtr(temp2, inputEndAddress);
+    }
+
+    // Guard that the RegExpShared has been compiled for this type of input.
+    // If it has not been compiled, we fall back to the OOL case, which will
+    // do a VM call into the interpreter.
+    // TODO: add an interpreter trampoline?
+    masm.branchPtr(Assembler::Equal, codePointer, ImmWord(0), failure);
+    masm.loadPtr(Address(codePointer, JitCode::offsetOfCode()), codePointer);
+
+    // Finish filling in the InputOutputData instance on the stack
+    masm.computeEffectiveAddress(matchPairsAddress, temp2);
+    masm.storePtr(temp2, matchesAddress);
+    masm.storePtr(lastIndex, startIndexAddress);
+
+    // Save any volatile inputs.
+    LiveGeneralRegisterSet volatileRegs;
+    if (lastIndex.volatile_()) {
+        volatileRegs.add(lastIndex);
+    }
+    if (input.volatile_()) {
+        volatileRegs.add(input);
+    }
+    if (regexp.volatile_()) {
+        volatileRegs.add(regexp);
+    }
+
+#ifdef JS_TRACE_LOGGING
+    if (TraceLogTextIdEnabled(TraceLogger_IrregexpExecute)) {
+        masm.loadTraceLogger(temp2);
+        masm.tracelogStartId(temp2, TraceLogger_IrregexpExecute);
+    }
+#endif
+
+    // Execute the RegExp.
+    masm.computeEffectiveAddress(Address(masm.getStackPointer(), inputOutputDataStartOffset),
+                                 temp2);
+    masm.PushRegsInMask(volatileRegs);
+    masm.setupUnalignedABICall(temp3);
+    masm.passABIArg(temp2);
+    masm.callWithABI(codePointer);
+    masm.storeCallInt32Result(temp1);
+    masm.PopRegsInMask(volatileRegs);
+
+#ifdef JS_TRACE_LOGGING
+    if (TraceLogTextIdEnabled(TraceLogger_IrregexpExecute)) {
+        masm.loadTraceLogger(temp2);
+        masm.tracelogStopId(temp2, TraceLogger_IrregexpExecute);
+    }
+#endif
+
+    Label success;
+    masm.branch32(Assembler::Equal, temp1, Imm32(RegExpRunStatus_Success_NotFound), notFound);
+    masm.branch32(Assembler::Equal, temp1, Imm32(RegExpRunStatus_Error), failure);
+
+    // Lazily update the RegExpStatics.
+    RegExpStatics* res = GlobalObject::getRegExpStatics(cx, cx->global());
+    if (!res) {
+        return false;
+    }
+    masm.movePtr(ImmPtr(res), temp1);
+    UpdateRegExpStatics(masm,
+                        regexp,
+                        input,
+                        lastIndex,
+                        temp1,
+                        temp2,
+                        temp3,
+                        // stringsCanBeInNursery,
+                        volatileRegs);
+
+    return true;
 }
 
 #else
