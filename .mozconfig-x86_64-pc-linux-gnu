@@ -37,6 +37,4 @@ if test -f "$HOME/.mozbuild/sccache/sccache"; then
 fi
 
 export MOZ_INCLUDE_SOURCE_INFO=1
-export MOZ_REQUIRE_SIGNING=0
-
 mk_add_options AUTOCLOBBER=1
