@@ -1213,6 +1213,92 @@ RegExpPairCountAddress(MacroAssembler& masm, size_t inputOutputDataStartOffset)
                                            + MatchPairs::offsetOfPairCount());
 }
 
+// When the unicode flag is set, if lastIndex points to a trail
+// surrogate, we should step back to the corresponding lead surrogate.
+// See ExecuteRegExp in builtin/RegExp.cpp for more detail.
+static void
+StepBackToLeadSurrogate(MacroAssembler& masm,
+                        Register regexpShared,
+                        Register input,
+                        Register lastIndex,
+                        Register temp1,
+                        Register temp2)
+{
+    Label done;
+
+    // If the unicode flag is not set, there is nothing to do.
+    masm.branchTest32(Assembler::Zero,
+                      Address(regexpShared, RegExpShared::offsetOfFlags()),
+                      Imm32(int32_t(JS::RegExpFlag::Unicode)),
+                      &done);
+
+    // If the input is latin1, there can't be any surrogates.
+    masm.branchLatin1String(input, &done);
+
+    // Check if |lastIndex > 0 && lastIndex < input->length()|.
+    // lastIndex should already have no sign here.
+    masm.branchTest32(Assembler::Zero, lastIndex, lastIndex, &done);
+    masm.loadStringLength(input, temp1);
+    masm.branch32(Assembler::AboveOrEqual, lastIndex, temp1, &done);
+
+    Register charsReg = temp1;
+    masm.loadStringChars(input, charsReg);
+
+    // Check if input[lastIndex] is trail surrogate.
+    masm.computeEffectiveAddress(BaseIndex(charsReg, lastIndex, TimesTwo), temp2);
+    masm.load16ZeroExtend(Address(temp2, 0), temp2);
+
+    masm.branch32(Assembler::Below, temp2, Imm32(unicode::TrailSurrogateMin), &done);
+    masm.branch32(Assembler::Above, temp2, Imm32(unicode::TrailSurrogateMax), &done);
+
+    // Check if input[lastIndex-1] is lead surrogate.
+    masm.move32(lastIndex, temp2);
+    masm.sub32(Imm32(1), temp2);
+    masm.computeEffectiveAddress(BaseIndex(charsReg, temp2, TimesTwo), temp2);
+    masm.load16ZeroExtend(Address(temp2, 0), temp2);
+
+    masm.branch32(Assembler::Below, temp2, Imm32(unicode::LeadSurrogateMin), &done);
+    masm.branch32(Assembler::Above, temp2, Imm32(unicode::LeadSurrogateMax), &done);
+
+    // Move lastIndex back to lead surrogate.
+    masm.subPtr(Imm32(1), lastIndex);
+
+    masm.bind(&done);
+}
+
+static void
+UpdateRegExpStatics(MacroAssembler& masm,
+                    Register regexp,
+                    Register input,
+                    Register lastIndex,
+                    Register staticsReg,
+                    Register temp1,
+                    Register temp2,
+                    // bool stringsCanBeInNursery,
+                    LiveGeneralRegisterSet& volatileRegs)
+{
+    Address pendingInputAddress(staticsReg, RegExpStatics::offsetOfPendingInput());
+    Address matchesInputAddress(staticsReg, RegExpStatics::offsetOfMatchesInput());
+    Address lazySourceAddress(staticsReg, RegExpStatics::offsetOfLazySource());
+    Address lazyIndexAddress(staticsReg, RegExpStatics::offsetOfLazyIndex());
+
+    masm.guardedCallPreBarrier(pendingInputAddress, MIRType::String);
+    masm.guardedCallPreBarrier(matchesInputAddress, MIRType::String);
+    masm.guardedCallPreBarrier(lazySourceAddress, MIRType::String);
+
+    masm.storePtr(input, pendingInputAddress);
+    masm.storePtr(input, matchesInputAddress);
+    masm.storePtr(lastIndex, Address(staticsReg, RegExpStatics::offsetOfLazyIndex()));
+    masm.store32(Imm32(1), Address(staticsReg, RegExpStatics::offsetOfPendingLazyEvaluation()));
+
+    masm.loadPtr(Address(regexp, NativeObject::getFixedSlotOffset(RegExpObject::PRIVATE_SLOT)),
+                 temp1);
+    masm.loadPtr(Address(temp1, RegExpShared::offsetOfSource()), temp2);
+    masm.storePtr(temp2, lazySourceAddress);
+    masm.load32(Address(temp1, RegExpShared::offsetOfFlags()), temp2);
+    masm.store32(temp2, Address(staticsReg, RegExpStatics::offsetOfLazyFlags()));
+}
+
 #ifdef JS_NEW_REGEXP
 
 // Prepare an InputOutputData and optional MatchPairs which space has been
@@ -1277,11 +1363,6 @@ PrepareAndExecuteRegExp(JSContext* cx,
 
     Address pairsVectorAddress(masm.getStackPointer(), pairsVectorStartOffset);
 
-    RegExpStatics* res = GlobalObject::getRegExpStatics(cx, cx->global());
-    if (!res) {
-        return false;
-    }
-
     // First, fill in a skeletal MatchPairs instance on the stack. This will be
     // passed to the OOL stub in the caller if we aren't able to execute the
     // RegExp inline, and that stub needs to be able to determine whether the
@@ -1298,45 +1379,8 @@ PrepareAndExecuteRegExp(JSContext* cx,
     masm.loadPtr(Address(regexp, NativeObject::getFixedSlotOffset(RegExpObject::PRIVATE_SLOT)), temp1);
     masm.branchPtr(Assembler::Equal, temp1, ImmWord(0), failure);
 
-    // ES6 21.2.2.2 step 2.
-    // See RegExp.cpp ExecuteRegExp for more detail.
-    {
-        Label done;
-
-        masm.branchTest32(Assembler::Zero, Address(temp1, RegExpShared::offsetOfFlags()),
-                          Imm32(int32_t(JS::RegExpFlag::Unicode)), &done);
-
-        // If input is latin1, there should not be surrogate pair.
-        masm.branchLatin1String(input, &done);
-
-        // Check if |lastIndex > 0 && lastIndex < input->length()|.
-        // lastIndex should already have no sign here.
-        masm.branchTest32(Assembler::Zero, lastIndex, lastIndex, &done);
-        masm.loadStringLength(input, temp2);
-        masm.branch32(Assembler::AboveOrEqual, lastIndex, temp2, &done);
-
-        // Check if input[lastIndex] is trail surrogate.
-        masm.loadStringChars(input, temp2);
-        masm.computeEffectiveAddress(BaseIndex(temp2, lastIndex, TimesTwo), temp3);
-        masm.load16ZeroExtend(Address(temp3, 0), temp3);
-
-        masm.branch32(Assembler::Below, temp3, Imm32(unicode::TrailSurrogateMin), &done);
-        masm.branch32(Assembler::Above, temp3, Imm32(unicode::TrailSurrogateMax), &done);
-
-        // Check if input[lastIndex-1] is lead surrogate.
-        masm.move32(lastIndex, temp3);
-        masm.sub32(Imm32(1), temp3);
-        masm.computeEffectiveAddress(BaseIndex(temp2, temp3, TimesTwo), temp3);
-        masm.load16ZeroExtend(Address(temp3, 0), temp3);
-
-        masm.branch32(Assembler::Below, temp3, Imm32(unicode::LeadSurrogateMin), &done);
-        masm.branch32(Assembler::Above, temp3, Imm32(unicode::LeadSurrogateMax), &done);
-
-        // Move lastIndex to lead surrogate.
-        masm.subPtr(Imm32(1), lastIndex);
-
-        masm.bind(&done);
-    }
+    // Update lastIndex if necessary.
+    StepBackToLeadSurrogate(masm, temp1, input, lastIndex, temp2, temp3);
 
     // Don't handle RegExps with excessive parens.
     masm.load32(Address(temp1, RegExpShared::offsetOfPairCount()), temp2);
@@ -1423,28 +1467,21 @@ PrepareAndExecuteRegExp(JSContext* cx,
                   Imm32(RegExpRunStatus_Error), failure);
 
     // Lazily update the RegExpStatics.
+    RegExpStatics* res = GlobalObject::getRegExpStatics(cx, cx->global());
+    if (!res) {
+        return false;
+    }
     masm.movePtr(ImmPtr(res), temp1);
 
-    Address pendingInputAddress(temp1, RegExpStatics::offsetOfPendingInput());
-    Address matchesInputAddress(temp1, RegExpStatics::offsetOfMatchesInput());
-    Address lazySourceAddress(temp1, RegExpStatics::offsetOfLazySource());
-    Address lazyIndexAddress(temp1, RegExpStatics::offsetOfLazyIndex());
-
-    masm.guardedCallPreBarrier(pendingInputAddress, MIRType::String);
-    masm.guardedCallPreBarrier(matchesInputAddress, MIRType::String);
-    masm.guardedCallPreBarrier(lazySourceAddress, MIRType::String);
-
-    masm.storePtr(input, pendingInputAddress);
-    masm.storePtr(input, matchesInputAddress);
-    masm.storePtr(lastIndex, Address(temp1, RegExpStatics::offsetOfLazyIndex()));
-    masm.store32(Imm32(1), Address(temp1, RegExpStatics::offsetOfPendingLazyEvaluation()));
-
-    masm.loadPtr(Address(regexp, NativeObject::getFixedSlotOffset(RegExpObject::PRIVATE_SLOT)), temp2);
-    masm.loadPtr(Address(temp2, RegExpShared::offsetOfSource()), temp3);
-    masm.storePtr(temp3, lazySourceAddress);
-    masm.load32(Address(temp2, RegExpShared::offsetOfFlags()), temp3);
-    masm.store32(temp3, Address(temp1, RegExpStatics::offsetOfLazyFlags()));
-
+    UpdateRegExpStatics(masm,
+                        regexp,
+                        input,
+                        lastIndex,
+                        temp1,
+                        temp2,
+                        temp3,
+                        // stringsCanBeInNursery,
+                        volatileRegs);
     return true;
 }
 
