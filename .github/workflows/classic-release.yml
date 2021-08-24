@@ -33,13 +33,19 @@ jobs:
 
           - name: Mach build
             run: |
-              ./mach build
-            shell: bash
+              $pattern = '[\\]'
+              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+              Write-Output $env:BUILD_DIR
+              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/build.sh"
 
           - name: Mach build installer
             run: |
-              ./mach build installer
-            shell: bash
+              $pattern = '[\\]'
+              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+              Write-Output $env:BUILD_DIR
+              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/package.sh"
               
           - name: Sign
             run: |
