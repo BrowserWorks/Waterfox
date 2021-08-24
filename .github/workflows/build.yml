@@ -83,7 +83,7 @@ jobs:
       name: 🐧 Linux X64
       runs-on: [self-hosted, linux, X64]
       env:
-        SHELL: /bin/sh
+        shell: bash
         MOZCONFIG: ".mozconfig"
       steps:
         - name: 📤 Checkout
