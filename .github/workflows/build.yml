@@ -90,12 +90,11 @@ jobs:
             for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
             pushd update
             7z x "Waterfox $VERSION_DISPLAY Setup.exe" -otmp/
-            MAR=$GITHUB_WORKSPACE/objdir-current-mingw64/dist/host/bin/mar \
+            MAR=$HOME/tooltool12/mar \
                 MOZ_PRODUCT_VERSION=$VERSION_DISPLAY MAR_CHANNEL_ID="default" \
                 ./make_full_update.sh \
                 waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar \
                 'tmp/core'
-            VERSION_DISPLAY=$(grep 'DisplayVersion=' tmp/core/application.ini | cut -d'=' -f2)
             VERSION=$(grep '\<Version\>' tmp/core/application.ini | cut -d'=' -f2)
             BUILDID=$(grep 'BuildID=' tmp/core/application.ini | cut -d'=' -f2)
             SHA512=$(shasum -a 512 waterfox-$VERSION_DISPLAY.en-US.win64.complete.xz.mar | awk '{print $1}')
