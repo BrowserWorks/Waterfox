@@ -135,54 +135,18 @@ const DEFAULT_WELCOME_CONTENT = {
               },
             },
             {
-              theme: "light",
+              theme: "lepton",
               label: {
-                string_id: "onboarding-multistage-theme-label-light",
+                string_id: "onboarding-multistage-theme-label-lepton",
               },
               tooltip: {
-                string_id: "onboarding-multistage-theme-tooltip-light-2",
+                string_id: "onboarding-multistage-theme-tooltip-lepton-2",
               },
               description: {
-                string_id: "onboarding-multistage-theme-description-light",
-              },
-            },
-            {
-              theme: "dark",
-              label: {
-                string_id: "onboarding-multistage-theme-label-dark",
-              },
-              tooltip: {
-                string_id: "onboarding-multistage-theme-tooltip-dark-2",
-              },
-              description: {
-                string_id: "onboarding-multistage-theme-description-dark",
-              },
-            },
-            {
-              theme: "alpenglow",
-              label: {
-                string_id: "onboarding-multistage-theme-label-alpenglow",
-              },
-              tooltip: {
-                string_id: "onboarding-multistage-theme-tooltip-alpenglow-2",
-              },
-              description: {
-                string_id: "onboarding-multistage-theme-description-alpenglow",
+                string_id: "onboarding-multistage-theme-description-lepton",
               },
             },
           ],
-        },
-        {
-          theme: "lepton",
-          label: {
-            string_id: "onboarding-multistage-theme-label-light",
-          },
-          tooltip: {
-            string_id: "onboarding-multistage-theme-tooltip-light-2",
-          },
-          description: {
-            string_id: "onboarding-multistage-theme-description-light",
-          },
         },
         primary_button: {
           label: {
@@ -348,51 +312,15 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
               },
             },
             {
-              theme: "light",
-              label: {
-                string_id: "mr1-onboarding-theme-label-light",
-              },
-              tooltip: {
-                string_id: "mr1-onboarding-theme-tooltip-light",
-              },
-              description: {
-                string_id: "mr1-onboarding-theme-description-light",
-              },
-            },
-            {
-              theme: "dark",
-              label: {
-                string_id: "mr1-onboarding-theme-label-dark",
-              },
-              tooltip: {
-                string_id: "mr1-onboarding-theme-tooltip-dark",
-              },
-              description: {
-                string_id: "mr1-onboarding-theme-description-dark",
-              },
-            },
-            {
-              theme: "alpenglow",
-              label: {
-                string_id: "mr1-onboarding-theme-label-alpenglow",
-              },
-              tooltip: {
-                string_id: "mr1-onboarding-theme-tooltip-alpenglow",
-              },
-              description: {
-                string_id: "mr1-onboarding-theme-description-alpenglow",
-              },
-            },
-            {
               theme: "lepton",
               label: {
-                string_id: "mr1-onboarding-theme-label-light",
+                string_id: "mr1-onboarding-theme-label-lepton",
               },
               tooltip: {
-                string_id: "mr1-onboarding-theme-tooltip-light",
+                string_id: "mr1-onboarding-theme-tooltip-lepton",
               },
               description: {
-                string_id: "mr1-onboarding-theme-description-light",
+                string_id: "mr1-onboarding-theme-description-lepton",
               },
             },
           ],
