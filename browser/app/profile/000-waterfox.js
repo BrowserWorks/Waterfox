@@ -46,6 +46,7 @@ pref("browser.newtabpage.activity-stream.feeds.section.topstories", false, locke
 pref("browser.newtabpage.activity-stream.feeds.section.topstories.options", "{}", locked);
 pref("browser.newtabpage.activity-stream.feeds.system.topstories", false, locked);
 pref("browser.newtabpage.activity-stream.feeds.telemetry", false, locked);
+pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", false);
 pref("browser.newtabpage.activity-stream.section.highlights.includePocket", false, locked);
 pref("browser.newtabpage.activity-stream.section.highlights.rows", "2");
 pref("browser.newtabpage.activity-stream.showSponsored", false, locked);
