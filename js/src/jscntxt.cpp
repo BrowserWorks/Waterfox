@@ -121,12 +121,7 @@ JSContext::init(ContextKind kind)
         threadNative_ = (size_t)pthread_self();
 #endif
 
-#ifdef JS_NEW_REGEXP
-        isolate = irregexp::CreateIsolate(this);
-        if (!isolate) {
-            return false;
-        }
-#else
+#ifndef JS_NEW_REGEXP
         if (!regexpStack.ref().init())
             return false;
 #endif
@@ -143,6 +138,13 @@ JSContext::init(ContextKind kind)
         if (!wasm::EnsureSignalHandlers(this))
             return false;
     }
+
+#ifdef JS_NEW_REGEXP
+    isolate = irregexp::CreateIsolate(this);
+    if (!isolate) {
+        return false;
+    }
+#endif
 
     // Set the ContextKind last, so that ProtectedData checks will allow us to
     // initialize this context before it becomes the runtime's active context.
