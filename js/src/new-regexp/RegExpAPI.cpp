@@ -149,6 +149,11 @@ static void ReportSyntaxError(TokenStream& ts,
   gc::AutoSuppressGC suppressGC(ts.context());
   uint32_t errorNumber = ErrorNumber(result.error);
 
+  if (errorNumber == JSMSG_OVER_RECURSED) {
+    ReportOverRecursed(ts.context());
+    return;
+  }
+
   uint32_t offset = std::max(result.error_pos, 0);
   MOZ_ASSERT(offset <= length);
 
@@ -428,7 +433,7 @@ bool CompilePattern(JSContext* cx, MutableHandleRegExpShared re,
   data.error = AnalyzeRegExp(cx->isolate, isLatin1, data.node);
   if (data.error != RegExpError::kNone) {
     MOZ_ASSERT(data.error == RegExpError::kAnalysisStackOverflow);
-    JS_ReportErrorASCII(cx, "Stack overflow");
+    ReportOverRecursed(cx);
     return false;
   }
 

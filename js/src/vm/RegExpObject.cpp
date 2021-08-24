@@ -1853,3 +1853,38 @@ JS_PUBLIC_API(JSString*) JS::GetRegExpSource(JSContext* cx, HandleObject obj)
     }
     return shared->getSource();
 }
+
+JS_PUBLIC_API(bool)
+JS::CheckRegExpSyntax(JSContext* cx,
+                      const char16_t* chars,
+                      size_t length,
+                      RegExpFlags flags,
+                      MutableHandleValue error)
+{
+    AssertHeapIsIdle();
+    CHECK_REQUEST(cx);
+
+    CompileOptions options(cx);
+    frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
+
+    mozilla::Range<const char16_t> source(chars, length);
+#ifdef JS_NEW_REGEXP
+    bool success = irregexp::CheckPatternSyntax(cx, dummyTokenStream, source, flags);
+#else
+    bool success =
+      irregexp::ParsePatternSyntax(
+          dummyTokenStream, cx->tempLifoAlloc(), source, flags.unicode(), flags.dotAll());
+#endif
+    error.set(UndefinedValue());
+    if (!success) {
+        // We can fail because of OOM or over-recursion even if the syntax is valid.
+        if (cx->isThrowingOutOfMemory() || cx->isThrowingOverRecursed()) {
+            return false;
+        }
+        if (!cx->getPendingException(error)) {
+            return false;
+        }
+        cx->clearPendingException();
+    }
+    return true;
+}
