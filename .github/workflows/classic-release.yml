@@ -1,12 +1,9 @@
 name: Build Classic for Release
 
 on:
-  pull_request:
-    branches:
+  push:
+     branches:
       - classic
-  # push:
-  #   tags:
-  #     - '*-classic'
 
 jobs:
     build-windows:
