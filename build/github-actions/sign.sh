@@ -10,14 +10,14 @@ TOPDIR=$GITHUB_WORKSPACE
 pushd objdir-classic/dist/install/sea/
 7z x waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
 rm -f waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
-az login --service-principal -u=$AZURE_USER_ID -p=$AZURE_USER_PWD -t=$AZURE_TENANT_ID
-find ./ -type f -name "*.exe" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore "$AZURE_VAULT_ID" --alias "$AZURE_CRT" --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant $AZURE_TENANT_ID | jq -r .accessToken)" {} \;
-find ./ -type f -name "*.dll" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore "$AZURE_VAULT_ID" --alias "$AZURE_CRT" --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant $AZURE_TENANT_ID | jq -r .accessToken)" {} \;
+az login --service-principal --username ${{ secrets.AZURE_USER_ID }} --password ${{ secrets.AZURE_USER_PWD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+find ./ -type f -name "*.exe" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
+find ./ -type f -name "*.dll" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
 7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
 cp $BUILD_DIR/browser/installer/windows/app.tag .
 cp $BUILD_DIR/other-licenses/7zstub/firefox/7zSD.sfx .
 cat 7zSD.sfx app.tag app.7z > "WaterfoxClassic$BROWSER_VERSION.exe"
-$JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore "$AZURE_VAULT_ID" --alias "$AZURE_CRT" --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant $AZURE_TENANT_ID | jq -r .accessToken)" "WaterfoxClassic$BROWSER_VERSION.exe"
+$JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "WaterfoxClassic$BROWSER_VERSION.exe"
 az logout
 rm -rf core 7zSD.sfx app.tag app.7z setup.exe
 popd
