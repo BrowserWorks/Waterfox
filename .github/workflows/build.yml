@@ -73,7 +73,7 @@ jobs:
             rm -rf core 7zSD.Win32.sfx app.tag app.7z setup.exe
             popd
 
-        - name: Update Package
+        - name: 🎁 Update Package
           run: |
             VERSION_DISPLAY=`cat browser/config/version_display.txt`
             pushd objdir-current-mingw64/dist/
@@ -83,8 +83,8 @@ jobs:
             cp -r "install/sea/Waterfox $VERSION_DISPLAY Setup.exe" update/
             xml=('<?xml version="1.0"?>'
             '<updates>'
-            '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
-            '        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-classic-BROWSER_VERSION.en-US.PLATFORM.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+            '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION">'
+            '        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-BROWSER_VERSION.en-US.win64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
             '    </update>'
             '</updates>')
             for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
@@ -147,7 +147,7 @@ jobs:
             cp obj-x86_64-pc-linux-gnu/dist/waterfox-$BROWSER_VERSION.en-US.linux-x86_64.tar.bz2 update/
             xml=('<?xml version="1.0"?>'
             '<updates>'
-            '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
+            '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION" displayVersion="BROWSER_VERSION">'
             '        <patch type="complete" URL="https://cdn.waterfox.net/releases/linux64/update/waterfox-BROWSER_VERSION.en-US.linux64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
             '    </update>'
             '</updates>')
