@@ -29,7 +29,9 @@ ac_add_options --enable-optimize="-O3 -march=x86-64-v2 -mtune=haswell -w"
 ac_add_options --enable-rust-simd
 ac_add_options --enable-updater
 
-ac_add_options --with-branding=browser/branding/dokimi
+ac_add_options --with-app-basename=Waterfox
+ac_add_options --with-app-name=waterfox
+ac_add_options --with-distribution-id=net.waterfox
 ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
 
 if test -f "$HOME/.mozbuild/sccache/sccache"; then
