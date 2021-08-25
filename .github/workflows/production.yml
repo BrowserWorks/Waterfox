@@ -3,8 +3,6 @@ name: Builds
 on:
   push:
     branches: [ future ]
-  pull_request:
-    branches: [ future ]
     
   workflow_dispatch:
 
