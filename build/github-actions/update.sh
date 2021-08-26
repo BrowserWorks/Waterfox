@@ -42,8 +42,8 @@ then
 elif [[ $(uname -s) = Linux ]]
 then
     tar -xvf waterfox-classic-$BROWSER_VERSION.en-US.linux-x86_64.tar.bz2
+    chmod +x $BUILD_DIR/objdir-classic/dist/host/bin/mar
 fi
-chmod +x $BUILD_DIR/objdir-classic/dist/host/bin/mar
 MAR=$BUILD_DIR/objdir-classic/dist/host/bin/mar \
     MOZ_PRODUCT_VERSION=$BROWSER_VERSION MAR_CHANNEL_ID="default" \
     ./make_full_update.sh \
