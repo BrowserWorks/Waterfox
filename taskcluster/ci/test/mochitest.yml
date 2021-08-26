@@ -656,8 +656,6 @@ mochitest-webgl1-ext:
             android.*: []
             linux.*64-qr/debug: ['webrender-sw', 'webgl-ipc', 'wayland']
             linux.*64(-shippable)?-qr/opt: ['webgl-ipc', 'wayland']
-            windows10-64-2004-shippable-qr/(opt|debug): ['fission', 'fission-webgl-ipc', 'webgl-ipc']
-            windows10-64-2004-qr/(opt|debug): ['fission', 'fission-webgl-ipc']
             default: ['webgl-ipc']
     chunks:
         by-test-platform:
@@ -696,7 +694,6 @@ mochitest-webgl2-core:
             android.*: []
             linux.*64-qr/debug: ['webrender-sw', 'webgl-ipc', 'wayland']
             linux.*64(-shippable)?(-asan)?-qr/opt: ['webgl-ipc', 'wayland']
-            windows10-64-2004(-shippable)?-qr/(opt|debug): ['fission', 'fission-webgl-ipc', 'webgl-ipc']
             default: ['webgl-ipc']
     chunks:
         by-test-platform:
@@ -733,7 +730,6 @@ mochitest-webgl2-ext:
             android.*: []
             linux.*64-qr/debug: ['webrender-sw', 'webgl-ipc', 'wayland']
             linux.*64(-shippable)?-(qr|asan)?/opt: ['webgl-ipc', 'wayland']
-            windows10-64-2004(-shippable)?-qr/(opt|debug): ['fission', 'fission-webgl-ipc', 'webgl-ipc']
             default: ['webgl-ipc']
     chunks: 4
     e10s: true
