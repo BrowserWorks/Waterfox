@@ -214,6 +214,9 @@ body[lwt-newtab-brighttext] {
 .onboardingContainer .tiles-theme-section .theme .icon.alpenglow {
   background-image: url("chrome://mozapps/content/extensions/firefox-alpenglow.svg");
 }
+.onboardingContainer .tiles-theme-section .theme .icon.lepton {
+  background-image: url("chrome://mozapps/content/extensions/firefox-compact-light.svg");
+}
 .onboardingContainer .tiles-theme-section .theme .text {
   display: flex;
   font-size: 14px;
@@ -611,6 +614,9 @@ body[lwt-newtab-brighttext] {
 }
 .onboardingContainer.proton .theme .icon.automatic {
   background-image: url("resource://default-theme/icon.svg");
+}
+.onboardingContainer.proton .theme .icon.lepton {
+  background-image: url("resource://builtin-themes/light/icon.svg");
 }
 .onboardingContainer.proton .message-text,
 .onboardingContainer.proton .attrib-text {
