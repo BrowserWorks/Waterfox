@@ -906,17 +906,17 @@ SearchService.prototype = {
       return;
     }
 
-    const ptag = Services.prefs.getCharPref("browser.search.ptag", "");
+    const ptag = Services.prefs.getCharPref("browser.search.PTAG", "");
     if (ptag && engine.name == "Bing") {
       const mainURL = "https://www.bing.com/search?q={searchTerms}";
       engine.__searchForm = mainURL + "&PC=IS46&PTAG=" + ptag;
-      engine._urls[0].params[6] = {
-        name: engine._urls[0].params[6].name,
+      engine._urls[0].params[5] = {
+        name: engine._urls[0].params[5].name,
         value: "IS46",
         purpose: undefined,
       };
-      engine._urls[0].params[7] = {
-        name: engine._urls[0].params[7].name,
+      engine._urls[0].params[6] = {
+        name: engine._urls[0].params[6].name,
         value: ptag,
         purpose: undefined,
       };
@@ -939,11 +939,11 @@ SearchService.prototype = {
         value: hsimp,
         purpose: undefined,
       };
-      engine._urls[0].params[3] = {
+      engine._urls[0].params.unshift({
         name: "typetag",
         value: typetag,
         purpose: undefined,
-      };
+      });
     }
 
     if (engine._engineToUpdate) {
