@@ -179,7 +179,7 @@ var MacAttribution = {
     try {
       [url, dataURL] = await queryQuarantineDatabase(guid);
       // Bing vals
-      await this.setPartnerCode(dataURL, "PTAG", "browser.search.ptag");
+      await this.setPartnerCode(dataURL, "PTAG", "browser.search.PTAG");
       // YHS vals
       await this.setPartnerCode(dataURL, "hspart", "browser.search.hspart");
       await this.setPartnerCode(dataURL, "hsimp", "browser.search.hsimp");
