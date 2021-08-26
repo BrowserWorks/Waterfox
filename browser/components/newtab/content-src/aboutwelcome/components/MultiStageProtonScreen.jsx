@@ -36,7 +36,7 @@ export class MultiStageProtonScreen extends React.PureComponent {
             </div>
             {content.help_text && content.help_text.text ? (
               <Localized text={content.help_text.text}>
-                <span className="attrib-text" />
+                <a href="https://flic.kr/p/AYfRz1" className="attrib-text" />
               </Localized>
             ) : null}
           </div>

@@ -75,12 +75,13 @@ onboarding-multistage-theme-primary-button-label2 = Done
 onboarding-multistage-theme-secondary-button-label = Not now
 
 # Automatic theme uses operating system color settings
-onboarding-multistage-theme-label-automatic = Automatic
+onboarding-multistage-theme-label-automatic = Default
 
 onboarding-multistage-theme-label-light = Light
 onboarding-multistage-theme-label-dark = Dark
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
 onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
+onboarding-multistage-theme-label-light = Compact
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -135,6 +136,18 @@ onboarding-multistage-theme-description-alpenglow =
     Use a colorful appearance for buttons,
     menus, and windows.
 
+# Tooltip displayed on hover of Lepton theme
+onboarding-multistage-theme-tooltip-lepton-2 =
+  .title =
+    Use a compact appearance for buttons,
+    menus, and windows.
+
+# Input description for Lepton theme
+onboarding-multistage-theme-description-lepton =
+  .aria-description =
+    Use a compact appearance for buttons,
+    menus, and windows.
+
 ## Multistage MR1 onboarding strings (MR1 about:welcome pages)
 
 # "Hero Text" displayed on left side of welcome screen.
@@ -145,14 +158,14 @@ onboarding-multistage-theme-description-alpenglow =
 # An alternative title for localization is: "It starts here".
 # This text can be formatted to span multiple lines as needed.
 mr1-welcome-screen-hero-text =
-  Fire starts
+  Surfing starts
   here
 
 # Caption for background image in about:welcome. "Soraya Osorio" is the name
 # of the person and shouldn't be translated.
 # In case your language needs to adapt the nouns to a gender, Soraya is a female name (she/her).
 # You can see the picture in about:welcome in Nightly 90.
-mr1-onboarding-welcome-image-caption = Soraya Osorio — Furniture designer, Firefox fan
+mr1-onboarding-welcome-image-caption = Venice, CA. "Last Dip" by Marc Cooper.
 
 # This button will open system settings to turn on prefers-reduced-motion
 mr1-onboarding-reduce-motion-button-label = Turn off animations
@@ -218,12 +231,13 @@ mr1-onboarding-theme-primary-button-label = Save theme
 mr1-onboarding-theme-secondary-button-label = Not now
 
 # System theme uses operating system color settings
-mr1-onboarding-theme-label-system = System theme
+mr1-onboarding-theme-label-system = Default
 
 mr1-onboarding-theme-label-light = Light
 mr1-onboarding-theme-label-dark = Dark
 # "Alpenglow" here is the name of the theme, and should be kept in English.
 mr1-onboarding-theme-label-alpenglow = Alpenglow
+mr1-onboarding-theme-label-lepton = Compact
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -276,4 +290,16 @@ mr1-onboarding-theme-tooltip-alpenglow =
 mr1-onboarding-theme-description-alpenglow =
   .aria-description =
     Use a dynamic, colorful theme for buttons,
+    menus, and windows.
+
+# Tooltip displayed on hover of Lepton theme
+mr1-onboarding-theme-tooltip-lepton =
+  .title =
+    Use a compact theme for buttons,
+    menus, and windows.
+
+# Input description for Lepton theme
+mr1-onboarding-theme-description-lepton =
+  .aria-description =
+    Use a compact theme for buttons,
     menus, and windows.
