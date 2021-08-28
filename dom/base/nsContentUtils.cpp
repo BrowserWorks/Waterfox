@@ -7232,28 +7232,17 @@ nsContentUtils::FindInternalContentViewer(const nsACString& aType,
 }
 
 static void
-ReportPatternCompileFailure(nsAString& aPattern, nsIDocument* aDocument,
+ReportPatternCompileFailure(nsAString& aPattern,
+                            nsIDocument* aDocument,
+                            JS::MutableHandle<JS::Value> error,
                             JSContext* cx)
 {
-    MOZ_ASSERT(JS_IsExceptionPending(cx));
-
-    JS::RootedValue exn(cx);
-    if (!JS_GetPendingException(cx, &exn)) {
-      return;
-    }
-    if (!exn.isObject()) {
-      // If pending exception is not an object, it should be OOM.
-      return;
-    }
-
     JS::AutoSaveExceptionState savedExc(cx);
-    JS::RootedObject exnObj(cx, &exn.toObject());
+    JS::RootedObject exnObj(cx, &error.toObject());
     JS::RootedValue messageVal(cx);
     if (!JS_GetProperty(cx, exnObj, "message", &messageVal)) {
       return;
     }
-    MOZ_ASSERT(messageVal.isString());
-
     JS::RootedString messageStr(cx, messageVal.toString());
     MOZ_ASSERT(messageStr);
 
@@ -7289,15 +7278,16 @@ nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
 
   // Check if the pattern by itself is valid first, and not that it only becomes
   // valid once we add ^(?: and )$.
-  {
-    JS::Rooted<JSObject*> testRe(
-        cx, JS::NewUCRegExpObject(
-                cx, static_cast<char16_t*>(aPattern.BeginWriting()),
-                aPattern.Length(), JS::RegExpFlag::Unicode));
-    if (!testRe) {
-      ReportPatternCompileFailure(aPattern, aDocument, cx);
-      return true;
-    }
+  JS::RootedValue error(cx);
+  if (!JS::CheckRegExpSyntax(
+          cx, static_cast<char16_t*>(aPattern.BeginWriting()),
+          aPattern.Length(), JS::RegExpFlag::Unicode, &error)) {
+    return true;
+  }
+
+  if (!error.isUndefined()) {
+    ReportPatternCompileFailure(aPattern, aDocument, &error, cx);
+    return true;
   }
 
   // The pattern has to match the entire value.
@@ -7309,8 +7299,9 @@ nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
                          static_cast<char16_t*>(aPattern.BeginWriting()),
                          aPattern.Length(), JS::RegExpFlag::Unicode));
 
-  // We checked that the pattern is valid above.
-  MOZ_ASSERT(re, "Adding ^(?: and )$ shouldn't make a valid regexp invalid");
+  if (!re) {
+    return true;
+  }
 
   JS::Rooted<JS::Value> rval(cx, JS::NullValue());
   size_t idx = 0;
