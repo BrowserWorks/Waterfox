@@ -210,14 +210,6 @@ Isolate::InternalizeString(const Vector<const char16_t>& str);
 static_assert(JSRegExp::RegistersForCaptureCount(JSRegExp::kMaxCaptures) <=
               RegExpMacroAssembler::kMaxRegisterCount);
 
-// TODO: Map flags to jitoptions
-bool FLAG_harmony_regexp_sequence = false;
-bool FLAG_regexp_interpret_all = false;
-bool FLAG_regexp_mode_modifiers = false;
-bool FLAG_regexp_optimization = true;
-bool FLAG_regexp_peephole_optimization = true;
-bool FLAG_regexp_possessive_quantifier = false;
-bool FLAG_regexp_tier_up = true;
 bool FLAG_trace_regexp_assembler = false;
 bool FLAG_trace_regexp_bytecodes = false;
 bool FLAG_trace_regexp_parser = false;
