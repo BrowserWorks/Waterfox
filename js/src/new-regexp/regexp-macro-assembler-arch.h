@@ -101,6 +101,7 @@ class SMRegExpMacroAssembler final : public NativeRegExpMacroAssembler {
 
   virtual Handle<HeapObject> GetCode(Handle<String> source);
 
+  virtual bool CanReadUnaligned();
  private:
   size_t frameSize_ = 0;
 

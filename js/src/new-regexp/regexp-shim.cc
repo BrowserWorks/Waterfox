@@ -212,7 +212,6 @@ static_assert(JSRegExp::RegistersForCaptureCount(JSRegExp::kMaxCaptures) <=
 
 // TODO: Map flags to jitoptions
 bool FLAG_correctness_fuzzer_suppressions = false;
-bool FLAG_enable_regexp_unaligned_accesses = false;
 bool FLAG_harmony_regexp_sequence = false;
 bool FLAG_regexp_interpret_all = false;
 bool FLAG_regexp_mode_modifiers = false;
