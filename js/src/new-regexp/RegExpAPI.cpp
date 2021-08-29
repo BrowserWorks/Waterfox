@@ -212,8 +212,8 @@ static void ReportSyntaxError(TokenStream& ts,
   ReportCompileError(ts.context(),
                      std::move(err),
                      nullptr, /* notes/report */
+                     JSREPORT_ERROR, /*flags*/
                      errorNumber,
-                     0 /*flags*/,
                      args);
   va_end(args);
 }
