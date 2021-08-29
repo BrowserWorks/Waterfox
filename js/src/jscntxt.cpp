@@ -1406,6 +1406,10 @@ JSContext::~JSContext()
         DestroyTraceLogger(traceLogger);
 #endif
 
+#ifdef JS_NEW_REGEXP
+  irregexp::DestroyIsolate(isolate.ref());
+#endif
+
     MOZ_ASSERT(TlsContext.get() == this);
     TlsContext.set(nullptr);
 }

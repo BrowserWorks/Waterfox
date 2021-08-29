@@ -20,6 +20,7 @@ namespace js {
 namespace irregexp {
 
 Isolate* CreateIsolate(JSContext* cx);
+void DestroyIsolate(Isolate* isolate);
 
 bool CheckPatternSyntax(JSContext* cx, frontend::TokenStream& ts,
                         const mozilla::Range<const char16_t> chars,
