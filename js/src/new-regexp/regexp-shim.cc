@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+#include "new-regexp/regexp-macro-assembler.h"
 #include "new-regexp/regexp-shim.h"
 #include "new-regexp/regexp-stack.h"
 
@@ -205,6 +206,9 @@ template Handle<String>
 Isolate::InternalizeString(const Vector<const uint8_t>& str);
 template Handle<String>
 Isolate::InternalizeString(const Vector<const char16_t>& str);
+
+static_assert(JSRegExp::RegistersForCaptureCount(JSRegExp::kMaxCaptures) <=
+              RegExpMacroAssembler::kMaxRegisterCount);
 
 // TODO: Map flags to jitoptions
 bool FLAG_correctness_fuzzer_suppressions = false;
