@@ -1934,6 +1934,18 @@ JitCompartment::generateRegExpMatcherStub(JSContext* cx)
         return nullptr;
     }
 
+#ifdef JS_NEW_REGEXP
+    // If a regexp has named captures, fall back to the OOL stub, which
+    // will end up calling CreateRegExpMatchResults.
+    Register shared = temp2;
+    masm.loadPtr(Address(regexp, NativeObject::getFixedSlotOffset(RegExpObject::PRIVATE_SLOT)),
+                 shared);
+    masm.branchPtr(Assembler::NotEqual,
+                   Address(shared, RegExpShared::offsetOfGroupsTemplate()),
+                   ImmWord(0),
+                   &oolEntry);
+#endif
+
     // Construct the result.
     Register object = temp1;
     Label matchResultFallback, matchResultJoin;
@@ -1944,6 +1956,9 @@ JitCompartment::generateRegExpMatcherStub(JSContext* cx)
     masm.loadPtr(Address(object, NativeObject::offsetOfSlots()), temp2);
     masm.storeValue(templateObject->getSlot(0), Address(temp2, 0));
     masm.storeValue(templateObject->getSlot(1), Address(temp2, sizeof(Value)));
+#ifdef JS_NEW_REGEXP
+    masm.storeValue(templateObject->getSlot(2), Address(temp2, 2 * sizeof(Value)));
+#endif
 
     size_t elementsOffset = NativeObject::offsetOfFixedElements();
 
