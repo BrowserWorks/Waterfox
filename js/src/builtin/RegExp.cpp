@@ -85,10 +85,17 @@ js::CreateRegExpMatchResult(JSContext* cx,
 #ifdef JS_NEW_REGEXP
     // Step 24 (reordered)
     RootedNativeObject groups(cx);
+    bool groupsInDictionaryMode = false;
     if (re->numNamedCaptures() > 0) {
         RootedNativeObject groupsTemplate(cx, re->getGroupsTemplate());
-        JS_TRY_VAR_OR_RETURN_FALSE(
-          cx, groups, NativeObject::createWithTemplate(cx, gc::DefaultHeap, groupsTemplate));
+        if (groupsTemplate->inDictionaryMode()) {
+            groups = NewObjectWithGivenProto<PlainObject>(cx, nullptr);
+            groups->setGroup(groupsTemplate->group());
+            groupsInDictionaryMode = true;
+        } else {
+            JS_TRY_VAR_OR_RETURN_FALSE(
+              cx, groups, NativeObject::createWithTemplate(cx, gc::DefaultHeap, groupsTemplate));
+        }
     }
 #endif
 
@@ -111,11 +118,35 @@ js::CreateRegExpMatchResult(JSContext* cx,
     }
 
 #ifdef JS_NEW_REGEXP
-  // Step 27 f.
-  for (uint32_t i = 0; i < re->numNamedCaptures(); i++) {
-    uint32_t idx = re->getNamedCaptureIndex(i);
-    groups->setSlot(i, arr->getDenseElement(idx));
-  }
+    // Step 27 f.
+    // The groups template object stores the names of the named captures in the
+    // the order in which they are defined. The named capture indices vector
+    // stores the corresponding capture indices. If we are not in dictionary mode,
+    // we simply fill in the slots with the correct values. In dictionary mode,
+    // we have to define the properties explicitly.
+    if (!groupsInDictionaryMode) {
+        for (uint32_t i = 0; i < re->numNamedCaptures(); i++) {
+            uint32_t idx = re->getNamedCaptureIndex(i);
+            groups->setSlot(i, arr->getDenseElement(idx));
+        }
+    } else {
+        AutoIdVector keys(cx);
+        RootedPlainObject groupsTemplate(cx, re->getGroupsTemplate());
+        if (!GetPropertyKeys(cx, groupsTemplate, 0, &keys)) {
+            return false;
+        }
+        MOZ_ASSERT(keys.length() == re->numNamedCaptures());
+        RootedId key(cx);
+        RootedValue val(cx);
+        for (uint32_t i = 0; i < keys.length(); i++) {
+            key = keys[i];
+            uint32_t idx = re->getNamedCaptureIndex(i);
+            val = arr->getDenseElement(idx);
+            if (!NativeDefineProperty(cx, groups, key, val, nullptr, nullptr, JSPROP_ENUMERATE)) {
+                return false;
+            }
+        }
+    }
 #endif
 
     /* Step 20 (reordered).
