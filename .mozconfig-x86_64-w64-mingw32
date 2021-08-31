@@ -33,7 +33,6 @@ ac_add_options --disable-maintenance-service
 ac_add_options --disable-profiling
 ac_add_options --disable-tests
 ac_add_options --disable-update-agent # Bug 1561797
-ac_add_options --disable-updater
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
@@ -44,6 +43,7 @@ ac_add_options --enable-lto
 ac_add_options --enable-optimize="-O3 -march=x86-64-v2 -mtune=haswell -w"
 ac_add_options --enable-rust-simd
 ac_add_options --enable-strip
+ac_add_options --enable-updater
 ac_add_options --target=x86_64-w64-mingw32
 ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-app-name=waterfox
