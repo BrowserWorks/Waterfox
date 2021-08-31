@@ -131,12 +131,10 @@ nsURLFormatterService.prototype = {
     BUILD_TARGET() {
       return Services.appinfo.OS + "_" + this.ABI;
     },
-    OS() {
-      return Services.appinfo.OS;
-    },
     OS_VERSION() {
       return this.OSVersion;
     },
+    DISPLAY_VERSION: () => AppConstants.MOZ_APP_VERSION_DISPLAY,
     CHANNEL: () => UpdateUtils.UpdateChannel,
     MOZILLA_API_KEY: () => AppConstants.MOZ_MOZILLA_API_KEY,
     GOOGLE_LOCATION_SERVICE_API_KEY: () =>
