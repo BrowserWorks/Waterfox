@@ -2506,7 +2506,8 @@ static const AllocKinds UpdatePhaseMisc {
     AllocKind::OBJECT_GROUP,
     AllocKind::STRING,
     AllocKind::JITCODE,
-    AllocKind::SCOPE
+    AllocKind::SCOPE,
+    AllocKind::REGEXP_SHARED
 };
 
 static const AllocKinds UpdatePhaseObjects {
