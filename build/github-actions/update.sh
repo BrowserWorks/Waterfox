@@ -30,7 +30,7 @@ cp -r $INSTALLER_PATH update/
 xml=('<?xml version="1.0"?>'
 '<updates>'
 '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
-'        <patch type="complete" URL="https://cdn.waterfox.net/releases/win64/update/waterfox-classic-BROWSER_VERSION.en-US.PLATFORM.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+'        <patch type="complete" URL="https://cdn.waterfox.net/releases/PLATFORM/update/waterfox-classic-BROWSER_VERSION.en-US.PLATFORM.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
 '    </update>'
 '</updates>')
 
@@ -42,6 +42,9 @@ then
 elif [[ $(uname -s) = Linux ]]
 then
     tar -xvf waterfox-classic-$BROWSER_VERSION.en-US.linux-x86_64.tar.bz2
+    chmod +x $BUILD_DIR/objdir-classic/dist/host/bin/mar
+elif [[ $(uname -s) = Darwin ]]
+then
     chmod +x $BUILD_DIR/objdir-classic/dist/host/bin/mar
 fi
 MAR=$BUILD_DIR/objdir-classic/dist/host/bin/mar \
