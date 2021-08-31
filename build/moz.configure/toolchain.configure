@@ -661,6 +661,8 @@ def default_cxx_compilers(c_compiler):
 
     return default_cxx_compilers
 
+def minimum_gcc_version():
+    return Version('7.1.0')
 
 @template
 def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
@@ -843,10 +845,11 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
         # Check the compiler version here instead of in `compiler_version` so
         # that the `checking` message doesn't pretend the compiler can be used
         # to then bail out one line later.
-        if info.type == 'gcc' and info.version < '4.9.0':
+        gcc_version = minimum_gcc_version()
+        if info.type == 'gcc' and info.version < gcc_version:
             raise FatalCheckError(
-                'Only GCC 4.9 or newer is supported (found version %s).'
-                % info.version)
+                    'Only GCC %d.%d or newer is supported (found version %s).'
+                    % (gcc_version.major, gcc_version.minor, info.version))
 
         # If you want to bump the version check here search for
         # cxx_alignof above, and see the associated comment.
@@ -1063,7 +1066,7 @@ def color_cflags(info):
     # value changes to e.g. "<x>=always", exact string match may fail and
     # multiple color flags could be added. So examine downstream consumers
     # before adding flags to return values.
-    if info.type == 'gcc' and info.version >= '4.9.0':
+    if info.type == 'gcc':
         return '-fdiagnostics-color'
     elif info.type == 'clang':
         return '-fcolor-diagnostics'
