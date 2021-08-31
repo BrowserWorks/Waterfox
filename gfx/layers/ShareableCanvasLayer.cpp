@@ -5,11 +5,16 @@
 
 #include "ShareableCanvasLayer.h"
 
+#include "gfxUtils.h"
 #include "GLContext.h"                  // for GLContext
 #include "GLScreenBuffer.h"             // for GLScreenBuffer
 #include "SharedSurfaceGL.h"            // for SurfaceFactory_GLTexture, etc
+#include "mozilla/gfx/2D.h"
 #include "mozilla/layers/AsyncCanvasRenderer.h"
+#include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/TextureClientSharedSurface.h"
+
+using namespace mozilla::gfx;
 
 namespace mozilla {
 namespace layers {

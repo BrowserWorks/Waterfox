@@ -7,6 +7,7 @@
 #include "GLBlitHelper.h"
 #include "GLReadTexImageHelper.h"
 #include "GLLibraryEGL.h"
+#include "mozilla/gfx/Logging.h"
 
 using namespace mozilla;
 using namespace mozilla::gl;
