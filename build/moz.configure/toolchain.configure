@@ -1018,6 +1018,45 @@ def bindgen_cflags(value):
 
 add_old_configure_assignment('_BINDGEN_CFLAGS', bindgen_cflags)
 
+@depends(cxx_compiler, target)
+def needs_libstdcxx_newness_check(cxx_compiler, target):
+    # We only have to care about this on Linux and MinGW.
+    if cxx_compiler.type == 'clang-cl':
+        return
+
+    if target.kernel not in ('Linux', 'WINNT'):
+        return
+
+    if target.os == 'Android':
+        return
+
+    return True
+
+
+def die_on_old_libstdcxx():
+    die('The libstdc++ in use is not new enough.  Please run '
+        './mach bootstrap to update your compiler, or update your system '
+        'libstdc++ installation.')
+
+try_compile(includes=['cstddef'],
+            body='\n'.join([
+                # _GLIBCXX_RELEASE showed up in libstdc++ 7.
+                '#if defined(__GLIBCXX__) && !defined(_GLIBCXX_RELEASE)',
+                '#  error libstdc++ not new enough',
+                '#endif',
+                '#if defined(_GLIBCXX_RELEASE)',
+                '#  if _GLIBCXX_RELEASE < %d' % minimum_gcc_version().major,
+                '#    error libstdc++ not new enough',
+                '#  else',
+                '     (void) 0',
+                '#  endif',
+                '#endif',
+            ]),
+            check_msg='for new enough STL headers from libstdc++',
+            when=needs_libstdcxx_newness_check,
+            onerror=die_on_old_libstdcxx)
+
+
 @depends(c_compiler)
 def default_debug_flags(compiler_info):
     # Debug info is ON by default.
