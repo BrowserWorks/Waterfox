@@ -3882,6 +3882,40 @@ BrowserGlue.prototype = {
       UrlbarPrefs.migrateResultBuckets();
     }
 
+    // WATERFOX: Move current prefs to 91 equivalents
+    if (currentUIVersion < 116) {
+      // Migrate old statusbar enabled pref
+      if (Services.prefs.prefHasUserValue("browser.statusbar.mode")) {
+        // If 0, 1 set to disable statusbar, if 2 enable
+        Services.prefs.setBoolPref(
+          "browser.statusbar.enabled",
+          Services.prefs.getIntPref("browser.statusbar.mode", 0) == 2
+        );
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.statusbar.mode");
+      }
+      // Migrate old tabbar position pref
+      if (Services.prefs.prefHasUserValue("browser.tabBar.position")) {
+        let oldPref = Services.prefs.getStringPref(
+          "browser.tabBar.position",
+          "topAboveAB"
+        );
+        let newPref;
+        if (oldPref == "topAboveAB") {
+          newPref = "topabove";
+        } else if (oldPref == "topUnderAB") {
+          newPref = "topbelow";
+        } else if (oldPref == "bottom") {
+          newPref = "bottomabove";
+        } else {
+          newPref = "topabove";
+        }
+        Services.prefs.setStringPref("browser.tabs.toolbarposition", newPref);
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.tabBar.position");
+      }
+    }
+
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
   },
