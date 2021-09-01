@@ -2,7 +2,7 @@
 
 X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
 
-if [[ $(uname -s) == *Darwin* ]]; then
+if test $(uname -s) = Darwin; then
     # Use the mozbuild linker when building on macOS
     # to avoid linking mismatches.
 	export CC=/usr/bin/clang
@@ -28,7 +28,7 @@ ac_add_options --enable-updater
 ac_add_options --target=aarch64-apple-darwin
 
 ac_add_options --with-app-basename=Waterfox
-if [[ -v WFX_RELEASE ]];
+if test -v $WFX_RELEASE;
 then
     ac_add_options --with-branding=browser/branding/waterfox
 else
@@ -36,10 +36,10 @@ else
 fi
 ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
 
-if [ -x "$(command -v sccache)" ]; then
-	ac_add_options --with-ccache=sccache
-elif [ -f "$HOME/.mozbuild/sccache/sccache" ]; then
-	ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
+if test -x "$(command -v sccache)"; then
+    ac_add_options --with-ccache=sccache
+elif test -f "$HOME/.mozbuild/sccache/sccache"; then
+    ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
 fi
 
 mk_add_options AUTOCLOBBER=1

@@ -50,7 +50,7 @@ ac_add_options --target=x86_64-pc-mingw32
 
 ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-app-name=waterfox
-if [[ -v WFX_RELEASE ]];
+if test -v $WFX_RELEASE;
 then
     ac_add_options --with-branding=browser/branding/waterfox
 else
@@ -58,4 +58,3 @@ else
 fi
 ac_add_options --with-distribution-id=net.waterfox
 ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
-

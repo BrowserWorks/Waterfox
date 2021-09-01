@@ -31,7 +31,7 @@ ac_add_options --enable-updater
 
 ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-app-name=waterfox
-if [[ -v WFX_RELEASE ]];
+if test -v $WFX_RELEASE;
 then
     ac_add_options --with-branding=browser/branding/waterfox
 else
@@ -40,7 +40,9 @@ fi
 ac_add_options --with-distribution-id=net.waterfox
 ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
 
-if test -f "$HOME/.mozbuild/sccache/sccache"; then
+if test -x "$(command -v sccache)"; then
+    ac_add_options --with-ccache=sccache
+elif test -f "$HOME/.mozbuild/sccache/sccache"; then
     ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
 fi
 

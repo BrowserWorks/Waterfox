@@ -1,12 +1,12 @@
 # For local development builds
 
-if [[ $(uname -s) == *Darwin* ]]; then
+if test $(uname -s) = Darwin; then
     # Any macOS specific settings
 	# For release builds we should use -march=core2 -mtune=haswell
 	X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
 	export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
-elif [[ $(uname -s) == *MINGW32* ]]; then
+elif test "$(uname -s) = MINGW*"; then
     # Any Windows specific settings
 	X=$(wmic cpu get NumberOfLogicalProcessors /Format:List | cut -d'=' -f2 | xargs)
 	ac_add_options --disable-bits-download
@@ -14,7 +14,7 @@ elif [[ $(uname -s) == *MINGW32* ]]; then
 	ac_add_options --disable-parental-controls
 	export WIN32_REDIST_DIR="/c/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Redist/MSVC/14.16.27012/x64/Microsoft.VC141.CRT"
 	export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64"
-elif [[ $(uname -s) == *Linux* ]]; then
+elif test $(uname -s) = Linux; then
     # Any Linux specific settings
 	X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
 	if test $(uname -m) = x86_64; then
@@ -57,9 +57,9 @@ ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-branding=browser/branding/dokimi
 ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
 
-if [ -x "$(command -v sccache)" ]; then
+if test -x "$(command -v sccache)"; then
 	ac_add_options --with-ccache=sccache
-elif [ -f "$HOME/.mozbuild/sccache/sccache" ]; then
+elif test -f "$HOME/.mozbuild/sccache/sccache"; then
 	ac_add_options --with-ccache=$HOME/.mozbuild/sccache/sccache
 fi
 
