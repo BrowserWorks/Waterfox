@@ -10,6 +10,7 @@
 #include "mozilla/gfx/GPUParent.h"
 #include "mozilla/gfx/StackArray.h"
 #include "mozilla/layers/DiagnosticsD3D11.h"
+#include "mozilla/layers/HelpersD3D11.h"
 #include "mozilla/layers/LayerMLGPU.h"
 #include "mozilla/layers/MemoryReportingMLGPU.h"
 #include "mozilla/layers/ShaderDefinitionsMLGPU.h"
