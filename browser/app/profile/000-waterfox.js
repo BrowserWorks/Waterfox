@@ -100,6 +100,7 @@ pref("general.useragent.compatMode.firefox", true);
 pref("geo.provider.network.url", "", locked);
 pref("image.avif.enabled", true);
 pref("image.jxl.enabled", true);
+pref("intl.multilingual.enabled", true, locked);
 pref("layout.css.backdrop-filter.enabled", true, locked);
 pref("media.eme.enabled", false);
 pref("media.gmp-manager.url", "data:text/plain,", locked);
