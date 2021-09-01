@@ -34,6 +34,17 @@ jobs:
         #     tar -xvf tooltool12.tar.xz -C $HOME/
         #   if: steps.cache.outputs.cache-hit != 'true'
 
+        # - name: Setup Rust
+        #     run: |
+        #       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        #       rustup target add x86_64-pc-windows-gnu x86_64-pc-windows-msvc
+        #       source $HOME/.cargo/env
+
+        # - name: Setup Wine Env
+        #       run: |
+        #         Xvfb :2 -screen 0 1024x768x16 &
+
+
         - name: 📤 Checkout
           uses: actions/checkout@v2
 
@@ -55,7 +66,7 @@ jobs:
         - name: ✍️ Sign
           run: |
             VERSION_DISPLAY=`cat browser/config/version_display.txt`
-            pushd objdir-current-mingw64/dist/install/sea/
+            pushd obj-x86_64-w64-mingw32/dist/install/sea/
             7z x waterfox-$VERSION_DISPLAY.en-US.win64.installer.exe
             rm -f waterfox-$VERSION_DISPLAY.en-US.win64.installer.exe
             az login --service-principal --username ${{ secrets.AZURE_USER_ID }} --password ${{ secrets.AZURE_USER_PWD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
@@ -74,7 +85,7 @@ jobs:
         - name: 🎁 Update Package
           run: |
             VERSION_DISPLAY=`cat browser/config/version_display.txt`
-            pushd objdir-current-mingw64/dist/
+            pushd obj-x86_64-w64-mingw32/dist/
             mkdir -p update
             cp $GITHUB_WORKSPACE/tools/update-packaging/make_full_update.sh update/
             cp $GITHUB_WORKSPACE/tools/update-packaging/common.sh update/
