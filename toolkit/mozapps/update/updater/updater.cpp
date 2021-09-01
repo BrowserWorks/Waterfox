@@ -3431,8 +3431,10 @@ int NS_main(int argc, NS_tchar** argv) {
       // is running in the current user's session. Note that we don't need to do
       // this when staging an update since the PostUpdate step runs during the
       // replace request.
+
       if (!sStagedUpdate) {
         bool updateStatusSucceeded = false;
+#ifdef MOZ_MAINTENANCE_SERVICE
         if (IsSecureUpdateStatusSucceeded(updateStatusSucceeded) &&
             updateStatusSucceeded) {
           if (!LaunchWinPostProcess(gInstallDirPath, gPatchDirPath)) {
@@ -3441,6 +3443,7 @@ int NS_main(int argc, NS_tchar** argv) {
                     " for service update could not be launched.");
           }
         }
+#endif
       }
 
       CloseHandle(elevatedFileHandle);
