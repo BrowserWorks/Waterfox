@@ -5,6 +5,7 @@
 
 #include "AudioNodeStream.h"
 
+#include "AlignmentUtils.h"
 #include "MediaStreamGraphImpl.h"
 #include "MediaStreamListener.h"
 #include "AudioNodeEngine.h"

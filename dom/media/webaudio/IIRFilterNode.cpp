@@ -5,7 +5,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "IIRFilterNode.h"
+#include "AlignmentUtils.h"
+#include "AudioBlock.h"
+#include "AudioDestinationNode.h"
 #include "AudioNodeEngine.h"
+#include "AudioNodeStream.h"
+#include "PlayingRefChangeHandler.h"
+#include "mozilla/dom/AudioDestinationNodeBinding.h"
 
 #include "blink/IIRFilter.h"
 

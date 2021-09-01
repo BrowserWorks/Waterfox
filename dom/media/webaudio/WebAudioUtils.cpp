@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WebAudioUtils.h"
+#include "AudioEventTimeline.h"
 #include "AudioNodeStream.h"
 #include "blink/HRTFDatabaseLoader.h"
 

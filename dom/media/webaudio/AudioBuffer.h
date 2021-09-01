@@ -9,6 +9,8 @@
 
 #include "nsWrapperCache.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsPIDOMWindow.h"
+#include "nsIWeakReferenceUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/StaticMutex.h"

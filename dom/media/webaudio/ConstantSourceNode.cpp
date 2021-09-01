@@ -7,6 +7,8 @@
 #include "ConstantSourceNode.h"
 
 #include "AudioDestinationNode.h"
+#include "AudioNodeEngine.h"
+#include "AudioNodeStream.h"
 #include "nsContentUtils.h"
 
 namespace mozilla {
