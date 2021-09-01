@@ -52,6 +52,10 @@ jobs:
           run: |
             ./mach package
 
+        - name: 📦 Package Multi-locale
+          run: |
+            ./mach package-multi-locale --locales en-US en-GB zh-CN zh-TW ja ko ru fr es-ES es-MX pt-PT pt-BR de pl nl da nn-NO sv-SE el it cs hu lt th id vi ar
+
         - name: ✍️ Sign
           run: |
             VERSION_DISPLAY=`cat browser/config/version_display.txt`
@@ -138,6 +142,7 @@ jobs:
         - name: 📦 Package
           run: |
             ./mach package
+            ./mach package-multi-locale --locales en-US en-GB zh-CN zh-TW ja ko ru fr es-ES es-MX pt-PT pt-BR de pl nl da nn-NO sv-SE el it cs hu lt th id vi ar
             mkdir update
             cp tools/update-packaging/make_full_update.sh update/
             cp tools/update-packaging/common.sh update/
