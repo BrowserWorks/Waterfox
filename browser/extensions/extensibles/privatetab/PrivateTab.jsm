@@ -32,7 +32,7 @@ const PrivateTab = {
       container => container.name == aName
     );
     if (!this.container) {
-      ContextualIdentityService.create(aName, "fingerprint", "purple");
+      ContextualIdentityService.create(aName, "private", "purple");
       this.container = ContextualIdentityService._identities.find(
         container => container.name == aName
       );
@@ -91,45 +91,16 @@ const PrivateTab = {
   },
 
   createPrivateWidget(aWindow, aAttrs) {
-    let { privateTab, setTimeout } = aWindow;
-    let { gSeenWidgets, CustomizableUI } = ChromeUtils.import(
-      "resource:///modules/CustomizableUI.jsm",
-      null
+    let { privateTab } = aWindow;
+    let { CustomizableUI } = ChromeUtils.import(
+      "resource:///modules/CustomizableUI.jsm"
     );
-    let firstRun = !gSeenWidgets.has(this.BTN_ID);
-    if (firstRun) {
-      let listener = {
-        onWidgetAfterCreation(id) {
-          if (id == privateTab.BTN_ID) {
-            setTimeout(() => {
-              let newTabPlacement = CustomizableUI.getPlacementOfWidget(
-                "new-tab-button"
-              )?.position;
-              if (
-                newTabPlacement &&
-                Services.wm
-                  .getMostRecentBrowserWindow()
-                  .gBrowser.tabContainer.hasAttribute("hasadjacentnewtabbutton")
-              ) {
-                CustomizableUI.addWidgetToArea(
-                  privateTab.BTN_ID,
-                  CustomizableUI.AREA_TABSTRIP,
-                  newTabPlacement + 1
-                );
-              }
-            }, 0);
-            CustomizableUI.removeListener(this);
-          }
-        },
-      };
-      CustomizableUI.addListener(listener);
-    }
     // if widget exists, don't attempt to create it again
     if (!CustomizableUI.getPlacementOfWidget(privateTab.BTN_ID)) {
       CustomizableUI.createWidget({
         id: privateTab.BTN_ID,
         type: "custom",
-        defaultArea: CustomizableUI.AREA_NAVBAR,
+        defaultArea: null,
         showInPrivateBrowsing: false,
         onBuild: doc => {
           let el = doc.createXULElement("toolbarbutton");
@@ -260,7 +231,7 @@ const PrivateTab = {
     }
     let { privateTab, document } = win;
     if (aEvent.button == 0) {
-      privateTab.BrowserOpenTabPrivate(win);
+      privateTab.browserOpenTabPrivate(win);
     } else if (aEvent.button == 2) {
       document.popupNode = document.getElementById(privateTab.BTN_ID);
       document
@@ -343,7 +314,7 @@ const PrivateTab = {
     gBrowser.removeTab(aTab);
   },
 
-  BrowserOpenTabPrivate(aWindow) {
+  browserOpenTabPrivate(aWindow) {
     aWindow.openTrustedLinkIn(aWindow.BROWSER_NEW_TAB_URL, "tab", {
       userContextId: this.container.userContextId,
     });
@@ -443,7 +414,9 @@ const PrivateTab = {
     MozElements.MozTab.prototype.getAttribute = function(att) {
       if (att == "usercontextid" && this.isToggling) {
         delete this.isToggling;
-        return privateTab.orig_getAttribute.call(this, att)
+        // If in private tab and we attempt to toggle, remove container, else convert to private tab
+        return privateTab.orig_getAttribute.call(this, att) ==
+          privateTab.container.userContextId
           ? 0
           : privateTab.container.userContextId;
       }
