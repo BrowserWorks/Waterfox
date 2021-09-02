@@ -10,6 +10,10 @@ const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
 
+const { PanelMultiView } = ChromeUtils.import(
+  "resource:///modules/PanelMultiView.jsm"
+);
+
 ChromeUtils.defineModuleGetter(
   this,
   "BrowserUtils",
@@ -95,7 +99,15 @@ this.extensibles = class extends ExtensionAPI {
             // Place it in certain location
             let pos = doc.getElementById(aAdjacentTo);
             if (aPosition) {
-              pos.insertAdjacentElement(aPosition, el);
+              // App Menu items are not retrieved successfully with doc.getElementById
+              if (!pos) {
+                pos = PanelMultiView.getViewNode(this.document, aAdjacentTo);
+              }
+              // If neither method to retrieve a positional element succeeded
+              // don't attempt to insert as it will fail
+              if (pos) {
+                pos.insertAdjacentElement(aPosition, el);
+              }
             } else if (aAdjacentTo == "gNavToolbox") {
               this.mostRecentWindow.gNavToolbox.appendChild(el);
             } else {

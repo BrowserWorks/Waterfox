@@ -77,7 +77,7 @@ const TabFeatures = {
           label: browser.i18n.getMessage("restartBrowser"),
           preference: "browser.restart_menu.showpanelmenubtn",
         },
-        adjacentTo: "appMenu-quit-button",
+        adjacentTo: "appMenu-quit-button2",
         position: "beforebegin",
       },
     ];

@@ -24,7 +24,7 @@ const PrivateTab = {
       label: browser.i18n.getMessage("newPrivateTab"),
       tooltiptext: this.privateTooltip,
       class: "toolbarbutton-1 chromeclass-toolbar-additional",
-      oncommand: "privateTab.BrowserOpenTabPrivate(window)",
+      oncommand: "privateTab.browserOpenTabPrivate(window)",
     };
   },
 
@@ -140,7 +140,7 @@ const PrivateTab = {
           id: "newPrivateTab-key",
           modifiers: "alt control",
           key: "P",
-          oncommand: "privateTab.BrowserOpenTabPrivate(window)",
+          oncommand: "privateTab.browserOpenTabPrivate(window)",
         },
         appendTo: "privateTab-keyset",
       },
@@ -157,7 +157,7 @@ const PrivateTab = {
           accesskey: "v",
           acceltext: "Ctrl+Alt+P", // TODO: change to key getter
           class: "menuitem-iconic privatetab-icon",
-          oncommand: "privateTab.BrowserOpenTabPrivate(window)",
+          oncommand: "privateTab.browserOpenTabPrivate(window)",
         },
         adjacentTo: "menu_newNavigatorTab",
         position: "afterend",
@@ -184,7 +184,7 @@ const PrivateTab = {
         attrs: {
           id: "toggleTabPrivateState",
           label: browser.i18n.getMessage("privateTab"),
-          type: "checkbox",
+          class: "menuitem-iconic privatetab-icon",
           accesskey: "v",
           acceltext: "Ctrl+Alt+T", // TODO: change to key getter
           oncommand:
