@@ -28,8 +28,7 @@ ac_add_options --enable-updater
 ac_add_options --target=x86_64-apple-darwin
 
 ac_add_options --with-app-basename=Waterfox
-if test -v $WFX_RELEASE;
-then
+if test "$WFX_RELEASE"; then
     ac_add_options --with-branding=browser/branding/waterfox
 else
     ac_add_options --with-branding=browser/branding/dokimi
