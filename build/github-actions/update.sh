@@ -16,10 +16,10 @@ then
     APP_PATH="waterfox-classic"
 elif [[ $(uname -s) = Darwin ]]
 then
-    INSTALLER_PATH="$BUILD_DIR/objdir-classic/dist/waterfox-classic/WaterfoxClassic.app"
+    INSTALLER_PATH="$BUILD_DIR/objdir-classic/dist/waterfox-classic/Waterfox Classic.app"
     PLATFORM="osx64"
-    EXTRACT_PATH="WaterfoxClassic.app"
-    APP_PATH="WaterfoxClassic.app/Contents/Resources"
+    EXTRACT_PATH="Waterfox Classic.app"
+    APP_PATH="Waterfox Classic.app/Contents/Resources"
 fi
 
 pushd objdir-classic/dist/

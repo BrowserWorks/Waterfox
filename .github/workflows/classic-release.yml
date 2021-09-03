@@ -28,7 +28,7 @@ jobs:
                 $LOCALAPPDATA/ccache
               key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
 
-          - name: Mach build
+          - name: mach build
             run: |
               $pattern = '[\\]'
               $env:BUILD_DIR = $env:GITHUB_WORKSPACE
@@ -36,7 +36,7 @@ jobs:
               Write-Output $env:BUILD_DIR
               c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/build.sh"
 
-          - name: Mach build installer
+          - name: mach build installer
             run: |
               $pattern = '[\\]'
               $env:BUILD_DIR = $env:GITHUB_WORKSPACE
@@ -77,15 +77,15 @@ jobs:
                 os: [macos-10.15, ubuntu-18.04]
                 include:
                   - os: macos-10.15
-                    name: Build for macOS
+                    name:  Build for macOS
                     platform: macOS
                   - os: ubuntu-18.04
-                    name: Build for Linux
+                    name: 🐧 Build for Linux
                     platform: Linux
 
         env:
             ENABLE_ARTIFACTS_MODE: "true"
-            MOZCONFIG: "./.mozconfig-ga"
+            MOZCONFIG: "./.mozconfig"
             SHELL: "/bin/bash"
         runs-on: ${{ matrix.os }}
         name: ${{ matrix.name }}
@@ -123,13 +123,13 @@ jobs:
               sudo rm -rf "$AGENT_TOOLSDIRECTORY"
             if: startsWith(matrix.os, 'ubuntu')
 
-          - name: Brew dependencies
+          - name: macOS build dependencies
             run: |
               brew update
               brew install autoconf@2.13 ccache make nasm yasm
             if: startsWith(matrix.os, 'macos')
 
-          - name: Apt-get dependencies
+          - name: Linux build dependencies
             run: |
               sudo apt-get update
               sudo apt-get install autoconf2.13 ccache libasound2-dev \
@@ -139,33 +139,71 @@ jobs:
               python2.7 python3 yasm
             if: startsWith(matrix.os, 'ubuntu')
 
-          - name: Get SDK
+          - name: Download MacOS X 10.12 SDK
             run: |
               wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
-              tar -xvf MacOSX10.12.sdk.tar.xz
+              tar -xvf MacOSX10.12.sdk.tar.xz -C ../
             if: startsWith(matrix.os, 'macos')
 
-          - name: Mach build
+          - name: mach build
             run: |
               ./mach build
 
-          - name: Mach package
+          - name: mach package
             run: |
               ./mach package
             if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
-          - name: Upload macOS artifact
+          - name: Sign .app
+            run: |
+              echo ${{ secrets.MACOS_CRT }} | base64 —decode > certificate.p12
+              security create-keychain -p ${{ secrets.MACOS_PWD }} build.keychain security default-keychain -s build.keychain
+              security unlock-keychain -p ${{ secrets.MACOS_PWD }} build.keychain
+              security import certificate.p12 -k build.keychain -P ${{ secrets.MACOS_PWD }} -T /usr/bin/codesign
+              security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k ${{ secrets.MACOS_PWD }} build.keychain
+              wget https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/codesign.bash https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/production.entitlements.xml
+              chmod +x ./codesign.bash
+              ./codesign.bash -a objdir-classic/dist/waterfox-classic/WaterfoxClassic.app -i "${{ secrets.MACOS_ID }}" -e ./production.entitlements.xml
+              mv objdir-classic/dist/waterfox-classic/WaterfoxClassic.app objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app
+            if: startsWith(matrix.os, 'macos')
+
+
+          - name: Sign DMG
+            run: |
+              BROWSER_VERSION=`cat browser/config/version_display.txt`
+              chmod +x ./browser/branding/unofficial/create-dmg
+              ./browser/branding/unofficial/create-dmg \
+              --volname "Waterfox Classic Setup" \
+              --volicon "browser/branding/unofficial/disk.icns" \
+              --background "browser/branding/unofficial/background.png" \
+              --window-pos 200 120 \
+              --window-size 520 380 \
+              --no-internet-enable \
+              --icon-size 128 \
+              --icon "Waterfox Classic.app" 100 178 \
+              --hide-extension "Waterfox Classic.app" \
+              --hdiutil-quiet \
+              --format UDBZ \
+              --eula "browser/branding/unofficial/license.txt" \
+              --app-drop-link 400 178 \
+              "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" \
+              "objdir-classic/dist/waterfox-classic/Waterfox Classic.app"
+              /usr/bin/codesign -s "${{ secrets.MACOS_ID }}" -fv "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg"
+              /usr/bin/xcrun altool --notarize-app -f "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" --primary-bundle-id 'org.waterfoxproject.waterfoxclassic' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
+            if: startsWith(matrix.os, 'macos')
+
+          - name: Upload macOS DMG
             uses: actions/upload-artifact@v2
             with:
               name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/*.dmg
+              path: ./objdir-*/dist/waterfox-classic/*.dmg
             if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
           - name: Upload macOS .app
             uses: actions/upload-artifact@v2
             with:
               name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/waterfox-classic/WaterfoxClassic.app
+              path: ./objdir-*/dist/waterfox-classic/Waterfox\ Classic.app
             if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
           - name: Upload Linux artifact
@@ -175,7 +213,7 @@ jobs:
               path: ./objdir-*/dist/*.tar.bz2
             if: startsWith(matrix.os, 'ubuntu') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
-          - name: Upload mar binary
+          - name: Upload MAR binary
             uses: actions/upload-artifact@v2
             with:
               name: Artifact Classic ${{ matrix.platform }} ${{ github.run_id }}
