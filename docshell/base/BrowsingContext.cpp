@@ -209,7 +209,7 @@ int32_t BrowsingContext::IndexOf(BrowsingContext* aChild) {
   return index;
 }
 
-WindowContext* BrowsingContext::GetTopWindowContext() {
+WindowContext* BrowsingContext::GetTopWindowContext() const {
   if (mParentWindow) {
     return mParentWindow->TopWindowContext();
   }
@@ -965,6 +965,14 @@ bool BrowsingContext::AncestorsAreCurrent() const {
       return true;
     }
   }
+}
+
+bool BrowsingContext::IsInBFCache() const {
+  if (mozilla::SessionHistoryInParent()) {
+    return mIsInBFCache;
+  }
+  return mParentWindow &&
+         mParentWindow->TopWindowContext()->GetWindowStateSaved();
 }
 
 Span<RefPtr<BrowsingContext>> BrowsingContext::Children() const {

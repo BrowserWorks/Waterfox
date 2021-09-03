@@ -270,6 +270,7 @@
 #include "nsIWebProgressListener.h"
 #include "nsIWidget.h"
 #include "nsIWidgetListener.h"
+#include "nsIXULRuntime.h"
 #include "nsJSPrincipals.h"
 #include "nsJSUtils.h"
 #include "nsLayoutStatics.h"
@@ -2772,7 +2773,8 @@ bool nsPIDOMWindowInner::HasOpenWebSockets() const {
 }
 
 bool nsPIDOMWindowInner::IsCurrentInnerWindow() const {
-  if (mBrowsingContext && mBrowsingContext->IsInBFCache()) {
+  if (mozilla::SessionHistoryInParent() && mBrowsingContext &&
+      mBrowsingContext->IsInBFCache()) {
     return false;
   }
 
