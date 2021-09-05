@@ -154,11 +154,14 @@ jobs:
               ./mach package
             if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
-          - name: Sign .app
+          - name: Setup keychain
             uses: apple-actions/import-codesign-certs@v1
             with: 
               p12-file-base64: ${{ secrets.MACOS_CRT }}
               p12-password: ${{ secrets.MACOS_PWD }}
+            if: startsWith(matrix.os, 'macos')
+
+          - name: Sign .app
             run: |
               wget https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/codesign.bash https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/production.entitlements.xml
               chmod +x ./codesign.bash
