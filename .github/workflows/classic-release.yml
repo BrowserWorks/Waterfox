@@ -90,11 +90,11 @@ jobs:
         runs-on: ${{ matrix.os }}
         name: ${{ matrix.name }}
         steps:
-          # - name: Set up Xcode version
-          #   uses: maxim-lobanov/setup-xcode@v1
-          #   with:
-          #     xcode-version: '11.2.1'
-          #   if: startsWith(matrix.os, 'macos')
+          - name: Set up Xcode version
+            uses: maxim-lobanov/setup-xcode@v1
+            with:
+              xcode-version: '11.2.1'
+            if: startsWith(matrix.os, 'macos')
 
           - name: Checkout branch
             uses: actions/checkout@v2
