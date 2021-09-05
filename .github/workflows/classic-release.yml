@@ -170,7 +170,7 @@ jobs:
             if: startsWith(matrix.os, 'macos')
 
 
-          - name: Sign DMG
+          - name: Create and sign DMG
             run: |
               BROWSER_VERSION=`cat browser/config/version_display.txt`
               chmod +x ./browser/branding/unofficial/create-dmg
