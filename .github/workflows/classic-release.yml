@@ -90,11 +90,11 @@ jobs:
         runs-on: ${{ matrix.os }}
         name: ${{ matrix.name }}
         steps:
-          - name: Set up Xcode version
-            uses: maxim-lobanov/setup-xcode@v1
-            with:
-              xcode-version: '11.2.1'
-            if: startsWith(matrix.os, 'macos')
+          # - name: Set up Xcode version
+          #   uses: maxim-lobanov/setup-xcode@v1
+          #   with:
+          #     xcode-version: '11.2.1'
+          #   if: startsWith(matrix.os, 'macos')
 
           - name: Checkout branch
             uses: actions/checkout@v2
@@ -155,13 +155,11 @@ jobs:
             if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
           - name: Sign .app
+            uses: apple-actions/import-codesign-certs@v1
+            with: 
+              p12-file-base64: ${{ secrets.MACOS_CRT }}
+              p12-password: ${{ secrets.MACOS_PWD }}
             run: |
-              echo ${{ secrets.MACOS_CRT }} | base64 --decode > certificate.p12
-              security delete-keychain wfx.keychain || :
-              security create-keychain -p ${{ secrets.MACOS_PWD }} wfx.keychain security default-keychain -s wfx.keychain
-              security unlock-keychain -p ${{ secrets.MACOS_PWD }} wfx.keychain
-              security import certificate.p12 -k wfx.keychain -P ${{ secrets.MACOS_PWD }} -T /usr/bin/codesign
-              security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k ${{ secrets.MACOS_PWD }} wfx.keychain
               wget https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/codesign.bash https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/production.entitlements.xml
               chmod +x ./codesign.bash
               ./codesign.bash -a objdir-classic/dist/waterfox-classic/WaterfoxClassic.app -i "${{ secrets.MACOS_ID }}" -e ./production.entitlements.xml
@@ -189,8 +187,8 @@ jobs:
               --app-drop-link 400 178 \
               "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" \
               "objdir-classic/dist/waterfox-classic/Waterfox Classic.app"
-              /usr/bin/codesign -s "${{ secrets.MACOS_ID }}" -fv "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg"
-              /usr/bin/xcrun altool --notarize-app -f "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" --primary-bundle-id 'org.waterfoxproject.waterfoxclassic' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
+              codesign -s "${{ secrets.MACOS_ID }}" -fv "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg"
+              xcrun altool --notarize-app -f "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" --primary-bundle-id 'org.waterfoxproject.waterfoxclassic' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
             if: startsWith(matrix.os, 'macos')
 
           - name: Upload macOS DMG
