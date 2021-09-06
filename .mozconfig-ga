@@ -1,14 +1,14 @@
 # Config for GitHub Actions
 
 if test $(uname -s) = Darwin; then
-	ac_add_options --target=x86_64-apple-darwin
+    ac_add_options --target=x86_64-apple-darwin
     ac_add_options --enable-macos-target=10.7
     ac_add_options --with-macos-sdk=$PWD/MacOSX10.12.sdk
     export CXXFLAGS="-stdlib=libc++"
 elif test $(uname -s) = MINGW32_NT-6.2; then
-	export LINKER=lld-link
-	export CC=clang-cl
-	export CXX=clang-cl
+    export LINKER=lld-link
+    export CC=clang-cl
+    export CXX=clang-cl
     ac_add_options --host=x86_64-pc-mingw32
     ac_add_options --target=x86_64-pc-mingw32
     ac_add_options --with-visual-studio-version=2017
@@ -16,22 +16,22 @@ elif test $(uname -s) = MINGW32_NT-6.2; then
     export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64"
 elif test $(uname -s) = Linux; then
     export CC=clang
-	export CXX=clang++
-	ac_add_options --target=x86_64-pc-linux-gnu
-	ac_add_options --enable-pulseaudio
-	ac_add_options --enable-alsa
+    export CXX=clang++
+    ac_add_options --target=x86_64-pc-linux-gnu
+    ac_add_options --enable-pulseaudio
+    ac_add_options --enable-alsa
 fi
 
 if test $(uname -s) = MINGW32_NT-6.2; then
     ac_add_options --enable-optimize="-O2 -Qvec -w -clang:-arch:SSE3"
     ac_add_options --with-ccache=sccache
-	X=$(wmic cpu get NumberOfLogicalProcessors /Format:List | cut -d'=' -f2 | xargs)
-	mk_add_options MOZ_MAKE_FLAGS=-j${X}
+    X=$(wmic cpu get NumberOfLogicalProcessors /Format:List | cut -d'=' -f2 | xargs)
+    mk_add_options MOZ_MAKE_FLAGS=-j${X}
 else
     ac_add_options --enable-optimize="-O2 -march=nocona -mtune=nocona -w"
     ac_add_options --with-ccache=ccache
-	X=$(getconf NPROCESSORS_ONLN 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)
-	mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+    X=$(getconf NPROCESSORS_ONLN 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)
+    mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 fi
 
 ac_add_options --disable-crashreporter
