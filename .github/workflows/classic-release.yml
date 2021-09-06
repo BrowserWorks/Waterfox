@@ -208,14 +208,14 @@ jobs:
               '</updates>')
               for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
               pushd update
-              chmod +x $BUILD_DIR/objdir-classic/dist/host/bin/mar
-              MAR=$BUILD_DIR/objdir-classic/dist/host/bin/mar \
+              chmod +x $GITHUB_WORKSPACE/objdir-classic/dist/host/bin/mar
+              MAR=$GITHUB_WORKSPACE/objdir-classic/dist/host/bin/mar \
               ./make_full_update.sh \
               waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar \
-              '${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app'
-              BROWSER_VERSION=$(grep 'DisplayVersion=' ${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              VERSION=$(grep '\<Version\>' ${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              BUILDID=$(grep 'BuildID=' ${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              '${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app'
+              BROWSER_VERSION=$(grep 'DisplayVersion=' ${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              VERSION=$(grep '\<Version\>' ${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              BUILDID=$(grep 'BuildID=' ${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
               SHA512=$(shasum -a 512 waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $1}')
               SIZE=$(ls -l waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $5}')
               echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
@@ -225,6 +225,7 @@ jobs:
               sed -i '' -e "s/BUILDID/$BUILDID/g" update.xml
               sed -i '' -e "s/SIZE/$SIZE/g" update.xml
               sed -i '' -e "s/HASH/"$SHA512"/g" update.xml
+            if: startsWith(matrix.os, 'macos')
 
           - name: Upload macOS DMG
             uses: actions/upload-artifact@v2
