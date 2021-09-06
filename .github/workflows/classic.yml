@@ -4,18 +4,19 @@ on:
   pull_request:
     branches:
       - classic
+  workflow_dispatch: null
 
+env:
+    ENABLE_ARTIFACTS_MODE: "true"
+    MOZCONFIG: "./.mozconfig-ga"
+    SHELL: "/bin/bash"
+    
 jobs:
     build:
         strategy:
             fail-fast: false
             matrix:
                 os: [macos-10.15, ubuntu-18.04]
-
-        env:
-            ENABLE_ARTIFACTS_MODE: "true"
-            MOZCONFIG: "./.mozconfig-ga"
-            SHELL: "/bin/bash"
 
         runs-on: ${{ matrix.os }}
         steps:
@@ -96,3 +97,40 @@ jobs:
               name: Artifact Classic Linux ${{ github.run_id }}
               path: ./objdir-*/dist/*.tar.bz2
             if: startsWith(matrix.os, 'ubuntu') && env.ENABLE_ARTIFACTS_MODE == 'true'
+    build-windows:
+      runs-on: windows-2016
+      steps:
+        - name: Checkout branch
+          uses: actions/checkout@v2
+        - name: Set build directory
+          run: |
+            $pattern = '[\\]'
+            $BUILD_DIR = $env:GITHUB_WORKSPACE -replace $pattern, '/'
+            echo "G_WORKSPACE=${BUILD_DIR}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+        - name: Install depends
+          run: |
+            iwr -useb get.scoop.sh | iex
+            scoop install sccache llvm nasm --global
+            mkdir -p ~\\scoop\\buckets\\my-bucket
+            Copy-Item -Path $env:GITHUB_WORKSPACE\\build\\github-actions\\mozilla-build.json -Destination ~\scoop\buckets\my-bucket
+            scoop install my-bucket/mozilla-build --global
+        - name: Set system PATH variable
+          shell: bash
+          run:  sed -i 's/SET PATH=.*/&;C:\\Rust\\.cargo\\bin;C:\\ProgramData\\scoop\\shims/g' /c/ProgramData/scoop/apps/mozilla-build/current/start-shell.bat
+        - name: Cache for Windows
+          uses: actions/cache@v2
+          with:
+              path: |
+                  ~/AppData/Local/Mozilla/sccache/cache
+              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+        - name: Build
+          run:  C:\\ProgramData\\scoop\\apps\\mozilla-build\\current\\start-shell.bat "$Env:G_WORKSPACE/build/github-actions/build.sh"
+        - name: Package
+          run:  C:\\ProgramData\\scoop\\apps\\mozilla-build\\current\\start-shell.bat "$Env:G_WORKSPACE/build/github-actions/packageZip.sh"
+          if: env.ENABLE_ARTIFACTS_MODE == 'true'
+        - name: Upload artifact
+          uses: actions/upload-artifact@v2
+          with:
+            name: Artifact_Classic_Windows_${{ github.run_id }}
+            path: ./objdir-*/dist/waterfox*.zip
+          if: env.ENABLE_ARTIFACTS_MODE == 'true'
