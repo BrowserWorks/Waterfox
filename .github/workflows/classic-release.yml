@@ -194,6 +194,38 @@ jobs:
               xcrun altool --notarize-app -f "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" --primary-bundle-id 'org.waterfoxproject.waterfoxclassic' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
             if: startsWith(matrix.os, 'macos')
 
+          - name: Create MAR
+            run: |
+              pushd objdir-classic/dist/
+              mkdir -p update
+              cp $GITHUB_WORKSPACE/tools/update-packaging/make_full_update.sh update/
+              cp $GITHUB_WORKSPACE/tools/update-packaging/common.sh update/
+              xml=('<?xml version="1.0"?>'
+              '<updates>'
+              '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
+              '        <patch type="complete" URL="https://cdn.waterfox.net/releases/PLATFORM/update/waterfox-classic-BROWSER_VERSION.en-US.PLATFORM.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+              '    </update>'
+              '</updates>')
+              for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
+              pushd update
+              chmod +x $BUILD_DIR/objdir-classic/dist/host/bin/mar
+              MAR=$BUILD_DIR/objdir-classic/dist/host/bin/mar \
+              ./make_full_update.sh \
+              waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar \
+              '${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app'
+              BROWSER_VERSION=$(grep 'DisplayVersion=' ${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              VERSION=$(grep '\<Version\>' ${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              BUILDID=$(grep 'BuildID=' ${BUILD_DIR}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              SHA512=$(shasum -a 512 waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $1}')
+              SIZE=$(ls -l waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $5}')
+              echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
+              sed -i '' -e "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" update.xml
+              sed -i '' -e "s/BROWSER_VERSION/$BROWSER_VERSION/g" update.xml
+              sed -i '' -e "s/VERSION/$VERSION/g" update.xml
+              sed -i '' -e "s/BUILDID/$BUILDID/g" update.xml
+              sed -i '' -e "s/SIZE/$SIZE/g" update.xml
+              sed -i '' -e "s/HASH/"$SHA512"/g" update.xml
+
           - name: Upload macOS DMG
             uses: actions/upload-artifact@v2
             with:
@@ -206,6 +238,20 @@ jobs:
             with:
               name: Artifact Classic macOS ${{ github.run_id }}
               path: ./objdir-*/dist/waterfox-classic/Waterfox\ Classic.app
+            if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+
+          - name: Upload macOS MAR
+            uses: actions/upload-artifact@v2
+            with:
+              name: Artifact Classic macOS ${{ github.run_id }}
+              path: ./objdir-*/dist/update/*.mar
+            if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+
+          - name: Upload macOS XML
+            uses: actions/upload-artifact@v2
+            with:
+              name: Artifact Classic macOS ${{ github.run_id }}
+              path: ./objdir-*/dist/update/update.xml
             if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
           - name: Upload Linux artifact
@@ -281,38 +327,38 @@ jobs:
               name: Artifact Classic Linux ${{ github.run_id }}
               path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
 
-    generate-mac-update:
-        needs: [build]
-        name: Generate macOS Update Files
-        runs-on: macos-10.15
-        strategy:
-            fail-fast: false
-        steps:
-          - name: Checkout branch
-            uses: actions/checkout@v2
+    # generate-mac-update:
+    #     needs: [build]
+    #     name: Generate macOS Update Files
+    #     runs-on: macos-10.15
+    #     strategy:
+    #         fail-fast: false
+    #     steps:
+    #       - name: Checkout branch
+    #         uses: actions/checkout@v2
 
-          - name: Download macOS artifacts
-            uses: actions/download-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
+    #       - name: Download macOS artifacts
+    #         uses: actions/download-artifact@v2
+    #         with:
+    #           name: Artifact Classic macOS ${{ github.run_id }}
 
-          - name: Generate update files
-            run: |
-              export BUILD_DIR=$GITHUB_WORKSPACE
-              chmod +x ./build/github-actions/update.sh
-              ./build/github-actions/update.sh
+    #       - name: Generate update files
+    #         run: |
+    #           export BUILD_DIR=$GITHUB_WORKSPACE
+    #           chmod +x ./build/github-actions/update.sh
+    #           ./build/github-actions/update.sh
 
-          - name: Upload update.xml
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/update/update.xml
+    #       - name: Upload update.xml
+    #         uses: actions/upload-artifact@v2
+    #         with:
+    #           name: Artifact Classic macOS ${{ github.run_id }}
+    #           path: ./objdir-*/dist/update/update.xml
 
-          - name: Upload .mar
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
+    #       - name: Upload .mar
+    #         uses: actions/upload-artifact@v2
+    #         with:
+    #           name: Artifact Classic macOS ${{ github.run_id }}
+    #           path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
 
     # release:
     #     needs: [generate-windows-update, generate-linux-update, generate-mac-update]

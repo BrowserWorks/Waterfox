@@ -19,7 +19,7 @@ then
     INSTALLER_PATH="$BUILD_DIR/objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app"
     PLATFORM="osx64"
     EXTRACT_PATH="Waterfox\ Classic.app"
-    APP_PATH="Waterfox Classic.app/Contents/Resources"
+    APP_PATH="Waterfox\ Classic.app/Contents/Resources"
 fi
 
 pushd objdir-classic/dist/
