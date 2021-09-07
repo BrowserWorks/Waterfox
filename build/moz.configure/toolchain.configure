@@ -1355,6 +1355,7 @@ option('--enable-gold',
 
 imply_option('--enable-linker', 'gold', when='--enable-gold')
 
+
 @imports('os')
 @imports('shutil')
 def enable_gnu_linker(enable_gold_option, c_compiler, developer_options, build_env,
@@ -1427,10 +1428,12 @@ def enable_gnu_linker(enable_gold_option, c_compiler, developer_options, build_e
         KIND='other'
     )
 
+
 js_option('--enable-linker', nargs=1,
           choices=('bfd', 'gold', 'lld', 'other'),
           help='Select the linker',
           when=is_linker_option_enabled)
+
 
 @depends('--enable-linker', c_compiler, developer_options, check_build_environment,
          extra_toolchain_flags, when=is_linker_option_enabled)
@@ -1442,7 +1445,8 @@ def select_linker(linker, c_compiler, developer_options, build_env, toolchain_fl
                                  build_env, toolchain_flags, linker)
     if linker == 'lld':
         version_check = ['-Wl,--version']
-        cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
+        cmd_base = c_compiler.wrapper + \
+            [c_compiler.compiler] + c_compiler.flags
         lld = ["-fuse-ld=" + linker]
         cmd = cmd_base + lld + version_check
         if 'LLD' in check_cmd_output(*cmd).decode('utf-8'):
