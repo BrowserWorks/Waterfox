@@ -1,0 +1,48 @@
+FROM centos:7
+ENV llvm_ver="7.0"
+ENV nasm_ver="2.15.05"
+ENV git_ver="2.33.0"
+ENV PATH="/opt/rh/llvm-toolset-${llvm_ver}/root/usr/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/opt/rh/llvm-toolset-${llvm_ver}/root/usr/lib64:${LD_LIBRARY_PATH}"
+RUN yum -y install "deltarpm" "centos-release-scl-rh" "epel-release"
+RUN yum -y install "perl(Env)" "autoconf" "automake" "make" "xz" "wget"
+#
+# Add Springdale SCL repo, which contains newer llvm toolchains (8, 9, 10 and 11)
+# ENV SPRINGDALE_SCL="springdale-SCL-7-2.sdl7.1.noarch.rpm"
+# RUN yum -y install "rpm2cpio" "bsdtar"
+# RUN wget "http://springdale.princeton.edu/data/springdale/7/x86_64/os/Packages/${SPRINGDALE_SCL}"
+# RUN rpm2cpio "${SPRINGDALE_SCL}" | bsdtar -xf -
+# RUN rm -rf "${SPRINGDALE_SCL}"
+# RUN rpm --import "http://springdale.princeton.edu/data/springdale/7/x86_64/os/RPM-GPG-KEY-springdale"
+# RUN yum repolist
+#
+RUN yum -y update
+RUN yum -y install "llvm-toolset-${llvm_ver}-clang" "llvm-toolset-${llvm_ver}-llvm-devel"
+RUN clang --version
+RUN yum -y install "ccache" "which" "pkgconfig" "python2-devel" "python36" "alsa-lib-devel" "autoconf213" "pkgconfig(gl)" "pkgconfig(dbus-glib-1)" "rust" "cargo" "libnotify-devel" "libproxy-devel" "startup-notification-devel" "unzip" "zip" "pkgconfig(xt)" "yasm" "pkgconfig(gdk-x11-2.0)" "pkgconfig(glib-2.0)" "pkgconfig(gobject-2.0)" "pkgconfig(gtk+-2.0)" "pkgconfig(gtk+-3.0)" "pkgconfig(gtk+-unix-print-2.0)" "pkgconfig(gtk+-unix-print-3.0)" "libcurl-devel" "pkgconfig(libffi)" "pkgconfig(libpulse)" "pkgconfig(jack)" "libdrm-devel" "pkgconfig(gconf-2.0)" "bzip2"
+# Build nasm
+RUN mkdir -p ~/nasm/
+WORKDIR "$HOME/nasm"
+RUN wget "https://www.nasm.us/pub/nasm/releasebuilds/${nasm_ver}/nasm-${nasm_ver}.tar.xz"
+RUN tar -xf nasm-${nasm_ver}.tar.xz
+WORKDIR "$HOME/nasm/nasm-${nasm_ver}"
+RUN ./configure --prefix=/usr
+RUN make all
+RUN make install
+RUN nasm --version
+# Build git (we need newer git version than it's on repo, cuz otherwise it will download using REST API and we won't receive source info)
+RUN mkdir -p ~/git_pkg/
+WORKDIR "$HOME/git_pkg"
+RUN wget "https://kernel.org/pub/software/scm/git/git-${git_ver}.tar.xz"
+RUN tar -xf git-${git_ver}.tar.xz
+WORKDIR "$HOME/git_pkg/git-${git_ver}"
+RUN make configure
+RUN ./configure --prefix=/usr
+RUN make all
+RUN make install
+RUN git --version
+WORKDIR "$HOME"
+# Cleanup
+RUN rm -rf ./git_pkg/*
+RUN rm -rf ./nasm/*
+RUN yum clean all
