@@ -1,10 +1,9 @@
-name: Future Release
+name: Future Staging
 
 on:
   push:
-    tags-ignore:
-      - '*-classic'
-    
+    branches: [future]
+
   workflow_dispatch:
 
 jobs:
@@ -130,21 +129,9 @@ jobs:
             name: Waterfox Windows Artifact ${{ github.run_id }}
             path: |
               ./objdir-*/dist/install/sea/*.exe
-              ./objdir-*/dist/update/*.mar
-              ./objdir-*/dist/update/update.xml
-
-        - name: Upload to CDN
-          run: |
-            rsync -e ssh ./objdir-*/dist/install/sea/*.exe ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }}:/92790/waterfox/releases/win64/installer
-            rsync -e ssh ./objdir-*/dist/update/*.mar ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }}:/92790/waterfox/releases/win64/update
-
-        - name: Upload new update.xml to test
-          run: |
-            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" s3://aus.waterfox.net/update/test/WINNT/update.xml \
-              s3://aus.waterfox.net/update/old/win64/latest/update.xml
-            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./objdir-*/dist/update/update.xml \
-              s3://aus.waterfox.net/update/test/WINNT/update.xml
-
+              ./objdir-*/dist/update/*.mar 
+              ./objdir-*/dist/update/*.xml
+            
     linux-x64:
       name: 🐧 Linux X64
       runs-on: [self-hosted, linux, X64]
@@ -206,64 +193,4 @@ jobs:
             path: |
               ./objdir-*/dist/*.tar.bz2
               ./update/*.mar
-              ./update/update.xml
-
-        - name: Upload to CDN
-          run: |
-            rsync -e ssh ./objdir-*/dist/*.tar.bz2 ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }}:/92790/waterfox/releases/linux64/installer
-            rsync -e ssh ./update/*.mar ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }}:/92790/waterfox/releases/linux64/update
-
-        - name: Upload new update.xml to test
-          run: |
-            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" s3://aus.waterfox.net/update/test/Linux/update.xml \
-              s3://aus.waterfox.net/update/old/linux64/latest/update.xml
-            aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./update/update.xml \
-              s3://aus.waterfox.net/update/test/Linux/update.xml
-
-    release:
-      name: Release Windows & Linux
-      needs: [windows-x64, linux-x64]
-      runs-on: [self-hosted, linux, X64]
-      env:
-          SHELL: /bin/sh
-      steps:
-        - name: Push new update
-          run: |
-            os=(Windows_NT Linux)
-            for i in ${os[@]}
-            do
-              update_loc='./update/update.xml'
-              if [[ $i == 'Windows_NT' ]]
-              then
-                update_loc='./objdir-*/dist/update/update.xml'
-              fi
-              for j in $(aws s3 ls s3://aus.waterfox.net/update/Waterfox/ | awk '{OFS=" "};{if ($1=="PRE") print $2}')
-              do
-                if [[ $j != '/' ]]
-                then
-                ver=$(echo $j | sed 's/\///g')
-                aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
-                  s3://aus.waterfox.net/update/Waterfox/$ver/aurora/$i/update.xml
-                fi
-              done
-              VERSION=$(aws s3 cp s3://aus.waterfox.net/update/old/win64/latest/update.xml - | grep displayVersion | cut -d \" -f 10)
-              aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" $update_loc \
-                s3://aus.waterfox.net/update/Waterfox/$VERSION/aurora/$i/update.xml
-            done
-
-        - name: Bump website version
-          run: |
-            cd $GITHUB_WORKSPACE
-            BROWSER_VERSION=`cat browser/config/version_display.txt`
-            cd ..
-            if [ ! -d "website" ]
-            then
-              git clone git@github.com:WaterfoxCo/website.git
-            fi
-            cd website
-            NEW_VER="version_current: &ver2 '$BROWSER_VERSION'"
-            sed -i "/^version_current/d" _config.yml
-            sed -i "/^version_classic.*/a $NEW_VER" _config.yml
-            git add _config.yml
-            git commit -m "Bump current version to $BROWSER_VERSION."
-            git push origin master
+              ./update/*.xml
