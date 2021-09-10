@@ -14,6 +14,8 @@ jobs:
       env:
           MOZCONFIG: ".mozconfig-x86_64-w64-mingw32"
           SHELL: /bin/sh
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       steps:
         # All the commented out parts are only needed when setting up on a VM that gets destroyed
         # after each build. Since we are using a self hosted runner, this isn't necessary and affords
@@ -151,6 +153,8 @@ jobs:
       env:
         shell: bash
         MOZCONFIG: ".mozconfig-x86_64-pc-linux-gnu"
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       steps:
         - name: 📤 Checkout
           uses: actions/checkout@v2
@@ -226,6 +230,8 @@ jobs:
       runs-on: [self-hosted, linux, X64]
       env:
           SHELL: /bin/sh
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       steps:
         - name: Push new update
           run: |
