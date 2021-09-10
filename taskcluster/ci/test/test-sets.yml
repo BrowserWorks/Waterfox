@@ -146,7 +146,6 @@ marionette-headless:
 desktop-screenshot-capture:
     - browser-screenshots
 
-
 ### Specific platform test sets
 
 # Linux
@@ -284,6 +283,9 @@ windows10-64-2004-ccov-tests:
 
 windows10-64-2004-failure-tests:
     - mochitest-browser-chrome-failures
+
+windows10-32-2004-failure-tests:
+    - xpcshell-failures
 
 mingwclang-tests-debug:
     - cppunit
