@@ -218,9 +218,7 @@ export class WelcomeScreen extends React.PureComponent {
   }
 
   renderSecondaryCTA(className) {
-    console.log(this.props.id);
-    let altName = this.props.id === "AW_SEARCH" ? " search" : "";
-    console.log(className);
+    let altName = this.props.id === "AW_SEARCH" ? " primary" : "secondary";
     return (
       <div className={`secondary-cta ${className}`}>
         <Localized text={this.props.content.secondary_button.text}>
@@ -228,7 +226,7 @@ export class WelcomeScreen extends React.PureComponent {
         </Localized>
         <Localized text={this.props.content.secondary_button.label}>
           <button
-            className={`secondary${altName}`}
+            className={`${altName}`}
             value="secondary_button"
             onClick={this.handleAction}
           />
@@ -379,7 +377,7 @@ export class WelcomeScreen extends React.PureComponent {
         </div>
         {content.additional ? this.renderAdditional() : null}
         {content.secondary_button && content.secondary_button.position !== "top"
-          ? this.renderSecondaryCTA()
+          ? this.renderSecondaryCTA("")
           : null}
         <nav
           className={

@@ -489,9 +489,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
   }
 
   renderSecondaryCTA(className) {
-    console.log(this.props.id);
-    let altName = this.props.id === "AW_SEARCH" ? " search" : "";
-    console.log(className);
+    let altName = this.props.id === "AW_SEARCH" ? " primary" : "secondary";
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
       className: `secondary-cta ${className}`
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
@@ -499,7 +497,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", null)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
       text: this.props.content.secondary_button.label
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
-      className: `secondary${altName}`,
+      className: `${altName}`,
       value: "secondary_button",
       onClick: this.handleAction
     })));
@@ -681,7 +679,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
       className: "primary",
       value: "primary_button",
       onClick: this.handleAction
-    }))), content.additional ? this.renderAdditional() : null, content.secondary_button && content.secondary_button.position !== "top" ? this.renderSecondaryCTA() : null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
+    }))), content.additional ? this.renderAdditional() : null, content.secondary_button && content.secondary_button.position !== "top" ? this.renderSecondaryCTA("") : null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
       className: content.tiles && content.tiles.type === "topsites" && topSites && topSites.showImportable ? "steps has-disclaimer" : "steps",
       "data-l10n-id": "onboarding-welcome-steps-indicator",
       "data-l10n-args": `{"current": ${parseInt(this.props.order, 10) + 1}, "total": ${this.props.totalNumberOfScreens}}`

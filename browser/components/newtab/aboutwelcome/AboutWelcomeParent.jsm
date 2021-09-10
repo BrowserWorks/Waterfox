@@ -105,6 +105,7 @@ async function setDefaultEngine(engine_name) {
     const engine = Services.search.getEngineByName(engine_name);
     Services.search.setDefault(engine);
     Services.search.setDefaultPrivate(engine);
+    Services.prefs.setCharPref("distribution.engine", engine_name)
   } catch (e) {
     Cu.reportError(`Failed to set ${data}. ${ex}`);
   }
