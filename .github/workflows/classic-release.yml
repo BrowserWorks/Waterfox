@@ -165,8 +165,7 @@ jobs:
             run: |
               wget https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/codesign.bash https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/production.entitlements.xml
               chmod +x ./codesign.bash
-              ./codesign.bash -a objdir-classic/dist/waterfox-classic/WaterfoxClassic.app -i "${{ secrets.MACOS_ID }}" -e ./production.entitlements.xml
-              mv objdir-classic/dist/waterfox-classic/WaterfoxClassic.app objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app
+              ./codesign.bash -a objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app -i "${{ secrets.MACOS_ID }}" -e ./production.entitlements.xml
             if: startsWith(matrix.os, 'macos')
 
 
@@ -196,35 +195,31 @@ jobs:
 
           - name: Create MAR
             run: |
-              pushd objdir-classic/dist/
-              mkdir -p update
-              cp $GITHUB_WORKSPACE/tools/update-packaging/make_full_update.sh update/
-              cp $GITHUB_WORKSPACE/tools/update-packaging/common.sh update/
+              BROWSER_VERSION=$(grep 'DisplayVersion=' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              mkdir -p ./objdir-classic/dist/update
               xml=('<?xml version="1.0"?>'
               '<updates>'
               '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
-              '        <patch type="complete" URL="https://cdn.waterfox.net/releases/PLATFORM/update/waterfox-classic-BROWSER_VERSION.en-US.PLATFORM.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+              '        <patch type="complete" URL="https://cdn.waterfox.net/releases/osx64/update/waterfox-classic-BROWSER_VERSION.en-US.osx64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
               '    </update>'
               '</updates>')
-              for line in "${xml[@]}" ; do echo $line >> update/update.xml ; done
-              pushd update
-              chmod +x $GITHUB_WORKSPACE/objdir-classic/dist/host/bin/mar
-              MAR=$GITHUB_WORKSPACE/objdir-classic/dist/host/bin/mar \
-              ./make_full_update.sh \
-              waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar \
-              '${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app'
-              BROWSER_VERSION=$(grep 'DisplayVersion=' ${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              VERSION=$(grep '\<Version\>' ${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              BUILDID=$(grep 'BuildID=' ${GITHUB_WORKSPACE}/objdir-classic/dist/waterfox-classic/Waterfox Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              SHA512=$(shasum -a 512 waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $1}')
-              SIZE=$(ls -l waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $5}')
+              for line in "${xml[@]}" ; do echo $line >> ./objdir-classic/dist/update/update.xml ; done
+              chmod +x ./objdir-classic/dist/host/bin/mar
+              MAR=./objdir-classic/dist/host/bin/mar \
+              ./tools/update-packaging/make_full_update.sh \
+              ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar \
+              ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app
+              VERSION=$(grep '\<Version\>' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              BUILDID=$(grep 'BuildID=' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+              SHA512=$(shasum -a 512 ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $1}')
+              SIZE=$(ls -l ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $5}')
               echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
-              sed -i '' -e "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" update.xml
-              sed -i '' -e "s/BROWSER_VERSION/$BROWSER_VERSION/g" update.xml
-              sed -i '' -e "s/VERSION/$VERSION/g" update.xml
-              sed -i '' -e "s/BUILDID/$BUILDID/g" update.xml
-              sed -i '' -e "s/SIZE/$SIZE/g" update.xml
-              sed -i '' -e "s/HASH/"$SHA512"/g" update.xml
+              sed -i '' -e "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" ./objdir-classic/dist/update/update.xml
+              sed -i '' -e "s/BROWSER_VERSION/$BROWSER_VERSION/g" ./objdir-classic/dist/update/update.xml
+              sed -i '' -e "s/VERSION/$VERSION/g" ./objdir-classic/dist/update/update.xml
+              sed -i '' -e "s/BUILDID/$BUILDID/g" ./objdir-classic/dist/update/update.xml
+              sed -i '' -e "s/SIZE/$SIZE/g" ./objdir-classic/dist/update/update.xml
+              sed -i '' -e "s/HASH/"$SHA512"/g" ./objdir-classic/dist/update/update.xml
             if: startsWith(matrix.os, 'macos')
 
           - name: Upload macOS DMG
