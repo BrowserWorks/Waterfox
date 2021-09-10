@@ -3141,6 +3141,9 @@ class nsDisplayItem : public nsDisplayItemBase {
 
   const nsRect& GetPaintRect() const { return mPaintRect; }
 
+  nsRect GetPaintRect(nsDisplayListBuilder* aBuilder,
+                      gfxContext* aCtx);
+
   virtual const nsRect& GetUntransformedPaintRect() const {
     return GetPaintRect();
   }

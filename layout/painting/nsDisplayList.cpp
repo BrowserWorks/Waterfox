@@ -2432,7 +2432,7 @@ void nsDisplayList::Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx,
     }
 
     nsRegion visible(item->GetClippedBounds(aBuilder));
-    visible.And(visible, item->GetBuildingRect());
+    visible.And(visible, item->GetPaintRect(aBuilder, aCtx));
     item->SetPaintRect(visible.GetBounds());
     if (!item->ComputeVisibility(aBuilder, &visible)) {
       continue;
@@ -3137,6 +3137,19 @@ nsRect nsDisplayItem::GetClippedBounds(nsDisplayListBuilder* aBuilder) const {
   bool snap;
   nsRect r = GetBounds(aBuilder, &snap);
   return GetClip().ApplyNonRoundedIntersection(r);
+}
+
+nsRect nsDisplayItem::GetPaintRect(nsDisplayListBuilder* aBuilder,
+                                   gfxContext* aCtx) {
+  bool dummy;
+  nsRect result = GetBounds(aBuilder, &dummy);
+  if (aCtx) {
+    result.IntersectRect(result,
+                         nsLayoutUtils::RoundGfxRectToAppRect(
+                             aCtx->GetClipExtents(),
+                             mFrame->PresContext()->AppUnitsPerDevPixel()));
+  }
+  return result;
 }
 
 nsDisplayContainer::nsDisplayContainer(
