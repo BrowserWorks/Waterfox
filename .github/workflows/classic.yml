@@ -15,7 +15,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-18.04
     container:
-      image: ghcr.io/WaterfoxCo/waterfox_docker_img:latest
+      image: ghcr.io/waterfoxco/waterfox_docker_img:latest
     steps:
       - name: Checkout branch
         uses: actions/checkout@v2
@@ -35,8 +35,8 @@ jobs:
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic Linux ${{ github.run_id }}
-          path: ./objdir-*/dist/*.tar.bz2
+          name: Artifact_Classic_Linux_${{ github.run_id }}
+          path: ./objdir-*/dist/waterfox*.tar.bz2
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
   build-mac:
     runs-on: macos-10.15
@@ -71,8 +71,8 @@ jobs:
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic macOS ${{ github.run_id }}
-          path: ./objdir-*/dist/*.dmg
+          name: Artifact_Classic_macOS_${{ github.run_id }}
+          path: ./objdir-*/dist/waterfox*.dmg
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
   build-windows:
     runs-on: windows-2016
@@ -110,3 +110,27 @@ jobs:
         with:
           name: Artifact_Classic_Windows_${{ github.run_id }}
           path: ./objdir-*/dist/waterfox*.zip
+  checksum:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-mac, build-windows]
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ./objdir-*/dist
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Generate checksum file
+        run: |
+          mkdir ./dist
+          mv ./objdir-*/dist/Artifact_Classic_*_${{ github.run_id }}/objdir-*/dist/waterfox*.* ./dist/
+          cd ./dist/
+          checksumFile=$(basename waterfox*.zip | sed 's/.win64.zip//g' | sed 's/$/.sha256/g')
+          sha256sum waterfox*.tar.bz2 | tee -a "$checksumFile"
+          sha256sum waterfox*.dmg | tee -a "$checksumFile"
+          sha256sum waterfox*.zip | tee -a "$checksumFile"
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_Checksum_${{ github.run_id }}
+          path: ./dist/*.sha256

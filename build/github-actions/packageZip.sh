@@ -1,2 +1,2 @@
-cd $GITHUB_WORKSPACE
+cd "$GITHUB_WORKSPACE" || exit
 ./mach package
