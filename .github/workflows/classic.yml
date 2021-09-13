@@ -31,12 +31,14 @@ jobs:
       - name: Package
         run: |
           ./mach package
+          mkdir ./dist/
+          mv ./objdir-*/dist/waterfox*.tar.bz2 ./dist/
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v2
         with:
           name: Artifact_Classic_Linux_${{ github.run_id }}
-          path: ./objdir-*/dist/waterfox*.tar.bz2
+          path: ./dist/waterfox*.tar.bz2
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
   build-mac:
     runs-on: macos-10.15
@@ -67,12 +69,14 @@ jobs:
       - name: Package
         run: |
           ./mach package
+          mkdir ./dist/
+          mv ./objdir-*/dist/waterfox*.dmg ./dist/
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v2
         with:
           name: Artifact_Classic_macOS_${{ github.run_id }}
-          path: ./objdir-*/dist/waterfox*.dmg
+          path: ./dist/waterfox*.dmg
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
   build-windows:
     runs-on: windows-2016
@@ -109,7 +113,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Artifact_Classic_Windows_${{ github.run_id }}
-          path: ./objdir-*/dist/waterfox*.zip
+          path: ./dist/waterfox*.zip
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
   checksum:
     runs-on: ubuntu-latest
     needs: [build-linux, build-mac, build-windows]
@@ -117,13 +122,12 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v2
         with:
-          path: ./objdir-*/dist
+          path: ./dist
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
       - name: Generate checksum file
         run: |
-          mkdir ./dist
-          mv ./objdir-*/dist/Artifact_Classic_*_${{ github.run_id }}/objdir-*/dist/waterfox*.* ./dist/
           cd ./dist/
+          mv ./Artifact_Classic_*_${{ github.run_id }}/waterfox*.* ./
           checksumFile=$(basename waterfox*.zip | sed 's/.win64.zip//g' | sed 's/$/.sha256/g')
           sha256sum waterfox*.tar.bz2 | tee -a "$checksumFile"
           sha256sum waterfox*.dmg | tee -a "$checksumFile"
@@ -134,3 +138,4 @@ jobs:
         with:
           name: Artifact_Classic_Checksum_${{ github.run_id }}
           path: ./dist/*.sha256
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
