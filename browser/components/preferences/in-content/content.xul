@@ -259,7 +259,7 @@
 <!-- Scrollbars -->
 <groupbox id="scrollbarsGroup" data-category="paneContent" hidden="true" orient="vertical">
     <caption>
-        <label>&scrollbar.label;</label>
+        <label>&scrollbars.label;</label>
     </caption>
     <checkbox id="scrollbarColorEnabled" label="&allowScrollbarColor.label;" preference="layout.css.scrollbar-color.enabled"/>
     <checkbox id="scrollbarWidthEnabled" label="&allowScrollbarWidth.label;" preference="layout.css.scrollbar-width.enabled"/>
