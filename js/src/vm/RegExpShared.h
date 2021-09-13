@@ -22,8 +22,13 @@
 #include "gc/Barrier.h"
 #include "gc/Heap.h"
 #include "gc/Marking.h"
+#include "jit/JitOptions.h"
+#include "js/RegExpFlags.h"
 #include "js/UbiNode.h"
 #include "js/Vector.h"
+#ifdef JS_NEW_REGEXP
+#  include "new-regexp/RegExpTypes.h"
+#endif
 #include "vm/ArrayObject.h"
 
 struct JSContext;
@@ -40,33 +45,23 @@ using RootedRegExpShared = JS::Rooted<RegExpShared*>;
 using HandleRegExpShared = JS::Handle<RegExpShared*>;
 using MutableHandleRegExpShared = JS::MutableHandle<RegExpShared*>;
 
-enum RegExpFlag : uint8_t
+enum RegExpRunStatus : int32_t
 {
-    IgnoreCaseFlag  = 0x01,
-    GlobalFlag      = 0x02,
-    MultilineFlag   = 0x04,
-    StickyFlag      = 0x08,
-    UnicodeFlag     = 0x10,
-    DotAllFlag      = 0x20,
-
-    NoFlags         = 0x00,
-    AllFlags        = 0x3f
+    RegExpRunStatus_Error = -1,
+    RegExpRunStatus_Success = 1,
+    RegExpRunStatus_Success_NotFound = 0,
 };
 
-static_assert(IgnoreCaseFlag == REGEXP_IGNORECASE_FLAG &&
-              GlobalFlag == REGEXP_GLOBAL_FLAG &&
-              MultilineFlag == REGEXP_MULTILINE_FLAG &&
-              StickyFlag == REGEXP_STICKY_FLAG &&
-              UnicodeFlag == REGEXP_UNICODE_FLAG &&
-              DotAllFlag == REGEXP_DOTALL_FLAG,
-              "Flag values should be in sync with self-hosted JS");
+#ifdef JS_NEW_REGEXP
 
-enum RegExpRunStatus
-{
-    RegExpRunStatus_Error,
-    RegExpRunStatus_Success,
-    RegExpRunStatus_Success_NotFound
-};
+inline bool IsNativeRegExpEnabled(JSContext* cx) {
+#  ifdef JS_CODEGEN_NONE
+  return false;
+#  else
+  return cx->options().nativeRegExp();
+#  endif
+}
+#endif  // JS_NEW_REGEXP
 
 /*
  * A RegExpShared is the compiled representation of a regexp. A RegExpShared is
@@ -88,17 +83,27 @@ enum RegExpRunStatus
 class RegExpShared : public gc::TenuredCell
 {
   public:
-    enum CompilationMode {
-        Normal,
-        MatchOnly
+    enum class Kind
+    {
+        Unparsed,
+        Atom,
+        RegExp
     };
 
-    enum ForceByteCodeEnum {
-        DontForceByteCode,
-        ForceByteCode
+    enum class CodeKind
+    {
+        Bytecode,
+        Jitcode,
+        Any
     };
 
+#ifdef JS_NEW_REGEXP
+    using ByteCode = js::irregexp::ByteArrayData;
+    using JitCodeTable = js::irregexp::ByteArray;
+#else
+    using ByteCode = uint8_t;
     using JitCodeTable = UniquePtr<uint8_t[], JS::FreePolicy>;
+#endif
     using JitCodeTables = Vector<JitCodeTable, 0, SystemAllocPolicy>;
 
   private:
@@ -108,63 +113,92 @@ class RegExpShared : public gc::TenuredCell
     struct RegExpCompilation
     {
         ReadBarriered<jit::JitCode*> jitCode;
-        uint8_t* byteCode;
+        ByteCode* byteCode;
 
         RegExpCompilation() : byteCode(nullptr) {}
 
-        bool compiled(ForceByteCodeEnum force = DontForceByteCode) const {
-            return byteCode || (force == DontForceByteCode && jitCode);
+        bool compiled(CodeKind kind = CodeKind::Any) const
+        {
+            switch (kind) {
+                case CodeKind::Bytecode:
+                    return !!byteCode;
+                case CodeKind::Jitcode:
+                    return !!jitCode;
+                case CodeKind::Any:
+                    return !!byteCode || !!jitCode;
+            }
+            MOZ_CRASH("Unreachable");
         }
     };
 
     /* Source to the RegExp, for lazy compilation. */
     HeapPtr<JSAtom*>   source;
 
-    RegExpFlag         flags;
-    bool               canStringMatch;
-    size_t             parenCount;
+    JS::RegExpFlags    flags;
 
-    RegExpCompilation  compilationArray[4];
+#ifdef JS_NEW_REGEXP
+    RegExpShared::Kind kind_ = Kind::Unparsed;
+    GCPtrAtom patternAtom_;
+    uint32_t maxRegisters_ = 0;
+    uint32_t ticks_ = 0;
+#else
+    bool canStringMatch = false;
+#endif
 
-    static int CompilationIndex(CompilationMode mode, bool latin1) {
-        switch (mode) {
-          case Normal:    return latin1 ? 0 : 1;
-          case MatchOnly: return latin1 ? 2 : 3;
-        }
-        MOZ_CRASH();
-    }
+#ifdef JS_NEW_REGEXP
+  uint32_t numNamedCaptures_ = {};
+  uint32_t* namedCaptureIndices_ = {};
+  GCPtr<PlainObject*> groupsTemplate_ = {};
+#endif
+
+    size_t             pairCount_;
+
+    RegExpCompilation  compilationArray[2];
+
+    static int CompilationIndex(bool latin1) { return latin1 ? 0 : 1; }
 
     // Tables referenced by JIT code.
     JitCodeTables tables;
 
     /* Internal functions. */
-    RegExpShared(JSAtom* source, RegExpFlag flags);
+    RegExpShared(JSAtom* source, JS::RegExpFlags flags);
 
-    static bool compile(JSContext* cx, MutableHandleRegExpShared res, HandleLinearString input,
-                        CompilationMode mode, ForceByteCodeEnum force);
-    static bool compile(JSContext* cx, MutableHandleRegExpShared res, HandleAtom pattern,
-                        HandleLinearString input, CompilationMode mode, ForceByteCodeEnum force);
+    static bool compile(JSContext* cx,
+                        MutableHandleRegExpShared res,
+                        HandleLinearString input,
+                        CodeKind code);
+    static bool compile(JSContext* cx,
+                        MutableHandleRegExpShared res,
+                        HandleAtom pattern,
+                        HandleLinearString input,
+                        CodeKind code);
 
-    static bool compileIfNecessary(JSContext* cx, MutableHandleRegExpShared res,
-                                   HandleLinearString input, CompilationMode mode,
-                                   ForceByteCodeEnum force);
+    static bool compileIfNecessary(JSContext* cx,
+                                   MutableHandleRegExpShared res,
+                                   HandleLinearString input,
+                                   CodeKind code);
 
-    const RegExpCompilation& compilation(CompilationMode mode, bool latin1) const {
-        return compilationArray[CompilationIndex(mode, latin1)];
+    const RegExpCompilation& compilation(bool latin1) const {
+        return compilationArray[CompilationIndex(latin1)];
     }
 
-    RegExpCompilation& compilation(CompilationMode mode, bool latin1) {
-        return compilationArray[CompilationIndex(mode, latin1)];
+    RegExpCompilation& compilation(bool latin1) {
+        return compilationArray[CompilationIndex(latin1)];
     }
 
   public:
     ~RegExpShared() = delete;
 
-    // Execute this RegExp on input starting from searchIndex, filling in
-    // matches if specified and otherwise only determining if there is a match.
+    static RegExpRunStatus executeAtom(JSContext* cx,
+                                       MutableHandleRegExpShared re,
+                                       HandleLinearString input,
+                                       size_t start,
+                                       MatchPairs* matches);
+
+    // Execute this RegExp on input starting from searchIndex, filling in matches.
     static RegExpRunStatus execute(JSContext* cx, MutableHandleRegExpShared res,
                                    HandleLinearString input, size_t searchIndex,
-                                   MatchPairs* matches, size_t* endIndex);
+                                   MatchPairs* matches);
 
     // Register a table with this RegExpShared, and take ownership.
     bool addTable(JitCodeTable table) {
@@ -173,31 +207,79 @@ class RegExpShared : public gc::TenuredCell
 
     /* Accessors */
 
-    size_t getParenCount() const {
+    size_t pairCount() const {
+#ifdef JS_NEW_REGEXP
+        MOZ_ASSERT(kind() != Kind::Unparsed);
+#else
         MOZ_ASSERT(isCompiled());
-        return parenCount;
+#endif
+        return pairCount_;
     }
 
-    /* Accounts for the "0" (whole match) pair. */
-    size_t pairCount() const            { return getParenCount() + 1; }
+#ifdef JS_NEW_REGEXP
+  RegExpShared::Kind kind() const { return kind_; }
+
+  // Use simple string matching for this regexp.
+  void useAtomMatch(HandleAtom pattern);
+
+  // Use the regular expression engine for this regexp.
+  void useRegExpMatch(size_t parenCount);
+
+  static bool initializeNamedCaptures(JSContext* cx, HandleRegExpShared re,
+                                      HandleNativeObject namedCaptures);
+  PlainObject* getGroupsTemplate() { return groupsTemplate_; }
+
+  void tierUpTick();
+  bool markedForTierUp(JSContext* cx) const;
+
+  void setByteCode(ByteCode* code, bool latin1) {
+    compilation(latin1).byteCode = code;
+  }
+  ByteCode* getByteCode(bool latin1) const {
+    return compilation(latin1).byteCode;
+  }
+  void setJitCode(jit::JitCode* code, bool latin1) {
+    compilation(latin1).jitCode = code;
+  }
+  jit::JitCode* getJitCode(bool latin1) const {
+    return compilation(latin1).jitCode;
+  }
+  uint32_t getMaxRegisters() const { return maxRegisters_; }
+  void updateMaxRegisters(uint32_t numRegisters) {
+    maxRegisters_ = std::max(maxRegisters_, numRegisters);
+  }
+
+  uint32_t numNamedCaptures() const { return numNamedCaptures_; }
+  int32_t getNamedCaptureIndex(uint32_t idx) const {
+    MOZ_ASSERT(idx < numNamedCaptures());
+    MOZ_ASSERT(namedCaptureIndices_);
+    return namedCaptureIndices_[idx];
+  }
+
+#endif
 
     JSAtom* getSource() const           { return source; }
-    RegExpFlag getFlags() const         { return flags; }
-    bool ignoreCase() const             { return flags & IgnoreCaseFlag; }
-    bool global() const                 { return flags & GlobalFlag; }
-    bool multiline() const              { return flags & MultilineFlag; }
-    bool sticky() const                 { return flags & StickyFlag; }
-    bool unicode() const                { return flags & UnicodeFlag; }
-    bool dotAll() const                 { return flags & DotAllFlag; }
 
-    bool isCompiled(CompilationMode mode, bool latin1,
-                    ForceByteCodeEnum force = DontForceByteCode) const {
-        return compilation(mode, latin1).compiled(force);
+#ifdef JS_NEW_REGEXP
+    JSAtom* patternAtom() const { return patternAtom_; }
+#else
+    JSAtom* patternAtom() const { return getSource(); }
+#endif
+
+    JS::RegExpFlags getFlags() const    { return flags; }
+
+    bool global() const                 { return flags.global(); }
+    bool ignoreCase() const             { return flags.ignoreCase(); }
+    bool multiline() const              { return flags.multiline(); }
+    bool dotAll() const                 { return flags.dotAll(); }
+    bool unicode() const                { return flags.unicode(); }
+    bool sticky() const                 { return flags.sticky(); }
+
+    bool isCompiled(bool latin1, CodeKind codeKind = CodeKind::Any) const
+    {
+        return compilation(latin1).compiled(codeKind);
     }
-    bool isCompiled() const {
-        return isCompiled(Normal, true) || isCompiled(Normal, false)
-            || isCompiled(MatchOnly, true) || isCompiled(MatchOnly, false);
-    }
+    bool isCompiled() const { return isCompiled(true) || isCompiled(false); }
 
     void traceChildren(JSTracer* trc);
     void discardJitCode();
@@ -211,51 +293,55 @@ class RegExpShared : public gc::TenuredCell
         return offsetof(RegExpShared, flags);
     }
 
-    static size_t offsetOfParenCount() {
-        return offsetof(RegExpShared, parenCount);
+    static size_t offsetOfPairCount() {
+        return offsetof(RegExpShared, pairCount_);
     }
 
-    static size_t offsetOfLatin1JitCode(CompilationMode mode) {
-        return offsetof(RegExpShared, compilationArray)
-             + (CompilationIndex(mode, true) * sizeof(RegExpCompilation))
-             + offsetof(RegExpCompilation, jitCode);
+    static size_t offsetOfJitCode(bool latin1)
+    {
+        return offsetof(RegExpShared, compilationArray) +
+               (CompilationIndex(latin1) * sizeof(RegExpCompilation)) +
+               offsetof(RegExpCompilation, jitCode);
     }
-    static size_t offsetOfTwoByteJitCode(CompilationMode mode) {
-        return offsetof(RegExpShared, compilationArray)
-             + (CompilationIndex(mode, false) * sizeof(RegExpCompilation))
-             + offsetof(RegExpCompilation, jitCode);
-    }
+#ifdef JS_NEW_REGEXP
+  static size_t offsetOfGroupsTemplate() {
+    return offsetof(RegExpShared, groupsTemplate_);
+  }
+#endif
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 
 #ifdef DEBUG
-    static bool dumpBytecode(JSContext* cx, MutableHandleRegExpShared res, bool match_only,
+    static bool dumpBytecode(JSContext* cx,
+                             MutableHandleRegExpShared res,
                              HandleLinearString input);
 #endif
 };
 
 class RegExpZone
 {
-    struct Key {
-        JSAtom* atom;
-        uint16_t flag;
+    struct Key
+    {
+        JSAtom* atom = nullptr;
+        JS::RegExpFlags flags = JS::RegExpFlag::NoFlags;
 
-        Key() {}
-        Key(JSAtom* atom, RegExpFlag flag)
-          : atom(atom), flag(flag)
-        { }
+        Key() = default;
+        Key(JSAtom* atom, JS::RegExpFlags flags)
+          : atom(atom)
+          , flags(flags)
+        {}
         MOZ_IMPLICIT Key(const ReadBarriered<RegExpShared*>& shared)
           : atom(shared.unbarrieredGet()->getSource()),
-            flag(shared.unbarrieredGet()->getFlags())
+            flags(shared.unbarrieredGet()->getFlags())
         { }
 
         typedef Key Lookup;
         static HashNumber hash(const Lookup& l) {
             HashNumber hash = DefaultHasher<JSAtom*>::hash(l.atom);
-            return mozilla::AddToHash(hash, l.flag);
+            return mozilla::AddToHash(hash, l.flags.value());
         }
         static bool match(Key l, Key r) {
-            return l.atom == r.atom && l.flag == r.flag;
+            return l.atom == r.atom && l.flags == r.flags;
         }
     };
 
@@ -277,7 +363,12 @@ class RegExpZone
 
     bool empty() const { return set_.empty(); }
 
-    RegExpShared* get(JSContext* cx, HandleAtom source, RegExpFlag flags);
+    RegExpShared* maybeGet(JSAtom* source, JS::RegExpFlags flags) const {
+        Set::Ptr p = set_.lookup(Key(source, flags));
+        return p ? *p : nullptr;
+    }
+
+    RegExpShared* get(JSContext* cx, HandleAtom source, JS::RegExpFlags flags);
 
     /* Like 'get', but compile 'maybeOpt' (if non-null). */
     RegExpShared* get(JSContext* cx, HandleAtom source, JSString* maybeOpt);

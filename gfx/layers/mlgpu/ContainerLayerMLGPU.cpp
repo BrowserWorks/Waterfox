@@ -7,6 +7,7 @@
 #include "gfxPrefs.h"
 #include "LayersLogging.h"
 #include "LayerManagerMLGPU.h"
+#include "MaskOperation.h"
 #include "MLGDevice.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/gfx/Types.h"

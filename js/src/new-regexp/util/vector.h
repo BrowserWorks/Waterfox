@@ -21,7 +21,7 @@ namespace internal {
 
 template <typename T>
 T* NewArray(size_t size) {
-  static_assert(std::is_pod<T>::value, "");
+  static_assert(std::is_pod_v<T>, "");
   js::AutoEnterOOMUnsafeRegion oomUnsafe;
   T* result = static_cast<T*>(js_malloc(size * sizeof(T)));
   if (!result) {
@@ -58,8 +58,8 @@ class Vector {
   // Returns a vector using the same backing storage as this one,
   // spanning from and including 'from', to but not including 'to'.
   Vector<T> SubVector(size_t from, size_t to) const {
-    MOZ_ASSERT(from < to);
-    MOZ_ASSERT(to < length_);
+    MOZ_ASSERT(from <= to);
+    MOZ_ASSERT(to <= length_);
     return Vector<T>(begin() + from, to - from);
   }
 
@@ -173,6 +173,9 @@ namespace base {
 template <typename T, size_t kSize>
 class SmallVector {
 public:
+  SmallVector() = default;
+  SmallVector(size_t size) { resize_no_init(size); }
+
   inline bool empty() const { return inner_.empty(); }
   inline const T& back() const { return inner_.back(); }
   inline void pop_back() { inner_.popBack(); };
@@ -185,6 +188,10 @@ public:
   };
   inline size_t size() const { return inner_.length(); }
   inline const T& at(size_t index) const { return inner_[index]; }
+  T* data() { return inner_.begin(); }
+
+  T& operator[](size_t index) { return inner_[index]; }
+  const T& operator[](size_t index) const { return inner_[index]; }
 
   void resize_no_init(size_t new_size) {
     js::AutoEnterOOMUnsafeRegion oomUnsafe;

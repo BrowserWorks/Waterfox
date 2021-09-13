@@ -10,6 +10,8 @@
 
 #include "2D.h"
 #include "Filters.h"
+#include "Logging.h"
+#include "mozilla/PodOperations.h"
 #include <vector>
 
 namespace mozilla {

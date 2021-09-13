@@ -13,6 +13,7 @@
 #include "mozilla/PodOperations.h"
 
 #include "MainThreadUtils.h"
+#include "MediaStreamGraph.h"
 #include "nsTArray.h"
 #include "math.h"
 #include "WebAudioUtils.h"

@@ -25,15 +25,15 @@ class Flags final {
   using flag_type = T;
   using mask_type = S;
 
-  constexpr Flags() : mask_(0) {}
-  constexpr Flags(flag_type flag)
+  Flags() : mask_(0) {}
+  Flags(flag_type flag)
       : mask_(static_cast<S>(flag)) {}
-  constexpr explicit Flags(mask_type mask) : mask_(static_cast<S>(mask)) {}
+  Flags(mask_type mask) : mask_(static_cast<S>(mask)) {}
 
-  constexpr bool operator==(flag_type flag) const {
+  bool operator==(flag_type flag) const {
     return mask_ == static_cast<S>(flag);
   }
-  constexpr bool operator!=(flag_type flag) const {
+  bool operator!=(flag_type flag) const {
     return mask_ != static_cast<S>(flag);
   }
 
@@ -50,13 +50,13 @@ class Flags final {
     return *this;
   }
 
-  constexpr Flags operator&(const Flags& flags) const {
+  Flags operator&(const Flags& flags) const {
     return Flags(mask_ & flags.mask_);
   }
-  constexpr Flags operator|(const Flags& flags) const {
+  Flags operator|(const Flags& flags) const {
     return Flags(mask_ | flags.mask_);
   }
-  constexpr Flags operator^(const Flags& flags) const {
+  Flags operator^(const Flags& flags) const {
     return Flags(mask_ ^ flags.mask_);
   }
 
@@ -64,20 +64,20 @@ class Flags final {
   Flags& operator|=(flag_type flag) { return operator|=(Flags(flag)); }
   Flags& operator^=(flag_type flag) { return operator^=(Flags(flag)); }
 
-  constexpr Flags operator&(flag_type flag) const {
+  Flags operator&(flag_type flag) const {
     return operator&(Flags(flag));
   }
-  constexpr Flags operator|(flag_type flag) const {
+  Flags operator|(flag_type flag) const {
     return operator|(Flags(flag));
   }
-  constexpr Flags operator^(flag_type flag) const {
+  Flags operator^(flag_type flag) const {
     return operator^(Flags(flag));
   }
 
-  constexpr Flags operator~() const { return Flags(~mask_); }
+  Flags operator~() const { return Flags(~mask_); }
 
-  constexpr operator mask_type() const { return mask_; }
-  constexpr bool operator!() const { return !mask_; }
+  operator mask_type() const { return mask_; }
+  bool operator!() const { return !mask_; }
 
   Flags without(flag_type flag) { return *this & (~Flags(flag)); }
 

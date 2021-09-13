@@ -78,16 +78,9 @@ UNIFIED_SOURCES += [
 ]
 
 SOURCES += [
+    'PluginInstanceChild.cpp', # 'PluginThreadCallback' : ambiguous symbol
     'PluginModuleChild.cpp',   # Redefinition of mozilla::WindowsDllInterceptor sUser32Intercept
 ]
-
-plugin_werror_sources = [
-    'PluginInstanceChild.cpp',
-]
-SOURCES += plugin_werror_sources
-if CONFIG['CC_TYPE'] == 'clang-cl':
-    for f in plugin_werror_sources:
-        SOURCES[f].flags += ['-Wno-c++11-narrowing']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     UNIFIED_SOURCES += [

@@ -10,6 +10,7 @@
 #include "InputBlockState.h"
 #include "InputData.h"
 #include "OverscrollHandoffState.h"
+#include "mozilla/TextEvents.h"
 
 namespace mozilla {
 namespace layers {

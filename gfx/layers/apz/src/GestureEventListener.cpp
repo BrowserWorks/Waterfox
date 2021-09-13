@@ -12,6 +12,7 @@
 #include "base/task.h"                  // for CancelableTask, etc
 #include "gfxPrefs.h"                   // for gfxPrefs
 #include "InputBlockState.h"            // for TouchBlockState
+#include "OverscrollHandoffState.h"
 #include "nsDebug.h"                    // for NS_WARNING
 #include "nsMathUtils.h"                // for NS_hypot
 

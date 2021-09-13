@@ -58,6 +58,8 @@
 #define RECYCLE_LOG(...) do { } while (0)
 #endif
 
+using namespace mozilla::gfx;
+
 namespace mozilla {
 namespace layers {
 

@@ -30,8 +30,11 @@
 #include <stdio.h>
 #include <string.h>
 
-using namespace std;
 using namespace cdm;
+
+using std::function;
+using std::string;
+using std::vector;
 
 ClearKeySessionManager::ClearKeySessionManager(Host_9* aHost)
   : mDecryptionManager(ClearKeyDecryptionManager::Get())

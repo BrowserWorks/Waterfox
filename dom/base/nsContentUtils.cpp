@@ -20,6 +20,7 @@
 #include "imgRequestProxy.h"
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "js/RegExp.h"
 #include "js/Value.h"
 #include "Layers.h"
 #include "MediaDecoder.h"
@@ -7231,28 +7232,17 @@ nsContentUtils::FindInternalContentViewer(const nsACString& aType,
 }
 
 static void
-ReportPatternCompileFailure(nsAString& aPattern, nsIDocument* aDocument,
+ReportPatternCompileFailure(nsAString& aPattern,
+                            nsIDocument* aDocument,
+                            JS::MutableHandle<JS::Value> error,
                             JSContext* cx)
 {
-    MOZ_ASSERT(JS_IsExceptionPending(cx));
-
-    JS::RootedValue exn(cx);
-    if (!JS_GetPendingException(cx, &exn)) {
-      return;
-    }
-    if (!exn.isObject()) {
-      // If pending exception is not an object, it should be OOM.
-      return;
-    }
-
     JS::AutoSaveExceptionState savedExc(cx);
-    JS::RootedObject exnObj(cx, &exn.toObject());
+    JS::RootedObject exnObj(cx, &error.toObject());
     JS::RootedValue messageVal(cx);
     if (!JS_GetProperty(cx, exnObj, "message", &messageVal)) {
       return;
     }
-    MOZ_ASSERT(messageVal.isString());
-
     JS::RootedString messageStr(cx, messageVal.toString());
     MOZ_ASSERT(messageStr);
 
@@ -7286,25 +7276,36 @@ nsContentUtils::IsPatternMatching(nsAString& aValue, nsAString& aPattern,
   // regexp evaluation, not actual script execution.
   JSAutoCompartment ac(cx, xpc::UnprivilegedJunkScope());
 
+  // Check if the pattern by itself is valid first, and not that it only becomes
+  // valid once we add ^(?: and )$.
+  JS::RootedValue error(cx);
+  if (!JS::CheckRegExpSyntax(
+          cx, static_cast<char16_t*>(aPattern.BeginWriting()),
+          aPattern.Length(), JS::RegExpFlag::Unicode, &error)) {
+    return true;
+  }
+
+  if (!error.isUndefined()) {
+    ReportPatternCompileFailure(aPattern, aDocument, &error, cx);
+    return true;
+  }
+
   // The pattern has to match the entire value.
   aPattern.Insert(NS_LITERAL_STRING("^(?:"), 0);
   aPattern.AppendLiteral(")$");
 
   JS::Rooted<JSObject*> re(cx,
-    JS_NewUCRegExpObject(cx,
+    JS::NewUCRegExpObject(cx,
                          static_cast<char16_t*>(aPattern.BeginWriting()),
-                         aPattern.Length(), JSREG_UNICODE));
+                         aPattern.Length(), JS::RegExpFlag::Unicode));
+
   if (!re) {
-    // Remove extra patterns added above to report with the original pattern.
-    aPattern.Cut(0, 4);
-    aPattern.Cut(aPattern.Length() - 2, 2);
-    ReportPatternCompileFailure(aPattern, aDocument, cx);
     return true;
   }
 
   JS::Rooted<JS::Value> rval(cx, JS::NullValue());
   size_t idx = 0;
-  if (!JS_ExecuteRegExpNoStatics(cx, re,
+  if (!JS::ExecuteRegExpNoStatics(cx, re,
                                  static_cast<char16_t*>(aValue.BeginWriting()),
                                  aValue.Length(), &idx, true, &rval)) {
     return true;

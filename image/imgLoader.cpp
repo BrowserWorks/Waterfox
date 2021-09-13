@@ -7,6 +7,8 @@
 // Undefine windows version of LoadImage because our code uses that name.
 #undef LoadImage
 
+#include <algorithm>
+
 #include "ImageLogging.h"
 #include "imgLoader.h"
 
@@ -962,9 +964,6 @@ imgCacheQueue::GetSize() const
 {
   return mSize;
 }
-
-#include <algorithm>
-using namespace std;
 
 void
 imgCacheQueue::Remove(imgCacheEntry* entry)

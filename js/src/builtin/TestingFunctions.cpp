@@ -26,13 +26,16 @@
 #include "builtin/SelfHostingDefines.h"
 #ifdef DEBUG
 #include "frontend/TokenStream.h"
+#  ifndef JS_NEW_REGEXP
 #include "irregexp/RegExpAST.h"
 #include "irregexp/RegExpEngine.h"
 #include "irregexp/RegExpParser.h"
+#  endif
 #endif
 #include "jit/InlinableNatives.h"
 #include "js/Debug.h"
 #include "js/HashTable.h"
+#include "js/RegExpFlags.h"
 #include "js/StructuredClone.h"
 #include "js/UbiNode.h"
 #include "js/UbiNodeBreadthFirst.h"
@@ -64,6 +67,9 @@ using namespace js;
 
 using mozilla::ArrayLength;
 using mozilla::Move;
+
+using JS::RegExpFlag;
+using JS::RegExpFlags;
 
 // If fuzzingSafe is set, remove functionality that could cause problems with
 // fuzzers. Set this via the environment variable MOZ_FUZZING_SAFE.
@@ -3957,7 +3963,7 @@ GetModuleEnvironmentValue(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(JS_NEW_REGEXP)
 static const char*
 AssertionTypeToString(irregexp::RegExpAssertion::AssertionType type)
 {
@@ -4231,7 +4237,7 @@ ParseRegExp(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RegExpFlag flags = RegExpFlag(0);
+    RegExpFlags flags = RegExpFlag::NoFlags;
     if (!args.get(1).isUndefined()) {
         if (!args.get(1).isString()) {
             ReportUsageErrorASCII(cx, callee, "Second argument, if present, must be a String");
@@ -4260,11 +4266,7 @@ ParseRegExp(JSContext* cx, unsigned argc, Value* vp)
 
     irregexp::RegExpCompileData data;
     if (!irregexp::ParsePattern(dummyTokenStream, cx->tempLifoAlloc(), pattern,
-                                flags & MultilineFlag, match_only,
-                                flags & UnicodeFlag, flags & IgnoreCaseFlag,
-                                flags & GlobalFlag, flags & StickyFlag,
-                                flags & DotAllFlag,
-                                &data))
+                                match_only, flags, &data))
     {
         return false;
     }
@@ -4295,34 +4297,25 @@ DisRegExp(JSContext* cx, unsigned argc, Value* vp)
 
     Rooted<RegExpObject*> reobj(cx, &args[0].toObject().as<RegExpObject>());
 
-    bool match_only = false;
-    if (!args.get(1).isUndefined()) {
-        if (!args.get(1).isBoolean()) {
-            ReportUsageErrorASCII(cx, callee, "Second argument, if present, must be a Boolean");
-            return false;
-        }
-        match_only = args[1].toBoolean();
-    }
-
     RootedLinearString input(cx, cx->runtime()->emptyString);
-    if (!args.get(2).isUndefined()) {
-        if (!args.get(2).isString()) {
-            ReportUsageErrorASCII(cx, callee, "Third argument, if present, must be a String");
+    if (!args.get(1).isUndefined()) {
+        if (!args.get(1).isString()) {
+            ReportUsageErrorASCII(cx, callee, "Second argument, if present, must be a String");
             return false;
         }
-        RootedString inputStr(cx, args[2].toString());
+        RootedString inputStr(cx, args[1].toString());
         input = inputStr->ensureLinear(cx);
         if (!input)
             return false;
     }
 
-    if (!RegExpObject::dumpBytecode(cx, reobj, match_only, input))
+    if (!RegExpObject::dumpBytecode(cx, reobj, input))
         return false;
 
     args.rval().setUndefined();
     return true;
 }
-#endif // DEBUG
+#endif  // DEBUG && !JS_NEW_REGEXP
 
 static bool
 EnableForEach(JSContext* cx, unsigned argc, Value* vp)
@@ -4986,13 +4979,13 @@ gc::ZealModeHelpText),
 };
 
 static const JSFunctionSpecWithHelp FuzzingUnsafeTestingFunctions[] = {
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(JS_NEW_REGEXP)
     JS_FN_HELP("parseRegExp", ParseRegExp, 3, 0,
 "parseRegExp(pattern[, flags[, match_only])",
 "  Parses a RegExp pattern and returns a tree, potentially throwing."),
 
     JS_FN_HELP("disRegExp", DisRegExp, 3, 0,
-"disRegExp(regexp[, match_only[, input]])",
+"disRegExp(regexp[, input])",
 "  Dumps RegExp bytecode."),
 #endif
 

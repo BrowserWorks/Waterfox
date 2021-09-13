@@ -7,16 +7,16 @@
 # This script handles all the mechanical steps of importing irregexp from v8:
 #
 # 1. Acquire the source: either from github, or optionally from a local copy of v8.
-# 2. Copy the contents of v8/src/regexp into js/src/regexp
+# 2. Copy the contents of v8/src/regexp into js/src/new-regexp
 #    - Exclude files that we have chosen not to import.
 # 3. While doing so, update #includes:
-#    - Change "src/regexp/*" to "regexp/*".
+#    - Change "src/regexp/*" to "new-regexp/*".
 #    - Remove other v8-specific headers completely.
-# 4. Add '#include "regexp/regexp-shim.h" in the necessary places.
-# 5. Update the VERSION file to include the correct git hash.
+# 4. Add '#include "new-regexp/regexp-shim.h" in the necessary places.
+# 5. Update the IRREGEXP_VERSION file to include the correct git hash.
 #
 # Usage:
-#  cd path/to/js/src/regexp
+#  cd path/to/js/src/new-regexp
 #  ./import-irregexp.py --path path/to/v8/src/regexp
 #
 # Alternatively, without the --path argument, import-irregexp.py will
@@ -49,6 +49,7 @@ def copy_and_update_includes(src_path, dst_path):
                  'regexp-bytecode-peephole.h',
                  'regexp-bytecodes.h',
                  'regexp-dotprinter.h',
+                 'regexp-error.h',
                  'regexp.h',
                  'regexp-macro-assembler.h',
                  'regexp-stack.h',
@@ -59,12 +60,12 @@ def copy_and_update_includes(src_path, dst_path):
 
     # 1. Rewrite includes of V8 regexp headers:
     regexp_include = re.compile('#include "src/regexp')
-    regexp_include_new = '#include "regexp'
+    regexp_include_new = '#include "new-regexp'
 
     # 2. Remove includes of other V8 headers
     other_include = re.compile('#include "src/')
 
-    # 3. If needed, add '#include "regexp/regexp-shim.h"'.
+    # 3. If needed, add '#include "new-regexp/regexp-shim.h"'.
     #    Note: We get a little fancy to ensure that header files are
     #    in alphabetic order. `need_to_add_shim` is true if we still
     #    have to add the shim header in this file. `adding_shim_now`
@@ -77,7 +78,7 @@ def copy_and_update_includes(src_path, dst_path):
     for line in src:
         if adding_shim_now:
             if (line == '\n' or line > '#include "src/regexp/regexp-shim.h"'):
-                dst.write('#include "regexp/regexp-shim.h"\n')
+                dst.write('#include "new-regexp/regexp-shim.h"\n')
                 need_to_add_shim = False
                 adding_shim_now = False
 
@@ -104,9 +105,9 @@ def import_from(srcdir, dstdir):
             continue
         copy_and_update_includes(file, dstdir / file.name)
 
-    # Update VERSION file
+    # Update IRREGEXP_VERSION file
     hash = get_hash(srcdir)
-    version_file = open(str(dstdir / 'VERSION'), 'w')
+    version_file = open(str(dstdir / 'IRREGEXP_VERSION'), 'w')
     version_file.write('Imported using import-irregexp.py from:\n')
     version_file.write('https://github.com/v8/v8/tree/%s/src/regexp\n' % hash)
 
@@ -115,9 +116,9 @@ if __name__ == '__main__':
     import argparse
     import tempfile
 
-    # This script should be run from js/src/regexp to work correctly.
+    # This script should be run from js/src/new-regexp to work correctly.
     current_path = Path(os.getcwd())
-    expected_path = 'js/src/regexp'
+    expected_path = 'js/src/new-regexp'
     if not current_path.match(expected_path):
         raise RuntimeError('%s must be run from %s' % (sys.argv[0],
                                                        expected_path))

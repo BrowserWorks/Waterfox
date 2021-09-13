@@ -81,6 +81,8 @@ EXPORTS.js += [
     '../public/Proxy.h',
     '../public/Realm.h',
     '../public/RefCounted.h',
+    '../public/RegExp.h',
+    '../public/RegExpFlags.h',
     '../public/RequiredDefines.h',
     '../public/Result.h',
     '../public/RootingAPI.h',
@@ -111,7 +113,6 @@ DIRS += [
     'ds',
     'frontend',
     'gc',
-    'irregexp',
     'jit',
     'perf',
     'proxy',
@@ -127,6 +128,8 @@ if CONFIG['JS_BUNDLED_EDITLINE']:
 
 if CONFIG['JS_NEW_REGEXP']:
     DIRS += ['new-regexp']
+else:
+    DIRS += ['irregexp']
 
 if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']
@@ -177,6 +180,10 @@ SOURCES += [
 # We are keeping this in the main moz.build because it is file specific
 if CONFIG['CLANG_CXX']:
     SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']
+
+SOURCES += [
+    'util/Text.cpp',
+]
 
 UNIFIED_SOURCES += [
     'vm/ArgumentsObject.cpp',

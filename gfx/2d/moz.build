@@ -69,7 +69,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('cocoa', 'uikit'):
         'MacIOSurface.h',
         'UnscaledFontMac.h',
     ]
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'NativeFontResourceMac.cpp',
         'ScaledFontMac.cpp',
     ]
@@ -151,7 +151,7 @@ elif CONFIG['CPU_ARCH'].startswith('mips'):
         'BlurLS3.cpp',
     ]
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'BezierUtils.cpp',
     'Blur.cpp',
     'DataSourceSurface.cpp',
@@ -165,10 +165,12 @@ UNIFIED_SOURCES += [
     'DrawTargetRecording.cpp',
     'DrawTargetTiled.cpp',
     'DrawTargetWrapAndRecord.cpp',
+    'Factory.cpp', # Need to suppress warnings in Skia header files.
     'FilterNodeSoftware.cpp',
     'FilterProcessing.cpp',
     'FilterProcessingScalar.cpp',
     'ImageScaling.cpp',
+    'InlineTranslator.cpp',
     'JobScheduler.cpp',
     'Matrix.cpp',
     'Path.cpp',
@@ -185,11 +187,6 @@ UNIFIED_SOURCES += [
     'SourceSurfaceCairo.cpp',
     'SourceSurfaceRawData.cpp',
     'Swizzle.cpp',
-]
-
-SOURCES += [
-    'Factory.cpp', # Need to suppress warnings in Skia header files.
-    'InlineTranslator.cpp',
 ]
 
 if CONFIG['CLANG_CXX']:

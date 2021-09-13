@@ -5,6 +5,7 @@
 
 #include "PaintedLayerMLGPU.h"
 #include "LayerManagerMLGPU.h"
+#include "MaskOperation.h"
 #include "mozilla/layers/LayersHelpers.h"
 
 namespace mozilla {

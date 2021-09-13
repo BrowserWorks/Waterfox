@@ -7,6 +7,7 @@
 
 #include "PathRecording.h"
 #include "RecordingTypes.h"
+#include "DrawEventRecorder.h"
 #include "Tools.h"
 #include "Filters.h"
 #include "Logging.h"

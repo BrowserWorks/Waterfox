@@ -48,6 +48,7 @@
   _(ProcessExecutableRegion,     550) \
   _(WasmCodeProfilingLabels,     550) \
                                       \
+  _(IrregexpLazyStatic,          600) \
   _(TraceLoggerGraphState,       600) \
   _(VTuneLock,                   600)
 

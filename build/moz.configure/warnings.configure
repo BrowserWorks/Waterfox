@@ -14,10 +14,14 @@ add_old_configure_assignment(
 
 
 # GCC/Clang warnings:
-# https://gcc.gnu.org/onlinedocs/gcc-4.7.2/gcc/Warning-Options.html
+# https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
+# https://clang.llvm.org/docs/DiagnosticsReference.html
 
 # lots of useful warnings
 add_gcc_warning('-Wall')
+
+# catch implicit truncation of enum values assigned to smaller bit fields
+check_and_add_gcc_warning('-Wbitfield-enum-conversion')
 
 # catches bugs, e.g. "if (c); foo();", few false positives
 add_gcc_warning('-Wempty-body')
@@ -30,6 +34,9 @@ add_gcc_warning('-Woverloaded-virtual', cxx_compiler)
 
 # catches pointer arithmetic using NULL or sizeof(void)
 add_gcc_warning('-Wpointer-arith')
+
+# catch modifying constructor parameter that shadows member variable
+check_and_add_gcc_warning('-Wshadow-field-in-constructor-modified')
 
 # catches comparing signed/unsigned ints
 add_gcc_warning('-Wsign-compare')
@@ -50,11 +57,18 @@ add_gcc_warning('-Wno-invalid-offsetof', cxx_compiler)
 # catches objects passed by value to variadic functions.
 check_and_add_gcc_warning('-Wclass-varargs')
 
+# catches empty if/switch/for initialization statements that have no effect
+check_and_add_gcc_warning('-Wempty-init-stmt', cxx_compiler)
+
+# catches some implicit conversion of floats to ints
+check_and_add_gcc_warning('-Wfloat-overflow-conversion')
+check_and_add_gcc_warning('-Wfloat-zero-conversion')
+
 # catches issues around loops
 check_and_add_gcc_warning('-Wloop-analysis')
 
 # catches C++ version forward-compat issues
-check_and_add_gcc_warning('-Wc++1z-compat', cxx_compiler)
+check_and_add_gcc_warning('-Wc++2a-compat', cxx_compiler)
 
 # catches possible misuse of the comma operator
 check_and_add_gcc_warning('-Wcomma', cxx_compiler)
@@ -79,6 +93,13 @@ check_and_add_gcc_warning('-Werror=non-literal-null-conversion',
 # catches string literals used in boolean expressions
 check_and_add_gcc_warning('-Wstring-conversion')
 
+# catches comparisons that are always true or false
+check_and_add_gcc_warning('-Wtautological-overlap-compare')
+check_and_add_gcc_warning('-Wtautological-unsigned-enum-zero-compare')
+check_and_add_gcc_warning('-Wtautological-unsigned-zero-compare')
+# This can be triggered by certain patterns used deliberately in portable code
+check_and_add_gcc_warning('-Wno-error=tautological-type-limit-compare')
+
 # we inline 'new' and 'delete' in mozalloc
 check_and_add_gcc_warning('-Wno-inline-new-delete', cxx_compiler)
 
@@ -98,6 +119,25 @@ check_and_add_gcc_warning('-Wno-error=coverage-mismatch', when='MOZ_PGO')
 
 # false positives depending on optimizations
 check_and_add_gcc_warning('-Wno-error=free-nonheap-object')
+
+# Would be a pain to fix all occurrences, for very little gain
+check_and_add_gcc_warning('-Wno-error=multistatement-macros')
+
+# Disable the -Werror for return-std-move because of a false positive
+# on nsTAutoStringN: https://bugs.llvm.org/show_bug.cgi?id=37249
+check_and_add_gcc_warning('-Wno-error=return-std-move')
+
+# Disable the -Werror for -Wclass-memaccess as we have a long
+# tail of issues to fix
+check_and_add_gcc_warning('-Wno-error=class-memaccess')
+
+# -Watomic-alignment is a new warning in clang 7 that seems way too broad.
+# https://bugs.llvm.org/show_bug.cgi?id=38593
+check_and_add_gcc_warning('-Wno-error=atomic-alignment')
+
+# New warning with gcc 9. Not useful
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1515356
+check_and_add_gcc_warning('-Wno-error=deprecated-copy')
 
 # catches format/argument mismatches with printf
 c_format_warning, cxx_format_warning = check_and_add_gcc_warning(

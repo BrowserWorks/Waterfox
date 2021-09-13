@@ -5828,57 +5828,6 @@ JS_ObjectIsDate(JSContext* cx, JS::HandleObject obj, bool* isDate);
 
 /************************************************************************/
 
-/*
- * Regular Expressions.
- */
-#define JSREG_FOLD      0x01u   /* fold uppercase to lowercase */
-#define JSREG_GLOB      0x02u   /* global exec, creates array of matches */
-#define JSREG_MULTILINE 0x04u   /* treat ^ and $ as begin and end of line */
-#define JSREG_STICKY    0x08u   /* only match starting at lastIndex */
-#define JSREG_UNICODE   0x10u   /* unicode */
-#define JSREG_DOTALL    0x20u   /* match . to everything including newlines */
-
-extern JS_PUBLIC_API(JSObject*)
-JS_NewRegExpObject(JSContext* cx, const char* bytes, size_t length, unsigned flags);
-
-extern JS_PUBLIC_API(JSObject*)
-JS_NewUCRegExpObject(JSContext* cx, const char16_t* chars, size_t length, unsigned flags);
-
-extern JS_PUBLIC_API(bool)
-JS_SetRegExpInput(JSContext* cx, JS::HandleObject obj, JS::HandleString input);
-
-extern JS_PUBLIC_API(bool)
-JS_ClearRegExpStatics(JSContext* cx, JS::HandleObject obj);
-
-extern JS_PUBLIC_API(bool)
-JS_ExecuteRegExp(JSContext* cx, JS::HandleObject obj, JS::HandleObject reobj,
-                 char16_t* chars, size_t length, size_t* indexp, bool test,
-                 JS::MutableHandleValue rval);
-
-/* RegExp interface for clients without a global object. */
-
-extern JS_PUBLIC_API(bool)
-JS_ExecuteRegExpNoStatics(JSContext* cx, JS::HandleObject reobj, char16_t* chars, size_t length,
-                          size_t* indexp, bool test, JS::MutableHandleValue rval);
-
-/**
- * Returns true and sets |*isRegExp| indicating whether |obj| is a RegExp
- * object or a wrapper around one, otherwise returns false on failure.
- *
- * This method returns true with |*isRegExp == false| when passed a proxy whose
- * target is a RegExp, or when passed a revoked proxy.
- */
-extern JS_PUBLIC_API(bool)
-JS_ObjectIsRegExp(JSContext* cx, JS::HandleObject obj, bool* isRegExp);
-
-extern JS_PUBLIC_API(unsigned)
-JS_GetRegExpFlags(JSContext* cx, JS::HandleObject obj);
-
-extern JS_PUBLIC_API(JSString*)
-JS_GetRegExpSource(JSContext* cx, JS::HandleObject obj);
-
-/************************************************************************/
-
 extern JS_PUBLIC_API(bool)
 JS_IsExceptionPending(JSContext* cx);
 

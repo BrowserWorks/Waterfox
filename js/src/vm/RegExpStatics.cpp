@@ -95,8 +95,7 @@ RegExpStatics::executeLazy(JSContext* cx)
 
     /* Execute the full regular expression. */
     RootedLinearString input(cx, matchesInput);
-    RegExpRunStatus status = RegExpShared::execute(cx, &shared, input, lazyIndex, &this->matches,
-                                                   nullptr);
+    RegExpRunStatus status = RegExpShared::execute(cx, &shared, input, lazyIndex, &this->matches);
     if (status == RegExpRunStatus_Error)
         return false;
 

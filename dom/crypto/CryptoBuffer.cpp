@@ -91,6 +91,10 @@ CryptoBuffer::Assign(const OwningArrayBufferViewOrArrayBuffer& aData)
   Clear();
   return nullptr;
 }
+uint8_t* CryptoBuffer::Assign(const Uint8Array& aArray) {
+  aArray.ComputeLengthAndData();
+  return Assign(aArray.Data(), aArray.Length());
+}
 
 uint8_t*
 CryptoBuffer::AppendSECItem(const SECItem* aItem)

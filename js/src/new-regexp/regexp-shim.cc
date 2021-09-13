@@ -1,5 +1,4 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: set ts=8 sts=2 et sw=2 tw=80:
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,8 +9,11 @@
 
 #include <iostream>
 
+#include "new-regexp/regexp-macro-assembler.h"
 #include "new-regexp/regexp-shim.h"
 #include "new-regexp/regexp-stack.h"
+
+#include "vm/NativeObject-inl.h"
 
 #include "mozilla/Sprintf.h" // for SprintfLiteral
 
@@ -73,20 +75,20 @@ HandleScope::~HandleScope() {
 
 template <typename T>
 Handle<T>::Handle(T object, Isolate* isolate)
-    : location_(isolate->getHandleLocation(JS::Value(object))) {}
+    : location_(isolate->getHandleLocation(object.value())) {}
 
 template Handle<ByteArray>::Handle(ByteArray b, Isolate* isolate);
-template Handle<HeapObject>::Handle(JS::Value v, Isolate* isolate);
+template Handle<HeapObject>::Handle(const JS::Value& v, Isolate* isolate);
 template Handle<JSRegExp>::Handle(JSRegExp re, Isolate* isolate);
 template Handle<String>::Handle(String s, Isolate* isolate);
 
 template <typename T>
-Handle<T>::Handle(JS::Value value, Isolate* isolate)
+Handle<T>::Handle(const JS::Value& value, Isolate* isolate)
   : location_(isolate->getHandleLocation(value)) {
   T::cast(Object(value)); // Assert that value has the correct type.
 }
 
-JS::Value* Isolate::getHandleLocation(JS::Value value) {
+JS::Value* Isolate::getHandleLocation(const JS::Value& value) {
   js::AutoEnterOOMUnsafeRegion oomUnsafe;
   if (!handleArena_.Append(value)) {
     oomUnsafe.crash("Irregexp handle allocation");
@@ -121,8 +123,8 @@ PseudoHandle<T> Isolate::takeOwnership(void* ptr) {
 
 PseudoHandle<ByteArrayData> ByteArray::takeOwnership(Isolate* isolate) {
   PseudoHandle<ByteArrayData> result =
-    isolate->takeOwnership<ByteArrayData>(value_.toPrivate());
-  value_ = JS::PrivateValue(nullptr);
+    isolate->takeOwnership<ByteArrayData>(value().toPrivate());
+  setValue(JS::PrivateValue(nullptr));
   return result;
 }
 
@@ -153,6 +155,20 @@ std::unique_ptr<char[]> String::ToCString() {
   return std::unique_ptr<char[]>();
 }
 
+bool Isolate::init() {
+  regexpStack_ = js_new<RegExpStack>();
+  if (!regexpStack_) {
+    return false;
+  }
+  return true;
+}
+
+Isolate::~Isolate() {
+  if (regexpStack_) {
+    js_delete(regexpStack_);
+  }
+}
+
 byte* Isolate::top_of_regexp_stack() const {
   return reinterpret_cast<byte*>(regexpStack_->memory_top_address_address());
 }
@@ -175,7 +191,13 @@ Handle<ByteArray> Isolate::NewByteArray(int length, AllocationType alloc) {
 
 Handle<FixedArray> Isolate::NewFixedArray(int length) {
   MOZ_RELEASE_ASSERT(length >= 0);
-  MOZ_CRASH("TODO");
+  js::AutoEnterOOMUnsafeRegion oomUnsafe;
+  js::ArrayObject* array = js::NewDenseFullyAllocatedArray(cx(), length);
+  if (!array) {
+    oomUnsafe.crash("Irregexp NewFixedArray");
+  }
+  array->ensureDenseInitializedLength(cx(), 0, length);
+  return Handle<FixedArray>(JS::ObjectValue(*array), this);
 }
 
 template <typename CharT>
@@ -193,16 +215,9 @@ Isolate::InternalizeString(const Vector<const uint8_t>& str);
 template Handle<String>
 Isolate::InternalizeString(const Vector<const char16_t>& str);
 
-// TODO: Map flags to jitoptions
-bool FLAG_correctness_fuzzer_suppressions = false;
-bool FLAG_enable_regexp_unaligned_accesses = false;
-bool FLAG_harmony_regexp_sequence = false;
-bool FLAG_regexp_interpret_all = false;
-bool FLAG_regexp_mode_modifiers = false;
-bool FLAG_regexp_optimization = true;
-bool FLAG_regexp_peephole_optimization = true;
-bool FLAG_regexp_possessive_quantifier = false;
-bool FLAG_regexp_tier_up = false;
+static_assert(JSRegExp::RegistersForCaptureCount(JSRegExp::kMaxCaptures) <=
+              RegExpMacroAssembler::kMaxRegisterCount);
+
 bool FLAG_trace_regexp_assembler = false;
 bool FLAG_trace_regexp_bytecodes = false;
 bool FLAG_trace_regexp_parser = false;

@@ -76,15 +76,12 @@ function FUNC_NAME(rx, S, lengthS, replaceValue
     }
 #endif
 
-    // Steps 11.c, 12-13, 14.a-b (skipped).
-
-#if defined(SUBSTITUTION)
-    // Steps 14.a-b.
-    assert(result.length >= 1, "RegExpMatcher doesn't return an empty array");
-    var nCaptures = result.length - 1;
-#endif
+    // Steps 11.c, 12-13.
 
 #if !defined(SHORT_STRING)
+    // Steps 14.a-b.
+    assert(result.length >= 1, "RegExpMatcher doesn't return an empty array");
+
     // Step 14.c.
     var matched = result[0];
 
@@ -94,11 +91,11 @@ function FUNC_NAME(rx, S, lengthS, replaceValue
     // Step 14.e-f.
     var position = result.index;
 
-    // Step 14.l.iii (reordered)
+    // Step 14.m.iii (reordered)
     // To set rx.lastIndex before RegExpGetComplexReplacement.
     var nextSourcePosition = position + matchLength;
 #else
-    // Steps 14.c-d (skipped).
+    // Steps 14.a-d (skipped).
 
     // Step 14.e-f.
     var position = result & 0x7fff;
@@ -112,18 +109,23 @@ function FUNC_NAME(rx, S, lengthS, replaceValue
        rx.lastIndex = nextSourcePosition;
 
     var replacement;
-    // Steps g-j.
+    // Steps g-l.
 #if defined(FUNCTIONAL)
     replacement = RegExpGetFunctionalReplacement(result, S, position, replaceValue);
 #elif defined(SUBSTITUTION)
-    replacement = RegExpGetComplexReplacement(result, matched, S, position,
-                                              nCaptures, replaceValue,
-                                              false, firstDollarIndex);
+    // Step l.i
+    var namedCaptures = result.groups;
+    if (namedCaptures !== undefined) {
+        namedCaptures = ToObject(namedCaptures);
+    }
+    // Step l.ii
+    replacement = RegExpGetSubstitution(result, S, position, replaceValue, firstDollarIndex,
+                                        namedCaptures);
 #else
     replacement = replaceValue;
 #endif
 
-    // Step 14.l.ii.
+    // Step 14.m.ii.
     var accumulatedResult = Substring(S, 0, position) + replacement;
 
     // Step 15.

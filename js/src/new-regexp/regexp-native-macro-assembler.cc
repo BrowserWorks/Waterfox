@@ -1,5 +1,4 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: set ts=8 sts=2 et sw=2 tw=80:
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -43,11 +42,11 @@ using js::jit::Register;
 using js::jit::Registers;
 using js::jit::StackMacroAssembler;
 
-SMRegExpMacroAssembler::SMRegExpMacroAssembler(JSContext* cx, Isolate* isolate,
+SMRegExpMacroAssembler::SMRegExpMacroAssembler(JSContext* cx,
                                                StackMacroAssembler& masm,
                                                Zone* zone, Mode mode,
                                                uint32_t num_capture_registers)
-    : NativeRegExpMacroAssembler(isolate, zone),
+    : NativeRegExpMacroAssembler(cx->isolate, zone),
       cx_(cx),
       masm_(masm),
       mode_(mode),
@@ -275,10 +274,14 @@ void SMRegExpMacroAssembler::CheckNotBackReferenceImpl(int start_reg,
   if (mode_ == UC16 && ignore_case) {
     // We call a helper function for case-insensitive non-latin1 strings.
 
-    // Save volatile regs. temp1_ and temp2_ don't need to be saved.
+    // Save volatile regs. temp1_, temp2_, and current_character_
+    // don't need to be saved.  current_position_ needs to be saved
+    // even if it's non-volatile, because we modify it to use as an argument.
     LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
+    volatileRegs.addUnchecked(current_position_);
     volatileRegs.takeUnchecked(temp1_);
     volatileRegs.takeUnchecked(temp2_);
+    volatileRegs.takeUnchecked(current_character_);
     masm_.PushRegsInMask(volatileRegs);
 
     // Parameters are
@@ -364,25 +367,25 @@ void SMRegExpMacroAssembler::CheckNotBackReferenceImpl(int start_reg,
     masm_.branch32(Assembler::Equal, temp1_, temp2_, &loop_increment);
 
     // Mismatch. Try case-insensitive match.
-    // Force the match character to lower case (by setting bit 0x20)
+    // Force the capture character to lower case (by setting bit 0x20)
     // then check to see if it is a letter.
-    js::jit::Label convert_capture;
+    js::jit::Label convert_match;
     masm_.or32(Imm32(0x20), temp1_);
 
     // Check if it is in [a,z].
     masm_.computeEffectiveAddress(Address(temp1_, -'a'), temp2_);
     masm_.branch32(Assembler::BelowOrEqual, temp2_, Imm32('z' - 'a'),
-                   &convert_capture);
+                   &convert_match);
     // Check for values in range [224,254].
     // Exclude 247 (U+00F7 DIVISION SIGN).
     masm_.sub32(Imm32(224 - 'a'), temp2_);
     masm_.branch32(Assembler::Above, temp2_, Imm32(254 - 224), &fail);
     masm_.branch32(Assembler::Equal, temp2_, Imm32(247 - 224), &fail);
 
-    // Match character is lower case. Convert capture character
+    // Capture character is lower case. Convert match character
     // to lower case and compare.
-    masm_.bind(&convert_capture);
-    masm_.load8ZeroExtend(Address(current_character_, 0), temp2_);
+    masm_.bind(&convert_match);
+    masm_.load8ZeroExtend(Address(current_position_, 0), temp2_);
     masm_.or32(Imm32(0x20), temp2_);
     masm_.branch32(Assembler::NotEqual, temp1_, temp2_, &fail);
 
@@ -407,6 +410,9 @@ void SMRegExpMacroAssembler::CheckNotBackReferenceImpl(int start_reg,
 
   masm_.bind(&success);
 
+  // Drop saved value of current_position_
+  masm_.addToStackPtr(Imm32(sizeof(uintptr_t)));
+
   // current_position_ is a pointer. Convert it back to an offset.
   masm_.subPtr(input_end_pointer_, current_position_);
   if (read_backward) {
@@ -414,9 +420,6 @@ void SMRegExpMacroAssembler::CheckNotBackReferenceImpl(int start_reg,
     masm_.addPtr(register_location(start_reg), current_position_);
     masm_.subPtr(register_location(start_reg + 1), current_position_);
   }
-
-  // Drop saved value of current_position_
-  masm_.addToStackPtr(Imm32(sizeof(uintptr_t)));
 
   masm_.bind(&fallthrough);
 }
@@ -454,7 +457,7 @@ void SMRegExpMacroAssembler::CheckPosition(int cp_offset,
         Address(current_position_, cp_offset * char_size()), temp0_);
 
     // Compare to start of input.
-    masm_.branchPtr(Assembler::GreaterThanOrEqual, inputStart(), temp0_,
+    masm_.branchPtr(Assembler::GreaterThan, inputStart(), temp0_,
                     LabelOrBacktrack(on_outside_input));
   }
 }
@@ -1010,8 +1013,13 @@ void SMRegExpMacroAssembler::initFrameAndRegs() {
   masm_.storePtr(backtrack_stack_pointer_, backtrackStackBase());
 }
 
+// Called when we find a match. May not be generated if we can
+// determine ahead of time that a regexp cannot match: for example,
+// when compiling /\u1e9e/ for latin-1 inputs.
 void SMRegExpMacroAssembler::successHandler() {
-  MOZ_ASSERT(success_label_.used());
+  if (!success_label_.used()) {
+    return;
+  }
   masm_.bind(&success_label_);
 
   // Copy captures to the MatchPairs pointed to by the InputOutputData.
@@ -1100,8 +1108,6 @@ void SMRegExpMacroAssembler::stackOverflowHandler() {
   }
 
   // Called if the backtrack-stack limit has been hit.
-  // NOTE: depending on architecture, the call may have
-  // changed the stack pointer. We adjust for that below.
   masm_.bind(&stack_overflow_label_);
 
   // Load argument
@@ -1111,7 +1117,7 @@ void SMRegExpMacroAssembler::stackOverflowHandler() {
   LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
 
 #ifdef JS_USE_LINK_REGISTER
-  masm.pushReturnAddress();
+  masm_.pushReturnAddress();
 #endif
 
   // Adjust for the return address on the stack.
@@ -1207,6 +1213,16 @@ bool SMRegExpMacroAssembler::GrowBacktrackStack(RegExpStack* regexp_stack) {
   JS::AutoCheckCannotGC nogc;
   size_t size = regexp_stack->stack_capacity();
   return !!regexp_stack->EnsureCapacity(size * 2);
+}
+
+bool SMRegExpMacroAssembler::CanReadUnaligned() {
+#if defined(JS_CODEGEN_ARM)
+  return !js::jit::HasAlignmentFault();
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
+  return false;
+#else
+  return true;
+#endif
 }
 
 }  // namespace internal

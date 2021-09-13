@@ -9,8 +9,6 @@
 #include "mozilla/ipc/Transport.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 
-using namespace std;
-
 using base::ProcessHandle;
 
 namespace mozilla {
@@ -21,7 +19,7 @@ CreateTransport(base::ProcessId aProcIdOne,
                 TransportDescriptor* aOne,
                 TransportDescriptor* aTwo)
 {
-  wstring id = IPC::Channel::GenerateVerifiedChannelID(std::wstring());
+  std::wstring id = IPC::Channel::GenerateVerifiedChannelID(std::wstring());
   // Use MODE_SERVER to force creation of the pipe
   Transport t(id, Transport::MODE_SERVER, nullptr);
   HANDLE serverPipe = t.GetServerPipeHandle();

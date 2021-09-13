@@ -9,7 +9,9 @@
 #include "AudioNodeEngine.h"
 #include "AudioNodeExternalInputStream.h"
 #include "AudioStreamTrack.h"
+#include "nsContentUtils.h"
 #include "nsIDocument.h"
+#include "nsIScriptError.h"
 #include "mozilla/CORSMode.h"
 
 namespace mozilla {

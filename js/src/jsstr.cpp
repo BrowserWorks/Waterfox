@@ -3051,10 +3051,10 @@ static JSString* ReplaceAll(JSContext* cx, JSLinearString* str,
 
     // Step 13.
     StringBuffer result(cx);
-    if (std::is_same<StrChar, char16_t>::value ||
-      std::is_same<RepChar, char16_t>::value) {
+    if (std::is_same_v<StrChar, char16_t> ||
+        std::is_same_v<RepChar, char16_t>) {
         if (!result.ensureTwoByteChars()) {
-          return nullptr;
+            return nullptr;
         }
     }
 
@@ -3134,8 +3134,8 @@ static JSString* ReplaceAllInterleave(JSContext* cx, JSLinearString* str,
 
     // Step 13.
     StringBuffer result(cx);
-    if (std::is_same<StrChar, char16_t>::value ||
-        std::is_same<RepChar, char16_t>::value) {
+    if (std::is_same_v<StrChar, char16_t> ||
+        std::is_same_v<RepChar, char16_t>) {
         if (!result.ensureTwoByteChars()) {
             return nullptr;
         }

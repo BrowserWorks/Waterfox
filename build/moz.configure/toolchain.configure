@@ -336,10 +336,10 @@ def get_compiler_info(compiler, language):
     # in Xcode have a completely different versioning scheme despite exposing
     # the version with the same defines.
     # So instead, we make things such that the version is missing when the
-    # clang used is below the minimum supported version (currently clang 3.6).
-    # We then only include the version information when the C++ compiler
-    # matches the feature check, so that an unsupported version of clang would
-    # have no version number.
+    # clang used is below the minimum supported version (currently clang 6.0).
+    # We then only include the version information when the compiler matches
+    # the feature check, so that an unsupported version of clang would have
+    # no version number.
     check = dedent('''\
         #if defined(_MSC_VER)
         #if defined(__clang__)
@@ -351,7 +351,7 @@ def get_compiler_info(compiler, language):
         #endif
         #elif defined(__clang__)
         %COMPILER "clang"
-        #  if !__cplusplus || __has_feature(cxx_alignof)
+        #  if __has_warning("-Wtautological-constant-compare")
         %VERSION __clang_major__.__clang_minor__.__clang_patchlevel__
         #  endif
         #elif defined(__GNUC__)
@@ -472,24 +472,15 @@ def check_compiler(compiler, language, target):
         if info.type in ('clang-cl', 'clang', 'gcc'):
             append_flag('-std=gnu99')
 
-    # Note: MSVC, while supporting C++14, still reports 199711L for __cplusplus.
-    # Note: this is a strict version check because we used to always add
-    # -std=gnu++14.
-    draft_cxx14_version = 201300
-    cxx14_version = 201402
+    cxx17_version = 201703
     if info.language == 'C++':
-        if info.type == 'clang' and info.language_version != cxx14_version:
-            append_flag('-std=gnu++14')
-        # MSVC 2015 headers include C++14 features, but don't guard them
-        # with appropriate checks.
-        elif info.type == 'clang-cl' and info.language_version != cxx14_version:
-            append_flag('-std=c++14')
-        # GCC 4.9 indicates that it implements draft C++14 features
-        # instead of the full language.
-        elif info.type == 'gcc' and \
-                info.language_version not in (draft_cxx14_version,
-                                              cxx14_version):
-            append_flag('-std=gnu++14')
+        if info.language_version != cxx17_version:
+            # MSVC headers include C++17 features, but don't guard them
+            # with appropriate checks.
+            if info.type == 'clang-cl':
+                append_flag('-std=c++17')
+            else:
+                append_flag('-std=gnu++17')
 
     # We force clang-cl to emulate Visual C++ 2017 version 15.4
     if info.type == 'clang-cl' and info.version != '19.11.25547':
@@ -670,6 +661,8 @@ def default_cxx_compilers(c_compiler):
 
     return default_cxx_compilers
 
+def minimum_gcc_version():
+    return Version('7.1.0')
 
 @template
 def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
@@ -852,16 +845,17 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
         # Check the compiler version here instead of in `compiler_version` so
         # that the `checking` message doesn't pretend the compiler can be used
         # to then bail out one line later.
-        if info.type == 'gcc' and info.version < '4.9.0':
+        gcc_version = minimum_gcc_version()
+        if info.type == 'gcc' and info.version < gcc_version:
             raise FatalCheckError(
-                'Only GCC 4.9 or newer is supported (found version %s).'
-                % info.version)
+                    'Only GCC %d.%d or newer is supported (found version %s).'
+                    % (gcc_version.major, gcc_version.minor, info.version))
 
         # If you want to bump the version check here search for
-        # cxx_alignof above, and see the associated comment.
+        # diagnose_if above, and see the associated comment.
         if info.type == 'clang' and not info.version:
             raise FatalCheckError(
-                'Only clang/llvm 3.6 or newer is supported.')
+                'Only clang/llvm 6.0 or newer is supported.')
 
         if info.type == 'msvc':
             if info.version < '19.00.24210':
@@ -1024,6 +1018,45 @@ def bindgen_cflags(value):
 
 add_old_configure_assignment('_BINDGEN_CFLAGS', bindgen_cflags)
 
+@depends(cxx_compiler, target)
+def needs_libstdcxx_newness_check(cxx_compiler, target):
+    # We only have to care about this on Linux and MinGW.
+    if cxx_compiler.type == 'clang-cl':
+        return
+
+    if target.kernel not in ('Linux', 'WINNT'):
+        return
+
+    if target.os == 'Android':
+        return
+
+    return True
+
+
+def die_on_old_libstdcxx():
+    die('The libstdc++ in use is not new enough.  Please run '
+        './mach bootstrap to update your compiler, or update your system '
+        'libstdc++ installation.')
+
+try_compile(includes=['cstddef'],
+            body='\n'.join([
+                # _GLIBCXX_RELEASE showed up in libstdc++ 7.
+                '#if defined(__GLIBCXX__) && !defined(_GLIBCXX_RELEASE)',
+                '#  error libstdc++ not new enough',
+                '#endif',
+                '#if defined(_GLIBCXX_RELEASE)',
+                '#  if _GLIBCXX_RELEASE < %d' % minimum_gcc_version().major,
+                '#    error libstdc++ not new enough',
+                '#  else',
+                '     (void) 0',
+                '#  endif',
+                '#endif',
+            ]),
+            check_msg='for new enough STL headers from libstdc++',
+            when=needs_libstdcxx_newness_check,
+            onerror=die_on_old_libstdcxx)
+
+
 @depends(c_compiler)
 def default_debug_flags(compiler_info):
     # Debug info is ON by default.
@@ -1072,7 +1105,7 @@ def color_cflags(info):
     # value changes to e.g. "<x>=always", exact string match may fail and
     # multiple color flags could be added. So examine downstream consumers
     # before adding flags to return values.
-    if info.type == 'gcc' and info.version >= '4.9.0':
+    if info.type == 'gcc':
         return '-fdiagnostics-color'
     elif info.type == 'clang':
         return '-fcolor-diagnostics'
@@ -1310,116 +1343,81 @@ set_config('MOZ_RUST_DEFAULT_FLAGS', rust_compiler_flags)
 
 
 @depends(target)
-def build_not_win_mac(target):
-    if target.kernel not in ('Darwin', 'WINNT'):
+def is_linker_option_enabled(target):
+    if target.kernel not in ('Darwin', 'WINNT', 'SunOS'):
         return True
 
 
 option('--enable-gold',
        env='MOZ_FORCE_GOLD',
        help='Enable GNU Gold Linker when it is not already the default',
-       when=build_not_win_mac)
+       when=is_linker_option_enabled)
 
-imply_option('--enable-linker',
-             depends_if('--enable-gold', when=build_not_win_mac)(lambda x: 'gold'),
-             when=build_not_win_mac)
-
-@imports('os')
-@imports('shutil')
-def enable_gnu_linker(enable_gold_option, c_compiler, developer_options, build_env,
-                      toolchain_flags, linker_name):
-    # Used to check the kind of linker
-    version_check = ['-Wl,--version']
-    cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
-    if toolchain_flags:
-        cmd_base += toolchain_flags
-
-    def resolve_gold():
-        # Try to force the usage of gold
-        targetDir = os.path.join(build_env.topobjdir, 'build', 'unix', 'gold')
-
-        gold_detection_arg = '-print-prog-name=ld.gold'
-        gold = check_cmd_output(c_compiler.compiler, gold_detection_arg).strip()
-        if not gold:
-            return
-
-        goldFullPath = find_program(gold)
-        if goldFullPath is None:
-            return
-
-        if os.path.exists(targetDir):
-            shutil.rmtree(targetDir)
-        os.makedirs(targetDir)
-        os.symlink(goldFullPath, os.path.join(targetDir, 'ld'))
-
-        linker = ['-B', targetDir]
-        cmd = cmd_base + linker + version_check
-        if 'GNU gold' in check_cmd_output(*cmd).decode('utf-8'):
-            # We have detected gold, will build with the -B workaround
-            return namespace(
-                KIND='gold',
-                LINKER_FLAG=linker,
-            )
-        else:
-            # The -B trick didn't work, removing the directory
-            shutil.rmtree(targetDir)
-
-    if (enable_gold_option or developer_options) and linker_name != 'bfd':
-        result = resolve_gold()
-
-        if result:
-            return result
-        # gold is only required if --enable-gold is used.
-        elif enable_gold_option:
-            die('Could not find gold')
-        # Else fallthrough.
-
-    cmd = cmd_base + version_check
-    cmd_output = check_cmd_output(*cmd).decode('utf-8')
-    # using decode because ld can be localized and python will
-    # have problems with french accent for example
-    if 'GNU ld' in cmd_output:
-        # We are using the normal linker
-        return namespace(
-            KIND='bfd'
-        )
-
-    # Special case for Android. In the ndk, it is gold
-    if 'GNU gold' in cmd_output:
-        return namespace(
-            KIND='gold'
-        )
-
-    # For other platforms without gold or the GNU linker
-    return namespace(
-        KIND='other'
-    )
+imply_option('--enable-linker', 'gold', when='--enable-gold')
 
 js_option('--enable-linker', nargs=1,
-          choices=('bfd', 'gold', 'lld', 'other'),
-          help='Select the linker',
-          when=build_not_win_mac)
+          help='Select the linker {bfd, gold, lld, lld-*}',
+          when=is_linker_option_enabled)
 
-@depends('--enable-linker', c_compiler, developer_options, check_build_environment,
-         extra_toolchain_flags, when=build_not_win_mac)
+
+@depends('--enable-linker', c_compiler, developer_options, '--enable-gold',
+         extra_toolchain_flags, when=is_linker_option_enabled)
 @checking('for linker', lambda x: x.KIND)
-def select_linker(linker, c_compiler, developer_options, build_env, toolchain_flags):
-    linker = linker[0] if linker else 'other'
-    if linker in ('gold', 'bfd', 'other'):
-        return enable_gnu_linker(linker == 'gold', c_compiler, developer_options,
-                                 build_env, toolchain_flags, linker)
-    if linker == 'lld':
-        version_check = ['-Wl,--version']
-        cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
-        lld = "-fuse-ld=" + linker
-        cmd = cmd_base + [lld] + version_check
-        if 'LLD' in check_cmd_output(*cmd).decode('utf-8'):
-            return namespace(
-                KIND='lld',
-                LINKER_FLAG=lld,
-            )
+@imports('os')
+@imports('shutil')
+def select_linker(linker, c_compiler, developer_options, enable_gold,
+                  toolchain_flags):
+
+    linker = linker[0] if linker else None
+
+    if linker not in ('bfd', 'gold', 'lld', None) and not linker.startswith("lld-"):
+        # Check that we are trying to use a supported linker
+        die('Unsupported linker ' + linker)
+
+    # Check the kind of linker
+    version_check = ['-Wl,--version']
+    cmd_base = c_compiler.wrapper + [c_compiler.compiler] + c_compiler.flags
+
+    def try_linker(linker):
+        # Generate the compiler flag
+        linker_flag = ["-fuse-ld=" + linker] if linker else []
+        cmd = cmd_base + linker_flag + version_check
+        if toolchain_flags:
+            cmd += toolchain_flags
+
+        cmd_output = check_cmd_output(*cmd).decode('utf-8')
+        if 'GNU ld' in cmd_output:
+            # We are using the normal linker
+            kind = 'bfd'
+
+        elif 'GNU gold' in cmd_output:
+            kind = 'gold'
+
+        elif 'LLD' in cmd_output:
+            kind = 'lld'
+
         else:
-            die("Could not use lld as linker")
+            kind = 'unknown'
+
+        return namespace(
+            KIND=kind,
+            LINKER_FLAG=linker_flag,
+        )
+
+    result = try_linker(linker)
+
+    if (linker is None and enable_gold.origin == 'default' and
+            developer_options and result.KIND == 'bfd'):
+        gold = try_linker('gold')
+
+        if gold.KIND == 'gold':
+            result = gold
+
+    # If an explicit linker was given, error out if what we found is different.
+    if linker and not linker.startswith(result.KIND):
+        die("Could not use {} as linker".format(linker))
+
+    return result
 
 
 set_config('LD_IS_BFD', depends(select_linker.KIND)

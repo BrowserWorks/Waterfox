@@ -30,6 +30,7 @@
 
 #include "irregexp/RegExpParser.h"
 
+#include "js/RegExpFlags.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Move.h"
 
@@ -40,6 +41,9 @@
 
 using namespace js;
 using namespace js::irregexp;
+
+using JS::RegExpFlag;
+using JS::RegExpFlags;
 
 using mozilla::Move;
 using mozilla::PointerRangeSize;
@@ -234,10 +238,12 @@ RegExpBuilder::AddQuantifierToAtom(int min, int max,
 // ----------------------------------------------------------------------------
 // RegExpParser
 
-template <typename CharT>
-RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
-                                  const CharT* chars, const CharT* end, bool multiline_mode,
-                                  bool unicode, bool ignore_case, bool dotAll)
+template<typename CharT>
+RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts,
+                                  LifoAlloc* alloc,
+                                  RegExpFlags flags,
+                                  const CharT* chars,
+                                  const CharT* end)
   : ts(ts),
     alloc(alloc),
     captures_(nullptr),
@@ -247,10 +253,10 @@ RegExpParser<CharT>::RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
     current_(kEndMarker),
     capture_count_(0),
     has_more_(true),
-    multiline_(multiline_mode),
-    unicode_(unicode),
-    ignore_case_(ignore_case),
-    dotAll_(dotAll),
+    multiline_(flags.multiline()),
+    unicode_(flags.unicode()),
+    ignore_case_(flags.ignoreCase()),
+    dotAll_(flags.dotAll()),
     simple_(false),
     contains_anchor_(false),
     is_scanned_for_captures_(false)
@@ -1865,7 +1871,7 @@ RegExpParser<CharT>::ParseDisjunction()
             break;
           case '{': {
             if (unicode_)
-                return ReportError(JSMSG_RAW_BRACE_IN_REGEP);
+                return ReportError(JSMSG_RAW_BRACE_IN_REGEXP);
             int dummy;
             if (ParseIntervalQuantifier(&dummy, &dummy))
                 return ReportError(JSMSG_NOTHING_TO_REPEAT);
@@ -1883,9 +1889,9 @@ RegExpParser<CharT>::ParseDisjunction()
                     else if (unicode::IsTrailSurrogate(c))
                         builder->AddAtom(TrailSurrogateAtom(alloc, c));
                     else if (c == ']')
-                        return ReportError(JSMSG_RAW_BRACKET_IN_REGEP);
+                        return ReportError(JSMSG_RAW_BRACKET_IN_REGEXP);
                     else if (c == '}')
-                        return ReportError(JSMSG_RAW_BRACE_IN_REGEP);
+                        return ReportError(JSMSG_RAW_BRACE_IN_REGEXP);
                     else
                         builder->AddCharacter(c);
                     Advance();
@@ -1943,15 +1949,19 @@ RegExpParser<CharT>::ParseDisjunction()
 template class irregexp::RegExpParser<Latin1Char>;
 template class irregexp::RegExpParser<char16_t>;
 
-template <typename CharT>
+template<typename CharT>
 static bool
-ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, size_t length,
-             bool multiline, bool match_only, bool unicode, bool ignore_case,
-             bool global, bool sticky, bool dotAll, RegExpCompileData* data)
+ParsePattern(frontend::TokenStream& ts,
+             LifoAlloc& alloc,
+             const CharT* chars,
+             size_t length,
+             bool match_only,
+             RegExpFlags flags,
+             RegExpCompileData* data)
 {
     // We shouldn't strip pattern for exec, or test with global/sticky,
     // to reflect correct match position and lastIndex.
-    if (match_only && !global && !sticky) {
+    if (match_only && !flags.global() && !flags.sticky()) {
         // Try to strip a leading '.*' from the RegExp, but only if it is not
         // followed by a '?' (which will affect how the .* is parsed). This
         // pattern will affect the captures produced by the RegExp, but not
@@ -1972,7 +1982,7 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
         }
     }
 
-    RegExpParser<CharT> parser(ts, &alloc, chars, chars + length, multiline, unicode, ignore_case, dotAll);
+    RegExpParser<CharT> parser(ts, &alloc, flags, chars, chars + length);
     data->tree = parser.ParsePattern();
     if (!data->tree)
         return false;
@@ -1984,26 +1994,37 @@ ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, si
 }
 
 bool
-irregexp::ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
-                       bool multiline, bool match_only, bool unicode, bool ignore_case,
-                       bool global, bool sticky, bool dotAll, RegExpCompileData* data)
+irregexp::ParsePattern(frontend::TokenStream& ts,
+                       LifoAlloc& alloc,
+                       JSAtom* str,
+                       bool match_only,
+                       RegExpFlags flags,
+                       RegExpCompileData* data)
 {
     JS::AutoCheckCannotGC nogc;
     return str->hasLatin1Chars()
            ? ::ParsePattern(ts, alloc, str->latin1Chars(nogc), str->length(),
-                            multiline, match_only, unicode, ignore_case, global, sticky, dotAll, data)
+                            match_only, flags, data)
            : ::ParsePattern(ts, alloc, str->twoByteChars(nogc), str->length(),
-                            multiline, match_only, unicode, ignore_case, global, sticky, dotAll, data);
+                            match_only, flags, data);
 }
 
-template <typename CharT>
+template<typename CharT>
 static bool
-ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc, const CharT* chars, size_t length,
-                   bool unicode, bool dotAll)
+ParsePatternSyntax(frontend::TokenStream& ts,
+                   LifoAlloc& alloc,
+                   const CharT* chars,
+                   size_t length,
+                   bool unicode,
+                   bool dotAll)
 {
     LifoAllocScope scope(&alloc);
-
-    RegExpParser<CharT> parser(ts, &alloc, chars, chars + length, false, unicode, dotAll, false);
+    RegExpFlags flags = RegExpFlag::NoFlags;
+    if (unicode)
+        flags |= RegExpFlag::Unicode;
+    if (dotAll)
+        flags |= RegExpFlag::DotAll;
+    RegExpParser<CharT> parser(ts, &alloc, flags, chars, chars + length);
     return parser.ParsePattern() != nullptr;
 }
 

@@ -41,13 +41,9 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'cairo-dwrite-font.cpp',
     ]
     if CONFIG['MOZ_ENABLE_D2D_SURFACE']:
-        cairo_werror_sources = [
+        SOURCES += [
             'cairo-d2d-surface.cpp',
         ]
-        SOURCES += cairo_werror_sources
-        if CONFIG['CC_TYPE'] == 'clang-cl':
-            for f in cairo_werror_sources:
-                SOURCES[f].flags += ['-Wno-c++11-narrowing']
     SOURCES += [
         'cairo-win32-font.c',
         'cairo-win32-surface.c',

@@ -51,8 +51,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     SOURCES += [
         'D3D11ShareHandleImage.cpp',
         'D3D11YCbCrImage.cpp',
-    ]
-    UNIFIED_SOURCES += [
         'D3D9SurfaceImage.cpp',
         'IMFYCbCrImage.cpp',
         'TextureDIB.cpp',
@@ -71,15 +69,13 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
             'd3d11/ShaderDefinitionsD3D11.h',
             'd3d11/TextureD3D11.h',
         ]
-        UNIFIED_SOURCES += [
-            'd3d11/DiagnosticsD3D11.cpp',
-            'd3d11/MLGDeviceD3D11.cpp',
-            'd3d11/TextureD3D11.cpp',
-        ]
         SOURCES += [
             'd3d11/CompositorD3D11.cpp',
             'd3d11/DeviceAttachmentsD3D11.cpp',
+            'd3d11/DiagnosticsD3D11.cpp',
+            'd3d11/MLGDeviceD3D11.cpp',
             'd3d11/ReadbackManagerD3D11.cpp',
+            'd3d11/TextureD3D11.cpp',
         ]
 
 EXPORTS.gfxipc += [
@@ -268,13 +264,11 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'MacIOSurfaceHelpers.h',
         'MacIOSurfaceImage.h',
     ]
-    UNIFIED_SOURCES += [
-        'opengl/GLManager.cpp',
-    ]
     SOURCES += [
         'ipc/ShadowLayerUtilsMac.cpp',
         'MacIOSurfaceHelpers.cpp',
         'MacIOSurfaceImage.cpp',
+        'opengl/GLManager.cpp',
     ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
@@ -286,7 +280,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
         'apz/src/AndroidDynamicToolbarAnimator.h',
     ]
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'AnimationHelper.cpp',
     'AnimationInfo.cpp',
     'apz/public/IAPZCTreeManager.cpp',
@@ -332,6 +326,7 @@ UNIFIED_SOURCES += [
     'basic/BasicCompositor.cpp',
     'basic/BasicContainerLayer.cpp',
     'basic/BasicDisplayItemLayer.cpp',
+    'basic/BasicImageLayer.cpp',
     'basic/BasicImages.cpp',
     'basic/BasicLayerManager.cpp',
     'basic/BasicLayersImpl.cpp',
@@ -385,6 +380,7 @@ UNIFIED_SOURCES += [
     'Effects.cpp',
     'FrameMetrics.cpp',
     'GLImages.cpp',
+    'ImageContainer.cpp',
     'ImageDataSerializer.cpp',
     'ImageLayers.cpp',
     'ipc/APZChild.cpp',
@@ -393,12 +389,10 @@ UNIFIED_SOURCES += [
     'ipc/CompositableTransactionParent.cpp',
     'ipc/CompositorBench.cpp',
     'ipc/CompositorBridgeChild.cpp',
-    'ipc/CompositorBridgeParent.cpp',
     'ipc/CompositorManagerChild.cpp',
     'ipc/CompositorManagerParent.cpp',
     'ipc/CompositorThread.cpp',
     'ipc/CompositorVsyncScheduler.cpp',
-    'ipc/CrossProcessCompositorBridgeParent.cpp',
     'ipc/ImageBridgeChild.cpp',
     'ipc/ImageBridgeParent.cpp',
     'ipc/ISurfaceAllocator.cpp',
@@ -414,11 +408,13 @@ UNIFIED_SOURCES += [
     'ipc/UiCompositorControllerParent.cpp',
     'ipc/VideoBridgeChild.cpp',
     'ipc/VideoBridgeParent.cpp',
+    'Layers.cpp',
     'LayerScope.cpp',
     'LayersHelpers.cpp',
     'LayersLogging.cpp',
     'LayerSorter.cpp',
     'LayersTypes.cpp',
+    'LayerTreeInvalidation.cpp',
     'mlgpu/BufferCache.cpp',
     'mlgpu/CanvasLayerMLGPU.cpp',
     'mlgpu/ContainerLayerMLGPU.cpp',
@@ -444,6 +440,7 @@ UNIFIED_SOURCES += [
     'opengl/TextureHostOGL.cpp',
     'opengl/TexturePoolOGL.cpp',
     'PaintThread.cpp',
+    'PersistentBufferProvider.cpp',
     'protobuf/LayerScopePacket.pb.cc',
     'ReadbackProcessor.cpp',
     'RenderTrace.cpp',
@@ -472,18 +469,15 @@ UNIFIED_SOURCES += [
     'wr/WebRenderPaintedLayerBlob.cpp',
     'wr/WebRenderScrollData.cpp',
     'wr/WebRenderTextLayer.cpp',
+    'wr/WebRenderTextureHost.cpp',
     'wr/WebRenderUserData.cpp',
-    # XXX here are some unified build error.
-    #'wr/WebRenderTextureHost.cpp'
 ]
 
-SOURCES += [
-    'basic/BasicImageLayer.cpp',
-    'ImageContainer.cpp',
-    'Layers.cpp',
-    'LayerTreeInvalidation.cpp',
-    'PersistentBufferProvider.cpp',
-    'wr/WebRenderTextureHost.cpp',
+# Implementation in CBP.cpp of things used in CPCBP.cpp
+# EraseLayerState, UpdateIndirectTree and map<uint64_t, CompositorBridgeParent::LayerTreeState>
+UNIFIED_SOURCES += [
+    'ipc/CompositorBridgeParent.cpp',
+    'ipc/CrossProcessCompositorBridgeParent.cpp',
 ]
 
 # Disable RTTI in google protocol buffer
@@ -565,6 +559,6 @@ if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']
 
 if CONFIG['MOZ_ENABLE_SKIA']:
-  UNIFIED_SOURCES += [
+  SOURCES += [
     'composite/PaintCounter.cpp',
   ]
