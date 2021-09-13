@@ -72,3 +72,7 @@
 <!ENTITY scripts.label "Scripts">
 
 <!ENTITY enableNotifications.label "Enable notifications">
+
+<!ENTITY scrollbars.label        "Scrollbars">
+<!ENTITY allowScrollbarColor.label "Allow websites to change scrollbars color">
+<!ENTITY allowScrollbarWidth.label "Allow websites to change scrollbars width">
