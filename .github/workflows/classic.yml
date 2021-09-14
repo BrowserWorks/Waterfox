@@ -8,7 +8,6 @@ on:
 
 env:
   ENABLE_ARTIFACTS_MODE: "true"
-  MOZCONFIG: "./.mozconfig-ga"
   SHELL: "/bin/bash"
 
 jobs:
@@ -56,7 +55,7 @@ jobs:
       - name: Get SDK
         run: |
           wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
-          tar -xvf MacOSX10.12.sdk.tar.xz
+          tar -xvf MacOSX10.12.sdk.tar.xz -C ../
       - name: Cache for macOS
         uses: actions/cache@v2
         with:
