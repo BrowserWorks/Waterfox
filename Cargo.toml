@@ -106,3 +106,6 @@ path = "third_party/rust/mio"
 # Patch failure 0.1.8 to disable the backtrace feature by default. See bug 1608157.
 [patch.crates-io.failure]
 path = "third_party/rust/failure"
+
+[patch.crates-io.prost-derive]
+path = "third_party/rust/prost-derive"
