@@ -179,59 +179,37 @@ export const DEFAULT_WELCOME_CONTENT = {
         },
       },
     },
-    // {
-    //   id: "AW_SEARCH",
-    //   order: 3,
-    //   content: {
-    //     zap: true,
-    // 		    title: "Set your Search",
-    //     subtitle: "Select your default search engine from the options below.",
-    //     tiles: {
-    //       type: "search",
-    //       action: {
-    //         search: "<event>",
-    //       },
-    //       data: [
-    //         {
-    //           search: "bing",
-    //           label: {
-    //             string_id: "onboarding-multistage-search-label-bing",
-    //           },
-    //           tooltip: {
-    //             string_id: "onboarding-multistage-search-tooltip-bing",
-    //           },
-    //         },
-    //         {
-    //           search: "startpage",
-    //           label: { string_id: "onboarding-multistage-search-label-startpage" },
-    //           tooltip: {
-    //             string_id: "onboarding-multistage-search-tooltip-startpage",
-    //           },
-    //         },
-    //       ],
-    //     },
-    //     primary_button: {
-    //       label: {
-    //         string_id: "onboarding-multistage-search-primary-button-label",
-    //       },
-    //       action: {
-    //         navigate: true,
-    //       },
-    //     },
-    //     secondary_button: {
-    //       label: {
-    //         string_id: "onboarding-multistage-search-secondary-button-label",
-    //       },
-    //       action: {
-    //         search: "bing",
-    //         navigate: true,
-    //       },
-    //     },
-    //   },
-    // },
+    {
+      id: "AW_SEARCH",
+      order: 3,
+      content: {
+        zap: true,
+		    title: { string_id: "onboarding-multistage-search-header" },
+        subtitle: { string_id: "onboarding-multistage-search-subtitle" },
+        additional: { string_id: "onboarding-multistage-search-additional" },
+        additional2: { string_id: "onboarding-multistage-search-additional2"},
+        primary_button: {
+          label: {
+            string_id: "onboarding-multistage-search-primary-button-label",
+          },
+          action: {
+			      search: "startpage",
+            navigate: true,
+          },
+        },
+        secondary_button: {
+          label: {
+            string_id: "onboarding-multistage-search-secondary-button-label",
+          },
+          action: {
+            navigate: true,
+          },
+        },
+      },
+    },
     {
       id: "AW_DEFAULT",
-      order: 3,
+      order: 4,
       content: {
         zap: true,
 		    title: "Best as Default",
@@ -255,7 +233,7 @@ export const DEFAULT_WELCOME_CONTENT = {
     },
     {
       id: "AW_PRIVACY",
-      order: 4,
+      order: 5,
       content: {
         title: "Automatic Privacy",
         subtitle:

@@ -122,14 +122,30 @@ var UpdateUtils = {
             return getSystemCapabilities();
           case "DISTRIBUTION":
             if (Services.prefs.getCharPref("browser.search.ptag", "")) {
-              return getDistributionPrefValue(PREF_APP_DISTRIBUTION) == "default" ? Services.prefs.getCharPref("distribution.source", "wfx") : getDistributionPrefValue(PREF_APP_DISTRIBUTION);
-            } else {
-              return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+              return getDistributionPrefValue(PREF_APP_DISTRIBUTION) ==
+                "default"
+                ? Services.prefs.getCharPref("distribution.source", "wfx")
+                : getDistributionPrefValue(PREF_APP_DISTRIBUTION);
             }
-            // return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+            return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+          // return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
           case "DISTRIBUTION_VERSION":
-            return (getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION) == "default" && defaultSearch.name == "Bing") ? Services.prefs.getCharPref("browser.search.ptag", "default") : getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
-            // return getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
+            // If sp set through welcome flow
+            if (Services.prefs.getCharPref("browser.search.ptag", "")) {
+              if (
+                Services.prefs.getCharPref("distribution.engine", "") &&
+                defaultSearch.name == "Startpage"
+              ) {
+                return "spA";
+              } else if (defaultSearch.name == "Startpage") {
+                return "spB";
+              }
+            }
+            return getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION) ==
+              "default" && defaultSearch.name == "Bing"
+              ? Services.prefs.getCharPref("browser.search.ptag", "default")
+              : getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
+          // return getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION);
         }
         return match;
       })
