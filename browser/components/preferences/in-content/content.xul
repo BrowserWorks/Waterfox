@@ -41,6 +41,15 @@
               name="font.language.group"
               type="wstring"/>
 
+  <!-- Scrollbars -->
+  <preference id="layout.css.scrollbar-color.enabled"
+              name="layout.css.scrollbar-color.enabled"
+              type="bool"/>
+
+  <preference id="layout.css.scrollbar-width.enabled"
+              name="layout.css.scrollbar-width.enabled"
+              type="bool"/>
+
   <!-- Languages -->
   <preference id="browser.translation.detectLanguage"
               name="browser.translation.detectLanguage"
@@ -245,6 +254,15 @@
       </row>
     </rows>
   </grid>
+</groupbox>
+
+<!-- Scrollbars -->
+<groupbox id="scrollbarsGroup" data-category="paneContent" hidden="true" orient="vertical">
+    <caption>
+        <label>&scrollbars.label;</label>
+    </caption>
+    <checkbox id="scrollbarColorEnabled" label="&allowScrollbarColor.label;" preference="layout.css.scrollbar-color.enabled"/>
+    <checkbox id="scrollbarWidthEnabled" label="&allowScrollbarWidth.label;" preference="layout.css.scrollbar-width.enabled"/>
 </groupbox>
 
 <!-- Languages -->
