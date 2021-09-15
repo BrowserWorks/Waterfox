@@ -175,17 +175,21 @@ it.ao
 // aq : https://en.wikipedia.org/wiki/.aq
 aq
 
-// ar : https://nic.ar/nic-argentina/normativa-vigente
+// ar : https://nic.ar/es/nic-argentina/normativa
 ar
+bet.ar
 com.ar
+coop.ar
 edu.ar
 gob.ar
 gov.ar
 int.ar
 mil.ar
 musica.ar
+mutual.ar
 net.ar
 org.ar
+senasa.ar
 tur.ar
 
 // arpa : https://en.wikipedia.org/wiki/.arpa
@@ -6714,9 +6718,10 @@ mil.vc
 edu.vc
 
 // ve : https://registro.nic.ve/
-// Submitted by registry
+// Submitted by registry nic@nic.ve and nicve@conatel.gob.ve
 ve
 arts.ve
+bib.ve
 co.ve
 com.ve
 e12.ve
@@ -6728,7 +6733,9 @@ info.ve
 int.ve
 mil.ve
 net.ve
+nom.ve
 org.ve
+rar.ve
 rec.ve
 store.ve
 tec.ve
@@ -7125,7 +7132,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2021-08-05T15:14:20Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2021-08-19T15:13:52Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -8716,6 +8723,9 @@ kfh
 
 // kia : 2015-07-09 KIA MOTORS CORPORATION
 kia
+
+// kids : 2021-08-13 DotKids Foundation Limited
+kids
 
 // kim : 2013-09-23 Afilias Limited
 kim
@@ -10848,6 +10858,10 @@ onavstack.net
 *.awdev.ca
 *.advisor.ws
 
+// AZ.pl sp. z.o.o: https://az.pl
+// Submited by Krzysztof Wolski <krzysztof.wolski@home.eu>
+ecommerce-shop.pl
+
 // b-data GmbH : https://www.b-data.io
 // Submitted by Olivier Benz <olivier.benz@b-data.ch>
 b-data.io
@@ -11037,6 +11051,8 @@ cleverapps.io
 
 // Clerk : https://www.clerk.dev
 // Submitted by Colin Sidoti <systems@clerk.dev>
+clerk.app
+clerkstage.app
 *.lcl.dev
 *.lclstage.dev
 *.stg.dev
@@ -11070,8 +11086,8 @@ cloudcontrolled.com
 cloudcontrolapp.com
 
 // Cloudera, Inc. : https://www.cloudera.com/
-// Submitted by Philip Langdale <security@cloudera.com>
-cloudera.site
+// Submitted by Kedarnath Waikar <security@cloudera.com>
+*.cloudera.site
 
 // Cloudflare, Inc. : https://www.cloudflare.com/
 // Submitted by Cloudflare Team <publicsuffixlist@cloudflare.com>
@@ -11245,6 +11261,11 @@ deno-staging.dev
 // deSEC : https://desec.io/
 // Submitted by Peter Thomassen <peter@desec.io>
 dedyn.io
+
+// Diher Solutions : https://diher.solutions
+// Submitted by Didi Hermawan <mail@diher.solutions>
+*.rss.my.id
+*.diher.solutions
 
 // DNS Africa Ltd https://dns.business
 // Submitted by Calvin Browne <calvin@dns.business>
@@ -11626,6 +11647,12 @@ blogsite.xyz
 // Submitted by Dominik Menke <dom@digineo.de>
 dynv6.net
 
+// Ellucian : https://ellucian.com
+// Submitted by Josue Colon <CloudOps-Network@ellucian.com>
+elluciancrmadvance.com
+elluciancrmadvise.com
+elluciancrmrecruit.com
+
 // E4YOU spol. s.r.o. : https://e4you.cz/
 // Submitted by Vladimir Dudr <info@e4you.cz>
 e4.cz
@@ -11657,11 +11684,6 @@ staging.onred.one
 // One.com: https://www.one.com/
 // Submitted by Jacob Bunk Nielsen <jbn@one.com>
 service.one
-
-// Enonic : http://enonic.com/
-// Submitted by Erik Kaareng-Sunde <esu@enonic.com>
-enonic.io
-customer.enonic.io
 
 // EU.org https://eu.org/
 // Submitted by Pierre Beyssac <hostmaster@eu.org>
@@ -12171,6 +12193,10 @@ hashbang.sh
 hasura.app
 hasura-app.io
 
+// Heilbronn University of Applied Sciences - Faculty Informatics (GitLab Pages): https://www.hs-heilbronn.de
+// Submitted by Richard Zowalla <mi-admin@hs-heilbronn.de>
+pages.it.hs-heilbronn.de
+
 // Hepforge : https://www.hepforge.org
 // Submitted by David Grellscheid <admin@hepforge.org>
 hepforge.org
@@ -12187,6 +12213,10 @@ ravendb.community
 ravendb.me
 development.run
 ravendb.run
+
+// home.pl S.A.: https://home.pl
+// Submited by Krzysztof Wolski <krzysztof.wolski@home.eu>
+homesklep.pl
 
 // Hong Kong Productivity Council: https://www.hkpc.org/
 // Submitted by SECaaS Team <summchan@hkpc.org>
@@ -12512,6 +12542,10 @@ loginline.io
 loginline.services
 loginline.site
 
+// Lokalized : https://lokalized.nl
+// Submitted by Noah Taheij <noah@lokalized.nl>
+servers.run
+
 // Lõhmus Family, The
 // Submitted by Heiki Lõhmus <hostmaster at lohmus dot me>
 lohmus.me
@@ -12552,6 +12586,7 @@ barsy.online
 barsy.org
 barsy.pro
 barsy.pub
+barsy.ro
 barsy.shop
 barsy.site
 barsy.support
@@ -12698,10 +12733,6 @@ for.sale
 that.win
 from.work
 to.work
-
-// NCTU.ME : https://nctu.me/
-// Submitted by Tocknicsu <admin@nctu.me>
-nctu.me
 
 // Netlify : https://www.netlify.com
 // Submitted by Jessica Parsons <jessica@netlify.com>
@@ -13085,6 +13116,10 @@ qbuser.com
 // Submitted by Scott Claeys <s.claeys@radwebhosting.com>
 cloudsite.builders
 
+// Redgate Software: https://red-gate.com
+// Submitted by Andrew Farries <andrew.farries@red-gate.com>
+instances.spawn.cc
+
 // Redstar Consultants : https://www.redstarconsultants.com/
 // Submitted by Jons Slemmer <jons@redstarconsultants.com>
 instantcloud.cn
@@ -13302,6 +13337,10 @@ beta.bounty-full.com
 // Submitted by Aral Balkan <aral@small-tech.org>
 small-web.org
 
+// Smoove.io : https://www.smoove.io/
+// Submitted by Dan Kozak <dan@smoove.io>
+vp4.me
+
 // Snowplow Analytics : https://snowplowanalytics.com/
 // Submitted by Ian Streeter <ian@snowplowanalytics.com>
 try-snowplow.com
@@ -13428,6 +13467,10 @@ myds.me
 synology.me
 vpnplus.to
 direct.quickconnect.to
+
+// Tabit Technologies Ltd. : https://tabit.cloud/
+// Submitted by Oren Agiv <oren@tabit.cloud>
+tabitorder.co.il
 
 // TAIFUN Software AG : http://taifun-software.de
 // Submitted by Bjoern Henke <dev-server@taifun-software.de>
@@ -13687,6 +13730,12 @@ community-pro.de
 diskussionsbereich.de
 community-pro.net
 meinforum.net
+
+// Woods Valldata : https://www.woodsvalldata.co.uk/
+// Submitted by Chris Whittle <chris.whittle@woodsvalldata.co.uk>
+affinitylottery.org.uk
+raffleentry.org.uk
+weeklylottery.org.uk
 
 // WP Engine : https://wpengine.com/
 // Submitted by Michael Smith <michael.smith@wpengine.com>

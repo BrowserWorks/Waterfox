@@ -800,9 +800,6 @@ void MessageChannel::Clear() {
   }
 
   // Free up any memory used by pending messages.
-  for (MessageTask* task : mPending) {
-    task->Clear();
-  }
   mPending.clear();
 
   mMaybeDeferredPendingCount = 0;
@@ -1968,19 +1965,15 @@ NS_IMPL_ISUPPORTS_INHERITED(MessageChannel::MessageTask, CancelableRunnable,
 MessageChannel::MessageTask::MessageTask(MessageChannel* aChannel,
                                          Message&& aMessage)
     : CancelableRunnable(aMessage.name()),
+      mMonitor(aChannel->mMonitor),
       mChannel(aChannel),
       mMessage(std::move(aMessage)),
       mScheduled(false) {}
 
 nsresult MessageChannel::MessageTask::Run() {
-  if (!mChannel) {
-    return NS_OK;
-  }
+  mMonitor->AssertNotCurrentThreadOwns();
 
-  mChannel->AssertWorkerThread();
-  mChannel->mMonitor->AssertNotCurrentThreadOwns();
-
-  MonitorAutoLock lock(*mChannel->mMonitor);
+  MonitorAutoLock lock(*mMonitor);
 
   // In case we choose not to run this message, we may need to be able to Post
   // it again.
@@ -1990,34 +1983,33 @@ nsresult MessageChannel::MessageTask::Run() {
     return NS_OK;
   }
 
-  mChannel->RunMessage(*this);
+  Channel()->AssertWorkerThread();
+  Channel()->RunMessage(*this);
   return NS_OK;
 }
 
 // Warning: This method removes the receiver from whatever list it might be in.
 nsresult MessageChannel::MessageTask::Cancel() {
-  if (!mChannel) {
-    return NS_OK;
-  }
+  mMonitor->AssertNotCurrentThreadOwns();
 
-  mChannel->AssertWorkerThread();
-  mChannel->mMonitor->AssertNotCurrentThreadOwns();
-
-  MonitorAutoLock lock(*mChannel->mMonitor);
+  MonitorAutoLock lock(*mMonitor);
 
   if (!isInList()) {
     return NS_OK;
   }
-  remove();
 
+  Channel()->AssertWorkerThread();
   if (!IsAlwaysDeferred(Msg())) {
-    mChannel->mMaybeDeferredPendingCount--;
+    Channel()->mMaybeDeferredPendingCount--;
   }
+
+  remove();
 
   return NS_OK;
 }
 
 void MessageChannel::MessageTask::Post() {
+  mMonitor->AssertCurrentThreadOwns();
   MOZ_RELEASE_ASSERT(!mScheduled);
   MOZ_RELEASE_ASSERT(isInList());
 
@@ -2025,19 +2017,13 @@ void MessageChannel::MessageTask::Post() {
 
   RefPtr<MessageTask> self = this;
   nsCOMPtr<nsIEventTarget> eventTarget =
-      mChannel->mListener->GetMessageEventTarget(mMessage);
+      Channel()->mListener->GetMessageEventTarget(mMessage);
 
   if (eventTarget) {
     eventTarget->Dispatch(self.forget(), NS_DISPATCH_NORMAL);
-  } else if (mChannel->mWorkerLoop) {
-    mChannel->mWorkerLoop->PostTask(self.forget());
+  } else if (Channel()->mWorkerLoop) {
+    Channel()->mWorkerLoop->PostTask(self.forget());
   }
-}
-
-void MessageChannel::MessageTask::Clear() {
-  mChannel->AssertWorkerThread();
-
-  mChannel = nullptr;
 }
 
 NS_IMETHODIMP

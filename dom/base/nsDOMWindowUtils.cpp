@@ -215,21 +215,27 @@ nsDOMWindowUtils::nsDOMWindowUtils(nsGlobalWindowOuter* aWindow) {
 
 nsDOMWindowUtils::~nsDOMWindowUtils() { OldWindowSize::GetAndRemove(mWindow); }
 
-PresShell* nsDOMWindowUtils::GetPresShell() {
+nsIDocShell* nsDOMWindowUtils::GetDocShell() {
   nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
-  if (!window) return nullptr;
+  if (!window) {
+    return nullptr;
+  }
+  return window->GetDocShell();
+}
 
-  nsIDocShell* docShell = window->GetDocShell();
-  if (!docShell) return nullptr;
-
+PresShell* nsDOMWindowUtils::GetPresShell() {
+  nsIDocShell* docShell = GetDocShell();
+  if (!docShell) {
+    return nullptr;
+  }
   return docShell->GetPresShell();
 }
 
 nsPresContext* nsDOMWindowUtils::GetPresContext() {
-  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
-  if (!window) return nullptr;
-  nsIDocShell* docShell = window->GetDocShell();
-  if (!docShell) return nullptr;
+  nsIDocShell* docShell = GetDocShell();
+  if (!docShell) {
+    return nullptr;
+  }
   return docShell->GetPresContext();
 }
 
@@ -2359,12 +2365,24 @@ nsDOMWindowUtils::AdvanceTimeAndRefresh(int64_t aMilliseconds) {
 
 NS_IMETHODIMP
 nsDOMWindowUtils::GetLastTransactionId(uint64_t* aLastTransactionId) {
-  nsPresContext* presContext = GetPresContext();
+  nsCOMPtr<nsIDocShell> docShell = GetDocShell();
+  if (!docShell) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  nsCOMPtr<nsIDocShellTreeItem> rootTreeItem;
+  docShell->GetInProcessRootTreeItem(getter_AddRefs(rootTreeItem));
+  docShell = do_QueryInterface(rootTreeItem);
+  if (!docShell) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  nsPresContext* presContext = docShell->GetPresContext();
   if (!presContext) {
     return NS_ERROR_UNEXPECTED;
   }
 
-  nsRefreshDriver* driver = presContext->GetRootPresContext()->RefreshDriver();
+  nsRefreshDriver* driver = presContext->RefreshDriver();
   *aLastTransactionId = uint64_t(driver->LastTransactionId());
   return NS_OK;
 }
