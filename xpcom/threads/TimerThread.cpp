@@ -170,6 +170,7 @@ public:
   void operator delete(void* aPtr)
   {
     sAllocator->Free(aPtr);
+    sAllocatorUsers--;
     DeleteAllocatorIfNeeded();
   }
 
@@ -193,7 +194,6 @@ private:
   {
     MOZ_ASSERT(!sCanDeleteAllocator || sAllocatorUsers > 0,
                "This will result in us attempting to deallocate the nsTimerEvent allocator twice");
-    sAllocatorUsers--;
   }
 
   RefPtr<nsTimerImpl> mTimer;
