@@ -1354,6 +1354,8 @@ already_AddRefed<LayerManager> nsBaseWidget::CreateCompositorSession(
     }
 #endif
 
+    options.SetUseWebGPU(StaticPrefs::dom_webgpu_enabled());
+
 #ifdef MOZ_WIDGET_ANDROID
     if (!GetNativeData(NS_JAVA_SURFACE)) {
       options.SetInitiallyPaused(true);
