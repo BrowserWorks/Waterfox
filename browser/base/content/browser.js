@@ -6377,7 +6377,9 @@ function onViewToolbarCommand(aEvent) {
     isVisible = node.getAttribute("checked") == "true";
   }
   CustomizableUI.setToolbarVisibility(toolbarId, isVisible);
-  BrowserUsageTelemetry.recordToolbarVisibility(toolbarId, isVisible, menuId);
+  try {
+    BrowserUsageTelemetry.recordToolbarVisibility(toolbarId, isVisible, menuId);
+  } catch (ex) {}
 }
 
 function setToolbarVisibility(
