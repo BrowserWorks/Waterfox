@@ -1,0 +1,511 @@
+[
+  {
+    "namespace": "extensibles.utils",
+    "description": "API implementing utility features",
+    "functions": [
+      {
+        "name": "createAndPositionElement",
+        "type": "function",
+        "async": false,
+        "description": "Creates a tab context menu item.",
+        "parameters": [
+          {
+            "name": "aTag",
+            "type": "string",
+            "description": "The tag of the element."
+          },
+          {
+            "name": "aAttrs",
+            "type": "object",
+            "description": "The attributes of the element.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "optional": true,
+                "description": "The id of the element being created."
+              },
+              "class": {
+                "type": "string",
+                "optional": true,
+                "description": "The class of the element being created."
+              },
+              "accesskey": {
+                "type": "string",
+                "optional": true,
+                "description": "The access key for the element."
+              },
+              "oncommand": {
+                "type": "string",
+                "optional": true,
+                "description": "The name of the function to execute oncommand."
+              },
+              "onclick": {
+                "type": "string",
+                "optional": true,
+                "description": "The name of the function to execute when the created element is clicked."
+              },
+              "label": {
+                "type": "string",
+                "optional": true,
+                "description": "The label of the element being created."
+              },
+              "key": {
+                "type": "string",
+                "optional": true,
+                "description": "The key to activate."
+              },
+              "modifiers": {
+                "type": "string",
+                "optional": true,
+                "description": "The modifiers for the activation key."
+              },
+              "acceltext": {
+                "type": "string",
+                "optional": true,
+                "description": "The shortcut text to display."
+              },
+              "hidden": {
+                "type": "boolean",
+                "optional": true,
+                "description": "The visibility status of the element."
+              },
+              "type": {
+                "type": "string",
+                "optional": true,
+                "description": "The element type."
+              },
+              "tooltiptext": {
+                "type": "string",
+                "optional": true,
+                "description": "The element tooltip text."
+              },
+              "toolbarname": {
+                "type": "string",
+                "optional": true,
+                "description": "The name of the toolbar."
+              },
+              "preference": {
+                "type": "string",
+                "optional": true,
+                "description": "The preference that controls visibility of the element."
+              },
+              "data-category": {
+                "type": "string",
+                "optional": true,
+                "description": "The data-category of the element."
+              }
+            }
+          },
+          {
+            "name": "aAdjacentTo",
+            "type": "string",
+            "description": "The id of the element that will be used to position the new element."
+          },
+          {
+            "name": "aPosition",
+            "type": "string",
+            "description": "The position relative to the target element. If no position is given the new element will be appeneded.",
+            "optional": true
+          },
+          {
+            "name": "aContent",
+            "type": "boolean",
+            "description": "True if elements should be created in window content document rather than window document.",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "createElementAs",
+        "type": "function",
+        "async": false,
+        "description": "Get the specified attribute from the given element id.",
+        "parameters": [
+          {
+            "name": "aTag",
+            "type": "string",
+            "description": "The id of the element to search for."
+          },
+          {
+            "name": "aAttrs",
+            "type": "object",
+            "description": "The attributes of the element.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "optional": false,
+                "description": "The id of the element being created."
+              },
+              "customizable": {
+                "type": "string",
+                "optional": true,
+                "description": "Whether the element is customizable or not."
+              },
+              "context": {
+                "type": "string",
+                "optional": true,
+                "description": "The element context."
+              },
+              "mode": {
+                "type": "string",
+                "optional": true,
+                "description": "The element mode."
+              },
+              "flex": {
+                "type": "string",
+                "optional": true,
+                "description": "Is the element a flex container."
+              },
+              "width": {
+                "type": "string",
+                "optional": true,
+                "description": "The element width."
+              }
+            }
+          },
+          {
+            "name": "aSetAs",
+            "type": "string",
+            "description": "String identifier to determine what to set the created element as."
+          }
+        ]
+      },
+      {
+        "name": "elementExistsInContent",
+        "type": "function",
+        "async": true,
+        "description": "Attempt to retrieve the given element Id from the current content document.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          }
+        ]
+      },
+      {
+        "name": "getElementAttr",
+        "type": "function",
+        "async": true,
+        "description": "Get the specified attribute from the given element id.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          },
+          {
+            "name": "aAttr",
+            "type": "string",
+            "description": "The attribute of the element to retrieve."
+          }
+        ]
+      },
+      {
+        "name": "setAttributes",
+        "type": "function",
+        "async": false,
+        "description": "Set the specified attributes for the given element id.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          },
+          {
+            "name": "aAttrs",
+            "type": "object",
+            "description": "The attributes of the element to set.",
+            "properties": {
+              "class": {
+                "type": "string",
+                "optional": true,
+                "description": "The class attribute to add to the element."
+              },
+              "preference": {
+                "type": "string",
+                "optional": true,
+                "description": "The preference that controls the elements action/visibility."
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "registerPref",
+        "type": "function",
+        "async": false,
+        "description": "Register the given preference with the default branch.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "The name of the preferences being registered."
+          },
+          {
+            "name": "aValue",
+            "type": "boolean",
+            "description": "The value of the preferences being registered."
+          }
+        ]
+      },
+      {
+        "name": "addPreference",
+        "type": "function",
+        "async": false,
+        "description": "Add preferences to the Preferences object in the window content.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "Preference id."
+          },
+          {
+            "name": "aType",
+            "type": "string",
+            "description": "Preference type."
+          }
+        ]
+      },
+      {
+        "name": "isTopWindowPrivate",
+        "type": "function",
+        "async": false,
+        "description": "Returns bool val of top window privacy state.",
+        "parameters": []
+      },
+      {
+        "name": "getContainer",
+        "type": "function",
+        "async": true,
+        "description": "Get the container with name aName.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "The name of the container to retrieve."
+          }
+        ]
+      },
+      {
+        "name": "addElementListener",
+        "type": "function",
+        "async": true,
+        "description": "Add an event listener to the given element for the given event type.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The Id of the element to add a listener to."
+          },
+          {
+            "name": "aEvent",
+            "type": "string",
+            "description": "The event to listen for."
+          },
+          {
+            "name": "aSubject",
+            "type": "string",
+            "description": "The subject used to determine function."
+          }
+        ]
+      },
+      {
+        "name": "windowIsChromeWindow",
+        "type": "function",
+        "async": true,
+        "description": "Returns whether the current window is a ChromeWindow",
+        "parameters": []
+      },
+      {
+        "name": "getPlatform",
+        "type": "function",
+        "async": true,
+        "description": "Returns the current platform.",
+        "parameters": []
+      },
+      {
+        "name": "append",
+        "type": "function",
+        "async": true,
+        "description": "Append text to given element.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          },
+          {
+            "name": "aText",
+            "type": "string",
+            "description": "The text to append."
+          }
+        ]
+      },
+      {
+        "name": "initialized",
+        "type": "function",
+        "async": true,
+        "description": "Returns a boolean indicating if aId is initialized in the current window.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the object to search for in the current top window."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.statusbar",
+    "description": "API implementing status bar features",
+    "functions": [
+      {
+        "name": "registerStatusBar",
+        "type": "function",
+        "async": false,
+        "description": "Register StatusBar.jsm with the current top window.",
+        "parameters": []
+      },
+      {
+        "name": "configureStatusBar",
+        "type": "function",
+        "async": false,
+        "description": "Configure the status bar.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The id of the element to search for."
+          }
+        ]
+      },
+      {
+        "name": "configureResizer",
+        "type": "function",
+        "async": false,
+        "description": "Configure the resizer.",
+        "parameters": []
+      },
+      {
+        "name": "overrideStatusPanelLabel",
+        "type": "function",
+        "async": false,
+        "description": "Override StatusPanel.label.",
+        "parameters": []
+      },
+      {
+        "name": "configureBottomBox",
+        "type": "function",
+        "async": false,
+        "description": "Configure the bottom box.",
+        "parameters": []
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.privatetab",
+    "description": "API implementing private tab features",
+    "functions": [
+      {
+        "name": "registerPrivateTab",
+        "type": "function",
+        "async": true,
+        "description": "Register PrivateTab.jsm with the current top window.",
+        "parameters": [
+          {
+            "name": "aName",
+            "type": "string",
+            "description": "The name of the container to retrieve."
+          },
+          {
+            "name": "aAttrs",
+            "type": "object",
+            "description": "The attributes of the custom private tab widget.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "optional": false,
+                "description": "The id of the element being created."
+              },
+              "class": {
+                "type": "string",
+                "optional": true,
+                "description": "The class of the element being created."
+              },
+              "oncommand": {
+                "type": "string",
+                "optional": true,
+                "description": "The name of the function to execute oncommand."
+              },
+              "label": {
+                "type": "string",
+                "optional": true,
+                "description": "The label of the element being created."
+              },
+              "tooltiptext": {
+                "type": "string",
+                "optional": true,
+                "description": "The element tooltip text."
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "updatePrivateMaskId",
+        "type": "function",
+        "async": true,
+        "description": "Updates the private-browsing-indicator id.",
+        "parameters": [
+          {
+            "name": "aId",
+            "type": "string",
+            "description": "The updated id value."
+          }
+        ]
+      },
+      {
+        "name": "initPrivateTabListeners",
+        "type": "function",
+        "async": true,
+        "description": "Initialize ancillary privateTab listeners.",
+        "parameters": []
+      },
+      {
+        "name": "initCustomFunctions",
+        "type": "function",
+        "async": true,
+        "description": "Initialize custom functions.",
+        "parameters": []
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.tabfeatures",
+    "description": "API implementing additional tab features",
+    "functions": [
+      {
+        "name": "registerTabFeatures",
+        "type": "function",
+        "async": false,
+        "description": "Register TabFeatures.jsm with the current top window.",
+        "parameters": []
+      }
+    ]
+  },
+  {
+    "namespace": "extensibles.prefsext",
+    "description": "API implementing about:preferences features",
+    "functions": [
+      {
+        "name": "setStyle",
+        "type": "function",
+        "async": false,
+        "description": "Set additional css rules for about:preferences.",
+        "parameters": []
+      }
+    ]
+  }
+]
