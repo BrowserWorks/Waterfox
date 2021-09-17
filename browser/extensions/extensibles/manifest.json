@@ -1,0 +1,43 @@
+{
+  "manifest_version": 2,
+  "name": "Extensibles",
+  "description": "Additional built-in features for Waterfox",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "hidden": true,
+
+  "applications": {
+    "gecko": {
+      "id": "extensibles@waterfox.net",
+      "strict_min_version": "72.0a1"
+    }
+  },
+
+  "background": {
+    "scripts": [
+      "privatetab/background.js",
+      "statusbar/background.js",
+      "tabfeatures/background.js",
+      "aboutpreferences/background.js"
+    ]
+  },
+
+  "permissions": ["tabs", "menus"],
+
+  "experiment_apis": {
+    "extensibles": {
+      "schema": "schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "api.js",
+        "paths": [
+          ["extensibles", "utils"],
+          ["extensibles", "privatetab"],
+          ["extensibles", "statusbar"],
+          ["extensibles", "tabfeatures"],
+          ["extensibles", "prefsext"]
+        ]
+      }
+    }
+  }
+}
