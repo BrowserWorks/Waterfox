@@ -1,0 +1,62 @@
+{
+  "newPrivateTab": {
+    "message": "New Private Tab"
+  },
+  "newPrivateTooltip": {
+    "message": "Open a new private tab"
+  },
+  "openAllPrivate": {
+    "message": "Open All in Private Tabs"
+  },
+  "openPrivateTab": {
+    "message": "Open in a New Private Tab"
+  },
+  "openLinkPrivate": {
+    "message": "Open Link in New Private Tab"
+  },
+  "privateTab": {
+    "message": "Private Tab"
+  },
+  "containerName": {
+    "message": "Private"
+  },
+  "statusBar": {
+    "message": "Status Bar"
+  },
+  "copyUrl": {
+    "message": "Copy Tab Link"
+  },
+  "copyAllUrls": {
+    "message": "Copy All Tab Links"
+  },
+  "restartBrowser": {
+    "message": "Restart"
+  },
+  "tabHeader": {
+    "message": "Tab Context Menu"
+  },
+  "showDuplicateTab": {
+    "message": "Show duplicate tab menu item"
+  },
+  "showCopyTab": {
+    "message": "Show copy tab link menu item"
+  },
+  "showCopyActiveTab": {
+    "message": "Copy link only from active tab"
+  },
+  "showCopyAllTab": {
+    "message": "Show copy all tab links menu item"
+  },
+  "restartHeader": {
+    "message": "Restart Menu Item"
+  },
+  "showRestartButton": {
+    "message": "Show restart button in PanelUI/Menu bar"
+  },
+  "restartClearCache": {
+    "message": "Clear fast restart cache on browser restart"
+  },
+  "confirmRestart": {
+    "message": "Require restart confirmation"
+  }
+}
