@@ -284,6 +284,43 @@ const DEFAULT_PROTON_WELCOME_CONTENT = {
         },
       },
     },
+    {
+      id: "AW_DEFAULT_SEARCH",
+      order: 3,
+      content: {
+        title: {
+          string_id: "mr1-onboarding-search-header",
+        },
+        subtitle: {
+          string_id: "mr1-onboarding-search-subtitle",
+        },
+        additional: {
+          string_id: "mr1-onboarding-search-additional",
+        },
+        additional2: {
+          string_id: "mr1-onboarding-search-additional2",
+        },
+        primary_button: {
+          label: {
+            string_id:
+              "mr1-onboarding-search-primary-button-label",
+          },
+          action: {
+            search: "startpage",
+            navigate: true,
+          },
+        },
+        secondary_button: {
+          label: {
+            string_id: "mr1-onboarding-search-secondary-button-label",
+          },
+          action: {
+            search: "bing",
+            navigate: true,
+          },
+        },
+      },
+    },
     // {
     //   id: "AW_CHOOSE_THEME",
     //   order: 3,
