@@ -225,6 +225,14 @@ mr1-onboarding-import-primary-button-label-attribution = Import from { $previous
 mr1-onboarding-import-primary-button-label-no-attribution = Import from previous browser
 mr1-onboarding-import-secondary-button-label = Not now
 
+# Default search strings
+mr1-onboarding-search-header = Add privacy to your default search
+mr1-onboarding-search-subtitle = For the most private browsing experience, we recommend setting Waterfox's default search to Startpage, a privacy-first search engine.
+mr1-onboarding-search-additional = Clicking the above will change the browser's default and homepage search boxes from Bing to Startpage.com.
+mr1-onboarding-search-additional2 = This selection can be adjusted in the Settings menu.
+mr1-onboarding-search-primary-button-label = Set Search to Startpage
+mr1-onboarding-search-secondary-button-label = Continue with Bing
+
 mr1-onboarding-theme-header = Make it your own
 mr1-onboarding-theme-subtitle = Personalize { -brand-short-name } with a theme.
 mr1-onboarding-theme-primary-button-label = Save theme

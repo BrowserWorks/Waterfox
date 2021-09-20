@@ -118,10 +118,24 @@ var UpdateUtils = {
           case "SYSTEM_CAPABILITIES":
             return getSystemCapabilities();
           case "DISTRIBUTION":
-            return getDistributionPrefValue(PREF_APP_DISTRIBUTION) == "default"
-              ? Services.prefs.getCharPref("distribution.source", "wfx")
-              : getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+            if (Services.prefs.getCharPref("browser.search.ptag", "")) {
+              return getDistributionPrefValue(PREF_APP_DISTRIBUTION) ==
+                "default"
+                ? Services.prefs.getCharPref("distribution.source", "wfx")
+                : getDistributionPrefValue(PREF_APP_DISTRIBUTION);
+            }
+            return getDistributionPrefValue(PREF_APP_DISTRIBUTION);
           case "DISTRIBUTION_VERSION":
+            if (Services.prefs.getCharPref("browser.search.ptag", "")) {
+              if (
+                Services.prefs.getCharPref("distribution.engine", "") &&
+                defaultSearch.name == "Startpage"
+              ) {
+                return "spA";
+              } else if (defaultSearch.name == "Startpage") {
+                return "spB";
+              }
+            }
             if (
               getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION) ==
               "default"
