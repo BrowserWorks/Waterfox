@@ -8,7 +8,7 @@ import { Localized } from "./MSLocalized";
 import { Themes } from "./Themes";
 import { Zap } from "./Zap";
 import { HelpText } from "./HelpText";
-import { SecondaryCTA, StepsIndicator } from "./MultiStageAboutWelcome";
+import { AdditionalText, SecondaryCTA, StepsIndicator } from "./MultiStageAboutWelcome";
 
 export class MultiStageScreen extends React.PureComponent {
   renderTiles() {
@@ -151,8 +151,14 @@ export class MultiStageScreen extends React.PureComponent {
             hasImg={content.help_text.img}
           />
         ) : null}
+        {content.additional ? (
+          <AdditionalText
+            content={content}
+          />
+        ) : null}
         {content.secondary_button ? (
           <SecondaryCTA
+            id={this.props.id}
             content={content}
             handleAction={this.props.handleAction}
           />
