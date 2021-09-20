@@ -484,10 +484,10 @@ home-newtabs-mode-label = 새 탭
 home-restore-defaults =
     .label = 기본값으로 복원
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox 홈 (기본값)
+    .label = Waterfox 홈 (기본값)
 home-mode-choice-custom =
     .label = 사용자 지정 URL…
 home-mode-choice-blank =
@@ -511,8 +511,8 @@ choose-bookmark =
 
 ## Home Section - Firefox Home Content Customization
 
-home-prefs-content-header = Firefox 홈 콘텐츠
-home-prefs-content-description = Firefox 홈 화면에서 원하는 콘텐츠를 선택하세요.
+home-prefs-content-header = Waterfox 홈 콘텐츠
+home-prefs-content-description = Waterfox 홈 화면에서 원하는 콘텐츠를 선택하세요.
 home-prefs-search-header =
     .label = 웹 검색
 home-prefs-topsites-header =
@@ -759,7 +759,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = 부가 기능
-    .tooltiptext = Firefox 데스크톱 용 확장 기능 및 테마
+    .tooltiptext = Waterfox 데스크톱 용 확장 기능 및 테마
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -869,8 +869,8 @@ history-header = 기록
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }가
     .accesskey = w

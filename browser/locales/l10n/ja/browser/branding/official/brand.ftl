@@ -12,11 +12,11 @@
 ##
 ## Reference: https://www.mozilla.org/styleguide/communications/translation/
 
--brand-shorter-name = Firefox
--brand-short-name = Firefox
--brand-full-name = Mozilla Firefox
+-brand-shorter-name = Waterfox
+-brand-short-name = Waterfox
+-brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
--brand-product-name = Firefox
+-brand-product-name = Waterfox
 -vendor-short-name = Mozilla
-trademarkInfo = Firefox および Firefox ロゴは 米国 Mozilla Foundation の米国およびその他の国における商標です。
+trademarkInfo = Waterfox および Firefox ロゴは 米国 Mozilla Foundation の米国およびその他の国における商標です。

@@ -18,6 +18,6 @@
 <!ENTITY aboutPage.credits.label                "정보">
 <!ENTITY aboutPage.license.label 				"라이선스 정보">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 <!ENTITY aboutPage.logoTrademark                "Firefox와 Firefox 로고는 Mozilla 재단의 상표입니다.">
 

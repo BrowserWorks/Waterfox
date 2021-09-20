@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Verzióinformáció">
 <!ENTITY aboutPage.credits.label                "Közreműködők">
 <!ENTITY aboutPage.license.label                "Licencinformációk">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
 <!ENTITY aboutPage.logoTrademark                "A Firefox és a Firefox logók a Mozilla Foundation védjegyei.">

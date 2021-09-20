@@ -24,7 +24,7 @@ newsletter-subscribe-button = บอกรับ
 newsletter-thanks-title = ขอบคุณ!
 newsletter-thanks-message = ถ้าคุณยังไม่เคยยืนยันการสมัครจดหมายข่าวที่เกี่ยวข้องกับ Mozilla คุณอาจจะต้องทำต่อไปนี้ โปรดตรวจสอบกล่องจดหมายเข้าของคุณหรือตัวกรองสแปมของคุณเพื่อดูอีเมลจากเรา
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = กำลังมองหามากกว่าเครื่องมือนักพัฒนาใช่ไหม? ตรวจสอบเบราว์เซอร์ Firefox ที่สร้างขึ้นสำหรับนักพัฒนาซอฟต์แวร์และเวิร์กโฟลว์แบบทันสมัยโดยเฉพาะ
 footer-learn-more-link = เรียนรู้เพิ่มเติม
 

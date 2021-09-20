@@ -30,7 +30,7 @@
 <!ENTITY importFromChromeDev.accesskey  "f">
 <!ENTITY importFromChromium.label       "Chromium">
 <!ENTITY importFromChromium.accesskey   "u">
-<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.label        "Waterfox">
 <!ENTITY importFromFirefox.accesskey    "x">
 <!ENTITY importFrom360se.label          "360 biztonságos böngésző">
 <!ENTITY importFrom360se.accesskey      "3">
