@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "クレジット">
 <!ENTITY aboutPage.license.label                "ライセンス情報">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 <!ENTITY aboutPage.logoTrademark                "Firefox と Firefox ロゴは Mozilla Foundation の登録商標です。">

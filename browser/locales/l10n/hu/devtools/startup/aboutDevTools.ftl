@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = A fejlesztői eszközök névjegye
-enable-title = Firefox fejlesztői eszközök engedélyezése
+enable-title = Waterfox fejlesztői eszközök engedélyezése
 enable-inspect-element-title = A Firefox fejlesztői eszközök használhatják a Vizsgáló elemet
 enable-inspect-element-message = Vizsgálja meg és szerkessze a HTML-t és CSS-t a fejlesztői eszközök vizsgálójával.
 enable-about-debugging-message = Fejlesszen WebExtensionöket, web workereket, service workereket és másokat a Firefox fejlesztői eszközeivel.
@@ -24,7 +24,7 @@ newsletter-subscribe-button = Feliratkozás
 newsletter-thanks-title = Köszönjük!
 newsletter-thanks-message = Ha korábban nem erősítette meg a Mozillához kapcsolódó hírlevél feliratkozását, akkor lehet hogy meg kell tennie. Ellenőrizze a Beérkezett üzenetek mappáját vagy a spam-szűrőjét az e-mailünk után.
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = Többre vágyik a fejlesztői eszközöknél? Nézze meg a Firefox böngészőt, amely kifejezetten a fejlesztőknek, és modern munkamenetekhez készül.
 footer-learn-more-link = További tudnivalók
 

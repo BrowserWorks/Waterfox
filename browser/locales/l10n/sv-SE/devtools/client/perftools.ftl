@@ -108,7 +108,7 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Firefox profilerare
+-profiler-brand-name = Waterfox profilerare
 perftools-onboarding-message = <b>Nytt</b>: { -profiler-brand-name } är nu integrerad i utvecklarverktyg. <a>Läs mer</a> om det här kraftfulla nya verktyget.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Under en begränsad tid kan du komma åt den ursprungliga Prestanda-panelen via <a>{ options-context-advanced-settings }</a>)

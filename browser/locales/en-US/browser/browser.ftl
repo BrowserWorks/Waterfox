@@ -7,7 +7,7 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
+# default - "Waterfox"
 # private - "Mozilla Firefox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
@@ -22,7 +22,7 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
+# "default" - "Waterfox"
 # "private" - "Mozilla Firefox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.

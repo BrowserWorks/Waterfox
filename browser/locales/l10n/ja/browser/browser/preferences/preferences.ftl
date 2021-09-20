@@ -624,10 +624,10 @@ home-restore-defaults =
     .label = 既定値に戻す
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox ホーム (既定)
+    .label = Waterfox ホーム (既定)
 
 home-mode-choice-custom =
     .label = カスタム URL...
@@ -656,8 +656,8 @@ choose-bookmark =
 
 ## Home Section - Firefox Home Content Customization
 
-home-prefs-content-header = Firefox Home コンテンツ
-home-prefs-content-description = Firefox Home に表示するコンテンツを選びましょう。
+home-prefs-content-header = Waterfox Home コンテンツ
+home-prefs-content-description = Waterfox Home に表示するコンテンツを選びましょう。
 
 home-prefs-search-header =
     .label = ウェブ検索
@@ -844,7 +844,7 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Firefox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> または <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> をダウンロードしてモバイル端末と同期しましょう。
+sync-mobile-promo = Waterfox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> または <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> をダウンロードしてモバイル端末と同期しましょう。
 
 ## Firefox Account - Signed in
 
@@ -1083,8 +1083,8 @@ history-header = 履歴
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } に
     .accesskey = w

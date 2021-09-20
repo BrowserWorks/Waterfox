@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "贡献者">
 <!ENTITY aboutPage.license.label                "授权信息">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 <!ENTITY aboutPage.logoTrademark                "Firefox 以及 Firefox 标志均为 Mozilla 基金会所有的商标。">
