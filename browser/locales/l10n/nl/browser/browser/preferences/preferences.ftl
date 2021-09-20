@@ -496,10 +496,10 @@ home-newtabs-mode-label = Nieuwe tabbladen
 home-restore-defaults =
     .label = Standaardwaarden herstellen
     .accesskey = S
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox-startpagina (Standaard)
+    .label = Waterfox-startpagina (Standaard)
 home-mode-choice-custom =
     .label = Aangepaste URL’s…
 home-mode-choice-blank =
@@ -885,8 +885,8 @@ history-header = Geschiedenis
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } zal
     .accesskey = z

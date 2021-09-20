@@ -9,7 +9,7 @@ enable-inspect-element-message = Examine and edit HTML and CSS with the Develope
 enable-about-debugging-message = Develop and debug WebExtensions, web workers, service workers and more with Firefox Developer Tools.
 enable-key-shortcut-message = You activated a Developer Tools shortcut. If that was a mistake, you can close this Tab.
 enable-menu-message = Perfect your web site’s HTML, CSS, and JavaScript with tools like Inspector and Debugger.
-enable-common-message = Firefox Developer Tools are disabled by default to give you more control over your browser.
+enable-common-message = Waterfox Developer Tools are disabled by default to give you more control over your browser.
 enable-learn-more-link = Learn more about Developer Tools
 enable-enable-button = Enable Developer Tools
 enable-close-button = Close this Tab
@@ -24,7 +24,7 @@ newsletter-subscribe-button = Subscribe
 newsletter-thanks-title = Thanks!
 newsletter-thanks-message = If you haven’t previously confirmed a subscription to a Mozilla-related newsletter you may have to do so. Please check your inbox or your spam filter for an email from us.
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = Looking for more than just Developer Tools? Check out the Firefox browser that is built specifically for developers and modern workflows.
 footer-learn-more-link = Learn more
 
