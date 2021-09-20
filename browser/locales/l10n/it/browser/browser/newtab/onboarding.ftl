@@ -104,7 +104,7 @@ onboarding-multistage-theme-label-automatic = Automatico
 # System refers to the operating system
 onboarding-multistage-theme-label-light = Chiaro
 onboarding-multistage-theme-label-dark = Scuro
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -241,7 +241,7 @@ return-to-amo-get-started-button = Inizia a usare { -brand-short-name }
 ## Multistage MR1 onboarding strings (MR1 about:welcome pages)
 
 # "Hero Text" displayed on left side of welcome screen.
-# The "Fire" in "Fire starts here" plays on the "Fire" in "Firefox".
+# The "Fire" in "Fire starts here" plays on the "Fire" in "Waterfox".
 # It also signals the passion users bring to Firefox, how they use
 # Firefox to pursue those passions, as well as the boldness in their
 # choice to use Firefox over a larger competitor browser.

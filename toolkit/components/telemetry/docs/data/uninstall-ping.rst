@@ -22,7 +22,7 @@ See also the `JSON schema <https://github.com/mozilla-services/mozilla-pipeline-
 
 payload.otherInstalls
 ---------------------
-This is a count of how many other installs of Firefox were present on the system at the time the ping was written. It is the number of values in the ``Software\Mozilla\Firefox\TaskBarIDs`` registry key, for both 32-bit and 64-bit architectures, for both HKCU and HKLM, excluding duplicates, and excluding a value for this install (if present). For example, if this is the only install on the system, the value will be 0. It may be missing in case of an error.
+This is a count of how many other installs of Firefox were present on the system at the time the ping was written. It is the number of values in the ``Software\WaterfoxLimited\Firefox\TaskBarIDs`` registry key, for both 32-bit and 64-bit architectures, for both HKCU and HKLM, excluding duplicates, and excluding a value for this install (if present). For example, if this is the only install on the system, the value will be 0. It may be missing in case of an error.
 
 This count is capped at 11. This avoids introducing a high-resolution identifier in case of a system with a large, unique number of installs.
 

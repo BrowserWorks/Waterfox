@@ -56,7 +56,7 @@ policy-DisableFeedbackCommands = ヘルプメニューのフィードバック�
 policy-DisableFirefoxAccounts = Sync を含む { -fxaccount-brand-name } を利用したサービスを無効にします。
 
 # Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Firefox Screenshots 機能を無効にします。
+policy-DisableFirefoxScreenshots = Waterfox Screenshots 機能を無効にします。
 
 policy-DisableFirefoxStudies = Shield 調査の実行を禁止します。
 
@@ -113,7 +113,7 @@ policy-ExtensionSettings = 拡張機能のインストール全般を管理し�
 
 policy-ExtensionUpdate = 拡張機能の自動更新を有効または無効にします。
 
-policy-FirefoxHome = Firefox Home の設定を行います。
+policy-FirefoxHome = Waterfox Home の設定を行います。
 
 policy-FlashPlugin = Flash プラグインの実行を許可、または拒否します。
 

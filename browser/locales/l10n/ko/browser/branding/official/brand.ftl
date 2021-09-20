@@ -27,11 +27,11 @@
 ## For further details, consult:
 ## https://mozilla-l10n.github.io/styleguides/mozilla_general/#brands-copyright-and-trademark
 
--brand-shorter-name = Firefox
--brand-short-name = Firefox
--brand-full-name = Mozilla Firefox
+-brand-shorter-name = Waterfox
+-brand-short-name = Waterfox
+-brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
--brand-product-name = Firefox
+-brand-product-name = Waterfox
 -vendor-short-name = Mozilla
-trademarkInfo = Firefox 및 Firefox 로고는 미국 Mozilla Foundation의 소유이며, 미국 및 그 외의 나라에 등록된 상표입니다.
+trademarkInfo = Waterfox 및 Firefox 로고는 미국 Mozilla Foundation의 소유이며, 미국 및 그 외의 나라에 등록된 상표입니다.

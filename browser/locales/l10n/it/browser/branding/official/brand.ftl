@@ -27,9 +27,9 @@
 ## For further details, consult:
 ## https://mozilla-l10n.github.io/styleguides/mozilla_general/#brands-copyright-and-trademark
 
--brand-shorter-name = Firefox
--brand-short-name = Firefox
--brand-full-name = Mozilla Firefox
--brand-product-name = Firefox
+-brand-shorter-name = Waterfox
+-brand-short-name = Waterfox
+-brand-full-name = Waterfox
+-brand-product-name = Waterfox
 -vendor-short-name = Mozilla
-trademarkInfo = Firefox e i logo di Firefox sono marchi registrati di Mozilla Foundation.
+trademarkInfo = Waterfox e i logo di Firefox sono marchi registrati di Mozilla Foundation.

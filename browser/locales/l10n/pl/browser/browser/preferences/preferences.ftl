@@ -499,7 +499,7 @@ home-newtabs-mode-label = Nowa karta:
 home-restore-defaults =
     .label = Przywróć domyślne
     .accesskey = P
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
     .label = strona startowa Firefoksa (domyślnie)
@@ -686,7 +686,7 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Firefox na <a data-l10n-name="android-link">Androida</a> <img data-l10n-name="android-icon"/> i <a data-l10n-name="ios-link">iOS</a> <img data-l10n-name="ios-icon"/> daje możliwość synchronizacji z urządzeniami przenośnymi.
+sync-mobile-promo = Waterfox na <a data-l10n-name="android-link">Androida</a> <img data-l10n-name="android-icon"/> i <a data-l10n-name="ios-link">iOS</a> <img data-l10n-name="ios-icon"/> daje możliwość synchronizacji z urządzeniami przenośnymi.
 
 ## Firefox Account - Signed in
 
@@ -889,8 +889,8 @@ history-header = Historia
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Program { -brand-short-name }:
     .accesskey = m
