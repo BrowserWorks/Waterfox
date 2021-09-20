@@ -71,7 +71,7 @@ perftools-button-edit-settings = Chỉnh sửa cài đặt…
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Firefox Profiler
+-profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>Mới</b>: { -profiler-brand-name } hiện được tích hợp vào Công cụ nhà phát triển. <a>Tìm hiểu thêm</a> về công cụ mới mạnh mẽ này.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Trong thời gian giới hạn, bạn có thể truy cập bảng hiệu suất ban đầu qua <a>{ options-context-advanced-settings }</a>)

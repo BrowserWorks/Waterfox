@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-MOZ_APP_VENDOR="Waterfox Ltd."
+MOZ_APP_VENDOR="Waterfox Limited"
 MOZ_APP_BASENAME=Waterfox
 MOZ_DISTRIBUTION_ID=net.waterfox
 MOZ_UPDATER=1

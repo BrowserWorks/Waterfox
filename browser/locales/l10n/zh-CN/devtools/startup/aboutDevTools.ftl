@@ -9,7 +9,7 @@ enable-inspect-element-message = 用开发者工具的探查器来检查和编�
 enable-about-debugging-message = 开发和调试 WebExtensions、Web worker、Service worker，……，尽在 Firefox 开发者工具。
 enable-key-shortcut-message = 您已用快捷键激活一个开发者工具。如果这是误操作，您可以关闭此标签页。
 enable-menu-message = 使用查看器、调试器等工具来完善您的网站的 HTML、CSS 和 JavaScript。
-enable-common-message = Firefox 开发者工具默认已被禁用，以便您更好的操作浏览器。
+enable-common-message = Waterfox 开发者工具默认已被禁用，以便您更好的操作浏览器。
 enable-learn-more-link = 详细了解开发者工具
 enable-enable-button = 启用开发者工具
 enable-close-button = 关闭此标签页
@@ -24,7 +24,7 @@ newsletter-subscribe-button = 订阅
 newsletter-thanks-title = 谢谢！
 newsletter-thanks-message = 如果您以前没有成功订阅过 Mozilla 相关的新闻通讯，您可能需要检查收件箱乃至垃圾邮件箱来找到我们发给您的确认邮件。
 
-footer-title = Firefox 开发者版本
+footer-title = Waterfox 开发者版本
 footer-message = 开发者工具不够尽兴？探索专为开发者和现代工作流程打造的 Firefox 浏览器。
 footer-learn-more-link = 详细了解
 
