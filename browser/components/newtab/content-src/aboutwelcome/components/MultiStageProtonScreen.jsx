@@ -5,7 +5,7 @@
 import React from "react";
 import { Localized } from "./MSLocalized";
 import { Themes } from "./Themes";
-import { SecondaryCTA, StepsIndicator } from "./MultiStageAboutWelcome";
+import { AdditionalText, SecondaryCTA, StepsIndicator } from "./MultiStageAboutWelcome";
 
 export class MultiStageProtonScreen extends React.PureComponent {
   componentDidMount() {
@@ -94,8 +94,14 @@ export class MultiStageProtonScreen extends React.PureComponent {
                 />
               </Localized>
             </div>
+            {content.additional ? (
+              <AdditionalText
+                content={content}
+              />
+            ) : null}
             {content.secondary_button ? (
               <SecondaryCTA
+                id={this.props.id}
                 content={content}
                 handleAction={this.props.handleAction}
               />
