@@ -9,12 +9,12 @@
 ## - Translated.
 
 -facebook-container-brand-name = Facebook Container
--lockwise-brand-name = Firefox Lockwise
+-lockwise-brand-name = Waterfox Lockwise
 -lockwise-brand-short-name = Lockwise
--monitor-brand-name = Firefox Monitor
+-monitor-brand-name = Waterfox Monitor
 -monitor-brand-short-name = Monitor
 -pocket-brand-name = Pocket
--send-brand-name = Firefox Send
--screenshots-brand-name = Firefox Screenshots
+-send-brand-name = Waterfox Send
+-screenshots-brand-name = Waterfox Screenshots
 -mozilla-vpn-brand-name = Mozilla VPN
--profiler-brand-name = Firefox Profiler
+-profiler-brand-name = Waterfox Profiler

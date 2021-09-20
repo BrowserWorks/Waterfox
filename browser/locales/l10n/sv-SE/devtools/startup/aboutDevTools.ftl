@@ -9,7 +9,7 @@ enable-inspect-element-message = Utforska och redigera HTML och CSS med utveckla
 enable-about-debugging-message = Utveckla och felsök WebExtensions, webb-workers, service-workers och mer med Firefox utvecklingsverktyg.
 enable-key-shortcut-message = Du aktiverade en genväg till utvecklingsverktygen. Om det var ett misstag kan du stänga den här fliken.
 enable-menu-message = Förbättra din webbplats HTML, CSS och JavaScript med verktyg som inspektören och felsökaren.
-enable-common-message = Firefox utvecklingsverktyg är vanligtvis avstängda för att ge dig större kontroll över din webbläsare.
+enable-common-message = Waterfox utvecklingsverktyg är vanligtvis avstängda för att ge dig större kontroll över din webbläsare.
 enable-learn-more-link = Lär dig mer om utvecklingsverktyg
 enable-enable-button = Aktivera utvecklingsverktyg
 enable-close-button = Stäng denna flik
@@ -24,7 +24,7 @@ newsletter-subscribe-button = Prenumerera
 newsletter-thanks-title = Tack!
 newsletter-thanks-message = Om du inte tidigare har bekräftat en prenumeration på ett Mozilla-relaterat nyhetsbrev måste du kanske göra det. Kontrollera din inkorg eller ditt spamfilter efter ett mejl från oss.
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = Letar du efter mer än bara utvecklingsverktyg? Kolla in Firefox:s webbläsare som är byggd speciellt för utvecklare och moderna arbetsflöden.
 footer-learn-more-link = Läs mer
 

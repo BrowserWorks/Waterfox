@@ -24,7 +24,7 @@ newsletter-subscribe-button = Subskrybuj
 newsletter-thanks-title = Dziękujemy!
 newsletter-thanks-message = Jeśli jeszcze nigdy nie potwierdzono subskrypcji biuletynu Mozilli, to możesz musieć to zrobić. Sprawdź, czy w skrzynce odbiorczej lub niechcianych jest wiadomość od nas.
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = Szukasz czegoś więcej niż same narzędzia dla programistów? Wypróbuj przeglądarkę Firefox zbudowaną z myślą o programistach i nowoczesnych narzędziach.
 footer-learn-more-link = Więcej informacji
 

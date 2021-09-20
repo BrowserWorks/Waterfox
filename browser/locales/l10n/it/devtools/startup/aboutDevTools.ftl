@@ -24,7 +24,7 @@ newsletter-subscribe-button = Iscrivimi
 newsletter-thanks-title = Grazie!
 newsletter-thanks-message = Potrebbe essere necessario confermare l’iscrizione se non sei già iscritto a una newsletter Mozilla. Verifica se c’è un nostro messaggio nella posta in arrivo o nello spam.
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = Hai bisogno di qualcosa in più rispetto ai soli strumenti di sviluppo? Dai un’occhiata alla versione di Firefox realizzata appositamente per sviluppatori e flussi di lavoro all’avanguardia.
 footer-learn-more-link = Ulteriori informazioni
 

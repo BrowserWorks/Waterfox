@@ -108,7 +108,7 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Firefox profilozó
+-profiler-brand-name = Waterfox profilozó
 perftools-onboarding-message = <b>Új</b>: A { -profiler-brand-name } mostantól a Fejlesztői eszközökbe integrált. <a>Tudjon meg többet</a> erről a hatékony új eszközről.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Korlátozott ideig elérheti az eredeti Teljesítmény panelt is a <a>{ options-context-advanced-settings }</a> segítségévél)

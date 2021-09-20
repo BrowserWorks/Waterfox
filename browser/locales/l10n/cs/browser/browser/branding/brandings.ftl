@@ -98,6 +98,6 @@
         [ins] Firefoxem Send
     }
     .gender = masculine
--screenshots-brand-name = Firefox Screenshots
+-screenshots-brand-name = Waterfox Screenshots
 -mozilla-vpn-brand-name = Mozilla VPN
--profiler-brand-name = Firefox Profiler
+-profiler-brand-name = Waterfox Profiler

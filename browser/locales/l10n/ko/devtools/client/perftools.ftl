@@ -108,7 +108,7 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Firefox Profiler
+-profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>새 기능</b>: { -profiler-brand-name }가 이제 개발자 도구에 통합되었습니다. 이 강력한 새 도구에 대해 <a>더 알아보세요</a>.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (한시적으로 <a>{ options-context-advanced-settings }</a>을 통해 원래의 성능 패널에 액세스할 수 있습니다)
