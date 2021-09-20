@@ -54,7 +54,10 @@ const LIGHT_WEIGHT_THEMES = {
   ALPENGLOW: "firefox-alpenglow@mozilla.org",
   LEPTON: "lepton@waterfox.net",
 };
-
+const DEFAULT_SEARCH_ENGINES = {
+  BING: "Bing",
+  STARTPAGE: "Startpage",
+};
 async function getImportableSites() {
   const sites = [];
 
@@ -94,6 +97,17 @@ async function getImportableSites() {
     }
   }
   return sites;
+}
+
+async function setDefaultEngine(engine_name) {
+  try {
+    const engine = Services.search.getEngineByName(engine_name);
+    Services.search.setDefault(engine);
+    Services.search.setDefaultPrivate(engine);
+    Services.prefs.setCharPref("distribution.engine", engine_name);
+  } catch (e) {
+    Cu.reportError(`Failed to set ${data}. ${ex}`);
+  }
 }
 
 class AboutWelcomeObserver {
@@ -278,6 +292,8 @@ class AboutWelcomeParent extends JSWindowActorParent {
             }
           })
         );
+      case "AWPage:SELECT_SEARCH_ENGINE":
+        return setDefaultEngine(DEFAULT_SEARCH_ENGINES[data]);
       default:
         log.debug(`Unexpected event ${type} was not handled.`);
     }

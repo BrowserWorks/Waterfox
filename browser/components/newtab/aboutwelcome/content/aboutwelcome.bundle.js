@@ -273,6 +273,7 @@ module.exports = ReactDOM;
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MultiStageAboutWelcome", function() { return MultiStageAboutWelcome; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "AdditionalText", function() { return AdditionalText; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SecondaryCTA", function() { return SecondaryCTA; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StepsIndicator", function() { return StepsIndicator; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "WelcomeScreen", function() { return WelcomeScreen; });
@@ -434,8 +435,18 @@ const MultiStageAboutWelcome = props => {
     }) : null;
   })));
 };
+const AdditionalText = props => {
+  return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "additional-text"
+  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+    text: props.content.additional
+  }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
+    text: props.content.additional2
+  }));
+};
 const SecondaryCTA = props => {
   let targetElement = props.position ? `secondary_button_${props.position}` : `secondary_button`;
+  let altName = props.id == "AW_DEFAULT_SEARCH" ? " primary" : "secondary text-link";
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: props.position ? `secondary-cta ${props.position}` : "secondary-cta"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
@@ -443,7 +454,7 @@ const SecondaryCTA = props => {
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", null)), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
     text: props.content[targetElement].label
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
-    className: "secondary text-link",
+    className: `${altName}`,
     value: targetElement,
     onClick: props.handleAction
   })));
@@ -560,6 +571,10 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
       let themeToUse = action.theme === "<event>" ? event.currentTarget.value : this.props.initialTheme || action.theme;
       this.props.setActiveTheme(themeToUse);
       window.AWSelectTheme(themeToUse);
+    }
+
+    if (action.search) {
+      window.AWSelectSearchEngine(action.search);
     }
 
     if (action.navigate) {
@@ -903,7 +918,10 @@ class MultiStageScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.Pure
       text: content.help_text.text,
       position: content.help_text.position,
       hasImg: content.help_text.img
+    }) : null, content.additional ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MultiStageAboutWelcome__WEBPACK_IMPORTED_MODULE_6__["AdditionalText"], {
+      content: content
     }) : null, content.secondary_button ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MultiStageAboutWelcome__WEBPACK_IMPORTED_MODULE_6__["SecondaryCTA"], {
+      id: this.props.id,
       content: content,
       handleAction: this.props.handleAction
     }) : null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
@@ -1194,7 +1212,10 @@ class MultiStageProtonScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.
       className: "primary",
       value: "primary_button",
       onClick: this.props.handleAction
-    }))), content.secondary_button ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MultiStageAboutWelcome__WEBPACK_IMPORTED_MODULE_3__["SecondaryCTA"], {
+    }))), content.additional ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MultiStageAboutWelcome__WEBPACK_IMPORTED_MODULE_3__["AdditionalText"], {
+      content: content
+    }) : null, content.secondary_button ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MultiStageAboutWelcome__WEBPACK_IMPORTED_MODULE_3__["SecondaryCTA"], {
+      id: this.props.id,
       content: content,
       handleAction: this.props.handleAction
     }) : null, !isWelcomeScreen ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
