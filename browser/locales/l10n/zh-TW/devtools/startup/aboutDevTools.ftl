@@ -24,7 +24,7 @@ newsletter-subscribe-button = 訂閱
 newsletter-thanks-title = 謝啦！
 newsletter-thanks-message = 若您先前沒有確認訂閱過 Mozilla 電子報，現在可能需要確認。請到信箱收信，或到垃圾信件匣中看看有沒有來自我們的訊息。
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = 想要的不只是開發者工具嗎？快試試特地為了開發者與現代工作流程所打造的 Firefox 瀏覽器。
 footer-learn-more-link = 了解更多
 

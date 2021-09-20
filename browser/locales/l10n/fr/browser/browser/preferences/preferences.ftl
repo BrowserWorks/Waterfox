@@ -496,7 +496,7 @@ home-newtabs-mode-label = Nouveaux onglets
 home-restore-defaults =
     .label = Configuration par défaut
     .accesskey = C
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
     .label = Page d’accueil de Firefox (par défaut)
@@ -885,8 +885,8 @@ history-header = Historique
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Règles de conservation
     .accesskey = R

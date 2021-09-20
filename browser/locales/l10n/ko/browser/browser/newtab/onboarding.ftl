@@ -58,7 +58,7 @@ onboarding-fullpage-form-email =
 
 onboarding-sync-welcome-header = { -brand-product-name }와 함께 하세요
 onboarding-sync-welcome-content = 북마크, 기록, 비밀번호 및 다른 설정을 모든 기기에서 사용해 보세요.
-onboarding-sync-welcome-learn-more-link = Firefox 계정 더 알아보기
+onboarding-sync-welcome-learn-more-link = Waterfox 계정 더 알아보기
 onboarding-sync-form-input =
     .placeholder = 이메일
 onboarding-sync-form-continue-button = 계속
@@ -207,7 +207,7 @@ onboarding-multistage-theme-label-automatic = 자동
 onboarding-multistage-theme-label-light = 밝게
 onboarding-multistage-theme-label-dark = 어둡게
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -258,7 +258,7 @@ onboarding-multistage-theme-description-alpenglow =
 ## Multistage MR1 onboarding strings (MR1 about:welcome pages)
 
 # "Hero Text" displayed on left side of welcome screen.
-# The "Fire" in "Fire starts here" plays on the "Fire" in "Firefox".
+# The "Fire" in "Fire starts here" plays on the "Fire" in "Waterfox".
 # It also signals the passion users bring to Firefox, how they use
 # Firefox to pursue those passions, as well as the boldness in their
 # choice to use Firefox over a larger competitor browser.
