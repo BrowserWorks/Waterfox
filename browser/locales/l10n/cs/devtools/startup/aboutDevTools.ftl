@@ -24,7 +24,7 @@ newsletter-subscribe-button = Odebírat
 newsletter-thanks-title = Děkujeme!
 newsletter-thanks-message = Pokud jste dříve nepotvrdili odběr zpravodaje společnosti Mozilla, budete tak muset učinit nyní. Podívejte se prosím do vaší e-mailové schránky a případně i nevyžádané pošty, jestli tam není e-mail od nás.
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-message = Hledáte více než jenom nástroje pro vývojáře? Vyzkoušejte verzi prohlížeče Firefox speciálně pro vývojáře a jejich pracovní postupy.
 footer-learn-more-link = Zjistit více
 

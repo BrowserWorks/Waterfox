@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Catatan Rilis">
 <!ENTITY aboutPage.credits.label                "Kredit">
 <!ENTITY aboutPage.license.label                "Informasi Lisensi">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
 <!ENTITY aboutPage.logoTrademark                "Firefox dan logo Firefox adalah merek dagang Mozilla Foundation.">
