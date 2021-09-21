@@ -3882,7 +3882,7 @@ BrowserGlue.prototype = {
       UrlbarPrefs.migrateResultBuckets();
     }
 
-    // WATERFOX: Move current prefs to 91 equivalents
+    // WATERFOX: Move current prefs to 91 equivalents and migrate floe/abyss to lepton
     if (currentUIVersion < 116) {
       // Migrate old statusbar enabled pref
       if (Services.prefs.prefHasUserValue("browser.statusbar.mode")) {
@@ -3914,6 +3914,16 @@ BrowserGlue.prototype = {
         //Then clear user pref
         Services.prefs.clearUserPref("browser.tabBar.position");
       }
+      // Migrate floe/abyss to lepton
+      AddonManager.getAddonsByTypes(["theme"]).then(themes => {
+        let activeTheme = themes.find(addon => addon.isActive);
+        let themeId = activeTheme.id;
+        if (["floe@waterfox.net", "abyss@waterfox.net"].includes(themeId)) {
+          AddonManager.getAddonByID("lepton@waterfox.net").then(addon =>
+            addon.enable()
+          );
+        }
+      });
     }
 
     // Update the migration version.
