@@ -3266,7 +3266,7 @@ BrowserGlue.prototype = {
   _migrateUI: function BG__migrateUI() {
     // Use an increasing number to keep track of the current migration state.
     // Completely unrelated to the current Firefox release number.
-    const UI_VERSION = 116;
+    const UI_VERSION = 117;
     const BROWSER_DOCURL = AppConstants.BROWSER_CHROME_URL;
 
     if (!Services.prefs.prefHasUserValue("browser.migration.version")) {
@@ -3891,6 +3891,88 @@ BrowserGlue.prototype = {
       // 115 (bug 1713322): Move TAIL_SUGGESTION group and rename properties
       // 116 (bug 1717509): Remove HEURISTIC_UNIFIED_COMPLETE group
       UrlbarPrefs.migrateResultBuckets();
+    }
+
+    // WATERFOX: Move current prefs to 91 equivalents and migrate floe/abyss to lepton
+    if (currentUIVersion < 116) {
+      // Migrate old statusbar enabled pref
+      if (Services.prefs.prefHasUserValue("browser.statusbar.mode")) {
+        // If 0, 1 set to disable statusbar, if 2 enable
+        Services.prefs.setBoolPref(
+          "browser.statusbar.enabled",
+          Services.prefs.getIntPref("browser.statusbar.mode", 0) == 2
+        );
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.statusbar.mode");
+      }
+      // Migrate old tabbar position pref
+      if (Services.prefs.prefHasUserValue("browser.tabBar.position")) {
+        let oldPref = Services.prefs.getStringPref(
+          "browser.tabBar.position",
+          "topAboveAB"
+        );
+        let newPref;
+        if (oldPref == "topAboveAB") {
+          newPref = "topabove";
+        } else if (oldPref == "topUnderAB") {
+          newPref = "topbelow";
+        } else if (oldPref == "bottom") {
+          newPref = "bottomabove";
+        } else {
+          newPref = "topabove";
+        }
+        Services.prefs.setStringPref("browser.tabs.toolbarposition", newPref);
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.tabBar.position");
+      }
+      // Migrate floe/abyss to lepton
+      AddonManager.getAddonsByTypes(["theme"]).then(themes => {
+        let activeTheme = themes.find(addon => addon.isActive);
+        let themeId = activeTheme.id;
+        if (["floe@waterfox.net", "abyss@waterfox.net"].includes(themeId)) {
+          AddonManager.getAddonByID("lepton@waterfox.net").then(addon =>
+            addon.enable()
+          );
+        }
+      });
+    }
+
+    if (currentUIVersion < 117) {
+      AddonManager.getAddonsByTypes(["theme"]).then(themes => {
+        let activeTheme = themes.find(addon => addon.isActive);
+        if (activeTheme) {
+          let themeId = activeTheme.id;
+          if (
+            [
+              "default-theme@mozilla.org",
+              "firefox-alpenglow@mozilla.org",
+            ].includes(themeId)
+          ) {
+            AddonManager.getAddonByID(
+              "firefox-compact-light@mozilla.org"
+            ).then(addon => addon.enable());
+          }
+        }
+      });
+      // Migrate old bookmarks bar position pref
+      if (Services.prefs.prefHasUserValue("browser.bookmarksBar.position")) {
+        let oldPref = Services.prefs.getStringPref(
+          "browser.bookmarksBar.position",
+          "top"
+        );
+        let newPref;
+        if (oldPref == "top") {
+          newPref = "top";
+        } else {
+          newPref = "bottom";
+        }
+        Services.prefs.setStringPref(
+          "browser.bookmarks.toolbarposition",
+          newPref
+        );
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.bookmarksBar.position");
+      }
     }
 
     // Update the migration version.
