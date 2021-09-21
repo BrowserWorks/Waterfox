@@ -3882,6 +3882,50 @@ BrowserGlue.prototype = {
       UrlbarPrefs.migrateResultBuckets();
     }
 
+    // WATERFOX: Move current prefs to 91 equivalents and migrate floe/abyss to lepton
+    if (currentUIVersion < 116) {
+      // Migrate old statusbar enabled pref
+      if (Services.prefs.prefHasUserValue("browser.statusbar.mode")) {
+        // If 0, 1 set to disable statusbar, if 2 enable
+        Services.prefs.setBoolPref(
+          "browser.statusbar.enabled",
+          Services.prefs.getIntPref("browser.statusbar.mode", 0) == 2
+        );
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.statusbar.mode");
+      }
+      // Migrate old tabbar position pref
+      if (Services.prefs.prefHasUserValue("browser.tabBar.position")) {
+        let oldPref = Services.prefs.getStringPref(
+          "browser.tabBar.position",
+          "topAboveAB"
+        );
+        let newPref;
+        if (oldPref == "topAboveAB") {
+          newPref = "topabove";
+        } else if (oldPref == "topUnderAB") {
+          newPref = "topbelow";
+        } else if (oldPref == "bottom") {
+          newPref = "bottomabove";
+        } else {
+          newPref = "topabove";
+        }
+        Services.prefs.setStringPref("browser.tabs.toolbarposition", newPref);
+        //Then clear user pref
+        Services.prefs.clearUserPref("browser.tabBar.position");
+      }
+      // Migrate floe/abyss to lepton
+      AddonManager.getAddonsByTypes(["theme"]).then(themes => {
+        let activeTheme = themes.find(addon => addon.isActive);
+        let themeId = activeTheme.id;
+        if (["floe@waterfox.net", "abyss@waterfox.net"].includes(themeId)) {
+          AddonManager.getAddonByID("lepton@waterfox.net").then(addon =>
+            addon.enable()
+          );
+        }
+      });
+    }
+
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
   },
