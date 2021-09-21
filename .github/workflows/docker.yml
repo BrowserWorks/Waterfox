@@ -1,6 +1,7 @@
 name: Build Docker image
 
 on:
+  pull_request:
   workflow_dispatch: null
   schedule:
     - cron: "00 00 20 * *"
@@ -8,6 +9,9 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
