@@ -1,0 +1,48 @@
+name: Build Docker image
+
+on:
+  workflow_dispatch: null
+  schedule:
+    - cron: "00 00 20 * *"
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: github-actions[bot]
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Downcase REPO
+        run: |
+          echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Dockerfile.GA
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO }}_docker_img:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+      - # Temp fix
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
