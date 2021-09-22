@@ -1,0 +1,69 @@
+CROSS_COMPILE=1
+
+# MinGW does not have (or need) makecab
+unset MAKECAB
+TOOLTOOL_DIR=$HOME/tooltool12
+
+AR="${TOOLTOOL_DIR}/clang/bin/llvm-ar"
+CBINDGEN="${TOOLTOOL_DIR}/cbindgen/cbindgen"
+CC="${TOOLTOOL_DIR}/clang/bin/x86_64-w64-mingw32-clang"
+CLANGPATH=$TOOLTOOL_DIR/clang
+BINDGEN_CFLAGS="-I$CLANGPATH/x86_64-w64-mingw32/include/c++/v1 -I$CLANGPATH/x86_64-w64-mingw32/include"
+CXX="${TOOLTOOL_DIR}/clang/bin/x86_64-w64-mingw32-clang++"
+CXXFLAGS="-fms-extensions -Wno-incompatible-ms-struct"
+HOST_CC="${TOOLTOOL_DIR}/clang/bin/clang"
+HOST_CXX="${TOOLTOOL_DIR}/clang/bin/clang++"
+LINKER="${TOOLTOOL_DIR}/clang/bin/lld-link"
+LLVM_DLLTOOL="${TOOLTOOL_DIR}/clang/bin/llvm-dlltool"
+NASM="${TOOLTOOL_DIR}/nasm/nasm"
+RANLIB="${TOOLTOOL_DIR}/clang/bin/llvm-ranlib"
+WINCHECKSEC="${TOOLTOOL_DIR}/winchecksec/winchecksec"
+WINE="/usr/bin/wine64"
+X=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)
+
+if test "$WFX_RELEASE"; then
+    ac_add_options --enable-lto
+    ac_add_options --enable-release
+    ac_add_options --with-branding=browser/branding/waterfox
+else
+    ac_add_options --with-branding=browser/branding/dokimi
+fi
+
+ac_add_options --disable-crashreporter
+ac_add_options --disable-debug
+ac_add_options --disable-default-browser-agent # WinToast does not build on mingw
+ac_add_options --disable-dmd
+ac_add_options --disable-geckodriver
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-profiling
+ac_add_options --disable-tests
+ac_add_options --disable-update-agent # Bug 1561797
+ac_add_options --disable-verify-mar
+
+ac_add_options --enable-application=browser
+ac_add_options --enable-ccache="${TOOLTOOL_DIR}/sccache/sccache"
+ac_add_options --enable-default-toolkit=cairo-windows
+ac_add_options --enable-optimize="-O3 -march=x86-64-v2 -mtune=haswell -w"
+ac_add_options --enable-release
+ac_add_options --enable-rust-simd
+ac_add_options --enable-strip
+ac_add_options --enable-updater
+ac_add_options --target=x86_64-w64-mingw32
+ac_add_options --with-app-basename=Waterfox
+ac_add_options --with-app-name=waterfox
+ac_add_options --with-clang-path="$CC"
+ac_add_options --with-distribution-id=net.waterfox
+ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
+ac_add_options --with-libclang-path="$TOOLTOOL_DIR/clang/lib"
+ac_add_options --with-toolchain-prefix=x86_64-w64-mingw32-
+
+export MOZ_INCLUDE_SOURCE_INFO=1
+export WINEDEBUG=-all
+export DISPLAY=:2
+
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}$TOOLTOOL_DIR/mingw32/lib64:$TOOLTOOL_DIR/clang/lib
+
+mk_add_options "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+mk_add_options "export PATH=$TOOLTOOL_DIR/clang/bin:$TOOLTOOL_DIR/mingw32/bin:$TOOLTOOL_DIR/wine/bin:$TOOLTOOL_DIR/upx/bin:$TOOLTOOL_DIR/fxc2/bin:$TOOLTOOL_DIR/nasm/bin:$PATH"
+mk_add_options AUTOCLOBBER=1
+mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
