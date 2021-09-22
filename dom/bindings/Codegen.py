@@ -12721,7 +12721,7 @@ class CGUnionStruct(CGThing):
 
             body = fill(
                 """
-                MOZ_ASSERT(Is${name}(), "Wrong type!");
+                MOZ_RELEASE_ASSERT(Is${name}(), "Wrong type!");
                 mValue.m${name}.Destroy();
                 mType = eUninitialized;
                 """,
@@ -12752,7 +12752,7 @@ class CGUnionStruct(CGThing):
 
             body = fill(
                 """
-                MOZ_ASSERT(Is${name}(), "Wrong type!");
+                MOZ_RELEASE_ASSERT(Is${name}(), "Wrong type!");
                 return mValue.m${name}.Value();
                 """,
                 **vars
