@@ -3,7 +3,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-MOZ_APP_VENDOR=Mozilla
+MOZ_APP_VENDOR="Waterfox Ltd."
+MOZ_APP_BASENAME=Waterfox
+MOZ_DISTRIBUTION_ID=net.waterfox
 MOZ_UPDATER=1
 
 if test "$OS_ARCH" = "WINNT"; then
@@ -42,3 +44,9 @@ MOZ_PROFILE_MIGRATOR=1
 
 # Include the DevTools client, not just the server (which is the default)
 MOZ_DEVTOOLS=all
+
+# Waterfox configuration switches
+
+MOZ_REQUIRE_SIGNING=
+MOZ_TELEMETRY_REPORTING=
+MOZ_INCLUDE_SOURCE_INFO=1
