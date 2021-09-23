@@ -66,6 +66,7 @@ FINAL_TARGET_FILES.features["webcompat@mozilla.org"]["injections"]["css"] += [
 ]
 
 FINAL_TARGET_FILES.features["webcompat@mozilla.org"]["injections"]["js"] += [
+    "injections/js/bing-banners.js",
     "injections/js/bug0000000-testbed-js-injection.js",
     "injections/js/bug1452707-window.controllers-shim-ib.absa.co.za.js",
     "injections/js/bug1457335-histography.io-ua-change.js",
