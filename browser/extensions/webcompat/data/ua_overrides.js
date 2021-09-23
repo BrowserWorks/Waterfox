@@ -57,6 +57,24 @@ const AVAILABLE_UA_OVERRIDES = [
       },
     },
   },
+  /*
+   * Prevent Edge banners on Bing SERP
+   */
+  {
+    id: "bing",
+    platform: "desktop",
+    domain: "bing.com",
+    bug: "0000000",
+    config: {
+      matches: ["*://bing.com/*"],
+      uaTransformer: originalUA => {
+        return (
+          UAHelpers.getPrefix(originalUA) +
+          " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10136"
+        );
+      },
+    },
+  },
   {
     id: "OWS",
     platform: "desktop",
