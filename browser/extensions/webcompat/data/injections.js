@@ -19,6 +19,19 @@ if (typeof InterventionHelpers === "undefined") {
  */
 const AVAILABLE_INJECTIONS = [
   {
+    id: "waterfox-injections",
+    platform: "all",
+    domain: "bing.com",
+    contentScripts: {
+      matches: ["*://*.bing.com/*"],
+      js: [
+        {
+          file: "injections/js/bing-banners.js",
+        },
+      ],
+    },
+  },
+  {
     id: "testbed-injection",
     platform: "all",
     domain: "webcompat-addon-testbed.herokuapp.com",
