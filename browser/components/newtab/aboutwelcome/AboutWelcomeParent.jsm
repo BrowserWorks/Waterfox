@@ -24,6 +24,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
     "resource://activity-stream/aboutwelcome/lib/AboutWelcomeDefaults.jsm",
   PromiseUtils: "resource://gre/modules/PromiseUtils.jsm",
   Region: "resource://gre/modules/Region.jsm",
+  SearchUtils: "resource://gre/modules/SearchUtils.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
 });
 
@@ -101,12 +102,51 @@ async function getImportableSites() {
 
 async function setDefaultEngine(engine_name) {
   try {
-    const engine = Services.search.getEngineByName(engine_name);
+    let engine = Services.search.getEngineByName(engine_name);
+    Services.prefs.setCharPref("distribution.engine", engine_name);
     Services.search.setDefault(engine);
     Services.search.setDefaultPrivate(engine);
-    Services.prefs.setCharPref("distribution.engine", engine_name);
+    if (engine_name == "Startpage") {
+      engine = engine.wrappedJSObject;
+      // Store original startpage segment
+      Services.prefs.setCharPref(
+        "distribution.startpage.segment",
+        engine._urls[0].params[1].value
+      );
+      // Set the startpage defaults
+      const mainURL = "https://www.startpage.com/do/search?q={searchTerms}";
+      const segment = "startpage.waterfox.default";
+      engine.__searchForm = mainURL + `&segment=${segment}`;
+      engine._urls[0].params[1] = {
+        name: "segment",
+        value: segment,
+        purpose: undefined,
+      };
+      // Update engine
+      SearchUtils.notifyAction(engine, SearchUtils.MODIFIED_TYPE.CHANGED);
+    } else {
+      // Reset Startpage defaults
+      const segment = Services.prefs.getCharPref(
+        "distribution.startpage.segment",
+        ""
+      );
+      // If no segment, Startpage hasn't been set as default through welcome flow
+      if (segment) {
+        engine = Services.search.getEngineByName("Startpage").wrappedJSObject;
+        const mainURL = "https://www.startpage.com/";
+        engine.__searchForm = mainURL;
+        engine._urls[0].params[1] = {
+          name: "segment",
+          value: segment,
+          purpose: undefined,
+        };
+        // Update engine
+        SearchUtils.notifyAction(engine, SearchUtils.MODIFIED_TYPE.CHANGED);
+        Services.prefs.clearUserPref("distribution.startpage.segment");
+      }
+    }
   } catch (e) {
-    Cu.reportError(`Failed to set ${data}. ${ex}`);
+    Cu.reportError(e);
   }
 }
 
