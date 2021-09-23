@@ -946,6 +946,18 @@ SearchService.prototype = {
       });
     }
 
+    const sp = Services.prefs.getCharPref("distribution.engine", "");
+    if (sp == "Startpage" && engine.name == "Startpage") {
+      const mainURL = "https://www.startpage.com/do/search?q={searchTerms}";
+      const segment = "startpage.waterfox.default";
+      engine.__searchForm = mainURL + `&segment=${segment}`;
+      engine._urls[0].params[1] = {
+        name: "segment",
+        value: segment,
+        purpose: undefined,
+      };
+    }
+
     if (engine._engineToUpdate) {
       // We need to replace engineToUpdate with the engine that just loaded.
       var oldEngine = engine._engineToUpdate;
