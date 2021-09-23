@@ -19,6 +19,60 @@ if (typeof InterventionHelpers === "undefined") {
  */
 const AVAILABLE_UA_OVERRIDES = [
   {
+    id: "waterfox-overrides",
+    platform: "desktop",
+    bug: "0000000",
+    config: {
+      matches: [
+        "*://*.whatsapp.com/*",
+        "*://*.discord.com/*",
+        "*://studio.youtube.com/*",
+        "*://*.chase.com/*",
+        "*://*.swedbank.se/*",
+        "*://*.slack.com/*",
+        "*://*.netflix.com/*",
+        "*://*.amazon.com/*",
+        "*://*.amazon.co.uk/*",
+        "*://mail.yahoo.com/*",
+        "*://vk.com/*",
+        "*://addons.mozilla.org/*",
+      ],
+      uaTransformer: originalUA => {
+        return originalUA.replace(/Waterfox.+$/, "");
+      },
+    },
+  },
+  {
+    /*
+     * Simply removing "Waterfox" from UA does not work for this site.
+     */
+    id: "xfinity",
+    platform: "all",
+    domain: "xfinity.com",
+    bug: "0000000",
+    config: {
+      matches: ["*://*.xfinity.com/*"],
+      uaTransformer: originalUA => {
+        return UAHelpers.getPrefix(originalUA) + " Gecko/20100101 Firefox/78.0";
+      },
+    },
+  },
+  {
+    id: "OWS",
+    platform: "desktop",
+    domain: "opera.com",
+    bug: "0000000",
+    config: {
+      matches: ["*://addons.opera.com/*"],
+      uaTransformer: originalUA => {
+        return (
+          UAHelpers.getPrefix(originalUA) +
+          " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36 OPR/73.0.3856.284"
+        );
+      },
+    },
+  },
+  {
     id: "testbed-override",
     platform: "all",
     domain: "webcompat-addon-testbed.herokuapp.com",
