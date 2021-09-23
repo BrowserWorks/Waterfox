@@ -489,7 +489,7 @@ class WelcomeScreen extends react__WEBPACK_IMPORTED_MODULE_0___default.a.PureCom
   }
 
   renderSecondaryCTA(className) {
-    let altName = this.props.id === "AW_SEARCH" ? " primary" : "secondary";
+    let altName = this.props.id === "AW_SEARCH" ? "primary" : "secondary";
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
       className: `secondary-cta ${className}`
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MSLocalized__WEBPACK_IMPORTED_MODULE_1__["Localized"], {
@@ -1058,6 +1058,7 @@ const DEFAULT_WELCOME_CONTENT = {
           string_id: "onboarding-multistage-search-secondary-button-label"
         },
         action: {
+          search: "bing",
           navigate: true
         }
       }

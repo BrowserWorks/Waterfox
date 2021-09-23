@@ -202,6 +202,7 @@ export const DEFAULT_WELCOME_CONTENT = {
             string_id: "onboarding-multistage-search-secondary-button-label",
           },
           action: {
+            search: "bing",
             navigate: true,
           },
         },
