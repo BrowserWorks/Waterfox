@@ -1,6 +1,7 @@
 name: Build Docker image
 
 on:
+  pull_request: null
   workflow_dispatch: null
   schedule:
     - cron: "00 00 20 * *"
@@ -34,7 +35,7 @@ jobs:
         with:
           context: .
           file: Dockerfile.GA
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/${{ env.REPO }}_docker_img:latest
           cache-from: type=local,src=/tmp/.buildx-cache
