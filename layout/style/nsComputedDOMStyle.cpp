@@ -2236,8 +2236,8 @@ static void SetValueToExtremumLength(nsROCSSPrimitiveValue* aValue,
       return aValue->SetString("min-content");
     case nsIFrame::ExtremumLength::MozAvailable:
       return aValue->SetString("-moz-available");
-    case nsIFrame::ExtremumLength::MozFitContent:
-      return aValue->SetString("-moz-fit-content");
+    case nsIFrame::ExtremumLength::FitContent:
+      return aValue->SetString("fit-content");
     case nsIFrame::ExtremumLength::FitContentFunction:
       MOZ_ASSERT_UNREACHABLE("fit-content() should be handled separately");
   }
@@ -2253,7 +2253,7 @@ void nsComputedDOMStyle::SetValueFromFitContentFunction(
   nsAutoString fitContentStr;
   fitContentStr.AppendLiteral("fit-content(");
   fitContentStr.Append(argumentStr);
-  fitContentStr.Append(char16_t(')'));
+  fitContentStr.Append(u')');
   aValue->SetString(fitContentStr);
 }
 
