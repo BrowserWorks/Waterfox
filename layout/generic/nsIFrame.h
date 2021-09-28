@@ -3074,7 +3074,7 @@ class nsIFrame : public nsQueryFrame {
   // intrinsic-sizing keywords.
   bool HasIntrinsicKeywordForBSize() const {
     const auto& bSize = StylePosition()->BSize(GetWritingMode());
-    return bSize.IsMozFitContent() || bSize.IsMinContent() ||
+    return bSize.IsFitContent() || bSize.IsMinContent() ||
            bSize.IsMaxContent() || bSize.IsFitContentFunction();
   }
   /**
@@ -4783,7 +4783,7 @@ class nsIFrame : public nsQueryFrame {
     MinContent,
     MaxContent,
     MozAvailable,
-    MozFitContent,
+    FitContent,
     FitContentFunction,
   };
 
@@ -4796,8 +4796,8 @@ class nsIFrame : public nsQueryFrame {
         return mozilla::Some(ExtremumLength::MaxContent);
       case SizeOrMaxSize::Tag::MozAvailable:
         return mozilla::Some(ExtremumLength::MozAvailable);
-      case SizeOrMaxSize::Tag::MozFitContent:
-        return mozilla::Some(ExtremumLength::MozFitContent);
+      case SizeOrMaxSize::Tag::FitContent:
+        return mozilla::Some(ExtremumLength::FitContent);
       case SizeOrMaxSize::Tag::FitContentFunction:
         return mozilla::Some(ExtremumLength::FitContentFunction);
       default:
