@@ -1335,6 +1335,7 @@ unicode/udat.h
 unicode/udatpg.h
 unicode/udisplaycontext.h
 unicode/uenum.h
+unicode/uniset.h
 unicode/unistr.h
 unicode/unorm.h
 unicode/unum.h
