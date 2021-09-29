@@ -3935,6 +3935,9 @@ BrowserGlue.prototype = {
           );
         }
       });
+
+      // Flush RemoteSettings
+      RemoteSettings.clearAll();
     }
 
     if (currentUIVersion < 117) {
