@@ -3924,6 +3924,9 @@ BrowserGlue.prototype = {
           );
         }
       });
+
+      // Flush RemoteSettings
+      RemoteSettings.clearAll();
     }
 
     // Update the migration version.
