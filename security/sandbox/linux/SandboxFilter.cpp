@@ -285,6 +285,9 @@ public:
     case __NR_clone:
       return ClonePolicy(InvalidSyscall());
 
+    case __NR_clone3:
+      return Error(ENOSYS);
+
       // More thread creation.
 #ifdef __NR_set_robust_list
     case __NR_set_robust_list:
@@ -997,6 +1000,9 @@ public:
       // usually do something reasonable on error.
     case __NR_clone:
       return ClonePolicy(Error(EPERM));
+
+    case __NR_clone3:
+      return Error(ENOSYS);
 
 #ifdef __NR_fadvise64
     case __NR_fadvise64:
