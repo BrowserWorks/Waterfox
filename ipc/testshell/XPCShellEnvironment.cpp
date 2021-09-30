@@ -55,7 +55,7 @@ namespace {
 static const char kDefaultRuntimeScriptFilename[] = "xpcshell.js";
 
 inline XPCShellEnvironment*
-Environment(JS::Handle<JSObject*> global)
+Environment(Handle<JSObject*> global)
 {
     AutoJSAPI jsapi;
     if (!jsapi.Init(global)) {
