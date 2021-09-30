@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// ES6 draft rev34 (2015/02/20) 21.2.5.3 get RegExp.prototype.flags
-// Updated for ES2018 /s (dotAll)
+// ECMAScript 2020 draft (2020/03/12) 21.2.5.4 get RegExp.prototype.flags
+// https://tc39.es/ecma262/#sec-get-regexp.prototype.flags
 function RegExpFlagsGetter() {
     // Steps 1-2.
     var R = this;
@@ -13,31 +13,31 @@ function RegExpFlagsGetter() {
     // Step 3.
     var result = "";
 
-    // Steps 4-6.
+    // Steps 4-5.
     if (R.global)
         result += "g";
 
-    // Steps 7-9.
+    // Steps 6-7.
     if (R.ignoreCase)
         result += "i";
 
-    // Steps 10-12.
+    // Steps 8-9.
     if (R.multiline)
         result += "m";
 
-    // Steps 13-15.
-    if (R.unicode)
-         result += "u";
-
-    // Steps 16-18.
-    if (R.sticky)
-        result += "y";
-
-    // ES2018
+    // Steps 10-11.
     if (R.dotAll)
         result += "s";
 
-    // Step 19.
+    // Steps 12-13.
+    if (R.unicode)
+         result += "u";
+
+    // Steps 14-15.
+    if (R.sticky)
+        result += "y";
+
+    // Step 16.
     return result;
 }
 _SetCanonicalName(RegExpFlagsGetter, "get flags");

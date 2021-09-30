@@ -1973,7 +1973,7 @@ js::RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto)
         return false;
 
     JSNative dotAllGetter;
-    if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().global), &dotAllGetter))
+    if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().dotAll), &dotAllGetter))
         return false;
 
     if (dotAllGetter != regexp_dotAll)
