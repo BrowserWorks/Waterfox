@@ -92,6 +92,13 @@
       <description control="doneItems" data-l10n-id="import-done-description"></description>
 
       <vbox id="doneItems" style="overflow: auto;" align="start" role="group" />
+      <groupbox id="restartBrowserGroup" style="visibility:hidden">
+        <description id="restartBrowserDescription" data-l10n-id="import-restart-browser-description"
+          style="font-weight:bold"></description>
+        <button id="restartBrowserButton" data-l10n-id="import-restart-browser"
+          onclick="MigrationWizard.restartBrowser();"
+          style="text-align: center;text-decoration: none;display: inline-block;font-size: 14px;margin: 4px 30px;" />
+      </groupbox>
     </wizardpage>
 
   </wizard>
