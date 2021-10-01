@@ -35,6 +35,21 @@
   "tabHeader": {
     "message": "Tab Context Menu"
   },
+  "tabPositionHeader": {
+    "message": "Tab Bar Position"
+  },
+  "tabBarTopAbove": {
+    "message": "Top above address bar"
+  },
+  "tabBarTopBelow": {
+    "message": "Top below address bar"
+  },
+  "tabBarBottomAbove": {
+    "message": "Bottom above status bar"
+  },
+  "tabBarBottomBelow": {
+    "message": "Bottom below status bar"
+  },
   "showDuplicateTab": {
     "message": "Show duplicate tab menu item"
   },
@@ -58,5 +73,23 @@
   },
   "confirmRestart": {
     "message": "Require restart confirmation"
+  },
+  "statusHeader": {
+    "message": "Status Bar"
+  },
+  "showStatusBar": {
+    "message": "Show Status Bar"
+  },
+  "showStatusLinks": {
+    "message": "Show links"
+  },
+  "bookmarkHeader": {
+    "message": "Bookmarks Toolbar Position"
+  },
+  "bookmarkBarTop": {
+    "message": "Top"
+  },
+  "bookmarkBarBottom": {
+    "message": "Bottom"
   }
 }
