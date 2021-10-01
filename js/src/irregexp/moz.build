@@ -11,6 +11,8 @@ FINAL_LIBRARY = "js"
 # Includes should be relative to parent path
 LOCAL_INCLUDES += ["!..", ".."]
 
+CXXFLAGS += ["-Wno-error=type-limits"]
+
 SOURCES += [
     'imported/regexp-ast.cc',
     'imported/regexp-bytecode-generator.cc',
