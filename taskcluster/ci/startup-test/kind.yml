@@ -25,7 +25,7 @@ job-defaults:
     description: Check whether or not a product crashes on startup
     run-on-projects: ['mozilla-central']
     worker:
-        max-run-time: 1200
+        max-run-time: 3600
     run:
         sparse-profile: mozharness
     attributes:
