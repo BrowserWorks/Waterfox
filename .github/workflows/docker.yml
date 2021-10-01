@@ -4,7 +4,7 @@ on:
   pull_request: null
   workflow_dispatch: null
   schedule:
-    - cron: "00 00 20 * *"
+    - cron: "0 0 8 * *"
 
 jobs:
   docker:
