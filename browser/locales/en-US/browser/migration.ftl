@@ -57,7 +57,7 @@ import-from-current =
 import-from-360se =
     .label = 360 Secure Browser
     .accesskey = 3
-import-from-file = 
+import-from-file =
     .label = Import from file
 
 profile-select-folder = Select a Profile Folder to Import
@@ -85,6 +85,10 @@ import-select-profile-description = The following profiles are available to impo
 import-done-page-title = Import Complete
 
 import-done-description = The following items were successfully imported:
+
+import-restart-browser-description = Browser restart required for profile migration to complete.
+
+import-restart-browser = Click to Restart
 
 import-close-source-browser = Please ensure the selected browser is closed before continuing.
 
