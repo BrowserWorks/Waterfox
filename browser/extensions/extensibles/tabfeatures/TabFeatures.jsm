@@ -19,6 +19,7 @@ const TabFeatures = {
   PREF_REQUIRECONFIRM: "browser.restart_menu.requireconfirm",
   PREF_PURGECACHE: "browser.restart_menu.purgecache",
   PREF_TOOLBARPOS: "browser.tabs.toolbarposition",
+  PREF_BOOKMARKPOS: "browser.bookmarks.toolbarposition",
   get browserBundle() {
     return Services.strings.createBundle(
       "chrome://extensibles/locale/extensibles.properties"
@@ -47,6 +48,7 @@ const TabFeatures = {
 
   initPrefListeners() {
     PrefUtils.set(this.PREF_TOOLBARPOS, "topabove", true);
+    // Set Tab toolbar position
     this.toolbarPositionListener = PrefUtils.addListener(
       this.PREF_TOOLBARPOS,
       value => {
@@ -55,6 +57,15 @@ const TabFeatures = {
         });
       }
     );
+    // Set Bookmark bar position
+    this.bookmarkBarPositionListener = PrefUtils.addListener(
+      this.PREF_BOOKMARKPOS,
+      value => {
+        TabFeatures.executeInAllWindows((doc, win) => {
+          TabFeatures.moveBookmarksBar(win, value)
+        })
+      }
+    )
   },
 
   tabContext(aEvent) {
@@ -209,7 +220,7 @@ const TabFeatures = {
       case "bottombelow":
         // Below status bar
         bottomBox.collapsed = false;
-        bottomBox.insertAdjacentElement("afterend", tabsToolbar);
+        bottomBox.insertAdjacentElement("beforeend", tabsToolbar);
         aWindow.gBrowser.setTabTitle(
           aWindow.document.querySelector(".tabbrowser-tab[first-visible-tab]")
         );
@@ -221,6 +232,35 @@ const TabFeatures = {
     const activeTab = aWindow.document.querySelector('tab[selected="true"]');
     if (topBar && activeTab) {
       topBar.textContent = activeTab.getAttribute("label");
+    }
+  },
+
+  moveBookmarksBar(aWindow, aValue) {
+    let bottomTabs = aWindow.document.querySelector(
+      "#browser-bottombox #TabsToolbar"
+    );
+    let bookmarksBar = aWindow.document.querySelector(
+      "#PersonalToolbar"
+    );
+
+    if (!aValue) {
+      aValue = PrefUtils.get(this.PREF_BOOKMARKPOS);
+    }
+    switch (aValue) {
+      case "top":
+        aWindow.document
+          .querySelector("#nav-bar")
+          .insertAdjacentElement("afterend", bookmarksBar);
+        break;
+      case "bottom":
+        if (bottomTabs) {
+          bottomTabs.insertAdjacentElement("beforebegin", bookmarksBar);
+        } else {
+          aWindow.document
+            .querySelector("#browser-bottombox")
+            .insertAdjacentElement("afterbegin", bookmarksBar);
+        }
+        break;
     }
   },
 };
