@@ -255,16 +255,3 @@ with only_when('--enable-compile-environment'):
 
     set_config('LIBFUZZER', enable_libfuzzer)
     set_define('LIBFUZZER', enable_libfuzzer)
-
-# Initial support for new regexp engine
-# ==================================================
-
-js_option('--disable-new-regexp', help='{Enable|Disable} new regexp engine')
-
-@depends('--disable-new-regexp')
-def enable_new_regexp(value):
-    if value:
-        return True
-
-set_config('JS_NEW_REGEXP', enable_new_regexp)
-set_define('JS_NEW_REGEXP', enable_new_regexp)
