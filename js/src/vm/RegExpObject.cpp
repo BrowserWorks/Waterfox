@@ -676,7 +676,7 @@ RegExpShared::execute(JSContext* cx,
     }
 
     if (re->kind() == RegExpShared::Kind::Atom) {
-        return RegExpShared::executeAtom(cx, re, input, start, matches);
+        return RegExpShared::executeAtom(re, input, start, matches);
     }
 
     /*
@@ -823,15 +823,10 @@ bool RegExpShared::markedForTierUp(JSContext* cx) const {
 }
 
 /* static */
-RegExpRunStatus
-RegExpShared::executeAtom(JSContext* cx,
-                          MutableHandleRegExpShared re,
-                          HandleLinearString input,
-                          size_t start,
-                          MatchPairs* matches)
+RegExpRunStatus ExecuteAtomImpl(RegExpShared* re, JSLinearString* input,
+                                size_t start, MatchPairs* matches)
 {
     MOZ_ASSERT(re->pairCount() == 1);
-
     size_t length = input->length();
     size_t searchLength = re->patternAtom()->length();
 
@@ -846,8 +841,7 @@ RegExpShared::executeAtom(JSContext* cx,
 
         (*matches)[0].start = start;
         (*matches)[0].limit = start + searchLength;
-        matches->checkAgainst(length);
-
+        matches->checkAgainst(input->length());
         return RegExpRunStatus_Success;
     }
 
@@ -858,9 +852,22 @@ RegExpShared::executeAtom(JSContext* cx,
 
     (*matches)[0].start = res;
     (*matches)[0].limit = res + searchLength;
-    matches->checkAgainst(length);
-
+    matches->checkAgainst(input->length());
     return RegExpRunStatus_Success;
+}
+
+RegExpRunStatus js::ExecuteRegExpAtomRaw(RegExpShared* re,
+                                         JSLinearString* input, size_t start,
+                                         MatchPairs* matchPairs) {
+  JS::AutoCheckCannotGC nogc;
+  return ExecuteAtomImpl(re, input, start, matchPairs);
+}
+
+/* static */
+RegExpRunStatus RegExpShared::executeAtom(MutableHandleRegExpShared re,
+                                          HandleLinearString input,
+                                          size_t start, MatchPairs* matches) {
+  return ExecuteAtomImpl(re, input, start, matches);
 }
 
 size_t
