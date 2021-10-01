@@ -93,6 +93,11 @@
                 "type": "string",
                 "optional": true,
                 "description": "The data-category of the element."
+              },
+              "value": {
+                "type": "string",
+                "optional": true,
+                "description": "The value of the element."
               }
             }
           },
