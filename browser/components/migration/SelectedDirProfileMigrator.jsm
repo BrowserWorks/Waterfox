@@ -128,10 +128,14 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
     return {
       type: aMigrationType,
       migrate(aCallback) {
-        for (let file of files) {
-          file.copyTo(currentProfileDir, "");
+        try {
+          for (let file of files) {
+            file.copyTo(currentProfileDir, "");
+          }
+          aCallback(true);
+        } catch (ex) {
+          aCallback(false);
         }
-        aCallback(true);
       },
     };
   };
@@ -143,60 +147,6 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
     let newPrefsFile = currentProfileDir.clone();
     newPrefsFile.append("prefs.js");
     Services.prefs.savePrefFile(newPrefsFile);
-  }
-
-  function convertBookmarks(rows) {
-    let unsortedItems = {};
-    let itemsToInsert = {};
-    // set up initial parent/child structure from unstructured data
-    rows.forEach(row => {
-      let item = {
-        type: row.getResultByName("type"),
-        url: row.getResultByName("url"),
-        parentGuid: row.getResultByName("parentGuid"),
-        guid: row.getResultByName("guid"),
-        title: row.getResultByName("title"),
-      };
-      // set up folder item
-      if (item.type == PlacesUtils.bookmarks.TYPE_FOLDER) {
-        delete item.url;
-        // if folder has already been initialized (child in db before parent) then merge
-        if (unsortedItems[item.guid]) {
-          unsortedItems[item.guid] = {
-            ...unsortedItems[item.guid],
-            ...item,
-          };
-        } else {
-          item.children = [];
-          unsortedItems[item.guid] = item;
-        }
-      }
-      // set up bookmark item
-      if (
-        item.type == PlacesUtils.bookmarks.TYPE_BOOKMARK &&
-        unsortedItems[item.parentGuid]
-      ) {
-        // if the parent exists, add as a child
-        unsortedItems[item.parentGuid].children.push(item);
-      } else if (item.type == PlacesUtils.bookmarks.TYPE_BOOKMARK) {
-        // if parent doesn't exist yet, initialize
-        unsortedItems[item.parentGuid] = {
-          guid: item.parentGuid,
-          children: [item],
-        };
-      }
-    });
-    // ensure correct heirarchy, separate for loop as the db rows are unstructured
-    Object.entries(unsortedItems).forEach(([guid, item]) => {
-      // don't import bookmarks with a parent that we cannot identify
-      if (item.parentGuid && unsortedItems[item.parentGuid]) {
-        unsortedItems[item.parentGuid].children.push(item);
-      } else if (!item.parentGuid) {
-        itemsToInsert[item.guid] = item;
-      }
-    });
-
-    return itemsToInsert;
   }
 
   let types = MigrationUtils.resourceTypes;
@@ -222,60 +172,10 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
     "formhistory.sqlite",
     "autofill-profiles.json",
   ]);
-  let bookmarks;
-  // don't try to import if places.sqlite doesn't exist
-  if (this._getFileObject(sourceProfileDir, "places.sqlite")) {
-    bookmarks = {
-      name: "bookmarks", // name is used only by tests.
-      type: types.BOOKMARKS,
-      migrate: async aCallback => {
-        try {
-          // get bookmarks from places.sqlite
-          let sourceDir = sourceProfileDir.clone();
-          sourceDir.append("places.sqlite");
-          // get raw rows from db
-          let rows = await MigrationUtils.getRowsFromDBWithoutLocks(
-            sourceDir.path,
-            "bookmarks",
-            `SELECT 
-              b.type, 
-              b.position, 
-              (SELECT guid FROM moz_bookmarks WHERE id = b.parent) as parentGuid, 
-              b.parent, 
-              b.title, 
-              b.guid,
-              p.url,
-              p.hidden
-            FROM moz_bookmarks b
-            LEFT JOIN moz_places p 
-            ON b.fk = p.id 
-            WHERE 
-              parentGuid != 'root________' AND (b.type == 2 OR (p.url IS NOT NULL AND p.hidden != 1));`
-          );
-          let itemsToInsert = convertBookmarks(rows);
-          // insert bookmarks
-          Object.entries(itemsToInsert).forEach(
-            async ([parentGuid, parent]) => {
-              // do not attempt to insert if empty
-              if (parent.children.length) {
-                try {
-                  await MigrationUtils.insertManyBookmarksWrapper(
-                    parent.children,
-                    parentGuid
-                  );
-                } catch (ex) {
-                  // catching duplicate guid errors, in case people try to import the same profile multiple times
-                }
-              }
-            }
-          );
-          aCallback(true);
-        } catch (ex) {
-          aCallback(false);
-        }
-      },
-    };
-  }
+  let bookmarks = getFileResource(types.BOOKMARKS, [
+    "places.sqlite",
+    "places.sqlite-wal",
+  ]);
 
   let bookmarksBackups = getFileResource(types.OTHERDATA, [
     PlacesBackups.profileRelativeFolderPath,
@@ -397,63 +297,6 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
     },
   };
 
-  // Telemetry related migrations.
-  let times = {
-    name: "times", // name is used only by tests.
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let file = this._getFileObject(sourceProfileDir, "times.json");
-      if (file) {
-        file.copyTo(currentProfileDir, "");
-      }
-      // And record the fact a migration (ie, a reset) happened.
-      let recordMigration = async () => {
-        try {
-          let profileTimes = await ProfileAge(currentProfileDir.path);
-          await profileTimes.recordProfileReset();
-          aCallback(true);
-        } catch (e) {
-          aCallback(false);
-        }
-      };
-
-      recordMigration();
-    },
-  };
-  let telemetry = {
-    name: "telemetry", // name is used only by tests...
-    type: types.OTHERDATA,
-    migrate: aCallback => {
-      let createSubDir = name => {
-        let dir = currentProfileDir.clone();
-        dir.append(name);
-        dir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
-        return dir;
-      };
-
-      // If the 'datareporting' directory exists we migrate files from it.
-      let dataReportingDir = this._getFileObject(
-        sourceProfileDir,
-        "datareporting"
-      );
-      if (dataReportingDir && dataReportingDir.isDirectory()) {
-        // Copy only specific files.
-        let toCopy = ["state.json", "session-state.json"];
-
-        let dest = createSubDir("datareporting");
-        let enumerator = dataReportingDir.directoryEntries;
-        while (enumerator.hasMoreElements()) {
-          let file = enumerator.nextFile;
-          if (file.isDirectory() || !toCopy.includes(file.leafName)) {
-            continue;
-          }
-          file.copyTo(dest, "");
-        }
-      }
-
-      aCallback(true);
-    },
-  };
   return [
     places,
     cookies,
@@ -463,8 +306,6 @@ SelectedDirProfileMigrator.prototype._getResourcesInternal = function(
     bookmarksBackups,
     session,
     sync,
-    times,
-    telemetry,
     favicons,
     bookmarks,
   ].filter(r => r);

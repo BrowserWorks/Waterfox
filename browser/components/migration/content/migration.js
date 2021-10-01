@@ -14,6 +14,9 @@ const { AppConstants } = ChromeUtils.import(
 const { MigrationUtils } = ChromeUtils.import(
   "resource:///modules/MigrationUtils.jsm"
 );
+const { RemoteSettings } = ChromeUtils.import(
+  "resource://services-settings/remote-settings.js"
+);
 
 /**
  * Map from data types that match Ci.nsIBrowserProfileMigrator's types to
@@ -41,6 +44,7 @@ var MigrationWizard = {
   _migrator: null,
   _autoMigrate: null,
   _receivedPermissions: new Set(),
+  _fileImport: false,
 
   init() {
     let os = Services.obs;
@@ -278,9 +282,11 @@ var MigrationWizard = {
               "pageadvanced",
               MigrationWizard.onImportSourcePageAdvanced
             );
+            // Set fileImport false so restart browser not triggered
+            this._fileImport = false;
         }
-      });
-    });
+      }.bind(this));
+    }.bind(this));
 
     observer.observe(element, {
       attributes: true, //configure it to listen to attribute changes
@@ -647,6 +653,14 @@ var MigrationWizard = {
     this._wiz.getButton("cancel").disabled = true;
     this._wiz.canRewind = false;
     this._listItems("doneItems");
+    if (this._fileImport) {
+      let el = document.getElementById("restartBrowserGroup");
+      el.style = "visibility:visible";
+      this._wiz.getButton("finish").disabled = true;
+      this._wiz.canAdvance = false;
+      // WFX-232
+      Services.prefs.setIntPref("browser.migration.version", 112);
+    }
   },
 
   reportDataRecencyTelemetry() {
@@ -754,6 +768,8 @@ var MigrationWizard = {
         el.hidden = false;
         el.textContent = "Selected profile: " + name;
         el.style.color = "";
+        // set fileImport so we can trigger restart browser at the end of the flow.
+        this._fileImport = true;
       } else {
         // Show that the profile had no data to import
         this.showImportError(
@@ -761,6 +777,30 @@ var MigrationWizard = {
         );
       }
     });
+  },
+
+  async restartBrowser() {
+  // Notify all windows that an application quit has been requested.
+  let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(
+    Ci.nsISupportsPRBool
+  );
+  Services.obs.notifyObservers(
+    cancelQuit,
+    "quit-application-requested",
+    "restart"
+  );
+  // Something aborted the quit process.
+  if (cancelQuit.data) {
+    return;
+  }
+  // If already in safe mode restart in safe mode.
+  if (Services.appinfo.inSafeMode) {
+    Services.startup.restartInSafeMode(Ci.nsIAppStartup.eAttemptQuit);
+  } else {
+    Services.startup.quit(
+      Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart
+    );
+  }
   },
 
   showImportError(msg) {
