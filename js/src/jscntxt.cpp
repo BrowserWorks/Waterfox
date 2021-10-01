@@ -46,10 +46,10 @@
 
 #include "gc/FreeOp.h"
 #include "gc/Marking.h"
+#include "irregexp/RegExpAPI.h"
 #include "jit/Ion.h"
 #include "jit/PcScriptCache.h"
 #include "js/CharacterEncoding.h"
-#include "new-regexp/RegExpAPI.h"
 #include "vm/ErrorReporting.h"
 #include "vm/HelperThreads.h"
 #include "vm/Shape.h"

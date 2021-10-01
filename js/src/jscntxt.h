@@ -11,12 +11,12 @@
 
 #include "mozilla/MemoryReporting.h"
 
+#include "irregexp/RegExpTypes.h"
 #include "js/CharacterEncoding.h"
 #include "js/GCVector.h"
 #include "js/Result.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
-#include "new-regexp/RegExpTypes.h"
 #include "threading/ProtectedData.h"
 #include "vm/ErrorReporting.h"
 #include "vm/Runtime.h"

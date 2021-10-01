@@ -26,7 +26,7 @@
 #include "js/RegExpFlags.h"
 #include "js/UbiNode.h"
 #include "js/Vector.h"
-#include "new-regexp/RegExpTypes.h"
+#include "irregexp/RegExpTypes.h"
 #include "vm/ArrayObject.h"
 
 struct JSContext;

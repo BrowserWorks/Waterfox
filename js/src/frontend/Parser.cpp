@@ -35,8 +35,8 @@
 #include "frontend/BytecodeCompiler.h"
 #include "frontend/FoldConstants.h"
 #include "frontend/TokenStream.h"
+#include "irregexp/RegExpAPI.h"
 #include "js/RegExpFlags.h"
-#include "new-regexp/RegExpAPI.h"
 #include "vm/RegExpObject.h"
 #include "wasm/AsmJS.h"
 

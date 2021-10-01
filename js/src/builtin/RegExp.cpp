@@ -13,9 +13,9 @@
 #include "jscntxt.h"
 
 #include "frontend/TokenStream.h"
+#include "irregexp/RegExpAPI.h"
 #include "jit/InlinableNatives.h"
 #include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
-#include "new-regexp/RegExpAPI.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/RegExpStatics.h"
 #include "vm/SelfHosting.h"
