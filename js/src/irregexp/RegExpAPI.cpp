@@ -134,9 +134,7 @@ Isolate* CreateIsolate(JSContext* cx) {
   return isolate.release();
 }
 
-void DestroyIsolate(Isolate* isolate) {
-  js_delete(isolate);
-}
+void DestroyIsolate(Isolate* isolate) { js_delete(isolate); }
 
 static size_t ComputeColumn(const Latin1Char* begin, const Latin1Char* end) {
   return mozilla::PointerRangeSize(begin, end);
@@ -149,9 +147,8 @@ static size_t ComputeColumn(const char16_t* begin, const char16_t* end) {
 // This function is varargs purely so it can call ReportCompileErrorLatin1.
 // We never call it with additional arguments.
 template <typename CharT>
-static void ReportSyntaxError(TokenStream& ts,
-                              RegExpCompileData& result, CharT* start,
-                              size_t length, ...) {
+static void ReportSyntaxError(TokenStream& ts, RegExpCompileData& result,
+                              CharT* start, size_t length, ...) {
   gc::AutoSuppressGC suppressGC(ts.context());
   uint32_t errorNumber = ErrorNumber(result.error);
 
@@ -215,17 +212,14 @@ static void ReportSyntaxError(TokenStream& ts,
 
   va_list args;
   va_start(args, length);
-  ReportCompileError(ts.context(),
-                     std::move(err),
-                     nullptr, /* notes/report */
-                     JSREPORT_ERROR, /*flags*/
-                     errorNumber,
-                     args);
+  ReportCompileError(ts.context(), std::move(err), nullptr, /* notes/report */
+                     JSREPORT_ERROR,                        /*flags*/
+                     errorNumber, args);
   va_end(args);
 }
 
-static void ReportSyntaxError(TokenStream& ts,
-                              RegExpCompileData& result, HandleAtom pattern) {
+static void ReportSyntaxError(TokenStream& ts, RegExpCompileData& result,
+                              HandleAtom pattern) {
   JS::AutoCheckCannotGC nogc_;
   if (pattern->hasLatin1Chars()) {
     ReportSyntaxError(ts, result, pattern->latin1Chars(nogc_),
@@ -260,8 +254,8 @@ bool CheckPatternSyntax(JSContext* cx, TokenStream& ts,
   return true;
 }
 
-bool CheckPatternSyntax(JSContext* cx, TokenStream& ts,
-                        HandleAtom pattern, JS::RegExpFlags flags) {
+bool CheckPatternSyntax(JSContext* cx, TokenStream& ts, HandleAtom pattern,
+                        JS::RegExpFlags flags) {
   FlatStringReader reader(cx, pattern);
   RegExpCompileData result;
   if (!CheckPatternSyntaxImpl(cx, &reader, flags, &result)) {
@@ -322,7 +316,7 @@ static void SampleCharacters(FlatStringReader* sample_subject,
   int half_way = (length - kSampleSize) / 2;
   for (int i = std::max(0, half_way); i < length && chars_sampled < kSampleSize;
        i++, chars_sampled++) {
-      compiler.frequency_collator()->CountCharacter(sample_subject->Get(i));
+    compiler.frequency_collator()->CountCharacter(sample_subject->Get(i));
   }
 }
 
@@ -508,15 +502,16 @@ bool CompilePattern(JSContext* cx, MutableHandleRegExpShared re,
   bool useNativeCode = codeKind == RegExpShared::CodeKind::Jitcode;
   MOZ_ASSERT_IF(useNativeCode, IsNativeRegExpEnabled(cx));
 
-  switch (Assemble(cx, &compiler, &data, re, pattern, &zone, useNativeCode, isLatin1)) {
-      case AssembleResult::TooLarge:
-          JS_ReportErrorASCII(cx, "regexp too big");
-          return false;
-      case AssembleResult::OutOfMemory:
-          ReportOutOfMemory(cx);
-          return false;
-      case AssembleResult::Success:
-          break;
+  switch (Assemble(cx, &compiler, &data, re, pattern, &zone, useNativeCode,
+                   isLatin1)) {
+    case AssembleResult::TooLarge:
+      JS_ReportErrorASCII(cx, "regexp too big");
+      return false;
+    case AssembleResult::OutOfMemory:
+      ReportOutOfMemory(cx);
+      return false;
+    case AssembleResult::Success:
+      break;
   }
   return true;
 }
@@ -538,7 +533,7 @@ RegExpRunStatus ExecuteRaw(jit::JitCode* code, const CharT* chars,
   auto function = reinterpret_cast<RegExpCodeSignature>(code->raw());
   {
     JS::AutoSuppressGCAnalysis nogc;
-    return (RegExpRunStatus) CALL_GENERATED_1(function, &data);
+    return (RegExpRunStatus)CALL_GENERATED_1(function, &data);
   }
 }
 
@@ -558,8 +553,8 @@ RegExpRunStatus Interpret(JSContext* cx, MutableHandleRegExpShared re,
 
   RegExpRunStatus status =
       (RegExpRunStatus)IrregexpInterpreter::MatchForCallFromRuntime(
-           cx->isolate, wrappedRegExp, wrappedInput, matches->pairsRaw(),
-           matches->pairCount() * 2, startIndex);
+          cx->isolate, wrappedRegExp, wrappedInput, matches->pairsRaw(),
+          matches->pairCount() * 2, startIndex);
 
   MOZ_ASSERT(status == RegExpRunStatus_Error ||
              status == RegExpRunStatus_Success ||

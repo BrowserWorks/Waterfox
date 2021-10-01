@@ -30,15 +30,15 @@ struct FrameData {
   void* backtrackStackBase;
 
   // Copy of the input MatchPairs.
-  int32_t* matches;   // pointer to capture array
-  int32_t numMatches; // size of capture array
+  int32_t* matches;    // pointer to capture array
+  int32_t numMatches;  // size of capture array
 };
 
 class SMRegExpMacroAssembler final : public NativeRegExpMacroAssembler {
  public:
   SMRegExpMacroAssembler(JSContext* cx, js::jit::StackMacroAssembler& masm,
                          Zone* zone, Mode mode, uint32_t num_capture_registers);
-  virtual ~SMRegExpMacroAssembler() {} // Nothing to do here
+  virtual ~SMRegExpMacroAssembler() {}  // Nothing to do here
 
   virtual int stack_limit_slack();
   virtual IrregexpImplementation Implementation();
@@ -102,6 +102,7 @@ class SMRegExpMacroAssembler final : public NativeRegExpMacroAssembler {
   virtual Handle<HeapObject> GetCode(Handle<String> source);
 
   virtual bool CanReadUnaligned();
+
  private:
   size_t frameSize_ = 0;
 
@@ -185,7 +186,8 @@ class SMRegExpMacroAssembler final : public NativeRegExpMacroAssembler {
     if (num_registers_ <= register_index) {
       num_registers_ = register_index + 1;
     }
-    static_assert(alignof(uintptr_t) <= alignof(FrameData),"Regexp: Alignment of uintptr_t and FrameData mismatch");
+    static_assert(alignof(uintptr_t) <= alignof(FrameData),
+                  "Regexp: Alignment of uintptr_t and FrameData mismatch");
     return sizeof(FrameData) + register_index * sizeof(uintptr_t*);
   }
 

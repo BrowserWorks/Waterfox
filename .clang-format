@@ -1,11 +1,4 @@
-BasedOnStyle: Mozilla
-
-# Ignore all comments because they aren't reflowed properly.
-CommentPragmas: "^"
-
-# Force pointers to the type for C++.
-DerivePointerAlignment: false
-PointerAlignment: Left
+BasedOnStyle: Google
 
 # Prevent the loss of indentation with these macros
 MacroBlockBegin: "^\
@@ -27,12 +20,13 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END_INHERITED|\
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END_INHERITED$"
 
 SortIncludes: false
+IndentPPDirectives: AfterHash
+StatementMacros: [MARKUPMAP, ASSERT_TRUE, ASSERT_FALSE, TEST, CHECK]
 
-
-# All of the following items are default
-# in the Mozila coding style from clang format 4.0
-AlwaysBreakAfterReturnType: TopLevel
-BinPackArguments: false
-BinPackParameters: false
-SpaceAfterTemplateKeyword: false
-ReflowComments: false
+# The Google coding style states:
+# You should do this consistently within a single file, so, when modifying an
+# existing file, use the style in that file.
+# Let's be more prescriptive and default to the one used in the Mozilla
+# coding style
+DerivePointerAlignment: false
+PointerAlignment: Left
