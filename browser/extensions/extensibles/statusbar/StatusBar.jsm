@@ -26,8 +26,12 @@ const StatusBar = {
     return PrefUtils.get(this.PREF_ENABLED);
   },
 
+  get showLinks() {
+    return PrefUtils.get(this.PREF_STATUSTEXT);
+  },
+
   get textInBar() {
-    return this.enabled && PrefUtils.get(this.PREF_STATUSTEXT);
+    return this.enabled && this.showLinks;
   },
 
   initPrefListeners() {
@@ -41,24 +45,39 @@ const StatusBar = {
             dummyBar.node.setAttribute("collapsed", !isEnabled);
           }
         );
+        this.setStatusTextVisibility();
       }
     );
     this.textListener = PrefUtils.addListener(
       this.PREF_STATUSTEXT,
       isEnabled => {
-        if (!statusBar.enabled) {
-          return;
-        }
-        StatusBar.executeInAllWindows((doc, win) => {
-          let StatusPanel = win.StatusPanel;
-          if (isEnabled) {
-            win.statusbar.textNode.appendChild(StatusPanel._labelElement);
-          } else {
-            StatusPanel.panel.firstChild.appendChild(StatusPanel._labelElement);
-          }
-        });
+        this.setStatusTextVisibility();
       }
     );
+  },
+
+  setStatusTextVisibility() {
+    if (this.enabled && this.showLinks) {
+      // Status bar enabled and want to display links in it
+      StatusBar.executeInAllWindows((doc, win) => {
+        let StatusPanel = win.StatusPanel;
+        win.statusbar.textNode.appendChild(StatusPanel._labelElement);
+      });
+    } else if (!this.enabled && this.showLinks) {
+      // Status bar disabled so display links in StatusPanel
+      StatusBar.executeInAllWindows((doc, win) => {
+        let StatusPanel = win.StatusPanel;
+        StatusPanel.panel.firstChild.appendChild(StatusPanel._labelElement);
+        StatusPanel.panel.firstChild.hidden = false;
+      });
+    } else {
+      // Don't display links
+      StatusBar.executeInAllWindows((doc, win) => {
+        let StatusPanel = win.StatusPanel;
+        StatusPanel.panel.firstChild.appendChild(StatusPanel._labelElement);
+        StatusPanel.panel.firstChild.hidden = true;
+      });
+    };
   },
 
   setStyle() {
