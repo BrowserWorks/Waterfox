@@ -113,7 +113,7 @@ DIRS += [
     'ds',
     'frontend',
     'gc',
-    'irregexp'
+    'irregexp',
     'jit',
     'perf',
     'proxy',
