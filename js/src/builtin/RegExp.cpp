@@ -13,14 +13,9 @@
 #include "jscntxt.h"
 
 #include "frontend/TokenStream.h"
-#ifndef JS_NEW_REGEXP
-#  include "irregexp/RegExpParser.h"
-#endif
 #include "jit/InlinableNatives.h"
 #include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/RegExpAPI.h"
-#endif
+#include "new-regexp/RegExpAPI.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/RegExpStatics.h"
 #include "vm/SelfHosting.h"
@@ -82,7 +77,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
         return false;
     }
 
-#ifdef JS_NEW_REGEXP
     // Step 24 (reordered)
     RootedNativeObject groups(cx);
     bool groupsInDictionaryMode = false;
@@ -97,7 +91,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
               cx, groups, NativeObject::createWithTemplate(cx, gc::DefaultHeap, groupsTemplate));
         }
     }
-#endif
 
     // Steps 22-23 and 27 a-e.
     // Store a Value for each pair.
@@ -117,7 +110,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
         }
     }
 
-#ifdef JS_NEW_REGEXP
     // Step 27 f.
     // The groups template object stores the names of the named captures in the
     // the order in which they are defined. The named capture indices vector
@@ -147,7 +139,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
             }
         }
     }
-#endif
 
     /* Step 20 (reordered).
      * Set the |index| property. (TemplateObject positions it in slot 0) */
@@ -157,11 +148,9 @@ js::CreateRegExpMatchResult(JSContext* cx,
      * Set the |input| property. (TemplateObject positions it in slot 1) */
     arr->setSlot(1, StringValue(input));
 
-#ifdef JS_NEW_REGEXP
     // Steps 25-26 (reordered)
     // Set the |groups| property.
     arr->setSlot(2, groups ? ObjectValue(*groups) : UndefinedValue());
-#endif
 
 #ifdef DEBUG
     RootedValue test(cx);
@@ -253,12 +242,7 @@ CheckPatternSyntaxSlow(JSContext* cx, HandleAtom pattern, RegExpFlags flags)
 {
     CompileOptions options(cx, JSVERSION_DEFAULT);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
-#ifdef JS_NEW_REGEXP
     return irregexp::CheckPatternSyntax(cx, dummyTokenStream, pattern, flags);
-#else
-    return irregexp::ParsePatternSyntax(dummyTokenStream, cx->tempLifoAlloc(), pattern,
-                                        flags.unicode(), flags.dotAll());
-#endif
 }
 
 static RegExpShared*

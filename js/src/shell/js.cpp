@@ -7739,12 +7739,10 @@ SetContextOptions(JSContext* cx, const OptionParser& op)
     if (warmUpThreshold >= 0)
         jit::JitOptions.baselineWarmUpThreshold = warmUpThreshold;
 
-#ifdef JS_NEW_REGEXP
     warmUpThreshold = op.getIntOption("regexp-warmup-threshold");
     if (warmUpThreshold >= 0) {
         jit::JitOptions.regexpWarmUpThreshold = warmUpThreshold;
     }
-#endif
 
     if (op.getBoolOption("baseline-eager"))
         jit::JitOptions.baselineWarmUpThreshold = 0;
@@ -8050,13 +8048,11 @@ main(int argc, char** argv, char** envp)
         || !op.addBoolOption('\0', "no-asmjs", "Disable asm.js compilation")
         || !op.addBoolOption('\0', "no-wasm", "Disable WebAssembly compilation")
         || !op.addBoolOption('\0', "no-native-regexp", "Disable native regexp compilation")
-#ifdef JS_NEW_REGEXP
         || !op.addIntOption(
           '\0', "regexp-warmup-threshold", "COUNT",
           "Wait for COUNT invocations before compiling regexps to native code "
           "(default 10)",
           -1)
-#endif
         || !op.addBoolOption('\0', "wasm-always-baseline", "Enable wasm baseline compiler when possible")
         || !op.addBoolOption('\0', "wasm-check-bce", "Always generate wasm bounds check, even redundant ones.")
         || !op.addBoolOption('\0', "wasm-test-mode", "Enable wasm testing mode, creating synthetic "

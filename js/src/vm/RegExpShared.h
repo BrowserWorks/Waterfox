@@ -26,9 +26,7 @@
 #include "js/RegExpFlags.h"
 #include "js/UbiNode.h"
 #include "js/Vector.h"
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/RegExpTypes.h"
-#endif
+#include "new-regexp/RegExpTypes.h"
 #include "vm/ArrayObject.h"
 
 struct JSContext;
@@ -51,17 +49,13 @@ enum RegExpRunStatus : int32_t
     RegExpRunStatus_Success = 1,
     RegExpRunStatus_Success_NotFound = 0,
 };
-
-#ifdef JS_NEW_REGEXP
-
 inline bool IsNativeRegExpEnabled(JSContext* cx) {
-#  ifdef JS_CODEGEN_NONE
+#ifdef JS_CODEGEN_NONE
   return false;
-#  else
+#else
   return cx->options().nativeRegExp();
-#  endif
+#endif
 }
-#endif  // JS_NEW_REGEXP
 
 /*
  * A RegExpShared is the compiled representation of a regexp. A RegExpShared is
@@ -97,13 +91,8 @@ class RegExpShared : public gc::TenuredCell
         Any
     };
 
-#ifdef JS_NEW_REGEXP
     using ByteCode = js::irregexp::ByteArrayData;
     using JitCodeTable = js::irregexp::ByteArray;
-#else
-    using ByteCode = uint8_t;
-    using JitCodeTable = UniquePtr<uint8_t[], JS::FreePolicy>;
-#endif
     using JitCodeTables = Vector<JitCodeTable, 0, SystemAllocPolicy>;
 
   private:
@@ -136,20 +125,14 @@ class RegExpShared : public gc::TenuredCell
 
     JS::RegExpFlags    flags;
 
-#ifdef JS_NEW_REGEXP
     RegExpShared::Kind kind_ = Kind::Unparsed;
     GCPtrAtom patternAtom_;
     uint32_t maxRegisters_ = 0;
     uint32_t ticks_ = 0;
-#else
-    bool canStringMatch = false;
-#endif
 
-#ifdef JS_NEW_REGEXP
-  uint32_t numNamedCaptures_ = {};
-  uint32_t* namedCaptureIndices_ = {};
-  GCPtr<PlainObject*> groupsTemplate_ = {};
-#endif
+    uint32_t numNamedCaptures_ = {};
+    uint32_t* namedCaptureIndices_ = {};
+    GCPtr<PlainObject*> groupsTemplate_ = {};
 
     size_t             pairCount_;
 
@@ -208,63 +191,47 @@ class RegExpShared : public gc::TenuredCell
     /* Accessors */
 
     size_t pairCount() const {
-#ifdef JS_NEW_REGEXP
         MOZ_ASSERT(kind() != Kind::Unparsed);
-#else
-        MOZ_ASSERT(isCompiled());
-#endif
         return pairCount_;
     }
 
-#ifdef JS_NEW_REGEXP
-  RegExpShared::Kind kind() const { return kind_; }
+    RegExpShared::Kind kind() const { return kind_; }
 
-  // Use simple string matching for this regexp.
-  void useAtomMatch(HandleAtom pattern);
+    // Use simple string matching for this regexp.
+    void useAtomMatch(HandleAtom pattern);
 
-  // Use the regular expression engine for this regexp.
-  void useRegExpMatch(size_t parenCount);
+    // Use the regular expression engine for this regexp.
+    void useRegExpMatch(size_t parenCount);
 
-  static bool initializeNamedCaptures(JSContext* cx, HandleRegExpShared re,
-                                      HandleNativeObject namedCaptures);
-  PlainObject* getGroupsTemplate() { return groupsTemplate_; }
+    static bool initializeNamedCaptures(JSContext* cx,
+                                        HandleRegExpShared re,
+                                        HandleNativeObject namedCaptures);
+    PlainObject* getGroupsTemplate() { return groupsTemplate_; }
 
-  void tierUpTick();
-  bool markedForTierUp(JSContext* cx) const;
+    void tierUpTick();
+    bool markedForTierUp(JSContext* cx) const;
 
-  void setByteCode(ByteCode* code, bool latin1) {
-    compilation(latin1).byteCode = code;
-  }
-  ByteCode* getByteCode(bool latin1) const {
-    return compilation(latin1).byteCode;
-  }
-  void setJitCode(jit::JitCode* code, bool latin1) {
-    compilation(latin1).jitCode = code;
-  }
-  jit::JitCode* getJitCode(bool latin1) const {
-    return compilation(latin1).jitCode;
-  }
-  uint32_t getMaxRegisters() const { return maxRegisters_; }
-  void updateMaxRegisters(uint32_t numRegisters) {
-    maxRegisters_ = std::max(maxRegisters_, numRegisters);
-  }
+    void setByteCode(ByteCode* code, bool latin1) { compilation(latin1).byteCode = code; }
+    ByteCode* getByteCode(bool latin1) const { return compilation(latin1).byteCode; }
+    void setJitCode(jit::JitCode* code, bool latin1) { compilation(latin1).jitCode = code; }
+    jit::JitCode* getJitCode(bool latin1) const { return compilation(latin1).jitCode; }
+    uint32_t getMaxRegisters() const { return maxRegisters_; }
+    void updateMaxRegisters(uint32_t numRegisters)
+    {
+        maxRegisters_ = std::max(maxRegisters_, numRegisters);
+    }
 
-  uint32_t numNamedCaptures() const { return numNamedCaptures_; }
-  int32_t getNamedCaptureIndex(uint32_t idx) const {
-    MOZ_ASSERT(idx < numNamedCaptures());
-    MOZ_ASSERT(namedCaptureIndices_);
-    return namedCaptureIndices_[idx];
-  }
-
-#endif
+    uint32_t numNamedCaptures() const { return numNamedCaptures_; }
+    int32_t getNamedCaptureIndex(uint32_t idx) const
+    {
+        MOZ_ASSERT(idx < numNamedCaptures());
+        MOZ_ASSERT(namedCaptureIndices_);
+        return namedCaptureIndices_[idx];
+    }
 
     JSAtom* getSource() const           { return source; }
 
-#ifdef JS_NEW_REGEXP
-    JSAtom* patternAtom() const { return patternAtom_; }
-#else
-    JSAtom* patternAtom() const { return getSource(); }
-#endif
+    JSAtom* patternAtom() const         { return patternAtom_; }
 
     JS::RegExpFlags getFlags() const    { return flags; }
 
@@ -303,11 +270,10 @@ class RegExpShared : public gc::TenuredCell
                (CompilationIndex(latin1) * sizeof(RegExpCompilation)) +
                offsetof(RegExpCompilation, jitCode);
     }
-#ifdef JS_NEW_REGEXP
-  static size_t offsetOfGroupsTemplate() {
-    return offsetof(RegExpShared, groupsTemplate_);
-  }
-#endif
+
+    static size_t offsetOfGroupsTemplate() {
+        return offsetof(RegExpShared, groupsTemplate_);
+    }
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 

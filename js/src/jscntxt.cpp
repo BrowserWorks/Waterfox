@@ -49,9 +49,7 @@
 #include "jit/Ion.h"
 #include "jit/PcScriptCache.h"
 #include "js/CharacterEncoding.h"
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/RegExpAPI.h"
-#endif
+#include "new-regexp/RegExpAPI.h"
 #include "vm/ErrorReporting.h"
 #include "vm/HelperThreads.h"
 #include "vm/Shape.h"
@@ -121,11 +119,6 @@ JSContext::init(ContextKind kind)
         threadNative_ = (size_t)pthread_self();
 #endif
 
-#ifndef JS_NEW_REGEXP
-        if (!regexpStack.ref().init())
-            return false;
-#endif
-
         if (!fx.initInstance())
             return false;
 
@@ -139,12 +132,10 @@ JSContext::init(ContextKind kind)
             return false;
     }
 
-#ifdef JS_NEW_REGEXP
     isolate = irregexp::CreateIsolate(this);
     if (!isolate) {
         return false;
     }
-#endif
 
     // Set the ContextKind last, so that ProtectedData checks will allow us to
     // initialize this context before it becomes the runtime's active context.
@@ -1407,9 +1398,7 @@ JSContext::~JSContext()
         DestroyTraceLogger(traceLogger);
 #endif
 
-#ifdef JS_NEW_REGEXP
-  irregexp::DestroyIsolate(isolate.ref());
-#endif
+    irregexp::DestroyIsolate(isolate.ref());
 
     MOZ_ASSERT(TlsContext.get() == this);
     TlsContext.set(nullptr);

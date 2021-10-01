@@ -159,11 +159,9 @@ DefaultJitOptions::DefaultJitOptions()
     // are compiled with the baseline compiler.
     SET_DEFAULT(baselineWarmUpThreshold, 10);
 
-#ifdef JS_NEW_REGEXP
-  // How many invocations are needed before regexps are compiled to
-  // native code.
-  SET_DEFAULT(regexpWarmUpThreshold, 10);
-#endif
+    // How many invocations are needed before regexps are compiled to
+    // native code.
+    SET_DEFAULT(regexpWarmUpThreshold, 10);
 
     // Number of exception bailouts (resuming into catch/finally block) before
     // we invalidate and forbid Ion compilation.
@@ -280,9 +278,7 @@ DefaultJitOptions::setEagerCompilation()
 {
     eagerCompilation = true;
     baselineWarmUpThreshold = 0;
-#ifdef JS_NEW_REGEXP
     regexpWarmUpThreshold = 0;
-#endif
     forcedDefaultIonWarmUpThreshold.reset();
     forcedDefaultIonWarmUpThreshold.emplace(0);
     forcedDefaultIonSmallFunctionWarmUpThreshold.reset();

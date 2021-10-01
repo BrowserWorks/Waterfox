@@ -18,16 +18,8 @@
 #include "builtin/RegExp.h"
 #include "builtin/SelfHostingDefines.h"
 #include "frontend/TokenStream.h"
-#ifndef JS_NEW_REGEXP
-#  ifdef DEBUG
-#    include "irregexp/RegExpBytecode.h"
-#  endif
-#  include "irregexp/RegExpParser.h"
-#endif
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/regexp-stack.h"
-#  include "new-regexp/RegExpAPI.h"
-#endif
+#include "new-regexp/regexp-stack.h"
+#include "new-regexp/RegExpAPI.h"
 #include "vm/MatchPairs.h"
 #include "vm/RegExpStatics.h"
 #include "vm/StringBuffer.h"
@@ -287,15 +279,9 @@ RegExpObject::create(JSContext* cx,
         tokenStream = dummyTokenStream.ptr();
     }
 
-#ifdef JS_NEW_REGEXP
     if (!irregexp::CheckPatternSyntax(cx, *tokenStream, source, flags)) {
         return nullptr;
     }
-#else
-    if (!irregexp::ParsePatternSyntax(
-          *tokenStream, alloc, source, flags.unicode(), flags.dotAll()))
-        return nullptr;
-#endif
     Rooted<RegExpObject*> regexp(cx, RegExpAlloc(cx, newKind));
     if (!regexp)
         return nullptr;
@@ -537,399 +523,6 @@ RegExpObject::toString(JSContext* cx) const
     return sb.finishString();
 }
 
-#if defined(DEBUG) && !defined(JS_NEW_REGEXP)
-/* static */ bool
-RegExpShared::dumpBytecode(JSContext* cx, MutableHandleRegExpShared re, HandleLinearString input)
-{
-    if (!RegExpShared::compileIfNecessary(cx, re, input, CodeKind::Bytecode))
-        return false;
-
-    const uint8_t* byteCode = re->compilation(input->hasLatin1Chars()).byteCode;
-    const uint8_t* pc = byteCode;
-
-    auto Load32Aligned = [](const uint8_t* pc) -> int32_t {
-        MOZ_ASSERT((reinterpret_cast<uintptr_t>(pc) & 3) == 0);
-        return *reinterpret_cast<const int32_t*>(pc);
-    };
-
-    auto Load16Aligned = [](const uint8_t* pc) -> int32_t {
-        MOZ_ASSERT((reinterpret_cast<uintptr_t>(pc) & 1) == 0);
-        return *reinterpret_cast<const uint16_t*>(pc);
-    };
-
-    int32_t numRegisters = Load32Aligned(pc);
-    fprintf(stderr, "numRegisters: %d\n", numRegisters);
-    pc += 4;
-
-    fprintf(stderr, "loc     op\n");
-    fprintf(stderr, "-----   --\n");
-
-    auto DumpLower = [](const char* text) {
-        while (*text) {
-            fprintf(stderr, "%c", unicode::ToLowerCase(*text));
-            text++;
-        }
-    };
-
-#define BYTECODE(NAME) \
-    case irregexp::BC_##NAME: \
-      DumpLower(#NAME);
-#define ADVANCE(NAME) \
-    fprintf(stderr, "\n"); \
-    pc += irregexp::BC_##NAME##_LENGTH; \
-    maxPc = js::Max(maxPc, pc); \
-    break;
-#define STOP(NAME) \
-    fprintf(stderr, "\n"); \
-    pc += irregexp::BC_##NAME##_LENGTH; \
-    break;
-#define JUMP(NAME, OFFSET) \
-    fprintf(stderr, "\n"); \
-    maxPc = js::Max(maxPc, byteCode + OFFSET); \
-    pc += irregexp::BC_##NAME##_LENGTH; \
-    break;
-#define BRANCH(NAME, OFFSET) \
-    fprintf(stderr, "\n"); \
-    pc += irregexp::BC_##NAME##_LENGTH; \
-    maxPc = js::Max(maxPc, js::Max(pc, byteCode + OFFSET)); \
-    break;
-
-    // Bytecode has no end marker, we need to calculate the bytecode length by
-    // tracing jumps and branches.
-    const uint8_t* maxPc = pc;
-    while (pc <= maxPc) {
-        fprintf(stderr, "%05d:  ", int32_t(pc - byteCode));
-        int32_t insn = Load32Aligned(pc);
-        switch (insn & irregexp::BYTECODE_MASK) {
-          BYTECODE(BREAK) {
-            STOP(BREAK);
-          }
-          BYTECODE(PUSH_CP) {
-            ADVANCE(PUSH_CP);
-          }
-          BYTECODE(PUSH_BT) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d",
-                    offset);
-            // Pushed value is used by POP_BT for jumping.
-            // Resolve maxPc here.
-            BRANCH(PUSH_BT, offset);
-          }
-          BYTECODE(PUSH_REGISTER) {
-            fprintf(stderr, " reg[%d]",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(PUSH_REGISTER);
-          }
-          BYTECODE(SET_REGISTER) {
-            fprintf(stderr, " reg[%d], %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4));
-            ADVANCE(SET_REGISTER);
-          }
-          BYTECODE(ADVANCE_REGISTER) {
-            fprintf(stderr, " reg[%d], %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4));
-            ADVANCE(ADVANCE_REGISTER);
-          }
-          BYTECODE(SET_REGISTER_TO_CP) {
-            fprintf(stderr, " reg[%d], %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4));
-            ADVANCE(SET_REGISTER_TO_CP);
-          }
-          BYTECODE(SET_CP_TO_REGISTER) {
-            fprintf(stderr, " reg[%d]",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(SET_CP_TO_REGISTER);
-          }
-          BYTECODE(SET_REGISTER_TO_SP) {
-            fprintf(stderr, " reg[%d]",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(SET_REGISTER_TO_SP);
-          }
-          BYTECODE(SET_SP_TO_REGISTER) {
-            fprintf(stderr, " reg[%d]",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(SET_SP_TO_REGISTER);
-          }
-          BYTECODE(POP_CP) {
-            ADVANCE(POP_CP);
-          }
-          BYTECODE(POP_BT) {
-            // Jump is already resolved in PUSH_BT.
-            STOP(POP_BT);
-          }
-          BYTECODE(POP_REGISTER) {
-            fprintf(stderr, " reg[%d]",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(POP_REGISTER);
-          }
-          BYTECODE(FAIL) {
-            ADVANCE(FAIL);
-          }
-          BYTECODE(SUCCEED) {
-            ADVANCE(SUCCEED);
-          }
-          BYTECODE(ADVANCE_CP) {
-            fprintf(stderr, " %d",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(ADVANCE_CP);
-          }
-          BYTECODE(GOTO) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d",
-                    offset);
-            JUMP(GOTO, offset);
-          }
-          BYTECODE(ADVANCE_CP_AND_GOTO) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            JUMP(ADVANCE_CP_AND_GOTO, offset);
-          }
-          BYTECODE(CHECK_GREEDY) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d",
-                    offset);
-            BRANCH(CHECK_GREEDY, offset);
-          }
-          BYTECODE(LOAD_CURRENT_CHAR) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(LOAD_CURRENT_CHAR, offset);
-          }
-          BYTECODE(LOAD_CURRENT_CHAR_UNCHECKED) {
-            fprintf(stderr, " %d",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(LOAD_CURRENT_CHAR_UNCHECKED);
-          }
-          BYTECODE(LOAD_2_CURRENT_CHARS) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(LOAD_2_CURRENT_CHARS, offset);
-          }
-          BYTECODE(LOAD_2_CURRENT_CHARS_UNCHECKED) {
-            fprintf(stderr, " %d",
-                    insn >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(LOAD_2_CURRENT_CHARS_UNCHECKED);
-          }
-          BYTECODE(LOAD_4_CURRENT_CHARS) {
-            ADVANCE(LOAD_4_CURRENT_CHARS);
-          }
-          BYTECODE(LOAD_4_CURRENT_CHARS_UNCHECKED) {
-            ADVANCE(LOAD_4_CURRENT_CHARS_UNCHECKED);
-          }
-          BYTECODE(CHECK_4_CHARS) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " %d, %d",
-                    Load32Aligned(pc + 4),
-                    offset);
-            BRANCH(CHECK_4_CHARS, offset);
-          }
-          BYTECODE(CHECK_CHAR) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_CHAR, offset);
-          }
-          BYTECODE(CHECK_NOT_4_CHARS) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " %d, %d",
-                    Load32Aligned(pc + 4),
-                    offset);
-            BRANCH(CHECK_NOT_4_CHARS, offset);
-          }
-          BYTECODE(CHECK_NOT_CHAR) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_NOT_CHAR, offset);
-          }
-          BYTECODE(AND_CHECK_4_CHARS) {
-            int32_t offset = Load32Aligned(pc + 12);
-            fprintf(stderr, " %d, %d, %d",
-                    Load32Aligned(pc + 4),
-                    Load32Aligned(pc + 8),
-                    offset);
-            BRANCH(AND_CHECK_4_CHARS, offset);
-          }
-          BYTECODE(AND_CHECK_CHAR) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " %d, %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4),
-                    offset);
-            BRANCH(AND_CHECK_CHAR, offset);
-          }
-          BYTECODE(AND_CHECK_NOT_4_CHARS) {
-            int32_t offset = Load32Aligned(pc + 12);
-            fprintf(stderr, " %d, %d, %d",
-                    Load32Aligned(pc + 4),
-                    Load32Aligned(pc + 8),
-                    offset);
-            BRANCH(AND_CHECK_NOT_4_CHARS, offset);
-          }
-          BYTECODE(AND_CHECK_NOT_CHAR) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " %d, %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4),
-                    offset);
-            BRANCH(AND_CHECK_NOT_CHAR, offset);
-          }
-          BYTECODE(MINUS_AND_CHECK_NOT_CHAR) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " %d, %d, %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load16Aligned(pc + 4),
-                    Load16Aligned(pc + 6),
-                    offset);
-            BRANCH(MINUS_AND_CHECK_NOT_CHAR, offset);
-          }
-          BYTECODE(CHECK_CHAR_IN_RANGE) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " %d, %d, %d",
-                    Load16Aligned(pc + 4),
-                    Load16Aligned(pc + 6),
-                    offset);
-            BRANCH(CHECK_CHAR_IN_RANGE, offset);
-          }
-          BYTECODE(CHECK_CHAR_NOT_IN_RANGE) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " %d, %d, %d",
-                    Load16Aligned(pc + 4),
-                    Load16Aligned(pc + 6),
-                    offset);
-            BRANCH(CHECK_CHAR_NOT_IN_RANGE, offset);
-          }
-          BYTECODE(CHECK_BIT_IN_TABLE) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, "
-                    "%02x %02x %02x %02x %02x %02x %02x %02x "
-                    "%02x %02x %02x %02x %02x %02x %02x %02x",
-                    offset,
-                    pc[8], pc[9], pc[10], pc[11],
-                    pc[12], pc[13], pc[14], pc[15],
-                    pc[16], pc[17], pc[18], pc[19],
-                    pc[20], pc[21], pc[22], pc[23]);
-            BRANCH(CHECK_BIT_IN_TABLE, offset);
-          }
-          BYTECODE(CHECK_LT) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_LT, offset);
-          }
-          BYTECODE(CHECK_GT) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_GT, offset);
-          }
-          BYTECODE(CHECK_REGISTER_LT) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " reg[%d], %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4),
-                    offset);
-            BRANCH(CHECK_REGISTER_LT, offset);
-          }
-          BYTECODE(CHECK_REGISTER_GE) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " reg[%d], %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4),
-                    offset);
-            BRANCH(CHECK_REGISTER_GE, offset);
-          }
-          BYTECODE(CHECK_REGISTER_EQ_POS) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " reg[%d], %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_REGISTER_EQ_POS, offset);
-          }
-          BYTECODE(CHECK_NOT_REGS_EQUAL) {
-            int32_t offset = Load32Aligned(pc + 8);
-            fprintf(stderr, " reg[%d], %d, %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    Load32Aligned(pc + 4),
-                    offset);
-            BRANCH(CHECK_NOT_REGS_EQUAL, offset);
-          }
-          BYTECODE(CHECK_NOT_BACK_REF) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " reg[%d], %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_NOT_BACK_REF, offset);
-          }
-          BYTECODE(CHECK_NOT_BACK_REF_NO_CASE) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " reg[%d], %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_NOT_BACK_REF_NO_CASE, offset);
-          }
-          BYTECODE(CHECK_NOT_BACK_REF_NO_CASE_UNICODE) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " reg[%d], %d",
-                    insn >> irregexp::BYTECODE_SHIFT,
-                    offset);
-            BRANCH(CHECK_NOT_BACK_REF_NO_CASE_UNICODE, offset);
-          }
-          BYTECODE(CHECK_AT_START) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d",
-                    offset);
-            BRANCH(CHECK_AT_START, offset);
-          }
-          BYTECODE(CHECK_NOT_AT_START) {
-            int32_t offset = Load32Aligned(pc + 4);
-            fprintf(stderr, " %d",
-                    offset);
-            BRANCH(CHECK_NOT_AT_START, offset);
-          }
-          BYTECODE(SET_CURRENT_POSITION_FROM_END) {
-            fprintf(stderr, " %u",
-                    static_cast<uint32_t>(insn) >> irregexp::BYTECODE_SHIFT);
-            ADVANCE(SET_CURRENT_POSITION_FROM_END);
-          }
-          default:
-            MOZ_CRASH("Bad bytecode");
-        }
-    }
-
-#undef BYTECODE
-#undef ADVANCE
-#undef STOP
-#undef JUMP
-#undef BRANCH
-
-    return true;
-}
-
-/* static */ bool
-RegExpObject::dumpBytecode(JSContext* cx, Handle<RegExpObject*> regexp, HandleLinearString input)
-{
-    RootedRegExpShared shared(cx, getShared(cx, regexp));
-    if (!shared)
-        return false;
-
-    return RegExpShared::dumpBytecode(cx, &shared, input);
-}
-#endif //DEBUG && !JS_NEW_REGEXP
-
 template <typename CharT>
 static MOZ_ALWAYS_INLINE bool
 IsRegExpMetaChar(CharT ch)
@@ -988,7 +581,6 @@ RegExpShared::traceChildren(JSTracer* trc)
         discardJitCode();
 
     TraceNullableEdge(trc, &source, "RegExpShared source");
-#ifdef JS_NEW_REGEXP
     if (kind() == RegExpShared::Kind::Atom) {
         TraceNullableEdge(trc, &patternAtom_, "RegExpShared pattern atom");
     } else {
@@ -997,10 +589,6 @@ RegExpShared::traceChildren(JSTracer* trc)
         }
         TraceNullableEdge(trc, &groupsTemplate_, "RegExpShared groups template");
     }
-#else
-    for (auto& comp : compilationArray)
-        TraceNullableEdge(trc, &comp.jitCode, "RegExpShared code");
-#endif
 }
 
 void
@@ -1022,11 +610,9 @@ RegExpShared::finalize(FreeOp* fop)
             js_free(comp.byteCode);
         }
     }
-#ifdef JS_NEW_REGEXP
     if (namedCaptureIndices_) {
         js_free(namedCaptureIndices_);
     }
-#endif
     tables.~JitCodeTables();
 }
 
@@ -1041,7 +627,6 @@ RegExpShared::compile(JSContext* cx, MutableHandleRegExpShared re, HandleLinearS
     return compile(cx, re, pattern, input, codeKind);
 }
 
-#ifdef JS_NEW_REGEXP
 bool
 RegExpShared::compile(JSContext* cx,
                       MutableHandleRegExpShared re,
@@ -1259,180 +844,6 @@ bool RegExpShared::markedForTierUp(JSContext* cx) const {
   return ticks_ == 0;
 }
 
-#else   // !JS_NEW_REGEXP
-/* static */ bool
-RegExpShared::compile(JSContext* cx,
-                      MutableHandleRegExpShared re,
-                      HandleAtom pattern,
-                      HandleLinearString input,
-                      RegExpShared::CodeKind codeKind)
-{
-    if (!re->ignoreCase() && !StringHasRegExpMetaChars(pattern))
-        re->canStringMatch = true;
-
-    CompileOptions options(cx, JSVERSION_DEFAULT);
-    frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
-
-    LifoAllocScope scope(&cx->tempLifoAlloc());
-
-    /* Parse the pattern. */
-    irregexp::RegExpCompileData data;
-    if (!irregexp::ParsePattern(dummyTokenStream,
-                                cx->tempLifoAlloc(),
-                                pattern,
-                                /*match_only =*/false,
-                                re->getFlags(),
-                                &data)) {
-        return false;
-    }
-
-    // Add one to account for the whole-match capture.
-    re->pairCount_ = data.capture_count + 1;
-
-    bool forceBytecode = codeKind == RegExpShared::CodeKind::Bytecode;
-    JitCodeTables tables;
-    irregexp::RegExpCode code = irregexp::CompilePattern(cx, re, &data, input,
-                                                         false /* global() */,
-                                                         re->ignoreCase(),
-                                                         input->hasLatin1Chars(),
-                                                         /*match_only = */ false,
-                                                         forceBytecode,
-                                                         re->sticky(),
-                                                         re->unicode(),
-                                                         tables);
-    if (code.empty())
-        return false;
-
-    MOZ_ASSERT(!code.jitCode || !code.byteCode);
-
-    RegExpCompilation& compilation = re->compilation(input->hasLatin1Chars());
-    if (code.jitCode) {
-        // First copy the tables. GC can purge the tables if the RegExpShared
-        // has no JIT code, so it's important to do this right before setting
-        // compilation.jitCode (to ensure no purging happens between adding the
-        // tables and setting the JIT code).
-        for (size_t i = 0; i < tables.length(); i++) {
-            if (!re->addTable(Move(tables[i]))) {
-                ReportOutOfMemory(cx);
-                return false;
-            }
-        }
-        compilation.jitCode = code.jitCode;
-    } else if (code.byteCode) {
-        MOZ_ASSERT(tables.empty(), "RegExpInterpreter does not use data tables");
-        compilation.byteCode = code.byteCode;
-    }
-
-    return true;
-}
-
-/* static */ bool
-RegExpShared::compileIfNecessary(JSContext* cx,
-                                 MutableHandleRegExpShared re,
-                                 HandleLinearString input,
-                                 RegExpShared::CodeKind codeKind)
-{
-    if (re->isCompiled(input->hasLatin1Chars(), codeKind))
-        return true;
-    return compile(cx, re, input, codeKind);
-}
-
-/* static */ RegExpRunStatus
-RegExpShared::execute(JSContext* cx,
-                      MutableHandleRegExpShared re,
-                      HandleLinearString input,
-                      size_t start,
-                      MatchPairs* matches)
-{
-    MOZ_ASSERT(matches);
-    TraceLoggerThread* logger = TraceLoggerForCurrentThread(cx);
-
-    /* Compile the code at point-of-use. */
-    if (!compileIfNecessary(cx, re, input, RegExpShared::CodeKind::Any))
-        return RegExpRunStatus_Error;
-
-    /*
-     * Ensure sufficient memory for output vector.
-     * No need to initialize it. The RegExp engine fills them in on a match.
-     */
-    if (!matches->allocOrExpandArray(re->pairCount())) {
-        ReportOutOfMemory(cx);
-        return RegExpRunStatus_Error;
-    }
-
-    size_t length = input->length();
-
-    // Reset the Irregexp backtrack stack if it grows during execution.
-    irregexp::RegExpStackScope stackScope(cx);
-
-    if (re->canStringMatch) {
-        return executeAtom(cx, re, input, start, matches);
-    }
-
-    do {
-        jit::JitCode* code = re->compilation(input->hasLatin1Chars()).jitCode;
-        if (!code)
-            break;
-
-        RegExpRunStatus result;
-        {
-            AutoTraceLog logJIT(logger, TraceLogger_IrregexpExecute);
-            AutoCheckCannotGC nogc;
-            if (input->hasLatin1Chars()) {
-                const Latin1Char* chars = input->latin1Chars(nogc);
-                result = irregexp::ExecuteCode(cx, code, chars, start, length, matches, /*endIndex = */ nullptr);
-            } else {
-                const char16_t* chars = input->twoByteChars(nogc);
-                result = irregexp::ExecuteCode(cx, code, chars, start, length, matches, /*endIndex = */ nullptr);
-            }
-        }
-
-        if (result == RegExpRunStatus_Error) {
-            // An 'Error' result is returned if a stack overflow guard or
-            // interrupt guard failed. If CheckOverRecursed doesn't throw, break
-            // out and retry the regexp in the bytecode interpreter, which can
-            // execute while tolerating future interrupts. Otherwise, if we keep
-            // getting interrupted we will never finish executing the regexp.
-            if (!jit::CheckOverRecursed(cx))
-                return RegExpRunStatus_Error;
-            break;
-        }
-
-        if (result == RegExpRunStatus_Success_NotFound)
-            return RegExpRunStatus_Success_NotFound;
-
-        MOZ_ASSERT(result == RegExpRunStatus_Success);
-
-        matches->checkAgainst(length);
-        return RegExpRunStatus_Success;
-    } while (false);
-
-    // Compile bytecode for the RegExp if necessary.
-    if (!compileIfNecessary(cx, re, input, RegExpShared::CodeKind::Bytecode))
-        return RegExpRunStatus_Error;
-
-    uint8_t* byteCode = re->compilation(input->hasLatin1Chars()).byteCode;
-    AutoTraceLog logInterpreter(logger, TraceLogger_IrregexpExecute);
-
-    AutoStableStringChars inputChars(cx);
-    if (!inputChars.init(cx, input))
-        return RegExpRunStatus_Error;
-
-    RegExpRunStatus result;
-    if (inputChars.isLatin1()) {
-        const Latin1Char* chars = inputChars.latin1Range().begin().get();
-        result = irregexp::InterpretCode(cx, byteCode, chars, start, length, matches, /*endIndex = */ nullptr);
-    } else {
-        const char16_t* chars = inputChars.twoByteRange().begin().get();
-        result = irregexp::InterpretCode(cx, byteCode, chars, start, length, matches, /*endIndex = */ nullptr);
-    }
-
-    if (result == RegExpRunStatus_Success)
-        matches->checkAgainst(length);
-    return result;
-}
-#endif // !JS_NEW_REGEXP
-
 /* static */
 RegExpRunStatus
 RegExpShared::executeAtom(JSContext* cx,
@@ -1535,8 +946,7 @@ RegExpCompartment::createMatchResultTemplateObject(JSContext* cx)
         return nullptr;
     }
 
-#ifdef JS_NEW_REGEXP
-  /* Set dummy groups property */
+    /* Set dummy groups property */
     RootedValue groupsVal(cx, UndefinedValue());
     if (!NativeDefineProperty(
           cx, templateObject, cx->names().groups, groupsVal, nullptr, nullptr, JSPROP_ENUMERATE)) {
@@ -1545,7 +955,7 @@ RegExpCompartment::createMatchResultTemplateObject(JSContext* cx)
     AddTypePropertyId(cx, templateObject, NameToId(cx->names().groups), TypeSet::AnyObjectType());
 
     // Make sure that the properties are in the right slots.
-#  ifdef DEBUG
+#ifdef DEBUG
   Shape* groupsShape = templateObject->lastProperty();
   MOZ_ASSERT(groupsShape->slot() == 0 &&
              groupsShape->propidRef() == NameToId(cx->names().groups));
@@ -1555,7 +965,6 @@ RegExpCompartment::createMatchResultTemplateObject(JSContext* cx)
   Shape* indexShape = inputShape->previous().get();
   MOZ_ASSERT(indexShape->slot() == 2 &&
              indexShape->propidRef() == NameToId(cx->names().index));
-#  endif
 #endif
 
     // Make sure type information reflects the indexed properties which might
@@ -1958,13 +1367,7 @@ JS::CheckRegExpSyntax(JSContext* cx,
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
 
     mozilla::Range<const char16_t> source(chars, length);
-#ifdef JS_NEW_REGEXP
     bool success = irregexp::CheckPatternSyntax(cx, dummyTokenStream, source, flags);
-#else
-    bool success =
-      irregexp::ParsePatternSyntax(
-          dummyTokenStream, cx->tempLifoAlloc(), source, flags.unicode(), flags.dotAll());
-#endif
     error.set(UndefinedValue());
     if (!success) {
         // We can fail because of OOM or over-recursion even if the syntax is valid.
