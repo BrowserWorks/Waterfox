@@ -239,7 +239,6 @@ jobs:
           - mozilla-central
           - mozilla-beta
           - mozilla-release
-          - mozilla-esr78
           - mozilla-esr91
       when:
           - {weekday: 'Monday', hour: 8, minute: 0}
