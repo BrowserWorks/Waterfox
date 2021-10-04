@@ -1,9 +1,10 @@
 name: Build Docker image
 
 on:
+  pull_request: null
   workflow_dispatch: null
   schedule:
-    - cron: "00 00 20 * *"
+    - cron: "0 0 8 * *"
 
 jobs:
   docker:
@@ -29,14 +30,18 @@ jobs:
       - name: Downcase REPO
         run: |
           echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+      - name: Set date string for version
+        run: |
+          echo "version_date=$(date +'%Y%m')" >> $GITHUB_ENV
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
           context: .
           file: Dockerfile.GA
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/${{ env.REPO }}_docker_img:latest
+            ghcr.io/${{ env.REPO }}_docker_img:${{ env.version_date }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
       - # Temp fix

@@ -42,6 +42,11 @@ RUN make all
 RUN make install
 RUN git --version
 WORKDIR "$HOME"
+# Install packages for releases based on 78+
+RUN cargo install cbindgen
+RUN wget -qO- https://rpm.nodesource.com/setup_14.x | bash -
+RUN yum install -y nodejs
+RUN node --version
 # Cleanup
 RUN rm -rf ./git_pkg/*
 RUN rm -rf ./nasm/*
