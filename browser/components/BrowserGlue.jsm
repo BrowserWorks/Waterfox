@@ -2596,7 +2596,15 @@ BrowserGlue.prototype = {
             Cu.isInAutomation &&
             Services.prefs.getBoolPref("app.update.disabledForTesting", false);
           if (!disabledForTesting) {
-            BackgroundUpdate.maybeScheduleBackgroundUpdateTask();
+            try {
+              BackgroundUpdate.maybeScheduleBackgroundUpdateTask();
+            } catch (ex) {
+              if (ex.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+                // The file does not exist
+              } else {
+                throw ex; // Other error
+              }
+            }
           }
         },
       },
