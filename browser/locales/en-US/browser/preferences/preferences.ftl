@@ -593,10 +593,10 @@ choose-bookmark =
     .label = Use Bookmark…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = Waterfox Home Content
-home-prefs-content-description = Choose what content you want on your Firefox Home screen.
+home-prefs-content-description = Choose what content you want on your Waterfox Home screen.
 
 home-prefs-search-header =
     .label = Web Search
@@ -868,7 +868,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Extensions and themes for Firefox desktop
+    .tooltiptext = Extensions and themes for Waterfox desktop
     .accesskey = A
 
 sync-engine-settings =
