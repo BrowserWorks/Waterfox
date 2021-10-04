@@ -138,6 +138,9 @@ const PrivateTab = {
 
   placesContext(aEvent) {
     let win = aEvent.view;
+    if (!win) {
+      return;
+    }
     let { document } = win;
     let openAll = "placesContext_openBookmarkContainer:tabs";
     let openAllLinks = "placesContext_openLinks:tabs";
