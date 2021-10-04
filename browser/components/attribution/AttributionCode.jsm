@@ -390,9 +390,11 @@ var AttributionCode = {
     try {
       await OS.File.remove(this.attributionFile.path);
     } catch (ex) {
-      // The attribution file may already have been deleted,
-      // or it may have never been installed at all;
-      // failure to delete it isn't an error.
+      if (ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
+        // The file does not exist
+      } else {
+        throw ex; // Other error
+      }
     }
   },
 
