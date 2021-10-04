@@ -299,6 +299,7 @@ private:
     bool mProxyTransparentResolvesHost;
     bool mHttpsProxy;
     uint32_t     mConnectionFlags;
+    uint32_t     mTlsFlags;
     bool mReuseAddrPort;
 
     // The origin attributes are used to create sockets.  The first party domain

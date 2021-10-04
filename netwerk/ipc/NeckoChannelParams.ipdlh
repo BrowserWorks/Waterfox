@@ -130,6 +130,7 @@ struct HttpChannelOpenArgs
   bool                        allowSpdy;
   bool                        allowAltSvc;
   bool                        beConservative;
+  uint32_t                    tlsFlags;
   OptionalLoadInfoArgs        loadInfo;
   OptionalHttpResponseHead    synthesizedResponseHead;
   nsCString                   synthesizedSecurityInfoSerialization;

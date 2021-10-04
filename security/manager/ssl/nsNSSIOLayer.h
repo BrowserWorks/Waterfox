@@ -35,7 +35,8 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
                               public nsIClientAuthUserDecision
 {
 public:
-  nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags);
+  nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags,
+                  uint32_t providerTlsFlags);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSISSLSOCKETCONTROL
@@ -75,6 +76,7 @@ public:
   void SetSentClientCert() { mSentClientCert = true; }
 
   uint32_t GetProviderFlags() const { return mProviderFlags; }
+  uint32_t GetProviderTlsFlags() const { return mProviderTlsFlags; }
 
   mozilla::psm::SharedSSLState& SharedState();
 
@@ -118,6 +120,8 @@ public:
 
   void SetMACAlgorithmUsed(int16_t mac) { mMACAlgorithmUsed = mac; }
 
+  void SetSharedOwningReference(mozilla::psm::SharedSSLState* ref);
+
 protected:
   virtual ~nsNSSSocketInfo();
 
@@ -156,16 +160,24 @@ private:
   bool    mBypassAuthentication;
 
   uint32_t mProviderFlags;
+  uint32_t mProviderTlsFlags;
   mozilla::TimeStamp mSocketCreationTimestamp;
   uint64_t mPlaintextBytesRead;
 
   nsCOMPtr<nsIX509Cert> mClientCert;
+
+  // if non-null this is a reference to the mSharedState (which is
+  // not an owning reference). If this is used, the info has a private
+  // state that does not share things like intolerance lists with the
+  // rest of the session. This is normally used when you have per
+  // socket tls flags overriding session wide defaults.
+  RefPtr<mozilla::psm::SharedSSLState> mOwningSharedRef;
 };
 
 class nsSSLIOLayerHelpers
 {
 public:
-  nsSSLIOLayerHelpers();
+  explicit nsSSLIOLayerHelpers(uint32_t aTlsFlags = 0);
   ~nsSSLIOLayerHelpers();
 
   nsresult Init();
@@ -223,6 +235,7 @@ public:
 private:
   mozilla::Mutex mutex;
   nsCOMPtr<nsIObserver> mPrefObserver;
+  uint32_t mTlsFlags;
 };
 
 nsresult nsSSLIOLayerNewSocket(int32_t family,
@@ -233,7 +246,8 @@ nsresult nsSSLIOLayerNewSocket(int32_t family,
                                PRFileDesc** fd,
                                nsISupports** securityInfo,
                                bool forSTARTTLS,
-                               uint32_t flags);
+                               uint32_t flags,
+                               uint32_t tlsFlags);
 
 nsresult nsSSLIOLayerAddToSocket(int32_t family,
                                  const char* host,
@@ -243,7 +257,8 @@ nsresult nsSSLIOLayerAddToSocket(int32_t family,
                                  PRFileDesc* fd,
                                  nsISupports** securityInfo,
                                  bool forSTARTTLS,
-                                 uint32_t flags);
+                                 uint32_t flags,
+                                 uint32_t tlsFlags);
 
 nsresult nsSSLIOLayerFreeTLSIntolerantSites();
 nsresult displayUnknownCertErrorAlert(nsNSSSocketInfo* infoObject, int error);
