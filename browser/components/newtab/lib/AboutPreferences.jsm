@@ -147,13 +147,13 @@ this.AboutPreferences = class AboutPreferences {
     if (discoveryStreamConfig.enabled) {
       sections = this.handleDiscoverySettings(sections);
     }
-
+    // Remove topstories
+    sections.shift();
     const featureConfig = NimbusFeatures.newtab.getValue() || {};
 
     this.renderPreferences(window, [
       ...PREFS_BEFORE_SECTIONS(featureConfig),
       ...sections,
-      ...PREFS_AFTER_SECTIONS(featureConfig),
     ]);
   }
 
