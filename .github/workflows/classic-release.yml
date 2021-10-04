@@ -6,13 +6,15 @@ on:
       - "*-classic"
   workflow_dispatch: null
 
+env:
+  ENABLE_ARTIFACTS_MODE: "true"
+  SHELL: "/bin/bash"
+
 jobs:
   build-windows:
     name: 🪟 Build for Windows
     runs-on: [self-hosted, windows, x64]
     env:
-      ENABLE_ARTIFACTS_MODE: "true"
-      MOZCONFIG: "./.mozconfig"
       MOZ_NOSPAM: 1
       JSIGN_PATH: /c/mozilla-build/bin/jsign-4.0.jar
       JAVA_PATH: /c/PROGRA~2/COMMON~1/Oracle/Java/javapath/java.exe
@@ -66,107 +68,78 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic Windows ${{ github.run_id }}
+          name: Artifact_Classic_Windows_${{ github.run_id }}
           path: ./objdir-*/dist/install/sea/*.exe
 
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-10.15, ubuntu-18.04]
-        include:
-          - os: macos-10.15
-            name:  Build for macOS
-            platform: macOS
-          - os: ubuntu-18.04
-            name: 🐧 Build for Linux
-            platform: Linux
-
-    env:
-      ENABLE_ARTIFACTS_MODE: "true"
-      MOZCONFIG: "./.mozconfig"
-      SHELL: "/bin/bash"
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }}
+  build-linux:
+    name: 🐧 Build for Linux
+    runs-on: ubuntu-18.04
+    container:
+      image: ghcr.io/waterfoxco/waterfox_docker_img:latest
     steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Cache for Linux
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+      - name: Build
+        run: |
+          ./mach build
+      - name: Package
+        run: |
+          ./mach package
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_Linux_${{ github.run_id }}
+          path: |
+            ./objdir-*/dist/waterfox*.tar.bz2
+            ./objdir-*/dist/host/bin/mar
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+
+  build-mac:
+    name: 🍏 Build for macOS
+    runs-on: macos-10.15
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
       - name: Set up Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: "11.2.1"
-        if: startsWith(matrix.os, 'macos')
-
-      - name: Checkout branch
-        uses: actions/checkout@v2
-
+      - name: Install depends
+        run: |
+          brew update
+          brew install autoconf@2.13 ccache make nasm yasm
+      - name: Download SDK
+        run: |
+          wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
+          tar -xvf MacOSX10.12.sdk.tar.xz -C ../
       - name: Cache for macOS
         uses: actions/cache@v2
         with:
           path: |
             ~/Library/Caches/ccache
           key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
-        if: startsWith(matrix.os, 'macos')
-
-      - name: Cache for Linux
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.ccache
-          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
-        if: startsWith(matrix.os, 'ubuntu')
-
-      - name: Cleanup useless paths
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-        if: startsWith(matrix.os, 'ubuntu')
-
-      - name: macOS build dependencies
-        run: |
-          brew update
-          brew install autoconf@2.13 ccache make nasm yasm
-        if: startsWith(matrix.os, 'macos')
-
-      - name: Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install autoconf2.13 ccache libasound2-dev \
-          libdbus-glib-1-dev libdrm-dev libfreetype6-dev libgconf2-dev \
-          libglib2.0-dev libgtk2.0-dev libgtk-3-dev libpangocairo-1.0-0 \
-          libpulse-dev libx11-xcb-dev libxkbcommon-dev nasm-mozilla \
-          python2.7 python3 yasm
-        if: startsWith(matrix.os, 'ubuntu')
-
-      - name: Download MacOS X 10.12 SDK
-        run: |
-          wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
-          tar -xvf MacOSX10.12.sdk.tar.xz -C ../
-        if: startsWith(matrix.os, 'macos')
-
-      - name: mach build
-        run: |
-          ./mach build
-
-      - name: mach package
+      - name: Build
+        run: ./mach build
+      - name: Package
         run: |
           ./mach package
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
-
       - name: Setup keychain
         uses: apple-actions/import-codesign-certs@v1
         with:
           p12-file-base64: ${{ secrets.MACOS_CRT }}
           p12-password: ${{ secrets.MACOS_PWD }}
-        if: startsWith(matrix.os, 'macos')
-
       - name: Sign .app
         run: |
           wget https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/codesign.bash https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/production.entitlements.xml
           chmod +x ./codesign.bash
           ./codesign.bash -a objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app -i "${{ secrets.MACOS_ID }}" -e ./production.entitlements.xml
-        if: startsWith(matrix.os, 'macos')
-
       - name: Create and sign DMG
         run: |
           BROWSER_VERSION=`cat browser/config/version_display.txt`
@@ -189,8 +162,6 @@ jobs:
           "objdir-classic/dist/waterfox-classic/Waterfox Classic.app"
           codesign -s "${{ secrets.MACOS_ID }}" -fv "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg"
           xcrun altool --notarize-app -f "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" --primary-bundle-id 'org.waterfoxproject.waterfoxclassic' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
-        if: startsWith(matrix.os, 'macos')
-
       - name: Create MAR
         run: |
           BROWSER_VERSION=$(grep 'DisplayVersion=' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
@@ -218,55 +189,45 @@ jobs:
           sed -i '' -e "s/BUILDID/$BUILDID/g" ./objdir-classic/dist/update/update.xml
           sed -i '' -e "s/SIZE/$SIZE/g" ./objdir-classic/dist/update/update.xml
           sed -i '' -e "s/HASH/"$SHA512"/g" ./objdir-classic/dist/update/update.xml
-        if: startsWith(matrix.os, 'macos')
 
       - name: Upload macOS DMG
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic macOS ${{ github.run_id }}
+          name: Artifact_Classic_macOS_${{ github.run_id }}
           path: ./objdir-*/dist/waterfox-classic/*.dmg
-        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
       - name: Upload macOS .app
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic macOS ${{ github.run_id }}
+          name: Artifact_Classic_macOS_${{ github.run_id }}
           path: ./objdir-*/dist/waterfox-classic/Waterfox\ Classic.app
-        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
       - name: Upload macOS MAR
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic macOS ${{ github.run_id }}
+          name: Artifact_Classic_macOS_${{ github.run_id }}
           path: ./objdir-*/dist/update/*.mar
-        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
       - name: Upload macOS XML
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic macOS ${{ github.run_id }}
+          name: Artifact_Classic_macOS_${{ github.run_id }}
           path: ./objdir-*/dist/update/update.xml
-        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
-
-      - name: Upload Linux artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: Artifact Classic Linux ${{ github.run_id }}
-          path: ./objdir-*/dist/*.tar.bz2
-        if: startsWith(matrix.os, 'ubuntu') && env.ENABLE_ARTIFACTS_MODE == 'true'
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
       - name: Upload MAR binary
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic ${{ matrix.platform }} ${{ github.run_id }}
+          name: Artifact_Classic_${{ matrix.platform }}_${{ github.run_id }}
           path: ./objdir-*/dist/host/bin/mar
 
   generate-windows-update:
     needs: [build-windows]
     name: Generate Windows Update Files
     runs-on: [self-hosted, windows, x64]
-    strategy:
-      fail-fast: false
     steps:
       - name: Generate update files
         run: |
@@ -279,19 +240,21 @@ jobs:
       - name: Upload update.xml
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic Windows ${{ github.run_id }}
+          name: Artifact_Classic_Windows_${{ github.run_id }}
           path: ./objdir-*/dist/update/update.xml
 
       - name: Upload .mar
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic Windows ${{ github.run_id }}
+          name: Artifact_Classic_Windows_${{ github.run_id }}
           path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
 
   generate-linux-update:
-    needs: [build]
+    needs: [build-linux]
     name: Generate Linux Update Files
     runs-on: ubuntu-18.04
+    container:
+      image: ghcr.io/waterfoxco/waterfox_docker_img:latest
     steps:
       - name: Checkout branch
         uses: actions/checkout@v2
@@ -299,7 +262,7 @@ jobs:
       - name: Download Linux artifacts
         uses: actions/download-artifact@v2
         with:
-          name: Artifact Classic Linux ${{ github.run_id }}
+          name: Artifact_Classic_Linux_${{ github.run_id }}
 
       - name: Generate update files
         run: |
@@ -310,13 +273,13 @@ jobs:
       - name: Upload update.xml
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic Linux ${{ github.run_id }}
+          name: Artifact_Classic_Linux_${{ github.run_id }}
           path: ./objdir-*/dist/update/update.xml
 
       - name: Upload .mar
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact Classic Linux ${{ github.run_id }}
+          name: Artifact_Classic_Linux_${{ github.run_id }}
           path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
 
   # generate-mac-update:
@@ -332,7 +295,7 @@ jobs:
   #       - name: Download macOS artifacts
   #         uses: actions/download-artifact@v2
   #         with:
-  #           name: Artifact Classic macOS ${{ github.run_id }}
+  #           name: Artifact_Classic_macOS_${{ github.run_id }}
 
   #       - name: Generate update files
   #         run: |
@@ -343,13 +306,13 @@ jobs:
   #       - name: Upload update.xml
   #         uses: actions/upload-artifact@v2
   #         with:
-  #           name: Artifact Classic macOS ${{ github.run_id }}
+  #           name: Artifact_Classic_macOS_${{ github.run_id }}
   #           path: ./objdir-*/dist/update/update.xml
 
   #       - name: Upload .mar
   #         uses: actions/upload-artifact@v2
   #         with:
-  #           name: Artifact Classic macOS ${{ github.run_id }}
+  #           name: Artifact_Classic_macOS_${{ github.run_id }}
   #           path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
 
   # release:
