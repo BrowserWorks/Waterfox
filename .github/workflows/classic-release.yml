@@ -221,7 +221,7 @@ jobs:
       - name: Upload MAR binary
         uses: actions/upload-artifact@v2
         with:
-          name: Artifact_Classic_${{ matrix.platform }}_${{ github.run_id }}
+          name: Artifact_Classic_macOS_${{ github.run_id }}
           path: ./objdir-*/dist/host/bin/mar
 
   generate-windows-update:
