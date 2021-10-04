@@ -2,359 +2,354 @@ name: Build Classic for Release
 
 on:
   push:
-     branches:
+    branches:
       - classic
 
 jobs:
-    build-windows:
-        name: 🪟 Build for Windows
-        runs-on: [self-hosted, windows, x64]
-        strategy:
-            fail-fast: false
-        env:
-            ENABLE_ARTIFACTS_MODE: "true"
-            MOZCONFIG: "./.mozconfig"
-            MOZ_NOSPAM: 1
-            JSIGN_PATH: /c/mozilla-build/bin/jsign-4.0.jar
-            JAVA_PATH: /c/PROGRA~2/COMMON~1/Oracle/Java/javapath/java.exe
-            NASM: /c/PROGRA~1/NASM/nasm.exe
-        steps:
-          - name: Checkout branch
-            uses: actions/checkout@v2
-          - name: Define cache
-            uses: actions/cache@v2
-            with:
-              path: |
-                $LOCALAPPDATA/ccache
-              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+  build-windows:
+    name: 🪟 Build for Windows
+    runs-on: [self-hosted, windows, x64]
+    env:
+      ENABLE_ARTIFACTS_MODE: "true"
+      MOZCONFIG: "./.mozconfig"
+      MOZ_NOSPAM: 1
+      JSIGN_PATH: /c/mozilla-build/bin/jsign-4.0.jar
+      JAVA_PATH: /c/PROGRA~2/COMMON~1/Oracle/Java/javapath/java.exe
+      NASM: /c/PROGRA~1/NASM/nasm.exe
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Define cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            $LOCALAPPDATA/ccache
+          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
 
-          - name: mach build
-            run: |
-              $pattern = '[\\]'
-              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
-              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
-              Write-Output $env:BUILD_DIR
-              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/build.sh"
+      - name: mach build
+        run: |
+          $pattern = '[\\]'
+          $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+          $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+          Write-Output $env:BUILD_DIR
+          c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/build.sh"
 
-          - name: mach build installer
-            run: |
-              $pattern = '[\\]'
-              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
-              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
-              Write-Output $env:BUILD_DIR
-              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/package.sh"
-              
-          - name: Sign
-            run: |
-              export PATH=/c/Program\ Files\ \(x86\)/Microsoft\ SDKs/Azure/CLI2/wbin:$PATH
-              BROWSER_VERSION=`cat browser/config/version_display.txt`
-              pushd objdir-classic/dist/install/sea/
-              7z x waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
-              rm -f waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
-              az login --service-principal --username "${{ secrets.AZURE_USER_ID }}" --password "${{ secrets.AZURE_USER_PWD }}" --tenant "${{ secrets.AZURE_TENANT_ID }}"
-              find ./ -type f -name "*.exe" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
-              find ./ -type f -name "*.dll" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
-              7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
-              cp $GITHUB_WORKSPACE/browser/installer/windows/app.tag .
-              cp $GITHUB_WORKSPACE/other-licenses/7zstub/firefox/7zSD.sfx .
-              cat 7zSD.sfx app.tag app.7z > "WaterfoxClassic$BROWSER_VERSION.exe"
-              $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "WaterfoxClassic$BROWSER_VERSION.exe"
-              az logout
-              rm -rf core 7zSD.sfx app.tag app.7z setup.exe
-              popd
-            shell: bash
-              
-          - name: Upload artifact
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic Windows ${{ github.run_id }}
-              path: ./objdir-*/dist/install/sea/*.exe
+      - name: mach build installer
+        run: |
+          $pattern = '[\\]'
+          $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+          $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+          Write-Output $env:BUILD_DIR
+          c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/package.sh"
 
-    build:
-        strategy:
-            fail-fast: false
-            matrix:
-                os: [macos-10.15, ubuntu-18.04]
-                include:
-                  - os: macos-10.15
-                    name:  Build for macOS
-                    platform: macOS
-                  - os: ubuntu-18.04
-                    name: 🐧 Build for Linux
-                    platform: Linux
+      - name: Sign
+        run: |
+          export PATH=/c/Program\ Files\ \(x86\)/Microsoft\ SDKs/Azure/CLI2/wbin:$PATH
+          BROWSER_VERSION=`cat browser/config/version_display.txt`
+          pushd objdir-classic/dist/install/sea/
+          7z x waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
+          rm -f waterfox-classic-$BROWSER_VERSION.en-US.win64.installer.exe
+          az login --service-principal --username "${{ secrets.AZURE_USER_ID }}" --password "${{ secrets.AZURE_USER_PWD }}" --tenant "${{ secrets.AZURE_TENANT_ID }}"
+          find ./ -type f -name "*.exe" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
+          find ./ -type f -name "*.dll" -exec $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" {} \;
+          7z a -r -t7z app.7z -mx -m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 -mb0s1:2 -mb0s2:3
+          cp $GITHUB_WORKSPACE/browser/installer/windows/app.tag .
+          cp $GITHUB_WORKSPACE/other-licenses/7zstub/firefox/7zSD.sfx .
+          cat 7zSD.sfx app.tag app.7z > "WaterfoxClassic$BROWSER_VERSION.exe"
+          $JAVA_PATH -jar $JSIGN_PATH --storetype AZUREKEYVAULT --keystore ${{ secrets.AZURE_VAULT_ID }} --alias ${{ secrets.AZURE_CRT }} --tsaurl "http://rfc3161timestamp.globalsign.com/advanced" --tsmode RFC3161 --alg SHA-256 --storepass "$(az account get-access-token --resource "https://vault.azure.net" --tenant ${{ secrets.AZURE_TENANT_ID }} | jq -r .accessToken)" "WaterfoxClassic$BROWSER_VERSION.exe"
+          az logout
+          rm -rf core 7zSD.sfx app.tag app.7z setup.exe
+          popd
+        shell: bash
 
-        env:
-            ENABLE_ARTIFACTS_MODE: "true"
-            MOZCONFIG: "./.mozconfig"
-            SHELL: "/bin/bash"
-        runs-on: ${{ matrix.os }}
-        name: ${{ matrix.name }}
-        steps:
-          - name: Set up Xcode version
-            uses: maxim-lobanov/setup-xcode@v1
-            with:
-              xcode-version: '11.2.1'
-            if: startsWith(matrix.os, 'macos')
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic Windows ${{ github.run_id }}
+          path: ./objdir-*/dist/install/sea/*.exe
 
-          - name: Checkout branch
-            uses: actions/checkout@v2
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, ubuntu-18.04]
+        include:
+          - os: macos-10.15
+            name:  Build for macOS
+            platform: macOS
+          - os: ubuntu-18.04
+            name: 🐧 Build for Linux
+            platform: Linux
 
-          - name: Cache for macOS
-            uses: actions/cache@v2
-            with:
-              path: |
-                ~/Library/Caches/ccache
-              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
-            if: startsWith(matrix.os, 'macos')
+    env:
+      ENABLE_ARTIFACTS_MODE: "true"
+      MOZCONFIG: "./.mozconfig"
+      SHELL: "/bin/bash"
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+    steps:
+      - name: Set up Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "11.2.1"
+        if: startsWith(matrix.os, 'macos')
 
-          - name: Cache for Linux
-            uses: actions/cache@v2
-            with:
-              path: |
-                ~/.ccache
-              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
-            if: startsWith(matrix.os, 'ubuntu')
+      - name: Checkout branch
+        uses: actions/checkout@v2
 
-          - name: Cleanup useless paths
-            run: |
-              sudo rm -rf /usr/share/dotnet
-              sudo rm -rf /opt/ghc
-              sudo rm -rf /usr/local/share/boost
-              sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-            if: startsWith(matrix.os, 'ubuntu')
+      - name: Cache for macOS
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/Library/Caches/ccache
+          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+        if: startsWith(matrix.os, 'macos')
 
-          - name: macOS build dependencies
-            run: |
-              brew update
-              brew install autoconf@2.13 ccache make nasm yasm
-            if: startsWith(matrix.os, 'macos')
+      - name: Cache for Linux
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.ccache
+          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+        if: startsWith(matrix.os, 'ubuntu')
 
-          - name: Linux build dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install autoconf2.13 ccache libasound2-dev \
-              libdbus-glib-1-dev libdrm-dev libfreetype6-dev libgconf2-dev \
-              libglib2.0-dev libgtk2.0-dev libgtk-3-dev libpangocairo-1.0-0 \
-              libpulse-dev libx11-xcb-dev libxkbcommon-dev nasm-mozilla \
-              python2.7 python3 yasm
-            if: startsWith(matrix.os, 'ubuntu')
+      - name: Cleanup useless paths
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        if: startsWith(matrix.os, 'ubuntu')
 
-          - name: Download MacOS X 10.12 SDK
-            run: |
-              wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
-              tar -xvf MacOSX10.12.sdk.tar.xz -C ../
-            if: startsWith(matrix.os, 'macos')
+      - name: macOS build dependencies
+        run: |
+          brew update
+          brew install autoconf@2.13 ccache make nasm yasm
+        if: startsWith(matrix.os, 'macos')
 
-          - name: mach build
-            run: |
-              ./mach build
+      - name: Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install autoconf2.13 ccache libasound2-dev \
+          libdbus-glib-1-dev libdrm-dev libfreetype6-dev libgconf2-dev \
+          libglib2.0-dev libgtk2.0-dev libgtk-3-dev libpangocairo-1.0-0 \
+          libpulse-dev libx11-xcb-dev libxkbcommon-dev nasm-mozilla \
+          python2.7 python3 yasm
+        if: startsWith(matrix.os, 'ubuntu')
 
-          - name: mach package
-            run: |
-              ./mach package
-            if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Download MacOS X 10.12 SDK
+        run: |
+          wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
+          tar -xvf MacOSX10.12.sdk.tar.xz -C ../
+        if: startsWith(matrix.os, 'macos')
 
-          - name: Setup keychain
-            uses: apple-actions/import-codesign-certs@v1
-            with: 
-              p12-file-base64: ${{ secrets.MACOS_CRT }}
-              p12-password: ${{ secrets.MACOS_PWD }}
-            if: startsWith(matrix.os, 'macos')
+      - name: mach build
+        run: |
+          ./mach build
 
-          - name: Sign .app
-            run: |
-              wget https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/codesign.bash https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/production.entitlements.xml
-              chmod +x ./codesign.bash
-              ./codesign.bash -a objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app -i "${{ secrets.MACOS_ID }}" -e ./production.entitlements.xml
-            if: startsWith(matrix.os, 'macos')
+      - name: mach package
+        run: |
+          ./mach package
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
 
+      - name: Setup keychain
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CRT }}
+          p12-password: ${{ secrets.MACOS_PWD }}
+        if: startsWith(matrix.os, 'macos')
 
-          - name: Create and sign DMG
-            run: |
-              BROWSER_VERSION=`cat browser/config/version_display.txt`
-              chmod +x ./browser/branding/unofficial/create-dmg
-              ./browser/branding/unofficial/create-dmg \
-              --volname "Waterfox Classic Setup" \
-              --volicon "browser/branding/unofficial/disk.icns" \
-              --background "browser/branding/unofficial/background.png" \
-              --window-pos 200 120 \
-              --window-size 520 380 \
-              --no-internet-enable \
-              --icon-size 128 \
-              --icon "Waterfox Classic.app" 100 178 \
-              --hide-extension "Waterfox Classic.app" \
-              --hdiutil-quiet \
-              --format UDBZ \
-              --eula "browser/branding/unofficial/license.txt" \
-              --app-drop-link 400 178 \
-              "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" \
-              "objdir-classic/dist/waterfox-classic/Waterfox Classic.app"
-              codesign -s "${{ secrets.MACOS_ID }}" -fv "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg"
-              xcrun altool --notarize-app -f "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" --primary-bundle-id 'org.waterfoxproject.waterfoxclassic' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
-            if: startsWith(matrix.os, 'macos')
+      - name: Sign .app
+        run: |
+          wget https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/codesign.bash https://hg.mozilla.org/releases/mozilla-esr60/raw-file/tip/security/mac/hardenedruntime/production.entitlements.xml
+          chmod +x ./codesign.bash
+          ./codesign.bash -a objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app -i "${{ secrets.MACOS_ID }}" -e ./production.entitlements.xml
+        if: startsWith(matrix.os, 'macos')
 
-          - name: Create MAR
-            run: |
-              BROWSER_VERSION=$(grep 'DisplayVersion=' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              mkdir -p ./objdir-classic/dist/update
-              xml=('<?xml version="1.0"?>'
-              '<updates>'
-              '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
-              '        <patch type="complete" URL="https://cdn.waterfox.net/releases/osx64/update/waterfox-classic-BROWSER_VERSION.en-US.osx64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
-              '    </update>'
-              '</updates>')
-              for line in "${xml[@]}" ; do echo $line >> ./objdir-classic/dist/update/update.xml ; done
-              chmod +x ./objdir-classic/dist/host/bin/mar
-              MAR=./objdir-classic/dist/host/bin/mar \
-              ./tools/update-packaging/make_full_update.sh \
-              ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar \
-              ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app
-              VERSION=$(grep '\<Version\>' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              BUILDID=$(grep 'BuildID=' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
-              SHA512=$(shasum -a 512 ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $1}')
-              SIZE=$(ls -l ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $5}')
-              echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
-              sed -i '' -e "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" ./objdir-classic/dist/update/update.xml
-              sed -i '' -e "s/BROWSER_VERSION/$BROWSER_VERSION/g" ./objdir-classic/dist/update/update.xml
-              sed -i '' -e "s/VERSION/$VERSION/g" ./objdir-classic/dist/update/update.xml
-              sed -i '' -e "s/BUILDID/$BUILDID/g" ./objdir-classic/dist/update/update.xml
-              sed -i '' -e "s/SIZE/$SIZE/g" ./objdir-classic/dist/update/update.xml
-              sed -i '' -e "s/HASH/"$SHA512"/g" ./objdir-classic/dist/update/update.xml
-            if: startsWith(matrix.os, 'macos')
+      - name: Create and sign DMG
+        run: |
+          BROWSER_VERSION=`cat browser/config/version_display.txt`
+          chmod +x ./browser/branding/unofficial/create-dmg
+          ./browser/branding/unofficial/create-dmg \
+          --volname "Waterfox Classic Setup" \
+          --volicon "browser/branding/unofficial/disk.icns" \
+          --background "browser/branding/unofficial/background.png" \
+          --window-pos 200 120 \
+          --window-size 520 380 \
+          --no-internet-enable \
+          --icon-size 128 \
+          --icon "Waterfox Classic.app" 100 178 \
+          --hide-extension "Waterfox Classic.app" \
+          --hdiutil-quiet \
+          --format UDBZ \
+          --eula "browser/branding/unofficial/license.txt" \
+          --app-drop-link 400 178 \
+          "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" \
+          "objdir-classic/dist/waterfox-classic/Waterfox Classic.app"
+          codesign -s "${{ secrets.MACOS_ID }}" -fv "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg"
+          xcrun altool --notarize-app -f "objdir-classic/dist/waterfox-classic/Waterfox Classic ${BROWSER_VERSION} Setup.dmg" --primary-bundle-id 'org.waterfoxproject.waterfoxclassic' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
+        if: startsWith(matrix.os, 'macos')
 
-          - name: Upload macOS DMG
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/waterfox-classic/*.dmg
-            if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Create MAR
+        run: |
+          BROWSER_VERSION=$(grep 'DisplayVersion=' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+          mkdir -p ./objdir-classic/dist/update
+          xml=('<?xml version="1.0"?>'
+          '<updates>'
+          '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-BROWSER_VERSION-release" displayVersion="BROWSER_VERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">'
+          '        <patch type="complete" URL="https://cdn.waterfox.net/releases/osx64/update/waterfox-classic-BROWSER_VERSION.en-US.osx64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+          '    </update>'
+          '</updates>')
+          for line in "${xml[@]}" ; do echo $line >> ./objdir-classic/dist/update/update.xml ; done
+          chmod +x ./objdir-classic/dist/host/bin/mar
+          MAR=./objdir-classic/dist/host/bin/mar \
+          ./tools/update-packaging/make_full_update.sh \
+          ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar \
+          ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app
+          VERSION=$(grep '\<Version\>' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+          BUILDID=$(grep 'BuildID=' ./objdir-classic/dist/waterfox-classic/Waterfox\ Classic.app/Contents/Resources/application.ini | cut -d'=' -f2)
+          SHA512=$(shasum -a 512 ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $1}')
+          SIZE=$(ls -l ./objdir-classic/dist/update/waterfox-classic-$BROWSER_VERSION.en-US.osx64.complete.xz.mar | awk '{print $5}')
+          echo "Display Version: $BROWSER_VERSION, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
+          sed -i '' -e "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" ./objdir-classic/dist/update/update.xml
+          sed -i '' -e "s/BROWSER_VERSION/$BROWSER_VERSION/g" ./objdir-classic/dist/update/update.xml
+          sed -i '' -e "s/VERSION/$VERSION/g" ./objdir-classic/dist/update/update.xml
+          sed -i '' -e "s/BUILDID/$BUILDID/g" ./objdir-classic/dist/update/update.xml
+          sed -i '' -e "s/SIZE/$SIZE/g" ./objdir-classic/dist/update/update.xml
+          sed -i '' -e "s/HASH/"$SHA512"/g" ./objdir-classic/dist/update/update.xml
+        if: startsWith(matrix.os, 'macos')
 
-          - name: Upload macOS .app
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/waterfox-classic/Waterfox\ Classic.app
-            if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic macOS ${{ github.run_id }}
+          path: ./objdir-*/dist/waterfox-classic/*.dmg
+        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
-          - name: Upload macOS MAR
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/update/*.mar
-            if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload macOS .app
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic macOS ${{ github.run_id }}
+          path: ./objdir-*/dist/waterfox-classic/Waterfox\ Classic.app
+        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
-          - name: Upload macOS XML
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/update/update.xml
-            if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload macOS MAR
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic macOS ${{ github.run_id }}
+          path: ./objdir-*/dist/update/*.mar
+        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
-          - name: Upload Linux artifact
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic Linux ${{ github.run_id }}
-              path: ./objdir-*/dist/*.tar.bz2
-            if: startsWith(matrix.os, 'ubuntu') && env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload macOS XML
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic macOS ${{ github.run_id }}
+          path: ./objdir-*/dist/update/update.xml
+        if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
-          - name: Upload MAR binary
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic ${{ matrix.platform }} ${{ github.run_id }}
-              path: ./objdir-*/dist/host/bin/mar
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic Linux ${{ github.run_id }}
+          path: ./objdir-*/dist/*.tar.bz2
+        if: startsWith(matrix.os, 'ubuntu') && env.ENABLE_ARTIFACTS_MODE == 'true'
 
-    generate-windows-update:
-        needs: [build-windows]
-        name: Generate Windows Update Files
-        runs-on: [self-hosted, windows, x64]
-        strategy:
-            fail-fast: false
-        steps:
-          - name: Generate update files
-            run: |
-              $pattern = '[\\]'
-              $env:BUILD_DIR = $env:GITHUB_WORKSPACE
-              $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
-              Write-Output $env:BUILD_DIR
-              c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/update.sh"
+      - name: Upload MAR binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic ${{ matrix.platform }} ${{ github.run_id }}
+          path: ./objdir-*/dist/host/bin/mar
 
-          - name: Upload update.xml
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic Windows ${{ github.run_id }}
-              path: ./objdir-*/dist/update/update.xml
+  generate-windows-update:
+    needs: [build-windows]
+    name: Generate Windows Update Files
+    runs-on: [self-hosted, windows, x64]
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Generate update files
+        run: |
+          $pattern = '[\\]'
+          $env:BUILD_DIR = $env:GITHUB_WORKSPACE
+          $env:BUILD_DIR = $env:BUILD_DIR -replace $pattern, '/'
+          Write-Output $env:BUILD_DIR
+          c:\\mozilla-build\\start-shell.bat "$env:BUILD_DIR/build/github-actions/update.sh"
 
-          - name: Upload .mar
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic Windows ${{ github.run_id }}
-              path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
+      - name: Upload update.xml
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic Windows ${{ github.run_id }}
+          path: ./objdir-*/dist/update/update.xml
 
-    generate-linux-update:
-        needs: [build]
-        name: Generate Linux Update Files
-        runs-on: ubuntu-18.04
-        strategy:
-            fail-fast: false
-        steps:
-          - name: Checkout branch
-            uses: actions/checkout@v2
+      - name: Upload .mar
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic Windows ${{ github.run_id }}
+          path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
 
-          - name: Download Linux artifacts
-            uses: actions/download-artifact@v2
-            with:
-              name: Artifact Classic Linux ${{ github.run_id }}
+  generate-linux-update:
+    needs: [build]
+    name: Generate Linux Update Files
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
 
-          - name: Generate update files
-            run: |
-              export BUILD_DIR=$GITHUB_WORKSPACE
-              chmod +x ./build/github-actions/update.sh
-              ./build/github-actions/update.sh
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Artifact Classic Linux ${{ github.run_id }}
 
-          - name: Upload update.xml
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic Linux ${{ github.run_id }}
-              path: ./objdir-*/dist/update/update.xml
+      - name: Generate update files
+        run: |
+          export BUILD_DIR=$GITHUB_WORKSPACE
+          chmod +x ./build/github-actions/update.sh
+          ./build/github-actions/update.sh
 
-          - name: Upload .mar
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic Linux ${{ github.run_id }}
-              path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
+      - name: Upload update.xml
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic Linux ${{ github.run_id }}
+          path: ./objdir-*/dist/update/update.xml
 
-    # generate-mac-update:
-    #     needs: [build]
-    #     name: Generate macOS Update Files
-    #     runs-on: macos-10.15
-    #     strategy:
-    #         fail-fast: false
-    #     steps:
-    #       - name: Checkout branch
-    #         uses: actions/checkout@v2
+      - name: Upload .mar
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact Classic Linux ${{ github.run_id }}
+          path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
 
-    #       - name: Download macOS artifacts
-    #         uses: actions/download-artifact@v2
-    #         with:
-    #           name: Artifact Classic macOS ${{ github.run_id }}
+  # generate-mac-update:
+  #     needs: [build]
+  #     name: Generate macOS Update Files
+  #     runs-on: macos-10.15
+  #     strategy:
+  #         fail-fast: false
+  #     steps:
+  #       - name: Checkout branch
+  #         uses: actions/checkout@v2
 
-    #       - name: Generate update files
-    #         run: |
-    #           export BUILD_DIR=$GITHUB_WORKSPACE
-    #           chmod +x ./build/github-actions/update.sh
-    #           ./build/github-actions/update.sh
+  #       - name: Download macOS artifacts
+  #         uses: actions/download-artifact@v2
+  #         with:
+  #           name: Artifact Classic macOS ${{ github.run_id }}
 
-    #       - name: Upload update.xml
-    #         uses: actions/upload-artifact@v2
-    #         with:
-    #           name: Artifact Classic macOS ${{ github.run_id }}
-    #           path: ./objdir-*/dist/update/update.xml
+  #       - name: Generate update files
+  #         run: |
+  #           export BUILD_DIR=$GITHUB_WORKSPACE
+  #           chmod +x ./build/github-actions/update.sh
+  #           ./build/github-actions/update.sh
 
-    #       - name: Upload .mar
-    #         uses: actions/upload-artifact@v2
-    #         with:
-    #           name: Artifact Classic macOS ${{ github.run_id }}
-    #           path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
+  #       - name: Upload update.xml
+  #         uses: actions/upload-artifact@v2
+  #         with:
+  #           name: Artifact Classic macOS ${{ github.run_id }}
+  #           path: ./objdir-*/dist/update/update.xml
 
-    # release:
-    #     needs: [generate-windows-update, generate-linux-update, generate-mac-update]
+  #       - name: Upload .mar
+  #         uses: actions/upload-artifact@v2
+  #         with:
+  #           name: Artifact Classic macOS ${{ github.run_id }}
+  #           path: ./objdir-*/dist/update/waterfox-classic-*.en-US.*.complete.xz.mar
+
+  # release:
+  #     needs: [generate-windows-update, generate-linux-update, generate-mac-update]
