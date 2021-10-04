@@ -3923,11 +3923,19 @@ BrowserGlue.prototype = {
         Services.prefs.clearUserPref("browser.tabBar.position");
       }
       // Migrate floe/abyss to lepton
+      const DEFAULT_THEME = "lepton@waterfox.net";
       AddonManager.getAddonsByTypes(["theme"]).then(themes => {
         let activeTheme = themes.find(addon => addon.isActive);
-        let themeId = activeTheme.id;
-        if (["floe@waterfox.net", "abyss@waterfox.net"].includes(themeId)) {
-          AddonManager.getAddonByID("lepton@waterfox.net").then(addon =>
+        if (activeTheme) {
+          let themeId = activeTheme.id;
+          if (["floe@waterfox.net", "abyss@waterfox.net"].includes(themeId)) {
+            AddonManager.getAddonByID(DEFAULT_THEME).then(addon =>
+              addon.enable()
+            );
+          }
+        } else {
+          // If no activeTheme detected, set default.
+          AddonManager.getAddonByID(DEFAULT_THEME).then(addon =>
             addon.enable()
           );
         }
