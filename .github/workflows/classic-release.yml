@@ -317,3 +317,30 @@ jobs:
 
   # release:
   #     needs: [generate-windows-update, generate-linux-update, generate-mac-update]
+
+  checksum:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-mac, build-windows]
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ./objdir-*/dist
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Generate checksum file
+        run: |
+          mkdir ./dist
+          mv ./objdir-*/dist/Artifact_Classic_*_${{ github.run_id }}/objdir-*/dist/waterfox*.tar.bz2 ./dist/
+          mv ./objdir-*/dist/Artifact_Classic_*_${{ github.run_id }}/objdir-*/dist/waterfox-classic/Waterfox*.dmg ./dist/
+          mv ./objdir-*/dist/install/sea/*.exe ./dist/
+          cd ./dist/
+          checksumFile=$(basename waterfox*.tar.bz2 | sed 's/.tar.bz2//g' | sed 's/$/.sha256/g')
+          sha256sum waterfox*.tar.bz2 | tee -a "$checksumFile"
+          sha256sum Waterfox*.dmg | tee -a "$checksumFile"
+          sha256sum Waterfox*.exe | tee -a "$checksumFile"
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_Checksum_${{ github.run_id }}
+          path: ./dist/*.sha256
