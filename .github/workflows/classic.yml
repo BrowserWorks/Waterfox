@@ -7,130 +7,134 @@ on:
   workflow_dispatch: null
 
 env:
-    ENABLE_ARTIFACTS_MODE: "true"
-    MOZCONFIG: "./.mozconfig-ga"
-    SHELL: "/bin/bash"
-    
+  ENABLE_ARTIFACTS_MODE: "true"
+  SHELL: "/bin/bash"
+
 jobs:
-    build:
-        strategy:
-            fail-fast: false
-            matrix:
-                os: [macos-10.15, ubuntu-18.04]
-
-        runs-on: ${{ matrix.os }}
-        steps:
-          - name: Set up Xcode version
-            uses: maxim-lobanov/setup-xcode@v1
-            with:
-              xcode-version: '11.2.1'
-            if: startsWith(matrix.os, 'macos')
-
-          - name: Checkout branch
-            uses: actions/checkout@v2
-
-          - name: Cache for macOS
-            uses: actions/cache@v2
-            with:
-              path: |
-                ~/Library/Caches/ccache
-              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
-            if: startsWith(matrix.os, 'macos')
-
-          - name: Cache for Linux
-            uses: actions/cache@v2
-            with:
-              path: |
-                ~/.ccache
-              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
-            if: startsWith(matrix.os, 'ubuntu')
-
-          - name: Cleanup useless paths
-            run: |
-              sudo rm -rf /usr/share/dotnet
-              sudo rm -rf /opt/ghc
-              sudo rm -rf /usr/local/share/boost
-              sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-            if: startsWith(matrix.os, 'ubuntu')
-
-          - name: Brew dependencies
-            run: |
-              brew update
-              brew install autoconf@2.13 ccache make nasm yasm
-            if: startsWith(matrix.os, 'macos')
-
-          - name: Apt-get dependencies
-            run: |
-              sudo apt-get update
-              sudo apt-get install autoconf2.13 ccache libasound2-dev \
-              libdbus-glib-1-dev libdrm-dev libfreetype6-dev libgconf2-dev \
-              libglib2.0-dev libgtk2.0-dev libgtk-3-dev libpangocairo-1.0-0 \
-              libpulse-dev libx11-xcb-dev libxkbcommon-dev nasm-mozilla \
-              python2.7 python3 yasm
-            if: startsWith(matrix.os, 'ubuntu')
-
-          - name: Get SDK
-            run: |
-              wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
-              tar -xvf MacOSX10.12.sdk.tar.xz
-            if: startsWith(matrix.os, 'macos')
-
-          - name: Mach build
-            run: |
-              ./mach build
-
-          - name: Mach package
-            run: |
-              ./mach package
-            if: env.ENABLE_ARTIFACTS_MODE == 'true'
-
-          - name: Upload macOS artifact
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic macOS ${{ github.run_id }}
-              path: ./objdir-*/dist/*.dmg
-            if: startsWith(matrix.os, 'macos') && env.ENABLE_ARTIFACTS_MODE == 'true'
-
-          - name: Upload Linux artifact
-            uses: actions/upload-artifact@v2
-            with:
-              name: Artifact Classic Linux ${{ github.run_id }}
-              path: ./objdir-*/dist/*.tar.bz2
-            if: startsWith(matrix.os, 'ubuntu') && env.ENABLE_ARTIFACTS_MODE == 'true'
-    build-windows:
-      runs-on: windows-2016
-      steps:
-        - name: Checkout branch
-          uses: actions/checkout@v2
-        - name: Set build directory
-          run: |
-            $pattern = '[\\]'
-            $BUILD_DIR = $env:GITHUB_WORKSPACE -replace $pattern, '/'
-            echo "G_WORKSPACE=${BUILD_DIR}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-        - name: Install depends
-          run: |
-            iwr -useb get.scoop.sh | iex
-            scoop install sccache llvm nasm --global
-            mkdir -p ~\\scoop\\buckets\\my-bucket
-            Copy-Item -Path $env:GITHUB_WORKSPACE\\build\\github-actions\\mozilla-build.json -Destination ~\scoop\buckets\my-bucket
-            scoop install my-bucket/mozilla-build --global
-        - name: Set system PATH variable
-          shell: bash
-          run:  sed -i 's/SET PATH=.*/&;C:\\Rust\\.cargo\\bin;C:\\ProgramData\\scoop\\shims/g' /c/ProgramData/scoop/apps/mozilla-build/current/start-shell.bat
-        - name: Cache for Windows
-          uses: actions/cache@v2
-          with:
-              path: |
-                  ~/AppData/Local/Mozilla/sccache/cache
-              key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
-        - name: Build
-          run:  C:\\ProgramData\\scoop\\apps\\mozilla-build\\current\\start-shell.bat "$Env:G_WORKSPACE/build/github-actions/build.sh"
-        - name: Package
-          run:  C:\\ProgramData\\scoop\\apps\\mozilla-build\\current\\start-shell.bat "$Env:G_WORKSPACE/build/github-actions/packageZip.sh"
-          if: env.ENABLE_ARTIFACTS_MODE == 'true'
-        - name: Upload artifact
-          uses: actions/upload-artifact@v2
-          with:
-            name: Artifact_Classic_Windows_${{ github.run_id }}
-            path: ./objdir-*/dist/waterfox*.zip
-          if: env.ENABLE_ARTIFACTS_MODE == 'true'
+  build-linux:
+    runs-on: ubuntu-18.04
+    container:
+      image: ghcr.io/waterfoxco/waterfox_docker_img:latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Cache for Linux
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.ccache
+          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+      - name: Build
+        run: |
+          ./mach build
+      - name: Package
+        run: |
+          ./mach package
+          mkdir ./dist/
+          mv ./objdir-*/dist/waterfox*.tar.bz2 ./dist/
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_Linux_${{ github.run_id }}
+          path: ./dist/waterfox*.tar.bz2
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+  build-mac:
+    runs-on: macos-10.15
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Set up Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "11.2.1"
+      - name: Install depends
+        run: |
+          brew update
+          brew install autoconf@2.13 ccache make nasm yasm
+      - name: Get SDK
+        run: |
+          wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
+          tar -xvf MacOSX10.12.sdk.tar.xz -C ../
+      - name: Cache for macOS
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/Library/Caches/ccache
+          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+      - name: Build
+        run: |
+          ./mach build
+      - name: Package
+        run: |
+          ./mach package
+          mkdir ./dist/
+          mv ./objdir-*/dist/waterfox*.dmg ./dist/
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_macOS_${{ github.run_id }}
+          path: ./dist/waterfox*.dmg
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+  build-windows:
+    runs-on: windows-2016
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Set build directory
+        run: |
+          $pattern = '[\\]'
+          $BUILD_DIR = $env:GITHUB_WORKSPACE -replace $pattern, '/'
+          echo "G_WORKSPACE=${BUILD_DIR}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Install depends
+        run: |
+          iwr -useb get.scoop.sh | iex
+          scoop install sccache llvm nasm --global
+          mkdir -p ~\\scoop\\buckets\\my-bucket
+          Copy-Item -Path $env:GITHUB_WORKSPACE\\build\\github-actions\\mozilla-build.json -Destination ~\scoop\buckets\my-bucket
+          scoop install my-bucket/mozilla-build --global
+      - name: Set system PATH variable
+        shell: bash
+        run: sed -i 's/SET PATH=.*/&;C:\\Rust\\.cargo\\bin;C:\\ProgramData\\scoop\\shims/g' /c/ProgramData/scoop/apps/mozilla-build/current/start-shell.bat
+      - name: Cache for Windows
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/AppData/Local/Mozilla/sccache/cache
+          key: ${{ runner.os }}-${{ hashFiles('**/browser/config/version_display.txt') }}
+      - name: Build
+        run: C:\\ProgramData\\scoop\\apps\\mozilla-build\\current\\start-shell.bat "$Env:G_WORKSPACE/build/github-actions/build.sh"
+      - name: Package
+        run: C:\\ProgramData\\scoop\\apps\\mozilla-build\\current\\start-shell.bat "$Env:G_WORKSPACE/build/github-actions/packageZip.sh"
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_Windows_${{ github.run_id }}
+          path: ./dist/waterfox*.zip
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+  checksum:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-mac, build-windows]
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ./dist
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Generate checksum file
+        run: |
+          cd ./dist/
+          mv ./Artifact_Classic_*_${{ github.run_id }}/waterfox*.* ./
+          checksumFile=$(basename waterfox*.zip | sed 's/.win64.zip//g' | sed 's/$/.sha256/g')
+          sha256sum waterfox*.tar.bz2 | tee -a "$checksumFile"
+          sha256sum waterfox*.dmg | tee -a "$checksumFile"
+          sha256sum waterfox*.zip | tee -a "$checksumFile"
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_Checksum_${{ github.run_id }}
+          path: ./dist/*.sha256
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
