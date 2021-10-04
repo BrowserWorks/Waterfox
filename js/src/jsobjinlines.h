@@ -531,26 +531,37 @@ HasNativeMethodPure(JSObject* obj, PropertyName* name, JSNative native, JSContex
 static MOZ_ALWAYS_INLINE bool
 HasNoToPrimitiveMethodPure(JSObject* obj, JSContext* cx)
 {
-    jsid id = SYMBOL_TO_JSID(cx->wellKnownSymbols().toPrimitive);
+    Symbol* toPrimitive = cx->wellKnownSymbols().toPrimitive;
+    JSObject* holder;
+    if (!MaybeHasInterestingSymbolProperty(cx, obj, toPrimitive, &holder)) {
+#ifdef DEBUG
+        JSObject* pobj;
+        PropertyResult prop;
+        MOZ_ASSERT(LookupPropertyPure(cx, obj, SYMBOL_TO_JSID(toPrimitive), &pobj, &prop));
+        MOZ_ASSERT(!prop);
+#endif
+        return true;
+    }
+
     JSObject* pobj;
     PropertyResult prop;
-    if (!LookupPropertyPure(cx, obj, id, &pobj, &prop))
+    if (!LookupPropertyPure(cx, holder, SYMBOL_TO_JSID(toPrimitive), &pobj, &prop))
         return false;
 
     return !prop;
 }
 
+extern bool
+ToPropertyKeySlow(JSContext* cx, HandleValue argument, MutableHandleId result);
+
 /* ES6 draft rev 28 (2014 Oct 14) 7.1.14 */
-inline bool
+MOZ_ALWAYS_INLINE bool
 ToPropertyKey(JSContext* cx, HandleValue argument, MutableHandleId result)
 {
-    // Steps 1-2.
-    RootedValue key(cx, argument);
-    if (!ToPrimitive(cx, JSTYPE_STRING, &key))
-        return false;
+    if (MOZ_LIKELY(argument.isPrimitive()))
+        return ValueToId<CanGC>(cx, argument, result);
 
-    // Steps 3-4.
-    return ValueToId<CanGC>(cx, key, result);
+    return ToPropertyKeySlow(cx, argument, result);
 }
 
 /*

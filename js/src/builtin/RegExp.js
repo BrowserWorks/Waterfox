@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// ES6 draft rev34 (2015/02/20) 21.2.5.3 get RegExp.prototype.flags
-// Updated for ES2018 /s (dotAll)
+// ECMAScript 2020 draft (2020/03/12) 21.2.5.4 get RegExp.prototype.flags
+// https://tc39.es/ecma262/#sec-get-regexp.prototype.flags
 function RegExpFlagsGetter() {
     // Steps 1-2.
     var R = this;
@@ -13,31 +13,31 @@ function RegExpFlagsGetter() {
     // Step 3.
     var result = "";
 
-    // Steps 4-6.
+    // Steps 4-5.
     if (R.global)
         result += "g";
 
-    // Steps 7-9.
+    // Steps 6-7.
     if (R.ignoreCase)
         result += "i";
 
-    // Steps 10-12.
+    // Steps 8-9.
     if (R.multiline)
         result += "m";
 
-    // Steps 13-15.
-    if (R.unicode)
-         result += "u";
-
-    // Steps 16-18.
-    if (R.sticky)
-        result += "y";
-
-    // ES2018
+    // Steps 10-11.
     if (R.dotAll)
         result += "s";
 
-    // Step 19.
+    // Steps 12-13.
+    if (R.unicode)
+         result += "u";
+
+    // Steps 14-15.
+    if (R.sticky)
+        result += "y";
+
+    // Step 16.
     return result;
 }
 _SetCanonicalName(RegExpFlagsGetter, "get flags");
@@ -108,9 +108,6 @@ function RegExpMatch(string) {
     // Step 2.
     if (!IsObject(rx))
         ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, rx === null ? "null" : typeof rx);
-
-    if (rx.flags === undefined || rx.flags === null)
-        ThrowTypeError(JSMSG_FLAGS_UNDEFINED_OR_NULL);
 
     // Step 3.
     var S = ToString(string);
@@ -290,28 +287,25 @@ function RegExpReplace(string, replaceValue) {
 
         // Steps 8-16.
         if (global) {
-            // Step 8.a.
-            var fullUnicode = !!(flags & REGEXP_UNICODE_FLAG);
-
             if (functionalReplace) {
-                var elemBase = GetElemBaseForLambda(replaceValue);
-                if (IsObject(elemBase)) {
-                    return RegExpGlobalReplaceOptElemBase(rx, S, lengthS, replaceValue,
-                                                          fullUnicode, elemBase);
+                // For large strings check if the replacer function is
+                // applicable for the elem-base optimization.
+                if (lengthS > 5000) {
+                    var elemBase = GetElemBaseForLambda(replaceValue);
+                    if (IsObject(elemBase)) {
+                        return RegExpGlobalReplaceOptElemBase(rx, S, lengthS, replaceValue, flags,
+                                                              elemBase);
+                    }
                 }
-                return RegExpGlobalReplaceOptFunc(rx, S, lengthS, replaceValue,
-                                                  fullUnicode);
+                return RegExpGlobalReplaceOptFunc(rx, S, lengthS, replaceValue, flags);
             }
             if (firstDollarIndex !== -1) {
-                return RegExpGlobalReplaceOptSubst(rx, S, lengthS, replaceValue,
-                                                   fullUnicode, firstDollarIndex);
+                return RegExpGlobalReplaceOptSubst(rx, S, lengthS, replaceValue, flags,
+                                                   firstDollarIndex);
             }
-            if (lengthS < 0x7fff) {
-                return RegExpGlobalReplaceShortOpt(rx, S, lengthS, replaceValue,
-                                                   fullUnicode);
-            }
-            return RegExpGlobalReplaceOpt(rx, S, lengthS, replaceValue,
-                                          fullUnicode);
+            if (lengthS < 0x7fff)
+                return RegExpGlobalReplaceShortOpt(rx, S, lengthS, replaceValue, flags);
+            return RegExpGlobalReplaceOpt(rx, S, lengthS, replaceValue, flags);
         }
 
         if (functionalReplace)
@@ -571,8 +565,11 @@ function RegExpGetFunctionalReplacement(result, S, position, replaceValue) {
 //   * global flag is true
 //   * S is a short string (lengthS < 0x7fff)
 //   * replaceValue is a string without "$"
-function RegExpGlobalReplaceShortOpt(rx, S, lengthS, replaceValue, fullUnicode)
+function RegExpGlobalReplaceShortOpt(rx, S, lengthS, replaceValue, flags)
 {
+    // Step 8.a.
+    var fullUnicode = !!(flags & REGEXP_UNICODE_FLAG);
+
     // Step 8.b.
     var lastIndex = 0;
     rx.lastIndex = 0;
@@ -1013,7 +1010,7 @@ function RegExpExec(R, S, forTest) {
     var result = callContentFunction(exec, R, S);
 
     // Step 5.c.
-    if (typeof result !== "object")
+    if (result !== null && !IsObject(result))
         ThrowTypeError(JSMSG_EXEC_NOT_OBJORNULL);
 
     // Step 5.d.
@@ -1114,6 +1111,19 @@ function RegExpSpecies() {
 }
 _SetCanonicalName(RegExpSpecies, "get [Symbol.species]");
 
+function IsRegExpMatchAllOptimizable(rx, C) {
+    if (!IsRegExpObject(rx))
+        return false;
+
+    var RegExpCtor = GetBuiltinConstructor("RegExp");
+    if (C !== RegExpCtor)
+        return false;
+
+    var RegExpProto = RegExpCtor.prototype;
+    return RegExpPrototypeOptimizable(RegExpProto) &&
+           RegExpInstanceOptimizable(rx, RegExpProto);
+}
+
 // String.prototype.matchAll proposal.
 //
 // RegExp.prototype [ @@matchAll ] ( string )
@@ -1131,49 +1141,73 @@ function RegExpMatchAll(string) {
     // Step 4.
     var C = SpeciesConstructor(rx, GetBuiltinConstructor("RegExp"));
 
-    // Step 5.
-    var flags = ToString(rx.flags);
+    var source, flags, matcher, lastIndex;
+    if (IsRegExpMatchAllOptimizable(rx, C)) {
+        // Step 5, 9-12.
+        source = UnsafeGetStringFromReservedSlot(rx, REGEXP_SOURCE_SLOT);
+        flags = UnsafeGetInt32FromReservedSlot(rx, REGEXP_FLAGS_SLOT);
 
-    // Step 2.b.iii; located here because it needs to check |flags|.
-    if (!callFunction(std_String_includes, flags, "g")) {
-        ThrowTypeError(JSMSG_REQUIRES_GLOBAL_REGEXP, "matchAll");
-    }
+        // Step 6.
+        matcher = rx;
 
-    // Step 6.
-    var matcher = new C(rx, flags);
+        // Step 7.
+        lastIndex = ToLength(rx.lastIndex);
 
-    // Steps 7-8.
-    matcher.lastIndex = ToLength(rx.lastIndex);
+        // Step 8 (not applicable for the optimized path).
+    } else {
+        // Step 5.
+        source = "";
+        flags = ToString(rx.flags);
 
-    // Steps 9-12.
-    // Note, always global because non-global throws as per
-    // https://github.com/tc39/ecma262/pull/1716
-    var flags = REGEXP_GLOBAL_FLAG |
+        // Step 6.
+        matcher = new C(rx, flags);
+
+        // Steps 7-8.
+        matcher.lastIndex = ToLength(rx.lastIndex);
+
+        // Steps 9-12.
+        flags = (callFunction(std_String_includes, flags, "g") ? REGEXP_GLOBAL_FLAG : 0);
                 (callFunction(std_String_includes, flags, "u") ? REGEXP_UNICODE_FLAG : 0);
 
+        // Take the non-optimized path.
+        lastIndex = REGEXP_STRING_ITERATOR_LASTINDEX_SLOW;
+    }
+
     // Step 13.
-    return CreateRegExpStringIterator(matcher, str, flags);
+    return CreateRegExpStringIterator(matcher, str, source, flags, lastIndex);
 }
 
 // String.prototype.matchAll proposal.
 //
 // CreateRegExpStringIterator ( R, S, global, fullUnicode )
-function CreateRegExpStringIterator(regexp, string, flags) {
+function CreateRegExpStringIterator(regexp, string, source, flags, lastIndex) {
     // Step 1.
     assert(typeof string === "string", "|string| is a string value");
 
     // Steps 2-3.
     assert(typeof flags === "number", "|flags| is a number value");
 
+    assert(typeof source === "string", "|source| is a string value");
+    assert(typeof lastIndex === "number", "|lastIndex| is a number value");
+
     // Steps 4-9.
     var iterator = NewRegExpStringIterator();
     UnsafeSetReservedSlot(iterator, REGEXP_STRING_ITERATOR_REGEXP_SLOT, regexp);
     UnsafeSetReservedSlot(iterator, REGEXP_STRING_ITERATOR_STRING_SLOT, string);
+    UnsafeSetReservedSlot(iterator, REGEXP_STRING_ITERATOR_SOURCE_SLOT, source);
     UnsafeSetReservedSlot(iterator, REGEXP_STRING_ITERATOR_FLAGS_SLOT, flags | 0);
-    UnsafeSetReservedSlot(iterator, REGEXP_STRING_ITERATOR_DONE_SLOT, false);
+    UnsafeSetReservedSlot(iterator, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT, lastIndex);
 
     // Step 10.
     return iterator;
+}
+
+function IsRegExpStringIteratorNextOptimizable() {
+    var RegExpProto = GetBuiltinPrototype("RegExp");
+    // If RegExpPrototypeOptimizable succeeds, `RegExpProto.exec` is
+    // guaranteed to be a data property.
+    return RegExpPrototypeOptimizable(RegExpProto) &&
+           RegExpProto.exec === RegExp_prototype_Exec;
 }
 
 // String.prototype.matchAll proposal.
@@ -1189,8 +1223,8 @@ function RegExpStringIteratorNext() {
     var result = { value: undefined, done: false };
 
     // Step 4.
-    var done = UnsafeGetReservedSlot(this, REGEXP_STRING_ITERATOR_DONE_SLOT);
-    if (done) {
+    var lastIndex = UnsafeGetReservedSlot(this, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT);
+    if (lastIndex === REGEXP_STRING_ITERATOR_LASTINDEX_DONE) {
         result.done = true;
         return result;
     }
@@ -1206,13 +1240,76 @@ function RegExpStringIteratorNext() {
     var global = !!(flags & REGEXP_GLOBAL_FLAG);
     var fullUnicode = !!(flags & REGEXP_UNICODE_FLAG);
 
+    if (lastIndex >= 0) {
+        assert(IsRegExpObject(regexp), "|regexp| is a RegExp object");
+
+        var source = UnsafeGetStringFromReservedSlot(this, REGEXP_STRING_ITERATOR_SOURCE_SLOT);
+        if (IsRegExpStringIteratorNextOptimizable() &&
+            UnsafeGetStringFromReservedSlot(regexp, REGEXP_SOURCE_SLOT) === source &&
+            UnsafeGetInt32FromReservedSlot(regexp, REGEXP_FLAGS_SLOT) === flags)
+        {
+            // Step 9 (Inlined RegExpBuiltinExec).
+            var globalOrSticky = !!(flags & (REGEXP_GLOBAL_FLAG | REGEXP_STICKY_FLAG));
+            if (!globalOrSticky)
+                lastIndex = 0;
+
+            var match = (lastIndex <= string.length)
+                        ? RegExpMatcher(regexp, string, lastIndex)
+                        : null;
+
+            // Step 10.
+            if (match === null) {
+                // Step 10.a.
+                UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT,
+                                      REGEXP_STRING_ITERATOR_LASTINDEX_DONE);
+
+                // Step 10.b.
+                result.done = true;
+                return result;
+            }
+
+            // Step 11.a.
+            if (global) {
+                // Step 11.a.i.
+                var matchLength = match[0].length;
+                lastIndex = match.index + matchLength;
+
+                // Step 11.a.ii.
+                if (matchLength === 0) {
+                    // Steps 11.a.ii.1-3.
+                    lastIndex = fullUnicode ? AdvanceStringIndex(string, lastIndex) : lastIndex + 1;
+                }
+
+                UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT, lastIndex);
+            } else {
+                // Step 11.b.i.
+                UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT,
+                                      REGEXP_STRING_ITERATOR_LASTINDEX_DONE);
+            }
+
+            // Steps 11.a.iii and 11.b.ii.
+            result.value = match;
+            return result;
+        }
+
+        // Reify the RegExp object.
+        regexp = regexp_construct_raw_flags(source, flags);
+        regexp.lastIndex = lastIndex;
+        UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_REGEXP_SLOT, regexp);
+
+        // Mark the iterator as no longer optimizable.
+        UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT,
+                              REGEXP_STRING_ITERATOR_LASTINDEX_SLOW);
+    }
+
     // Step 9.
     var match = RegExpExec(regexp, string, false);
 
     // Step 10.
     if (match === null) {
         // Step 10.a.
-        UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_DONE_SLOT, true);
+        UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT,
+                              REGEXP_STRING_ITERATOR_LASTINDEX_DONE);
 
         // Step 10.b.
         result.done = true;
@@ -1237,7 +1334,8 @@ function RegExpStringIteratorNext() {
         }
     } else {
         // Step 11.b.i.
-        UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_DONE_SLOT, true);
+        UnsafeSetReservedSlot(this, REGEXP_STRING_ITERATOR_LASTINDEX_SLOT,
+                              REGEXP_STRING_ITERATOR_LASTINDEX_DONE);
     }
 
     // Steps 11.a.iii and 11.b.ii.

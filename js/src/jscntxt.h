@@ -11,14 +11,12 @@
 
 #include "mozilla/MemoryReporting.h"
 
+#include "irregexp/RegExpTypes.h"
 #include "js/CharacterEncoding.h"
 #include "js/GCVector.h"
 #include "js/Result.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/RegExpTypes.h"
-#endif
 #include "threading/ProtectedData.h"
 #include "vm/ErrorReporting.h"
 #include "vm/Runtime.h"
@@ -349,13 +347,8 @@ struct JSContext : public JS::RootingContext,
      */
     js::ThreadLocalData<js::jit::JitActivation*> jitActivation;
 
-#ifdef JS_NEW_REGEXP
     // Shim for V8 interfaces used by irregexp code
     js::ThreadLocalData<js::irregexp::Isolate*> isolate;
-#else
-    // Information about the heap allocated backtrack stack used by RegExp JIT code.
-    js::ThreadLocalData<js::irregexp::RegExpStack> regexpStack;
-#endif
 
     /*
      * Points to the most recent activation running on the thread.
@@ -816,6 +809,7 @@ struct JSContext : public JS::RootingContext,
     js::ThreadLocalData<bool> interruptCallbackDisabled;
 
     mozilla::Atomic<uint32_t, mozilla::Relaxed> interrupt_;
+    mozilla::Atomic<uint32_t, mozilla::Relaxed> interruptRegExpJit_;
 
     enum InterruptMode {
         RequestInterruptUrgent,
@@ -870,6 +864,9 @@ struct JSContext : public JS::RootingContext,
 
     void* addressOfInterrupt() {
         return &interrupt_;
+    }
+    void* addressOfInterruptRegExpJit() {
+        return &interruptRegExpJit_;
     }
     void* addressOfJitStackLimit() {
         return &jitStackLimit;

@@ -152,8 +152,11 @@ class RegExpObject : public NativeObject
 
     static RegExpShared* getShared(JSContext* cx, Handle<RegExpObject*> regexp);
 
-    bool hasShared() {
-        return !!sharedRef();
+    bool hasShared() const { return !!sharedRef(); }
+
+    RegExpShared* getShared() const {
+      MOZ_ASSERT(hasShared());
+      return sharedRef();
     }
 
     void setShared(RegExpShared& shared) {
@@ -161,7 +164,7 @@ class RegExpObject : public NativeObject
         sharedRef().init(&shared);
     }
 
-    PreBarriered<RegExpShared*>& sharedRef() {
+    PreBarriered<RegExpShared*>& sharedRef() const {
         auto& ref = NativeObject::privateRef(PRIVATE_SLOT);
         return reinterpret_cast<PreBarriered<RegExpShared*>&>(ref);
     }

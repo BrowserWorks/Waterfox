@@ -35,13 +35,8 @@
 #include "frontend/BytecodeCompiler.h"
 #include "frontend/FoldConstants.h"
 #include "frontend/TokenStream.h"
-#ifndef JS_NEW_REGEXP
-#  include "irregexp/RegExpParser.h"
-#endif
+#include "irregexp/RegExpAPI.h"
 #include "js/RegExpFlags.h"
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/RegExpAPI.h"
-#endif
 #include "vm/RegExpObject.h"
 #include "wasm/AsmJS.h"
 
@@ -9487,14 +9482,9 @@ Parser<SyntaxParseHandler, char16_t>::newRegExp()
     RegExpFlags flags = tokenStream.currentToken().regExpFlags();
 
     mozilla::Range<const char16_t> source(chars, length);
-#ifdef JS_NEW_REGEXP
     if (!irregexp::CheckPatternSyntax(context, tokenStream, source, flags)) {
       return null();
     }
-#else
-    if (!js::irregexp::ParsePatternSyntax(tokenStream, alloc, source, flags.unicode(), flags.dotAll()))
-        return null();
-#endif
     return handler.newRegExp(SyntaxParseHandler::NodeGeneric, pos(), *this);
 }
 

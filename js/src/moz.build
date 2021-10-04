@@ -113,6 +113,7 @@ DIRS += [
     'ds',
     'frontend',
     'gc',
+    'irregexp',
     'jit',
     'perf',
     'proxy',
@@ -125,11 +126,6 @@ if CONFIG['JS_HAS_CTYPES']:
 
 if CONFIG['JS_BUNDLED_EDITLINE']:
     DIRS += ['editline']
-
-if CONFIG['JS_NEW_REGEXP']:
-    DIRS += ['new-regexp']
-else:
-    DIRS += ['irregexp']
 
 if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']

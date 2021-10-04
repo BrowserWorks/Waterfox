@@ -13,14 +13,9 @@
 #include "jscntxt.h"
 
 #include "frontend/TokenStream.h"
-#ifndef JS_NEW_REGEXP
-#  include "irregexp/RegExpParser.h"
-#endif
+#include "irregexp/RegExpAPI.h"
 #include "jit/InlinableNatives.h"
 #include "js/RegExpFlags.h"  // JS::RegExpFlag, JS::RegExpFlags
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/RegExpAPI.h"
-#endif
 #include "vm/NativeObject-inl.h"
 #include "vm/RegExpStatics.h"
 #include "vm/SelfHosting.h"
@@ -53,6 +48,7 @@ js::CreateRegExpMatchResult(JSContext* cx,
                             const MatchPairs& matches,
                             MutableHandleValue rval)
 {
+    MOZ_ASSERT(re);
     MOZ_ASSERT(input);
 
     /*
@@ -82,7 +78,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
         return false;
     }
 
-#ifdef JS_NEW_REGEXP
     // Step 24 (reordered)
     RootedNativeObject groups(cx);
     bool groupsInDictionaryMode = false;
@@ -97,7 +92,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
               cx, groups, NativeObject::createWithTemplate(cx, gc::DefaultHeap, groupsTemplate));
         }
     }
-#endif
 
     // Steps 22-23 and 27 a-e.
     // Store a Value for each pair.
@@ -117,7 +111,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
         }
     }
 
-#ifdef JS_NEW_REGEXP
     // Step 27 f.
     // The groups template object stores the names of the named captures in the
     // the order in which they are defined. The named capture indices vector
@@ -147,7 +140,6 @@ js::CreateRegExpMatchResult(JSContext* cx,
             }
         }
     }
-#endif
 
     /* Step 20 (reordered).
      * Set the |index| property. (TemplateObject positions it in slot 0) */
@@ -157,11 +149,9 @@ js::CreateRegExpMatchResult(JSContext* cx,
      * Set the |input| property. (TemplateObject positions it in slot 1) */
     arr->setSlot(1, StringValue(input));
 
-#ifdef JS_NEW_REGEXP
     // Steps 25-26 (reordered)
     // Set the |groups| property.
     arr->setSlot(2, groups ? ObjectValue(*groups) : UndefinedValue());
-#endif
 
 #ifdef DEBUG
     RootedValue test(cx);
@@ -251,14 +241,9 @@ js::ExecuteRegExpLegacy(JSContext* cx, RegExpStatics* res, Handle<RegExpObject*>
 static bool
 CheckPatternSyntaxSlow(JSContext* cx, HandleAtom pattern, RegExpFlags flags)
 {
-    CompileOptions options(cx);
+    CompileOptions options(cx, JSVERSION_DEFAULT);
     frontend::TokenStream dummyTokenStream(cx, options, nullptr, 0, nullptr);
-#ifdef JS_NEW_REGEXP
     return irregexp::CheckPatternSyntax(cx, dummyTokenStream, pattern, flags);
-#else
-    return irregexp::ParsePatternSyntax(dummyTokenStream, cx->tempLifoAlloc(), pattern,
-                                        flags.unicode(), flags.dotAll());
-#endif
 }
 
 static RegExpShared*
@@ -1105,8 +1090,7 @@ RegExpMatcherImpl(JSContext* cx, HandleObject regexp, HandleString string, int32
     }
 
     /* Steps 16-25 */
-    Handle<RegExpObject*> reobj = regexp.as<RegExpObject>();
-    RootedRegExpShared shared(cx, RegExpObject::getShared(cx, reobj));
+    RootedRegExpShared shared(cx, regexp->as<RegExpObject>().getShared());
     return CreateRegExpMatchResult(cx, shared, string, matches, rval);
 }
 
@@ -1147,8 +1131,7 @@ js::RegExpMatcherRaw(JSContext* cx, HandleObject regexp, HandleString input,
     // The MatchPairs will always be passed in, but RegExp execution was
     // successful only if the pairs have actually been filled in.
     if (maybeMatches && maybeMatches->pairsRaw()[0] >= 0) {
-        Handle<RegExpObject*> reobj = regexp.as<RegExpObject>();
-        RootedRegExpShared shared(cx, RegExpObject::getShared(cx, reobj));
+        RootedRegExpShared shared(cx, regexp->as<RegExpObject>().getShared());
         return CreateRegExpMatchResult(cx, shared, input, *maybeMatches, output);
     }
 
@@ -1293,6 +1276,25 @@ js::RegExpTesterRaw(JSContext* cx, HandleObject regexp, HandleString input,
 
 using CapturesVector = GCVector<Value, 4>;
 
+struct JSSubString
+{
+    JSLinearString* base;
+    size_t          offset;
+    size_t          length;
+
+    JSSubString() { mozilla::PodZero(this); }
+
+    void initEmpty(JSLinearString* base) {
+        this->base = base;
+        offset = length = 0;
+    }
+    void init(JSLinearString* base, size_t offset, size_t length) {
+        this->base = base;
+        this->offset = offset;
+        this->length = length;
+    }
+};
+
 static void
 GetParen(JSLinearString* matched, const JS::Value& capture, JSSubString* out)
 {
@@ -1368,7 +1370,6 @@ InterpretDollar(JSLinearString* matched,
   if (c == '<') {
     // Step 1.
     if (namedCaptures.length() == 0) {
-      *skip = 2;
       return false;
     }
 
@@ -1378,7 +1379,6 @@ InterpretDollar(JSLinearString* matched,
 
     // Step 2.c
     if (!nameEnd) {
-      *skip = 2;
       return false;
     }
 
@@ -1388,13 +1388,13 @@ InterpretDollar(JSLinearString* matched,
     // we can just take the next one in the list.
     size_t nameLength = nameEnd - nameStart;
     *skip = nameLength + 3;  // $<...>
+
     // Steps 2.d.iii-iv
     GetParen(matched, namedCaptures[*currentNamedCapture], out);
     *currentNamedCapture += 1;
     return true;
   }
 
-    *skip = 2;
     switch (c) {
       default:
         return false;
@@ -1418,6 +1418,8 @@ InterpretDollar(JSLinearString* matched,
         out->init(string, tailPos, string->length() - tailPos);
         break;
     }
+
+    *skip = 2;
     return true;
 }
 
@@ -1593,10 +1595,12 @@ static bool CollectNames(JSContext* cx, HandleLinearString replacement,
       // Step 2.b
       const CharT* nameStart = currentDollar + 2;
       const CharT* nameEnd = js_strchr_limit(nameStart, '>', replacementEnd);
+
       // Step 2.c
       if (!nameEnd) {
         return true;
       }
+
       // Step 2.d.i
       size_t nameLength = nameEnd - nameStart;
       JSAtom* atom = AtomizeChars(cx, nameStart, nameLength);
@@ -1644,14 +1648,15 @@ static bool InitNamedCaptures(JSContext* cx, HandleLinearString replacement,
   // https://tc39.es/ecma262/#table-45, "$<" section
   RootedId id(cx);
   RootedValue capture(cx);
-  RootedLinearString linear(cx);
   for (uint32_t i = 0; i < names.length(); i++) {
     // Step 2.d.i
     id = names[i];
+
     // Step 2.d.ii
     if (!GetProperty(cx, groups, groups, id, &capture)) {
       return false;
     }
+
     // Step 2.d.iii
     if (capture.isUndefined()) {
       if (!namedCaptures.append(capture)) {
@@ -1663,7 +1668,7 @@ static bool InitNamedCaptures(JSContext* cx, HandleLinearString replacement,
       if (!str) {
         return false;
       }
-      linear = str->ensureLinear(cx);
+      JSLinearString* linear = str->ensureLinear(cx);
       if (!linear) {
         return false;
       }
@@ -1690,16 +1695,14 @@ NeedTwoBytes(HandleLinearString string,
     if (matched->hasTwoByteChars())
         return true;
 
-    for (size_t i = 0, len = captures.length(); i < len; i++) {
-        const Value& capture = captures[i];
+    for (const Value& capture : captures) {
         if (capture.isUndefined())
             continue;
         if (capture.toString()->hasTwoByteChars())
             return true;
     }
 
-    for (size_t i = 0, len = namedCaptures.length(); i < len; i++) {
-        const Value& capture = namedCaptures[i];
+    for (const Value& capture : namedCaptures) {
         if (capture.isUndefined()) {
             continue;
         }
@@ -1954,7 +1957,7 @@ js::RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto)
         return false;
 
     JSNative dotAllGetter;
-    if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().global), &dotAllGetter))
+    if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().dotAll), &dotAllGetter))
         return false;
 
     if (dotAllGetter != regexp_dotAll)

@@ -79,9 +79,7 @@ struct DefaultJitOptions
     bool ionInterruptWithoutSignals;
     bool simulatorAlwaysInterrupt;
     uint32_t baselineWarmUpThreshold;
-#ifdef JS_NEW_REGEXP
     uint32_t regexpWarmUpThreshold;
-#endif
     uint32_t exceptionBailoutThreshold;
     uint32_t frequentBailoutThreshold;
     uint32_t maxStackArgs;

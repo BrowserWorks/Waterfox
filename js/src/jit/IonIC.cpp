@@ -162,6 +162,15 @@ IonGetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonGetProperty
         if (outerScript->hasIonScript())
             Invalidate(cx, outerScript);
 
+        // IonBuilder::createScriptedThis does not use InvalidedIdempotentCache
+        // flag so prevent bailout-loop by disabling Ion for the script.
+        MOZ_ASSERT(ic->kind() == CacheKind::GetProp);
+        if (idVal.toString()->asAtom().asPropertyName() == cx->names().prototype) {
+          if (val.isObject() && val.toObject().is<JSFunction>()) {
+            outerScript->setIonScript(cx->runtime(), ION_DISABLED_SCRIPT);
+          }
+        }
+
         // We will redo the potentially effectful lookup in Baseline.
         return true;
     }

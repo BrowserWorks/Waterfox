@@ -11,13 +11,35 @@ FINAL_LIBRARY = "js"
 # Includes should be relative to parent path
 LOCAL_INCLUDES += ["!..", ".."]
 
-UNIFIED_SOURCES += [
-    'NativeRegExpMacroAssembler.cpp',
-    'RegExpAST.cpp',
-    'RegExpCharacters.cpp',
-    'RegExpEngine.cpp',
-    'RegExpInterpreter.cpp',
-    'RegExpMacroAssembler.cpp',
-    'RegExpParser.cpp',
-    'RegExpStack.cpp',
+CXXFLAGS += ["-Wno-error=type-limits"]
+
+SOURCES += [
+    'imported/regexp-ast.cc',
+    'imported/regexp-bytecode-generator.cc',
+    'imported/regexp-bytecode-peephole.cc',
+    'imported/regexp-bytecodes.cc',
+    'imported/regexp-compiler-tonode.cc',
+    'imported/regexp-compiler.cc',
+    'imported/regexp-dotprinter.cc',
+    'imported/regexp-interpreter.cc',
+    'imported/regexp-macro-assembler-tracer.cc',
+    'imported/regexp-macro-assembler.cc',
+    'imported/regexp-parser.cc',
+    'imported/regexp-stack.cc',
+    'RegExpAPI.cpp',
+    'RegExpNativeMacroAssembler.cpp',
+    'RegExpShim.cpp',
+    'util/UnicodeShim.cpp'
 ]
+
+if CONFIG['ENABLE_INTL_API']:
+    CXXFLAGS += ['-DV8_INTL_SUPPORT']
+    SOURCES += [
+        'imported/property-sequences.cc',
+        'imported/special-case.cc'
+    ]
+
+if CONFIG['_MSC_VER']:
+    # This is intended as a temporary workaround to unblock compilation
+    # on VS2015 in warnings as errors mode.
+    CXXFLAGS += ['-wd4275']

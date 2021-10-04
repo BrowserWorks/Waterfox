@@ -135,6 +135,7 @@
     _(IntrinsicIsMapIterator)       \
     _(IntrinsicIsSetIterator)       \
     _(IntrinsicIsStringIterator)    \
+    _(IntrinsicGuardToRegExpStringIterator)          \
                                     \
     _(IntrinsicIsMapObject)         \
     _(IntrinsicGetNextMapEntryForIterator) \
@@ -144,6 +145,7 @@
                                     \
     _(IntrinsicNewArrayIterator)    \
     _(IntrinsicNewStringIterator)   \
+    _(IntrinsicNewRegExpStringIterator)              \
                                     \
     _(IntrinsicArrayBufferByteLength) \
     _(IntrinsicPossiblyWrappedArrayBufferByteLength) \

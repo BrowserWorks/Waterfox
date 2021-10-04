@@ -100,3 +100,6 @@
 ^toolkit/components/jsoncpp/.*
 ^toolkit/components/protobuf/.*
 ^toolkit/crashreporter/google-breakpad/.*
+
+# Don't want to reformat irregexp (third-party code)
+js/src/irregexp/imported/.*

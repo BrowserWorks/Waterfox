@@ -46,12 +46,10 @@
 
 #include "gc/FreeOp.h"
 #include "gc/Marking.h"
+#include "irregexp/RegExpAPI.h"
 #include "jit/Ion.h"
 #include "jit/PcScriptCache.h"
 #include "js/CharacterEncoding.h"
-#ifdef JS_NEW_REGEXP
-#  include "new-regexp/RegExpAPI.h"
-#endif
 #include "vm/ErrorReporting.h"
 #include "vm/HelperThreads.h"
 #include "vm/Shape.h"
@@ -121,11 +119,6 @@ JSContext::init(ContextKind kind)
         threadNative_ = (size_t)pthread_self();
 #endif
 
-#ifndef JS_NEW_REGEXP
-        if (!regexpStack.ref().init())
-            return false;
-#endif
-
         if (!fx.initInstance())
             return false;
 
@@ -139,12 +132,10 @@ JSContext::init(ContextKind kind)
             return false;
     }
 
-#ifdef JS_NEW_REGEXP
     isolate = irregexp::CreateIsolate(this);
     if (!isolate) {
         return false;
     }
-#endif
 
     // Set the ContextKind last, so that ProtectedData checks will allow us to
     // initialize this context before it becomes the runtime's active context.
@@ -1350,6 +1341,7 @@ JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
     asyncCallIsExplicit(false),
     interruptCallbackDisabled(false),
     interrupt_(false),
+    interruptRegExpJit_(false),
     handlingJitInterrupt_(false),
     osrTempData_(nullptr),
     ionReturnOverride_(MagicValue(JS_ARG_POISON)),
@@ -1406,9 +1398,9 @@ JSContext::~JSContext()
         DestroyTraceLogger(traceLogger);
 #endif
 
-#ifdef JS_NEW_REGEXP
-  irregexp::DestroyIsolate(isolate.ref());
-#endif
+    if (isolate) {
+      irregexp::DestroyIsolate(isolate.ref());
+    }
 
     MOZ_ASSERT(TlsContext.get() == this);
     TlsContext.set(nullptr);
@@ -1541,15 +1533,15 @@ JSContext::updateJITEnabled()
     jitIsBroken = IsJITBrokenHere();
 }
 
-size_t
-JSContext::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
-{
-    /*
-     * There are other JSContext members that could be measured; the following
-     * ones have been found by DMD to be worth measuring.  More stuff may be
-     * added later.
-     */
-    return cycleDetectorVector().sizeOfExcludingThis(mallocSizeOf);
+size_t JSContext::sizeOfExcludingThis(
+    mozilla::MallocSizeOf mallocSizeOf) const {
+  /*
+   * There are other JSContext members that could be measured; the following
+   * ones have been found by DMD to be worth measuring.  More stuff may be
+   * added later.
+   */
+  return cycleDetectorVector().sizeOfExcludingThis(mallocSizeOf) +
+         irregexp::IsolateSizeOfIncludingThis(isolate, mallocSizeOf);
 }
 
 void

@@ -1769,6 +1769,7 @@ intrinsic_StringSplitStringLimit(JSContext* cx, unsigned argc, Value* vp)
     // args[2] should be already in UInt32 range, but it could be double typed,
     // because of Ion optimization.
     uint32_t limit = uint32_t(args[2].toNumber());
+    MOZ_ASSERT(limit > 0, "Zero limit case is already handled in self-hosted code.");
 
     RootedObjectGroup group(cx, ObjectGroupCompartment::getStringSplitStringGroup(cx));
     if (!group)
@@ -2420,7 +2421,9 @@ static const JSFunctionSpec intrinsic_functions[] = {
                     intrinsic_IsInstanceOfBuiltin<StringIteratorObject>, 1,0,
                     IntrinsicIsStringIterator),
 
-    JS_FN("GuardToRegExpStringIterator", intrinsic_IsInstanceOfBuiltin<RegExpStringIteratorObject>,  2,0),
+    JS_INLINABLE_FN("GuardToRegExpStringIterator",
+                    intrinsic_IsInstanceOfBuiltin<RegExpStringIteratorObject>, 1,0,
+                    IntrinsicGuardToRegExpStringIterator),
 
     JS_FN("_CreateMapIterationResultPair", intrinsic_CreateMapIterationResultPair, 0, 0),
     JS_INLINABLE_FN("_GetNextMapEntryForIterator", intrinsic_GetNextMapEntryForIterator, 2,0,
@@ -2440,7 +2443,9 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_FN("CallStringIteratorMethodIfWrapped",
           CallNonGenericSelfhostedMethod<Is<StringIteratorObject>>,     2,0),
 
-    JS_FN("NewRegExpStringIterator", intrinsic_NewRegExpStringIterator, 0, 0),
+    JS_INLINABLE_FN("NewRegExpStringIterator",
+                    intrinsic_NewRegExpStringIterator, 0, 0,
+                    IntrinsicNewRegExpStringIterator),
     JS_FN("CallRegExpStringIteratorMethodIfWrapped",
           CallNonGenericSelfhostedMethod<Is<RegExpStringIteratorObject>>, 2, 0),
 
