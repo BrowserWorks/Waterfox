@@ -116,7 +116,7 @@ jobs:
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
   checksum:
     runs-on: ubuntu-latest
-    needs: [build-linux, build-mac, build-windows]
+    needs: [build-linux, build-mac, build-windows, create-appimage]
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v2
@@ -131,10 +131,39 @@ jobs:
           sha256sum waterfox*.tar.bz2 | tee -a "$checksumFile"
           sha256sum waterfox*.dmg | tee -a "$checksumFile"
           sha256sum waterfox*.zip | tee -a "$checksumFile"
+          sha256sum waterfox*.AppImage | tee -a "$checksumFile"
         if: env.ENABLE_ARTIFACTS_MODE == 'true'
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: Artifact_Classic_Checksum_${{ github.run_id }}
           path: ./dist/*.sha256
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+  create-appimage:
+    env:
+      UPDATE_INFO: "zsync|https://cdn.waterfox.net/releases/linux64/appimage/waterfox-classic-latest-x86_64.AppImage.zsync"
+    runs-on: ubuntu-latest
+    needs: [build-linux]
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ./dist
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Create AppImage
+        run: |
+          sudo apt-get update
+          sudo apt-get install appstream
+          ./build/github-actions/appimage/create_appimage.sh
+        if: env.ENABLE_ARTIFACTS_MODE == 'true'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifact_Classic_AppImage_${{ github.run_id }}
+          path: |
+            ./dist/waterfox-classic-*-x86_64.AppImage
+            ./dist/waterfox-classic-*-x86_64.AppImage.zsync
         if: env.ENABLE_ARTIFACTS_MODE == 'true'

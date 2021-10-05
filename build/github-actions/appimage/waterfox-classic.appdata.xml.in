@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>net.waterfox.waterfox-classic</id>
+    <metadata_license>CC-BY-SA-3.0</metadata_license>
+    <project_license>MPL-2.0</project_license>
+    <project_group>Waterfox</project_group>
+    <developer_name>Waterfox Ltd</developer_name>
+    <name>Waterfox Classic</name>
+    <summary>Customizable privacy-conscious web browser with primary support for legacy extensions</summary>
+    <description>
+        <p>Waterfox focuses on giving users choice. The browser is focused on power users, which lets you make the important decisions. There is no plugin whitelist (meaning you can run Java Applets and Silverlight apps), you can run whichever extensions you like (including bootstrapped add-ons that can completely change functionality of the browser) and absolutely no data or telemetry is sent back to Mozilla or the Waterfox project.</p>
+        <p>Waterfox is powered by Mozilla Firefox source code.</p>
+    </description>
+    <launchable type="desktop-id">net.waterfox.waterfox-classic.desktop</launchable>
+    <url type="homepage">https://www.waterfox.net/</url>
+    <url type="bugtracker">https://github.com/WaterfoxCo/Waterfox/issues</url>
+    <screenshots>
+        <screenshot type="default">
+            <image>https://i.imgur.com/5tTNJNJ.png</image>
+        </screenshot>
+    </screenshots>
+    <provides>
+        <id>net.waterfox.waterfox-classic.desktop</id>
+    </provides>
+    <keywords>
+        <keyword>internet</keyword>
+        <keyword>web</keyword>
+    </keywords>
+    <content_rating type="oars-1.1" />
+    <releases>
+        <release version="__VERSION__" date="__DATE__"/>
+    </releases>
+</component>
