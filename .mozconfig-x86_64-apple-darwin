@@ -44,7 +44,7 @@ ac_add_options --disable-trace-logging
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
-ac_add_options --enable-optimize="-O3 -march=core2 -mtune=haswell -w"
+ac_add_options --enable-optimize="-O3 -march=nehalem -mtune=haswell -w"
 ac_add_options --enable-rust-simd
 ac_add_options --enable-updater
 
