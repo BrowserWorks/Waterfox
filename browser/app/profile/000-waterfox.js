@@ -128,7 +128,7 @@ pref("security.protectionspopup.recordEventTelemetry", false, locked);
 pref("security.sandbox.content.win32k-disable", true);
 pref("security.ssl.enable_false_start", true);
 pref("security.ssl.errorReporting.enabled", false, locked);
-pref("services.settings.server", "data:application/json,", locked); // 24H
+pref("services.settings.server", "https://firefox.settings.services.mozilla.com/v1", locked); // 24H
 pref("services.sync.engine.prefs", false, locked); // Never sync prefs, addons, or tabs with other browsers
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", false, locked);

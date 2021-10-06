@@ -19,7 +19,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   Region: "resource://gre/modules/Region.jsm",
   RemoteSettings: "resource://services-settings/remote-settings.js",
   SearchEngine: "resource://gre/modules/SearchEngine.jsm",
-  SearchEngineSelector: "resource://gre/modules/SearchEngineSelector.jsm",
   SearchSettings: "resource://gre/modules/SearchSettings.jsm",
   SearchStaticData: "resource://gre/modules/SearchStaticData.jsm",
   SearchUtils: "resource://gre/modules/SearchUtils.jsm",
@@ -248,15 +247,8 @@ SearchService.prototype = {
     Services.obs.addObserver(this, Region.REGION_TOPIC);
 
     try {
-      // Create the search engine selector.
-      this._engineSelector = new SearchEngineSelector(
-        this._handleConfigurationUpdated.bind(this)
-      );
-
       // See if we have a settings file so we don't have to parse a bunch of XML.
       let settings = await this._settings.get();
-
-      this._setupRemoteSettings().catch(Cu.reportError);
 
       await this._loadEngines(settings);
 
@@ -1109,16 +1101,16 @@ SearchService.prototype = {
       ? "esr"
       : AppConstants.MOZ_UPDATE_CHANNEL;
 
-    let {
-      engines,
-      privateDefault,
-    } = await this._engineSelector.fetchEngineConfiguration({
-      locale,
-      region,
-      channel,
-      experiment: gExperiment,
-      distroID: SearchUtils.distroID,
-    });
+    const engines = [
+      { webExtension: { id: "bing@search.waterfox.net" }, orderHint: 100 },
+      { webExtension: { id: "google@search.waterfox.net" }, orderHint: 90 },
+      { webExtension: { id: "startpage@search.waterfox.net" }, orderHint: 80 },
+      { webExtension: { id: "ddg@search.waterfox.net" }, orderHint: 70 },
+      { webExtension: { id: "yahoo@search.waterfox.net" }, orderHint: 60 },
+      { webExtension: { id: "amazon@search.mozilla.org" }, orderHint: 50 },
+      { webExtension: { id: "wikipedia@search.mozilla.org" }, orderHint: 40 },
+      { webExtension: { id: "ebay@search.mozilla.org" }, orderHint: 30 },
+    ];
 
     for (let e of engines) {
       if (!e.webExtension) {
@@ -1127,7 +1119,7 @@ SearchService.prototype = {
       e.webExtension.locale = e.webExtension?.locale ?? SearchUtils.DEFAULT_TAG;
     }
 
-    return { engines, privateDefault };
+    return { engines, privateDefault: undefined };
   },
 
   _setDefaultAndOrdersFromSelector(engines, privateDefault) {
