@@ -1103,13 +1103,12 @@ SearchService.prototype = {
 
     const engines = [
       { webExtension: { id: "bing@search.waterfox.net" }, orderHint: 100 },
-      { webExtension: { id: "google@search.waterfox.net" }, orderHint: 90 },
-      { webExtension: { id: "startpage@search.waterfox.net" }, orderHint: 80 },
-      { webExtension: { id: "ddg@search.waterfox.net" }, orderHint: 70 },
-      { webExtension: { id: "yahoo@search.waterfox.net" }, orderHint: 60 },
-      { webExtension: { id: "amazon@search.mozilla.org" }, orderHint: 50 },
+      { webExtension: { id: "startpage@search.waterfox.net" }, orderHint: 90 },
+      { webExtension: { id: "yahoo@search.waterfox.net" }, orderHint: 80 },
+      { webExtension: { id: "google@search.waterfox.net" }, orderHint: 70 },
+      { webExtension: { id: "ddg@search.waterfox.net" }, orderHint: 60 },
+      { webExtension: { id: "ecosia@search.waterfox.net" }, orderHint: 50 },
       { webExtension: { id: "wikipedia@search.mozilla.org" }, orderHint: 40 },
-      { webExtension: { id: "ebay@search.mozilla.org" }, orderHint: 30 },
     ];
 
     for (let e of engines) {
