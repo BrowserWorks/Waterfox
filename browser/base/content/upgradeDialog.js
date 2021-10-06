@@ -53,10 +53,9 @@ const SCREEN_STRINGS = [
 
 // Themes that can be selected by the button with matching index.
 const THEME_IDS = [
-  "default-theme@mozilla.org",
+  "lepton@waterfox.net",
   "firefox-compact-light@mozilla.org",
   "firefox-compact-dark@mozilla.org",
-  "firefox-alpenglow@mozilla.org",
 ];
 
 // Callbacks to run when the dialog closes (both from this file or externally).
