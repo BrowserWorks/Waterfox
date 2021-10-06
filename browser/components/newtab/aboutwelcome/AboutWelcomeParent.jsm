@@ -100,13 +100,13 @@ async function getImportableSites() {
   return sites;
 }
 
-async function setDefaultEngine(engine_name) {
+function setDefaultEngine(engine_name) {
   try {
     let engine = Services.search.getEngineByName(engine_name);
     Services.prefs.setCharPref("distribution.engine", engine_name);
     Services.search.setDefault(engine);
     Services.search.setDefaultPrivate(engine);
-    if (engine_name == "Startpage") {
+    if (engine_name === "Startpage") {
       engine = engine.wrappedJSObject;
       // Store original startpage segment
       Services.prefs.setCharPref(
@@ -116,7 +116,7 @@ async function setDefaultEngine(engine_name) {
       // Set the startpage defaults
       const mainURL = "https://www.startpage.com/do/search?q={searchTerms}";
       const segment = "startpage.waterfox.default";
-      engine.__searchForm = mainURL + `&segment=${segment}`;
+      engine.__searchForm = `${mainURL}&segment=${segment}`;
       engine._urls[0].params[1] = {
         name: "segment",
         value: segment,
