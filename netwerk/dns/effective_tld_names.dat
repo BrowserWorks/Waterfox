@@ -6206,29 +6206,22 @@ gov.tm
 mil.tm
 edu.tm
 
-// tn : https://en.wikipedia.org/wiki/.tn
-// http://whois.ati.tn/
+// tn : http://www.registre.tn/fr/
+// https://whois.ati.tn/
 tn
 com.tn
 ens.tn
 fin.tn
 gov.tn
 ind.tn
+info.tn
 intl.tn
+mincom.tn
 nat.tn
 net.tn
 org.tn
-info.tn
 perso.tn
 tourism.tn
-edunet.tn
-rnrt.tn
-rns.tn
-rnu.tn
-mincom.tn
-agrinet.tn
-defense.tn
-turen.tn
 
 // to : https://en.wikipedia.org/wiki/.to
 // Submitted by registry <egullich@colo.to>
@@ -7132,7 +7125,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2021-08-19T15:13:52Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2021-10-01T15:13:10Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -8022,7 +8015,7 @@ duck
 // dunlop : 2015-07-02 The Goodyear Tire & Rubber Company
 dunlop
 
-// dupont : 2015-06-25 E. I. du Pont de Nemours and Company
+// dupont : 2015-06-25 DuPont Specialty Products USA, LLC
 dupont
 
 // durban : 2014-03-24 ZA Central Registry NPC trading as ZA Central Registry
@@ -9558,9 +9551,6 @@ rio
 // rip : 2014-07-10 Dog Beach, LLC
 rip
 
-// rmit : 2015-11-19 Royal Melbourne Institute of Technology
-rmit
-
 // rocher : 2014-12-18 Ferrero Trading Lux S.A.
 rocher
 
@@ -11058,10 +11048,6 @@ clerkstage.app
 *.stg.dev
 *.stgstage.dev
 
-// Clic2000 : https://clic2000.fr
-// Submitted by Mathilde Blanchemanche <mathilde@clic2000.fr>
-clic2000.net
-
 // ClickRising : https://clickrising.com/
 // Submitted by Umut Gumeli <infrastructure-publicsuffixlist@clickrising.com>
 clickrising.net
@@ -11615,9 +11601,13 @@ ddnss.org
 definima.net
 definima.io
 
-// DigitalOcean : https://digitalocean.com/
-// Submitted by Braxton Huggins <bhuggins@digitalocean.com>
+// DigitalOcean App Platform : https://www.digitalocean.com/products/app-platform/
+// Submitted by Braxton Huggins <psl-maintainers@digitalocean.com>
 ondigitalocean.app
+
+// DigitalOcean Spaces : https://www.digitalocean.com/products/spaces/
+// Submitted by Robin H. Johnson <psl-maintainers@digitalocean.com>
+*.digitaloceanspaces.com
 
 // dnstrace.pro : https://dnstrace.pro/
 // Submitted by Chris Partridge <chris@partridge.tech>
@@ -12083,6 +12073,7 @@ withyoutube.com
 *.gateway.dev
 cloud.goog
 translate.goog
+*.usercontent.goog
 cloudfunctions.net
 blogspot.ae
 blogspot.al
@@ -13065,6 +13056,10 @@ postman-echo.com
 pstmn.io
 mock.pstmn.io
 httpbin.org
+
+//prequalifyme.today : https://prequalifyme.today
+//Submitted by DeepakTiwari deepak@ivylead.io
+prequalifyme.today
 
 // prgmr.com : https://prgmr.com/
 // Submitted by Sarah Newman <owner@prgmr.com>
