@@ -428,7 +428,7 @@ var MigratorPrototype = {
           // If migrate throws, an error occurred, and the callback
           // (itemMayBeDone) might haven't been called.
           try {
-            res.migrate(resourceDone);
+            await res.migrate(resourceDone);
           } catch (ex) {
             Cu.reportError(ex);
             resourceDone(false);
