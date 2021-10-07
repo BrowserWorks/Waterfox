@@ -11,6 +11,7 @@
 // shellapi.h is needed to build with WIN32_LEAN_AND_MEAN
 #include <shellapi.h>
 
+#include "mozilla/StaticPrefs_clipboard.h"
 #include "nsArrayUtils.h"
 #include "nsCOMPtr.h"
 #include "nsDataObj.h"
@@ -142,6 +143,29 @@ nsresult nsClipboard::CreateNativeDataObject(nsITransferable* aTransferable,
   return res;
 }
 
+static nsresult StoreValueInDataObject(nsDataObj* aObj,
+                                       LPCWSTR aClipboardFormat, DWORD value) {
+  HGLOBAL hGlobalMemory = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+  if (!hGlobalMemory) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  DWORD* pdw = (DWORD*)::GlobalLock(hGlobalMemory);
+  *pdw = value;
+  ::GlobalUnlock(hGlobalMemory);
+
+  STGMEDIUM stg;
+  stg.tymed = TYMED_HGLOBAL;
+  stg.pUnkForRelease = nullptr;
+  stg.hGlobal = hGlobalMemory;
+
+  FORMATETC fe;
+  SET_FORMATETC(fe, ::RegisterClipboardFormat(aClipboardFormat), 0,
+                DVASPECT_CONTENT, -1, TYMED_HGLOBAL)
+  aObj->SetData(&fe, &stg, TRUE);
+
+  return NS_OK;
+}
+
 //-------------------------------------------------------------------------
 nsresult nsClipboard::SetupNativeDataObject(nsITransferable* aTransferable,
                                             IDataObject* aDataObj) {
@@ -245,6 +269,23 @@ nsresult nsClipboard::SetupNativeDataObject(nsITransferable* aTransferable,
                     ::RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), 0,
                     DVASPECT_CONTENT, -1, TYMED_HGLOBAL)
       dObj->AddDataFlavor(kFilePromiseMime, &shortcutFE);
+    }
+  }
+
+  if (!StaticPrefs::clipboard_copyPrivateDataToClipboardCloudOrHistory()) {
+    // Let Clipboard know that data is sensitive and must not be copied to
+    // the Cloud Clipboard, Clipboard History and similar.
+    // https://docs.microsoft.com/en-us/windows/win32/dataxchg/clipboard-formats#cloud-clipboard-and-clipboard-history-formats
+    if (aTransferable->GetIsPrivateData()) {
+      nsresult rv =
+          StoreValueInDataObject(dObj, TEXT("CanUploadToCloudClipboard"), 0);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv =
+          StoreValueInDataObject(dObj, TEXT("CanIncludeInClipboardHistory"), 0);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = StoreValueInDataObject(
+          dObj, TEXT("ExcludeClipboardContentFromMonitorProcessing"), 0);
+      NS_ENSURE_SUCCESS(rv, rv);
     }
   }
 
