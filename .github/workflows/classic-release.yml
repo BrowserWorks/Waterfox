@@ -332,7 +332,7 @@ jobs:
           mkdir ./dist
           mv ./objdir-*/dist/Artifact_Classic_*_${{ github.run_id }}/objdir-*/dist/waterfox*.tar.bz2 ./dist/
           mv ./objdir-*/dist/Artifact_Classic_*_${{ github.run_id }}/objdir-*/dist/waterfox-classic/Waterfox*.dmg ./dist/
-          mv ./objdir-*/dist/install/sea/*.exe ./dist/
+          mv ./objdir-*/dist/Artifact_Classic_*_${{ github.run_id }}/objdir-*/dist/install/sea/*.exe ./dist/
           cd ./dist/
           checksumFile=$(basename waterfox*.tar.bz2 | sed 's/.tar.bz2//g' | sed 's/$/.sha256/g')
           sha256sum waterfox*.tar.bz2 | tee -a "$checksumFile"
