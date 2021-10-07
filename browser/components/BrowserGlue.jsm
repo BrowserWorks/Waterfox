@@ -3957,12 +3957,20 @@ BrowserGlue.prototype = {
       for (const [key, value] of Object.entries(attrData)) {
         // if PTAG/TypeTag we only want to set the relevant pref
         if (["PTAG", "hspart", "hsimp", "typetag"].includes(key)) {
-          Services.prefs.setCharPref("browser.search." + key, value);
+          Services.prefs.setCharPref(
+            "browser.search." + key.toLowerCase(),
+            value
+          );
           continue;
         }
         // if mtm_source we want to set the distribution source pref & attribution data
         if (key == "mtm_source") {
           Services.prefs.setCharPref("distribution.source", value);
+        } else if (key == "engine" && ["bing", "yahoo"].includes(value)) {
+          const nameMap = { bing: "Bing", yahoo: "Yahoo!" };
+          const engine = Services.search.getEngineByName(nameMap[value]);
+          Services.search.setDefault(engine);
+          Services.search.setDefaultPrivate(engine);
         }
         // only add to postSigningData if this hasn't been called previously
         attributionStr += `&${key}=${value}`;
