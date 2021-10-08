@@ -59,25 +59,17 @@ pref("browser.newtabpage.activity-stream.telemetry.ut.events", false, locked);
 pref("browser.partnerlink.attributionURL", "", locked);
 pref("browser.partnerlink.campaign.topsites", "", locked);
 pref("browser.ping-centre.telemetry", false, locked);
-pref("browser.safebrowsing.blockedURIs.enabled", false);
 pref("browser.safebrowsing.downloads.enabled", false);
 pref("browser.safebrowsing.downloads.remote.enabled", false);
 pref("browser.safebrowsing.downloads.remote.url", "", locked);
 pref("browser.safebrowsing.malware.enabled", false);
-pref("browser.safebrowsing.phishing.enabled", false);
-pref("browser.safebrowsing.provider.google.gethashURL", "", locked);
-pref("browser.safebrowsing.provider.google.updateURL", "", locked);
-pref("browser.safebrowsing.provider.google4.gethashURL", "", locked);
-pref("browser.safebrowsing.provider.google4.updateURL", "", locked);
-pref("browser.safebrowsing.provider.mozilla.gethashURL", "", locked);
-pref("browser.safebrowsing.provider.mozilla.updateURL", "", locked);
 pref("browser.send_pings", false, locked);
-pref("browser.tabs.remote.separatedMozillaDomains", "", locked);
+//pref("browser.tabs.remote.separatedMozillaDomains", "", locked);
 pref("browser.topsites.contile.enabled", false, locked);
 pref("browser.topsites.contile.endpoint", "", locked);
 pref("browser.topsites.useRemoteSetting", false, locked);
 pref("browser.uiCustomization.state", "{\"placements\":{\"widget-overflow-fixed-list\":[],\"nav-bar\":[\"back-button\",\"forward-button\",\"stop-reload-button\",\"urlbar-container\",\"save-to-pocket-button\",\"downloads-button\",\"library-button\",\"fxa-toolbar-menu-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"PersonalToolbar\":[\"import-button\",\"personal-bookmarks\"]},\"seen\":[\"profiler-button\",\"developer-button\"],\"dirtyAreaCache\":[\"nav-bar\",\"PersonalToolbar\"],\"currentVersion\":17,\"newElementCount\":3}");
-pref("browser.uidensity", 1, locked);
+pref("browser.uidensity", 1);
 pref("browser.urlbar.dnsResolveSingleWordsAfterSearch", 0, locked);
 pref("browser.urlbar.eventTelemetry.enabled", false, locked);
 pref("browser.urlbar.showSearchSuggestionsFirst", false);
@@ -90,13 +82,14 @@ pref("devtools.webide.autoinstallADBExtension", false);
 pref("dom.security.unexpected_system_load_telemetry_enabled", false, locked);
 pref("extensions.activeThemeID", "lepton@waterfox.net");
 pref("extensions.allowPrivateBrowsingByDefault", true);
-pref("extensions.getAddons.cache.enabled", false, locked); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
+pref("extensions.getAddons.cache.enabled", false); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
 pref("extensions.getAddons.showPane", false, locked);
 pref("extensions.htmlaboutaddons.recommendations.enabled", false, locked);
 pref("extensions.pocket.api", "", locked);
 pref("extensions.pocket.enabled", false, locked);
 pref("extensions.pocket.oAuthConsumerKey", "", locked);
 pref("extensions.pocket.showHome", false, locked);
+pref("extensions.webextensions.restrictedDomains", "accounts-static.cdn.mozilla.net,accounts.firefox.com,api.accounts.firefox.com,oauth.accounts.firefox.com,profile.accounts.firefox.com,sync.services.mozilla.com");
 pref("fission.autostart", true);
 pref("general.useragent.compatMode.firefox", true);
 pref("geo.provider.network.url", "", locked);
@@ -117,7 +110,7 @@ pref("network.trr.confirmation_telemetry_enabled", false, locked);
 pref("network.trr.exclude-etc-hosts", false, locked);
 pref("network.trr.resolvers", "", locked);
 pref("plugin.state.flash", 0, locked); // Disable for defense-in-depth
-pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
+// pref("privacy.firstparty.isolate", true); // Always enforce first party isolation
 pref("privacy.trackingprotection.origin_telemetry.enabled", false, locked);
 pref("security.app_menu.recordEventTelemetry", false, locked);
 pref("security.certerrors.mitm.priming.enabled", false, locked);
@@ -126,10 +119,9 @@ pref("security.family_safety.mode", 0, locked);
 pref("security.identitypopup.recordEventTelemetry", false, locked);
 pref("security.pki.crlite_mode", 0, locked);
 pref("security.protectionspopup.recordEventTelemetry", false, locked);
-pref("security.sandbox.content.win32k-disable", true);
 pref("security.ssl.enable_false_start", true);
 pref("security.ssl.errorReporting.enabled", false, locked);
-pref("services.sync.engine.prefs", false, locked); // Never sync prefs, addons, or tabs with other browsers
+pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs with other browsers
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsoredTopSites", false, locked);
