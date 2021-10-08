@@ -59,6 +59,7 @@ const ATTR_CODE_KEYS = [
   "typetag",
   "hsimp",
   "hspart",
+  "engine",
 ];
 
 let gCachedAttrData = null;
