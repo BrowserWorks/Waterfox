@@ -67,3 +67,4 @@ mk_add_options "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 mk_add_options "export PATH=$TOOLTOOL_DIR/clang/bin:$TOOLTOOL_DIR/mingw32/bin:$TOOLTOOL_DIR/wine/bin:$TOOLTOOL_DIR/upx/bin:$TOOLTOOL_DIR/fxc2/bin:$TOOLTOOL_DIR/nasm/bin:$PATH"
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+MOZ_REQUIRE_SIGNING=

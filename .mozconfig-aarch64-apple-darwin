@@ -63,3 +63,5 @@ fi
 
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
+MOZ_REQUIRE_SIGNING=
+
