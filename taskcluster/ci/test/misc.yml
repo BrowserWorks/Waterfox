@@ -44,10 +44,7 @@ telemetry-tests-client:
                     windows.*-64-qr/debug: [trunk]
                     windows.*-64(?:-shippable)?-qr/opt: [trunk]
                     default: []
-            default:
-                by-test-platform:
-                    linux.*-64-qr/debug: []
-                    default: built-projects
+            default: built-projects
     max-run-time: 1200
     tier: default
     mozharness:
