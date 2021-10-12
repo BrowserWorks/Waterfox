@@ -62,3 +62,5 @@ ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-distribution-id=net.waterfox
 ac_add_options --with-l10n-base=$PWD/browser/locales/l10n
+
+MOZ_REQUIRE_SIGNING=
