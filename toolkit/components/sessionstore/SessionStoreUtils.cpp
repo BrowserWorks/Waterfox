@@ -1292,7 +1292,7 @@ static void CollectFrameTreeData(JSContext* aCx,
     return;
   }
 
-  Document* document = window->GetDoc();
+  Document* document = window->GetExtantDoc();
   if (!document) {
     return;
   }
