@@ -4700,7 +4700,7 @@
 
 - name: gfx.e10s.font-list.shared
   type: bool
-  value: true
+  value: false
   mirror: once
 
 # [Windows] Whether registry FontSubstitutes entries are used unconditionally,
