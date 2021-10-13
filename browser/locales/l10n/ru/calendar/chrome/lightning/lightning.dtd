@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,12 +17,6 @@
 <!ENTITY lightning.menupopup.new.task.accesskey "З">
 <!ENTITY lightning.menupopup.new.calendar.label "Календарь…">
 <!ENTITY lightning.menupopup.new.calendar.accesskey "К">
-
-<!-- Open menu popup in File menu -->
-<!ENTITY lightning.menupopup.open.label               "Открыть">
-<!ENTITY lightning.menupopup.open.accesskey           "О">
-<!ENTITY lightning.menupopup.open.message.label       "Сохраненные сообщения…">
-<!ENTITY lightning.menupopup.open.message.accesskey   "С">
 
 <!-- Open menu popup in File menu -->
 <!ENTITY lightning.menupopup.open.calendar.label      "Файлы календаря…">
@@ -51,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Пока вы можете включить это только после настройки этого календаря в диалоговом окне его свойств, если сервер календаря сам отправляет эл.письма с приглашениями.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Эта настройка доступна только в том случае, если сервер календаря сам отправляет эл.письма с приглашениями. Её включение позволит вернуться к стандартной отправке эл.писем с приглашениями, а не поручать это серверу.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Уведомления">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Глобальные настройки уведомлений…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Подтвердить">

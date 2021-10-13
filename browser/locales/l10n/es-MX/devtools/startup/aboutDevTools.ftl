@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Acerca de herramientas de desarrollador
-enable-title = Habilitar herramientas de Firefox Developer
-enable-inspect-element-title = Habilitar las herramientas de desarrollador de Firefox para usar Inspeccionar elemento
+enable-title = Habilitar herramientas de Waterfox Developer
+enable-inspect-element-title = Habilitar las herramientas de desarrollador de Waterfox para usar Inspeccionar elemento
 enable-inspect-element-message = Examinar y editar HTML y CSS para el inspector de herramientas de desarrollador.
-enable-about-debugging-message = Desarrollar y depurar WebExtensions, web workers, service workers y más con las herramientas de desarrollador de Firefox.
+enable-about-debugging-message = Desarrollar y depurar WebExtensions, web workers, service workers y más con las herramientas de desarrollador de Waterfox.
 enable-key-shortcut-message = Activaste un atajo de las herramientas de desarrollador. Si eso fue un error, puedes cerrar esta pestaña.
 enable-menu-message = Perfecciona el HTML, CSS y JavaScript de tu sitio web con herramientas como el Inspector y el Depurador.
 enable-common-message = Las herramientas de desarrollador están deshabilitadas por defecto para darte más control sobre tu navegador.
@@ -14,18 +14,18 @@ enable-learn-more-link = Conoce más acerca de las herramientas de desarrollador
 enable-enable-button = Habilitar herramientas de desarrollador
 enable-close-button = Cerrar esta pestaña
 
-welcome-title = ¡Bienvenido a las herramientas de desarrollador de Firefox!
-newsletter-title = Boletín de Mozilla Developer
+welcome-title = ¡Bienvenido a las herramientas de desarrollador de Waterfox!
+newsletter-title = Boletín de Waterfox Developer
 newsletter-message = Obtén noticias de desarrollo, trucos y recursos enviados directamente a tu bandeja de entrada.
 newsletter-email-placeholder =
     .placeholder = Correo electrónico
-newsletter-privacy-label = Estoy de acuerdo con que Mozilla maneje mi información la cual explica en su <a data-l10n-name="privacy-policy">Política de Privacidad</a>.
+newsletter-privacy-label = Estoy de acuerdo con que Waterfox maneje mi información la cual explica en su <a data-l10n-name="privacy-policy">Política de Privacidad</a>.
 newsletter-subscribe-button = Suscribir
 newsletter-thanks-title = ¡Gracias!
-newsletter-thanks-message = Si no has confirmado previamente una suscripción a un boletín relacionado a Mozilla, puede que tengas que hacerlo. Por favor, revisa tu bandeja de entrada o filtro de spam en busca de un email de nosotros.
+newsletter-thanks-message = Si no has confirmado previamente una suscripción a un boletín relacionado a Waterfox, puede que tengas que hacerlo. Por favor, revisa tu bandeja de entrada o filtro de spam en busca de un email de nosotros.
 
 footer-title = Waterfox Developer Edition
-footer-message = ¿Buscas más que unas simples herramientas de desarrollador? Revisa el navegador Firefox que está creado específicamente por desarrolladores y flujos de trabajo modernos.
+footer-message = ¿Buscas más que unas simples herramientas de desarrollador? Revisa el navegador Waterfox que está creado específicamente por desarrolladores y flujos de trabajo modernos.
 footer-learn-more-link = Aprender más
 
 features-learn-more = Aprender más

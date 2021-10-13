@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "Очистить">
 
-<!ENTITY fillLoginMenu.label          "Ввести логин">
-<!ENTITY fillLoginMenu.accesskey      "е">
-<!ENTITY fillPasswordMenu.label       "Ввести пароль">
-<!ENTITY fillPasswordMenu.accesskey   "е">
-<!ENTITY fillUsernameMenu.label       "Ввести имя пользователя">
-<!ENTITY fillUsernameMenu.accesskey   "е">
-<!ENTITY noLoginSuggestions.label     "(Нет предложений для логинов)">
-<!ENTITY viewSavedLogins.label        "Просмотр сохранённых логинов">

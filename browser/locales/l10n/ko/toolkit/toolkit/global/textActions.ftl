@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -37,3 +37,20 @@ text-action-select-all-shortcut =
     .key = A
 text-action-spell-no-suggestions =
     .label = 맞춤법 제안 없음
+text-action-spell-add-to-dictionary =
+    .label = 사전에 추가
+    .accesskey = o
+text-action-spell-undo-add-to-dictionary =
+    .label = 사전에 추가 취소
+    .accesskey = n
+text-action-spell-check-toggle =
+    .label = 맞춤법 검사
+    .accesskey = g
+text-action-spell-add-dictionaries =
+    .label = 사전 추가…
+    .accesskey = A
+text-action-spell-dictionaries =
+    .label = 언어
+    .accesskey = L
+text-action-search-text-box-clear =
+    .title = 지우기

@@ -1,18 +1,18 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY dialog.title             "Personalizar barra de ferramentas">
 <!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
-<!ENTITY instructions.description "Você pode adicionar ou remover itens arrastando-os para dentro ou fora das barras de ferramentas.">
+<!ENTITY instructions.description "Arraste itens para a barra de ferramentas, ou remova arrastando para cá.">
 <!ENTITY show.label               "Exibir:">
-<!ENTITY iconsAndText.label       "Ícones e texto">
-<!ENTITY icons.label              "Ícones">
-<!ENTITY text.label               "Texto">
-<!ENTITY iconsBesideText.label    "Ícones ao lado do texto">
+<!ENTITY iconsAndText.label       "Ícone acima do texto">
+<!ENTITY icons.label              "Só ícone">
+<!ENTITY text.label               "Só texto">
+<!ENTITY iconsBesideText.label    "Ícone ao lado do texto">
 <!ENTITY useSmallIcons.label      "Usar ícones pequenos">
 <!ENTITY restoreDefaultSet.label  "Restaurar configuração padrão">
 <!ENTITY showTitlebar2.label      "Barra de titulo">
 <!ENTITY extraDragSpace2.label    "Borda de janela">
-<!ENTITY saveChanges.label        "Concluído">
+<!ENTITY saveChanges.label        "Pronto">
 <!ENTITY undoChanges.label        "Desfazer alterações">

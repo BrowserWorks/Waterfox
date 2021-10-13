@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,16 +38,20 @@ menu-quit =
             [windows] r
            *[other] r
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = Sair do { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = Sair do { -brand-shorter-name }
+
 menu-about =
     .label = Acerca do { -brand-shorter-name }
     .accesskey = A
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = j
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = Abrir localização…
 menu-file-open-file =
@@ -89,6 +93,9 @@ menu-file-save-page =
 menu-file-email-link =
     .label = Enviar ligação por email…
     .accesskey = E
+menu-file-share-url =
+    .label = Partilhar
+    .accesskey = h
 menu-file-print-setup =
     .label = Configurar página…
     .accesskey = C
@@ -110,9 +117,6 @@ menu-file-go-offline =
 menu-edit =
     .label = Editar
     .accesskey = E
-menu-edit-find-on =
-    .label = Localizar nesta página…
-    .accesskey = E
 menu-edit-find-in-page =
     .label = Localizar na página…
     .accesskey = L
@@ -131,9 +135,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = Barras de ferramentas
     .accesskey = t
-menu-view-customize-toolbar =
-    .label = Personalizar…
-    .accesskey = P
 menu-view-customize-toolbar2 =
     .label = Personalizar barra de ferramentas…
     .accesskey = f
@@ -170,9 +171,6 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = Estilo de página básico
     .accesskey = b
-menu-view-charset =
-    .label = Codificação de texto
-    .accesskey = C
 menu-view-repair-text-encoding =
     .label = Corrigir a codificação de texto
     .accesskey = C
@@ -226,10 +224,6 @@ menu-history-reopen-all-windows = Reabrir todas as janelas
 menu-bookmarks-menu =
     .label = Marcadores
     .accesskey = M
-menu-bookmarks-show-all =
-    .label = Mostrar todos os marcadores
-menu-bookmark-this-page =
-    .label = Adicionar esta página aos marcadores
 menu-bookmarks-manage =
     .label = Gerir marcadores
 menu-bookmark-current-tab =
@@ -253,15 +247,6 @@ menu-tools =
 menu-tools-downloads =
     .label = Transferências
     .accesskey = T
-menu-tools-addons =
-    .label = Extras
-    .accesskey = E
-menu-tools-fxa-sign-in =
-    .label = Iniciar sessão no { -brand-product-name }…
-    .accesskey = I
-menu-tools-turn-on-sync =
-    .label = Ligar { -sync-brand-short-name }…
-    .accesskey = L
 menu-tools-addons-and-themes =
     .label = Extras e temas
     .accesskey = x
@@ -277,9 +262,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = Restabelecer ligação ao { -brand-product-name }…
     .accesskey = R
-menu-tools-web-developer =
-    .label = Ferramentas de programação
-    .accesskey = g
 menu-tools-browser-tools =
     .label = Ferramentas do navegador
     .accesskey = g
@@ -292,17 +274,6 @@ menu-tools-page-source =
 menu-tools-page-info =
     .label = Informação da página
     .accesskey = I
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Opções
-           *[other] Preferências
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] f
-        }
 menu-settings =
     .label = Definições
     .accesskey =
@@ -335,21 +306,6 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = Ajuda
     .accesskey = u
-menu-help-product =
-    .label = Ajuda do { -brand-shorter-name }
-    .accesskey = u
-menu-help-show-tour =
-    .label = Visita ao { -brand-shorter-name }
-    .accesskey = o
-menu-help-import-from-another-browser =
-    .label = Importar de outro navegador…
-    .accesskey = I
-menu-help-keyboard-shortcuts =
-    .label = Atalhos de teclado
-    .accesskey = h
-menu-help-troubleshooting-info =
-    .label = Informação para resolução de problemas
-    .accesskey = r
 menu-get-help =
     .label = Obter ajuda
     .accesskey = j
@@ -361,12 +317,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = Submeter feedback…
     .accesskey = S
-menu-help-safe-mode-without-addons =
-    .label = Reiniciar com os extras desativados…
-    .accesskey = R
-menu-help-safe-mode-with-addons =
-    .label = Reiniciar com os extras ativados
-    .accesskey = R
 menu-help-enter-troubleshoot-mode2 =
     .label = Modo de diagnóstico…
     .accesskey = M

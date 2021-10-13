@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,16 +8,13 @@ auth-label = Verifikasi identitas kontak Anda
 reauth-label = Verifikasikan kembali identitas kontak Anda
 
 auth-cancel = Batal
-auth-cancelAccessKey = C
 
 auth-error = Terjadi kesalahan saat memverifikasi identitas kontak Anda.
 auth-success = Memverifikasi identitas kontak Anda berhasil diselesaikan.
-auth-successThem = Kontak Anda telah berhasil memverifikasi identitas Anda. Anda mungkin ingin memverifikasi identitas mereka juga dengan mengajukan pertanyaan Anda sendiri.
 auth-fail = Gagal memverifikasi identitas kontak Anda.
 auth-waiting = Menunggu kontak menyelesaikan verifikasi...
 
 finger-verify = Verifikasi
-finger-verify-accessKey = V
 
 # Do not translate 'OTR' (name of an encryption protocol)
 buddycontextmenu-label = Tambahkan Sidik Jari OTR
@@ -32,17 +29,11 @@ alert-refresh = Mencoba memuat ulang percakapan terenkripsi dengan { $name }.
 
 # Variables:
 #   $name (String) - the screen name of a chat contact person
-alert-gone_insecure = Percakapan terenkripsi dengan { $name } berakhir.
-
-# Variables:
-#   $name (String) - the screen name of a chat contact person
 finger-unseen = Identitas { $name } belum diverifikasi. Menguping sekedarnya saja tidak mungkin, tetapi dengan sedikit usaha seseorang dapat mendengarkan. Cegah pengawasan dengan memverifikasi identitas kontak ini.
 
 # Variables:
 #   $name (String) - the screen name of a chat contact person
 finger-seen = { $name } menghubungi Anda dari komputer yang tidak dikenal. Menguping sekedarnya saja tidak mungkin, tetapi dengan sedikit usaha seseorang dapat mendengarkan. Cegah pengawasan dengan memverifikasi identitas kontak ini.
-
-state-not_private = Percakapan saat ini tidak bersifat pribadi.
 
 # Variables:
 #   $name (String) - the screen name of a chat contact person
@@ -56,7 +47,6 @@ state-private = Identitas { $name } telah diverifikasi. Percakapan saat ini dien
 #   $name (String) - the screen name of a chat contact person
 state-finished = { $name } telah mengakhiri percakapan terenkripsi mereka dengan Anda; Anda harus melakukan hal yang sama.
 
-state-not_private-label = Tidak Aman
 state-unverified-label = Belum Diverifikasi
 state-private-label = Pribadi
 state-finished-label = Selesai
@@ -76,7 +66,6 @@ afterauth-unverified = Identitas { $name } belum diverifikasi.
 verify-title = Verifikasi identitas kontak Anda
 error-title = Galat
 success-title = Enkripsi Ujung ke Ujung
-successThem-title = Verifikasi identitas kontak Anda
 fail-title = Tidak dapat memverifikasi
 waiting-title = Permintaan verifikasi dikirim
 

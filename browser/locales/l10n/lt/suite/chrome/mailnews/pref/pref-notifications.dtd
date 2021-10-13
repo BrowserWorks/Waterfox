@@ -1,10 +1,11 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.notifications.title         "Signalai">
 <!ENTITY notifications.caption            "Signalai">
 <!ENTITY newMessagesArrive.label          "Kai atsiunčiami laiškai:">
+
 <!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
      showAlertFor.label is associated with the checkbox to show the alert,
      leading into a numerical field to enter a time in seconds, followed by

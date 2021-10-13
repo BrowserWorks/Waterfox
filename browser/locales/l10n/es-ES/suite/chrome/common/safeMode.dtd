@@ -1,20 +1,27 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY safeModeDialog.title "Modo seguro de &brandShortName;">
 <!ENTITY window.width "47em">
+
 <!ENTITY safeModeDescription.label "&brandShortName; se está ejecutando ahora en modo seguro, que desactiva temporalmente sus personalización de opciones, temas y extensiones.">
 <!ENTITY safeModeDescription2.label "Puede hacer permanentes todos o algunos de estos cambios:">
+
 <!ENTITY disableAddons.label "Desactivar todos los complementos">
 <!ENTITY disableAddons.accesskey "D">
+
 <!ENTITY resetToolbars.label "Reinicializar los tamaños de las barras de herramientas y las ventanas">
 <!ENTITY resetToolbars.accesskey "R">
+
 <!ENTITY deleteBookmarks.label "Eliminar todos los marcadores excepto las copias de seguridad">
 <!ENTITY deleteBookmarks.accesskey "E">
+
 <!ENTITY resetUserPrefs.label "Reinicializar todas las preferencias de usuario de &brandShortName; a sus valores predeterminados">
 <!ENTITY resetUserPrefs.accesskey "N">
+
 <!ENTITY restoreSearch.label "Restaurar los buscadores predeterminados">
 <!ENTITY restoreSearch.accesskey "a">
+
 <!ENTITY changeAndRestartButton.label "Hacer cambios y reiniciar">
 <!ENTITY continueButton.label "Continuar en modo seguro">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -90,15 +90,6 @@
       </li>
     </ol>
   </li>
-  <li class="win"><strong>Navegador predeterminado</strong>: le permite
-    establecer &brandShortName; como navegador predeterminado o bien le muestra
-    que ya lo es.
-    <ul>
-      <li><strong>Establecer como navegador predeterminado</strong>: a menos
-        que esté deshabilitado, puede pulsar aquí para hacer que
-        &brandShortName; sea su navegador predeterminado.</li>
-    </ul>
-  </li>
   <li><strong>Al restaurar sesiones y ventanas</strong>: elija cómo deben
     restaurarse (en su caso) múltiples pestañas del navegador a la vez durante
     el arranque.
@@ -116,6 +107,21 @@
       <li><strong>Restaurar sólo las pestañas cuando las necesite</strong>:
         esto desactiva la restauración automática de pestañas, es decir, las
         pestañas sólo se cargarán si se pasa a ellas o se pide su recarga.</li>
+    </ul>
+  </li>
+  <li><strong>Iconos de sitios web</strong>:
+    <ul>
+      <li><strong>Mostrar iconos de sitios web</strong>: seleccione esta opción
+        si quiere ver iconos específicos de cada sitio, si están disponibles, en
+        lugar del icono de marcadores
+        <img src="chrome://communicator/skin/places/bookmark-item.svg"
+        alt="Icono de elemento marcador"/>. Los iconos de sitios web se
+        muestran a la izquierda de la barra de direcicones y de las pestañas
+        del navegador.</li>
+      <li><strong>Intentar usar el <em>favicon</em> del servidor cuando la
+        página no defina uno</strong>: si la página en sí no define un icono del
+        sitio web, activar esta opción hace que &brandShortName; busque un
+        &quot;favicon&quot; en el servidor y lo use en su lugar.</li>
     </ul>
   </li>
   <li>Preferencias del botón de inicio: en el campo, escriba la pagina web que
@@ -520,6 +526,16 @@ pestañas</h2>
         enlaces</strong>: seleccione esta opción para hacer que
         &brandShortName; cambie a una nueva pestaña cuando se use
         <q>Abrir en una pestaña nueva</q> para abrir un enlace.</li>
+      <li><strong>Cambiar a las nuevas pestañas abiertas a partir de enlaces
+        redirigidos</strong>: seleccione esta opción para que &brandShortName;
+        cambie a una nueva pestaña al abrir enlaces redirigidos o enlaces de
+        otras aplicaciones.</li>
+      <li><strong>Pasar a primer plano la ventana del navegador al abrir en
+        pestañas enlaces desde otras aplicaciones</strong>: seleccione esta
+        opción para que &brandShortName; pase a primer plano la ventana del
+        navegador usada para abrir enlaces en pestañas desde otras aplicaciones.
+        Si no está marcada, la ventana del navegador permanece en segundo
+        plano.</li>        
       <li><strong>Advertirme al cerrar una ventana con múltiples
         pestañas</strong>: seleccione esta opción para hacer que
         &brandShortName; le avise cuando intente cerrar una ventana del
@@ -534,34 +550,34 @@ pestañas</h2>
   <li>
     <strong>Abrir pestañas en vez de ventanas cuando</strong>:
     <ul>
-      <li><strong>se haga
-      <span class="mac"><kbd>Cmd</kbd>+clic o
-      <kbd>Cmd</kbd>+<kbd>Return</kbd></span>
-      <span class="noMac">clic con el botón central,
-      <kbd>Ctrl</kbd>+clic o <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span> en
-      enlaces de una página web</strong>: seleccione esta
-      opción para abrir enlaces de páginas web en una
-      pestaña nueva cuando pulse en un enlace
-      <span class="mac">manteniendo pulsada la tecla
-      <kbd>Command</kbd> o manteniendo pulsada la tecla <kbd>Command</kbd>
-      mientras pulsa <kbd>Return</kbd></span>
-      <span class="noMac">con el botón central del ratón,
-      o mientras pulsa <kbd>Ctrl</kbd>, o mientras pulsa
-      <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>.
+      <li><strong>se haga clic en el botón central,
+        <span class="mac"><kbd>Cmd</kbd>+clic o
+          <kbd>Cmd</kbd>+<kbd>Return</kbd></span>
+        <span class="noMac"><kbd>Ctrl</kbd>+clic o
+            <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+        en enlaces de una página web</strong>: seleccione esta opción para
+        abrir enlaces de páginas web en una pestaña nueva cuando pulse en
+        un enlace con el botón central del ratón,
+        <span class="mac">manteniendo pulsada la tecla <kbd>Command</kbd>
+          mientras hace clic en enlaces o manteniendo pulsada la tecla
+          <kbd>Command</kbd> y pulsando <kbd>Return</kbd> en enlaces</span>
+        <span class="noMac"><kbd>Ctrl</kbd>+clic en enlaces y pulsando
+          <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>.
       
-      <p><strong>Truco</strong>: use Encontrar enlaces mientras escribe
-      para navegar al enlace que quiere abrir con las órdenes de teclado
-      anteriores.</p>
+        <p><strong>Truco</strong>: use Encontrar enlaces mientras escribe
+          para navegar al enlace que quiere abrir con las órdenes de teclado
+          anteriores.</p>
       </li>
       <li><strong>Se pulse
-      <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd>+<kbd
-      class="mac">Return</kbd><kbd class="noMac">Enter</kbd>
-      en la barra de direcciones</strong>:
-      seleccione esta opción para abrir el enlace de una
-      página web en una pestaña nueva cuando escriba la URL en
-      la barra de direcciones y pulse <kbd
-      class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd>+<kbd
-      class="mac">Return</kbd><kbd class="noMac">Enter</kbd>.</li>
+        <kbd class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd>+<kbd
+        class="mac">Return</kbd><kbd class="noMac">Enter</kbd>
+        en la barra de direcciones</strong>:
+        seleccione esta opción para abrir el enlace de una
+        página web en una pestaña nueva cuando escriba la URL en
+        la barra de direcciones y pulse <kbd
+        class="mac">Cmd</kbd><kbd class="noMac">Ctrl</kbd>+<kbd
+        class="mac">Return</kbd><kbd class="noMac">Enter</kbd>.
+      </li>
     </ul>
   </li>
   <li><strong>Abrir en una pestaña nueva en lugar de en una ventana

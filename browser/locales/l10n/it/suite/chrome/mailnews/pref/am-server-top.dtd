@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -37,7 +37,6 @@
 <!ENTITY deleteOnServer2.accesskey "h">
 <!ENTITY downloadOnBiff.label "Scarica automaticamente ogni nuovo messaggio">
 <!ENTITY downloadOnBiff.accesskey "o">
-<!ENTITY username.label "Nome di accesso">
 <!ENTITY deleteMessagePrefix.label "Quando si elimina un messaggio:">
 <!ENTITY modelMoveToTrash.label "Spostalo nella cartella:">
 <!ENTITY modelMoveToTrash.accesskey "o">
@@ -70,6 +69,7 @@
 <!ENTITY browseFolder.accesskey "r">
 <!ENTITY browseNewsrc.label "Seleziona…">
 <!ENTITY browseNewsrc.accesskey "z">
+
 <!ENTITY accountTitle.label "Impostazioni account">
 <!ENTITY accountSettingsDesc.label "Questo è un account speciale. Non ci sono identità associate.">
 <!ENTITY storeType.label "Tipo di archivio messaggi:">

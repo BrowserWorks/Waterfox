@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,9 +8,6 @@
 <!ENTITY chooseColor1.label "Farbe auswählen:">
 <!ENTITY chooseColor2.label "HTML-Farbstring eingeben">
 <!ENTITY chooseColor2.accessKey "H">
-<!ENTITY setColor1.label "Klicken Sie auf eine Farbe oder">
-<!ENTITY setColor2.label "geben Sie einen HTML-Farbstring ein">
-<!ENTITY setColor2.accessKey "H">
 <!ENTITY setColorExample.label "(z.B.: &quot;#0000ff&quot; oder &quot;blue&quot;):">
 <!ENTITY default.label "Standard">
 <!ENTITY default.accessKey "S">

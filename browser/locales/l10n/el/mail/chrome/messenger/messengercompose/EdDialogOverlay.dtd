@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,7 +11,7 @@
 <!ENTITY chooseFileLinkButton.accessKey "λ">
 <!ENTITY makeUrlRelative.label "Το URL είναι σχετικό με την τοποθεσία της σελίδας">
 <!ENTITY makeUrlRelative.accessKey "χ">
-<!ENTITY makeUrlRelative.tooltip "Αλλαγή μεταξύ σχετικού και απόλυτου URL. Πρέπει να αποθηκεύσετε πρώτα τη σελίδα για να γίνουν οι αλλαγές.">
+<!ENTITY makeUrlRelative.tooltip "Αλλαγή μεταξύ σχετικού και απόλυτου URL. Πρέπει να αποθηκεύσετε πρώτα τη σελίδα για να το αλλάξετε αυτό.">
 
 <!-- Shared by Link and Image dialogs -->
 <!ENTITY LinkURLEditField2.label "Εισαγάγετε μια ιστοσελίδα, ένα τοπικό αρχείο ή επιλέξτε μια επώνυμη άγκυρα ή κεφαλίδα από το μενού επιλογών του πεδίου:">

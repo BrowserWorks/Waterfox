@@ -1,13 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 
 <!ENTITY tabDisplay.label "Fanevising">
 <!ENTITY warnOnClose.label "Åtvar meg når eg vil late att fleire faner">
-
-<!ENTITY loadGroupAppend.label "Legg til faner">
-<!ENTITY loadGroupAppend.accesskey "L">
 
 
 

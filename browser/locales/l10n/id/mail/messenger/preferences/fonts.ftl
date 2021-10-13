@@ -1,20 +1,24 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window-close =
     .key = w
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =
     .label = Baku ({ $name })
 fonts-label-default-unnamed =
     .label = Asali
+
 fonts-encoding-dialog-title =
     .title = Huruf & Pengodean
+
 fonts-language-legend =
     .value = Huruf untuk:
     .accesskey = H
+
 fonts-proportional-label =
     .value = Proporsional:
     .accesskey = P
@@ -85,38 +89,45 @@ font-language-group-tibetan =
 
 default-font-serif =
     .label = Serif
+
 default-font-sans-serif =
     .label = Tanpa Serif
-font-size-label =
-    .value = Ukuran:
-    .accesskey = e
+
 font-size-proportional-label =
     .value = Ukuran:
     .accesskey = u
+
 font-size-monospace-label =
     .value = Ukuran:
     .accesskey = i
+
 font-serif-label =
     .value = Serif:
     .accesskey = S
+
 font-sans-serif-label =
     .value = Tanpa-serif:
     .accesskey = T
+
 font-monospace-label =
     .value = Spasi tetap:
     .accesskey = S
+
 font-min-size-label =
     .value = Ukuran huruf terkecil:
     .accesskey = k
+
 min-size-none =
     .label = Tidak Ada
 
 ## Fonts in message
 
 font-control-legend = Pengaturan Huruf
+
 use-document-fonts-checkbox =
     .label = Izinkan pesan untuk menggunakan huruf lainnya
     .accesskey = I
+
 use-fixed-width-plain-checkbox =
     .label = Gunakan huruf dengan lebar tetap untuk pesan dalam teks polos
     .accesskey = s
@@ -124,13 +135,17 @@ use-fixed-width-plain-checkbox =
 ## Language settings
 
 text-encoding-legend = Pengodean Teks
+
 text-encoding-description = Atur penyandian teks asal untuk mengirim dan menerima surel
+
 font-outgoing-email-label =
     .value = Email Keluar:
     .accesskey = u
+
 font-incoming-email-label =
     .value = Email Masuk:
     .accesskey = i
+
 default-font-reply-checkbox =
     .label = Jika memungkinkan, gunakan pengodean teks asal di balasan
     .accesskey = h

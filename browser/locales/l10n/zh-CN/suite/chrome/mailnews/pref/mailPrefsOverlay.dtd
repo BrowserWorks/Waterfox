@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!-- These are added to the Advanced - Scripts & Plugins panel -->
@@ -15,11 +15,11 @@
 
 <!ENTITY viewingMessages.label            "显示信息">
 <!ENTITY notifications.label              "通知">
-<!ENTITY address.label                    "地址查找">
 <!ENTITY composingMessages.label          "编写">
 <!ENTITY format.label                     "发送格式">
-<!ENTITY return.label                     "回执">
+<!ENTITY address.label                    "地址查找">
 <!ENTITY junk.label                       "垃圾 &amp; 可疑邮件">
 <!ENTITY tags.label                       "标签">
+<!ENTITY return.label                     "回执">
 <!ENTITY characterEncoding2.label         "文字编码">
 <!ENTITY networkStorage.label             "网络 &amp; 存储">

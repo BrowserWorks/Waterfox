@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,7 +13,7 @@
 <!ENTITY name.accesskey "Τ">
 <!ENTITY email.label "Διεύθυνση email:">
 <!ENTITY email.accesskey "e">
-<!ENTITY catchAll.label "Απάντηση από αυτή την ταυτότητα όταν ταιριάζουν οι κεφαλίδες παράδοσης:">
+<!ENTITY catchAll.label "Απάντηση από αυτήν την ταυτότητα όταν ταιριάζουν οι κεφαλίδες παράδοσης:">
 <!ENTITY catchAll.accesskey "τ">
 <!ENTITY replyTo.label "Διεύθυνση απάντησης:">
 <!ENTITY replyTo.accesskey "ν">

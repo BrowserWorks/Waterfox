@@ -1,12 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Context Menu -->
-<!ENTITY popupWindowRejectCmd.label     "Απόρριψη αναδυόμενων παραθύρων από αυτή την ιστοσελίδα">
-<!ENTITY popupWindowRejectCmd.accesskey "ο">
-<!ENTITY popupWindowAllowCmd.label      "Αποδοχή αναδυόμενων από την ιστοσελίδα">
-<!ENTITY popupWindowAllowCmd.accesskey  "ο">
 <!ENTITY openLinkCmdInTab.label       "Άνοιγμα συνδέσμου σε νέα καρτέλα">
 <!ENTITY openLinkCmdInTab.accesskey   "κ">
 <!ENTITY openLinkCmd.label            "Άνοιγμα συνδέσμου σε νέο παράθυρο">

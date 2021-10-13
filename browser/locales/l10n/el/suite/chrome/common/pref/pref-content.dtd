@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,8 +7,8 @@
 <!ENTITY pref.content.title                     "Περιεχόμενο">
 <!ENTITY pref.content.description               "Αυτές οι ρυθμίσεις επηρεάζουν την εμφάνιση του περιεχομένου ιστοσελίδων και μηνυμάτων στο &brandShortName;.">
 
-<!ENTITY siteIcons.label                        "Εικονίδια ιστοσελίδων">
-<!ENTITY useSiteIcons.label                     "Εμφάνιση εικονιδίων ιστοσελίδων">
+<!ENTITY siteIcons.label                        "Εικονίδια ιστοτόπων">
+<!ENTITY useSiteIcons.label                     "Εμφάνιση εικονιδίων ιστοτόπων">
 <!ENTITY useSiteIcons.accesskey                 "Ε">
 <!ENTITY useFavIcons2.label                     "Απόπειρα χρήσης εικονιδίων διακομιστών όταν η σελίδα δεν ορίζει εικονίδιο">
 <!ENTITY useFavIcons2.accesskey                 "χ">
@@ -29,20 +29,20 @@
 <!ENTITY maxZoom.label                          "έως">
 <!ENTITY maxZoom.accesskey                      "ω">
 <!ENTITY percent.label                          "&#37;">
-
 <!ENTITY defaultZoom.label                      "Προεπιλεγμένο ζουμ">
 <!ENTITY defaultZoom.accesskey                  "Π">
 
-<!ENTITY siteSpecific.label                     "Αποθήκευση επιπέδων ζουμ για κάθε ιστοσελίδα">
-<!ENTITY siteSpecific.accesskey                 "μ">
 <!ENTITY textZoomOnly.label                     "Ζουμ μόνο στο κείμενο αντί για την πλήρη σελίδα">
 <!ENTITY textZoomOnly.accesskey                 "Ζ">
+<!ENTITY siteSpecific.label                     "Αποθήκευση επιπέδων ζουμ για κάθε ιστότοπο">
+<!ENTITY siteSpecific.accesskey                 "μ">
+<!ENTITY showZoomStatusPanel.label              "Εμφάνιση κουμπιών ζουμ στη γραμμή κατάστασης">
+<!ENTITY showZoomStatusPanel.accesskey          "ζ">
 <!ENTITY enableAutomaticImageResizing.label     "Προσαρμογή μεγέθους μεγάλων εικόνων στο παράθυρο προγράμματος περιήγησης">
 <!ENTITY enableAutomaticImageResizing.accesskey "Π">
 
 <!ENTITY allowHWAccel.label                     "Χρήση επιτάχυνσης υλικού όταν είναι διαθέσιμη">
 <!ENTITY allowHWAccel.accesskey                 "ρ">
-<!ENTITY blockAutoRefresh.label                 "Προειδοποίηση όταν οι ιστοσελίδες προσπαθούν να ανακατευθύνουν ή να φορτώσουν ξανά τη σελίδα">
+<!ENTITY blockAutoRefresh.label                 "Προειδοποίηση όταν οι ιστότοποι προσπαθούν να ανακατευθύνουν ή να φορτώσουν ξανά τη σελίδα">
 <!ENTITY blockAutoRefresh.accesskey             "Π">
 
-<!ENTITY showZoomStatusPanel.label              "Εμφάνιση κουμπιών ζουμ στη γραμμή κατάστασης">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetry-gegevens
 about-telemetry-current-store = Huidige winkel:
 about-telemetry-more-information = Zoekt u meer informatie?
-about-telemetry-firefox-data-doc = De <a data-l10n-name="data-doc-link">Firefox Data Documentation</a> bevat handleidingen over het werken met onze gegevenshulpmiddelen.
-about-telemetry-telemetry-client-doc = De <a data-l10n-name="client-doc-link">Firefox Telemetry-clientdocumentatie</a> bevat definities voor concepten, API-documentatie en gegevensverwijzingen.
-about-telemetry-telemetry-dashboard = Met de <a data-l10n-name="dashboard-link">Telemetry-dashboards</a> kunt u de gegevens visualiseren die Mozilla via Telemetry ontvangt.
+about-telemetry-firefox-data-doc = De <a data-l10n-name="data-doc-link">Waterfox Data Documentation</a> bevat handleidingen over het werken met onze gegevenshulpmiddelen.
+about-telemetry-telemetry-client-doc = De <a data-l10n-name="client-doc-link">Waterfox Telemetry-clientdocumentatie</a> bevat definities voor concepten, API-documentatie en gegevensverwijzingen.
+about-telemetry-telemetry-dashboard = Met de <a data-l10n-name="dashboard-link">Telemetry-dashboards</a> kunt u de gegevens visualiseren die Waterfox via Telemetry ontvangt.
 about-telemetry-telemetry-probe-dictionary = De <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> biedt details en beschrijvingen voor de probes die door Telemetry worden verzameld.
-about-telemetry-show-in-Firefox-json-viewer = Openen in de JSON-viewer
+about-telemetry-show-in-Waterfox-json-viewer = Openen in de JSON-viewer
 about-telemetry-home-section = Startpagina
 about-telemetry-general-data-section = Algemene gegevens
 about-telemetry-environment-data-section = Omgevingsgegevens
@@ -68,7 +68,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } monsters, gemiddelde = { $prettyAverage }, som = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = Deze pagina toont de gegevens over prestaties, hardware, gebruik en aanpassingen die door Telemetry zijn verzameld. Deze gegevens worden naar { $telemetryServerOwner } verzonden om { -brand-full-name } te helpen verbeteren.
 about-telemetry-settings-explanation = Telemetry verzamelt { about-telemetry-data-type }, en uploaden is <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -140,8 +140,8 @@ about-telemetry-origin-section = Origin-telemetrie
 about-telemetry-origin-origin = oorsprong
 about-telemetry-origin-count = aantal
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Origin-telemetrie in Firefox</a> codeert gegevens voordat ze worden verzonden, zodat { $telemetryServerOwner } dingen kan tellen, maar niet kan weten of een bepaalde { -brand-product-name } wel of niet aan dat aantal heeft bijgedragen. (<a data-l10n-name="prio-blog-link">meer info</a>)
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Origin-telemetrie in Waterfox</a> codeert gegevens voordat ze worden verzonden, zodat { $telemetryServerOwner } dingen kan tellen, maar niet kan weten of een bepaalde { -brand-product-name } wel of niet aan dat aantal heeft bijgedragen. (<a data-l10n-name="prio-blog-link">meer info</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process }-proces

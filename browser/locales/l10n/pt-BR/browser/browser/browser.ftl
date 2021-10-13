@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -87,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = Gerenciar plugin em uso
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = Gerenciar o compartilhamento da sua câmera e/ou microfone com o site
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = Gerenciar o compartilhamento de outros dispositivos de áudio com o site
 urlbar-autoplay-notification-anchor =
     .tooltiptext = Abrir painel de reprodução automática
 urlbar-persistent-storage-notification-anchor =
@@ -156,12 +160,8 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = Adicionar à barra de endereços
 page-action-manage-extension =
     .label = Gerenciar extensão…
-page-action-remove-from-urlbar =
-    .label = Remover da barra de endereços
 page-action-remove-extension =
     .label = Remover extensão
 
@@ -179,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = Desta vez, pesquisar com:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = Alterar configurações de pesquisa
 search-one-offs-change-settings-compact-button =
     .tooltiptext = Alterar configurações de pesquisa
 search-one-offs-context-open-new-tab =
@@ -246,8 +242,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = Exibir este painel ao adicionar um favorito
     .accesskey = x
-bookmark-panel-done-button =
-    .label = Concluído
 bookmark-panel-save-button =
     .label = Salvar
 # Width of the bookmark panel.
@@ -272,13 +266,11 @@ identity-connection-internal = Esta é uma página segura do { -brand-short-name
 identity-connection-file = Esta página está armazenada no seu computador.
 identity-extension-page = Esta página é carregada a partir de uma extensão.
 identity-active-blocked = O { -brand-short-name } bloqueou partes não seguras desta página.
-identity-custom-root = Conexão homologada por uma entidade certificadora que não é reconhecida pela Mozilla.
+identity-custom-root = Conexão homologada por uma entidade certificadora que não é reconhecida pela Waterfox.
 identity-passive-loaded = Partes desta página não são seguras (como imagens).
 identity-active-loaded = Você desativou a proteção nesta página.
 identity-weak-encryption = Esta página usa criptografia fraca.
 identity-insecure-login-forms = As contas de acesso inseridas nesta página podem ser comprometidas.
-identity-permissions =
-    .value = Permissões
 identity-https-only-connection-upgraded = (promovido a HTTPS)
 identity-https-only-label = Modo somente HTTPS
 identity-https-only-dropdown-on =
@@ -289,18 +281,17 @@ identity-https-only-dropdown-off-temporarily =
     .label = Desativado temporariamente
 identity-https-only-info-turn-on2 = Ative o modo somente HTTPS neste site se quiser que o { -brand-short-name } promova a conexão quando possível.
 identity-https-only-info-turn-off2 = Se a página parecer não funcionar, você pode desativar o modo somente HTTPS neste site para recarregar usando HTTP não seguro.
-identity-https-only-info-no-upgrade = Não foi possível promover a conexão de HTTP.
+identity-https-only-info-no-upgrade = Não foi possível promover a conexão de HTTP para HTTPS.
 identity-permissions-storage-access-header = Cookies entre sites
 identity-permissions-storage-access-hint = Essas partes podem usar cookies entre sites e dados do site enquanto você estiver nesse site.
 identity-permissions-storage-access-learn-more = Saiba mais
 identity-permissions-reload-hint = Pode ser necessário recarregar a página para que as alterações sejam aplicadas.
-identity-permissions-empty = Você não concedeu permissões especiais a este site.
 identity-clear-site-data =
-    .label = Limpar cookies e dados de sites…
+    .label = Limpar cookies e dados de sites do domínio…
 identity-connection-not-secure-security-view = Você não está conectado com segurança a este site.
 identity-connection-verified = Você está conectado com segurança a este site.
 identity-ev-owner-label = Certificado emitido para:
-identity-description-custom-root = A Mozilla não reconhece esta entidade certificadora. Ela pode ter sido adicionada pelo seu sistema operacional ou por um administrador. <label data-l10n-name="link">Saiba mais</label>
+identity-description-custom-root = A Waterfox não reconhece esta entidade certificadora. Ela pode ter sido adicionada pelo seu sistema operacional ou por um administrador. <label data-l10n-name="link">Saiba mais</label>
 identity-remove-cert-exception =
     .label = Remover exceção
     .accesskey = R
@@ -376,12 +367,6 @@ bookmarks-toolbar-empty-message = Para acesso rápido, coloque seus favoritos aq
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = Câmera a compartilhar:
-    .accesskey = C
-popup-select-microphone =
-    .value = Microfone a compartilhar:
-    .accesskey = M
 popup-select-camera-device =
     .value = Câmera:
     .accesskey = C
@@ -395,14 +380,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = Saídas de áudio
 popup-all-windows-shared = Todas as janelas visíveis na sua tela serão compartilhadas.
-popup-screen-sharing-not-now =
-    .label = Agora não
-    .accesskey = A
-popup-screen-sharing-never =
-    .label = Nunca permitir
-    .accesskey = N
-popup-silence-notifications-checkbox = Desativar notificação do { -brand-short-name } ao compartilhar
-popup-silence-notifications-checkbox-warning = O { -brand-short-name } não exibe notificações enquanto você está compartilhando.
 popup-screen-sharing-block =
     .label = Bloquear
     .accesskey = B
@@ -426,14 +403,10 @@ enable-devtools-popup-description = Para usar o atalho F12, primeiro abra as fer
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = Pesquisar ou abrir endereço
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
     .placeholder = Pesquisar ou abrir endereço
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = O navegador está sob controle remoto
 # This placeholder is used in search mode with search engines that search the
 # entire web.
 # Variables
@@ -482,8 +455,6 @@ urlbar-go-button =
     .tooltiptext = Abrir a página
 urlbar-page-action-button =
     .tooltiptext = Ações da página
-urlbar-pocket-button =
-    .tooltiptext = Salvar no { -pocket-brand-name }
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -539,6 +510,19 @@ urlbar-result-action-calculator-result = = { $result }
 urlbar-result-action-search-bookmarks = Procurar favoritos
 urlbar-result-action-search-history = Pesquisar no histórico
 urlbar-result-action-search-tabs = Pesquisar nas abas
+
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = Sugestões do { $engine }
 
 ## Full Screen and Pointer Lock UI
 
@@ -672,6 +656,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = Trabalhar offline
     .accesskey = o
+toolbar-overflow-customize-button =
+    .label = Personalizar barra de ferramentas…
+    .accesskey = P
+toolbar-button-email-link =
+    .label = Enviar link por email
+    .tooltiptext = Enviar link desta página por email
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = Salvar página
+    .tooltiptext = Salvar esta página ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = Abrir arquivo
+    .tooltiptext = Abrir um arquivo ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = Abas sincronizadas
+    .tooltiptext = Mostrar abas de outros dispositivos
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = Nova janela privativa
+    .tooltiptext = Abrir uma nova janela de navegação privativa ({ $shortcut })
 
 ## EME notification panel
 
@@ -698,3 +706,79 @@ addon-removal-abuse-report-checkbox = Denunciar esta extensão para a { -vendor-
 remote-tabs-manage-account =
     .label = Gerenciar conta
 remote-tabs-sync-now = Sincronizar agora
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = Mais…
+ui-tour-info-panel-close =
+    .tooltiptext = Fechar
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = Permitir abertura de janelas de { $uriHost }
+    .accesskey = P
+popups-infobar-block =
+    .label = Bloquear abertura de janelas de { $uriHost }
+    .accesskey = B
+
+##
+
+popups-infobar-dont-show-message =
+    .label = Não mostrar esta mensagem ao bloquear abertura de janelas
+    .accesskey = N
+edit-popup-settings =
+    .label = Gerenciar configurações de abertura de janelas…
+    .accesskey = G
+picture-in-picture-hide-toggle =
+    .label = Ocultar seletor de picture-in-picture
+    .accesskey = O
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = Navegação
+navbar-downloads =
+    .label = Downloads
+navbar-overflow =
+    .tooltiptext = Mais ferramentas…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = Imprimir
+    .tooltiptext = Imprimir esta página… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = Imprimir
+    .tooltiptext = Imprimir a página
+navbar-home =
+    .label = Página inicial
+    .tooltiptext = Página inicial do { -brand-short-name }
+navbar-library =
+    .label = Biblioteca
+    .tooltiptext = Ver histórico, favoritos salvos e muito mais
+navbar-search =
+    .title = Pesquisar
+navbar-accessibility-indicator =
+    .tooltiptext = Recursos de acessibilidade ativos
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = Abas do navegador
+tabs-toolbar-new-tab =
+    .label = Nova aba
+tabs-toolbar-list-all-tabs =
+    .label = Listar todas as abas
+    .tooltiptext = Listar todas as abas
+
+## Infobar shown at startup to suggest session-restore
+
+# <img data-l10n-name="icon"/> will be replaced by the application menu icon
+restore-session-startup-suggestion-message = <strong>Quer abrir abas anteriores?</strong> Você pode restaurar a sessão anterior através do menu <img data-l10n-name="icon"/> do { -brand-short-name }, em Histórico.
+restore-session-startup-suggestion-button = Mostrar como fazer

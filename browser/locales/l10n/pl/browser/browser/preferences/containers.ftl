@@ -1,22 +1,20 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 containers-window-new =
     .title = Dodawanie kontekstu
     .style = width: 45em
-# Variables
-#   $name (String) - Name of the container
-containers-window-update =
-    .title = Preferencje kontekstu „{ $name }”
-    .style = width: 45em
+
 # Variables
 #   $name (String) - Name of the container
 containers-window-update-settings =
     .title = Ustawienia kontekstu „{ $name }”
     .style = width: 45em
+
 containers-window-close =
     .key = w
+
 # This is a term to store style to be applied
 # on the three labels in the containers add/edit dialog:
 #   - name
@@ -27,23 +25,26 @@ containers-window-close =
 # of the three messages ensures that all three labels
 # will be aligned correctly.
 -containers-labels-style = min-width: 4rem
+
 containers-name-label = Nazwa:
     .accesskey = N
     .style = { -containers-labels-style }
+
 containers-name-text =
     .placeholder = Nazwa kontekstu
+
 containers-icon-label = Ikona:
     .accesskey = I
     .style = { -containers-labels-style }
+
 containers-color-label = Kolor:
     .accesskey = K
     .style = { -containers-labels-style }
-containers-button-done =
-    .label = Gotowe
-    .accesskey = G
+
 containers-dialog =
     .buttonlabelaccept = Gotowe
     .buttonaccesskeyaccept = G
+
 containers-color-blue =
     .label = Niebieski
 containers-color-turquoise =
@@ -62,6 +63,7 @@ containers-color-purple =
     .label = Purpurowy
 containers-color-toolbar =
     .label = Pasujący do paska narzędzi
+
 containers-icon-fence =
     .label = Płotek
 containers-icon-fingerprint =

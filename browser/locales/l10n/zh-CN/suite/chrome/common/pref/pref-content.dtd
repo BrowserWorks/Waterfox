@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,14 +29,15 @@
 <!ENTITY maxZoom.label                          "至">
 <!ENTITY maxZoom.accesskey                      "o">
 <!ENTITY percent.label                          "&#37;">
-
 <!ENTITY defaultZoom.label                      "默认缩放">
 <!ENTITY defaultZoom.accesskey                  "D">
 
-<!ENTITY siteSpecific.label                     "记住每个站点上的缩放等级">
-<!ENTITY siteSpecific.accesskey                 "m">
 <!ENTITY textZoomOnly.label                     "仅放大文本而不是放大整个页面">
 <!ENTITY textZoomOnly.accesskey                 "Z">
+<!ENTITY siteSpecific.label                     "记住每个站点上的缩放等级">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY showZoomStatusPanel.label              "在状态栏显示缩放控件">
+<!ENTITY showZoomStatusPanel.accesskey          "S">
 <!ENTITY enableAutomaticImageResizing.label     "调整大图像的尺寸以适应浏览器窗口">
 <!ENTITY enableAutomaticImageResizing.accesskey "R">
 
@@ -45,4 +46,3 @@
 <!ENTITY blockAutoRefresh.label                 "当网站尝试重定向或者重新载入页面时发出警告">
 <!ENTITY blockAutoRefresh.accesskey             "W">
 
-<!ENTITY showZoomStatusPanel.label              "在状态栏显示缩放控件">

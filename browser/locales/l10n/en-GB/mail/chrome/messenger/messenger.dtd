@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Print…">
 <!ENTITY printCmd.accesskey "P">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Print Preview">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "Page Setup…">
-<!ENTITY printSetupCmd.accesskey "u">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Delete Message">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "Compact View">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "Folder Pane Toolbar">
-<!ENTITY folderPaneBar.accesskey "F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Sort by">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Address Book">
 <!ENTITY addressBookCmd.accesskey "B">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Add-ons">
-<!ENTITY addons.accesskey "A">
-<!ENTITY addonPrefs.label "Add-on Options">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Add-on Preferences">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "No Add-on settings found.">
 <!ENTITY activitymanager.label "Activity Manager">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "D">
 <!ENTITY importCmd.label "Import…">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "Export…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Clear Recent History…">
 <!ENTITY clearRecentHistory.accesskey "H">
 <!ENTITY accountManagerCmd2.label "Account Settings">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Debug Add-ons">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "Content Frame Debugger">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "Error Console">
 <!ENTITY errorConsoleCmd.accesskey "E">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Backwards">
 <!ENTITY goForwardButton1.label "Forwards">
 <!ENTITY deleteItem.title "Delete">
-<!ENTITY deleteButton.label "Delete">
-<!ENTITY undeleteButton.label "Undelete">
 <!ENTITY markButton.label "Mark">
 <!ENTITY printButton.label "Print">
 <!ENTITY stopButton.label "Stop">
 <!ENTITY throbberItem.title "Activity Indicator">
 <!ENTITY junkItem.title "Junk">
-<!ENTITY junkButton.label "Junk">
-<!ENTITY notJunkButton.label "Not Junk">
 <!ENTITY addressBookButton.label "Address Book">
 <!ENTITY chatButton.label "Chat">
 <!ENTITY glodaSearch.title "Global Search">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Move to the previous message">
 <!ENTITY goForwardButton.tooltip "Go forwards one message">
 <!ENTITY goBackButton.tooltip "Go back one message">
-<!ENTITY deleteButton.tooltip "Delete selected message or folder">
-<!ENTITY undeleteButton.tooltip "Undelete selected message">
 <!ENTITY markButton.tooltip "Mark messages">
 <!ENTITY printButton.tooltip "Print this message">
 <!ENTITY stopButton.tooltip "Stop the current transfer">
-<!ENTITY junkButton.tooltip "Mark the selected messages as junk">
-<!ENTITY notJunkButton.tooltip "Mark the selected messages as not junk">
 <!ENTITY addressBookButton.tooltip "Go to the address book">
 <!ENTITY chatButton.tooltip "Show the Chat tab">
 <!ENTITY tagButton.tooltip "Tag messages">
 <!ENTITY compactButton.tooltip "Remove deleted messages from selected folder">
 <!ENTITY appmenuButton1.tooltip "Display the &brandShortName; Menu">
-<!ENTITY addonsButton.tooltip "Manage your add-ons">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Forward Inline">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Location">
 <!ENTITY idColumn.label "Order Received">
 <!ENTITY attachmentColumn.label "Attachments">
-
 <!ENTITY deleteColumn.label "Delete">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Sort by location">
 <!ENTITY idColumn2.tooltip "Sort by order received">
 <!ENTITY attachmentColumn2.tooltip "Sort by attachments">
-
 <!ENTITY deleteColumn.tooltip "Delete a message">
 
 <!-- Thread Pane Context Menu -->

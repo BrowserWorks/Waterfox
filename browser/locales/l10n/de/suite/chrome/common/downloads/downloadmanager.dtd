@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -88,3 +88,8 @@
 <!ENTITY cmd.copyDownloadLink.accesskey  "k">
 <!ENTITY cmd.properties.label            "Eigenschaften…">
 <!ENTITY cmd.properties.accesskey        "E">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Zugriff erlauben">
+<!ENTITY cmd.unblock2.accesskey           "a">

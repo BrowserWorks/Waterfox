@@ -1,8 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Při odesílání hlášení nastala chyba. Zkuste to prosím později.
+
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = Stránka začala fungovat? Pošlete hlášení
 
@@ -21,10 +22,13 @@ protections-popup-footer-protection-label-standard = Standardní
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Více informací o rozšířené ochraně proti sledování
+
 protections-panel-etp-on-header = Rozšířená ochrana proti sledování je zapnuta
 protections-panel-etp-off-header = Rozšířená ochrana proti sledování je vypnuta
+
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Stránka nefunguje?
+
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Stránka nefunguje?
@@ -45,7 +49,9 @@ protections-panel-no-trackers-found =
         [neuter] { -brand-short-name } na této stránce nenalezlo
        *[other] Aplikace { -brand-short-name } na této stránce nenalezla
     } žádné známé sledovací prvky.
+
 protections-panel-content-blocking-tracking-protection = Sledující obsah
+
 protections-panel-content-blocking-socialblock = Sledující prvky sociálních sítí
 protections-panel-content-blocking-cryptominers-label = Těžba kryptoměn
 protections-panel-content-blocking-fingerprinters-label = Otisk prohlížeče
@@ -71,12 +77,14 @@ protections-panel-protectionsdashboard-label = Přehled ochrany soukromí
 
 # The header of the list
 protections-panel-site-not-working-view-header = Vypněte ochranu proti sledování pokud pozorujete problémy s:
+
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = přihlášením
 protections-panel-site-not-working-view-issue-list-forms = fungováním formulářů
 protections-panel-site-not-working-view-issue-list-payments = platbami
 protections-panel-site-not-working-view-issue-list-comments = psaním komentářů
 protections-panel-site-not-working-view-issue-list-videos = přehráváním videí
+
 protections-panel-site-not-working-view-send-report = Poslat hlášení
 
 ##
@@ -86,13 +94,16 @@ protections-panel-cryptominers = Těžba kryptoměn využívá výpočetní výk
 protections-panel-fingerprinters = Sběrem informací o vašem prohlížeči a počítači lze vytvořit unikátní otisk a ten pak použít k vašemu sledování napříč různými a nijak nesouvisejícími servery a webovými stránkami.
 protections-panel-tracking-content = Webové stránky mohou načítat externí reklamy, videa a další obsah, který obsahuje sledovací kód. Po zablokování sledujícího obsahu se stránky načítají rychleji, ale některá tlačítka nebo formuláře nemusí správně fungovat.
 protections-panel-social-media-trackers = Sociální sítě umisťují na ostatní stránky sledovací prvky, pomocí kterých mohou sledovat, co na internetu děláte, vidíte a co si pouštíte. To umožňuje společnostem, které tato sociální média vlastní, dozvědět se o vás víc než jen to, co sdílíte na svých profilech.
+
 protections-panel-description-shim-allowed = Některé níže označené sledovací prvky byly na této stránce částečně povoleny, protože jste s nimi interagovali.
 protections-panel-description-shim-allowed-learn-more = Zjistit více
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Sledovací prvky částečně povoleny
+
 protections-panel-content-blocking-manage-settings =
     .label = Nastavení ochrany
     .accesskey = N
+
 protections-panel-content-blocking-breakage-report-view =
     .title = Nahlásit nefunkční stránku
 protections-panel-content-blocking-breakage-report-view-description =

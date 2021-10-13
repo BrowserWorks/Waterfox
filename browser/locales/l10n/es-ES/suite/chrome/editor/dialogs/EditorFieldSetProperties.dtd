@@ -1,10 +1,12 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Propiedades del conjunto de campos">
+
 <!ENTITY Legend.label "Leyenda">
 <!ENTITY Legend.accesskey "L">
+
 <!ENTITY EditLegendText.label "Editar leyenda:">
 <!ENTITY EditLegendText.accesskey "d">
 <!ENTITY LegendAlign.label "Alinear leyenda:">
@@ -13,5 +15,6 @@
 <!ENTITY AlignLeft.label "Izquierda">
 <!ENTITY AlignCenter.label "Centrada">
 <!ENTITY AlignRight.label "Derecha">
+
 <!ENTITY RemoveFieldSet.label "Eliminar conjunto de campos">
 <!ENTITY RemoveFieldSet.accesskey "m">

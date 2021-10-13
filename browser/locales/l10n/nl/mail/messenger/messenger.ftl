@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,12 +22,12 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = Add-ons en thema's
-    .tooltip = Uw add-ons beheren
 addons-and-themes-toolbarbutton =
     .label = Add-ons en thema’s
     .tooltiptext = Uw add-ons beheren
+quick-filter-toolbarbutton =
+    .label = Snelfilter
+    .tooltiptext = Berichten filteren
 redirect-msg-button =
     .label = Omleiden
     .tooltiptext = Geselecteerd bericht omleiden
@@ -70,9 +70,14 @@ folder-toolbar-toggle-folder-compact-view =
 redirect-msg-menuitem =
     .label = Omleiden
     .accesskey = O
+menu-file-save-as-file =
+    .label = Bestand…
+    .accesskey = B
 
 ## AppMenu
 
+appmenu-save-as-file =
+    .label = Bestand…
 # Since v89 we dropped the platforms distinction between Options or Preferences
 # and consolidated everything with Preferences.
 appmenu-preferences =
@@ -127,3 +132,9 @@ caret-browsing-prompt-check-text = Dit niet meer vragen.
 repair-text-encoding-button =
     .label = Tekstcodering repareren
     .tooltiptext = De juiste tekstcodering raden uit de berichtinhoud
+
+## no-reply handling
+
+no-reply-title = Antwoord niet ondersteund
+no-reply-message = Het antwoordadres ({ $email }) lijkt geen gecontroleerd adres te zijn. Berichten naar dit adres worden waarschijnlijk door niemand gelezen.
+no-reply-reply-anyway-button = Toch antwoorden

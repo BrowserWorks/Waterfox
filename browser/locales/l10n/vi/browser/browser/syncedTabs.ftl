@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Muốn xem thẻ từ các thiết bị
 synced-tabs-sidebar-intro = Xem danh sách các thẻ từ các thiết bị khác của bạn.
 synced-tabs-sidebar-unverified = Tài khoản của bạn cần được xác thực.
 synced-tabs-sidebar-notabs = Không có thẻ đang mở
-synced-tabs-sidebar-openprefs = Mở tùy chỉnh của { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Mở cài đặt đồng bộ hóa
 synced-tabs-sidebar-tabsnotsyncing = Bật đồng bộ thẻ để xem danh sách thẻ từ các thiết bị khác của bạn.
 synced-tabs-sidebar-connect-another-device = Kết nối thiết bị khác
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Đồng bộ ngay
     .accesskey = S
-fxa-sign-in = Đăng nhập vào { -sync-brand-short-name }
-turn-on-sync = Bật { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Đăng nhập vào đồng bộ hóa
 synced-tabs-turn-on-sync = Bật đồng bộ hóa

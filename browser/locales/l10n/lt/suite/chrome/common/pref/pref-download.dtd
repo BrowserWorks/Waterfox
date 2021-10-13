@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,18 +22,9 @@
 <!ENTITY alwaysAsk.label                "Klausti, kur įrašyti kiekvieną atsiunčiamą failą">
 <!ENTITY alwaysAsk.accesskey            "K">
 
-<!ENTITY downloadHistory.label          "Parsiuntimų žurnalas">
-<!ENTITY removeEntries.label            "Šalinti įrašus apie parsiųstus failus">
-<!ENTITY removeEntries.accesskey        "Š">
-<!ENTITY whenCompleted.label            "užbaigus siuntimą">
-<!ENTITY whenQuittingApp.label          "baigiant „&brandShortName;“ darbą">
-<!ENTITY neverRemove.label              "nešalinti">
-
 <!ENTITY finishedBehavior.label         "Pasibaigus siuntimui">
 <!ENTITY playSound.label                "Groti garsą">
 <!ENTITY playSound.accesskey            "G">
-<!ENTITY showAlert.label                "Rodyti pranešimą">
-<!ENTITY showAlert.accesskey            "o">
 <!ENTITY browse.label                   "Parinkti…">
 <!ENTITY browse.accesskey               "r">
 <!ENTITY playButton.label               "Perklausyti">

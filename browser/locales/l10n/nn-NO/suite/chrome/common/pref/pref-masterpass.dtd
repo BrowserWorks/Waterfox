@@ -1,17 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY  pref.masterpass.title                  "Hovudpassord">
-<!ENTITY  managepassword.caption                 "Tidsavbrot for hovudpassord">
-<!ENTITY  managepassword.text                    "&brandShortName; vil spørje etter hovudpassordet:">
-<!ENTITY  managepassword.askfirsttime            "Første gong det trengst">
-<!ENTITY  managepassword.askfirsttime.accesskey  "F">
-<!ENTITY  managepassword.askeverytime            "Kvar gong det trengst">
-<!ENTITY  managepassword.askeverytime.accesskey  "K">
-<!ENTITY  managepassword.asktimeout              "Dersom det ikkje er brukt sidan ">
-<!ENTITY  managepassword.asktimeout.accesskey    "D">
-<!ENTITY  managepassword.timeout.unit            "minutt eller meir">
 
 <!ENTITY  changepassword.caption                 "Endre hovudpassord">
 <!ENTITY  changepassword.text                    "Hovudpassordet vernar sensitiv informasjon somt.d. nettsidepassord og sertifikat.">

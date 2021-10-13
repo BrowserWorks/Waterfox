@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -19,12 +19,6 @@ serviceworker-worker-unregister = Deregistra
 serviceworker-worker-debug = Avvia debug
   .title = Il debug è disponibile solo per service worker in esecuzione
 
-serviceworker-worker-debug-forbidden = Avvia debug
-  .title = Il debug per i service worker è disponibile solo se multi e10s è disattivato
-
-serviceworker-worker-start2 = Avvia
-  .title = È possibile avviare service worker solo se multi e10s è disattivato
-
 # Alt text for the image icon displayed inside a debug link for a service worker.
 serviceworker-worker-inspect-icon =
   .alt = Ispeziona
@@ -33,26 +27,12 @@ serviceworker-worker-start3 = Avvia
 
 serviceworker-worker-updated = Ultimo aggiornamento: <time>{ DATETIME($date, month: "long", year: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric") }</time>
 
-serviceworker-worker-source = Sorgente
-
-serviceworker-worker-status = Stato
-
 ## Service Worker status strings: all serviceworker-worker-status-* strings are also
 ## defined in aboutdebugging.properties and should be synchronized with them.
 
 serviceworker-worker-status-running = In esecuzione
 
 serviceworker-worker-status-stopped = Bloccato
-
-serviceworker-empty-intro = È necessario registrare un service worker per poterlo analizzare in questo strumento. <a>Ulteriori informazioni</a>
-
-serviceworker-empty-suggestions = Se la pagina corrente include un service worker ma non è disponibile, ecco alcune prove da effettuare
-
-serviceworker-empty-suggestions-console = Verifica la presenza di errori nella console. <a>Apri la console</a>
-
-serviceworker-empty-suggestions-debugger = Analizza passo per passo la registrazione del service worker e verifica la presenza di eccezioni. <a>Apri Debugger</a>
-
-serviceworker-empty-suggestions-aboutdebugging = Analizza i service worker da altri domini. <a>Apri about:debugging</a>
 
 serviceworker-empty-intro2 = Non è stato trovato alcun service worker
 
@@ -63,8 +43,6 @@ serviceworker-empty-suggestions2 = Se si ritiene che questa pagina debba mostrar
 serviceworker-empty-suggestions-aboutdebugging2 = Visualizza i service worker da altri domini
 
 manifest-view-header = Manifesto dell’app
-
-manifest-empty-intro = È necessario aggiungere il manifesto di una web app per analizzarlo qui. <a>Ulteriori informazioni</a>
 
 manifest-empty-intro2 = Non è stato trovato alcun manifesto web app
 
@@ -84,7 +62,7 @@ manifest-loaded-ok = Caricato manifesto.
 
 manifest-loaded-error = Si è verificato un errore durante il caricamento del manifesto:
 
-manifest-loaded-devtools-error = Errore in Firefox DevTools
+manifest-loaded-devtools-error = Errore in Waterfox DevTools
 
 manifest-non-existing = Nessun manifesto trovato da analizzare.
 

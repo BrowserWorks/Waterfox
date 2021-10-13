@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,10 +20,3 @@
 <!ENTITY loadNoImagesRadio.accesskey    "N">
 <!ENTITY viewPermissions.label          "Spravovat oprávnění">
 <!ENTITY viewPermissions.accesskey      "S">
-<!ENTITY animLoopingTitle.label         "Animované obrázky by se měly opakovat">
-<!ENTITY animLoopAsSpecified.label      "Tolikrát, kolikrát obrázek specifikuje">
-<!ENTITY animLoopAsSpecified.accesskey  "T">
-<!ENTITY animLoopOnce.label             "Jednou">
-<!ENTITY animLoopOnce.accesskey         "J">
-<!ENTITY animLoopNever.label            "Nikdy">
-<!ENTITY animLoopNever.accesskey        "k">

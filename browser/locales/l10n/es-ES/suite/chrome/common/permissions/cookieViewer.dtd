@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,19 +14,23 @@
 <!ENTITY button.removecookie.accesskey "R">
 <!ENTITY button.removeallcookies.label "Eliminar todas las cookies">
 <!ENTITY button.removeallcookies.accesskey "E">
+
 <!ENTITY search.placeholder "Buscar en las cookies">
 <!ENTITY focusSearch.key "f">
 <!ENTITY selectAll.key "a">
+
 <!ENTITY props.name.label "Nombre:">
 <!ENTITY props.value.label "Contenido:">
 <!ENTITY props.domain.label "Servidor:">
 <!ENTITY props.path.label "Ruta:">
 <!ENTITY props.secure.label "Enviar para:">
 <!ENTITY props.expires.label "Caduca:">
+
 <!ENTITY treehead.sitename.label "Sitio web">
 <!ENTITY treehead.scheme.label "Esquema">
 <!ENTITY treehead.status.label "Estado">
 <!ENTITY windowtitle.label "Administrador de cookies">
+
 <!ENTITY blockSite.label "Bloquear">
 <!ENTITY blockSite.accesskey "B">
 <!ENTITY allowSite.label "Permitir">
@@ -37,5 +41,6 @@
 <!ENTITY removepermission.accesskey "R">
 <!ENTITY removeallpermissions.label "Eliminar todos los sitios web">
 <!ENTITY removeallpermissions.accesskey "E">
+
 <!ENTITY futureCookies.label "No permitir a los sitios web que enviaron cookies eliminadas enviar cookies en el futuro">
 <!ENTITY futureCookies.accesskey "N">

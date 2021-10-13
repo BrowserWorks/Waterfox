@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Kontakty
 
 about-addressbook-toolbar-new-address-book =
     .label = Nový adresář
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Nová složka kontaktů CardDAV
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Nová složka kontaktů LDAP
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Přidat složku kontaktů CardDAV
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Nový kontakt
 about-addressbook-toolbar-new-list =
     .label = Nová skupina
+about-addressbook-toolbar-import =
+    .label = Importovat
 
 ## Books
 
@@ -30,10 +28,14 @@ about-addressbook-books-context-synchronize =
     .label = Synchronizovat
 about-addressbook-books-context-print =
     .label = Tisk…
+about-addressbook-books-context-export =
+    .label = Exportovat…
 about-addressbook-books-context-delete =
     .label = Smazat
 about-addressbook-books-context-remove =
     .label = Odebrat
+about-addressbook-books-context-startup-default =
+    .label = Výchozí počáteční složka
 about-addressbook-confirm-delete-book-title = Smazat složku kontaktů
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Seřadit podle e-mailové adresy
 about-addressbook-sort-email-descending =
     .label = Seřadit podle e-mailové adresy (pozpátku)
+about-addressbook-cards-context-write =
+    .label = Napsat
 about-addressbook-confirm-delete-mixed-title = Smazat kontakty a skupiny
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.

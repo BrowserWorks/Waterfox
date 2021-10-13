@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Om dina rättigheter
 rights-intro = { -brand-full-name } är fri programvara baserad på öppen källkod, byggd av en community av tusentals personer över hela världen. Det finns några saker du bör känna till:
-rights-intro-point-1 = { -brand-short-name } görs tillgänglig enligt villkoren i <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Det betyder att du får använda, kopiera och distribuera { -brand-short-name } till andra. Du får också modifiera källkoden i { -brand-short-name } för att bättre passa dina behov. Mozilla Public License ger dig även rätt att distribuera de modifierade versionerna.
-rights-intro-point-2 = Du ges ingen rätt till varumärken eller licenser till varumärken tillhörande Mozilla Foundation eller annan part, detta inkluderar utan undantag namnet Firefox eller dess logotyp. Ytterligare information om varumärkena hittar du <a data-l10n-name="mozilla-trademarks-link">här</a>.
+rights-intro-point-1 = { -brand-short-name } görs tillgänglig enligt villkoren i <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a>. Det betyder att du får använda, kopiera och distribuera { -brand-short-name } till andra. Du får också modifiera källkoden i { -brand-short-name } för att bättre passa dina behov. Waterfox Public License ger dig även rätt att distribuera de modifierade versionerna.
+rights-intro-point-2 = Du ges ingen rätt till varumärken eller licenser till varumärken tillhörande Waterfox Foundation eller annan part, detta inkluderar utan undantag namnet Waterfox eller dess logotyp. Ytterligare information om varumärkena hittar du <a data-l10n-name="mozilla-trademarks-link">här</a>.
 rights-intro-point-3 = Vissa funktioner i { -brand-short-name }, såsom Kraschrapportören, ger dig möjlighet att ge feedback till { -vendor-short-name }. Genom att skicka in feedback ger du { -vendor-short-name } tillstånd att använda den för att förbättra sina produkter, publicera denna feedback på sina webbplatser och att distribuera den.
 rights-intro-point-4 = Hur vi använder dina personliga uppgifter och din feedback som du skickar till { -vendor-short-name } genom { -brand-short-name } finns beskrivet i <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name } sekretesspolicy</a>.
 rights-intro-point-4-unbranded = Tillämpliga sekretesspolicyer för denna produkt bör listas här.

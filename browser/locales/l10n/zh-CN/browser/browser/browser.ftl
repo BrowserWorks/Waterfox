@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -87,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = 管理插件使用
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = 管理您是否与该网站共享摄像头和麦克风
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = 管理是否要与网站共享音频输出设备
 urlbar-autoplay-notification-anchor =
     .tooltiptext = 打开自动播放面板
 urlbar-persistent-storage-notification-anchor =
@@ -156,12 +160,8 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = 添加到地址栏
 page-action-manage-extension =
     .label = 管理扩展…
-page-action-remove-from-urlbar =
-    .label = 从地址栏移除
 page-action-remove-extension =
     .label = 移除扩展
 
@@ -179,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = 本次搜索使用：
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = 更改搜索设置
 search-one-offs-change-settings-compact-button =
     .tooltiptext = 更改搜索设置
 search-one-offs-context-open-new-tab =
@@ -242,8 +238,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = 保存时显示编辑器
     .accesskey = S
-bookmark-panel-done-button =
-    .label = 完成
 bookmark-panel-save-button =
     .label = 保存
 # Width of the bookmark panel.
@@ -268,13 +262,11 @@ identity-connection-internal = 这是安全的 { -brand-short-name } 页面。
 identity-connection-file = 此页面存储在您的计算机上。
 identity-extension-page = 此页面是扩展页面。
 identity-active-blocked = { -brand-short-name } 已拦截此页面上不安全的内容。
-identity-custom-root = 连接由 Mozilla 不认可的证书颁发者所验证。
+identity-custom-root = 连接由 Waterfox 不认可的证书颁发者所验证。
 identity-passive-loaded = 此页面上部分内容不安全（例如图像）。
 identity-active-loaded = 您在此页面上已禁用保护。
 identity-weak-encryption = 此页面使用较弱加密。
 identity-insecure-login-forms = 在此网页上输入的登录信息可能会泄露。
-identity-permissions =
-    .value = 权限
 identity-https-only-connection-upgraded = （升级为 HTTPS）
 identity-https-only-label = HTTPS-Only 模式
 identity-https-only-dropdown-on =
@@ -290,13 +282,12 @@ identity-permissions-storage-access-header = 跨网站 Cookie
 identity-permissions-storage-access-hint = 当您在此网站上时，以下各方可以使用跨网站 Cookie 和网站数据。
 identity-permissions-storage-access-learn-more = 详细了解
 identity-permissions-reload-hint = 您可能需要重新载入此页面以应用更改。
-identity-permissions-empty = 您尚未授予此站点任何权限。
 identity-clear-site-data =
     .label = 清除 Cookie 和网站数据…
 identity-connection-not-secure-security-view = 您并未安全地连接至此网站。
 identity-connection-verified = 您已安全地连接至此网站。
 identity-ev-owner-label = 证书颁发给：
-identity-description-custom-root = Mozilla 不认识此证书颁发者。它可能是由您的操作系统或管理员身份添加。 <label data-l10n-name="link">详细了解</label>
+identity-description-custom-root = Waterfox 不认识此证书颁发者。它可能是由您的操作系统或管理员身份添加。 <label data-l10n-name="link">详细了解</label>
 identity-remove-cert-exception =
     .label = 移除例外
     .accesskey = R
@@ -372,12 +363,6 @@ bookmarks-toolbar-empty-message = 可将书签放在书签工具栏上，方便�
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = 共享的摄像头：
-    .accesskey = C
-popup-select-microphone =
-    .value = 共享的麦克风：
-    .accesskey = M
 popup-select-camera-device =
     .value = 摄像头：
     .accesskey = C
@@ -391,14 +376,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = 音频输出设备
 popup-all-windows-shared = 您的屏幕上的所有可见窗口都将被共享。
-popup-screen-sharing-not-now =
-    .label = 暂时不要
-    .accesskey = w
-popup-screen-sharing-never =
-    .label = 永不允许
-    .accesskey = N
-popup-silence-notifications-checkbox = 共享时，不显示 { -brand-short-name } 的通知
-popup-silence-notifications-checkbox-warning = { -brand-short-name } 将不会在共享时显示通知。
 popup-screen-sharing-block =
     .label = 阻止
     .accesskey = B
@@ -422,14 +399,10 @@ enable-devtools-popup-description = 请通过“Web 开发者”菜单打开开�
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = 搜索或输入网址
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
     .placeholder = 搜索或输入网址
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = 浏览器正被远程控制
 # This placeholder is used in search mode with search engines that search the
 # entire web.
 # Variables
@@ -478,8 +451,6 @@ urlbar-go-button =
     .tooltiptext = 转到地址栏中指向的网址
 urlbar-page-action-button =
     .tooltiptext = 页面动作
-urlbar-pocket-button =
-    .tooltiptext = 保存到 { -pocket-brand-name }
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -535,6 +506,19 @@ urlbar-result-action-calculator-result = = { $result }
 urlbar-result-action-search-bookmarks = 搜索书签
 urlbar-result-action-search-history = 搜索历史记录
 urlbar-result-action-search-tabs = 搜索标签页
+
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = { $engine } 建议
 
 ## Full Screen and Pointer Lock UI
 
@@ -668,6 +652,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = 脱机工作
     .accesskey = k
+toolbar-overflow-customize-button =
+    .label = 定制工具栏…
+    .accesskey = C
+toolbar-button-email-link =
+    .label = 用邮件发送链接
+    .tooltiptext = 用邮件发送此页链接
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = 保存页面
+    .tooltiptext = 保存此页 ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = 打开文件
+    .tooltiptext = 打开文件 ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = 受同步标签页
+    .tooltiptext = 显示来自其他设备的标签页
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = 新建隐私窗口
+    .tooltiptext = 新建一个隐私浏览窗口 ({ $shortcut })
 
 ## EME notification panel
 
@@ -694,3 +702,79 @@ addon-removal-abuse-report-checkbox = 向 { -vendor-short-name } 举报此扩展
 remote-tabs-manage-account =
     .label = 管理账户
 remote-tabs-sync-now = 立即同步
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = 更多…
+ui-tour-info-panel-close =
+    .tooltiptext = 关闭
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = 允许 { $uriHost } 弹出窗口
+    .accesskey = p
+popups-infobar-block =
+    .label = 阻止 { $uriHost } 弹出窗口
+    .accesskey = p
+
+##
+
+popups-infobar-dont-show-message =
+    .label = 当弹出式窗口被拦截时不显示此消息
+    .accesskey = D
+edit-popup-settings =
+    .label = 管理弹出式窗口设置…
+    .accesskey = M
+picture-in-picture-hide-toggle =
+    .label = 隐藏画中画切换按钮
+    .accesskey = H
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = 导航
+navbar-downloads =
+    .label = 下载
+navbar-overflow =
+    .tooltiptext = 更多工具…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = 打印
+    .tooltiptext = 打印此页… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = 打印
+    .tooltiptext = 打印当前页
+navbar-home =
+    .label = 主页
+    .tooltiptext = { -brand-short-name } 主页
+navbar-library =
+    .label = 我的足迹
+    .tooltiptext = 查看浏览历史、已保存的书签等
+navbar-search =
+    .title = 搜索
+navbar-accessibility-indicator =
+    .tooltiptext = 无障碍功能已启用
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = 浏览器标签页
+tabs-toolbar-new-tab =
+    .label = 新建标签页
+tabs-toolbar-list-all-tabs =
+    .label = 列出全部标签页
+    .tooltiptext = 列出全部标签页
+
+## Infobar shown at startup to suggest session-restore
+
+# <img data-l10n-name="icon"/> will be replaced by the application menu icon
+restore-session-startup-suggestion-message = <strong>想打开先前的标签页？</strong>您可以从 { -brand-short-name } 应用程序菜单 <img data-l10n-name="icon"/> 中的“历史”恢复先前的浏览状态。
+restore-session-startup-suggestion-button = 告诉我如何做

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "Wissen">
 
-<!ENTITY fillLoginMenu.label          "Aanmelding invullen">
-<!ENTITY fillLoginMenu.accesskey      "u">
-<!ENTITY fillPasswordMenu.label       "Wachtwoord invullen">
-<!ENTITY fillPasswordMenu.accesskey   "u">
-<!ENTITY fillUsernameMenu.label       "Gebruikersnaam invullen">
-<!ENTITY fillUsernameMenu.accesskey   "u">
-<!ENTITY noLoginSuggestions.label     "(Geen aanmeldingssuggesties)">
-<!ENTITY viewSavedLogins.label        "Opgeslagen aanmeldingen weergeven">

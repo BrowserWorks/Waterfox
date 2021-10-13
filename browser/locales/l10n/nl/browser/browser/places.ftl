@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,39 +8,18 @@ places-open =
 places-open-in-tab =
     .label = Openen in nieuw tabblad
     .accesskey = w
-places-open-tab =
-    .label = Openen in een nieuw tabblad
-    .accesskey = t
 places-open-all-bookmarks =
     .label = Alle bladwijzers openen
     .accesskey = o
 places-open-all-in-tabs =
     .label = Alle openen in tabbladen
     .accesskey = t
-places-open-window =
-    .label = Openen in een nieuw venster
-    .accesskey = v
 places-open-in-window =
     .label = Openen in nieuw venster
     .accesskey = u
-places-open-private-window =
-    .label = Openen in een nieuw privévenster
-    .accesskey = r
 places-open-in-private-window =
     .label = Openen in nieuw privévenster
     .accesskey = v
-places-new-bookmark =
-    .label = Nieuwe bladwijzer…
-    .accesskey = b
-places-new-folder-contextmenu =
-    .label = Nieuwe map…
-    .accesskey = m
-places-new-folder =
-    .label = Nieuwe map…
-    .accesskey = m
-places-new-separator =
-    .label = Nieuw scheidingsteken
-    .accesskey = c
 places-add-bookmark =
     .label = Bladwijzer toevoegen…
     .accesskey = B
@@ -73,6 +52,8 @@ places-by-day-and-site =
     .accesskey = e
 places-history-search =
     .placeholder = Geschiedenis doorzoeken
+places-history =
+    .aria-label = Geschiedenis
 places-bookmarks-search =
     .placeholder = Bladwijzers doorzoeken
 places-delete-domain-data =
@@ -81,9 +62,6 @@ places-delete-domain-data =
 places-sortby-name =
     .label = Sorteren op naam
     .accesskey = S
-places-properties =
-    .label = Eigenschappen
-    .accesskey = E
 # places-edit-bookmark and places-edit-generic will show one or the other and can have the same access key.
 places-edit-bookmark =
     .label = Bladwijzer bewerken…
@@ -95,6 +73,17 @@ places-edit-folder =
     .label = Mapnaam wijzigen…
     .accesskey = w
 places-remove-folder =
+    .label =
+        { $count ->
+            [1] Map verwijderen
+            [one] Map verwijderen
+           *[other] Mappen verwijderen
+        }
+    .accesskey = v
+places-edit-folder2 =
+    .label = Map bewerken…
+    .accesskey = w
+places-delete-folder =
     .label =
         { $count ->
             [1] Map verwijderen
@@ -121,6 +110,107 @@ places-remove-bookmark =
            *[other] Bladwijzers verwijderen
         }
     .accesskey = v
+places-show-in-folder =
+    .label = In map tonen
+    .accesskey = m
+# Variables:
+# $count (number) - The number of elements being selected for removal.
+places-delete-bookmark =
+    .label =
+        { $count ->
+            [1] Bladwijzer verwijderen
+            [one] Bladwijzer verwijderen
+           *[other] Bladwijzers verwijderen
+        }
+    .accesskey = v
 places-manage-bookmarks =
     .label = Bladwijzers beheren
     .accesskey = b
+places-forget-about-this-site-confirmation-title = Deze website vergeten
+# Variables:
+# $hostOrBaseDomain (string) - The base domain (or host in case there is no base domain) for which data is being removed
+places-forget-about-this-site-confirmation-message = Met deze actie worden alle gegevens met betrekking tot { $hostOrBaseDomain } verwijderd, inclusief geschiedenis, wachtwoorden, cookies, buffer en inhoudsvoorkeuren. Weet u zeker dat u door wilt gaan?
+places-forget-about-this-site-forget = Vergeten
+places-library =
+    .title = Bibliotheek
+    .style = width:700px; height:500px;
+places-organize-button =
+    .label = Ordenen
+    .tooltiptext = Uw bladwijzers ordenen
+    .accesskey = O
+places-organize-button-mac =
+    .label = Ordenen
+    .tooltiptext = Uw bladwijzers ordenen
+places-file-close =
+    .label = Sluiten
+    .accesskey = S
+places-cmd-close =
+    .key = w
+places-view-button =
+    .label = Weergaven
+    .tooltiptext = Uw weergave wijzigen
+    .accesskey = W
+places-view-button-mac =
+    .label = Weergaven
+    .tooltiptext = Uw weergave wijzigen
+places-view-menu-columns =
+    .label = Kolommen tonen
+    .accesskey = K
+places-view-menu-sort =
+    .label = Sorteren
+    .accesskey = S
+places-view-sort-unsorted =
+    .label = Ongesorteerd
+    .accesskey = O
+places-view-sort-ascending =
+    .label = Sorteervolgorde A > Z
+    .accesskey = A
+places-view-sort-descending =
+    .label = Sorteervolgorde Z > A
+    .accesskey = Z
+places-maintenance-button =
+    .label = Importeren en reservekopie maken
+    .tooltiptext = Uw bladwijzers importeren en een reservekopie maken
+    .accesskey = I
+places-maintenance-button-mac =
+    .label = Importeren en reservekopie maken
+    .tooltiptext = Uw bladwijzers importeren en een reservekopie maken
+places-cmd-backup =
+    .label = Reservekopie maken…
+    .accesskey = R
+places-cmd-restore =
+    .label = Herstellen
+    .accesskey = H
+places-cmd-restore-from-file =
+    .label = Bestand kiezen…
+    .accesskey = B
+places-import-bookmarks-from-html =
+    .label = Bladwijzers importeren vanuit HTML…
+    .accesskey = m
+places-export-bookmarks-to-html =
+    .label = Bladwijzers exporteren naar HTML…
+    .accesskey = x
+places-import-other-browser =
+    .label = Gegevens van een andere browser importeren…
+    .accesskey = d
+places-view-sort-col-name =
+    .label = Naam
+places-view-sort-col-tags =
+    .label = Labels
+places-view-sort-col-url =
+    .label = Locatie
+places-view-sort-col-most-recent-visit =
+    .label = Meest recente bezoek
+places-view-sort-col-visit-count =
+    .label = Bezoekteller
+places-view-sort-col-date-added =
+    .label = Toegevoegd
+places-view-sort-col-last-modified =
+    .label = Laatst gewijzigd
+places-cmd-find-key =
+    .key = f
+places-back-button =
+    .tooltiptext = Teruggaan
+places-forward-button =
+    .tooltiptext = Vooruit gaan
+places-details-pane-select-an-item-description = Selecteer een item om de eigenschappen ervan te bekijken en te wijzigen

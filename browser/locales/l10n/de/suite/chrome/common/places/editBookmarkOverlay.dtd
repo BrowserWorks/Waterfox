@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editBookmarkOverlay.name.label                      "Name:">
+<!ENTITY editBookmarkOverlay.name.accesskey                  "N">
+<!ENTITY editBookmarkOverlay.location.label                  "Adresse:">
+<!ENTITY editBookmarkOverlay.location.accesskey              "A">
+<!ENTITY editBookmarkOverlay.feedLocation.label              "Feed-Adresse:">
+<!ENTITY editBookmarkOverlay.feedLocation.accesskey          "F">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Website-Adresse:">
+<!ENTITY editBookmarkOverlay.siteLocation.accesskey          "W">
+<!ENTITY editBookmarkOverlay.folder.label                    "Ordner:">
+<!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Alle Lesezeichenordner anzeigen">
+<!ENTITY editBookmarkOverlay.expanderUp.tooltip              "Verstecken">
+<!ENTITY editBookmarkOverlay.tags.label                      "Tags:">
+<!ENTITY editBookmarkOverlay.tags.accesskey                  "T">
+<!ENTITY editBookmarkOverlay.tagsEmptyDesc.label             "Tags mit Kommas trennen">
+<!ENTITY editBookmarkOverlay.description.label               "Beschreibung:">
+<!ENTITY editBookmarkOverlay.description.accesskey           "B">
+<!ENTITY editBookmarkOverlay.keyword.label                   "Schlüsselwort:">
+<!ENTITY editBookmarkOverlay.keyword.accesskey               "S">
+<!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Alle Tags anzeigen">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Dieses Lesezeichen in der Sidebar laden">
+<!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "D">
+<!ENTITY editBookmarkOverlay.choose.label                    "Wählen…">
+<!ENTITY editBookmarkOverlay.newFolderButton.label           "Neuer Ordner">
+<!ENTITY editBookmarkOverlay.newFolderButton.accesskey       "d">

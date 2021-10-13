@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,7 +12,7 @@
 <!ENTITY fileMenu.accesskey               "F">
 <!ENTITY newMenu.label                    "新建">
 <!ENTITY newMenu.accesskey                "N">
-<!ENTITY newBlankPageCmd.label            "编写页面">
+<!ENTITY newBlankPageCmd.label            "编辑器页面">
 <!ENTITY newBlankPageCmd.accesskey        "P">
 <!ENTITY newBlankPageCmd.key              "n">
 <!ENTITY newPageFromTemplateCmd.label "使用模板新建">
@@ -90,7 +90,7 @@
 <!ENTITY pasteSearchCmd.accesskey         "e">
 <!ENTITY deleteCmd.label                  "删除">
 <!ENTITY deleteCmd.accesskey              "D">
-<!ENTITY selectAllCmd.label               "选择全部">
+<!ENTITY selectAllCmd.label               "全选">
 <!ENTITY selectAllCmd.key                 "A">
 <!ENTITY selectAllCmd.accesskey           "A">
 <!ENTITY clearHistoryCmd.label            "清空搜索历史">
@@ -133,7 +133,6 @@
 
 <!ENTITY helpMenu.label                   "帮助">
 <!ENTITY helpMenu.accesskey               "H">
-
 <!-- LOCALIZATION NOTE some localizations of Windows use "?"
      for the help button in the menubar. -->
 <!ENTITY helpMenuWin.label                "帮助">
@@ -142,8 +141,6 @@
 <!ENTITY openHelpCmd.accesskey            "H">
 <!ENTITY openHelpCmd.key                  "VK_F1">
 
-<!ENTITY helpForIEUsers.label               "致IE浏览器用户">
-<!ENTITY helpForIEUsers.accesskey           "I">
 <!ENTITY helpTroubleshootingInfo.label      "疑难排解信息">
 <!ENTITY helpTroubleshootingInfo.accesskey  "T">
 <!ENTITY releaseCmd.label                   "版本注释">

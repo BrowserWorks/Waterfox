@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,6 +6,7 @@
 <!ENTITY trainingDescription.label "Se abilitata, bisogna prima istruire &brandShortName; su come identificare lo spam usando il pulsante Spam nella barra degli strumenti per marcare i messaggi come spam oppure no. Bisogna identificare sia i messaggi spam che quelli non spam. Dopo un periodo di addestramento &brandShortName; sarà in grado di segnalare lo spam automaticamente.">
 <!ENTITY level.label "Attiva i controlli spam per questo account">
 <!ENTITY level.accesskey "t">
+
 <!ENTITY move.label "Sposta i nuovi messaggi spam in:">
 <!ENTITY move.accesskey "S">
 <!ENTITY junkFolderOn.label "Cartella &quot;Spam&quot; in:">
@@ -15,12 +16,16 @@
 <!ENTITY purge1.label "Cancella automaticamente i messaggi spam dopo">
 <!ENTITY purge1.accesskey "C">
 <!ENTITY purge2.label "giorni">
+
 <!ENTITY whitelistHeader.label "Non contrassegnare automaticamente i messaggi come spam se il mittente è in:">
 <!ENTITY whitelistHeader.accesskey "N">
+
 <!ENTITY ispHeadersWarning.label "Se abilitata, &brandShortName; considererà automaticamente i messaggi marcati con questo classificatore esterno come spam.">
 <!ENTITY ispHeaders.label "Utilizza le intestazioni spam impostate da:">
 <!ENTITY ispHeaders.accesskey "U">
+
 <!ENTITY junkClassification.label "Selezione">
 <!ENTITY junkActions.label "Destinazione e conservazione">
+
 <!ENTITY globalJunkPrefs.label "Impostazioni globali spam…">
 <!ENTITY globalJunkPrefs.accesskey "z">

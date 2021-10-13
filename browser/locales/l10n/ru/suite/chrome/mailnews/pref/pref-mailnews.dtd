@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,17 @@
 <!ENTITY confirmMove.accesskey            "а">
 <!ENTITY preserveThreading.label          "Сохранять группировку по обсуждениям при сортировке сообщений">
 <!ENTITY preserveThreading.accesskey      "г">
+<!ENTITY mailAutoHide.label               "Скрывать панель вкладок почты, если открыта только одна вкладка">
+<!ENTITY mailAutoHide.accesskey           "ы">
 <!ENTITY loadInBackground.label           "Переключаться на новые вкладки при их открытии">
 <!ENTITY loadInBackground.accesskey       "е">
+<!ENTITY mailOpenTabsFor.label            "Открывать вкладки вместо окон при">
+<!ENTITY mailMiddleClick.label            "Щелчке средней кнопкой мыши или Ctrl+Enter по сообщению или папке">
+<!ENTITY mailMiddleClick.accesskey        "н">
+<!ENTITY mailMiddleClickMac.label         "Щелчке средней кнопкой мыши или &#8984;+Return по сообщению или папке">
+<!ENTITY mailMiddleClickMac.accesskey     "н">
+<!ENTITY mailDoubleClick.label            "Двойном щелчке мышью по сообщению">
+<!ENTITY mailDoubleClick.accesskey        "й">
 <!ENTITY mailBiffOnNewWindow.label        "Проверять наличие новой почты только после открытия окна «Почта и группы новостей»">
 <!ENTITY mailBiffOnNewWindow.accesskey    "р">
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,6 +15,7 @@ deprecation-description=Czegoś tutaj brakuje? Niektóre wtyczki nie są już ob
 ##   $pluginLibraries: the plugin library
 ##   $pluginFullPath: path of the plugin
 ##   $version: version of the plugin
+
 file-dd=<span data-l10n-name="file">Plik</span>: { $pluginLibraries }
 path-dd=<span data-l10n-name="path">Ścieżka</span>: { $pluginFullPath }
 version-dd=<span data-l10n-name="version">Wersja</span>: { $version }
@@ -23,6 +24,7 @@ version-dd=<span data-l10n-name="version">Wersja</span>: { $version }
 ##
 ## Variables:
 ##   $blockListState: show some special state of the plugin, such as blocked, outdated
+
 state-dd-enabled=<span data-l10n-name="state">Stan:</span>: włączony
 state-dd-enabled-block-list-state=<span data-l10n-name="state">Stan</span>: włączony ({ $blockListState })
 state-dd-Disabled=<span data-l10n-name="state">Stan</span>: wyłączony

@@ -1,20 +1,24 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window-close =
     .key = w
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =
     .label = 기본 ({ $name })
 fonts-label-default-unnamed =
     .label = 기본
+
 fonts-encoding-dialog-title =
     .title = 글꼴 및 인코딩
+
 fonts-language-legend =
     .value = 언어
     .accesskey = t
+
 fonts-proportional-label =
     .value = 가변폭 글꼴:
     .accesskey = P
@@ -85,38 +89,45 @@ font-language-group-tibetan =
 
 default-font-serif =
     .label = 세리프
+
 default-font-sans-serif =
     .label = 산세리프
-font-size-label =
-    .value = 크기:
-    .accesskey = e
+
 font-size-proportional-label =
     .value = 크기:
     .accesskey = e
+
 font-size-monospace-label =
     .value = 크기:
     .accesskey = i
+
 font-serif-label =
     .value = 세리프:
     .accesskey = S
+
 font-sans-serif-label =
     .value = 산세리프:
     .accesskey = n
+
 font-monospace-label =
     .value = 고정폭 글꼴:
     .accesskey = m
+
 font-min-size-label =
     .value = 최소 글꼴 크기:
     .accesskey = z
+
 min-size-none =
     .label = 없음
 
 ## Fonts in message
 
 font-control-legend = 글꼴 제어
+
 use-document-fonts-checkbox =
     .label = 문서에서 지정한 글꼴 사용 허용
     .accesskey = o
+
 use-fixed-width-plain-checkbox =
     .label = 평문 메시지에 고정폭 글꼴 사용
     .accesskey = x
@@ -124,13 +135,17 @@ use-fixed-width-plain-checkbox =
 ## Language settings
 
 text-encoding-legend = 문자 인코딩
+
 text-encoding-description = 메일을 보내고 받을 때 사용할 문자 인코딩 설정
+
 font-outgoing-email-label =
     .value = 보내는 메일:
     .accesskey = u
+
 font-incoming-email-label =
     .value = 받는 메일:
     .accesskey = I
+
 default-font-reply-checkbox =
     .label = 가능하면 회신할 때 기본 문자 인코딩 사용
     .accesskey = h

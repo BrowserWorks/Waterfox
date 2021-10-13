@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
@@ -7,17 +7,12 @@ about-logins-page-title = Dane logowania i hasła
 
 # "Google Play" and "App Store" are both branding and should not be translated
 
-login-app-promo-title = Miej hasła zawsze przy sobie
-login-app-promo-subtitle = Pobierz darmową aplikację { -lockwise-brand-name }
-login-app-promo-android =
-    .alt = Pobierz z Google Play
-login-app-promo-apple =
-    .alt = Pobierz z App Store
 login-filter =
     .placeholder = Szukaj danych logowania
+
 create-login-button = Utwórz nowe dane logowania
+
 fxaccounts-sign-in-text = Korzystaj ze swoich haseł na innych urządzeniach
-fxaccounts-sign-in-button = Zaloguj się do { -sync-brand-short-name(case: "gen", capitalization: "lower") }
 fxaccounts-sign-in-sync-button = Zaloguj się do synchronizacji
 fxaccounts-avatar-button =
     .title = Zarządzaj kontem
@@ -37,8 +32,6 @@ menu-menuitem-preferences =
        *[other] Preferencje
     }
 about-logins-menu-menuitem-help = Pomoc
-menu-menuitem-android-app = { -lockwise-brand-short-name } na Androida
-menu-menuitem-iphone-app = { -lockwise-brand-short-name } na iPhone’a i iPada
 
 ## Login List
 
@@ -53,6 +46,8 @@ login-list-count =
 login-list-sort-label-text = Sortuj wg:
 login-list-name-option = Nazwa (A-Z)
 login-list-name-reverse-option = Nazwa (Z-A)
+login-list-username-option = Nazwa użytkownika (A-Z)
+login-list-username-reverse-option = Nazwa użytkownika (Z-A)
 about-logins-login-list-alerts-option = Powiadomienia
 login-list-last-changed-option = Ostatnia modyfikacja
 login-list-last-used-option = Ostatnie użycie
@@ -68,16 +63,18 @@ about-logins-list-item-breach-icon =
 about-logins-list-item-vulnerable-password-icon =
     .title = Potencjalnie niebezpieczne hasło
 
+about-logins-list-section-breach = Witryny z wyciekami haseł
+about-logins-list-section-vulnerable = Potencjalnie niebezpieczne hasła
+about-logins-list-section-nothing = Brak powiadomienia
+about-logins-list-section-today = Dzisiaj
+about-logins-list-section-yesterday = Wczoraj
+about-logins-list-section-week = Ostatnie 7 dni
+
 ## Introduction screen
 
-login-intro-heading = Szukasz swoich zachowanych haseł? Skonfiguruj { -sync-brand-short-name(case: "acc", capitalization: "lower") }.
-about-logins-login-intro-heading-logged-out = Szukasz swoich zachowanych haseł? Skonfiguruj { -sync-brand-short-name(case: "acc", capitalization: "lower") } lub je zaimportuj.
 about-logins-login-intro-heading-logged-out2 = Szukasz swoich zachowanych haseł? Włącz synchronizację lub je zaimportuj.
 about-logins-login-intro-heading-logged-in = Brak synchronizowanych danych logowania.
 login-intro-description = Aby przenieść tutaj dane logowania zachowane w przeglądarce { -brand-product-name } na innym urządzeniu:
-login-intro-instruction-fxa = Zarejestruj się lub zaloguj na { -fxaccount-brand-name(case: "loc", capitalization: "lower") } na urządzeniu, w którym zachowano dane logowania
-login-intro-instruction-fxa-settings = Upewnij się, że opcja „Dane logowania” jest zaznaczona w ustawieniach { -sync-brand-short-name(case: "gen", capitalization: "lower") }
-about-logins-intro-instruction-help = <a data-l10n-name="help-link">Pomoc usługi { -lockwise-brand-short-name }</a> zawiera więcej informacji
 login-intro-instructions-fxa = Zarejestruj się lub zaloguj na { -fxaccount-brand-name(case: "loc", capitalization: "lower") } na urządzeniu, w którym zachowano dane logowania.
 login-intro-instructions-fxa-settings = Otwórz Ustawienia → Synchronizacja → Włącz synchronizację… i zaznacz pole „dane logowania i hasła”.
 login-intro-instructions-fxa-help = <a data-l10n-name="help-link">Pomoc usługi { -lockwise-brand-short-name }</a> zawiera więcej informacji.
@@ -114,7 +111,7 @@ login-item-time-used = Ostatnie użycie: { DATETIME($timeUsed, day: "numeric", m
 
 about-logins-os-auth-dialog-caption = { -brand-full-name }
 
-## The macOS strings are preceded by the operating system with "Firefox is trying to "
+## The macOS strings are preceded by the operating system with "Waterfox is trying to "
 ## and includes subtitle of "Enter password for the user "xxx" to allow this." These
 ## notes are only valid for English. Please test in your respected locale.
 
@@ -123,11 +120,13 @@ about-logins-edit-login-os-auth-dialog-message-win = Aby zmienić dane logowania
 # This message can be seen when attempting to edit a login in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-edit-login-os-auth-dialog-message-macosx = zmiana zachowanych danych logowania
+
 # This message can be seen when attempting to reveal a password in about:logins on Windows.
 about-logins-reveal-password-os-auth-dialog-message-win = Aby wyświetlić hasło, wprowadź swoje dane logowania do systemu Windows. Pomaga to chronić bezpieczeństwo Twoich kont.
 # This message can be seen when attempting to reveal a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-reveal-password-os-auth-dialog-message-macosx = wyświetlenie zachowanego hasła
+
 # This message can be seen when attempting to copy a password in about:logins on Windows.
 about-logins-copy-password-os-auth-dialog-message-win = Aby skopiować hasło, wprowadź swoje dane logowania do systemu Windows. Pomaga to chronić bezpieczeństwo Twoich kont.
 # This message can be seen when attempting to copy a password in about:logins
@@ -136,7 +135,6 @@ about-logins-copy-password-os-auth-dialog-message-macosx = skopiowanie zachowane
 
 ## Master Password notification
 
-master-password-notification-message = Proszę podać hasło główne, aby wyświetlić zachowane dane logowania i hasła
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = Aby wyeksportować dane logowania witryn, wprowadź swoje dane logowania do systemu Windows. Pomaga to chronić bezpieczeństwo Twoich kont.
 # This message can be seen when attempting to export a password in about:logins
@@ -152,35 +150,22 @@ master-password-reload-button =
 
 ## Password Sync notification
 
-enable-password-sync-notification-message =
-    { PLATFORM() ->
-        [windows] Chcesz mieć swoje hasła wszędzie, gdzie korzystasz z przeglądarki { -brand-product-name }? Przejdź do opcji { -sync-brand-short-name(case: "gen", capitalization: "lower") } i zaznacz opcję „Dane logowania”.
-       *[other] Chcesz mieć swoje hasła wszędzie, gdzie korzystasz z przeglądarki { -brand-product-name }? Przejdź do preferencji { -sync-brand-short-name(case: "gen", capitalization: "lower") } i zaznacz opcję „Dane logowania”.
-    }
-enable-password-sync-preferences-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Otwórz opcje { -sync-brand-short-name(case: "gen", capitalization: "lower") }
-           *[other] Otwórz preferencje { -sync-brand-short-name(case: "gen", capitalization: "lower") }
-        }
-    .accesskey = O
-about-logins-enable-password-sync-dont-ask-again-button =
-    .label = Nie pytaj ponownie
-    .accesskey = N
-
 ## Dialogs
 
 confirmation-dialog-cancel-button = Anuluj
 confirmation-dialog-dismiss-button =
     .title = Anuluj
+
 about-logins-confirm-remove-dialog-title = Czy usunąć te dane logowania?
 confirm-delete-dialog-message = Tej czynności nie można cofnąć.
 about-logins-confirm-remove-dialog-confirm-button = Usuń
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Usuń
        *[other] Usuń wszystkie
     }
+
 about-logins-confirm-remove-all-dialog-checkbox-label =
     { $count ->
         [1] Tak, usuń te dane logowania
@@ -188,6 +173,7 @@ about-logins-confirm-remove-all-dialog-checkbox-label =
         [few] Tak, usuń te dane logowania
        *[many] Tak, usuń te dane logowania
     }
+
 about-logins-confirm-remove-all-dialog-title =
     { $count ->
         [one] Czy usunąć { $count } dane logowania?
@@ -201,6 +187,7 @@ about-logins-confirm-remove-all-dialog-message =
         [few] Spowoduje to usunięcie danych logowania zachowanych w przeglądarce { -brand-short-name } i widocznych tutaj powiadomień o wyciekach danych. Tego działania nie można cofnąć.
        *[many] Spowoduje to usunięcie danych logowania zachowanych w przeglądarce { -brand-short-name } i widocznych tutaj powiadomień o wyciekach danych. Tego działania nie można cofnąć.
     }
+
 about-logins-confirm-remove-all-sync-dialog-title =
     { $count ->
         [one] Czy usunąć { $count } dane logowania ze wszystkich urządzeń?
@@ -214,11 +201,14 @@ about-logins-confirm-remove-all-sync-dialog-message =
         [few] Spowoduje to usunięcie danych logowania zachowanych w przeglądarce { -brand-short-name } na wszystkich urządzeniach synchronizowanych z { -fxaccount-brand-name(case: "ins", capitalization: "lower") } oraz widocznych tutaj powiadomień o wyciekach danych. Tego działania nie można cofnąć.
        *[many] Spowoduje to usunięcie danych logowania zachowanych w przeglądarce { -brand-short-name } na wszystkich urządzeniach synchronizowanych z { -fxaccount-brand-name(case: "ins", capitalization: "lower") } oraz widocznych tutaj powiadomień o wyciekach danych. Tego działania nie można cofnąć.
     }
+
 about-logins-confirm-export-dialog-title = Eksport danych logowania i haseł
 about-logins-confirm-export-dialog-message = Twoje hasła zostaną zapisane jako zwykły tekst (np. SłabeH@s1o), więc każdy, kto może otworzyć wyeksportowany plik, będzie mógł je zobaczyć.
 about-logins-confirm-export-dialog-confirm-button = Eksportuj…
+
 about-logins-alert-import-title = Ukończono importowanie
 about-logins-alert-import-message = Wyświetl szczegółowe podsumowanie importowania
+
 confirm-discard-changes-dialog-title = Czy odrzucić niezachowane zmiany?
 confirm-discard-changes-dialog-message = Wszystkie niezachowane zmiany zostaną utracone.
 confirm-discard-changes-dialog-confirm-button = Odrzuć
@@ -249,6 +239,7 @@ about-logins-vulnerable-alert-learn-more-link = Więcej informacji
 # Variables:
 #   $loginTitle (String) - The title of the website associated with the login.
 about-logins-error-message-duplicate-login-with-link = Dane logowania dla witryny „{ $loginTitle }” z tą nazwą użytkownika już istnieją. <a data-l10n-name="duplicate-link">Przejść do istniejących danych?</a>
+
 # This is a generic error message.
 about-logins-error-message-default = Wystąpił błąd podczas zapisywania tego hasła.
 
@@ -297,10 +288,12 @@ about-logins-import-dialog-items-added =
     { $count ->
        *[other] <span>Dodano nowe dane logowania:</span> <span data-l10n-name="count">{ $count }</span>
     }
+
 about-logins-import-dialog-items-modified =
     { $count ->
        *[other] <span>Zaktualizowano istniejące dane logowania:</span> <span data-l10n-name="count">{ $count }</span>
     }
+
 about-logins-import-dialog-items-no-change =
     { $count ->
        *[other] <span>Odnaleziono podwójne dane logowania:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(nie zaimportowano)</span>
@@ -310,6 +303,7 @@ about-logins-import-dialog-items-error =
        *[other] <span>Błędy:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(nie zaimportowano)</span>
     }
 about-logins-import-dialog-done = Gotowe
+
 about-logins-import-dialog-error-title = Błąd importu
 about-logins-import-dialog-error-conflicting-values-title = Wiele sprzecznych wartości dla jednych danych logowania
 about-logins-import-dialog-error-conflicting-values-description = Na przykład: kilka nazw użytkownika, haseł, adresów itp. dla jednych danych logowania.
@@ -321,11 +315,12 @@ about-logins-import-dialog-error-unable-to-read-title = Nie można przetworzyć 
 about-logins-import-dialog-error-unable-to-read-description = Upewnij się, że wybrano plik CSV lub TSV.
 about-logins-import-dialog-error-no-logins-imported = Żadne dane logowania nie zostały zaimportowane
 about-logins-import-dialog-error-learn-more = Więcej informacji
-about-logins-import-dialog-error-try-again = Spróbuj ponownie…
 about-logins-import-dialog-error-try-import-again = Spróbuj zaimportować ponownie…
 about-logins-import-dialog-error-cancel = Anuluj
+
 about-logins-import-report-title = Podsumowanie importowania
 about-logins-import-report-description = Dane logowania i hasła zaimportowane do przeglądarki { -brand-short-name }.
+
 #
 # Variables:
 #  $number (number) - The number of the row

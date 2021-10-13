@@ -1,23 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip		"メニューを開きます">
-
 <!ENTITY navbarOverflow.label		"その他のツール...">
 
 <!-- Tab context menu -->
-
-<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
-used as a metaphor for expressing the fact that these tabs are "pinned" to the
-left edge of the tabstrip. Really we just want the string to express the idea
-that this is a lightweight and reversible action that keeps your tab where you
-can reach it easily. -->
-<!ENTITY  pinTab.label			"タブをピン留め">
-<!ENTITY  unpinTab.label		"タブのピン留めを外す">
 
 <!ENTITY  listAllTabs.label		"タブを一覧表示します">
 
@@ -25,78 +15,26 @@ can reach it easily. -->
 <!ENTITY openFileCmd.label		"ファイルを開く...">
 <!ENTITY printCmd.label			"印刷...">
 
-<!ENTITY taskManagerCmd.label		"タスクマネージャー">
-
 <!ENTITY menubarCmd.label		"メニューバー">
 <!ENTITY menubarCmd.accesskey		"M">
 <!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
 include the word "toolbar" or such, because screen readers already know that
 this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY navbar.accessibleLabel		"ナビゲーション">
-<!ENTITY personalbarCmd.label		"ブックマークツールバー">
-<!ENTITY personalbarCmd.accesskey	"B">
-<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
-include the word "toolbar" or such, because screen readers already know that
-this container is a toolbar. This avoids double-speaking. -->
-<!ENTITY personalbar.accessibleLabel	"ブックマーク">
-<!ENTITY bookmarksToolbarItem.label	"ブックマークツールバーの項目">
-
 <!ENTITY fullScreenCmd.label		"全画面表示">
 
 <!ENTITY pictureInPictureHideToggle.label	"ピクチャーインピクチャーの切り替えボタンを隠す">
 <!ENTITY pictureInPictureHideToggle.accesskey	"H">
 
-<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
-     followed by the user's email. -->
-<!ENTITY fxa.menu.syncSettings2.label		"&syncBrand.shortName.label; の設定">
-<!ENTITY fxa.menu.connectAnotherDevice2.label	"別の端末を接続...">
-<!ENTITY fxa.menu.firefoxAccount		"&syncBrand.fxAccount.label;">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.signin.label			"&brandProductName; にログイン">
-<!ENTITY fxa.menu.turnOnSync.label		"&syncBrand.shortName.label; をオンにする">
-<!ENTITY fxa.menu.firefoxServices.label		"&brandProductName; サービス">
-<!ENTITY fxa.menu.account.label			"アカウント">
-<!ENTITY fxa.menu.settings.label		"設定">
-<!ENTITY fxa.menu.accountSettings.label		"アカウントの設定">
-<!ENTITY fxa.menu.manageAccount2.label		"アカウントを管理">
-<!ENTITY fxa.menu.signOut.label			"ログアウト...">
-<!ENTITY fxa.menu.setupSync.label		"&syncBrand.shortName.label; をセットアップ...">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description	"ログインしている他の端末に今すぐタブを送ります。">
-
-<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
-     fullscreenWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring fullscreen.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY fullscreenWarning.beforeDomain.label	"">
-<!ENTITY fullscreenWarning.afterDomain.label	"は現在全画面表示モードです。">
-<!ENTITY fullscreenWarning.generic.label	"このページは現在全画面表示モードです。">
-
-<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
-     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
-     is uppercase, while on Mac keyboards it is lowercase -->
-<!ENTITY exitDOMFullscreen.button	"全画面表示モードを終了 (Esc)">
-<!ENTITY exitDOMFullscreenMac.button	"全画面表示モードを終了 (esc)">
-
-<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
-     pointerlockWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring pointerlock.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY pointerlockWarning.beforeDomain.label	"マウスポインターは現在、">
-<!ENTITY pointerlockWarning.afterDomain.label	"が制御しています。制御を取り戻すには、ESC キーを押してください。">
-<!ENTITY pointerlockWarning.generic.label	"マウスポインターは現在、このページが制御しています。制御を取り戻すには、ESC キーを押してください。">
-
-<!ENTITY showAllBookmarks2.label		"すべてのブックマークを表示">
-<!ENTITY recentBookmarks.label			"最近のブックマーク">
-<!ENTITY bookmarksToolbarChevron.tooltip	"残りのブックマークを表示します">
 
 <!ENTITY printButton.label			"印刷">
 <!ENTITY printButton.tooltip			"このページを印刷します">
@@ -107,20 +45,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY homeButton.label			"ホーム">
 <!ENTITY homeButton.defaultPage.tooltip		"&brandShortName; のホームページです">
 
-<!ENTITY bookmarksButton.label			"ブックマーク">
-
-<!ENTITY bookmarksSubview.label			"ブックマーク">
-<!ENTITY bookmarksMenuButton2.label		"ブックマークメニュー">
-<!ENTITY bookmarksMenuButton.other.label	"他のブックマーク">
-<!ENTITY bookmarksMenuButton.mobile.label	"モバイルのブックマーク">
-<!ENTITY viewBookmarksSidebar2.label		"ブックマークサイドバーを表示">
-<!ENTITY hideBookmarksSidebar.label		"ブックマークサイドバーを隠す">
-<!ENTITY viewBookmarksToolbar.label		"ブックマークツールバーを表示">
-<!ENTITY hideBookmarksToolbar.label		"ブックマークツールバーを隠す">
-<!ENTITY searchBookmarks.label			"ブックマークを検索">
-<!ENTITY bookmarkingTools.label			"ブックマークツール">
-<!ENTITY addBookmarksMenu.label			"ブックマークメニューをツールバーに追加">
-<!ENTITY removeBookmarksMenu.label		"ブックマークメニューをツールバーから削除">
+<!-- Toolbar items -->
 
 <!ENTITY historyButton.label		"履歴">
 
@@ -128,7 +53,6 @@ this container is a toolbar. This avoids double-speaking. -->
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label		"ダウンロード">
-<!ENTITY addons.label			"アドオン">
 
 <!ENTITY webDeveloperMenu.label		"ウェブ開発">
 
@@ -144,28 +68,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY overflowCustomizeToolbar.accesskey	"C">
 
 <!ENTITY historyMenu.label			"履歴">
-<!ENTITY historyUndoMenu.label			"最近閉じたタブ">
-<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
-<!ENTITY historyUndoWindowMenu.label		"最近閉じたウィンドウ">
-
-<!ENTITY appMenuHistory.showAll.label		"すべての履歴を表示">
-
-<!ENTITY appMenuHistory.clearRecent.label	"最近の履歴を消去...">
-<!ENTITY appMenuHistory.restoreSession.label	"以前のセッションを復元">
-<!ENTITY appMenuHistory.viewSidebar.label	"履歴サイドバーを表示">
-<!ENTITY appMenuHistory.hideSidebar.label	"履歴サイドバーを隠す">
-<!ENTITY appMenuHistory.recentHistory.label	"最近の履歴">
 
 <!ENTITY appMenuHelp.label			"ヘルプ">
-
-<!ENTITY appMenuRemoteTabs.label		"同期タブ">
 
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
      the name of a device when that device has no open tabs -->
 <!ENTITY appMenuRemoteTabs.notabs.label		"タブがありません">
-<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
-     This is shown after the tabs list if we can display more tabs by clicking on the button -->
-<!ENTITY appMenuRemoteTabs.showMore.label	"さらに表示">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
      This is shown after the tabs list if we can display more tabs by clicking on the button -->
 <!ENTITY appMenuRemoteTabs.showMore.tooltip	"この端末からのタブをさらに表示します">
@@ -178,19 +86,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label	"タブの同期をオンにすると、あなたの他の端末のタブ一覧が表示されます。">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle	"他の端末のタブを表示しますか？">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label	"Sync の設定を開く">
 <!ENTITY appMenuRemoteTabs.welcome.label	"他の端末のタブ一覧を表示する。">
 <!ENTITY appMenuRemoteTabs.unverified.label	"あなたのアカウントは検証する必要があります。">
-<!ENTITY appMenuRemoteTabs.signintosync.label	"&syncBrand.shortName.label; にログイン...">
-<!ENTITY appMenuRemoteTabs.turnonsync.label	"&syncBrand.shortName.label; をオンにする...">
-<!ENTITY appMenuRemoteTabs.managedevices.label	"端末の管理...">
-<!ENTITY appMenuRemoteTabs.sidebar.label	"同期タブサイドバーを表示">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label	"同期タブサイドバーを隠す">
 <!ENTITY appMenuRemoteTabs.connectdevice.label	"他の端末を接続">
-
-<!ENTITY appMenuRecentHighlights.label		"最近のハイライト">
 
 <!ENTITY customizeMenu.addToToolbar.label		"ツールバーに追加">
 <!ENTITY customizeMenu.addToToolbar.accesskey		"A">
@@ -202,8 +103,6 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey	"M">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label	"オーバーフローメニューからピン留めを外す">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey	"U">
-<!ENTITY customizeMenu.removeFromToolbar.label		"ツールバーから削除">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey	"R">
 <!ENTITY customizeMenu.addMoreItems.label		"その他の項目を追加...">
 <!ENTITY customizeMenu.addMoreItems.accesskey		"A">
 
@@ -221,25 +120,9 @@ this container is a toolbar. This avoids double-speaking. -->
 
 <!ENTITY openLinkCmdInTab.accesskey		"T">
 
-<!ENTITY pageAction.copyLink.label		"リンクをコピー">
-
-<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
-  "Pocket" is a brand name. -->
-<!ENTITY saveToPocketCmd.label			"ページを Pocket に保存">
-<!ENTITY pocketMenuitem.label			"Pocket のリストを表示">
-
-<!ENTITY emailPageCmd.label			"ページの URL をメールで送信...">
-
 <!ENTITY fullZoom.label                 "ズーム">
 
 <!ENTITY sidebarCloseButton.tooltip		"サイドバーを閉じます">
-
-<!ENTITY quitApplicationCmdWin2.label		"終了">
-<!ENTITY quitApplicationCmdWin2.accesskey	"x">
-<!ENTITY quitApplicationCmdWin2.tooltip		"&brandShorterName; を終了します">
-<!ENTITY quitApplicationCmd.label		"終了">
-<!ENTITY quitApplicationCmd.accesskey		"Q">
-<!ENTITY quitApplicationCmdMac2.label		"&brandShorterName; を終了">
 
 <!ENTITY allowPopups.accesskey		"p">
 <!-- On Windows we use the term "Options" to describe settings, but
@@ -259,26 +142,13 @@ this container is a toolbar. This avoids double-speaking. -->
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label			"ブラウザータブ"><!-- (^m^) Bug 565042  音声読み上げ用ラベル -->
 
-<!ENTITY syncBrand.shortName.label		"Sync">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label	"自動的に隠す">
-
-
 <!ENTITY uiTour.infoPanel.close			"閉じる">
 
 <!ENTITY panicButton.thankyou.msg1		"最近の履歴を消去しました。">
 <!ENTITY panicButton.thankyou.msg2		"安全なブラウジングをお楽しみください！">
 <!ENTITY panicButton.thankyou.buttonlabel	"OK">
 
-<!ENTITY updateAvailable.panelUI.label		"&brandShorterName; の更新をダウンロード">
-<!ENTITY updateManual.panelUI.label		"&brandShorterName; の新たなコピーをダウンロード">
-<!ENTITY updateUnsupported.panelUI.label	"これ以上は更新できません">
-<!ENTITY updateRestart.panelUI.label2		"再起動して &brandShorterName; を更新">
-
 <!ENTITY sendToDevice.syncNotReady.label	"端末を同期しています...">
-
-<!ENTITY pageAction.shareUrl.label		"共有">
-<!ENTITY pageAction.shareMore.label		"その他...">
 
 <!ENTITY libraryButton.tooltip			"履歴や保存したブックマークなどを表示します">
 

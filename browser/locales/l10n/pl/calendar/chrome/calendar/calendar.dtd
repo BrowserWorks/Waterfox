@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -359,7 +359,7 @@
 <!ENTITY calendarproperties.refreshInterval.manual.label   "ręcznie">
 <!ENTITY calendarproperties.name.label                     "Nazwa:">
 <!ENTITY calendarproperties.readonly.label                 "Tylko do odczytu">
-<!ENTITY calendarproperties.firealarms.label               "Wyświetlaj powiadomienia">
+<!ENTITY calendarproperties.firealarms.label               "Wyświetlaj przypomnienia">
 <!ENTITY calendarproperties.cache3.label                   "Dostępność offline">
 <!ENTITY calendarproperties.enabled2.label                 "Włącz ten kalendarz">
 <!ENTITY calendarproperties.forceDisabled.label            "Nie znaleziono dostawcy dla tego kalendarza. Zdarza się to często, gdy zostały wyłączone lub odinstalowane pewne rozszerzenia.">

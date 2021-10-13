@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Afdrukken…">
 <!ENTITY printCmd.accesskey "d">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Afdrukvoorbeeld">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "Pagina-instellingen…">
-<!ENTITY printSetupCmd.accesskey "i">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Bericht verwijderen">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "Compacte weergave">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "Mappenvensterwerkbalk">
-<!ENTITY folderPaneBar.accesskey "v">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Sorteren op">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Adresboek">
 <!ENTITY addressBookCmd.accesskey "b">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Add-ons">
-<!ENTITY addons.accesskey "A">
-<!ENTITY addonPrefs.label "Add-on-opties">
-<!ENTITY addonPrefs.accesskey "o">
-<!ENTITY addonPrefsUnix.label "Add-on-voorkeuren">
-<!ENTITY addonPrefsUnix.accesskey "k">
 <!ENTITY addonNoPrefs.label "Er zijn geen add-on-instellingen gevonden.">
 <!ENTITY activitymanager.label "Activiteitenbeheerder">
 <!ENTITY activitymanager.accesskey "e">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "v">
 <!ENTITY importCmd.label "Importeren…">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "Exporteren…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Recente geschiedenis wissen…">
 <!ENTITY clearRecentHistory.accesskey "R">
 <!ENTITY accountManagerCmd2.label "Accountinstellingen">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Add-ons debuggen">
 <!ENTITY debugAddonsCmd.accesskey "b">
-<!ENTITY tabsDebugCmd.label "Contentframe-debugger">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "Foutconsole">
 <!ENTITY errorConsoleCmd.accesskey "F">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Terug">
 <!ENTITY goForwardButton1.label "Vooruit">
 <!ENTITY deleteItem.title "Verwijderen">
-<!ENTITY deleteButton.label "Verwijderen">
-<!ENTITY undeleteButton.label "Terugplaatsen">
 <!ENTITY markButton.label "Markeren">
 <!ENTITY printButton.label "Afdrukken">
 <!ENTITY stopButton.label "Stoppen">
 <!ENTITY throbberItem.title "Activiteitsindicator">
 <!ENTITY junkItem.title "Ongewenst">
-<!ENTITY junkButton.label "Ongewenst">
-<!ENTITY notJunkButton.label "Niet ongewenst">
 <!ENTITY addressBookButton.label "Adresboek">
 <!ENTITY chatButton.label "Chat">
 <!ENTITY glodaSearch.title "Globaal zoeken">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Naar het vorige bericht gaan">
 <!ENTITY goForwardButton.tooltip "Een bericht vooruit gaan">
 <!ENTITY goBackButton.tooltip "Een bericht terug gaan">
-<!ENTITY deleteButton.tooltip "Geselecteerde bericht of map verwijderen">
-<!ENTITY undeleteButton.tooltip "Geselecteerde bericht terugplaatsen">
 <!ENTITY markButton.tooltip "Berichten markeren">
 <!ENTITY printButton.tooltip "Dit bericht afdrukken">
 <!ENTITY stopButton.tooltip "De huidige overdracht stoppen">
-<!ENTITY junkButton.tooltip "Geselecteerde berichten als ongewenst markeren">
-<!ENTITY notJunkButton.tooltip "Geselecteerde berichten als gewenst markeren">
 <!ENTITY addressBookButton.tooltip "Naar het adresboek gaan">
 <!ENTITY chatButton.tooltip "Het chattabblad tonen">
 <!ENTITY tagButton.tooltip "Berichten labelen">
 <!ENTITY compactButton.tooltip "Verwijderde berichten uit geselecteerde map verwijderen">
 <!ENTITY appmenuButton1.tooltip "Het &brandShortName;-menu weergeven">
-<!ENTITY addonsButton.tooltip "Uw add-ons beheren">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Doorsturen in het bericht">

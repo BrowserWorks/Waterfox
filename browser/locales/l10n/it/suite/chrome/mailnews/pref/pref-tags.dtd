@@ -1,6 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!ENTITY pref.tags.title "Etichette">
 <!ENTITY pref.tags.caption "Personalizza etichette">
 <!ENTITY pref.tags.description "Le etichette possono essere utilizzate per classificare ed ordinare per priorità i messaggi. Modifica l'aspetto e l'importanza delle etichette usando le impostazioni sottostanti. Le etichette in alto sono più importanti di quelle in basso.">

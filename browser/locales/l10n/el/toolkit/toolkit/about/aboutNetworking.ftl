@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,6 +20,7 @@ about-networking-active = Ενεργό
 about-networking-idle = Αδρανές
 about-networking-host = Διακομιστής
 about-networking-tcp = TCP
+about-networking-type = Τύπος
 about-networking-sent = Απεσταλμένα
 about-networking-received = Ληφθέντα
 about-networking-family = Οικογένεια
@@ -34,7 +35,7 @@ about-networking-bytes-received = Ληφθέντα byte
 about-networking-logging = Καταγραφή
 about-networking-log-tutorial = Δείτε την <a data-l10n-name="logging">Καταγραφή HTTP</a> για οδηγίες σχετικά με τη χρήση αυτού του εργαλείου.
 about-networking-current-log-file = Τρέχον αρχείο καταγραφής:
-about-networking-current-log-modules = Τρέχοντες μονάδες καταγραφής:
+about-networking-current-log-modules = Τρέχουσες μονάδες καταγραφής:
 about-networking-set-log-file = Ορισμός αρχείου καταγραφής
 about-networking-set-log-modules = Ορισμός μονάδων καταγραφής
 about-networking-start-logging = Έναρξη καταγραφής
@@ -42,7 +43,7 @@ about-networking-stop-logging = Τερματισμός καταγραφής
 about-networking-dns-lookup = Αναζήτηση DNS
 about-networking-dns-lookup-button = Επίλυση
 about-networking-dns-domain = Τομέας:
-about-networking-dns-lookup-table-column = IPs
+about-networking-dns-lookup-table-column = IP
 about-networking-dns-https-rr-lookup-table-column = HTTP RR
 about-networking-rcwn = Στατιστικά RCWN
 about-networking-rcwn-status = Κατάσταση RCWN

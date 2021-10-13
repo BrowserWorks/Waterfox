@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,28 +11,20 @@
 # This title can be explicitly wrapped to control which words are on which line.
 upgrade-dialog-new-title = Köszönjön az új { -brand-short-name }nak
 upgrade-dialog-new-subtitle = Arra tervezve, hogy gyorsabban eljusson oda, ahová szeretne
-# The <span data-l10n-name="zap"></span> in this string allows a "zap" underline
-# style to be automatically added to the text inside it. { -brand-short-name }
-# should stay inside the span.
-upgrade-dialog-new-alt-subtitle = Kezdje azzal, hogy a <span data-l10n-name="zap">{ -brand-short-name }</span> csak egy kattintásnyira legyen
 upgrade-dialog-new-item-menu-title = Korszerűsített eszköztár és menük
 upgrade-dialog-new-item-menu-description = Priorizálja a fontos dolgokat, hogy megtalálja amire szüksége van.
 upgrade-dialog-new-item-tabs-title = Modern lapok
 upgrade-dialog-new-item-tabs-description = Rendezetten tárolja az információkat, támogatja a fókuszt és a rugalmas mozgatást.
 upgrade-dialog-new-item-icons-title = Friss ikonok és egyértelműbb üzenetek
 upgrade-dialog-new-item-icons-description = Könnyebb érintéssel segít eligazodni.
-upgrade-dialog-new-primary-primary-button = A { -brand-short-name } elsődleges böngészővé tétele
-    .title = Beállítja a { -brand-short-name }ot alapértelmezett böngészőnek, és rögzíti a tálcára
 upgrade-dialog-new-primary-default-button = A { -brand-short-name } alapértelmezett böngészővé tétele
-upgrade-dialog-new-primary-pin-button = A { -brand-short-name } rögzítése a tálcára
-upgrade-dialog-new-primary-pin-alt-button = Rögzítés a tálcára
 upgrade-dialog-new-primary-theme-button = Válasszon témát
 upgrade-dialog-new-secondary-button = Most nem
 # This string is only shown on Windows 7, where we intentionally suppress the
 # theme selection screen.
 upgrade-dialog-new-primary-win7-button = Rendben, értem!
 
-## Pin Firefox screen
+## Pin Waterfox screen
 ##
 ## These title, subtitle and button strings differ between platforms as they
 ## match the OS' application context menu item action where Windows uses "pin"
@@ -61,10 +53,6 @@ upgrade-dialog-pin-secondary-button = Most nem
 ## Default browser screen
 
 # This title can be explicitly wrapped to control which words are on which line.
-upgrade-dialog-default-title = A { -brand-short-name } legyen az alapértelmezett böngészője?
-upgrade-dialog-default-subtitle = Szerezzen gyorsaságot, biztonságot és adatvédelmet minden böngészés során.
-upgrade-dialog-default-primary-button = Beállítás alapértelmezett böngészőként
-# This title can be explicitly wrapped to control which words are on which line.
 upgrade-dialog-default-title-2 = A { -brand-short-name } alapértelmezetté tétele
 upgrade-dialog-default-subtitle-2 = Tegye robotpilótára a sebességet, a biztonságot és az adatvédelmet
 upgrade-dialog-default-primary-button-2 = Alapértelmezett böngészővé tétel
@@ -73,12 +61,33 @@ upgrade-dialog-default-secondary-button = Most nem
 ## Theme selection screen
 
 # This title can be explicitly wrapped to control which words are on which line.
-upgrade-dialog-theme-title =
-    Induljon tisztán
-    egy frissített témával
-# This title can be explicitly wrapped to control which words are on which line.
 upgrade-dialog-theme-title-2 = Induljon tisztán egy ropogós, új témával
 upgrade-dialog-theme-system = Rendszertéma
+    .title = Az operációs rendszer témájának követése a gomboknál, menüknél és ablakoknál
+
+## Start screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-start-title = Az élet színesben
+upgrade-dialog-start-subtitle = Élénk új színvilágok. Korlátozott ideig elérhető.
+upgrade-dialog-start-primary-button = Fedezze fel a színvilágokat
+upgrade-dialog-start-secondary-button = Most nem
+
+## Colorway screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-colorway-title = Válassza ki a palettáját
+upgrade-dialog-colorway-home-checkbox = Váltson a temázott háttérrel rendelkező Waterfox kezdőoldalra
+upgrade-dialog-colorway-primary-button = Színvilág mentése
+upgrade-dialog-colorway-secondary-button = Előző téma megtartása
+upgrade-dialog-colorway-theme-tooltip =
+    .title = Alapértelmezett témák felfedezése
+# $colorwayName (String) - Name of colorway, e.g., Abstract, Cheers
+upgrade-dialog-colorway-colorway-tooltip =
+    .title = Fedezze fel a(z) { $colorwayName } színvilágokat
+upgrade-dialog-colorway-default-theme = Alapértelmezett
+# "Auto" is short for "Automatic"
+upgrade-dialog-colorway-theme-auto = Automatikus
     .title = Az operációs rendszer témájának követése a gomboknál, menüknél és ablakoknál
 upgrade-dialog-theme-light = Világos
     .title = Világos téma használata a gomboknál, menüknél és ablakoknál
@@ -90,3 +99,18 @@ upgrade-dialog-theme-keep = Előző megtartása
     .title = A { -brand-short-name } frissítése előtt használt téma használata
 upgrade-dialog-theme-primary-button = Téma mentése
 upgrade-dialog-theme-secondary-button = Most nem
+upgrade-dialog-colorway-variation-soft = Puha
+    .title = Ezen színvilág használata
+upgrade-dialog-colorway-variation-balanced = Kiegyensúlyozott
+    .title = Ezen színvilág használata
+# "Bold" is used in the sense of bravery or courage, not in the sense of
+# emphasized text.
+upgrade-dialog-colorway-variation-bold = Élénk
+    .title = Ezen színvilág használata
+
+## Thank you screen
+
+# This title can be explicitly wrapped to control which words are on which line.
+upgrade-dialog-thankyou-title = Köszönjük, hogy minket választott
+upgrade-dialog-thankyou-subtitle = A { -brand-short-name } egy független böngésző, melyet egy nonprofit szervezet támogat. Együtt biztonságosabbá, egészségesebbé és privátabbá tesszük a világhálót.
+upgrade-dialog-thankyou-primary-button = Böngészés megkezdése

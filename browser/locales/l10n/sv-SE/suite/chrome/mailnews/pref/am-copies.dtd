@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -25,11 +25,6 @@
 <!ENTITY sentFolderOn.accesskey "c">
 <!ENTITY sentInOtherFolder.label "Annan mapp:">
 <!ENTITY sentInOtherFolder.accesskey "A">
-<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
-<!ENTITY draftsFolderOn.label "Mappen &quot;Utkast&quot; i:">
-<!ENTITY draftsFolderOn.accesskey "U">
-<!ENTITY draftInOtherFolder.label "Annan mapp:">
-<!ENTITY draftInOtherFolder.accesskey "n">
 <!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
 <!ENTITY archivesTitle.label "Meddelandearkiv">
 <!ENTITY keepArchives.label "Spara arkiv i:">
@@ -40,11 +35,16 @@
 <!ENTITY archivesFolderOn.accesskey "i">
 <!ENTITY archiveInOtherFolder.label "Annan mapp:">
 <!ENTITY archiveInOtherFolder.accesskey "p">
+<!ENTITY specialFolders.label "Utkast och mallar">
+<!ENTITY keepDrafts2.label "Spara utkast i:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Mappen &quot;Utkast&quot; i:">
+<!ENTITY draftsFolderOn.accesskey "U">
+<!ENTITY draftInOtherFolder.label "Annan mapp:">
+<!ENTITY draftInOtherFolder.accesskey "n">
+<!ENTITY keepTemplates.label "Spara mallar i:">
 <!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
 <!ENTITY templatesFolderOn.label "Mappen &quot;Mallar&quot; i:">
 <!ENTITY templatesFolderOn.accesskey "r">
 <!ENTITY templateInOtherFolder.label "Annan mapp:">
 <!ENTITY templateInOtherFolder.accesskey "m">
-<!ENTITY specialFolders.label "Utkast och mallar">
-<!ENTITY keepDrafts2.label "Spara utkast i:">
-<!ENTITY keepTemplates.label "Spara mallar i:">

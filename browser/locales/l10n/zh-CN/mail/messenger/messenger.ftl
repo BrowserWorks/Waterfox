@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -21,9 +21,6 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = 扩展和主题
-    .tooltip = 管理您的附加组件
 addons-and-themes-toolbarbutton =
     .label = 扩展和主题
     .tooltiptext = 管理您的附加组件
@@ -72,9 +69,14 @@ folder-toolbar-toggle-folder-compact-view =
 redirect-msg-menuitem =
     .label = 重定向
     .accesskey = D
+menu-file-save-as-file =
+    .label = 文件…
+    .accesskey = F
 
 ## AppMenu
 
+appmenu-save-as-file =
+    .label = 文件…
 # Since v89 we dropped the platforms distinction between Options or Preferences
 # and consolidated everything with Preferences.
 appmenu-preferences =
@@ -129,3 +131,9 @@ caret-browsing-prompt-check-text = 不再询问。
 repair-text-encoding-button =
     .label = 修复文字编码
     .tooltiptext = 根据消息内容猜测正确的文字编码
+
+## no-reply handling
+
+no-reply-title = 不支持回复
+no-reply-message = 邮件的回复地址（{ $email }）看起来不像是有人会收件的地址。发送到此地址的邮件，不大可能被人阅读。
+no-reply-reply-anyway-button = 仍然回复

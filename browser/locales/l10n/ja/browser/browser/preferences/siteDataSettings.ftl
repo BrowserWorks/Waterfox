@@ -1,7 +1,6 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
 
 ## Settings
 
@@ -24,12 +23,6 @@ site-data-local-file-host = (ローカルファイル)
 site-data-remove-selected =
     .label = 選択したサイトデータを削除
     .accesskey = R
-site-data-button-cancel =
-    .label = キャンセル
-    .accesskey = C
-site-data-button-save =
-    .label = 変更を保存
-    .accesskey = a
 site-data-settings-dialog =
     .buttonlabelaccept = 変更を保存
     .buttonaccesskeyaccept = a
@@ -52,6 +45,13 @@ site-data-remove-shown =
 site-data-removing-dialog =
     .title = { site-data-removing-header }
     .buttonlabelaccept = 削除
+
 site-data-removing-header = Cookie とサイトデータの削除
+
 site-data-removing-desc = Cookie とサイトデータを削除すると、ウェブサイトからログアウトされます。本当に削除してもよろしいですか？
+
+# Variables:
+#   $baseDomain (String) - The single domain for which data is being removed
+site-data-removing-single-desc = Cookie とサイトデータを削除すると、ウェブサイトからログアウトされます。本当に <strong>{ $baseDomain }</strong> の Cookie とサイトデータを削除してもよろしいですか？
+
 site-data-removing-table = 次のウェブサイトの Cookie とサイトデータが削除されます

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,5 +12,6 @@
 <!ENTITY makeUrlRelative.label "La URL es relativa a la ruta de la página">
 <!ENTITY makeUrlRelative.accessKey "r">
 <!ENTITY makeUrlRelative.tooltip "Alterna entre URL absoluta y relativa. Debe guardar previamente la página para cambiar esta propiedad.">
+
 <!ENTITY LinkURLEditField2.label "Introduzca una dirección de página web, un archivo local, o seleccione un enlace con nombre o encabezado del menú contextual del campo:">
 <!ENTITY LinkURLEditField2.accessKey "n">

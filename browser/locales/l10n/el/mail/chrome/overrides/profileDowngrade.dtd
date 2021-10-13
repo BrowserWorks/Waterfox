@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,12 +9,12 @@
  Thunderbird" and "version" is used to mean "the specific revision number of a
  given Thunderbird channel". These terms are not synonymous.
 -->
-<!ENTITY window.title "Έχετε ανοίξει μια παλιότερη έκδοση του &brandProductName;">
+<!ENTITY window.title "Έχετε εκκινήσει μια παλιότερη έκδοση του &brandProductName;">
 <!ENTITY window.style "width: 490px;">
 
-<!ENTITY window.nosync2 "Μια νεότερη έκδοση του &brandProductName; ενδέχεται να έχει κάνει αλλαγές στο προφίλ σας που δεν είναι πλέον συμβατές με αυτή την παλιότερη έκδοση. Χρησιμοποιήστε το προφίλ αυτό μόνο με τη νεότερη έκδοση ή δημιουργήστε ένα νέο προφίλ για αυτή την εγκατάσταση του &brandShortName;. Η δημιουργία νέου προφίλ απαιτεί εκ νέου την παραμετροποίηση των λογαριασμών, ημερολογίων και προσθέτων σας.">
+<!ENTITY window.nosync2 "Μια νεότερη έκδοση του &brandProductName; ενδέχεται να έχει κάνει αλλαγές στο προφίλ σας που δεν είναι πλέον συμβατές με αυτήν την παλιότερη έκδοση. Χρησιμοποιήστε το προφίλ αυτό μόνο με τη νεότερη έκδοση ή δημιουργήστε ένα νέο προφίλ για αυτήν την εγκατάσταση του &brandShortName;. Η δημιουργία ενός νέου προφίλ απαιτεί την εκ νέου ρύθμιση των λογαριασμών, των ημερολογίων και των προσθέτων σας.">
 
 <!ENTITY window.moreinfo "Περισσότερες πληροφορίες…">
 <!ENTITY window.create "Δημιουργία νέου προφίλ">
 <!ENTITY window.quit-win "Έξοδος">
-<!ENTITY window.quit-nonwin "Έξοδος">
+<!ENTITY window.quit-nonwin "Κλείσιμο">

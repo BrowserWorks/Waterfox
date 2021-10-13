@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Savybės">
 
 <!ENTITY generalInfo.label                       "Bendroji informacija">
-<!ENTITY folderCharsetFallback2.label            "Surogatinė teksto koduotė:">
-<!ENTITY folderCharsetFallback2.accesskey        "o">
-<!ENTITY folderCharsetEnforce2.label             "Taikyti visiems aplanko laiškams (bus nepaisoma individualių laiškų koduočių ir automatinio koduotės nustatymo)">
-<!ENTITY folderCharsetEnforce2.accesskey         "a">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Perindeksuoti aplanke esančius laiškus">
 <!ENTITY folderRebuildSummaryFile2.label         "Perindeksuoti aplanką">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "r">

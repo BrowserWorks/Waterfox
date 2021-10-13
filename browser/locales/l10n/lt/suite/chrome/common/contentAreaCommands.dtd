@@ -1,12 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!-- Context Menu -->
 
-<!ENTITY popupWindowRejectCmd.label     "Neatverti iškylančiųjų langų iš šios svetainės">
-<!ENTITY popupWindowRejectCmd.accesskey "N">
-<!ENTITY popupWindowAllowCmd.label      "Leisti atverti iškylančiuosius langus iš šios svetainės">
-<!ENTITY popupWindowAllowCmd.accesskey  "L">
 <!ENTITY openLinkCmdInTab.label       "Atverti saitą naujoje kortelėje">
 <!ENTITY openLinkCmdInTab.accesskey   "v">
 <!ENTITY openLinkCmd.label            "Atverti saitą naujame lange">

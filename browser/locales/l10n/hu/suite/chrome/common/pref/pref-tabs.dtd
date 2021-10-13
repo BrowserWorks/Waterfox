@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,19 +9,16 @@
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "Új lap aktiválása a hivatkozások megnyitásakor">
 <!ENTITY background.accesskey "h">
+<!ENTITY diverted.label "Új lap aktiválása az eltérített hivatkozások megnyitásakor">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "A böngészőablak fókuszáljon a más alkalmazásokból megnyitott hivatkozások lapjára">
+<!ENTITY browserFocus.accesskey "f">
 <!ENTITY warnOnClose.label "Figyelmeztetés több lap bezárása előtt">
 <!ENTITY warnOnClose.accesskey "t">
 <!ENTITY relatedAfterCurrent.label "Kapcsolodó lapok megnyitása az aktuális lap után">
 <!ENTITY relatedAfterCurrent.accesskey "o">
 
-<!ENTITY loadGroup.label "Könyvjelzőcsoport megnyitásakor">
-<!ENTITY loadGroupAppend.label "Új lapok hozzáadása">
-<!ENTITY loadGroupAppend.accesskey "h">
-<!ENTITY loadGroupReplace.label "Meglévő lapok lecserélése">
-<!ENTITY loadGroupReplace.accesskey "M">
-
 <!ENTITY openTabs.label "Megnyitás új ablak helyett új lapon, ha a felhasználó">
-
 <!ENTITY middleClick.label "Középső kattintás, Ctrl+kattintás vagy Ctrl+Enter a linkeken a weboldalon">
 <!ENTITY middleClick.accesskey "M">
 <!ENTITY middleClickMac.label "Középső kattintás, &#8984;+kattintás vagy &#8984;+Return a linkeken a weboldalon">

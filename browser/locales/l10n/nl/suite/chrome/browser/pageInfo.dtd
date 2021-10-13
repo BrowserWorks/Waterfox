@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -61,8 +61,6 @@
 
 <!ENTITY  mediaTab              "Media">
 <!ENTITY  mediaTab.accesskey    "M">
-<!ENTITY  mediaURL              "Adres:">
-<!ENTITY  mediaAlt              "Alternatieve tekst:">
 <!ENTITY  mediaLocation         "Locatie:">
 <!ENTITY  mediaText             "Geassocieerde tekst:">
 <!ENTITY  mediaAltHeader        "Alternatieve tekst">
@@ -70,9 +68,6 @@
 <!ENTITY  mediaType             "Type">
 <!ENTITY  mediaSize             "Grootte">
 <!ENTITY  mediaCount            "Aantal">
-<!ENTITY  mediaDimensions       "Afmetingen:">
-<!ENTITY  mediaPhysDimensions   "Werkelijke afmetingen:">
-<!ENTITY  mediaTitle            "Titel:">
 <!ENTITY  mediaDimension        "Afmetingen:">
 <!ENTITY  mediaLongdesc         "Lange beschrijving:">
 <!ENTITY  mediaBlockImage.accesskey "e">
@@ -88,18 +83,7 @@
 
 <!ENTITY  permTab               "Toestemmingen">
 <!ENTITY  permTab.accesskey     "T">
-<!ENTITY  permUseDefault        "Standaard gebruiken">
-<!ENTITY  permAskAlways         "Altijd vragen">
-<!ENTITY  permAllow             "Toestaan">
-<!ENTITY  permAllowSession      "Toestaan voor sessie">
-<!ENTITY  permBlock             "Blokkeren">
 <!ENTITY  permissionsFor        "Toestemmingen voor:">
-<!ENTITY  permImage             "Afbeeldingen laden">
-<!ENTITY  permPopup             "Pop-upvensters openen">
-<!ENTITY  permCookie            "Cookies instellen">
-<!ENTITY  permNotifications     "Notificaties tonen">
-<!ENTITY  permInstall           "Extensies of thema’s installeren">
-<!ENTITY  permGeo               "Locatie doorgeven">
 
 <!ENTITY  securityTab           "Beveiliging">
 <!ENTITY  securityTab.accesskey "B">

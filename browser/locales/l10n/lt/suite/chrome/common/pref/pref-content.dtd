@@ -1,6 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
 
 
@@ -27,10 +28,10 @@
 
 
 
-<!ENTITY siteSpecific.label                     "Atskirai įsiminti skirtingoms svetainėms taikomus mastelius">
-<!ENTITY siteSpecific.accesskey                 "t">
 <!ENTITY textZoomOnly.label                     "Nekeisti svetainės mastelio, keisti tik teksto dydį">
 <!ENTITY textZoomOnly.accesskey                 "k">
+<!ENTITY siteSpecific.label                     "Atskirai įsiminti skirtingoms svetainėms taikomus mastelius">
+<!ENTITY siteSpecific.accesskey                 "t">
 <!ENTITY enableAutomaticImageResizing.label     "Sumažinti didelių paveikslų dydį, kad tilptų naršyklės lange">
 <!ENTITY enableAutomaticImageResizing.accesskey "m">
 
@@ -38,3 +39,4 @@
 <!ENTITY allowHWAccel.accesskey                 "a">
 <!ENTITY blockAutoRefresh.label                 "Įspėti, kai tinklalapis bando peradresuoti naršyklę arba pakartotinai save įkelti">
 <!ENTITY blockAutoRefresh.accesskey             "p">
+

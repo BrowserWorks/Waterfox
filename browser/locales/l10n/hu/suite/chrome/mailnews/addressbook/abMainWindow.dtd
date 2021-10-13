@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -98,8 +98,6 @@
 <!ENTITY newIM.tooltip                                  "Üzenet küldése vagy csevegés">
 <!ENTITY printButton.tooltip                            "A kijelölt elem nyomtatása">
 <!ENTITY deleteItemButton.tooltip                       "Kiválasztott elemek törlése">
-<!ENTITY throbber.tooltip                               "Ugrás a &vendorShortName; honlapjára">
-<!ENTITY throbber.tooltip2                              "Ugrás a &brandShortName; honlapjára">
 <!ENTITY advancedButton.tooltip                         "Keresés az üzenetekben…">
 
 <!-- Dir Tree header -->

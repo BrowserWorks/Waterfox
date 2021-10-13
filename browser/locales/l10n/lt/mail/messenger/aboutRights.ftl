@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Apie jūsų teises
 rights-intro = „{ -brand-full-name }“ yra laisvoji atviroji programa, kuriama bendruomenės, apimančios tūkstančius žmonių iš viso pasaulio. Keletas dalykų, kuriuos turėtumėte žinoti:
-rights-intro-point-1 = Jums leidžiama naudotis „{ -brand-short-name }“ programa, vadovaujantis <a data-l10n-name="mozilla-public-license-link">„Mozilla“ viešąja licencija (Mozilla Public License)</a>. Ši licencija leidžia naudotis „{ -brand-short-name }“ programa, ją dauginti ir platinti.  Be to, galite laisvai modifikuoti programos pirminius tekstus. Licencija nedraudžia platinti ir jūsų modifikuotų programos versijų.
-rights-intro-point-2 = Jums nesuteikiamos jokios prekės ženklo teisės ar licencijos į „Mozilla Foundation“ ar kitų šalių prekės ženklus, tame tarpe – į „Thunderbird“ vardą ar logotipą. Papildomą informaciją apie prekės ženklus rasite <a data-l10n-name="mozilla-trademarks-link">čia</a>.
+rights-intro-point-1 = Jums leidžiama naudotis „{ -brand-short-name }“ programa, vadovaujantis <a data-l10n-name="mozilla-public-license-link">„Waterfox“ viešąja licencija (Waterfox Public License)</a>. Ši licencija leidžia naudotis „{ -brand-short-name }“ programa, ją dauginti ir platinti.  Be to, galite laisvai modifikuoti programos pirminius tekstus. Licencija nedraudžia platinti ir jūsų modifikuotų programos versijų.
+rights-intro-point-2 = Jums nesuteikiamos jokios prekės ženklo teisės ar licencijos į „Waterfox Foundation“ ar kitų šalių prekės ženklus, tame tarpe – į „Thunderbird“ vardą ar logotipą. Papildomą informaciją apie prekės ženklus rasite <a data-l10n-name="mozilla-trademarks-link">čia</a>.
 rights-intro-point-3 = Kai kurios „{ -brand-short-name }“ savybės, pavyzdžiui, strigčių pranešiklis, suteikia galimybę siųsti atsiliepimus „{ -vendor-short-name }i“. Siųsdami atsiliepimus, jūs suteikiate „{ -vendor-short-name }i“ teisę jais naudotis savo kuriamų produktų tobulinimo tikslais, skelbti juos savo svetainėse ir platinti juos kitais būdais.
 rights-intro-point-4 = Kaip jūsų asmeninius duomenis ir per „{ -brand-short-name }“ pateiktus atsiliepimus naudoja „{ -vendor-short-name }“, nurodyta <a data-l10n-name="mozilla-privacy-policy-link">„{ -brand-short-name }“ privatumo nuostatuose</a>.
 rights-intro-point-4-unbranded = Čia turėtų būti išvardintos šiai programai taikomos privatumo nuostatos.

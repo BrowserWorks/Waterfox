@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Stampa…">
 <!ENTITY printCmd.accesskey "m">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Anteprima di stampa">
-<!ENTITY printPreviewCmd.accesskey "d">
-<!ENTITY printSetupCmd.label "Imposta pagina…">
-<!ENTITY printSetupCmd.accesskey "I">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Elimina messaggio">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "Visualizzazione compatta">
 <!ENTITY compactVersion.accesskey "V">
-<!ENTITY folderPaneBar.label "Barra degli strumenti del pannello delle cartelle">
-<!ENTITY folderPaneBar.accesskey "B">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Ordina per">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Rubrica">
 <!ENTITY addressBookCmd.accesskey "R">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Componenti aggiuntivi">
-<!ENTITY addons.accesskey "c">
-<!ENTITY addonPrefs.label "Opzioni componente aggiuntivo">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Preferenze componente aggiuntivo">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Nessuna impostazione trovata per il componente aggiuntivo.">
 <!ENTITY activitymanager.label "Registro attività">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "m">
 <!ENTITY importCmd.label "Importa…">
 <!ENTITY importCmd.accesskey "I">
+<!ENTITY exportCmd.label "Esporta…">
+<!ENTITY exportCmd.accesskey "e">
 <!ENTITY clearRecentHistory.label "Cancella la cronologia recente…">
 <!ENTITY clearRecentHistory.accesskey "c">
 <!ENTITY accountManagerCmd2.label "Impostazioni account">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Componenti aggiuntivi di debug">
 <!ENTITY debugAddonsCmd.accesskey "m">
-<!ENTITY tabsDebugCmd.label "Tab di debug del contenuto">
-<!ENTITY tabsDebugCmd.accesskey "T">
 <!ENTITY errorConsoleCmd.label "Console degli errori">
 <!ENTITY errorConsoleCmd.accesskey "d">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Indietro">
 <!ENTITY goForwardButton1.label "Avanti">
 <!ENTITY deleteItem.title "Elimina">
-<!ENTITY deleteButton.label "Elimina">
-<!ENTITY undeleteButton.label "Ripristina">
 <!ENTITY markButton.label "Segna">
 <!ENTITY printButton.label "Stampa">
 <!ENTITY stopButton.label "Interrompi">
 <!ENTITY throbberItem.title "Indicatore di attività">
 <!ENTITY junkItem.title "Indesiderata">
-<!ENTITY junkButton.label "Indesiderata">
-<!ENTITY notJunkButton.label "Non indesiderata">
 <!ENTITY addressBookButton.label "Rubrica">
 <!ENTITY chatButton.label "Chat">
 <!ENTITY glodaSearch.title "Ricerca globale">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Vai al messaggio precedente">
 <!ENTITY goForwardButton.tooltip "Avanti di un messaggio">
 <!ENTITY goBackButton.tooltip "Indietro di un messaggio">
-<!ENTITY deleteButton.tooltip "Elimina i messaggi o le cartelle selezionate">
-<!ENTITY undeleteButton.tooltip "Ripristina il messaggio selezionato">
 <!ENTITY markButton.tooltip "Segna i messaggi">
 <!ENTITY printButton.tooltip "Stampa questo messaggio">
 <!ENTITY stopButton.tooltip "Interrompi il trasferimento corrente">
-<!ENTITY junkButton.tooltip "Segna il messaggio selezionato come posta indesiderata">
-<!ENTITY notJunkButton.tooltip "Rimuovi il marchio posta indesiderata">
 <!ENTITY addressBookButton.tooltip "Apri la rubrica">
 <!ENTITY chatButton.tooltip "Mostra scheda della chat">
 <!ENTITY tagButton.tooltip "Applica un’etichetta ai messaggi">
 <!ENTITY compactButton.tooltip "Compatta le cartelle">
 <!ENTITY appmenuButton1.tooltip "Mostra il menu di &brandShortName;">
-<!ENTITY addonsButton.tooltip "Gestisci i tuoi componenti aggiuntivi">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Inoltra nel messaggio">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Posizione">
 <!ENTITY idColumn.label "Ordine ricezione">
 <!ENTITY attachmentColumn.label "Allegati">
-
 <!ENTITY deleteColumn.label "Elimina">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Ordina per località">
 <!ENTITY idColumn2.tooltip "Ordina per ordine di ricevimento">
 <!ENTITY attachmentColumn2.tooltip "Ordina per allegato">
-
 <!ENTITY deleteColumn.tooltip "Elimina un messaggio">
 
 <!-- Thread Pane Context Menu -->

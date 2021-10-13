@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,7 +18,11 @@ downloads-panel =
 # in-progress and blocked downloads.
 downloads-panel-list =
     .style = width: 70ch
-
+# The style attribute has the width of the Downloads Panel expressed using
+# a CSS unit. The longest labels that should fit are usually those of
+# in-progress and blocked downloads.
+downloads-panel-items =
+    .style = width: 35em
 downloads-cmd-pause =
     .label = Pausar
     .accesskey = P
@@ -29,32 +33,26 @@ downloads-cmd-cancel =
     .tooltiptext = Cancelar
 downloads-cmd-cancel-panel =
     .aria-label = Cancelar
-
 # This message is only displayed on Windows and Linux devices
 downloads-cmd-show-menuitem =
     .label = Abrir pasta de destino
     .accesskey = p
-
 # This message is only displayed on macOS devices
 downloads-cmd-show-menuitem-mac =
     .label = Mostrar no Finder
     .accesskey = F
-
 downloads-cmd-use-system-default =
     .label = Abrir no visualizador do sistema
     .accesskey = v
-
 downloads-cmd-always-use-system-default =
     .label = Abrir sempre no visualizador do sistema
     .accesskey = m
-
 downloads-cmd-show-button =
     .tooltiptext =
         { PLATFORM() ->
             [macos] Mostrar no Finder
            *[other] Abrir pasta de destino
         }
-
 downloads-cmd-show-panel =
     .aria-label =
         { PLATFORM() ->
@@ -67,7 +65,6 @@ downloads-cmd-show-description =
             [macos] Mostrar no Finder
            *[other] Abrir pasta de destino
         }
-
 downloads-cmd-show-downloads =
     .label = Mostrar pasta de transferências
 downloads-cmd-retry =
@@ -89,78 +86,79 @@ downloads-cmd-clear-list =
 downloads-cmd-clear-downloads =
     .label = Limpar transferências
     .accesskey = t
-
 # This command is shown in the context menu when downloads are blocked.
 downloads-cmd-unblock =
     .label = Permitir transferência
     .accesskey = m
-
 # This is the tooltip of the action button shown when malware is blocked.
 downloads-cmd-remove-file =
     .tooltiptext = Remover ficheiro
-
 downloads-cmd-remove-file-panel =
     .aria-label = Remover ficheiro
-
 # This is the tooltip of the action button shown when potentially unwanted
 # downloads are blocked. This opens a dialog where the user can choose
 # whether to unblock or remove the download. Removing is the default option.
 downloads-cmd-choose-unblock =
     .tooltiptext = Remover ficheiro ou permitir transferência
-
 downloads-cmd-choose-unblock-panel =
     .aria-label = Remover ficheiro ou permitir transferência
-
 # This is the tooltip of the action button shown when uncommon downloads are
 # blocked.This opens a dialog where the user can choose whether to open the
 # file or remove the download. Opening is the default option.
 downloads-cmd-choose-open =
     .tooltiptext = Abrir ou remover ficheiro
-
 downloads-cmd-choose-open-panel =
     .aria-label = Abrir ou remover ficheiro
-
 # Displayed when hovering a blocked download, indicates that it's possible to
 # show more information for user to take the next action.
 downloads-show-more-information =
     .value = Mostrar mais informação
-
 # Displayed when hovering a complete download, indicates that it's possible to
 # open the file using an app available in the system.
 downloads-open-file =
     .value = Abrir ficheiro
 
+## Displayed when the user clicked on a download in process. Indicates that the
+## downloading file will be opened after certain amount of time using an app
+## available in the system.
+## Variables:
+##   $hours (number) - Amount of hours left till the file opens.
+##   $seconds (number) - Amount of seconds left till the file opens.
+##   $minutes (number) - Amount of minutes till the file opens.
+
+downloading-file-opens-in-hours-and-minutes = A abrir em { $hours }h { $minutes }m…
+downloading-file-opens-in-minutes = A abrir em { $minutes }m…
+downloading-file-opens-in-minutes-and-seconds = A abrir em { $minutes }m { $seconds }s…
+downloading-file-opens-in-seconds = A abrir em { $seconds }s…
+downloading-file-opens-in-some-time = Será aberto quando terminar…
+
+##
+
 # Displayed when hovering a download which is able to be retried by users,
 # indicates that it's possible to download this file again.
 downloads-retry-download =
     .value = Recomeçar transferência
-
 # Displayed when hovering a download which is able to be cancelled by users,
 # indicates that it's possible to cancel and stop the download.
 downloads-cancel-download =
     .value = Cancelar transferência
-
 # This string is shown at the bottom of the Downloads Panel when all the
 # downloads fit in the available space, or when there are no downloads in
 # the panel at all.
 downloads-history =
     .label = Mostrar todas as transferências
     .accesskey = s
-
 # This string is shown at the top of the Download Details Panel, to indicate
 # that we are showing the details of a single download.
 downloads-details =
     .title = Detalhes da transferência
-
 downloads-clear-downloads-button =
     .label = Limpar transferências
     .tooltiptext = Limpa as transferências concluídas, canceladas e falhadas
-
 # This string is shown when there are no items in the Downloads view, when it
 # is displayed inside a browser tab.
 downloads-list-empty =
     .value = Não existem transferências.
-
 # This string is shown when there are no items in the Downloads Panel.
 downloads-panel-empty =
     .value = Sem transferências para esta sessão.

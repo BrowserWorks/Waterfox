@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Om dine rettigheder
 rights-intro = { -brand-full-name } er software med fri og åben kildekode, skabt af en sammenslutning af tusindvis af mennesker over hele kloden. Der er et par ting, som du bør vide:
-rights-intro-point-1 = { -brand-short-name } gøres tilgængelig for dig under retningslinjerne i <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Dette betyder at du må bruge, kopiere og videregive { -brand-short-name } til andre. Du er er også velkommen til at ændre i kildekoden til { -brand-short-name } for at opfylde dine behov. Mozilla Public License tildeler dig også retten til at videregive dine ændrede versioner.
-rights-intro-point-2 = Du tildeles ikke nogen rettigheder eller licens til varemærker tilhørende Mozilla Foundation eller tredjepartier, herunder (uden undtagelse) produktet Firefox og dets tilhørende logo. Yderligere information om varemærker kan findes <a data-l10n-name="mozilla-trademarks-link">her</a>.
+rights-intro-point-1 = { -brand-short-name } gøres tilgængelig for dig under retningslinjerne i <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a>. Dette betyder at du må bruge, kopiere og videregive { -brand-short-name } til andre. Du er er også velkommen til at ændre i kildekoden til { -brand-short-name } for at opfylde dine behov. Waterfox Public License tildeler dig også retten til at videregive dine ændrede versioner.
+rights-intro-point-2 = Du tildeles ikke nogen rettigheder eller licens til varemærker tilhørende Waterfox Foundation eller tredjepartier, herunder (uden undtagelse) produktet Waterfox og dets tilhørende logo. Yderligere information om varemærker kan findes <a data-l10n-name="mozilla-trademarks-link">her</a>.
 rights-intro-point-3 = Nogle funktioner i { -brand-short-name }, såsom Fejlrapportør, giver dig mulighed for at give feedback til  { -vendor-short-name }. Ved at vælge at sende feedback giver du { -vendor-short-name } tilladelse til at bruge de givne informationer til at forbedre deres produkter, offenliggøre disse på deres webside(r) samt at videredistribuere disse frit.
 rights-intro-point-4 = Hvordan vi bruger dine personlige oplysninger og indsendt feedback til { -vendor-short-name } med  { -brand-short-name } er beskrevet i <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name } Privatlivspolitik</a>.
 rights-intro-point-4-unbranded = Alle relevante privatlivspolitikker for dette produkt bør være beskrevet her.

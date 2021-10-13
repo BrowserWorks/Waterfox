@@ -1,17 +1,21 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY downloadManager.title "Administrador de descargas">
+
 <!ENTITY menuBar.tooltip "Barra de menú">
 <!ENTITY searchBar.tooltip "Barra de búsqueda">
+
 <!ENTITY search.placeholder "Buscar en las descargas">
 <!ENTITY search.label "Buscar en las descargas">
 <!ENTITY search.accesskey "B">
 <!ENTITY search.key "f">
+
 <!ENTITY cmd.clearList.label "Limpiar lista">
 <!ENTITY cmd.clearList.tooltip "Eimina las descargas completadas, canceladas y fallidas de la lista">
 <!ENTITY cmd.clearList.accesskey "L">
+
 <!ENTITY col.name.label "Nombre">
 <!ENTITY col.name.accesskey "N">
 <!ENTITY col.name.tooltip "Nombre de archivo">
@@ -51,16 +55,19 @@
 <!ENTITY col.source.label "Origen">
 <!ENTITY col.source.accesskey "O">
 <!ENTITY col.source.tooltip "Origen">
+
 <!ENTITY view.columns.label "Mostrar columnas">
 <!ENTITY view.columns.accesskey "M">
 <!ENTITY view.sortBy.label "Ordenar por">
 <!ENTITY view.sortBy.accesskey "O">
+
 <!ENTITY view.unsorted.label "Sin ordenar">
 <!ENTITY view.unsorted.accesskey "S">
 <!ENTITY view.sortAscending.label "Ordenar A > Z">
 <!ENTITY view.sortAscending.accesskey "A">
 <!ENTITY view.sortDescending.label "Ordenar Z > A">
 <!ENTITY view.sortDescending.accesskey "Z">
+
 <!ENTITY cmd.pause.label "Pausar">
 <!ENTITY cmd.pause.accesskey "P">
 <!ENTITY cmd.resume.label "Reanudar">

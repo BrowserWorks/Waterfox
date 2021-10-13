@@ -1,17 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY  pref.masterpass.title                  "Мастер-пароль">
-<!ENTITY  managepassword.caption                 "Временной лимит мастер-пароля">
-<!ENTITY  managepassword.text                    "&brandShortName; будет спрашивать мастер-пароль:">
-<!ENTITY  managepassword.askfirsttime            "В первый раз, когда он понадобится">
-<!ENTITY  managepassword.askfirsttime.accesskey  "е">
-<!ENTITY  managepassword.askeverytime            "Каждый раз, когда он понадобится">
-<!ENTITY  managepassword.askeverytime.accesskey  "ы">
-<!ENTITY  managepassword.asktimeout              "Если он не использовался более ">
-<!ENTITY  managepassword.asktimeout.accesskey    "с">
-<!ENTITY  managepassword.timeout.unit            "минут или дольше">
 
 <!ENTITY  changepassword.caption                 "Смена мастер-пароля">
 <!ENTITY  changepassword.text                    "Ваш мастер-пароль защищает личную информацию, например, пароли для веб-сайтов и сертификаты.">
@@ -22,3 +13,5 @@
 <!ENTITY  resetpassword.text                     "При сбросе мастер-пароля, все сохранённые вами почтовые и веб-пароли, данные форм, личные сертификаты и закрытые ключи будут утеряны.">
 <!ENTITY  resetpassword.button                   "Сбросить пароль">
 <!ENTITY  resetpassword.accesskey                "п">
+<!ENTITY  resetpassword2.button                  "Сбросить пароль">
+<!ENTITY  resetpassword2.accesskey               "а">

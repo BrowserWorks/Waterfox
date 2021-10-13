@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,12 +11,6 @@
 <!ENTITY helpMenuWin.accesskey "Ž">
 <!ENTITY aboutProduct2.label "Apie „&brandShorterName;“">
 <!ENTITY aboutProduct2.accesskey "A">
-<!ENTITY helpTroubleshootingInfo.label     "Informacija problemų sprendimui">
-<!ENTITY helpTroubleshootingInfo.accesskey "s">
-<!ENTITY helpSafeMode.label     "Perleisti programą, išjungus priedus…">
-<!ENTITY helpSafeMode.accesskey "r">
-<!ENTITY helpSafeMode.stop.label     "Perleisti programą su įjungtais priedais">
-<!ENTITY helpSafeMode.stop.accesskey "R">
 <!ENTITY productHelp.label "„&brandShortName;“ žinynas">
 <!ENTITY productHelp.accesskey "H">
 <!ENTITY productHelp.commandkey "VK_F1">

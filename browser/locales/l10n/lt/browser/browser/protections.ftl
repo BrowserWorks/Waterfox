@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -29,9 +29,9 @@ graph-week-summary-private-window = Šią savaitę „{ -brand-short-name }“ u
 
 protection-report-webpage-title = Apsaugos skydelis
 protection-report-page-content-title = Apsaugos skydelis
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = „{ -brand-short-name }“ gali saugoti jūsų privatumą jums naršant. Čia pateikiama asmeninė šios apsaugos santrauka, kartu su įrankiais, kurie leidžia tai valdyti.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = „{ -brand-short-name }“ saugo jūsų privatumą jums naršant. Čia pateikiama asmeninė šios apsaugos santrauka, kartu su įrankiais, kurie leidžia tai valdyti.
 
 protection-report-settings-link = Tvarkykite savo privatumo ir saugumo nuostatas
@@ -104,9 +104,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] Jūsų slaptažodžiai laikomi saugiai.
     }
 lockwise-how-it-works-link = Kaip tai veikia
-
-turn-on-sync = Įjungti „{ -sync-brand-short-name }“…
-    .title = Eiti į sinchronizavimo nuostatas
 
 monitor-title = Būkite informuoti apie duomenų pažeidimus
 monitor-link = Kaip tai veikia

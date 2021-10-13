@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -132,7 +132,7 @@ policy-SearchEngines = Konfigurasikan setelan mesin pencari. Kebijakan ini hanya
 
 policy-SearchSuggestEnabled = Aktifkan atau nonaktifkan saran pencarian.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Pasang modul PKCS#11.
 
 policy-SSLVersionMax = Tetapkan versi SSL maksimum.

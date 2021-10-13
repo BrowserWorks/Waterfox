@@ -1,9 +1,11 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Vlastnosti textového pole">
+
 <!ENTITY Settings.label "Nastavení">
+
 <!ENTITY TextAreaName.label "Název pole:">
 <!ENTITY TextAreaName.accessKey "N">
 <!ENTITY TextAreaRows.label "Řádky:">
@@ -20,6 +22,7 @@
 <!ENTITY TextAreaAccessKey.accessKey "k">
 <!ENTITY InitialText.label "Výchozí text:">
 <!ENTITY InitialText.accessKey "t">
+
 <!ENTITY TextAreaWrap.label "Druh zalamování:">
 <!ENTITY TextAreaWrap.accessKey "z">
 <!ENTITY WrapDefault.value "Výchozí">

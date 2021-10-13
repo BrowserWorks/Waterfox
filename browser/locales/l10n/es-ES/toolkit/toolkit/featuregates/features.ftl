@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Habilita la compatibilidad con la característica CSS Masonry Layout experimental. Consulte <a data-l10n-name="explainer">más detalles</a> para obtener una descripción general de la función. Para enviar comentarios, comente en <a data-l10n-name="w3c-issue">este issue de GitHub </a> o <a data-l10n-name="bug">este bug</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = Activa el soporte para CSS Cascade Layers. Consulta la <a data-l10n-name="spec">especificación en desarrollo</a> para obtener más detalles. Reporta errores bloqueando el <a data-l10n-name="bugzilla">bug 1699215</a> para bugs relacionados con esta funcionalidad.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission (aislamiento de sitios) es u
 experimental-features-multi-pip =
     .label = Compatibilidad con múltiples Picture-in-Picture
 experimental-features-multi-pip-description = Función experimental para permitir que se abran varias ventanas Picture-in-Picture al mismo tiempo.
-experimental-features-http3 =
-    .label = Protocolo HTTP/3
-experimental-features-http3-description = Soporte experimental para el protocolo HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Barra de direcciones: mostrar resultados durante la composición IME

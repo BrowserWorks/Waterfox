@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Om utvecklingsverktyg
-enable-title = Aktivera Firefox utvecklingsverktyg
-enable-inspect-element-title = Aktivera Firefox utvecklingsverktyg för att använda Inspektera element
+enable-title = Aktivera Waterfox utvecklingsverktyg
+enable-inspect-element-title = Aktivera Waterfox utvecklingsverktyg för att använda Inspektera element
 enable-inspect-element-message = Utforska och redigera HTML och CSS med utvecklarverktygets inspektör.
-enable-about-debugging-message = Utveckla och felsök WebExtensions, webb-workers, service-workers och mer med Firefox utvecklingsverktyg.
+enable-about-debugging-message = Utveckla och felsök WebExtensions, webb-workers, service-workers och mer med Waterfox utvecklingsverktyg.
 enable-key-shortcut-message = Du aktiverade en genväg till utvecklingsverktygen. Om det var ett misstag kan du stänga den här fliken.
 enable-menu-message = Förbättra din webbplats HTML, CSS och JavaScript med verktyg som inspektören och felsökaren.
 enable-common-message = Waterfox utvecklingsverktyg är vanligtvis avstängda för att ge dig större kontroll över din webbläsare.
@@ -14,18 +14,18 @@ enable-learn-more-link = Lär dig mer om utvecklingsverktyg
 enable-enable-button = Aktivera utvecklingsverktyg
 enable-close-button = Stäng denna flik
 
-welcome-title = Välkommen till Firefox utvecklingsverktyg!
-newsletter-title = Nyhetsbrev Mozilla Developer
+welcome-title = Välkommen till Waterfox utvecklingsverktyg!
+newsletter-title = Nyhetsbrev Waterfox Developer
 newsletter-message = Få nyheter om utveckling, tricks och resurser skickade direkt till din inkorg.
 newsletter-email-placeholder =
     .placeholder = E-post
-newsletter-privacy-label = Det är okej för mig att Mozilla hanterar min information som förklaras i denna <a data-l10n-name="privacy-policy">sekretesspolicy</a>.
+newsletter-privacy-label = Det är okej för mig att Waterfox hanterar min information som förklaras i denna <a data-l10n-name="privacy-policy">sekretesspolicy</a>.
 newsletter-subscribe-button = Prenumerera
 newsletter-thanks-title = Tack!
-newsletter-thanks-message = Om du inte tidigare har bekräftat en prenumeration på ett Mozilla-relaterat nyhetsbrev måste du kanske göra det. Kontrollera din inkorg eller ditt spamfilter efter ett mejl från oss.
+newsletter-thanks-message = Om du inte tidigare har bekräftat en prenumeration på ett Waterfox-relaterat nyhetsbrev måste du kanske göra det. Kontrollera din inkorg eller ditt spamfilter efter ett mejl från oss.
 
 footer-title = Waterfox Developer Edition
-footer-message = Letar du efter mer än bara utvecklingsverktyg? Kolla in Firefox:s webbläsare som är byggd speciellt för utvecklare och moderna arbetsflöden.
+footer-message = Letar du efter mer än bara utvecklingsverktyg? Kolla in Waterfox:s webbläsare som är byggd speciellt för utvecklare och moderna arbetsflöden.
 footer-learn-more-link = Läs mer
 
 features-learn-more = Läs mer

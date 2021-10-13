@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,9 +21,13 @@
 <!ENTITY safeb.blocked.phishingPage.shortDesc2 "&quot;Die Webseite auf <span id='phishing_sitename'/> wurde als Betrugsversuch gemeldet und gemäß Ihrer Sicherheitseinstellungen blockiert">
 <!ENTITY safeb.blocked.phishingPage.longDesc2 "<p>Mit Betrugsseiten versuchen Kriminelle Sie dazu zu bringen, persönliche oder finanzielle Daten preiszugeben. Dabei ahmen sie in betrügerischer Absicht Webseiten oder E-Mails nach, denen Sie eventuell vertrauen.</p><p>Falls Sie hier persönliche Daten eingeben, müssen Sie mit Identitätsdiebstahl oder sonstigem Betrug rechnen.</p>">
 
+<!ENTITY safeb.blocked.harmfulPage.title "Website welche eventuell Schadsoftware enthält blockiert">
+<!-- Localization note (safeb.blocked.harmfulPage.shortDesc) - Please don't translate the contents of the <span id="harmful_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; hat die Webseite <span id='harmful_sitename'/> blockiert, da sie versuchen könnte, schädliche Apps zu installieren, welche Ihre Informationen stehlen oder löschen (zum Beispiel Fotos, Passwörter, Nachrichten und Kreditkarteninformationen).">
+<!ENTITY safeb.blocked.harmfulPage.longDesc "">
+
 <!-- Localization note (reportDeceptiveSite, notADeceptiveSite) - The two button strings will never be shown at the same time, so it's okay for them to have the same access key. -->
 <!ENTITY reportDeceptiveSite.label "Betrugsversuch melden…">
 <!ENTITY reportDeceptiveSite.accesskey "B">
 <!ENTITY notADeceptiveSite.label "Dies ist kein Betrugsversuch…">
 <!ENTITY notADeceptiveSite.accesskey "B">
-

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,18 +9,24 @@
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "Zu neuen Tabs, die von Links geöffnet werden, umschalten">
 <!ENTITY background.accesskey "Z">
+<!ENTITY diverted.label "Zu neuen Tabs, die von umgeleiteten Links geöffnet werden, umschalten">
+<!ENTITY diverted.accesskey "L">
+<!ENTITY browserFocus.label "Browser Fenster für von anderen Applikationen in Tabs geöffneten Links fokussieren">
+<!ENTITY browserFocus.accesskey "f">
 <!ENTITY warnOnClose.label "Warnung beim Schließen von Fenstern mit mehreren Tabs">
 <!ENTITY warnOnClose.accesskey "W">
 <!ENTITY relatedAfterCurrent.label "Verbundene Tabs neben aktuellem Tab öffnen">
 <!ENTITY relatedAfterCurrent.accesskey "V">
 
-<!ENTITY loadGroup.label "Beim Öffnen einer Lesezeichengruppe">
-<!ENTITY loadGroupAppend.label "Tabs hinzufügen">
-<!ENTITY loadGroupAppend.accesskey "h">
-<!ENTITY loadGroupReplace.label "Existierende Tabs ersetzen">
-<!ENTITY loadGroupReplace.accesskey "E">
-
 <!ENTITY openTabs.label "Tabs statt Fenster öffnen bei">
+<!ENTITY middleClick.label "Mittel-Klick, Strg+Klick oder Strg+Enter auf Links in einer Webseite">
+<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClickMac.label "Mittel-Klick, &#8984;+Klick oder &#8984;+Enter auf Links in einer Webseite">
+<!ENTITY middleClickMac.accesskey "K">
+<!ENTITY urlbar.label "Strg+Enter in der Adressleiste">
+<!ENTITY urlbar.accesskey "S">
+<!ENTITY urlbarMac.label "&#8984;+Enter in der Adressleiste">
+<!ENTITY urlbarMac.accesskey "A">
 
 <!ENTITY openManagers.label "In neuem Tab statt eines alleinstehenden Fensters öffnen">
 <!ENTITY openDataManager.label "Datenverwaltung">

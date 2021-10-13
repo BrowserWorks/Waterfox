@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## View Menu
 
-menu-view-charset =
-    .label = 텍스트 인코딩
-    .accesskey = c
+## Tools Menu
+
+## Help Menu
 
 ## Mail Toolbar
 
@@ -23,3 +23,10 @@ toolbar-delete-button =
 toolbar-undelete-button =
     .label = 삭제 취소
     .tooltiptext = 선택한 메세지를 삭제 취소함
+
+## View
+
+## View / Layout
+
+## File
+

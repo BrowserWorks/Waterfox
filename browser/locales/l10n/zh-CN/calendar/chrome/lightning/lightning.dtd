@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,12 +17,6 @@
 <!ENTITY lightning.menupopup.new.task.accesskey "T">
 <!ENTITY lightning.menupopup.new.calendar.label "日历…">
 <!ENTITY lightning.menupopup.new.calendar.accesskey "n">
-
-<!-- Open menu popup in File menu -->
-<!ENTITY lightning.menupopup.open.label               "打开">
-<!ENTITY lightning.menupopup.open.accesskey           "O">
-<!ENTITY lightning.menupopup.open.message.label       "已保存消息…">
-<!ENTITY lightning.menupopup.open.message.accesskey   "M">
 
 <!-- Open menu popup in File menu -->
 <!ENTITY lightning.menupopup.open.calendar.label      "日历文件…">
@@ -51,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "现在起，必须先在其属性对话框里设置好此日历，并且对应的日历服务器有定时发送功能时，您才能启用这个选项。">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "此选项仅在日历服务器可以处理定时发送时才能启用。启用后，将不使用日历服务器提供的定时发送功能，而仍使用基于邮件的标准定时发送流程。">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "通知">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "全局通知首选项…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "接受">

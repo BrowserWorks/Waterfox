@@ -1,13 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!ENTITY  brandShortName        "Thunderbird">
 <!ENTITY  brandShorterName      "Thunderbird">
-<!ENTITY  brandFullName         "Mozilla Thunderbird">
+<!ENTITY  brandFullName         "Waterfox Thunderbird">
 <!-- LOCALIZATION NOTE (brandProductName):
    This brand name can be used in messages where the product name needs to
    remain unchanged across different versions (Daily, Beta, etc.). -->
 <!ENTITY  brandProductName      "Thunderbird">
-<!ENTITY  vendorShortName       "Mozilla">
-<!ENTITY  trademarkInfo.part1   "Mozilla Thunderbird e os logos do Thunderbird
-                                 são marcas registradas da Mozilla Foundation.">
+<!ENTITY  vendorShortName       "Waterfox">
+<!ENTITY  trademarkInfo.part1   "Waterfox Thunderbird e os logos do Thunderbird
+                                 são marcas registradas da Waterfox Foundation.">

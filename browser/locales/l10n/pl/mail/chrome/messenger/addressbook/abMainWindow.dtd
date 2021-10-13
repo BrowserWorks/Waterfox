@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Zamknij">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "Z">
-<!ENTITY printSetupCmd.label                            "Ustawienia strony…">
-<!ENTITY printSetupCmd.accesskey                        "n">
-<!ENTITY printPreviewContactCmd.label                   "Podgląd wydruku wizytówki">
-<!ENTITY printPreviewContactCmd.accesskey               "w">
-<!ENTITY printPreviewAddressBook.label                  "Podgląd wydruku książki adresowej">
-<!ENTITY printPreviewAddressBook.accesskey              "P">
 <!ENTITY printContactCmd.label                          "Drukuj wizytówkę…">
 <!ENTITY printContactCmd.accesskey                      "D">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,7 +42,9 @@
 <!ENTITY editMenu.accesskey                             "E">
 <!ENTITY deleteCmd.label                                "Usuń">
 <!ENTITY deleteAbCmd.label                              "Usuń książkę adresową">
+<!ENTITY deleteAbCmd.accesskey                          "U">
 <!ENTITY removeAbCmd.label                              "Usuń książkę adresową">
+<!ENTITY removeAbCmd.accesskey                          "U">
 <!ENTITY deleteContactCmd.label                         "Usuń wizytówkę">
 <!ENTITY deleteContactsCmd.label                        "Usuń wizytówki">
 <!ENTITY deleteListCmd.label                            "Usuń listę">
@@ -109,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "I">
 <!ENTITY exportCmd.label                                "Eksportuj…">
 <!ENTITY exportCmd.accesskey                            "E">
-<!ENTITY preferencesCmd2.label                          "Opcje">
-<!ENTITY preferencesCmd2.accesskey                      "O">
-<!ENTITY preferencesCmdUnix.label                       "Preferencje">
-<!ENTITY preferencesCmdUnix.accesskey                   "P">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Nowa wizytówka">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Imprimir…">
 <!ENTITY printCmd.accesskey "I">
 <!ENTITY printCmd.key "P">
-<!ENTITY printPreviewCmd.label "Visualizar impressão">
-<!ENTITY printPreviewCmd.accesskey "z">
-<!ENTITY printSetupCmd.label "Configurar página…">
-<!ENTITY printSetupCmd.accesskey "C">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Excluir mensagem">
@@ -170,10 +166,8 @@
 <!ENTITY favoriteFolders.accesskey "F">
 <!ENTITY recentFolders.label "Recentes">
 <!ENTITY recentFolders.accesskey "R">
-<!ENTITY compactVersion.label "Visualização compacta">
+<!ENTITY compactVersion.label "Visão compacta">
 <!ENTITY compactVersion.accesskey "c">
-<!ENTITY folderPaneBar.label "Barra de ferramentas do painel de pastas">
-<!ENTITY folderPaneBar.accesskey "F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Ordenar por">
@@ -248,7 +242,7 @@
 <!ENTITY bodyMenu.label "Formatar mensagens como">
 <!ENTITY bodyMenu.accesskey "o">
 <!ENTITY bodyAllowHTML.label "HTML original">
-<!ENTITY bodyAllowHTML.accesskey "F">
+<!ENTITY bodyAllowHTML.accesskey "o">
 <!ENTITY bodySanitized.label "HTML simples">
 <!ENTITY bodySanitized.accesskey "s">
 <!ENTITY bodyAsPlaintext.label "Sem formatação">
@@ -280,8 +274,8 @@
 <!ENTITY findCmd.label "Procurar nesta mensagem…">
 <!ENTITY findCmd.accesskey "o">
 <!ENTITY findCmd.key "F">
-<!ENTITY findAgainCmd.label "Procurar próxima">
-<!ENTITY findAgainCmd.accesskey "x">
+<!ENTITY findAgainCmd.label "Procurar novamente">
+<!ENTITY findAgainCmd.accesskey "n">
 <!ENTITY findAgainCmd.key "G">
 <!ENTITY findAgainCmd.key2 "VK_F3">
 <!ENTITY findPrevCmd.key "G">
@@ -468,17 +462,11 @@
 <!ENTITY addressBookCmd.label "Catálogo de endereços">
 <!ENTITY addressBookCmd.accesskey "a">
 <!ENTITY addressBookCmd.key "b">
-<!ENTITY addons.label "Extensões">
-<!ENTITY addons.accesskey "E">
-<!ENTITY addonPrefs.label "Opções da extensão">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Preferências de extensões">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Nenhuma extensão configurada.">
 <!ENTITY activitymanager.label "Gerenciador de atividade">
 <!ENTITY activitymanager.accesskey "G">
 <!ENTITY imAccountsStatus.label "Status em conversas">
-<!ENTITY imAccountsStatus.accesskey "b">
+<!ENTITY imAccountsStatus.accesskey "v">
 <!ENTITY imStatus.available          "Disponível">
 <!ENTITY imStatus.unavailable        "Ocupado">
 <!ENTITY imStatus.offline            "Desconectado">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "x">
 <!ENTITY importCmd.label "Importar…">
 <!ENTITY importCmd.accesskey "I">
+<!ENTITY exportCmd.label "Exportar…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Limpar histórico recente…">
 <!ENTITY clearRecentHistory.accesskey "L">
 <!ENTITY accountManagerCmd2.label "Configurações da conta">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Depurar extensões">
 <!ENTITY debugAddonsCmd.accesskey "e">
-<!ENTITY tabsDebugCmd.label "Depurador de conteúdo">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "Console de erros">
 <!ENTITY errorConsoleCmd.accesskey "s">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -530,8 +518,8 @@
 <!ENTITY getMsgButton1.label "Receber mensagens">
 <!ENTITY newMsgButton.label "Escrever">
 <!ENTITY replyButton.label "Responder">
-<!ENTITY replyAllButton.label "Re: Todos">
-<!ENTITY replyListButton.label "Re: Lista">
+<!ENTITY replyAllButton.label "Responder a todos">
+<!ENTITY replyListButton.label "Responder à lista">
 <!ENTITY forwardButton.label "Encaminhar">
 <!ENTITY fileButton.label "Mover">
 <!ENTITY archiveButton.label "Arquivar">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Voltar">
 <!ENTITY goForwardButton1.label "Avançar">
 <!ENTITY deleteItem.title "Excluir">
-<!ENTITY deleteButton.label "Excluir">
-<!ENTITY undeleteButton.label "Restaurar">
 <!ENTITY markButton.label "Marcar">
 <!ENTITY printButton.label "Imprimir">
 <!ENTITY stopButton.label "Parar">
 <!ENTITY throbberItem.title "Indicador de atividade">
 <!ENTITY junkItem.title "Spam">
-<!ENTITY junkButton.label "Spam">
-<!ENTITY notJunkButton.label "Não é spam">
 <!ENTITY addressBookButton.label "Catálogo">
 <!ENTITY chatButton.label "Conversa">
 <!ENTITY glodaSearch.title "Pesquisa global">
@@ -561,7 +545,7 @@
 <!ENTITY mailViewsToolbarItem.title "Modos de visualização">
 <!ENTITY folderLocationToolbarItem.title "Endereço da pasta">
 <!ENTITY tagButton.label "Etiquetas">
-<!ENTITY compactButton.label "Condensar">
+<!ENTITY compactButton.label "Compactar">
 <!ENTITY appmenuButton.label "AppMenu">
 
 <!-- Mail Toolbar Tooltips-->
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Mover para mensagem anterior">
 <!ENTITY goForwardButton.tooltip "Próxima mensagem">
 <!ENTITY goBackButton.tooltip "Mensagem anterior">
-<!ENTITY deleteButton.tooltip "Excluir mensagens/pastas selecionadas">
-<!ENTITY undeleteButton.tooltip "Restaurar mensagem selecionada">
 <!ENTITY markButton.tooltip "Marcar mensagens">
 <!ENTITY printButton.tooltip "Imprimir a mensagem">
 <!ENTITY stopButton.tooltip "Interromper a transferência atual">
-<!ENTITY junkButton.tooltip "Marcar mensagens selecionadas como spam">
-<!ENTITY notJunkButton.tooltip "Marcar mensagens selecionadas como não spam">
 <!ENTITY addressBookButton.tooltip "Catálogo de endereços">
 <!ENTITY chatButton.tooltip "Mostrar a aba de conversa">
 <!ENTITY tagButton.tooltip "Aplicar etiquetas em mensagens">
 <!ENTITY compactButton.tooltip "Remover as mensagens excluídas da pasta selecionada">
 <!ENTITY appmenuButton1.tooltip "Exibir o menu do &brandShortName;">
-<!ENTITY addonsButton.tooltip "Gerenciar suas extensões">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Reencaminhar como texto">
@@ -656,7 +635,7 @@
 <!ENTITY folderContextRename.accesskey "m">
 <!ENTITY folderContextRemove.label "Excluir">
 <!ENTITY folderContextRemove.accesskey "x">
-<!ENTITY folderContextCompact.label "Condensar">
+<!ENTITY folderContextCompact.label "Compactar">
 <!ENTITY folderContextCompact.accesskey "C">
 <!ENTITY folderContextEmptyTrash.label "Esvaziar lixeira">
 <!ENTITY folderContextEmptyTrash.accesskey "x">
@@ -666,7 +645,7 @@
 <!ENTITY folderContextSendUnsentMessages.accesskey "E">
 <!ENTITY folderContextUnsubscribe.label "Cancelar inscrição">
 <!ENTITY folderContextUnsubscribe.accesskey "C">
-<!ENTITY folderContextMarkNewsgroupRead.label "Marcar newsgroup como lido">
+<!ENTITY folderContextMarkNewsgroupRead.label "Marcar grupo de notícias como lido">
 <!ENTITY folderContextMarkNewsgroupRead.accesskey "l">
 <!ENTITY folderContextMarkMailFolderRead.label "Marcar a pasta como lida">
 <!ENTITY folderContextMarkMailFolderRead.accesskey "l">
@@ -769,11 +748,11 @@
 <!ENTITY contextArchive.accesskey "A">
 <!ENTITY contextReplySender.label "Responder só ao remetente">
 <!ENTITY contextReplySender.accesskey "R">
-<!ENTITY contextReplyNewsgroup2.label "Responder ao grupo">
+<!ENTITY contextReplyNewsgroup2.label "Responder ao grupo de notícias">
 <!ENTITY contextReplyNewsgroup2.accesskey "p">
-<!ENTITY contextReplyAll.label "Re: Todos">
+<!ENTITY contextReplyAll.label "Responder a todos">
 <!ENTITY contextReplyAll.accesskey "T">
-<!ENTITY contextReplyList.label "Re: Lista">
+<!ENTITY contextReplyList.label "Responder à lista">
 <!ENTITY contextReplyList.accesskey "s">
 <!ENTITY contextForward.label "Encaminhar">
 <!ENTITY contextForward.accesskey "E">
@@ -818,7 +797,7 @@
      folder(s). The sub-menu items indicate whether we want to apply it to just
      a folder or also its children.
   -->
-<!ENTITY columnPicker.applyTo.label "Aplicar colunas na">
+<!ENTITY columnPicker.applyTo.label "Aplicar colunas a…">
 <!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
      This option in the thread pane column picker is found on a sub-menu beneath
      the "columnPicker.applyTo.label" alongside
@@ -898,7 +877,7 @@
 <!ENTITY EditContact1.accesskey "E">
 <!ENTITY ViewContact.label "Ver contato">
 <!ENTITY ViewContact.accesskey "V">
-<!ENTITY SubscribeToNewsgroup.label "Inscrever o newsgroup">
+<!ENTITY SubscribeToNewsgroup.label "Inscrever-se no grupo de notícias">
 <!ENTITY SubscribeToNewsgroup.accesskey "I">
 <!ENTITY SendMessageTo.label "Nova mensagem para">
 <!ENTITY SendMessageTo.accesskey "N">
@@ -906,7 +885,7 @@
 <!ENTITY CopyEmailAddress.accesskey "o">
 <!ENTITY CopyNameAndEmailAddress.label "Copiar nome e endereço de email">
 <!ENTITY CopyNameAndEmailAddress.accesskey "N">
-<!ENTITY CopyNewsgroupName.label "Copiar o nome do newsgroup">
+<!ENTITY CopyNewsgroupName.label "Copiar o nome do grupo de notícias">
 <!ENTITY CopyNewsgroupName.accesskey "C">
 <!ENTITY CopyNewsgroupURL.label "Copiar URL do grupo de notícias">
 <!ENTITY CopyNewsgroupURL.accesskey "U">
@@ -940,7 +919,7 @@
 <!ENTITY openLinkInBrowser.accesskey "A">
 
 <!-- Statusbar -->
-<!ENTITY statusText.label "Concluído">
+<!ENTITY statusText.label "Pronto">
 
 <!-- Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.label "Minimizar">

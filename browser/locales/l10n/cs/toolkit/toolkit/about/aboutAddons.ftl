@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Správce doplňků
 addons-page-title = Správce doplňků
 search-header =
     .placeholder = Vyhledat na addons.mozilla.org
@@ -24,27 +22,6 @@ list-empty-button =
 help-button = Nápověda
 sidebar-help-button-title =
     .title = Nápověda
-preferences =
-    { PLATFORM() ->
-        [windows] Možnosti
-       *[other] Předvolby
-    } { -brand-short-name.gender ->
-        [masculine] { -brand-short-name(case: "gen") }
-        [feminine] { -brand-short-name(case: "gen") }
-        [neuter] { -brand-short-name(case: "gen") }
-       *[other] aplikace
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Možnosti
-           *[other] Předvolby
-        } { -brand-short-name.gender ->
-            [masculine] { -brand-short-name(case: "gen") }
-            [feminine] { -brand-short-name(case: "gen") }
-            [neuter] { -brand-short-name(case: "gen") }
-           *[other] aplikace
-        }
 addons-settings-button =
     Nastavení { -brand-short-name.gender ->
         [masculine] { -brand-short-name(case: "gen") }
@@ -64,36 +41,6 @@ show-unsigned-extensions-button =
     .label = Některá rozšíření nemohla být ověřena
 show-all-extensions-button =
     .label = Zobrazit všechna rozšíření
-cmd-show-details =
-    .label = Zobrazit více informací
-    .accesskey = v
-cmd-find-updates =
-    .label = Aktualizovat
-    .accesskey = A
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Možnosti
-           *[other] Předvolby
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] M
-           *[other] P
-        }
-cmd-enable-theme =
-    .label = Použít motiv vzhledu
-    .accesskey = m
-cmd-disable-theme =
-    .label = Nepoužívat motiv vzhledu
-    .accesskey = m
-cmd-install-addon =
-    .label = Instalovat
-    .accesskey = I
-cmd-contribute =
-    .label = Přispět
-    .accesskey = s
-    .tooltiptext = Zobrazí informace jak přispět na vývoj doplňku
 detail-version =
     .label = Verze
 detail-last-updated =
@@ -344,6 +291,7 @@ install-theme-button = Nainstalovat vzhled
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Správa
 find-more-addons = Najít další doplňky
+find-more-themes = Najít další vzhledy
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -373,13 +321,20 @@ extension-enabled-heading = Povolená rozšíření
 extension-disabled-heading = Zakázaná rozšíření
 theme-enabled-heading = Aktivní vzhled
 theme-disabled-heading = Zakázané vzhledy
+theme-monochromatic-heading = Palety barev
+theme-monochromatic-subheading =
+    Nové palety barev pro { -brand-product-name.gender ->
+        [masculine] { -brand-product-name(case: "acc") }
+        [feminine] { -brand-product-name(case: "acc") }
+        [neuter] { -brand-product-name(case: "acc") }
+       *[other] aplikaci { -brand-product-name }
+    } dostupné po omezenou dobu.
 plugin-enabled-heading = Povolené moduly
 plugin-disabled-heading = Zakázané moduly
 dictionary-enabled-heading = Povolené slovníky
 dictionary-disabled-heading = Zakázané slovníky
 locale-enabled-heading = Povolené jazyky
 locale-disabled-heading = Zakázané jazyky
-ask-to-activate-button = Spustit na vyžádání
 always-activate-button = Vždy spustit
 never-activate-button = Nespouštět
 addon-detail-author-label = Autor
@@ -442,8 +397,8 @@ addon-detail-private-browsing-disallow = Nepovolit
 addon-badge-recommended2 =
     .title = { -brand-product-name } doporučuje jen rozšíření, která splňují naše standardy pro bezpečnost a výkon
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
     .title = Oficiální rozšíření od Mozilly. Splňuje standardy na zabezpečení i výkon
     .aria-label = { addon-badge-line3.title }
@@ -463,9 +418,9 @@ addon-permissions-optional = Volitelná oprávnění pro dodatečné funkce:
 addon-permissions-learnmore = Zjistit více o oprávněních
 recommended-extensions-heading = Doporučená rozšíření
 recommended-themes-heading = Doporučené vzhledy
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Jste tvořiví? <a data-l10n-name="link">Vyrobte si vlastní vzhled pomocí Firefox Color.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Jste tvořiví? <a data-l10n-name="link">Vyrobte si vlastní vzhled pomocí Waterfox Color.</a>
 
 ## Page headings
 

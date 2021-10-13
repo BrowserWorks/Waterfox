@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -93,8 +93,8 @@ perftools-thread-img-decoder =
     .title = Bilddekodierungsthreads
 perftools-thread-dns-resolver =
     .title = DNS-Auflösung erfolgt in diesem Thread
-perftools-thread-js-helper =
-    .title = Hintergrundarbeit der JS-Engine wie Kompilierungen außerhalb des Hauptthreads
+perftools-thread-task-controller =
+    .title = TaskController-Thread-Pool-Threads
 
 ##
 
@@ -106,9 +106,30 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>Neu</b>: { -profiler-brand-name } ist jetzt in die Entwicklerwerkzeuge integriert. <a>Erfahren Sie mehr</a> über dieses leistungsstarke neue Werkzeug.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Für eine begrenzte Zeit können Sie über <a>{ options-context-advanced-settings }</a> auf die ursprüngliche Ansicht für Leistungsanalyse zugreifen.)
 perftools-onboarding-close-button =
     .aria-label = Diese Änderungsmitteilung schließen
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Web-Entwickler
+perftools-presets-web-developer-description = Empfohlene Voreinstellung für das Debuggen der meisten Web-Apps mit geringem Overhead.
+perftools-presets-firefox-platform-label = Waterfox-Plattform
+perftools-presets-firefox-platform-description = Empfohlene Voreinstellung für das interne Debugging der Waterfox-Plattform.
+perftools-presets-firefox-front-end-label = Waterfox-Frontend
+perftools-presets-firefox-front-end-description = Empfohlene Voreinstellung für das interne Debugging des Waterfox-Frontend.
+perftools-presets-firefox-graphics-label = Waterfox-Grafik
+perftools-presets-firefox-graphics-description = Empfohlene Voreinstellung für das Untersuchen der Grafikleistung von Waterfox.
+perftools-presets-media-label = Medien
+perftools-presets-media-description = Empfohlene Voreinstellung zur Diagnose von Audio- und Videoproblemen.
+perftools-presets-custom-label = Benutzerdefiniert
+
+##
+

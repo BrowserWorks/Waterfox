@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,8 +13,5 @@
 <!ENTITY makeUrlRelative.accessKey "U">
 <!ENTITY makeUrlRelative.tooltip "Změní URL na relativní nebo absolutní. Před změnou je nejprve nutné uložit stránku.">
 
-<!-- Shared by Link and Image dialogs -->
-<!ENTITY LinkURLEditField.label "Zadejte adresu stránky, místní soubor nebo vyberte pojmenovanou kotvu nebo záhlaví ze seznamu:">
-<!ENTITY LinkURLEditField.accessKey "m">
 <!ENTITY LinkURLEditField2.label "Zadejte adresu stránky, lokální soubor nebo vyberte pojmenovanou kotvu nebo nadpis z kontextové nabídky:">
 <!ENTITY LinkURLEditField2.accessKey "m">

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -71,7 +71,7 @@
         <rdf:li> <rdf:Description nc:name="megkülönböztető név (DN)" nc:link="glossary.xhtml#distinguished_name"/> </rdf:li>
         <rdf:li> <rdf:Description nc:name="megtévesztés" nc:link="glossary.xhtml#misrepresentation"/> </rdf:li>
         <rdf:li> <rdf:Description nc:name="mesterjelszó" nc:link="glossary.xhtml#master_password"/> </rdf:li>
-        <rdf:li> <rdf:Description nc:name="Mozilla-komponensek" nc:link="glossary.xhtml#component_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description nc:name="Waterfox-komponensek" nc:link="glossary.xhtml#component_bar"/> </rdf:li>
         <rdf:li> <rdf:Description nc:name="nyilvános kulcs" nc:link="glossary.xhtml#public_key"/> </rdf:li>
         <rdf:li> <rdf:Description nc:name="nyilvános kulcsú titkosítás" nc:link="glossary.xhtml#public-key_cryptography"/> </rdf:li>
         <rdf:li> <rdf:Description nc:name="objektumaláírás" nc:link="glossary.xhtml#object_signing"/> </rdf:li>

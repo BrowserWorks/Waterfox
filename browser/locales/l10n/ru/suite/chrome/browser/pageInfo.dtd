@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -61,8 +61,6 @@
 
 <!ENTITY  mediaTab              "Мультимедиа">
 <!ENTITY  mediaTab.accesskey    "л">
-<!ENTITY  mediaURL              "Адрес:">
-<!ENTITY  mediaAlt              "Альтернативный текст:">
 <!ENTITY  mediaLocation         "Расположение:">
 <!ENTITY  mediaText             "Связанный текст:">
 <!ENTITY  mediaAltHeader        "Альтернативный текст">
@@ -70,9 +68,6 @@
 <!ENTITY  mediaType             "Тип">
 <!ENTITY  mediaSize             "Размер">
 <!ENTITY  mediaCount            "Количество">
-<!ENTITY  mediaDimensions       "Указанные размеры:">
-<!ENTITY  mediaPhysDimensions   "Реальные размеры:">
-<!ENTITY  mediaTitle            "Описание:">
 <!ENTITY  mediaDimension        "Размеры:">
 <!ENTITY  mediaLongdesc         "Длинное описание:">
 <!ENTITY  mediaBlockImage.accesskey "л">
@@ -88,18 +83,7 @@
 
 <!ENTITY  permTab               "Разрешения">
 <!ENTITY  permTab.accesskey     "з">
-<!ENTITY  permUseDefault        "По умолчанию">
-<!ENTITY  permAskAlways         "Всегда спрашивать">
-<!ENTITY  permAllow             "Разрешить">
-<!ENTITY  permAllowSession      "Разрешить на сессию">
-<!ENTITY  permBlock             "Блокировать">
 <!ENTITY  permissionsFor        "Разрешения для:">
-<!ENTITY  permImage             "Загружать изображения">
-<!ENTITY  permPopup             "Открывать всплывающие окна">
-<!ENTITY  permCookie            "Устанавливать куки">
-<!ENTITY  permNotifications     "Отображать уведомления">
-<!ENTITY  permInstall           "Устанавливать расширения или темы">
-<!ENTITY  permGeo               "Узнавать местоположение">
 
 <!ENTITY  securityTab           "Защита">
 <!ENTITY  securityTab.accesskey "щ">

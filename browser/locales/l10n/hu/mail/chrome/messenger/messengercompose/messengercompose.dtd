@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Új">
 <!ENTITY newMenu.accesskey "Ú">
 <!ENTITY newMessage.label "Üzenet">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "z">
 <!ENTITY newContact.label "Névjegy…">
 <!ENTITY newContact.accesskey "N">
 <!ENTITY attachMenu.label "Melléklet">
 <!ENTITY attachMenu.accesskey "t">
-<!ENTITY attachFileCmd.label "Fájlok…">
-<!ENTITY attachFileCmd.accesskey "F">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Óriásfájl-küldés">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "Weboldal…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Küldés később">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "l">
-<!ENTITY printSetupCmd.label "Oldalbeállítás…">
-<!ENTITY printSetupCmd.accesskey "l">
-<!ENTITY printPreviewCmd.label "Nyomtatási kép">
-<!ENTITY printPreviewCmd.accesskey "t">
 <!ENTITY printCmd.label "Nyomtatás…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "N">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Mellékletek átrendezése…">
 <!ENTITY reorderAttachmentsCmd.accesskey "r">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Mellékletek ablaktábla">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "M">
 <!ENTITY selectAllCmd.accesskey "d">
 <!ENTITY findBarCmd.label "Keresés…">
 <!ENTITY findBarCmd.accesskey "K">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Mellékletek átrendezése">
-<!ENTITY moveAttachmentTopPanelBtn.label "Mozgatás a tetejére">
-<!ENTITY moveAttachmentUpPanelBtn.label "Mozgatás felfelé">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Mozgatás együtt">
-<!ENTITY moveAttachmentDownPanelBtn.label "Mozgatás lefelé">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Mozgatás az aljára">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Postafiók beállításai">
 <!ENTITY accountManagerCmd2.accesskey "P">
 <!ENTITY accountManagerCmdUnix2.accesskey "P">
-<!ENTITY preferencesCmd2.label "Beállítások">
-<!ENTITY preferencesCmd2.accesskey "B">
-<!ENTITY preferencesCmdUnix.label "Beállítások">
-<!ENTITY preferencesCmdUnix.accesskey "B">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Küldés">
 <!ENTITY quoteButton.label "Idézés">
 <!ENTITY addressButton.label "Kapcsolatok">
-<!ENTITY attachButton.label "Melléklet">
 <!ENTITY spellingButton.label "Helyesírás">
 <!ENTITY saveButton.label "Mentés">
 <!ENTITY printButton.label "Nyomtatás">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Üzenet elküldése később">
 <!ENTITY quoteButton.tooltip "Előző üzenet idézése">
 <!ENTITY addressButton.tooltip "Egy címzett kiválasztása a címjegyzékből">
-<!ENTITY attachButton.tooltip2 "Melléklet hozzáadása">
 <!ENTITY spellingButton.tooltip "A kijelölt rész vagy az egész üzenet helyesírásának ellenőrzése">
 <!ENTITY saveButton.tooltip "Az üzenet mentése">
 <!ENTITY cutButton.tooltip              "Kivágás">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Más típusú címzési mezők">
 <!ENTITY fromAddr2.label "Feladó">
 <!ENTITY fromAddr.accesskey "a">
-<!ENTITY toAddr2.label "Címzett">
-<!ENTITY ccAddr2.label "Másolatot kap">
-<!ENTITY bccAddr2.label "Rejtett másolat">
 <!ENTITY replyAddr2.label "Válaszcím">
 <!ENTITY newsgroupsAddr2.label "Hírcsoport">
 <!ENTITY followupAddr2.label "Nyilvános válaszcím">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "Minden kijelölése">
 <!ENTITY selectAll.accesskey "d">
-<!ENTITY attachFile.label "Fájlok csatolása…">
-<!ENTITY attachFile.accesskey "F">
 <!ENTITY attachCloud.label "Óriásfájl-küldés…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "Átalakítás…">

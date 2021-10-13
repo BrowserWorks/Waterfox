@@ -1,31 +1,31 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Tentang Alat Pengembang
-enable-title = Aktifkan Alat Pengembang Firefox
-enable-inspect-element-title = Aktifkan Alat Pengembang Firefox untuk menggunakan Inspeksi Elemen
+enable-title = Aktifkan Alat Pengembang Waterfox
+enable-inspect-element-title = Aktifkan Alat Pengembang Waterfox untuk menggunakan Inspeksi Elemen
 enable-inspect-element-message = Periksa dan edit HTML dan CSS dengan Inspektur Alat Pengembang.
-enable-about-debugging-message = Mengembangkan dan men-debug WebExtensions, web worker, service worker, dan lainnya dengan Alat Pengembang Firefox.
+enable-about-debugging-message = Mengembangkan dan men-debug WebExtensions, web worker, service worker, dan lainnya dengan Alat Pengembang Waterfox.
 enable-key-shortcut-message = Anda telah mengaktifkan pintasan Alat Pengembang. Jika itu tidak disengaja, Anda dapat menutup Tab ini.
 enable-menu-message = Sempurnakan HTML, CSS, dan JavaScript situs web Anda dengan alat-alat seperti Inspektur dan Debugger.
-enable-common-message = Alat Pengembang Firefox dinonaktifkan secara baku untuk memberikan Anda lebih banyak kendali atas peramban Anda.
+enable-common-message = Alat Pengembang Waterfox dinonaktifkan secara baku untuk memberikan Anda lebih banyak kendali atas peramban Anda.
 enable-learn-more-link = Pelajari lebih lanjut tentang Alat Pengembang
 enable-enable-button = Aktifkan Alat Pengembang
 enable-close-button = Tutup Tab Ini
 
-welcome-title = Selamat Datang di Alat Pengembang Firefox!
-newsletter-title = Nawala Pengembang Mozilla
+welcome-title = Selamat Datang di Alat Pengembang Waterfox!
+newsletter-title = Nawala Pengembang Waterfox
 newsletter-message = Dapatkan berita, trik, dan sumber daya untuk pengembang yang dikirim langsung ke kotak masuk Anda.
 newsletter-email-placeholder =
     .placeholder = Surel
-newsletter-privacy-label = Saya setuju Mozilla menangani informasi saya seperti yang dijelaskan dalam <a data-l10n-name="privacy-policy">Kebijakan Privasi</a>.
+newsletter-privacy-label = Saya setuju Waterfox menangani informasi saya seperti yang dijelaskan dalam <a data-l10n-name="privacy-policy">Kebijakan Privasi</a>.
 newsletter-subscribe-button = Berlangganan
 newsletter-thanks-title = Trims!
-newsletter-thanks-message = Jika sebelumnya Anda belum pernah mengonfirmasi langganan nawala terkait Mozilla, Anda mungkin harus melakukannya. Silakan cek surel dari kami di kotak masuk atau filter spam Anda.
+newsletter-thanks-message = Jika sebelumnya Anda belum pernah mengonfirmasi langganan nawala terkait Waterfox, Anda mungkin harus melakukannya. Silakan cek surel dari kami di kotak masuk atau filter spam Anda.
 
 footer-title = Waterfox Developer Edition
-footer-message = Mencari lebih dari sekadar Alat Pengembang? Cobalah peramban Firefox yang dibuat secara khusus untuk pengembang dan alur kerja modern.
+footer-message = Mencari lebih dari sekadar Alat Pengembang? Cobalah peramban Waterfox yang dibuat secara khusus untuk pengembang dan alur kerja modern.
 footer-learn-more-link = Pelajari lebih lanjut
 
 features-learn-more = Pelajari lebih lanjut

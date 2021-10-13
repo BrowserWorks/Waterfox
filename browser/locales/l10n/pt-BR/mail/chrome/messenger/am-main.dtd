@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,34 +8,34 @@
 <!ENTITY accountName.label "Nome da conta:">
 <!ENTITY accountName.accesskey "N">
 <!ENTITY identityTitle.label "Identidade padrão">
-<!ENTITY identityDesc.label "Cada conta tem uma identidade, a qual é a informação que as outras pessoas veem quando elas leem as suas mensagens.">
+<!ENTITY identityDesc.label "Cada conta tem uma identidade, a informação que aparece para outras pessoas ao ler suas mensagens.">
 <!ENTITY name.label "Seu nome:">
 <!ENTITY name.accesskey "m">
 <!ENTITY email.label "Endereço de email:">
 <!ENTITY email.accesskey "E">
 <!ENTITY catchAll.label "Responder com esta identidade quando cabeçalhos de entrega corresponderem:">
 <!ENTITY catchAll.accesskey "d">
-<!ENTITY replyTo.label "Responder ao endereço:">
+<!ENTITY replyTo.label "Endereço de resposta:">
 <!ENTITY replyTo.accesskey "s">
-<!ENTITY replyTo.placeholder "Os destinatários responderão para este outro endereço">
+<!ENTITY replyTo.placeholder "Respostas de destinatários serão para este outro endereço">
 <!ENTITY organization.label "Organização:">
 <!ENTITY organization.accesskey "O">
 <!ENTITY signatureText.label "Texto da assinatura:">
 <!ENTITY signatureText.accesskey "x">
-<!ENTITY signatureHtml.label "Usar HTML (ex.: &lt;b&gt;negrito&lt;/b&gt;)">
+<!ENTITY signatureHtml.label "Usar HTML (por exemplo, &lt;b&gt;negrito&lt;/b&gt;)">
 <!ENTITY signatureHtml.accesskey "L">
-<!ENTITY signatureFile.label "Anexar a assinatura a partir de um arquivo (texto, HTML ou imagem):">
+<!ENTITY signatureFile.label "Anexar assinatura a partir de um arquivo (texto, HTML ou imagem):">
 <!ENTITY signatureFile.accesskey "t">
 <!ENTITY edit.label "Editar…">
 <!ENTITY choose.label "Escolher…">
 <!ENTITY choose.accesskey "c">
-<!ENTITY editVCard.label "Editar o cartão…">
+<!ENTITY editVCard.label "Editar cartão…">
 <!ENTITY editVCard.accesskey "d">
 <!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
-<!ENTITY attachVCard.label "Anexar o meu vCard às mensagens">
+<!ENTITY attachVCard.label "Anexar meu vCard às mensagens">
 <!ENTITY attachVCard.accesskey "v">
 
-<!ENTITY manageIdentities.label "Gerenciar as identidades…">
+<!ENTITY manageIdentities.label "Gerenciar identidades…">
 <!ENTITY manageIdentities.accesskey "G">
 
 <!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->

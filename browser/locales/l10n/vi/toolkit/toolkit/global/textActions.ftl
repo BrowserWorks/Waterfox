@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -37,3 +37,20 @@ text-action-select-all-shortcut =
     .key = A
 text-action-spell-no-suggestions =
     .label = Không có gợi ý sửa chính tả
+text-action-spell-add-to-dictionary =
+    .label = Thêm vào từ điển
+    .accesskey = o
+text-action-spell-undo-add-to-dictionary =
+    .label = Hoàn tác thêm vào từ điển
+    .accesskey = n
+text-action-spell-check-toggle =
+    .label = Kiểm tra chính tả
+    .accesskey = g
+text-action-spell-add-dictionaries =
+    .label = Thêm từ điển…
+    .accesskey = A
+text-action-spell-dictionaries =
+    .label = Ngôn ngữ
+    .accesskey = L
+text-action-search-text-box-clear =
+    .title = Xóa trắng

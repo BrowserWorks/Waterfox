@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -120,8 +120,6 @@
 <!ENTITY openHelpCmd.label "Contenido de la ayuda">
 <!ENTITY openHelpCmd.accesskey "u">
 <!ENTITY openHelpCmd.key "VK_F1">
-<!ENTITY helpForIEUsers.label "Para usuarios de Internet Explorer">
-<!ENTITY helpForIEUsers.accesskey "I">
 <!ENTITY helpTroubleshootingInfo.label "Información sobre resolución de problemas">
 <!ENTITY helpTroubleshootingInfo.accesskey "n">
 <!ENTITY releaseCmd.label "Notas de esta versión">

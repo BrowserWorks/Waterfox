@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = New Tab
 newtab-settings-button =
     .title = Customise your New Tab page
-newtab-personalize-button-label = Personalise
+newtab-personalize-icon-label =
     .title = Personalise new tab
     .aria-label = Personalise new tab
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Search
     .aria-label = Search
-newtab-search-box-search-the-web-text = Search the Web
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Search with { $engine } or enter address
@@ -170,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Sponsored
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Sponsored by { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } min
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -222,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = Oops! We almost loaded thi
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = Popular Topics:
+newtab-pocket-new-topics-title = Want even more stories? See these popular topics from { -pocket-brand-name }
 newtab-pocket-more-recommendations = More Recommendations
 newtab-pocket-learn-more = Learn more
 newtab-pocket-cta-button = Get { -pocket-brand-name }
 newtab-pocket-cta-text = Save the stories you love in { -pocket-brand-name }, and fuel your mind with fascinating reads.
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name } is part of the { -brand-product-name } family
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Save to { -pocket-brand-name }
+newtab-pocket-saved-to-pocket = Saved to { -pocket-brand-name }
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Load more stories
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = You’re all caught up!
+newtab-pocket-last-card-desc = Check back later for more.
+newtab-pocket-last-card-image =
+    .alt = You’re all caught up
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -249,10 +268,4 @@ newtab-custom-pocket-sponsored = Sponsored stories
 newtab-custom-recent-title = Recent activity
 newtab-custom-recent-subtitle = A selection of recent sites and content
 newtab-custom-close-button = Close
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Snippets
-newtab-custom-snippets-subtitle = Tips and news from { -vendor-short-name } and { -brand-product-name }
 newtab-custom-settings = Manage more settings

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,6 +14,17 @@ about-processes-shutdown-process =
     .title = Iškelti korteles ir išjungti procesą
 about-processes-shutdown-tab =
     .title = Užverti kortelę
+# Profiler icons
+# Variables:
+#    $duration (Number) The time in seconds during which the profiler will be running.
+#                       The value will be an integer, typically less than 10.
+about-processes-profile-process =
+    .title =
+        { $duration ->
+            [one] Profiliuoti visas šio proceso gijas { $duration } sekundei
+            [few] Profiliuoti visas šio proceso gijas { $duration } sekundėms
+           *[other] Profiliuoti visas šio proceso gijas { $duration } sekundžių
+        }
 
 ## Column headers
 

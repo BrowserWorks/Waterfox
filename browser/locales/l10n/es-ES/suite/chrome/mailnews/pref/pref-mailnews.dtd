@@ -1,15 +1,24 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.mailnews.title "Correo y noticias">
 <!ENTITY generalSettings.caption "Configuración general">
 <!ENTITY confirmMove.label "Confirmar cuando se muevan carpetas a la papelera">
-<!ENTITY confirmMove.accesskey "C">
+<!ENTITY confirmMove.accesskey "f">
 <!ENTITY preserveThreading.label "Preservar las conversaciones al ordenar mensajes">
 <!ENTITY preserveThreading.accesskey "v">
+<!ENTITY mailAutoHide.label "Esconder la barra de pestañas cuando solo haya una abierta">
+<!ENTITY mailAutoHide.accesskey "s">
 <!ENTITY loadInBackground.label "Cambiar a las pestañas nuevas al abrirlas">
 <!ENTITY loadInBackground.accesskey "m">
+<!ENTITY mailOpenTabsFor.label "Abrir pestañas en vez de ventanas cuando">
+<!ENTITY mailMiddleClick.label "Haga clic con el botón central o Ctrl+Enter en un mensaje o una carpeta">
+<!ENTITY mailMiddleClick.accesskey "H">
+<!ENTITY mailMiddleClickMac.label "Haga clic con el botón central o ⌘+Return en un mensaje o una carpeta">
+<!ENTITY mailMiddleClickMac.accesskey "u">
+<!ENTITY mailDoubleClick.label "Haga doble clic en un mensaje">
+<!ENTITY mailDoubleClick.accesskey "i">
 <!ENTITY mailBiffOnNewWindow.label "Buscar correo nuevo sólo tras abrir Correo y noticias">
 <!ENTITY mailBiffOnNewWindow.accesskey "B">
 <!ENTITY defaultMailSettings.description "Hacer que &brandShortName; sea la aplicación predeterminada para:">
@@ -30,6 +39,6 @@
 <!ENTITY location.label "Dirección:">
 <!ENTITY location.accesskey "D">
 <!ENTITY useDefault.label "Rest. valores predet.">
-<!ENTITY useDefault.accesskey "D">
+<!ENTITY useDefault.accesskey "t">
 <!ENTITY rememberLastMsg.label "Recordar el último mensaje seleccionado">
 <!ENTITY rememberLastMsg.accesskey "R">

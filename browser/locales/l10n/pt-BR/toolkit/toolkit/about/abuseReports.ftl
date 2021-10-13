@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,15 +8,19 @@
 # Variables:
 #   $addon-name (string) - Name of the add-on being reported
 abuse-report-dialog-title = Relatório de { $addon-name }
+
 abuse-report-title-extension = Denunciar esta extensão para a { -vendor-short-name }
 abuse-report-title-theme = Denunciar este tema para a { -vendor-short-name }
 abuse-report-subtitle = Qual é o problema?
+
 # Variables:
 #   $author-name (string) - Name of the add-on author
 abuse-report-addon-authored-by = por <a data-l10n-name="author-name">{ $author-name }</a>
+
 abuse-report-learnmore =
     Não tem certeza de qual problema selecionar?
     <a data-l10n-name="learnmore-link">Saiba mais sobre como denunciar extensões e temas</a>
+
 abuse-report-submit-description = Descreva o problema (opcional)
 abuse-report-textarea =
     .placeholder = É mais fácil para nós abordar um problema se tivermos detalhes. Descreva o que está acontecendo. Obrigado por nos ajudar a manter a web saudável.
@@ -32,6 +36,11 @@ abuse-report-submit-button = Enviar
 ## Message bars descriptions.
 
 
+## Variables:
+##   $addon-name (string) - Name of the add-on
+
+## Message bars descriptions.
+##
 ## Variables:
 ##   $addon-name (string) - Name of the add-on
 
@@ -57,14 +66,18 @@ abuse-report-messagebar-action-cancel = Cancelar
 
 abuse-report-damage-reason-v2 = Danificou meu computador ou comprometeu meus dados
 abuse-report-damage-example = Exemplo: injetou código malicioso ou roubou dados
+
 abuse-report-spam-reason-v2 = Contém spam ou insere publicidade indesejada
 abuse-report-spam-example = Exemplo: insere anúncios em páginas web
+
 abuse-report-settings-reason-v2 = Mudou meu mecanismo de pesquisa, página inicial ou página de nova aba, sem me informar ou me perguntar
 abuse-report-settings-suggestions = Antes de denunciar a extensão, você pode tentar alterar suas configurações:
 abuse-report-settings-suggestions-search = Muda sua configuração de pesquisa padrão
 abuse-report-settings-suggestions-homepage = Muda a página inicial e a página de nova aba
+
 abuse-report-deceptive-reason-v2 = Alega ser algo que não é
 abuse-report-deceptive-example = Exemplo: descrição ou imagens enganosas
+
 abuse-report-broken-reason-extension-v2 = Não funciona, atrapalha sites, ou faz o { -brand-product-name } ficar mais lento
 abuse-report-broken-reason-theme-v2 = Não funciona ou atrapalha a exibição do navegador
 abuse-report-broken-example = Exemplo: recursos são lentos, difíceis de usar, ou não funcionam; partes de sites não são carregadas ou aparecem erradas
@@ -76,10 +89,14 @@ abuse-report-broken-suggestions-theme =
     Parece que você identificou um bug. Além de enviar um relato aqui, a melhor maneira de
     ter um problema de funcionalidade resolvido é entrar em contato com o desenvolvedor do tema.
     <a data-l10n-name="support-link">Visite o site do tema</a> para obter informações do desenvolvedor.
+
 abuse-report-policy-reason-v2 = Contém conteúdo de ódio, violento ou ilegal
 abuse-report-policy-suggestions =
     Nota: Problemas de direitos autorais (copyright) e marcas registradas (trademark) devem ser relatados em um processo diferente.
     <a data-l10n-name="report-infringement-link">Siga essas instruções</a> para relatar um problema.
+
 abuse-report-unwanted-reason-v2 = Eu nunca quis e não sei como me livrar disso
 abuse-report-unwanted-example = Exemplo: uma aplicação instalou sem minha permissão
+
 abuse-report-other-reason = Outra coisa
+

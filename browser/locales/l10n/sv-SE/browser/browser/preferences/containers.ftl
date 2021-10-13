@@ -1,22 +1,20 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 containers-window-new =
     .title = Lägg till ny behållare
     .style = width: 45em
-# Variables
-#   $name (String) - Name of the container
-containers-window-update =
-    .title = Behållarinställningar för { $name }
-    .style = width: 45em
+
 # Variables
 #   $name (String) - Name of the container
 containers-window-update-settings =
     .title = Behållarinställningar för { $name }
     .style = width: 45em
+
 containers-window-close =
     .key = w
+
 # This is a term to store style to be applied
 # on the three labels in the containers add/edit dialog:
 #   - name
@@ -27,23 +25,26 @@ containers-window-close =
 # of the three messages ensures that all three labels
 # will be aligned correctly.
 -containers-labels-style = min-width: 4rem
+
 containers-name-label = Namn
     .accesskey = N
     .style = { -containers-labels-style }
+
 containers-name-text =
     .placeholder = Ange ett behållarnamn
+
 containers-icon-label = Ikon
     .accesskey = k
     .style = { -containers-labels-style }
+
 containers-color-label = Färg
     .accesskey = F
     .style = { -containers-labels-style }
-containers-button-done =
-    .label = Klar
-    .accesskey = K
+
 containers-dialog =
     .buttonlabelaccept = Klar
     .buttonaccesskeyaccept = K
+
 containers-color-blue =
     .label = Blå
 containers-color-turquoise =
@@ -62,6 +63,7 @@ containers-color-purple =
     .label = Lila
 containers-color-toolbar =
     .label = Färgverktygsfält
+
 containers-icon-fence =
     .label = Staket
 containers-icon-fingerprint =

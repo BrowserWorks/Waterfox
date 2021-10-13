@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,6 +11,7 @@
 # Placeholder text for tag input
 pocket-panel-saved-add-tags =
     .placeholder = Legg til etikettar
+
 pocket-panel-saved-error-generic = Eit problem oppstod ved lagring til { -pocket-brand-name }.
 pocket-panel-saved-error-tag-length = Etikettar er avgrensa til 25 teikn
 pocket-panel-saved-error-only-links = Berre lenker kan lagrast

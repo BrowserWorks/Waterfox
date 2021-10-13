@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,6 +9,10 @@
 <!ENTITY autoHide.accesskey2 "ψ">
 <!ENTITY background.label "Εναλλαγή σε νέες καρτέλες που ανοίγουν από συνδέσμους">
 <!ENTITY background.accesskey "Ε">
+<!ENTITY diverted.label "Εναλλαγή σε νέες καρτέλες που ανοίγουν από εκτρεπόμενους συνδέσμους">
+<!ENTITY diverted.accesskey "λ">
+<!ENTITY browserFocus.label "Εστίαση στο παράθυρο για συνδέσμους που ανοίγουν σε καρτέλες από άλλες εφαρμογές">
+<!ENTITY browserFocus.accesskey "Ε">
 <!ENTITY warnOnClose.label "Προειδοποίηση κατά το κλείσιμο παραθύρου με πολλαπλές καρτέλες">
 <!ENTITY warnOnClose.accesskey "Π">
 <!ENTITY relatedAfterCurrent.label "Άνοιγμα σχετικών καρτελών μετά την τρέχουσα">

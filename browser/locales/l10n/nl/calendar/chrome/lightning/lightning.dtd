@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -45,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Voorlopig kunt u dit alleen inschakelen na het instellen van deze agenda in het eigenschappenvenster ervan als de agendaserver de planning verzorgt.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Deze optie is alleen beschikbaar als de agendaserver planning verzorgt. Bij inschakelen kan worden teruggevallen naar de standaard op e-mail gebaseerde planning in plaats van dit aan de server over te laten.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Meldingen">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Algemene meldingsvoorkeuren…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Accepteren">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -44,7 +44,6 @@
 <!ENTITY deleteOnServer2.accesskey "d">
 <!ENTITY downloadOnBiff.label "Automatically download new messages">
 <!ENTITY downloadOnBiff.accesskey "m">
-<!ENTITY username.label "Your Login Name">
 <!ENTITY deleteMessagePrefix.label "When I delete a message:">
 <!ENTITY modelMoveToTrash.label "Move it to this folder:">
 <!ENTITY modelMoveToTrash.accesskey "o">
@@ -70,17 +69,17 @@
 <!ENTITY alwaysAuthenticate.label "Always request authentication when connecting to this server">
 <!ENTITY alwaysAuthenticate.accesskey "w">
 <!ENTITY newsrcFilePath.label "newsrc file:">
-<!ENTITY localPath.label "Local directory:">
+<!ENTITY newsrcPicker.label "Select newsrc File">
 <!ENTITY abbreviate.label "Show newsgroup names in the Mail Folder pane as:">
 <!ENTITY abbreviateOn.label "Full names (For example, 'netscape.public.mozilla.mail-news')">
 <!ENTITY abbreviateOff.label "Abbreviate names (For example, 'n.p.m.mail-news')">
 <!ENTITY advancedButton.label "Advanced…">
 <!ENTITY serverDefaultCharset2.label "Default Text Encoding:">
 <!ENTITY advancedButton.accesskey "v">
+<!ENTITY localPath.label "Local directory:">
 <!ENTITY localFolderPicker.label "Select Local Directory">
 <!ENTITY browseFolder.label "Browse…">
 <!ENTITY browseFolder.accesskey "B">
-<!ENTITY newsrcPicker.label "Select newsrc File">
 <!ENTITY browseNewsrc.label "Browse…">
 <!ENTITY browseNewsrc.accesskey "e">
 

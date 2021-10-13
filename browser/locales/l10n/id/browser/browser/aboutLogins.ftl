@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # NOTE: New strings should use the about-logins- prefix.
@@ -7,17 +7,12 @@ about-logins-page-title = Info Masuk dan Kata Sandi
 
 # "Google Play" and "App Store" are both branding and should not be translated
 
-login-app-promo-title = Bawa kata sandi Anda ke mana saja
-login-app-promo-subtitle = Dapatkan aplikasi gratis { -lockwise-brand-name }
-login-app-promo-android =
-    .alt = Dapatkan di Google Play
-login-app-promo-apple =
-    .alt = Unduh di App Store
 login-filter =
     .placeholder = Cari Info Masuk
+
 create-login-button = Buat Info Masuk Baru
+
 fxaccounts-sign-in-text = Dapatkan kata sandi Anda di perangkat lain
-fxaccounts-sign-in-button = Masuk ke { -sync-brand-short-name }
 fxaccounts-sign-in-sync-button = Masuk untuk sinkronisasi
 fxaccounts-avatar-button =
     .title = Kelola akun
@@ -37,8 +32,6 @@ menu-menuitem-preferences =
        *[other] Pengaturan
     }
 about-logins-menu-menuitem-help = Bantuan
-menu-menuitem-android-app = { -lockwise-brand-short-name } untuk Android
-menu-menuitem-iphone-app = { -lockwise-brand-short-name } untuk iPhone dan iPad
 
 ## Login List
 
@@ -68,18 +61,14 @@ about-logins-list-item-vulnerable-password-icon =
 
 ## Introduction screen
 
-login-intro-heading = Mencari info masuk Anda yang tersimpan? Siapkan { -sync-brand-short-name }.
-about-logins-login-intro-heading-logged-out = Mencari info masuk Anda yang tersimpan? Siapkan { -sync-brand-short-name } atau impor saja.
 about-logins-login-intro-heading-logged-out2 = Mencari info masuk Anda yang simpan? Aktifkan sinkronisasi atau mengimpornya.
 about-logins-login-intro-heading-logged-in = Info masuk yang disinkronkan tidak ditemukan.
 login-intro-description = Jika Anda menyimpan info masuk Anda di { -brand-product-name } pada perangkat lain, berikut cara mendapatkannya di sini:
-login-intro-instruction-fxa = Buat atau masuk ke { -fxaccount-brand-name } Anda pada perangkat tempat info masuk Anda tersimpan
-login-intro-instruction-fxa-settings = Pastikan Anda telah memilih kotak centang Info Masuk pada Pengaturan { -sync-brand-short-name }
-about-logins-intro-instruction-help = Kunjungi <a data-l10n-name="help-link">Bantuan { -lockwise-brand-short-name }</a> untuk bantuan lebih lanjut
 login-intro-instructions-fxa = Buat atau masuk ke { -fxaccount-brand-name } Anda pada perangkat tempat info masuk Anda tersimpan
 login-intro-instructions-fxa-settings = Buka Pengaturan > Sinkronisasi > Aktifkan sinkronisasi… Centang Info masuk dan sandi.
 login-intro-instructions-fxa-help = Kunjungi <a data-l10n-name="help-link">Bantuan { -lockwise-brand-short-name }</a> untuk bantuan lebih lanjut.
 about-logins-intro-import = Jika info masuk Anda tersimpan dalam peramban lain, Anda dapat <a data-l10n-name="import-link">mengimpor data tersebut ke { -lockwise-brand-short-name }</a>
+
 about-logins-intro-import2 = Jika info masuk Anda tersimpan di luar { -brand-product-name }, Anda bisa <a data-l10n-name="import-browser-link">mengimpornya dari peramban lain</a> atau <a data-l10n-name="import-file-link">mengimpornya dari berkas</a>.
 
 ## Login
@@ -112,7 +101,7 @@ login-item-time-used = Terakhir digunakan: { DATETIME($timeUsed, day: "numeric",
 
 about-logins-os-auth-dialog-caption = { -brand-full-name }
 
-## The macOS strings are preceded by the operating system with "Firefox is trying to "
+## The macOS strings are preceded by the operating system with "Waterfox is trying to "
 ## and includes subtitle of "Enter password for the user "xxx" to allow this." These
 ## notes are only valid for English. Please test in your respected locale.
 
@@ -121,11 +110,13 @@ about-logins-edit-login-os-auth-dialog-message-win = Untuk mengubah info masuk A
 # This message can be seen when attempting to edit a login in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-edit-login-os-auth-dialog-message-macosx = mengedit info masuk tersimpan
+
 # This message can be seen when attempting to reveal a password in about:logins on Windows.
 about-logins-reveal-password-os-auth-dialog-message-win = Untuk melihat kata sandi Anda, masukkan kredensial info masuk Windows Anda. Hal ini membantu melindungi keamanan akun Anda.
 # This message can be seen when attempting to reveal a password in about:logins
 # On MacOS, only provide the reason that account verification is needed. Do not put a complete sentence here.
 about-logins-reveal-password-os-auth-dialog-message-macosx = mengungkapkan kata sandi tersimpan
+
 # This message can be seen when attempting to copy a password in about:logins on Windows.
 about-logins-copy-password-os-auth-dialog-message-win = Untuk menyalin kata sandi Anda, masukkan kredensial info masuk Windows Anda. Hal ini membantu melindungi keamanan akun Anda.
 # This message can be seen when attempting to copy a password in about:logins
@@ -134,7 +125,6 @@ about-logins-copy-password-os-auth-dialog-message-macosx = menyalin kata sandi t
 
 ## Master Password notification
 
-master-password-notification-message = Masukkan kata sandi utama Anda untuk melihat info masuk dan kata sandi yang disimpan
 # This message can be seen when attempting to export a password in about:logins on Windows.
 about-logins-export-password-os-auth-dialog-message-win = Untuk mengekspor info masuk Anda, silakan masukkan kredensial info masuk Windows Anda. Ini akan membantu mengamankan akun Anda.
 # This message can be seen when attempting to export a password in about:logins
@@ -150,36 +140,24 @@ master-password-reload-button =
 
 ## Password Sync notification
 
-enable-password-sync-notification-message =
-    { PLATFORM() ->
-        [windows] Ingin mendapatkan info masuk Anda di mana saja menggunakan { -brand-product-name }? Buka Pengaturan { -sync-brand-short-name } dan pilih kotak centang Info Masuk.
-       *[other] Ingin mendapatkan info masuk Anda di mana saja menggunakan { -brand-product-name }? Buka Pengaturan { -sync-brand-short-name } dan pilih kotak centang Info Masuk.
-    }
-enable-password-sync-preferences-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Kunjungi Pengaturan { -sync-brand-short-name }
-           *[other] Kunjungi Pengaturan { -sync-brand-short-name }
-        }
-    .accesskey = K
-about-logins-enable-password-sync-dont-ask-again-button =
-    .label = Jangan tanyakan lagi
-    .accesskey = J
-
 ## Dialogs
 
 confirmation-dialog-cancel-button = Batal
 confirmation-dialog-dismiss-button =
     .title = Batal
+
 about-logins-confirm-remove-dialog-title = Hapus info masuk ini?
 confirm-delete-dialog-message = Tindakan ini tidak dapat diurungkan.
 about-logins-confirm-remove-dialog-confirm-button = Hapus
+
 about-logins-confirm-remove-all-dialog-confirm-button-label =
     { $count ->
         [1] Hapus
        *[other] Hapus Seluruhnya
     }
+
 about-logins-confirm-remove-all-dialog-checkbox-label = Ya, hapus log masuk ini
+
 about-logins-confirm-remove-all-dialog-title =
     { $count ->
        *[other] Hapus seluruh { $count } log masuk?
@@ -189,6 +167,7 @@ about-logins-confirm-remove-all-dialog-message =
         [1] Ini akan menghapus info masuk yang Anda simpan ke { -brand-short-name } dan semua peringatan pembobolan yang muncul di sini. Anda tidak akan dapat membatalkan tindakan ini.
        *[other] Ini akan menghapus info masuk yang Anda simpan ke { -brand-short-name } dan semua peringatan pembobolan yang muncul di sini. Anda tidak akan dapat membatalkan tindakan ini.
     }
+
 about-logins-confirm-remove-all-sync-dialog-title =
     { $count ->
        *[other] Hapus { $count } info masuk dari semua perangkat?
@@ -198,11 +177,14 @@ about-logins-confirm-remove-all-sync-dialog-message =
         [1] Ini akan menghapus info masuk yang Anda simpan ke { -brand-short-name } di semua perangkat yang disinkronkan ke { -fxaccount-brand-name } Anda. Ini juga akan menghapus peringatan pembobolan yang muncul di sini. Anda tidak akan dapat mengurungkan tindakan ini.
        *[other] Ini akan menghapus info masuk yang Anda simpan ke { -brand-short-name } di semua perangkat yang disinkronkan ke { -fxaccount-brand-name } Anda. Ini juga akan menghapus peringatan pembobolan yang muncul di sini. Anda tidak akan dapat mengurungkan tindakan ini.
     }
+
 about-logins-confirm-export-dialog-title = Ekspor info masuk dan sandi
 about-logins-confirm-export-dialog-message = Kata sandi Anda akan disimpan sebagai teks biasa yang bisa dibaca (contoh: P@sw0rd) sehingga siapa pun yang dapat membuka berkas yang Anda ekspor akan bisa membacanya.
 about-logins-confirm-export-dialog-confirm-button = Ekspor…
+
 about-logins-alert-import-title = Proses Impor Selesai
 about-logins-alert-import-message = Lihat ringkasan Detail Impor
+
 confirm-discard-changes-dialog-title = Buang perubahan yang belum disimpan?
 confirm-discard-changes-dialog-message = Semua perubahan yang belum disimpan akan hilang.
 confirm-discard-changes-dialog-confirm-button = Hapus Perubahan
@@ -233,8 +215,10 @@ about-logins-vulnerable-alert-learn-more-link = Pelajari lebih lanjut
 # Variables:
 #   $loginTitle (String) - The title of the website associated with the login.
 about-logins-error-message-duplicate-login-with-link = Entri info masuk { $loginTitle } dengan nama pengguna itu sudah tersimpan. <a data-l10n-name="duplicate-link">Buka entri yang tersimpan?</a>
+
 # This is a generic error message.
 about-logins-error-message-default = Terjadi kesalahan saat mencoba menyimpan kata sandi ini.
+
 
 ## Login Export Dialog
 
@@ -281,10 +265,12 @@ about-logins-import-dialog-items-added =
     { $count ->
        *[other] <span>Info masuk baru ditambahkan:</span> <span data-l10n-name="count">{ $count }</span>
     }
+
 about-logins-import-dialog-items-modified =
     { $count ->
        *[other] <span>Info masuk yang ada diperbarui:</span> <span data-l10n-name="count">{ $count }</span>
     }
+
 about-logins-import-dialog-items-no-change =
     { $count ->
        *[other] <span>Info masuk ganda ditemukan:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(tidak diimpor)</span>
@@ -294,6 +280,7 @@ about-logins-import-dialog-items-error =
        *[other] <span>Kesalahan:</span> <span data-l10n-name="count">{ $count }</span> <span data-l10n-name="meta">(tidak diimpor)</span>
     }
 about-logins-import-dialog-done = Selesai
+
 about-logins-import-dialog-error-title = Kesalahan Impor
 about-logins-import-dialog-error-conflicting-values-title = Nilai-Nilai yang Tidak Sama untuk Sebuah Info Masuk
 about-logins-import-dialog-error-conflicting-values-description = Misalnya: ada beberapa nama pengguna, kata sandi, URL, dll. untuk sebuah info masuk.
@@ -305,11 +292,12 @@ about-logins-import-dialog-error-unable-to-read-title = Tidak Dapat Mengurai Ber
 about-logins-import-dialog-error-unable-to-read-description = Pastikan Anda memilih file CSV atau TSV.
 about-logins-import-dialog-error-no-logins-imported = Tidak ada info masuk yang diimpor
 about-logins-import-dialog-error-learn-more = Pelajari lebih lanjut
-about-logins-import-dialog-error-try-again = Coba Lagi…
 about-logins-import-dialog-error-try-import-again = Coba Impor Lagi…
 about-logins-import-dialog-error-cancel = Batalkan
+
 about-logins-import-report-title = Ringkasan Impor
 about-logins-import-report-description = Info masuk dan kata sandi yang diimpor ke { -brand-short-name }.
+
 #
 # Variables:
 #  $number (number) - The number of the row

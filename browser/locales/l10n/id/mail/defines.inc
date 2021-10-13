@@ -1,6 +1,6 @@
 #filter emptyLines
 
-#define MOZ_LANGPACK_CREATOR id-Mozilla - Komunitas Mozilla Indonesia
+#define MOZ_LANGPACK_CREATOR id-Waterfox - Komunitas Waterfox Indonesia
 
 # If non-English locales wish to credit multiple contributors, uncomment this
 

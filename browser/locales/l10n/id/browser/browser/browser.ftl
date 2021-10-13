@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -156,51 +156,10 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = Tambahkan ke Bilah Alamat
 page-action-manage-extension =
     .label = Kelola Ekstensi…
-page-action-remove-from-urlbar =
-    .label = Singkirkan dari Bilah Alamat
 page-action-remove-extension =
     .label = Hapus Ekstensi
-
-## Page Action menu
-
-# Variables
-# $tabCount (integer) - Number of tabs selected
-page-action-send-tabs-panel =
-    .label = Kirim Tab ke { $tabCount } Peranti
-page-action-send-tabs-urlbar =
-    .tooltiptext = Kirim Tab ke { $tabCount } Peranti
-page-action-copy-url-panel =
-    .label = Salin Tautan
-page-action-copy-url-urlbar =
-    .tooltiptext = Salin Tautan
-page-action-email-link-panel =
-    .label = Surelkan Tautan…
-page-action-email-link-urlbar =
-    .tooltiptext = Surelkan Tautan…
-page-action-share-url-panel =
-    .label = Bagikan
-page-action-share-url-urlbar =
-    .tooltiptext = Bagikan
-page-action-share-more-panel =
-    .label = Lainnya…
-page-action-send-tab-not-ready =
-    .label = Menyinkronkan Peranti…
-# "Pin" is being used as a metaphor for expressing the fact that these tabs
-# are "pinned" to the left edge of the tabstrip. Really we just want the
-# string to express the idea that this is a lightweight and reversible
-# action that keeps your tab where you can reach it easily.
-page-action-pin-tab-panel =
-    .label = Sematkan Tab
-page-action-pin-tab-urlbar =
-    .tooltiptext = Sematkan Tab
-page-action-unpin-tab-panel =
-    .label = Copot dari Tab Permanen
-page-action-unpin-tab-urlbar =
-    .tooltiptext = Copot dari Tab Permanen
 
 ## Auto-hide Context Menu
 
@@ -216,10 +175,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = Kali ini, cari dengan:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = Ubah Pengaturan Pencarian
 search-one-offs-change-settings-compact-button =
     .tooltiptext = Ubah setelan pencarian
 search-one-offs-context-open-new-tab =
@@ -279,8 +234,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = Tampilkan editor saat menyimpan
     .accesskey = e
-bookmark-panel-done-button =
-    .label = Selesai
 bookmark-panel-save-button =
     .label = Simpan
 # Width of the bookmark panel.
@@ -305,13 +258,11 @@ identity-connection-internal = Ini adalah laman { -brand-short-name } aman.
 identity-connection-file = Laman ini tersimpan di komputer Anda.
 identity-extension-page = Laman ini dimuat dari ekstensi.
 identity-active-blocked = { -brand-short-name } telah memblokir bagian dari laman ini yang tidak aman.
-identity-custom-root = Koneksi diverifikasi oleh penerbit sertifikat yang tidak dikenali oleh Mozilla.
+identity-custom-root = Koneksi diverifikasi oleh penerbit sertifikat yang tidak dikenali oleh Waterfox.
 identity-passive-loaded = Bagian dari laman ini tidak aman (misalnya, gambar).
 identity-active-loaded = Anda telah menonaktifkan perlindungan di laman ini.
 identity-weak-encryption = Laman ini menggunakan enkripsi lemah.
 identity-insecure-login-forms = Info masuk yang dimasukkan di laman ini bisa diketahui orang lain.
-identity-permissions =
-    .value = Izin
 identity-https-only-connection-upgraded = (ditingkatkan ke HTTPS)
 identity-https-only-label = Mode Hanya HTTPS
 identity-https-only-dropdown-on =
@@ -327,13 +278,12 @@ identity-permissions-storage-access-header = Kuki lintas situs
 identity-permissions-storage-access-hint = Pihak berikut dapat menggunakan kuki lintas situs dan data situs saat Anda berada di situs ini.
 identity-permissions-storage-access-learn-more = Pelajari lebih lanjut
 identity-permissions-reload-hint = Anda mungkin perlu memuat ulang laman untuk menerapkan perubahan.
-identity-permissions-empty = Anda belum memberikan izin khusus apa pun untuk situs ini.
 identity-clear-site-data =
     .label = Hapus Kuki dan Data Situs…
 identity-connection-not-secure-security-view = Anda tidak terhubung dengan aman ke situs ini.
 identity-connection-verified = Anda terhubung dengan aman ke situs ini.
 identity-ev-owner-label = Sertifikat diterbitkan untuk:
-identity-description-custom-root = Mozilla tidak mengenali penerbit sertifikat ini. Itu mungkin telah ditambahkan dari sistem operasi Anda atau oleh administrator. <label data-l10n-name="link">Pelajari Lebih Lanjut</label>
+identity-description-custom-root = Waterfox tidak mengenali penerbit sertifikat ini. Itu mungkin telah ditambahkan dari sistem operasi Anda atau oleh administrator. <label data-l10n-name="link">Pelajari Lebih Lanjut</label>
 identity-remove-cert-exception =
     .label = Buang Pengecualian
     .accesskey = B
@@ -409,12 +359,6 @@ bookmarks-toolbar-empty-message = Untuk akses cepat, tempatkan markah Anda di si
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = Kamera untuk dibagikan:
-    .accesskey = K
-popup-select-microphone =
-    .value = Mikrofon untuk dibagikan:
-    .accesskey = M
 popup-select-camera-device =
     .value = Kamera:
     .accesskey = K
@@ -428,14 +372,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = Pengeras suara
 popup-all-windows-shared = Semua jendela yang terlihat pada layar Anda akan dibagikan.
-popup-screen-sharing-not-now =
-    .label = Jangan Sekarang
-    .accesskey = J
-popup-screen-sharing-never =
-    .label = Jangan Pernah Izinkan
-    .accesskey = N
-popup-silence-notifications-checkbox = Nonaktifkan pemberitahuan dari { -brand-short-name } ketika berbagi
-popup-silence-notifications-checkbox-warning = { -brand-short-name } tidak akan menampilkan pemberitahuan saat Anda berbagi.
 popup-screen-sharing-block =
     .label = Blokir
     .accesskey = B
@@ -459,8 +395,6 @@ enable-devtools-popup-description = Untuk menggunakan pintasan F12, pertama buka
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = Cari atau masukkan alamat
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
@@ -497,8 +431,6 @@ urlbar-placeholder-search-mode-other-tabs =
 #  $name (String): the name of the user's default search engine
 urlbar-placeholder-with-name =
     .placeholder = Cari lewat { $name } atau masukkan alamat
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = Peramban dalam kendali jarak jauh
 # Variables
 #  $component (String): the name of the component which forces remote control.
 #    Example: "DevTools", "Marionette", "RemoteAgent".
@@ -515,8 +447,6 @@ urlbar-go-button =
     .tooltiptext = Pindah ke alamat di Bilah Lokasi
 urlbar-page-action-button =
     .tooltiptext = Tindakan laman
-urlbar-pocket-button =
-    .tooltiptext = Simpan ke { -pocket-brand-name }
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -572,6 +502,9 @@ urlbar-result-action-calculator-result = = { $result }
 urlbar-result-action-search-bookmarks = Cari Markah
 urlbar-result-action-search-history = Cari di Riwayat
 urlbar-result-action-search-tabs = Cari Tab
+
+## Labels shown above groups of urlbar results
+
 
 ## Full Screen and Pointer Lock UI
 
@@ -701,6 +634,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = Bekerja Luring
     .accesskey = L
+toolbar-overflow-customize-button =
+    .label = Ubahsuai Bilah Alat…
+    .accesskey = U
+toolbar-button-email-link =
+    .label = Surelkan Tautan
+    .tooltiptext = Surelkan tautan laman ini
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = Simpan Laman
+    .tooltiptext = Simpan laman ini ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = Buka Berkas
+    .tooltiptext = Buka berkas ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = Tab yang Disinkronkan
+    .tooltiptext = Tampilkan tab dari perangkat lain
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = Jendela Mode Pribadi Baru
+    .tooltiptext = Buka jendela Penjelajahan Pribadi baru ({ $shortcut })
 
 ## EME notification panel
 
@@ -727,3 +684,67 @@ addon-removal-abuse-report-checkbox = Laporkan ekstensi ini ke { -vendor-short-n
 remote-tabs-manage-account =
     .label = Kelola Akun
 remote-tabs-sync-now = Sinkronkan Sekarang
+
+##
+
+ui-tour-info-panel-close =
+    .tooltiptext = Tutup
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = Izinkan pop-up untuk { $uriHost }
+    .accesskey = i
+popups-infobar-block =
+    .label = Blokir pop-up untuk { $uriHost }
+    .accesskey = i
+
+##
+
+popups-infobar-dont-show-message =
+    .label = Jangan tampilkan pesan ini saat pop-up diblokir
+    .accesskey = J
+picture-in-picture-hide-toggle =
+    .label = Sembunyikan Sakelar Gambar-dalam-Gambar
+    .accesskey = S
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = Navigasi
+navbar-downloads =
+    .label = Unduhan
+navbar-overflow =
+    .tooltiptext = Alat lainnya…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = Cetak
+    .tooltiptext = Cetak laman ini… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = Cetak
+    .tooltiptext = Cetak laman ini
+navbar-home =
+    .label = Beranda
+    .tooltiptext = Beranda { -brand-short-name }
+navbar-library =
+    .label = Pustaka
+    .tooltiptext = Lihat riwayat, markah tersimpan, dan lainnya
+navbar-search =
+    .title = Cari
+navbar-accessibility-indicator =
+    .tooltiptext = Fitur Aksesibilitas Aktif
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = Tab peramban
+tabs-toolbar-new-tab =
+    .label = Tab Baru
+tabs-toolbar-list-all-tabs =
+    .label = Daftar tab
+    .tooltiptext = Daftar tab

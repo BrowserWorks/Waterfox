@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Om dine rettigheder
 rights-intro = { -brand-full-name } er software med fri og åben kildekode, skabt af en sammenslutning af tusindvis af mennesker over hele kloden. Der er et par ting, som du bør vide:
-rights-intro-point-1 = { -brand-short-name } gøres tilgængelig for dig under retningslinjerne i <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Dette betyder at du må bruge, kopiere og videregive { -brand-short-name } til andre. Du er er også velkommen til at ændre i kildekoden til { -brand-short-name } for at opfylde dine behov. Mozilla Public License tildeler dig også retten til at videregive dine ændrede versioner.
+rights-intro-point-1 = { -brand-short-name } gøres tilgængelig for dig under retningslinjerne i <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a>. Dette betyder at du må bruge, kopiere og videregive { -brand-short-name } til andre. Du er er også velkommen til at ændre i kildekoden til { -brand-short-name } for at opfylde dine behov. Waterfox Public License tildeler dig også retten til at videregive dine ændrede versioner.
 rights-intro-point-2 =
-    Du tildeles ikke nogen rettigheder eller licens til varemærker tilhørende Mozilla
+    Du tildeles ikke nogen rettigheder eller licens til varemærker tilhørende Waterfox
     Foundation eller tredjeparter, herunder og uden undtagelse Thunderbird-
     navnet og det tilhørende logo. Yderligere information om
     varemærker kan findes <a data-l10n-name="mozilla-trademarks-link">her</a>.

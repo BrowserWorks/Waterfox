@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Drukuj…">
 <!ENTITY printCmd.accesskey "D">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Podgląd wydruku">
-<!ENTITY printPreviewCmd.accesskey "P">
-<!ENTITY printSetupCmd.label "Ustawienia strony…">
-<!ENTITY printSetupCmd.accesskey "n">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Usuń wiadomość">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "O">
 <!ENTITY compactVersion.label "Widok kompaktowy">
 <!ENTITY compactVersion.accesskey "k">
-<!ENTITY folderPaneBar.label "Pasek panelu folderów">
-<!ENTITY folderPaneBar.accesskey "f">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Sortowanie według">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Książka adresowa">
 <!ENTITY addressBookCmd.accesskey "a">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Dodatki">
-<!ENTITY addons.accesskey "D">
-<!ENTITY addonPrefs.label "Opcje dodatku">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Preferencje dodatku">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "Nie odnaleziono ustawień dodatku.">
 <!ENTITY activitymanager.label "Monitor aktywności">
 <!ENTITY activitymanager.accesskey "M">
@@ -501,7 +489,9 @@
 <!ENTITY deleteJunk.label "Usuń niechciane wiadomości z folderu">
 <!ENTITY deleteJunk.accesskey "e">
 <!ENTITY importCmd.label "Importuj…">
-<!ENTITY importCmd.accesskey "I">
+<!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "Eksportuj…">
+<!ENTITY exportCmd.accesskey "k">
 <!ENTITY clearRecentHistory.label "Wyczyść historię przeglądania…">
 <!ENTITY clearRecentHistory.accesskey "h">
 <!ENTITY accountManagerCmd2.label "Konfiguracja kont">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Debuguj dodatki">
 <!ENTITY debugAddonsCmd.accesskey "D">
-<!ENTITY tabsDebugCmd.label "Debuger ramek treści">
-<!ENTITY tabsDebugCmd.accesskey "r">
 <!ENTITY errorConsoleCmd.label "Konsola błędów">
 <!ENTITY errorConsoleCmd.accesskey "K">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Wstecz">
 <!ENTITY goForwardButton1.label "Dalej">
 <!ENTITY deleteItem.title "Usuń">
-<!ENTITY deleteButton.label "Usuń">
-<!ENTITY undeleteButton.label "Przywróć">
 <!ENTITY markButton.label "Oznacz">
 <!ENTITY printButton.label "Drukuj">
 <!ENTITY stopButton.label "Zatrzymaj">
 <!ENTITY throbberItem.title "Wskaźnik aktywności">
 <!ENTITY junkItem.title "Niechciana">
-<!ENTITY junkButton.label "Niechciana">
-<!ENTITY notJunkButton.label "Pożądana">
 <!ENTITY addressBookButton.label "Adresy">
 <!ENTITY chatButton.label "Komunikator">
 <!ENTITY glodaSearch.title "Wyszukiwanie">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Przejdź do poprzedniej wiadomości">
 <!ENTITY goForwardButton.tooltip "Przejdź o jedną wiadomość do przodu">
 <!ENTITY goBackButton.tooltip "Przejdź o jedną wiadomość wstecz">
-<!ENTITY deleteButton.tooltip "Usuń zaznaczoną wiadomość albo folder">
-<!ENTITY undeleteButton.tooltip "Przywróć usuniętą wiadomość">
 <!ENTITY markButton.tooltip "Oznacz wiadomości">
 <!ENTITY printButton.tooltip "Drukuj wiadomość">
 <!ENTITY stopButton.tooltip "Zatrzymaj bieżący transfer">
-<!ENTITY junkButton.tooltip "Oznacz zaznaczoną wiadomość jako niechcianą">
-<!ENTITY notJunkButton.tooltip "Oznacz zaznaczoną wiadomość jako pożądaną">
 <!ENTITY addressBookButton.tooltip "Wyświetl Książkę adresową">
 <!ENTITY chatButton.tooltip "Wyświetl kartę komunikatora">
 <!ENTITY tagButton.tooltip "Oznacz wiadomości etykietą">
 <!ENTITY compactButton.tooltip "Porządkuj folder, aby wyczyścić pozostałości po usuniętych wiadomościach">
 <!ENTITY appmenuButton1.tooltip "Wyświetl menu programu &brandShortName;">
-<!ENTITY addonsButton.tooltip "Zarządzaj dodatkami">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Przekaż bezpośrednio">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Położenie">
 <!ENTITY idColumn.label "Kolejność otrzymania">
 <!ENTITY attachmentColumn.label "Załączniki">
-
 <!ENTITY deleteColumn.label "Usuń">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Sortowanie według adresu">
 <!ENTITY idColumn2.tooltip "Sortowanie według kolejności otrzymania">
 <!ENTITY attachmentColumn2.tooltip "Sortowanie według załącznika">
-
 <!ENTITY deleteColumn.tooltip "Usuń wiadomość">
 
 <!-- Thread Pane Context Menu -->

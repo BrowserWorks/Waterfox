@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,12 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry レイアウト
 experimental-features-css-masonry-description = 実験的な CSS Masonry レイアウト機能のサポートを有効にします。この機能の解説は <a data-l10n-name="explainer">こちらの説明</a> を参照してください。フィードバックを提供するには、<a data-l10n-name="w3c-issue">GitHub issue</a> または <a data-l10n-name="bug">こちらのバグ</a> にコメントしてください。
+
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: カスケードレイヤー
+experimental-features-css-cascade-layers-description = CSS Cascade Layers をサポートします。詳細は <a data-l10n-name="spec">策定中の仕様</a> を参照してください。この機能に関連するバグについては <a data-l10n-name="bugzilla">bug 1699215</a> をブロックするバグとして報告してください。
 
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
@@ -103,10 +109,6 @@ experimental-features-fission-description = Fission (サイト隔離) は、セ�
 experimental-features-multi-pip =
     .label = ピクチャーインピクチャーの複数サポート
 experimental-features-multi-pip-description = 複数のピクチャーインピクチャーウィンドウを同時に開けるようにする実験的なサポートです。
-
-experimental-features-http3 =
-    .label = HTTP/3 プロトコル
-experimental-features-http3-description = HTTP/3 プロトコルの実験的なサポートです。
 
 # Search during IME
 experimental-features-ime-search =

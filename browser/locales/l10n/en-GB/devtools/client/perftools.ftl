@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -95,8 +95,8 @@ perftools-thread-img-decoder =
     .title = Image decoding threads
 perftools-thread-dns-resolver =
     .title = DNS resolution happens on this thread
-perftools-thread-js-helper =
-    .title = JS engine background work such as off-main-thread compiles
+perftools-thread-task-controller =
+    .title = TaskController thread pool threads
 
 ##
 
@@ -108,9 +108,30 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>New</b>: { -profiler-brand-name } is now integrated into Developer Tools. <a>Learn more</a> about this powerful new tool.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (For a limited time, you can access the original Performance panel via <a>{ options-context-advanced-settings }</a>)
 perftools-onboarding-close-button =
     .aria-label = Close the onboarding message
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Web Developer
+perftools-presets-web-developer-description = Recommended preset for most web app debugging, with low overhead.
+perftools-presets-firefox-platform-label = Waterfox Platform
+perftools-presets-firefox-platform-description = Recommended preset for internal Waterfox platform debugging.
+perftools-presets-firefox-front-end-label = Waterfox Front-End
+perftools-presets-firefox-front-end-description = Recommended preset for internal Waterfox front-end debugging.
+perftools-presets-firefox-graphics-label = Waterfox Graphics
+perftools-presets-firefox-graphics-description = Recommended preset for Waterfox graphics performance investigation.
+perftools-presets-media-label = Media
+perftools-presets-media-description = Recommended preset for diagnosing audio and video problems.
+perftools-presets-custom-label = Custom
+
+##
+

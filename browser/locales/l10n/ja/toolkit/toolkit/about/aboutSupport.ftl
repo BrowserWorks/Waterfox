@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,11 +9,6 @@ crashes-id = レポート ID
 crashes-send-date = 送信日時
 crashes-all-reports = すべてのクラッシュレポート
 crashes-no-config = このプログラムはクラッシュレポートを表示できるように設定されていません。
-extensions-title = 拡張機能
-extensions-name = アドオン名
-extensions-enabled = 有効
-extensions-version = バージョン
-extensions-id = ID
 support-addons-title = アドオン
 support-addons-name = アドオン名
 support-addons-type = 種類
@@ -37,7 +32,7 @@ app-basics-title = アプリケーション基本情報
 app-basics-name = 製品名
 app-basics-version = バージョン
 app-basics-build-id = ビルド ID
-app-basics-distribution-id = 区域 ID
+app-basics-distribution-id = ディストリビューション ID
 app-basics-update-channel = 更新チャンネル
 app-basics-update-dir =
     { PLATFORM() ->
@@ -57,12 +52,14 @@ app-basics-enabled-plugins = 有効なプラグイン
 app-basics-build-config = ビルド設定
 app-basics-user-agent = ユーザーエージェント
 app-basics-os = OS
+app-basics-os-theme = OS のテーマ
 # Rosetta is Apple's translation process to run apps containing x86_64
 # instructions on Apple Silicon. This should remain in English.
 app-basics-rosetta = Rosetta Translated
 app-basics-memory-use = メモリー使用量
 app-basics-performance = パフォーマンス
 app-basics-service-workers = 登録された Service Workers
+app-basics-third-party = サードパーティモジュール
 app-basics-profiles = プロファイル
 app-basics-launcher-process-status = 起動プロセス
 app-basics-multi-process-support = マルチプロセスウィンドウ
@@ -71,7 +68,7 @@ app-basics-remote-processes-count = リモートプロセス
 app-basics-enterprise-policies = エンタープライズポリシー
 app-basics-location-service-key-google = Google Location Service キー
 app-basics-safebrowsing-key-google = Google Safebrowsing キー
-app-basics-key-mozilla = Mozilla Location Service キー
+app-basics-key-mozilla = Waterfox Location Service キー
 app-basics-safe-mode = セーフモード
 show-dir-label =
     { PLATFORM() ->
@@ -126,8 +123,6 @@ sandbox-sys-call-tid = TID
 sandbox-sys-call-proc-type = プロセスの種類
 sandbox-sys-call-number = Syscall
 sandbox-sys-call-args = 引数
-safe-mode-title = セーフモードを試す
-restart-in-safe-mode-label = アドオンを無効化して再起動...
 troubleshoot-mode-title = 問題の原因調査
 restart-in-troubleshoot-mode-label = トラブルシューティングモード...
 clear-startup-cache-title = 起動時キャッシュの消去を試行
@@ -172,7 +167,7 @@ intl-regional-prefs = 地域設定
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -184,37 +179,6 @@ remote-debugging-accepting-connections = 接続の受け入れ
 remote-debugging-url = URL
 
 ##
-
-support-third-party-modules-title = サードパーティモジュール
-support-third-party-modules-module = モジュールファイル
-support-third-party-modules-version = ファイルのバージョン
-support-third-party-modules-vendor = ベンダー情報
-support-third-party-modules-occurrence = プロセス数
-support-third-party-modules-process = プロセスタイプと ID
-support-third-party-modules-thread = スレッド
-support-third-party-modules-base = Imagebase アドレス
-support-third-party-modules-uptime = プロセス実行時間 (ms)
-support-third-party-modules-duration = 読み込み遅延 (ms)
-support-third-party-modules-status = 状態
-support-third-party-modules-status-loaded = 読み込み
-support-third-party-modules-status-blocked = ブロック
-support-third-party-modules-status-redirected = リダイレクト
-support-third-party-modules-empty = 非サードパーティモジュールは読み込まれませんでした。
-support-third-party-modules-no-value = (値なし)
-support-third-party-modules-button-open =
-    .title = ファイルの場所を開く...
-support-third-party-modules-expand =
-    .title = 詳細情報を表示
-support-third-party-modules-collapse =
-    .title = 詳細情報を折りたたむ
-support-third-party-modules-unsigned-icon =
-    .title = このモジュールは署名がありません
-support-third-party-modules-folder-icon =
-    .title = ファイルの場所を開く...
-support-third-party-modules-down-icon =
-    .title = 詳細情報を表示
-support-third-party-modules-up-icon =
-    .title = 詳細情報を折りたたむ
 
 # Variables
 # $days (Integer) - Number of days of crashes to log
@@ -282,10 +246,6 @@ webgl2-renderer = WebGL 2 ドライバーのレンダラー
 webgl2-version = WebGL 2 ドライバーのバージョン
 webgl2-driver-extensions = WebGL 2 ドライバーの拡張
 webgl2-extensions = WebGL 2 拡張
-blocklisted-bug = 既知の問題によりブロックリストに掲載されています
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = Bug { $bugNumber }
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = 既知の問題によりブロックリストに追加: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
@@ -293,8 +253,6 @@ support-blocklisted-bug = 既知の問題によりブロックリストに追加
 # $failureCode (string) - String that can be searched in the source tree.
 unknown-failure = ブロックリストに掲載。失敗コード { $failureCode }
 d3d11layers-crash-guard = D3D11 コンポジター
-d3d11video-crash-guard = D3D11 動画デコーダー
-d3d9video-crash-guard = D3D9 動画デコーダー
 glcontext-crash-guard = OpenGL
 wmfvpxvideo-crash-guard = WMF VPX 動画デコーダー
 reset-on-next-restart = 次回起動時にリセット
@@ -334,14 +292,6 @@ launcher-process-status-unknown = 状態不明
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = ユーザー設定により有効
-multi-process-status-1 = 既定で有効
-multi-process-status-2 = 無効
-multi-process-status-4 = アクセシビリティツールにより無効
-multi-process-status-6 = 未サポートのテキスト入力により無効
-multi-process-status-7 = アドオンにより無効
-multi-process-status-8 = 強制的に無効
-multi-process-status-unknown = 状態不明
 # Variables
 # $fissionWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
@@ -356,6 +306,7 @@ fission-status-disabled-by-default = 既定で無効
 fission-status-enabled-by-user-pref = ユーザーにより有効
 fission-status-disabled-by-user-pref = ユーザーにより無効
 fission-status-disabled-by-e10s-other = E10s 無効
+fission-status-enabled-by-rollout = 段階的ロールアウトにより有効
 async-pan-zoom = 非同期パン / ズーム
 apz-none = なし
 wheel-enabled = ホイール入力有効
@@ -392,7 +343,6 @@ support-remote-experiments-title = リモート機能の実験
 support-remote-experiments-name = 機能名
 support-remote-experiments-branch = 実験ブランチ
 support-remote-experiments-see-about-studies = 各実験を無効にする方法や、これらの今後の実験を { -brand-short-name } で無効にする方法を含め、詳しい情報は <a data-l10n-name="support-about-studies-link">about:studies</a> をご覧ください。
-
 support-remote-features-title = リモート機能
 support-remote-features-name = 機能名
 support-remote-features-status = 状態

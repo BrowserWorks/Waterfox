@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,6 +14,8 @@ openpgp-compose-key-status-open-details = Schlüssel für gewählten Empfänger 
 openpgp-recip-good = OK
 openpgp-recip-missing = kein Schlüssel vorhanden
 openpgp-recip-none-accepted = kein akzeptierter Schlüssel
+openpgp-compose-general-info-alias = { -brand-short-name} verlangt standardmäßig, dass der öffentliche Schlüssel des Empfängers eine Benutzer-ID enthält, welche mit der E-Mail-Adresse übereinstimmt. Dies kann durch die Verwendung von OpenPGP-Alias-Regeln für Empfänger überschrieben werden.
+openpgp-compose-general-info-alias-learn-more = Weitere Informationen
 openpgp-compose-alias-status-direct = { $count ->
                [one] verweist auf einen Alias-Schlüssel
                *[other] verweist auf {$count} Alias-Schlüssel

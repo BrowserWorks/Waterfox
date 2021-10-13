@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,22 +14,15 @@
 <!ENTITY relatedAfterCurrent.label "Otevírat související panely za aktuálním panelem">
 <!ENTITY relatedAfterCurrent.accesskey "O">
 
-<!ENTITY loadGroup.label "Při otevírání skupiny záložek">
-<!ENTITY loadGroupAppend.label "Přidat k panelům">
-<!ENTITY loadGroupAppend.accesskey "A">
-<!ENTITY loadGroupReplace.label "Nahradit existující panely">
-<!ENTITY loadGroupReplace.accesskey "R">
-
 <!ENTITY openTabs.label "Otevírat panely místo oken při">
-
 <!ENTITY middleClick.label "Prostřední tlačítko, Ctrl+klepnutí nebo Ctrl+Enter na odkazu na webové stránce">
-<!ENTITY middleClick.accesskey "M">
+<!ENTITY middleClick.accesskey "P">
 <!ENTITY middleClickMac.label "Prostřední tlačítko, &#8984;+klepnutí nebo &#8984;+Return na odkazu na webové stránce">
-<!ENTITY middleClickMac.accesskey "M">
+<!ENTITY middleClickMac.accesskey "P">
 <!ENTITY urlbar.label "Ctrl+Enter v adresním řádku">
 <!ENTITY urlbar.accesskey "L">
 <!ENTITY urlbarMac.label "&#8984;+Return v adresním řádku">
-<!ENTITY urlbarMac.accesskey "L">
+<!ENTITY urlbarMac.accesskey "a">
 
 <!ENTITY openManagers.label "Otevřít v novém panelu místo samostatného okna">
 <!ENTITY openDataManager.label "Správce dat">

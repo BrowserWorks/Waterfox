@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = 실험적인 CSS Masonry 레이아웃 기능을 지원합니다. 기능에 대한 자세한 내용은 <a data-l10n-name="explainer">설명자</a>를 참조하세요. 사용자 의견을 제공하시려면, <a data-l10n-name="w3c-issue">이 GitHub 문제</a> 또는 <a data-l10n-name="bug">이 버그</a>에 의견을 보내주세요.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = CSS Cascade Layer 기능을 지원합니다. 자세한 내용은 <a data-l10n-name="spec">진행 중인 사양</a>을 참고하세요. 이 기능과 관련된 버그에 대해 <a data-l10n-name="bugzilla">버그 1699215</a>에 신고하세요.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -67,7 +72,7 @@ experimental-features-devtools-serviceworker-debugger-support =
 experimental-features-devtools-serviceworker-debugger-support-description = 디버거 패널에서 Service Worker를 실험적으로 지원합니다. 이 기능은 개발자 도구의 속도를 저하시키고 메모리 소비를 증가시킬 수 있습니다.
 # WebRTC global mute toggle controls
 experimental-features-webrtc-global-mute-toggles =
-    .label = WebRTC 전역 음소거 설정/해제
+    .label = WebRTC 전역 음소거 전환
 experimental-features-webrtc-global-mute-toggles-description = WebRTC 전역 공유 표시기에 컨트롤을 추가하여 사용자가 전역적으로 마이크 및 카메라 피드를 음소거 할 수 있습니다.
 # Win32k Lockdown
 experimental-features-win32k-lockdown =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission (사이트 격리)은 { -bra
 experimental-features-multi-pip =
     .label = 다중 화면 속 화면 지원
 experimental-features-multi-pip-description = 여러 화면 속 화면 창을 동시에 열 수 있는 기능을 실험적으로 지원합니다.
-experimental-features-http3 =
-    .label = HTTP/3 프로토콜
-experimental-features-http3-description = HTTP/3 프로토콜을 실험적으로 지원합니다.
 # Search during IME
 experimental-features-ime-search =
     .label = 주소 표시줄: IME 입력 중 결과 표시

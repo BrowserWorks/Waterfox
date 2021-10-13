@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -132,7 +132,7 @@ policy-SearchEngines = 검색 엔진 설정을 구성합니다. 이 정책은 �
 
 policy-SearchSuggestEnabled = 검색 제안을 사용하거나 사용하지 않게 합니다.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = PKCS #11 모듈을 설치하십시오.
 
 policy-SSLVersionMax = 최대 SSL 버전을 설정하십시오.

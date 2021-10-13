@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = เกี่ยวกับสิทธิของคุณ
 rights-intro = { -brand-full-name } เป็นซอฟต์แวร์เสรีและเปิดต้นฉบับ สร้างขึ้นโดยชุมชนของคนนับพันจากทั่วโลก มีบางสิ่งที่คุณควรทราบ:
-rights-intro-point-1 = { -brand-short-name } ให้คุณใช้ภายใต้เงื่อนไขของ <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a> สิ่งนี้หมายถึงคุณอาจใช้งาน คัดลอก และแจกจ่าย { -brand-short-name } ให้กับผู้อื่น  คุณยังสามารถแก้ไขโค้ดต้นฉบับของ { -brand-short-name } ตามที่คุณต้องการเพื่อให้ตรงกับความต้องการของคุณ Mozilla Public License ยังให้สิทธิคุณในการแจกจ่ายรุ่นที่คุณแก้ไขอีกด้วย
-rights-intro-point-2 = คุณไม่ได้รับสิทธิหรือสัญญาอนุญาตเครื่องหมายการค้าใด ๆ ในเครื่องหมายการค้าของมูลนิธิ Mozilla หรือบุคคลใด ๆ ไม่จำกัดทั้งชื่อหรือโลโก้ Thunderbird ข้อมูลเพิ่มเติมเกี่ยวกับเครื่องหมายการค้าอาจพบได้ <a data-l10n-name="mozilla-trademarks-link">ที่นี่</a>
+rights-intro-point-1 = { -brand-short-name } ให้คุณใช้ภายใต้เงื่อนไขของ <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a> สิ่งนี้หมายถึงคุณอาจใช้งาน คัดลอก และแจกจ่าย { -brand-short-name } ให้กับผู้อื่น  คุณยังสามารถแก้ไขโค้ดต้นฉบับของ { -brand-short-name } ตามที่คุณต้องการเพื่อให้ตรงกับความต้องการของคุณ Waterfox Public License ยังให้สิทธิคุณในการแจกจ่ายรุ่นที่คุณแก้ไขอีกด้วย
+rights-intro-point-2 = คุณไม่ได้รับสิทธิหรือสัญญาอนุญาตเครื่องหมายการค้าใด ๆ ในเครื่องหมายการค้าของมูลนิธิ Waterfox หรือบุคคลใด ๆ ไม่จำกัดทั้งชื่อหรือโลโก้ Thunderbird ข้อมูลเพิ่มเติมเกี่ยวกับเครื่องหมายการค้าอาจพบได้ <a data-l10n-name="mozilla-trademarks-link">ที่นี่</a>
 rights-intro-point-3 = บางคุณลักษณะใน { -brand-short-name } อย่างตัวรายงานข้อขัดข้อง ให้ตัวเลือกคุณในการเสนอข้อคิดเห็นมายัง { -vendor-short-name } โดยการเลือกส่งข้อคิดเห็นหมายถึงคุณให้อนุญาต { -vendor-short-name } ในการใช้ข้อคิดเห็นนั้นเพื่อปรับปรุงผลิตภัณฑ์ เผยแพร่ข้อคิดเห็นบนเว็บไซต์ และแจกจ่ายข้อคิดเห็น
 rights-intro-point-4 = วิธีที่เราใช้ข้อมูลส่วนบุคคลและข้อคิดเห็นของคุณที่ส่งมายัง { -vendor-short-name } ผ่าน { -brand-short-name } ได้รับการอธิบายไว้ใน <a data-l10n-name="mozilla-privacy-policy-link">นโยบายความเป็นส่วนตัว { -brand-short-name }</a>
 rights-intro-point-4-unbranded = นโยบายความเป็นส่วนตัวใด ๆ ที่บังคับใช้สำหรับผลิตภัณฑ์นี้ควรถูกแสดงรายการไว้ที่นี่

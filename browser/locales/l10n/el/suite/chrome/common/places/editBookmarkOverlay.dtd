@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,7 +8,7 @@
 <!ENTITY editBookmarkOverlay.location.accesskey              "Τ">
 <!ENTITY editBookmarkOverlay.feedLocation.label              "Διεύθυνση ροής:">
 <!ENTITY editBookmarkOverlay.feedLocation.accesskey          "Δ">
-<!ENTITY editBookmarkOverlay.siteLocation.label              "Διεύθυνση ιστοσελίδας:">
+<!ENTITY editBookmarkOverlay.siteLocation.label              "Διεύθυνση ιστοτόπου:">
 <!ENTITY editBookmarkOverlay.siteLocation.accesskey          "ι">
 <!ENTITY editBookmarkOverlay.folder.label                    "Φάκελος:">
 <!ENTITY editBookmarkOverlay.foldersExpanderDown.tooltip     "Προβολή όλων των φακέλων σελιδοδεικτών">
@@ -21,7 +21,7 @@
 <!ENTITY editBookmarkOverlay.keyword.label                   "Λέξη-κλειδί:">
 <!ENTITY editBookmarkOverlay.keyword.accesskey               "Λ">
 <!ENTITY editBookmarkOverlay.tagsExpanderDown.tooltip        "Εμφάνιση όλων των ετικετών">
-<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Φόρτωση σελιδοδείκτη στην πλευρική στήλη">
+<!ENTITY editBookmarkOverlay.loadInSidebar.label             "Φόρτωση σελιδοδείκτη στην πλαϊνή γραμμή">
 <!ENTITY editBookmarkOverlay.loadInSidebar.accesskey         "δ">
 <!ENTITY editBookmarkOverlay.choose.label                    "Επιλογή…">
 <!ENTITY editBookmarkOverlay.newFolderButton.label           "Νέος φάκελος">

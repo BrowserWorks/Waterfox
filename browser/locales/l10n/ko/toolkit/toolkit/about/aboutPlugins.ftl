@@ -1,10 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 title-label = 플러그인에 대하여
+
 installed-plugins-label = 설치한 플러그인
 no-plugins-are-installed-label = 설치한 플러그인 없음
+
 deprecation-description = 뭔가 빠졌습니까? 어떤 플러그인은 더 이상 지원되지 않습니다. <a data-l10n-name="deprecation-link">더 알아보기.</a>
 
 ## The information of plugins
@@ -27,6 +29,7 @@ state-dd-enabled = <span data-l10n-name="state">상태:</span> 사용
 state-dd-enabled-block-list-state = <span data-l10n-name="state">상태:</span> 사용 ({ $blockListState })
 state-dd-Disabled = <span data-l10n-name="state">상태:</span> 사용 안 함
 state-dd-Disabled-block-list-state = <span data-l10n-name="state">상태:</span> 사용 안 함 ({ $blockListState })
+
 mime-type-label = MIME 타입
 description-label = 설명
 suffixes-label = 확장자

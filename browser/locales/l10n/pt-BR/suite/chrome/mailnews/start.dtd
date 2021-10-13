@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,6 +29,6 @@ seção de <a id="dictURL" href="">dicionários</a> nas
 <!ENTITY info.title "Links">
 <!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
 <!ENTITY info_bugs.label
-'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Nós</a> agradecemos os relatos de erros e pedidos de funcionalidades,
+'<a href="https://developer.mozilla.org/docs/Waterfox/Projects/MailNews">Nós</a> agradecemos os relatos de erros e pedidos de funcionalidades,
 mas primeiro leia as <a id="releaseNotesURL" href="">notas de atualização</a> e
 procure no <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = الرّقم التّسلسلي
-
-fips-nonempty-password-required = يتطلّب وضع FIPS وجود كلمة سر رئيسيّة لكلّ جهاز أمن. رجاءً ضع كلمة سر قبل تمكين وضع FIPS.
 
 unable-to-toggle-fips = تعذر تغيير نمط FIPS للجهاز الأمني. ننصحك بالخروج من هذا البرنامج و إعادة تشغيله.
 load-pk11-module-file-picker-title = اختر مشغّل جهاز PKCS#11 ليحمّل

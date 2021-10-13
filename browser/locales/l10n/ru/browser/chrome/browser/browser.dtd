@@ -1,22 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip                     "Открыть меню">
 <!ENTITY navbarOverflow.label                "Другие инструменты…">
 
 <!-- Tab context menu -->
-
-<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
-used as a metaphor for expressing the fact that these tabs are "pinned" to the
-left edge of the tabstrip. Really we just want the string to express the idea
-that this is a lightweight and reversible action that keeps your tab where you
-can reach it easily. -->
-<!ENTITY  pinTab.label                       "Закрепить вкладку">
-<!ENTITY  unpinTab.label                     "Открепить вкладку">
 
 <!ENTITY  listAllTabs.label      "Список всех вкладок">
 
@@ -24,74 +15,24 @@ can reach it easily. -->
 <!ENTITY openFileCmd.label "Открыть файл…">
 <!ENTITY printCmd.label "Печать…">
 
-<!ENTITY taskManagerCmd.label "Диспетчер задач">
-
 <!ENTITY menubarCmd.label "Панель меню">
 <!ENTITY menubarCmd.accesskey "е">
 <!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
 include the word "toolbar" or such, because screen readers already know that
 this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY navbar.accessibleLabel "Навигация">
-<!ENTITY personalbarCmd.label "Панель закладок">
-<!ENTITY personalbarCmd.accesskey "з">
-<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
-include the word "toolbar" or such, because screen readers already know that
-this container is a toolbar. This avoids double-speaking. -->
-<!ENTITY personalbar.accessibleLabel "Закладки">
-<!ENTITY bookmarksToolbarItem.label "Элементы панели закладок">
 
 <!ENTITY fullScreenCmd.label "Полный экран">
 
 <!ENTITY pictureInPictureHideToggle.label "Скрыть переключатель «Картинка в картинке»">
 <!ENTITY pictureInPictureHideToggle.accesskey "ы">
 
-<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
-     followed by the user's email. -->
-<!ENTITY fxa.menu.syncSettings2.label "Настройки Синхронизации">
-<!ENTITY fxa.menu.connectAnotherDevice2.label "Подключить другое устройство…">
-<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
 <!ENTITY fxa.menu.signin.label "Войти в &brandProductName;">
-<!ENTITY fxa.menu.turnOnSync.label "Включить Синхронизацию">
-<!ENTITY fxa.menu.firefoxServices.label "Сервисы &brandProductName;">
-<!ENTITY fxa.menu.account.label "Аккаунт">
-<!ENTITY fxa.menu.settings.label "Настройки">
-<!ENTITY fxa.menu.accountSettings.label "Настройки Аккаунта">
-<!ENTITY fxa.menu.manageAccount2.label "Управление Аккаунтом">
-<!ENTITY fxa.menu.signOut.label "Выйти…">
-<!ENTITY fxa.menu.setupSync.label "Настроить синхронизацию…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Мгновенно отправляйте вкладку на любое привязанное устройство.">
-
-<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
-     fullscreenWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring fullscreen.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY fullscreenWarning.beforeDomain.label "">
-<!ENTITY fullscreenWarning.afterDomain.label "теперь находится в полноэкранном режиме">
-<!ENTITY fullscreenWarning.generic.label "Этот документ теперь находится в полноэкранном режиме">
-
-<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
-     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
-     is uppercase, while on Mac keyboards it is lowercase -->
-<!ENTITY exitDOMFullscreen.button "Выйти из полноэкранного режима (Esc)">
-<!ENTITY exitDOMFullscreenMac.button "Выйти из полноэкранного режима (esc)">
-
-<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
-     pointerlockWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring pointerlock.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY pointerlockWarning.beforeDomain.label "">
-<!ENTITY pointerlockWarning.afterDomain.label "контролирует ваш курсор. Нажмите Esc, чтобы вернуть себе контроль.">
-<!ENTITY pointerlockWarning.generic.label "Этот документ контролирует ваш курсор. Нажмите Esc, чтобы вернуть себе контроль.">
-
-<!ENTITY showAllBookmarks2.label "Показать все закладки">
-<!ENTITY recentBookmarks.label "Недавно добавленные закладки">
-<!ENTITY bookmarksToolbarChevron.tooltip "Показать больше закладок">
 
 <!ENTITY printButton.label            "Печать">
 <!ENTITY printButton.tooltip          "Распечатать эту страницу">
@@ -102,28 +43,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY homeButton.label             "Домой">
 <!ENTITY homeButton.defaultPage.tooltip "Домашняя страница &brandShortName;">
 
-<!ENTITY bookmarksButton.label          "Закладки">
-
-<!ENTITY bookmarksSubview.label             "Закладки">
-<!ENTITY bookmarksMenuButton2.label         "Меню закладок">
-<!ENTITY bookmarksMenuButton.other.label    "Другие закладки">
-<!ENTITY bookmarksMenuButton.mobile.label   "Мобильные закладки">
-<!ENTITY viewBookmarksSidebar2.label        "Показать боковую панель закладок">
-<!ENTITY hideBookmarksSidebar.label         "Скрыть боковую панель закладок">
-<!ENTITY viewBookmarksToolbar.label         "Показать панель закладок">
-<!ENTITY hideBookmarksToolbar.label         "Скрыть панель закладок">
-<!ENTITY searchBookmarks.label              "Поиск закладок">
-<!ENTITY bookmarkingTools.label             "Инструменты закладок">
-<!ENTITY addBookmarksMenu.label             "Добавить меню закладок в панель">
-<!ENTITY removeBookmarksMenu.label          "Удалить меню закладок с панели">
-
 <!ENTITY historyButton.label            "Журнал">
 
 <!ENTITY downloads.label              "Загрузки">
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label       "Загрузки">
-<!ENTITY addons.label                 "Дополнения">
 
 <!ENTITY webDeveloperMenu.label       "Веб-разработка">
 
@@ -139,25 +64,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY overflowCustomizeToolbar.accesskey   "а">
 
 <!ENTITY historyMenu.label "Журнал">
-<!ENTITY historyUndoMenu.label "Недавно закрытые вкладки">
-<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
-<!ENTITY historyUndoWindowMenu.label "Недавно закрытые окна">
 
-<!ENTITY appMenuHistory.showAll.label "Показать весь журнал">
-<!ENTITY appMenuHistory.clearRecent.label "Удалить историю…">
-<!ENTITY appMenuHistory.restoreSession.label "Восстановить предыдущую сессию">
-<!ENTITY appMenuHistory.viewSidebar.label "Боковая панель журнала">
-<!ENTITY appMenuHistory.hideSidebar.label "Скрыть боковую панель журнала">
-<!ENTITY appMenuHistory.recentHistory.label "Недавняя история">
 <!ENTITY appMenuHelp.label "Справка">
 
-<!ENTITY appMenuRemoteTabs.label "Облачные вкладки">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
      the name of a device when that device has no open tabs -->
 <!ENTITY appMenuRemoteTabs.notabs.label "Нет открытых вкладок">
-<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
-     This is shown after the tabs list if we can display more tabs by clicking on the button -->
-<!ENTITY appMenuRemoteTabs.showMore.label "Показать ещё">
 <!ENTITY appMenuRemoteTabs.showMore.tooltip "Показать больше вкладок с этого устройства">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
      This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
@@ -168,19 +80,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Включите синхронизацию вкладок, чтобы увидеть список вкладок с других устройств.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Хотите увидеть здесь ваши вкладки с других устройств?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Открыть настройки синхронизации">
 <!ENTITY appMenuRemoteTabs.welcome.label "Просмотрите список вкладок с других устройств.">
 <!ENTITY appMenuRemoteTabs.unverified.label "Ваш аккаунт должен быть подтверждён.">
-<!ENTITY appMenuRemoteTabs.signintosync.label "Войти в Синхронизацию…">
-<!ENTITY appMenuRemoteTabs.turnonsync.label "Включить Синхронизацию…">
-<!ENTITY appMenuRemoteTabs.managedevices.label "Управление устройствами…">
-<!ENTITY appMenuRemoteTabs.sidebar.label "Показать боковую панель облачных вкладок">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label "Скрыть боковую панель облачных вкладок">
 <!ENTITY appMenuRemoteTabs.connectdevice.label "Подключить другое устройство">
-
-<!ENTITY appMenuRecentHighlights.label "Последнее Избранное">
 
 <!ENTITY customizeMenu.addToToolbar.label "Добавить на панель инструментов">
 <!ENTITY customizeMenu.addToToolbar.accesskey "о">
@@ -192,8 +97,6 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "а">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "Открепить от расширенного меню">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "п">
-<!ENTITY customizeMenu.removeFromToolbar.label "Убрать с панели инструментов">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey "и">
 <!ENTITY customizeMenu.addMoreItems.label "Добавить элементы…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "о">
 
@@ -211,28 +114,9 @@ this container is a toolbar. This avoids double-speaking. -->
 
 <!ENTITY openLinkCmdInTab.accesskey   "в">
 
-<!ENTITY pageAction.copyLink.label    "Копировать ссылку">
-
-<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
-  "Pocket" is a brand name. -->
-<!ENTITY saveToPocketCmd.label        "Сохранить страницу в Pocket">
-
-<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
-  "Pocket" is a brand name. -->
-<!ENTITY pocketMenuitem.label         "Показать список Pocket">
-
-<!ENTITY emailPageCmd.label           "Отправить ссылку по почте…">
-
 <!ENTITY fullZoom.label                 "Масштаб">
 
 <!ENTITY sidebarCloseButton.tooltip     "Закрыть боковую панель">
-
-<!ENTITY quitApplicationCmdWin2.label       "Выход">
-<!ENTITY quitApplicationCmdWin2.accesskey   "х">
-<!ENTITY quitApplicationCmdWin2.tooltip     "Выход из &brandShorterName;">
-<!ENTITY quitApplicationCmd.label       "Выход">
-<!ENTITY quitApplicationCmd.accesskey   "ы">
-<!ENTITY quitApplicationCmdMac2.label   "Завершить &brandShorterName;">
 
 <!ENTITY allowPopups.accesskey "Р">
 <!-- On Windows we use the term "Options" to describe settings, but
@@ -252,10 +136,6 @@ this container is a toolbar. This avoids double-speaking. -->
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label "Вкладки браузера">
 
-<!ENTITY syncBrand.shortName.label    "Синхронизация">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label "Автоматически скрывать">
-
 
 <!ENTITY uiTour.infoPanel.close "Закрыть">
 
@@ -263,15 +143,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY panicButton.thankyou.msg2                "Безопасного веб-сёрфинга!">
 <!ENTITY panicButton.thankyou.buttonlabel         "Спасибо!">
 
-<!ENTITY updateAvailable.panelUI.label "Загрузите обновление &brandShorterName;">
-<!ENTITY updateManual.panelUI.label "Загрузите новую версию &brandShorterName;">
-<!ENTITY updateUnsupported.panelUI.label "Вы не можете произвести дальнейшее обновление">
-<!ENTITY updateRestart.panelUI.label2 "Перезапустить &brandShorterName; для обновления">
-
 <!ENTITY sendToDevice.syncNotReady.label "Синхронизация устройств…">
-
-<!ENTITY pageAction.shareUrl.label "Поделиться">
-<!ENTITY pageAction.shareMore.label "Ещё…">
 
 <!ENTITY libraryButton.tooltip "Просмотр истории, сохранённых закладок и многого другого">
 

@@ -1,32 +1,42 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- Window title -->
+<!-- Window title -->
 <!ENTITY editorWindow.titlemodifier "Composer">
 <!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
 <!ENTITY compositionToolbar.tooltip "Barra de herramientas de redacción">
 <!ENTITY previewToolbarCmd.label "Examinar">
 <!ENTITY previewToolbarCmd.tooltip "Cargar esta página en el navegador">
+
 <!ENTITY exportToTextCmd.label "Exportar como texto…">
 <!ENTITY exportToTextCmd.accesskey "x">
 <!ENTITY previewCmd.label "Examinar página">
 <!ENTITY previewCmd.accesskey "x">
 <!ENTITY sendPageCmd.label "Enviar página…">
 <!ENTITY sendPageCmd.accesskey "v">
+
 <!ENTITY compositionToolbarCmd.label "Barra de herramientas de redacción">
 <!ENTITY compositionToolbarCmd.accesskey "B">
 <!ENTITY formattingToolbarCmd.label "Barra de formato">
 <!ENTITY formattingToolbarCmd.accesskey "F">
 <!ENTITY editmodeToolbarCmd.label "Barra de edición">
 <!ENTITY editmodeToolbarCmd.accesskey "c">
+
 <!ENTITY formatMenu.label "Formato">
 <!ENTITY formatMenu.accesskey "o">
 <!ENTITY grid.label "Rejilla de posicionamiento">
 <!ENTITY grid.accesskey "R">
 <!ENTITY pageProperties.label "Título propiedades de la página…">
 <!ENTITY pageProperties.accesskey "T">
+
 <!ENTITY validateCmd.label "Validar HTML">
 <!ENTITY validateCmd.accesskey "L">
+
 <!ENTITY NormalModeTab.label "Normal">
 <!ENTITY NormalMode.label "Modo de edición normal">
 <!ENTITY NormalMode.accesskey "M">

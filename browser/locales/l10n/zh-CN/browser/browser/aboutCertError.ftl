@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,8 +6,8 @@
 # $hostname (String) - Hostname of the website with cert error.
 cert-error-intro = { $hostname } 使用了无效的安全证书。
 cert-error-mitm-intro = 各个网站通过证书证明自己的身份，而证书由受信任的数字证书颁发机构颁发。
-cert-error-mitm-mozilla = { -brand-short-name } 由非营利的 Mozilla 提供支持。Mozilla 管理一组完全开放的数字证书认证机构（CA）存储库。该存储库帮助确保这些数字证书认证机构遵循最佳实践，以保障用户的安全。
-cert-error-mitm-connection = { -brand-short-name } 使用 Mozilla 的数字证书认证机构存储库来验证连接是否安全，而非用户操作系统所提供的证书库。因此，如果您的防病毒软件或网络使用不在 Mozilla 数字证书认证机构列表中的机构所签发的证书来拦截网络流量，该连接被视为不安全。
+cert-error-mitm-mozilla = { -brand-short-name } 由非营利的 Waterfox 提供支持。Waterfox 管理一组完全开放的数字证书认证机构（CA）存储库。该存储库帮助确保这些数字证书认证机构遵循最佳实践，以保障用户的安全。
+cert-error-mitm-connection = { -brand-short-name } 使用 Waterfox 的数字证书认证机构存储库来验证连接是否安全，而非用户操作系统所提供的证书库。因此，如果您的防病毒软件或网络使用不在 Waterfox 数字证书认证机构列表中的机构所签发的证书来拦截网络流量，该连接被视为不安全。
 cert-error-trust-unknown-issuer-intro = 可能有人试图冒充该网站，您不应该继续访问。
 # Variables:
 # $hostname (String) - Hostname of the website with cert error.
@@ -85,7 +85,7 @@ unknownProtocolFound-title = 无法理解该网址
 proxyConnectFailure-title = 代理服务器拒绝连接
 proxyResolveFailure-title = 无法找到代理服务器
 redirectLoop-title = 此页面不能正确地重定向
-unknownSocketType-title = 意外的服务器响应
+unknownSocketType-title = 服务器响应异常
 nssFailure2-title = 建立安全连接失败
 csp-xfo-error-title = { -brand-short-name } 无法打开此页面
 corruptedContentError-title = 内容损坏错误

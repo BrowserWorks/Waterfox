@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "ล้าง">
 
-<!ENTITY fillLoginMenu.label          "กรอกการเข้าสู่ระบบ">
-<!ENTITY fillLoginMenu.accesskey      "ก">
-<!ENTITY fillPasswordMenu.label       "กรอกรหัสผ่าน">
-<!ENTITY fillPasswordMenu.accesskey   "ก">
-<!ENTITY fillUsernameMenu.label       "กรอกชื่อผู้ใช้">
-<!ENTITY fillUsernameMenu.accesskey   "ก">
-<!ENTITY noLoginSuggestions.label     "(ไม่มีข้อเสนอแนะการเข้าสู่ระบบ)">
-<!ENTITY viewSavedLogins.label        "ดูการเข้าสู่ระบบที่บันทึกไว้">

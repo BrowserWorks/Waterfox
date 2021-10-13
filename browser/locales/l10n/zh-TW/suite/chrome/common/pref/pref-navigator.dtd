@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,6 +30,12 @@
 <!ENTITY restoreTabsAtATime.label       "個分頁">
 <!ENTITY restoreDeferred.label          "只在我需要時還原分頁">
 <!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY siteIcons.label                "網站圖示">
+<!ENTITY useSiteIcons.label             "顯示網站圖示">
+<!ENTITY useSiteIcons.accesskey         "w">
+<!ENTITY useFavIcons.label              "當頁面沒有指定圖示時，嘗試使用伺服器的 favicon">
+<!ENTITY useFavIcons.accesskey          "T">
 
 <!ENTITY homePageIntro.label            "當按下「首頁」按鈕時會自動瀏覽此(組)網址">
 <!ENTITY useCurrent.label               "使用目前頁面">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,6 +27,13 @@ connection-dialog-window =
         }
 connection-disable-extension =
     .label = Vô hiệu hóa tiện ích mở rộng
+disable-extension-button = Vô hiệu hóa tiện ích mở rộng
+# Variables:
+#   $name (String) - The extension that is controlling the proxy settings.
+#
+# The extension-icon is the extension's icon, or a fallback image. It should be
+# purely decoration for the actual extension name, with alt="".
+proxy-settings-controlled-by-extension = Một tiện ích mở rộng, <img data-l10n-name="extension-icon" alt="" /> { $name }, đang kiểm soát cách { -brand-short-name } kết nối internet.
 connection-proxy-legend = Định cấu hình proxy để truy cập Internet
 proxy-type-no =
     .label = Không dùng proxy
@@ -77,8 +84,6 @@ no-proxy-label =
     .value = Không dùng proxy cho:
     .accesskey = n
 no-proxy-example = Ví dụ: .mozilla.org, .net.nz, 192.168.1.0/24
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = Các kết nối với localhost, 127.0.0.1 và :: 1 không bao giờ được ủy quyền.
 # Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
 connection-proxy-noproxy-localhost-desc-2 = Kết nối đến localhost, 127.0.0.1/8, và ::1 không bao giờ dùng proxy.
 proxy-password-prompt =

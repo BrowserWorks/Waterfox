@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,12 +11,6 @@
 <!ENTITY helpMenuWin.accesskey "H">
 <!ENTITY aboutProduct2.label "Về &brandShorterName;">
 <!ENTITY aboutProduct2.accesskey "A">
-<!ENTITY helpTroubleshootingInfo.label     "Thông tin gỡ rối vấn đề">
-<!ENTITY helpTroubleshootingInfo.accesskey "T">
-<!ENTITY helpSafeMode.label     "Khởi động lại và vô hiệu hóa các tiện ích…">
-<!ENTITY helpSafeMode.accesskey "R">
-<!ENTITY helpSafeMode.stop.label     "Khởi động lại và kích hoạt các tiện ích">
-<!ENTITY helpSafeMode.stop.accesskey "R">
 <!ENTITY productHelp.label "Trợ giúp &brandShortName;">
 <!ENTITY productHelp.accesskey "H">
 <!ENTITY productHelp.commandkey "VK_F1">

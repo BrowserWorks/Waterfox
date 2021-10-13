@@ -1,22 +1,20 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 containers-window-new =
     .title = เพิ่มการแยกข้อมูลใหม่
     .style = width: 45em
-# Variables
-#   $name (String) - Name of the container
-containers-window-update =
-    .title = ค่ากำหนดการแยกข้อมูล { $name }
-    .style = width: 45em
+
 # Variables
 #   $name (String) - Name of the container
 containers-window-update-settings =
     .title = การตั้งค่าการแยกข้อมูล { $name }
     .style = width: 45em
+
 containers-window-close =
     .key = w
+
 # This is a term to store style to be applied
 # on the three labels in the containers add/edit dialog:
 #   - name
@@ -27,23 +25,26 @@ containers-window-close =
 # of the three messages ensures that all three labels
 # will be aligned correctly.
 -containers-labels-style = min-width: 4rem
+
 containers-name-label = ชื่อ
     .accesskey = ช
     .style = { -containers-labels-style }
+
 containers-name-text =
     .placeholder = ป้อนชื่อการแยกข้อมูล
+
 containers-icon-label = ไอคอน
     .accesskey = อ
     .style = { -containers-labels-style }
+
 containers-color-label = สี
     .accesskey = ส
     .style = { -containers-labels-style }
-containers-button-done =
-    .label = เสร็จสิ้น
-    .accesskey = ร
+
 containers-dialog =
     .buttonlabelaccept = เสร็จสิ้น
     .buttonaccesskeyaccept = ร
+
 containers-color-blue =
     .label = น้ำเงิน
 containers-color-turquoise =
@@ -62,6 +63,7 @@ containers-color-purple =
     .label = ม่วง
 containers-color-toolbar =
     .label = จับคู่แถบเครื่องมือ
+
 containers-icon-fence =
     .label = รั้ว
 containers-icon-fingerprint =

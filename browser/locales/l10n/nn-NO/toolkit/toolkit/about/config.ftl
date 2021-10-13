@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,11 +14,15 @@ about-config-intro-warning-button = Godta risikoen og fortsett
 
 # This is shown on the page before searching but after the warning is accepted.
 about-config-caution-text = Endring av desse innstillingane kan påverke yting eller sikkerheit i { -brand-short-name }
+
 about-config-page-title = Avanserte innstillingar
+
 about-config-search-input1 =
     .placeholder = Søk på innstillingsnamn
 about-config-show-all = Vis alt
+
 about-config-show-only-modified = Vis berre endra innstillingar
+
 about-config-pref-add-button =
     .title = Legg til
 about-config-pref-toggle-button =

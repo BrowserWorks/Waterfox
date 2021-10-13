@@ -1,29 +1,33 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ### For this feature, "installation" is used to mean "this discrete download of
-### Firefox" and "version" is used to mean "the specific revision number of a
-### given Firefox channel". These terms are not synonymous.
+### Waterfox" and "version" is used to mean "the specific revision number of a
+### given Waterfox channel". These terms are not synonymous.
 
 title = Vigtige nyheder
 heading = Din { -brand-short-name }-profile er blevet ændret
+
 changed-title = Hvad er ændret?
-changed-desc-profiles = Denne installation af { -brand-short-name } har en ny profil. En profil er en samling af filer, hvor Firefox gemmer oplysninger som fx bogmærker, adgangskoder og bruger-indstillinger.
-changed-desc-dedicated = Denne installation har nu sin egen, dedikerede profil for at gøre det nemmere og mere sikkert at skifte mellem forskellige installationer af Firefox (inklusive Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition og Firefox Nightly). Profilen deler ikke automatisk dine gemte informationer med andre Firefox-installationer.
-lost = <b>Du har ikke mistet nogle af dine personlige data eller indstillinger.</b> Hvis du allerede har gemt oplysninger i Firefox på denne computer, så er de stadig tilgængelige i en anden Firefox-installation.
+changed-desc-profiles = Denne installation af { -brand-short-name } har en ny profil. En profil er en samling af filer, hvor Waterfox gemmer oplysninger som fx bogmærker, adgangskoder og bruger-indstillinger.
+changed-desc-dedicated = Denne installation har nu sin egen, dedikerede profil for at gøre det nemmere og mere sikkert at skifte mellem forskellige installationer af Waterfox (inklusive Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition og Waterfox Nightly). Profilen deler ikke automatisk dine gemte informationer med andre Waterfox-installationer.
+
+lost = <b>Du har ikke mistet nogle af dine personlige data eller indstillinger.</b> Hvis du allerede har gemt oplysninger i Waterfox på denne computer, så er de stadig tilgængelige i en anden Waterfox-installation.
+
 options-title = Hvilke muligheder har jeg?
-options-do-nothing = Som standard vil dine profildata i { -brand-short-name } ikke blive synkroniseret med profildata i dine andre Firefox-installationer.
-options-use-sync = Hvis du gerne vil have at dine profildata skal være ens for alle installationer af Firefox, så kan du bruge en { -fxaccount-brand-name } til at holde dem synkroniserede.
+options-do-nothing = Som standard vil dine profildata i { -brand-short-name } ikke blive synkroniseret med profildata i dine andre Waterfox-installationer.
+options-use-sync = Hvis du gerne vil have at dine profildata skal være ens for alle installationer af Waterfox, så kan du bruge en { -fxaccount-brand-name } til at holde dem synkroniserede.
+
 resources = Læs mere:
 support-link = Brug Profilmanageren - artikel
+
 sync-header = Log ind eller opret en { -fxaccount-brand-name }
 sync-label = Indtast din mailadresse
 sync-input =
     .placeholder = Mailadresse
 sync-button = Fortsæt
 sync-terms = Ved at fortsætte accepterer du vores <a data-l10n-name="terms">tjenestevilkår</a> og vores <a data-l10n-name="privacy">privatlivspolitik</a>.
-sync-first = Er det første gang, du bruger { -sync-brand-name }? Så er du nødt til at logge ind i hver enkel installation af Firefox for at synkronisere dine oplysninger.
-new-install-sync-first = Er det første gang, du bruger synkronisering? Du skal logge ind på Firefox på alle dine enheder for at synkronisere dine oplysninger.
+sync-first = Er det første gang, du bruger { -sync-brand-name }? Så er du nødt til at logge ind i hver enkel installation af Waterfox for at synkronisere dine oplysninger.
 sync-learn = Læs mere

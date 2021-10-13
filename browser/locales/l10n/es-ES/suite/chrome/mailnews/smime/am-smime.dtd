@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -24,11 +24,13 @@
 <!ENTITY signMessage.label "Firmar mensajes digitalmente">
 <!ENTITY signMessage.accesskey "D">
 <!ENTITY signingCert.message "Usar este certificado para firmar los mensajes que envíe:">
+
 <!ENTITY certificates.label "Certificados">
 <!ENTITY manageCerts2.label "Administrar certificados…">
 <!ENTITY manageCerts2.accesskey "A">
 <!ENTITY manageDevices.label "Administrar dispositivos de seguridad…">
 <!ENTITY manageDevices.accesskey "i">
+
 <!ENTITY certPicker.title "Seleccione certificado">
 <!ENTITY certPicker.info "Certificado:">
 <!ENTITY certPicker.detailsLabel "Detalles del certificado seleccionado:">

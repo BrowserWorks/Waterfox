@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,9 +15,9 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "HTTP-tilkoplingar kan bli finjusterte med desse innstillingane for å betre anten yting eller kompabilitet. Enkelte mellomtenarar, til dømes, treng HTTP/1.0 for å verke (sjå versjonsnotatet for meir informasjon).">
 <!ENTITY prefUseragent.label                 "Brukeragenttekst">
-<!ENTITY prefFirefoxStrict.label             "Identifiser som Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "I">
-<!ENTITY prefFirefoxNone.label               "Identifiser som SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefWaterfoxStrict.label             "Identifiser som Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "I">
+<!ENTITY prefWaterfoxNone.label               "Identifiser som SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "ÅTVARING: endring av denne innstillinga kan føre til at nettstadar eller tenester ikkje fungerer som dei skal.">

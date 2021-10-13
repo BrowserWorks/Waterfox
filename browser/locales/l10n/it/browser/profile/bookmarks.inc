@@ -15,12 +15,8 @@
 #define getting_started Come iniziare
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
-
-# LOCALIZATION NOTE (firefox_help):
-# link title for http://www.mozilla.com/en-US/firefox/help/
-#define firefox_help Aiuto e guide
+# Waterfox links folder name
+#define firefox_heading Waterfox Waterfox
 
 # LOCALIZATION NOTE (firefox_get_help):
 # link title for http://www.mozilla.com/firefox/help/
@@ -28,7 +24,7 @@
 
 # LOCALIZATION NOTE (firefox_customize):
 # link title for http://www.mozilla.com/en-US/firefox/customize/
-#define firefox_customize Personalizza Firefox
+#define firefox_customize Personalizza Waterfox
 
 # LOCALIZATION NOTE (firefox_community):
 # link title for http://www.mozilla.com/en-US/firefox/community/
@@ -39,20 +35,20 @@
 #define firefox_about Informazioni
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
-#define nightly_heading Risorse per Firefox Nightly
+# Waterfox Nightly links folder name
+#define nightly_heading Risorse per Waterfox Nightly
 
 # LOCALIZATION NOTE (nightly_blog):
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
-#define nightly_blog Firefox Nightly blog
+#define nightly_blog Waterfox Nightly blog
 
 # LOCALIZATION NOTE (bugzilla):
 # Nightly builds only, link title for https://bugzilla.mozilla.org/
-#define bugzilla Mozilla - Segnalazione bug
+#define bugzilla Waterfox - Segnalazione bug
 
 # LOCALIZATION NOTE (mdn):
 # Nightly builds only, link title for https://developer.mozilla.org/
-#define mdn Mozilla Developer Network
+#define mdn Waterfox Developer Network
 
 # LOCALIZATION NOTE (nightly_tester_tools):
 # Nightly builds only, link title for https://addons.mozilla.org/en-US/firefox/addon/nightly-tester-tools/
@@ -64,6 +60,6 @@
 
 # LOCALIZATION NOTE (planet):
 # Nightly builds only, link title for https://planet.mozilla.org/
-#define planet Pianeta Mozilla
+#define planet Pianeta Waterfox
 
 #unfilter emptyLines

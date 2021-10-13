@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,17 @@
 <!ENTITY confirmMove.accesskey            "C">
 <!ENTITY preserveThreading.label          "在信息排序时保持进程">
 <!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY mailAutoHide.label               "只打开一个标签页时隐藏标签栏">
+<!ENTITY mailAutoHide.accesskey           "b">
 <!ENTITY loadInBackground.label           "在新标签页中打开时，立即切换过去">
 <!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailOpenTabsFor.label            "新建标签页而非窗口，当：">
+<!ENTITY mailMiddleClick.label            "对消息或邮件夹鼠标中键或按下 Ctrl+Enter">
+<!ENTITY mailMiddleClick.accesskey        "M">
+<!ENTITY mailMiddleClickMac.label         "对消息或邮件夹鼠标中键或按下 &#8984;+Return">
+<!ENTITY mailMiddleClickMac.accesskey     "M">
+<!ENTITY mailDoubleClick.label            "双击消息">
+<!ENTITY mailDoubleClick.accesskey        "k">
 <!ENTITY mailBiffOnNewWindow.label        "只在打开邮箱或新闻组时检查是否有新邮件">
 <!ENTITY mailBiffOnNewWindow.accesskey    "O">
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetry Data
 about-telemetry-current-store = Current Store:
 about-telemetry-more-information = Looking for more information?
-about-telemetry-firefox-data-doc = The <a data-l10n-name="data-doc-link">Firefox Data Documentation</a> contains guides about how to work with our data tools.
-about-telemetry-telemetry-client-doc = The <a data-l10n-name="client-doc-link">Firefox Telemetry client documentation</a> includes definitions for concepts, API documentation and data references.
-about-telemetry-telemetry-dashboard = The <a data-l10n-name="dashboard-link">Telemetry dashboards</a> allow you to visualise the data Mozilla receives via Telemetry.
+about-telemetry-firefox-data-doc = The <a data-l10n-name="data-doc-link">Waterfox Data Documentation</a> contains guides about how to work with our data tools.
+about-telemetry-telemetry-client-doc = The <a data-l10n-name="client-doc-link">Waterfox Telemetry client documentation</a> includes definitions for concepts, API documentation and data references.
+about-telemetry-telemetry-dashboard = The <a data-l10n-name="dashboard-link">Telemetry dashboards</a> allow you to visualise the data Waterfox receives via Telemetry.
 about-telemetry-telemetry-probe-dictionary = The <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> provides details and descriptions for the probes collected by Telemetry.
-about-telemetry-show-in-Firefox-json-viewer = Open in the JSON viewer
+about-telemetry-show-in-Waterfox-json-viewer = Open in the JSON viewer
 about-telemetry-home-section = Home
 about-telemetry-general-data-section = General Data
 about-telemetry-environment-data-section = Environment Data
@@ -68,7 +68,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } samples, average = { $prettyAverage }, sum = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = This page shows the information about performance, hardware, usage and customisations collected by Telemetry. This information is submitted to { $telemetryServerOwner } to help improve { -brand-full-name }.
 about-telemetry-settings-explanation = Telemetry is collecting { about-telemetry-data-type } and upload is <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -140,8 +140,8 @@ about-telemetry-origin-section = Origin Telemetry
 about-telemetry-origin-origin = origin
 about-telemetry-origin-count = count
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Firefox Origin Telemetry</a> encodes data before it is sent so that { $telemetryServerOwner } can count things, but not know whether or not any given { -brand-product-name } contributed to that count. (<a data-l10n-name="prio-blog-link">learn more</a>)
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a> encodes data before it is sent so that { $telemetryServerOwner } can count things, but not know whether or not any given { -brand-product-name } contributed to that count. (<a data-l10n-name="prio-blog-link">learn more</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } process

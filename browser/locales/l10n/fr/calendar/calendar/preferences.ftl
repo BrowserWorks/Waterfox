@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Agenda
 calendar-title-reminder = Rappels
+calendar-title-notification = Notifications
 calendar-title-category = Catégories
 dateformat-label =
     .value = Format de la date :
@@ -133,6 +134,9 @@ task-due-label =
 edit-intab-label =
     .label = Modifier les évènements et les tâches dans un onglet plutôt que dans une fenêtre de dialogue.
     .accesskey = t
+prompt-delete-label =
+    .label = Demander avant de supprimer des évènements et des tâches.
+    .accesskey = D
 accessibility-legend = Accessibilité
 accessibility-colors-label =
     .label = Optimiser les couleurs pour l’accessibilité
@@ -179,6 +183,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Temps de déclenchement d’une alarme avant une tâche :
     .accesskey = s
+calendar-notifications-customize-label = Les notifications peuvent être personnalisées pour chaque agenda dans la fenêtre des propriétés de l’agenda.
 category-new-label = Nouvelle catégorie
 category-edit-label = Modifier la catégorie
 category-overwrite-title = Attention : nom en double

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -153,7 +153,7 @@ was trying to connect. -->
 
 <!ENTITY securityOverride.exceptionButton1Label "위험을 감수하고 계속 진행">
 
-<!ENTITY errorReporting.automatic2 "이러한 오류를 보고하여 Mozilla가 악성 사이트를 식별하고 차단하는 것을 돕습니다.">
+<!ENTITY errorReporting.automatic2 "이러한 오류를 보고하여 Waterfox가 악성 사이트를 식별하고 차단하는 것을 돕습니다.">
 <!ENTITY errorReporting.learnMore "더 알아보기…">
 
 <!ENTITY remoteXUL.longDesc "<p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul></p>">

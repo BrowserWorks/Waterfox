@@ -1,15 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 # Addressing widget
 
-#   $type (String) - the type of the addressing row
-remove-address-row-type = A(z) { $type } mező eltávolítása
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = A(z) { $type } mező eltávolítása
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
     .title = A(z) { $type } mező eltávolítása
@@ -67,6 +62,10 @@ toolbar-button-add-attachment =
 add-attachment-notification-reminder =
     .label = Melléklet hozzáadása…
     .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
+add-attachment-notification-reminder2 =
+    .label = Melléklet hozzáadása…
+    .accesskey = a
+    .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
 menuitem-attach-files =
     .label = Fájlok…
     .accesskey = F
@@ -84,21 +83,14 @@ attachment-bucket-count =
            *[other] { $count } melléklet
         }
     .accesskey = m
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext =
-        { $count ->
-            [1] { $count } melléklet
-            [one] { $count } melléklet
-           *[other] { $count } melléklet
-        }
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
 expand-attachment-pane-tooltip =
     .tooltiptext = A mellékletek ablaktábla megjelenítése ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 collapse-attachment-pane-tooltip =
     .tooltiptext = A mellékletek ablaktábla elrejtése ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-show =
+    .title = A mellékletek ablaktábla megjelenítése ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-hide =
+    .title = A mellékletek ablaktábla elrejtése ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 drop-file-label-attachment =
     { $count ->
         [one] Hozzáadás mellékletként
@@ -123,6 +115,13 @@ move-attachment-last-panel-button =
 button-return-receipt =
     .label = Visszaigazolás
     .tooltiptext = Visszaigazolás kérése az üzenetről
+
+# Encryption
+
+message-to-be-signed-icon =
+    .alt = Üzenet aláírása
+message-to-be-encrypted-icon =
+    .alt = Üzenet titkosítása
 
 # Addressing Area
 
@@ -158,12 +157,74 @@ bcc-compose-show-address-row-label =
     .tooltiptext = A { bcc-compose-address-row-label.value } mező megjelenítése ({ bcc-compose-show-address-row-menuitem.acceltext })
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = A címzett és másolatot kapó { $count } partner látni fogja egymás címét. Elkerülheti a címzettek közzétételét, ha helyette titkos másolatot használ.
+to-address-row-label =
+    .value = Címzett
+#   $key (String) - the shortcut key for this field
+show-to-row-main-menuitem =
+    .label = Címzett mező
+    .accesskey = C
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-to-row-button text.
+show-to-row-extra-menuitem =
+    .label = Címzett
+    .accesskey = C
+#   $key (String) - the shortcut key for this field
+show-to-row-button = Címzett
+    .title = Címzett mező megjelenítése ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+cc-address-row-label =
+    .value = Másolatot kap
+#   $key (String) - the shortcut key for this field
+show-cc-row-main-menuitem =
+    .label = Másolatot kap mező
+    .accesskey = M
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-cc-row-button text.
+show-cc-row-extra-menuitem =
+    .label = Másolatot kap
+    .accesskey = M
+#   $key (String) - the shortcut key for this field
+show-cc-row-button = Másolatot kap
+    .title = Másolatot kap mező megjelenítése ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+bcc-address-row-label =
+    .value = Rejtett másolatot kap
+#   $key (String) - the shortcut key for this field
+show-bcc-row-main-menuitem =
+    .label = Rejtett másolatot kap
+    .accesskey = R
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-bcc-row-button text.
+show-bcc-row-extra-menuitem =
+    .label = Rejtett másolatot kap
+    .accesskey = R
+#   $key (String) - the shortcut key for this field
+show-bcc-row-button = Rejtett másolatot kap
+    .title = Rejtett másolatot kap mező megjelenítése ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+extra-address-rows-menu-button =
+    .title = További megjelenítendő címzési mezők
+#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
+many-public-recipients-notice =
+    { $count ->
+        [one] Az üzenetének nyilvános címzettje van. Elkerülheti a címzettek közzétételét, ha helyette titkos másolatot használ.
+       *[other] A címzett és másolatot kapó { $count } partner látni fogja egymás címét. Elkerülheti a címzettek közzétételét, ha helyette titkos másolatot használ.
+    }
 many-public-recipients-bcc =
     .label = Helyette titkos másolat használata
     .accesskey = H
 many-public-recipients-ignore =
     .label = A címzettek legyenek nyilvánosak
     .accesskey = l
+many-public-recipients-prompt-title = Túl sok nyilvános címzett
+#   $count (Number) - the count of addresses in the public recipients fields.
+many-public-recipients-prompt-msg =
+    { $count ->
+        [one] Üzenetének nyilvános címzettje van. Ez adatvédelmi aggály lehet. Elkerülheti a címzettek közzétételét, ha áthelyezi a címzetteket a Címzett/Másolatot kap mezőból a Titkos másolatba.
+       *[other] Üzenetének { $count } nyilvános címzettje van, akik láthatják egymás címét. Ez adatvédelmi aggály lehet. Elkerülheti a címzettek közzétételét, ha áthelyezi a címzetteket a Címzett/Másolatot kap mezőből a Titkos másolatba.
+    }
+many-public-recipients-prompt-cancel = Küldés megszakítása
+many-public-recipients-prompt-send = Küldés mindenképp
 
 ## Notifications
 
@@ -172,3 +233,11 @@ many-public-recipients-ignore =
 compose-missing-identity-warning = Nem található egyedi személyazonosság, amely egyezik a feladó címével. Az üzenete a jelenlegi Feladó mező, és a(z) { $identity } személyazonosság beállításaival lesz elküldve.
 encrypted-bcc-warning = Titkosított üzenet küldésekor a Titkos másolatot kapóként hozzáadott címzettjei nincsenek teljesen elrejtve. Minden címzett képes lehet azonosítani őket.
 encrypted-bcc-ignore-button = Értettem
+
+## Editing
+
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+    .tooltiptext = Szövegstílus eltávolítása

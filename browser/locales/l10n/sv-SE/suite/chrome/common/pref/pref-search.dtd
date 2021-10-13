@@ -1,7 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+
+<!-- extracted from content/pref-search.xul -->
 
 <!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
 
@@ -13,12 +15,10 @@
 <!-- Will be used by bug 595246 -->
 <!ENTITY engineManager.label              "Hantera sökmotorer…">
 
+<!ENTITY  searchResults.label             "Sökresultat">
+
 <!ENTITY openInTab.label                  "Öppna nya flikar för sökresultatet i sidofältet">
 <!ENTITY openInTab.accesskey              "n">
 <!ENTITY openContextSearchTab.label       "Öppna en flik istället för ett fönster när internetsökningen startas från snabbmenyn">
 <!ENTITY openContextSearchTab.accesskey   "t">
-<!ENTITY  openSidebarSearchPanel.label    "Öppna sökfliken i sidofältet när sökresultat finns tillgängliga">
-<!ENTITY  openSidebarSearchPanel.accesskey "s">
-
-<!ENTITY  searchResults.label             "Sökresultat">
 

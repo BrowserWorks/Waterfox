@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,7 +17,6 @@
     no longer used but we might bring it back later
 -->
 <!ENTITY askBeforeClear.label             "Mij vragen voordat privégegevens worden gewist">
-<!ENTITY askBeforeClear.accesskey         "M">
 
 <!ENTITY clearDataSettings.label          "Als ik &brandShortName; vraag mijn privégegevens te wissen, moet het volgende worden verwijderd:">
 

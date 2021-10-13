@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = 새 탭
 newtab-settings-button =
     .title = 새 탭 페이지 사용자 지정
-newtab-personalize-button-label = 개인화
+newtab-personalize-icon-label =
     .title = 새 탭 개인화
     .aria-label = 새 탭 개인화
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = 검색
     .aria-label = 검색
-newtab-search-box-search-the-web-text = 웹 검색
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = { $engine } 검색 또는 주소 입력
@@ -39,6 +38,7 @@ newtab-search-box-search-the-web-input =
     .placeholder = 웹 검색
     .title = 웹 검색
     .aria-label = 웹 검색
+newtab-search-box-text = 웹 검색
 newtab-search-box-input =
     .placeholder = 웹 검색
     .aria-label = 웹 검색
@@ -147,7 +147,7 @@ newtab-menu-remove-download = 기록에서 삭제
 newtab-menu-show-file =
     { PLATFORM() ->
         [macos] Finder에서 보기
-       *[other] 폴더 열기
+       *[other] 상위 폴더 열기
     }
 newtab-menu-open-file = 파일 열기
 
@@ -169,6 +169,11 @@ newtab-label-sponsored = { $sponsorOrSource } · 후원
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = { $sponsor } 후원
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead }분
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -221,10 +226,25 @@ newtab-discovery-empty-section-topstories-timed-out = 이런! 이 섹션을 거�
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = 인기 주제:
+newtab-pocket-new-topics-title = 더 많은 이야기를 원하세요? { -pocket-brand-name } 인기 주제 보기
 newtab-pocket-more-recommendations = 더 많은 추천
 newtab-pocket-learn-more = 더 알아보기
 newtab-pocket-cta-button = { -pocket-brand-name } 받기
 newtab-pocket-cta-text = 좋아하는 이야기를 { -pocket-brand-name }에 저장하고 재미있게 읽어 보세요.
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name }은 { -brand-product-name } 제품군의 일부입니다.
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = { -pocket-brand-name }에 저장
+newtab-pocket-saved-to-pocket = { -pocket-brand-name }에 저장
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = 더 많은 이야기 불러오기
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = 모두 따라 잡았습니다!
+newtab-pocket-last-card-desc = 더 많은 이야기는 나중에 다시 확인해 보세요.
+newtab-pocket-last-card-image =
+    .alt = 모두 따라 잡았습니다
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -247,10 +267,4 @@ newtab-custom-pocket-sponsored = 스폰서 소식
 newtab-custom-recent-title = 최근 활동
 newtab-custom-recent-subtitle = 최근 사이트 및 콘텐츠 선택
 newtab-custom-close-button = 닫기
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = 짧은 소식
-newtab-custom-snippets-subtitle = { -vendor-short-name }와 { -brand-product-name }의 팁 및 뉴스
 newtab-custom-settings = 더 많은 설정 관리

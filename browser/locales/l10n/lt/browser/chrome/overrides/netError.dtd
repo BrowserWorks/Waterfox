@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -96,7 +96,7 @@ was trying to connect. -->
 
 <!ENTITY securityOverride.exceptionButton1Label "Priimti riziką ir tęsti">
 
-<!ENTITY errorReporting.automatic2 "Pranešdami apie tokias klaidas kaip ši, padėsite „Mozillai“ nustatyti ir užblokuoti kenksmingas svetaines">
+<!ENTITY errorReporting.automatic2 "Pranešdami apie tokias klaidas kaip ši, padėsite „Waterfoxi“ nustatyti ir užblokuoti kenksmingas svetaines">
 <!ENTITY errorReporting.learnMore "Sužinoti daugiau…">
 
 <!ENTITY remoteXUL.longDesc "<p><ul><li>Siūlome susisiekti su svetainės savininkais ar valdytojais ir pranešti jiems apie šią problemą.</li></ul></p>">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,7 +31,13 @@
 <!ENTITY restoreDeferred.label          "Επαναφορά καρτελών μόνο όταν τις χρειάζομαι">
 <!ENTITY restoreDeferred.accesskey      "μ">
 
-<!ENTITY homePageIntro.label            'Μετάβαση σε αυτή την ομάδα σελίδων με κλικ στο κουμπί "Αρχική σελίδα":'>
+<!ENTITY siteIcons.label                "Εικονίδια ιστοτόπων">
+<!ENTITY useSiteIcons.label             "Εμφάνιση εικονιδίων ιστοτόπων">
+<!ENTITY useSiteIcons.accesskey         "ι">
+<!ENTITY useFavIcons.label              "Χρήση εικονιδίου διακομιστή όταν η σελίδα δεν ορίζει κάποιο εικονίδιο">
+<!ENTITY useFavIcons.accesskey          "Χ">
+
+<!ENTITY homePageIntro.label            "Μετάβαση σε αυτήν την ομάδα σελίδων με κλικ στο κουμπί «Αρχική σελίδα»:">
 <!ENTITY useCurrent.label               "Χρήση τρέχουσας σελίδας">
 <!ENTITY useCurrent.accesskey           "Χ">
 <!ENTITY useCurrentGroup.label          "Χρήση τρέχουσας ομάδας">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -29,6 +29,6 @@ die geavanceerde detectie van ongewenste berichten en andere handige functies on
 <!ENTITY info.title "Meer informatie">
 <!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
 <!ENTITY info_bugs.label
-'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">We</a> ontvangen graag bugrapporten en aanvragen voor
+'<a href="https://developer.mozilla.org/docs/Waterfox/Projects/MailNews">We</a> ontvangen graag bugrapporten en aanvragen voor
 nieuwe functies, maar lees eerst de <a id="releaseNotesURL" href="">uitgaveopmerkingen</a>
 en doorzoek <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> voordat u een bug meldt.'>

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetri-data
 about-telemetry-current-store = Gjeldande lagringsplass:
 about-telemetry-more-information = Ser du etter mer informasjon?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Firefox Data Documentation</a> inneheld rettleiingar om korleis du jobbar med dataverktøa våre.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Firefox Telemetry-klientdokumentasjonen</a> inneheld definisjonar for konsept, API-dokumentasjon og datareferansar.
-about-telemetry-telemetry-dashboard = Med <a data-l10n-name="dashboard-link">Telemetry-panelet</a> kan du visualisere dataa Mozilla får via Telementry.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Waterfox Data Documentation</a> inneheld rettleiingar om korleis du jobbar med dataverktøa våre.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Waterfox Telemetry-klientdokumentasjonen</a> inneheld definisjonar for konsept, API-dokumentasjon og datareferansar.
+about-telemetry-telemetry-dashboard = Med <a data-l10n-name="dashboard-link">Telemetry-panelet</a> kan du visualisere dataa Waterfox får via Telementry.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> gjev detaljar og skildringar for sondar som vert samla inn av Telemetry.
-about-telemetry-show-in-Firefox-json-viewer = Opne i JSON-visar
+about-telemetry-show-in-Waterfox-json-viewer = Opne i JSON-visar
 about-telemetry-home-section = Heim
 about-telemetry-general-data-section = Generelle data
 about-telemetry-environment-data-section = Miljødata
@@ -68,7 +68,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } utval, gjennomsnitt = { $prettyAverage }, sum = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = Denne sida viser info om yting, maskinvare, bruksmønster og utvidingar som er innsamla av Telemetri. Denne infoen vert sendt til { $telemetryServerOwner } for å hjelpe til med å forbetre { -brand-full-name }.
 about-telemetry-settings-explanation = Telemetri samlar inn { about-telemetry-data-type } og opplastinga er <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -140,8 +140,8 @@ about-telemetry-origin-section = Origin Telemetry
 about-telemetry-origin-origin = opphav
 about-telemetry-origin-count = mengde
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Firefox origin-telemetri</a> kodar data før dei vert sende. Det tyder at { $telemetryServerOwner } kan telje ting, men ikkje vite om ein bestemt installasjon av { -brand-product-name } bidrog til den samla mengda. (<a data-l10n-name="prio-blog-link">les meir</a>)
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox origin-telemetri</a> kodar data før dei vert sende. Det tyder at { $telemetryServerOwner } kan telje ting, men ikkje vite om ein bestemt installasjon av { -brand-product-name } bidrog til den samla mengda. (<a data-l10n-name="prio-blog-link">les meir</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process }-prosess

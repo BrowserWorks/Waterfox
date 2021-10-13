@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -37,7 +37,7 @@
 <!ENTITY block.displaycontent               "Να μην φορτώνονται άλλοι τύποι μεικτού περιεχομένου σε κρυπτογραφημένες σελίδες">
 <!ENTITY block.displaycontent.accesskey     "μ">
 
-<!ENTITY certselect.description             "Αποφασίστε τον τρόπο επιλογής ασφαλούς πιστοποιητικού στο &brandShortName; για παρουσίαση σε ιστοσελίδες που το απαιτούν:">
+<!ENTITY certselect.description             "Αποφασίστε τον τρόπο επιλογής ασφαλούς πιστοποιητικού στο &brandShortName; για παρουσίαση σε ιστοτόπους που το απαιτούν:">
 <!ENTITY certselect.auto                    "Αυτόματη επιλογή">
 <!ENTITY certselect.auto.accesskey          "Α">
 <!ENTITY certselect.ask                     "Ερώτηση κάθε φορά">

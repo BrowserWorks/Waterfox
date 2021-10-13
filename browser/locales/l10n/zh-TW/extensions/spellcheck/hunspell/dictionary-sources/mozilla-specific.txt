@@ -5,12 +5,12 @@ Camino/M
 ChatZilla/M
 Composer/M
 Fennec/M
-Firefox/M
+Waterfox/M
 Flock/M
 Gecko/M
 JavaScript/M
 Lightning/M
-Mozilla/M
+Waterfox/M
 Necko/M
 Netscape/M
 NSPR/M

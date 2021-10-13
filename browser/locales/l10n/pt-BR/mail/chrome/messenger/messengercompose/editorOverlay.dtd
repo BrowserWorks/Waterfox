@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -26,12 +26,12 @@
 <!ENTITY insertTableCmd.label "Tabela…">
 <!ENTITY insertTableCmd.accesskey "T">
 <!ENTITY insertHTMLCmd.label "HTML…">
-<!ENTITY insertHTMLCmd.accesskey "f">
+<!ENTITY insertHTMLCmd.accesskey "H">
 <!ENTITY insertMathCmd.label "Fórmula matemática…">
 <!ENTITY insertMathCmd.accesskey "M">
 <!ENTITY insertCharsCmd.label "Caracteres e símbolos…">
 <!ENTITY insertCharsCmd.accesskey "C">
-<!ENTITY insertBreakAllCmd.label "Quebrar abaixo da(s) imagem(ns)">
+<!ENTITY insertBreakAllCmd.label "Quebra abaixo de imagens">
 <!ENTITY insertBreakAllCmd.accesskey "Q">
 
 <!-- Used just in context popup. -->
@@ -45,9 +45,9 @@
 <!ENTITY fontfaceMenu.label "Fonte">
 <!ENTITY fontfaceMenu.accesskey "F">
 <!ENTITY fontVarWidth.label "Largura variável">
-<!ENTITY fontVarWidth.accesskey "P">
+<!ENTITY fontVarWidth.accesskey "v">
 <!ENTITY fontFixedWidth.label "Largura fixa">
-<!ENTITY fontFixedWidth.accesskey "M">
+<!ENTITY fontFixedWidth.accesskey "f">
 <!ENTITY fontFixedWidth.key "t">
 <!ENTITY fontHelvetica.label "Helvetica, Arial">
 <!ENTITY fontHelvetica.accesskey "H">
@@ -59,7 +59,7 @@
 <!-- Font Size SubMenu -->
 <!ENTITY FontSizeSelect.tooltip "Escolha um tamanho da fonte">
 <!ENTITY decreaseFontSize.label "Menor">
-<!ENTITY decreaseFontSize.accesskey "D">
+<!ENTITY decreaseFontSize.accesskey "n">
 <!ENTITY decrementFontSize.key "&lt;">
 <!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
 <!ENTITY increaseFontSize.label "Maior">
@@ -68,7 +68,7 @@
 <!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
 
 <!ENTITY fontSizeMenu.label "Tamanho">
-<!ENTITY fontSizeMenu.accesskey "x">
+<!ENTITY fontSizeMenu.accesskey "T">
 <!ENTITY size-tinyCmd.label "Minúsculo">
 <!ENTITY size-tinyCmd.accesskey "M">
 <!ENTITY size-smallCmd.label "Pequeno">
@@ -95,13 +95,13 @@
 <!ENTITY styleUnderlineCmd.accesskey "S">
 <!ENTITY styleUnderlineCmd.key "u">
 <!ENTITY styleStrikeThruCmd.label "Riscado">
-<!ENTITY styleStrikeThruCmd.accesskey "T">
+<!ENTITY styleStrikeThruCmd.accesskey "R">
 <!ENTITY styleSuperscriptCmd.label "Sobrescrito">
 <!ENTITY styleSuperscriptCmd.accesskey "o">
 <!ENTITY styleSubscriptCmd.label "Subscrito">
 <!ENTITY styleSubscriptCmd.accesskey "u">
 <!ENTITY styleNonbreakingCmd.label "Sem quebra">
-<!ENTITY styleNonbreakingCmd.accesskey "l">
+<!ENTITY styleNonbreakingCmd.accesskey "b">
 <!ENTITY styleEm.label "Ênfase">
 <!ENTITY styleEm.accesskey "e">
 <!ENTITY styleStrong.label "Ênfase mais forte">
@@ -170,7 +170,7 @@
 <!ENTITY ParagraphSelect.tooltip "Escolher um formato de parágrafo">
 <!-- Shared in Paragraph, and Toolbar menulist -->
 <!ENTITY bodyTextCmd.label "Corpo do texto">
-<!ENTITY bodyTextCmd.accesskey "N">
+<!ENTITY bodyTextCmd.accesskey "C">
 
 <!-- Align menu items -->
 <!ENTITY alignMenu.label "Alinhamento">
@@ -219,21 +219,21 @@
 <!ENTITY tableTable.label "Tabela">
 <!ENTITY tableTable.accesskey "T">
 <!ENTITY tableRow.label "Linha">
-<!ENTITY tableRows.label "Linha(s)">
+<!ENTITY tableRows.label "Linhas">
 <!ENTITY tableRow.accesskey "L">
 <!ENTITY tableRowAbove.label "Linha acima">
 <!ENTITY tableRowAbove.accesskey "L">
 <!ENTITY tableRowBelow.label "Linha abaixo">
-<!ENTITY tableRowBelow.accesskey "e">
+<!ENTITY tableRowBelow.accesskey "b">
 <!ENTITY tableColumn.label "Coluna">
-<!ENTITY tableColumns.label "Coluna(s)">
+<!ENTITY tableColumns.label "Colunas">
 <!ENTITY tableColumn.accesskey "C">
 <!ENTITY tableColumnBefore.label "Coluna antes">
 <!ENTITY tableColumnBefore.accesskey "o">
 <!ENTITY tableColumnAfter.label "Coluna depois">
 <!ENTITY tableColumnAfter.accesskey "o">
 <!ENTITY tableCell.label "Célula">
-<!ENTITY tableCells.label "Célula(s)">
+<!ENTITY tableCells.label "Células">
 <!ENTITY tableCell.accesskey "u">
 <!ENTITY tableCellContents.label "Conteúdos da célula">
 <!ENTITY tableCellContents.accesskey "o">
@@ -261,6 +261,7 @@
 <!ENTITY tableProperties.label "Propriedades da tabela…">
 <!ENTITY tableProperties.accesskey "o">
 
+<!-- Toolbar-only items -->
 <!ENTITY imageToolbarCmd.label "Imagem">
 <!ENTITY imageToolbarCmd.tooltip "Inserir uma nova imagem ou editar as propriedades da imagem selecionada">
 <!ENTITY hruleToolbarCmd.label "Linha H.">

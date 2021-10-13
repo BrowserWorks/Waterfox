@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -215,7 +215,7 @@
 <!ENTITY bodySanitized.accesskey "S">
 <!ENTITY bodyAsPlaintext.label "纯文本">
 <!ENTITY bodyAsPlaintext.accesskey "P">
-<!ENTITY bodyAllParts.label "所有主体部分">
+<!ENTITY bodyAllParts.label "所有正文部分">
 <!ENTITY bodyAllParts.accesskey "A">
 
 <!ENTITY bodyMenuFeed.label "用邮件正文作为">
@@ -368,7 +368,7 @@
 <!ENTITY markAsShowRemoteCmd.label "显示远程内容">
 <!ENTITY markAsShowRemoteCmd.accesskey "e">
 <!ENTITY markAsShowRemoteCmd.key "r">
-<!ENTITY markAsNotPhishCmd.label "标记为非垃圾指令.label">
+<!ENTITY markAsNotPhishCmd.label "为非诈骗邮件">
 <!ENTITY markAsNotPhishCmd.accesskey "S">
 <!ENTITY markAsNotPhishCmd.key "p">
 <!ENTITY openFeedMessage.label "打开收取点消息">
@@ -410,10 +410,10 @@
 <!ENTITY getMsgButton.label "获取邮件">
 <!ENTITY getAllNewMsgCmd.label "获取所有新消息">
 <!ENTITY getAllNewMsgCmd.accesskey "G">
-<!ENTITY newMsgButton.label "编写">
-<!ENTITY newHTMLMessageCmd.label "用HTML编写">
+<!ENTITY newMsgButton.label "撰写">
+<!ENTITY newHTMLMessageCmd.label "用 HTML 撰写">
 <!ENTITY newHTMLMessageCmd.accesskey "H">
-<!ENTITY newPlainTextMessageCmd.label "用普通文本编写">
+<!ENTITY newPlainTextMessageCmd.label "用纯文本撰写">
 <!ENTITY newPlainTextMessageCmd.accesskey "P">
 <!ENTITY replyButton.label "回复">
 <!ENTITY replyAllButton.label "全部回复">

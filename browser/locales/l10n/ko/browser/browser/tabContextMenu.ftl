@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = 탭 북마크
     .accesskey = B
-reopen-in-container =
-    .label = 컨테이너에 다시 열기
-    .accesskey = e
 tab-context-open-in-new-container-tab =
     .label = 새 컨테이너에 열기
     .accesskey = e
@@ -69,25 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = 여러 탭 닫기
     .accesskey = M
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] 닫은 탭 다시 열기
-           *[other] 닫은 탭 다시 열기
-        }
-    .accesskey = U
-close-tab =
-    .label = 탭 닫기
-    .accesskey = c
-close-tabs =
-    .label = 탭 닫기
-    .accesskey = S
-move-tabs =
-    .label = 탭 이동
-    .accesskey = v
-move-tab =
-    .label = 탭 이동
-    .accesskey = v
 tab-context-share-url =
     .label = 공유
     .accesskey = h
@@ -111,6 +89,13 @@ tab-context-close-tabs =
            *[other] 탭 닫기
         }
     .accesskey = C
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] 탭 닫기
+           *[other] 탭 { $tabCount }개 닫기
+        }
+    .accesskey = C
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -118,3 +103,7 @@ tab-context-move-tabs =
            *[other] 탭 이동
         }
     .accesskey = v
+
+tab-context-send-tabs-to-device =
+    .label = 탭 { $tabCount }개를 기기로 보내기
+    .accesskey = n

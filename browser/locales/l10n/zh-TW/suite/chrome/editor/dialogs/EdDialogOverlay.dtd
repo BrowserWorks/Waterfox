@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,8 +13,5 @@
 <!ENTITY makeUrlRelative.accessKey "r">
 <!ENTITY makeUrlRelative.tooltip "相對與絕對路徑的轉換。您要先存檔才能改變此頁。">
 
-<!-- Shared by Link and Image dialogs -->
-<!ENTITY LinkURLEditField.label "輸入網址、本機檔案路徑，或由選單中選取一個錨點或是標題:">
-<!ENTITY LinkURLEditField.accessKey "w">
 <!ENTITY LinkURLEditField2.label "輸入網址、本機檔案路徑，或從右鍵選單中選擇一個錨點或是標題:">
 <!ENTITY LinkURLEditField2.accessKey "w">

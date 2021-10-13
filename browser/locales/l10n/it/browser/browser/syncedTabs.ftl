@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Come fare per visualizzare in questa se
 synced-tabs-sidebar-intro = Visualizza un elenco delle schede aperte in altri dispositivi.
 synced-tabs-sidebar-unverified = L’account non è ancora stato verificato.
 synced-tabs-sidebar-notabs = Nessuna scheda aperta
-synced-tabs-sidebar-openprefs = Apri le impostazioni di { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Apri impostazioni per la sincronizzazione
 synced-tabs-sidebar-tabsnotsyncing = Attiva la sincronizzazione delle schede per visualizzare le schede disponibili negli altri dispositivi.
 synced-tabs-sidebar-connect-another-device = Connetti un altro dispositivo
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Sincronizza adesso
     .accesskey = z
-fxa-sign-in = Accedi a { -sync-brand-short-name }
-turn-on-sync = Attiva { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Accedi per sincronizzare
 synced-tabs-turn-on-sync = Attiva sincronizzazione

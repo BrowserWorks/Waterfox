@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,16 +38,20 @@ menu-quit =
             [windows] خ
            *[other] غ
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = أغلق { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = أغلق { -brand-shorter-name }
+
 menu-about =
     .label = عن { -brand-shorter-name }
     .accesskey = ع
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = ن
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = افتح مكانًا…
 menu-file-open-file =
@@ -110,9 +114,6 @@ menu-file-go-offline =
 menu-edit =
     .label = حرّر
     .accesskey = ح
-menu-edit-find-on =
-    .label = ابحث في هذه الصفحة…
-    .accesskey = ب
 menu-edit-find-in-page =
     .label = ابحث في الصفحة…
     .accesskey = ح
@@ -131,9 +132,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = أشرطة الأدوات
     .accesskey = ش
-menu-view-customize-toolbar =
-    .label = خصّص…
-    .accesskey = ص
 menu-view-customize-toolbar2 =
     .label = خصّص شريط الأدوات…
     .accesskey = خ
@@ -170,9 +168,6 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = طراز صفحة بسيط
     .accesskey = ص
-menu-view-charset =
-    .label = ترميز النص
-    .accesskey = ر
 
 ## These should match what Safari and other Apple applications
 ## use on macOS.
@@ -223,10 +218,8 @@ menu-history-reopen-all-windows = أعِد فتح كل النوافذ
 menu-bookmarks-menu =
     .label = علامات
     .accesskey = ع
-menu-bookmarks-show-all =
-    .label = أظهِر كل العلامات
-menu-bookmark-this-page =
-    .label = علّم هذه الصفحة
+menu-bookmarks-manage =
+    .label = أدِر العلامات
 menu-bookmark-current-tab =
     .label = علّم اللسان الحالي
 menu-bookmark-edit =
@@ -248,21 +241,12 @@ menu-tools =
 menu-tools-downloads =
     .label = التنزيلات
     .accesskey = ز
-menu-tools-addons =
-    .label = الإضافات
-    .accesskey = ض
-menu-tools-fxa-sign-in =
-    .label = لِج إلى { -brand-product-name }…
-    .accesskey = ل
 menu-tools-addons-and-themes =
     .label = الإضافات والسمات
     .accesskey = ض
 menu-tools-fxa-sign-in2 =
     .label = لِج
     .accesskey = ل
-menu-tools-turn-on-sync =
-    .label = فعّل { -sync-brand-short-name }…
-    .accesskey = ف
 menu-tools-turn-on-sync2 =
     .label = فعّل المزامنة…
     .accesskey = ن
@@ -272,9 +256,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = أعِد الاتصال بِ‍ { -brand-product-name }…
     .accesskey = ع
-menu-tools-web-developer =
-    .label = مطوّري الوب
-    .accesskey = و
 menu-tools-browser-tools =
     .label = أدوات المتصفّح
     .accesskey = ص
@@ -293,17 +274,6 @@ menu-settings =
         { PLATFORM() ->
             [windows] ع
            *[other] ع
-        }
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] خيارات
-           *[other] التفضيلات
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] خ
-           *[other] ف
         }
 menu-tools-layout-debugger =
     .label = منقح تخطيط الصفحة
@@ -330,26 +300,9 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = مساعدة
     .accesskey = س
-menu-help-product =
-    .label = مساعدة { -brand-shorter-name }
-    .accesskey = س
-menu-help-show-tour =
-    .label = جولة في { -brand-shorter-name }
-    .accesskey = ل
-menu-help-import-from-another-browser =
-    .label = استورِد من متصفح آخر…
-    .accesskey = س
-menu-help-keyboard-shortcuts =
-    .label = اختصارات لوحة المفاتيح
-    .accesskey = خ
 menu-get-help =
     .label = احصل على مُساعدة
     .accesskey = ح
-menu-help-troubleshooting-info =
-    .label = معلومات مواجهة الأعطال
-    .accesskey = ط
-menu-help-taskmanager =
-    .label = مدير المهام
 menu-help-more-troubleshooting-info =
     .label = معلومات أكثر عن مواجهة الأعطال
     .accesskey = ط
@@ -358,12 +311,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = أرسِل تعليقًا…
     .accesskey = ر
-menu-help-safe-mode-without-addons =
-    .label = أعِد التشغيل مع تعطيل الإضافات…
-    .accesskey = ش
-menu-help-safe-mode-with-addons =
-    .label = أعِد التشغيل مع تفعيل الإضافات
-    .accesskey = ش
 menu-help-enter-troubleshoot-mode2 =
     .label = وضع مواجهة الأعطال
     .accesskey = ه

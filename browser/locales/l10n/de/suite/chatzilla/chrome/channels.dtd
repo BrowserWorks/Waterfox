@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,8 +22,8 @@
 <!ENTITY maxusers.label     "Max. Benutzer:">
 <!ENTITY maxusers.accesskey "x">
 
-<!ENTITY refresh.label     "Aktualisieren">
-<!ENTITY refresh.accesskey "A">
+<!ENTITY refreshNow.label     "Jetzt Aktualisieren">
+<!ENTITY refreshNow.accesskey "A">
 
 <!ENTITY network.hint.label "Geben Sie einen Netzwerk- oder Servernamen (ein Port kann inkludiert werden) und einen Channel zum Betreten an.">
 

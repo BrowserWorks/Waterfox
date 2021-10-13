@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Kvalitetsmåler for adgangskode
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Skift hovedadgangskode
 
 change-device-password-window =
     .title = Skift adgangskode
@@ -20,10 +17,6 @@ change-password-new = Ny adgangskode:
 change-password-reenter = Ny adgangskode (igen):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Nulstil hovedadgangskode
-    .style = width: 40em
 
 pippki-failed-pw-change = Kan ikke ændre adgangskode.
 pippki-incorrect-pw = Du indtastede ikke den nuværende adgangskode. Prøv igen.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Nulstil
-reset-password-text = Hvis du nulstiller din hovedadgangskode, vil alle dine gemte web- og mail-adgangskoder, formulardata, personlige certifikater og private nøgler blive slettet. Er du sikker på, at du vil nulstille din hovedadgangskode?
 
 reset-primary-password-text = Hvis du nulstiller din hovedadgangskode, vil alle dine gemte websteds- og mail-adgangskoder, personlige certifikater og private nøgler blive glemt. Er du sikker på, at du vil nulstille din hovedadgangskode?
 

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,38 +6,52 @@
 <!ENTITY validatePage.accesskey "V">
 <!ENTITY allowRemoteDebugging.label "Permitir depuración remota">
 <!ENTITY allowRemoteDebugging.accesskey "P">
+
 <!ENTITY devToolsCmd.keycode "VK_F12">
 <!ENTITY devToolsCmd.keytext "F12">
+
 <!ENTITY devtoolsConnect.label "Conectar…">
 <!ENTITY devtoolsConnect.accesskey "C">
+
 <!ENTITY browserConsoleCmd.label "Consola del navegador">
 <!ENTITY browserConsoleCmd.commandkey "Ζ">
 <!ENTITY browserConsoleCmd.accesskey "d">
+
 <!ENTITY responsiveDesignTool.label "Vista de diseño adaptable">
 <!ENTITY responsiveDesignTool.accesskey "e">
+
 <!ENTITY eyedropper.label "Recogecolor">
 <!ENTITY eyedropper.accesskey "R">
+
 <!ENTITY scratchpad.label "Borrador">
 <!ENTITY scratchpad.accesskey "B">
 <!ENTITY scratchpad.keycode "VK_F4">
 <!ENTITY scratchpad.keytext "F4">
+
 <!ENTITY browserToolboxMenu.label "Caja de herramientas del navegador">
 <!ENTITY browserToolboxMenu.accesskey "h">
 <!ENTITY browserToolboxCmd.commandkey "I">
+
 <!ENTITY browserContentToolboxMenu.label "Caja de herramientas de contenido del navegador">
 <!ENTITY browserContentToolboxMenu.accesskey "m">
+
 <!ENTITY devToolbarCloseButton.tooltiptext "Cerrar caja de herramientas de desarrollo">
 <!ENTITY devToolbarMenu.label "Barra de herramientas de desarrollador">
 <!ENTITY devToolbarMenu.accesskey "n">
+
 <!ENTITY webide.label "WebIDE">
 <!ENTITY webide.accesskey "W">
 <!ENTITY webide.keycode "VK_F8">
 <!ENTITY webide.keytext "F8">
+
 <!ENTITY devToolbar.keycode "VK_F2">
 <!ENTITY devToolbar.keytext "F2">
+
 <!ENTITY devToolboxMenuItem.label "Alternar herramientas">
 <!ENTITY devToolboxMenuItem.accesskey "A">
 <!ENTITY devToolboxMenuItem.keytext "I">
+
 <!ENTITY devToolbarToolsButton.tooltip "Alternar herramientas de desarrollo">
+
 <!ENTITY getMoreDevtoolsCmd.label "Obtener más herramientas">
 <!ENTITY getMoreDevtoolsCmd.accesskey "O">

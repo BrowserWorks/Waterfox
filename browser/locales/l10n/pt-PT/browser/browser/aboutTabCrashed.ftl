@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,15 +13,10 @@ crashed-multiple-offer-help-message = Escolha { crashed-restore-tab-button } ou 
 crashed-request-help = Poderia ajudar-nos?
 crashed-request-help-message = Os relatórios de falha ajudam-nos a diagnosticar problemas e a tornar o { -brand-short-name } melhor.
 crashed-request-report-title = Relatar este separador
-crashed-send-report = Enviar um relatório de falha automatizado para que possamos reparar problemas como este.
 crashed-send-report-2 = Enviar um relatório de falha automatizado para que possamos corrigir problemas como este
 crashed-comment =
     .placeholder = Comentários opcionais (os comentários são publicamente visíveis)
-crashed-include-URL = Incluir os URLs dos sites em que estava quando o { -brand-short-name } falhou.
 crashed-include-URL-2 = Incluir os endereços dos sites em que estava quando o { -brand-short-name } falhou
-crashed-email-placeholder = Introduza o seu endereço de email aqui
-crashed-email-me = Enviar-me um email quando mais informação estiver disponível
 crashed-report-sent = Relatório de falha já submetido; obrigado por ajudar a tornar o { -brand-short-name } melhor!
 crashed-request-auto-submit-title = Reportar separadores em segundo plano
-crashed-auto-submit-checkbox = Atualizar preferências para submeter relatórios automaticamente quando o { -brand-short-name } falha.
 crashed-auto-submit-checkbox-2 = Atualizar preferências para submeter relatórios automaticamente quando o { -brand-short-name } falha

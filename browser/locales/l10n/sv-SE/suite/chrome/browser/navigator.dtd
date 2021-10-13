@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,10 +57,6 @@
 <!ENTITY goButton.tooltip             "Gå direkt till webbsidan i adressfältet">
 <!ENTITY printButton.label            "Skriv ut">
 <!ENTITY printButton.tooltip          "Skriv ut den här sidan">
-
-<!ENTITY throbber.tooltip             "Gå till &vendorShortName;s webbplats">
-
-<!ENTITY throbber.tooltip2            "Gå till &brandShortName;s webbplats">
 
 <!ENTITY locationBar.tooltip          "Adress- och sökfält">
 <!ENTITY locationBar.accesskey        "d">

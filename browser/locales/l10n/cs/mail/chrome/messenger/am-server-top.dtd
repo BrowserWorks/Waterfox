@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -68,7 +68,7 @@
 <!ENTITY alwaysAuthenticate.accesskey "v">
 <!ENTITY newsrcFilePath1.label "Soubor News.rc:">
 <!ENTITY newsrcPicker1.label "Vyberte soubor News.rc">
-<!ENTITY abbreviate.label "Zobrazit názvy skupin v okně poštovních složek jako:">
+<!ENTITY abbreviate.label "Zobrazit názvy skupin v podokně poštovních složek jako:">
 <!ENTITY abbreviateOn.label "Celá jména (např.: 'netscape.public.mozilla.mail-news')">
 <!ENTITY abbreviateOff.label "Zkracovat jména (např.: 'n.p.m.mail-news')">
 <!ENTITY advancedButton.label "Rozšířené…">

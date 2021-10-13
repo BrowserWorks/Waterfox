@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!-- Title -->
@@ -22,9 +22,9 @@
 <!ENTITY newIM.label                                    "Žinutė">
 <!ENTITY printContactViewCmd.label                      "Spausdinti adresato kortelę…">
 <!ENTITY printContactViewCmd.accesskey                  "S">
+<!ENTITY printContactViewCmd.key                        "P">
 <!ENTITY printPreviewContactViewCmd.label               "Spausdinsimos adresato kortelės peržiūra">
 <!ENTITY printPreviewContactViewCmd.accesskey           "o">
-<!ENTITY printContactViewCmd.key                        "P">
 <!ENTITY printAddressBook.label                         "Spausdinti adresų knygą…"> 
 <!ENTITY printAddressBook.accesskey                     "a"> 
 <!ENTITY printPreviewAddressBook.label                  "Spausdinsimos adresų knygos peržiūra"> 
@@ -92,11 +92,11 @@
 <!ENTITY newmsgButton.tooltip                           "Rašyti laišką"> 
 <!ENTITY newIM.tooltip                                  "Siųsti žinutę arba pradėti pokalbį"> 
 <!ENTITY deleteItemButton.tooltip                       "Pašalinti pažymėtą elementą">
-<!ENTITY throbber.tooltip                               "Atverti &vendorShortName; pradžios tinklalapį">
 <!ENTITY advancedButton.tooltip                         "Papildoma adresų paieška">
 <!-- Dir Tree header -->
 
 <!ENTITY dirTreeHeader.label                            "Adresų knygos">
+
 <!-- Card Summary Pane -->
 <!-- Box Headings -->
 
@@ -114,6 +114,7 @@
 <!-- Status Bar -->  
 
 <!ENTITY statusText.label                               "">
+
 <!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
 <!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
 

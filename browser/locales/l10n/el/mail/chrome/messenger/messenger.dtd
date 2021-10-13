@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -59,7 +59,7 @@
 <!ENTITY getAllNewMsgCmdPopupMenu.accesskey "λ">
 <!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Τον τρέχοντα λογαριασμό">
 <!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "Τ">
-<!ENTITY getNextNMsgCmd2.label "Λήψη νέων μηνυμάτων ειδήσεων">
+<!ENTITY getNextNMsgCmd2.label "Λήψη επόμενων μηνυμάτων συζητήσεων">
 <!ENTITY getNextNMsgCmd2.accesskey "ω">
 <!ENTITY sendUnsentCmd.label "Αποστολή μη απεσταλμένων μηνυμάτων">
 <!ENTITY sendUnsentCmd.accesskey "π">
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Εκτύπωση…">
 <!ENTITY printCmd.accesskey "Ε">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Προεπισκόπηση εκτύπωσης">
-<!ENTITY printPreviewCmd.accesskey "π">
-<!ENTITY printSetupCmd.label "Διαμόρφωση σελίδας…">
-<!ENTITY printSetupCmd.accesskey "μ">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Διαγραφή μηνύματος">
@@ -120,7 +116,7 @@
 <!ENTITY menuFavoriteFolder.accesskey "γ">
 <!ENTITY folderPropsCmd2.label "Ιδιότητες">
 <!ENTITY folderPropsFolderCmd2.label "Ιδιότητες φακέλου">
-<!ENTITY folderPropsNewsgroupCmd2.label "Ιδιότητες ομάδας ειδήσεων">
+<!ENTITY folderPropsNewsgroupCmd2.label "Ιδιότητες ομάδας συζητήσεων">
 <!ENTITY folderPropsCmd.accesskey "δ">
 <!ENTITY undoDeleteMsgCmd.label "Αναίρεση διαγραφής μηνύματος">
 <!ENTITY redoDeleteMsgCmd.label "Επανάληψη διαγραφής μηνύματος">
@@ -170,10 +166,8 @@
 <!ENTITY favoriteFolders.accesskey "γ">
 <!ENTITY recentFolders.label "Πρόσφατοι">
 <!ENTITY recentFolders.accesskey "ρ">
-<!ENTITY compactVersion.label "Συμπτυγμένη όψη">
+<!ENTITY compactVersion.label "Συμπτυγμένη προβολή">
 <!ENTITY compactVersion.accesskey "Σ">
-<!ENTITY folderPaneBar.label "Γραμμή εργαλείων προβολής φακέλων">
-<!ENTITY folderPaneBar.accesskey "φ">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Ταξινόμηση κατά">
@@ -202,8 +196,8 @@
 <!ENTITY sortByFromCmd.accesskey "π">
 <!ENTITY sortByRecipientCmd.label "Παραλήπτη">
 <!ENTITY sortByRecipientCmd.accesskey "ρ">
-<!ENTITY sortByCorrespondentCmd.label "Ανταποκριτές">
-<!ENTITY sortByCorrespondentCmd.accesskey "ν">
+<!ENTITY sortByCorrespondentCmd.label "Επιστολογράφοι">
+<!ENTITY sortByCorrespondentCmd.accesskey "π">
 <!ENTITY sortByUnreadCmd.label "Αναγνωσμένα">
 <!ENTITY sortByUnreadCmd.accesskey "γ">
 <!ENTITY sortByOrderReceivedCmd.label "Κατά σειρά παραλαβής">
@@ -245,18 +239,18 @@
 <!ENTITY headersAllCmd.accesskey "λ">
 <!ENTITY headersNormalCmd.label "Κανονικές">
 <!ENTITY headersNormalCmd.accesskey "ν">
-<!ENTITY bodyMenu.label "Κυρίως κείμενο μηνύματος ως">
-<!ENTITY bodyMenu.accesskey "ρ">
+<!ENTITY bodyMenu.label "Σώμα μηνύματος ως">
+<!ENTITY bodyMenu.accesskey "Σ">
 <!ENTITY bodyAllowHTML.label "Πρωτότυπο HTML">
 <!ENTITY bodyAllowHTML.accesskey "H">
 <!ENTITY bodySanitized.label "Απλό HTML">
 <!ENTITY bodySanitized.accesskey "L">
 <!ENTITY bodyAsPlaintext.label "Απλό κείμενο">
 <!ENTITY bodyAsPlaintext.accesskey "π">
-<!ENTITY bodyAllParts.label "Όλα τα μέρη του κυρίως κειμένου">
+<!ENTITY bodyAllParts.label "Όλα τα μέρη σώματος">
 <!ENTITY bodyAllParts.accesskey "λ">
 
-<!ENTITY bodyMenuFeed.label "Σώμα μηνύματος αρχείου ροής ως">
+<!ENTITY bodyMenuFeed.label "Σώμα μηνύματος ροής ως">
 <!ENTITY bodyMenuFeed.accesskey "η">
 <!ENTITY viewFeedWebPage.label "Ιστοσελίδα">
 <!ENTITY viewFeedWebPage.accesskey "σ">
@@ -265,8 +259,8 @@
 <!ENTITY viewFeedSummaryFeedPropsPref.label "Προεπιλεγμένη μορφή">
 <!ENTITY viewFeedSummaryFeedPropsPref.accesskey "μ">
 
-<!ENTITY viewAttachmentsInlineCmd.label "Εμφάνιση συνημμένων στο κυρίως κείμενο">
-<!ENTITY viewAttachmentsInlineCmd.accesskey "φ">
+<!ENTITY viewAttachmentsInlineCmd.label "Προβολή συνημμένων εντός μηνύματος">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "ν">
 
 <!ENTITY pageSourceCmd.label "Κώδικας μηνύματος">
 <!ENTITY pageSourceCmd.accesskey "κ">
@@ -353,7 +347,7 @@
 <!ENTITY replyMsgCmd.key "r">
 <!ENTITY replySenderCmd.label "Απάντηση μόνο στον αποστολέα">
 <!ENTITY replySenderCmd.accesskey "μ">
-<!ENTITY replyNewsgroupCmd2.label "Απάντηση στην ομάδα συζήτησης">
+<!ENTITY replyNewsgroupCmd2.label "Απάντηση στην ομάδα συζητήσεων">
 <!ENTITY replyNewsgroupCmd2.accesskey "ζ">
 <!ENTITY replyToAllMsgCmd.label "Απάντηση σε όλους">
 <!ENTITY replyToAllMsgCmd.accesskey "λ">
@@ -375,7 +369,7 @@
 <!ENTITY editAsNewMsgCmd.key "e">
 <!ENTITY editDraftMsgCmd.label "Επεξεργασία πρόχειρου μηνύματος">
 <!ENTITY editDraftMsgCmd.accesskey "χ">
-<!ENTITY editTemplateMsgCmd.label "Επεξεργασία πρότυπου">
+<!ENTITY editTemplateMsgCmd.label "Επεξεργασία προτύπου">
 <!ENTITY editTemplateMsgCmd.accesskey "Π">
 <!ENTITY newMsgFromTemplateCmd.label "Νέο μήνυμα από πρότυπο">
 <!ENTITY newMsgFromTemplateCmd.keycode "VK_RETURN"><!-- do not change "VK_RETURN" -->
@@ -435,7 +429,7 @@
 <!ENTITY markAsJunkCmd.label "Ως ανεπιθύμητο">
 <!ENTITY markAsJunkCmd.accesskey "ν">
 <!ENTITY markAsJunkCmd.key "j">
-<!ENTITY markAsNotJunkCmd.label "Ως μη ανεπιθύμητο">
+<!ENTITY markAsNotJunkCmd.label "Ως επιθυμητό">
 <!ENTITY markAsNotJunkCmd.accesskey "θ">
 <!ENTITY markAsNotJunkCmd.key "j">
 <!ENTITY recalculateJunkScoreCmd.label "Έλεγχος για ανεπιθύμητα email">
@@ -463,24 +457,18 @@
 <!-- Tools Menu -->
 <!ENTITY tasksMenu.label "Εργαλεία">
 <!ENTITY tasksMenu.accesskey "γ">
-<!ENTITY messengerCmd.label "Αλληλογραφία &amp; ομάδες συζήτησης">
+<!ENTITY messengerCmd.label "Ταχυδρομείο &amp; ομάδες συζητήσεων">
 <!ENTITY messengerCmd.accesskey "Α">
 <!ENTITY addressBookCmd.label "Ευρετήριο">
 <!ENTITY addressBookCmd.accesskey "ρ">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Πρόσθετα">
-<!ENTITY addons.accesskey "θ">
-<!ENTITY addonPrefs.label "Επιλογές προσθέτου">
-<!ENTITY addonPrefs.accesskey "Ε">
-<!ENTITY addonPrefsUnix.label "Προτιμήσεις προσθέτου">
-<!ENTITY addonPrefsUnix.accesskey "Π">
 <!ENTITY addonNoPrefs.label "Δεν βρέθηκαν ρυθμίσεις προσθέτου.">
 <!ENTITY activitymanager.label "Διαχείριση δραστηριότητας">
 <!ENTITY activitymanager.accesskey "χ">
 <!ENTITY imAccountsStatus.label "Κατάσταση συνομιλίας">
 <!ENTITY imAccountsStatus.accesskey "Κ">
-<!ENTITY imStatus.available          "Διαθέσιμος">
-<!ENTITY imStatus.unavailable        "Μη διαθέσιμος">
+<!ENTITY imStatus.available          "Διαθέσιμος/-η">
+<!ENTITY imStatus.unavailable        "Μη διαθέσιμος/-η">
 <!ENTITY imStatus.offline            "Εκτός σύνδεσης">
 <!ENTITY imStatus.showAccounts       "Εμφάνιση λογαριασμών…">
 <!ENTITY joinChatCmd.label "Συμμετοχή στη συνομιλία…">
@@ -502,7 +490,9 @@
 <!ENTITY deleteJunk.accesskey "ι">
 <!ENTITY importCmd.label "Εισαγωγή…">
 <!ENTITY importCmd.accesskey "γ">
-<!ENTITY clearRecentHistory.label "Εκκαθάριση πρόσφατου ιστορικού…">
+<!ENTITY exportCmd.label "Εξαγωγή…">
+<!ENTITY exportCmd.accesskey "ξ">
+<!ENTITY clearRecentHistory.label "Απαλοιφή πρόσφατου ιστορικού…">
 <!ENTITY clearRecentHistory.accesskey "Ι">
 <!ENTITY accountManagerCmd2.label "Ρυθμίσεις λογαριασμού">
 <!ENTITY accountManagerCmd2.accesskey "θ">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Έλεγχος σφαλμάτων προσθέτων">
 <!ENTITY debugAddonsCmd.accesskey "Α">
-<!ENTITY tabsDebugCmd.label "Έλεγχος σφαλμάτων πλαισίου περιεχομένου">
-<!ENTITY tabsDebugCmd.accesskey "Π">
 <!ENTITY errorConsoleCmd.label "Κονσόλα σφαλμάτων">
 <!ENTITY errorConsoleCmd.accesskey "ν">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Πίσω">
 <!ENTITY goForwardButton1.label "Μπροστά">
 <!ENTITY deleteItem.title "Διαγραφή">
-<!ENTITY deleteButton.label "Διαγραφή">
-<!ENTITY undeleteButton.label "Ακύρωση διαγραφής">
 <!ENTITY markButton.label "Επισήμανση">
 <!ENTITY printButton.label "Εκτύπωση">
 <!ENTITY stopButton.label "Διακοπή">
 <!ENTITY throbberItem.title "Επισήμανση ενέργειας">
 <!ENTITY junkItem.title "Ανεπιθύμητα">
-<!ENTITY junkButton.label "Ανεπιθύμητο">
-<!ENTITY notJunkButton.label "Επιθυμητά">
 <!ENTITY addressBookButton.label "Ευρετήριο">
 <!ENTITY chatButton.label "Συνομιλία">
 <!ENTITY glodaSearch.title "Καθολική αναζήτηση">
@@ -575,7 +559,7 @@
 <!ENTITY replyListButton.tooltip "Απάντηση στη λίστα αλληλογραφίας">
 <!ENTITY forwardButton.tooltip "Προώθηση επιλεγμένου μηνύματος">
 <!ENTITY forwardAsInline.tooltip "Προώθηση επιλεγμένου μηνύματος ως ενσωματωμένου κειμένου">
-<!ENTITY forwardAsAttachment.tooltip "Προώθηση επιλεγμένου μηνύματος ως συνημμένο">
+<!ENTITY forwardAsAttachment.tooltip "Προώθηση επιλεγμένου μηνύματος ως συνημμένου">
 <!ENTITY fileButton.tooltip "Αρχειοθέτηση επιλεγμένου μηνύματος">
 <!ENTITY archiveButton.tooltip "Αρχειοθέτηση επιλεγμένων μηνυμάτων">
 <!ENTITY openMsgConversationButton.tooltip "Εμφάνιση συζήτησης για το επιλεγμένο μήνυμα">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Μετάβαση στο προηγούμενο μήνυμα">
 <!ENTITY goForwardButton.tooltip "Μετάβαση μπροστά ένα μήνυμα">
 <!ENTITY goBackButton.tooltip "Μετάβαση πίσω κατά ένα μήνυμα">
-<!ENTITY deleteButton.tooltip "Διαγραφή επιλεγμένου μηνύματος ή φακέλου">
-<!ENTITY undeleteButton.tooltip "Ακύρωση διαγραφής επιλεγμένου μηνύματος">
 <!ENTITY markButton.tooltip "Επισήμανση μηνυμάτων">
 <!ENTITY printButton.tooltip "Εκτύπωση μηνύματος">
 <!ENTITY stopButton.tooltip "Διακοπή της τρέχουσας μεταφοράς">
-<!ENTITY junkButton.tooltip "Επισήμανση επιλεγμένων μηνυμάτων ως ανεπιθύμητων">
-<!ENTITY notJunkButton.tooltip "Επισήμανση επιλεγμένων μηνυμάτων ως μη ανεπιθύμητων">
 <!ENTITY addressBookButton.tooltip "Μετάβαση στο ευρετήριο διευθύνσεων">
-<!ENTITY chatButton.tooltip 'Εμφάνιση καρτέλας "Συνομιλία"'>
+<!ENTITY chatButton.tooltip "Εμφάνιση καρτέλας «Συνομιλία»">
 <!ENTITY tagButton.tooltip "Ετικέτα σε μηνύματα">
 <!ENTITY compactButton.tooltip "Αφαίρεση διαγραμμένων μηνυμάτων από τον επιλεγμένο φάκελο">
 <!ENTITY appmenuButton1.tooltip "Προβολή του μενού του &brandShortName;">
-<!ENTITY addonsButton.tooltip "Διαχείριση των προσθέτων σας">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Προώθηση ως κείμενο στο σώμα">
@@ -658,7 +637,7 @@
 <!ENTITY folderContextRemove.accesskey "φ">
 <!ENTITY folderContextCompact.label "Σύμπτυξη">
 <!ENTITY folderContextCompact.accesskey "Σ">
-<!ENTITY folderContextEmptyTrash.label "Άδειασμα του κάδου απορριμμάτων">
+<!ENTITY folderContextEmptyTrash.label "Άδειασμα απορριμμάτων">
 <!ENTITY folderContextEmptyTrash.accesskey "μ">
 <!ENTITY folderContextEmptyJunk.label "Διαγραφή ανεπιθύμητων">
 <!ENTITY folderContextEmptyJunk.accesskey "θ">
@@ -763,13 +742,13 @@
 <!ENTITY contextEditMsgAsNew.label "Επεξεργασία ως νέο μήνυμα">
 <!ENTITY contextEditMsgAsNew.accesskey "ω">
 <!ENTITY contextEditDraftMsg.label "Επεξεργασία πρόχειρου μηνύματος">
-<!ENTITY contextEditTemplate.label "Επεξεργασία πρότυπου">
+<!ENTITY contextEditTemplate.label "Επεξεργασία προτύπου">
 <!ENTITY contextEditTemplate.accesskey "Π">
 <!ENTITY contextArchive.label "Αρχειοθέτηση">
 <!ENTITY contextArchive.accesskey "χ">
 <!ENTITY contextReplySender.label "Απάντηση μόνο στον αποστολέα">
 <!ENTITY contextReplySender.accesskey "ο">
-<!ENTITY contextReplyNewsgroup2.label "Απάντηση στην ομάδα συζήτησης">
+<!ENTITY contextReplyNewsgroup2.label "Απάντηση στην ομάδα συζητήσεων">
 <!ENTITY contextReplyNewsgroup2.accesskey "ζ">
 <!ENTITY contextReplyAll.label "Απάντηση σε όλους">
 <!ENTITY contextReplyAll.accesskey "υ">
@@ -848,7 +827,7 @@
      items are "This folder", "B", and "C". This is the equivalent of the
      "File here" option for the move to/copy to widget.
   -->
-<!ENTITY columnPicker.thisFolder.label "Αυτό τον φάκελο">
+<!ENTITY columnPicker.thisFolder.label "Αυτόν τον φάκελο">
 
 <!-- Media (video/audio) controls -->
 <!ENTITY contextPlay.label "Αναπαραγωγή">
@@ -898,7 +877,7 @@
 <!ENTITY EditContact1.accesskey "Ε">
 <!ENTITY ViewContact.label "Προβολή επαφής">
 <!ENTITY ViewContact.accesskey "β">
-<!ENTITY SubscribeToNewsgroup.label "Συνδρομή στην ομάδα συζήτησης">
+<!ENTITY SubscribeToNewsgroup.label "Συνδρομή στην ομάδα συζητήσεων">
 <!ENTITY SubscribeToNewsgroup.accesskey "δ">
 <!ENTITY SendMessageTo.label "Σύνταξη μηνύματος προς">
 <!ENTITY SendMessageTo.accesskey "Σ">
@@ -906,13 +885,13 @@
 <!ENTITY CopyEmailAddress.accesskey "γ">
 <!ENTITY CopyNameAndEmailAddress.label "Αντιγραφή ονόματος και διεύθυνσης email">
 <!ENTITY CopyNameAndEmailAddress.accesskey "ο">
-<!ENTITY CopyNewsgroupName.label "Αντιγραφή ονόματος ομάδας">
+<!ENTITY CopyNewsgroupName.label "Αντιγραφή ονόματος ομάδας συζητήσεων">
 <!ENTITY CopyNewsgroupName.accesskey "γ">
 <!ENTITY CopyNewsgroupURL.label "Αντιγραφή URL ομάδας συζητήσεων">
-<!ENTITY CopyNewsgroupURL.accesskey "Τ">
+<!ENTITY CopyNewsgroupURL.accesskey "U">
 <!ENTITY CreateFilterFrom.label "Δημιουργία φίλτρου από…">
 <!ENTITY CreateFilterFrom.accesskey "φ">
-<!ENTITY reportPhishingURL.label "Αναφορά email απάτης">
+<!ENTITY reportPhishingURL.label "Αναφορά απάτης μέσω email">
 <!ENTITY reportPhishingURL.accesskey "φ">
 
 <!-- Spell checker context menu items -->
@@ -953,19 +932,19 @@
 <!ENTITY preferencesCmdMac.commandkey   ",">
 <!ENTITY preferencesCmdMac.modifiers    "accel">
 <!ENTITY servicesMenuMac.label          "Υπηρεσίες">
-<!ENTITY hideThisAppCmdMac.label        "Απόκρυψη &brandShortName;">
+<!ENTITY hideThisAppCmdMac.label        "Απόκρυψη του &brandShortName;">
 <!ENTITY hideThisAppCmdMac.commandkey   "H">
 <!ENTITY hideThisAppCmdMac.modifiers    "accel">
 <!ENTITY hideOtherAppsCmdMac.label      "Απόκρυψη άλλων">
 <!ENTITY hideOtherAppsCmdMac.commandkey "H">
 <!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
-<!ENTITY showAllAppsCmdMac.label        "Προβολή όλων">
+<!ENTITY showAllAppsCmdMac.label        "Εμφάνιση όλων">
 
 <!-- Mac OS X Dock Icon pop-up menu -->
 <!ENTITY dockOptions.label              "Επιλογές εικονιδίου εφαρμογής…">
 <!ENTITY writeNewMessageDock.label      "Σύνταξη νέου μηνύματος">
-<!ENTITY openAddressBookDock.label      "Άνοιγμα βιβλίου διευθύνσεων">
+<!ENTITY openAddressBookDock.label      "Άνοιγμα ευρετηρίου">
 
 <!-- Content tab Navigation buttons -->
-<!ENTITY browseBackButton.tooltip    "Μετάβαση μια σελίδα πίσω">
-<!ENTITY browseForwardButton.tooltip "Μετάβαση μια σελίδα μπροστά">
+<!ENTITY browseBackButton.tooltip    "Μετάβαση μία σελίδα πίσω">
+<!ENTITY browseForwardButton.tooltip "Μετάβαση μία σελίδα μπροστά">

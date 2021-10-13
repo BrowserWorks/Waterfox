@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "高级">
 
-<!ENTITY systemPref.caption               "系统选项">
-<!ENTITY systemPrefCheck.label            "使用系统设置">
-<!ENTITY systemPrefCheck.accesskey        "U">
-<!ENTITY systemPref.desc                  "使用这个选项，&brandShortName; 从系统中继承首选项。这些系统设置将优先覆盖 &brandShortName; 首选项。 ">
-
 <!ENTITY prefCheckDefault.caption         "系统集成">
 <!ENTITY prefCheckDefaultClient.label     "启动时检查默认应用程序设置">
 <!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY defaultClientFor.description     "将 &brandShortName; 设为下列应用的默认程序：">
+<!ENTITY setDefaultBrowser.label          "浏览器">
+<!ENTITY setDefaultBrowser.accesskey      "B">
+<!ENTITY setDefaultMail.label             "邮件">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "新闻组">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "收取点">
+<!ENTITY setDefaultFeed.accesskey         "F">
+<!ENTITY useInternalSettings.description  "使用 &brandShortName; 邮件 &amp; 新闻组打开此类浏览器链接：">
+<!ENTITY useInternalMail.label            "邮件（mailto:）">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "新闻组（news:、snews:、nntp:）">
+<!ENTITY useInternalNews.accesskey        "e">
 
 <!ENTITY printing.label                   "打印">
 <!ENTITY useNativePrintDialog.label       "使用原生的打印对话框（若支持）">
@@ -31,5 +41,5 @@
 <!ENTITY allowRemoteConnections.accesskey "o">
 <!ENTITY connectionPrompt.label           "连接传入时提示">
 <!ENTITY connectionPrompt.accesskey       "P">
-<!ENTITY remoteDebuggerPort.label         "要连接的端口号:">
+<!ENTITY remoteDebuggerPort.label         "要连接的端口号：">
 <!ENTITY remoteDebuggerPort.accesskey     "n">

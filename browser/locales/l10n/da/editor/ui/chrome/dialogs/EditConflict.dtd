@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY windowTitle.label "Vælg ændringer du vil beholde">
-<!ENTITY conflictWarning.label "Denne side er blevet ændret af et andet program, men du har samtidig ugemte ændringer i Composer.">
-<!ENTITY conflictResolve.label "Vælg hvilke ændringer, der du vil beholde:">
-<!ENTITY keepCurrentPageButton.label "Behold dine ændringer i Composer">
-<!ENTITY useOtherPageButton.label "Udskift dine ændringer med ændringerne fra det andet program">

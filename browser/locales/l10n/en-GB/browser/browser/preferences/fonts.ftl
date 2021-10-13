@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -112,45 +112,6 @@ fonts-allow-own =
 ##
 ## Translate the encoding names as adjectives for an encoding, not as the name
 ## of the language.
-
-fonts-languages-fallback-header = Text Encoding for Legacy Content
-fonts-languages-fallback-desc = This text encoding is used for legacy content that fails to declare its encoding.
-
-fonts-languages-fallback-label = Fallback Text Encoding
-    .accesskey = T
-
-fonts-languages-fallback-name-auto =
-    .label = Default for Current Locale
-fonts-languages-fallback-name-arabic =
-    .label = Arabic
-fonts-languages-fallback-name-baltic =
-    .label = Baltic
-fonts-languages-fallback-name-ceiso =
-    .label = Central European, ISO
-fonts-languages-fallback-name-cewindows =
-    .label = Central European, Microsoft
-fonts-languages-fallback-name-simplified =
-    .label = Chinese, Simplified
-fonts-languages-fallback-name-traditional =
-    .label = Chinese, Traditional
-fonts-languages-fallback-name-cyrillic =
-    .label = Cyrillic
-fonts-languages-fallback-name-greek =
-    .label = Greek
-fonts-languages-fallback-name-hebrew =
-    .label = Hebrew
-fonts-languages-fallback-name-japanese =
-    .label = Japanese
-fonts-languages-fallback-name-korean =
-    .label = Korean
-fonts-languages-fallback-name-thai =
-    .label = Thai
-fonts-languages-fallback-name-turkish =
-    .label = Turkish
-fonts-languages-fallback-name-vietnamese =
-    .label = Vietnamese
-fonts-languages-fallback-name-other =
-    .label = Other (incl. Western European)
 
 # Variables:
 #   $name {string, "Arial"} - Name of the default font

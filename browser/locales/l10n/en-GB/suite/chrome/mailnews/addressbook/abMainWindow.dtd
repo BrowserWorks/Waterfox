@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -98,8 +98,6 @@
 <!ENTITY newIM.tooltip                                  "Send an instant message or chat">
 <!ENTITY printButton.tooltip                            "Print selected item">
 <!ENTITY deleteItemButton.tooltip                       "Delete selected item">
-<!ENTITY throbber.tooltip                               "Go to the &vendorShortName; home page">
-<!ENTITY throbber.tooltip2                              "Go to the &brandShortName; home page">
 <!ENTITY advancedButton.tooltip                         "Advanced address search">
 
 <!-- Dir Tree header -->

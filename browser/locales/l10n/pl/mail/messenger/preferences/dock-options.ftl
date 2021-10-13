@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,8 +6,12 @@ dock-options-window-dialog =
     .title = Opcje ikony aplikacji
     .style = width: 35em;
 
+dock-options-show-badge =
+    .label = Wyświetlanie plakietki na ikonie
+    .accesskey = W
+
 bounce-system-dock-icon =
-    .label = Animowanie ikony aplikacji, gdy przybędzie nowa wiadomość
+    .label = Animowanie ikony aplikacji, gdy nadejdzie nowa wiadomość
     .accesskey = A
 
 dock-icon-legend = Plakietka ikony aplikacji

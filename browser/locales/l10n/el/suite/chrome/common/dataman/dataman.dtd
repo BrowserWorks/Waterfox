@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -25,7 +25,7 @@
 
 <!ENTITY data.search.key "k">
 
-<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY tab.cookies.label "Cookie">
 <!ENTITY tab.permissions.label "Δικαιώματα">
 <!ENTITY tab.preferences.label "Προτιμήσεις">
 <!ENTITY tab.passwords.label "Κωδικοί πρόσβασης">
@@ -36,7 +36,7 @@
 <!-- cookies -->
 <!ENTITY cookies.description "Αυτός ο τομέας έχει αποθηκεύσει τα εξής cookies στον υπολογιστή σας:">
 
-<!ENTITY cookies.tree.host.label "Ιστοσελίδα">
+<!ENTITY cookies.tree.host.label "Ιστότοπος">
 <!ENTITY cookies.tree.name.label "Όνομα cookie">
 <!ENTITY cookies.tree.expires.label "Λήξη">
 
@@ -63,7 +63,7 @@
 
 <!-- permissions -->
 <!ENTITY perm.UseDefault "Χρήση προεπιλογής">
-<!ENTITY perm.AskAlways "Πάντα ερώτηση">
+<!ENTITY perm.AskAlways "Ερώτηση πάντα">
 <!ENTITY perm.NeverSave "Ποτέ αποθήκευση">
 <!ENTITY perm.Allow "Αποδοχή">
 <!ENTITY perm.AllowSameDomain "Αποδοχή για τον ίδιο τομέα">
@@ -77,7 +77,7 @@
 <!-- preferences -->
 <!ENTITY prefs.description "Οι προτιμήσεις περιεχομένου είναι ένας τρόπος για να αποθηκεύει το &brandShortName; τις ρυθμίσεις του, όπως επίπεδα ζουμ, συγκεκριμένα για κάθε ιστοσελίδα.">
 
-<!ENTITY prefs.tree.host.label "Ιστοσελίδα">
+<!ENTITY prefs.tree.host.label "Ιστότοπος">
 <!ENTITY prefs.tree.name.label "Όνομα προτίμησης">
 <!ENTITY prefs.tree.value.label "Τιμή">
 
@@ -92,7 +92,7 @@
 <!-- passwords -->
 <!ENTITY pwd.description "Έχετε αποθηκεύσει τους παρακάτω κωδικούς πρόσβασης για τον τομέα:">
 
-<!ENTITY pwd.tree.host.label "Ιστοσελίδα">
+<!ENTITY pwd.tree.host.label "Ιστότοπος">
 <!ENTITY pwd.tree.username.label "Όνομα χρήστη">
 <!ENTITY pwd.tree.password.label "Κωδικός πρόσβασης">
 
@@ -109,7 +109,7 @@
 <!-- storage -->
 <!ENTITY storage.description "Ο τομέας χρησιμοποιεί τα εξής δεδομένα αποθήκευση ιστού στον υπολογιστή σας:">
 
-<!ENTITY storage.tree.host.label "Ιστοσελίδα">
+<!ENTITY storage.tree.host.label "Ιστότοπος">
 <!ENTITY storage.tree.type.label "Τύπος">
 <!ENTITY storage.tree.size.label "Μέγεθος">
 
@@ -139,7 +139,7 @@
 <!ENTITY fdata.button.remove.accesskey "Α">
 
 <!-- forget -->
-<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY forget.cookies.label "Cookie">
 <!ENTITY forget.cookies.accesskey "C">
 <!ENTITY forget.permissions.label "Δικαιώματα">
 <!ENTITY forget.permissions.accesskey "Δ">

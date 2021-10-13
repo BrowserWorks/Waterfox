@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Norite čia matyti savo korteles iš ki
 synced-tabs-sidebar-intro = Peržiūrėkite kituose įrenginiuose esančias korteles.
 synced-tabs-sidebar-unverified = Jūsų paskyra turi būti patvirtinta.
 synced-tabs-sidebar-notabs = Nėra atvirų kortelių
-synced-tabs-sidebar-openprefs = Atverti „{ -sync-brand-short-name }“ nuostatas
 synced-tabs-sidebar-open-settings = Atverti sinchronizavimo nuostatas
 synced-tabs-sidebar-tabsnotsyncing = Įjunkite kortelių sinchronizavimą, norėdami peržiūrėti kituose įrenginiuose esančias korteles.
 synced-tabs-sidebar-connect-another-device = Susieti kitą įrenginį
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Sinchronizuoti dabar
     .accesskey = S
-fxa-sign-in = Jungtis prie „{ -sync-brand-short-name }“
-turn-on-sync = Įjungti „{ -sync-brand-short-name }“
 synced-tabs-fxa-sign-in = Prisijungti sinchronizavimui
 synced-tabs-turn-on-sync = Įjungti sinchronizavimą

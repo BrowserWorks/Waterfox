@@ -1,8 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY window.title "Rejoindre un salon">
+<!ENTITY window.title  "Rejoindre un salon">
 
 <!ENTITY network.label     "Réseau :">
 <!ENTITY network.accesskey "R">
@@ -10,24 +10,24 @@
 <!ENTITY channel.label     "Salon :">
 <!ENTITY channel.accesskey "S">
 
-<!ENTITY topics.label "Rechercher dans les sujets et dans les noms de salons">
+<!ENTITY topics.label     "Rechercher dans les sujets et dans les noms de salons">
 <!ENTITY topics.accesskey "t">
 
-<!ENTITY join.label "Rejoindre">
+<!ENTITY join.label     "Rejoindre">
 <!ENTITY join.accesskey "j">
 
-<!ENTITY minusers.label "Min de présents :">
+<!ENTITY minusers.label     "Min de présents :">
 <!ENTITY minusers.accesskey "n">
 
-<!ENTITY maxusers.label "Max de présents :">
+<!ENTITY maxusers.label     "Max de présents :">
 <!ENTITY maxusers.accesskey "x">
 
-<!ENTITY refresh.label "Actualiser">
-<!ENTITY refresh.accesskey "">
+<!ENTITY refreshNow.label     "Actualiser">
+<!ENTITY refreshNow.accesskey "A">
 
 <!ENTITY network.hint.label "Saisir n’importe quel nom de réseau ou de serveur (vous pouvez inclure un port) et un salon à rejoindre.">
 
 <!ENTITY col.network "Réseau">
-<!ENTITY col.name "Nom">
+<!ENTITY col.name  "Nom">
 <!ENTITY col.users "Présents">
 <!ENTITY col.topic "Sujet">

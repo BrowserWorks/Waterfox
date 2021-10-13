@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Indicador de qualidade da palavra-passe
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Alterar palavra-passe mestra
 
 change-device-password-window =
     .title = Alterar palavra-passe
@@ -20,10 +17,6 @@ change-password-new = Nova palavra-passe:
 change-password-reenter = Nova palavra-passe (novamente):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Repor palavra-passe mestra
-    .style = width: 40em
 
 pippki-failed-pw-change = Não foi possível alterar a palavra-passe.
 pippki-incorrect-pw = A palavra-passe que digitou não corresponde à palavra-passe principal atual. Por favor, tente novamente.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Repor
-reset-password-text = Se remover a palavra-passe mestra, todas as suas palavras-passe da Internet e e-mail, dados de formulários, certificados pessoais e chaves privadas guardadas serão esquecidas. Tem a certeza que pretende repor a palavra-passe mestra?
 
 reset-primary-password-text = Se remover a sua palavra-passe principal, todas as suas palavras-passe da Internet e e-mail, certificados pessoais e chaves privadas guardadas serão esquecidas. Tem a certeza de que pretende repor a sua palavra-passe principal?
 

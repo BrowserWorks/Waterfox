@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.cookies.title             "Cookies">
+
 <!-- cookies -->
 
 
@@ -31,11 +32,6 @@
 <!ENTITY acceptforNDays.label           "Aceitar cookies por">
 <!ENTITY acceptforNDays.accesskey       "p">
 <!ENTITY days.label                     "dias">
-
-<!ENTITY warnAboutCookies.label         "Perguntar antes de aceitar um cookie">
-<!ENTITY warnAboutCookies.accesskey     "c">
-<!ENTITY forCurrentSession.label        "exceto para cookies de sessão">
-<!ENTITY forCurrentSession.accesskey    "x">
 
 <!ENTITY manageCookies.label            "Gerenciar cookies e sites">
 <!ENTITY manageCookiesDescription.label "Permite visualizar e gerenciar os cookies armazenados e aceitar ou recusar cookies de sites específicos. As configurações para sites específicos sobrepõem as configurações acima.">

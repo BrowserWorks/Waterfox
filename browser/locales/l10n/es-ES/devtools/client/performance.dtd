@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,7 +13,7 @@
 
 <!ENTITY performanceUI.bufferStatusTooltip "El analizador guarda muestras en un buffer circular, y una vez que el buffer alcanza su límite de registro, las muestras nuevas comienzan a sobrescribir las del principio de la grabación.">
 
-<!ENTITY performanceUI.disabledRealTime.disabledE10S "Active Firefox multiproceso en las preferencias para mostrar los datos registrados en tiempo real.">
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Active Waterfox multiproceso en las preferencias para mostrar los datos registrados en tiempo real.">
 
 <!ENTITY performanceUI.bufferStatusFull "El buffer está lleno. Las muestras más antiguas están siendo sobrescritas.">
 

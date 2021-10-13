@@ -1,10 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = حقوقك
 rights-intro = { -brand-full-name } برنامج حرّ مفتوح المصدر، اشترك في بنائه الآلاف من أنحاء العالم. هناك بضعة أمور ينبغي أن تعلمها:
-rights-intro-point-1 = يُتاح لك { -brand-short-name } وفق بنود <a data-l10n-name="mozilla-public-license-link">رخصة Mozilla العامة</a>. يعني هذا أنك تستطيع استخدام { -brand-short-name } ونسخه وتوزيعه إلى الآخرين.  تستطيع أيضًا تعديل كود { -brand-short-name } المصدري كما تشاء لموافقة احتياجاتك. كما تعطيك رخصة موزيلا العامة الحق في توزيع نسخك المعدلة.
+rights-intro-point-1 = يُتاح لك { -brand-short-name } وفق بنود <a data-l10n-name="mozilla-public-license-link">رخصة Waterfox العامة</a>. يعني هذا أنك تستطيع استخدام { -brand-short-name } ونسخه وتوزيعه إلى الآخرين.  تستطيع أيضًا تعديل كود { -brand-short-name } المصدري كما تشاء لموافقة احتياجاتك. كما تعطيك رخصة موزيلا العامة الحق في توزيع نسخك المعدلة.
 rights-intro-point-3 = بعض مزايا { -brand-short-name }، مثل مبلّغ الانهيارات، تتيح إرسال تعليقاتك إلى { -vendor-short-name }. باختيارك إرسال تعليق فأنت تعطي { -vendor-short-name } الإذن باستخدامه لتحسين منتجاتها، ونشره على مواقعها، وتوزيعه.
 rights-intro-point-4 = كيفية استخدامنا لمعلوماتك الشخصية والتعليقات التي ترسلها إلى { -vendor-short-name } عبر { -brand-short-name } مشروحة في <a data-l10n-name="mozilla-privacy-policy-link">سياسة خصوصية { -brand-short-name }</a>.
 rights-intro-point-5 = بعض مزايا { -brand-short-name } تستفيد من خدمات للمعلومات في الوب، ولكننا لا نضمن دقتها التامة أو خلوها من الأخطاء. يمكن الاطلاع على مزيد من التفاصيل، بما فيها كيفية تعطيل المزايا التي تستخدم هذه الخدمات، في <a data-l10n-name="mozilla-service-terms-link">بنود الخدمة</a>.

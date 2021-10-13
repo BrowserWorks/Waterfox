@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,7 +57,7 @@
 <!ENTITY calendar.unifinder.close.tooltip                  "Κλείσιμο αναζήτησης και λίστας εκδηλώσεων">
 
 <!ENTITY calendar.today.button.tooltip          "Μετάβαση στη σημερινή ημέρα" >
-<!ENTITY calendar.todaypane.button.tooltip      "Εμφάνιση παραθύρου σημερινής ημέρας" >
+<!ENTITY calendar.todaypane.button.tooltip      "Εμφάνιση προβολής «Σήμερα»" >
 
 <!ENTITY calendar.day.button.tooltip            "Εναλλαγή σε ημερήσια προβολή" >
 <!ENTITY calendar.week.button.tooltip           "Εναλλαγή σε εβδομαδιαία προβολή" >
@@ -86,8 +86,6 @@
 
 <!ENTITY calendar.newevent.button.label         "Νέα εκδήλωση" >
 <!ENTITY calendar.newtask.button.label          "Νέα εργασία" >
-<!ENTITY calendar.print.button.label            "Εκτύπωση" >
-<!ENTITY calendar.print.button.accesskey        "π">
 
 <!ENTITY calendar.day.button.label              "Ημέρα" >
 <!ENTITY calendar.week.button.label             "Εβδομάδα" >
@@ -343,7 +341,7 @@
      This string is not seen in the UI, it is read by screen readers when the
      user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
      dialog. -->
-<!ENTITY calendar.alarm.snooze.cancel               "Ακύρωση αναστολής υπενθύμισης">
+<!ENTITY calendar.alarm.snooze.cancel               "Ακύρωση αναβολής">
 
 <!-- Calendar Server Dialog -->
 <!ENTITY calendar.server.dialog.title.edit          "Επεξεργασία ημερολογίου">
@@ -356,7 +354,7 @@
 <!ENTITY calendarproperties.format.label                   "Μορφή:">
 <!ENTITY calendarproperties.location.label                 "Τοποθεσία:">
 <!ENTITY calendarproperties.refreshInterval.label          "Ανανέωση ημερολογίου:">
-<!ENTITY calendarproperties.refreshInterval.manual.label   "Με μη αυτόματο τρόπο">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "Χειροκίνητα">
 <!ENTITY calendarproperties.name.label                     "Όνομα:">
 <!ENTITY calendarproperties.readonly.label                 "Μόνο για ανάγνωση">
 <!ENTITY calendarproperties.firealarms.label               "Εμφάνιση υπενθυμίσεων">
@@ -376,23 +374,6 @@
 
 <!-- Select Calendar Dialog -->
 <!ENTITY calendar.select.dialog.title    "Επιλογή ημερολογίου">
-
-<!-- Calendar Printing -->
-<!ENTITY calendar.print.window.title "Εκτύπωση κάποιου ημερολογίου">
-<!ENTITY calendar.print.title.label "Τίτλος:">
-<!ENTITY calendar.print.layout.label "Διάταξη:">
-<!ENTITY calendar.print.range.label "Τι να εκτυπωθεί">
-<!ENTITY calendar.print.currentView2.label "Τρέχουσα προβολή">
-<!ENTITY calendar.print.selectedEventsAndTasks.label "Επιλεγμένες εκδηλώσεις/εργασίες">
-<!ENTITY calendar.print.tasks.label "Εργασίες">
-<!ENTITY calendar.print.events.label "Εκδηλώσεις">
-<!ENTITY calendar.print.custom.label "Προσαρμοσμένο εύρος ημερομηνιών:">
-<!ENTITY calendar.print.from.label "Από:">
-<!ENTITY calendar.print.to.label "Έως:">
-<!ENTITY calendar.print.settingsGroup.label "Ρυθμίσεις εκτύπωσης">
-<!ENTITY calendar.print.optionsGroup.label "Επιλογές">
-<!ENTITY calendar.print.taskswithnoduedate.label "Εργασίες χωρίς προθεσμία">
-<!ENTITY calendar.print.completedtasks.label "Ολοκληρωμένες εργασίες">
 
 <!-- Error reporting -->
 <!ENTITY calendar.error.detail "Λεπτομέρειες…">

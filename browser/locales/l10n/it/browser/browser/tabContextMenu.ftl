@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -47,9 +47,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Aggiungi scheda ai segnalibri…
     .accesskey = A
-reopen-in-container =
-    .label = Riapri in contenitore
-    .accesskey = e
 tab-context-open-in-new-container-tab =
     .label = Apri in nuova scheda contenitore
     .accesskey = e
@@ -73,13 +70,7 @@ tab-context-share-more =
 
 ## Variables:
 ##  $tabCount (Number): the number of tabs that are affected by the action.
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Riapri scheda chiusa
-           *[other] Riapri schede chiuse
-        }
-    .accesskey = s
+
 tab-context-reopen-closed-tabs =
     .label =
         { $tabCount ->
@@ -87,23 +78,18 @@ tab-context-reopen-closed-tabs =
            *[other] Riapri schede chiuse
         }
     .accesskey = s
-close-tab =
-    .label = Chiudi scheda
-    .accesskey = C
-close-tabs =
-    .label = Chiudi schede
-    .accesskey = C
-move-tabs =
-    .label = Sposta schede
-    .accesskey = S
-move-tab =
-    .label = Sposta scheda
-    .accesskey = S
 tab-context-close-tabs =
     .label =
         { $tabCount ->
             [1] Chiudi scheda
            *[other] Chiudi schede
+        }
+    .accesskey = C
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Chiudi scheda
+           *[other] Chiudi { $tabCount } schede
         }
     .accesskey = C
 tab-context-move-tabs =
@@ -113,3 +99,11 @@ tab-context-move-tabs =
            *[other] Sposta schede
         }
     .accesskey = S
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [1] Invia scheda a dispositivo
+           *[other] Invia { $tabCount } schede a dispositivo
+        }
+    .accesskey = n

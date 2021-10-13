@@ -1,9 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY prefWindow.size "width: 137ch; height: 43em;">
-<!ENTITY urlbar.label "Ctrl+Enter en la barra de direcciones">
-<!ENTITY urlbar.accesskey "L">
-<!ENTITY middleClick.label "Clic con el botón central, Ctrl+clic o Ctrl+Enter en enlaces en una página web">
-<!ENTITY middleClick.accesskey "e">

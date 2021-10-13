@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Miernik jakości hasła
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Zmień hasło główne
 
 change-device-password-window =
     .title = Zmień hasło
@@ -20,10 +17,6 @@ change-password-new = Nowe hasło:
 change-password-reenter = Nowe hasło (ponownie):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Zresetuj hasło główne
-    .style = width: 40em
 
 pippki-failed-pw-change = Nie można zmienić hasła.
 pippki-incorrect-pw = Nie podano właściwego hasła. Proszę spróbować ponownie.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Zresetuj
-reset-password-text = Po zresetowaniu hasła głównego wszystkie przechowywane dane formularzy, hasła internetowe oraz hasła serwerów pocztowych, certyfikaty osobiste oraz prywatne klucze zostaną usunięte. Czy na pewno zresetować hasło główne?
 
 reset-primary-password-text = Po zresetowaniu hasła głównego wszystkie przechowywane hasła internetowe i hasła serwerów pocztowych, certyfikaty osobiste oraz prywatne klucze zostaną usunięte. Czy na pewno zresetować hasło główne?
 

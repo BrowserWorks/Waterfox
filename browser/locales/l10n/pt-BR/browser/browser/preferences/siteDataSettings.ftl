@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,7 @@
 
 site-data-settings-window =
     .title = Gerenciar cookies e dados de sites
-site-data-settings-description = Os seguintes sites armazenam cookies e dados de site no seu computador. O { -brand-short-name } mantém dados de sites com armazenamento persistente até você excluí-los, e apaga dados de sites com armazenamento não persistente à medida que necessita de espaço.
+site-data-settings-description = Os seguintes sites armazenam cookies e dados no seu computador. O { -brand-short-name } mantém dados de sites com armazenamento persistente até você excluir e apaga dados de sites com armazenamento não persistente à medida que necessita de espaço.
 site-data-search-textbox =
     .placeholder = Pesquisar sites
     .accesskey = P
@@ -24,12 +24,6 @@ site-data-local-file-host = (arquivo local)
 site-data-remove-selected =
     .label = Remover selecionados
     .accesskey = r
-site-data-button-cancel =
-    .label = Cancelar
-    .accesskey = C
-site-data-button-save =
-    .label = Salvar alterações
-    .accesskey = a
 site-data-settings-dialog =
     .buttonlabelaccept = Salvar alterações
     .buttonaccesskeyaccept = a
@@ -54,4 +48,7 @@ site-data-removing-dialog =
     .buttonlabelaccept = Remover
 site-data-removing-header = Remoção de cookies e dados de sites
 site-data-removing-desc = Remover cookies e dados de sites pode desconectar você de contas de sites. Tem certeza que quer fazer as alterações?
+# Variables:
+#   $baseDomain (String) - The single domain for which data is being removed
+site-data-removing-single-desc = Remover cookies e dados de sites pode encerrar sessões de acesso. Tem certeza que quer remover cookies e dados de sites do domínio <strong>{ $baseDomain }</strong>?
 site-data-removing-table = Os cookies e dados dos seguintes sites serão removidos

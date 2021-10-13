@@ -1,7 +1,0 @@
-<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  settingsChangePreferences.label  "&brandShortName;의 설정 내 애플리케이션 탭 항목을 변경하면 됩니다.">
-<!ENTITY  settingsChangeOptions.label      "&brandShortName;의 설정 내 애플리케이션 탭 항목을 변경하면 됩니다.">

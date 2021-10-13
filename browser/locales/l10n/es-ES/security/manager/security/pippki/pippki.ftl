@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Medidor de calidad de la contraseña
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Cambiar contraseña maestra
 
 change-device-password-window =
     .title = Cambiar contraseña
@@ -20,10 +17,6 @@ change-password-new = Nueva contraseña:
 change-password-reenter = Nueva contraseña (confirmar):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Restablecer la contraseña maestra
-    .style = width: 40em
 
 pippki-failed-pw-change = No se puede cambiar la contraseña.
 pippki-incorrect-pw = No ha introducido la actual contraseña maestra correctamente. Vuelva a intentarlo.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Restablecer
-reset-password-text = Si restablece su contraseña maestra, todas las contraseñas web y de correo electrónico almacenados, los datos de los formularios, certificados personales y claves privadas serán olvidados. ¿Seguro que quiere restablecer su contraseña maestra?
 
 reset-primary-password-text = Si restablece su contraseña maestra, se olvidarán todas las contraseñas de webs, correo electrónico, certificados personales y llaves privadas almacenadas. ¿Está seguro de que quiere restablecer su contraseña maestra?
 

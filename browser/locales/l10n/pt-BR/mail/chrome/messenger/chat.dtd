@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,7 +8,7 @@
 <!ENTITY searchResultConversation.label "Resultado da pesquisa">
 <!ENTITY chat.noConv.title             "As conversas serão exibidas aqui">
 <!ENTITY chat.noConv.description       "Use a lista de contatos do painel esquerdo para iniciar uma conversa.">
-<!ENTITY chat.noPreviousConv.description       "O &brandShortName; no momento não possui nenhuma conversa anterior armazenada para este contato.">
+<!ENTITY chat.noPreviousConv.description       "O &brandShortName; no momento não tem nenhuma conversa anterior armazenada deste contato.">
 <!ENTITY chat.noAccount.title             "Você ainda não configurou uma conta de conversa.">
 <!ENTITY chat.noAccount.description       "Deixe o &brandShortName; guiar você pelo processo de configuração da sua conta de conversa.">
 <!ENTITY chat.accountWizard.button       "Começar">

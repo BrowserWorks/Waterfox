@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS : Masonry Layout
 experimental-features-css-masonry-description = Active la prise en charge de la fonctionnalité expérimentale CSS Masonry Layout. Consultez <a data-l10n-name="explainer">cette explication</a> pour une description de haut niveau de la fonctionnalité. Pour soumettre vos commentaires, veuillez commenter dans <a data-l10n-name="w3c-issue">cette issue sur GitHub</a> ou <a data-l10n-name="bug">ce bug</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS : Cascade Layers
+experimental-features-css-cascade-layers-description = Active la prise en charge des couches CSS en cascade (cascade layers). Voir la <a data-l10n-name="spec">spécification en cours de création</a> pour plus de détails. Signalez tout problème en créant un bug bloquant le <a data-l10n-name="bugzilla">bug 1699215</a> s’il est lié à cette fonctionnalité.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission (isolement des sites) est un
 experimental-features-multi-pip =
     .label = Prise en charge de plusieurs incrustations vidéo
 experimental-features-multi-pip-description = Prise en charge expérimentale de l’ouverture simultanée de plusieurs incrustations vidéo.
-experimental-features-http3 =
-    .label = Protocole HTTP/3
-experimental-features-http3-description = Prise en charge expérimentale du protocole HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Barre d’adresse : afficher les résultats pendant la composition IME

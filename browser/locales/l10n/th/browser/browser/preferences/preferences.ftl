@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,26 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = เฉพาะเมื่อ { -brand-short-name } ถูกตั้งให้ปิดกั้นตัวติดตามที่รู้จัก
 do-not-track-option-always =
     .label = เสมอ
-pref-page-title =
-    { PLATFORM() ->
-        [windows] ตัวเลือก
-       *[other] ค่ากำหนด
-    }
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] ค้นหาในตัวเลือก
-           *[other] ค้นหาในค่ากำหนด
-        }
 settings-page-title = การตั้งค่า
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -55,9 +35,6 @@ category-search =
 pane-privacy-title = ความเป็นส่วนตัวและความปลอดภัย
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 pane-sync-title3 = การซิงค์
 category-sync3 =
     .tooltiptext = { pane-sync-title3 }
@@ -96,21 +73,12 @@ restart-later = เริ่มการทำงานใหม่ในภา�
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = ส่วนขยาย <img data-l10n-name="icon"/> { $name } กำลังควบคุมหน้าแรกของคุณ
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = ส่วนขยาย <img data-l10n-name="icon"/> { $name } กำลังควบคุมหน้าแท็บใหม่ของคุณ
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = ส่วนเสริม <img data-l10n-name="icon"/>{ $name } กำลังควบคุมการตั้งค่านี้
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = ส่วนขยาย <img data-l10n-name="icon"/> { $name } กำลังควบคุมการตั้งค่านี้
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = ส่วนขยาย <img data-l10n-name="icon"/> { $name } ได้ตั้งเครื่องมือค้นหาเริ่มต้นของคุณ
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
 extension-controlled-privacy-containers = ส่วนขยาย <img data-l10n-name="icon"/> { $name } ต้องการแท็บแยกข้อมูล
@@ -131,25 +99,12 @@ extension-controlled-enable = เพื่อเปิดใช้งานส�
 
 search-results-header = ผลการค้นหา
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] ขออภัย! ไม่มีผลลัพธ์สำหรับ “<span data-l10n-name="query"></span>” ในตัวเลือก
-       *[other] ขออภัย! ไม่มีผลลัพธ์สำหรับ “<span data-l10n-name="query"></span>” ในค่ากำหนด
-    }
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
 search-results-empty-message2 = ขออภัย! ไม่มีผลลัพธ์สำหรับ “<span data-l10n-name="query"></span>” ในการตั้งค่า
 search-results-help-link = ต้องการความช่วยเหลือ? เยี่ยมชม <a data-l10n-name="url">การสนับสนุนของ { -brand-short-name }</a>
 
 ## General Section
 
 startup-header = เริ่มการทำงาน
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = อนุญาตให้ { -brand-short-name } และ Firefox ทำงานพร้อมกัน
-use-firefox-sync = เคล็ดลับ: สิ่งนี้ใช้โปรไฟล์แยก ใช้ { -sync-brand-short-name } เพื่อแบ่งปันข้อมูลระหว่างโปรไฟล์
-get-started-not-logged-in = ลงชื่อเข้า { -sync-brand-short-name }…
-get-started-configured = เปิดค่ากำหนด { -sync-brand-short-name }
 always-check-default =
     .label = ตรวจสอบเสมอว่า { -brand-short-name } เป็นเบราว์เซอร์เริ่มต้นของคุณหรือไม่
     .accesskey = ต
@@ -161,6 +116,9 @@ set-as-my-default-browser =
 startup-restore-previous-session =
     .label = เรียกคืนวาระก่อนหน้า
     .accesskey = ร
+startup-restore-windows-and-tabs =
+    .label = เปิดหน้าต่างและแท็บก่อนหน้า
+    .accesskey = ก
 startup-restore-warn-on-quit =
     .label = เตือนคุณเมื่อออกจากเบราว์เซอร์
 disable-extension =
@@ -175,12 +133,20 @@ open-new-link-as-tabs =
 warn-on-close-multiple-tabs =
     .label = เตือนคุณเมื่อกำลังจะปิดหลายแท็บ
     .accesskey = ต
+confirm-on-close-multiple-tabs =
+    .label = ยืนยันก่อนปิดหลายแท็บ
+    .accesskey = ย
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = ยืนยันก่อนออกด้วย { $quitKey }
+    .accesskey = อ
 warn-on-open-many-tabs =
     .label = เตือนคุณเมื่อการเปิดหลายแท็บอาจทำให้ { -brand-short-name } ช้าลง
     .accesskey = อ
-switch-links-to-new-tabs =
-    .label = เมื่อคุณเปิดลิงก์ในแท็บใหม่ สลับไปที่แท็บนั้นทันที
-    .accesskey = ม
 switch-to-new-tabs =
     .label = เมื่อคุณเปิดลิงก์ รูปภาพ หรือสื่อในแท็บใหม่ สลับไปที่แท็บนั้นทันที
     .accesskey = h
@@ -242,6 +208,7 @@ confirm-browser-language-change-button = นำไปใช้แล้วเร
 translate-web-pages =
     .label = แปลเนื้อหาเว็บ
     .accesskey = ป
+fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
 translate-attribution = แปลโดย <img data-l10n-name="logo"/>
@@ -314,10 +281,6 @@ applications-manage-app =
     .label = รายละเอียดแอปพลิเคชัน…
 applications-always-ask =
     .label = ถามเสมอ
-applications-type-pdf = Portable Document Format (PDF)
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
 #   $type (String) - the MIME type (e.g application/binary)
@@ -384,15 +347,6 @@ update-application-warning-cross-user-setting = การตั้งค่า�
 update-application-use-service =
     .label = ใช้บริการเบื้องหลังเพื่อติดตั้งการอัปเดต
     .accesskey = ช
-update-setting-write-failure-title = เกิดข้อผิดพลาดในการบันทึกค่ากำหนดการอัปเดต
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    { -brand-short-name } พบข้อผิดพลาดและไม่ได้บันทึกการเปลี่ยนแปลงนี้ โปรดทราบว่าการตั้งค่าค่ากำหนดการอัปเดตนี้จำเป็นต้องได้รับสิทธิอนุญาตให้เขียนไปยังไฟล์ด้านล่าง คุณหรือผู้ดูแลระบบอาจสามารถแก้ไขข้อผิดพลาดได้ด้วยการมอบสิทธิ์ให้กับกลุ่มผู้ใช้เพื่อให้สามารถควบคุมไฟล์นี้ได้อย่างเต็มที่
-    
-    ไม่สามารถเขียนไปยังไฟล์: { $path }
 update-setting-write-failure-title2 = เกิดข้อผิดพลาดในการบันทึกการตั้งค่าการอัปเดต
 # Variables:
 #   $path (String) - Path to the configuration file
@@ -487,7 +441,7 @@ home-restore-defaults =
 # "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = หน้าแรก Firefox (ค่าเริ่มต้น)
+    .label = หน้าแรก Waterfox (ค่าเริ่มต้น)
 home-mode-choice-custom =
     .label = URL ที่กำหนดเอง…
 home-mode-choice-blank =
@@ -509,10 +463,10 @@ choose-bookmark =
     .label = ใช้ที่คั่นหน้า…
     .accesskey = ท
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = เนื้อหาหน้าแรก Firefox
-home-prefs-content-description = เลือกเนื้อหาที่คุณต้องการในหน้าจอหน้าแรก Firefox ของคุณ
+home-prefs-content-header = เนื้อหาหน้าแรก Waterfox
+home-prefs-content-description = เลือกเนื้อหาที่คุณต้องการในหน้าจอหน้าแรก Waterfox ของคุณ
 home-prefs-search-header =
     .label = การค้นหาเว็บ
 home-prefs-topsites-header =
@@ -594,10 +548,8 @@ search-show-suggestions-above-history-option =
     .label = แสดงข้อเสนอแนะการค้นหานำหน้าประวัติการเรียกดูในผลลัพธ์ของแถบที่อยู่
 search-show-suggestions-private-windows =
     .label = แสดงคำแนะนำการค้นหาในหน้าต่างส่วนตัว
-suggestions-addressbar-settings-generic = เปลี่ยนค่ากำหนดข้อเสนอแนะจากแถบที่อยู่อื่น ๆ
 suggestions-addressbar-settings-generic2 = เปลี่ยนการตั้งค่าข้อเสนอแนะจากแถบที่อยู่อื่น ๆ
 search-suggestions-cant-show = ข้อเสนอแนะการค้นหาจะไม่แสดงในผลลัพธ์ของแถบตำแหน่งที่ตั้งเนื่องจากคุณได้กำหนดค่า { -brand-short-name } ให้ไม่จดจำประวัติเสมอ
-search-one-click-header = เครื่องมือค้นหาในคลิกเดียว
 search-one-click-header2 = ทางลัดการค้นหา
 search-one-click-desc = เลือกเครื่องมือค้นหาทางเลือกที่จะปรากฏด้านล่างแถบที่อยู่และแถบค้นหาเมื่อคุณเริ่มป้อนคำสำคัญ
 search-choose-engine-column =
@@ -624,12 +576,6 @@ search-keyword-warning-bookmark = คุณได้เลือกคำสำ�
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-        { PLATFORM() ->
-            [windows] กลับไปที่ตัวเลือก
-           *[other] กลับไปที่การตั้งค่า
-        }
 containers-back-button2 =
     .aria-label = กลับไปที่การตั้งค่า
 containers-header = แท็บแยกข้อมูล
@@ -639,21 +585,15 @@ containers-add-button =
 containers-new-tab-check =
     .label = เลือกการแยกข้อมูลสำหรับแต่ละแท็บใหม่
     .accesskey = ล
-containers-preferences-button =
-    .label = ค่ากำหนด
 containers-settings-button =
     .label = การตั้งค่า
 containers-remove-button =
     .label = เอาออก
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = นำเว็บของคุณไปกับคุณ
-sync-signedout-description = ประสานที่คั่นหน้า, ประวัติ, แท็บ, รหัสผ่าน, ส่วนเสริม และค่ากำหนดในอุปกรณ์ทั้งหมดของคุณ
-sync-signedout-account-signin2 =
-    .label = ลงชื่อเข้า { -sync-brand-short-name }…
-    .accesskey = i
 sync-signedout-description2 = ประสานที่คั่นหน้า, ประวัติ, แท็บ, รหัสผ่าน, ส่วนเสริม และการตั้งค่าระหว่างอุปกรณ์ทั้งหมดของคุณ
 sync-signedout-account-signin3 =
     .label = ลงชื่อเข้าเพื่อซิงค์…
@@ -666,9 +606,9 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = ดาวน์โหลด Firefox สำหรับ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> หรือ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> เพื่อซิงค์กับอุปกรณ์มือถือของคุณ
+sync-mobile-promo = ดาวน์โหลด Waterfox สำหรับ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> หรือ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> เพื่อซิงค์กับอุปกรณ์มือถือของคุณ
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = เปลี่ยนรูปโปรไฟล์
@@ -693,10 +633,6 @@ sync-sign-in =
 
 prefs-syncing-on = การซิงค์: เปิด
 prefs-syncing-off = การซิงค์: ปิด
-prefs-sync-setup =
-    .label = ตั้งค่า { -sync-brand-short-name }…
-    .accesskey = S
-prefs-sync-offer-setup-label = ประสานที่คั่นหน้า ประวัติ แท็บ รหัสผ่าน ส่วนเสริม และค่ากำหนดระหว่างอุปกรณ์ทั้งหมดของคุณ
 prefs-sync-turn-on-syncing =
     .label = เปิดการซิงค์…
     .accesskey = ซ
@@ -716,11 +652,6 @@ sync-currently-syncing-logins-passwords = การเข้าสู่ระ�
 sync-currently-syncing-addresses = ที่อยู่
 sync-currently-syncing-creditcards = บัตรเครดิต
 sync-currently-syncing-addons = ส่วนเสริม
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] ตัวเลือก
-       *[other] ค่ากำหนด
-    }
 sync-currently-syncing-settings = การตั้งค่า
 sync-change-options =
     .label = เปลี่ยน…
@@ -759,16 +690,8 @@ sync-engine-creditcards =
     .accesskey = ต
 sync-engine-addons =
     .label = ส่วนเสริม
-    .tooltiptext = ส่วนขยายและชุดตกแต่งสำหรับ Firefox เดสก์ท็อป
+    .tooltiptext = ส่วนขยายและชุดตกแต่งสำหรับ Waterfox เดสก์ท็อป
     .accesskey = ส
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] ตัวเลือก
-           *[other] ค่ากำหนด
-        }
-    .tooltiptext = การตั้งค่าทั่วไป, ความเป็นส่วนตัว และความปลอดภัยที่คุณได้เปลี่ยนแปลง
-    .accesskey = ว
 sync-engine-settings =
     .label = การตั้งค่า
     .tooltiptext = การตั้งค่าทั่วไป ความเป็นส่วนตัว และความปลอดภัยที่คุณเปลี่ยน
@@ -818,9 +741,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = การเข้าสู่ระบบที่บันทึกไว้…
     .accesskey = ก
-forms-master-pw-use =
-    .label = ใช้รหัสผ่านหลัก
-    .accesskey = ช
 forms-primary-pw-use =
     .label = ใช้รหัสผ่านหลัก
     .accesskey = ช
@@ -831,7 +751,6 @@ forms-primary-pw-learn-more-link = เรียนรู้เพิ่มเต
 forms-master-pw-change =
     .label = เปลี่ยนรหัสผ่านหลัก…
     .accesskey = ผ
-forms-master-pw-fips-title = คุณกำลังอยู่ในโหมด FIPS ซึ่ง FIPS จำเป็นต้องมีรหัสผ่านหลักที่ไม่ว่างเปล่า
 forms-primary-pw-change =
     .label = เปลี่ยนรหัสผ่านหลัก…
     .accesskey = ล
@@ -841,20 +760,17 @@ forms-primary-pw-change =
 forms-primary-pw-former-name = { "" }
 forms-primary-pw-fips-title = คุณกำลังอยู่ในโหมด FIPS ซึ่ง FIPS จำเป็นต้องมีรหัสผ่านหลักที่ไม่ว่างเปล่า
 forms-master-pw-fips-desc = การเปลี่ยนรหัสผ่านล้มเหลว
+forms-windows-sso =
+    .label = อนุญาต Windows single sign-on สำหรับบัญชีที่ทำงานและโรงเรียนของ Microsoft
+forms-windows-sso-learn-more-link = เรียนรู้เพิ่มเติม
+forms-windows-sso-desc = จัดการบัญชีในการตั้งค่าอุปกรณ์ของคุณ
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = หากต้องการสร้างรหัสผ่านหลัก ให้ป้อนข้อมูลประจำตัวการเข้าสู่ระบบ Windows ของคุณ ซึ่งจะช่วยปกป้องความปลอดภัยให้กับบัญชีต่าง ๆ ของคุณ
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = สร้างรหัสผ่านหลัก
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = หากต้องการสร้างรหัสผ่านหลัก ให้ป้อนข้อมูลประจำตัวการเข้าสู่ระบบ Windows ของคุณ ซึ่งจะช่วยปกป้องความปลอดภัยให้กับบัญชีต่าง ๆ ของคุณ
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = สร้างรหัสผ่านหลัก
@@ -866,12 +782,12 @@ history-header = ประวัติ
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = { -brand-short-name } จะ
     .accesskey = จ
 history-remember-option-all =
@@ -913,7 +829,7 @@ sitedata-learn-more = เรียนรู้เพิ่มเติม
 sitedata-delete-on-close =
     .label = ลบคุกกี้และข้อมูลไซต์เมื่อ { -brand-short-name } ถูกปิด
     .accesskey = บ
-sitedata-delete-on-close-private-browsing = ในโหมดการท่องเว็บแบบส่วนตัวแบบถาวร คุกกี้และข้อมูลไซต์จะถูกล้างทุกครั้งเมื่อปิด { -brand-short-name }
+sitedata-delete-on-close-private-browsing = ในโหมดการเรียกดูแบบส่วนตัวแบบถาวร คุกกี้และข้อมูลไซต์จะถูกล้างทุกครั้งเมื่อปิด { -brand-short-name }
 sitedata-allow-cookies-option =
     .label = ยอมรับคุกกี้และข้อมูลไซต์
     .accesskey = ย
@@ -946,9 +862,6 @@ sitedata-clear =
 sitedata-settings =
     .label = จัดการข้อมูล…
     .accesskey = จ
-sitedata-cookies-permissions =
-    .label = จัดการสิทธิอนุญาต…
-    .accesskey = ด
 sitedata-cookies-exceptions =
     .label = จัดการข้อยกเว้น…
     .accesskey = ข
@@ -1093,16 +1006,18 @@ permissions-block-popups =
 permissions-block-popups-exceptions =
     .label = ข้อยกเว้น…
     .accesskey = ข
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = ข้อยกเว้น…
+    .accesskey = ข
+    .searchkeywords = ป๊อปอัป
 permissions-addon-install-warning =
     .label = เตือนคุณเมื่อเว็บไซต์พยายามจะติดตั้งส่วนเสริม
     .accesskey = ต
 permissions-addon-exceptions =
     .label = ข้อยกเว้น…
     .accesskey = ข
-permissions-a11y-privacy-checkbox =
-    .label = ป้องกันไม่ให้บริการการช่วยการเข้าถึงเข้าถึงเบราว์เซอร์ของคุณ
-    .accesskey = อ
-permissions-a11y-privacy-link = เรียนรู้เพิ่มเติม
 
 ## Privacy Section - Data Collection
 
@@ -1124,10 +1039,6 @@ addon-recommendations-link = เรียนรู้เพิ่มเติม
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = การรายงานข้อมูลถูกปิดใช้งานสำหรับการกำหนดค่าการสร้างนี้
-collection-backlogged-crash-reports =
-    .label = อนุญาตให้ { -brand-short-name } ส่งรายงานข้อขัดข้องที่ค้างอยู่ในนามของคุณ
-    .accesskey = ต
-collection-backlogged-crash-reports-link = เรียนรู้เพิ่มเติม
 collection-backlogged-crash-reports-with-link = อนุญาตให้ { -brand-short-name } ส่งรายงานข้อขัดข้องในชื่อของคุณ <a data-l10n-name="crash-reports-link">เรียนรู้เพิ่มเติม</a>
     .accesskey = ข
 
@@ -1152,13 +1063,6 @@ security-block-uncommon-software =
 ## Privacy Section - Certificates
 
 certs-header = ใบรับรอง
-certs-personal-label = เมื่อเซิร์ฟเวอร์ขอใบรับรองส่วนบุคคลของคุณ
-certs-select-auto-option =
-    .label = เลือกมาหนึ่งโดยอัตโนมัติ
-    .accesskey = ห
-certs-select-ask-option =
-    .label = ถามคุณทุกครั้ง
-    .accesskey = ถ
 certs-enable-ocsp =
     .label = สืบค้นเซิร์ฟเวอร์ตอบกลับ OCSP เพื่อยืนยันความถูกต้องของใบรับรองปัจจุบัน
     .accesskey = ฟ
@@ -1168,34 +1072,11 @@ certs-view =
 certs-devices =
     .label = อุปกรณ์ความปลอดภัย…
     .accesskey = ค
-space-alert-learn-more-button =
-    .label = เรียนรู้เพิ่มเติม
-    .accesskey = ร
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] เปิดตัวเลือก
-           *[other] เปิดค่ากำหนด
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] ป
-           *[other] ป
-        }
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] พื้นที่ดิสก์ของ { -brand-short-name } กำลังจะเต็ม เนื้อหาเว็บไซต์อาจแสดงผลไม่ถูกต้อง คุณสามารถล้างข้อมูลที่จัดเก็บไว้ได้ใน ตัวเลือก > ความเป็นส่วนตัวและความปลอดภัย > คุกกี้และข้อมูลไซต์
-       *[other] พื้นที่ดิสก์ของ { -brand-short-name } กำลังจะเต็ม เนื้อหาเว็บไซต์อาจแสดงผลไม่ถูกต้อง คุณสามารถล้างข้อมูลที่จัดเก็บไว้ได้ใน ค่ากำหนด > ความเป็นส่วนตัวและความปลอดภัย > คุกกี้และข้อมูลไซต์
-    }
-space-alert-under-5gb-ok-button =
-    .label = ตกลง เข้าใจแล้ว
-    .accesskey = ต
-space-alert-under-5gb-message = พื้นที่ดิสก์ของ { -brand-short-name } กำลังจะเต็ม เนื้อหาเว็บไซต์อาจแสดงผลไม่ถูกต้อง เยี่ยมชม “เรียนรู้เพิ่มเติม” เพื่อเพิ่มประสิทธิภาพการใช้งานดิสก์ของคุณสำหรับประสบการณ์การท่องเว็บที่ดีขึ้น
 space-alert-over-5gb-settings-button =
     .label = เปิดการตั้งค่า
     .accesskey = ป
 space-alert-over-5gb-message2 = <strong>พื้นที่ดิสก์ของ { -brand-short-name } กำลังจะเต็ม</strong> เนื้อหาเว็บไซต์อาจแสดงผลไม่ถูกต้อง คุณสามารถล้างข้อมูลที่ถูกจัดเก็บไว้ได้ใน การตั้งค่า > ความเป็นส่วนตัวและความปลอดภัย > คุกกี้และข้อมูลไซต์
-space-alert-under-5gb-message2 = <strong>พื้นที่ดิสก์ของ { -brand-short-name } กำลังจะเต็ม</strong> เนื้อหาเว็บไซต์อาจแสดงผลไม่ถูกต้อง เยี่ยมชม “เรียนรู้เพิ่มเติม” เพื่อเพิ่มประสิทธิภาพการใช้งานดิสก์ของคุณสำหรับประสบการณ์การท่องเว็บที่ดีขึ้น
+space-alert-under-5gb-message2 = <strong>พื้นที่ดิสก์ของ { -brand-short-name } กำลังจะเต็ม</strong> เนื้อหาเว็บไซต์อาจแสดงผลไม่ถูกต้อง เยี่ยมชม “เรียนรู้เพิ่มเติม” เพื่อเพิ่มประสิทธิภาพการใช้งานดิสก์ของคุณสำหรับประสบการณ์การเรียกดูที่ดีขึ้น
 
 ## Privacy Section - HTTPS-Only
 

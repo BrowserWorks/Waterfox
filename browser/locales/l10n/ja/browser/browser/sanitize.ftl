@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -64,6 +64,11 @@ data-section-label = データ
 item-site-preferences =
     .label = サイトの設定
     .accesskey = S
+
+item-site-settings =
+    .label = サイトの設定
+    .accesskey = S
+
 item-offline-apps =
     .label = ウェブサイトのオフライン作業用データ
     .accesskey = O

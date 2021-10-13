@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "ใหม่">
 <!ENTITY newMenu.accesskey "ห">
 <!ENTITY newMessage.label "ข้อความ">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "ข">
 <!ENTITY newContact.label "ผู้ติดต่อของสมุดรายชื่อ…">
 <!ENTITY newContact.accesskey "ผ">
 <!ENTITY attachMenu.label "แนบ">
 <!ENTITY attachMenu.accesskey "น">
-<!ENTITY attachFileCmd.label "ไฟล์…">
-<!ENTITY attachFileCmd.accesskey "ฟ">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "ลิงก์ไฟล์">
 <!ENTITY attachCloudCmd.accesskey "ล">
 <!ENTITY attachPageCmd.label "หน้าเว็บ…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "ส่งภายหลัง">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "ภ">
-<!ENTITY printSetupCmd.label "ตั้งค่าหน้ากระดาษ…">
-<!ENTITY printSetupCmd.accesskey "ต">
-<!ENTITY printPreviewCmd.label "ตัวอย่างก่อนพิมพ์">
-<!ENTITY printPreviewCmd.accesskey "ย">
 <!ENTITY printCmd.label "พิมพ์…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "พ">
@@ -82,11 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "จัดลำดับไฟล์แนบใหม่…">
 <!ENTITY reorderAttachmentsCmd.accesskey "จ">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "บานหน้าต่างไฟล์แนบ">
-<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
-     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
-     as attachments.accesskey. -->
-<!ENTITY toggleAttachmentPaneCmd.accesskey "า">
 <!ENTITY selectAllCmd.accesskey "ล">
 <!ENTITY findBarCmd.label "ค้นหา…">
 <!ENTITY findBarCmd.accesskey "ค">
@@ -105,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "จัดลำดับไฟล์แนบใหม่">
-<!ENTITY moveAttachmentTopPanelBtn.label "ย้ายไปด้านบนสุด">
-<!ENTITY moveAttachmentUpPanelBtn.label "ย้ายขึ้น">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "ย้ายพร้อมกัน">
-<!ENTITY moveAttachmentDownPanelBtn.label "ย้ายลง">
-<!ENTITY moveAttachmentBottomPanelBtn.label "ย้ายไปด้านล่างสุด">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -207,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "การตั้งค่าบัญชี">
 <!ENTITY accountManagerCmd2.accesskey "ก">
 <!ENTITY accountManagerCmdUnix2.accesskey "ก">
-<!ENTITY preferencesCmd2.label "ตัวเลือก">
-<!ENTITY preferencesCmd2.accesskey "ต">
-<!ENTITY preferencesCmdUnix.label "ค่ากำหนด">
-<!ENTITY preferencesCmdUnix.accesskey "ค">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -223,7 +201,6 @@
 <!ENTITY sendButton.label "ส่ง">
 <!ENTITY quoteButton.label "อ้างอิง">
 <!ENTITY addressButton.label "ผู้ติดต่อ">
-<!ENTITY attachButton.label "แนบ">
 <!ENTITY spellingButton.label "การสะกดคำ">
 <!ENTITY saveButton.label "บันทึก">
 <!ENTITY printButton.label "พิมพ์">
@@ -233,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "ส่งข้อความนี้ในภายหลัง">
 <!ENTITY quoteButton.tooltip "อ้างอิงข้อความก่อนหน้า">
 <!ENTITY addressButton.tooltip "เลือกผู้รับจากสมุดรายชื่อ">
-<!ENTITY attachButton.tooltip2 "เพิ่มไฟล์แนบ">
 <!ENTITY spellingButton.tooltip "ตรวจสอบการสะกดของส่วนที่เลือกหรือทั้งข้อความ">
 <!ENTITY saveButton.tooltip "บันทึกข้อความนี้">
 <!ENTITY cutButton.tooltip              "ตัด">
@@ -248,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "ช่องกำหนดที่อยู่ชนิดอื่น">
 <!ENTITY fromAddr2.label "จาก">
 <!ENTITY fromAddr.accesskey "จ">
-<!ENTITY toAddr2.label "ถึง">
-<!ENTITY ccAddr2.label "สำเนาถึง">
-<!ENTITY bccAddr2.label "สำเนาลับถึง">
 <!ENTITY replyAddr2.label "ตอบกลับถึง">
 <!ENTITY newsgroupsAddr2.label "กลุ่มข่าว">
 <!ENTITY followupAddr2.label "ติดตามถึง">
@@ -309,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "า">
 <!ENTITY selectAll.label "เลือกทั้งหมด">
 <!ENTITY selectAll.accesskey "ท">
-<!ENTITY attachFile.label "แนบไฟล์…">
-<!ENTITY attachFile.accesskey "แ">
 <!ENTITY attachCloud.label "ลิงก์ไฟล์…">
 <!ENTITY attachCloud.accesskey "ง">
 <!ENTITY convertCloud.label "แปลงเป็น…">

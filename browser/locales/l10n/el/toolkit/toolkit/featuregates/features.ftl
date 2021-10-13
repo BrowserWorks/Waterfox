@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Ενεργοποιεί την υποστήριξη για την πειραματική λειτουργία CSS Masonry Layout. Δείτε την <a data-l10n-name="explainer">επεξήγηση</a> για μια περιγραφή υψηλού επιπέδου της λειτουργίας. Για να παρέχετε σχόλια, σχολιάστε σε <a data-l10n-name="w3c-issue"> αυτό το ζήτημα GitHub</a> ή <a data-l10n-name="bug"> αυτό το σφάλμα </a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = Ενεργοποιεί την υποστήριξη για CSS Cascade Layers. Δείτε τις <a data-l10n-name="spec">προδιαγραφές (σε εξέλιξη)</a> για λεπτομέρειες. Για ζητήματα που σχετίζονται με αυτήν τη λειτουργία, αναφέρετε σφάλματα που να αποκλείουν το <a data-l10n-name="bugzilla">σφάλμα 1699215</a>.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -45,11 +50,11 @@ experimental-features-devtools-compatibility-panel-description = Ένας πλε
 # Do not translate 'SameSite', 'Lax' and 'None'.
 experimental-features-cookie-samesite-lax-by-default2 =
     .label = Cookies: SameSite=Lax από προεπιλογή
-experimental-features-cookie-samesite-lax-by-default2-description = Αντιμετώπιση των cookies ως “SameSite=Lax” από προεπιλογή αν δεν καθορίζεται ιδιότητα “SameSite”. Οι προγραμματιστές πρέπει να επιλέξουν στο τρέχον status quo της απεριόριστης χρήσης, δηλώνοντας ρητά ότι “SameSite=None”.
+experimental-features-cookie-samesite-lax-by-default2-description = Αντιμετώπιση των cookies ως «SameSite=Lax» από προεπιλογή αν δεν καθορίζεται η ιδιότητα «SameSite». Οι προγραμματιστές πρέπει να εγγραφούν στο τρέχον status quo της απεριόριστης χρήσης, δηλώνοντας ρητά ότι «SameSite=None».
 # Do not translate 'SameSite', 'Lax' and 'None'.
 experimental-features-cookie-samesite-none-requires-secure2 =
-    .label = Cookies: Το SameSite=None απαιτεί την ιδιότητα "secure"
-experimental-features-cookie-samesite-none-requires-secure2-description = Τα cookies με την ιδιότητα “SameSite=None” απαιτούν την ιδιότητα "secure". Αυτή η λειτουργία απαιτεί το “Cookies: SameSite=Lax από προεπιλογή”.
+    .label = Cookies: Το SameSite=None απαιτεί την ιδιότητα «secure»
+experimental-features-cookie-samesite-none-requires-secure2-description = Τα cookies με την ιδιότητα «SameSite=None» απαιτούν την ιδιότητα «secure». Αυτή η λειτουργία απαιτεί το «Cookies: SameSite=Lax από προεπιλογή».
 # about:home should be kept in English, as it refers to the the URI for
 # the internal default home page.
 experimental-features-abouthome-startup-cache =
@@ -59,7 +64,7 @@ experimental-features-abouthome-startup-cache-description = Κρυφή μνήμ�
 # by various online articles and is technical in nature.
 experimental-features-cookie-samesite-schemeful =
     .label = Cookies: Schemeful SameSite
-experimental-features-cookie-samesite-schemeful-description = Διαχείριση των cookies ίδιου τομέα αλλά διαφορετικού μοτίβου (π.χ. http://example.com και https://example.com) ως cookies πολλαπλών ιστοσελίδων αντί cookies ίδιας ιστοσελίδας. Βελτιώνει την ασφάλεια, αλλά ενδέχεται να προκαλέσει προβλήματα.
+experimental-features-cookie-samesite-schemeful-description = Διαχείριση των cookies ίδιου τομέα αλλά διαφορετικού μοτίβου (π.χ. http://example.com και https://example.com) ως cookie μεταξύ ιστοτόπων αντί για cookies ίδιου ιστοτόπου. Βελτιώνει την ασφάλεια, αλλά ενδέχεται να προκαλέσει προβλήματα.
 # "Service Worker" is an API name and is usually not translated.
 experimental-features-devtools-serviceworker-debugger-support =
     .label = Εργαλεία ανάπτυξης: Έλεγχος σφαλμάτων service worker
@@ -79,15 +84,12 @@ experimental-features-js-warp =
 experimental-features-js-warp-description = Ενεργοποίηση του Warp - ένα έργο για τη βελτίωση των επιδόσεων JavaScript και της χρήσης μνήμης.
 # Fission is the name of the feature and should not be translated.
 experimental-features-fission =
-    .label = Fission (Απομόνωση ιστοσελίδας)
-experimental-features-fission-description = Το Fission (απομόνωση ιστοσελίδας) είναι μια πειραματική λειτουργία στο { -brand-short-name }, ώστε να παρέχει ένα επιπλέον επίπεδο προστασίας από σφάλματα ασφαλείας. Απομονώνοντας την κάθε σελίδα σε ξεχωριστή διεργασία, το Fission καθιστά δυσκολότερη την πρόσβαση κακόβουλων ιστοσελίδων σε πληροφορίες άλλων ιστότοπων που επισκέπτεστε. Πρόκειται για μια μεγάλη αρχιτεκτονική αλλαγή στο { -brand-short-name } και θα το εκτιμούσαμε ιδιαίτερα αν δοκιμάζατε τη λειτουργία και αναφέρατε τυχόν ζητήματα. Για περισσότερες λεπτομέρειες, δείτε <a data-l10n-name="wiki">το wiki</a>.
+    .label = Fission (Απομόνωση ιστοτόπων)
+experimental-features-fission-description = Το Fission (απομόνωση ιστοτόπων) είναι μια πειραματική λειτουργία στο { -brand-short-name }, ώστε να παρέχει ένα επιπλέον επίπεδο προστασίας από σφάλματα ασφαλείας. Απομονώνοντας τον κάθε ιστότοπο σε ξεχωριστή διεργασία, το Fission καθιστά δυσκολότερη την πρόσβαση κακόβουλων ιστοτόπων σε πληροφορίες άλλων σελίδων που επισκέπτεστε. Πρόκειται για μια μεγάλη αρχιτεκτονική αλλαγή στο { -brand-short-name } και θα το εκτιμούσαμε ιδιαίτερα αν δοκιμάζατε τη λειτουργία και αναφέρατε τυχόν ζητήματα. Για περισσότερες λεπτομέρειες, δείτε <a data-l10n-name="wiki">το wiki</a>.
 # Support for having multiple Picture-in-Picture windows open simultaneously
 experimental-features-multi-pip =
     .label = Υποστήριξη πολλαπλών παραθύρων εικόνας-εντός-εικόνας
 experimental-features-multi-pip-description = Πειραματική υποστήριξη για άνοιγμα πολλαπλών παραθύρων εικόνας-εντός-εικόνας ταυτόχρονα.
-experimental-features-http3 =
-    .label = Πρωτόκολλο HTTP/3
-experimental-features-http3-description = Πειραματική υποστήριξη για το πρωτόκολλο HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Γραμμή διευθύνσεων: εμφάνιση αποτελεσμάτων κατά τη σύνταξη IME

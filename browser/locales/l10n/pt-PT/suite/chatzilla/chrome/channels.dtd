@@ -1,4 +1,4 @@
-﻿<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,8 +22,8 @@
 <!ENTITY maxusers.label     "Máx. utilizadores:">
 <!ENTITY maxusers.accesskey "x">
 
-<!ENTITY refresh.label     "Recarregar Agora">
-<!ENTITY refresh.accesskey "">
+<!ENTITY refreshNow.label     "Recarregar agora">
+<!ENTITY refreshNow.accesskey "R">
 
 <!ENTITY network.hint.label "Escreva um nome de uma rede ou servidor (pode incluir uma porta) e um canal para se ligar.">
 

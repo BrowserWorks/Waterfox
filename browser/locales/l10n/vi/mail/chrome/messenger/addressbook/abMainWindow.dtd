@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Đóng">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "g">
-<!ENTITY printSetupCmd.label                            "Thiết lập trang…">
-<!ENTITY printSetupCmd.accesskey                        "p">
-<!ENTITY printPreviewContactCmd.label                   "Xem trước bản in danh bạ">
-<!ENTITY printPreviewContactCmd.accesskey               "X">
-<!ENTITY printPreviewAddressBook.label                  "Xem trước bản in sổ địa chỉ">
-<!ENTITY printPreviewAddressBook.accesskey              "a">
 <!ENTITY printContactCmd.label                          "In danh bạ…">
 <!ENTITY printContactCmd.accesskey                      "I">
 <!ENTITY printContactCmd.key                            "P">
@@ -111,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "N">
 <!ENTITY exportCmd.label                                "Xuất…">
 <!ENTITY exportCmd.accesskey                            "X">
-<!ENTITY preferencesCmd2.label                          "Tùy chọn">
-<!ENTITY preferencesCmd2.accesskey                      "O">
-<!ENTITY preferencesCmdUnix.label                       "Tùy chỉnh">
-<!ENTITY preferencesCmdUnix.accesskey                   "y">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Liên hệ mới">

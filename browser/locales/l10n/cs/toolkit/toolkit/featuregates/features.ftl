@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Zapne podporu experimentálního CSS Masonry Layoutu. Podrobnosti o této funkci najdete <a data-l10n-name="explainer">zde</a>. Zpětnou vazbu nám můžete napsat <a data-l10n-name="w3c-issue">zde na GitHubu</a> nebo <a data-l10n-name="bug">do tohoto bugu</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = Zapne podporu vrstev CSS Cascade Layers. Podrobnosti najdete v <a data-l10n-name="spec">rozpracované specifikaci</a> a <a data-l10n-name="bugzilla">bugu 1699215</a>.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -108,9 +113,6 @@ experimental-features-fission-description =
 experimental-features-multi-pip =
     .label = Podpora více oken obraz v obraze
 experimental-features-multi-pip-description = Zapne experimentální podporu pro otevření více oken obraz v obraze najednou.
-experimental-features-http3 =
-    .label = Protokol HTTP/3
-experimental-features-http3-description = Experimentální podpora protokolu HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Adresní řádek: zobrazovat výsledky při použití IME

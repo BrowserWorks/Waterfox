@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Exceções
     .style = width: 45em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Endereço do site
     .accesskey = d
+
 permissions-block =
     .label = Bloquear
     .accesskey = B
+
 permissions-session =
     .label = Permitir para a sessão
     .accesskey = e
+
 permissions-allow =
     .label = Permitir
     .accesskey = P
+
 permissions-button-off =
     .label = Desligar
     .accesskey = D
+
 permissions-button-off-temporarily =
     .label = Desligar temporariamente
     .accesskey = t
+
 permissions-site-name =
     .label = Site
+
 permissions-status =
     .label = Estado
+
 permissions-remove =
     .label = Remover site
     .accesskey = R
+
 permissions-remove-all =
     .label = Remover todos os sites
     .accesskey = e
-permissions-button-cancel =
-    .label = Cancelar
-    .accesskey = C
-permissions-button-ok =
-    .label = Guardar alterações
-    .accesskey = G
+
 permission-dialog =
     .buttonlabelaccept = Guardar alterações
     .buttonaccesskeyaccept = G
+
 permissions-autoplay-menu = Predefinição para todos os sites:
+
 permissions-searchbox =
     .placeholder = Pesquisar site
+
 permissions-capabilities-autoplay-allow =
     .label = Permitir áudio e vídeo
 permissions-capabilities-autoplay-block =
     .label = Bloquear áudio
 permissions-capabilities-autoplay-blockall =
     .label = Bloquear áudio e vídeo
+
 permissions-capabilities-allow =
     .label = Permitir
 permissions-capabilities-block =
     .label = Bloquear
 permissions-capabilities-prompt =
     .label = Perguntar sempre
+
 permissions-capabilities-listitem-allow =
     .value = Permitir
 permissions-capabilities-listitem-block =
     .value = Bloquear
 permissions-capabilities-listitem-allow-session =
     .value = Permitir para a sessão
+
 permissions-capabilities-listitem-off =
     .value = Desligado
 permissions-capabilities-listitem-off-temporarily =

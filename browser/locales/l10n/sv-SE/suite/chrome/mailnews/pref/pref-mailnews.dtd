@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,17 @@
 <!ENTITY confirmMove.accesskey            "B">
 <!ENTITY preserveThreading.label          "Bevara trådningen vid sortering av meddelanden">
 <!ENTITY preserveThreading.accesskey      "t">
+<!ENTITY mailAutoHide.label               "Dölj raden med e-postflikar när bara en flik är öppen">
+<!ENTITY mailAutoHide.accesskey           "D">
 <!ENTITY loadInBackground.label           "Byt till nya flikar när du öppnar dem">
 <!ENTITY loadInBackground.accesskey       "n">
+<!ENTITY mailOpenTabsFor.label            "Öppna flikar istället för fönster för">
+<!ENTITY mailMiddleClick.label            "Mittklick eller Ctrl+Enter i ett meddelande eller en mapp">
+<!ENTITY mailMiddleClick.accesskey        "M">
+<!ENTITY mailMiddleClickMac.label         "Mittklick eller &#8984;+Return i ett meddelande eller en mapp">
+<!ENTITY mailMiddleClickMac.accesskey     "M">
+<!ENTITY mailDoubleClick.label            "Dubbelklicka på ett meddelande">
+<!ENTITY mailDoubleClick.accesskey        "k">
 <!ENTITY mailBiffOnNewWindow.label        "Leta efter nya meddelanden bara om fönstret E-post &amp; grupper har öppnats">
 <!ENTITY mailBiffOnNewWindow.accesskey    "y">
 

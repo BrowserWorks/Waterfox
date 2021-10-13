@@ -1,5 +1,5 @@
 <!--
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
@@ -61,8 +61,6 @@
 
 <!ENTITY  mediaTab              "Media">
 <!ENTITY  mediaTab.accesskey    "M">
-<!ENTITY  mediaURL              "Adress:">
-<!ENTITY  mediaAlt              "Ersättningstext:">
 <!ENTITY  mediaLocation         "Plats:">
 <!ENTITY  mediaText             "Tillhörande text:">
 <!ENTITY  mediaAltHeader        "Ersättningstext">
@@ -70,9 +68,6 @@
 <!ENTITY  mediaType             "Typ">
 <!ENTITY  mediaSize             "Storlek">
 <!ENTITY  mediaCount            "Antal gånger">
-<!ENTITY  mediaDimensions       "Dimensioner:">
-<!ENTITY  mediaPhysDimensions   "Egentlig storlek:">
-<!ENTITY  mediaTitle            "Titel:">
 <!ENTITY  mediaDimension        "Storlek:">
 <!ENTITY  mediaLongdesc         "Lång beskrivning:">
 <!ENTITY  mediaBlockImage.accesskey "B">
@@ -88,18 +83,7 @@
 
 <!ENTITY  permTab               "Tillåtelser">
 <!ENTITY  permTab.accesskey     "T">
-<!ENTITY  permUseDefault        "Använd förinställning">
-<!ENTITY  permAskAlways         "Fråga alltid">
-<!ENTITY  permAllow             "Tillåt">
-<!ENTITY  permAllowSession      "Tillfälliga">
-<!ENTITY  permBlock             "Blockera">
 <!ENTITY  permissionsFor        "Tillåtelser för:">
-<!ENTITY  permImage             "Hämta bilder">
-<!ENTITY  permPopup             "Öppna extrafönster">
-<!ENTITY  permCookie            "Lagra kakor">
-<!ENTITY  permNotifications     "Visa notifieringar">
-<!ENTITY  permInstall           "Installera tillägg eller teman">
-<!ENTITY  permGeo               "Meddela plats">
 
 <!ENTITY  securityTab           "Säkerhet">
 <!ENTITY  securityTab.accesskey "S">

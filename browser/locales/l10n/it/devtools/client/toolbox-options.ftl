@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -63,20 +63,16 @@ options-stylesheet-autocompletion-tooltip =
 ## Screenshot section
 
 # The heading
-options-screenshot-label = Opzioni per la cattura schermate
+options-screenshot-label = Opzioni per l’acquisizione di schermate
 
-# Label for the checkbox that toggles screenshot to clipboard feature
-options-screenshot-clipboard-label = Salva negli appunti
 options-screenshot-clipboard-only-label = Salva solo negli appunti
-options-screenshot-clipboard-tooltip =
-    .title = Salva la schermata direttamente negli appunti
 options-screenshot-clipboard-tooltip2 =
     .title = Salva la schermata direttamente negli appunti
 
 # Label for the checkbox that toggles the camera shutter audio for screenshot tool
 options-screenshot-audio-label = Riproduci il suono dell’otturatore
 options-screenshot-audio-tooltip =
-    .title = Riproduci il suono dell’otturatore di una fotocamera quando si cattura una schermata
+    .title = Riproduci il suono dell’otturatore di una fotocamera quando si acquisisce una schermata
 
 ## Editor section
 

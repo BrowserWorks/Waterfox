@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 ## These strings appear on the warning you see when first visiting about:config.
 
-about-config-intro-warning-title = 주의해서 진행하세요
+about-config-intro-warning-title = 주의해서 사용하세요
 about-config-intro-warning-text = 고급 구성 설정을 변경하면 { -brand-short-name }의 성능 또는 보안에 영향을 줄 수 있습니다.
 about-config-intro-warning-checkbox = 이 설정에 접근하려고 할 때 경고
 about-config-intro-warning-button = 위험을 감수하고 계속 진행
@@ -22,7 +22,7 @@ about-config-show-only-modified = 수정한 설정만 표시
 about-config-pref-add-button =
     .title = 추가
 about-config-pref-toggle-button =
-    .title = 설정/해제
+    .title = 전환
 about-config-pref-edit-button =
     .title = 편집
 about-config-pref-save-button =

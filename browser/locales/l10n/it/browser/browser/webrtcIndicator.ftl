@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,10 +15,6 @@ webrtc-sharing-window = Stai condividendo la finestra di un’altra applicazione
 webrtc-sharing-browser-window = Stai condividendo { -brand-short-name }.
 webrtc-sharing-screen = Stai condividendo l’intero schermo.
 webrtc-stop-sharing-button = Interrompi condivisione
-webrtc-microphone-button =
-  .title = Il microfono è condiviso. Fai clic per gestire la condivisione.
-webrtc-camera-button =
-  .title = La fotocamera è condivisa. Fai clic per gestire la condivisione.
 webrtc-microphone-unmuted =
   .title = Disattiva microfono
 webrtc-microphone-muted =

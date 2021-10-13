@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -25,9 +25,9 @@ graph-week-summary-private-window = 이번 주에 { -brand-short-name }가 차�
 
 protection-report-webpage-title = 보호 대시보드
 protection-report-page-content-title = 보호 대시보드
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name }는 탐색하는 동안 뒤에서 개인 정보를 보호할 수 있습니다. 다음은 온라인 보안을 제어하는 도구를 포함하여 이러한 보호 기능에 대한 개인화된 요약입니다.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name }는 탐색하는 동안 뒤에서 개인 정보를 보호합니다. 다음은 온라인 보안을 제어하는 도구를 포함하여 이러한 보호 기능에 대한 개인화된 요약입니다.
 
 protection-report-settings-link = 개인 정보 및 보안 설정 관리
@@ -96,9 +96,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] 비밀번호가 안전하게 저장되고 있습니다.
     }
 lockwise-how-it-works-link = 작동 방식
-
-turn-on-sync = { -sync-brand-short-name } 켜기…
-    .title = Sync 설정으로 가기
 
 monitor-title = 데이터 유출에 주의하세요
 monitor-link = 작동 방식

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = 想查看您在其他设备上的标签
 synced-tabs-sidebar-intro = 查看来自您的其他设备的标签页列表。
 synced-tabs-sidebar-unverified = 您的账号需要验证。
 synced-tabs-sidebar-notabs = 尚无打开的标签页
-synced-tabs-sidebar-openprefs = 打开{ -sync-brand-short-name }服务首选项
 synced-tabs-sidebar-open-settings = 打开同步设置
 synced-tabs-sidebar-tabsnotsyncing = 开启标签页同步服务，即可查看您的其他设备上的标签页列表。
 synced-tabs-sidebar-connect-another-device = 关联其他设备
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = 立即同步
     .accesskey = S
-fxa-sign-in = 登录{ -sync-brand-short-name }服务…
-turn-on-sync = 开启{ -sync-brand-short-name }
 synced-tabs-fxa-sign-in = 登录同步服务
 synced-tabs-turn-on-sync = 开启同步

@@ -1,15 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
 
 
 <!ENTITY pref.mouseWheel.title           "Pelės ratukas">
 <!ENTITY mouseWheelPanel.label           "Pasirinkite pelės ratuko veiksmą, kai paspaustas šis klavišas:">
 <!ENTITY usingJustTheWheel.label         "Be klavišo">
-<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
-<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
-<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
 <!ENTITY mouseWheelGroup.label           "Vertikalus slinkimas">
 <!ENTITY mouseWheelHorizGroup.label      "Horizontalus slinkimas">
 <!ENTITY sameAsVertical.label            "Tas pats, kaip slenkant vertikaliai">

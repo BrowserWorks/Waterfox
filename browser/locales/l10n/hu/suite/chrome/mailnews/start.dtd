@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,10 +21,6 @@
 "Szoros integráció a &brandShortName; alkalmazáscsomaggal">
 <!ENTITY dict.title "Szótárak">
 <!ENTITY dict_intro.label "A szótárak az üzenetek helyesírás-ellőrzésére használatosak.">
-<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
-<!ENTITY dict_info.label
-'Sok további nyelv telepíthető a <a href="https://addons.mozilla.org/seamonkey/">Mozilla kiegészítők</a>
-oldal <a id="dictURL" href="">szótárak</a> részéről.'>
 <!ENTITY dict_info.label2
 'Számos további nyelv telepíthető a
 <a id="dictURL" href="">szótárok</a> szakaszban a
@@ -32,4 +28,4 @@ oldal <a id="dictURL" href="">szótárak</a> részéről.'>
 <!ENTITY info.title "További tudnivalók">
 <!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
 <!ENTITY info_bugs.label
-'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Örölünk</a> a hibajelentéseknek és a funkció kéréseknek, de kérjük olvassa el a <a id="releaseNotesURL" href="">kiadási megjegyzéseket</a>, valamint először keressen a <a href="https://bugzilla.mozilla.org/query.cgi">Bugzillában</a>.'>
+'<a href="https://developer.mozilla.org/docs/Waterfox/Projects/MailNews">Örölünk</a> a hibajelentéseknek és a funkció kéréseknek, de kérjük olvassa el a <a id="releaseNotesURL" href="">kiadási megjegyzéseket</a>, valamint először keressen a <a href="https://bugzilla.mozilla.org/query.cgi">Bugzillában</a>.'>

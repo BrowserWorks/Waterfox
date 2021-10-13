@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -36,15 +36,14 @@ url-classifier-debug-title = ดีบั๊ก
 url-classifier-debug-module-btn = ตั้งโมดูลรายการบันทึก
 url-classifier-debug-file-btn = ตั้งไฟล์รายการบันทึก
 url-classifier-debug-js-log-chk = ตั้งรายการบันทึก JS
-url-classifier-debug-sb-modules = โมดูลรายการบันทึกการท่องเว็บแบบปลอดภัย
+url-classifier-debug-sb-modules = โมดูลรายการบันทึกการเรียกดูแบบปลอดภัย
 url-classifier-debug-modules = โมดูลรายการบันทึกปัจจุบัน
-url-classifier-debug-sbjs-modules = รายการบันทึก JS การท่องเว็บแบบปลอดภัย
+url-classifier-debug-sbjs-modules = รายการบันทึก JS การเรียกดูแบบปลอดภัย
 url-classifier-debug-file = ไฟล์รายการบันทึกปัจจุบัน
-
 url-classifier-trigger-update = กระตุ้นการอัปเดต
 url-classifier-not-available = ไม่มี
-url-classifier-disable-sbjs-log = ปิดใช้งานรายการบันทึก JS การท่องเว็บแบบปลอดภัย
-url-classifier-enable-sbjs-log = เปิดใช้งานรายการบันทึก JS การท่องเว็บแบบปลอดภัย
+url-classifier-disable-sbjs-log = ปิดใช้งานรายการบันทึก JS การเรียกดูแบบปลอดภัย
+url-classifier-enable-sbjs-log = เปิดใช้งานรายการบันทึก JS การเรียกดูแบบปลอดภัย
 url-classifier-enabled = เปิดใช้งานอยู่
 url-classifier-disabled = ปิดใช้งานอยู่
 url-classifier-updating = กำลังอัปเดต

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,22 +15,29 @@
 <!ENTITY importSettings.accesskey "u">
 <!ENTITY importFilters.label "Filtros">
 <!ENTITY importFilters.accesskey "F">
+
 <!ENTITY window.width "47em">
 <!ENTITY window.macWidth "52em">
+
 <!ENTITY importTitle.label "Asistente de importación de &brandShortName;">
 <!ENTITY importShortDesc.label "Importar correo, libretas de direcciones, configuraciones y filtros de otros programas">
+
 <!ENTITY importDescription1.label "Este asistente importará mensajes de correo, entradas de libretas de direcciones, suscripciones a canales, preferencias y filtros de otros programas de correo y formatos comunes de libretas de direcciones en &brandShortName;.">
 <!ENTITY importDescription2.label "Cuando hayan sido importados, podrá acceder a ellos desde el correo de &brandShortName;.">
+
 <!ENTITY selectDescription.label "Seleccione el tipo de archivo que le gustaría importar:">
 <!ENTITY selectDescriptionB.label "Seleccione una cuenta existente o cree una cuenta nueva:">
 <!ENTITY selectDescription.accesskey "P">
 <!ENTITY acctName.label "Nombre:">
 <!ENTITY acctName.accesskey "N">
 <!ENTITY noModulesFound.label "No se ha encontrado aplicación o archivo de donde importar datos.">
+
 <!ENTITY back.label "&lt; Atrás">
 <!ENTITY forward.label "Siguiente &gt;">
 <!ENTITY finish.label "Terminar">
 <!ENTITY cancel.label "Cancelar">
+
 <!ENTITY select.label "o seleccione el tipo de datos a importar:">
+
 <!ENTITY title.label "Puesto">
 <!ENTITY processing.label "Importando…">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,9 @@ cert-error-intro = A(z) { $hostname } érvénytelen biztonsági tanúsítványt 
 
 cert-error-mitm-intro = A weboldalak tanúsítványokkal igazolják a személyazonosságukat, amelyet tanúsítványkibocsátók állítanak ki.
 
-cert-error-mitm-mozilla = A { -brand-short-name } mögött a nonprofit Mozilla áll, amely egy teljesen nyílt tanúsítványtárolót kezel. A CA tároló biztosítja, hogy a tanúsítványkibocsátók kövessék a felhasználói biztonságra vonatkozó legjobb gyakorlatokat.
+cert-error-mitm-mozilla = A { -brand-short-name } mögött a nonprofit Waterfox áll, amely egy teljesen nyílt tanúsítványtárolót kezel. A CA tároló biztosítja, hogy a tanúsítványkibocsátók kövessék a felhasználói biztonságra vonatkozó legjobb gyakorlatokat.
 
-cert-error-mitm-connection = A { -brand-short-name } a Mozilla CA tároló használatával ellenőrzi, hogy a kapcsolat biztonságos-e, és nem a felhasználó operációs rendszere által biztosított tanúsítványokkal. Tehát ha egy víruskereső program vagy egy hálózat elfogja a CA által kibocsátott biztonsági tanúsítványt, és az nincs a Mozilla CA tárolóban, akkor a kapcsolat nem biztonságosként lesz kezelve.
+cert-error-mitm-connection = A { -brand-short-name } a Waterfox CA tároló használatával ellenőrzi, hogy a kapcsolat biztonságos-e, és nem a felhasználó operációs rendszere által biztosított tanúsítványokkal. Tehát ha egy víruskereső program vagy egy hálózat elfogja a CA által kibocsátott biztonsági tanúsítványt, és az nincs a Waterfox CA tárolóban, akkor a kapcsolat nem biztonságosként lesz kezelve.
 
 cert-error-trust-unknown-issuer-intro = Lehet hogy valaki megszemélyesíti az oldalt, ne folytassa.
 
@@ -84,7 +84,7 @@ open-in-new-window-for-csp-or-xfo-error = Webhely megnyitása új ablakban
 
 # Variables:
 # $hostname (String) - Hostname of the website blocked by csp or xfo error.
-csp-xfo-blocked-long-desc = A biztonsága érdekében a { $hostname } nem engedi a { -brand-short-name }nak, hogy megjelenítse az oldalt, ha egy másik oldalt beágyazta magába. Az oldal megtekintéséhez új ablakban kell megnyitnia.
+csp-xfo-blocked-long-desc = A biztonsága érdekében a { $hostname } nem engedi a { -brand-short-name }nak, hogy megjelenítse az oldalt, ha egy másik oldal beágyazta magába. Az oldal megtekintéséhez új ablakban kell megnyitnia.
 
 ## Messages used for certificate error titles
 

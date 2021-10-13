@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = Sériové číslo
-
-fips-nonempty-password-required = Režim FIPS vyžaduje, abyste měli nastavené hlavní heslo pro každé bezpečnostní zařízení. Prosím nastavte jej před povolením režimu FIPS.
 
 fips-nonempty-primary-password-required = Režim FIPS vyžaduje, abyste měli nastavené hlavní heslo pro každé bezpečnostní zařízení. Prosím nastavte jej před povolením režimu FIPS.
 unable-to-toggle-fips = Změna režimu FIPS pro bezpečnostní zařízení se nezdařila. Doporučujeme restartovat aplikaci.

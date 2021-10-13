@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,9 +7,11 @@
 <!ENTITY pref.mouseWheel.title           "Mausrad">
 <!ENTITY mouseWheelPanel.label           "Mausrad-Verhalten unter Verwendung folgender Zusatztasten:">
 <!ENTITY usingJustTheWheel.label         "Keine Taste">
-<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
-<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
-<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Strg">
+<!ENTITY usingWheelAndShft.label2        "Umschalt">
 <!ENTITY mouseWheelGroup.label           "Vertikales Scrollen">
 <!ENTITY mouseWheelHorizGroup.label      "Horizontales Scrollen">
 <!ENTITY sameAsVertical.label            "Wie vertikales Scrollen">

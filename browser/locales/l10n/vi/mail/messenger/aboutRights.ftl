@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Về quyền lợi của bạn
 rights-intro = { -brand-full-name } là phần mềm tự do mã nguồn mở, được xây dựng bởi một cộng đồng gồm hàng nghìn người trên khắp thế giới. Có vài điều mà bạn nên biết:
-rights-intro-point-1 = { -brand-short-name } cung cấp cho bạn theo điều khoản của <a data-l10n-name="mozilla-public-license-link">giấy phép công cộng Mozilla</a>. Điều này có nghĩa là bạn có thể sử dụng, sao chép và phân phối { -brand-short-name } đến người khác. Bạn cũng được hoan nghênh trong việc chỉnh sửa mã nguồn của { -brand-short-name } cho phù hợp với nhu cầu của mình. Giấy phép công cộng Mozilla cũng cho bạn quyền phân phối phiên bản được chỉnh sửa đó.
+rights-intro-point-1 = { -brand-short-name } cung cấp cho bạn theo điều khoản của <a data-l10n-name="mozilla-public-license-link">giấy phép công cộng Waterfox</a>. Điều này có nghĩa là bạn có thể sử dụng, sao chép và phân phối { -brand-short-name } đến người khác. Bạn cũng được hoan nghênh trong việc chỉnh sửa mã nguồn của { -brand-short-name } cho phù hợp với nhu cầu của mình. Giấy phép công cộng Waterfox cũng cho bạn quyền phân phối phiên bản được chỉnh sửa đó.
 rights-intro-point-2 =
     Bạn không được cấp bất kỳ quyền hoặc giấy phép nhãn hiệu nào cho các
-    nhãn hiệu của tổ chức Mozilla hoặc bất kỳ bên nào, bao gồm nhưng không
+    nhãn hiệu của tổ chức Waterfox hoặc bất kỳ bên nào, bao gồm nhưng không
     giới hạn tên hoặc logo Thunderbird. Thông tin bổ sung về nhãn hiệu có thể
     được tìm thấy <a data-l10n-name="mozilla-trademarks-link">tại đây</a>.
 rights-intro-point-3 = Một số tính năng trong { -brand-short-name }, như Trình Báo Cáo Lỗi, cho bạn tùy chọn cung cấp phản hồi tới { -vendor-short-name }. Bằng việc chọn gửi phản hồi, bạn cho { -vendor-short-name } quyền sử dụng phản hồi đó để cải tiến sản phẩm, công bố phản hồi trên trang web, và phân phối phản hồi.

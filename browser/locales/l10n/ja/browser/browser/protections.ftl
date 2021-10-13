@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,9 +20,9 @@ graph-week-summary-private-window = { -brand-short-name } が今週ブロック�
 # This should match the "appmenuitem-protection-dashboard-title" string in browser/appmenu.ftl.
 protection-report-webpage-title = プライバシー保護ダッシュボード
 protection-report-page-content-title = プライバシー保護ダッシュボード
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } はブラウジングの舞台裏でプライバシーを保護します。これはユーザーにパーソナライズされた保護結果の概要であり、オンラインセキュリティを制御するツールを含みます。
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } はブラウジングの舞台裏でプライバシーを保護します。これはユーザーにパーソナライズされた保護結果の概要であり、オンラインセキュリティを制御するツールを含みます。
 
 protection-report-settings-link = プライバシーとセキュリティの設定を管理
@@ -85,9 +85,6 @@ lockwise-scanned-text-breached-logins = { $count } 個のパスワードが漏�
 # $count (Number) - Number of passwords stored in Lockwise.
 lockwise-scanned-text-no-breached-logins = パスワードは安全に保存されています。
 lockwise-how-it-works-link = 仕組みについて
-
-turn-on-sync = { -sync-brand-short-name } をオンにする...
-    .title = 同期の設定に移動
 
 monitor-title = データ漏洩に注意を
 monitor-link = 仕組みについて

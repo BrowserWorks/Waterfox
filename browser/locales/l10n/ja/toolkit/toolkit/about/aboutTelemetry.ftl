@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetry データ
 about-telemetry-current-store = 現在のストア:
 about-telemetry-more-information = 詳しい情報をお探しですか？
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Firefox Data Documentation</a> には、私たちのデータツールでの取り扱われ方についてのガイドが含まれます。
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Firefox Telemetry クライアントドキュメント</a> には、コンセプト、API ドキュメント、データ参照についての定義が含まれます。
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Telemetry ダッシュボード</a> では、Telemetry 経由で Mozilla が受信したデータが視覚化されています。
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Waterfox Data Documentation</a> には、私たちのデータツールでの取り扱われ方についてのガイドが含まれます。
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Waterfox Telemetry クライアントドキュメント</a> には、コンセプト、API ドキュメント、データ参照についての定義が含まれます。
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Telemetry ダッシュボード</a> では、Telemetry 経由で Waterfox が受信したデータが視覚化されています。
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> は、Telemetry により収集されたプローブの詳細と説明を提供します。
-about-telemetry-show-in-Firefox-json-viewer = JSON ビューアーで開く
+about-telemetry-show-in-Waterfox-json-viewer = JSON ビューアーで開く
 about-telemetry-home-section = ホーム
 about-telemetry-general-data-section = 一般データ
 about-telemetry-environment-data-section = 環境データ
@@ -64,7 +64,7 @@ about-telemetry-upload-type =
 #   $sum (Integer): sum of histogram samples
 about-telemetry-histogram-stats = サンプル数 { $sampleCount }、平均 = { $prettyAverage }、合計 = { $sum }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = このページは、Telemetry によって収集されたパフォーマンスとハードウェア、使用状況、カスタマイズについての情報を表示します。この情報は、{ -brand-full-name } の改善のため { $telemetryServerOwner } に送信されます。
 about-telemetry-settings-explanation = Telemetry は { about-telemetry-data-type }を収集しています。アップロードは<a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>です。
 # Variables:
@@ -136,8 +136,8 @@ about-telemetry-origin-section = 生成元 Telemetry
 about-telemetry-origin-origin = 生成元
 about-telemetry-origin-count = カウント
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Firefox 生成元 Telemetry</a> はデータを送信前にエンコードするため、{ $telemetryServerOwner } が対象をカウントできます。ただし、与えられた { -brand-product-name } がカウントに含まれるかどうかを知ることはできません。(<a data-l10n-name="prio-blog-link">詳細情報</a>)
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox 生成元 Telemetry</a> はデータを送信前にエンコードするため、{ $telemetryServerOwner } が対象をカウントできます。ただし、与えられた { -brand-product-name } がカウントに含まれるかどうかを知ることはできません。(<a data-l10n-name="prio-blog-link">詳細情報</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } プロセス

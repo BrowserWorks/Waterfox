@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Lap könyvjelzőzése
     .accesskey = k
-reopen-in-container =
-    .label = Újranyitás konténerben
-    .accesskey = j
 tab-context-open-in-new-container-tab =
     .label = Megnyitás új konténerlapban
     .accesskey = e
@@ -69,26 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Több lap bezárása
     .accesskey = T
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Lapbezárás visszavonása
-            [one] Lapbezárás visszavonása
-           *[other] Lapbezárások visszavonása
-        }
-    .accesskey = L
-close-tab =
-    .label = Lap bezárása
-    .accesskey = b
-close-tabs =
-    .label = Lapok bezárása
-    .accesskey = z
-move-tabs =
-    .label = Lapok áthelyezése
-    .accesskey = h
-move-tab =
-    .label = Lap áthelyezése
-    .accesskey = h
 tab-context-share-url =
     .label = Megosztás
     .accesskey = M
@@ -114,6 +91,14 @@ tab-context-close-tabs =
            *[other] Lapok bezárása
         }
     .accesskey = b
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Lap bezárása
+            [one] Lap bezárása
+           *[other] { $tabCount } lap bezárása
+        }
+    .accesskey = b
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -122,3 +107,12 @@ tab-context-move-tabs =
            *[other] Lapok áthelyezése
         }
     .accesskey = h
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [1] Lap küldése az eszközre
+            [one] Lap küldése az eszközre
+           *[other] { $tabCount } lap küldése az eszközre
+        }
+    .accesskey = k

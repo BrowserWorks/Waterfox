@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,10 +17,6 @@
 <!ENTITY allowWindowStatusChange.label "Zmienianie domyślnego tekstu wyświetlanego w pasku stanu">
 <!ENTITY allowContextmenuDisable.label "Wyłączanie lub zmienianie menu kontekstowego">
 <!ENTITY allowHideStatusBar.label "Ukrywanie paska stanu">
-
-<!ENTITY enableDrmMedia.label "Aktywuj odtwarzanie treści chronionych przez DRM dla">
-<!ENTITY enableEmeForSuite.label "Zewnętrzne moduły odtwarzania treści chronionych">
-<!ENTITY enableEmeForSuite.accesskey "Z">
 
 <!ENTITY enablePlugins.label "Aktywuj wtyczki dla">
 <!ENTITY enablePluginForSuite.label "Pakiet SeaMonkey">

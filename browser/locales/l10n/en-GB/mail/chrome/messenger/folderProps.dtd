@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Properties">
 
 <!ENTITY generalInfo.label                       "General Information">
-<!ENTITY folderCharsetFallback2.label            "Fallback Text Encoding:">
-<!ENTITY folderCharsetFallback2.accesskey        "E">
-<!ENTITY folderCharsetEnforce2.label             "Apply encoding to all messages in the folder (individual message text encoding settings and auto-detection will be ignored)">
-<!ENTITY folderCharsetEnforce2.accesskey         "A">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Rebuild Summary File Index">
 <!ENTITY folderRebuildSummaryFile2.label         "Repair Folder">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = Узнать подробнее
 safeb-blocked-phishing-page-error-desc-override = Есть информация, что <span data-l10n-name='sitename'>{ $sitename }</span> является <a data-l10n-name='error_desc_link'>поддельным сайтом</a>. Вы можете <a data-l10n-name='report_detection'>сообщить о неверности этой информации</a>, или <a data-l10n-name='ignore_warning_link'>проигнорировать риск</a> и перейти на этот небезопасный сайт.
 safeb-blocked-phishing-page-error-desc-no-override = Есть информация, что <span data-l10n-name='sitename'>{ $sitename }</span> является <a data-l10n-name='error_desc_link'>поддельным сайтом</a>. Вы можете <a data-l10n-name='report_detection'>сообщить о неверности этой информации</a>.
 safeb-blocked-phishing-page-learn-more = Узнайте больше о поддельных сайтах и фишинге на сайте <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Узнайте больше о Защите от фишинга и вредоносных программ в { -brand-short-name } на сайте <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = Есть информация, что на <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>размещены вредоносные программы</a>. Вы можете <a data-l10n-name='report_detection'>сообщить о неверности этой информации</a>, или <a data-l10n-name='ignore_warning_link'>проигнорировать риск</a> и перейти на этот небезопасный сайт.
-safeb-blocked-malware-page-error-desc-no-override = Есть информация, что на <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>размещены вредоносные программы</a>. Вы можете <a data-l10n-name='report_detection'>сообщить о неверности этой информации</a>.
-safeb-blocked-malware-page-learn-more = Узнайте больше о нежелательном веб-содержимом, в том числе о вирусах и других вредоносных программах, и о том, как защитить свой компьютер, на сайте <a data-l10n-name='learn_more_link'>StopBadware.org</a>. Узнайте больше о Защите от фишинга и вредоносных программ в { -brand-short-name } на сайте <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-blocked-malware-page-error-desc-override-sumo = Есть информация, что на <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>размещены вредоносные программы</a>. Вы можете <a data-l10n-name='ignore_warning_link'>проигнорировать риск</a> и перейти на этот небезопасный сайт.
 safeb-blocked-malware-page-error-desc-no-override-sumo = Есть информация, что на <span data-l10n-name='sitename'>{ $sitename }</span> <a data-l10n-name='error_desc_link'>размещены вредоносные программы</a>.
 safeb-blocked-malware-page-learn-more-sumo = Узнайте больше о Защите от фишинга и вредоносных программ в { -brand-short-name } на сайте <a data-l10n-name='firefox_support'>support.mozilla.org</a>.

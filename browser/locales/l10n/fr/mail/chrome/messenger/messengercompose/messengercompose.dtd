@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Nouveau">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Message">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "Contact du carnet d’adresses…">
 <!ENTITY newContact.accesskey "C">
 <!ENTITY attachMenu.label "Joindre">
 <!ENTITY attachMenu.accesskey "J">
-<!ENTITY attachFileCmd.label "Fichier(s)…">
-<!ENTITY attachFileCmd.accesskey "F">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Espace de fichiers">
 <!ENTITY attachCloudCmd.accesskey "E">
 <!ENTITY attachPageCmd.label "Page web…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Envoyer plus tard">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "l">
-<!ENTITY printSetupCmd.label "Mise en page…">
-<!ENTITY printSetupCmd.accesskey "M">
-<!ENTITY printPreviewCmd.label "Aperçu avant impression">
-<!ENTITY printPreviewCmd.accesskey "A">
 <!ENTITY printCmd.label "Imprimer…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "P">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Réorganiser les pièces jointes…">
 <!ENTITY reorderAttachmentsCmd.accesskey "a">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Panneau des pièces jointes">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "j">
 <!ENTITY selectAllCmd.accesskey "T">
 <!ENTITY findBarCmd.label "Rechercher…">
 <!ENTITY findBarCmd.accesskey "h">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Réorganiser les pièces jointes">
-<!ENTITY moveAttachmentTopPanelBtn.label "Déplacer tout en haut">
-<!ENTITY moveAttachmentUpPanelBtn.label "Déplacer vers le haut">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Déplacer l’ensemble">
-<!ENTITY moveAttachmentDownPanelBtn.label "Déplacer vers le bas">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Déplacer tout en bas">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Paramètres des comptes">
 <!ENTITY accountManagerCmd2.accesskey "m">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "Options">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Préférences">
-<!ENTITY preferencesCmdUnix.accesskey "n">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Envoyer">
 <!ENTITY quoteButton.label "Citer">
 <!ENTITY addressButton.label "Contacts">
-<!ENTITY attachButton.label "Joindre">
 <!ENTITY spellingButton.label "Orthographe">
 <!ENTITY saveButton.label "Enregistrer">
 <!ENTITY printButton.label "Imprimer">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Envoyer ce message plus tard">
 <!ENTITY quoteButton.tooltip "Citer le précédent message">
 <!ENTITY addressButton.tooltip "Sélectionner un destinataire du carnet d’adresses">
-<!ENTITY attachButton.tooltip2 "Ajouter une pièce jointe">
 <!ENTITY spellingButton.tooltip "Vérifier l’orthographe de la sélection ou du message complet">
 <!ENTITY saveButton.tooltip "Enregistrer ce message">
 <!ENTITY cutButton.tooltip              "Couper">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Autres types de champs d’adressage">
 <!ENTITY fromAddr2.label "De">
 <!ENTITY fromAddr.accesskey "e">
-<!ENTITY toAddr2.label "Pour">
-<!ENTITY ccAddr2.label "Copie à">
-<!ENTITY bccAddr2.label "Copie cachée à">
 <!ENTITY replyAddr2.label "Répondre à">
 <!ENTITY newsgroupsAddr2.label "Newsgroup">
 <!ENTITY followupAddr2.label "Faire suivre à">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "s">
 <!ENTITY selectAll.label "Tout sélectionner">
 <!ENTITY selectAll.accesskey "t">
-<!ENTITY attachFile.label "Joindre fichier(s)…">
-<!ENTITY attachFile.accesskey "f">
 <!ENTITY attachCloud.label "Espace de fichiers…">
 <!ENTITY attachCloud.accesskey "E">
 <!ENTITY convertCloud.label "Convertir en…">

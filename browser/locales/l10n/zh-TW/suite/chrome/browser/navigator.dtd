@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -57,10 +57,6 @@
 <!ENTITY goButton.tooltip             "在網址列中打入網址後按此開始瀏覽">
 <!ENTITY printButton.label            "列印">
 <!ENTITY printButton.tooltip          "列印此頁">
-
-<!ENTITY throbber.tooltip             "&vendorShortName; 的首頁">
-
-<!ENTITY throbber.tooltip2            "前往 &brandShortName; 首頁">
 
 <!ENTITY locationBar.tooltip          "輸入網址及搜尋欄位">
 <!ENTITY locationBar.accesskey        "d">

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -437,7 +437,7 @@ rdf:Description about="#mail-doc-blogs">
 <rdf:Description about="#mail-doc-offline">
     <nc:subheadings>
       <rdf:Seq>
-        <rdf:li> <rdf:Description ID="mail-offline-setup" nc:name="A Mozilla Levelező beállítása kapcsolat nélküli munkára" nc:link="mail_help.xhtml#setting_up_mozilla_mail_and_newsgroups_to_work_offline"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="mail-offline-setup" nc:name="A Waterfox Levelező beállítása kapcsolat nélküli munkára" nc:link="mail_help.xhtml#setting_up_mozilla_mail_and_newsgroups_to_work_offline"/> </rdf:li>
         <rdf:li> <rdf:Description ID="mail-offline-inbox" nc:name="A Beérkezett üzenetek (Inbox) letöltése" nc:link="mail_help.xhtml#downloading_your_inbox_for_offline_use"/> </rdf:li>
         <rdf:li> <rdf:Description ID="mail-offline-folder" nc:name="Egy mappa letöltése" nc:link="mail_help.xhtml#downloading_an_individual_folder_for_offline_use"/> </rdf:li>
         <rdf:li> <rdf:Description ID="mail-offline-flagged" nc:name="Kijelölt vagy megjelölt üzenetek letöltése" nc:link="mail_help.xhtml#downloading_selected_or_flagged_messages_for_offline_use"/> </rdf:li>
@@ -766,7 +766,7 @@ rdf:Description about="#mail-doc-blogs">
         <rdf:li> <rdf:Description ID="cust-main" nc:name="Böngésző eszköztár"  nc:link="customize_help.xhtml#navigation_toolbar"/> </rdf:li>
         <rdf:li> <rdf:Description ID="cust-personal" nc:name="Személyes eszköztár"  nc:link="customize_help.xhtml#personal_toolbar"/> </rdf:li>
         <rdf:li> <rdf:Description ID="cust-status" nc:name="Állapotsor"  nc:link="customize_help.xhtml#status_bar"/> </rdf:li>
-        <rdf:li> <rdf:Description ID="cust-taskbar" nc:name="Mozilla-komponensek"  nc:link="customize_help.xhtml#component_bar"/> </rdf:li>
+        <rdf:li> <rdf:Description ID="cust-taskbar" nc:name="Waterfox-komponensek"  nc:link="customize_help.xhtml#component_bar"/> </rdf:li>
         <rdf:li> <rdf:Description ID="cust-hide" nc:name="Eszköztár elrejtése"  nc:link="customize_help.xhtml#hiding_a_toolbar"/> </rdf:li>
       </rdf:Seq>
     </nc:subheadings>

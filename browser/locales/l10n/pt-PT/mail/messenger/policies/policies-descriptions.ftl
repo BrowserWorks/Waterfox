@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -132,7 +132,7 @@ policy-SearchEngines = Configurar as definições do motor de pesquisa. Esta pol
 
 policy-SearchSuggestEnabled = Ativar ou desativar sugestões de pesquisa.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Instalar os módulos PKCS #11.
 
 policy-SSLVersionMax = Definir a versão máxima de SSL.

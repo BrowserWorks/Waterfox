@@ -1,17 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 close-button =
     .aria-label = Đóng
-preferences-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Tùy chọn
-           *[other] Tùy chỉnh
-        }
-preferences-tab-title =
-    .title = Tùy chỉnh
 preferences-doc-title = Tùy chỉnh
 category-list =
     .aria-label = Thể loại
@@ -91,19 +83,11 @@ update-in-progress-ok-button = &Loại bỏ
 # Continue is the cancel button so pressing escape or using a platform standard
 # method of closing the UI will not discard the update.
 update-in-progress-cancel-button = &Tiếp tục
-addons-button = Tiện ích mở rộng & chủ đề
 account-button = Cài đặt tài khoản
 open-addons-sidebar-button = Tiện ích mở rộng và chủ đề
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Để tạo mật khẩu chính, hãy nhập thông tin đăng nhập Windows của bạn. Điều này giúp bảo vệ tính bảo mật của tài khoản của bạn.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Thunderbird is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = tạo một mật khẩu chính
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Để tạo mật khẩu chính, hãy nhập thông tin đăng nhập Windows của bạn. Điều này giúp bảo vệ tính bảo mật của tài khoản của bạn.
 # This message can be seen by trying to add a Primary Password.
@@ -166,9 +150,6 @@ animated-alert-label =
 customize-alert-label =
     .label = Tùy biến…
     .accesskey = C
-tray-icon-label =
-    .label = Hiển thị biểu tượng trong khay thanh tác vụ
-    .accesskey = t
 biff-use-system-alert =
     .label = Sử dụng thông báo hệ thống
 tray-icon-unread-label =
@@ -227,9 +208,9 @@ search-integration-label =
 config-editor-button =
     .label = Trình chỉnh sửa cấu hình…
     .accesskey = C
-return-receipts-description = Xác định cách thức { -brand-short-name } xử lý biên lai
+return-receipts-description = Xác định cách { -brand-short-name } xử lý xác nhận đã nhận thư
 return-receipts-button =
-    .label = Biên lai…
+    .label = Xác nhận đã nhận thư…
     .accesskey = R
 update-app-legend = Cập nhật { -brand-short-name }
 # Variables:
@@ -263,6 +244,9 @@ diskspace-legend = Dung lượng đĩa
 offline-compact-folder =
     .label = Nén tất cả các thư mục khi nó sẽ lưu lại
     .accesskey = a
+offline-compact-folder-automatically =
+    .label = Hỏi mọi lúc trước khi thu gọn
+    .accesskey = b
 compact-folder-size =
     .value = MB tổng cộng
 
@@ -325,8 +309,6 @@ smaller-size-item =
 quoted-text-color =
     .label = Màu sắc:
     .accesskey = o
-search-input =
-    .placeholder = Tìm kiếm
 search-handler-table =
     .placeholder = Lọc các loại nội dung và hành động
 type-column-label =
@@ -549,13 +531,6 @@ passwords-description = { -brand-short-name } có thể ghi nhớ mật khẩu c
 passwords-button =
     .label = Mật khẩu đã lưu…
     .accesskey = S
-master-password-description = Mật khẩu chính bảo vệ tất cả mật khẩu của bạn, nhưng bạn phải nhập mật khẩu một lần mỗi phiên.
-master-password-label =
-    .label = Dùng một mật khẩu chính
-    .accesskey = U
-master-password-button =
-    .label = Thay đổi mật khẩu chính…
-    .accesskey = C
 primary-password-description = Mật khẩu chính bảo vệ tất cả mật khẩu của bạn, nhưng bạn phải nhập mật khẩu một lần mỗi phiên.
 primary-password-label =
     .label = Sử dụng mật khẩu chính
@@ -696,24 +671,6 @@ no-preview-description = Chủ đề này không hợp lệ hoặc hiện không
 chat-variant-label =
     .value = Biến thể:
     .accesskey = V
-chat-header-label =
-    .label = Hiển thị Header
-    .accesskey = H
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] Tìm kiếm trong Tùy chọn
-           *[other] Tìm kiếm trong Tùy chỉnh
-        }
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
 #

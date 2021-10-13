@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -37,3 +37,20 @@ text-action-select-all-shortcut =
     .key = A
 text-action-spell-no-suggestions =
     .label = 无拼写建议
+text-action-spell-add-to-dictionary =
+    .label = 添加到字典
+    .accesskey = o
+text-action-spell-undo-add-to-dictionary =
+    .label = 撤销添加到字典
+    .accesskey = n
+text-action-spell-check-toggle =
+    .label = 拼写检查
+    .accesskey = g
+text-action-spell-add-dictionaries =
+    .label = 添加字典…
+    .accesskey = A
+text-action-spell-dictionaries =
+    .label = 语言
+    .accesskey = L
+text-action-search-text-box-clear =
+    .title = 清空

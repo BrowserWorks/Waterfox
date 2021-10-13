@@ -1,16 +1,20 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 notifications-dialog-window =
-    .title = Προσαρμογή ειδοποίησης νέου email
+    .title = Προσαρμογή ειδοποίησης νέων email
+
 customize-alert-description = Επιλέξτε ποια πεδία θα εμφανίζονται στην ειδοποίηση:
+
 preview-text-checkbox =
     .label = Προεπισκόπηση κειμένου μηνύματος
     .accesskey = Π
+
 subject-checkbox =
     .label = Θέμα
     .accesskey = Θ
+
 sender-checkbox =
     .label = Αποστολέας
     .accesskey = π
@@ -22,7 +26,8 @@ sender-checkbox =
 ## to translate the whole sentence.
 
 open-time-label-before =
-    .value = Εμφάνιση ειδοποίησης νέου email για
+    .value = Εμφάνιση ειδοποίησης νέων email για
     .accesskey = ν
+
 open-time-label-after =
     .value = δευτερόλεπτα

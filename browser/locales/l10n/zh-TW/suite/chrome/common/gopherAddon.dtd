@@ -1,10 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY loadError.label        "頁面載入錯誤">
 <!ENTITY gopherAddon.title      "Gopher 通訊協定">
 <!ENTITY gopherAddon.shortDesc  "gopher 不是已註冊的通訊協定。">
-<!ENTITY gopherAddon.longDesc   "已不再支援該網址使用的 gopher 通訊協定，所以瀏覽器無法連線至該站台。您可以到 Mozilla 附加元件站安裝相容性附加元件來存取此伺服器。">
+<!ENTITY gopherAddon.longDesc   "已不再支援該網址使用的 gopher 通訊協定，所以瀏覽器無法連線至該站台。您可以到 Waterfox 附加元件站安裝相容性附加元件來存取此伺服器。">
 <!ENTITY goToAddOn.label        "前往附加元件頁面">
 

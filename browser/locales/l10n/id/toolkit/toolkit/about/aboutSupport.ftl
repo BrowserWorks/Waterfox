@@ -1,19 +1,15 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 page-title = Informasi Pemecahan Masalah
 page-subtitle = Laman ini berisi informasi teknis yang mungkin berguna ketika Anda berusaha mengatasi masalah. Jika Anda mencari jawaban untuk pertanyaan umum tentang { -brand-short-name }, silakan kunjungi <a data-l10n-name="support-link">situs web layanan dukungan kami</a>.
+
 crashes-title = Laporan Kerusakan
 crashes-id = ID Laporan
 crashes-send-date = Dikirim
 crashes-all-reports = Semua Laporan Kerusakan
 crashes-no-config = Aplikasi ini tidak dikonfigurasikan untuk menampilkan laporan kerusakan.
-extensions-title = Ekstensi
-extensions-name = Nama
-extensions-enabled = Aktif
-extensions-version = Versi
-extensions-id = ID
 support-addons-title = Pengaya
 support-addons-name = Nama
 support-addons-type = Tipe
@@ -73,7 +69,7 @@ app-basics-remote-processes-count = Proses Jarak Jauh
 app-basics-enterprise-policies = Kebijakan Perusahaan
 app-basics-location-service-key-google = Google Location Service Key
 app-basics-safebrowsing-key-google = Google Safebrowsing Key
-app-basics-key-mozilla = Kunci Layanan Lokasi Mozilla
+app-basics-key-mozilla = Kunci Layanan Lokasi Waterfox
 app-basics-safe-mode = Mode Aman
 show-dir-label =
     { PLATFORM() ->
@@ -128,8 +124,7 @@ sandbox-sys-call-tid = TID
 sandbox-sys-call-proc-type = Jenis Proses
 sandbox-sys-call-number = Syscall
 sandbox-sys-call-args = Argumen
-safe-mode-title = Coba Mode Aman
-restart-in-safe-mode-label = Mulai Ulang dengan Pengaya Dinonaktifkan…
+
 troubleshoot-mode-title = Diagnosis masalah
 restart-in-troubleshoot-mode-label = Mode Pemecahan Masalah…
 clear-startup-cache-title = Coba bersihkan tembolok permulaan
@@ -174,7 +169,7 @@ intl-regional-prefs = Pengaturan Regional
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -187,51 +182,26 @@ remote-debugging-url = URL
 
 ##
 
-support-third-party-modules-title = Modul Pihak Ketiga
-support-third-party-modules-module = Berkas Modul
-support-third-party-modules-version = Versi File
-support-third-party-modules-vendor = Info Vendor
-support-third-party-modules-occurrence = Kejadian
-support-third-party-modules-process = ID & Jenis Proses
-support-third-party-modules-thread = Thread
-support-third-party-modules-base = Alamat Imagebase
-support-third-party-modules-uptime = Waktu Operasi Proses (md)
-support-third-party-modules-duration = Durasi Pemuatan (md)
-support-third-party-modules-status = Status
-support-third-party-modules-status-loaded = Dimuat
-support-third-party-modules-status-blocked = Diblokir
-support-third-party-modules-status-redirected = Diarahkan ulang
-support-third-party-modules-empty = Tidak ada modul pihak ketiga yang dimuat.
-support-third-party-modules-no-value = (Tidak ada nilai)
-support-third-party-modules-button-open =
-    .title = Buka lokasi berkas…
-support-third-party-modules-expand =
-    .title = Tampilkan informasi rinci
-support-third-party-modules-collapse =
-    .title = Ciutkan informasi rinci
-support-third-party-modules-unsigned-icon =
-    .title = Modul ini tidak ditandatangani
-support-third-party-modules-folder-icon =
-    .title = Buka lokasi berkas…
-support-third-party-modules-down-icon =
-    .title = Tampilkan informasi rinci
-support-third-party-modules-up-icon =
-    .title = Ciutkan informasi rinci
 # Variables
 # $days (Integer) - Number of days of crashes to log
 report-crash-for-days = Laporan Kerusakan dalam { $days } Hari Terakhir
+
 # Variables
 # $minutes (integer) - Number of minutes since crash
 crashes-time-minutes = { $minutes } menit yang lalu
+
 # Variables
 # $hours (integer) - Number of hours since crash
 crashes-time-hours = { $hours } jam yang lalu
+
 # Variables
 # $days (integer) - Number of days since crash
 crashes-time-days = { $days } hari yang lalu
+
 # Variables
 # $reports (integer) - Number of pending reports
 pending-reports = Semua Laporan Kerusakan (termasuk { $reports } kerusakan yang tertunda pada rentang waktu yang ditentukan)
+
 raw-data-copied = Data mentah telah disalin ke papan klip
 text-copied = Teks telah disalin ke clipboard
 
@@ -244,9 +214,11 @@ blocked-mismatched-version = Diblokir karena versi driver kartu grafis Anda tida
 # Variables
 # $driverVersion - The graphics driver version string
 try-newer-driver = Diblokir untuk versi penggerak grafik Anda. Coba perbarui penggerak grafik Anda ke versi { $driverVersion } atau yang lebih baru.
+
 # "ClearType" is a proper noun and should not be translated. Feel free to leave English strings if
 # there are no good translations, these are only used in about:support
 clear-type-parameters = Parameter ClearType
+
 compositing = Compositing
 hardware-h264 = Dekode H264 Perangkat Keras
 main-thread-no-omtc = thread utama, tanpa OMTC
@@ -261,6 +233,7 @@ virtual-monitor-disp = Layar Monitor Virtual
 
 found = Ditemukan
 missing = Hilang
+
 gpu-process-pid = GPUProcessPid
 gpu-process = GPUProcess
 gpu-description = Deskripsi
@@ -283,21 +256,19 @@ webgl2-renderer = Perender WebGL2
 webgl2-version = Versi Penggerak WebGL 2
 webgl2-driver-extensions = Ekstensi Penggerak WebGL 2
 webgl2-extensions = Ekstensi WebGL 2
-blocklisted-bug = Dicekal karena alasan yang diketahui
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = bug { $bugNumber }
+
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = Dicekal karena masalah yang diketahui: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
+
 # Variables
 # $failureCode (string) - String that can be searched in the source tree.
 unknown-failure = Dicekal: kode kegagalan { $failureCode }
+
 d3d11layers-crash-guard = Compositor D3D11
-d3d11video-crash-guard = Pendekode Video D3D11
-d3d9video-crash-guard = Pendekode Video D3D9
 glcontext-crash-guard = OpenGL
 wmfvpxvideo-crash-guard = WMF VPX Video Decoder
+
 reset-on-next-restart = Setel Ulang pada Mulai Ulang Berikutnya
 gpu-process-kill-button = Matikan Proses GPU
 gpu-device-reset = Reset Perangkat
@@ -307,8 +278,10 @@ content-uses-tiling = Gunakan Tiling (Konten)
 off-main-thread-paint-enabled = Off Main Thread Painting Diaktifkan
 off-main-thread-paint-worker-count = Jumlah Off Main Thread Painting Worker
 target-frame-rate = Tingkat Target Bingkai
+
 min-lib-versions = Versi minimum diharapkan
 loaded-lib-versions = Versi yang digunakan
+
 has-seccomp-bpf = Seccomp-BPF (Pemfilteran Pemanggilan Sistem - System Call Filtering)
 has-seccomp-tsync = Sinkronisasi Utas Seccomp
 has-user-namespaces = Ruang Nama Pengguna
@@ -322,27 +295,23 @@ sandbox-proc-type-content = konten
 sandbox-proc-type-file = konten berkas
 sandbox-proc-type-media-plugin = plugin media
 sandbox-proc-type-data-decoder = dekoder data
+
 startup-cache-title = Tembolok Permulaan
 startup-cache-disk-cache-path = Jalur Tembolok Disk
 startup-cache-ignore-disk-cache = Abaikan Tembolok Disk
 startup-cache-found-disk-cache-on-init = Tembolok Disk di Init ditemukan
 startup-cache-wrote-to-disk-cache = Menulis ke Tembolok Disk
+
 launcher-process-status-0 = Diaktifkan
 launcher-process-status-1 = Dinonaktifkan karena kegagalan
 launcher-process-status-2 = Dinonaktifkan secara paksa
 launcher-process-status-unknown = Status tak diketahui
+
 # Variables
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = Diaktifkan pengguna
-multi-process-status-1 = Diaktifkan secara baku
-multi-process-status-2 = Dinonaktifkan
-multi-process-status-4 = Dinonaktifkan oleh alat aksesibilitas
-multi-process-status-6 = Dinonaktifkan oleh masukan teks yang tidak didukung
-multi-process-status-7 = Dinonaktifkan oleh pengaya
-multi-process-status-8 = Dinonaktifkan secara paksa
-multi-process-status-unknown = Status tak diketahui
+
 # Variables
 # $fissionWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
@@ -357,6 +326,7 @@ fission-status-disabled-by-default = Dinonaktifkan secara baku
 fission-status-enabled-by-user-pref = Diaktifkan oleh pengguna
 fission-status-disabled-by-user-pref = Dinonaktifkan oleh pengguna
 fission-status-disabled-by-e10s-other = E10s dinonaktifkan
+
 async-pan-zoom = Geser/Perbesaran Asinkron
 apz-none = tidak ada
 wheel-enabled = input wheel diaktifkan
@@ -393,6 +363,7 @@ support-remote-experiments-title = Eksperimen Jarak Jauh
 support-remote-experiments-name = Nama
 support-remote-experiments-branch = Cabang Eksperimen
 support-remote-experiments-see-about-studies = Lihat <a data-l10n-name="support-about-studies-link">about:studies</a> untuk informasi lebih lanjut, termasuk cara menonaktifkan masing-masing percobaan atau menonaktifkan { -brand-short-name } untuk menjalankan jenis eksperimen ini di masa mendatang.
+
 support-remote-features-title = Fitur Jarak Jauh
 support-remote-features-name = Nama
 support-remote-features-status = Status

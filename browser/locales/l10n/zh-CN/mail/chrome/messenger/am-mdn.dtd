@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -18,7 +18,7 @@
 <!ENTITY moveToSent.label             "移到“寄件备份”文件夹中">
 <!ENTITY moveToSent.accesskey         "M">
 <!ENTITY requestMDN.label             "当我收到消息，并且消息发件人索取邮件回执时(MDN)">
-<!ENTITY returnSome.label             "对某些消息返回邮件回执">
+<!ENTITY returnSome.label             "允许对某些消息返回邮件回执">
 <!ENTITY returnSome.accesskey         "e">
 <!ENTITY never.label                  "总不发送邮件回执">
 <!ENTITY never.accesskey              "N">

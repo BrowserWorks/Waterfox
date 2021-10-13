@@ -1,24 +1,33 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY window.title "Зайти на канал">
-<!ENTITY network.label "Сеть:">
+<!ENTITY window.title  "Зайти на канал">
+
+<!ENTITY network.label     "Сеть:">
 <!ENTITY network.accesskey "е">
-<!ENTITY channel.label "Канал:">
+
+<!ENTITY channel.label     "Канал:">
 <!ENTITY channel.accesskey "н">
-<!ENTITY topics.label "Кроме поиска в именах каналов, искать также в темах">
+
+<!ENTITY topics.label     "Кроме поиска в именах каналов, искать также в темах">
 <!ENTITY topics.accesskey "т">
-<!ENTITY join.label "Зайти">
+
+<!ENTITY join.label     "Зайти">
 <!ENTITY join.accesskey "З">
-<!ENTITY minusers.label "Мин. кол-во пользователей:">
+
+<!ENTITY minusers.label     "Мин. кол-во пользователей:">
 <!ENTITY minusers.accesskey "и">
-<!ENTITY maxusers.label "Макс. кол-во пользователей:">
+
+<!ENTITY maxusers.label     "Макс. кол-во пользователей:">
 <!ENTITY maxusers.accesskey "к">
-<!ENTITY refresh.label "Обновить сейчас">
-<!ENTITY refresh.accesskey "">
+
+<!ENTITY refreshNow.label     "Обновить сейчас">
+<!ENTITY refreshNow.accesskey "н">
+
 <!ENTITY network.hint.label "Введите имя сети или сервера (также можно ввести номер порта) и канал, на который хотите зайти.">
+
 <!ENTITY col.network "Сеть">
-<!ENTITY col.name "Имя">
+<!ENTITY col.name  "Имя">
 <!ENTITY col.users "Пользователи">
 <!ENTITY col.topic "Тема">

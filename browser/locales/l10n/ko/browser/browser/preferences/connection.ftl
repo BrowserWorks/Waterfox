@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -30,9 +30,6 @@ connection-proxy-http = HTTP 프록시
     .accesskey = x
 connection-proxy-http-port = 포트
     .accesskey = P
-connection-proxy-http-sharing =
-    .label = FTP 및 HTTPS에도 이 프록시를 사용
-    .accesskey = s
 connection-proxy-https-sharing =
     .label = HTTPS에도 이 프록시를 사용
     .accesskey = s
@@ -40,10 +37,6 @@ connection-proxy-https = HTTPS 프록시
     .accesskey = H
 connection-proxy-ssl-port = 포트
     .accesskey = o
-connection-proxy-ftp = FTP 프록시
-    .accesskey = F
-connection-proxy-ftp-port = 포트
-    .accesskey = r
 connection-proxy-socks = SOCKS 호스트
     .accesskey = C
 connection-proxy-socks-port = 포트
@@ -54,13 +47,11 @@ connection-proxy-socks4 =
 connection-proxy-socks5 =
     .label = SOCKS v5
     .accesskey = v
-connection-proxy-noproxy = 프록시를 지나지 않음
+connection-proxy-noproxy = 프록시 사용 안 함:
     .accesskey = n
 connection-proxy-noproxy-desc = 예: .mozilla.org, .net.nz, 192.168.1.0/24
-# Do not translate localhost, 127.0.0.1 and ::1.
-connection-proxy-noproxy-localhost-desc = Localhost나 127.0.0.1, ::1에 대한 연결은 결코 프록시 되지 않습니다.
 # Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
-connection-proxy-noproxy-localhost-desc-2 = localhost, 127.0.0.1/8 및 ::1에 대한 연결은 프록시 되지 않습니다.
+connection-proxy-noproxy-localhost-desc-2 = localhost, 127.0.0.1/8 및 ::1에 대한 연결은 프록시가 사용되지 않습니다.
 connection-proxy-autotype =
     .label = 자동 프록시 설정 URL
     .accesskey = A
@@ -72,7 +63,7 @@ connection-proxy-autologin =
     .accesskey = i
     .tooltip = 저장한 자격 증명이 있으면 조용히 인증합니다. 인증이 되지 않으면 물어볼 것입니다.
 connection-proxy-socks-remote-dns =
-    .label = SOCKS v5를 사용할 때 프록시 DNS
+    .label = SOCKS v5를 사용할 때 DNS 프록시
     .accesskey = d
 connection-dns-over-https =
     .label = DNS over HTTPS (HTTPS를 통한 DNS) 사용

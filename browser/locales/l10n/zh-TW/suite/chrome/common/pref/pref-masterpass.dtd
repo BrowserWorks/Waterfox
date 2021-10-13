@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,3 +13,5 @@
 <!ENTITY  resetpassword.text                     "若您重設主控密碼，將失去所有網頁與電子郵件密碼、表單資料、個人憑證以及私鑰。">
 <!ENTITY  resetpassword.button                   "重設密碼">
 <!ENTITY  resetpassword.accesskey                "R">
+<!ENTITY  resetpassword2.button                  "重設密碼">
+<!ENTITY  resetpassword2.accesskey               "P">

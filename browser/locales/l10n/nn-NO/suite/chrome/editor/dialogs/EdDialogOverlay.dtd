@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,8 +13,5 @@
 <!ENTITY makeUrlRelative.accessKey "r">
 <!ENTITY makeUrlRelative.tooltip "Byt mellom relativ og absolutt URL. Først må du lagre sida for å endre dette.">
 
-<!-- Shared by Link and Image dialogs -->
-<!ENTITY LinkURLEditField.label "Skriv inn ei nettsideadresse, namnet til ei lokal fil, eller vel eit namngjeve anker eller overskrift frå sprettopplista:">
-<!ENTITY LinkURLEditField.accessKey "n">
 <!ENTITY LinkURLEditField2.label "Skriv inn ei nettsideadresse, namnet til ei lokal fil, eller vel eit nemngjeve anker eller overskrift frå feltet sin kontekstmeny:">
 <!ENTITY LinkURLEditField2.accessKey "n">

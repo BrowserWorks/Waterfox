@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,17 @@
 <!ENTITY confirmMove.accesskey            "l">
 <!ENTITY preserveThreading.label          "Manter tópicos agrupados ao ordenar mensagens">
 <!ENTITY preserveThreading.accesskey      "p">
+<!ENTITY mailAutoHide.label               "Ocultar a aba de email quando apenas uma aba estiver aberta">
+<!ENTITY mailAutoHide.accesskey           "b">
 <!ENTITY loadInBackground.label           "Mudar para novas abas quando forem abertas">
 <!ENTITY loadInBackground.accesskey       "M">
+<!ENTITY mailOpenTabsFor.label            "Abrir abas em vez de janelas para">
+<!ENTITY mailMiddleClick.label            "Clique com o botão do meio ou Ctrl+Enter em uma mensagem ou pasta">
+<!ENTITY mailMiddleClick.accesskey        "m">
+<!ENTITY mailMiddleClickMac.label         "Clique com o botão do meio ou &#8984;+Return em uma mensagem ou pasta">
+<!ENTITY mailMiddleClickMac.accesskey     "m">
+<!ENTITY mailDoubleClick.label            "Dê um duplo-clique em uma mensagem">
+<!ENTITY mailDoubleClick.accesskey        "d">
 <!ENTITY mailBiffOnNewWindow.label        "Só verificar se há novos emails após abrir email e grupos de notícias">
 <!ENTITY mailBiffOnNewWindow.accesskey    "o">
 

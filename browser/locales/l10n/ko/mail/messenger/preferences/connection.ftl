@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -93,9 +93,6 @@ no-proxy-label =
     .accesskey = n
 
 no-proxy-example = 예: .mozilla.or.kr, .net.nz 192.168.1.0/24
-
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = Localhost나 127.0.0.1, ::1로의 연결은 프록시 되지 않습니다.
 
 proxy-password-prompt =
     .label = 비밀번호가 저장되어 있으면 인증시 묻지 않기

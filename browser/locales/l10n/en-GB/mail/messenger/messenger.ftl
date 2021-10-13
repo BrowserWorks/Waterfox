@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,9 +22,6 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = Add-ons and Themes
-    .tooltip = Manage your add-ons
 addons-and-themes-toolbarbutton =
     .label = Add-ons and Themes
     .tooltiptext = Manage your add-ons
@@ -73,9 +70,14 @@ folder-toolbar-toggle-folder-compact-view =
 redirect-msg-menuitem =
     .label = Redirect
     .accesskey = d
+menu-file-save-as-file =
+    .label = File…
+    .accesskey = F
 
 ## AppMenu
 
+appmenu-save-as-file =
+    .label = File…
 # Since v89 we dropped the platforms distinction between Options or Preferences
 # and consolidated everything with Preferences.
 appmenu-preferences =
@@ -130,3 +132,9 @@ caret-browsing-prompt-check-text = Do not ask again.
 repair-text-encoding-button =
     .label = Repair Text Encoding
     .tooltiptext = Guess correct text encoding from message content
+
+## no-reply handling
+
+no-reply-title = Reply Not Supported
+no-reply-message = The reply address ({ $email }) does not appear to be a monitored address. Messages to this address will likely not be read by anyone.
+no-reply-reply-anyway-button = Reply Anyway

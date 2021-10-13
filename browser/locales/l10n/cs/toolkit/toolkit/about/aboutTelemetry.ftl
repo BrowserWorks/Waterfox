@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetrická data
 about-telemetry-current-store = Současné úložiště:
 about-telemetry-more-information = Hledáte více informací?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentace dat prohlížeče Firefox</a> obsahuje návody pro práci s našimi datovými nástroji.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentace klienta telemetrie pro prohlížeč Firefox</a> obsahuje definice pojmů, dokumentaci API a popisy dat.
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Nástěnky telemetrie</a> umožňují zobrazovat data, které Mozilla získává z telemetrie.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentace dat prohlížeče Waterfox</a> obsahuje návody pro práci s našimi datovými nástroji.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentace klienta telemetrie pro prohlížeč Waterfox</a> obsahuje definice pojmů, dokumentaci API a popisy dat.
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Nástěnky telemetrie</a> umožňují zobrazovat data, které Waterfox získává z telemetrie.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> poskytuje podrobnosti a popis sond sbíraných v rámci telemetrie.
-about-telemetry-show-in-Firefox-json-viewer = Otevřít v zobrazení JSONu
+about-telemetry-show-in-Waterfox-json-viewer = Otevřít v zobrazení JSONu
 about-telemetry-home-section = Domů
 about-telemetry-general-data-section = Obecná data
 about-telemetry-environment-data-section = Data prostředí
@@ -69,7 +69,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } vzorků
     }, průměr = { $prettyAverage }, součet = { $sum }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = Tato stránka zobrazuje data o výkonu, hardwaru, používání a přizpůsobení aplikace. Tyto informace jsou anonymně odesílány organizaci { $telemetryServerOwner } a slouží k vylepšování aplikace { -brand-full-name }.
 about-telemetry-settings-explanation = Telemetrie sbírá { about-telemetry-data-type } a její odesílání <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -141,9 +141,9 @@ about-telemetry-origin-section = Origin telemetrie
 about-telemetry-origin-origin = origin
 about-telemetry-origin-count = počet
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-origins-explanation =
-    <a data-l10n-name="origin-doc-link">Firefox Origin Telemetry</a> kóduje před odesláním data tak, aby z nich mohl provozovatel serveru, { $telemetryServerOwner }, získávat různé součty, ale nemohl zjistit, které konkrétní instance { -brand-product-name.gender ->
+    <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a> kóduje před odesláním data tak, aby z nich mohl provozovatel serveru, { $telemetryServerOwner }, získávat různé součty, ale nemohl zjistit, které konkrétní instance { -brand-product-name.gender ->
         [masculine] { -brand-product-name(case: "gen") }
         [feminine] { -brand-product-name(case: "gen") }
         [neuter] { -brand-product-name(case: "gen") }

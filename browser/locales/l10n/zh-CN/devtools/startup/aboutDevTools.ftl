@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = 关于开发者工具
-enable-title = 启用 Firefox 开发者工具
-enable-inspect-element-title = 启用 Firefox 开发者工具以使用元素探查器
+enable-title = 启用 Waterfox 开发者工具
+enable-inspect-element-title = 启用 Waterfox 开发者工具以使用元素探查器
 enable-inspect-element-message = 用开发者工具的探查器来检查和编辑 HTML 和 CSS。
-enable-about-debugging-message = 开发和调试 WebExtensions、Web worker、Service worker，……，尽在 Firefox 开发者工具。
+enable-about-debugging-message = 开发和调试 WebExtensions、Web worker、Service worker，……，尽在 Waterfox 开发者工具。
 enable-key-shortcut-message = 您已用快捷键激活一个开发者工具。如果这是误操作，您可以关闭此标签页。
 enable-menu-message = 使用查看器、调试器等工具来完善您的网站的 HTML、CSS 和 JavaScript。
 enable-common-message = Waterfox 开发者工具默认已被禁用，以便您更好的操作浏览器。
@@ -14,18 +14,18 @@ enable-learn-more-link = 详细了解开发者工具
 enable-enable-button = 启用开发者工具
 enable-close-button = 关闭此标签页
 
-welcome-title = 欢迎使用 Firefox 开发者工具！
-newsletter-title = Mozilla 开发者新闻通讯
+welcome-title = 欢迎使用 Waterfox 开发者工具！
+newsletter-title = Waterfox 开发者新闻通讯
 newsletter-message = 获取开发者的新消息、技巧和资源，直接发到您的邮箱。
 newsletter-email-placeholder =
     .placeholder = 电子邮件地址
-newsletter-privacy-label = 我同意 Mozilla 遵循 <a data-l10n-name="privacy-policy">隐私政策</a>中的说明来处理我的信息。
+newsletter-privacy-label = 我同意 Waterfox 遵循 <a data-l10n-name="privacy-policy">隐私政策</a>中的说明来处理我的信息。
 newsletter-subscribe-button = 订阅
 newsletter-thanks-title = 谢谢！
-newsletter-thanks-message = 如果您以前没有成功订阅过 Mozilla 相关的新闻通讯，您可能需要检查收件箱乃至垃圾邮件箱来找到我们发给您的确认邮件。
+newsletter-thanks-message = 如果您以前没有成功订阅过 Waterfox 相关的新闻通讯，您可能需要检查收件箱乃至垃圾邮件箱来找到我们发给您的确认邮件。
 
 footer-title = Waterfox 开发者版本
-footer-message = 开发者工具不够尽兴？探索专为开发者和现代工作流程打造的 Firefox 浏览器。
+footer-message = 开发者工具不够尽兴？探索专为开发者和现代工作流程打造的 Waterfox 浏览器。
 footer-learn-more-link = 详细了解
 
 features-learn-more = 详细了解

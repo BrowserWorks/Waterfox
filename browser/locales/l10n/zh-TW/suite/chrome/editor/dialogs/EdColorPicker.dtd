@@ -1,13 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "色彩">
 <!ENTITY lastPickedColor.label "上次使用的色彩">
 <!ENTITY lastPickedColor.accessKey "L">
-<!ENTITY setColor1.label "選擇一種色彩或">
-<!ENTITY setColor2.label "輸入 HTML 色彩字串">
-<!ENTITY setColor2.accessKey "H">
 <!ENTITY chooseColor1.label "選擇色彩:">
 <!ENTITY chooseColor2.label "輸入 HTML 色彩字串">
 <!ENTITY chooseColor2.accessKey "H">

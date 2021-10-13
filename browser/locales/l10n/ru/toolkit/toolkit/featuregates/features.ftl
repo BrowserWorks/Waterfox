@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: «Masonry-раскладка»
 experimental-features-css-masonry-description = Включает поддержку экспериментальной «Masonry-раскладки» в CSS. Прочтите <a data-l10n-name="explainer">объяснения</a> для получения высокоуровневого описания функции. Оставляйте свои отзывы и комментарии в <a data-l10n-name="w3c-issue">этой issue на GitHub</a> или в <a data-l10n-name="bug">этом баг-репорте</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Каскадные Слои
+experimental-features-css-cascade-layers-description = Включает поддержку каскадных слоев CSS. Для получения подробностей см. <a data-l10n-name="spec">спецификацию в стадии разработки</a>. В случае возникновения проблем, вызванных этой возможностью, создавайте сообщения об ошибках с блокировкой <a data-l10n-name="bugzilla">запроса 1699215</a>.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -80,14 +85,11 @@ experimental-features-js-warp-description = Активирует проект Wa
 # Fission is the name of the feature and should not be translated.
 experimental-features-fission =
     .label = Fission (изоляция сайта)
-experimental-features-fission-description = Fission (изоляция сайта) — это экспериментальная функция в { -brand-short-name }, обеспечивающая дополнительный уровень защиты от ошибок системы безопасности. Изолируя каждый сайт в отдельный процесс, Fission затрудняет доступ вредоносных веб-сайтов к информации с других посещаемых вами страниц. Это серьезное архитектурное изменение в { -brand-short-name }, и мы будем благодарны вас за тестирование и сообщения о любых проблемах, с которыми вы можете столкнуться. Для получения дополнительных сведений прочтите <a data-l10n-name="wiki">вики</a>.
+experimental-features-fission-description = Fission (изоляция сайта) — это экспериментальная функция в { -brand-short-name }, обеспечивающая дополнительный уровень защиты от ошибок системы безопасности. Изолируя каждый сайт в отдельный процесс, Fission затрудняет доступ вредоносных веб-сайтов к информации с других посещаемых вами страниц. Это серьёзное архитектурное изменение в { -brand-short-name }, и мы будем благодарны вам за тестирование и сообщения о любых проблемах, с которыми вы можете столкнуться. Для получения дополнительных сведений прочтите <a data-l10n-name="wiki">вики</a>.
 # Support for having multiple Picture-in-Picture windows open simultaneously
 experimental-features-multi-pip =
     .label = Поддержка нескольких окон «Картинка в картинке»
 experimental-features-multi-pip-description = Экспериментальная поддержка, позволяющая одновременно открывать несколько окон «Картинка в картинке».
-experimental-features-http3 =
-    .label = Протокол HTTP/3
-experimental-features-http3-description = Экспериментальная поддержка протокола HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Адресная строка: показывать результаты при составлении IME

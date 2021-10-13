@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,12 +17,6 @@
 <!ENTITY lightning.menupopup.new.task.accesskey "T">
 <!ENTITY lightning.menupopup.new.calendar.label "Calendário…">
 <!ENTITY lightning.menupopup.new.calendar.accesskey "n">
-
-<!-- Open menu popup in File menu -->
-<!ENTITY lightning.menupopup.open.label               "Abrir">
-<!ENTITY lightning.menupopup.open.accesskey           "A">
-<!ENTITY lightning.menupopup.open.message.label       "Mensagem guardada…">
-<!ENTITY lightning.menupopup.open.message.accesskey   "M">
 
 <!-- Open menu popup in File menu -->
 <!ENTITY lightning.menupopup.open.calendar.label      "Ficheiro de calendário…">
@@ -51,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Por agora, pode apenas ativar isto depois de configurar este calendário no seu diálogo de propriedade se o servidor do calendário cuidar do agendamento.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Esta opção apenas está disponível se o servidor do calendário lidar com o agendamento. Ativar isto irá permitir retroceder para o agendamento baseado no email padrão em vez de o deixar para o servidor.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Notificações">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Preferências globais de notificação...">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Aceitar">

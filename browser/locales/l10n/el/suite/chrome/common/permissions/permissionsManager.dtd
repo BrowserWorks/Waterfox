@@ -1,15 +1,15 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowtitle.label              "Εξαιρέσεις">
-<!ENTITY treehead.sitename.label        "Ιστοσελίδα">
+<!ENTITY treehead.sitename.label        "Ιστότοπος">
 <!ENTITY treehead.status.label          "Κατάσταση">
-<!ENTITY remove.label                   "Αφαίρεση ιστοσελίδας">
+<!ENTITY remove.label                   "Αφαίρεση ιστοτόπου">
 <!ENTITY remove.accesskey               "Α">
-<!ENTITY removeall.label                "Αφαίρεση όλων των ιστοσελίδων">
+<!ENTITY removeall.label                "Αφαίρεση όλων των ιστοτόπων">
 <!ENTITY removeall.accesskey            "φ">
-<!ENTITY address.label                  "Διεύθυνση ιστοσελίδας:">
+<!ENTITY address.label                  "Διεύθυνση ιστοτόπου:">
 <!ENTITY address.accesskey              "δ">
 <!ENTITY block.label                    "Φραγή">
 <!ENTITY block.accesskey                "Φ">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -19,6 +19,4 @@
 <!ENTITY openInTab.accesskey              "n">
 <!ENTITY openContextSearchTab.label       "使用右鍵搜尋功能時，將搜尋結果顯示在新分頁而非新視窗">
 <!ENTITY openContextSearchTab.accesskey   "t">
-<!ENTITY openSidebarSearchPanel.label     "當搜尋到資料時自動開啟側邊欄的「搜尋結果」面板">
-<!ENTITY openSidebarSearchPanel.accesskey "O">
 

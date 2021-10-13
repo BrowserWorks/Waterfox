@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "Fullt namn:">
 <!ENTITY DisplayName.accesskey          "F">
 <!ENTITY preferDisplayName.label        "Alltid føretrekk å vise namnet i staden for det i meldingshovudet">
-<!ENTITY preferDisplayName.accesskey    "A">
 <!ENTITY NickName.label                 "Kallenamn:">
 <!ENTITY NickName.accesskey             "K">
 
@@ -45,8 +44,6 @@
 <!ENTITY PlainText.label                "Rein tekst">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Ukjent">
-<!ENTITY ScreenName.label               "Skjermnamn:">
-<!ENTITY ScreenName.accesskey           "S">
 
 <!ENTITY WorkPhone.label                "Arbeid:">
 <!ENTITY WorkPhone.accesskey            "A">
@@ -121,7 +118,6 @@
 
 <!ENTITY Photo.tab                      "Foto">
 <!ENTITY Photo.accesskey                "F">
-<!ENTITY PhotoDesc.label                "Vel ein av følgjande:">
 <!ENTITY GenericPhoto.label             "Generelt bilde">
 <!ENTITY GenericPhoto.accesskey         "G">
 <!ENTITY DefaultPhoto.label             "Standard">

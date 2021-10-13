@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,9 @@ cert-error-intro = { $hostname } bruger et ugyldigt sikkerhedscertifikat.
 
 cert-error-mitm-intro = Websteder bekræfter deres identitet ved hjælp af sikkerhedscertifikater, der er udstedt af certifikat-autoriteter (CA).
 
-cert-error-mitm-mozilla = { -brand-short-name } er støttet af nonprofit-organisationen Mozilla, der administrer et helt åbent lager for certifikat-autoriter (CA-lager). Dette lager sikrer, at certifikat-autoriteter følger de korrekte retningslinjer for brugernes sikkerhed.
+cert-error-mitm-mozilla = { -brand-short-name } er støttet af nonprofit-organisationen Waterfox, der administrer et helt åbent lager for certifikat-autoriter (CA-lager). Dette lager sikrer, at certifikat-autoriteter følger de korrekte retningslinjer for brugernes sikkerhed.
 
-cert-error-mitm-connection = { -brand-short-name } bruger Mozillas CA-lager til at sikre, at en forbindelse er sikker - fremfor at bruge de certifikater, brugerens operativsystem leverer. Det vil sige, at forbindelsen betragtes som usikker, hvis et antivirus-program eller et netværk opfanger en forbindelse med et sikkerhedscertifikat, udstedt af en CA, der ikke findes i Mozillas CA-lager.
+cert-error-mitm-connection = { -brand-short-name } bruger Waterfoxs CA-lager til at sikre, at en forbindelse er sikker - fremfor at bruge de certifikater, brugerens operativsystem leverer. Det vil sige, at forbindelsen betragtes som usikker, hvis et antivirus-program eller et netværk opfanger en forbindelse med et sikkerhedscertifikat, udstedt af en CA, der ikke findes i Waterfoxs CA-lager.
 
 cert-error-trust-unknown-issuer-intro = Nogen kan have lavet en falsk version af webstedet, og du bør ikke fortsætte.
 

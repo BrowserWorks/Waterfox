@@ -1,7 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -17,8 +17,8 @@
      Also note the leading/trailing whitespace in strings here, which is
      deliberate for formatting around the embedded links. -->
 <!ENTITY rights.intro-point1a "O &brandShortName; é disponibilizado de acordo com os termos da ">
-<!ENTITY rights.intro-point1b "Licença Pública Mozilla">
-<!ENTITY rights.intro-point1c ". Isso significa que pode usar, copiar e distribuir o &brandShortName; para outras pessoas. Também é bem-vindo para modificar o código-fonte do &brandShortName; para atender suas necessidades. A Licença Pública Mozilla também lhe dá o direito de distribuir as suas versões modificadas.">
+<!ENTITY rights.intro-point1b "Licença Pública Waterfox">
+<!ENTITY rights.intro-point1c ". Isso significa que pode usar, copiar e distribuir o &brandShortName; para outras pessoas. Também é bem-vindo para modificar o código-fonte do &brandShortName; para atender suas necessidades. A Licença Pública Waterfox também lhe dá o direito de distribuir as suas versões modificadas.">
 
 <!ENTITY rights.intro-point2aa "A &vendorShortName; não concede a você nenhum direito às marcas registradas ou logotipos do &quot;&brandFullName;&quot;. Informações adicionais sobre marcas registradas (Trademarks) podem ser encontradas ">
 <!ENTITY rights.intro-point2b "aqui">

@@ -1,7 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- Window title -->
 <!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
 <!ENTITY editorWindow.titlemodifier "Kompozytor Stron">
 <!ENTITY editorWindow.titlemodifiermenuseparator " - ">
@@ -10,6 +11,17 @@
 
 <!-- Toolbar-only items -->
 <!ENTITY compositionToolbar.tooltip "Pasek narzędzi edycyjnych">
+
+<!ENTITY previewToolbarCmd.label   "Podgląd">
+<!ENTITY previewToolbarCmd.tooltip "Otwórz bieżącą stronę w nowym oknie przeglądarki">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label     "Eksportuj do formatu tekstowego…">
+<!ENTITY exportToTextCmd.accesskey "t">
+<!ENTITY previewCmd.label          "Otwórz stronę w przeglądarce">
+<!ENTITY previewCmd.accesskey      "g">
+<!ENTITY sendPageCmd.label         "Wyślij stronę…">
+<!ENTITY sendPageCmd.accesskey     "s">
 
 <!-- View menu items -->
 <!ENTITY compositionToolbarCmd.label     "Pasek narzędzi edycji">
@@ -30,16 +42,6 @@
 <!-- Tools menu items -->
 <!ENTITY validateCmd.label         "Weryfikuj poprawność kodu HTML">
 <!ENTITY validateCmd.accesskey     "W">
-<!ENTITY previewToolbarCmd.label   "Podgląd">
-<!ENTITY previewToolbarCmd.tooltip "Otwórz bieżącą stronę w nowym oknie przeglądarki">
-
-<!-- File menu items -->
-<!ENTITY exportToTextCmd.label     "Eksportuj do formatu tekstowego…">
-<!ENTITY exportToTextCmd.accesskey "t">
-<!ENTITY previewCmd.label          "Otwórz stronę w przeglądarce">
-<!ENTITY previewCmd.accesskey      "g">
-<!ENTITY sendPageCmd.label         "Wyślij stronę…">
-<!ENTITY sendPageCmd.accesskey     "s">
 
 <!-- Display Mode toolbar and View menu items -->
 <!ENTITY NormalModeTab.label      "Normalny">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,8 +23,6 @@ customize-mode-uidensity-menu-touch =
     .tooltiptext = Touch
 customize-mode-uidensity-auto-touch-mode-checkbox =
     .label = Utilizza Touch per la modalità tablet
-customize-mode-extra-drag-space =
-    .label = Spazio per trascinamento
 customize-mode-lwthemes =
     .label = Temi
 customize-mode-overflow-list-description = Trascina e rilascia elementi in quest’area per tenerli a portata di clic ma fuori dalla barra degli strumenti…
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = Normale
     .accesskey = N
     .tooltiptext = Normale
-customize-mode-uidensity-menu-compact =
-    .label = Compatta
-    .accesskey = C
-    .tooltiptext = Compatta
 customize-mode-uidensity-menu-compact-unsupported =
     .label = Compatta (non supportata)
     .accesskey = C
@@ -47,6 +41,7 @@ customize-mode-undo-cmd =
     .label = Annulla
 customize-mode-lwthemes-my-themes =
     .value = I miei temi
+customize-mode-lwthemes-link = Gestisci temi
 customize-mode-touchbar-cmd =
     .label = Personalizza Touch Bar…
 customize-mode-downloads-button-autohide =

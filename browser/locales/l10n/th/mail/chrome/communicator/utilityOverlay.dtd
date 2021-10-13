@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,10 +17,6 @@
 <!ENTITY redoCmd.accesskey          "ท">
 <!ENTITY deleteCmd.label          "ลบ">
 <!ENTITY deleteCmd.accesskey        "บ">
-<!ENTITY preferencesCmd2.label "ตัวเลือก">
-<!ENTITY preferencesCmd2.accesskey "ก">
-<!ENTITY preferencesCmdUnix.label       "ค่ากำหนด">
-<!ENTITY preferencesCmdUnix.accesskey     "ก">
 
 <!ENTITY customizeCmd.label "ปรับแต่ง">
 <!ENTITY customizeCmd.accesskey "ป">

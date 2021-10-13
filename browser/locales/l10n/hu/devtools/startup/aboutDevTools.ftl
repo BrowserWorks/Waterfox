@@ -1,31 +1,31 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = A fejlesztői eszközök névjegye
 enable-title = Waterfox fejlesztői eszközök engedélyezése
-enable-inspect-element-title = A Firefox fejlesztői eszközök használhatják a Vizsgáló elemet
+enable-inspect-element-title = A Waterfox fejlesztői eszközök használhatják a Vizsgáló elemet
 enable-inspect-element-message = Vizsgálja meg és szerkessze a HTML-t és CSS-t a fejlesztői eszközök vizsgálójával.
-enable-about-debugging-message = Fejlesszen WebExtensionöket, web workereket, service workereket és másokat a Firefox fejlesztői eszközeivel.
+enable-about-debugging-message = Fejlesszen WebExtensionöket, web workereket, service workereket és másokat a Waterfox fejlesztői eszközeivel.
 enable-key-shortcut-message = Aktiválta a fejlesztői eszközök gyorsbillentyűjét. Ha ez véletlenül történt, akkor bezárhatja ezt a lapot.
 enable-menu-message = Tökéletesítse a weboldala HTML, CSS és JavaScript kódját a Vizsgáló és Hibakereső eszközökkel.
-enable-common-message = A Firefox fejlesztői eszközök alapértelmezett le vannak tiltva, hogy jobb irányítással rendelkezzen a böngészője felett.
+enable-common-message = A Waterfox fejlesztői eszközök alapértelmezett le vannak tiltva, hogy jobb irányítással rendelkezzen a böngészője felett.
 enable-learn-more-link = Tudjon meg többet a fejlesztői eszközökről
 enable-enable-button = Fejlesztői eszköztár engedélyezése
 enable-close-button = Lap bezárása
 
-welcome-title = Üdvözöljük a Firefox fejlesztői eszközökben!
-newsletter-title = Mozilla fejlesztői hírlevél
+welcome-title = Üdvözöljük a Waterfox fejlesztői eszközökben!
+newsletter-title = Waterfox fejlesztői hírlevél
 newsletter-message = Kapjon fejlesztői híreket, trükköket és erőforrásokat, közvetlenül a postafiókjába.
 newsletter-email-placeholder =
     .placeholder = E-mail
-newsletter-privacy-label = Elfogadom, hogy a Mozilla az <a data-l10n-name="privacy-policy">adatvédelmi irányelveknek</a> megfelelően kezelje az adataimat.
+newsletter-privacy-label = Elfogadom, hogy a Waterfox az <a data-l10n-name="privacy-policy">adatvédelmi irányelveknek</a> megfelelően kezelje az adataimat.
 newsletter-subscribe-button = Feliratkozás
 newsletter-thanks-title = Köszönjük!
 newsletter-thanks-message = Ha korábban nem erősítette meg a Mozillához kapcsolódó hírlevél feliratkozását, akkor lehet hogy meg kell tennie. Ellenőrizze a Beérkezett üzenetek mappáját vagy a spam-szűrőjét az e-mailünk után.
 
 footer-title = Waterfox Developer Edition
-footer-message = Többre vágyik a fejlesztői eszközöknél? Nézze meg a Firefox böngészőt, amely kifejezetten a fejlesztőknek, és modern munkamenetekhez készül.
+footer-message = Többre vágyik a fejlesztői eszközöknél? Nézze meg a Waterfox böngészőt, amely kifejezetten a fejlesztőknek, és modern munkamenetekhez készül.
 footer-learn-more-link = További tudnivalók
 
 features-learn-more = További tudnivalók

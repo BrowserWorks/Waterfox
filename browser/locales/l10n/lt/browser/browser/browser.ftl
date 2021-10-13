@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -87,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = Valdyti papildinių naudojimą
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = Tvarkyti kameros ir mikrofono naudojimą svetainėje
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = Tvarkyti kitų garsiakalbių naudojimą svetainėje
 urlbar-autoplay-notification-anchor =
     .tooltiptext = Atverti automatinio grojimo polangį
 urlbar-persistent-storage-notification-anchor =
@@ -156,61 +160,10 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = Pridėti į adreso lauką
 page-action-manage-extension =
     .label = Tvarkyti priedą…
-page-action-remove-from-urlbar =
-    .label = Pašalinti iš adreso lauko
 page-action-remove-extension =
     .label = Pašalinti priedą
-
-## Page Action menu
-
-# Variables
-# $tabCount (integer) - Number of tabs selected
-page-action-send-tabs-panel =
-    .label =
-        { $tabCount ->
-            [one] Siųsti kortelę į įrenginį
-            [few] Siųsti { $tabCount } kortelių į įrenginį
-           *[other] Siųsti { $tabCount } korteles į įrenginį
-        }
-page-action-send-tabs-urlbar =
-    .tooltiptext =
-        { $tabCount ->
-            [one] Siųsti kortelę į įrenginį
-            [few] Siųsti { $tabCount } kortelių į įrenginį
-           *[other] Siųsti { $tabCount } korteles į įrenginį
-        }
-page-action-copy-url-panel =
-    .label = Kopijuoti saitą
-page-action-copy-url-urlbar =
-    .tooltiptext = Kopijuoti saitą
-page-action-email-link-panel =
-    .label = Išsiųsti saitą el. paštu…
-page-action-email-link-urlbar =
-    .tooltiptext = Išsiųsti saitą el. paštu…
-page-action-share-url-panel =
-    .label = Dalintis
-page-action-share-url-urlbar =
-    .tooltiptext = Dalintis
-page-action-share-more-panel =
-    .label = Daugiau…
-page-action-send-tab-not-ready =
-    .label = Sinchronizuojami įrenginiai…
-# "Pin" is being used as a metaphor for expressing the fact that these tabs
-# are "pinned" to the left edge of the tabstrip. Really we just want the
-# string to express the idea that this is a lightweight and reversible
-# action that keeps your tab where you can reach it easily.
-page-action-pin-tab-panel =
-    .label = Įsegti kortelę
-page-action-pin-tab-urlbar =
-    .tooltiptext = Įsegti kortelę
-page-action-unpin-tab-panel =
-    .label = Išsegti kortelę
-page-action-unpin-tab-urlbar =
-    .tooltiptext = Išsegti kortelę
 
 ## Auto-hide Context Menu
 
@@ -226,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = Šįkart ieškokite su:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = Keisti paieškos nuostatas
 search-one-offs-change-settings-compact-button =
     .tooltiptext = Keisti paieškos nuostatas
 search-one-offs-context-open-new-tab =
@@ -294,8 +243,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = Rodyti redagavimo formą įrašant
     .accesskey = R
-bookmark-panel-done-button =
-    .label = Atlikta
 bookmark-panel-save-button =
     .label = Įrašyti
 # Width of the bookmark panel.
@@ -320,13 +267,11 @@ identity-connection-internal = Tai yra saugus „{ -brand-short-name }“ tinkla
 identity-connection-file = Šis tinklalapis yra įrašytas jūsų kompiuteryje.
 identity-extension-page = Šis tinklalapis yra įkeltas iš priedo.
 identity-active-blocked = „{ -brand-short-name }“ užblokavo nesaugias šio tinklalapio dalis.
-identity-custom-root = Ryšį patvirtino liudijimo išdavėjas, kurio „Mozilla“ neatpažino.
+identity-custom-root = Ryšį patvirtino liudijimo išdavėjas, kurio „Waterfox“ neatpažino.
 identity-passive-loaded = Kai kurios šio tinklalapio dalys nėra saugios (pvz., paveikslai).
 identity-active-loaded = Šiame tinklalapyje esate išjungę apsaugą.
 identity-weak-encryption = Šis tinklalapis naudoja silpną šifravimą.
 identity-insecure-login-forms = Šiame tinklalapyje įvesti prisijungimo duomenys gali būti perimti.
-identity-permissions =
-    .value = Leidimai
 identity-https-only-connection-upgraded = (naudojamas HTTPS)
 identity-https-only-label = Tik HTTPS veiksena
 identity-https-only-dropdown-on =
@@ -342,13 +287,12 @@ identity-permissions-storage-access-header = Tarp svetainių veikiantys slapukai
 identity-permissions-storage-access-hint = Šios šalys gali naudoti tarp svetainių veikiančius slapukus ir svetainių duomenis, kai esate šioje svetainėje.
 identity-permissions-storage-access-learn-more = Sužinoti daugiau
 identity-permissions-reload-hint = Kad būtų pritaikyti pakeitimai, tinklalapį galimai reikia atsiųsti iš naujo.
-identity-permissions-empty = Šiai svetainei nesate suteikę jokių ypatingų leidimų.
 identity-clear-site-data =
     .label = Valyti slapukus ir svetainių duomenis…
 identity-connection-not-secure-security-view = Nesate saugiai prisijungę prie šios svetainės.
 identity-connection-verified = Esate saugiai prisijungę prie šios svetainės.
 identity-ev-owner-label = Kam išduotas liudijimas:
-identity-description-custom-root = „Mozilla“ neatpažįsta šio liudijimo išdavėjo. Jis galėjo būti pridėtas iš jūsų operacinės sistemos, arba administratoriaus. <label data-l10n-name="link">Sužinoti daugiau</label>
+identity-description-custom-root = „Waterfox“ neatpažįsta šio liudijimo išdavėjo. Jis galėjo būti pridėtas iš jūsų operacinės sistemos, arba administratoriaus. <label data-l10n-name="link">Sužinoti daugiau</label>
 identity-remove-cert-exception =
     .label = Panaikinti išimtį
     .accesskey = n
@@ -430,12 +374,6 @@ bookmarks-toolbar-empty-message = Spartesniam pasiekimui, patalpinkite savo adre
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = Kamera, kurią leisite pasiekti:
-    .accesskey = K
-popup-select-microphone =
-    .value = Mikrofonas, kurį leisite pasiekti:
-    .accesskey = M
 popup-select-camera-device =
     .value = Kamera:
     .accesskey = K
@@ -449,14 +387,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = Garsiakalbiai
 popup-all-windows-shared = Bus leidžiama matyti visus jūsų ekrane matomus langus.
-popup-screen-sharing-not-now =
-    .label = Ne dabar
-    .accesskey = b
-popup-screen-sharing-never =
-    .label = Niekada neleisti
-    .accesskey = N
-popup-silence-notifications-checkbox = Išjungti „{ -brand-short-name }“ pranešimus dalinantis
-popup-silence-notifications-checkbox-warning = „{ -brand-short-name }“ nerodys pranešimų, kai jūs dalinatės.
 popup-screen-sharing-block =
     .label = Neleisti
     .accesskey = N
@@ -480,8 +410,6 @@ enable-devtools-popup-description = Norėdami naudoti spartųjį klavišą „F1
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = Įveskite adresą arba paieškos žodžius
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
@@ -518,8 +446,6 @@ urlbar-placeholder-search-mode-other-tabs =
 #  $name (String): the name of the user's default search engine
 urlbar-placeholder-with-name =
     .placeholder = Ieškokite per „{ $name }“ arba įveskite adresą
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = Naršyklė valdoma per nuotolį
 # Variables
 #  $component (String): the name of the component which forces remote control.
 #    Example: "DevTools", "Marionette", "RemoteAgent".
@@ -536,8 +462,6 @@ urlbar-go-button =
     .tooltiptext = Eiti į adreso lauke surinktą adresą
 urlbar-page-action-button =
     .tooltiptext = Tinklalapio veiksmai
-urlbar-pocket-button =
-    .tooltiptext = Įrašyti į „{ -pocket-brand-name }“
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -594,6 +518,19 @@ urlbar-result-action-search-bookmarks = Ieškoti adresyne
 urlbar-result-action-search-history = Ieškoti žurnale
 urlbar-result-action-search-tabs = Ieškoti kortelėse
 
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = „{ $engine }“ siūlymai
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
@@ -613,6 +550,10 @@ pointerlock-warning-no-domain = Šis dokumentas valdo jūsų žymeklį. Spustel�
 ## Subframe crash notification
 
 crashed-subframe-message = <strong>Dalis šio tinklalapio užstrigo.</strong> Norėdami pranešti apie šią problemą „{ -brand-product-name }“ ir greičiau ją išspręsti, nusiųskite pranešimą.
+# The string for crashed-subframe-title.title should match crashed-subframe-message,
+# but without any markup.
+crashed-subframe-title =
+    .title = Dalis šio tinklalapio užstrigo. Norėdami pranešti apie šią problemą „{ -brand-product-name }“ ir greičiau ją išspręsti, nusiųskite pranešimą.
 crashed-subframe-learnmore-link =
     .value = Sužinoti daugiau
 crashed-subframe-submit =
@@ -722,6 +663,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = Atsijungti nuo tinklo
     .accesskey = t
+toolbar-overflow-customize-button =
+    .label = Tvarkyti priemonių juostą…
+    .accesskey = T
+toolbar-button-email-link =
+    .label = Nusiųsti saitą
+    .tooltiptext = Nusiųsti saitą el. paštu
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = Įrašyti tinklalapį
+    .tooltiptext = Įrašyti šį tinklalapį ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = Atverti failą
+    .tooltiptext = Atverti failą ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = Sinchronizuotos kortelės
+    .tooltiptext = Rodyti korteles iš kitų įrenginių
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = Naujas privataus naršymo langas
+    .tooltiptext = Atverti naują privačiojo naršymo langą ({ $shortcut })
 
 ## EME notification panel
 
@@ -748,3 +713,79 @@ addon-removal-abuse-report-checkbox = Pranešti apie šį priedą į „{ -vendo
 remote-tabs-manage-account =
     .label = Tvarkyti paskyrą
 remote-tabs-sync-now = Sinchronizuoti dabar
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = Daugiau…
+ui-tour-info-panel-close =
+    .tooltiptext = Užverti
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = Leisti iškylančiuosius langus iš { $uriHost }
+    .accesskey = p
+popups-infobar-block =
+    .label = Blokuoti iškylančiuosius langus iš { $uriHost }
+    .accesskey = p
+
+##
+
+popups-infobar-dont-show-message =
+    .label = Užblokavus iškylančiuosius langus nerodyti šio pranešimo
+    .accesskey = n
+edit-popup-settings =
+    .label = Keisti iškylančiųjų langų nustatymus…
+    .accesskey = K
+picture-in-picture-hide-toggle =
+    .label = Slėpti vaizdo-vaizde perjungimą
+    .accesskey = S
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = Navigacija
+navbar-downloads =
+    .label = Atsiuntimai
+navbar-overflow =
+    .tooltiptext = Daugiau priemonių…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = Spausdinti
+    .tooltiptext = Spausdinti šį tinklalapį… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = Spausdinti
+    .tooltiptext = Spausdinti šį tinklalapį
+navbar-home =
+    .label = Pradžios tinklalapis
+    .tooltiptext = „{ -brand-short-name }“ pradžios tinklalapis
+navbar-library =
+    .label = Archyvas
+    .tooltiptext = Peržiūrėti žurnalą, adresyno įrašus ir daugiau
+navbar-search =
+    .title = Paieška
+navbar-accessibility-indicator =
+    .tooltiptext = Prieinamumo funkcijos įjungtos
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = Kortelių juosta
+tabs-toolbar-new-tab =
+    .label = Nauja kortelė
+tabs-toolbar-list-all-tabs =
+    .label = Pateikti visas korteles
+    .tooltiptext = Pateikti visas korteles
+
+## Infobar shown at startup to suggest session-restore
+
+# <img data-l10n-name="icon"/> will be replaced by the application menu icon
+restore-session-startup-suggestion-message = <strong>Atverti ankstesnes korteles?</strong> Galite atkurti savo ankstesnį seansą iš „{ -brand-short-name }“ programos meniu <img data-l10n-name="icon"/>, iš žurnalo.
+restore-session-startup-suggestion-button = Parodyti instrukciją

@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "คุณสมบัติ">
 
 <!ENTITY generalInfo.label                       "ข้อมูลทั่วไป">
-<!ENTITY folderCharsetFallback2.label            "รหัสอักขระตัวทางเลือก:">
-<!ENTITY folderCharsetFallback2.accesskey        "ร">
-<!ENTITY folderCharsetEnforce2.label             "ใช้รหัสอักขระกับข้อความทั้งหมดในโฟลเดอร์ (แต่ละการตั้งค่ารหัสอักขระเนื้อหาข้อความและการตรวจจับอัตโนมัติจะถูกเพิกเฉย)">
-<!ENTITY folderCharsetEnforce2.accesskey         "ช">
 <!ENTITY folderRebuildSummaryFileTip2.label      "สร้างดัชนีไฟล์ข้อมูลสรุปใหม่">
 <!ENTITY folderRebuildSummaryFile2.label         "ซ่อมแซมโฟลเดอร์">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "ซ">

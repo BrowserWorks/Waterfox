@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,8 +23,6 @@ customize-mode-uidensity-menu-touch =
     .tooltiptext = Chạm
 customize-mode-uidensity-auto-touch-mode-checkbox =
     .label = Sử dụng cảm ứng cho chế độ máy tính bảng
-customize-mode-extra-drag-space =
-    .label = Kéo khoảng trắng
 customize-mode-lwthemes =
     .label = Chủ đề
 customize-mode-overflow-list-description = Kéo và thả các mục vào đây để dễ sử dụng chúng và nó sẽ nằm ngoài thanh công cụ của bạn…
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = Bình thường
     .accesskey = N
     .tooltiptext = Bình thường
-customize-mode-uidensity-menu-compact =
-    .label = Làm gọn
-    .accesskey = C
-    .tooltiptext = Làm gọn
 customize-mode-uidensity-menu-compact-unsupported =
     .label = Thu gọn (không được hỗ trợ)
     .accesskey = C
@@ -47,6 +41,7 @@ customize-mode-undo-cmd =
     .label = Hoàn tác
 customize-mode-lwthemes-my-themes =
     .value = Chủ đề của tôi
+customize-mode-lwthemes-link = Quản lý chủ đề
 customize-mode-touchbar-cmd =
     .label = Tùy biến Touch Bar…
 customize-mode-downloads-button-autohide =

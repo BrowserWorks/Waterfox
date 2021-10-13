@@ -1,13 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
-## View Menu
-
-menu-view-charset =
-    .label = Bảng mã văn bản
-    .accesskey = c
 
 ## Tools Menu
 
@@ -47,6 +41,12 @@ toolbar-undelete-button =
     .label = Hoàn tác xóa
     .tooltiptext = Phục hồi các thư đã chọn
 
+## View
+
+menu-view-repair-text-encoding =
+    .label = Sửa chữa mã hóa văn bản
+    .accesskey = c
+
 ## View / Layout
 
 mail-uidensity-label =
@@ -61,3 +61,9 @@ mail-uidensity-normal =
 mail-uidensity-touch =
     .label = Chạm
     .accesskey = T
+
+## File
+
+file-new-newsgroup-account =
+    .label = Tài khoản nhóm tin…
+    .accesskey = N

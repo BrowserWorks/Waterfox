@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,6 +20,7 @@ about-networking-active = Active
 about-networking-idle = Idle
 about-networking-host = Host
 about-networking-tcp = TCP
+about-networking-type = Type
 about-networking-sent = Sent
 about-networking-received = Received
 about-networking-family = Family

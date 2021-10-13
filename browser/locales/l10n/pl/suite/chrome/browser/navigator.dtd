@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -54,8 +54,6 @@
 <!ENTITY printButton.label "Drukuj">
 <!ENTITY printButton.tooltip "Drukuj bieżącą stronę">
 
-<!ENTITY throbber.tooltip "SeaMonkey.pl! Otwórz naszą stronę!">
-
 <!ENTITY locationBar.tooltip "Wprowadź termin, słowo kluczowe lub adres WWW">
 <!ENTITY locationBar.accesskey "d">
 <!ENTITY locationBar.title "Adres">
@@ -80,3 +78,4 @@
 <!ENTITY viewCertificate.accesskey "c">
 <!ENTITY viewCertManager.label "Otwórz menedżer certyfikatów">
 <!ENTITY viewCertManager.accesskey "m">
+

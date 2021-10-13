@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Propriedades">
 
 <!ENTITY generalInfo.label                       "Geral">
-<!ENTITY folderCharsetFallback2.label            "Codificação secundária do texto:">
-<!ENTITY folderCharsetFallback2.accesskey        "e">
-<!ENTITY folderCharsetEnforce2.label             "Aplicar codificação a todas as mensagens da pasta (a configuração individual de codificação de texto das mensagens e a detecção automática serão ignoradas)">
-<!ENTITY folderCharsetEnforce2.accesskey         "A">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Recriar arquivo de índice">
 <!ENTITY folderRebuildSummaryFile2.label         "Reparar pasta">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">
@@ -30,7 +26,7 @@
 <!ENTITY retentionKeepAll.accesskey "N">
 <!ENTITY retentionKeepRecent.label "Excluir tudo, exceto as últimas">
 <!ENTITY retentionKeepRecent.accesskey "E">
-<!ENTITY retentionApplyToFlagged.label "Sempre manter as mensagens com estrela">
+<!ENTITY retentionApplyToFlagged.label "Sempre manter mensagens com estrela">
 <!ENTITY retentionApplyToFlagged.accesskey "S">
 
 <!ENTITY folderSynchronizationTab.label          "Sincronização">
@@ -53,7 +49,7 @@
 <!ENTITY folderProps.color.accesskey             "C">
 <!ENTITY folderProps.reset.tooltip               "Restaurar cor padrão">
 <!ENTITY folderProps.location.label              "Local:">
-<!ENTITY folderProps.location.accesskey          "E">
+<!ENTITY folderProps.location.accesskey          "L">
 
 <!ENTITY folderSharingTab.label                  "Compartilhamento">
 <!ENTITY privileges.button.label                 "Privilégios…">

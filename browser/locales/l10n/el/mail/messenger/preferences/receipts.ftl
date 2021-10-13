@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,13 +7,22 @@ receipts-dialog-window =
 return-receipt-checkbox =
     .label = Κατά την αποστολή μηνυμάτων, να ζητείται πάντα αποδεικτικό προβολής
     .accesskey = Κ
+return-receipt-checkbox-control =
+    .label = Κατά την αποστολή μηνυμάτων, να ζητείται πάντα αποδεικτικό προβολής
+    .accesskey = Κ
 receipt-arrive-label = Μετά την επιστροφή μιας βεβαίωσης
 receipt-leave-radio =
     .label = Διατήρηση στα εισερχόμενα
     .accesskey = τ
 receipt-move-radio =
-    .label = Μεταφορά στον φάκελο "Απεσταλμένα"
+    .label = Μεταφορά στον φάκελο «Απεσταλμένα»
     .accesskey = μ
+receipt-leave-radio-control =
+    .label = Διατήρηση στα εισερχόμενα
+    .accesskey = ρ
+receipt-move-radio-control =
+    .label = Μετακίνηση στον φάκελο «Απεσταλμένα»
+    .accesskey = φ
 receipt-request-label = Κατά τη λήψη αιτήματος για αποδεικτικό προβολής:
 receipt-return-never-radio =
     .label = Να μην γίνεται ποτέ αποστολή αποδεικτικού προβολής
@@ -22,17 +31,32 @@ receipt-return-some-radio =
     .label = Αποδοχή αποδεικτικών προβολής για ορισμένα μηνύματα
     .accesskey = π
 receipt-not-to-cc =
-    .value = Αν δεν είμαι στα πεδία "Προς" ή "Κοιν." του μηνύματος:
+    .value = Αν δεν είμαι στα πεδία «Προς» ή «Κοιν.» του μηνύματος:
     .accesskey = ν
+receipt-return-never-radio-control =
+    .label = Να μην γίνεται ποτέ αποστολή αποδεικτικού προβολής
+    .accesskey = ν
+receipt-return-some-radio-control =
+    .label = Αποδοχή αποδεικτικών προβολής για ορισμένα μηνύματα
+    .accesskey = χ
+receipt-not-to-cc-label =
+    .value = Αν δεν είμαι στα πεδία «Προς» ή «Κοιν.» του μηνύματος:
+    .accesskey = π
 receipt-send-never-label =
     .label = Ποτέ αποστολή
 receipt-send-always-label =
-    .label = Πάντα αποστολή
+    .label = Αποστολή πάντα
 receipt-send-ask-label =
-    .label = Να γίνεται ερώτηση
+    .label = Ερώτηση
 sender-outside-domain =
-    .value = Aν ο αποστολέας είναι εκτός του τομέα μου:
+    .value = Αν ο αποστολέας είναι εκτός του τομέα μου:
     .accesskey = κ
 other-cases-label =
     .value = Σε όλες τις άλλες περιπτώσεις:
     .accesskey = λ
+sender-outside-domain-label =
+    .value = Αν ο αποστολέας είναι εκτός του τομέα μου:
+    .accesskey = μ
+other-cases-text-label =
+    .value = Σε όλες τις άλλες περιπτώσεις:
+    .accesskey = τ

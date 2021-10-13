@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Kiegészítőkezelő
 addons-page-title = Kiegészítőkezelő
 search-header =
     .placeholder = Keresés itt: addons.mozilla.org
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Kiegészítő támogatás
 sidebar-help-button-title =
     .title = Kiegészítő támogatás
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } beállítások
-       *[other] { -brand-short-name } beállítások
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name } beállítások
-           *[other] { -brand-short-name } beállítások
-        }
 addons-settings-button = { -brand-short-name } Beállítások
 sidebar-settings-button-title =
     .title = { -brand-short-name } Beállítások
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Néhány kiegészítő nem ellenőrizhető
 show-all-extensions-button =
     .label = Minden kiegészítő megjelenítése
-cmd-show-details =
-    .label = További adatok megjelenítése
-    .accesskey = T
-cmd-find-updates =
-    .label = Frissítések keresése
-    .accesskey = F
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Beállítások
-           *[other] Beállítások
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] B
-           *[other] B
-        }
-cmd-enable-theme =
-    .label = Téma alkalmazása
-    .accesskey = T
-cmd-disable-theme =
-    .label = Téma levétele
-    .accesskey = l
-cmd-install-addon =
-    .label = Telepítés
-    .accesskey = T
-cmd-contribute =
-    .label = Támogatás
-    .accesskey = T
-    .tooltiptext = A kiegészítő fejlesztésének támogatása
 detail-version =
     .label = Verzió
 detail-last-updated =
@@ -297,6 +254,7 @@ install-theme-button = Téma telepítése
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Kezelés
 find-more-addons = Több kiegészítő keresése
+find-more-themes = További témák keresése
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -326,13 +284,14 @@ extension-enabled-heading = Engedélyezve
 extension-disabled-heading = Tiltva
 theme-enabled-heading = Engedélyezve
 theme-disabled-heading = Tiltva
+theme-monochromatic-heading = Színvilágok
+theme-monochromatic-subheading = Élénk új színvilágok a { -brand-product-name }tól. Korlátozott ideig elérhető.
 plugin-enabled-heading = Engedélyezve
 plugin-disabled-heading = Tiltva
 dictionary-enabled-heading = Engedélyezve
 dictionary-disabled-heading = Tiltva
 locale-enabled-heading = Engedélyezve
 locale-disabled-heading = Tiltva
-ask-to-activate-button = Aktiválás kérésre
 always-activate-button = Mindig aktiválja
 never-activate-button = Soha ne aktiválja
 addon-detail-author-label = Szerző
@@ -388,10 +347,10 @@ addon-detail-private-browsing-disallow = Tiltás
 addon-badge-recommended2 =
     .title = A { -brand-product-name } csak olyan kiegészítőket ajánl, amelyek megfelelnek a biztonsági és a teljesítménybeli követelményeinknek.
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Hivatalos, a Mozilla által készített kiegészítő. Megfelel a biztonsági és teljesítményi előírásoknak.
+    .title = Hivatalos, a Waterfox által készített kiegészítő. Megfelel a biztonsági és teljesítményi előírásoknak.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Megvizsgáltuk ezt a kiegészítőt, és megfelelt a biztonsági és a teljesítménybeli követelményeinknek.
@@ -409,9 +368,9 @@ addon-permissions-optional = A további funkciókhoz szükséges engedélyek:
 addon-permissions-learnmore = További tudnivalók az engedélyekről
 recommended-extensions-heading = Ajánlott kiegészítők
 recommended-themes-heading = Ajánlott témák
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Kreatívnak érzi magát? <a data-l10n-name="link">Állítsa össze a saját témáját a Firefox Color használatával.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Kreatívnak érzi magát? <a data-l10n-name="link">Állítsa össze a saját témáját a Waterfox Color használatával.</a>
 
 ## Page headings
 

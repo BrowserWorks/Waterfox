@@ -1,14 +1,14 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Link Toolbar Title -->
-<!ENTITY linkToolbar.label "Γραμμή πλοήγησης ιστοσελίδας">
+<!ENTITY linkToolbar.label "Γραμμή πλοήγησης ιστοτόπου">
 <!ENTITY linkToolbar.accesskey "μ">
-<!ENTITY linkToolbar.tooltip "Γραμμή πλοήγησης ιστοσελίδας">
+<!ENTITY linkToolbar.tooltip "Γραμμή πλοήγησης ιστοτόπου">
 
 <!-- Link Toolbar visibility options -->
-<!ENTITY linkToolbarAlways.label "Πάντα εμφάνιση">
+<!ENTITY linkToolbarAlways.label "Εμφάνιση πάντα">
 <!ENTITY linkToolbarAlways.accesskey "ε">
 <!ENTITY linkToolbarAsNeeded.label "Εμφάνιση μόνο αν χρειάζεται">
 <!ENTITY linkToolbarAsNeeded.accesskey "μ">

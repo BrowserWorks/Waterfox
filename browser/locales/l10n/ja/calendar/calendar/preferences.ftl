@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = カレンダー
 calendar-title-reminder = アラーム
+calendar-title-notification = 通知
 calendar-title-category = カテゴリー
 dateformat-label =
     .value = 日付の形式:
@@ -133,6 +134,9 @@ task-due-label =
 edit-intab-label =
     .label = 予定と ToDo をダイアログウィンドウではなくタブで編集する
     .accesskey = t
+prompt-delete-label =
+    .label = 予定や ToDo を削除する前に確認する
+    .accesskey = V
 accessibility-legend = アクセシビリティ
 accessibility-colors-label =
     .label = システムの配色に最適化する
@@ -179,6 +183,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = アラーム通知から ToDo までの時間:
     .accesskey = o
+calendar-notifications-customize-label = 通知はカレンダーのプロパティウィンドウでカレンダーごとにカスタマイズできます。
 category-new-label = 新しいカテゴリー
 category-edit-label = カテゴリーの編集
 category-overwrite-title = 警告: 重複した名前

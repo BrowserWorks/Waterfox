@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Adressbuch
 
 about-addressbook-toolbar-new-address-book =
   .label = Neues Adressbuch
-about-addressbook-toolbar-new-carddav-address-book =
-  .label = Neues CardDAV-Adressbuch
-about-addressbook-toolbar-new-ldap-address-book =
-  .label = Neues LDAP-Adressbuch
 about-addressbook-toolbar-add-carddav-address-book =
   .label = CardDAV-Adressbuch hinzufügen
 about-addressbook-toolbar-add-ldap-address-book =

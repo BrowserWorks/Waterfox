@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,10 +6,6 @@ saved-logins =
     .title = Zachowane dane logowania
 window-close =
     .key = w
-focus-search-shortcut =
-    .key = f
-focus-search-altshortcut =
-    .key = k
 focus-search-primary-shortcut =
     .key = f
 focus-search-alt-shortcut =
@@ -52,12 +48,11 @@ remove =
 import =
     .label = Importuj…
     .accesskey = I
-close-button =
-    .label = Zamknij
-    .accesskey = Z
+
 password-close-button =
     .label = Zamknij
     .accesskey = Z
+
 show-passwords =
     .label = Wyświetl hasła
     .accesskey = h
@@ -80,10 +75,12 @@ no-master-password-prompt = Czy na pewno wyświetlić hasła?
 
 # This message can be seen by trying to show or copy the passwords.
 password-os-auth-dialog-message = Potwierdź swoją tożsamość, aby wyświetlić zachowane hasła.
+
 # This message can be seen by trying to show or copy the passwords.
 # The macOS strings are preceded by the operating system with "Thunderbird is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 password-os-auth-dialog-message-macosx = wyświetlenie zachowanych haseł
+
 # Don't change this label.
 password-os-auth-dialog-caption = { -brand-full-name }

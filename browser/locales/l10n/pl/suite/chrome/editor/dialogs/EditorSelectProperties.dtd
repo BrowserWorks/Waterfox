@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY windowTitle.label "Właściwości listy wyboru">
+
 <!ENTITY Select.label "Lista wyboru">
 <!ENTITY SelectName.label "Nazwa listy:">
 <!ENTITY SelectName.accesskey "N">
@@ -14,11 +15,13 @@
 <!ENTITY SelectDisabled.accesskey "W">
 <!ENTITY SelectTabIndex.label "Indeks kolejności dostępu:">
 <!ENTITY SelectTabIndex.accesskey "I">
+
 <!ENTITY OptGroup.label "Grupa opcji">
 <!ENTITY OptGroupLabel.label "Etykieta:">
 <!ENTITY OptGroupLabel.accesskey "E">
 <!ENTITY OptGroupDisabled.label "Wyłączony">
 <!ENTITY OptGroupDisabled.accesskey "W">
+
 <!ENTITY Option.label "Opcja">
 <!ENTITY OptionText.label "Tekst:">
 <!ENTITY OptionText.accesskey "T">
@@ -28,9 +31,11 @@
 <!ENTITY OptionSelected.accesskey "P">
 <!ENTITY OptionDisabled.label "Wyłączony">
 <!ENTITY OptionDisabled.accesskey "W">
+
 <!ENTITY TextHeader.label "Tekst">
 <!ENTITY ValueHeader.label "Wartość">
 <!ENTITY SelectedHeader.label "Zaznaczony">
+
 <!ENTITY AddOption.label "Dodaj opcję">
 <!ENTITY AddOption.accesskey "o">
 <!ENTITY AddOptGroup.label "Dodaj grupę">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "新增">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "郵件">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "通訊錄連絡人…">
 <!ENTITY newContact.accesskey "C">
 <!ENTITY attachMenu.label "附件">
 <!ENTITY attachMenu.accesskey "t">
-<!ENTITY attachFileCmd.label "檔案…">
-<!ENTITY attachFileCmd.accesskey "F">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "雲端鏈結">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "網頁…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "稍候再寄">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "L">
-<!ENTITY printSetupCmd.label "頁面設定…">
-<!ENTITY printSetupCmd.accesskey "u">
-<!ENTITY printPreviewCmd.label "預覽列印">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "列印…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "P">
@@ -82,11 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "重排附件…">
 <!ENTITY reorderAttachmentsCmd.accesskey "s">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "附件窗格">
-<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
-     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
-     as attachments.accesskey. -->
-<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
 <!ENTITY selectAllCmd.accesskey "A">
 <!ENTITY findBarCmd.label "尋找…">
 <!ENTITY findBarCmd.accesskey "F">
@@ -105,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "重排附件">
-<!ENTITY moveAttachmentTopPanelBtn.label "移到頂端">
-<!ENTITY moveAttachmentUpPanelBtn.label "上移">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "一起移動">
-<!ENTITY moveAttachmentDownPanelBtn.label "下移">
-<!ENTITY moveAttachmentBottomPanelBtn.label "移到底端">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -207,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "帳號設定">
 <!ENTITY accountManagerCmd2.accesskey "S">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "選項">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "偏好設定">
-<!ENTITY preferencesCmdUnix.accesskey "n">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -223,7 +201,6 @@
 <!ENTITY sendButton.label "傳送">
 <!ENTITY quoteButton.label "引言">
 <!ENTITY addressButton.label "聯絡人">
-<!ENTITY attachButton.label "附件">
 <!ENTITY spellingButton.label "拼字檢查">
 <!ENTITY saveButton.label "儲存">
 <!ENTITY printButton.label "列印">
@@ -233,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "稍後再寄出此封郵件">
 <!ENTITY quoteButton.tooltip "引入前封郵件的文字">
 <!ENTITY addressButton.tooltip "從通訊錄裡選擇收件者">
-<!ENTITY attachButton.tooltip2 "新增附件">
 <!ENTITY spellingButton.tooltip "對郵件的全部或反白部分檢查拼字">
 <!ENTITY saveButton.tooltip "儲存此訊息">
 <!ENTITY cutButton.tooltip              "剪下">
@@ -248,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "其他類型的地址欄位">
 <!ENTITY fromAddr2.label "從">
 <!ENTITY fromAddr.accesskey "r">
-<!ENTITY toAddr2.label "到">
-<!ENTITY ccAddr2.label "副本">
-<!ENTITY bccAddr2.label "密件副本">
 <!ENTITY replyAddr2.label "回函地址">
 <!ENTITY newsgroupsAddr2.label "新聞群組">
 <!ENTITY followupAddr2.label "原文參見">
@@ -309,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "全選">
 <!ENTITY selectAll.accesskey "A">
-<!ENTITY attachFile.label "附加檔案…">
-<!ENTITY attachFile.accesskey "F">
 <!ENTITY attachCloud.label "雲端鏈結…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "轉換成…">

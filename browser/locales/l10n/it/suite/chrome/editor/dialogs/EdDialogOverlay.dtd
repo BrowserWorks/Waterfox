@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,8 +13,5 @@
 <!ENTITY makeUrlRelative.accessKey "L">
 <!ENTITY makeUrlRelative.tooltip "Cambia tra URL relativo e assoluto. È necessario che la pagina sia stata salvata.">
 
-<!-- Shared by Link and Image dialogs -->
-<!ENTITY LinkURLEditField.label "Inserire un indirizzo web, un file locale, oppure selezionare un'ancora con nome o un'intestazione dall'elenco:">
-<!ENTITY LinkURLEditField.accessKey "I">
 <!ENTITY LinkURLEditField2.label "Inserire un indirizzo web, un file locale, oppure selezionare un'ancora con nome o un'intestazione dal menu contestuale del campo:">
 <!ENTITY LinkURLEditField2.accessKey "w">

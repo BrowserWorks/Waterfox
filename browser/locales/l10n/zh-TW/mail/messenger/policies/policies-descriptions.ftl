@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,8 @@ policy-AppUpdateURL = 自訂應用程式更新網址。
 
 policy-Authentication = 為支援的網站設定整合身分驗證方式。
 
+policy-BackgroundAppUpdate2 = 啟用或停用背景更新程式。
+
 policy-BlockAboutAddons = 防止開啟附加元件管理員（about:addons）。
 
 policy-BlockAboutConfig = 防止開啟 about:config 頁面。
@@ -31,6 +33,8 @@ policy-CaptivePortal = 開啟或關閉支援 Captive portal。
 policy-CertificatesDescription = 新增憑證，或使用內建憑證。
 
 policy-Cookies = 允許或拒絕網站設定 Cookie。
+
+policy-DisableBuiltinPDFViewer = 停用 { -brand-short-name } 內建的 PDF 閱讀器 PDF.js。
 
 policy-DisabledCiphers = 停用加密演算法。
 
@@ -85,6 +89,8 @@ policy-ExtensionSettings = 管理擴充套件的各種安裝設定。
 
 policy-ExtensionUpdate = 開啟或關閉擴充套件自動更新。
 
+policy-Handlers = 設定預設應用程式處理方式。
+
 policy-HardwareAcceleration = 若為 false，就會關閉硬體加速。
 
 policy-InstallAddonsPermission = 允許某些網站安裝附加元件。
@@ -100,6 +106,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = 對指定的網站恢�
 ##
 
 policy-LocalFileLinks = 允許特定網站鏈結到本機檔案。
+
+policy-ManualAppUpdateOnly = 只允許手動更新，也不通知使用者已有更新推出。
 
 policy-NetworkPrediction = 開啟或關閉網路預測（DNS 預讀）功能。
 
@@ -120,6 +128,8 @@ policy-Permissions2 = 設定攝影機、麥克風、地理位置、通知、自�
 
 policy-Preferences = 鎖定部分偏好設定的內容。
 
+policy-PrimaryPassword = 要求使用或不允許使用主控密碼。
+
 policy-PromptForDownloadLocation = 下載檔案時，詢問要將檔案儲存至何處。
 
 policy-Proxy = 設定代理伺服器選項。
@@ -132,7 +142,7 @@ policy-SearchEngines = 調整搜尋引擎設定。此原則僅對 Extended Suppo
 
 policy-SearchSuggestEnabled = 啟用或停用搜尋建議。
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = 安裝 PKCS #11 模組。
 
 policy-SSLVersionMax = 設定最大 SSL 版本。

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "As ligações HTTP podem ser ajustadas utilizando estas opções para melhorar o desempenho ou compatibilidade. Alguns servidores proxy são conhecidos por necessitar de HTTP/1.0 (veja as notas de lançamento para mais detalhes).">
 <!ENTITY prefUseragent.label                 "String de User Agent">
-<!ENTITY prefFirefoxCompat.label             "Anunciar compatibilidade do Firefox">
-<!ENTITY prefFirefoxCompat.accesskey         "F">
-<!ENTITY prefLightningShow.label             "Publicitar instalação do Lightning">
-<!ENTITY prefLightningShow.accesskey         "L">
-<!ENTITY prefCompatWarning                   "AVISO: desativar estas definições pode fazer com que websites ou serviços não funcionem corretamente.">
-<!ENTITY prefFirefoxStrict.label             "Identificar como Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "I">
-<!ENTITY prefFirefoxNone.label               "Identificar como SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Identificar como SeaMonkey e anunciar compatibilidade com o Firefox">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefWaterfoxStrict.label             "Identificar como Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "I">
+<!ENTITY prefWaterfoxNone.label               "Identificar como SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Identificar como SeaMonkey e anunciar compatibilidade com o Waterfox">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "AVISO: alterar esta definição pode fazer com que os sites ou serviços não funcionem corretamente.">

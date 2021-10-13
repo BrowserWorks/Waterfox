@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -57,8 +57,6 @@ protections-panel-not-found-label = 検出されませんでした
 ##
 
 protections-panel-settings-label = 保護設定
-
-# This should match the "appmenuitem-protection-dashboard-title" string in browser/appmenu.ftl.
 protections-panel-protectionsdashboard-label = プライバシー保護ダッシュボード
 
 ## In the Site Not Working? view, we suggest turning off protections if
@@ -92,7 +90,7 @@ protections-panel-content-blocking-manage-settings =
     .accesskey = M
 protections-panel-content-blocking-breakage-report-view =
     .title = 動作しないサイトを報告
-protections-panel-content-blocking-breakage-report-view-description = 特定のトラッカーをブロックすると、一部のウェブサイトで問題が起こる可能性があります。これらの問題を報告すると、{ -brand-short-name } を改善する手助けになります。報告とともに URL とあなたのブラウザーの設定に関する情報が Mozilla に送信されます。 <label data-l10n-name="learn-more">詳細情報</label>
+protections-panel-content-blocking-breakage-report-view-description = 特定のトラッカーをブロックすると、一部のウェブサイトで問題が起こる可能性があります。これらの問題を報告すると、{ -brand-short-name } を改善する手助けになります。報告とともに URL とあなたのブラウザーの設定に関する情報が Waterfox に送信されます。 <label data-l10n-name="learn-more">詳細情報</label>
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL

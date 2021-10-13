@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Nyomtatás…">
 <!ENTITY printCmd.accesskey "N">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Nyomtatási kép">
-<!ENTITY printPreviewCmd.accesskey "t">
-<!ENTITY printSetupCmd.label "Oldalbeállítás…">
-<!ENTITY printSetupCmd.accesskey "O">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Üzenet törlése">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "N">
 <!ENTITY compactVersion.label "Tömör nézet">
 <!ENTITY compactVersion.accesskey "T">
-<!ENTITY folderPaneBar.label "Mappa ablaktábla eszköztár">
-<!ENTITY folderPaneBar.accesskey "a">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Rendezés">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Címjegyzék">
 <!ENTITY addressBookCmd.accesskey "C">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Kiegészítők">
-<!ENTITY addons.accesskey "t">
-<!ENTITY addonPrefs.label "Kiegészítőbeállítások">
-<!ENTITY addonPrefs.accesskey "b">
-<!ENTITY addonPrefsUnix.label "Kiegészítőbeállítások">
-<!ENTITY addonPrefsUnix.accesskey "b">
 <!ENTITY addonNoPrefs.label "Nincsenek kiegészítőbeállítások.">
 <!ENTITY activitymanager.label "Tevékenységkezelő">
 <!ENTITY activitymanager.accesskey "k">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "a">
 <!ENTITY importCmd.label "Importálás…">
 <!ENTITY importCmd.accesskey "I">
+<!ENTITY exportCmd.label "Exportálás…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Előzmények törlése…">
 <!ENTITY clearRecentHistory.accesskey "E">
 <!ENTITY accountManagerCmd2.label "Postafiók beállításai">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Kiegészítők hibakeresése">
 <!ENTITY debugAddonsCmd.accesskey "h">
-<!ENTITY tabsDebugCmd.label "Tartalomkeret hibakeresése">
-<!ENTITY tabsDebugCmd.accesskey "T">
 <!ENTITY errorConsoleCmd.label "Hibakonzol">
 <!ENTITY errorConsoleCmd.accesskey "H">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Vissza">
 <!ENTITY goForwardButton1.label "Előre">
 <!ENTITY deleteItem.title "Törlés">
-<!ENTITY deleteButton.label "Törlés">
-<!ENTITY undeleteButton.label "Visszaállítás">
 <!ENTITY markButton.label "Megjelölés">
 <!ENTITY printButton.label "Nyomtatás">
 <!ENTITY stopButton.label "Leállítás">
 <!ENTITY throbberItem.title "Aktivitásjelző">
 <!ENTITY junkItem.title "Szemét">
-<!ENTITY junkButton.label "Szemét">
-<!ENTITY notJunkButton.label "Nem szemét">
 <!ENTITY addressBookButton.label "Címjegyzék">
 <!ENTITY chatButton.label "Csevegés">
 <!ENTITY glodaSearch.title "Globális keresés">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Ugrás az előző üzenetre">
 <!ENTITY goForwardButton.tooltip "Ugrás egy üzenettel előre">
 <!ENTITY goBackButton.tooltip "Ugrás egy üzenettel hátra">
-<!ENTITY deleteButton.tooltip "A kijelölt üzenet vagy mappa törlése">
-<!ENTITY undeleteButton.tooltip "A kijelölt törölt üzenet visszaállítása">
 <!ENTITY markButton.tooltip "Az üzenet megjelölése">
 <!ENTITY printButton.tooltip "Az üzenet kinyomtatása">
 <!ENTITY stopButton.tooltip "Átvitel megszakítása">
-<!ENTITY junkButton.tooltip "A kijelölt üzenetek megjelölése szemétként">
-<!ENTITY notJunkButton.tooltip "A kijelölt üzenetek megjelölése nem szemétként">
 <!ENTITY addressBookButton.tooltip "A címjegyzék megjelenítése">
 <!ENTITY chatButton.tooltip "A Csevegés lap megjelenítése">
 <!ENTITY tagButton.tooltip "Üzenetek címkézése">
 <!ENTITY compactButton.tooltip "Törölt üzenetek eltávolítása a kijelölt mappából">
 <!ENTITY appmenuButton1.tooltip "A &brandShortName; menü megjelenítése">
-<!ENTITY addonsButton.tooltip "Kiegészítők kezelése">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Továbbítás beágyazva">

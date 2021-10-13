@@ -1,21 +1,21 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY  pref.navigator.title      "Webbläsare">
+<!ENTITY pref.navigator.title           "Webbläsare">
 
 <!ENTITY navRadio.label                 "Visa vid">
 <!ENTITY navRadio.accesskey             "a">
-<!ENTITY  navStartPageMenu.label    "Programstart">
-<!ENTITY  newWinPageMenu.label      "Nytt fönster">
-<!ENTITY  newTabPageMenu.label      "Ny flik">
+<!ENTITY navStartPageMenu.label         "Programstart">
+<!ENTITY newWinPageMenu.label           "Nytt fönster">
+<!ENTITY newTabPageMenu.label           "Ny flik">
 
-<!ENTITY  blankPageRadio.label      "En tom sida">
-<!ENTITY  blankPageRadio.accesskey  "t">
-<!ENTITY  homePageRadio.label       "Startsidan">
-<!ENTITY  homePageRadio.accesskey   "i">
-<!ENTITY  lastPageRadio.label       "Senast besökta sidan">
-<!ENTITY  lastPageRadio.accesskey   "S">
+<!ENTITY blankPageRadio.label           "En tom sida">
+<!ENTITY blankPageRadio.accesskey       "t">
+<!ENTITY homePageRadio.label            "Startsidan">
+<!ENTITY homePageRadio.accesskey        "i">
+<!ENTITY lastPageRadio.label            "Senast besökta sidan">
+<!ENTITY lastPageRadio.accesskey        "S">
 <!ENTITY restoreSessionRadio.label      "Återställ föregående session">
 <!ENTITY restoreSessionRadio.accesskey  "e">
 
@@ -31,15 +31,21 @@
 <!ENTITY restoreDeferred.label          "Återställ flikar bara när jag behöver dem">
 <!ENTITY restoreDeferred.accesskey      "b">
 
-<!ENTITY  homePageIntro.label       "Den sida eller grupp av sidor som visas när du klickar på ikonen Startsida.">
-<!ENTITY  useCurrent.label          "Använd aktuell sida">
-<!ENTITY  useCurrent.accesskey      "v">
-<!ENTITY  useCurrentGroup.label     "Använd aktuell grupp">
-<!ENTITY  useCurrentGroup.accesskey "u">
-<!ENTITY  browseFile.label          "Välj fil…">
-<!ENTITY  browseFile.accesskey      "f">
-<!ENTITY  useDefault.label          "Återställ">
-<!ENTITY  useDefault.accesskey      "Å">
+<!ENTITY siteIcons.label                "Webbplatsikoner">
+<!ENTITY useSiteIcons.label             "Visa webbplatsikoner">
+<!ENTITY useSiteIcons.accesskey         "w">
+<!ENTITY useFavIcons.label              "Försök använda serverns ikon när sidan inte anger någon">
+<!ENTITY useFavIcons.accesskey          "F">
+
+<!ENTITY homePageIntro.label            "Den sida eller grupp av sidor som visas när du klickar på ikonen Startsida.">
+<!ENTITY useCurrent.label               "Använd aktuell sida">
+<!ENTITY useCurrent.accesskey           "v">
+<!ENTITY useCurrentGroup.label          "Använd aktuell grupp">
+<!ENTITY useCurrentGroup.accesskey      "u">
+<!ENTITY browseFile.label               "Välj fil…">
+<!ENTITY browseFile.accesskey           "f">
+<!ENTITY useDefault.label               "Återställ">
+<!ENTITY useDefault.accesskey           "Å">
 
 <!ENTITY defaultBrowserGroup.label      "Förvald webbläsare">
 <!ENTITY defaultBrowserButton.label     "Gör till förvald webbläsare">

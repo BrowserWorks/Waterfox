@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,19 +9,16 @@
 <!ENTITY autoHide.accesskey2 "а">
 <!ENTITY background.label "Переходить на новые вкладки, открываемые из ссылок">
 <!ENTITY background.accesskey "х">
+<!ENTITY diverted.label "Переходить на новые вкладки, открываемые из переадресованных ссылок">
+<!ENTITY diverted.accesskey "и">
+<!ENTITY browserFocus.label "Переносить фокус на окно браузера для ссылок открываемых из других приложений во вкладках">
+<!ENTITY browserFocus.accesskey "н">
 <!ENTITY warnOnClose.label "Предупреждать при закрытии окна с несколькими вкладками">
 <!ENTITY warnOnClose.accesskey "ж">
 <!ENTITY relatedAfterCurrent.label "Открывать связанные вкладки после текущей вкладки">
 <!ENTITY relatedAfterCurrent.accesskey "в">
 
-<!ENTITY loadGroup.label "При открытии группы закладок">
-<!ENTITY loadGroupAppend.label "Открывать новые вкладки">
-<!ENTITY loadGroupAppend.accesskey "ы">
-<!ENTITY loadGroupReplace.label "Использовать уже открытые вкладки">
-<!ENTITY loadGroupReplace.accesskey "о">
-
 <!ENTITY openTabs.label "Открывать вкладки вместо окон при">
-
 <!ENTITY middleClick.label "щелчке средней кнопки мыши, щелчке левой кнопки мыши с удержанием Ctrl или нажатии Ctrl+Enter на ссылках веб-страниц">
 <!ENTITY middleClick.accesskey "д">
 <!ENTITY middleClickMac.label "щелчке средней кнопкой мыши, щелчке с удержанием &#8984; или нажатии &#8984;+Return на ссылках веб-страницы">

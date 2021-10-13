@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,8 @@ policy-AppUpdateURL = Ustawienie niestandardowego adresu URL aktualizacji progra
 
 policy-Authentication = Konfiguracja zintegrowanego uwierzytelniania dla witryn, które je obsługują.
 
+policy-BackgroundAppUpdate2 = Włączenie lub wyłączenie aktualizatora w tle.
+
 policy-BlockAboutAddons = Blokowanie dostępu do menedżera dodatków (about:addons).
 
 policy-BlockAboutConfig = Blokowanie dostępu do strony about:config.
@@ -31,6 +33,8 @@ policy-CaptivePortal = Włączenie lub wyłączenie obsługi portalu przechwytuj
 policy-CertificatesDescription = Dodawanie certyfikatów lub używanie wbudowanych.
 
 policy-Cookies = Zezwalanie lub zabranianie witrynom ustawiania ciasteczek.
+
+policy-DisableBuiltinPDFViewer = Wyłączenie PDF.js, wbudowanej przeglądarki plików PDF w programie { -brand-short-name }.
 
 policy-DisabledCiphers = Wyłączenie szyfrów.
 
@@ -85,6 +89,8 @@ policy-ExtensionSettings = Zarządzanie wszystkimi aspektami instalacji rozszerz
 
 policy-ExtensionUpdate = Włączenie lub wyłączenie automatycznego aktualizowania rozszerzeń.
 
+policy-Handlers = Konfiguracja domyślnych aplikacji obsługujących typy plików.
+
 policy-HardwareAcceleration = Wartość „fałsz” wyłącza przyspieszanie sprzętowe.
 
 policy-InstallAddonsPermission = Zezwalanie pewnym witrynom na instalowanie dodatków.
@@ -100,6 +106,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Wracanie do starego za
 ##
 
 policy-LocalFileLinks = Zezwalanie podanym witrynom na odnośniki do lokalnych plików.
+
+policy-ManualAppUpdateOnly = Zezwalanie tylko na aktualizacje ręczne i wyłączenie powiadamiania użytkownika o aktualizacjach.
 
 policy-NetworkPrediction = Włączenie lub wyłączenie przewidywania sieci (wstępnego pobierania DNS).
 
@@ -120,6 +128,8 @@ policy-Permissions2 = Konfiguracja uprawnień kamery, mikrofonu, położenia, po
 
 policy-Preferences = Ustawienie i zablokowanie wartości dla podzbioru preferencji.
 
+policy-PrimaryPassword = Wymaganie lub uniemożliwienie używania hasła głównego.
+
 policy-PromptForDownloadLocation = Pytanie, gdzie zapisywać pliki podczas pobierania.
 
 policy-Proxy = Konfiguracja ustawień proxy.
@@ -132,7 +142,7 @@ policy-SearchEngines = Konfiguracja ustawień wyszukiwarki. Ta zasada jest dost�
 
 policy-SearchSuggestEnabled = Włączenie lub wyłączenie podpowiedzi wyszukiwania.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = Instalacja modułów PKCS #11.
 
 policy-SSLVersionMax = Ustawienie maksymalnej wersji SSL.

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,8 @@ policy-AppUpdateURL = 设置自定义的应用程序更新网址。
 
 policy-Authentication = 为支持的网站配置集成身份验证。
 
+policy-BackgroundAppUpdate2 = 启用或禁用后台更新程序。
+
 policy-BlockAboutAddons = 阻止访问附加组件管理器（about:addons）。
 
 policy-BlockAboutConfig = 阻止访问 about:config 页面。
@@ -31,6 +33,8 @@ policy-CaptivePortal = 启用或禁用强制门户支持。
 policy-CertificatesDescription = 添加证书或使用内置的证书。
 
 policy-Cookies = 允许或拒绝网站设置 Cookie。
+
+policy-DisableBuiltinPDFViewer = 禁用 { -brand-short-name } 内置的 PDF 阅读器 PDF.js。
 
 policy-DisabledCiphers = 禁用加密算法。
 
@@ -85,6 +89,8 @@ policy-ExtensionSettings = 管理扩展安装的所有方面。
 
 policy-ExtensionUpdate = 启用或禁用扩展自动更新。
 
+policy-Handlers = 配置默认应用程序处理方式。
+
 policy-HardwareAcceleration = 若为 false，将会关闭硬件加速。
 
 policy-InstallAddonsPermission = 允许特定网站安装附加组件。
@@ -100,6 +106,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = 对指定的网站恢�
 ##
 
 policy-LocalFileLinks = 允许特定网站链接到本地文件。
+
+policy-ManualAppUpdateOnly = 只允许手动更新，并且不通知用户有可用更新。
 
 policy-NetworkPrediction = 启用或禁用网络预测（DNS 预读取）功能。
 
@@ -120,6 +128,8 @@ policy-Permissions2 = 配置摄像头、麦克风、位置、通知和自动播�
 
 policy-Preferences = 设置并锁定若干首选项的值。
 
+policy-PrimaryPassword = 要求或禁止使用主密码。
+
 policy-PromptForDownloadLocation = 下载前询问文件保存位置。
 
 policy-Proxy = 配置代理设置
@@ -132,7 +142,7 @@ policy-SearchEngines = 配置搜索引擎设置。此策略仅适用于延长支
 
 policy-SearchSuggestEnabled = 启用或禁用搜索建议。
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = 安装 PKCS #11 模块。
 
 policy-SSLVersionMax = 设置最高 SSL 版本。

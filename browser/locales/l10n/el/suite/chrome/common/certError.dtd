@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,15 @@ was trying to connect. -->
 <!ENTITY certerror.introPara1a "Ζητήσατε από το &brandShortName; να συνδεθεί
 με ασφάλεια στο <span class='hostname'/>, αλλά δεν μπορούμε να επαληθεύσουμε
 ότι η σύνδεση είναι ασφαλής.">
-<!ENTITY certerror.introPara2 "Κανονικά, όταν προσπαθείτε να συνδεθείτε με ασφάλεια, οι ιστοσελίδες
+<!ENTITY certerror.introPara2 "Κανονικά, όταν προσπαθείτε να συνδεθείτε με ασφάλεια, οι ιστότοποι
 παραθέτουν αξιόπιστα πιστοποιητικά που αποδεικνύουν ότι είστε στο
-σωστό μέρος. Ωστόσο, η ταυτότητα αυτής της σελίδας δεν μπορεί να επαληθευτεί.">
+σωστό μέρος. Ωστόσο, η ταυτότητα του ιστοτόπου δεν μπορεί να επαληθευτεί.">
 
 <!ENTITY certerror.whatShouldIDo.heading "Τι πρέπει να κάνω;">
 <!ENTITY certerror.whatShouldIDo.content "Αν συνδέεστε συχνά σε
-αυτή την ιστοσελίδα χωρίς προβλήματα, αυτό το σφάλμα σημαίνει ότι κάποιος
-προσπαθεί να την υποδυθεί και δεν πρέπει να συνεχίσετε.">
-<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Αυτή η ιστοσελίδα χρησιμοποιεί το πρωτόκολλο HSTS
+αυτόν τον ιστότοπο χωρίς προβλήματα, αυτό το σφάλμα σημαίνει ότι κάποιος
+προσπαθεί να τον υποδυθεί και δεν πρέπει να συνεχίσετε.">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation "Αυτός ο ιστότοπος χρησιμοποιεί το πρωτόκολλο HSTS
 (HTTP Strict Transport Security) για να καθορίσει την ασφαλή σύνδεση με το
 &brandShortName;. Συνεπώς, δεν είναι δυνατή η εξαίρεση αυτού του
 πιστοποιητικού.">
@@ -35,7 +35,7 @@ was trying to connect. -->
 <b>Ακόμα κι αν εμπιστεύεστε την ιστοσελίδα, αυτό το σφάλμα υποδεικνύει ότι
 κάποιος ενδέχεται να έχει παραβιάσει τη σύνδεσή σας.</b>">
 <!ENTITY certerror.expert.contentPara2 "Μην προσθέστε εξαίρεση εκτός αν υπάρχει
-λόγος που η ιστοσελίδα αυτή δεν χρησιμοποιεί αξιόπιστη ταυτοποίηση.">
+λόγος που ο ιστότοπος δεν χρησιμοποιεί αξιόπιστη ταυτοποίηση.">
 <!ENTITY certerror.addException.label "Προσθήκη εξαίρεσης…">
 
 <!ENTITY certerror.technical.heading "Τεχνικές λεπτομέρειες">

@@ -1,18 +1,26 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
 <!ENTITY privatebrowsingpage.title.private "Está en una ventana de navegación privada">
 <!ENTITY privatebrowsingpage.title.normal "¿Le gustaría iniciar la navegación privada?">
+
 <!ENTITY privatebrowsingpage.status.private "&brandShortName; no recordará ningún historial de esta ventana.">
 <!ENTITY privatebrowsingpage.status.normal "Actualmente no está en una ventana privada.">
+
 <!ENTITY privatebrowsingpage.common.description "En una ventana de navegación privada, &brandShortName; no conservará ningún archivo temporal de internet, cookies ni historiales de navegación, búsquedas, descargas o formularios web. Sin embargo, los marcadores creados y los archivos descargados sí se conservarán.">
 <!ENTITY privatebrowsingpage.track.warn "Aunque este equipo no tendrá un registro de su historial de navegación, sus superiores laborales y proveedores de servicio de internet aún podrían rastrear las páginas que visite.">
 <!ENTITY privatebrowsingpage.learnmore.label "Saber más">
 <!ENTITY privatebrowsingpage.learnmore.accesskey "S">
+
 <!ENTITY privatebrowsingpage.close.info "Una vez termine, cierre la ventana para detener la navegación privada.">
 <!ENTITY privatebrowsingpage.close.label "Cerrar esta ventana ahora">
 <!ENTITY privatebrowsingpage.close.accesskey "C">
+
 <!ENTITY privatebrowsingpage.start.info "Para iniciar la navegación privada, pulse el botón de debajo o seleccione Archivo ▶ Nuevo ▶ ventana privada del menú.">
 <!ENTITY privatebrowsingpage.private.label "Abrir una nueva ventana privada">
 <!ENTITY privatebrowsingpage.private.accesskey "A">

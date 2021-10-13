@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Kalender
 calendar-title-reminder = Alarmer
+calendar-title-notification = Beskeder
 calendar-title-category = Kategorier
 dateformat-label =
     .value = Datoformat:
@@ -179,6 +180,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Forvalgt tidsrum for hvornår en  alarm aktiveres før en opgave:
     .accesskey = o
+calendar-notifications-customize-label = Beskeder kan tilpasses for hver kalender i kalenderens egenskaber.
 category-new-label = Ny kategori
 category-edit-label = Rediger kategori
 category-overwrite-title = Advarsel: Navnet findes allerede

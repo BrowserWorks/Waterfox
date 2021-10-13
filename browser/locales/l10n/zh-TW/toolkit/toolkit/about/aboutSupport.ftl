@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,16 +7,12 @@ page-subtitle =
     此頁面包含技術資訊，可能可以幫您解決一些問題。
     如果您正在尋找關於 { -brand-short-name } 的一些常見問題，
     請看看我們的<a data-l10n-name="support-link">支援網站</a>。
+
 crashes-title = 錯誤資訊報表
 crashes-id = 報表編號
 crashes-send-date = 送出日期
 crashes-all-reports = 所有錯誤報表
 crashes-no-config = 此應用程式並未設定為要顯示錯誤資訊報表。
-extensions-title = 擴充套件
-extensions-name = 名稱
-extensions-enabled = 已啟用
-extensions-version = 版本
-extensions-id = ID
 support-addons-title = 附加元件
 support-addons-name = 名稱
 support-addons-type = 類型
@@ -62,6 +58,7 @@ app-basics-enabled-plugins = 啟用的外掛程式
 app-basics-build-config = 編譯組態
 app-basics-user-agent = 使用者代理字串（User Agent）
 app-basics-os = 作業系統
+app-basics-os-theme = 作業系統佈景主題
 # Rosetta is Apple's translation process to run apps containing x86_64
 # instructions on Apple Silicon. This should remain in English.
 app-basics-rosetta = 經 Rosetta 轉譯
@@ -77,7 +74,7 @@ app-basics-remote-processes-count = 遠端處理程序
 app-basics-enterprise-policies = 企業政策
 app-basics-location-service-key-google = Google Location Service 金鑰
 app-basics-safebrowsing-key-google = Google Safebrowsing 金鑰
-app-basics-key-mozilla = Mozilla Location Service 金鑰
+app-basics-key-mozilla = Waterfox Location Service 金鑰
 app-basics-safe-mode = 安全模式
 show-dir-label =
     { PLATFORM() ->
@@ -132,8 +129,6 @@ sandbox-sys-call-tid = TID
 sandbox-sys-call-proc-type = 程序類型
 sandbox-sys-call-number = 系統呼叫
 sandbox-sys-call-args = 引數
-safe-mode-title = 試試安全模式
-restart-in-safe-mode-label = 重新啟動但停用附加元件…
 troubleshoot-mode-title = 診斷問題
 restart-in-troubleshoot-mode-label = 疑難排解模式…
 clear-startup-cache-title = 也可清除啟動快取
@@ -178,7 +173,7 @@ intl-regional-prefs = 區域偏好設定
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.
@@ -191,51 +186,26 @@ remote-debugging-url = 網址
 
 ##
 
-support-third-party-modules-title = 第三方模組
-support-third-party-modules-module = 模組檔案
-support-third-party-modules-version = 檔案版本
-support-third-party-modules-vendor = 供應商資訊
-support-third-party-modules-occurrence = 次數
-support-third-party-modules-process = 程序類型與 ID
-support-third-party-modules-thread = 執行緒
-support-third-party-modules-base = Imagebase 位置
-support-third-party-modules-uptime = 程序執行時間（ms）
-support-third-party-modules-duration = 載入時間長度（ms）
-support-third-party-modules-status = 狀態
-support-third-party-modules-status-loaded = 已載入
-support-third-party-modules-status-blocked = 已封鎖
-support-third-party-modules-status-redirected = 已重新導向
-support-third-party-modules-empty = 並未載入任何第三方模組。
-support-third-party-modules-no-value = （沒有值）
-support-third-party-modules-button-open =
-    .title = 開啟檔案位置…
-support-third-party-modules-expand =
-    .title = 顯示詳細資訊
-support-third-party-modules-collapse =
-    .title = 摺疊詳細資訊
-support-third-party-modules-unsigned-icon =
-    .title = 此模組未經簽署
-support-third-party-modules-folder-icon =
-    .title = 開啟檔案位置…
-support-third-party-modules-down-icon =
-    .title = 顯示詳細資訊
-support-third-party-modules-up-icon =
-    .title = 摺疊詳細資訊
 # Variables
 # $days (Integer) - Number of days of crashes to log
 report-crash-for-days = 最近 { $days } 天內的錯誤資訊報表
+
 # Variables
 # $minutes (integer) - Number of minutes since crash
 crashes-time-minutes = { $minutes } 分鐘前
+
 # Variables
 # $hours (integer) - Number of hours since crash
 crashes-time-hours = { $hours } 小時前
+
 # Variables
 # $days (integer) - Number of days since crash
 crashes-time-days = { $days } 天前
+
 # Variables
 # $reports (integer) - Number of pending reports
 pending-reports = 所有錯誤資訊報表（包含 { $reports } 筆在指定時間範圍內，還在處理中的報表）
+
 raw-data-copied = 已複製原始資料至剪貼簿
 text-copied = 已複製文字至剪貼簿
 
@@ -248,9 +218,11 @@ blocked-mismatched-version = 因為您的系統登錄檔與顯示卡驅動程式
 # Variables
 # $driverVersion - The graphics driver version string
 try-newer-driver = 因為您的顯示卡驅動程式版本過舊，已封鎖此功能。請試著更新您的顯示卡驅動程式到 { $driverVersion } 或更新版本。
+
 # "ClearType" is a proper noun and should not be translated. Feel free to leave English strings if
 # there are no good translations, these are only used in about:support
 clear-type-parameters = ClearType 參數
+
 compositing = 合成
 hardware-h264 = H264 硬體解碼
 main-thread-no-omtc = 主執行緒，無 OMTC
@@ -265,6 +237,7 @@ virtual-monitor-disp = 虛擬螢幕顯示
 
 found = 找到
 missing = 缺少
+
 gpu-process-pid = GPUProcessPid
 gpu-process = GPUProcess
 gpu-description = 顯示卡名稱
@@ -287,21 +260,19 @@ webgl2-renderer = WebGL2 Renderer
 webgl2-version = WebGL 2 驅動程式 Renderer
 webgl2-driver-extensions = WebGL 2 驅動程式擴充套件
 webgl2-extensions = WebGL 2 擴充套件
-blocklisted-bug = 因為有已知問題被封鎖
-# Variables
-# $bugNumber (string) - String of bug number from Bugzilla
-bug-link = bug { $bugNumber }
+
 # Variables
 #   $bugNumber (string) - Bug number on Bugzilla
 support-blocklisted-bug = 由於有已知問題，被加入封鎖名單: <a data-l10n-name="bug-link">bug { $bugNumber }</a>
+
 # Variables
 # $failureCode (string) - String that can be searched in the source tree.
 unknown-failure = 已封鎖，錯誤代碼 { $failureCode }
+
 d3d11layers-crash-guard = D3D11 合成器
-d3d11video-crash-guard = D3D11 視訊解碼器
-d3d9video-crash-guard = D3D9 視訊解碼器
 glcontext-crash-guard = OpenGL
 wmfvpxvideo-crash-guard = WMF VPX 視訊解碼器
+
 reset-on-next-restart = 下次重新啟動時重設
 gpu-process-kill-button = 結束 GPU 處理程序
 gpu-device-reset = 裝置重設
@@ -311,8 +282,10 @@ content-uses-tiling = 使用 Tiling（內容）
 off-main-thread-paint-enabled = 已啟用 Off Main Thread Painting
 off-main-thread-paint-worker-count = Off Main Thread Painting Worker 數量
 target-frame-rate = 目標畫框率
+
 min-lib-versions = 預期應有的最小版本
 loaded-lib-versions = 使用中的版本
+
 has-seccomp-bpf = Seccomp-BPF（過濾系統呼叫）
 has-seccomp-tsync = Seccomp 執行緒同步
 has-user-namespaces = 使用者命名空間
@@ -326,27 +299,22 @@ sandbox-proc-type-content = 內容
 sandbox-proc-type-file = 檔案內容
 sandbox-proc-type-media-plugin = 媒體外掛程式
 sandbox-proc-type-data-decoder = 資料解碼器
+
 startup-cache-title = 啟動快取
 startup-cache-disk-cache-path = 磁碟快取路徑
 startup-cache-ignore-disk-cache = 忽略磁碟快取
 startup-cache-found-disk-cache-on-init = 在初始化時找到磁碟快取
 startup-cache-wrote-to-disk-cache = 已寫入磁碟快取
+
 launcher-process-status-0 = 啟用
 launcher-process-status-1 = 由於失敗而停用
 launcher-process-status-2 = 強制停用
 launcher-process-status-unknown = 未知狀態
+
 # Variables
 # $remoteWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
 multi-process-windows = { $remoteWindows }/{ $totalWindows }
-multi-process-status-0 = 由使用者開啟
-multi-process-status-1 = 預設開啟
-multi-process-status-2 = 已關閉
-multi-process-status-4 = 因輔助工具停用
-multi-process-status-6 = 因不支援的文字輸入工具停用
-multi-process-status-7 = 因附加元件停用
-multi-process-status-8 = 強制停用
-multi-process-status-unknown = 未知狀態
 # Variables
 # $fissionWindows (integer) - Number of remote windows
 # $totalWindows (integer) - Number of total windows
@@ -362,6 +330,7 @@ fission-status-enabled-by-user-pref = 由使用者開啟
 fission-status-disabled-by-user-pref = 由使用者關閉
 fission-status-disabled-by-e10s-other = 已停用 e10s
 fission-status-enabled-by-rollout = 透過分階段推出啟用
+
 async-pan-zoom = 異步 Pan/Zoom
 apz-none = 無
 wheel-enabled = 已啟用滾輪輸入
@@ -398,6 +367,7 @@ support-remote-experiments-title = 遠端實驗
 support-remote-experiments-name = 名稱
 support-remote-experiments-branch = 實驗分支
 support-remote-experiments-see-about-studies = 若需更多資訊，請參考 <a data-l10n-name="support-about-studies-link">about:studies</a>。當中包含如何關閉單一實驗，或防止 { -brand-short-name } 在未來進行任何此類實驗的資訊。
+
 support-remote-features-title = 遠端功能
 support-remote-features-name = 名稱
 support-remote-features-status = 狀態

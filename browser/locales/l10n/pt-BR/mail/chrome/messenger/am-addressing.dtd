@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -35,9 +35,9 @@
 <!ENTITY place.accesskey                      "I">
 <!ENTITY belowText.label                      "abaixo da citação (recomendado)">
 <!ENTITY aboveText.label                      "abaixo da minha resposta (acima da citação)">
-<!ENTITY includeSigOnReply.label              "Incluir a assinatura nas respostas">
+<!ENTITY includeSigOnReply.label              "Incluir assinatura ao responder">
 <!ENTITY includeSigOnReply.accesskey          "o">
-<!ENTITY includeSigOnForward.label            "Incluir a assinatura nos encaminhamentos">
+<!ENTITY includeSigOnForward.label            "Incluir assinatura ao encaminhar">
 <!ENTITY includeSigOnForward.accesskey        "n">
 
 <!ENTITY globalComposingPrefs.label           "Preferências globais de edição…">

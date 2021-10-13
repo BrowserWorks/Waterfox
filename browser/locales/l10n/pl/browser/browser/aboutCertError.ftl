@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,9 @@ cert-error-intro = Witryna „{ $hostname }” używa nieprawidłowego certyfika
 
 cert-error-mitm-intro = Strony internetowe dowodzą swojej tożsamości przy użyciu certyfikatów, wystawianych przez organizacje certyfikujące.
 
-cert-error-mitm-mozilla = { -brand-short-name } to oprogramowanie tworzone przez organizację Mozilla, która zarządza całkowicie otwartym magazynem organów certyfikacji (CA). Magazyn ten pomaga dopilnować przestrzegania przez organy certyfikacji najlepszych praktyk dla bezpieczeństwa użytkowników.
+cert-error-mitm-mozilla = { -brand-short-name } to oprogramowanie tworzone przez organizację Waterfox, która zarządza całkowicie otwartym magazynem organów certyfikacji (CA). Magazyn ten pomaga dopilnować przestrzegania przez organy certyfikacji najlepszych praktyk dla bezpieczeństwa użytkowników.
 
-cert-error-mitm-connection = Zamiast certyfikatów systemowych { -brand-short-name } używa magazynu CA organizacji Mozilla, aby weryfikować bezpieczeństwo połączeń. Połączenie nie jest uznawane za bezpieczne, jeśli oprogramowanie antywirusowe lub sieciowe przechwytuje połączenie z certyfikatem bezpieczeństwa wystawionym przez organizację certyfikującą nieobecną w magazynie CA organizacji Mozilla.
+cert-error-mitm-connection = Zamiast certyfikatów systemowych { -brand-short-name } używa magazynu CA organizacji Waterfox, aby weryfikować bezpieczeństwo połączeń. Połączenie nie jest uznawane za bezpieczne, jeśli oprogramowanie antywirusowe lub sieciowe przechwytuje połączenie z certyfikatem bezpieczeństwa wystawionym przez organizację certyfikującą nieobecną w magazynie CA organizacji Waterfox.
 
 cert-error-trust-unknown-issuer-intro = Ktoś może próbować podszywać się pod tę witrynę. Odradzamy kontynuowanie.
 

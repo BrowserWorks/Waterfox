@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,9 @@ cert-error-intro = { $hostname } menggunakan sertifikat keamanan yang tidak vali
 
 cert-error-mitm-intro = Situs web membuktikan identitas mereka melalui sertifikat, yang diterbitkan oleh pewenang sertifikat.
 
-cert-error-mitm-mozilla = { -brand-short-name } disokong oleh Mozilla yang bersifat nirlaba, yang mengelola penyimpanan otoritas sertifikat (CA/Certificate Authority) yang sepenuhnya terbuka. Penyimpanan CA membantu memastikan bahwa otoritas sertifikat mengikuti penerapan terbaik demi keamanan pengguna.
+cert-error-mitm-mozilla = { -brand-short-name } disokong oleh Waterfox yang bersifat nirlaba, yang mengelola penyimpanan otoritas sertifikat (CA/Certificate Authority) yang sepenuhnya terbuka. Penyimpanan CA membantu memastikan bahwa otoritas sertifikat mengikuti penerapan terbaik demi keamanan pengguna.
 
-cert-error-mitm-connection = { -brand-short-name } menggunakan penyimpanan CA Mozilla untuk memverifikasi keamanan koneksi yang digunakan, alih-alih sertifikat yang diberikan oleh sistem operasi pengguna. Jadi, jika sebuah program antivirus maupun jaringan mencegat koneksi dengan sertifikat keamanan yang dikeluarkan oleh CA yang tidak ada dalam penyimpanan CA Mozilla, koneksi tersebut dianggap tidak aman.
+cert-error-mitm-connection = { -brand-short-name } menggunakan penyimpanan CA Waterfox untuk memverifikasi keamanan koneksi yang digunakan, alih-alih sertifikat yang diberikan oleh sistem operasi pengguna. Jadi, jika sebuah program antivirus maupun jaringan mencegat koneksi dengan sertifikat keamanan yang dikeluarkan oleh CA yang tidak ada dalam penyimpanan CA Waterfox, koneksi tersebut dianggap tidak aman.
 
 cert-error-trust-unknown-issuer-intro = Ada pihak yang mencoba menyamar sebagai situs ini dan sebaiknya tidak Anda lanjutkan.
 

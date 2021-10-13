@@ -1,6 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!-- extracted from am-addressing.xul -->
 
 
@@ -18,6 +19,7 @@
 <!ENTITY directories.label         "naudoti kitą LDAP serverį:">
 <!ENTITY directories.accesskey     "k">
 <!ENTITY directoriesNone.label     "Nėra">
+
 <!-- am-addressing.xul -->
 
 
@@ -27,9 +29,6 @@
 <!ENTITY useHtml.accesskey                    "L">
 <!ENTITY autoQuote.label                      "Atsakant cituoti originalų laišką">
 <!ENTITY autoQuote.accesskey                  "A">
-<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
-<!ENTITY then.label                           "Tuomet">
-<!ENTITY then.accesskey                       "u">
 <!ENTITY aboveQuote.label                     "pradėti rašyti atsakymą virš pacituoto teksto">
 <!ENTITY belowQuote.label                     "pradėti rašyti atsakymą po pacituotu tekstu">
 <!ENTITY selectAndQuote.label                 "pažymėti pacituotą tekstą">

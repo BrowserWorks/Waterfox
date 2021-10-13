@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,10 +20,3 @@
 <!ENTITY loadNoImagesRadio.accesskey    "h">
 <!ENTITY viewPermissions.label          "Gerenciar permissão de imagens">
 <!ENTITY viewPermissions.accesskey      "P">
-<!ENTITY animLoopingTitle.label         "Limitar a repetição de imagens animadas">
-<!ENTITY animLoopAsSpecified.label      "Determinado pela imagem">
-<!ENTITY animLoopAsSpecified.accesskey  "d">
-<!ENTITY animLoopOnce.label             "Repetir uma vez">
-<!ENTITY animLoopOnce.accesskey         "R">
-<!ENTITY animLoopNever.label            "Nunca repetir">
-<!ENTITY animLoopNever.accesskey        "u">

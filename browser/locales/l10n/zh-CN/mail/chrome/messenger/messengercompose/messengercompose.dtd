@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "新建">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "新建消息">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "通讯录联系人…">
 <!ENTITY newContact.accesskey "C">
 <!ENTITY attachMenu.label "附件">
 <!ENTITY attachMenu.accesskey "h">
-<!ENTITY attachFileCmd.label "文件…">
-<!ENTITY attachFileCmd.accesskey "F">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "文件链接">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "网页…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "以后发送">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "L">
-<!ENTITY printSetupCmd.label "打印设置…">
-<!ENTITY printSetupCmd.accesskey "u">
-<!ENTITY printPreviewCmd.label "打印预览">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "打印…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "P">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "重新排列附件…">
 <!ENTITY reorderAttachmentsCmd.accesskey "s">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "附件窗格">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
 <!ENTITY selectAllCmd.accesskey "A">
 <!ENTITY findBarCmd.label "查找…">
 <!ENTITY findBarCmd.accesskey "F">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "重新排列附件">
-<!ENTITY moveAttachmentTopPanelBtn.label "移动到顶">
-<!ENTITY moveAttachmentUpPanelBtn.label "向上移动">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "共同移动">
-<!ENTITY moveAttachmentDownPanelBtn.label "向下移动">
-<!ENTITY moveAttachmentBottomPanelBtn.label "移动到底">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "账户设置">
 <!ENTITY accountManagerCmd2.accesskey "S">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "选项">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "首选项">
-<!ENTITY preferencesCmdUnix.accesskey "n">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "发送">
 <!ENTITY quoteButton.label "引用">
 <!ENTITY addressButton.label "地址">
-<!ENTITY attachButton.label "附件">
 <!ENTITY spellingButton.label "拼写">
 <!ENTITY saveButton.label "保存">
 <!ENTITY printButton.label "打印">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "以后发送此消息">
 <!ENTITY quoteButton.tooltip "引用上一条消息">
 <!ENTITY addressButton.tooltip "从通讯录中选择一个收件人">
-<!ENTITY attachButton.tooltip2 "添加附件">
 <!ENTITY spellingButton.tooltip "检查选定的或整个消息的拼写">
 <!ENTITY saveButton.tooltip "保存此消息">
 <!ENTITY cutButton.tooltip              "剪切">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "其他类型的地址">
 <!ENTITY fromAddr2.label "发件人">
 <!ENTITY fromAddr.accesskey "r">
-<!ENTITY toAddr2.label "收件人">
-<!ENTITY ccAddr2.label "抄送">
-<!ENTITY bccAddr2.label "密送">
 <!ENTITY replyAddr2.label "回复地址">
 <!ENTITY newsgroupsAddr2.label "新闻组">
 <!ENTITY followupAddr2.label "跟踪地址：">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "选择全部">
 <!ENTITY selectAll.accesskey "A">
-<!ENTITY attachFile.label "附件…">
-<!ENTITY attachFile.accesskey "F">
 <!ENTITY attachCloud.label "文件链接…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "转换为…">

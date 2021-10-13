@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = Sjå detaljar
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> er <a data-l10n-name='error_desc_link'>rapportert som ein villeiande nettstad</a>. Du kan <a data-l10n-name='report_detection'>rapportere eit deteksjonsproblem</a> eller <a data-l10n-name='ignore_warning_link'>ignorere risikoen</a> og gå til denne utrygge nettstaden.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> er <a data-l10n-name='error_desc_link'>rapportert som ein villeiande nettstad</a>. You can <a data-l10n-name='report_detection'>rapportere eit deteksjonsproblem</a>.
 safeb-blocked-phishing-page-learn-more = Les meir om villeiande nettstadar og nettfisking på <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Les meir om { -brand-short-name } sitt vern mot nettfisking og skadeleg programvare på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> er <a data-l10n-name='error_desc_link'>rapportert å innehalde skadelig programvare</a>. Du kan <a data-l10n-name='report_detection'>rapportere eit deteksjonsproblem</a> eller <a data-l10n-name='ignore_warning_link'>ignorere risikoen</a> og gå til denne utrygge nettstaden.
-safeb-blocked-malware-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> er <a data-l10n-name='error_desc_link'>rapportert å innehalde skadeleg programvare</a>. Du kan <a data-l10n-name='report_detection'>rapportere eit deteksjonsproblem</a>.
-safeb-blocked-malware-page-learn-more = Les meir om skadeleg nettinnhald, inkludert virus og anna skadeleg programvare, og korleis du beskyttar datamaskina di på <a data-l10n-name='learn_more_link'>StopBadware.org</a>. Les meir om { -brand-short-name } sitt vern mot nettfisking og skadeleg programvare på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> er <a data-l10n-name='error_desc_link'>rapportert å innehalde skadeleg programvare</a>. Du kan <a data-l10n-name='ignore_warning_link'>ignorere risikoen</a> og gå til denne usikre nettstaden.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> er <a data-l10n-name='error_desc_link'>rapportert å innehalde skadeleg programvare</a>.
 safeb-blocked-malware-page-learn-more-sumo = Les meir om{ -brand-short-name } sitt vern mot nettfiske og skadeleg programvare på <a data-l10n-name='firefox_support'>support.mozilla.org</a>.

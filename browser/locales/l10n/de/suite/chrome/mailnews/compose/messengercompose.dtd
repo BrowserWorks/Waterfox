@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,7 +7,13 @@
 
 <!ENTITY fromAddr.label "Von:">
 <!ENTITY fromAddr.accesskey "V">
-<!ENTITY subject.label  "Betreff:">
+<!ENTITY toAddr.label "An:">
+<!ENTITY ccAddr.label "CC:">
+<!ENTITY bccAddr.label "BCC:">
+<!ENTITY replyAddr.label "Antwort an:">
+<!ENTITY newsgroupsAddr.label "Newsgroup:">
+<!ENTITY followupAddr.label "Followup-An:">
+<!ENTITY subject.label "Betreff:">
 <!ENTITY subject.accesskey "r">
 <!ENTITY attachments.label "Anhänge:">
 <!ENTITY attachments.accesskey "A">
@@ -42,9 +48,6 @@
 <!ENTITY sendLaterCmd.accesskey "S">
 
 <!-- Edit menu items -->
-<!ENTITY editRewrapCmd.label "Neu umbrechen">
-<!ENTITY editRewrapCmd.key "R">
-<!ENTITY editRewrapCmd.accesskey  "b">
 <!ENTITY accountManagerCmd.label "Mail &amp; Newsgroup-Account-Einstellungen…">
 <!ENTITY accountManagerCmd.accesskey "M">
 
@@ -114,12 +117,12 @@
 <!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
 <!ENTITY addressBar.tooltip "Adressleiste">
 <!ENTITY formatToolbar.tooltip "Formatierungs-Symbolleiste">
-<!ENTITY sendButton.tooltip "Diese Nachricht jetzt senden"> 
-<!ENTITY sendlaterButton.tooltip "Diese Nachricht später senden"> 
-<!ENTITY addressButton.tooltip "Empfänger aus einem Adressbuch wählen"> 
-<!ENTITY attachButton.tooltip "Anhang anfügen"> 
-<!ENTITY saveButton.tooltip "Diese Nachricht speichern"> 
-<!ENTITY stopButton.tooltip "Aktuelle Übertragung stoppen"> 
+<!ENTITY sendButton.tooltip "Diese Nachricht jetzt senden">
+<!ENTITY sendlaterButton.tooltip "Diese Nachricht später senden">
+<!ENTITY addressButton.tooltip "Empfänger aus einem Adressbuch wählen">
+<!ENTITY attachButton.tooltip "Anhang anfügen">
+<!ENTITY saveButton.tooltip "Diese Nachricht speichern">
+<!ENTITY stopButton.tooltip "Aktuelle Übertragung stoppen">
 
 <!-- context menu items -->
 <!ENTITY openAttachment.label "Öffnen">

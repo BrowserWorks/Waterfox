@@ -1,13 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
-## View Menu
-
-menu-view-charset =
-    .label = Κωδικοποίηση κειμένου
-    .accesskey = κ
 
 ## Tools Menu
 
@@ -29,7 +23,7 @@ menu-help-exit-troubleshoot-mode =
     .label = Απενεργοποίηση λειτουργίας επίλυσης προβλημάτων
     .accesskey = Α
 menu-help-more-troubleshooting-info =
-    .label = Περισσότερες πληροφορίες επίλυσης προβλημάτων
+    .label = Πληροφορίες επίλυσης προβλημάτων
     .accesskey = Π
 
 ## Mail Toolbar
@@ -67,3 +61,9 @@ mail-uidensity-normal =
 mail-uidensity-touch =
     .label = Αφή
     .accesskey = Α
+
+## File
+
+file-new-newsgroup-account =
+    .label = Λογαριασμός ομάδας συζητήσεων…
+    .accesskey = δ

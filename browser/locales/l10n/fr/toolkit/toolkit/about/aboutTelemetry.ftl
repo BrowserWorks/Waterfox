@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Données télémétriques
 about-telemetry-current-store = Magasin actuel :
 about-telemetry-more-information = Besoin de plus d’informations ?
-about-telemetry-firefox-data-doc = La <a data-l10n-name="data-doc-link">documentation des données de Firefox</a> propose des guides pour comprendre comment utiliser nos outils de données.
-about-telemetry-telemetry-client-doc = La <a data-l10n-name="client-doc-link">documentation du client de télémétrie Firefox</a> contient la définition des différents concepts, la documentation de l’API et un référentiel de données.
-about-telemetry-telemetry-dashboard = Les <a data-l10n-name="dashboard-link">tableaux de bord de télémétrie</a> vous permettent de visualiser les données reçues par Mozilla grâce à la télémétrie.
+about-telemetry-firefox-data-doc = La <a data-l10n-name="data-doc-link">documentation des données de Waterfox</a> propose des guides pour comprendre comment utiliser nos outils de données.
+about-telemetry-telemetry-client-doc = La <a data-l10n-name="client-doc-link">documentation du client de télémétrie Waterfox</a> contient la définition des différents concepts, la documentation de l’API et un référentiel de données.
+about-telemetry-telemetry-dashboard = Les <a data-l10n-name="dashboard-link">tableaux de bord de télémétrie</a> vous permettent de visualiser les données reçues par Waterfox grâce à la télémétrie.
 about-telemetry-telemetry-probe-dictionary = Le <a data-l10n-name="probe-dictionary-link">dictionnaire des échantillons</a> fournit des informations et des descriptions sur les échantillons collectés par télémétrie.
-about-telemetry-show-in-Firefox-json-viewer = Ouvrir dans la visionneuse JSON
+about-telemetry-show-in-Waterfox-json-viewer = Ouvrir dans la visionneuse JSON
 about-telemetry-home-section = Accueil
 about-telemetry-general-data-section = Données générales
 about-telemetry-environment-data-section = Données de l’environnement
@@ -68,7 +68,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } éléments, moyenne = { $prettyAverage }, somme = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = Cette page affiche les informations collectées par télémétrie concernant les performances, les caractéristiques matérielles, l’utilisation des fonctionnalités et la personnalisation du navigateur. Ces informations sont envoyées à { $telemetryServerOwner } pour aider à l’amélioration de { -brand-full-name }.
 about-telemetry-settings-explanation = La télémétrie collecte les { about-telemetry-data-type } et la transmission est <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -140,8 +140,8 @@ about-telemetry-origin-section = Télémétrie d’origine
 about-telemetry-origin-origin = origine
 about-telemetry-origin-count = comptage
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Firefox Origin Telemetry</a> encode les données avant de les envoyer de façon à ce que { $telemetryServerOwner } puisse compter différentes choses, mais ne puisse pas savoir si tel { -brand-product-name } a contribué ou non à ce comptage. <a data-l10n-name="prio-blog-link">En savoir plus</a>
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a> encode les données avant de les envoyer de façon à ce que { $telemetryServerOwner } puisse compter différentes choses, mais ne puisse pas savoir si tel { -brand-product-name } a contribué ou non à ce comptage. <a data-l10n-name="prio-blog-link">En savoir plus</a>
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = Processus « { $process } »

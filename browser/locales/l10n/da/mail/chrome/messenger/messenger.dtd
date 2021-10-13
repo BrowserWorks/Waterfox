@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Udskriv">
 <!ENTITY printCmd.accesskey "U">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Vis udskrift">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "Sideopsætning…">
-<!ENTITY printSetupCmd.accesskey "æ">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Slet meddelelsen">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "e">
 <!ENTITY compactVersion.label "Kompakt visning">
 <!ENTITY compactVersion.accesskey "K">
-<!ENTITY folderPaneBar.label "Værktøjslinje for mapper">
-<!ENTITY folderPaneBar.accesskey "æ">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Sorter efter">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Adressebog">
 <!ENTITY addressBookCmd.accesskey "A">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Tilføjelser">
-<!ENTITY addons.accesskey "T">
-<!ENTITY addonPrefs.label "Indstillinger for tilføjelser">
-<!ENTITY addonPrefs.accesskey "J">
-<!ENTITY addonPrefsUnix.label "Indstillinger for tilføjelser">
-<!ENTITY addonPrefsUnix.accesskey "J">
 <!ENTITY addonNoPrefs.label "Ingen indstillinger for tilføjelser fundet.">
 <!ENTITY activitymanager.label "Aktivitet">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "l">
 <!ENTITY importCmd.label "Importer…">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "Eksporter…">
+<!ENTITY exportCmd.accesskey "E">
 <!ENTITY clearRecentHistory.label "Ryd seneste historik…">
 <!ENTITY clearRecentHistory.accesskey "h">
 <!ENTITY accountManagerCmd2.label "Kontoindstillinger">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Fejlsøg tilføjelser">
 <!ENTITY debugAddonsCmd.accesskey "F">
-<!ENTITY tabsDebugCmd.label "Indholdsramme-debugger">
-<!ENTITY tabsDebugCmd.accesskey "n">
 <!ENTITY errorConsoleCmd.label "Fejlkonsol">
 <!ENTITY errorConsoleCmd.accesskey "j">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Tilbage">
 <!ENTITY goForwardButton1.label "Fremad">
 <!ENTITY deleteItem.title "Slet">
-<!ENTITY deleteButton.label "Slet">
-<!ENTITY undeleteButton.label "Fortryd sletning">
 <!ENTITY markButton.label "Marker">
 <!ENTITY printButton.label "Udskriv">
 <!ENTITY stopButton.label "Stop">
 <!ENTITY throbberItem.title "Aktivitetsindikator">
 <!ENTITY junkItem.title "Spam">
-<!ENTITY junkButton.label "Spam">
-<!ENTITY notJunkButton.label "Ikke-spam">
 <!ENTITY addressBookButton.label "Adressebog">
 <!ENTITY chatButton.label "Chat">
 <!ENTITY glodaSearch.title "Global søg">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Gå til den forrige meddelelse">
 <!ENTITY goForwardButton.tooltip "Gå en meddelelse fremad">
 <!ENTITY goBackButton.tooltip "Gå en meddelelse tilbage">
-<!ENTITY deleteButton.tooltip "Slet valgte meddelelse eller mappe">
-<!ENTITY undeleteButton.tooltip "Fortryd sletning af valgt meddelelse">
 <!ENTITY markButton.tooltip "Marker meddelelser">
 <!ENTITY printButton.tooltip "Udskriv denne meddelelse">
 <!ENTITY stopButton.tooltip "Stop den aktuelle overførsel">
-<!ENTITY junkButton.tooltip "Marker de valgte meddelelser som spam">
-<!ENTITY notJunkButton.tooltip "Marker den valgte meddelelse, som ikke-spam">
 <!ENTITY addressBookButton.tooltip "Gå til adressebogen">
 <!ENTITY chatButton.tooltip "Vis fanebladet Chat">
 <!ENTITY tagButton.tooltip "Marker meddelelser">
 <!ENTITY compactButton.tooltip "Fjern slettede meddelelser fra valgte mappe">
 <!ENTITY appmenuButton1.tooltip "Vis &brandShortName;-menuen">
-<!ENTITY addonsButton.tooltip "Håndter dine tilføjelser">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Videresend som en del af meddelelsen">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Placering">
 <!ENTITY idColumn.label "Modtagelsesorden">
 <!ENTITY attachmentColumn.label "Vedhæftede filer">
-
 <!ENTITY deleteColumn.label "Slet">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Sorter efter placering">
 <!ENTITY idColumn2.tooltip "Sorter efter modtagelsesorden">
 <!ENTITY attachmentColumn2.tooltip "Sorter efter vedhæftede filer">
-
 <!ENTITY deleteColumn.tooltip "Slet en meddelelse">
 
 <!-- Thread Pane Context Menu -->

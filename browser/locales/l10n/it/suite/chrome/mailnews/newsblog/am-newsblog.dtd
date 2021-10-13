@@ -1,14 +1,15 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY loginAtStartup.label "Controlla presenza di nuovi articoli all'avvio.">
-<!ENTITY loginAtStartup.accesskey "C">
 <!ENTITY biffAll.label "Abilita aggiornamenti per tutti i feed">
 <!ENTITY biffAll.accesskey "b">
+
 <!ENTITY newFeedSettings.label "Impostazioni predefinite per i nuovi feed">
+
 <!ENTITY manageSubscriptions.label "Gestione sottoscrizioni…">
 <!ENTITY manageSubscriptions.accesskey "G">
+
 <!ENTITY feeds.accountName "Blog e feed delle notizie">
 <!ENTITY feeds.wizardShortName "Feed">
 <!ENTITY feeds.wizardLongName "Blog e feed delle notizie">
