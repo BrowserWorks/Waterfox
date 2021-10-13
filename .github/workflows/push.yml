@@ -75,6 +75,7 @@ jobs:
       - name: 📦 Package
         run: |
           ./mach package
+          ./mach package-multi-locale --locales ar cs da de el en-GB en-US es-ES es-MX fr hu id it ja ko lt nl nn-NO pl pt-BR pt-PT ru sv-SE th vi zh-CN zh-TW
 
       - name: ✍️ Sign
         run: |
@@ -204,6 +205,7 @@ jobs:
       - name: 📦 Package
         run: |
           ./mach package
+          ./mach package-multi-locale --locales ar cs da de el en-GB en-US es-ES es-MX fr hu id it ja ko lt nl nn-NO pl pt-BR pt-PT ru sv-SE th vi zh-CN zh-TW
 
       - name: 🆙 Upload artifact
         uses: actions/upload-artifact@v2
@@ -264,6 +266,7 @@ jobs:
       - name: 📦 Package
         run: |
           ./mach package
+          ./mach package-multi-locale --locales ar cs da de el en-GB en-US es-ES es-MX fr hu id it ja ko lt nl nn-NO pl pt-BR pt-PT ru sv-SE th vi zh-CN zh-TW
 
       - name: 🆙 Upload artifact
         uses: actions/upload-artifact@v2
@@ -322,6 +325,7 @@ jobs:
       - name: 📦 Package
         run: |
           ./mach package
+          ./mach package-multi-locale --locales ar cs da de el en-GB en-US es-ES es-MX fr hu id it ja ko lt nl nn-NO pl pt-BR pt-PT ru sv-SE th vi zh-CN zh-TW
           mkdir update
           cp tools/update-packaging/make_full_update.sh update/
           cp tools/update-packaging/common.sh update/
@@ -550,10 +554,10 @@ jobs:
           --format UDBZ \
           --eula "browser/branding/waterfox/license.txt" \
           --app-drop-link 400 178 \
-          "obj-${{ env.ARCH }}/dist/waterfox/Waterfox ${VERSION_DISPLAY} Setup.dmg" \
+          "obj-${{ env.ARCH }}/dist/waterfox/Waterfox ${VERSION_DISPLAY} ARM Setup.dmg" \
           "obj-${{ env.ARCH }}/dist/waterfox/Waterfox.app"
-          codesign -s "${{ secrets.MACOS_ID }}" -fv "obj-${{ env.ARCH }}/dist/waterfox/Waterfox ${VERSION_DISPLAY} Setup.dmg"
-          xcrun altool --notarize-app -f "obj-${{ env.ARCH }}/dist/waterfox/Waterfox ${VERSION_DISPLAY} Setup.dmg" --primary-bundle-id 'net.waterfox.waterfox' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
+          codesign -s "${{ secrets.MACOS_ID }}" -fv "obj-${{ env.ARCH }}/dist/waterfox/Waterfox ${VERSION_DISPLAY} ARM Setup.dmg"
+          xcrun altool --notarize-app -f "obj-${{ env.ARCH }}/dist/waterfox/Waterfox ${VERSION_DISPLAY} ARM Setup.dmg" --primary-bundle-id 'net.waterfox.waterfox' -u ${{ secrets.MACOS_DEV_ID }} -p ${{ secrets.MACOS_DEV_PWD }}
 
       - name: 📦 Create MAR
         run: |
@@ -562,7 +566,7 @@ jobs:
           xml=('<?xml version="1.0"?>'
           '<updates>'
           '    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-VERSION_DISPLAY" displayVersion="VERSION_DISPLAY">'
-          '        <patch type="complete" URL="https://cdn.waterfox.net/releases/osx64/update/waterfox-VERSION_DISPLAY.en-US.osx64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
+          '        <patch type="complete" URL="https://cdn.waterfox.net/releases/osx64/update/waterfox-VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>'
           '    </update>'
           '</updates>')
           for line in "${xml[@]}" ; do echo $line >> ./obj-${{ env.ARCH }}/dist/update/update.xml ; done
@@ -570,12 +574,12 @@ jobs:
           chmod +x ./mar
           MAR=./mar MOZ_PRODUCT_VERSION=$VERSION_DISPLAY MAR_CHANNEL_ID="default" \
               ./tools/update-packaging/make_full_update.sh \
-              ./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx64.complete.xz.mar \
+              ./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar \
               ./obj-${{ env.ARCH }}/dist/waterfox/Waterfox.app
           VERSION=$(grep '\<Version\>' ./obj-${{ env.ARCH }}/dist/waterfox/Waterfox.app/Contents/Resources/application.ini | cut -d'=' -f2)
           BUILDID=$(grep 'BuildID=' ./obj-${{ env.ARCH }}/dist/waterfox/Waterfox.app/Contents/Resources/application.ini | cut -d'=' -f2)
-          SHA512=$(shasum -a 512 ./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx64.complete.xz.mar | awk '{print $1}')
-          SIZE=$(ls -l ./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx64.complete.xz.mar | awk '{print $5}')
+          SHA512=$(shasum -a 512 ./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar | awk '{print $1}')
+          SIZE=$(ls -l ./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar | awk '{print $5}')
           echo "Display Version: $VERSION_DISPLAY, Version: $VERSION, Build ID: $BUILDID, File Size: $SIZE, SHA512: $SHA512"
           sed -i '' -e "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" ./obj-${{ env.ARCH }}/dist/update/update.xml
           sed -i '' -e "s/VERSION_DISPLAY/$VERSION_DISPLAY/g" ./obj-${{ env.ARCH }}/dist/update/update.xml
@@ -604,4 +608,4 @@ jobs:
         run: |
           VERSION_DISPLAY=`cat browser/config/version_display.txt`
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} aws s3 cp --content-type="text/xml" --metadata-directive="REPLACE" ./obj-${{ env.ARCH }}/dist/update/update.xml s3://aus.waterfox.net/update/staging/aarch64/Darwin/update.xml
-          rsync -rtvz --chmod=D2755,F644 --delete-before --progress {obj-${{ env.ARCH }}/dist/waterfox/Waterfox\ ${VERSION_DISPLAY}\ Setup.dmg,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/aarch64/Darwin
+          rsync -rtvz --chmod=D2755,F644 --delete-before --progress {obj-${{ env.ARCH }}/dist/waterfox/Waterfox\ ${VERSION_DISPLAY}\ ARM\ Setup.dmg,./obj-${{ env.ARCH }}/dist/update/waterfox-$VERSION_DISPLAY.en-US.osx-arm64.complete.xz.mar} kontos@rsync.keycdn.com:waterfox/staging/aarch64/Darwin
