@@ -13,12 +13,39 @@
     }
   },
 
+	"content_scripts": [
+		{
+			"matches":[
+				"http://chrome.google.com/webstore*",
+				"https://chrome.google.com/webstore*"
+			],
+			"js":[
+				"addon-stores/cws.js"
+			],
+      "run_at": "document_start",
+      "all_frames": true
+		},
+		{
+			"matches":[
+				"http://addons.opera.com/*",
+				"https://addons.opera.com/*"
+			],
+			"js":[
+				"addon-stores/ows.js"
+			],
+      "run_at": "document_start",
+      "all_frames": true
+		}
+	],
+
   "background": {
     "scripts": [
       "privatetab/background.js",
       "statusbar/background.js",
       "tabfeatures/background.js",
-      "aboutpreferences/background.js"
+      "aboutpreferences/background.js",
+      "addon-stores/cws.js",
+      "addon-stores/ows.js"
     ]
   },
 

@@ -13,7 +13,6 @@ DIRS += [
     "pictureinpicture",
     "proxy-failover",
     "extensibles",
-    "addon-stores",
 ]
 
 if CONFIG["NIGHTLY_BUILD"]:
