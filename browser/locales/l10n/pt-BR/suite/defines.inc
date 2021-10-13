@@ -1,6 +1,6 @@
 #filter emptyLines
 
-#define MOZ_LANGPACK_CREATOR Mozilla Brasil
+#define MOZ_LANGPACK_CREATOR Waterfox Brasil
 
 # If non-English locales wish to credit multiple contributors, uncomment this
 

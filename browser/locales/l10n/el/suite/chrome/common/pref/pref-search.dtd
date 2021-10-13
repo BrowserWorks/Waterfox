@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,7 +15,7 @@
 
 <!ENTITY searchResults.label              "Αποτελέσματα αναζήτησης">
 
-<!ENTITY openInTab.label                  "Άνοιγμα νέων καρτελών για αποτελέσματα αναζήτησης πλευρικής στήλης">
+<!ENTITY openInTab.label                  "Άνοιγμα νέων καρτελών για αποτελέσματα αναζήτησης της πλαϊνής γραμμής">
 <!ENTITY openInTab.accesskey              "ν">
 <!ENTITY openContextSearchTab.label       "Άνοιγμα καρτέλας αντί παραθύρου για αναζήτηση ιστού από το μενού επιλογών">
 <!ENTITY openContextSearchTab.accesskey   "κ">

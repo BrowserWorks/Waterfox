@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = 序列号
-
-fips-nonempty-password-required = FIPS 需要您为各个安全设备设置一个主密码。请在启用 FIPS 模式之前设置主密码。
 
 fips-nonempty-primary-password-required = FIPS 需要您为各个安全设备设置一个主密码。请在启用 FIPS 模式之前设置主密码。
 unable-to-toggle-fips = 无法更换该安全设备的 FIPS 模式。建议您退出并重启本应用程序。

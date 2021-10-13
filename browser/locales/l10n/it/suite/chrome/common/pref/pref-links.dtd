@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,15 +8,19 @@
 <!ENTITY newWindowRestriction.label "Quando gli script vogliono aprire una nuova finestra:">
 <!ENTITY external.label "Link da altre applicazioni">
 <!ENTITY externalDescription.label "Apri link passati da altre applicazioni in:">
+
 <!ENTITY openCurrent.label "La scheda/finestra corrente">
 <!ENTITY newWindowGroupCurrent.accesskey "c">
 <!ENTITY externalGroupCurrent.accesskey "r">
+
 <!ENTITY openTab.label "Una nuova scheda nella finestra corrente">
 <!ENTITY newWindowGroupTab.accesskey "v">
 <!ENTITY externalGroupTab.accesskey "h">
+
 <!ENTITY openWindow.label "Una nuova finestra">
 <!ENTITY newWindowGroupWindow.accesskey "f">
 <!ENTITY externalGroupWindow.accesskey "u">
+
 <!ENTITY divertAll.label "Trasforma le finestre in schede">
 <!ENTITY divertAll.accesskey "T">
 <!ENTITY divertNoFeatures.label "Non trasformare finestre personalizzate in schede">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -44,7 +44,7 @@
 <!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
      from messenger.dtd -->
 <!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
-<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Εμφάνιση του μενού του &brandShortName;">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Προβολή του μενού του &brandShortName;">
 <!ENTITY lightning.toolbar.calendarmenu.label        "Παράθυρο ημερολογίου">
 <!ENTITY lightning.toolbar.calendarmenu.accesskey    "θ">
 <!ENTITY lightning.toolbar.calendarpane.label        "Εμφάνιση παραθύρου ημερολογίου">

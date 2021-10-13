@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -84,10 +84,6 @@
 <!ENTITY printCmd.label "Imprimir…">
 <!ENTITY printCmd.accesskey "I">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Vista preliminar">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "Configurar página…">
-<!ENTITY printSetupCmd.accesskey "u">
 
 <!ENTITY deleteMsgCmd.label "Eliminar mensaje">
 <!ENTITY deleteMsgCmd.accesskey "r">
@@ -165,8 +161,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "Vista compacta">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "Barra de herramientas del panel de carpetas">
-<!ENTITY folderPaneBar.accesskey "h">
 
 <!ENTITY sortMenu.label "Ordenar por">
 <!ENTITY sortMenu.accesskey "O">
@@ -455,12 +449,6 @@
 <!ENTITY addressBookCmd.label "Libreta de direcciones">
 <!ENTITY addressBookCmd.accesskey "L">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Complementos">
-<!ENTITY addons.accesskey "m">
-<!ENTITY addonPrefs.label "Opciones del complemento">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "Preferencias del complemento">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "No se han encontrado ajustes del complemento.">
 <!ENTITY activitymanager.label "Administrador de actividad">
 <!ENTITY activitymanager.accesskey "A">
@@ -502,8 +490,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Depurar complementos">
 <!ENTITY debugAddonsCmd.accesskey "c">
-<!ENTITY tabsDebugCmd.label "Depurador del marco de contenido">
-<!ENTITY tabsDebugCmd.accesskey "a">
 <!ENTITY errorConsoleCmd.label "Consola de errores">
 <!ENTITY errorConsoleCmd.accesskey "E">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -526,15 +512,11 @@
 <!ENTITY backButton1.label "Retroceder">
 <!ENTITY goForwardButton1.label "Avanzar">
 <!ENTITY deleteItem.title "Eliminar">
-<!ENTITY deleteButton.label "Eliminar">
-<!ENTITY undeleteButton.label "Recuperar">
 <!ENTITY markButton.label "Marcar">
 <!ENTITY printButton.label "Imprimir">
 <!ENTITY stopButton.label "Detener">
 <!ENTITY throbberItem.title "Indicador de actividad">
 <!ENTITY junkItem.title "Basura">
-<!ENTITY junkButton.label "No deseado">
-<!ENTITY notJunkButton.label "Legítimo">
 <!ENTITY addressBookButton.label "Direcciones">
 <!ENTITY chatButton.label "Charlar">
 <!ENTITY glodaSearch.title "Búsqueda global">
@@ -565,19 +547,14 @@
 <!ENTITY previousMsgButton.tooltip "Moverse al mensaje anterior">
 <!ENTITY goForwardButton.tooltip "Ir al mensaje siguiente">
 <!ENTITY goBackButton.tooltip "Ir al mensaje anterior">
-<!ENTITY deleteButton.tooltip "Eliminar el mensaje o la carpeta seleccionados">
-<!ENTITY undeleteButton.tooltip "Recuperar mensaje seleccionado">
 <!ENTITY markButton.tooltip "Marcar mensajes">
 <!ENTITY printButton.tooltip "Imprimir este mensaje">
 <!ENTITY stopButton.tooltip "Detener la transferencia actual">
-<!ENTITY junkButton.tooltip "Marcar los mensajes seleccionados como no deseados">
-<!ENTITY notJunkButton.tooltip "Marcar los mensajes seleccionados como correo normal">
 <!ENTITY addressBookButton.tooltip "Ir a la libreta de direcciones">
 <!ENTITY chatButton.tooltip "Mostrar la pestaña de chat">
 <!ENTITY tagButton.tooltip "Etiquetar mensajes">
 <!ENTITY compactButton.tooltip "Eliminar mensajes borrados de la carpeta seleccionada">
 <!ENTITY appmenuButton1.tooltip "Mostrar el menú &brandShortName;">
-<!ENTITY addonsButton.tooltip "Administre sus complementos">
 
 <!ENTITY buttonMenuForwardAsInline.label "Reenviar en el cuerpo del mensaje">
 <!ENTITY buttonMenuForwardAsAttachment.label "Reenviar como adjunto">

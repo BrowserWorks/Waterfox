@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,7 +21,7 @@
 <!ENTITY biffStart.label "Verificar novas mensagens a cada">
 <!ENTITY biffStart.accesskey "V">
 <!ENTITY biffEnd.label "minutos">
-<!ENTITY useIdleNotifications.label "Permitir notificações imediatas do servidor quando novas mensagens chegarem">
+<!ENTITY useIdleNotifications.label "Permitir notificações imediatas do servidor quando chegar novas mensagens">
 <!ENTITY useIdleNotifications.accesskey "P">
 <!ENTITY connectionSecurity.label "Segurança da conexão:">
 <!ENTITY connectionSecurity.accesskey "d">
@@ -68,7 +68,7 @@
 <!ENTITY alwaysAuthenticate.accesskey "m">
 <!ENTITY newsrcFilePath1.label "Arquivo News.rc:">
 <!ENTITY newsrcPicker1.label "Selecionar o arquivo News.rc">
-<!ENTITY abbreviate.label "Exibir nomes de newsgroups na área de pastas como:">
+<!ENTITY abbreviate.label "Exibir nomes dos grupos de notícias no painel de pastas como:">
 <!ENTITY abbreviateOn.label "Nomes completos (exemplo, 'netscape.public.mozilla.mail-news')">
 <!ENTITY abbreviateOff.label "Nomes abreviados (por exemplo, 'n.p.m.mail-news')">
 <!ENTITY advancedButton.label "Avançado…">

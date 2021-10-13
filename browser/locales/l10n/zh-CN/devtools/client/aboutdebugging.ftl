@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = 调试 - 运行时 / { $selectedRuntim
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = 此 { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -61,13 +61,9 @@ about-debugging-sidebar-item-connect-button-connection-not-responding = 连接�
 # Text displayed as connection error in sidebar item when the connection has timed out.
 about-debugging-sidebar-item-connect-button-connection-timeout = 连接超时
 
-# Temporary text displayed in sidebar items representing remote runtimes after
-# successfully connecting to them. Temporary UI, do not localize.
-about-debugging-sidebar-item-connected-label = 已连接
-
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = 正在等待浏览器…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +99,7 @@ about-debugging-setup-title = 设置
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = 配置您偏好的连接方法以远程调试您的设备。
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = 使用<a>{ about-debugging-this-firefox-runtime-name }</a> 调试此版本 { -brand-shorter-name } 上的扩展和 Service Worker。
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +134,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = 在您的 Android 设备上启
 about-debugging-setup-usb-step-enable-debug2 = 启用 Android 开发者选项中的“USB 调试”功能
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = 在 Android 设备的 Firefox 中启用“USB 调试”功能。
+about-debugging-setup-usb-step-enable-debug-firefox2 = 在 Android 设备的 Waterfox 中启用“USB 调试”功能。
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = 将 Android 设备连接到您的计算机。
@@ -185,7 +181,7 @@ about-debugging-network-location-form-duplicate = 主机“{ $host-value }”已
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = 临时扩展
 # Title of the extensions category.
@@ -219,25 +215,25 @@ about-debugging-runtime-service-workers-not-compatible = 您的浏览器配置�
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = 已连接的浏览器为旧版本（{ $runtimeVersion }）。支持的最低版本为（{ $minVersion }）。不支持的版本可能致使开发者工具运行失败。请更新连接的浏览器。<a>故障排查</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Waterfox 无法调试 Android 版 Firefox（68）。我们建议您在手机上安装 Android 版 Firefox Nightly 进行测试。<a>更多信息</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Waterfox 无法调试 Android 版 Waterfox（68）。我们建议您在手机上安装 Android 版 Waterfox Nightly 进行测试。<a>更多信息</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
 about-debugging-browser-version-too-recent =
-    已连接的浏览器（版本 { $runtimeVersion }、buildID { $runtimeID }）比您的 { -brand-shorter-name }（{ $localVersion }、buildID { $localID }）还新。这个不受支持的设置可能导致开发者工具故障。请更新 Firefox。
+    已连接的浏览器（版本 { $runtimeVersion }、buildID { $runtimeID }）比您的 { -brand-shorter-name }（{ $localVersion }、buildID { $localID }）还新。这个不受支持的设置可能导致开发者工具故障。请更新 Waterfox。
     <a>故障排除</a>
 
 # Displayed for runtime info in runtime pages.
-# { $name } is brand name such as "Firefox Nightly"
+# { $name } is brand name such as "Waterfox Nightly"
 # { $version } is version such as "64.0a1"
 about-debugging-runtime-name = { $name }（{ $version }）
 
@@ -272,18 +268,18 @@ about-debugging-debug-target-list-empty = 没有任何东西。
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = 检查
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = 临时载入附加组件…
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = 安装临时附加组件时出错。
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = 重载
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = 移除
 

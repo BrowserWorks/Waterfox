@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,16 +12,20 @@
 # $hostname (String) - Hostname of the website with SSL error.
 # $errorMessage (String) - Error message corresponding to the type of error we are experiencing.
 ssl-connection-error = An error occurred during a connection to { $hostname }. { $errorMessage }
+
 # Variables:
 # $error (string) - NSS error code string that specifies type of cert error. e.g. unknown issuer, invalid cert, etc.
 cert-error-code-prefix = Error code: { $error }
+
 psmerr-ssl-disabled = Can’t connect securely because the SSL protocol has been disabled.
 psmerr-ssl2-disabled = Can’t connect securely because the site uses an older, insecure version of the SSL protocol.
+
 # This is a multi-line message.
 psmerr-hostreusedissuerandserial =
     You have received an invalid certificate.  Please contact the server administrator or email correspondent and give them the following information:
     
     Your certificate contains the same serial number as another certificate issued by the certificate authority.  Please get a new certificate containing a unique serial number.
+
 ssl-error-export-only-server = Unable to communicate securely. Peer does not support high-grade encryption.
 ssl-error-us-only-server = Unable to communicate securely. Peer requires high-grade encryption which is not supported.
 ssl-error-no-cypher-overlap = Cannot communicate securely with peer: no common encryption algorithm(s).

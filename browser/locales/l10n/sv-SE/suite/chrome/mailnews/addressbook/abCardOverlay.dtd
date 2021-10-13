@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "Kortnamn:">
 <!ENTITY DisplayName.accesskey          "o">
 <!ENTITY preferDisplayName.label        "Föredra alltid kortnamn istället för visningsnamnet i meddelandet">
-<!ENTITY preferDisplayName.accesskey    "a">
 <!ENTITY preferDisplayName2.accesskey   "v">
 <!ENTITY NickName.label                 "Smeknamn:">
 <!ENTITY NickName.accesskey             "S">
@@ -46,8 +45,6 @@
 <!ENTITY PlainText.label                "Oformaterad text">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Okänt">
-<!ENTITY ScreenName.label               "Skärmnamn:">
-<!ENTITY ScreenName.accesskey           "m">
 
 <!ENTITY chatName.label                 "Chattnamn:">
 
@@ -145,7 +142,6 @@
 
 <!ENTITY Photo.tab                      "Foto">
 <!ENTITY Photo.accesskey                "F">
-<!ENTITY PhotoDesc.label                "Välj en av de följande:">
 <!ENTITY GenericPhoto.label             "Allmän bild">
 <!ENTITY GenericPhoto.accesskey         "A">
 <!ENTITY DefaultPhoto.label             "Standard">

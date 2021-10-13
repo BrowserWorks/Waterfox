@@ -1,13 +1,17 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.popups.title "Ventanas emergentes">
+
 <!ENTITY pref.popups.caption "Ventanas emergentes">
+
 <!ENTITY popupBlock.label "Bloquear ventanas emergentes no solicitadas">
 <!ENTITY popupBlock.accesskey "B">
+
 <!ENTITY viewPermissions.label "Administrar permisos">
 <!ENTITY viewPermissions.accesskey "d">
+
 <!ENTITY whenBlock.description "Cuando se ha bloqueado una ventana emergente:">
 <!ENTITY playSound.label "Reproducir un sonido:">
 <!ENTITY playSound.accesskey "R">
@@ -15,12 +19,16 @@
 <!ENTITY systemSound.accesskey "S">
 <!ENTITY customSound.label "Archivo de sonido personalizado">
 <!ENTITY customSound.accesskey "A">
+
 <!ENTITY selectSound.label "Seleccionar…">
 <!ENTITY selectSound.accesskey "o">
 <!ENTITY playSoundButton.label "Reproducir">
 <!ENTITY playSoundButton.accesskey "c">
+
 <!ENTITY displayIcon.label "Mostrar un icono en la barra de estado del navegador">
 <!ENTITY displayIcon.accesskey "M">
+
 <!ENTITY displayNotification.label "Mostrar una barra de notificación en la parte superior del área de contenido">
 <!ENTITY displayNotification.accesskey "n">
+
 <!ENTITY popupNote.description "Nota: bloquear todas las ventanas emergentes puede impedir que funcionen características importantes de algunos sitios web, como ventanas de inicio de sesión de bancos y sitios de compra en línea. Para detalles sobre cómo permitir usar ventanas emergentes a sitios web específicos sin dejar de bloquearlas para el resto, pulse Ayuda. Incluso con el bloqueo activado, algunos sitios web pueden usar otros métodos para mostrar ventanas emergentes.">

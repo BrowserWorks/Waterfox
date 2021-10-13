@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -74,6 +74,6 @@
 
 <!-- leaving this stuff in for now -->
 
-<!ENTITY  header2                                 "Όταν μια ιστοσελίδα επιλέγει τις δικές της γραμματοσειρές">
+<!ENTITY  header2                                 "Όταν μια ιστοσελίδα επιλέγει δικές της γραμματοσειρές">
 <!ENTITY  useDefaultFont.label                    "Χρήση προεπιλεγμένων γραμματοσειρών, αγνοώντας τις γραμματοσειρές της σελίδας">
 <!ENTITY  useDefaultFont.accesskey                "Χ">

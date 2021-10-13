@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,10 +13,10 @@
 <!ENTITY removeDataChat.label         "Αφαίρεση δεδομένων συζητήσεων">
 <!ENTITY removeDataChat.accesskey     "δ">
 <!ENTITY removeDataLocalAccount.desc  "Διαγράφει από τον τοπικό σας δίσκο όλα τα μηνύματα, τους φακέλους και τα φίλτρα του λογαριασμού. Δεν επηρεάζει τα μηνύματα που υπάρχουν ακόμη στο διακομιστή. Μην το επιλέξετε αν σκοπεύετε να αρχειοθετήσετε τα τοπικά σας δεδομένα ή να τα χρησιμοποιήσετε πάλι στο &brandShortName;.">
-<!ENTITY removeDataServerAccount.desc "Διαγράφει από τον τοπικό σας δίσκο όλα τα μηνύματα, φακέλους και φίλτρα που είναι συσχετισμένα με το λογαριασμό. Τα μηνύματα και οι φάκελοι υπάρχουν ακόμη στο διακομιστή.">
+<!ENTITY removeDataServerAccount.desc "Διαγράφει από τον τοπικό σας δίσκο όλα τα μηνύματα, τους φακέλους και τα φίλτρα που σχετίζονται με τον λογαριασμό. Τα μηνύματα και οι φάκελοι υπάρχουν ακόμα στον διακομιστή.">
 <!ENTITY removeDataChatAccount.desc   "Διαγράφει όλα τα αρχεία συζητήσεων που είναι αποθηκευμένα στον τοπικό σας δίσκο για αυτό το λογαριασμό.">
 <!ENTITY showData.label               "Εμφάνιση τοποθεσίας δεδομένων">
 <!ENTITY showData.accesskey           "Ε">
 <!ENTITY progressPending              "Αφαίρεση επιλεγμένων δεδομένων…">
-<!ENTITY progressSuccess              "Η αφαίρεση έγινε με επιτυχία.">
-<!ENTITY progressFailure              "Αποτυχία αφαίρεσης.">
+<!ENTITY progressSuccess              "Η αφαίρεση ολοκληρώθηκε.">
+<!ENTITY progressFailure              "Η αφαίρεση απέτυχε.">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,9 @@ cert-error-intro = { $hostname } utilizza un certificato di sicurezza non valido
 
 cert-error-mitm-intro = I siti web garantiscono la propria identità attraverso certificati rilasciati da autorità di certificazione.
 
-cert-error-mitm-mozilla = { -brand-short-name } è sostenuto da Mozilla, un’organizzazione senza fini di lucro che gestisce un archivio di autorità di certificazione (CA) completamente aperto. Questo archivio CA aiuta a garantire che le autorità di certificazione si attengano alle pratiche di sicurezza previste per proteggere gli utenti.
+cert-error-mitm-mozilla = { -brand-short-name } è sostenuto da Waterfox, un’organizzazione senza fini di lucro che gestisce un archivio di autorità di certificazione (CA) completamente aperto. Questo archivio CA aiuta a garantire che le autorità di certificazione si attengano alle pratiche di sicurezza previste per proteggere gli utenti.
 
-cert-error-mitm-connection = { -brand-short-name } utilizza l’archivio CA di Mozilla per verificare che una connessione sia sicura, invece di utilizzare certificati forniti dal sistema operativo dell’utente. Se un antivirus o un elemento nella rete intercettano la connessione utilizzando un certificato di sicurezza rilasciato da una CA non presente nell’archivio CA di Mozilla, la connessione viene considerata non sicura.
+cert-error-mitm-connection = { -brand-short-name } utilizza l’archivio CA di Waterfox per verificare che una connessione sia sicura, invece di utilizzare certificati forniti dal sistema operativo dell’utente. Se un antivirus o un elemento nella rete intercettano la connessione utilizzando un certificato di sicurezza rilasciato da una CA non presente nell’archivio CA di Waterfox, la connessione viene considerata non sicura.
 
 cert-error-trust-unknown-issuer-intro = Potrebbe trattarsi di un tentativo di sostituirsi al sito originale e non si dovrebbe proseguire.
 

@@ -1,17 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-fxa-toolbar-sync-syncing =
-    .label = Sincronizando…
-fxa-toolbar-sync-syncing-tabs =
-    .label = Sincronizando Pestañas...
-sync-disconnect-dialog-title = ¿Desconectar { -sync-brand-short-name }?
 fxa-toolbar-sync-syncing2 = Sincronizando…
 sync-disconnect-dialog-title2 = ¿Desconectar?
 sync-disconnect-dialog-body = { -brand-product-name } dejará de sincronizar tu cuenta, pero no se eliminará nada de tus datos de navegación en tu dispositivo.
-fxa-disconnect-dialog-title = ¿Desconectar { -brand-product-name }?
-fxa-disconnect-dialog-body = { -brand-product-name } se desconectará de tu cuenta, pero no se eliminará nada de tus datos de navegación en tu dispositivo.
 sync-disconnect-dialog-button = Desconectar
 fxa-signout-dialog2-title = ¿Cerrar la sesión de { -fxaccount-brand-name }?
 fxa-signout-dialog-body = Los datos sincronizados permanecerán en tu cuenta.
@@ -24,5 +17,10 @@ fxa-menu-turn-on-sync =
 fxa-menu-turn-on-sync-default = Activar Sync
 fxa-menu-connect-another-device =
     .label = Conectar otro dispositivo…
+# This is shown dynamically within "Send tab to device" in fxa menu.
+fxa-menu-send-tab-to-device-syncnotready =
+    .label = Sincronizando dispositivos…
+# This is shown within "Send tab to device" in fxa menu if account is not configured.
+fxa-menu-send-tab-to-device-description = Envía al instante una pestaña a cualquier dispositivo donde hayas iniciado sesión.
 fxa-menu-sign-out =
     .label = Cerrar sesión…

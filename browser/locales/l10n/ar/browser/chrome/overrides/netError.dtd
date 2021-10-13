@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -101,7 +101,7 @@ was trying to connect. -->
 
 <!ENTITY securityOverride.exceptionButton1Label "أقبلُ المخاطرة فتابِع">
 
-<!ENTITY errorReporting.automatic2 "أبلغ عن مثل هذه الأعطال لمساعدة Mozilla في التعرف على المواقع الخبيثة و حجبها">
+<!ENTITY errorReporting.automatic2 "أبلغ عن مثل هذه الأعطال لمساعدة Waterfox في التعرف على المواقع الخبيثة و حجبها">
 <!ENTITY errorReporting.learnMore "اطّلع على المزيد…">
 
 <!ENTITY remoteXUL.longDesc "<p><ul><li>الرجاء التواصل مع مالك الموقع لإبلاغه بهذه المشكلة.</li></ul></p>">

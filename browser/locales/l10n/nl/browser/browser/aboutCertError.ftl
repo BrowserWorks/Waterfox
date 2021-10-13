@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,9 +8,9 @@ cert-error-intro = { $hostname } gebruikt een ongeldig beveiligingscertificaat.
 
 cert-error-mitm-intro = Websites bewijzen hun identiteit via certificaten, die door certificaatautoriteiten worden uitgegeven.
 
-cert-error-mitm-mozilla = { -brand-short-name } wordt gesteund door de non-profitorganisatie Mozilla, die een volledig open archief voor certificaatautoriteiten (CA) beheert. Het CA-archief helpt te verzekeren dat certificaatautoriteiten de beste procedures voor gebruikersbeveiliging volgen.
+cert-error-mitm-mozilla = { -brand-short-name } wordt gesteund door de non-profitorganisatie Waterfox, die een volledig open archief voor certificaatautoriteiten (CA) beheert. Het CA-archief helpt te verzekeren dat certificaatautoriteiten de beste procedures voor gebruikersbeveiliging volgen.
 
-cert-error-mitm-connection = { -brand-short-name } gebruikt het CA-archief van Mozilla om te verifiëren dat een verbinding is beveiligd in plaats van certificaten die door het besturingssysteem van de gebruiker worden geleverd. Als een antivirusprogramma of een netwerk dus een verbinding onderschept met een door een CA uitgegeven beveiligingscertificaat dat zich niet in het CA-archief van Mozilla bevindt, wordt de verbinding als onveilig beschouwd.
+cert-error-mitm-connection = { -brand-short-name } gebruikt het CA-archief van Waterfox om te verifiëren dat een verbinding is beveiligd in plaats van certificaten die door het besturingssysteem van de gebruiker worden geleverd. Als een antivirusprogramma of een netwerk dus een verbinding onderschept met een door een CA uitgegeven beveiligingscertificaat dat zich niet in het CA-archief van Waterfox bevindt, wordt de verbinding als onveilig beschouwd.
 
 cert-error-trust-unknown-issuer-intro = Iemand kan proberen de website na te bootsen, en u kunt beter niet verdergaan.
 

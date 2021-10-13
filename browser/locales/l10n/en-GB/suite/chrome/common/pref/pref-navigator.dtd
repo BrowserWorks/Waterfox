@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,6 +30,12 @@
 <!ENTITY restoreTabsAtATime.label       "tab(s) at a time">
 <!ENTITY restoreDeferred.label          "Only restore tabs when I need them">
 <!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY siteIcons.label                "Web site icons">
+<!ENTITY useSiteIcons.label             "Show web site icons">
+<!ENTITY useSiteIcons.accesskey         "w">
+<!ENTITY useFavIcons.label              "Try to use the server&apos;s favicon when the page doesn&apos;t define an icon">
+<!ENTITY useFavIcons.accesskey          "T">
 
 <!ENTITY homePageIntro.label            "Clicking the Home button takes you to this group of pages:">
 <!ENTITY useCurrent.label               "Use Current Page">

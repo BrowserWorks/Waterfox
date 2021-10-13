@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,8 +30,6 @@
 <!ENTITY HomePhone.accesskey                   "H">
 <!ENTITY WorkPhone.label                       "商務電話">
 <!ENTITY WorkPhone.accesskey                   "W">
-<!ENTITY ScreenName.label                      "網路代號">
-<!ENTITY ScreenName.accesskey                  "S">
 <!ENTITY ChatName.label                        "聊天名稱">
 <!ENTITY ChatName.accesskey                    "C">
 <!ENTITY sortAscending.label                   "由小到大">

@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = 附加组件管理器
 addons-page-title = 附加组件管理器
 search-header =
     .placeholder = 在 addons.mozilla.org 搜索
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = 附加组件帮助
 sidebar-help-button-title =
     .title = 附加组件帮助
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } 选项
-       *[other] { -brand-short-name } 首选项
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name } 选项
-           *[other] { -brand-short-name } 首选项
-        }
 addons-settings-button = { -brand-short-name } 设置
 sidebar-settings-button-title =
     .title = { -brand-short-name } 设置
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = 一些扩展未通过验证
 show-all-extensions-button =
     .label = 显示所有扩展
-cmd-show-details =
-    .label = 显示详细信息
-    .accesskey = S
-cmd-find-updates =
-    .label = 查找更新
-    .accesskey = F
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] 选项
-           *[other] 首选项
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] P
-        }
-cmd-enable-theme =
-    .label = 使用主题
-    .accesskey = W
-cmd-disable-theme =
-    .label = 停用主题
-    .accesskey = W
-cmd-install-addon =
-    .label = 安装
-    .accesskey = I
-cmd-contribute =
-    .label = 捐助
-    .accesskey = C
-    .tooltiptext = 捐助此附加组件的开发
 detail-version =
     .label = 版本
 detail-last-updated =
@@ -284,6 +241,7 @@ install-theme-button = 安装主题
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = 管理
 find-more-addons = 寻找更多附加组件
+find-more-themes = 寻找更多主题
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -313,13 +271,14 @@ extension-enabled-heading = 已启用
 extension-disabled-heading = 已禁用
 theme-enabled-heading = 已启用
 theme-disabled-heading = 已禁用
+theme-monochromatic-heading = 配色
+theme-monochromatic-subheading = 元气满满的 { -brand-product-name } 新配色，限时提供。
 plugin-enabled-heading = 已启用
 plugin-disabled-heading = 已禁用
 dictionary-enabled-heading = 已启用
 dictionary-disabled-heading = 已禁用
 locale-enabled-heading = 已启用
 locale-disabled-heading = 已禁用
-ask-to-activate-button = 需要时询问
 always-activate-button = 一律激活
 never-activate-button = 永不激活
 addon-detail-author-label = 作者
@@ -374,10 +333,10 @@ addon-detail-private-browsing-disallow = 不允许
 addon-badge-recommended2 =
     .title = { -brand-product-name } 只推荐符合我们的安全和性能标准的扩展。
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = 由 Mozilla 构建的官方扩展，符合安全和性能标准
+    .title = 由 Waterfox 构建的官方扩展，符合安全和性能标准
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = 此扩展已通过审核，符合我们的安全和性能标准
@@ -395,9 +354,9 @@ addon-permissions-optional = 附加功能的可选权限：
 addon-permissions-learnmore = 详细了解“权限”
 recommended-extensions-heading = 推荐扩展
 recommended-themes-heading = 推荐主题
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = 有好的创意？<a data-l10n-name="link">使用 Firefox Color 打造自己的主题。</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = 有好的创意？<a data-l10n-name="link">使用 Waterfox Color 打造自己的主题。</a>
 
 ## Page headings
 

@@ -1,14 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ## Addressing widget
 
-#   $type (String) - the type of the addressing row
-remove-address-row-type = { $type } フィールドを削除
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = { $type } フィールドを削除します
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
     .title = { $type } フィールドを削除します
@@ -64,6 +59,10 @@ toolbar-button-add-attachment =
 add-attachment-notification-reminder =
     .label = 添付ファイルを追加...
     .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
+add-attachment-notification-reminder2 =
+    .label = 添付ファイルを追加...
+    .accesskey = A
+    .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
 menuitem-attach-files =
     .label = ファイル...
     .accesskey = F
@@ -74,12 +73,6 @@ context-menuitem-attach-files =
     .acceltext = { ctrl-cmd-shift-pretty-prefix }{ trigger-attachment-picker-key }
 #   $count (Number) - the number of attachments in the attachment bucket
 attachment-bucket-count = 添付ファイル { $count } 個
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext = 添付ファイル { $count } 個
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
 expand-attachment-pane-tooltip =
     .tooltiptext = 添付ペインを表示します ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 collapse-attachment-pane-tooltip =
@@ -100,6 +93,11 @@ move-attachment-last-panel-button =
 button-return-receipt =
     .label = 開封確認
     .tooltiptext = このメッセージの開封確認の返送を求めます
+# Encryption
+message-to-be-signed-icon =
+    .alt = メッセージに署名
+message-to-be-encrypted-icon =
+    .alt = メッセージを暗号化
 
 ## Addressing Area
 
@@ -135,15 +133,84 @@ bcc-compose-show-address-row-label =
     .tooltiptext = { bcc-compose-address-row-label.value } フィールドを表示します ({ bcc-compose-show-address-row-menuitem.acceltext })
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = 宛先および Cc フィールドの {$count} 件の受信者は互いのアドレスを見られます。代わりに Bcc フィールドを使用すると受信者アドレスの開示を避けられます。
+#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
+to-address-row-label =
+    .value = 宛先
+#   $key (String) - the shortcut key for this field
+show-to-row-main-menuitem =
+    .label = 宛先フィールド
+    .accesskey = T
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-to-row-button text.
+show-to-row-extra-menuitem =
+    .label = 宛先
+    .accesskey = T
+#   $key (String) - the shortcut key for this field
+show-to-row-button = 宛先
+    .title = 宛先フィールドを表示します ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+cc-address-row-label =
+    .value = Cc
+#   $key (String) - the shortcut key for this field
+show-cc-row-main-menuitem =
+    .label = Cc フィールド
+    .accesskey = C
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-cc-row-button text.
+show-cc-row-extra-menuitem =
+    .label = Cc
+    .accesskey = C
+#   $key (String) - the shortcut key for this field
+show-cc-row-button = Cc
+    .title = Cc フィールドを表示します ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+bcc-address-row-label =
+    .value = Bcc
+#   $key (String) - the shortcut key for this field
+show-bcc-row-main-menuitem =
+    .label = Bcc フィールド
+    .accesskey = B
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-bcc-row-button text.
+show-bcc-row-extra-menuitem =
+    .label = Bcc
+    .accesskey = B
+#   $key (String) - the shortcut key for this field
+show-bcc-row-button = Bcc
+    .title = Bcc フィールドを表示します ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+extra-address-rows-menu-button =
+    .title = 他のアドレス入力フィールドを表示します
+many-public-recipients-notice = { $count ->
+    [one] あなたのメッセージの受信者は開示されています。代わりに Bcc フィールドを使用すると受信者アドレスの開示を避けられます。
+    *[other] 宛先および Cc フィールドの {$count} 件の受信者アドレスは開示されており、受信者が互いにこれらのアドレスを見られます。代わりに Bcc フィールドを使用すると受信者アドレスの開示を避けられます。
+}
 many-public-recipients-bcc =
     .label = 代わりに Bcc を使用する
     .accesskey = U
 many-public-recipients-ignore =
     .label = 受信者を開示したままにする
     .accesskey  = K
+many-public-recipients-prompt-title = 開示された受信者が多すぎます
+#   $count (Number) - the count of addresses in the public recipients fields.
+many-public-recipients-prompt-msg = { $count ->
+    [one] あなたのメッセージの受信者は開示されており、プライバシー上の懸念が生じる可能性があります。受信者を宛先または Cc フィールドから Bcc フィールドへ移動することで受信者アドレスの開示を避けられます。
+    *[other] あなたのメッセージは {$count} 件の受信者が開示されており、受信者が互いにこれらのアドレスを見られるため、プライバシー上の懸念が生じる可能性があります。受信者を宛先または Cc フィールドから Bcc フィールドへ移動することで受信者アドレスの開示を避けられます。
+}
+many-public-recipients-prompt-cancel = 送信をキャンセル
+many-public-recipients-prompt-send = 強制送信
 
 ## Notifications
 
 # Variables:
 # $identity (string) - The name of the used identity, most likely an email address.
 compose-missing-identity-warning = 差出人アドレスと一致する一意の ID が見つかりませんでした。メッセージは現在の差出人フィールドと { $identity } の差出人情報の設定を使用して送信されます。
+encrypted-bcc-warning = 暗号化したメッセージの送信する場合、Bcc の受信者は完全に秘匿されません。すべての受信者が Bcc の受信者を認識できます。
+encrypted-bcc-ignore-button = 了解
+
+## Editing
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+    .tooltiptext = テキストのスタイル付けを削除します

@@ -14,7 +14,7 @@
 #define personal_toolbarfolder Asmeninė mygtukų juosta
 
 
-#define seamonkey_and_mozilla SeaMonkey ir Mozilla
+#define seamonkey_and_mozilla SeaMonkey ir Waterfox
 
 
 # LOCALIZATION NOTE (seamonkey):
@@ -50,7 +50,7 @@
 # link title for http://www.mozilla.org/ (in normal bookmarks)
 
 
-#define mozilla_org_long Mozilla
+#define mozilla_org_long Waterfox
 
 
 # LOCALIZATION NOTE (mozilla_projects):
@@ -167,7 +167,7 @@
 # e.g. #define seamonkey_l10n <DT><A HREF="http://www.seamonkey.tlh/">SeaMonkey tlhIngan</a>
 
 
-#define seamonkey_l10n <DT><A HREF="http://mozilla.lt/">„Mozilla“ Lietuvoje</a>
+#define seamonkey_l10n <DT><A HREF="http://mozilla.lt/">„Waterfox“ Lietuvoje</a>
 
 
 # LOCALIZATION NOTE (seamonkey_l10n_long):
@@ -179,7 +179,7 @@
 # e.g. #define seamonkey_l10n_long <DT><A HREF="http://www.seamonkey.tld/">tlhIngan Hol SeaMonkey</a>
 
 
-#define seamonkey_l10n_long <DT><A HREF="http://mozilla.lt/">„Mozilla“ Lietuvoje</a>
+#define seamonkey_l10n_long <DT><A HREF="http://mozilla.lt/">„Waterfox“ Lietuvoje</a>
 
 
 #unfilter emptyLines

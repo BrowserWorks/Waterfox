@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -101,7 +101,7 @@ was trying to connect. -->
 
 <!ENTITY securityOverride.exceptionButton1Label "Chấp nhận rủi ro và tiếp tục">
 
-<!ENTITY errorReporting.automatic2 "Báo cáo những lỗi như thế này để giúp Mozilla nhận diện và chặn những trang độc hại">
+<!ENTITY errorReporting.automatic2 "Báo cáo những lỗi như thế này để giúp Waterfox nhận diện và chặn những trang độc hại">
 <!ENTITY errorReporting.learnMore "Tìm hiểu thêm…">
 
 <!ENTITY remoteXUL.longDesc "<p><ul><li>Vui lòng liên hệ với chủ trang web để báo với họ vấn đề này.</li></ul></p>">

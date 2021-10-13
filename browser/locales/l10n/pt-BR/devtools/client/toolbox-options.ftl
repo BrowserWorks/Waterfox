@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -58,11 +58,7 @@ options-stylesheet-autocompletion-tooltip =
 # The heading
 options-screenshot-label = Comportamento da captura de tela
 # Label for the checkbox that toggles screenshot to clipboard feature
-options-screenshot-clipboard-label = Capturar tela para área de transferência
-options-screenshot-clipboard-tooltip =
-    .title = Copiar capturas de tela diretamente para a área de transferência
-# Label for the checkbox that toggles screenshot to clipboard feature
-options-screenshot-clipboard-only-label = Capturar tela para apenas para a área de transferência
+options-screenshot-clipboard-only-label = Capturar tela apenas para área de transferência
 options-screenshot-clipboard-tooltip2 =
     .title = Salva a captura de tela diretamente na área de transferência
 # Label for the checkbox that toggles the camera shutter audio for screenshot tool

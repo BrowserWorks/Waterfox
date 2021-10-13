@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,12 +15,14 @@
 
 <!ENTITY closeOtherTabs.label "Andere Tabs schließen">
 <!ENTITY closeOtherTabs.accesskey "d">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Rechte Tabs schließen">
+<!ENTITY  closeTabsToTheEnd.accesskey "R">
 
 <!ENTITY uploadFile.label "Datei hochladen…">
 <!ENTITY uploadFile.accesskey "h">
-
-<!ENTITY printSetupCmd.label "Seite einrichten…">
-<!ENTITY printSetupCmd.accesskey "t">
 
 <!-- Edit Menu -->
 <!ENTITY findOnCmd.label "Seite durchsuchen…">
@@ -56,10 +58,16 @@
 <!-- Go Menu -->
 <!ENTITY goMenu.label "Gehe">
 <!ENTITY goMenu.accesskey "G">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
 <!ENTITY goHomeCmd.label "Startseite">
 <!ENTITY goHomeCmd.accesskey "a">
 <!ENTITY historyCmd.label "Chronik">
 <!ENTITY historyCmd.accesskey "C">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
 <!ENTITY history.commandKey "h">
 <!ENTITY recentTabs.label "Zuletzt geschlossene Tabs">
 <!ENTITY recentTabs.accesskey "Z">
@@ -144,3 +152,6 @@
 
 <!ENTITY clearPrivateDataCmd.label "Private Daten löschen…">
 <!ENTITY clearPrivateDataCmd.accesskey "v">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

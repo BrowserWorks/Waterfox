@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -61,12 +61,12 @@ perftools-status-restart-required = È necessario riavviare il browser per attiv
 ## These are shown briefly when the user is waiting for the profiler to respond.
 
 perftools-request-to-stop-profiler = Interruzione registrazione in corso
-perftools-request-to-get-profile-and-stop-profiler = Cattura profilo in corso
+perftools-request-to-get-profile-and-stop-profiler = Acquisizione profilo in corso
 
 ##
 
 perftools-button-start-recording = Avvia registrazione
-perftools-button-capture-recording = Cattura registrazione
+perftools-button-capture-recording = Acquisizione registrazione
 perftools-button-cancel-recording = Annulla registrazione
 perftools-button-save-settings = Salva impostazioni e torna indietro
 perftools-button-restart = Riavvia
@@ -98,8 +98,9 @@ perftools-thread-img-decoder =
   .title = Thread per la decodifica delle immagini
 perftools-thread-dns-resolver =
   .title = La risoluzione DNS viene eseguita in questo thread
-perftools-thread-js-helper =
-  .title = Lavori in background del motore JS come compilazioni fuori dal thread principale (“off-main-thread”)
+
+perftools-thread-task-controller =
+  .title = Thread del pool TaskController
 
 ##
 
@@ -120,3 +121,20 @@ perftools-onboarding-reenable-old-panel = (per un periodo limitato di tempo sar�
 
 perftools-onboarding-close-button =
   .aria-label = Chiudi il messaggio introduttivo
+
+perftools-presets-web-developer-description = Preset consigliato per il debug della maggior parte delle applicazioni web, con overhead limitato.
+perftools-presets-web-developer-label = Sviluppo web
+
+perftools-presets-firefox-platform-description = Preset consigliato per il debug degli aspetti interni della piattaforma di Waterfox.
+perftools-presets-firefox-platform-label = Waterfox - Piattaforma
+
+perftools-presets-firefox-front-end-description = Preset consigliato per il debug degli aspetti interni dell’interfaccia (front-end) di Waterfox.
+perftools-presets-firefox-front-end-label = Waterfox - Front-end
+
+perftools-presets-firefox-graphics-description = Preset consigliato per l’analisi delle prestazioni grafiche di Waterfox.
+perftools-presets-firefox-graphics-label = Waterfox - Grafica
+
+perftools-presets-media-description = Preset consigliato per la diagnosi di problemi audio e video.
+perftools-presets-media-label = Multimediale
+
+perftools-presets-custom-label = Personalizzato

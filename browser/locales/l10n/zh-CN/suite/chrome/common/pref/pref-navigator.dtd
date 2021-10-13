@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -30,6 +30,12 @@
 <!ENTITY restoreTabsAtATime.label       "一次恢复X个标签页">
 <!ENTITY restoreDeferred.label          "仅在需要时恢复标签页">
 <!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY siteIcons.label                "网站图标">
+<!ENTITY useSiteIcons.label             "显示网站图标">
+<!ENTITY useSiteIcons.accesskey         "w">
+<!ENTITY useFavIcons.label              "页面未定义图标时，尝试使用服务器的网站图标（Favicon）">
+<!ENTITY useFavIcons.accesskey          "T">
 
 <!ENTITY homePageIntro.label            "点击 主页 按钮打开此组页面：">
 <!ENTITY useCurrent.label               "使用当前页面">

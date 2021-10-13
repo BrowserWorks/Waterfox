@@ -1,23 +1,27 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY linkToolbar.label "Barra navigazione sito">
 <!ENTITY linkToolbar.accesskey "t">
 <!ENTITY linkToolbar.tooltip "Barra navigazione sito">
+
 <!ENTITY linkToolbarAlways.label "Mostra sempre">
 <!ENTITY linkToolbarAlways.accesskey "M">
 <!ENTITY linkToolbarAsNeeded.label "Mostra solo se necessario">
 <!ENTITY linkToolbarAsNeeded.accesskey "s">
 <!ENTITY linkToolbarNever.label "Nascondi sempre">
 <!ENTITY linkToolbarNever.accesskey "N">
+
 <!ENTITY topButton.label "Inizio">
 <!ENTITY upButton.label "Sali">
 <!ENTITY firstButton.label "Primo">
 <!ENTITY prevButton.label "Precedente">
 <!ENTITY nextButton.label "Prossimo">
 <!ENTITY lastButton.label "Ultimo">
+
 <!ENTITY documentButton.label "Documento">
+
 <!ENTITY tocButton.label "Indice argomenti">
 <!ENTITY chapterButton.label "Capitoli">
 <!ENTITY sectionButton.label "Sezioni">
@@ -25,11 +29,17 @@
 <!ENTITY appendixButton.label "Appendici">
 <!ENTITY glossaryButton.label "Glossario">
 <!ENTITY indexButton.label "Indice">
+
 <!ENTITY moreButton.label "Altro">
+
 <!ENTITY helpButton.label "Guida">
 <!ENTITY searchButton.label "Ricerca">
+
 <!ENTITY authorButton.label "Autori">
 <!ENTITY copyrightButton.label "Copyright">
+
 <!ENTITY bookmarkButton.label "Segnalibri">
+
 <!ENTITY alternateButton.label "Altre versioni">
+
 <!ENTITY feedButton.label "Abbonati">

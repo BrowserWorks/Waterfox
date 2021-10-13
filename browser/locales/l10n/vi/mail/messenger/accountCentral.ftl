@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -48,9 +48,6 @@ import-label = Nhập
     .aria-label = Nhập dữ liệu từ các chương trình khác
 
 about-paragraph = Thunderbird là ứng dụng email và lịch trình đa nền tảng, mã nguồn mở hàng đầu, miễn phí cho doanh nghiệp và sử dụng cá nhân. Chúng tôi muốn nó được an toàn và trở nên tốt hơn. Việc quyên góp sẽ cho phép chúng tôi thuê các nhà phát triển, trả tiền cho cơ sở hạ tầng và tiếp tục cải thiện.
-
-about-paragraph-2 = <b>Thunderbird được tài trợ bởi những người dùng như bạn! Nếu bạn thích Thunderbird, bạn có thể cân nhắc việc quyên góp.</b> Cách tốt nhất để bạn đảm bảo Thunderbird vẫn có sẵn là
-about-donation = quyên góp
 
 about-paragraph-consider-donation = <b>Thunderbird được tài trợ bởi những người dùng như bạn! Nếu bạn thích Thunderbird, vui lòng xem xét việc quyên góp.</b> Cách tốt nhất để bạn đảm bảo Thunderbird vẫn khả dụng là <a data-l10n-name="donation-link">thực hiện quyên góp</a>.
 

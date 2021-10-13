@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -19,5 +19,3 @@
 <!ENTITY openInTab.accesskey              "b">
 <!ENTITY openContextSearchTab.label       "Abrir uma aba ao invés de uma janela ao usar o menu de contexto de pesquisa">
 <!ENTITY openContextSearchTab.accesskey   "t">
-<!ENTITY openSidebarSearchPanel.label     "Abrir a aba de pesquisa no painel lateral quando uma pesquisa for chamada">
-<!ENTITY openSidebarSearchPanel.accesskey "a">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,6 +15,7 @@
 <!ENTITY findAsYouTypeAutoText.accesskey "t">
 <!ENTITY findAsYouTypeAutoLinks.label "Solo nei collegamenti">
 <!ENTITY findAsYouTypeAutoLinks.accesskey "S">
+
 <!ENTITY findAsYouTypeFindbarEnable.label "Mostra la barra di ricerca per la ricerca durante la digitazione">
 <!ENTITY findAsYouTypeFindbarEnable.accesskey "M">
 <!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: la ricerca durante la digitazione senza mostrare la barra di ricerca non permette di inserire i caratteri speciali.">

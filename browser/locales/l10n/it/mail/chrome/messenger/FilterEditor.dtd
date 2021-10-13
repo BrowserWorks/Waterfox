@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,7 +17,7 @@
 <!ENTITY highestPriorityCmd.label "Massima">
 
 <!ENTITY contextDesc.label "Quando applicare il filtro:">
-<!ENTITY contextIncomingMail.label "Scarico la nuova posta:">
+<!ENTITY contextIncomingMail.label "Viene scaricata nuova posta:">
 <!ENTITY contextIncomingMail.accesskey "S">
 <!ENTITY contextManual.label "Manualmente">
 <!ENTITY contextManual.accesskey "M">
@@ -27,7 +27,6 @@
 <!ENTITY contextOutgoing.accesskey "D">
 <!ENTITY contextArchive.label "Archiviazione">
 <!ENTITY contextArchive.accesskey "A">
-
 <!ENTITY contextPeriodic.accesskey "e">
 
 <!ENTITY filterActionDesc.label "Esegui queste azioni:">

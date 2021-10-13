@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "Megjelenítendő:">
 <!ENTITY DisplayName.accesskey          "B">
 <!ENTITY preferDisplayName.label        "A megjelenítendő név használata az üzenetfejlécben levő helyett">
-<!ENTITY preferDisplayName.accesskey    "m">
 <!ENTITY preferDisplayName2.accesskey   "j">
 <!ENTITY NickName.label                 "Becenév:">
 <!ENTITY NickName.accesskey             "B">
@@ -46,8 +45,6 @@
 <!ENTITY PlainText.label                "Normál szöveg">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Ismeretlen">
-<!ENTITY ScreenName.label               "Felhasználói név:">
-<!ENTITY ScreenName.accesskey           "F">
 
 <!ENTITY chatName.label                 "Csevegési név:">
 
@@ -145,7 +142,6 @@
 
 <!ENTITY Photo.tab                      "Fotó">
 <!ENTITY Photo.accesskey                "o">
-<!ENTITY PhotoDesc.label                "Válasszon a következők közül:">
 <!ENTITY GenericPhoto.label             "Általános fotó">
 <!ENTITY GenericPhoto.accesskey         "l">
 <!ENTITY DefaultPhoto.label             "Alapértelmezett">

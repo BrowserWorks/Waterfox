@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = Depuración - Tiempo de ejecución / {
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Este { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -61,13 +61,9 @@ about-debugging-sidebar-item-connect-button-connection-not-responding = La conex
 # Text displayed as connection error in sidebar item when the connection has timed out.
 about-debugging-sidebar-item-connect-button-connection-timeout = La conexión ha caducado
 
-# Temporary text displayed in sidebar items representing remote runtimes after
-# successfully connecting to them. Temporary UI, do not localize.
-about-debugging-sidebar-item-connected-label = Conectado
-
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Esperando al navegador...
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +99,7 @@ about-debugging-setup-title = Configuración
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = Configure el método de conexión con el que desea depurar remotamente su dispositivo.
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = Usa <a>{ about-debugging-this-firefox-runtime-name }</a> para depurar extensiones y service workers en esta versión de { -brand-shorter-name }.
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +134,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = Activar menú de desarrollador
 about-debugging-setup-usb-step-enable-debug2 = Activar depuración USB en el menú de desarrollador de Android.
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Activar depuración USB en Firefox en el dispositivo Android.
+about-debugging-setup-usb-step-enable-debug-firefox2 = Activar depuración USB en Waterfox en el dispositivo Android.
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Conectar el dispositivo Android a su equipo.
@@ -185,7 +181,7 @@ about-debugging-network-location-form-duplicate = El servidor “{ $host-value }
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Extensiones temporales
 # Title of the extensions category.
@@ -219,23 +215,23 @@ about-debugging-runtime-service-workers-not-compatible = La configuración de su
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = El navegador conectado tiene una versión antigua ({ $runtimeVersion }). La versión mínima compatible es ({ $minVersion }). Ésta es una configuración incompatible y puede hacer que las herramientas de desarrollo fallen. Por favor, actualice el navegador conectado. <a>Resolución de problemas</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Esta versión de Firefox no puede depurar Firefox para Android (68). Recomendamos instalar Firefox para Android Nightly en su teléfono para realizar pruebas. <a>Más detalles</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Esta versión de Waterfox no puede depurar Waterfox para Android (68). Recomendamos instalar Waterfox para Android Nightly en su teléfono para realizar pruebas. <a>Más detalles</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = El navegador conectado es más reciente ({ $runtimeVersion }, buildID { $runtimeID }) que su { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Ésta es una configuración incompatible y puede hacer que las herramientas de desarrollo fallen. Por favor actualice Firefox. <a>Resolución de problemas</a>
+about-debugging-browser-version-too-recent = El navegador conectado es más reciente ({ $runtimeVersion }, buildID { $runtimeID }) que su { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Ésta es una configuración incompatible y puede hacer que las herramientas de desarrollo fallen. Por favor actualice Waterfox. <a>Resolución de problemas</a>
 
 # Displayed for runtime info in runtime pages.
-# { $name } is brand name such as "Firefox Nightly"
+# { $name } is brand name such as "Waterfox Nightly"
 # { $version } is version such as "64.0a1"
 about-debugging-runtime-name = { $name } ({ $version })
 
@@ -270,18 +266,18 @@ about-debugging-debug-target-list-empty = Nada todavía.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Inspeccionar
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Cargar complemento temporal...
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = Hubo un error durante la instalación del complemento temporal.
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Recargar
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Eliminar
 

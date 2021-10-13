@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY loadError.label        "Falha no carregamento da página">
 <!ENTITY gopherAddon.title      "Protocolo Gopher">
 <!ENTITY gopherAddon.shortDesc  "gopher não é um protocolo registrado.">
-<!ENTITY gopherAddon.longDesc   "O endereço especifica o protocolo gopher, que já não é mais suportado, portanto o navegador não pode se conectar ao site. Você pode obter um complemento compatível para acessar este servidor a partir de Complementos Mozilla.">
+<!ENTITY gopherAddon.longDesc   "O endereço especifica o protocolo gopher, que já não é mais suportado, portanto o navegador não pode se conectar ao site. Você pode obter um complemento compatível para acessar este servidor a partir de Complementos Waterfox.">
 <!ENTITY goToAddOn.label        "Abrir página de complementos">

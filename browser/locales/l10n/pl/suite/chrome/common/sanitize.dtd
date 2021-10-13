@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY sanitizeDialog.title "Czyszczenie danych prywatnych">
+
 <!ENTITY sanitizeItems.label "Wyczyść następujące elementy:">
 
 <!ENTITY itemHistory.label "historię przeglądanych stron">
@@ -24,4 +25,3 @@
 <!ENTITY itemSessions.label "sesje uwierzytelnione">
 <!ENTITY itemSessions.accesskey "e">
 
-<!ENTITY sanitizeButton.label "Wyczyść dane prywatne">

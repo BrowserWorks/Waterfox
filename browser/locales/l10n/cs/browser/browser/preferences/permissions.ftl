@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = Výjimky
     .style = width: 36em
+
 permissions-close-key =
     .key = w
+
 permissions-address = Adresa webového serveru
     .accesskey = d
+
 permissions-block =
     .label = Blokovat
     .accesskey = B
+
 permissions-session =
     .label = Povolit pro relaci
     .accesskey = o
+
 permissions-allow =
     .label = Povolit
     .accesskey = P
+
 permissions-button-off =
     .label = Vypnout
     .accesskey = o
+
 permissions-button-off-temporarily =
     .label = Dočasně vypnout
     .accesskey = t
+
 permissions-site-name =
     .label = Server
+
 permissions-status =
     .label = Stav
+
 permissions-remove =
     .label = Odebrat server
     .accesskey = r
+
 permissions-remove-all =
     .label = Odebrat všechny servery
     .accesskey = e
-permissions-button-cancel =
-    .label = Zrušit
-    .accesskey = Z
-permissions-button-ok =
-    .label = Uložit změny
-    .accesskey = U
+
 permission-dialog =
     .buttonlabelaccept = Uložit změny
     .buttonaccesskeyaccept = U
+
 permissions-autoplay-menu = Výchozí nastavení:
+
 permissions-searchbox =
     .placeholder = Hledat
+
 permissions-capabilities-autoplay-allow =
     .label = povolit zvuk i video
 permissions-capabilities-autoplay-block =
     .label = blokovat zvuk
 permissions-capabilities-autoplay-blockall =
     .label = blokovat zvuk i video
+
 permissions-capabilities-allow =
     .label = Povolit
 permissions-capabilities-block =
     .label = Blokovat
 permissions-capabilities-prompt =
     .label = Vždy se zeptat
+
 permissions-capabilities-listitem-allow =
     .value = Povolit
 permissions-capabilities-listitem-block =
     .value = Blokovat
 permissions-capabilities-listitem-allow-session =
     .value = Povolit pro relaci
+
 permissions-capabilities-listitem-off =
     .value = Vypnuto
 permissions-capabilities-listitem-off-temporarily =

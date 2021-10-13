@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Padaryti ekrano nuotrauką
 screenshot-toolbarbutton =
     .label = Ekrano nuotrauka
     .tooltiptext = Padaryti ekrano nuotrauką
-screenshots-my-shots-button = Mano nuotraukos
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Tempkite arba spustelėkite tinklalapyje norėdami pasirinkti regioną. Spustelėkite „ESC“ norėdami atsisakyti.
 screenshots-cancel-button = Atsisakyti
 screenshots-save-visible-button = Įrašyti matomą
@@ -31,7 +31,6 @@ screenshots-connection-error-details = Patikrinkite savo interneto ryšį. Jeigu
 screenshots-login-error-details = Mums nepavyko įrašyti jūsų nuotraukos, nes yra problema su „{ -screenshots-brand-name }“ paslauga. Prašome pabandyti vėliau.
 screenshots-unshootable-page-error-title = Mums nepavyko nufotografuoti šio tinklalapio.
 screenshots-unshootable-page-error-details = Tai nėra įprastas tinklalapis, tad negalite padaryti jo nuotraukos.
-screenshots-self-screenshot-error-title = Negalite padaryti „{ -screenshots-brand-name }“ tinklalapio nuotraukos!
 screenshots-empty-selection-error-title = Jūsų pasirinkimas yra per mažas
 screenshots-private-window-error-title = „{ -screenshots-brand-name }“ privačiajame naršyme neveikia
 screenshots-private-window-error-details = Atsiprašome už nepatogumą. Mes dirbame prie šio funkcionalumo vėlesnėms versijoms.

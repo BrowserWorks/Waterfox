@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -66,8 +66,8 @@ openpgp-key-man-edit-menu =
     .label = Editar
     .accesskey = E
 openpgp-key-man-view-menu =
-    .label = Ver
-    .accesskey = V
+    .label = Exibir
+    .accesskey = x
 openpgp-key-man-generate-menu =
     .label = Gerar
     .accesskey = G
@@ -75,26 +75,26 @@ openpgp-key-man-keyserver-menu =
     .label = Servidor de chaves
     .accesskey = r
 openpgp-key-man-import-public-from-file =
-    .label = Importar chave(s) pública(s) de arquivo
+    .label = Importar chaves públicas de arquivo
     .accesskey = I
 openpgp-key-man-import-secret-from-file =
-    .label = Importar chave(s) secreta(s) de arquivo
+    .label = Importar chaves secretas de arquivo
 openpgp-key-man-import-sig-from-file =
-    .label = Importar revogação(ções) de arquivo
+    .label = Importar revogações de arquivo
 openpgp-key-man-import-from-clipbrd =
-    .label = Importar chave(s) da área de transferência
+    .label = Importar chaves da área de transferência
     .accesskey = I
 openpgp-key-man-import-from-url =
-    .label = Importar chave(s) a partir de URL
+    .label = Importar chaves a partir de URL
     .accesskey = U
 openpgp-key-man-export-to-file =
-    .label = Exportar chave(s) pública(s) para arquivo
+    .label = Exportar chaves públicas para arquivo
     .accesskey = E
 openpgp-key-man-send-keys =
-    .label = Enviar chave(s) pública(s) por email
+    .label = Enviar chaves públicas por email
     .accesskey = m
 openpgp-key-man-backup-secret-keys =
-    .label = Fazer backup de chave(s) secreta(s) em arquivo
+    .label = Fazer backup de chaves secretas em arquivo
     .accesskey = b
 openpgp-key-man-discover-cmd =
     .label = Descobrir chaves online
@@ -113,9 +113,6 @@ openpgp-key-backup-key =
 openpgp-key-send-key =
     .label = Enviar chave pública por email
     .accesskey = m
-openpgp-key-man-copy-to-clipbrd =
-    .label = Copiar chave(s) pública(s) para área de transferência
-    .accesskey = C
 openpgp-key-man-copy-key-ids =
     .label =
         { $count ->
@@ -139,8 +136,6 @@ openpgp-key-man-copy-to-clipboard =
     .accesskey = b
 openpgp-key-man-ctx-expor-to-file-label =
     .label = Exportar chaves para arquivo
-openpgp-key-man-ctx-copy-to-clipbrd-label =
-    .label = Copiar chaves públicas para área de transferência
 openpgp-key-man-ctx-copy =
     .label = Copiar
     .accesskey = C
@@ -174,7 +169,7 @@ openpgp-key-man-change-expiry =
     .label = Alterar data de validade
     .accesskey = v
 openpgp-key-man-del-key =
-    .label = Excluir chave(s)
+    .label = Excluir chaves
     .accesskey = x
 openpgp-delete-key =
     .label = Excluir chave
@@ -282,16 +277,8 @@ openpgp-description =
         [one] O Thunderbird encontrou { $count } chave OpenPGP pessoal associada a <b>{ $identity }</b>
        *[other] O Thunderbird encontrou { $count } chaves OpenPGP pessoais associadas a <b>{ $identity }</b>
     }
-#   $count (Number) - the number of configured keys associated with the current identity
 #   $key (String) - the currently selected OpenPGP key
-openpgp-selection-status =
-    { $count ->
-        [0] Selecione uma chave válida para ativar o protocolo OpenPGP.
-        [one] Sua configuração atual usa o ID de chave <b>{ $key }</b>
-       *[other] Sua configuração atual usa os IDs de chave <b>{ $key }</b>
-    }
-#   $key (String) - the currently selected OpenPGP key
-openpgp-selection-status-have-key = Sua configuração atual usa ID de chave <b>{ $key }</b>
+openpgp-selection-status-have-key = Sua configuração atual usa a chave com ID <b>{ $key }</b>
 #   $key (String) - the currently selected OpenPGP key
 openpgp-selection-status-error = Sua configuração atual usa a chave <b>{ $key }</b>, que está vencida.
 openpgp-add-key-button =
@@ -312,12 +299,8 @@ openpgp-radio-key-not-accepted = Para usar esta chave, você precisa aprovar com
 openpgp-radio-key-not-found = Esta chave não foi encontrada! Se quiser usar, você precisa importar para o { -brand-short-name }.
 #   $key (String) - the expiration date of the OpenPGP key
 openpgp-radio-key-expires = Expira em: { $date }
-openpgp-key-expires-image =
-    .tooltiptext = A chave expira em menos de 6 meses
 #   $key (String) - the expiration date of the OpenPGP key
 openpgp-radio-key-expired = Expirou em: { $date }
-openpgp-key-expired-image =
-    .tooltiptext = Chave expirada
 openpgp-key-expires-within-6-months-icon =
     .title = A chave expira em menos de 6 meses
 openpgp-key-has-expired-icon =
@@ -364,7 +347,7 @@ keyserver-error-unknown = Ocorreu um erro desconhecido
 keyserver-error-server-error = O servidor de chaves relatou um erro.
 keyserver-error-import-error = Falha ao importar a chave baixada.
 keyserver-error-unavailable = O servidor de chaves não está disponível.
-keyserver-error-security-error = O servidor de chaves não suporta acesso criptografado.
+keyserver-error-security-error = O servidor de chaves não oferece suporte a acesso criptografado.
 keyserver-error-certificate-error = O certificado do servidor de chaves não é válido.
 keyserver-error-unsupported = O servidor de chaves não é suportado.
 # Strings in mimeWkdHandler.jsm
@@ -422,10 +405,10 @@ import-info-fpr = Impressão digital
 import-info-details = Ver detalhes e gerenciar aceitação de chaves
 import-info-no-keys = Nenhuma chave importada.
 # Strings in enigmailKeyManager.js
-import-from-clip = Quer importar alguma(s) chave(s) da área de transferência?
+import-from-clip = Quer importar algumas chaves da área de transferência?
 import-from-url = Baixar chave pública a partir desta URL:
-copy-to-clipbrd-failed = Não foi possível copiar a(s) chave(s) selecionada(s) para área de transferência.
-copy-to-clipbrd-ok = Chave(s) copiada(s) para área de transferência
+copy-to-clipbrd-failed = Não foi possível copiar as chaves selecionadas para área de transferência.
+copy-to-clipbrd-ok = Chaves copiadas para área de transferência
 delete-secret-key =
     AVISO: Você está prestes a excluir uma chave secreta!
     
@@ -520,7 +503,7 @@ fail-key-extract = Erro - Falha no comando de extração de chave
 # Strings used in keyRing.jsm
 fail-cancel = Erro - Recebimento de chave cancelado pelo usuário
 not-first-block = Erro - Primeiro bloco OpenPGP não é bloco de chave pública
-import-key-confirm = Importar chave(s) pública(s) incorporada(s) na mensagem?
+import-key-confirm = Importar chaves públicas incorporadas na mensagem?
 fail-key-import = Erro - Falha na importação de chave
 file-write-failed = Falha ao gravar no arquivo { $output }
 no-pgp-block = Erro - Não foi encontrado nenhum bloco blindado válido de dados OpenPGP
@@ -592,7 +575,6 @@ quoted-printable-warn =
 minimal-line-wrapping =
     Você configurou a quebra de linhas em { $width } caracteres. Para criptografia e/ou assinatura correta, este valor precisa ser pelo menos 68.
     Quer alterar agora a quebra de linhas em 68 caracteres?
-sending-hidden-rcpt = Destinatários de CCO (cópia oculta) não podem ser usados ao enviar uma mensagem criptografada. Para enviar esta mensagem criptografada, remova os destinatários de CCO ou mova-os para o campo CC.
 sending-news =
     A operação de envio criptografado foi interrompida.
     Esta mensagem não pode ser criptografada porque há destinatários de grupos de notícias. Reenvie a mensagem sem criptografia.
@@ -607,6 +589,12 @@ no-temp-dir =
 possibly-pgp-mime = Mensagem possivelmente criptografada ou assinada por PGP/MIME. Use a função 'Descriptografar/Verificar' para verificar
 cannot-send-sig-because-no-own-key = Não é possível assinar digitalmente esta mensagem, porque você ainda não configurou a criptografia de ponta a ponta de <{ $key }>
 cannot-send-enc-because-no-own-key = Não é possível enviar esta mensagem criptografada, porque você ainda não configurou a criptografia de ponta a ponta de <{ $key }>
+compose-menu-attach-key =
+    .label = Anexar minha chave pública
+    .accesskey = A
+compose-menu-encrypt-subject =
+    .label = Criptografia de assunto
+    .accesskey = s
 # Strings used in decryption.jsm
 do-import-multiple =
     Importar as seguintes chaves?
@@ -616,11 +604,11 @@ cant-import = Erro ao importar chave pública
 unverified-reply = Parte deslocada da mensagem (resposta) provavelmente foi modificada
 key-in-message-body = Uma chave foi encontrada no corpo da mensagem. Clique em 'Importar chave' para importar a chave
 sig-mismatch = Erro - Assinatura não combina
-invalid-email = Erro - Endereço(s) de email inválido(s)
+invalid-email = Erro - Endereços de email inválidos
 attachment-pgp-key =
     O anexo '{ $name }' que você está abrindo parece ser um arquivo de chave OpenPGP.
     Clique em 'Importar' para importar as chaves contidas, ou em 'Ver' para ver o conteúdo do arquivo em uma janela do navegador
-dlg-button-view = &Ver
+dlg-button-view = E&xibir
 # Strings used in enigmailMsgHdrViewOverlay.js
 decrypted-msg-with-format-error = Mensagem descriptografada (restaurado o formato de email PGP corrompido, provavelmente causado por um servidor Exchange antigo, de modo que o resultado pode não ser perfeito para leitura)
 # Strings used in encryption.jsm
@@ -646,8 +634,6 @@ enig-info = Informação OpenPGP
 # Strings used in persistentCrypto.jsm
 dlg-button-retry = &Tentar novamente
 dlg-button-skip = &Ignorar
-# Strings used in enigmailCommon.js
-enig-error = Erro OpenPGP
 # Strings used in enigmailMsgBox.js
 enig-alert-title =
     .title = Alerta OpenPGP

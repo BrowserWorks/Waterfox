@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -10,7 +10,7 @@
 <!ENTITY  language.label                          "文字系统：">
 <!ENTITY  language.accesskey                      "t">
 
-<!ENTITY  typefaces.label                         "字型">
+<!ENTITY  typefaces.label                         "字体">
 <!ENTITY  sizes.label                             "大小（像素）">
 
 <!ENTITY  proportional.label                      "比例字体：">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetry 資料
 about-telemetry-current-store = 目前的儲存區:
 about-telemetry-more-information = 想了解更多嗎？
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Firefox Data Documentation</a> 當中描述了我們使用資料工具的方式。
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Firefox Telemetry 客戶端文件</a>當中包含資料收集概念、API 文件以及資料格式的參考資料。
-about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Telemetry 儀錶板</a>讓您可將 Mozilla 透過 Telemetry 收集到的資料以視覺化的方式呈現。
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Waterfox Data Documentation</a> 當中描述了我們使用資料工具的方式。
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Waterfox Telemetry 客戶端文件</a>當中包含資料收集概念、API 文件以及資料格式的參考資料。
+about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Telemetry 儀錶板</a>讓您可將 Waterfox 透過 Telemetry 收集到的資料以視覺化的方式呈現。
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> 當中提供 Telemetry 所收集的探測資料的詳細資訊與說明。
-about-telemetry-show-in-Firefox-json-viewer = 用 JSON 檢視器開啟
+about-telemetry-show-in-Waterfox-json-viewer = 用 JSON 檢視器開啟
 about-telemetry-home-section = 首頁
 about-telemetry-general-data-section = 一般資料
 about-telemetry-environment-data-section = 環境資料
@@ -67,7 +67,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } 個樣本、平均 = { $prettyAverage }、加總 = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = 此頁面顯示 Telemetry 所收集到效能、硬體設定、使用程度、以及自訂選項的相關資訊。此資訊將會傳送到 { $telemetryServerOwner } 以幫助改善 { -brand-full-name }。
 about-telemetry-settings-explanation = Telemetry 正在收集{ about-telemetry-data-type }，已<a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>上傳。
 # Variables:
@@ -139,8 +139,8 @@ about-telemetry-origin-section = Origin Telemetry
 about-telemetry-origin-origin = 來源
 about-telemetry-origin-count = 數量
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Firefox Origin Telemetry</a> 會在送出資料前為資料編碼，這樣 { $telemetryServerOwner } 才可以計數，但不知道是由哪一套 { -brand-product-name } 所送出的資料。（<a data-l10n-name="prio-blog-link">了解更多資訊</a>）
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Waterfox Origin Telemetry</a> 會在送出資料前為資料編碼，這樣 { $telemetryServerOwner } 才可以計數，但不知道是由哪一套 { -brand-product-name } 所送出的資料。（<a data-l10n-name="prio-blog-link">了解更多資訊</a>）
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } 處理程序

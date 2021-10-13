@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -116,7 +116,7 @@ language-name-lt = 리투아니아어
 language-name-ltg = 라트갈레어
 language-name-lu = 루바-카탄가어
 language-name-lv = 라트비아어
-language-name-mai = 마이틸라어
+language-name-mai = 마이틸어
 language-name-meh = 남서부 트락시아코 미스텍어
 language-name-mg = 말라카시어
 language-name-mh = 마셜제도어
@@ -125,7 +125,7 @@ language-name-mix = 미스테펙 미스텍어
 language-name-mk = 마케도니아어
 language-name-ml = 말라야람어
 language-name-mn = 몽골어
-language-name-mr = 말라티어
+language-name-mr = 마라티어
 language-name-ms = 말레이어
 language-name-mt = 몰타어
 language-name-my = 버마어
@@ -149,7 +149,7 @@ language-name-os = 오시타아어
 language-name-pa = 펀잡어
 language-name-pi = 파리어
 language-name-pl = 폴란드어
-language-name-ps = 파쉬토어
+language-name-ps = 파슈토어
 language-name-pt = 포르투갈어
 language-name-qu = 케추아어
 language-name-rm = 로망스어
@@ -195,7 +195,7 @@ language-name-ts = 통가어
 language-name-tt = 타타르어
 language-name-tw = 트위어
 language-name-ty = 타히티어
-language-name-ug = 위그르어
+language-name-ug = 위구르어
 language-name-uk = 우크라이나어
 language-name-ur = 파키스탄어
 language-name-uz = 우즈벡어

@@ -1,15 +1,8 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Addressing widget
-
-#   $type (String) - the type of the addressing row
-remove-address-row-type = { $type }-Eingabefeld entfernen
-
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = { $type }-Eingabefeld entfernen
 
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
@@ -96,17 +89,6 @@ attachment-bucket-count = { $count ->
     *[other] { $count } Anhänge
 }
 
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext = { $count ->
-        [1]      { $count } Anhang
-        *[other] { $count } Anhänge
-    }
-
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
-
 expand-attachment-pane-tooltip =
     .tooltiptext = Anhangbereich anzeigen ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 
@@ -138,8 +120,7 @@ button-return-receipt =
     .label = Empfangsbestätigung
     .tooltiptext = Eine Empfangsbestätigung für diese Nachricht anfordern
 
-#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
-consider-bcc-notification = Die {$count} Empfänger in den Feldern "An" und "Kopie (CC)" können die Adressen aller Beteiligten in diesen Feldern sehen. Das Veröffentlichen der Empfänger kann durch Verwenden des Feldes "Blindkopie (BCC)" verhindert werden.
+# Encryption
 
 # Addressing Area
 
@@ -185,6 +166,7 @@ bcc-compose-show-address-row-label =
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = Die {$count} Empfänger in den Feldern "An" und "Kopie (CC)" können die Adressen aller Beteiligten in diesen Feldern sehen. Das Veröffentlichen der Empfänger kann durch Verwenden des Feldes "Blindkopie (BCC)" verhindert werden.
 
+
 many-public-recipients-bcc =
   .label = Blindkopie (BCC) stattdessen verwenden
   .accesskey = C
@@ -198,3 +180,14 @@ many-public-recipients-ignore =
 # Variables:
 # $identity (string) - The name of the used identity, most likely an email address.
 compose-missing-identity-warning = Es wurde keine Identität gefunden, welche mit der E-Mail-Adresse im "Von"-Feld übereinstimmt. Die Nachricht wird mit der derzeit im "Von"-Feld eingegebenen Adresse und den Einstellungen von { $identity } gesendet.
+
+encrypted-bcc-warning = Beim Senden einer verschlüsselten Nachricht sind die Empfänger in der Blindkopie (BCC) nicht vollständig verborgen. Jeder Empfänger kann sie identifizieren.
+
+encrypted-bcc-ignore-button = OK
+
+## Editing
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+  .tooltiptext = Textformatierung entfernen

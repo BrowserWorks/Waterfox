@@ -1,16 +1,16 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- for SearchDialog.xhtml -->
-<!ENTITY searchHeading.label         "Αναζήτηση σε:">
+<!ENTITY searchHeading.label         "Αναζήτηση μηνυμάτων σε:">
 <!ENTITY searchHeading.accesskey     "ζ">
-<!ENTITY searchSubfolders.label      "Αναζήτηση σε υποφακέλους">
+<!ENTITY searchSubfolders.label      "Αναζήτηση υποφακέλων">
 <!ENTITY searchSubfolders.accesskey  "ν">
 <!ENTITY searchOnServer.label        "Εκτέλεση αναζήτησης στον διακομιστή">
 <!ENTITY searchOnServer.accesskey    "κ">
-<!ENTITY resetButton.label           "Εκκαθάριση">
-<!ENTITY resetButton.accesskey       "θ">
+<!ENTITY resetButton.label           "Απαλοιφή">
+<!ENTITY resetButton.accesskey       "Α">
 <!ENTITY openButton.label            "Άνοιγμα">
 <!ENTITY openButton.accesskey        "γ">
 <!ENTITY deleteButton.label          "Διαγραφή">

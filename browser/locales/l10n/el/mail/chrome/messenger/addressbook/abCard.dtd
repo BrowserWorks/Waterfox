@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,7 +31,7 @@
 <!ENTITY PhoneticField2.label           "Φωνητικό:">
 <!ENTITY DisplayName.label              "Προβολή ως:">
 <!ENTITY DisplayName.accesskey          "Π">
-<!ENTITY preferDisplayName.label        "Να προτιμάται πάντα το εμφανιζόμενο όνομα αντί της κεφαλίδας μηνύματος">
+<!ENTITY preferDisplayName.label        "Προτίμηση του εμφανιζόμενου ονόματος αντί της κεφαλίδας μηνύματος">
 <!ENTITY preferDisplayName.accesskey    "φ">
 <!ENTITY NickName.label                 "Ψευδώνυμο:">
 <!ENTITY NickName.accesskey             "Ψ">
@@ -144,13 +144,13 @@
 <!ENTITY GenericPhoto.label             "Γενική φωτογραφία">
 <!ENTITY GenericPhoto.accesskey         "Γ">
 <!ENTITY DefaultPhoto.label             "Προεπιλογή">
-<!ENTITY PhotoFile.label                "Από αυτό τον υπολογιστή">
+<!ENTITY PhotoFile.label                "Στον υπολογιστή">
 <!ENTITY PhotoFile.accesskey            "υ">
 <!ENTITY BrowsePhoto.label              "Περιήγηση">
 <!ENTITY BrowsePhoto.accesskey          "γ">
-<!ENTITY PhotoURL.label                 "Από το διαδίκτυο">
+<!ENTITY PhotoURL.label                 "Στο διαδίκτυο">
 <!ENTITY PhotoURL.accesskey             "κ">
-<!ENTITY PhotoURL.placeholder           "Επικολλήστε ή εισαγάγετε τη διεύθυνση web μιας φωτογραφίας">
+<!ENTITY PhotoURL.placeholder           "Επικολλήστε ή εισαγάγετε τη διεύθυνση ιστού μιας φωτογραφίας">
 <!ENTITY UpdatePhoto.label              "Ενημέρωση">
 <!ENTITY UpdatePhoto.accesskey          "μ">
 <!ENTITY PhotoDropTarget.label          "Σύρετε μια νέα φωτογραφία εδώ">

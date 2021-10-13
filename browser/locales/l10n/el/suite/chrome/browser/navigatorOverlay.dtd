@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -104,42 +104,42 @@ left instead of right. -->
 <!ENTITY cookieMessageTitle.label "Τα δικαιώματα cookies άλλαξαν">
 <!ENTITY cookieDisplayCookiesCmd.label "Διαχείριση αποθηκευμένων cookies">
 <!ENTITY cookieDisplayCookiesCmd.accesskey "Δ">
-<!ENTITY cookieAllowCookiesCmd.label "Αποδοχή cookies από την ιστοσελίδα">
+<!ENTITY cookieAllowCookiesCmd.label "Αποδοχή cookies από τον ιστότοπο">
 <!ENTITY cookieAllowCookiesCmd.accesskey "Α">
-<!ENTITY cookieAllowCookiesMsg.label "Τα cookies από αυτή την ιστοσελίδα θα επιτρέπονται πάντα.">
-<!ENTITY cookieAllowSessionCookiesCmd.label "Αποδοχή cookies συνεδρίας από αυτή την ιστοσελίδα">
+<!ENTITY cookieAllowCookiesMsg.label "Θα επιτρέπονται πάντα τα cookies από αυτόν τον ιστότοπο.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Αποδοχή cookie συνεδρίας από τον ιστότοπο">
 <!ENTITY cookieAllowSessionCookiesCmd.accesskey "σ">
-<!ENTITY cookieAllowSessionCookiesMsg.label "Αυτή η ιστοσελίδα θα μπορεί να τοποθετεί cookies μόνο στην τρέχουσα συνεδρία.">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Αυτός ο ιστότοπος θα μπορεί να τοποθετεί cookie μόνο στην τρέχουσα συνεδρία.">
 <!ENTITY cookieCookiesDefaultCmd.label "Χρήση προεπιλεγμένων δικαιωμάτων cookie">
 <!ENTITY cookieCookiesDefaultCmd.accesskey "Χ">
-<!ENTITY cookieCookiesDefaultMsg.label "Τα cookies της ιστοσελίδας θα επιτρέπονται ή θα απορρίπτονται σύμφωνα με τις προεπιλεγμένες ρυθμίσεις.">
-<!ENTITY cookieBlockCookiesCmd.label "Φραγή cookies από την ιστοσελίδα">
+<!ENTITY cookieCookiesDefaultMsg.label "Τα cookies του ιστοτόπου θα επιτρέπονται ή θα απορρίπτονται βάσει των προεπιλεγμένων ρυθμίσεων.">
+<!ENTITY cookieBlockCookiesCmd.label "Φραγή cookies από τον ιστότοπο">
 <!ENTITY cookieBlockCookiesCmd.accesskey "Φ">
-<!ENTITY cookieBlockCookiesMsg.label "Τα cookies από αυτή την ιστοσελίδα θα απορρίπτονται πάντα.">
+<!ENTITY cookieBlockCookiesMsg.label "Τα cookie από αυτόν τον ιστότοπο θα απορρίπτονται πάντα.">
 
 <!ENTITY cookieImageMessageTitle.label "Τα δικαιώματα εικόνων άλλαξαν">
 <!ENTITY cookieDisplayImagesCmd.label "Διαχείριση δικαιωμάτων εικόνων">
 <!ENTITY cookieDisplayImagesCmd.accesskey "Δ">
-<!ENTITY cookieAllowImagesCmd.label "Αποδοχή εικόνων από την ιστοσελίδα">
+<!ENTITY cookieAllowImagesCmd.label "Αποδοχή εικόνων από τον ιστότοπο">
 <!ENTITY cookieAllowImagesCmd.accesskey "Α">
-<!ENTITY cookieAllowImagesMsg.label "Θα γίνεται πάντα λήψη εικόνων από αυτή την ιστοσελίδα.">
+<!ENTITY cookieAllowImagesMsg.label "Θα γίνεται πάντα λήψη εικόνων από αυτόν τον ιστότοπο.">
 <!ENTITY cookieImagesDefaultCmd.label "Χρήση προεπιλεγμένων δικαιωμάτων εικόνων">
 <!ENTITY cookieImagesDefaultCmd.accesskey "Χ">
-<!ENTITY cookieImagesDefaultMsg.label "Οι εικόνες από αυτή την ιστοσελίδα θα ληφθούν βάσει των προεπιλεγμένων ρυθμίσεων.">
-<!ENTITY cookieBlockImagesCmd.label "Φραγή εικόνων από την ιστοσελίδα">
+<!ENTITY cookieImagesDefaultMsg.label "Οι εικόνες από αυτόν τον ιστότοπο θα ληφθούν βάσει των προεπιλεγμένων ρυθμίσεων.">
+<!ENTITY cookieBlockImagesCmd.label "Φραγή εικόνων από τον ιστότοπο">
 <!ENTITY cookieBlockImagesCmd.accesskey "Φ">
-<!ENTITY cookieBlockImagesMsg.label "Δεν θα γίνεται ποτέ λήψη εικόνων από αυτή την ιστοσελίδα.">
+<!ENTITY cookieBlockImagesMsg.label "Δεν θα γίνεται ποτέ λήψη εικόνων από αυτόν τον ιστότοπο.">
 
 <!ENTITY popupsMessageChangeTitle.label "Τα δικαιώματα αναδυόμενων παραθύρων άλλαξαν">
-<!ENTITY popupAllowCmd.label "Αποδοχή αναδυόμενων από την ιστοσελίδα">
+<!ENTITY popupAllowCmd.label "Αποδοχή αναδυόμενων από τον ιστότοπο">
 <!ENTITY popupAllowCmd.accesskey "Α">
-<!ENTITY popupAllowMsg.label "Τα αναδυόμενα από αυτή την ιστοσελίδα θα εμφανίζονται πάντα.">
+<!ENTITY popupAllowMsg.label "Θα εμφανίζονται πάντα τα αναδυόμενα παράθυρα του ιστοτόπου.">
 <!ENTITY popupDefaultCmd.label "Χρήση προεπιλεγμένων δικαιωμάτων αναδυόμενων">
 <!ENTITY popupDefaultCmd.accesskey "Χ">
-<!ENTITY popupDefaultMsg.label "Τα αναδυόμενα παράθυρα από αυτή την ιστοσελίδα θα εμφανίζονται βάσει των προεπιλεγμένων ρυθμίσεων.">
-<!ENTITY popupBlockCmd.label "Φραγή αναδυόμενων από την ιστοσελίδα">
+<!ENTITY popupDefaultMsg.label "Τα αναδυόμενα παράθυρα από αυτόν τον ιστότοπο θα εμφανίζονται βάσει των προεπιλεγμένων ρυθμίσεων.">
+<!ENTITY popupBlockCmd.label "Φραγή αναδυόμενων από τον ιστότοπο">
 <!ENTITY popupBlockCmd.accesskey "Φ">
-<!ENTITY popupBlockMsg.label "Δεν θα εμφανίζονται αναδυόμενα από αυτή την ιστοσελίδα.">
+<!ENTITY popupBlockMsg.label "Δεν θα εμφανίζονται αναδυόμενα παράθυρα από αυτόν τον ιστότοπο.">
 <!ENTITY popupsManage.label "Διαχείριση αναδυόμενων παραθύρων">
 <!ENTITY popupsManage.accesskey "Δ">
 
@@ -150,7 +150,7 @@ left instead of right. -->
 <!ENTITY popupsManager.label "Διαχείριση αναδυόμενων παραθύρων">
 <!ENTITY popupsManager.accesskey "χ">
 
-<!ENTITY clearPrivateDataCmd.label "Εκκαθάριση ιδιωτικών δεδομένων…">
+<!ENTITY clearPrivateDataCmd.label "Απαλοιφή ιδιωτικών δεδομένων…">
 <!ENTITY clearPrivateDataCmd.accesskey "κ">
 
 <!ENTITY stopCmd.macCommandKey ".">

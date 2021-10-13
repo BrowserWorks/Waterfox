@@ -1,12 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!-- Context Menu -->
-<!ENTITY popupWindowRejectCmd.label     "Zakázat vyskakovací okna z tohoto serveru">
-<!ENTITY popupWindowRejectCmd.accesskey "a">
-<!ENTITY popupWindowAllowCmd.label      "Povolit vyskakovací okna z tohoto serveru">
-<!ENTITY popupWindowAllowCmd.accesskey  "v">
 <!ENTITY openLinkCmdInTab.label       "Otevřít odkaz v novém panelu">
 <!ENTITY openLinkCmdInTab.accesskey   "n">
 <!ENTITY openLinkCmd.label            "Otevřít odkaz v novém okně">

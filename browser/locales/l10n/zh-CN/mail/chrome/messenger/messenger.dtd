@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "打印…">
 <!ENTITY printCmd.accesskey "P">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "打印预览">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "页面设置…">
-<!ENTITY printSetupCmd.accesskey "u">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "删除消息">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "紧凑模式">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "文件夹窗格工具栏">
-<!ENTITY folderPaneBar.accesskey "F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "排序">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "通讯录">
 <!ENTITY addressBookCmd.accesskey "B">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "附加组件">
-<!ENTITY addons.accesskey "A">
-<!ENTITY addonPrefs.label "附加组件选项">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "附加组件首选项">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "没有找到附加组件设置。">
 <!ENTITY activitymanager.label "活动管理器">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "D">
 <!ENTITY importCmd.label "导入…">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "导出…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "清除最近历史记录…">
 <!ENTITY clearRecentHistory.accesskey "H">
 <!ENTITY accountManagerCmd2.label "账户设置">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "调试附加组件">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "内容框架调试器">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "错误控制台">
 <!ENTITY errorConsoleCmd.accesskey "E">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "后退">
 <!ENTITY goForwardButton1.label "前进">
 <!ENTITY deleteItem.title "删除">
-<!ENTITY deleteButton.label "删除">
-<!ENTITY undeleteButton.label "撤销删除">
 <!ENTITY markButton.label "标记">
 <!ENTITY printButton.label "打印">
 <!ENTITY stopButton.label "停止">
 <!ENTITY throbberItem.title "活动指示器">
 <!ENTITY junkItem.title "垃圾">
-<!ENTITY junkButton.label "垃圾">
-<!ENTITY notJunkButton.label "非垃圾">
 <!ENTITY addressBookButton.label "通讯录">
 <!ENTITY chatButton.label "聊天">
 <!ENTITY glodaSearch.title "全局搜索">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "移动到上一条信息">
 <!ENTITY goForwardButton.tooltip "前进至下一条消息">
 <!ENTITY goBackButton.tooltip "后退至上一条消息">
-<!ENTITY deleteButton.tooltip "删除选择的消息或文件夹">
-<!ENTITY undeleteButton.tooltip "恢复选中消息">
 <!ENTITY markButton.tooltip "标记消息">
 <!ENTITY printButton.tooltip "打印此消息">
 <!ENTITY stopButton.tooltip "停止当前的传输">
-<!ENTITY junkButton.tooltip "将选中的消息标记为垃圾(或者非垃圾)">
-<!ENTITY notJunkButton.tooltip "将所选消息标记为非垃圾邮件">
 <!ENTITY addressBookButton.tooltip "转到通讯录">
 <!ENTITY chatButton.tooltip "显示聊天选项卡">
 <!ENTITY tagButton.tooltip "为消息添加标签">
 <!ENTITY compactButton.tooltip "从选中文件夹移除已删除消息">
 <!ENTITY appmenuButton1.tooltip "显示 &brandShortName; 菜单">
-<!ENTITY addonsButton.tooltip "管理您的附加组件">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "内联转发">

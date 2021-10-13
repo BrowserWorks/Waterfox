@@ -1,7 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  settingsChangePreferences.label  "設定可在 &brandShortName; 偏好設定中的「附加檔案」頁面修改。">
-<!ENTITY  settingsChangeOptions.label      "您可以在 &brandShortName; 的選項中的附件分頁修改相關設定。">
-

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,11 +8,6 @@ by NSS/PSM via netError.xhtml. -->
 
 <!ENTITY certerror.pagetitle  "不受信任的連線">
 <!ENTITY certerror.longpagetitle "這個連線未受信任">
-
-<!-- Localization note (certerror.introPara1) - The string "#1" will
-be replaced at runtime with the name of the server to which the user
-was trying to connect. -->
-<!ENTITY certerror.introPara1 "您要求 &brandShortName; 和 <b>#1</b> 建立安全連線，但是我們無法確認目前的連線是安全的。">
 
 <!-- Localization note (certerror.introPara1a) - The text content of the span
 tag will be replaced at runtime with the name of the server to which the user

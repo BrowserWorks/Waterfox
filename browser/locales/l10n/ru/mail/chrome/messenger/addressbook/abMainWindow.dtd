@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Закрыть">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "а">
-<!ENTITY printSetupCmd.label                            "Параметры страницы…">
-<!ENTITY printSetupCmd.accesskey                        "а">
-<!ENTITY printPreviewContactCmd.label                   "Предварительный просмотр контакта">
-<!ENTITY printPreviewContactCmd.accesskey               "в">
-<!ENTITY printPreviewAddressBook.label                  "Предварительный просмотр адресной книги">
-<!ENTITY printPreviewAddressBook.accesskey              "а">
 <!ENTITY printContactCmd.label                          "Печать контакта…">
 <!ENTITY printContactCmd.accesskey                      "ч">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,7 +42,9 @@
 <!ENTITY editMenu.accesskey                             "а">
 <!ENTITY deleteCmd.label                                "Удалить">
 <!ENTITY deleteAbCmd.label                              "Удалить адресную книгу">
+<!ENTITY deleteAbCmd.accesskey                          "л">
 <!ENTITY removeAbCmd.label                              "Удалить адресную книгу">
+<!ENTITY removeAbCmd.accesskey                          "л">
 <!ENTITY deleteContactCmd.label                         "Удалить контакт">
 <!ENTITY deleteContactsCmd.label                        "Удалить контакты">
 <!ENTITY deleteListCmd.label                            "Удалить список">
@@ -109,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "И">
 <!ENTITY exportCmd.label                                "Экспорт…">
 <!ENTITY exportCmd.accesskey                            "Э">
-<!ENTITY preferencesCmd2.label                          "Настройки">
-<!ENTITY preferencesCmd2.accesskey                      "а">
-<!ENTITY preferencesCmdUnix.label                       "Настройки">
-<!ENTITY preferencesCmdUnix.accesskey                   "Н">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Создать контакт">

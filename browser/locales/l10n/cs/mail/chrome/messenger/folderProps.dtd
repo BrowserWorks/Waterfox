@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Vlastnosti">
 
 <!ENTITY generalInfo.label                       "Obecné informace">
-<!ENTITY folderCharsetFallback2.label            "Výchozí znaková sada:">
-<!ENTITY folderCharsetFallback2.accesskey        "k">
-<!ENTITY folderCharsetEnforce2.label             "Použít znakovou sadu pro všechny zprávy ve složce (individuální znaková sada zprávy nebo automatická detekce bude ignorována)">
-<!ENTITY folderCharsetEnforce2.accesskey         "a">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Obnoví indexový soubor">
 <!ENTITY folderRebuildSummaryFile2.label         "Opravit složku">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "O">

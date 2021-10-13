@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,8 +23,6 @@ customize-mode-uidensity-menu-touch =
     .tooltiptext = Pro dotyk
 customize-mode-uidensity-auto-touch-mode-checkbox =
     .label = V režimu tabletu použít velikost pro dotyk
-customize-mode-extra-drag-space =
-    .label = Prostor pro chycení okna
 customize-mode-lwthemes =
     .label = Motivy vzhledu
 customize-mode-overflow-list-description = Sem můžete přetáhnout položky, které chcete mít na dosah, ale ne přímo na liště…
@@ -32,10 +30,6 @@ customize-mode-uidensity-menu-normal =
     .label = Výchozí
     .accesskey = V
     .tooltiptext = Výchozí
-customize-mode-uidensity-menu-compact =
-    .label = Kompaktní
-    .accesskey = K
-    .tooltiptext = Kompaktní
 customize-mode-uidensity-menu-compact-unsupported =
     .label = Kompaktní (nepodporováno)
     .accesskey = K
@@ -47,6 +41,7 @@ customize-mode-undo-cmd =
     .label = Zpět
 customize-mode-lwthemes-my-themes =
     .value = Mé motivy vzhledu
+customize-mode-lwthemes-link = Nastavení vzhledu
 customize-mode-touchbar-cmd =
     .label = Nastavit Touch Bar…
 customize-mode-downloads-button-autohide =

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,12 +13,6 @@
 <!ENTITY warnOnClose.accesskey "s">
 <!ENTITY relatedAfterCurrent.label "Apri le schede simili dopo quella corrente">
 <!ENTITY relatedAfterCurrent.accesskey "d">
-
-<!ENTITY loadGroup.label "All'apertura di un gruppo di segnalibri">
-<!ENTITY loadGroupAppend.label "Aggiungi le schede">
-<!ENTITY loadGroupAppend.accesskey "A">
-<!ENTITY loadGroupReplace.label "Sostituisci le schede aperte">
-<!ENTITY loadGroupReplace.accesskey "o">
 
 <!ENTITY openTabs.label "Apri una scheda al posto di una finestra con">
 

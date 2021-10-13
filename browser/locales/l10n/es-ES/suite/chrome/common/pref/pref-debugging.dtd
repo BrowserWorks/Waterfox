@@ -1,13 +1,17 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- extracted from pref-eventdebugging.xul -->
+
 <!ENTITY pref.debugging.title "Depuración">
+
 <!ENTITY debugRendering.label "Dibujado">
 <!ENTITY debugXULBox.label "Depurar cajas XUL">
 <!ENTITY debugXULBox.accesskey "L">
 <!ENTITY debugDisableXULCache.label "Desactivar caché XUL">
 <!ENTITY debugDisableXULCache.accesskey "D">
+
 <!ENTITY debugEvents.label "Eventos">
 <!ENTITY debugPaintFlashing.label "Resaltado de dibujado (Bloq. Mayús. lo alterna)">
 <!ENTITY debugPaintFlashing.accesskey "B">
@@ -23,6 +27,7 @@
 <!ENTITY debugMotionEventDumping.accesskey "c">
 <!ENTITY debugCrossingEventDumping.label "Volcado de eventos de cruce">
 <!ENTITY debugCrossingEventDumping.accesskey "V">
+
 <!ENTITY debugReflowEvents.label "Refluir eventos">
 <!ENTITY debugReflowShowFrameCounts.label "Mostrar cuenta de fotogramas">
 <!ENTITY debugReflowShowFrameCounts.accesskey "M">

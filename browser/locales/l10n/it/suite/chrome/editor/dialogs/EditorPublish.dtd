@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,6 +7,7 @@
 <!ENTITY publishTab.label "Pubblicazione">
 <!ENTITY settingsTab.label "Impostazioni">
 <!ENTITY publishButton.label "Pubblica">
+
 <!ENTITY siteList.label "Nome sito:">
 <!ENTITY siteList.accesskey "e">
 <!ENTITY siteList.tooltip "Scegli il sito su cui si vuole pubblicare">
@@ -37,6 +38,7 @@
 <!ENTITY setDefaultButton.accesskey "d">
 <!ENTITY removeButton.label "Rimuovi sito">
 <!ENTITY removeButton.accesskey "R">
+
 <!ENTITY publishSites.label "Siti di pubblicazione">
 <!ENTITY serverInfo.label "Informazioni server">
 <!ENTITY loginInfo.label "Informazioni di accesso">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,12 +31,6 @@
 <!ENTITY closeCmd.label                                 "Zavřít">
 <!ENTITY closeCmd.key                                   "W">
 <!ENTITY closeCmd.accesskey                             "Z">
-<!ENTITY printSetupCmd.label                            "Vzhled stránky…">
-<!ENTITY printSetupCmd.accesskey                        "V">
-<!ENTITY printPreviewContactCmd.label                   "Náhled tisku kontaktu">
-<!ENTITY printPreviewContactCmd.accesskey               "h">
-<!ENTITY printPreviewAddressBook.label                  "Náhled tisku kontaktů">
-<!ENTITY printPreviewAddressBook.accesskey              "l">
 <!ENTITY printContactCmd.label                          "Tisk kontaktu…">
 <!ENTITY printContactCmd.accesskey                      "T">
 <!ENTITY printContactCmd.key                            "P">
@@ -48,7 +42,9 @@
 <!ENTITY editMenu.accesskey                             "a">
 <!ENTITY deleteCmd.label                                "Smazat">
 <!ENTITY deleteAbCmd.label                              "Smazat složku kontaktů">
+<!ENTITY deleteAbCmd.accesskey                          "S">
 <!ENTITY removeAbCmd.label                              "Smazat složku kontaktů">
+<!ENTITY removeAbCmd.accesskey                          "S">
 <!ENTITY deleteContactCmd.label                         "Smazat kontakt">
 <!ENTITY deleteContactsCmd.label                        "Smazat kontakty">
 <!ENTITY deleteListCmd.label                            "Smazat seznam">
@@ -70,7 +66,7 @@
 <!ENTITY viewMenu.accesskey                             "Z">
 <!ENTITY viewToolbarsMenu.label                         "Nástrojové lišty">
 <!ENTITY viewToolbarsMenu.accesskey                     "N">
-<!ENTITY menubarCmd.label                               "Lišta nabídky">
+<!ENTITY menubarCmd.label                               "Hlavní nabídka">
 <!ENTITY menubarCmd.accesskey                           "n">
 <!ENTITY showAbToolbarCmd.label                         "Lišta kontaktů">
 <!ENTITY showAbToolbarCmd.accesskey                     "o">
@@ -109,10 +105,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY importCmd.accesskey                            "I">
 <!ENTITY exportCmd.label                                "Exportovat…">
 <!ENTITY exportCmd.accesskey                            "x">
-<!ENTITY preferencesCmd2.label                          "Možnosti">
-<!ENTITY preferencesCmd2.accesskey                      "M">
-<!ENTITY preferencesCmdUnix.label                       "Předvolby">
-<!ENTITY preferencesCmdUnix.accesskey                   "e">
 
 <!-- Address Book Toolbar and Context Menus -->
 <!ENTITY newContactButton.label                         "Nový kontakt">
@@ -140,7 +132,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY printButton.accesskey                          "t">
 <!ENTITY deleteButton2.label                            "Smazat">
 <!ENTITY deleteButton2.accesskey                        "m">
-
 <!ENTITY removeButton.label                             "Smazat">
 <!ENTITY removeButton.accesskey                         "S">
 
@@ -155,7 +146,6 @@ because displayed names don't have the comma in between. -->
 <!ENTITY newmsgButton.tooltip                           "Vytvoří novou zprávu">
 <!ENTITY newIM.tooltip                                  "Pošle krátkou zprávu nebo začne rozhovor">
 <!ENTITY deleteButton2.tooltip                          "Smaže označenou položku">
-
 <!ENTITY removeButton.tooltip                           "Smaže vybranou složku kontaktů">
 
 <!-- Search Bar -->

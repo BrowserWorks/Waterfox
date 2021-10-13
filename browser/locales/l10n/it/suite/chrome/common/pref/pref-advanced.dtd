@@ -1,14 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Avanzate">
-
-<!ENTITY systemPref.caption               "Preferenze di sistema">
-<!ENTITY systemPrefCheck.label            "Utilizza preferenze del sistema">
-<!ENTITY systemPrefCheck.accesskey        "U">
-<!ENTITY systemPref.desc                  "Spunta questo elemento per ereditare le preferenze dal sistema. Le impostazioni del sistema avranno la precedenza sulle preferenze di &brandShortName;.">
 
 <!ENTITY prefCheckDefault.caption         "Integrazione con il sistema">
 <!ENTITY prefCheckDefaultClient.label     "Controlla le impostazioni predefinite dell'applicazione all'avvio">

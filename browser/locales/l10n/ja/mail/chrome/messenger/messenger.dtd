@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -92,10 +92,6 @@
 <!ENTITY printCmd.label				"印刷...">
 <!ENTITY printCmd.accesskey			"P">
 <!ENTITY printCmd.key				"p">
-<!ENTITY printPreviewCmd.label			"印刷プレビュー">
-<!ENTITY printPreviewCmd.accesskey		"v">
-<!ENTITY printSetupCmd.label			"ページ設定...">
-<!ENTITY printSetupCmd.accesskey		"u">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label			"メッセージを削除">
@@ -175,8 +171,6 @@
 <!ENTITY recentFolders.accesskey		"R">
 <!ENTITY compactVersion.label			"コンパクトビュー">
 <!ENTITY compactVersion.accesskey		"C">
-<!ENTITY folderPaneBar.label			"フォルダーペインツールバー">
-<!ENTITY folderPaneBar.accesskey		"F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label				"並べ替え順序">
@@ -471,12 +465,6 @@
 <!ENTITY addressBookCmd.label		"アドレス帳">
 <!ENTITY addressBookCmd.accesskey	"B">
 <!ENTITY addressBookCmd.key		"B">
-<!ENTITY addons.label			"アドオン">
-<!ENTITY addons.accesskey		"A">
-<!ENTITY addonPrefs.label		"アドオンのオプション">
-<!ENTITY addonPrefs.accesskey		"O">
-<!ENTITY addonPrefsUnix.label		"アドオンの設定">
-<!ENTITY addonPrefsUnix.accesskey	"P">
 <!ENTITY addonNoPrefs.label		"アドオンの設定はありません。">
 <!ENTITY activitymanager.label		"イベントログの管理"><!-- (^^; en-US: Activity Manager -->
 <!ENTITY activitymanager.accesskey	"v">
@@ -505,6 +493,8 @@
 <!ENTITY deleteJunk.accesskey		"D">
 <!ENTITY importCmd.label		"設定とデータのインポート...">
 <!ENTITY importCmd.accesskey		"m">
+<!ENTITY exportCmd.label		"エクスポート...">
+<!ENTITY exportCmd.accesskey		"x">
 <!ENTITY clearRecentHistory.label	"最近の履歴を消去...">
 <!ENTITY clearRecentHistory.accesskey	"H">
 <!ENTITY accountManagerCmd2.label	"アカウント設定">
@@ -523,8 +513,6 @@
 <!ENTITY devToolboxCmd.commandkey	"i">
 <!ENTITY debugAddonsCmd.label		"アドオンをデバッグ">
 <!ENTITY debugAddonsCmd.accesskey	"A">
-<!ENTITY tabsDebugCmd.label		"コンテンツフレームデバッガー">
-<!ENTITY tabsDebugCmd.accesskey		"C">
 <!ENTITY errorConsoleCmd.label		"エラーコンソール">
 <!ENTITY errorConsoleCmd.accesskey	"E">
 <!ENTITY errorConsoleCmd.commandkey	"j">
@@ -548,15 +536,11 @@
 <!ENTITY backButton1.label		"戻る">
 <!ENTITY goForwardButton1.label		"進む">
 <!ENTITY deleteItem.title		"削除">
-<!ENTITY deleteButton.label		"削除">
-<!ENTITY undeleteButton.label		"削除を元に戻す">
 <!ENTITY markButton.label		"マーク">
 <!ENTITY printButton.label		"印刷">
 <!ENTITY stopButton.label		"停止">
 <!ENTITY throbberItem.title		"アクティブインジケータ">
 <!ENTITY junkItem.title			"迷惑メール">
-<!ENTITY junkButton.label		"迷惑メール">
-<!ENTITY notJunkButton.label		"非迷惑メール">
 <!ENTITY addressBookButton.label	"アドレス帳">
 <!ENTITY chatButton.label		"チャット">
 <!ENTITY glodaSearch.title		"グローバル検索">
@@ -588,19 +572,14 @@
 <!ENTITY previousMsgButton.tooltip	"前のメッセージに移動します">
 <!ENTITY goForwardButton.tooltip	"メッセージ表示履歴を次に進みます"><!-- 一つ次以外も -->
 <!ENTITY goBackButton.tooltip		"メッセージ表示履歴を前に戻ります"><!-- 一つ前以外も -->
-<!ENTITY deleteButton.tooltip		"メッセージまたはフォルダーを削除します">
-<!ENTITY undeleteButton.tooltip		"メッセージの削除を元に戻します">
 <!ENTITY markButton.tooltip		"メッセージにマークを付けます">
 <!ENTITY printButton.tooltip		"メッセージを印刷します">
 <!ENTITY stopButton.tooltip		"送受信処理を中止します">
-<!ENTITY junkButton.tooltip		"メッセージに迷惑マークを付けます">
-<!ENTITY notJunkButton.tooltip		"メッセージの迷惑マークを外します">
 <!ENTITY addressBookButton.tooltip	"アドレス帳を開きます">
 <!ENTITY chatButton.tooltip		"チャットタブを開きます">
 <!ENTITY tagButton.tooltip		"メッセージにタグを付けます">
 <!ENTITY compactButton.tooltip		"削除したメッセージをフォルダーから消去します"><!-- (^^; わかりにくい... -->
 <!ENTITY appmenuButton1.tooltip		"&brandShortName; のメニューを表示します">
-<!ENTITY addonsButton.tooltip		"アドオンを管理します">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label	"メッセージ本文として転送"><!-- en-US: "Forward Inline" -->

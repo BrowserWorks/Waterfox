@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Quản lí tiện ích
 addons-page-title = Quản lí tiện ích
 search-header =
     .placeholder = Tìm kiếm addons.mozilla.org
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Hỗ trợ tiện ích
 sidebar-help-button-title =
     .title = Hỗ trợ tiện ích
-preferences =
-    { PLATFORM() ->
-        [windows] Tùy chọn { -brand-short-name }
-       *[other] Tùy chỉnh { -brand-short-name }
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] Tùy chọn { -brand-short-name }
-           *[other] Tùy chỉnh { -brand-short-name }
-        }
 addons-settings-button = Cài đặt { -brand-short-name }
 sidebar-settings-button-title =
     .title = Cài đặt { -brand-short-name }
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Không thể xác thực một số tiện ích
 show-all-extensions-button =
     .label = Hiện tất cả các tiện ích
-cmd-show-details =
-    .label = Hiện thêm thông tin
-    .accesskey = S
-cmd-find-updates =
-    .label = Tìm bản cập nhật
-    .accesskey = F
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Tùy chọn
-           *[other] Tùy chỉnh
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] P
-        }
-cmd-enable-theme =
-    .label = Sử dụng chủ đề
-    .accesskey = W
-cmd-disable-theme =
-    .label = Dừng sử dụng chủ đề
-    .accesskey = W
-cmd-install-addon =
-    .label = Cài đặt
-    .accesskey = I
-cmd-contribute =
-    .label = Đóng góp
-    .accesskey = C
-    .tooltiptext = Đóng góp vào sự phát triển của tiện ích này
 detail-version =
     .label = Phiên bản
 detail-last-updated =
@@ -295,6 +252,7 @@ install-theme-button = Cài đặt chủ đề
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Quản lý
 find-more-addons = Tìm thêm tiện ích
+find-more-themes = Tìm thêm chủ đề
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -324,13 +282,14 @@ extension-enabled-heading = Đã bật
 extension-disabled-heading = Đã vô hiệu hóa
 theme-enabled-heading = Đã bật
 theme-disabled-heading = Đã tắt
+theme-monochromatic-heading = Màu
+theme-monochromatic-subheading = Các màu mới sống động từ { -brand-product-name }. Có sẵn trong một thời gian giới hạn.
 plugin-enabled-heading = Đã bật
 plugin-disabled-heading = Đã tắt
 dictionary-enabled-heading = Đã bật
 dictionary-disabled-heading = Đã tắt
 locale-enabled-heading = Đã bật
 locale-disabled-heading = Đã tắt
-ask-to-activate-button = Hỏi trước khi kích hoạt
 always-activate-button = Luôn kích hoạt
 never-activate-button = Không bao giờ kích hoạt
 addon-detail-author-label = Tác giả
@@ -385,10 +344,10 @@ addon-detail-private-browsing-disallow = Không cho phép
 addon-badge-recommended2 =
     .title = { -brand-product-name } chỉ đề xuất các tiện ích mở rộng đáp ứng các tiêu chuẩn của chúng tôi về bảo mật và hiệu suất
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Tiện ích mở rộng chính thức do Mozilla xây dựng. Đáp ứng các tiêu chuẩn về bảo mật và hiệu suất.
+    .title = Tiện ích mở rộng chính thức do Waterfox xây dựng. Đáp ứng các tiêu chuẩn về bảo mật và hiệu suất.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Tiện ích mở rộng này đã được xem xét để đáp ứng các tiêu chuẩn của chúng tôi về bảo mật và hiệu suất
@@ -406,9 +365,9 @@ addon-permissions-optional = Các quyền tùy chọn cho chức năng được 
 addon-permissions-learnmore = Tìm hiểu thêm về quyền hạn
 recommended-extensions-heading = Tiện ích mở rộng được đề xuất
 recommended-themes-heading = Chủ đề được đề xuất
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Cảm thấy muốn sáng tạo? <a data-l10n-name="link">Xây dựng chủ đề của riêng bạn với Firefox Color.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Cảm thấy muốn sáng tạo? <a data-l10n-name="link">Xây dựng chủ đề của riêng bạn với Waterfox Color.</a>
 
 ## Page headings
 

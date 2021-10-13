@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,18 +6,18 @@
 
 <!ENTITY MsgSynchronize.label "Λήψη και συγχρονισμός μηνυμάτων">
 <!ENTITY MsgSelect.label "Στοιχεία για χρήση εκτός σύνδεσης">
-<!ENTITY MsgSyncDesc.label "Αν έχετε ήδη επιλέξει φακέλους αλληλογραφίας και συζητήσεων για εργασία χωρίς σύνδεση, μπορείτε να κάνετε λήψη ή και να τους συγχρονίσετε τώρα.Αλλιώς χρησιμοποιήστε το κουμπί &quot;Επιλογή&quot; για να επιλέξετε φακέλους. ">
+<!ENTITY MsgSyncDesc.label "Αν έχετε ήδη επιλέξει φακέλους ταχυδρομείων ή ομάδες συζητήσεων για εργασία εκτός σύνδεσης, μπορείτε να κάνετε λήψη ή/και συγχρονισμό τους τώρα. Διαφορετικά, χρησιμοποιήστε το κουμπί «Επιλογή» για να επιλέξτε τους φακέλους ταχυδρομείων και τις ομάδες συζητήσεων για χρήση εκτός σύνδεσης.">
 <!ENTITY MsgSyncDirections.label "Λήψη ή/και συγχρονισμός των ακόλουθων:">
 <!ENTITY syncTypeMail.label "Μηνύματα email">
 <!ENTITY syncTypeMail.accesskey "Μ">
-<!ENTITY syncTypeNews.label "Μηνύματα ομάδων συζήτησης">
+<!ENTITY syncTypeNews.label "Μηνύματα ομάδων συζητήσεων">
 <!ENTITY syncTypeNews.accesskey "ζ">
 <!ENTITY sendMessage.label "Αποστολή μη απεσταλμένων μηνυμάτων">
 <!ENTITY sendMessage.accesskey "μ">
-<!ENTITY workOffline.label "Να γίνει αποσύνδεση όταν ολοκληρωθεί η λήψη ή/και ο συγχρονισμός ολοκληρωθεί">
+<!ENTITY workOffline.label "Εργασία εκτός σύνδεσης όταν ολοκληρωθεί η λήψη ή/και ο συγχρονισμός">
 <!ENTITY workOffline.accesskey "γ">
 <!ENTITY selectButton.label "Επιλογή…">
 <!ENTITY selectButton.accesskey "λ">
-<!ENTITY MsgSelectDesc.label "Επιλέξτε τους φακέλους αλληλογραφίας και συζητήσεων που θέλετε να χρησιμοποιείτε εκτός σύνδεσης.">
+<!ENTITY MsgSelectDesc.label "Επιλέξτε τους φακέλους ταχυδρομείων και ομάδων συζητήσεων για χρήση εκτός σύνδεσης.">
 <!ENTITY MsgSelectInd.label "Λήψη">
-<!ENTITY MsgSelectItems.label "Φάκελοι και ομάδες ειδήσεων">
+<!ENTITY MsgSelectItems.label "Φάκελοι και ομάδες συζητήσεων">

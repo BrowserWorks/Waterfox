@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Vil du gerne se faneblade fra dine andr
 synced-tabs-sidebar-intro = Se en liste med faneblade fra dine andre enheder.
 synced-tabs-sidebar-unverified = Din konto skal godkendes.
 synced-tabs-sidebar-notabs = Ingen åbne faneblade
-synced-tabs-sidebar-openprefs = Åbn Indstillinger i { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Åbn indstillinger for synkronisering
 synced-tabs-sidebar-tabsnotsyncing = Aktivér synkronisering af faneblade for at se en liste med faneblade, der er åbne på dine andre enheder.
 synced-tabs-sidebar-connect-another-device = Opret forbindelse til en ny enhed
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Synkroniser nu
     .accesskey = S
-fxa-sign-in = Log ind på { -sync-brand-short-name }
-turn-on-sync = Aktiver { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Log ind for at synkronisere
 synced-tabs-turn-on-sync = Slå synkronisering til

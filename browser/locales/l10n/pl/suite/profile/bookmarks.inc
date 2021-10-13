@@ -8,7 +8,7 @@
 
 #define personal_toolbarfolder Folder zakładek osobistych
 
-#define seamonkey_and_mozilla SeaMonkey i Mozilla
+#define seamonkey_and_mozilla SeaMonkey i Waterfox
 
 # LOCALIZATION NOTE (seamonkey):
 # link title for http://www.seamonkey-project.org/ (in the personal toolbar)
@@ -20,11 +20,11 @@
 
 # LOCALIZATION NOTE (mozilla_org):
 # link title for http://www.mozilla.org/ (in the personal toolbar)
-#define mozilla_org Mozilla.org
+#define mozilla_org Waterfox.org
 
 # LOCALIZATION NOTE (mozilla_org_long):
 # link title for http://www.mozilla.org/ (in normal bookmarks)
-#define mozilla_org_long Organizacja Mozilla
+#define mozilla_org_long Organizacja Waterfox
 
 # LOCALIZATION NOTE (mozilla_projects):
 # link title for http://www.mozilla.org/projects/
@@ -68,11 +68,11 @@
 
 # LOCALIZATION NOTE (mozillazine):
 # link title for http://www.mozillazine.org/
-#define mozillazine MozillaZine
+#define mozillazine WaterfoxZine
 
 # LOCALIZATION NOTE (seamonkey_support):
 # link title for the mozillaZine SeaMonkey Support forum
-#define seamonkey_support Pomoc dla SeaMonkey na forum witryny MozillaZine
+#define seamonkey_support Pomoc dla SeaMonkey na forum witryny WaterfoxZine
 
 # LOCALIZATION NOTE (seamonkey_l10n):
 # insert full bookmark line for localized SeaMonkey page (personal toolbar)

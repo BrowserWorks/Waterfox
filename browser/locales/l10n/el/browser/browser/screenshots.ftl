@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Λήψη στιγμιότυπου
 screenshot-toolbarbutton =
     .label = Στιγμιότυπο
     .tooltiptext = Λήψη στιγμιότυπου
-screenshots-my-shots-button = Οι λήψεις μου
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Σύρετε ή κάντε κλικ στη σελίδα για να επιλέξετε μια περιοχή. Για ακύρωση πιέστε το πλήκτρο ESC.
 screenshots-cancel-button = Ακύρωση
 screenshots-save-visible-button = Αποθήκευση ορατής περιοχής
@@ -30,8 +30,7 @@ screenshots-connection-error-title = Δεν μπορούμε να συνδεθο
 screenshots-connection-error-details = Ελέγξτε τη σύνδεσή σας στο Internet. Εάν είστε σε θέση να συνδεθείτε στο Internet, ίσως υπάρχει ένα προσωρινό πρόβλημα με την υπηρεσία { -screenshots-brand-name }.
 screenshots-login-error-details = Δεν μπορέσαμε να αποθηκεύσουμε την λήψη σας γιατί υπάρχει κάποιο πρόβλημα με την υπηρεσία { -screenshots-brand-name }. Προσπαθήστε ξανά αργότερα.
 screenshots-unshootable-page-error-title = Δεν μπορούμε να λάβουμε στιγμιότυπο αυτής της σελίδας.
-screenshots-unshootable-page-error-details = Δεν μπορεί να γίνει λήψη στιγμιότυπου καθώς αυτή δεν είναι μια τυπική σελίδα του Διαδικτύου.
-screenshots-self-screenshot-error-title = Δεν μπορεί να γίνει λήψη ενός στιγμιότυπου της σελίδας { -screenshots-brand-name }!
+screenshots-unshootable-page-error-details = Δεν μπορεί να γίνει λήψη στιγμιότυπου καθώς αυτή δεν είναι μια τυπική ιστοσελίδα.
 screenshots-empty-selection-error-title = Η επιλογή σας είναι πολύ μικρή
 screenshots-private-window-error-title = Το { -screenshots-brand-name } είναι απενεργοποιημένο στη λειτουργία ιδιωτικής περιήγησης
 screenshots-private-window-error-details = Λυπούμαστε για την ταλαιπωρία. Εργαζόμαστε πάνω σε αυτό το χαρακτηριστικό για μελλοντικές εκδόσεις.

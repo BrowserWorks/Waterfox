@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,6 +14,7 @@ about-glean-warning =
         [neuter] { -brand-short-name(case: "gen") }
        *[other] aplikace { -brand-short-name }
     }.
+
 tag-pings-label = Označovat všechny odeslané pingy tímto štítkem
 log-pings-label = Zaznamenávat obsah pingu před odesláním do protokolu?
 send-pings-label = Poslat pojmenovaný ping

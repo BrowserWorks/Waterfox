@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,19 +9,16 @@
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "切换到新标签页">
 <!ENTITY background.accesskey "S">
+<!ENTITY diverted.label "点击跳转链接打开标签页时，切换到新标签页">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "在其他应用程序打开链接时，将浏览器窗口置顶">
+<!ENTITY browserFocus.accesskey "F">
 <!ENTITY warnOnClose.label "当关闭多标签页窗口时提示我">
 <!ENTITY warnOnClose.accesskey "W">
 <!ENTITY relatedAfterCurrent.label "在当前标签页后面打开相关标签页">
 <!ENTITY relatedAfterCurrent.accesskey "O">
 
-<!ENTITY loadGroup.label "当打开一个书签组">
-<!ENTITY loadGroupAppend.label "添加标签">
-<!ENTITY loadGroupAppend.accesskey "A">
-<!ENTITY loadGroupReplace.label "替换已有的标签">
-<!ENTITY loadGroupReplace.accesskey "R">
-
 <!ENTITY openTabs.label "打开一个标签页而非窗口，当：">
-
 <!ENTITY middleClick.label "在网页链接上中键单击，Ctrl+单击或Ctrl+Enter">
 <!ENTITY middleClick.accesskey "M">
 <!ENTITY middleClickMac.label "在链接上单击鼠标中键，或 &#8984;+单击 或 &#8984;+Return">

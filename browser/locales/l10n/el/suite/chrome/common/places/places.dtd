@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -41,7 +41,7 @@
 <!ENTITY cmd.restoreFromFile.label      "Επιλογή αρχείου…">
 <!ENTITY cmd.restoreFromFile.accesskey  "Ε">
 
-<!ENTITY cmd.deleteDomainData.label     "Διαγραφή δεδομένων ιστοσελίδας">
+<!ENTITY cmd.deleteDomainData.label     "Διαγραφή δεδομένων ιστοτόπου">
 <!ENTITY cmd.deleteDomainData.accesskey "Δ">
 
 <!ENTITY cmd.open.label                  "Άνοιγμα">
@@ -96,7 +96,7 @@
 <!ENTITY view.accesskey           "β">
 <!ENTITY byDate.label             "Κατά ημερομηνία">
 <!ENTITY byDate.accesskey         "η">
-<!ENTITY bySite.label             "Κατά ιστοσελίδα">
+<!ENTITY bySite.label             "Κατά ιστότοπο">
 <!ENTITY bySite.accesskey         "ι">
 <!ENTITY byMostVisited.label      "Κατά συχνότητα">
 <!ENTITY byMostVisited.accesskey  "σ">

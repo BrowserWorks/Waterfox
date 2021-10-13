@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,12 +17,6 @@
 <!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
 that require it.  -->
 <!ENTITY clearTimeDuration.suffix         "">
-
-<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
-     of the "Details" progressive disclosure button.  See UI mockup at bug
-     480169 -->
-<!ENTITY detailsProgressiveDisclosure.label     "Szczegóły">
-<!ENTITY detailsProgressiveDisclosure.accesskey "S">
 
 
 <!ENTITY historyGroup.label                "Historia">

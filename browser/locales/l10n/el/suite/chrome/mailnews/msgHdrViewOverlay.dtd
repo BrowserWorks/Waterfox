@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,11 +17,11 @@
 
 <!ENTITY tagsHdr.label "Ετικέτες: ">
 <!ENTITY dateField.label "Ημερομηνία: ">
-<!ENTITY userAgentField.label "Πλατφόρμα-χρήστη: ">
+<!ENTITY userAgentField.label "Παράγοντας χρήστη:">
 <!ENTITY referencesField.label "Αναφορές: ">
 <!ENTITY messageIdField.label "ID-μηνύματος:">
 <!ENTITY inReplyToField.label "Σε-απάντηση-σε:">
-<!ENTITY originalWebsite.label "Ιστοσελίδα: ">
+<!ENTITY originalWebsite.label "Ιστότοπος: ">
 
 <!ENTITY editMessage.label                 "Επεξεργασία προσχεδίου…">
 <!ENTITY editMessage.accesskey             "π">

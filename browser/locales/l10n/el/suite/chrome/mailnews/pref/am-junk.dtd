@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,7 +20,7 @@
 <!ENTITY whitelistHeader.label "Να μην γίνεται αυτόματη επισήμανση email ως ανεπιθύμητων, όταν ο αποστολέας είναι σε: ">
 <!ENTITY whitelistHeader.accesskey "Ν">
 
-<!ENTITY ispHeadersWarning.label "Αν ενεργοποιηθεί, το &brandShortName; θα θεωρεί αυτομάτως ανεπιθύμητα τα μηνύματα που επισημαίνονται από αυτή την εξωτερική υπηρεσία ταξινόμησης.">
+<!ENTITY ispHeadersWarning.label "Αν ενεργοποιηθεί, το &brandShortName; θα θεωρεί αυτομάτως ανεπιθύμητα τα μηνύματα που επισημαίνονται από αυτήν την εξωτερική υπηρεσία ταξινόμησης.">
 <!ENTITY ispHeaders.label "Να θεωρούνται έμπιστες οι κεφαλίδες ανεπιθύμητων email που ορίζονται από: ">
 <!ENTITY ispHeaders.accesskey "θ">
 

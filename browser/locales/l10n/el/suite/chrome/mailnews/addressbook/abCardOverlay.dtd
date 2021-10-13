@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -31,7 +31,7 @@
 <!ENTITY PhoneticField2.label           "Φωνητικό:">
 <!ENTITY DisplayName.label              "Εμφάνιση:">
 <!ENTITY DisplayName.accesskey          "Ε">
-<!ENTITY preferDisplayName.label        "Να προτιμάται πάντα το εμφανιζόμενο όνομα αντί της κεφαλίδας μηνύματος">
+<!ENTITY preferDisplayName.label        "Να προτιμάται το εμφανιζόμενο όνομα αντί της κεφαλίδας μηνύματος">
 <!ENTITY preferDisplayName2.accesskey   "η">
 <!ENTITY NickName.label                 "Ψευδώνυμο:">
 <!ENTITY NickName.accesskey             "Ψ">
@@ -141,7 +141,6 @@
 
 <!ENTITY Photo.tab                      "Φωτογραφία">
 <!ENTITY Photo.accesskey                "ο">
-<!ENTITY PhotoDesc.label                "Επιλέξτε ένα από τα παρακάτω:">
 <!ENTITY GenericPhoto.label             "Γενική φωτογραφία">
 <!ENTITY GenericPhoto.accesskey         "Γ">
 <!ENTITY DefaultPhoto.label             "Προεπιλογή">

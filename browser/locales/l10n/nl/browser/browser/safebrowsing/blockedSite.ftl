@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,9 +16,6 @@ safeb-palm-see-details-label = Details bekijken
 safeb-blocked-phishing-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> is <a data-l10n-name='error_desc_link'>gerapporteerd als een misleidende website</a>. U kunt <a data-l10n-name='report_detection'>een detectieprobleem rapporteren</a> of <a data-l10n-name='ignore_warning_link'>het risico negeren</a> en deze onveilige website bezoeken.
 safeb-blocked-phishing-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> is <a data-l10n-name='error_desc_link'>gerapporteerd als een misleidende website</a>. U kunt <a data-l10n-name='report_detection'>een detectieprobleem rapporteren</a>.
 safeb-blocked-phishing-page-learn-more = Lees meer over misleidende websites en phishing op <a data-l10n-name='learn_more_link'>www.antiphishing.org</a>. Lees meer over bescherming tegen phishing en malware van { -brand-short-name } op <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
-safeb-blocked-malware-page-error-desc-override = <span data-l10n-name='sitename'>{ $sitename }</span> is <a data-l10n-name='error_desc_link'>gerapporteerd als een website die kwaadwillende software bevat</a>. U kunt <a data-l10n-name='report_detection'>een detectieprobleem rapporteren</a> of <a data-l10n-name='ignore_warning_link'>het risico negeren</a> en deze onveilige website bezoeken.
-safeb-blocked-malware-page-error-desc-no-override = <span data-l10n-name='sitename'>{ $sitename }</span> is <a data-l10n-name='error_desc_link'>gerapporteerd als een website die kwaadwillende software bevat</a>. U kunt <a data-l10n-name='report_detection'>een detectieprobleem rapporteren</a>.
-safeb-blocked-malware-page-learn-more = Lees meer over schadelijke webinhoud, waaronder virussen en andere malware, en het beschermen van uw computer op <a data-l10n-name='learn_more_link'>StopBadware.org</a>. Lees meer over bescherming tegen phishing en malware van { -brand-short-name } op <a data-l10n-name='firefox_support'>support.mozilla.org</a>.
 safeb-blocked-malware-page-error-desc-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> is <a data-l10n-name='error_desc_link'>gerapporteerd als een website die kwaadwillende software bevat</a>. U kunt <a data-l10n-name='ignore_warning_link'>het risico negeren</a> en deze onveilige website bezoeken.
 safeb-blocked-malware-page-error-desc-no-override-sumo = <span data-l10n-name='sitename'>{ $sitename }</span> is <a data-l10n-name='error_desc_link'>gerapporteerd als een website die kwaadwillende software bevat</a>.
 safeb-blocked-malware-page-learn-more-sumo = Meer info over de bescherming door { -brand-short-name } tegen phishing en malware op <a data-l10n-name='firefox_support'>support.mozilla.org</a>.

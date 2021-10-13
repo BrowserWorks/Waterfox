@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,9 +27,9 @@ graph-week-summary-private-window = Rastreadores que o { -brand-short-name } blo
 
 protection-report-webpage-title = Painel das proteções
 protection-report-page-content-title = Painel das proteções
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = O { -brand-short-name } pode proteger a sua privacidade nos bastidores, enquanto navega. Este é um resumo personalizado destas proteções, incluindo ferramentas para assumir o controle da sua segurança na Internet.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = O { -brand-short-name } protege a sua privacidade, nos bastidores, enquanto navega. Este é um resumo personalizado destas proteções, incluindo ferramentas para assumir a gestão da sua segurança na Internet.
 
 protection-report-settings-link = Gerir as suas definições de privacidade e segurança
@@ -100,9 +100,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] As suas palavras-passe estão a ser guardadas em segurança.
     }
 lockwise-how-it-works-link = Como é que funciona
-
-turn-on-sync = Ligar { -sync-brand-short-name }…
-    .title = Ir para as preferências de sincronização
 
 monitor-title = Procurar por violações de dados
 monitor-link = Como funciona

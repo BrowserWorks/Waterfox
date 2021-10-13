@@ -1,10 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Window title -->
 <!ENTITY windowTitle.label "Εισαγωγή HTML">
-<!ENTITY sourceEditField.label "Εισάγετε ετικέτες HTML και κείμενο:">
+<!ENTITY sourceEditField.label "Εισαγάγετε ετικέτες και κείμενο HTML:">
 <!ENTITY example.label "Παράδειγμα: ">
 <!-- LOCALIZATION NOTE (exampleOpenTag.label): DONT_TRANSLATE: they are text for HTML tagnames: "<i>" and "</i>" -->
 <!ENTITY exampleOpenTag.label "&lt;i&gt;">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,13 +11,7 @@
 <!ENTITY helpMenuWin.accesskey "С">
 <!ENTITY aboutProduct2.label "О &brandShorterName;">
 <!ENTITY aboutProduct2.accesskey "О">
-<!ENTITY helpTroubleshootingInfo.label     "Информация для решения проблем">
-<!ENTITY helpTroubleshootingInfo.accesskey "ф">
-<!ENTITY helpSafeMode.label     "Перезапустить с отключёнными дополнениями…">
-<!ENTITY helpSafeMode.accesskey "з">
 
-<!ENTITY helpSafeMode.stop.label     "Перезапустить с дополнениями">
-<!ENTITY helpSafeMode.stop.accesskey "е">
 <!ENTITY productHelp.label "Помощь по &brandShortName;">
 <!ENTITY productHelp.accesskey "м">
 <!ENTITY productHelp.commandkey "VK_F1">

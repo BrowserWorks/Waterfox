@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Waterfox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - Waterfox
+# private - "Waterfox Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Waterfox"
-# "private" - "Mozilla Firefox — (Private Browsing)"
+# "default" - Waterfox
+# "private" - "Waterfox Waterfox — (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -87,6 +87,10 @@ urlbar-plugins-notification-anchor =
     .tooltiptext = จัดการการใช้ปลั๊กอิน
 urlbar-web-rtc-share-devices-notification-anchor =
     .tooltiptext = จัดการการแบ่งปันกล้องและ/หรือไมโครโฟนของคุณกับไซต์
+# "Speakers" is used in a general sense that might include headphones or
+# another audio output connection.
+urlbar-web-rtc-share-speaker-notification-anchor =
+    .tooltiptext = จัดการการแบ่งปันลำโพงอื่น ๆ กับไซต์
 urlbar-autoplay-notification-anchor =
     .tooltiptext = เปิดแผงการเล่นอัตโนมัติ
 urlbar-persistent-storage-notification-anchor =
@@ -156,51 +160,10 @@ urlbar-star-add-bookmark =
 
 ## Page Action Context Menu
 
-page-action-add-to-urlbar =
-    .label = เพิ่มลงในแถบที่อยู่
 page-action-manage-extension =
     .label = จัดการส่วนขยาย…
-page-action-remove-from-urlbar =
-    .label = เอาออกจากแถบที่อยู่
 page-action-remove-extension =
     .label = เอาส่วนขยายออก
-
-## Page Action menu
-
-# Variables
-# $tabCount (integer) - Number of tabs selected
-page-action-send-tabs-panel =
-    .label = ส่ง { $tabCount } แท็บไปยังอุปกรณ์
-page-action-send-tabs-urlbar =
-    .tooltiptext = ส่ง { $tabCount } แท็บไปยังอุปกรณ์
-page-action-copy-url-panel =
-    .label = คัดลอกลิงก์
-page-action-copy-url-urlbar =
-    .tooltiptext = คัดลอกลิงก์
-page-action-email-link-panel =
-    .label = ส่งอีเมลลิงก์…
-page-action-email-link-urlbar =
-    .tooltiptext = ส่งอีเมลลิงก์…
-page-action-share-url-panel =
-    .label = แบ่งปัน
-page-action-share-url-urlbar =
-    .tooltiptext = แบ่งปัน
-page-action-share-more-panel =
-    .label = เพิ่มเติม…
-page-action-send-tab-not-ready =
-    .label = กำลังซิงค์อุปกรณ์…
-# "Pin" is being used as a metaphor for expressing the fact that these tabs
-# are "pinned" to the left edge of the tabstrip. Really we just want the
-# string to express the idea that this is a lightweight and reversible
-# action that keeps your tab where you can reach it easily.
-page-action-pin-tab-panel =
-    .label = ปักหมุดแท็บ
-page-action-pin-tab-urlbar =
-    .tooltiptext = ปักหมุดแท็บ
-page-action-unpin-tab-panel =
-    .label = ถอนหมุดแท็บ
-page-action-unpin-tab-urlbar =
-    .tooltiptext = ถอนหมุดแท็บ
 
 ## Auto-hide Context Menu
 
@@ -216,10 +179,6 @@ full-screen-exit =
 # This string prompts the user to use the list of search shortcuts in
 # the Urlbar and searchbar.
 search-one-offs-with-title = คราวนี้ค้นหาด้วย:
-# This string won't wrap, so if the translated string is longer,
-# consider translating it as if it said only "Search Settings".
-search-one-offs-change-settings-button =
-    .label = เปลี่ยนการตั้งค่าการค้นหา
 search-one-offs-change-settings-compact-button =
     .tooltiptext = เปลี่ยนการตั้งค่าการค้นหา
 search-one-offs-context-open-new-tab =
@@ -279,8 +238,6 @@ bookmark-panel-remove =
 bookmark-panel-show-editor-checkbox =
     .label = แสดงตัวแก้ไขเมื่อบันทึก
     .accesskey = ส
-bookmark-panel-done-button =
-    .label = เสร็จสิ้น
 bookmark-panel-save-button =
     .label = บันทึก
 # Width of the bookmark panel.
@@ -305,13 +262,11 @@ identity-connection-internal = นี่คือหน้า { -brand-short-nam
 identity-connection-file = หน้านี้ถูกจัดเก็บไว้ในคอมพิวเตอร์ของคุณ
 identity-extension-page = หน้านี้ถูกโหลดจากส่วนขยาย
 identity-active-blocked = { -brand-short-name } ได้ปิดกั้นบางส่วนของหน้านี้ที่ไม่ปลอดภัย
-identity-custom-root = การเชื่อมต่อถูกตรวจสอบโดยผู้ออกใบรับรองที่ Mozilla ไม่รู้จัก
+identity-custom-root = การเชื่อมต่อถูกตรวจสอบโดยผู้ออกใบรับรองที่ Waterfox ไม่รู้จัก
 identity-passive-loaded = บางส่วนของหน้านี้ไม่ปลอดภัย (อย่างเช่น ภาพ)
 identity-active-loaded = คุณได้ปิดใช้งานการป้องกันในหน้านี้
 identity-weak-encryption = หน้านี้ใช้การเข้ารหัสที่อ่อนแอ
 identity-insecure-login-forms = การเข้าสู่ระบบที่ป้อนบนหน้านี้อาจถูกบุกรุกได้
-identity-permissions =
-    .value = สิทธิอนุญาต
 identity-https-only-connection-upgraded = (อัปเกรดเป็น HTTPS)
 identity-https-only-label = โหมด HTTPS-Only
 identity-https-only-dropdown-on =
@@ -327,13 +282,12 @@ identity-permissions-storage-access-header = คุกกี้ข้ามไ�
 identity-permissions-storage-access-hint = บุคคลเหล่านี้สามารถใช้คุกกี้ข้ามไซต์และข้อมูลไซต์ในขณะที่คุณอยู่บนไซต์นี้ได้
 identity-permissions-storage-access-learn-more = เรียนรู้เพิ่มเติม
 identity-permissions-reload-hint = คุณอาจจำเป็นต้องโหลดหน้าใหม่เพื่อให้การเปลี่ยนแปลงมีผล
-identity-permissions-empty = คุณไม่ได้อนุญาตไซต์นี้ด้วยสิทธิอนุญาตพิเศษใด ๆ
 identity-clear-site-data =
     .label = ล้างคุกกี้และข้อมูลไซต์…
 identity-connection-not-secure-security-view = คุณไม่ได้เชื่อมต่ออย่างปลอดภัยไปยังไซต์นี้
 identity-connection-verified = คุณได้เชื่อมต่ออย่างปลอดภัยไปยังไซต์นี้
 identity-ev-owner-label = ออกใบรับรองให้กับ:
-identity-description-custom-root = Mozilla ไม่รู้จักผู้ออกใบรับรองนี้ ซึ่งอาจถูกเพิ่มจากระบบปฏิบัติการของคุณหรือโดยผู้ดูแลระบบ <label data-l10n-name="link">เรียนรู้เพิ่มเติม</label>
+identity-description-custom-root = Waterfox ไม่รู้จักผู้ออกใบรับรองนี้ ซึ่งอาจถูกเพิ่มจากระบบปฏิบัติการของคุณหรือโดยผู้ดูแลระบบ <label data-l10n-name="link">เรียนรู้เพิ่มเติม</label>
 identity-remove-cert-exception =
     .label = เอาข้อยกเว้นออก
     .accesskey = อ
@@ -409,12 +363,6 @@ bookmarks-toolbar-empty-message = วางที่คั่นหน้าข�
 
 ## WebRTC Pop-up notifications
 
-popup-select-camera =
-    .value = กล้องที่แบ่งปัน:
-    .accesskey = ก
-popup-select-microphone =
-    .value = ไมโครโฟนที่แบ่งปัน:
-    .accesskey = ม
 popup-select-camera-device =
     .value = กล้อง:
     .accesskey = ก
@@ -428,14 +376,6 @@ popup-select-microphone-icon =
 popup-select-speaker-icon =
     .tooltiptext = ลำโพง
 popup-all-windows-shared = หน้าต่างที่ปรากฏอยู่ทั้งหมดบนหน้าจอของคุณจะถูกแบ่งปัน
-popup-screen-sharing-not-now =
-    .label = ไม่ใช่ตอนนี้
-    .accesskey = w
-popup-screen-sharing-never =
-    .label = ไม่อนุญาตเสมอ
-    .accesskey = ม
-popup-silence-notifications-checkbox = ปิดใช้งานการแจ้งเตือนจาก { -brand-short-name } ขณะที่แบ่งปัน
-popup-silence-notifications-checkbox-warning = { -brand-short-name } จะไม่แสดงการแจ้งเตือนขณะที่คุณกำลังแบ่งปัน
 popup-screen-sharing-block =
     .label = ปิดกั้น
     .accesskey = ป
@@ -459,8 +399,6 @@ enable-devtools-popup-description = หากต้องการใช้ท�
 
 ## URL Bar
 
-urlbar-default-placeholder =
-    .defaultPlaceholder = ค้นหาหรือป้อนที่อยู่
 # This placeholder is used when not in search mode and the user's default search
 # engine is unknown.
 urlbar-placeholder =
@@ -497,8 +435,6 @@ urlbar-placeholder-search-mode-other-tabs =
 #  $name (String): the name of the user's default search engine
 urlbar-placeholder-with-name =
     .placeholder = ค้นหาด้วย { $name } หรือป้อนที่อยู่
-urlbar-remote-control-notification-anchor =
-    .tooltiptext = เบราว์เซอร์อยู่ภายใต้การควบคุมระยะไกล
 # Variables
 #  $component (String): the name of the component which forces remote control.
 #    Example: "DevTools", "Marionette", "RemoteAgent".
@@ -515,8 +451,6 @@ urlbar-go-button =
     .tooltiptext = ไปยังที่อยู่ในแถบตำแหน่งที่ตั้ง
 urlbar-page-action-button =
     .tooltiptext = การกระทำหน้า
-urlbar-pocket-button =
-    .tooltiptext = บันทึกไปยัง { -pocket-brand-name }
 
 ## Action text shown in urlbar results, usually appended after the search
 ## string or the url, like "result value - action text".
@@ -573,6 +507,19 @@ urlbar-result-action-search-bookmarks = ค้นหาที่คั่นห�
 urlbar-result-action-search-history = ค้นหาประวัติ
 urlbar-result-action-search-tabs = ค้นหาแท็บ
 
+## Labels shown above groups of urlbar results
+
+# A label shown above the "Waterfox Suggest" (bookmarks/history) group in the
+# urlbar results.
+urlbar-group-firefox-suggest =
+    .label = { -firefox-suggest-brand-name }
+# A label shown above the search suggestions group in the urlbar results. It
+# should use title case.
+# Variables
+#  $engine (String): the name of the search engine providing the suggestions
+urlbar-group-search-suggestions =
+    .label = { $engine } ข้อเสนอแนะ
+
 ## Full Screen and Pointer Lock UI
 
 # Please ensure that the domain stays in the `<span data-l10n-name="domain">` markup.
@@ -592,6 +539,10 @@ pointerlock-warning-no-domain = เอกสารชิ้นนี้ได้
 ## Subframe crash notification
 
 crashed-subframe-message = <strong>เนื้อหาบางส่วนของหน้านี้ขัดข้อง</strong> หากต้องการแจ้งให้ { -brand-product-name } ทราบเกี่ยวกับปัญหานี้เพื่อให้ได้รับการแก้ไขเร็วขึ้น โปรดส่งรายงาน
+# The string for crashed-subframe-title.title should match crashed-subframe-message,
+# but without any markup.
+crashed-subframe-title =
+    .title = เนื้อหาบางส่วนของหน้านี้ขัดข้อง หากต้องการแจ้งให้ { -brand-product-name } ทราบเกี่ยวกับปัญหานี้เพื่อให้ได้รับการแก้ไขเร็วขึ้น โปรดส่งรายงาน
 crashed-subframe-learnmore-link =
     .value = เรียนรู้เพิ่มเติม
 crashed-subframe-submit =
@@ -701,6 +652,30 @@ toolbar-settings-button =
 more-menu-go-offline =
     .label = ทำงานออฟไลน์
     .accesskey = ฟ
+toolbar-overflow-customize-button =
+    .label = ปรับแต่งแถบเครื่องมือ…
+    .accesskey = ป
+toolbar-button-email-link =
+    .label = ส่งอีเมลลิงก์
+    .tooltiptext = ส่งอีเมลลิงก์ไปยังหน้านี้
+# Variables:
+#  $shortcut (String): keyboard shortcut to save a copy of the page
+toolbar-button-save-page =
+    .label = บันทึกหน้า
+    .tooltiptext = บันทึกหน้านี้ ({ $shortcut })
+# Variables:
+#  $shortcut (String): keyboard shortcut to open a local file
+toolbar-button-open-file =
+    .label = เปิดไฟล์
+    .tooltiptext = เปิดไฟล์ ({ $shortcut })
+toolbar-button-synced-tabs =
+    .label = แท็บที่ซิงค์
+    .tooltiptext = แสดงแท็บจากอุปกรณ์อื่น ๆ
+# Variables
+# $shortcut (string) - Keyboard shortcut to open a new private browsing window
+toolbar-button-new-private-window =
+    .label = หน้าต่างส่วนตัวใหม่
+    .tooltiptext = เปิดหน้าต่างเรียกดูแบบส่วนตัวใหม่ ({ $shortcut })
 
 ## EME notification panel
 
@@ -727,3 +702,73 @@ addon-removal-abuse-report-checkbox = รายงานส่วนขยาย
 remote-tabs-manage-account =
     .label = จัดการบัญชี
 remote-tabs-sync-now = ซิงค์ตอนนี้
+
+##
+
+# "More" item in macOS share menu
+menu-share-more =
+    .label = เพิ่มเติม…
+ui-tour-info-panel-close =
+    .tooltiptext = ปิด
+
+## Variables:
+##  $uriHost (String): URI host for which the popup was allowed or blocked.
+
+popups-infobar-allow =
+    .label = อนุญาตป๊อปอัปสำหรับ { $uriHost }
+    .accesskey = ป
+popups-infobar-block =
+    .label = ปิดกั้นป๊อปอัปสำหรับ { $uriHost }
+    .accesskey = ป
+
+##
+
+popups-infobar-dont-show-message =
+    .label = ไม่แสดงข้อความนี้เมื่อป๊อปอัปถูกปิดกั้น
+    .accesskey = ข
+edit-popup-settings =
+    .label = จัดการการตั้งค่าป๊อปอัป…
+    .accesskey = จ
+picture-in-picture-hide-toggle =
+    .label = ซ่อนสลับภาพที่เล่นควบคู่
+    .accesskey = อ
+
+# Navigator Toolbox
+
+# This string is a spoken label that should not include
+# the word "toolbar" or such, because screen readers already know that
+# this container is a toolbar. This avoids double-speaking.
+navbar-accessible =
+    .aria-label = การนำทาง
+navbar-downloads =
+    .label = การดาวน์โหลด
+navbar-overflow =
+    .tooltiptext = เครื่องมือเพิ่มเติม…
+# Variables:
+#   $shortcut (String): keyboard shortcut to print the page
+navbar-print =
+    .label = พิมพ์
+    .tooltiptext = พิมพ์หน้านี้… ({ $shortcut })
+navbar-print-tab-modal-disabled =
+    .label = พิมพ์
+    .tooltiptext = พิมพ์หน้านี้
+navbar-home =
+    .label = หน้าแรก
+    .tooltiptext = หน้าแรกของ { -brand-short-name }
+navbar-library =
+    .label = ห้องสมุด
+    .tooltiptext = ดูประวัติ, ที่คั่นหน้าที่บันทึกไว้ และอื่น ๆ
+navbar-search =
+    .title = ค้นหา
+navbar-accessibility-indicator =
+    .tooltiptext = คุณลักษณะการช่วยการเข้าถึงถูกเปิดใช้งานอยู่
+# Name for the tabs toolbar as spoken by screen readers. The word
+# "toolbar" is appended automatically and should not be included in
+# in the string
+tabs-toolbar =
+    .aria-label = แท็บเบราว์เซอร์
+tabs-toolbar-new-tab =
+    .label = แท็บใหม่
+tabs-toolbar-list-all-tabs =
+    .label = แสดงรายการแท็บทั้งหมด
+    .tooltiptext = แสดงรายการแท็บทั้งหมด

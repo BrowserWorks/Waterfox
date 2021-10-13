@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Priedų tvarkytuvė
 addons-page-title = Priedų tvarkytuvė
 search-header =
     .placeholder = Ieškoti per addons.mozilla.org
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Priedų pagalba
 sidebar-help-button-title =
     .title = Priedų pagalba
-preferences =
-    { PLATFORM() ->
-        [windows] „{ -brand-short-name }“ nuostatos
-       *[other] „{ -brand-short-name }“ nuostatos
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] „{ -brand-short-name }“ nuostatos
-           *[other] „{ -brand-short-name }“ nuostatos
-        }
 addons-settings-button = „{ -brand-short-name }“ nuostatos
 sidebar-settings-button-title =
     .title = „{ -brand-short-name }“ nuostatos
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Kai kurių plėtinių patikrinti nepavyko
 show-all-extensions-button =
     .label = Rodyti visus plėtinius
-cmd-show-details =
-    .label = Išsamiau
-    .accesskey = I
-cmd-find-updates =
-    .label = Rasti naujinimų
-    .accesskey = R
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Nuostatos
-           *[other] Nuostatos
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] N
-           *[other] N
-        }
-cmd-enable-theme =
-    .label = Naudoti apvalkalą
-    .accesskey = N
-cmd-disable-theme =
-    .label = Nebenaudoti apvalkalo
-    .accesskey = N
-cmd-install-addon =
-    .label = Įdiegti
-    .accesskey = d
-cmd-contribute =
-    .label = Paremti
-    .accesskey = P
-    .tooltiptext = Paremti šio priedo kūrimą
 detail-version =
     .label = Laida
 detail-last-updated =
@@ -297,6 +254,7 @@ install-theme-button = Įdiegti grafinį apvalkalą
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Tvarkyti
 find-more-addons = Rasti daugiau priedų
+find-more-themes = Rasti daugiau apvalkalų
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -326,13 +284,14 @@ extension-enabled-heading = Įjungtas
 extension-disabled-heading = Išjungtas
 theme-enabled-heading = Įjungtas
 theme-disabled-heading = Išjungtas
+theme-monochromatic-heading = Spalvų rinkiniai
+theme-monochromatic-subheading = Ryškūs ir nauji spalvų rinkiniai iš „{ -brand-product-name }“. Pasiekiami ribotą laiką.
 plugin-enabled-heading = Įjungtas
 plugin-disabled-heading = Išjungtas
 dictionary-enabled-heading = Įjungtas
 dictionary-disabled-heading = Išjungtas
 locale-enabled-heading = Įjungta
 locale-disabled-heading = Išjungta
-ask-to-activate-button = Klausti prieš aktyvinant
 always-activate-button = Visada aktyvinti
 never-activate-button = Niekada neaktyvinti
 addon-detail-author-label = Autorius
@@ -389,10 +348,10 @@ addon-detail-private-browsing-disallow = Neleisti
 addon-badge-recommended2 =
     .title = „{ -brand-product-name }“ rekomenduoja tik mūsų saugumo ir našumo reikalavimus atitinkančius priedus
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Oficialus „Mozilla“ sukurtas priedas. Atitinka saugumo ir našumo standartus
+    .title = Oficialus „Waterfox“ sukurtas priedas. Atitinka saugumo ir našumo standartus
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Šis priedas buvo peržiūrėtas ir atitinka mūsų saugumo bei našumo standartus
@@ -410,9 +369,9 @@ addon-permissions-optional = Papildomam funkcionalumui reikalingi leidimai:
 addon-permissions-learnmore = Sužinokite apie leidimus daugiau
 recommended-extensions-heading = Rekomenduojami priedai
 recommended-themes-heading = Rekomenduojami grafiniai apvalkalai
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Jaučiatės kūrybiškai? <a data-l10n-name="link">Sukurkite savo grafinį apvalkalą su „Firefox Color“.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Jaučiatės kūrybiškai? <a data-l10n-name="link">Sukurkite savo grafinį apvalkalą su „Waterfox Color“.</a>
 
 ## Page headings
 

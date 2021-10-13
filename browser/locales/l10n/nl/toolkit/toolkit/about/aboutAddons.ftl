@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Add-onbeheerder
 addons-page-title = Add-onbeheerder
 search-header =
     .placeholder = addons.mozilla.org doorzoeken
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Add-on-ondersteuning
 sidebar-help-button-title =
     .title = Add-on-ondersteuning
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name }-opties
-       *[other] { -brand-short-name }-voorkeuren
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name }-opties
-           *[other] { -brand-short-name }-voorkeuren
-        }
 addons-settings-button = { -brand-short-name }-instellingen
 sidebar-settings-button-title =
     .title = { -brand-short-name }-instellingen
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Sommige extensies konden niet worden geverifieerd
 show-all-extensions-button =
     .label = Alle extensies tonen
-cmd-show-details =
-    .label = Meer informatie tonen
-    .accesskey = M
-cmd-find-updates =
-    .label = Updates zoeken
-    .accesskey = z
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Opties
-           *[other] Voorkeuren
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] V
-        }
-cmd-enable-theme =
-    .label = Thema gebruiken
-    .accesskey = T
-cmd-disable-theme =
-    .label = Gebruik van thema stoppen
-    .accesskey = t
-cmd-install-addon =
-    .label = Installeren
-    .accesskey = I
-cmd-contribute =
-    .label = Bijdragen
-    .accesskey = r
-    .tooltiptext = Bijdragen aan de ontwikkeling van deze add-on
 detail-version =
     .label = Versie
 detail-last-updated =
@@ -299,6 +256,7 @@ install-theme-button = Thema installeren
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Beheren
 find-more-addons = Meer add-ons zoeken
+find-more-themes = Meer thema’s zoeken
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -328,13 +286,14 @@ extension-enabled-heading = Ingeschakeld
 extension-disabled-heading = Uitgeschakeld
 theme-enabled-heading = Ingeschakeld
 theme-disabled-heading = Uitgeschakeld
+theme-monochromatic-heading = Kleurstellingen
+theme-monochromatic-subheading = Levendige nieuwe kleurstellingen van { -brand-product-name }. Beschikbaar gedurende een beperkte tijd.
 plugin-enabled-heading = Ingeschakeld
 plugin-disabled-heading = Uitgeschakeld
 dictionary-enabled-heading = Ingeschakeld
 dictionary-disabled-heading = Uitgeschakeld
 locale-enabled-heading = Ingeschakeld
 locale-disabled-heading = Uitgeschakeld
-ask-to-activate-button = Vragen om te activeren
 always-activate-button = Altijd activeren
 never-activate-button = Nooit activeren
 addon-detail-author-label = Schrijver
@@ -390,10 +349,10 @@ addon-detail-private-browsing-disallow = Niet toestaan
 addon-badge-recommended2 =
     .title = { -brand-product-name } beveelt alleen extensies aan die voldoen aan onze normen voor beveiliging en prestaties
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Officiële door Mozilla Firefox gebouwde extensie. Voldoet aan beveiligings- en prestatienormen.
+    .title = Officiële door Waterfox Waterfox gebouwde extensie. Voldoet aan beveiligings- en prestatienormen.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Deze extensie is beoordeeld en voldoet aan onze normen voor beveiliging en prestaties
@@ -411,9 +370,9 @@ addon-permissions-optional = Optionele toestemmingen voor extra functionaliteit:
 addon-permissions-learnmore = Meer info over toestemmingen
 recommended-extensions-heading = Aanbevolen extensies
 recommended-themes-heading = Aanbevolen thema’s
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Voelt u zich creatief? <a data-l10n-name="link"> Bouw uw eigen thema met Firefox Color.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Voelt u zich creatief? <a data-l10n-name="link"> Bouw uw eigen thema met Waterfox Color.</a>
 
 ## Page headings
 

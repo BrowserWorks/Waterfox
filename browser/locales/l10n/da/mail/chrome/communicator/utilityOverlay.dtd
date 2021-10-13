@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,10 +17,6 @@
 <!ENTITY redoCmd.accesskey          "G">
 <!ENTITY deleteCmd.label          "Slet">
 <!ENTITY deleteCmd.accesskey        "S">
-<!ENTITY preferencesCmd2.label "Indstillinger">
-<!ENTITY preferencesCmd2.accesskey "I">
-<!ENTITY preferencesCmdUnix.label       "Indstillinger">
-<!ENTITY preferencesCmdUnix.accesskey     "I">
 
 <!ENTITY customizeCmd.label "Tilpas">
 <!ENTITY customizeCmd.accesskey "T">

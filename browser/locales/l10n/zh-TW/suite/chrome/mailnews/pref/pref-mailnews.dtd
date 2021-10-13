@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,8 +8,17 @@
 <!ENTITY confirmMove.accesskey            "C">
 <!ENTITY preserveThreading.label          "排序訊息時保留討論串結構">
 <!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY mailAutoHide.label               "只開啟一個分頁時自動隱藏郵件分頁列">
+<!ENTITY mailAutoHide.accesskey           "b">
 <!ENTITY loadInBackground.label           "開啟分頁後，自動切換到新分頁">
 <!ENTITY loadInBackground.accesskey       "t">
+<!ENTITY mailOpenTabsFor.label            "在下列情形開啟至分頁而非新視窗:">
+<!ENTITY mailMiddleClick.label            "對訊息或信件匣點滑鼠中鍵或按 Ctrl+Enter">
+<!ENTITY mailMiddleClick.accesskey        "M">
+<!ENTITY mailMiddleClickMac.label         "對訊息或信件匣點滑鼠中鍵或按 &#8984;+Return">
+<!ENTITY mailMiddleClickMac.accesskey     "M">
+<!ENTITY mailDoubleClick.label            "點兩下訊息">
+<!ENTITY mailDoubleClick.accesskey        "k">
 <!ENTITY mailBiffOnNewWindow.label        "只在開啟郵件與新聞群組後檢查新郵件">
 <!ENTITY mailBiffOnNewWindow.accesskey    "O">
 

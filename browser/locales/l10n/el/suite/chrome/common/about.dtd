@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -18,7 +18,7 @@
      between the linked about.credits.linkTitle phrase and this phrase, so if
      your locale needs a space between words, add it at the start of this
      entity. -->
-<!ENTITY about.credits.afterLink      " στο έργο της Mozilla.">
+<!ENTITY about.credits.afterLink      " στο έργο της Waterfox.">
 
 <!-- LOCALIZATION NOTE (about.license.beforeTheLink): note that there is no
      space between this phrase and the linked about.license.linkTitle phrase,
@@ -42,7 +42,7 @@
      space between the linked about.relnotes.linkTitle phrase and this phrase,
      so if your locale needs a space between words, add it at the start of
      this entity. -->
-<!ENTITY about.relnotes.afterTheLink  " για αυτή την έκδοση.">
+<!ENTITY about.relnotes.afterTheLink  " για αυτήν την έκδοση.">
 
 <!-- LOCALIZATION NOTE (about.buildconfig.beforeTheLink): note that there is
      no space between this phrase and the linked about.buildconfig.linkTitle
@@ -54,7 +54,7 @@
      space between the linked about.buildconfig.linkTitle phrase and this
      phrase, so if your locale needs a space between words, add it at the
      start of this entity. -->
-<!ENTITY about.buildconfig.afterTheLink  " για αυτή την έκδοση.">
+<!ENTITY about.buildconfig.afterTheLink  " για αυτήν την έκδοση.">
 
 <!ENTITY about.buildIdentifier        "Αναγνωριστικό έκδοσης: ">
 
@@ -65,6 +65,6 @@
      channel.description.start and channel.description.end create one sentence,
      with the current channel label inserted in between.
      example: You are currently on the _Stable_ update channel. -->
-<!ENTITY channel.description.start  "Αυτή τη στιγμή, βρίσκεστε στο κανάλι ενημερώσεων ">
+<!ENTITY channel.description.start  "Αυτήν τη στιγμή, βρίσκεστε στο κανάλι ενημερώσεων ">
 <!ENTITY channel.description.end    " .">
-<!ENTITY about.userAgent            "Πλατφόρμα χρήστη: ">
+<!ENTITY about.userAgent            "Παράγοντας χρήστη:">

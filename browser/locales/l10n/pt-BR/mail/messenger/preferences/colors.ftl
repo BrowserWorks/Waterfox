@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,7 +18,7 @@ text-color-label =
 
 background-color-label =
     .value = Fundo:
-    .accesskey = P
+    .accesskey = F
 
 use-system-colors =
     .label = Usar cores do sistema
@@ -39,7 +39,7 @@ underline-link-checkbox =
     .accesskey = S
 
 override-color-label =
-    .value = Substituir as cores especificadas pelo conteúdo com as escolhas acima:
+    .value = Substituir as cores que o conteúdo especifica pelas escolhas acima:
     .accesskey = S
 
 override-color-always =

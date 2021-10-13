@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -38,6 +38,10 @@
 <!ENTITY bookmarksToolbar.tooltip         "Lesezeichen-Symbolleiste">
 <!ENTITY navigationToolbar.tooltip        "Navigations-Symbolleiste">
 
+<!ENTITY editBookmark.done.label "Fertig">
+<!ENTITY editBookmark.cancel.label "Abbrechen">
+<!ENTITY editBookmark.removeBookmark.accessKey "L">
+
 <!-- Toolbar items --> 
 <!ENTITY backButton.label             "Zurück">
 <!ENTITY backButton.tooltip           "Eine Seite zurück gehen">
@@ -53,8 +57,6 @@
 <!ENTITY goButton.tooltip             "Geben Sie eine Adresse in das Feld auf der linken Seite ein, dann klicken Sie &quot;Gehe zu&quot;">
 <!ENTITY printButton.label            "Drucken">
 <!ENTITY printButton.tooltip          "Diese Seite drucken">
-
-<!ENTITY throbber.tooltip             "&vendorShortName;-Homepage aufrufen">
 
 <!ENTITY locationBar.tooltip          "Geben Sie einen Suchbegriff, ein Schlüsselwort oder eine Web-Adresse ein">
 <!ENTITY locationBar.accesskey        "s">
@@ -80,3 +82,6 @@
 <!ENTITY viewCertificate.accesskey   "Z">
 <!ENTITY viewCertManager.label       "Zertifikatverwaltung öffnen">
 <!ENTITY viewCertManager.accesskey   "M">
+
+<!ENTITY zoomIn.tooltiptext          "Vergrößern">
+<!ENTITY zoomOut.tooltiptext         "Verkleinern">

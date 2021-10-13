@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Kalender
 calendar-title-reminder = Erinnerungen
+calendar-title-notification = Benachrichtigungen
 calendar-title-category = Kategorien
 
 dateformat-label =
@@ -185,6 +186,9 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Erinnerungszeitpunkt vor Aufgabenbeginn:
     .accesskey = o
+
+calendar-notifications-customize-label = Benachrichtigungen für einzelne Kalender können in deren Eigenschaften angepasst werden.
+
 category-new-label = Kategorie hinzufügen
 category-edit-label = Kategorie bearbeiten
 category-overwrite-title = Warnung: Doppelter Name

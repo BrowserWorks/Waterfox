@@ -1,10 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 dock-options-window-dialog =
     .title = App icon options
     .style = width: 35em;
+
+dock-options-show-badge =
+    .label = Show badge icon
+    .accesskey = b
 
 bounce-system-dock-icon =
     .label = Animate the app icon when a new message arrives

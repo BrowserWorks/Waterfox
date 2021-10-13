@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,17 +15,15 @@ view-fingerprint-button =
 otr-settings-title = OTR nuostatos
 otr-log =
     .label = Įtraukite OTR užšifruotus pranešimus į pokalbių žurnalus
-otr-requireEncryption =
-    .label = Reikalauti abipusiai šifruoti tiesioginius privačius pokalbius
+
 otr-require-encryption =
     .label = Tiesioginiai privatūs pokalbiai turi būti abipusiai šifruoti
 otr-require-encryption-info =
     Kai reikalaujate abipusio šifravimo, pranešimai privačiuose pokalbiuose
     nebus siunčiami, jei jų nebus galima užšifruoti. Gautos nešifruotos žinutės
     nebus rodomos kaip įprasto pokalbio dalis ir nebus fiksuojamos.
-otr-verifyNudge =
-    .label = Visada priminkite man patvirtinti nepatikrintą kontaktą
-otr-notYetAvailable = kol kas nepasiekiamas
 otr-verify-nudge =
     .label = Visada priminti, kad reikia patikrinti nepatvirtintą kontaktą
+
 otr-not-yet-available = kol kas nepasiekiamas
+

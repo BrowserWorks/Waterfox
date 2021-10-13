@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,11 +14,15 @@ about-config-intro-warning-button = Het risico aanvaarden en doorgaan
 
 # This is shown on the page before searching but after the warning is accepted.
 about-config-caution-text = Het wijzigen van deze voorkeuren kan de prestaties of veiligheid van { -brand-short-name } beïnvloeden.
+
 about-config-page-title = Geavanceerde voorkeuren
+
 about-config-search-input1 =
     .placeholder = Naam voorkeursinstelling zoeken
 about-config-show-all = Alles tonen
+
 about-config-show-only-modified = Alleen gewijzigde voorkeuren tonen
+
 about-config-pref-add-button =
     .title = Toevoegen
 about-config-pref-toggle-button =
