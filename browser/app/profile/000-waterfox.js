@@ -117,7 +117,6 @@ pref("security.family_safety.mode", 0, locked);
 pref("security.identitypopup.recordEventTelemetry", false, locked);
 pref("security.pki.crlite_mode", 0, locked);
 pref("security.protectionspopup.recordEventTelemetry", false, locked);
-pref("security.sandbox.content.win32k-disable", true);
 pref("security.ssl.enable_false_start", true);
 pref("security.ssl.errorReporting.enabled", false, locked);
 pref("services.sync.engine.prefs", false, locked); // Never sync prefs, addons, or tabs with other browsers
