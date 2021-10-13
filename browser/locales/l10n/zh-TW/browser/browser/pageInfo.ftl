@@ -1,21 +1,25 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
 page-info-window =
     .style = width: 600px; min-height: 500px;
+
 copy =
     .key = C
 menu-copy =
     .label = 複製
     .accesskey = C
+
 select-all =
     .key = A
 menu-select-all =
     .label = 全選
     .accesskey = A
+
 close-dialog =
     .key = w
+
 general-tab =
     .label = 一般
     .accesskey = G
@@ -39,6 +43,7 @@ general-meta-name =
     .label = 名稱
 general-meta-content =
     .label = 內容
+
 media-tab =
     .label = 媒體
     .accesskey = M
@@ -66,11 +71,13 @@ media-save-as =
 media-save-image-as =
     .label = 另存新檔…
     .accesskey = e
+
 perm-tab =
     .label = 權限
     .accesskey = P
 permissions-for =
     .value = 此網站權限設定:
+
 security-tab =
     .label = 安全
     .accesskey = S
@@ -91,17 +98,22 @@ security-view-identity-validity =
     .value = 到期於:
 security-view-privacy =
     .value = 隱私權及瀏覽記錄
+
 security-view-privacy-history-value = 我以前瀏覽過這個網站嗎？
 security-view-privacy-sitedata-value = 此網站有在我的電腦中儲存資訊嗎？
+
 security-view-privacy-clearsitedata =
     .label = 清除 Cookie 與網站資料
     .accesskey = C
+
 security-view-privacy-passwords-value = 我有在此網站儲存任何密碼嗎？
+
 security-view-privacy-viewpasswords =
     .label = 檢視已存密碼
     .accesskey = w
 security-view-technical =
     .value = 技術細節
+
 help-button =
     .label = 說明
 
@@ -113,8 +125,12 @@ help-button =
 
 security-site-data-cookies = 有，Cookie 及 { $value } { $unit } 的網站資料
 security-site-data-only = 有，{ $value } { $unit } 的網站資料
+
 security-site-data-cookies-only = 有，僅 Cookie
 security-site-data-no = 無
+
+##
+
 image-size-unknown = 未知
 page-info-not-specified =
     .value = 未指定
@@ -133,6 +149,7 @@ media-video = 視訊
 media-audio = 音訊
 saved-passwords-yes = 是
 saved-passwords-no = 否
+
 no-page-title =
     .value = 未命名頁面:
 general-quirks-mode =
@@ -147,6 +164,7 @@ media-unknown-not-cached =
 permissions-use-default =
     .label = 使用預設值
 security-no-visits = 否
+
 # This string is used to display the number of meta tags
 # in the General Tab
 # Variables:
@@ -156,6 +174,7 @@ general-meta-tags =
         { $tags ->
            *[other] Meta（{ $tags } 個標籤）
         }
+
 # This string is used to display the number of times
 # the user has visited the website prior
 # Variables:
@@ -166,6 +185,7 @@ security-visits-number =
         [one] 有，1 次
        *[other] 有，{ $visits } 次
     }
+
 # This string is used to display the size of a media file
 # Variables:
 #   $kb (number) - The size of an image in Kilobytes
@@ -175,6 +195,7 @@ properties-general-size =
         { $bytes ->
            *[other] { $kb } KB（{ $bytes } 位元組）
         }
+
 # This string is used to display the type and number
 # of frames of a animated image
 # Variables:
@@ -185,12 +206,14 @@ media-animated-image-type =
         { $frames ->
            *[other] { $type } 圖片（動畫，{ $frames } 個畫格）
         }
+
 # This string is used to display the type of
 # an image
 # Variables:
 #   $type (string) - The type of an image
 media-image-type =
     .value = { $type } 圖片
+
 # This string is used to display the size of a scaled image
 # in both scaled and unscaled pixels
 # Variables:
@@ -200,17 +223,20 @@ media-image-type =
 #   $scaledy (number) - The scaled vertical size of an image
 media-dimensions-scaled =
     .value = { $dimx }px × { $dimy }px（縮放為 { $scaledx }px × { $scaledy }px）
+
 # This string is used to display the size of an image in pixels
 # Variables:
 #   $dimx (number) - The horizontal size of an image
 #   $dimy (number) - The vertical size of an image
 media-dimensions =
     .value = { $dimx }px × { $dimy }px
+
 # This string is used to display the size of a media
 # file in kilobytes
 # Variables:
 #   $size (number) - The size of the media file in kilobytes
 media-file-size = { $size } KB
+
 # This string is used to display the website name next to the
 # "Block Images" checkbox in the media tab
 # Variables:
@@ -218,6 +244,7 @@ media-file-size = { $size } KB
 media-block-image =
     .label = 封鎖來自 { $website } 的圖片
     .accesskey = B
+
 # This string is used to display the URL of the website on top of the
 # pageInfo dialog box
 # Variables:

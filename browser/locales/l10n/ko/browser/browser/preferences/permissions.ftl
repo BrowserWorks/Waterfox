@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = 예외 사이트
     .style = width: 36em
+
 permissions-close-key =
     .key = w
+
 permissions-address = 웹 사이트 주소
     .accesskey = d
+
 permissions-block =
     .label = 차단
     .accesskey = B
+
 permissions-session =
     .label = 세션 허용
     .accesskey = S
+
 permissions-allow =
     .label = 허용
     .accesskey = A
+
 permissions-button-off =
     .label = 끄기
     .accesskey = O
+
 permissions-button-off-temporarily =
     .label = 일시적으로 끄기
     .accesskey = T
+
 permissions-site-name =
     .label = 웹 사이트
+
 permissions-status =
     .label = 상태
+
 permissions-remove =
     .label = 웹 사이트 삭제
     .accesskey = R
+
 permissions-remove-all =
     .label = 모든 웹 사이트 삭제
     .accesskey = e
-permissions-button-cancel =
-    .label = 취소
-    .accesskey = C
-permissions-button-ok =
-    .label = 변경 내용 저장
-    .accesskey = S
+
 permission-dialog =
     .buttonlabelaccept = 변경 내용 저장
     .buttonaccesskeyaccept = S
+
 permissions-autoplay-menu = 모든 웹 사이트의 기본값:
+
 permissions-searchbox =
     .placeholder = 웹 사이트 검색
+
 permissions-capabilities-autoplay-allow =
     .label = 오디오 및 비디오 허용
 permissions-capabilities-autoplay-block =
     .label = 오디오 차단
 permissions-capabilities-autoplay-blockall =
     .label = 오디오 및 비디오 차단
+
 permissions-capabilities-allow =
     .label = 허용
 permissions-capabilities-block =
     .label = 차단
 permissions-capabilities-prompt =
     .label = 항상 물어보기
+
 permissions-capabilities-listitem-allow =
     .value = 허용
 permissions-capabilities-listitem-block =
     .value = 차단
 permissions-capabilities-listitem-allow-session =
     .value = 세션 허용
+
 permissions-capabilities-listitem-off =
     .value = 끄기
 permissions-capabilities-listitem-off-temporarily =

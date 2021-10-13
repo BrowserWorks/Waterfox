@@ -8,7 +8,7 @@
 
 #define personal_toolbarfolder 个人工具栏文件夹
 
-#define seamonkey_and_mozilla SeaMonkey 与 Mozilla
+#define seamonkey_and_mozilla SeaMonkey 与 Waterfox
 
 # LOCALIZATION NOTE (seamonkey):
 # link title for https://www.seamonkey-project.org/ (in the personal toolbar)
@@ -24,15 +24,15 @@
 
 # LOCALIZATION NOTE (mozilla_org_long):
 # link title for https://www.mozilla.org/ (in normal bookmarks)
-#define mozilla_org_long Mozilla 组织
+#define mozilla_org_long Waterfox 组织
 
 # LOCALIZATION NOTE (mozilla_projects):
 # link title for http://www.mozilla.org/projects/
-#define mozilla_projects Mozilla 项目
+#define mozilla_projects Waterfox 项目
 
 # LOCALIZATION NOTE (mozilla_about):
 # link title for http://www.mozilla.org/about/
-#define mozilla_about 关于 Mozilla
+#define mozilla_about 关于 Waterfox
 
 #define extend_seamonkey 扩展 SeaMonkey
 

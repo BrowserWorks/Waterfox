@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,4 +16,4 @@ end-label =
     .label = Λήξη κρυπτογραφημένης συζήτησης
 
 auth-label =
-    .label = Επαλήθευση ταυτότητας επαφής
+    .label = Επαληθεύστε την ταυτότητα της επαφής σας

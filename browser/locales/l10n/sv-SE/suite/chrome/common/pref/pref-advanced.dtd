@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Avancerat">
 
-<!ENTITY systemPref.caption               "Systeminställningar">
-<!ENTITY systemPrefCheck.label            "Använd inställningar från systemet">
-<!ENTITY systemPrefCheck.accesskey        "ä">
-<!ENTITY systemPref.desc                  "Med detta valalternativ tar &brandShortName; över inställningar från systemet. Dessa systeminställningar kommer att åsidosätta &brandShortName;s inställningar.">
-
 <!ENTITY prefCheckDefault.caption         "Systemintegrering">
 <!ENTITY prefCheckDefaultClient.label     "Kontrollera inställningar för förvalda program vid uppstart">
 <!ENTITY prefCheckDefaultClient.accesskey "K">
+
+<!ENTITY defaultClientFor.description     "Gör &brandShortName; standardapplikationen för:">
+<!ENTITY setDefaultBrowser.label          "Webbläsare">
+<!ENTITY setDefaultBrowser.accesskey      "W">
+<!ENTITY setDefaultMail.label             "E-post">
+<!ENTITY setDefaultMail.accesskey         "E">
+<!ENTITY setDefaultNews.label             "Nyheter">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "RSS-kanaler">
+<!ENTITY setDefaultFeed.accesskey         "R">
+<!ENTITY useInternalSettings.description  "Använd &brandShortName; E-post &amp; Grupper när webbläsaren öppnar länkar för:">
+<!ENTITY useInternalMail.label            "E-post (mailto:)">
+<!ENTITY useInternalMail.accesskey        "p">
+<!ENTITY useInternalNews.label            "Grupper (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "G">
 
 <!ENTITY printing.label                   "Utskrift">
 <!ENTITY useNativePrintDialog.label       "Använd systemets utskriftsdialog (där det stöds)">

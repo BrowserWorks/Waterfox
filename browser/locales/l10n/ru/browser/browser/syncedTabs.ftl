@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Хотите увидеть здесь 
 synced-tabs-sidebar-intro = Просмотрите список вкладок с других устройств.
 synced-tabs-sidebar-unverified = Ваш аккаунт должен быть подтверждён.
 synced-tabs-sidebar-notabs = Нет открытых вкладок
-synced-tabs-sidebar-openprefs = Открыть настройки { -sync-brand-short-name(case: "genitive") }
 synced-tabs-sidebar-open-settings = Открыть настройки синхронизации
 synced-tabs-sidebar-tabsnotsyncing = Включите синхронизацию вкладок, чтобы увидеть список вкладок с других устройств.
 synced-tabs-sidebar-connect-another-device = Подключить другое устройство
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Синхронизировать
     .accesskey = х
-fxa-sign-in = Войти в { -sync-brand-short-name(case: "accusative") }
-turn-on-sync = Включить { -sync-brand-short-name(case: "accusative") }
 synced-tabs-fxa-sign-in = Войти в синхронизацию
 synced-tabs-turn-on-sync = Включить синхронизацию

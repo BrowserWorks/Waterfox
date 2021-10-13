@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -16,3 +16,11 @@ opensearch-error-download-title = Errore download
 opensearch-error-download-desc = Non è stato possibile scaricare il plugin di ricerca da: { $location-url }
 
 ##
+
+searchbar-submit =
+    .tooltiptext = Avvia ricerca
+# This string is displayed in the search box when the input field is empty
+searchbar-input =
+    .placeholder = Cerca
+searchbar-icon =
+    .tooltiptext = Cerca

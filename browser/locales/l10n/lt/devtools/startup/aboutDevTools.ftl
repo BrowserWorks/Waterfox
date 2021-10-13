@@ -1,30 +1,33 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Apie saityno kūrėjų priemones
 enable-title = Įjungti saityno kūrėjų priemones
-enable-inspect-element-title = Įjunkite „Firefox“ saityno kūrėjų priemones, norėdami naudotis elementų tyrikliu
+enable-inspect-element-title = Įjunkite „Waterfox“ saityno kūrėjų priemones, norėdami naudotis elementų tyrikliu
 enable-inspect-element-message = Peržiūrėkite ir redaguokite HTML bei CSS su saityno kūrėjų priemonių tyrikliu
-enable-about-debugging-message = Programuokite ir derinkite „WebExtensions“, saityno scenarijus, aptarnavimo scenarijus, ir daugiau su „Firefox“ saityno kūrėjų priemonėmis.
+enable-about-debugging-message = Programuokite ir derinkite „WebExtensions“, saityno scenarijus, aptarnavimo scenarijus, ir daugiau su „Waterfox“ saityno kūrėjų priemonėmis.
 enable-key-shortcut-message = Jūs paspaudėte saityno kūrėjų priemonių spartųjį klavišą. Jeigu tai buvo klaida, galite šią kortelę užverti.
 enable-menu-message = Ištobulinkite savo svetainės HTML, CSS ir „JavaScript“ su tyriklio ir derintuvės įrankiais.
-enable-common-message = Įprastai „Firefox“ saityno kūrėjų įrankiai yra išjungti, norint suteikti jums daugiau pasirinkimo, kaip veikia jūsų naršyklė.
+enable-common-message = Įprastai „Waterfox“ saityno kūrėjų įrankiai yra išjungti, norint suteikti jums daugiau pasirinkimo, kaip veikia jūsų naršyklė.
 enable-learn-more-link = Sužinokite apie saityno kūrėjų priemones
 enable-enable-button = Įjungti saityno kūrėjų priemones
 enable-close-button = Užverti šią kortelę
-welcome-title = Sveiki! Čia – „Firefox“ saityno kūrėjų priemonės.
+
+welcome-title = Sveiki! Čia – „Waterfox“ saityno kūrėjų priemonės.
 newsletter-title = „Mozillos“ programuotojų naujienlaiškis
 newsletter-message = Gaukite programuotojams skirtas naujienas, patarimus ir kitą naudingą informaciją tiesiai į savo el. pašto dėžutę.
 newsletter-email-placeholder =
     .placeholder = El. paštas
-newsletter-privacy-label = Sutinku, kad „Mozilla“ tvarkytų mano duomenis kaip paaiškinta šiuose <a data-l10n-name="privacy-policy">Privatumo nuostatuose</a>.
+newsletter-privacy-label = Sutinku, kad „Waterfox“ tvarkytų mano duomenis kaip paaiškinta šiuose <a data-l10n-name="privacy-policy">Privatumo nuostatuose</a>.
 newsletter-subscribe-button = Prenumeruoti
 newsletter-thanks-title = Ačiū!
 newsletter-thanks-message = Jei nesate anksčiau patvirtinę kurio nors „Mozillos“ naujienlaiškio prenumeratos, turbūt turėsite tai padaryti dabar. Dėl visa ko patikrinkite ir savo brukalo aplanką – galbūt mūsų laiškas netyčia atsidurs jame.
+
 footer-title = Waterfox Developer Edition
-footer-message = Neužtenka saityno kūrėjo priemonių? Išbandykite „Firefox“ naršyklę, kuri sukurta būtent programuotojams bei moderniems darbams.
+footer-message = Neužtenka saityno kūrėjo priemonių? Išbandykite „Waterfox“ naršyklę, kuri sukurta būtent programuotojams bei moderniems darbams.
 footer-learn-more-link = Sužinoti daugiau
+
 features-learn-more = Sužinoti daugiau
 features-inspector-title = Tyriklis
 features-inspector-desc = Tirkite ir tobulinkite kodą, kad visi tinklalapiai atrodytų tobulai. <a data-l10n-name="learn-more">{ features-learn-more }</a>

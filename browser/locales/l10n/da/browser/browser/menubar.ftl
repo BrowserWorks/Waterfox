@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -38,16 +38,20 @@ menu-quit =
             [windows] A
            *[other] A
         }
+
 # This menu-quit-mac string is only used on macOS.
 menu-quit-mac =
     .label = Afslut { -brand-shorter-name }
+
 # This menu-quit-button string is only used on Linux.
 menu-quit-button =
     .label = { menu-quit.label }
+
 # This menu-quit-button-win string is only used on Windows.
 menu-quit-button-win =
     .label = { menu-quit.label }
     .tooltip = Afslut { -brand-shorter-name }
+
 menu-about =
     .label = Om { -brand-shorter-name }
     .accesskey = O
@@ -71,7 +75,7 @@ menu-file-new-private-window =
     .accesskey = p
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = Åbn…
 menu-file-open-file =
@@ -89,6 +93,9 @@ menu-file-save-page =
 menu-file-email-link =
     .label = Send link…
     .accesskey = l
+menu-file-share-url =
+    .label = Del
+    .accesskey = D
 menu-file-print-setup =
     .label = Sideopsætning…
     .accesskey = S
@@ -110,9 +117,6 @@ menu-file-go-offline =
 menu-edit =
     .label = Rediger
     .accesskey = R
-menu-edit-find-on =
-    .label = Find på denne side…
-    .accesskey = d
 menu-edit-find-in-page =
     .label = Find på side…
     .accesskey = d
@@ -131,9 +135,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = Værktøjslinjer
     .accesskey = V
-menu-view-customize-toolbar =
-    .label = Tilpas…
-    .accesskey = p
 menu-view-customize-toolbar2 =
     .label = Tilpas værktøjslinje…
     .accesskey = T
@@ -170,9 +171,9 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = Basissidestil
     .accesskey = B
-menu-view-charset =
-    .label = Tegnkodning
-    .accesskey = T
+menu-view-repair-text-encoding =
+    .label = Reparer tegnkodning
+    .accesskey = t
 
 ## These should match what Safari and other Apple applications
 ## use on macOS.
@@ -223,10 +224,8 @@ menu-history-reopen-all-windows = Genåbn alle vinduer
 menu-bookmarks-menu =
     .label = Bogmærker
     .accesskey = B
-menu-bookmarks-show-all =
-    .label = Vis alle bogmærker
-menu-bookmark-this-page =
-    .label = Bogmærk denne side
+menu-bookmarks-manage =
+    .label = Håndter bogmærker
 menu-bookmark-current-tab =
     .label = Bogmærk dette faneblad
 menu-bookmark-edit =
@@ -248,21 +247,12 @@ menu-tools =
 menu-tools-downloads =
     .label = Filhentning
     .accesskey = F
-menu-tools-addons =
-    .label = Tilføjelser
-    .accesskey = t
-menu-tools-fxa-sign-in =
-    .label = Log ind på { -brand-product-name }…
-    .accesskey = g
 menu-tools-addons-and-themes =
     .label = Tilføjelser og temaer
     .accesskey = T
 menu-tools-fxa-sign-in2 =
     .label = Log ind
     .accesskey = L
-menu-tools-turn-on-sync =
-    .label = Aktiver { -sync-brand-short-name }…
-    .accesskey = A
 menu-tools-turn-on-sync2 =
     .label = Slå synkronisering til
     .accesskey = S
@@ -272,9 +262,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = Genopret forbindelse til { -brand-product-name }…
     .accesskey = G
-menu-tools-web-developer =
-    .label = Webudvikler
-    .accesskey = W
 menu-tools-browser-tools =
     .label = Browser-værktøj
     .accesskey = B
@@ -293,17 +280,6 @@ menu-settings =
         { PLATFORM() ->
             [windows] I
            *[other] t
-        }
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Indstillinger
-           *[other] Indstillinger
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] I
-           *[other] I
         }
 menu-tools-layout-debugger =
     .label = Layout-debugger
@@ -330,26 +306,9 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = Hjælp
     .accesskey = H
-menu-help-product =
-    .label = Hjælp til { -brand-shorter-name }
-    .accesskey = H
-menu-help-show-tour =
-    .label = Rundvisning i { -brand-shorter-name }
-    .accesskey = R
-menu-help-import-from-another-browser =
-    .label = Importer fra en anden browser…
-    .accesskey = I
-menu-help-keyboard-shortcuts =
-    .label = Tastaturgenveje
-    .accesskey = u
 menu-get-help =
     .label = Få hjælp
     .accesskey = h
-menu-help-troubleshooting-info =
-    .label = Teknisk information…
-    .accesskey = T
-menu-help-taskmanager =
-    .label = Jobliste
 menu-help-more-troubleshooting-info =
     .label = Mere teknisk information
     .accesskey = t
@@ -358,12 +317,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = Indsend feedback…
     .accesskey = n
-menu-help-safe-mode-without-addons =
-    .label = Genstart med tilføjelser deaktiveret…
-    .accesskey = G
-menu-help-safe-mode-with-addons =
-    .label = Genstart med tilføjelser aktiveret
-    .accesskey = G
 menu-help-enter-troubleshoot-mode2 =
     .label = Fejlsøgnings-tilstand…
     .accesskey = F

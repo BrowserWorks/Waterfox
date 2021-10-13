@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,6 +17,8 @@ policy-AppUpdateURL = アプリケーションのカスタム更新 URL を設�
 
 policy-Authentication = ウェブサイトが対応する統合認証の設定を行います。
 
+policy-BackgroundAppUpdate2 = バックグラウンド更新を有効または無効にします。
+
 policy-BlockAboutAddons = アドオンマネージャー (about:addons) へのアクセスをブロックします。
 
 policy-BlockAboutConfig = about:config ページへのアクセスをブロックします。
@@ -30,6 +32,8 @@ policy-CaptivePortal = キャプティブポータルサポートを有効また
 policy-CertificatesDescription = 証明書を追加、または組み込みの証明書を利用します。
 
 policy-Cookies = Cookie の保存をウェブサイトに許可または拒否します。
+
+policy-DisableBuiltinPDFViewer = { -brand-short-name } 組み込みの PDF ビューアーの PDF.js を無効にします。
 
 policy-DisabledCiphers = 暗号を無効にします。
 
@@ -84,6 +88,8 @@ policy-ExtensionSettings = 拡張機能のインストール全般を管理し�
 
 policy-ExtensionUpdate = 拡張機能の自動更新を有効または無効にします。
 
+policy-Handlers = 既定のアプリケーションハンドラーを設定します。
+
 policy-HardwareAcceleration = false の場合、ハードウェアアクセラレーションをオフにします。
 
 policy-InstallAddonsPermission = 特定のウェブサイトにアドオンのインストールを許可します。
@@ -99,6 +105,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = 特定のサイトで�
 ##
 
 policy-LocalFileLinks = 特定のウェブサイトにローカルファイルへのリンクを許可します。
+
+policy-ManualAppUpdateOnly = 更新を手動のみにし、ユーザーに更新を通知しないようにします。
 
 policy-NetworkPrediction = 先読み機能 (DNS プリフェッチ) を有効または無効にします。
 
@@ -119,6 +127,8 @@ policy-Permissions2 = カメラ、マイク、位置情報、通知、自動再�
 
 policy-Preferences = 設定のサブセットに対する値を設定してロックします。
 
+policy-PrimaryPassword = マスターパスワードの使用を要求または抑止します。
+
 policy-PromptForDownloadLocation = ダウンロード時にファイルの保存先を確認します。
 
 policy-Proxy = プロキシーの設定を指示します。
@@ -131,7 +141,7 @@ policy-SearchEngines = 検索エンジンの設定を指示します。このポ
 
 policy-SearchSuggestEnabled = 検索候補の表示機能を有効または無効にします。
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = PKCS #11 モジュールをインストールします。
 
 policy-SSLVersionMax = SSL の最高バージョンを設定します。

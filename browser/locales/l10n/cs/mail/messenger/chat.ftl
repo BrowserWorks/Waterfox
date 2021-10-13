@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -14,3 +14,11 @@ chat-participant-moderator-role-icon2 =
     .alt = Moderátor
 chat-participant-voiced-role-icon2 =
     .alt = Účastník může psát zprávy
+chat-verify-identity =
+    .label = Ověření identity
+    .accesskey = i
+chat-identity-verified =
+    .label = Identita už byla ověřena
+chat-buddy-identity-status = Důvěra šifrování
+chat-buddy-identity-status-verified = Ověřeno
+chat-buddy-identity-status-unverified = Neověřeno

@@ -1,11 +1,11 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Window title -->
 <!ENTITY windowTitle.label "Χρώματα και φόντο σελίδας">
 <!ENTITY pageColors.label "Χρώματα σελίδας">
-<!ENTITY defaultColorsRadio.label "Προεπιλεγμένα χρώματα">
+<!ENTITY defaultColorsRadio.label "Προεπιλεγμένα χρώματα αναγνώστη (Χωρίς ορισμό χρωμάτων στη σελίδα)">
 <!ENTITY defaultColorsRadio.accessKey "γ">
 <!ENTITY defaultColorsRadio.tooltip "Χρήση των ρυθμίσεων χρώματος από το περιηγητή του αναγνώστη μόνο">
 <!ENTITY customColorsRadio.label "Χρήση προσαρμοσμένων χρωμάτων:">

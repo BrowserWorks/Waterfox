@@ -1,6 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!ENTITY pref.formatting.title "Options d’expédition">
 <!ENTITY sendMaildesc.label "Lors de l’expédition d’un courrier en HTML à un destinataire ne figurant pas dans la liste de ceux pouvant recevoir du HTML :">
 <!ENTITY askMe.label "Me demander de choisir">

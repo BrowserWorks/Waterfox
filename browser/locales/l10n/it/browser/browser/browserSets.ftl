@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -78,7 +78,7 @@ page-source-shortcut =
 
 # This should match the Option+Command keyboard shortcut letter that Safari
 # and Chrome use for "View Source" on macOS. `page-source-shortcut` above
-# is Firefox's official keyboard shortcut shown in the GUI.
+# is Waterfox's official keyboard shortcut shown in the GUI.
 # Safari variant is an alias provided for the convenience of Safari and Chrome
 # users on macOS. See bug 1398988.
 page-source-shortcut-safari =
@@ -145,16 +145,6 @@ picture-in-picture-toggle-shortcut-alt =
 bookmark-this-page-shortcut =
     .key = d
 
-# Verify what shortcut for that operation
-# are recommended by the Human Interface Guidelines
-# of each platform for your locale.
-bookmark-show-all-shortcut =
-    .key =
-        { PLATFORM() ->
-            [linux] o
-           *[other] b
-        }
-
 bookmark-show-library-shortcut =
     .key = o
 
@@ -176,12 +166,6 @@ bookmark-show-toolbar-shortcut =
 
 full-zoom-reduce-shortcut =
     .key = -
-
-# If in keyboard layouts popular for your locale you need to use the shift key
-# to access the original shortcuts, the following shortcuts can be used.
-# Otherwise their values should remain empty.
-full-zoom-reduce-shortcut-alt =
-    .key = { "" }
 
 full-zoom-reduce-shortcut-alt-a =
     .key = _

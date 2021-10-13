@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Độ an toàn mật khẩu
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Thay đổi mật khẩu chính
 
 change-device-password-window =
     .title = Thay đổi mật khẩu
@@ -20,10 +17,6 @@ change-password-new = Mật khẩu mới:
 change-password-reenter = Mật khẩu mới (nhập lại):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Đặt lại mật khẩu chính
-    .style = width: 40em
 
 pippki-failed-pw-change = Không thể thay đổi mật khẩu.
 pippki-incorrect-pw = Bạn đã không nhập đúng mật khẩu hiện tại. Vui lòng thử lại.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Đặt lại
-reset-password-text = Nếu bạn đặt lại mật khẩu chính, toàn bộ các mật khẩu web, email, dữ liệu biểu mẫu, chứng chỉ và khóa cá nhân đã lưu sẽ bị xóa. Bạn có chắc muốn xóa mật khẩu chính của mình không?
 
 reset-primary-password-text = Nếu bạn đặt lại mật khẩu chính, toàn bộ các mật khẩu web, email, dữ liệu biểu mẫu, chứng chỉ và khóa cá nhân đã lưu sẽ bị xóa. Bạn có chắc muốn đặt lại mật khẩu chính của mình không?
 

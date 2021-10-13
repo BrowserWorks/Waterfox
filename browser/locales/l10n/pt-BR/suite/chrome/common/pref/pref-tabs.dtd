@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,19 +9,16 @@
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "Carregar links em primeiro plano">
 <!ENTITY background.accesskey "s">
+<!ENTITY diverted.label "Mudar para novas abas abertas a partir de links desviados">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "Mudar o foco para a janela do navegador ao abrir links em abas a partir de outros programas">
+<!ENTITY browserFocus.accesskey "f">
 <!ENTITY warnOnClose.label "Alertar ao fechar uma janela com várias abas">
 <!ENTITY warnOnClose.accesskey "A">
 <!ENTITY relatedAfterCurrent.label "Abrir abas relacionadas após a aba atual">
 <!ENTITY relatedAfterCurrent.accesskey "o">
 
-<!ENTITY loadGroup.label "Ao abrir um grupo de marcadores">
-<!ENTITY loadGroupAppend.label "Adicionar abas">
-<!ENTITY loadGroupAppend.accesskey "A">
-<!ENTITY loadGroupReplace.label "Substituir as abas existentes">
-<!ENTITY loadGroupReplace.accesskey "S">
-
 <!ENTITY openTabs.label "Abrir em nova aba quando">
-
 <!ENTITY middleClick.label "Clique com o botão do meio, Ctrl+clique ou Ctrl+Enter em links em uma página web">
 <!ENTITY middleClick.accesskey "m">
 <!ENTITY middleClickMac.label "Clique com o botão do meio, &#8984;+clique ou &#8984;+Return em links em uma página web">

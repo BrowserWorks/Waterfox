@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Vil du sjå faner frå dei andre eining
 synced-tabs-sidebar-intro = Vis ei liste over faner frå andre einingar.
 synced-tabs-sidebar-unverified = Kontoen din må stadfestast.
 synced-tabs-sidebar-notabs = Ingen opne faner
-synced-tabs-sidebar-openprefs = Opne innstillingar for { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Opne synkroniseringsinnstillingar
 synced-tabs-sidebar-tabsnotsyncing = Slå på fane-sync for å vise ei liste over faner frå dei andre einingane dine.
 synced-tabs-sidebar-connect-another-device = Kople til ei anna eining
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Synkroniser no
     .accesskey = S
-fxa-sign-in = Logg inn på { -sync-brand-short-name }
-turn-on-sync = Slå på { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Logg inn for å synkronisere
 synced-tabs-turn-on-sync = Slå på synkronisering

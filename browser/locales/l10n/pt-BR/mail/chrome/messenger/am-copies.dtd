@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -18,7 +18,7 @@
 <!ENTITY bccAddress.label "Cco para esses endereços:">
 <!ENTITY bccAddress.accesskey "C">
 <!ENTITY bccAddressList.placeholder "Separe endereços com vírgulas">
-<!ENTITY saveMessageDlg.label "Mostrar caixa de diálogo de confirmação quando salvar mensagens">
+<!ENTITY saveMessageDlg.label "Mostrar diálogo de confirmação ao salvar mensagens">
 <!ENTITY saveMessageDlg.accesskey "N">
 <!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
 <!ENTITY sentFolderOn.label "Pasta &quot;Enviados&quot; em:">

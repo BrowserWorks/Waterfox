@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -13,15 +13,10 @@ crashed-multiple-offer-help-message = [{ crashed-restore-tab-button }] または
 crashed-request-help = ご協力をお願いします
 crashed-request-help-message = クラッシュレポートを送信すると、問題の解決と { -brand-short-name } の改善に役立ちます。
 crashed-request-report-title = このタブを報告
-crashed-send-report = 自動化されたクラッシュレポートを送信すると、このような問題の解決に役立てられます。
 crashed-send-report-2 = 自動化されたクラッシュレポートを送信すると、このような問題の解決に役立てられます
 crashed-comment =
     .placeholder = コメントを追記 (公開されます)
-crashed-include-URL = { -brand-short-name } のクラッシュ時に表示していたサイトの URL を含める
-crashed-email-placeholder = メールアドレスを記入してください
-crashed-email-me = 新着情報があったらメールを送信する
 crashed-include-URL-2 = { -brand-short-name } のクラッシュ時に表示していたサイトの URL を含める
 crashed-report-sent = クラッシュレポートを送信しました。{ -brand-short-name } の改善に役立てます。
 crashed-request-auto-submit-title = 他のタブも報告
-crashed-auto-submit-checkbox = 設定を変更すると、{ -brand-short-name } のクラッシュ時にレポートが自動的に送信されます。
 crashed-auto-submit-checkbox-2 = 設定を変更すると、{ -brand-short-name } のクラッシュ時にレポートが自動的に送信されます

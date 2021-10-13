@@ -1,6 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+
+##
+## Localization for remote types defined in RemoteType.h
+##
 
 process-type-web = Web-indhold
 
@@ -10,7 +15,7 @@ process-type-privilegedabout = Priviligerede About-sider
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Priviligeret Mozilla-indhold
+process-type-privilegedmozilla = Priviligeret Waterfox-indhold
 
 process-type-extension = Udvidelse
 
@@ -25,6 +30,16 @@ process-type-weblargeallocation = Stor allokering
 # to improve security
 process-type-webisolated = Isoleret web-indhold
 
+# process preallocated; may change to other types
+process-type-prealloc = Forhånds-allokeret
+
+##
+## Localization for Gecko process types defined in GeckoProcessTypes.h
+##
+
+process-type-default = Primær
+process-type-tab = Faneblad
+
 # process used to communicate with the GPU for
 # graphics acceleration
 process-type-gpu = GPU
@@ -32,5 +47,12 @@ process-type-gpu = GPU
 # process used to perform network operations
 process-type-socket = Socket
 
-# process preallocated; may change to other types
-process-type-prealloc = Forhånds-allokeret
+# process used to decode media
+process-type-rdd = RDD
+
+##
+## Other
+##
+
+# fallback
+process-type-unknown = Ukendt

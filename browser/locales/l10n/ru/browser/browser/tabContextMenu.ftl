@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Добавить вкладку в закладки
     .accesskey = а
-reopen-in-container =
-    .label = Переоткрыть в контейнере
-    .accesskey = й
 tab-context-open-in-new-container-tab =
     .label = Открыть в новой вкладке в контейнере
     .accesskey = к
@@ -69,27 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Закрыть несколько вкладок
     .accesskey = ы
-tab-context-undo-close-tabs =
-    .label =
-        Восстановить { $tabCount ->
-            [1] закрытую вкладку
-            [one] { $tabCount } закрытую вкладку
-            [few] { $tabCount } закрытые вкладки
-           *[many] { $tabCount } закрытых вкладок
-        }
-    .accesskey = о
-close-tab =
-    .label = Закрыть вкладку
-    .accesskey = а
-close-tabs =
-    .label = Закрыть вкладки
-    .accesskey = ы
-move-tabs =
-    .label = Переместить вкладки
-    .accesskey = м
-move-tab =
-    .label = Переместить вкладку
-    .accesskey = м
 tab-context-share-url =
     .label = Поделиться
     .accesskey = д
@@ -117,6 +93,15 @@ tab-context-close-tabs =
            *[many] { $tabCount } вкладок
         }
     .accesskey = ь
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Закрыть вкладку
+            [one] Закрыть { $tabCount } вкладку
+            [few] Закрыть { $tabCount } вкладки
+           *[many] Закрыть { $tabCount } вкладок
+        }
+    .accesskey = ы
 tab-context-move-tabs =
     .label =
         Переместить { $tabCount ->
@@ -126,3 +111,12 @@ tab-context-move-tabs =
            *[many] { $tabCount } вкладок
         }
     .accesskey = м
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Отправить { $tabCount } вкладку на устройство
+            [few] Отправить { $tabCount } вкладки на устройство
+           *[many] Отправить { $tabCount } вкладок на устройство
+        }
+    .accesskey = п

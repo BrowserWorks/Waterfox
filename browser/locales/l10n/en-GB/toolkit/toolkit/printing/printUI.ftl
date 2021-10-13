@@ -1,10 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 printui-title = Print
 # Dialog title to prompt the user for a filename to save print to PDF.
 printui-save-to-pdf-title = Save As
+
 # Variables
 # $sheetCount (integer) - Number of paper sheets
 printui-sheets-count =
@@ -12,6 +13,7 @@ printui-sheets-count =
         [one] { $sheetCount } sheet of paper
        *[other] { $sheetCount } sheets of paper
     }
+
 printui-page-range-all = All
 printui-page-range-custom = Custom
 printui-page-range-label = Pages
@@ -20,22 +22,29 @@ printui-page-range-picker =
 printui-page-custom-range-input =
     .aria-label = Enter custom page range
     .placeholder = e.g. 2-6, 9, 12-16
+
 # Section title for the number of copies to print
 printui-copies-label = Copies
+
 printui-orientation = Orientation
 printui-landscape = Landscape
 printui-portrait = Portrait
+
 # Section title for the printer or destination device to target
 printui-destination-label = Destination
 printui-destination-pdf-label = Save to PDF
+
 printui-more-settings = More settings
 printui-less-settings = Fewer settings
+
 printui-paper-size-label = Paper size
+
 # Section title (noun) for the print scaling options
 printui-scale = Scale
 printui-scale-fit-to-page-width = Fit to page width
 # Label for input control where user can set the scale percentage
 printui-scale-pcent = Scale
+
 # Section title (noun) for the two-sided print options
 printui-two-sided-printing = Two-sided printing
 printui-two-sided-printing-off = Off
@@ -43,14 +52,31 @@ printui-two-sided-printing-off = Off
 printui-two-sided-printing-long-edge = Flip on long edge
 # Flip the sheet as if it were bound along its short edge.
 printui-two-sided-printing-short-edge = Flip on short edge
+
 # Section title for miscellaneous print options
 printui-options = Options
 printui-headers-footers-checkbox = Print headers and footers
 printui-backgrounds-checkbox = Print backgrounds
-printui-selection-checkbox = Print selection only
+
+## The "Format" section, select a version of the website to print. Radio
+## options to select between the original page, selected text only, or a version
+## where the page is processed with "Reader View".
+
+# The section title.
+printui-source-label = Format
+# Option for printing the original page.
+printui-source-radio = Original
+# Option for printing just the content a user selected prior to printing.
+printui-selection-radio = Selection
+# Option for "simplifying" the page by printing the Reader View version.
+printui-simplify-page-radio = Simplified
+
+##
+
 printui-color-mode-label = Colour mode
 printui-color-mode-color = Colour
 printui-color-mode-bw = Black and white
+
 printui-margins = Margins
 printui-margins-default = Default
 printui-margins-min = Minimum
@@ -69,17 +95,23 @@ printui-margins-custom-left-mm = Left (mm)
 printui-margins-custom-right = Right
 printui-margins-custom-right-inches = Right (inches)
 printui-margins-custom-right-mm = Right (mm)
+
 printui-system-dialog-link = Print using the system dialog…
+
 printui-primary-button = Print
 printui-primary-button-save = Save
 printui-cancel-button = Cancel
 printui-close-button = Close
+
 printui-loading = Preparing Preview
+
 # Reported by screen readers and other accessibility tools to indicate that
 # the print preview has focus.
 printui-preview-label =
     .aria-label = Print Preview
+
 printui-pages-per-sheet = Pages per sheet
+
 # This is shown next to the Print button with an indefinite loading spinner
 # when the user prints a page and it is being sent to the printer.
 printui-print-progress-indicator = Printing…
@@ -106,6 +138,7 @@ printui-paper-tabloid = Tabloid
 printui-error-invalid-scale = Scale must be a number between 10 and 200.
 printui-error-invalid-margin = Please enter a valid margin for the selected paper size.
 printui-error-invalid-copies = Copies must be a number between 1 and 10000.
+
 # Variables
 # $numPages (integer) - Number of pages
 printui-error-invalid-range = Range must be a number between 1 and { $numPages }.

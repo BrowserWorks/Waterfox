@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = 新标签页
 newtab-settings-button =
     .title = 定制您的新标签页
-newtab-personalize-button-label = 个性化
+newtab-personalize-icon-label =
     .title = 个性化标签页
     .aria-label = 个性化标签页
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = 搜索
     .aria-label = 搜索
-newtab-search-box-search-the-web-text = 在网络上搜索
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = 使用 { $engine } 搜索，或者输入网址
@@ -39,9 +38,10 @@ newtab-search-box-search-the-web-input =
     .placeholder = 在网络上搜索
     .title = 在网络上搜索
     .aria-label = 在网络上搜索
+newtab-search-box-text = 网上搜索
 newtab-search-box-input =
-    .placeholder = 在网上搜索
-    .aria-label = 在网上搜索
+    .placeholder = 网上搜索
+    .aria-label = 网上搜索
 
 ## Top Sites - General form dialog.
 
@@ -165,6 +165,11 @@ newtab-label-sponsored = { $sponsorOrSource } · 赞助
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = 由 { $sponsor } 赞助
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } 分钟
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -202,12 +207,12 @@ newtab-empty-section-highlights = 开始网上冲浪之旅吧，之后这里会�
 # Ex. When there are no more Pocket story recommendations, in the space where there would have been stories, this is shown instead.
 # Variables:
 #  $provider (String): Name of the content provider for this section, e.g "Pocket".
-newtab-empty-section-topstories = 所有文章都读完啦！晚点再来，{ $provider } 将推荐更多热门文章。等不及了？选择一个热门话题，找到更多网上的好文章。
+newtab-empty-section-topstories = 所有文章都读完啦！晚点再来，{ $provider } 将推荐更多精彩文章。等不及了？选择热门主题，找到更多网上的好文章。
 
 ## Empty Section (Content Discovery Experience). These show when there are no more stories or when some stories fail to load.
 
 newtab-discovery-empty-section-topstories-header = 都读完了！
-newtab-discovery-empty-section-topstories-content = 待会儿回来看看更多新鲜事。
+newtab-discovery-empty-section-topstories-content = 待会再来看是否有新文章。
 newtab-discovery-empty-section-topstories-try-again-button = 重试
 newtab-discovery-empty-section-topstories-loading = 正在载入…
 # Displays when a layout in a section took too long to fetch articles.
@@ -217,10 +222,25 @@ newtab-discovery-empty-section-topstories-timed-out = 哎呀！无法完全加�
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
 newtab-pocket-read-more = 热门主题：
+newtab-pocket-new-topics-title = 想刷到更多文章？看看这些 { -pocket-brand-name } 上的热门主题
 newtab-pocket-more-recommendations = 更多推荐
 newtab-pocket-learn-more = 详细了解
 newtab-pocket-cta-button = 获取 { -pocket-brand-name }
 newtab-pocket-cta-text = 将您喜爱的故事保存到 { -pocket-brand-name }，用精彩的读物为思想注入活力。
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name } 是 { -brand-product-name } 系列产品的一部分
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = 保存到 { -pocket-brand-name }
+newtab-pocket-saved-to-pocket = 已保存到 { -pocket-brand-name }
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = 加载更多文章
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = 都读完了！
+newtab-pocket-last-card-desc = 待会再来看是否有新文章。
+newtab-pocket-last-card-image =
+    .alt = 都读完了
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -243,10 +263,4 @@ newtab-custom-pocket-sponsored = 赞助内容
 newtab-custom-recent-title = 近期动态
 newtab-custom-recent-subtitle = 近期访问的网站与内容精选
 newtab-custom-close-button = 关闭
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = 只言片语
-newtab-custom-snippets-subtitle = 来自 { -vendor-short-name } 和 { -brand-product-name } 的使用窍门与快讯
 newtab-custom-settings = 管理更多设置

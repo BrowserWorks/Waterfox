@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -78,7 +78,7 @@ language-name-hy = 亚美尼亚语
 language-name-hz = 赫雷罗语
 language-name-ia = 国际语
 language-name-id = 印度尼西亚语
-language-name-ie = 国际语E
+language-name-ie = 国际语 E
 language-name-ig = 伊博语
 language-name-ii = 四川彝语
 language-name-ik = 伊努皮克语

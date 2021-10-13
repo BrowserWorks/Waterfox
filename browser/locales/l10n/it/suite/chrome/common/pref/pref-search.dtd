@@ -1,16 +1,21 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
 
 <!ENTITY pref.search.title "Ricerche in Internet">
 <!ENTITY legendHeader "Motore di ricerca predefinito">
 <!ENTITY defaultSearchEngine.label "Cerca usando:">
 <!ENTITY defaultSearchEngine.accesskey "C">
+
 <!ENTITY engineManager.label "Gestione motori di ricerca…">
+
 <!ENTITY searchResults.label "Risultati della ricerca">
+
 <!ENTITY openInTab.label "Apri nuove schede per i risultati della ricerca della Barra laterale">
 <!ENTITY openInTab.accesskey "n">
 <!ENTITY openContextSearchTab.label "Apri una scheda invece di una finestra per una ricerca sul web tramite menu contestuale">
 <!ENTITY openContextSearchTab.accesskey "s">
-<!ENTITY openSidebarSearchPanel.label "Apri la scheda Ricerca nella Barra laterale quando si avvia una ricerca">
-<!ENTITY openSidebarSearchPanel.accesskey "R">

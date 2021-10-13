@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -95,8 +95,8 @@ perftools-thread-img-decoder =
     .title = Bildavkodningstrådar
 perftools-thread-dns-resolver =
     .title = DNS-upplösning sker på den här tråden
-perftools-thread-js-helper =
-    .title = JS-motorns bakgrundsarbete som kompileringar utanför huvudtråden
+perftools-thread-task-controller =
+    .title = TaskController trådpoolstrådar
 
 ##
 
@@ -108,9 +108,30 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox profilerare
 perftools-onboarding-message = <b>Nytt</b>: { -profiler-brand-name } är nu integrerad i utvecklarverktyg. <a>Läs mer</a> om det här kraftfulla nya verktyget.
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Under en begränsad tid kan du komma åt den ursprungliga Prestanda-panelen via <a>{ options-context-advanced-settings }</a>)
 perftools-onboarding-close-button =
     .aria-label = Stäng meddelandet
+
+## Profiler presets
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# The same labels and descriptions are also defined in appmenu.ftl.
+
+perftools-presets-web-developer-label = Webbutvecklare
+perftools-presets-web-developer-description = Rekommenderad förinställning för de flesta webbappfelsökningar, med lite pålägg.
+perftools-presets-firefox-platform-label = Waterfox - Plattform
+perftools-presets-firefox-platform-description = Rekommenderad förinställning för intern felsökning av plattformar i Waterfox.
+perftools-presets-firefox-front-end-label = Waterfox - Front-End
+perftools-presets-firefox-front-end-description = Rekommenderad förinställning för intern felsökning av front-end i Waterfox.
+perftools-presets-firefox-graphics-label = Waterfox - Grafik
+perftools-presets-firefox-graphics-description = Rekommenderad förinställning för utredning av grafikprestanda i Waterfox.
+perftools-presets-media-label = Media
+perftools-presets-media-description = Rekommenderad förinställning för diagnos av ljud- och videoproblem.
+perftools-presets-custom-label = Anpassad
+
+##
+

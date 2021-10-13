@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -21,11 +21,6 @@ byggt på öppen källkod, och som stöder avancerad igenkänning av skräppost 
 "Nära integrerad med &brandShortName;s programsvit">
 <!ENTITY dict.title "Ordlistor">
 <!ENTITY dict_intro.label "Ordlistor används för att kontrollera stavningen i meddelandetext.">
-<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
-<!ENTITY dict_info.label
-'För många olika språk finns det  
-<a id="dictURL" href="">ordlistor</a>  
-att hämta på <a href="http://addons.mozilla.org/">Mozilla Add-ons</a>.'>
 <!ENTITY dict_info.label2
 'Många olika språk kan installeras från sektionen <a id="dictURL" href="">Ordlistor</a> på <a href="https://addons.thunderbird.net/seamonkey/"> SeaMonkey och Thunderbird-tillägg</a>.'>
 <!ENTITY info.title "Mer information">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,7 +7,7 @@
 <!ENTITY chatzilla.label       "ChatZilla">
 <!ENTITY version.unknown.label "Άγνωστη έκδοση">
 <!ENTITY version.known.label   "Έκδοση &#37;S">
-<!ENTITY description.label     "Ένα απλό στη χρήση, αλλά εξαιρετικά επεκτάσιμο πρόγραμμα IRC (Internet Relay Chat).">
+<!ENTITY description.label     "Ένας απλός στη χρήση, αλλά εξαιρετικά ευέλικτος πελάτης IRC (Internet Relay Chat).">
 
 <!ENTITY homepage.label    "Αρχική σελίδα">
 <!ENTITY copyversion.label "Αντιγραφή λεπτομερειών έκδοσης">

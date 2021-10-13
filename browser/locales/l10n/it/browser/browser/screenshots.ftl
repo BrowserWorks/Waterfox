@@ -1,13 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Cattura schermata
 screenshot-toolbarbutton =
-  .label = Cattura schermata
-  .tooltiptext = Cattura schermata
+  .label = Acquisisci schermata
+  .tooltiptext = Acquisisci schermata
 
-screenshots-my-shots-button = Le mie immagini
+screenshot-shortcut =
+  .key = S
+
 screenshots-instructions = Trascina o fai clic su una pagina per selezionare un’area della pagina. Premi ESC per annullare.
 screenshots-cancel-button = Annulla
 screenshots-save-visible-button = Salva l’area visibile
@@ -36,10 +37,8 @@ screenshots-connection-error-details = Verifica che la connessione a Internet st
 
 screenshots-login-error-details = Non è stato possibile salvare l’immagine in quanto si è verificato un problema con il servizio { -screenshots-brand-name }. Riprova più tardi.
 
-screenshots-unshootable-page-error-title = Non è possibile catturare una schermata di questa pagina.
-screenshots-unshootable-page-error-details = Non è possibile catturare una schermata in quanto non si tratta di una normale pagina web.
-
-screenshots-self-screenshot-error-title = Non è possibile catturare una schermata di una pagina di { -screenshots-brand-name }
+screenshots-unshootable-page-error-title = Non è possibile acquisire una schermata di questa pagina.
+screenshots-unshootable-page-error-details = Non è possibile acquisire una schermata in quanto non si tratta di una normale pagina web.
 
 screenshots-empty-selection-error-title = L’area selezionata è troppo piccola
 

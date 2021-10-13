@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -10,8 +10,8 @@ rights-intro-point-1 =
         [feminine] { -brand-short-name } je dostupná
         [neuter] { -brand-short-name } je dostupné
        *[other] Aplikace { -brand-short-name } je dostupná
-    } za podmínek stanovených licencí <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a> (MPL). Ta vám umožňuje aplikaci { -brand-short-name } používat, kopírovat a šířit. Pokud potřebujete, můžete také pozměnit zdrojový kód aplikace { -brand-short-name } podle vašich potřeb. MPL vám dává také právo šířit vámi pozměněné verze.
-rights-intro-point-2 = Nejsou vám však podstoupena žádná práva ani licence k ochranným známkám Mozilla Foundation, či třetích stran, a to zejména k logu a názvu Firefox. Podrobnější informace o ochranných známkách jsou dostupné <a data-l10n-name="mozilla-trademarks-link">zde</a>.
+    } za podmínek stanovených licencí <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a> (MPL). Ta vám umožňuje aplikaci { -brand-short-name } používat, kopírovat a šířit. Pokud potřebujete, můžete také pozměnit zdrojový kód aplikace { -brand-short-name } podle vašich potřeb. MPL vám dává také právo šířit vámi pozměněné verze.
+rights-intro-point-2 = Nejsou vám však podstoupena žádná práva ani licence k ochranným známkám Waterfox Foundation, či třetích stran, a to zejména k logu a názvu Waterfox. Podrobnější informace o ochranných známkách jsou dostupné <a data-l10n-name="mozilla-trademarks-link">zde</a>.
 rights-intro-point-3 =
     Některé funkce aplikace { -brand-short-name }, jako např. hlášení pádů, vám umožní odeslat zpětnou vazbu { -vendor-short-name.gender ->
         [masculine] { -vendor-short-name(case: "dat") }

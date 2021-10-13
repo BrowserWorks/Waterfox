@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -12,16 +12,20 @@
 # $hostname (String) - Hostname of the website with SSL error.
 # $errorMessage (String) - Error message corresponding to the type of error we are experiencing.
 ssl-connection-error = Při spojení s { $hostname } nastala chyba. { $errorMessage }
+
 # Variables:
 # $error (string) - NSS error code string that specifies type of cert error. e.g. unknown issuer, invalid cert, etc.
 cert-error-code-prefix = Kód chyby: { $error }
+
 psmerr-ssl-disabled = Nelze se připojit zabezpečeně, protože protokol SSL je zakázán.
 psmerr-ssl2-disabled = Nelze se připojit zabezpečeně, protože server používá starší a už nespolehlivou verzi protokolu SSL.
+
 # This is a multi-line message.
 psmerr-hostreusedissuerandserial =
     Obdrželi jste neplatný certifikát. Kontaktujte prosím správce serveru nebo odesílatele e-mailové zprávy a poskytněte mu tyto informace:
     
     Váš certifikát obsahuje stejné sériové číslo jako jiný certifikát vydaný danou certifikační autoritou. Opatřete si prosím nový certifikát obsahující unikátní sériové číslo.
+
 ssl-error-export-only-server = Bezpečná komunikace není možná. Partner nepodporuje vysoký stupeň šifrování.
 ssl-error-us-only-server = Bezpečná komunikace není možná. Partner vyžaduje vysoký stupeň šifrování, který není podporován.
 ssl-error-no-cypher-overlap = Bezpečná komunikace s partnerem není možná: Nenalezen žádný společný šifrovací algoritmus.

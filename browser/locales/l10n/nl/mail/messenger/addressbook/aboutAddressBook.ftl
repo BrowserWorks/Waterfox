@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,14 +8,16 @@ about-addressbook-title = Adresboek
 
 about-addressbook-toolbar-new-address-book =
     .label = Nieuw adresboek
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Nieuw CardDAV-adresboek
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Nieuw LDAP-adresboek
+about-addressbook-toolbar-add-carddav-address-book =
+    .label = CardDAV-adresboek toevoegen
+about-addressbook-toolbar-add-ldap-address-book =
+    .label = LDAP-adresboek toevoegen
 about-addressbook-toolbar-new-contact =
     .label = Nieuw contact
 about-addressbook-toolbar-new-list =
     .label = Nieuwe lijst
+about-addressbook-toolbar-import =
+    .label = Importeren
 
 ## Books
 
@@ -26,11 +28,18 @@ about-addressbook-books-context-synchronize =
     .label = Synchroniseren
 about-addressbook-books-context-print =
     .label = Afdrukken…
+about-addressbook-books-context-export =
+    .label = Exporteren…
 about-addressbook-books-context-delete =
     .label = Verwijderen
 about-addressbook-books-context-remove =
     .label = Verwijderen
+about-addressbook-books-context-startup-default =
+    .label = Standaard opstartmap
 about-addressbook-confirm-delete-book-title = Adresboek verwijderen
+# Variables:
+# $name (String) - Name of the address book to be deleted.
+about-addressbook-confirm-delete-book = Weet u zeker dat u { $name } en alle contacten erin wilt verwijderen?
 about-addressbook-confirm-remove-remote-book-title = Adresboek verwijderen
 # Variables:
 # $name (String) - Name of the remote address book to be removed.
@@ -60,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Sorteren op e-mailadres (A > Z)
 about-addressbook-sort-email-descending =
     .label = Sorteren op e-mailadres (Z > A)
+about-addressbook-cards-context-write =
+    .label = Opstellen
 about-addressbook-confirm-delete-mixed-title = Contacten en lijsten verwijderen
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.
@@ -121,3 +132,5 @@ about-addressbook-details-phone-numbers-header = Telefoonnummers
 about-addressbook-details-home-address-header = Adres
 about-addressbook-details-work-address-header = Werkadres
 about-addressbook-details-other-info-header = Andere informatie
+about-addressbook-prompt-to-save-title = Wijzigingen opslaan?
+about-addressbook-prompt-to-save = Wilt u uw wijzigingen opslaan?

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,3 +17,10 @@ opensearch-error-download-desc = { -brand-short-name }가 검색 플러그인을
 
 ##
 
+searchbar-submit =
+    .tooltiptext = 검색하기
+# This string is displayed in the search box when the input field is empty
+searchbar-input =
+    .placeholder = 검색
+searchbar-icon =
+    .tooltiptext = 검색

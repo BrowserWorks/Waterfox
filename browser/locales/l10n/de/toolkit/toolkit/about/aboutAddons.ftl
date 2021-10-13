@@ -1,9 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-addons-window =
-    .title = Add-ons-Verwaltung
 addons-page-title = Add-ons-Verwaltung
 search-header =
     .placeholder = Auf addons.mozilla.org suchen
@@ -24,17 +22,6 @@ list-empty-button =
 help-button = Hilfe für Add-ons
 sidebar-help-button-title =
     .title = Hilfe für Add-ons
-preferences =
-    { PLATFORM() ->
-        [windows] { -brand-short-name } - Einstellungen
-       *[other] { -brand-short-name } - Einstellungen
-    }
-sidebar-preferences-button-title =
-    .title =
-        { PLATFORM() ->
-            [windows] { -brand-short-name } - Einstellungen
-           *[other] { -brand-short-name } - Einstellungen
-        }
 addons-settings-button = { -brand-short-name } - Einstellungen
 sidebar-settings-button-title =
     .title = { -brand-short-name } - Einstellungen
@@ -42,36 +29,6 @@ show-unsigned-extensions-button =
     .label = Einige Erweiterungen konnten nicht verifiziert werden.
 show-all-extensions-button =
     .label = Alle Erweiterungen anzeigen
-cmd-show-details =
-    .label = Weitere Informationen anzeigen
-    .accesskey = W
-cmd-find-updates =
-    .label = Updates suchen
-    .accesskey = U
-cmd-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] Einstellungen
-           *[other] Einstellungen
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] E
-           *[other] E
-        }
-cmd-enable-theme =
-    .label = Theme anlegen
-    .accesskey = T
-cmd-disable-theme =
-    .label = Theme ablegen
-    .accesskey = T
-cmd-install-addon =
-    .label = Installieren
-    .accesskey = I
-cmd-contribute =
-    .label = Beitragen
-    .accesskey = a
-    .tooltiptext = Zur Entwicklung dieses Add-ons beitragen
 detail-version =
     .label = Version
 detail-last-updated =
@@ -147,7 +104,7 @@ plugin-deprecation-description = Fehlt etwas? Einige Plugins werden nicht mehr v
 legacy-warning-show-legacy = Erweiterungen des alten Add-on-Typs anzeigen
 legacy-extensions =
     .value = Alter Add-on-Typ
-legacy-extensions-description = Diese Erweiterungen erfüllen nicht die aktuellen Standards von { -brand-short-name } und wurden deshalb deaktiviert. <label data-l10n-name="legacy-learn-more">Weitere Informationen über Änderungen bei der Unterstützung von Add-ons für Firefox</label>
+legacy-extensions-description = Diese Erweiterungen erfüllen nicht die aktuellen Standards von { -brand-short-name } und wurden deshalb deaktiviert. <label data-l10n-name="legacy-learn-more">Weitere Informationen über Änderungen bei der Unterstützung von Add-ons für Waterfox</label>
 private-browsing-description2 =
     { -brand-short-name } ändert die Verwendung von Erweiterungen im Privaten Modus.
     Neu in { -brand-short-name } installierte Erweiterungen werden standardmäßig in privaten Fenstern nicht ausgeführt und haben keinen Zugriff auf die Online-Aktivitäten in diesen, außer die Erweiterung wird in den Einstellungen für die Verwendung im Privaten Modus freigegeben.
@@ -295,6 +252,7 @@ install-theme-button = Theme installieren
 # the detailed add-on view is opened, from where the add-on can be managed.
 manage-addon-button = Verwalten
 find-more-addons = Mehr Add-ons ansehen
+find-more-themes = Weitere Themes suchen
 # This is a label for the button to open the "more options" menu, it is only
 # used for screen readers.
 addon-options-button =
@@ -324,13 +282,14 @@ extension-enabled-heading = Aktiviert
 extension-disabled-heading = Deaktiviert
 theme-enabled-heading = Aktiviert
 theme-disabled-heading = Deaktiviert
+theme-monochromatic-heading = Farbgebungen
+theme-monochromatic-subheading = Lebendige neue Farbgebungen von { -brand-product-name }. Verfügbar für eine begrenzte Zeit.
 plugin-enabled-heading = Aktiviert
 plugin-disabled-heading = Deaktiviert
 dictionary-enabled-heading = Aktiviert
 dictionary-disabled-heading = Deaktiviert
 locale-enabled-heading = Aktiviert
 locale-disabled-heading = Deaktiviert
-ask-to-activate-button = Nachfragen, ob aktiviert werden soll
 always-activate-button = Immer aktivieren
 never-activate-button = Nie aktivieren
 addon-detail-author-label = Autor
@@ -386,10 +345,10 @@ addon-detail-private-browsing-disallow = Nicht erlauben
 addon-badge-recommended2 =
     .title = { -brand-product-name } empfiehlt nur Erweiterungen, die unsere Standards für Sicherheit und Leistung erfüllen.
     .aria-label = { addon-badge-recommended2.title }
-# We hard code "Mozilla" in the string below because the extensions are built
-# by Mozilla and we don't want forks to display "by Fork".
+# We hard code "Waterfox" in the string below because the extensions are built
+# by Waterfox and we don't want forks to display "by Fork".
 addon-badge-line3 =
-    .title = Offizielle Erweiterung von Mozilla. Erfüllt Sicherheits- und Leistungsstandards.
+    .title = Offizielle Erweiterung von Waterfox. Erfüllt Sicherheits- und Leistungsstandards.
     .aria-label = { addon-badge-line3.title }
 addon-badge-verified2 =
     .title = Diese Erweiterung wurde überprüft, um unsere Standards für Sicherheit und Leistung zu erfüllen.
@@ -407,9 +366,9 @@ addon-permissions-optional = Optionale Berechtigungen für zusätzliche Funktion
 addon-permissions-learnmore = Weitere Informationen zu Berechtigungen
 recommended-extensions-heading = Empfohlene Erweiterungen
 recommended-themes-heading = Empfohlene Themes
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
-# list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Fühlen Sie sich inspiriert? <a data-l10n-name="link">Erstellen Sie eigene Themes mit Firefox Color.</a>
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
+# list view. The "Waterfox Color" name itself should not be translated.
+recommended-theme-1 = Fühlen Sie sich inspiriert? <a data-l10n-name="link">Erstellen Sie eigene Themes mit Waterfox Color.</a>
 
 ## Page headings
 

@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-ics-file-window-2 =
-    .title = Nhập sự kiện và nhiệm vụ lịch
+    .title = Nhập sự kiện và tác vụ lịch
 calendar-ics-file-dialog-import-event-button-label = Nhập sự kiện
-calendar-ics-file-dialog-import-task-button-label = Nhập nhiệm vụ
+calendar-ics-file-dialog-import-task-button-label = Nhập tác vụ
 calendar-ics-file-dialog-2 =
     .buttonlabelaccept = Nhập tất cả
 calendar-ics-file-accept-button-ok-label = OK
@@ -40,4 +40,4 @@ calendar-ics-file-import-errors =
     { $errorsCount ->
        *[other] Không nhập được { $errorsCount } mục. Kiểm tra bảng điều khiển lỗi để biết chi tiết.
     }
-calendar-ics-file-dialog-no-calendars = Không có lịch có thể nhập các sự kiện hoặc nhiệm vụ.
+calendar-ics-file-dialog-no-calendars = Không có lịch có thể nhập các sự kiện hoặc tác vụ.

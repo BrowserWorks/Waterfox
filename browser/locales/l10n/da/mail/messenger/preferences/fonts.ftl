@@ -1,20 +1,24 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window-close =
     .key = w
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =
     .label = Standard ({ $name })
 fonts-label-default-unnamed =
     .label = Standard
+
 fonts-encoding-dialog-title =
     .title = Skrifttyper & tegnkodning
+
 fonts-language-legend =
     .value = Skrifttyper for:
     .accesskey = f
+
 fonts-proportional-label =
     .value = Proportional:
     .accesskey = P
@@ -85,38 +89,45 @@ font-language-group-tibetan =
 
 default-font-serif =
     .label = Serif
+
 default-font-sans-serif =
     .label = Sans Serif
-font-size-label =
-    .value = Størrelse:
-    .accesskey = ø
+
 font-size-proportional-label =
     .value = Størrelse:
     .accesskey = e
+
 font-size-monospace-label =
     .value = Størrelse:
     .accesskey = r
+
 font-serif-label =
     .value = Serif:
     .accesskey = S
+
 font-sans-serif-label =
     .value = Sans-serif:
     .accesskey = n
+
 font-monospace-label =
     .value = Monospatieret:
     .accesskey = M
+
 font-min-size-label =
     .value = Minimum skriftstørrelse:
     .accesskey = i
+
 min-size-none =
     .label = Ingen
 
 ## Fonts in message
 
 font-control-legend = Vælg skrifttype
+
 use-document-fonts-checkbox =
     .label = Tillad meddelelser at bruge andre skrifttyper
     .accesskey = T
+
 use-fixed-width-plain-checkbox =
     .label = Anvend skrifttype med fast bredde til ren tekst-meddelelser
     .accesskey = F
@@ -124,13 +135,17 @@ use-fixed-width-plain-checkbox =
 ## Language settings
 
 text-encoding-legend = Tegnkodning
+
 text-encoding-description = Sæt standardtegnkodning for udgående og indkommende meddelelser
+
 font-outgoing-email-label =
     .value = Udgående meddelelser:
     .accesskey = u
+
 font-incoming-email-label =
     .value = Indkommende meddelelser:
     .accesskey = d
+
 default-font-reply-checkbox =
     .label = Anvend standardtegnkodning i svar, når det er muligt
     .accesskey = o

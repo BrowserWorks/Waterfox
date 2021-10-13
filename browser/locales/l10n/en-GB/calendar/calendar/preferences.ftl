@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Calendar
 calendar-title-reminder = Reminders
+calendar-title-notification = Notifications
 calendar-title-category = Categories
 dateformat-label =
     .value = Date Text Format:
@@ -106,6 +107,9 @@ todaypane-legend = Today Pane
 soon-label =
     .value = The Upcoming section shows:
     .accesskey = U
+agenda-days =
+    .value = The agenda shows:
+    .accesskey = g
 event-task-legend = Events and Tasks
 default-length-label =
     .value = Default Event and Task Length:
@@ -133,6 +137,9 @@ task-due-label =
 edit-intab-label =
     .label = Edit events and tasks in a tab instead of in a dialog window.
     .accesskey = t
+prompt-delete-label =
+    .label = Prompt before deleting events and tasks.
+    .accesskey = v
 accessibility-legend = Accessibility
 accessibility-colors-label =
     .label = Optimise colours for accessibility
@@ -179,6 +186,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Default time a reminder is set before a task:
     .accesskey = o
+calendar-notifications-customize-label = Notifications can be customised for each calendar in the calendar’s properties window.
 category-new-label = New Category
 category-edit-label = Edit Category
 category-overwrite-title = Warning: Duplicate name

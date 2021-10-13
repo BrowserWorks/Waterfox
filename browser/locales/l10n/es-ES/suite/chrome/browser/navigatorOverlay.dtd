@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,13 +11,17 @@
 <!ENTITY openFileCmd.label "Abrir archivo…">
 <!ENTITY openFileCmd.accesskey "A">
 <!ENTITY openFileCmd.commandkey "o">
+
 <!ENTITY closeOtherTabs.label "Cerrar las otras pestañas">
 <!ENTITY closeOtherTabs.accesskey "T">
 <!ENTITY closeTabsToTheEnd.label "Cerrar pestañas a la derecha">
 <!ENTITY closeTabsToTheEnd.accesskey "d">
+
 <!ENTITY uploadFile.label "Subir archivo…">
 <!ENTITY uploadFile.accesskey "b">
+
 <!ENTITY findOnCmd.label "Buscar en esta página…">
+
 <!ENTITY toolbarsCmd.label "Mostrar/Ocultar">
 <!ENTITY toolbarsCmd.accesskey "m">
 <!ENTITY tabbarCmd.label "Barra de pestañas">
@@ -26,8 +30,10 @@
 <!ENTITY taskbarCmd.accesskey "S">
 <!ENTITY componentbarCmd.label "Barra de componentes">
 <!ENTITY componentbarCmd.accesskey "C">
+
 <!ENTITY fullScreenCmd.label "Pantalla completa">
 <!ENTITY fullScreenCmd.accesskey "n">
+
 <!ENTITY useStyleSheetMenu.label "Utilizar hoja de estilos">
 <!ENTITY useStyleSheetMenu.accesskey "u">
 <!ENTITY useStyleSheetNone.label "Ninguna">
@@ -42,6 +48,7 @@
 <!ENTITY pageInfoCmd.label "Información de la página">
 <!ENTITY pageInfoCmd.accesskey "I">
 <!ENTITY pageInfoCmd.commandkey "i">
+
 <!ENTITY goMenu.label "Ir">
 <!ENTITY goMenu.accesskey "i">
 <!ENTITY goBackCmd.commandKey "[">
@@ -62,6 +69,7 @@
 <!ENTITY historyRestoreLastSession.accesskey "R">
 <!ENTITY syncTabsMenu.label "Pestañas de otros equipos">
 <!ENTITY syncTabsMenu.accesskey "O">
+
 <!ENTITY bookmarksMenu.label "Marcadores">
 <!ENTITY bookmarksMenu.accesskey "m">
 <!ENTITY addCurPageCmd.label "Añadir a marcadores">
@@ -74,11 +82,13 @@
 <!ENTITY manBookmarksCmd.label "Administrar marcadores…">
 <!ENTITY manBookmarksCmd.accesskey "M">
 <!ENTITY manBookmarksCmd.commandkey "b">
+
 <!ENTITY searchInternetCmd.label "Buscar en la web">
 <!ENTITY searchInternetCmd.accesskey "B">
 <!ENTITY searchInternet.commandKey "s">
 <!ENTITY translateMenu.label "Traducir página">
 <!ENTITY translateMenu.accesskey "t">
+
 <!ENTITY cookieMessageTitle.label "Permisos de cookies cambiados">
 <!ENTITY cookieDisplayCookiesCmd.label "Administrar cookies guardadas">
 <!ENTITY cookieDisplayCookiesCmd.accesskey "A">
@@ -94,6 +104,7 @@
 <!ENTITY cookieBlockCookiesCmd.label "Bloquear cookies de este sitio web">
 <!ENTITY cookieBlockCookiesCmd.accesskey "B">
 <!ENTITY cookieBlockCookiesMsg.label "Las cookies de este sitio web serán siempre rechazadas.">
+
 <!ENTITY cookieImageMessageTitle.label "Permisos de imágenes cambiados">
 <!ENTITY cookieDisplayImagesCmd.label "Administrar permisos de imágenes">
 <!ENTITY cookieDisplayImagesCmd.accesskey "d">
@@ -106,6 +117,7 @@
 <!ENTITY cookieBlockImagesCmd.label "Bloquear imágenes de este sitio web">
 <!ENTITY cookieBlockImagesCmd.accesskey "n">
 <!ENTITY cookieBlockImagesMsg.label "Las imágenes de este sitio web no se descargarán nunca.">
+
 <!ENTITY popupsMessageChangeTitle.label "Permisos de ventanas emergentes cambiados">
 <!ENTITY popupAllowCmd.label "Permitir ventanas emergentes de este sitio web">
 <!ENTITY popupAllowCmd.accesskey "P">
@@ -118,13 +130,16 @@
 <!ENTITY popupBlockMsg.label "Las ventanas emergentes de este sitio web no se mostrarán.">
 <!ENTITY popupsManage.label "Administrar ventanas emergentes">
 <!ENTITY popupsManage.accesskey "A">
+
 <!ENTITY cookieCookieManager.label "Administrador de cookies">
 <!ENTITY cookieCookieManager.accesskey "k">
 <!ENTITY cookieImageManager.label "Administrador de imágenes">
 <!ENTITY cookieImageManager.accesskey "i">
 <!ENTITY popupsManager.label "Administrador de ventanas emergentes">
 <!ENTITY popupsManager.accesskey "d">
+
 <!ENTITY clearPrivateDataCmd.label "Limpiar datos privados…">
 <!ENTITY clearPrivateDataCmd.accesskey "L">
+
 <!ENTITY stopCmd.macCommandKey ".">
 <!ENTITY fullScreenCmd.commandKey "f">

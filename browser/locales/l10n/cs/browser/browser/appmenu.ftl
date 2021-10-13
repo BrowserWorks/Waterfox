@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,25 +18,30 @@ appmenuitem-update-banner3 =
     .label-update-unsupported = Nekompatibilní systém pro novou aktualizaci
     .label-update-restart = Nová aktualizace — restartovat
 appmenuitem-protection-dashboard-title = Přehled ochrany soukromí
-appmenuitem-customize-mode =
-    .label = Nastavení tlačítek a lišt…
-
-## Zoom Controls
-
 appmenuitem-new-tab =
     .label = Nový panel
 appmenuitem-new-window =
     .label = Nové okno
 appmenuitem-new-private-window =
     .label = Nové anonymní okno
+appmenuitem-history =
+    .label = Historie
+appmenuitem-downloads =
+    .label = Stahování
 appmenuitem-passwords =
     .label = Přihlašovací údaje
 appmenuitem-addons-and-themes =
     .label = Doplňky a vzhledy
+appmenuitem-print =
+    .label = Vytisknout stránku…
 appmenuitem-find-in-page =
     .label = Najít na stránce…
+appmenuitem-zoom =
+    .value = Velikost stránky
 appmenuitem-more-tools =
     .label = Další nástroje
+appmenuitem-help =
+    .label = Nápověda
 appmenuitem-exit2 =
     .label = Ukončit
 appmenu-menu-button-closed2 =
@@ -59,15 +64,31 @@ appmenuitem-zoom-reduce =
 appmenuitem-fullscreen =
     .label = Celá obrazovka
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
-fxa-toolbar-sync-now =
-    .label = Synchronizovat
 appmenu-remote-tabs-sign-into-sync =
     .label = Přihlásit se k synchronizaci…
 appmenu-remote-tabs-turn-on-sync =
     .label = Zapnout synchronizaci…
+# This is shown after the tabs list if we can display more tabs by clicking on the button
+appmenu-remote-tabs-showmore =
+    .label = Zobrazit další panely
+    .tooltiptext = Zobrazí panely z tohoto zařízení
+# This is shown beneath the name of a device when that device has no open tabs
+appmenu-remote-tabs-notabs = Žádné otevřené panely
+# This is shown when Sync is configured but syncing tabs is disabled.
+appmenu-remote-tabs-tabsnotsyncing = Zapněte synchronizaci panelů pro zobrazení seznamu panelů z vašich ostatních zařízení.
+appmenu-remote-tabs-opensettings =
+    .label = Nastavení
+# This is shown when Sync is configured but this appears to be the only device attached to
+# the account. We also show links to download Waterfox for android/ios.
+appmenu-remote-tabs-noclients = Chcete zde vidět své panely z ostatních zařízení?
+appmenu-remote-tabs-connectdevice =
+    .label = Připojit další zařízení
+appmenu-remote-tabs-welcome = Seznam panelů z ostatních zařízení
+appmenu-remote-tabs-unverified = Je potřeba ověřit váš účet.
 appmenuitem-fxa-toolbar-sync-now2 = Synchronizovat
+appmenuitem-fxa-sign-in = Přihlásit se k aplikaci { -brand-product-name }
 appmenuitem-fxa-manage-account = Správa účtu
 appmenu-fxa-header2 = { -fxaccount-brand-name }
 # Variables
@@ -92,10 +113,13 @@ whatsnew-panel-footer-checkbox =
     .label = Informovat o nových funkcích
     .accesskey = f
 
-## The Firefox Profiler – The popup is the UI to turn on the profiler, and record
+## The Waterfox Profiler – The popup is the UI to turn on the profiler, and record
 ## performance profiles. To enable it go to profiler.firefox.com and click
 ## "Enable Profiler Menu Button".
 
+profiler-popup-button-idle =
+    .label = Profiler
+    .tooltiptext = Záznam výkonu
 profiler-popup-title =
     .value = { -profiler-brand-name }
 profiler-popup-reveal-description-button =
@@ -104,10 +128,15 @@ profiler-popup-description-title =
     .value = Zaznamenejte, analyzujte, sdílejte
 profiler-popup-description = Spolupracujte na řešení výkonnostních problémů sdílením dat se svým týmem.
 profiler-popup-learn-more = Zjistit více
+profiler-popup-learn-more-button =
+    .label = Zjistit více
 profiler-popup-settings =
     .value = Nastavení
 # This link takes the user to about:profiling, and is only visible with the Custom preset.
 profiler-popup-edit-settings = Úprava nastavení
+# This link takes the user to about:profiling, and is only visible with the Custom preset.
+profiler-popup-edit-settings-button =
+    .label = Úprava nastavení
 profiler-popup-disabled = Profiler je v tuto chvíli vypnutý, pravděpodobně protože máte otevřené okno anonymního prohlížení.
 profiler-popup-recording-screen = Nahrávání…
 # The profiler presets list is generated elsewhere, but the custom preset is defined
@@ -130,6 +159,15 @@ profiler-popup-capture-shortcut =
         [macos] ⌃⇧2
        *[other] Ctrl+Shift+2
     }
+
+## Profiler presets
+## They are shown in the popup's select box.
+
+
+# Presets and their l10n IDs are defined in the file
+# devtools/client/performance-new/popup/background.jsm.js
+# Please take care that the same values are also defined in devtools' perftools.ftl.
+
 
 ## History panel
 
@@ -167,7 +205,7 @@ appmenu-help-more-troubleshooting-info =
     .label = Další technické informace
     .accesskey = t
 appmenu-help-report-site-issue =
-    .label = Nahlásit problém se stránkou…
+    .label = Nahlásit problém se zobrazením stránky…
 appmenu-help-feedback-page =
     .label = Odeslat zpětnou vazbu…
     .accesskey = d

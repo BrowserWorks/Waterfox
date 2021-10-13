@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = Serienummer
-
-fips-nonempty-password-required = FIPS-tilstand kræver at der er angivet en hovedadgangskode for hver sikkerhedsenhed. Opret en adgangskode før du skifter til FIPS-tilstand.
 
 fips-nonempty-primary-password-required = FIPS-tilstand kræver, at du har sat en hovedadgangskode for hvert sikkerhedsmodul. Opret en adgangskode, før du forsøger at aktivere FIPS-tilstand.
 unable-to-toggle-fips = Kunne ikke skifte FIPS-tilstand med sikkerhedsenheden. Det anbefales at du afslutter og genstarter dette program.

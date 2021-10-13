@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,9 +22,6 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = Kiegészítők és témák
-    .tooltip = Saját kiegészítők kezelése
 addons-and-themes-toolbarbutton =
     .label = Kiegészítők és témák
     .tooltiptext = Kiegészítők kezelése
@@ -73,9 +70,14 @@ folder-toolbar-toggle-folder-compact-view =
 redirect-msg-menuitem =
     .label = Átirányítás
     .accesskey = i
+menu-file-save-as-file =
+    .label = Fájl…
+    .accesskey = F
 
 ## AppMenu
 
+appmenu-save-as-file =
+    .label = Fájl…
 # Since v89 we dropped the platforms distinction between Options or Preferences
 # and consolidated everything with Preferences.
 appmenu-preferences =
@@ -130,3 +132,9 @@ caret-browsing-prompt-check-text = Ne kérdezze meg újra.
 repair-text-encoding-button =
     .label = Szövegkódolás javítása
     .tooltiptext = Kitalálja a helyes szövegkódolást az üzenet tartalma alapján
+
+## no-reply handling
+
+no-reply-title = A válasz nem támogatott
+no-reply-message = A válaszcím ({ $email }) nem tűnik figyelt címnek. Az erre a címre küldött leveleket valószínűleg senki sem fogja olvasni.
+no-reply-reply-anyway-button = Válasz mindenképp

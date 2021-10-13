@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: Masonry Layout
 experimental-features-css-masonry-description = Aktiverer den eksperimentelle funktion med CSS Masonry-layout. Læs <a data-l10n-name="explainer">denne artikel</a> for at få et overblik over funktionen. Hvis du har feedback, så skriv gerne en kommentar på <a data-l10n-name="w3c-issue">dette issue på GitHub</a> eller på <a data-l10n-name="bug">denne bug</a>.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: Cascade Layers
+experimental-features-css-cascade-layers-description = Aktiverer understørrelse af CSS Cascade Layers. Se flere detaljer i <a data-l10n-name="spec">den foreløbige specifikation</a>. Rapportér gerne fejl med denne funktionalitet på <a data-l10n-name="bugzilla">bug 1699215</a>.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission (isolation af websteder) er 
 experimental-features-multi-pip =
     .label = Understøttelse af flere billede-i-billede
 experimental-features-multi-pip-description = Eksperimentel understøttelse for, at flere videoer kan vises som billede-i-billede på samme tid.
-experimental-features-http3 =
-    .label = HTTP/3-protokol
-experimental-features-http3-description = Eksperimentel understøttelse for HTTP/3-protokollen.
 # Search during IME
 experimental-features-ime-search =
     .label = Adressefelt: Vis resulter under IME-komponering

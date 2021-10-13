@@ -1,6 +1,8 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+## Message Header Encryption Button
 
 openpgp-view-signer-key =
     .label = Vis signatarnøkkel
@@ -32,3 +34,4 @@ openpgp-unknown-key-id = Ukjend nøkkel
 
 openpgp-other-enc-additional-key-ids = I tillegg vart meldinga kryptert til eigarane av følgjande nøklar:
 openpgp-other-enc-all-key-ids = Meldinga vart kryptert til eigarane av følgjande nøklar:
+

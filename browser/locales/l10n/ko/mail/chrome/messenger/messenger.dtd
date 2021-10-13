@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "인쇄…">
 <!ENTITY printCmd.accesskey "P">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "인쇄 미리 보기">
-<!ENTITY printPreviewCmd.accesskey "v">
-<!ENTITY printSetupCmd.label "인쇄 화면 설정…">
-<!ENTITY printSetupCmd.accesskey "u">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "메시지 삭제">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "R">
 <!ENTITY compactVersion.label "간단히 보기">
 <!ENTITY compactVersion.accesskey "C">
-<!ENTITY folderPaneBar.label "폴더 창 도구모음">
-<!ENTITY folderPaneBar.accesskey "F">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "정렬">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "주소록">
 <!ENTITY addressBookCmd.accesskey "B">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "부가 기능">
-<!ENTITY addons.accesskey "A">
-<!ENTITY addonPrefs.label "부가 기능 설정">
-<!ENTITY addonPrefs.accesskey "O">
-<!ENTITY addonPrefsUnix.label "부가 기능 설정">
-<!ENTITY addonPrefsUnix.accesskey "P">
 <!ENTITY addonNoPrefs.label "부가 기능 설정이 없습니다.">
 <!ENTITY activitymanager.label "메시지 작업 관리">
 <!ENTITY activitymanager.accesskey "v">
@@ -520,8 +508,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "부가기능 디버그">
 <!ENTITY debugAddonsCmd.accesskey "A">
-<!ENTITY tabsDebugCmd.label "콘텐츠 프레임 디버거">
-<!ENTITY tabsDebugCmd.accesskey "C">
 <!ENTITY errorConsoleCmd.label "오류 정보">
 <!ENTITY errorConsoleCmd.accesskey "E">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +531,11 @@
 <!ENTITY backButton1.label "뒤로">
 <!ENTITY goForwardButton1.label "앞으로">
 <!ENTITY deleteItem.title "삭제">
-<!ENTITY deleteButton.label "삭제">
-<!ENTITY undeleteButton.label "복구">
 <!ENTITY markButton.label "표시">
 <!ENTITY printButton.label "인쇄">
 <!ENTITY stopButton.label "중지">
 <!ENTITY throbberItem.title "활성도 지시자">
 <!ENTITY junkItem.title "스팸">
-<!ENTITY junkButton.label "스팸">
-<!ENTITY notJunkButton.label "정상">
 <!ENTITY addressBookButton.label "주소록">
 <!ENTITY chatButton.label "채팅">
 <!ENTITY glodaSearch.title "전체 검색">
@@ -585,19 +567,14 @@
 <!ENTITY previousMsgButton.tooltip "이전 메시지로 이동">
 <!ENTITY goForwardButton.tooltip "한 메시지 앞으로 가기">
 <!ENTITY goBackButton.tooltip "한 메시지 뒤로 가기">
-<!ENTITY deleteButton.tooltip "선택한 메시지나 폴더 삭제">
-<!ENTITY undeleteButton.tooltip "선택한 메시지 삭제 복구">
 <!ENTITY markButton.tooltip "메시지 표시">
 <!ENTITY printButton.tooltip "메시지 인쇄">
 <!ENTITY stopButton.tooltip "전송 중지">
-<!ENTITY junkButton.tooltip "선택한 메시지를 스팸 메일로 설정">
-<!ENTITY notJunkButton.tooltip "선택한 메시지를 정상 메일로 설정">
 <!ENTITY addressBookButton.tooltip "주소록 열기">
 <!ENTITY chatButton.tooltip "채팅 열기">
 <!ENTITY tagButton.tooltip "태그 메시지">
 <!ENTITY compactButton.tooltip "선택한 폴더에서 삭제 표시된 메시지 지우기">
 <!ENTITY appmenuButton1.tooltip "앱 메뉴 표시하기">
-<!ENTITY addonsButton.tooltip "부가 기능 관리하기">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "인라인 전달">

@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = 密码强度
 
 ## Change Password dialog
-
-change-password-window =
-    .title = 修改主密码
 
 change-device-password-window =
     .title = 更改密码
@@ -20,10 +17,6 @@ change-password-new = 新密码:
 change-password-reenter = 新密码(重复):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = 重置主密码
-    .style = width: 40em
 
 pippki-failed-pw-change = 无法更改密码。
 pippki-incorrect-pw = 您未输入正确的主密码，请重试。
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = 重置
-reset-password-text = 如果您重置您的主密码，您存储的所有网站和电子邮箱密码、表单数据、个人证书以及私钥，都将被丢弃。您确实要重置主密码吗？
 
 reset-primary-password-text = 如果您重置您的主密码，您存储的所有网站和电子邮箱密码、表单数据、个人证书以及私钥，都将被丢弃。您确实要重置主密码吗？
 

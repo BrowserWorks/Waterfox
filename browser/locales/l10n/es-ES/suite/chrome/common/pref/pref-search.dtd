@@ -1,13 +1,20 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
 
 <!ENTITY pref.search.title "Búsqueda en Internet">
 <!ENTITY legendHeader "Buscador predeterminado">
 <!ENTITY defaultSearchEngine.label "Buscar usando:">
 <!ENTITY defaultSearchEngine.accesskey "S">
+
 <!ENTITY engineManager.label "Administrar buscadores…">
+
 <!ENTITY searchResults.label "Resultados de la búsqueda">
+
 <!ENTITY openInTab.label "Abrir pestañas nuevas con los resultados de búsquedas en el panel lateral">
 <!ENTITY openInTab.accesskey "A">
 <!ENTITY openContextSearchTab.label "Abrir una pestaña en lugar de una ventana al buscar con el menú contextual">

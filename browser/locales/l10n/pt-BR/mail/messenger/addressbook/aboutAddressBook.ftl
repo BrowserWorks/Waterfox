@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Catálogo de endereços
 
 about-addressbook-toolbar-new-address-book =
     .label = Novo catálogo de endereços
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Novo catálogo de endereços CardDAV
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Novo catálogo de endereços LDAP
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Adicionar catálogo de endereços CardDAV
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Novo contato
 about-addressbook-toolbar-new-list =
     .label = Nova lista
+about-addressbook-toolbar-import =
+    .label = Importar
 
 ## Books
 
@@ -30,10 +28,14 @@ about-addressbook-books-context-synchronize =
     .label = Sincronizar
 about-addressbook-books-context-print =
     .label = Imprimir…
+about-addressbook-books-context-export =
+    .label = Exportar…
 about-addressbook-books-context-delete =
     .label = Excluir
 about-addressbook-books-context-remove =
     .label = Remover
+about-addressbook-books-context-startup-default =
+    .label = Diretório de início padrão
 about-addressbook-confirm-delete-book-title = Excluir catálogo de endereços
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Ordenar por endereço de email (A > Z)
 about-addressbook-sort-email-descending =
     .label = Ordenar por endereço de email (Z > A)
+about-addressbook-cards-context-write =
+    .label = Escrever
 about-addressbook-confirm-delete-mixed-title = Excluir contatos e listas
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.

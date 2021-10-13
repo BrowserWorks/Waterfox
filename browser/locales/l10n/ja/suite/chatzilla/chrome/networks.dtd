@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Used in networks-edit dialog -->
+<!ENTITY networksEditDialog.title	"ネットワークエディター">
+<!ENTITY networksEditDialog.size	"width: 75ch; height: 28em;">
+
+<!ENTITY restoreButton.label		"既定値に戻す">
+<!ENTITY restoreButton.accesskey	"f">
+
+<!ENTITY networkListAdd.label		"ネットワークを追加...">
+<!ENTITY networkListAdd.accesskey	"A">
+<!ENTITY networkListAdd.tooltip		"新しいネットワークを追加します">
+<!ENTITY networkListEdit.label		"ネットワークを編集...">
+<!ENTITY networkListEdit.accesskey	"E">
+<!ENTITY networkListEdit.tooltip	"選択したネットワークを編集します">
+<!ENTITY networkListRemove.label	"ネットワークを削除">
+<!ENTITY networkListRemove.accesskey	"R">
+<!ENTITY networkListRemove.tooltip	"選択したネットワークを削除します">
+
+<!ENTITY serverListUp.label		"上へ移動">
+<!ENTITY serverListUp.accesskey		"U">
+<!ENTITY serverListUp.tooltip		"選択したサーバーをリストの上へ移動します">
+<!ENTITY serverListDown.label		"下へ移動">
+<!ENTITY serverListDown.accesskey	"D">
+<!ENTITY serverListDown.tooltip		"選択したサーバーをリストの下へ移動します">
+<!ENTITY serverListAdd.label		"サーバーを追加...">
+<!ENTITY serverListAdd.accesskey	"S">
+<!ENTITY serverListAdd.tooltip		"新しいサーバーを追加します">
+<!ENTITY serverListEdit.label		"サーバーを編集...">
+<!ENTITY serverListEdit.accesskey	"i">
+<!ENTITY serverListEdit.tooltip		"選択したサーバーを編集します">
+<!ENTITY serverListRemove.label		"サーバーを削除">
+<!ENTITY serverListRemove.accesskey	"m">
+<!ENTITY serverListRemove.tooltip	"選択したサーバーを削除します">
+
+<!-- LOCALIZATION NOTE:
+   - *.label are shared between networks-edit and networks-server dialogs
+   - *.accesskey are only used in network-servers dialog -->
+<!ENTITY serverDetails.label		"選択したサーバーの詳細:">
+<!ENTITY serverName.label		"サーバー:">
+<!ENTITY serverName.accesskey		"S">
+<!ENTITY serverPort.label		"ポート番号:">
+<!ENTITY serverPort.accesskey		"P">
+<!ENTITY connectionSecurity.label	"接続の保護:">
+<!ENTITY connectionSecurity.accesskey	"n">
+
+<!-- Used in networks-server dialog -->
+<!ENTITY serverEditDialog.title		"IRC サーバー">
+<!ENTITY settings.caption		"設定">
+<!ENTITY security.caption		"セキュリティ">
+<!ENTITY serverPortDefault.label	"既定:">

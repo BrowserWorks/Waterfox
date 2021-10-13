@@ -1,8 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Hiba történt a jelentés beküldésekor. Próbálja újra később.
+
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = A webhely javítva lett? Jelentés küldése
 
@@ -21,10 +22,13 @@ protections-popup-footer-protection-label-standard = Szokásos
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = További információk a fokozott követés elleni védelemről
+
 protections-panel-etp-on-header = A fokozott követés elleni védelem BE van kapcsolva ezen a webhelyen
 protections-panel-etp-off-header = A fokozott követés elleni védelem KI van kapcsolva ezen a webhelyen
+
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = Nem működik az oldal?
+
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = Nem működik az oldal?
@@ -39,7 +43,9 @@ protections-panel-not-blocking-why-etp-off-tooltip = A webhely összes nyomköve
 ##
 
 protections-panel-no-trackers-found = Egyetlen ismert nyomkövetőt sem észlelt a { -brand-short-name } ezen az oldalon.
+
 protections-panel-content-blocking-tracking-protection = Nyomkövető tartalom
+
 protections-panel-content-blocking-socialblock = Közösségimédia-követők
 protections-panel-content-blocking-cryptominers-label = Kriptobányászok
 protections-panel-content-blocking-fingerprinters-label = Ujjlenyomat-készítők
@@ -65,12 +71,14 @@ protections-panel-protectionsdashboard-label = Védelmi vezérlőpult
 
 # The header of the list
 protections-panel-site-not-working-view-header = Kapcsolja ki a védelmet, ha problémái vannak a következőkkel:
+
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = Bejelentkezési mezők
 protections-panel-site-not-working-view-issue-list-forms = Űrlapok
 protections-panel-site-not-working-view-issue-list-payments = Fizetések
 protections-panel-site-not-working-view-issue-list-comments = Megjegyzések
 protections-panel-site-not-working-view-issue-list-videos = Videók
+
 protections-panel-site-not-working-view-send-report = Jelentés küldése
 
 ##
@@ -80,13 +88,16 @@ protections-panel-cryptominers = A kriptobányászok az Ön rendszerének erőfo
 protections-panel-fingerprinters = A ujjlenyomat-készítők beállításokat gyűjtenek a böngészőjéből és számítógépéből, hogy profilt hozzanak létre Önről. A digitális ujjlenyomat használatával követhetik Ön a különböző webhelyek között.
 protections-panel-tracking-content = A weboldalak külső hirdetéseket, videókat és más követési kódot tartalmazó tartalmakat tölthetnek be. A nyomkövető tartalmak blokkolása az oldalak gyorsabb betöltését eredményezheti, de egyes gombok, űrlapok és bejelentkezési mezők lehet, hogy nem fognak működni.
 protections-panel-social-media-trackers = A közösségi hálózatok nyomkövetőket helyeznek el más weboldalakon, hogy kövessék mit tesz, lát és néz online. Így a közösségi médiával foglalkozó cégek többet tudhatnak meg Önről, mint amit megoszt a közösségimédia-profiljaiban.
+
 protections-panel-description-shim-allowed = Egyes lent jelzett nyomkövetők részleges feloldásra kerültek, mert interakcióba lépett velük.
 protections-panel-description-shim-allowed-learn-more = További tudnivalók
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Nyomkövető részlegesen feloldva
+
 protections-panel-content-blocking-manage-settings =
     .label = Védelmi beállítások kezelése
     .accesskey = k
+
 protections-panel-content-blocking-breakage-report-view =
     .title = Hibás webhely bejelentése
 protections-panel-content-blocking-breakage-report-view-description = Egyes nyomkövetők blokkolása problémákat okozhat néhány weboldalon. Ezen problémák bejelentése segít jobbá tenni a { -brand-short-name } böngészőt mindenki számára. A jelentés elküldi az URL-t és a böngészőbeállításait a Mozillának. <label data-l10n-name="learn-more">További tudnivalók</label>

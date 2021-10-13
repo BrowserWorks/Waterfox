@@ -1,31 +1,37 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.junk.title "Correo basura o sospechoso">
 <!ENTITY junkSettings.caption "Configuración global de correo basura">
 <!ENTITY junkMail.intro "Vaya a Configuración de cuentas para establecer configuraciones de correo basura específicas de cada cuenta.">
+
 <!ENTITY manualMark.label "Cuando marco los mensajes como basura:">
 <!ENTITY manualMark.accesskey "C">
 <!ENTITY manualMarkModeMove.label "Moverlos a la carpeta &quot;Basura&quot; de la cuenta">
 <!ENTITY manualMarkModeMove.accesskey "M">
 <!ENTITY manualMarkModeDelete.label "Eliminarlos">
 <!ENTITY manualMarkModeDelete.accesskey "E">
+
 <!ENTITY markAsRead.intro "Marcar mensajes como leídos:">
 <!ENTITY autoMarkAsRead.label "Cuando &brandShortName; determina que son basura">
 <!ENTITY autoMarkAsRead.accesskey "u">
 <!ENTITY manualMarkAsRead.label "Cuando los marco como basura manualmente">
 <!ENTITY manualMarkAsRead.accesskey "b">
+
 <!ENTITY enableJunkLogging.label "Activar registro del filtro de correo basura">
 <!ENTITY enableJunkLogging.accesskey "A">
 <!ENTITY openJunkLog.label "Mostrar el registro">
 <!ENTITY openJunkLog.accesskey "s">
 <!ENTITY resetTrainingData.label "Reiniciar datos de entrenamiento">
 <!ENTITY resetTrainingData.accesskey "R">
+
 <!ENTITY pref.suspectMail.caption "Correo sospechoso">
+
 <!ENTITY pref.phishing.caption "Correo fraudulento">
 <!ENTITY enablePhishingDetector.label "Decirme si el mensaje que estoy leyendo parece un mensaje fraudulento">
 <!ENTITY enablePhishingDetector.accesskey "D">
+
 <!ENTITY pref.antivirus.caption "Antivirus">
 <!ENTITY antiVirus.label "Permitir a los clientes antivirus analizar los mensajes entrantes más fácilmente">
 <!ENTITY antiVirus.accesskey "P">

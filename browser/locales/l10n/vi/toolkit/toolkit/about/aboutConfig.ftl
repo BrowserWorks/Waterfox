@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,14 +15,11 @@ config-about-warning-button =
     .label = Tôi chấp nhận rủi ro!
 config-about-warning-checkbox =
     .label = Hiện cảnh báo này vào lần sau
-
 config-search-prefs =
     .value = Tìm kiếm:
     .accesskey = r
-
 config-focus-search =
     .key = r
-
 config-focus-search-2 =
     .key = f
 
@@ -50,60 +47,45 @@ config-copy-pref =
     .key = C
     .label = Chép
     .accesskey = C
-
 config-copy-name =
     .label = Sao chép tên
     .accesskey = N
-
 config-copy-value =
     .label = Sao chép giá trị
     .accesskey = V
-
 config-modify =
     .label = Sửa đổi
     .accesskey = M
-
 config-toggle =
     .label = Bật-Tắt
     .accesskey = T
-
 config-reset =
     .label = Đặt về mặc định
     .accesskey = R
-
 config-new =
     .label = Mới
     .accesskey = w
-
 config-string =
     .label = Chuỗi kí tự
     .accesskey = S
-
 config-integer =
     .label = Số nguyên
     .accesskey = I
-
 config-boolean =
-    .label = Luận lí
+    .label = Logic
     .accesskey = B
-
 config-default = mặc định
 config-modified = đã sửa
 config-locked = bị khóa
-
 config-property-string = chuỗi kí tự
 config-property-int = số nguyên
-config-property-bool = luận lí
-
+config-property-bool = logic
 config-new-prompt = Nhập tên tùy chọn
-
 config-nan-title = Giá trị không hợp lệ
 config-nan-text = Văn bản bạn điền vào không phải là số.
-
 # Variables:
 #   $type (String): type of value (boolean, integer or string)
 config-new-title = Giá trị mới { $type }
-
 # Variables:
 #   $type (String): type of value (boolean, integer or string)
 config-modify-title = Nhập giá trị { $type }

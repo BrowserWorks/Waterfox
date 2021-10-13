@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,11 +17,11 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetrie-Daten
 about-telemetry-current-store = Aktueller Speicher: 
 about-telemetry-more-information = Weitere Informationen:
-about-telemetry-firefox-data-doc = Die <a data-l10n-name="data-doc-link">Dokumentation von Firefox-Daten</a> enthält Anleitungen zur Verwendung unserer Datenwerkzeuge.
-about-telemetry-telemetry-client-doc = Die <a data-l10n-name="client-doc-link">Dokumentation des Telemetrie-Clients von Firefox</a> enthält Definitionen von Konzepten, API-Dokumentationen und Erläuterungen zu den Daten.
-about-telemetry-telemetry-dashboard = Die <a data-l10n-name="dashboard-link">Telemetrie-Übersicht</a> ermöglicht die Visualisierung der Daten, welche Mozilla mittels der Telemetrie empfängt.
+about-telemetry-firefox-data-doc = Die <a data-l10n-name="data-doc-link">Dokumentation von Waterfox-Daten</a> enthält Anleitungen zur Verwendung unserer Datenwerkzeuge.
+about-telemetry-telemetry-client-doc = Die <a data-l10n-name="client-doc-link">Dokumentation des Telemetrie-Clients von Waterfox</a> enthält Definitionen von Konzepten, API-Dokumentationen und Erläuterungen zu den Daten.
+about-telemetry-telemetry-dashboard = Die <a data-l10n-name="dashboard-link">Telemetrie-Übersicht</a> ermöglicht die Visualisierung der Daten, welche Waterfox mittels der Telemetrie empfängt.
 about-telemetry-telemetry-probe-dictionary = Das <a data-l10n-name="probe-dictionary-link">Messgrößen-Wörterbuch</a> bietet Beschreibungen und Details zu den von Telemetrie gesammelten Daten.
-about-telemetry-show-in-Firefox-json-viewer = In JSON-Ansicht öffnen
+about-telemetry-show-in-Waterfox-json-viewer = In JSON-Ansicht öffnen
 about-telemetry-home-section = Einführung
 about-telemetry-general-data-section = Allgemeine Daten
 about-telemetry-environment-data-section = Umgebungsdaten
@@ -68,7 +68,7 @@ about-telemetry-histogram-stats =
        *[other] { $sampleCount } Messungen, Durchschnitt = { $prettyAverage }, Summe = { $sum }
     }
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
 about-telemetry-page-subtitle = Diese Seite zeigt durch Telemetrie gesammelte Informationen über Performanz, Hardware, Benutzung und vom Benutzer gemachte Änderungen an. Diese Informationen werden an { $telemetryServerOwner } gesendet, um { -brand-full-name } zu verbessern.
 about-telemetry-settings-explanation = Telemetrie sammelt { about-telemetry-data-type } und das Hochladen ist <a data-l10n-name="upload-link">{ about-telemetry-upload-type }</a>.
 # Variables:
@@ -140,8 +140,8 @@ about-telemetry-origin-section = Quellen-Telemetrie
 about-telemetry-origin-origin = Quelle
 about-telemetry-origin-count = Anzahl
 # Variables:
-#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = Die <a data-l10n-name="origin-doc-link">Quellen-Telemetrie von Firefox</a> kodiert Daten vor dem Senden, sodass { $telemetryServerOwner } etwas zählen aber nicht bestimmen kann, ob eine bestimmte { -brand-product-name }-Installation zu der Zählung beigetragen hat. <a data-l10n-name="prio-blog-link">Weitere Informationen</a>
+#   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Waterfox"
+about-telemetry-origins-explanation = Die <a data-l10n-name="origin-doc-link">Quellen-Telemetrie von Waterfox</a> kodiert Daten vor dem Senden, sodass { $telemetryServerOwner } etwas zählen aber nicht bestimmen kann, ob eine bestimmte { -brand-product-name }-Installation zu der Zählung beigetragen hat. <a data-l10n-name="prio-blog-link">Weitere Informationen</a>
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process }-Prozess

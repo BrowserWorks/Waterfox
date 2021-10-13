@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "Bersihkan">
 
-<!ENTITY fillLoginMenu.label          "Isi Info Masuk">
-<!ENTITY fillLoginMenu.accesskey      "I">
-<!ENTITY fillPasswordMenu.label       "Isi Sandi">
-<!ENTITY fillPasswordMenu.accesskey   "I">
-<!ENTITY fillUsernameMenu.label       "Isi Nama Pengguna">
-<!ENTITY fillUsernameMenu.accesskey   "I">
-<!ENTITY noLoginSuggestions.label     "(Tidak Ada Saran Info Masuk)">
-<!ENTITY viewSavedLogins.label        "Lihat Info Masuk Tersimpan">

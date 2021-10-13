@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "屬性">
 
 <!ENTITY generalInfo.label                       "一般資訊">
-<!ENTITY folderCharsetFallback2.label            "備用字元編碼:">
-<!ENTITY folderCharsetFallback2.accesskey        "E">
-<!ENTITY folderCharsetEnforce2.label             "對信件匣中的所有訊息套用以下編碼（將忽略每封訊息自己的編碼設定與自動偵測功能）">
-<!ENTITY folderCharsetEnforce2.accesskey         "A">
 <!ENTITY folderRebuildSummaryFileTip2.label      "重建摘要檔案索引">
 <!ENTITY folderRebuildSummaryFile2.label         "修復資料夾">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

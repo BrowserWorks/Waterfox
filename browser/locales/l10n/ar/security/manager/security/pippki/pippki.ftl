@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,8 +6,6 @@ password-quality-meter = مقياس جودة كلمة السرّ
 
 ## Change Password dialog
 
-change-password-window =
-    .title = غيّر كلمة السرّ الرئيسيّة
 # Variables:
 # $tokenName (String) - Security device of the change password dialog
 change-password-token = جهاز الأمن: { $tokenName }
@@ -17,16 +15,12 @@ change-password-reenter = كلمة السرّ الجّديدة (مرّة ثان�
 
 ## Reset Password dialog
 
-reset-password-window =
-    .title = صفّر كلمة السرّ الرّئيسية
-    .style = width: 40em
 pippki-incorrect-pw = لم تُدخل كلمة السر الرئيسية الصحيحة. رجاءً أعِد المحاولة.
 
 ## Reset Primary Password dialog
 
 reset-password-button-label =
     .label = صفّر
-reset-password-text = إذا صفّرت كلمة السرّ الرئيسية، ستُنسى كلّ كلمات سرّ البريد الإلكتروني و وِب، وبيانات الاستمارات، والشّهادات الشّخصيّة، والمفاتيح السرّية المخزّنة. متأكّد أنّك تريد إعادة ضبط كلمة السرّ الرّئيسية؟
 
 ## Downloading cert dialog
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,9 +23,6 @@ content-tab-security-broken-icon =
 
 ## Toolbar
 
-addons-and-themes-button =
-    .label = アドオンとテーマ
-    .tooltip = アドオンを管理します
 addons-and-themes-toolbarbutton =
     .label = アドオンとテーマ
     .tooltiptext = アドオンを管理します
@@ -133,3 +130,9 @@ caret-browsing-prompt-check-text = 今後は確認しない
 repair-text-encoding-button =
   .label = テキストエンコーディングを修復
   .tooltiptext = メッセージ本文の適切なテキストエンコーディングを推定します
+
+## no-reply handling
+
+no-reply-title = 返信に対応していません
+no-reply-message = この返信アドレス ({ $email }) は通信相手が監視していません。このアドレスへのメッセージは誰にも読まれることがないでしょう。
+no-reply-reply-anyway-button = 強制返信する

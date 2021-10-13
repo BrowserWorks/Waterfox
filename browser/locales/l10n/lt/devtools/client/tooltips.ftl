@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,7 +27,6 @@ inactive-css-not-display-block-on-floated = Varikliukas pakeitė <strong>display
 inactive-css-property-is-impossible-to-override-in-visited = Neįmanoma pakeisti <strong>{ $property }</strong> dėl <strong>:visited</strong> apribojimo.
 inactive-css-position-property-on-unpositioned-box = <strong>{ $property }</strong> nedaro poveikio šiam elementui, kadangi jis nėra pozicionuotas elementas.
 inactive-text-overflow-when-no-overflow = <strong>{ $property }</strong> nedaro poveikio šiam elementui, kadangi nėra nustatyta <strong>overflow:hidden</strong> savybė.
-inactive-outline-radius-when-outline-style-auto-or-none = <strong>{ $property }</strong> nedaro poveikio šiam elementui, kadangi jo savybė <strong>outline-style</strong> turi reikšmę <strong>auto</strong> arba <strong>none</strong>.
 inactive-css-not-for-internal-table-elements = <strong>{ $property }</strong> neturi jokios įtakos vidiniams lentelės elementams.
 inactive-css-not-for-internal-table-elements-except-table-cells = <strong>{ $property }</strong> neturi jokios įtakos vidiniams lentelės elementams, išskyrus langelius.
 inactive-css-not-table = <strong>{ $property }</strong> nedaro poveikio šiam elementui, kadangi jis nėra „table“ elementas.
@@ -40,6 +39,7 @@ inactive-scroll-padding-when-not-scroll-container = <strong>{ $property }</stron
 inactive-css-not-grid-or-flex-container-fix = Pabandykite pridėti <strong>display:grid</strong> arba <strong>display:flex</strong>. { learn-more }
 inactive-css-not-grid-or-flex-container-or-multicol-container-fix = Pabandykite pridėti <strong>display:grid</strong>, <strong>display:flex</strong>, arba <strong>columns:2</strong>. { learn-more }
 inactive-css-not-grid-or-flex-item-fix-2 = Pabandykite pridėti <strong>display:grid</strong>, <strong>display:flex</strong>, <strong>display:inline-grid</strong>, arba <strong>display:inline-flex</strong>. { learn-more }
+inactive-css-not-grid-or-flex-item-fix-3 = Pabandykite pridėti <strong>display:grid</strong>, <strong>display:flex</strong>, <strong>display:inline-grid</strong>, arba <strong>display:inline-flex</strong> prie tėvinio elemento. { learn-more }
 inactive-css-not-grid-item-fix-2 = Pabandykite pridėti <strong>display:grid</strong> arba <strong>display:inline-grid</strong> tėviniam elementui. { learn-more }
 inactive-css-not-grid-container-fix = Pabandykite pridėti <strong>display:grid</strong> arba <strong>display:inline-grid</strong>. { learn-more }
 inactive-css-not-flex-item-fix-2 = Pabandykite pridėti <strong>display:flex</strong> arba <strong>display:inline-flex</strong> tėviniam elementui. { learn-more }
@@ -50,9 +50,8 @@ inactive-css-non-replaced-inline-or-table-column-or-column-group-fix = Pabandyki
 inactive-css-not-display-block-on-floated-fix = Pabandykite nuimti <strong>float</strong> arba pridėti <strong>display:block</strong>. { learn-more }
 inactive-css-position-property-on-unpositioned-box-fix = Pabandykite nustatyti jo <strong>position</strong> savybės reikšmę į kitą negu <strong>static</strong>. { learn-more }
 inactive-text-overflow-when-no-overflow-fix = Pabandykite pridėti <strong>overflow:hidden</strong>. { learn-more }
-inactive-css-not-for-internal-table-elements-fix = Pabandykite nustatyti jo <strong>display</strong> savybės reikšmę į kitą negu <strong>table-cell</strong>, <strong>table-column</strong>, <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong>, arba <strong>table-footer-group</strong>. { learn-more }
-inactive-css-not-for-internal-table-elements-except-table-cells-fix = Pabandykite nustatyti jo <strong>display</strong> savybės reikšmę į kitą negu <strong>table-column</strong>, <strong>table-column</strong>, <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong>, arba <strong>table-footer-group</strong>. { learn-more }
-inactive-outline-radius-when-outline-style-auto-or-none-fix = Pabandykite nustatyti jo <strong>outline-style</strong> savybės reikšmę į kitą negu <strong>auto</strong> ar <strong>none</strong>. { learn-more }
+inactive-css-not-for-internal-table-elements-fix = Pabandykite nustatyti jo <strong>display</strong> savybės reikšmę į kitą negu <strong>table-cell</strong>, <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong>, arba <strong>table-footer-group</strong>. { learn-more }
+inactive-css-not-for-internal-table-elements-except-table-cells-fix = Pabandykite nustatyti jo <strong>display</strong> savybės reikšmę į kitą negu <strong>table-column</strong>, <strong>table-row</strong>, <strong>table-column-group</strong>, <strong>table-row-group</strong>, arba <strong>table-footer-group</strong>. { learn-more }
 inactive-css-not-table-fix = Pabandykite pridėti <strong>display:table</strong> arba <strong>display:inline-table</strong>. { learn-more }
 inactive-scroll-padding-when-not-scroll-container-fix = Pabandykite pridėti <strong>overflow:auto</strong>, <strong>overflow:scroll</strong>, arba <strong>overflow:hidden</strong>. { learn-more }
 
@@ -66,7 +65,7 @@ inactive-scroll-padding-when-not-scroll-container-fix = Pabandykite pridėti <st
 css-compatibility-default-message = <strong>{ $property }</strong> nėra palaikoma šiose naršyklėse:
 css-compatibility-deprecated-experimental-message = <strong>{ $property }</strong> buvo bandomoji savybė, kuri dabar yra nenaudotina pagal „W3C“ standartus. Ji nėra palaikoma šiose naršyklėse:
 css-compatibility-deprecated-experimental-supported-message = <strong>{ $property }</strong> buvo bandomoji savybė, kuri dabar yra nenaudotina pagal „W3C“ standartus.
-css-compatibility-deprecated-message = <strong>{ $property }{ $property } yra nenaudotina pagal „W3C“ standartus. Ji nėra palaikoma šiose naršyklėse:
+css-compatibility-deprecated-message = <strong>{ $property }</strong> yra nenaudotina pagal „W3C“ standartus. Ji nėra palaikoma šiose naršyklėse:
 css-compatibility-deprecated-supported-message = <strong>{ $property }</strong> yra nenaudotina pagal „W3C“ standartus.
 css-compatibility-experimental-message = <strong>{ $property }</strong> yra bandomoji savybė. Ji nėra palaikoma šiose naršyklėse:
 css-compatibility-experimental-supported-message = <strong>{ $property }</strong> yra bandomoji savybė.

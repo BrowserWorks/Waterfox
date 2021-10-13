@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,15 @@ account-setup-tab-title = Konto einrichten
 
 account-setup-title = Bestehende E-Mail-Adresse einrichten
 
-account-setup-description = Geben Sie zur Verwendung Ihrer derzeitigen E-Mail-Adresse deren Zugangsdaten ein.<br/>
-    { -brand-product-name } wird automatisch nach funktionierenden und empfohlenen Server-Konfigurationen suchen.
+account-setup-description = Geben Sie zur Verwendung Ihrer derzeitigen E-Mail-Adresse deren Zugangsdaten ein.
+
+account-setup-secondary-description = { -brand-product-name } wird automatisch nach funktionierenden und empfohlenen Server-Konfigurationen suchen.
+
+account-setup-success-title = Konto erfolgreich hinzugefügt
+
+account-setup-success-description = Das Konto kann jetzt mit { -brand-short-name } verwendet werden.
+
+account-setup-success-secondary-description = Das Verhalten des Kontos kann durch Verbinden mit damit zusammenhängenden Diensten und durch das Verändern von erweiterten Konteneinstellungen angepasst werden.
 
 ## Form fields
 
@@ -95,8 +102,8 @@ account-setup-looking-up-disk = Einstellungen suchen: In der { -brand-short-name
 
 account-setup-looking-up-isp = Einstellungen suchen: Anbieter des E-Mail-Diensts…
 
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = Einstellungen suchen: Mozilla ISP-Datenbank…
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = Einstellungen suchen: Waterfox ISP-Datenbank…
 
 account-setup-looking-up-mx = Einstellungen suchen: Posteingangs-Server…
 
@@ -116,8 +123,8 @@ account-setup-success-password = Passwort akzeptiert
 
 account-setup-success-addon = Add-on erfolgreich installiert
 
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = Einstellungen wurden in der Mozilla ISP-Datenbank gefunden.
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = Einstellungen wurden in der Waterfox ISP-Datenbank gefunden.
 
 account-setup-success-settings-disk = Einstellungen wurden in der { -brand-short-name }-Installation gefunden.
 
@@ -140,15 +147,24 @@ account-setup-step3-image =
 account-setup-step4-image =
     .title = Verbindungsfehler
 
-account-setup-privacy-footnote = Ihre Zugangsdaten werden entsprechend unserer <a data-l10n-name="privacy-policy-link">Datenschutzerklärung</a> verwendet und nur lokal auf Ihrem Computer gespeichert.
+account-setup-step5-image =
+    .title = Konto hinzugefügt
+
+account-setup-privacy-footnote2 = Ihre Zugangsdaten werden nur lokal auf Ihrem Computer gespeichert.
 
 account-setup-selection-help = Nicht sicher, was ausgewählt werden soll?
 
 account-setup-selection-error = Benötigen Sie Hilfe?
 
+account-setup-success-help = Nicht sicher, was als Nächstes kommt?
+
 account-setup-documentation-help = Dokumentation zur Einrichtung
 
 account-setup-forum-help = Hilfeforum
+
+account-setup-privacy-help = Datenschutzerklärung
+
+account-setup-getting-started = Einführung
 
 ## Results area
 
@@ -159,8 +175,6 @@ account-setup-results-area-title =
         [one] Verfügbare Konfiguration
         *[other] Verfügbare Konfigurationen
     }
-
-account-setup-protocol-title = Protokoll auswählen
 
 # Note: IMAP is the name of a protocol.
 account-setup-result-imap = IMAP
@@ -175,7 +189,8 @@ account-setup-result-pop-description = Ordner und E-Mails auf dem Computer speic
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
 
-account-setup-result-exchange-description = Microsoft Exchange Server
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = Microsoft-Exchange-Server oder Office365-Cloud-Dienste verwenden
 
 account-setup-incoming-title = Posteingangs-Server
 
@@ -292,6 +307,8 @@ exchange-dialog-confirm-button = Senden
 
 exchange-dialog-cancel-button = Abbrechen
 
+## Dismiss account creation dialog
+
 ## Alert dialogs
 
 account-setup-creation-error-title = Konteneinrichtung fehlgeschlagen
@@ -309,3 +326,100 @@ account-setup-addon-install-title = Installieren
 account-setup-addon-install-intro = Ein Add-on eines Drittanbieters kann den Zugriff auf das E-Mail-Konto des Servers ermöglichen:
 
 account-setup-addon-no-protocol = Dieser Posteingangs-Server unterstützt leider keine offenen Protokolle. { account-setup-addon-install-intro }
+
+## Success view
+
+account-setup-settings-button = Konteneinstellungen
+
+account-setup-encryption-button = Ende-zu-Ende-Verschlüsselung
+
+account-setup-signature-button = Signatur hinzufügen
+
+account-setup-dictionaries-button = Wörterbücher hinzufügen
+
+account-setup-address-book-carddav-button = Mit CardDAV-Adressbuch verbinden
+
+account-setup-address-book-ldap-button = Mit LDAP-Adressbuch verbinden
+
+account-setup-calendar-button = Mit externem Kalender verbinden
+
+account-setup-linked-services-title = Mit verknüpften Diensten verbinden
+
+account-setup-linked-services-description = { -brand-short-name } erkannte andere Dienste, die mit Ihrem E-Mail-Konto verknüpft sind.
+
+account-setup-no-linked-description = Richten Sie andere Dienste ein, um Ihre Nutzung von { -brand-short-name } zu optimieren.
+
+# Variables:
+# $count (Number) - The number of address books found during autoconfig.
+account-setup-found-address-books-description =
+    { $count ->
+        [one] { -brand-short-name } erkannte ein Adressbuch, das mit Ihrem E-Mail-Konto verknüpft ist.
+        *[other] { -brand-short-name } erkannte { $count } Adressbücher, die mit Ihrem E-Mail-Konto verknüpft sind.
+    }
+
+# Variables:
+# $count (Number) - The number of calendars found during autoconfig.
+account-setup-found-calendars-description =
+    { $count ->
+        [one] { -brand-short-name } erkannte einen Kalender, der mit Ihrem E-Mail-Konto verknüpft ist.
+        *[other] { -brand-short-name } erkannte { $count } Kalender, die mit Ihrem E-Mail-Konto verknüpft sind.
+    }
+
+account-setup-button-finish = Beenden
+    .accesskey = B
+
+account-setup-looking-up-address-books = Adressbücher werden aufgerufen…
+
+account-setup-looking-up-calendars = Kalender werden aufgerufen…
+
+account-setup-address-books-button = Adressbücher
+
+account-setup-calendars-button = Kalender
+
+account-setup-connect-link = Verbinden
+
+account-setup-existing-address-book = Verbunden
+    .title = Bereits mit Adressbuch verbunden
+
+account-setup-existing-calendar = Verbunden
+    .title = Bereits mit Kalender verbunden
+
+account-setup-connect-all-calendars = Mit allen Kalendern verbinden
+
+account-setup-connect-all-address-books = Mit allen Adressbüchern verbinden
+
+## Calendar synchronization dialog
+
+calendar-dialog-title = Kalender verbinden
+
+calendar-dialog-cancel-button = Abbrechen
+    .accesskey = b
+
+calendar-dialog-confirm-button = Verbinden
+    .accesskey = V
+
+account-setup-calendar-name-label = Name
+
+account-setup-calendar-name-input =
+    .placeholder = Mein Kalender
+
+account-setup-calendar-color-label = Farbe
+
+account-setup-calendar-refresh-label = Aktualisieren
+
+account-setup-calendar-refresh-manual = Manuell
+
+account-setup-calendar-refresh-interval =
+    { $count ->
+        [one] Jede Minute
+        *[other] Alle { $count } Minuten
+    }
+
+account-setup-calendar-read-only = Schreibgeschützt
+    .accesskey = S
+
+account-setup-calendar-show-reminders = Alarme anzeigen
+    .accesskey = A
+
+account-setup-calendar-offline-support = Offline-Unterstützung
+    .accesskey = O

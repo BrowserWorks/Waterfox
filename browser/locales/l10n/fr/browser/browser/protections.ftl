@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,9 +27,9 @@ graph-week-summary-private-window = Traqueurs bloqués par { -brand-short-name }
 
 protection-report-webpage-title = Tableau de bord des protections
 protection-report-page-content-title = Tableau de bord des protections
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } peut protéger votre vie privée en arrière-plan pendant que vous naviguez. Voici un résumé personnalisé de ces protections, avec des outils pour prendre le contrôle de votre sécurité en ligne.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } protège votre vie privée en arrière-plan pendant que vous naviguez. Voici un résumé personnalisé de ces protections, avec des outils pour prendre le contrôle de votre sécurité en ligne.
 
 protection-report-settings-link = Gérer vos paramètres de confidentialité et de sécurité
@@ -100,9 +100,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] Vos mots de passe sont stockés en toute sécurité.
     }
 lockwise-how-it-works-link = Principes de fonctionnement
-
-turn-on-sync = Activer { -sync-brand-short-name }…
-    .title = Ouvrir les préférences de synchronisation
 
 monitor-title = Gardez un œil sur les fuites de données
 monitor-link = Principes de fonctionnement

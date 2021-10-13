@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,6 +41,10 @@ account-provisioner-button = Get a new email address
     .accesskey = G
 account-setup-password-toggle =
     .title = Show/hide password
+account-setup-password-toggle-show =
+    .title = Show password in clear text
+account-setup-password-toggle-hide =
+    .title = Hide password
 account-setup-remember-password = Remember password
     .accesskey = m
 account-setup-exchange-label = Your login
@@ -74,8 +78,8 @@ account-setup-looking-up-settings-guess = Looking up configuration: Trying commo
 account-setup-looking-up-settings-half-manual = Looking up configuration: Probing server…
 account-setup-looking-up-disk = Looking up configuration: { -brand-short-name } installation…
 account-setup-looking-up-isp = Looking up configuration: Email provider…
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = Looking up configuration: Mozilla ISP database…
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = Looking up configuration: Waterfox ISP database…
 account-setup-looking-up-mx = Looking up configuration: Incoming mail domain…
 account-setup-looking-up-exchange = Looking up configuration: Exchange server…
 account-setup-checking-password = Checking password…
@@ -85,8 +89,8 @@ account-setup-success-guess = Configuration found by trying common server names.
 account-setup-success-guess-offline = You are offline. We guessed some settings but you will need to enter the right settings.
 account-setup-success-password = Password OK
 account-setup-success-addon = Successfully installed the add-on
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = Configuration found in Mozilla ISP database.
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = Configuration found in Waterfox ISP database.
 account-setup-success-settings-disk = Configuration found on { -brand-short-name } installation.
 account-setup-success-settings-isp = Configuration found at email provider.
 # Note: Microsoft Exchange is a product name.
@@ -104,12 +108,13 @@ account-setup-step4-image =
     .title = Connection error
 account-setup-step5-image =
     .title = Account created
-account-setup-privacy-footnote = Your credentials will be used according to our <a data-l10n-name="privacy-policy-link">privacy policy</a> and will only be stored locally on your computer.
+account-setup-privacy-footnote2 = Your credentials will only be stored locally on your computer.
 account-setup-selection-help = Not sure what to select?
 account-setup-selection-error = Need help?
 account-setup-success-help = Not sure about your next steps?
 account-setup-documentation-help = Setup documentation
 account-setup-forum-help = Support forum
+account-setup-privacy-help = Privacy policy
 account-setup-getting-started = Getting started
 
 ## Results area
@@ -129,7 +134,8 @@ account-setup-result-pop = POP3
 account-setup-result-pop-description = Keep your folders and emails on your computer
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
-account-setup-result-exchange-description = Microsoft Exchange Server
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = Use the Microsoft Exchange server or Office365 cloud services
 account-setup-incoming-title = Incoming
 account-setup-outgoing-title = Outgoing
 account-setup-username-title = Username
@@ -151,6 +157,7 @@ account-setup-credentials-incomplete = Authentication failed. Either the entered
 account-setup-credentials-wrong = Authentication failed. Please check the username and password
 account-setup-find-settings-failed = { -brand-short-name } failed to find the settings for your email account
 account-setup-exchange-config-unverifiable = Configuration could not be verified. If your username and password are correct, it’s likely that the server administrator has disabled the selected configuration for your account. Try selecting another protocol.
+account-setup-provisioner-error = An error occurred while setting up your new account in { -brand-short-name }. Please, try to manually set up your account with your credentials.
 
 ## Manual configuration area
 
@@ -206,6 +213,17 @@ insecure-dialog-confirm-button = Confirm
 exchange-dialog-question = { -brand-short-name } found your account setup information on { $domain }. Do you want to proceed and submit your credentials?
 exchange-dialog-confirm-button = Login
 exchange-dialog-cancel-button = Cancel
+
+## Dismiss account creation dialog
+
+exit-dialog-title = No Email Account Configured
+exit-dialog-description = Are you sure you want to cancel the setup process? { -brand-short-name } can still be used without an email account, but many features will not be available.
+account-setup-no-account-checkbox = Use { -brand-short-name } without an email account
+    .accesskey = U
+exit-dialog-cancel-button = Continue Setup
+    .accesskey = C
+exit-dialog-confirm-button = Exit Setup
+    .accesskey = E
 
 ## Alert dialogs
 

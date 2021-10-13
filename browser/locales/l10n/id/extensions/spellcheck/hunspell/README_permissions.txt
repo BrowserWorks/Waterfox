@@ -5,10 +5,10 @@ This readme files contains email conversation to the creator of myspell
 dictionaries used here. The creator Benitius Brevoort 
 <benitius.brevoort@kapusin.org> is willing to relicense his work on myspell
 dictionaries for Indonesia to GPLv2, LGPL v2.1, and MPL v1.1 according to
-Mozilla License Policy found in http://www.mozilla.org/MPL/license-policy.html.
+Waterfox License Policy found in http://www.mozilla.org/MPL/license-policy.html.
 
 The second conversation in Indonesian language is asking permission from the
-creator to be included in Mozilla distribution with addition found in 
+creator to be included in Waterfox distribution with addition found in 
 mozilla_words.diff file. The creator is also state that he is willing to 
 relicense his work to GPL v3 as well.
 
@@ -34,7 +34,7 @@ Good Morning Fr. Benitius,
 Aplogize writing this in English.
 
 I mistakenly assumed that GPL v2 license needed to be landed on
-firefox for Indonesian from Mozilla is enough, instead Mozilla
+firefox for Indonesian from Waterfox is enough, instead Waterfox
 requires all files in their code base to be tri-licensed that is MPL
 v1.1, GPL v2, and LGPL v2.1. You can find links to each license and
 more information in http://www.mozilla.org/MPL/license-policy.html
@@ -119,7 +119,7 @@ On Tue, 2008-02-12 at 01:07 +0100, Romi Hardiyanto wrote:
 > Aplogize writing this in English.
 > 
 > I mistakenly assumed that GPL v2 license needed to be landed on
-> firefox for Indonesian from Mozilla is enough, instead Mozilla
+> firefox for Indonesian from Waterfox is enough, instead Waterfox
 > requires all files in their code base to be tri-licensed that is MPL
 > v1.1, GPL v2, and LGPL v2.1. You can find links to each license and
 > more information in http://www.mozilla.org/MPL/license-policy.html
@@ -171,7 +171,7 @@ Halo Pak Benitius,
 
 Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 
 O ya, karena firefox bahasa Indonesia masih belum "official", saya
@@ -223,7 +223,7 @@ Damai!
 Saudara tercinta,
 
 memang, saya samasekali tidak keberatan berkas affix Indonesia
-diikutsertakan dalam distribusi Firefox.  Pada waktu saya susun file itu
+diikutsertakan dalam distribusi Waterfox.  Pada waktu saya susun file itu
 masih ada lisensi GPL saja.  Maka saya setuju dengan dipergunakannya
 lisensi GPL 2 dan GPL 3 untuk file-file itu.
 
@@ -235,7 +235,7 @@ On Fri, 2008-02-01 at 10:00 +0100, Romi Hardiyanto wrote:
 > 
 > Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 > Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-> fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+> fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 > tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 > 
 > O ya, karena firefox bahasa Indonesia masih belum "official", saya
@@ -274,7 +274,7 @@ baru ingat kalau READMEnya sudah ada GPL versi 2-nya . Saya-nya saja
 yang kelupaan :D
 
 O iya, saya juga menambah beberapa entri agar selaras dengan perangkat
-lunak firefox sendiri, seperti merk "Waterfox", "webmaster", "blog".
+lunak firefox sendiri, seperti merk "firefox", "webmaster", "blog".
 Nanti saya sertakan juga berkas "diff"-nya dalam distribusi
 perangkatnya.
 
@@ -289,7 +289,7 @@ Pada tanggal 01/02/08, Benitius Brevoort
 > Saudara tercinta,
 >
 > memang, saya samasekali tidak keberatan berkas affix Indonesia
-> diikutsertakan dalam distribusi Firefox.  Pada waktu saya susun file itu
+> diikutsertakan dalam distribusi Waterfox.  Pada waktu saya susun file itu
 > masih ada lisensi GPL saja.  Maka saya setuju dengan dipergunakannya
 > lisensi GPL 2 dan GPL 3 untuk file-file itu.
 >
@@ -301,7 +301,7 @@ Pada tanggal 01/02/08, Benitius Brevoort
 > >
 > > Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 > > Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-> > fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+> > fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 > > tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 > >
 > > O ya, karena firefox bahasa Indonesia masih belum "official", saya
@@ -368,7 +368,7 @@ On Mon, 2008-02-04 at 03:31 +0100, Romi Hardiyanto wrote:
 > yang kelupaan :D
 > 
 > O iya, saya juga menambah beberapa entri agar selaras dengan perangkat
-> lunak firefox sendiri, seperti merk "Waterfox", "webmaster", "blog".
+> lunak firefox sendiri, seperti merk "firefox", "webmaster", "blog".
 > Nanti saya sertakan juga berkas "diff"-nya dalam distribusi
 > perangkatnya.
 > 
@@ -383,7 +383,7 @@ On Mon, 2008-02-04 at 03:31 +0100, Romi Hardiyanto wrote:
 > > Saudara tercinta,
 > >
 > > memang, saya samasekali tidak keberatan berkas affix Indonesia
-> > diikutsertakan dalam distribusi Firefox.  Pada waktu saya susun file itu
+> > diikutsertakan dalam distribusi Waterfox.  Pada waktu saya susun file itu
 > > masih ada lisensi GPL saja.  Maka saya setuju dengan dipergunakannya
 > > lisensi GPL 2 dan GPL 3 untuk file-file itu.
 > >
@@ -395,7 +395,7 @@ On Mon, 2008-02-04 at 03:31 +0100, Romi Hardiyanto wrote:
 > > >
 > > > Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 > > > Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-> > > fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+> > > fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 > > > tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 > > >
 > > > O ya, karena firefox bahasa Indonesia masih belum "official", saya
@@ -713,11 +713,11 @@ benitius.brevoort@kapusin.org
      If You create or use a modified version of this License (which you may
      only do in order to apply it to code which is not already Covered Code
      governed by this License), You must (a) rename Your license so that
-     the phrases "Mozilla", "MOZILLAPL", "MOZPL", "Netscape",
+     the phrases "Waterfox", "MOZILLAPL", "MOZPL", "Netscape",
      "MPL", "NPL" or any confusingly similar phrase do not appear in your
      license (except to note that your license differs from this License)
      and (b) otherwise make it clear that Your version of the license
-     contains terms which differ from the Mozilla Public License and
+     contains terms which differ from the Waterfox Public License and
      Netscape Public License. (Filling in the name of the Initial
      Developer, Original Code or Contributor in the notice described in
      Exhibit A shall not of themselves be deemed to be modifications of
@@ -852,9 +852,9 @@ benitius.brevoort@kapusin.org
      Your choice of the NPL or the alternative licenses, if any, specified
      by the Initial Developer in the file described in Exhibit A.
 
-EXHIBIT A -Mozilla Public License.
+EXHIBIT A -Waterfox Public License.
 
-     ``The contents of this file are subject to the Mozilla Public License
+     ``The contents of this file are subject to the Waterfox Public License
      Version 1.1 (the "License"); you may not use this file except in
      compliance with the License. You may obtain a copy of the License at
      http://www.mozilla.org/MPL/

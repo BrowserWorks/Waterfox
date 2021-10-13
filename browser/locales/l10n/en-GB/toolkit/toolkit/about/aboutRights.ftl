@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = About Your Rights
 rights-intro = { -brand-full-name } is free and open source software, built by a community of thousands from all over the world. There are a few things you should know:
-rights-intro-point-1 = { -brand-short-name } is made available to you under the terms of the <a data-l10n-name="mozilla-public-license-link">Mozilla Public Licence</a>. This means you may use, copy and distribute { -brand-short-name } to others.  You are also welcome to modify the source code of { -brand-short-name } as you want to meet your needs. The Mozilla Public Licence also gives you the right to distribute your modified versions.
-rights-intro-point-2 = You are not granted any trademark rights or licences to the trademarks of the Mozilla Foundation or any party, including without limitation the Firefox name or logo. Additional information on trademarks may be found <a data-l10n-name="mozilla-trademarks-link">here</a>.
+rights-intro-point-1 = { -brand-short-name } is made available to you under the terms of the <a data-l10n-name="mozilla-public-license-link">Waterfox Public Licence</a>. This means you may use, copy and distribute { -brand-short-name } to others.  You are also welcome to modify the source code of { -brand-short-name } as you want to meet your needs. The Waterfox Public Licence also gives you the right to distribute your modified versions.
+rights-intro-point-2 = You are not granted any trademark rights or licences to the trademarks of the Waterfox Foundation or any party, including without limitation the Waterfox name or logo. Additional information on trademarks may be found <a data-l10n-name="mozilla-trademarks-link">here</a>.
 rights-intro-point-3 = Some features in { -brand-short-name }, such as the Crash Reporter, give you the option to provide feedback to { -vendor-short-name }. By choosing to submit feedback, you give { -vendor-short-name } permission to use the feedback to improve its products, to publish the feedback on its web sites, and to distribute the feedback.
 rights-intro-point-4 = How we use your personal information and feedback submitted to { -vendor-short-name } through { -brand-short-name } is described in the <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name } Privacy Policy</a>.
 rights-intro-point-4-unbranded = Any applicable privacy policies for this product should be listed here.

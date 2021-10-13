@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
@@ -14,13 +14,13 @@
 <!ENTITY alwaysClear.accesskey            "V">
 
 <!ENTITY askBeforeClear.label             "Įspėti prieš šalinant privačius duomenis">
-<!ENTITY askBeforeClear.accesskey         "p">
 
 <!ENTITY clearDataSettings.label          "Liepus programai „&brandShortName;“ pašalinti privačius duomenis, reikia išvalyti:">
 <!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
   The only difference bettween the two labels is that one calls a dialog, the other doesn't.
   The same accesskey is used for both labels.
 -->
+
 
 <!ENTITY clearDataDialog.label            "Pašalinti dabar…">
 <!ENTITY clearDataSilent.label            "Pašalinti dabar">

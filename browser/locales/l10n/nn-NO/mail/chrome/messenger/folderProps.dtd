@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Eigenskapar">
 
 <!ENTITY generalInfo.label                       "Generell informasjon">
-<!ENTITY folderCharsetFallback2.label            "Reserveteiknkoding:">
-<!ENTITY folderCharsetFallback2.accesskey        "R">
-<!ENTITY folderCharsetEnforce2.label             "Bruk koding på alle meldingar i mappa (individuelle innstillingar for koding av meldingstekst og auto-oppdaging vert ignorert)">
-<!ENTITY folderCharsetEnforce2.accesskey         "B">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Bygg opp oppsummeringsfil på nytt">
 <!ENTITY folderRebuildSummaryFile2.label         "Reparer mappe">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

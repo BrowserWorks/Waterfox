@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,12 +13,6 @@
 <!ENTITY warnOnClose.accesskey "ė">
 <!ENTITY relatedAfterCurrent.label "Susijusias korteles atverti greta esamos">
 <!ENTITY relatedAfterCurrent.accesskey "g">
-
-<!ENTITY loadGroup.label "Atveriant į adresyną įrašytą tinklalapių grupę:">
-<!ENTITY loadGroupAppend.label "Sukurti naujas korteles">
-<!ENTITY loadGroupAppend.accesskey "k">
-<!ENTITY loadGroupReplace.label "Pakeisti esamas">
-<!ENTITY loadGroupReplace.accesskey "P">
 
 <!ENTITY openTabs.label "Vietoj naujo naršyklės lango atverti kortelę">
 

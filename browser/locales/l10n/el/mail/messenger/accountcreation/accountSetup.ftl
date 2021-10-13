@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,12 +6,12 @@ account-setup-tab-title = Ρύθμιση λογαριασμού
 
 ## Header
 
-account-setup-title = Ρύθμιση της υπάρχουσας διεύθυνσης email σας
-account-setup-description =
-    Για να χρησιμοποιήσετε την υπάρχουσα διεύθυνση ηλεκτρονικού ταχυδρομείου σας, συμπληρώστε τα διαπιστευτήριά σας. <br/>
-    Το { -brand-product-name } θα αναζητήσει αυτόματα τις λειτουργικές και προτεινόμενες ρυθμίσεις του διακομιστή.
+account-setup-title = Ρύθμιση υπάρχουσας διεύθυνσης email
+account-setup-description = Για να χρησιμοποιήσετε την υπάρχουσα διεύθυνση email σας, συμπληρώστε τα διαπιστευτήριά σας.
+account-setup-secondary-description = Το { -brand-product-name } θα αναζητήσει αυτόματα για τις λειτουργικές και προτεινόμενες ρυθμίσεις διακομιστή.
 account-setup-success-title = Επιτυχής δημιουργία λογαριασμού
 account-setup-success-description = Μπορείτε πλέον να χρησιμοποιήσετε αυτόν τον λογαριασμό με το { -brand-short-name }.
+account-setup-success-secondary-description = Μπορείτε να βελτιώσετε την εμπειρία σας συνδέοντας σχετικές υπηρεσίες και διαμορφώνοντας τις σύνθετες ρυθμίσεις λογαριασμού.
 
 ## Form fields
 
@@ -21,7 +21,7 @@ account-setup-name-label = Το ονοματεπώνυμό σας
 account-setup-name-input =
     .placeholder = Ονοματεπώνυμο
 account-setup-name-info-icon =
-    .title = Το όνομά σας, όπως θα εμφανίζεται στους άλλους
+    .title = Το όνομά σας, όπως θα εμφανίζεται σε τρίτους
 account-setup-name-warning-icon =
     .title = Παρακαλώ εισαγάγετε το όνομά σας
 account-setup-email-label = Διεύθυνση email
@@ -39,6 +39,10 @@ account-provisioner-button = Απόκτηση νέας διεύθυνσης emai
     .accesskey = Α
 account-setup-password-toggle =
     .title = Εμφάνιση/απόκρυψη του κωδικού πρόσβασης
+account-setup-password-toggle-show =
+    .title = Εμφάνιση κωδικού πρόσβασης σε κείμενο
+account-setup-password-toggle-hide =
+    .title = Απόκρυψη κωδικού πρόσβασης
 account-setup-remember-password = Απομνημόνευση κωδικού πρόσβασης
     .accesskey = Α
 account-setup-exchange-label = Η σύνδεσή σας
@@ -72,19 +76,19 @@ account-setup-looking-up-settings-guess = Αναζήτηση ρυθμίσεων:
 account-setup-looking-up-settings-half-manual = Αναζήτηση ρυθμίσεων: Έλεγχος διακομιστή…
 account-setup-looking-up-disk = Αναζήτηση ρυθμίσεων: εγκατάσταση του { -brand-short-name }…
 account-setup-looking-up-isp = Αναζήτηση ρυθμίσεων: Πάροχος ηλεκτρονικού ταχυδρομείου…
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = Αναζήτηση ρυθμίσεων: Βάση δεδομένων Mozilla ISP…
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = Αναζήτηση ρυθμίσεων: Βάση δεδομένων Waterfox ISP…
 account-setup-looking-up-mx = Αναζήτηση ρυθμίσεων: Τομέας εισερχόμενης αλληλογραφίας…
 account-setup-looking-up-exchange = Αναζήτηση ρυθμίσεων: Διακομιστής Exchange…
 account-setup-checking-password = Έλεγχος κωδικού πρόσβασης…
-account-setup-installing-addon = Λήψη και εγκατάσταση πρόσθετου…
+account-setup-installing-addon = Λήψη και εγκατάσταση του προσθέτου…
 account-setup-success-half-manual = Κατά τον έλεγχο του διακομιστή εντοπίστηκαν οι παρακάτω ρυθμίσεις:
 account-setup-success-guess = Ρυθμίσεις που βρέθηκαν κατά τη δοκιμή των κοινών ονομάτων.
 account-setup-success-guess-offline = Είστε εκτός σύνδεσης. Μαντέψαμε ορισμένες ρυθμίσεις αλλά θα χρειαστεί να εισαγάγετε τις σωστές.
-account-setup-success-password = Ο κωδικός πρόσβασης είναι εντάξει.
+account-setup-success-password = Ο κωδικός πρόσβασης είναι εντάξει
 account-setup-success-addon = Το πρόσθετο εγκαταστάθηκε επιτυχώς
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = Βρέθηκε ρύθμιση στην βάση δεδομένων του Mozilla ISP.
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = Βρέθηκε ρύθμιση στην βάση δεδομένων του Waterfox ISP.
 account-setup-success-settings-disk = Βρέθηκε ρύθμιση στην εγκατάσταση του { -brand-short-name }.
 account-setup-success-settings-isp = Βρέθηκε ρύθμιση στον πάροχο ηλεκτρονικού ταχυδρομείου.
 # Note: Microsoft Exchange is a product name.
@@ -102,12 +106,13 @@ account-setup-step4-image =
     .title = Σφάλμα σύνδεσης
 account-setup-step5-image =
     .title = Ο λογαριασμός δημιουργήθηκε
-account-setup-privacy-footnote = Τα διαπιστευτήριά σας θα χρησιμοποιηθούν σύμφωνα με την <a data-l10n-name="privacy-policy-link">πολιτική απορρήτου</a> μας και θα αποθηκευτούν μόνο τοπικά στον υπολογιστή σας.
-account-setup-selection-help = Δεν είστε σίγουροι τι να επιλέξετε;
+account-setup-privacy-footnote2 = Τα διαπιστευτήριά σας θα αποθηκευτούν μόνο τοπικά, στον υπολογιστή σας.
+account-setup-selection-help = Δεν ξέρετε τι να επιλέξετε;
 account-setup-selection-error = Χρειάζεστε βοήθεια;
 account-setup-success-help = Δεν γνωρίζετε σίγουρα τα επόμενα βήματα;
 account-setup-documentation-help = Τεκμηρίωση ρύθμισης
 account-setup-forum-help = Φόρουμ υποστήριξης
+account-setup-privacy-help = Πολιτική απορρήτου
 account-setup-getting-started = Ξεκινώντας
 
 ## Results area
@@ -121,13 +126,14 @@ account-setup-results-area-title =
     }
 # Note: IMAP is the name of a protocol.
 account-setup-result-imap = IMAP
-account-setup-result-imap-description = Διατηρήστε συγχρονισμένους τους φακέλους και τα μηνύματα με τον διακομιστή σας
+account-setup-result-imap-description = Διατηρήστε συγχρονισμένους τους φακέλους και τα email σας με τον διακομιστή σας
 # Note: POP3 is the name of a protocol.
 account-setup-result-pop = POP3
-account-setup-result-pop-description = Διατηρήστε τους φακέλους και τα μηνύματα στον υπολογιστή σας
+account-setup-result-pop-description = Διατηρήστε τους φακέλους και τα email σας στον υπολογιστή σας
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
-account-setup-result-exchange-description = Διακομιστής Microsoft Exchange
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = Χρησιμοποιήστε τον διακομιστή Microsoft Exchange ή τις υπηρεσίες cloud του Office365
 account-setup-incoming-title = Εισερχόμενα
 account-setup-outgoing-title = Εξερχόμενα
 account-setup-username-title = Όνομα χρήστη
@@ -148,7 +154,7 @@ account-setup-result-username-different = Εισερχόμενα: { $incoming },
 account-setup-credentials-incomplete = Η αυθεντικοποίηση απέτυχε. Είτε τα διαπιστευτήρια που εισαγάγατε είναι λάθος είτε απαιτείται ξεχωριστό όνομα χρήστη για είσοδο. Το όνομα χρήστη συνήθως είναι το όνομα χρήστη για τον τομέα στα Windows, με ή χωρίς το όνομα τομέα (για παράδειγμα janedoe ή AD\\janedoe).
 account-setup-credentials-wrong = Η αυθεντικοποίηση απέτυχε. Παρακαλούμε ελέγξτε το όνομα χρήστη και τον κωδικό πρόσβασης
 account-setup-find-settings-failed = Το { -brand-short-name } απέτυχε να εντοπίσει τις ρυθμίσεις του λογαριασμού ηλεκτρονικής αλληλογραφίας σας
-account-setup-exchange-config-unverifiable = Δεν ήταν δυνατή η επαλήθευση των ρυθμίσεων. Αν το όνομα χρήστη και ο κωδικός πρόσβασης είναι σωστά, ενδέχεται ο διαχειριστής του διακομιστή σας να έχει απενεργοποιήσει την επιλεγμένη ρύθμιση για το λογαριασμό σας. Δοκιμάστε επιλέγοντας άλλο πρωτόκολλο.
+account-setup-exchange-config-unverifiable = Δεν ήταν δυνατή η επαλήθευση των ρυθμίσεων παραμέτρων. Αν το όνομα χρήστη και ο κωδικός πρόσβασής σας είναι σωστά, ο διαχειριστής του διακομιστή ενδέχεται να έχει απενεργοποιήσει τις επιλεγμένες ρυθμίσεις παραμέτρων για τον λογαριασμό σας. Δοκιμάστε να επιλέξετε άλλο πρωτόκολλο.
 
 ## Manual configuration area
 
@@ -188,10 +194,10 @@ account-setup-insecure-outgoing-title = Ρυθμίσεις εξερχομένω�
 # Variables:
 #  $server (String): The name of the hostname of the server the user was trying to connect to.
 account-setup-warning-cleartext = Το <b>{ $server }</b> δεν χρησιμοποιεί κρυπτογράφηση.
-account-setup-warning-cleartext-details = Οι μη-ασφαλείς διακομιστές email δεν χρησιμοποιούν κρυπτογραφημένες συνδέσεις για την προστασία των κωδικών πρόσβασης και των προσωπικών πληροφοριών σας. Αν συνδεθείτε σε αυτόν τον διακομιστή, οι κωδικοί πρόσβασης και οι προσωπικές σας πληροφορίες ενδέχεται να εκτεθούν.
+account-setup-warning-cleartext-details = Οι επισφαλείς διακομιστές αλληλογραφίας δεν χρησιμοποιούν κρυπτογραφημένες συνδέσεις για την προστασία των κωδικών πρόσβασης και των προσωπικών σας πληροφοριών. Αν συνδεθείτε σε αυτό τον διακομιστή, οι κωδικοί πρόσβασης και οι προσωπικές σας πληροφορίες ενδέχεται να εκτεθούν.
 account-setup-insecure-server-checkbox = Κατανοώ τους κινδύνους
     .accesskey = τ
-account-setup-insecure-description = Το { -brand-short-name } μπορεί να σας επιτρέψει να κάνετε λήψη των email σας με τις παρεχόμενες ρυθμίσεις. Ωστόσο, θα πρέπει να επικοινωνήσετε με τον διαχειριστή του συστήματος ή τον πάροχο ηλεκτρονικού ταχυδρομείου σας σχετικά με αυτές τις ασυνήθιστες συνδέσεις. Δείτε τις <a data-l10n-name="thunderbird-faq-link">συχνές ερωτήσεις του Thunderbird</a> για περισσότερες πληροφορίες.
+account-setup-insecure-description = Το { -brand-short-name } σάς επιτρέπει να κάνετε λήψη των email σας με τις παρεχόμενες ρυθμίσεις. Ωστόσο, θα πρέπει να επικοινωνήσετε με τον διαχειριστή του συστήματος ή τον πάροχο ηλεκτρονικού ταχυδρομείου σας σχετικά με αυτές τις ασυνήθιστες συνδέσεις. Δείτε τις <a data-l10n-name="thunderbird-faq-link">συχνές ερωτήσεις του Thunderbird</a> για περισσότερες πληροφορίες.
 insecure-dialog-cancel-button = Αλλαγή ρυθμίσεων
     .accesskey = ρ
 insecure-dialog-confirm-button = Επιβεβαίωση
@@ -204,6 +210,17 @@ insecure-dialog-confirm-button = Επιβεβαίωση
 exchange-dialog-question = Το { -brand-short-name } βρήκε τις πληροφορίες ρύθμισης του λογαριασμού σας στο { $domain }. Θέλετε να συνεχίσετε και να υποβάλετε τα διαπιστευτήριά σας;
 exchange-dialog-confirm-button = Σύνδεση
 exchange-dialog-cancel-button = Ακύρωση
+
+## Dismiss account creation dialog
+
+exit-dialog-title = Δεν έχουν ρυθμιστεί λογαριασμοί email
+exit-dialog-description = Θέλετε σίγουρα να ακυρώσετε τη διαδικασία ρύθμισης; Το { -brand-short-name } μπορεί να χρησιμοποιηθεί ακόμα και χωρίς λογαριασμό email, αλλά πολλές λειτουργίες δεν θα είναι διαθέσιμες.
+account-setup-no-account-checkbox = Χρήση του { -brand-short-name } χωρίς λογαριασμό email
+    .accesskey = Χ
+exit-dialog-cancel-button = Συνέχεια ρύθμισης
+    .accesskey = Σ
+exit-dialog-confirm-button = Κλείσιμο ρύθμισης
+    .accesskey = Κ
 
 ## Alert dialogs
 
@@ -221,18 +238,40 @@ account-setup-addon-no-protocol = Αυτός ο διακομιστής email δ�
 ## Success view
 
 account-setup-settings-button = Ρυθμίσεις λογαριασμού
-account-setup-encryption-button = Κρυπτογράφηση από άκρο σε άκρο
+account-setup-encryption-button = Διατερματική κρυπτογράφηση
 account-setup-signature-button = Προσθήκη υπογραφής
 account-setup-dictionaries-button = Λήψη λεξικών
 account-setup-address-book-carddav-button = Σύνδεση σε ευρετήριο CardDAV
 account-setup-address-book-ldap-button = Σύνδεση σε ευρετήριο LDAP
 account-setup-calendar-button = Σύνδεση σε απομακρυσμένο ημερολόγιο
+account-setup-linked-services-title = Σύνδεση σχετικών υπηρεσιών
+account-setup-linked-services-description = Το { -brand-short-name } ανίχνευσε άλλες συνδεδεμένες υπηρεσίες στον λογαριασμό email σας.
+account-setup-no-linked-description = Ρυθμίστε άλλες υπηρεσίες για να αξιοποιήσετε στο έπακρο το { -brand-short-name } σας.
+# Variables:
+# $count (Number) - The number of address books found during autoconfig.
+account-setup-found-address-books-description =
+    { $count ->
+        [one] Το { -brand-short-name } βρήκε ένα συνδεδεμένο ευρετήριο στον λογαριασμό email σας.
+       *[other] Το { -brand-short-name } βρήκε { $count } συνδεδεμένα ευρετήρια στον λογαριασμό email σας.
+    }
+# Variables:
+# $count (Number) - The number of calendars found during autoconfig.
+account-setup-found-calendars-description =
+    { $count ->
+        [one] Το { -brand-short-name } βρήκε ένα συνδεδεμένο ημερολόγιο στον λογαριασμό email σας.
+       *[other] Το { -brand-short-name } βρήκε { $count } συνδεδεμένα ημερολόγιο στον λογαριασμό email σας.
+    }
 account-setup-button-finish = Τέλος
     .accesskey = Τ
+account-setup-looking-up-address-books = Αναζήτηση ευρετηρίων…
 account-setup-looking-up-calendars = Αναζήτηση ημερολογίων…
 account-setup-address-books-button = Ευρετήρια
 account-setup-calendars-button = Ημερολόγια
 account-setup-connect-link = Σύνδεση
+account-setup-existing-address-book = Συνδεδεμένο
+    .title = Το ευρετήριο έχει ήδη συνδεθεί
+account-setup-existing-calendar = Συνδεδεμένο
+    .title = Το ημερολόγιο έχει ήδη συνδεθεί
 account-setup-connect-all-calendars = Σύνδεση όλων των ημερολογίων
 account-setup-connect-all-address-books = Σύνδεση όλων των ευρετηρίων
 

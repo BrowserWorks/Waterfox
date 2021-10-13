@@ -1,13 +1,16 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY Menubar.tooltip "Основное меню">
 <!ENTITY Toolbar.tooltip "Панель инструментов">
+
+
 <!ENTITY multiline-expand.tooltip "Переключиться в многострочный режим (Ctrl+Up)">
 <!ENTITY multiline-contract.tooltip "Переключиться в однострочный режим (Ctrl+Down)">
 <!ENTITY multiline-send.tooltip "Отправить текст (Ctrl+Enter)">
 <!ENTITY server-nick.tooltip "Изменить ник или установить состояние отсутствия. Чтобы перевести фокус на поле ввода, нажмите Esc.">
+
 <!ENTITY Underline.label "Подчёркнутый">
 <!ENTITY Bold.label "Полужирный">
 <!ENTITY Reverse.label "Негатив">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,15 +15,10 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "HTTP-verbindingen kunnen via deze opties worden fijnafgesteld om prestaties of compatibiliteit te verbeteren. Van sommige proxyservers is bijvoorbeeld bekend dat ze HTTP/1.0 vereisen (bekijk de uitgaveopmerkingen voor details).">
 <!ENTITY prefUseragent.label                 "Useragent-string">
-<!ENTITY prefFirefoxCompat.label             "Bekendmaken als Firefox-compatibel">
-<!ENTITY prefFirefoxCompat.accesskey         "F">
-<!ENTITY prefLightningShow.label             "Lightning-installatie bekendmaken">
-<!ENTITY prefLightningShow.accesskey         "L">
-<!ENTITY prefCompatWarning                   "WAARSCHUWING: het uitschakelen van deze instellingen kan ertoe leiden dat websites of services niet goed werken.">
-<!ENTITY prefFirefoxStrict.label             "Als Firefox identificeren">
-<!ENTITY prefFirefoxStrict.accesskey         "F">
-<!ENTITY prefFirefoxNone.label               "Als SeaMonkey identificeren">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Als SeaMonkey identificeren en Firefox-compatibiliteit promoten">
-<!ENTITY prefFirefoxCompat2.accesskey        "c">
+<!ENTITY prefWaterfoxStrict.label             "Als Waterfox identificeren">
+<!ENTITY prefWaterfoxStrict.accesskey         "F">
+<!ENTITY prefWaterfoxNone.label               "Als SeaMonkey identificeren">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Als SeaMonkey identificeren en Waterfox-compatibiliteit promoten">
+<!ENTITY prefWaterfoxCompat2.accesskey        "c">
 <!ENTITY prefCompatWarning2.desc             "WAARSCHUWING: het wijzigen van deze instelling kan ertoe leiden dat websites of services niet goed werken.">

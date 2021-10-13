@@ -1,15 +1,25 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.advanced.title "Avanzadas">
-<!ENTITY systemPref.caption "Preferencias de sistema">
-<!ENTITY systemPrefCheck.label "Usar las preferencias del sistema">
-<!ENTITY systemPrefCheck.accesskey "U">
-<!ENTITY systemPref.desc "Con esta opción, &brandShortName; hereda las preferencias del sistema. Los valores globales del sistema prevalecerán sobre las preferencias de &brandShortName;.">
 <!ENTITY prefCheckDefault.caption "Integración con el sistema">
 <!ENTITY prefCheckDefaultClient.label "Comprobar la condición de aplicación predeterminada al iniciar">
-<!ENTITY prefCheckDefaultClient.accesskey "C">
+<!ENTITY prefCheckDefaultClient.accesskey "d">
+<!ENTITY defaultClientFor.description "Hacer que &brandShortName; sea la aplicación predeterminada para:">
+<!ENTITY setDefaultBrowser.label "Navegador">
+<!ENTITY setDefaultBrowser.accesskey "o">
+<!ENTITY setDefaultMail.label "Correo">
+<!ENTITY setDefaultMail.accesskey "C">
+<!ENTITY setDefaultNews.label "Noticias">
+<!ENTITY setDefaultNews.accesskey "s">
+<!ENTITY setDefaultFeed.label "Canales">
+<!ENTITY setDefaultFeed.accesskey "l">
+<!ENTITY useInternalSettings.description "Usar Correo y Noticias &brandShortName; al abrir enlaces del navegador de:">
+<!ENTITY useInternalMail.label "Correo (mailto:)">
+<!ENTITY useInternalMail.accesskey "m">
+<!ENTITY useInternalNews.label "Noticias (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey "w">
 <!ENTITY printing.label "Impresión">
 <!ENTITY useNativePrintDialog.label "Usar el diálogo de impresión nativo (donde esté admitido)">
 <!ENTITY useNativePrintDialog.accesskey "a">

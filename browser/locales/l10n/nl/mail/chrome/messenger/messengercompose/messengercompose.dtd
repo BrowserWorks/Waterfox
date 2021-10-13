@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Nieuw">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Bericht">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "B">
 <!ENTITY newContact.label "Adresboekcontact…">
 <!ENTITY newContact.accesskey "A">
 <!ENTITY attachMenu.label "Bijlage">
 <!ENTITY attachMenu.accesskey "B">
-<!ENTITY attachFileCmd.label "Bestand(en)…">
-<!ENTITY attachFileCmd.accesskey "B">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Filelink">
 <!ENTITY attachCloudCmd.accesskey "F">
 <!ENTITY attachPageCmd.label "Webpagina…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Later verzenden">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "z">
-<!ENTITY printSetupCmd.label "Pagina-instellingen…">
-<!ENTITY printSetupCmd.accesskey "i">
-<!ENTITY printPreviewCmd.label "Afdrukvoorbeeld">
-<!ENTITY printPreviewCmd.accesskey "v">
 <!ENTITY printCmd.label "Afdrukken…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "d">
@@ -82,11 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Volgorde van bijlagen wijzigen…">
 <!ENTITY reorderAttachmentsCmd.accesskey "V">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Bijlagenpaneel">
-<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
-     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
-     as attachments.accesskey. -->
-<!ENTITY toggleAttachmentPaneCmd.accesskey "B">
 <!ENTITY selectAllCmd.accesskey "A">
 <!ENTITY findBarCmd.label "Zoeken…">
 <!ENTITY findBarCmd.accesskey "Z">
@@ -105,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Volgorde van bijlagen wijzigen">
-<!ENTITY moveAttachmentTopPanelBtn.label "Bovenaan plaatsen">
-<!ENTITY moveAttachmentUpPanelBtn.label "Omhoog verplaatsen">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Samen plaatsen">
-<!ENTITY moveAttachmentDownPanelBtn.label "Omlaag verplaatsen">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Onderaan plaatsen">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -207,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Accountinstellingen">
 <!ENTITY accountManagerCmd2.accesskey "c">
 <!ENTITY accountManagerCmdUnix2.accesskey "i">
-<!ENTITY preferencesCmd2.label "Opties">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Voorkeuren">
-<!ENTITY preferencesCmdUnix.accesskey "V">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -223,7 +201,6 @@
 <!ENTITY sendButton.label "Verzenden">
 <!ENTITY quoteButton.label "Citaat">
 <!ENTITY addressButton.label "Adresboek">
-<!ENTITY attachButton.label "Bijlage">
 <!ENTITY spellingButton.label "Spelling">
 <!ENTITY saveButton.label "Opslaan">
 <!ENTITY printButton.label "Afdrukken">
@@ -233,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Dit bericht later verzenden">
 <!ENTITY quoteButton.tooltip "Het vorige bericht citeren">
 <!ENTITY addressButton.tooltip "Een ontvanger uit een adresboek selecteren">
-<!ENTITY attachButton.tooltip2 "Een bijlage toevoegen">
 <!ENTITY spellingButton.tooltip "Spelling van selectie of hele bericht controleren">
 <!ENTITY saveButton.tooltip "Dit bericht opslaan">
 <!ENTITY cutButton.tooltip              "Knippen">
@@ -248,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Andere soorten adresvelden">
 <!ENTITY fromAddr2.label "Van">
 <!ENTITY fromAddr.accesskey "V">
-<!ENTITY toAddr2.label "Aan">
-<!ENTITY ccAddr2.label "Cc">
-<!ENTITY bccAddr2.label "Bcc">
 <!ENTITY replyAddr2.label "Antwoord-naar">
 <!ENTITY newsgroupsAddr2.label "Nieuwsgroep">
 <!ENTITY followupAddr2.label "Opvolgen-aan">
@@ -309,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "b">
 <!ENTITY selectAll.label "Alles selecteren">
 <!ENTITY selectAll.accesskey "A">
-<!ENTITY attachFile.label "Bestand(en) koppelen…">
-<!ENTITY attachFile.accesskey "B">
 <!ENTITY attachCloud.label "Filelink…">
 <!ENTITY attachCloud.accesskey "F">
 <!ENTITY convertCloud.label "Converteren naar…">

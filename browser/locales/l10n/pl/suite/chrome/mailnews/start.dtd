@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -16,6 +16,5 @@
 <!ENTITY feat_integration.label "Ściśle zintegrowany z &brandShortName;">
 <!ENTITY dict.title "Słowniki">
 <!ENTITY dict_intro.label "Słowniki są używane do sprawdzania poprawności pisowni.">
-<!ENTITY dict_info.label 'Wiele dodatkowych słowników można zainstalować z sekcji <a id="dictURL" href="">słowniki</a> witryny <a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>.'>
 <!ENTITY info.title "Więcej informacji">
 <!ENTITY info_bugs.label '<a href="http://www.mozilla.org/mailnews/">Cieszymy się z wszelkich uwag i propozycji</a>, jednak prosimy przeczytać wcześniej <a id="releaseNotesURL" href="">informacje o wydaniu</a> oraz sprawdzić <a href="https://bugzilla.mozilla.org/query.cgi">Bugzillę</a>.'>

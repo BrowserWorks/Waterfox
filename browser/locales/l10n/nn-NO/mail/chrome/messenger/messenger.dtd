@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Skriv ut…">
 <!ENTITY printCmd.accesskey "u">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Førehandsvis sida">
-<!ENTITY printPreviewCmd.accesskey "F">
-<!ENTITY printSetupCmd.label "Utskriftsformat …">
-<!ENTITY printSetupCmd.accesskey "m">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Slett melding">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "N">
 <!ENTITY compactVersion.label "Kompaktvising">
 <!ENTITY compactVersion.accesskey "K">
-<!ENTITY folderPaneBar.label "Verktøylinje for mapper">
-<!ENTITY folderPaneBar.accesskey "m">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Sorter etter">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Adressebok">
 <!ENTITY addressBookCmd.accesskey "A">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Tillegg">
-<!ENTITY addons.accesskey "U">
-<!ENTITY addonPrefs.label "Innstillingar for tillegg">
-<!ENTITY addonPrefs.accesskey "o">
-<!ENTITY addonPrefsUnix.label "Innstillingar for tillegg">
-<!ENTITY addonPrefsUnix.accesskey "o">
 <!ENTITY addonNoPrefs.label "Fann ingen innstillingar for tillegget.">
 <!ENTITY activitymanager.label "Aktivitetar">
 <!ENTITY activitymanager.accesskey "v">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "S">
 <!ENTITY importCmd.label "Importer …">
 <!ENTITY importCmd.accesskey "m">
+<!ENTITY exportCmd.label "Eksporter…">
+<!ENTITY exportCmd.accesskey "x">
 <!ENTITY clearRecentHistory.label "Slett nyleg historikk…">
 <!ENTITY clearRecentHistory.accesskey "n">
 <!ENTITY accountManagerCmd2.label "Kontoinnstillingar">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Feilsøk tillegg">
 <!ENTITY debugAddonsCmd.accesskey "F">
-<!ENTITY tabsDebugCmd.label "Feilsøking for innhaldsramme">
-<!ENTITY tabsDebugCmd.accesskey "F">
 <!ENTITY errorConsoleCmd.label "Feilmeldingar">
 <!ENTITY errorConsoleCmd.accesskey "F">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Tilbake">
 <!ENTITY goForwardButton1.label "Fram">
 <!ENTITY deleteItem.title "Slett">
-<!ENTITY deleteButton.label "Slett">
-<!ENTITY undeleteButton.label "Angre sletting">
 <!ENTITY markButton.label "Merk">
 <!ENTITY printButton.label "Skriv ut">
 <!ENTITY stopButton.label "Stopp">
 <!ENTITY throbberItem.title "Aktivitetsindikator">
 <!ENTITY junkItem.title "Søppel">
-<!ENTITY junkButton.label "Uønskt">
-<!ENTITY notJunkButton.label "Ønskt">
 <!ENTITY addressBookButton.label "Adressebok">
 <!ENTITY chatButton.label "Nettprat">
 <!ENTITY glodaSearch.title "Globalt søk">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Gå til førre melding">
 <!ENTITY goForwardButton.tooltip "Gå fram ei melding">
 <!ENTITY goBackButton.tooltip "Gå tilbake ei melding">
-<!ENTITY deleteButton.tooltip "Slett vald melding eller mappe">
-<!ENTITY undeleteButton.tooltip "Angre sletting av melding">
 <!ENTITY markButton.tooltip "Merk meldingar">
 <!ENTITY printButton.tooltip "Skriv ut denne meldinga">
 <!ENTITY stopButton.tooltip "Stopp denne overføringa">
-<!ENTITY junkButton.tooltip "Merk dei valde meldingane som uønskte">
-<!ENTITY notJunkButton.tooltip "Merk den valde meldinga som ønskt">
 <!ENTITY addressBookButton.tooltip "Opne adresseboka">
 <!ENTITY chatButton.tooltip "Vis nettprat-fana">
 <!ENTITY tagButton.tooltip "Merk melding">
 <!ENTITY compactButton.tooltip "Fjern sletta meldingar frå vald mappe">
 <!ENTITY appmenuButton1.tooltip "Viser &brandShortName;-menyen">
-<!ENTITY addonsButton.tooltip "Handter tillegga dine">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Vidaresend innbunde">
@@ -719,7 +698,6 @@
 <!ENTITY locationColumn.label "Plassering">
 <!ENTITY idColumn.label "Motteke-rekkjefølgje">
 <!ENTITY attachmentColumn.label "Vedlegg">
-
 <!ENTITY deleteColumn.label "Slett">
 
 <!-- Thread Pane Tooltips -->
@@ -745,7 +723,6 @@
 <!ENTITY locationColumn2.tooltip "Sorter etter: Plassering">
 <!ENTITY idColumn2.tooltip "Sorter etter: Mottaksrekkjefølgje">
 <!ENTITY attachmentColumn2.tooltip "Sorter etter: Vedlegg">
-
 <!ENTITY deleteColumn.tooltip "Slett ei melding">
 
 <!-- Thread Pane Context Menu -->

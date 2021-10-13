@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -14,11 +14,11 @@
 <!ENTITY prefEnableHTTP11.accesskey          "ρ">
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "Οι συνδέσεις HTTP μπορούν να βελτιστοποιηθούν με αυτές τις επιλογές για ενίσχυση επιδόσεων ή συμβατότητας. Ορισμένοι διακομιστές μεσολάβησης, για παράδειγμα, είναι γνωστοί για την απαίτηση HTTP/1.0 (δείτε τις σημειώσεις έκδοσης για λεπτομέρειες).">
-<!ENTITY prefUseragent.label                 "Νήμα λειτουργίας χρήσης">
-<!ENTITY prefFirefoxStrict.label             "Αναγνώριση ως Firefox">
-<!ENTITY prefFirefoxStrict.accesskey         "Α">
-<!ENTITY prefFirefoxNone.label               "Αναγνώριση ως SeaMonkey">
-<!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Αναγνώριση ως SeaMonkey και γνωστοποίηση συμβατότητας με το Firefox">
-<!ENTITY prefFirefoxCompat2.accesskey        "F">
-<!ENTITY prefCompatWarning2.desc             "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: η αλλαγή αυτής της ρύθμισης ενδέχεται να προκαλέσει δυσλειτουργία ιστοσελίδων ή υπηρεσιών.">
+<!ENTITY prefUseragent.label                 "Συμβολοσειρά παράγοντα χρήστη">
+<!ENTITY prefWaterfoxStrict.label             "Αναγνώριση ως Waterfox">
+<!ENTITY prefWaterfoxStrict.accesskey         "Α">
+<!ENTITY prefWaterfoxNone.label               "Αναγνώριση ως SeaMonkey">
+<!ENTITY prefWaterfoxNone.accesskey           "M">
+<!ENTITY prefWaterfoxCompat2.label            "Αναγνώριση ως SeaMonkey και γνωστοποίηση συμβατότητας με το Waterfox">
+<!ENTITY prefWaterfoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: η αλλαγή αυτής της ρύθμισης ενδέχεται να προκαλέσει δυσλειτουργία ιστοτόπων ή υπηρεσιών.">

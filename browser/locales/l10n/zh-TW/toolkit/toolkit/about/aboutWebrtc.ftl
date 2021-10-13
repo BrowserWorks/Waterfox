@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,6 +8,7 @@
 
 # The text "WebRTC" is a proper noun and should not be translated.
 about-webrtc-document-title = WebRTC 內部資訊
+
 # "about:webrtc" is a internal browser URL and should not be
 # translated. This string is used as a title for a file save dialog box.
 about-webrtc-save-page-dialog-title = 將 about:webrtc 儲存至
@@ -58,16 +59,10 @@ about-webrtc-ice-pair-bytes-sent = 位元組已送出:
 about-webrtc-ice-pair-bytes-received = 位元組已接收:
 about-webrtc-ice-component-id = 元件 ID
 
-##
-
-
 ## "Avg." is an abbreviation for Average. These are used as data labels.
 
 about-webrtc-avg-bitrate-label = 平均位元率:
 about-webrtc-avg-framerate-label = 平均畫框率:
-
-##
-
 
 ## These adjectives are used to label a line of statistics collected for a peer
 ## connection. The data represents either the local or remote end of the
@@ -78,13 +73,16 @@ about-webrtc-type-remote = 遠端
 
 ##
 
+
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 about-webrtc-nominated = 已指定
+
 # This adjective is used to label a table column. Cells in this column contain
 # the localized javascript string representation of "true" or are left blank.
 # This represents an attribute of an ICE candidate.
 about-webrtc-selected = 已選取
+
 about-webrtc-save-page-label = 儲存本頁
 about-webrtc-debug-mode-msg-label = 除錯模式
 about-webrtc-debug-mode-off-state-label = 開始除錯模式
@@ -109,6 +107,7 @@ about-webrtc-connection-open = [ { $browser-id } | { $id } ] { $url } { $now }
 about-webrtc-connection-closed = [ { $browser-id } | { $id } ] { $url } (已關閉) { $now }
 
 ##
+
 
 about-webrtc-local-candidate = 本地候選
 about-webrtc-remote-candidate = 遠端候選
@@ -150,26 +149,36 @@ about-webrtc-remote-send-ssrc = 遠端發送 SSRC
 # An option whose value will not be displayed but instead noted as having been
 # provided
 about-webrtc-configuration-element-provided = 提供
+
 # An option whose value will not be displayed but instead noted as having not
 # been provided
 about-webrtc-configuration-element-not-provided = 不提供
+
 # The options set by the user in about:config that could impact a WebRTC call
 about-webrtc-custom-webrtc-configuration-heading = 使用者設定的 WebRTC 偏好設定
+
 # Section header for estimated bandwidths of WebRTC media flows
 about-webrtc-bandwidth-stats-heading = 估計頻寬
+
 # The ID of the MediaStreamTrack
 about-webrtc-track-identifier = 軌道識別符
+
 # The estimated bandwidth available for sending WebRTC media in bytes per second
 about-webrtc-send-bandwidth-bytes-sec = 傳送頻寬（位元組／秒）
+
 # The estimated bandwidth available for receiving WebRTC media in bytes per second
 about-webrtc-receive-bandwidth-bytes-sec = 接收頻寬（位元組／秒）
+
 # Maximum number of bytes per second that will be padding zeros at the ends of packets
 about-webrtc-max-padding-bytes-sec = 封包填充資料（位元組／秒）
+
 # The amount of time inserted between packets to keep them spaced out
 about-webrtc-pacer-delay-ms = 間隔時間（ms）
+
 # The amount of time it takes for a packet to travel from the local machine to the remote machine,
 # and then have a packet return
 about-webrtc-round-trip-time-ms = RTT（ms）
+
 # This is a section heading for video frame statistics for a MediaStreamTrack.
 # see https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamTrack.
 # Variables:
@@ -195,6 +204,7 @@ about-webrtc-received-label =
     { $packets ->
        *[other] 已收到 { $packets } 個封包
     }
+
 # This is the total number of packets lost by the PeerConnection.
 # Variables:
 #  $packets (Number) - The number of packets lost.
@@ -202,6 +212,7 @@ about-webrtc-lost-label =
     { $packets ->
        *[other] 已捨棄 { $packets } 個封包
     }
+
 # This is the total number of packets sent by the PeerConnection.
 # Variables:
 #  $packets (Number) - The number of packets sent.
@@ -209,11 +220,13 @@ about-webrtc-sent-label =
     { $packets ->
        *[other] 已送出 { $packets } 個封包
     }
+
 # Jitter is the variance in the arrival time of packets.
 # See: https://w3c.github.io/webrtc-stats/#dom-rtcreceivedrtpstreamstats-jitter
 # Variables:
 #   $jitter (Number) - The jitter.
 about-webrtc-jitter-label = 抖動 { $jitter }
+
 # ICE candidates arriving after the remote answer arrives are considered trickled
 # (an attribute of an ICE candidate). These are highlighted in the ICE stats
 # table with light blue background.
@@ -226,15 +239,21 @@ about-webrtc-trickle-caption-msg = 使用 藍色 強調太晚抵達的候選（�
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 about-webrtc-sdp-set-at-timestamp-local = 已將本地 SDP 時間戳記設為 { NUMBER($timestamp, useGrouping: "false") }
+
 # This is used as a header for remote SDP.
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 about-webrtc-sdp-set-at-timestamp-remote = 已將遠端 SDP 時間戳記設為 { NUMBER($timestamp, useGrouping: "false") }
+
 # This is used as a header for an SDP section contained in two columns allowing for side-by-side comparisons.
 # Variables:
 #  $timestamp (Number) - The Unix Epoch time at which the SDP was set.
 #  $relative-timestamp (Number) - The timestamp relative to the timestamp of the earliest received SDP.
 about-webrtc-sdp-set-timestamp = 時間戳記 { NUMBER($timestamp, useGrouping: "false") }（+ { $relative-timestamp } ms）
+
+##
+
+##
 
 ##
 

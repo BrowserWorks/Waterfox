@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -99,7 +99,7 @@ security-view-identity-validity =
 security-view-privacy =
     .value = Приватность и История
 
-security-view-privacy-history-value = Посещал ли я этот веб-сайт до сегодняшнего дня?
+security-view-privacy-history-value = Посещал ли я этот сайт до сегодняшнего дня?
 security-view-privacy-sitedata-value = Хранит ли этот веб-сайт информацию на моём компьютере?
 
 security-view-privacy-clearsitedata =
@@ -128,6 +128,8 @@ security-site-data-only = Да, { $value } { $unit } данных сайта
 
 security-site-data-cookies-only = Да, куки
 security-site-data-no = Нет
+
+##
 
 image-size-unknown = Неизвестно
 page-info-not-specified =
@@ -196,7 +198,7 @@ properties-general-size =
         { $bytes ->
             [one] { $kb } КБ ({ $bytes } байт)
             [few] { $kb } КБ ({ $bytes } байта)
-           *[many] { $kb } КБ ({ $bytes } байтов)
+           *[many] { $kb } КБ ({ $bytes } байт)
         }
 
 # This string is used to display the type and number
@@ -253,7 +255,7 @@ media-block-image =
 # This string is used to display the URL of the website on top of the
 # pageInfo dialog box
 # Variables:
-#   $website (string) - The url of the website pageInfo is getting info for
+#   $website (string) — The url of the website pageInfo is getting info for
 page-info-page =
     .title = Информация о странице — { $website }
 page-info-frame =

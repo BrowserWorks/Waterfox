@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,19 +8,19 @@
 <!ENTITY filterName.accesskey "ν">
 
 <!ENTITY junk.label "Ανεπιθύμητα">
-<!ENTITY notJunk.label "Επιθυμητή αλληλογραφία">
+<!ENTITY notJunk.label "Επιθυμητά">
 
-<!ENTITY lowestPriorityCmd.label "Πολύ χαμηλή">
+<!ENTITY lowestPriorityCmd.label "Κατώτατη">
 <!ENTITY lowPriorityCmd.label "Χαμηλή">
 <!ENTITY normalPriorityCmd.label "Κανονική">
 <!ENTITY highPriorityCmd.label "Υψηλή">
-<!ENTITY highestPriorityCmd.label "Πολύ υψηλή">
+<!ENTITY highestPriorityCmd.label "Ύψιστη">
 
 <!ENTITY contextDesc.label "Εφαρμογή φίλτρου:">
 <!ENTITY contextIncomingMail.label "Κατά τη λήψη νέων email:">
-<!ENTITY contextIncomingMail.accesskey "Λ">
+<!ENTITY contextIncomingMail.accesskey "λ">
 <!ENTITY contextManual.label "Κατά τη χειροκίνητη εκτέλεση">
-<!ENTITY contextManual.accesskey "Χ">
+<!ENTITY contextManual.accesskey "χ">
 <!ENTITY contextBeforeCls.label "Φιλτράρισμα πριν από την ταξινόμηση ανεπιθύμητων">
 <!ENTITY contextAfterCls.label "Φιλτράρισμα μετά την ταξινόμηση ανεπιθύμητων">
 <!ENTITY contextOutgoing.label "Μετά την αποστολή">
@@ -29,7 +29,7 @@
 <!ENTITY contextArchive.accesskey "Α">
 <!ENTITY contextPeriodic.accesskey "ε">
 
-<!ENTITY filterActionDesc.label "Εκτέλεση των ακόλουθων ενεργειών:  ">
+<!ENTITY filterActionDesc.label "Εκτέλεση των εξής ενεργειών:">
 <!ENTITY filterActionDesc.accesskey "Ε">
 
 <!ENTITY filterActionOrderWarning.label "Σημείωση: Οι ενέργειες των φίλτρων θα εκτελεστούν με διαφορετική σειρά.">
@@ -38,17 +38,17 @@
 <!-- New Style Filter Rule Actions -->
 <!ENTITY moveMessage.label "Μετακίνηση μηνύματος σε">
 <!ENTITY copyMessage.label "Αντιγραφή μηνύματος σε">
-<!ENTITY forwardTo.label "Προώθηση σε:">
-<!ENTITY replyWithTemplate.label "Απάντηση με πρότυπο:">
+<!ENTITY forwardTo.label "Προώθηση μηνύματος σε">
+<!ENTITY replyWithTemplate.label "Απάντηση με πρότυπο">
 <!ENTITY markMessageRead.label "Επισήμανση ως αναγνωσμένο">
 <!ENTITY markMessageUnread.label "Επισήμανση ως μη αναγνωσμένο">
 <!ENTITY markMessageStarred.label "Προσθήκη αστεριού">
 <!ENTITY setPriority.label "Ορισμός προτεραιότητας σε">
-<!ENTITY addTag.label "Ετικέτα στο μήνυμα">
-<!ENTITY setJunkScore.label "Ορισμός κατάστασης ανεπιθύμητου σε">
+<!ENTITY addTag.label "Προσθήκη ετικέτας στο μήνυμα">
+<!ENTITY setJunkScore.label "Ορισμός κατάστασης σε">
 <!ENTITY deleteMessage.label "Διαγραφή μηνύματος">
-<!ENTITY deleteFromPOP.label "Διαγραφή από το διακομιστή POP">
-<!ENTITY fetchFromPOP.label "Λήψη από το διακομιστή POP">
+<!ENTITY deleteFromPOP.label "Διαγραφή από διακομιστή POP">
+<!ENTITY fetchFromPOP.label "Λήψη από διακομιστή POP">
 <!ENTITY ignoreThread.label "Παράβλεψη νήματος">
 <!ENTITY ignoreSubthread.label "Παράβλεψη υπονήματος">
 <!ENTITY watchThread.label "Παρακολούθηση νήματος">

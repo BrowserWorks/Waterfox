@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -41,7 +41,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Ukuran buffer:
+
 perftools-custom-threads-label = Tambahkan thread khusus berdasarkan nama:
+
 perftools-devtools-interval-label = Interval:
 perftools-devtools-threads-label = Thread:
 perftools-devtools-settings-label = Pengaturan
@@ -94,12 +96,11 @@ perftools-thread-img-decoder =
     .title = Thread dekode gambar
 perftools-thread-dns-resolver =
     .title = Resolusi DNS terjadi di thread ini
-perftools-thread-js-helper =
-    .title = Pekerjaan latar belakang mesin JS, misalnya kompilasi off-main-thread
 
 ##
 
 perftools-record-all-registered-threads = Lewati pilihan di atas dan rekam semua utas yang terdaftar
+
 perftools-tools-threads-input-label =
     .title = Nama utas ini berupa daftar yang dipisahkan karakter koma, yang akan digunakan untuk mengaktifkan profiling utas pada profiler. Pencocokan nama juga akan dilakukan secara bagian, tidak secara lengkap pada utas yang disertakan. Karakter spasi pada nama berpengaruh.
 
@@ -107,9 +108,10 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Waterfox Profiler
 perftools-onboarding-message = <b>Baru</b>: { -profiler-brand-name } telah diintegrasikan ke dalam Alat Pengembang. <a>Pelajari lebih lanjut</a> tentang alat baru yang canggih ini.
+
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (Untuk waktu yang terbatas, Anda dapat mengakses panel Kinerja lawas melalui <a>{ options-context-advanced-settings }</a>)
+
 perftools-onboarding-close-button =
     .aria-label = Tutup pesan orientasi

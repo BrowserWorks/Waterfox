@@ -1,14 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Geavanceerd">
-
-<!ENTITY systemPref.caption               "Systeemvoorkeuren">
-<!ENTITY systemPrefCheck.label            "Voorkeuren van systeem gebruiken">
-<!ENTITY systemPrefCheck.accesskey        "V">
-<!ENTITY systemPref.desc                  "Met deze optie neemt &brandShortName; voorkeuren van het systeem over. Deze systeeminstellingen hebben voorrang op de voorkeuren van &brandShortName;.">
 
 <!ENTITY prefCheckDefault.caption         "Systeemintegratie">
 <!ENTITY prefCheckDefaultClient.label     "Instellingen van standaardtoepassingen controleren bij het opstarten">

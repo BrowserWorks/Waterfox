@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -35,6 +35,7 @@
 <!ENTITY tableCaptionRight.label "Derecha de la tabla">
 <!ENTITY tableCaptionNone.label "Ninguno">
 <!ENTITY tableInheritColor.label "(Permitir que se vea el color de fondo de la página)">
+
 <!ENTITY cellSelection.label "Selección">
 <!ENTITY cellSelectCell.label "Celda">
 <!ENTITY cellSelectRow.label "Fila">
@@ -63,6 +64,7 @@
 <!ENTITY cellAlignJustify.label "Justificado">
 <!ENTITY cellInheritColor.label "(Permitir que se vea el color de fondo de la tabla)">
 <!ENTITY cellUseCheckboxHelp.label "Use las casillas de selección para determinar qué propiedades se aplican a todas las celdas seleccionadas">
+
 <!ENTITY size.label "Tamaño">
 <!ENTITY pixels.label "píxeles">
 <!ENTITY backgroundColor.label "Color de fondo:">

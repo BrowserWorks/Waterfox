@@ -1,9 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 calendar-title = Kalendář
 calendar-title-reminder = Upozornění
+calendar-title-notification = Oznámení
 calendar-title-category = Kategorie
 dateformat-label =
     .value = Formát data:
@@ -133,6 +134,9 @@ task-due-label =
 edit-intab-label =
     .label = Upravovat události a úkoly v panelu místo dialogového okna.
     .accesskey = t
+prompt-delete-label =
+    .label = Zeptat se na potvrzení před smazáním události nebo úkolu.
+    .accesskey = v
 accessibility-legend = Přístupnost
 accessibility-colors-label =
     .label = Optimalizovat barvy kvůli přístupnosti
@@ -179,6 +183,7 @@ event-alarm-time-label =
 task-alarm-time-label =
     .value = Výchozí čas pro upozornění na úkol:
     .accesskey = s
+calendar-notifications-customize-label = Oznámení můžete přizpůsobit pro každý kalendář v okně s vlastnostmi kalendáře.
 category-new-label = Nová kategorie
 category-edit-label = Upravit kategorii
 category-overwrite-title = Varování: Duplicitní jméno

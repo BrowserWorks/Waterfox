@@ -1,69 +1,81 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 permissions-window =
     .title = 例外網站
     .style = width: 45em
+
 permissions-close-key =
     .key = w
+
 permissions-address = 網站網址
     .accesskey = d
+
 permissions-block =
     .label = 封鎖
     .accesskey = B
+
 permissions-session =
     .label = 此次瀏覽階段允許
     .accesskey = S
+
 permissions-allow =
     .label = 允許
     .accesskey = A
+
 permissions-button-off =
     .label = 關閉
     .accesskey = O
+
 permissions-button-off-temporarily =
     .label = 暫時關閉
     .accesskey = T
+
 permissions-site-name =
     .label = 網站
+
 permissions-status =
     .label = 狀態
+
 permissions-remove =
     .label = 移除網站
     .accesskey = R
+
 permissions-remove-all =
     .label = 移除所有網站
     .accesskey = e
-permissions-button-cancel =
-    .label = 取消
-    .accesskey = C
-permissions-button-ok =
-    .label = 儲存變更
-    .accesskey = S
+
 permission-dialog =
     .buttonlabelaccept = 儲存變更
     .buttonaccesskeyaccept = S
+
 permissions-autoplay-menu = 對所有網站的預設行為:
+
 permissions-searchbox =
     .placeholder = 搜尋網站
+
 permissions-capabilities-autoplay-allow =
     .label = 允許自動播放影音內容
 permissions-capabilities-autoplay-block =
     .label = 封鎖音訊
 permissions-capabilities-autoplay-blockall =
     .label = 封鎖影音內容
+
 permissions-capabilities-allow =
     .label = 允許
 permissions-capabilities-block =
     .label = 阻擋
 permissions-capabilities-prompt =
     .label = 總是詢問
+
 permissions-capabilities-listitem-allow =
     .value = 允許
 permissions-capabilities-listitem-block =
     .value = 阻擋
 permissions-capabilities-listitem-allow-session =
     .value = 此次瀏覽階段允許
+
 permissions-capabilities-listitem-off =
     .value = 關閉
 permissions-capabilities-listitem-off-temporarily =

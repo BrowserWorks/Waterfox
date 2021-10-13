@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -6,7 +6,7 @@
 
 #ifdef XP_WIN
 
-// overwrite zh-CN defaults with zh-TW ones in win32 Firefox. (see bug 603549)
+// overwrite zh-CN defaults with zh-TW ones in win32 Waterfox. (see bug 603549)
 // noted that below setting should change accordingly if setting in intl/all.js changes.
 pref("font.name.serif.zh-CN", "Times New Roman");
 pref("font.name.sans-serif.zh-CN", "Arial");

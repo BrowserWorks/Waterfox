@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,9 +22,9 @@
 <!ENTITY newIM.label                                    "IM">
 <!ENTITY printContactViewCmd.label                      "Kontakt drucken…">
 <!ENTITY printContactViewCmd.accesskey                  "d">
+<!ENTITY printContactViewCmd.key                        "P">
 <!ENTITY printPreviewContactViewCmd.label               "Druckvorschau: Kontakt">
 <!ENTITY printPreviewContactViewCmd.accesskey           "v">
-<!ENTITY printContactViewCmd.key                        "P">
 <!ENTITY printAddressBook.label                         "Drucke Adressbuch…"> 
 <!ENTITY printAddressBook.accesskey                     "D"> 
 <!ENTITY printPreviewAddressBook.label                  "Druckvorschau: Adressbuch"> 
@@ -92,7 +92,6 @@
 <!ENTITY newmsgButton.tooltip                           "Neue Mail-Nachricht verfassen"> 
 <!ENTITY newIM.tooltip                                  "Neue Sofortnachricht (instant message) oder neuen Chat verfassen"> 
 <!ENTITY deleteItemButton.tooltip                       "Ausgewählten Eintrag löschen">
-<!ENTITY throbber.tooltip                               "&vendorShortName;-Homepage aufrufen">
 <!ENTITY advancedButton.tooltip                         "Erweiterte Adressensuche">
 
 <!-- Dir Tree header -->

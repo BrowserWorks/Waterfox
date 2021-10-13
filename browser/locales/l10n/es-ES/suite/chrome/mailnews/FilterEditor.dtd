@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,14 +6,18 @@
 <!ENTITY filterEditorDialog.dimensions "width: 105ch;">
 <!ENTITY filterName.label "Nombre del filtro:">
 <!ENTITY filterName.accesskey "f">
+
 <!ENTITY recentFolders.label "Reciente">
+
 <!ENTITY junk.label "Basura">
 <!ENTITY notJunk.label "No es basura">
+
 <!ENTITY lowestPriorityCmd.label "La menor">
 <!ENTITY lowPriorityCmd.label "Baja">
 <!ENTITY normalPriorityCmd.label "Normal">
 <!ENTITY highPriorityCmd.label "Alta">
 <!ENTITY highestPriorityCmd.label "La mayor">
+
 <!ENTITY contextDesc.label "Aplicar filtro cuando:">
 <!ENTITY contextIncomingMail.label "Al recuperar el correo nuevo:">
 <!ENTITY contextIncomingMail.accesskey "A">
@@ -26,10 +30,13 @@
 <!ENTITY contextArchive.label "Archivado">
 <!ENTITY contextArchive.accesskey "c">
 <!ENTITY contextPeriodic.accesskey "P">
+
 <!ENTITY filterActionDesc.label "Realizar estas acciones:">
 <!ENTITY filterActionDesc.accesskey "R">
+
 <!ENTITY filterActionOrderWarning.label "Nota: las acciones del filtro se ejecutarán en un orden diferente.">
 <!ENTITY filterActionOrder.label "Ver orden de ejecución">
+
 <!ENTITY moveMessage.label "Mover mensaje a">
 <!ENTITY copyMessage.label "Copiar mensaje a">
 <!ENTITY forwardTo.label "Reenviar mensaje a:">
@@ -47,7 +54,18 @@
 <!ENTITY ignoreSubthread.label "Ignorar sub-conversación">
 <!ENTITY watchThread.label "Observar conversación">
 <!ENTITY stopExecution.label "Detener ejecución de los filtros">
+
 <!ENTITY addAction.tooltip "Añadir una acción nueva">
 <!ENTITY removeAction.tooltip "Eliminar esta acción">
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
 <!ENTITY filterActionTypeFlexValue "1">
 <!ENTITY filterActionTargetFlexValue "4">

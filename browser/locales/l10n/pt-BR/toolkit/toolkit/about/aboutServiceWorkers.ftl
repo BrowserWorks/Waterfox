@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,6 +9,7 @@ about-service-workers-title = Sobre os Service Workers
 about-service-workers-main-title = Service Workers registrados
 about-service-workers-warning-not-enabled = Os Service Workers não estão ativados.
 about-service-workers-warning-no-service-workers = Nenhum Service Workers registrado.
+
 # The original title of service workers' information
 #
 # Variables:
@@ -28,8 +29,12 @@ active-cache-name = <strong>Nome da cache ativa:</strong> { $name }
 waiting-cache-name = <strong>Nome da cache em espera:</strong> { $name }
 push-end-point-waiting = <strong>Ponto final de publicação:</strong> { waiting }
 push-end-point-result = <strong>Ponto final de publicação:</strong> { $name }
+
 # This term is used as a button label (verb, not noun).
 update-button = Atualizar
+
 unregister-button = Cancelar registro
+
 unregister-error = Falha ao cancelar o registro deste Service Worker.
+
 waiting = Esperando…

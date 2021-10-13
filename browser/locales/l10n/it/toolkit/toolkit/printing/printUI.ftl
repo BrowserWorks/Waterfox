@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -59,7 +59,21 @@ printui-two-sided-printing-short-edge = Capovolgi pagine sul lato corto
 printui-options = Opzioni
 printui-headers-footers-checkbox = Stampa intestazioni e piè di pagina
 printui-backgrounds-checkbox = Stampa sfondi
-printui-selection-checkbox = Stampa solo la selezione
+
+## The "Format" section, select a version of the website to print. Radio
+## options to select between the original page, selected text only, or a version
+## where the page is processed with "Reader View".
+
+# The section title.
+printui-source-label = Formato
+# Option for printing the original page.
+printui-source-radio = Originale
+# Option for printing just the content a user selected prior to printing.
+printui-selection-radio = Selezione
+# Option for "simplifying" the page by printing the Reader View version.
+printui-simplify-page-radio = Semplificato
+
+##
 
 printui-color-mode-label = Modalità colore
 printui-color-mode-color = Colori
@@ -72,16 +86,16 @@ printui-margins-none = Nessuno
 printui-margins-custom-inches = Personalizzati (pollici)
 printui-margins-custom-mm = Personalizzati (mm)
 printui-margins-custom-top = Superiore
-printui-margins-custom-bottom = Inferiore
-printui-margins-custom-left = Sinistra
-printui-margins-custom-right = Destra
 printui-margins-custom-top-inches = Superiore (pollici)
-printui-margins-custom-bottom-inches = Inferiore (pollici)
-printui-margins-custom-left-inches = Sinistra (pollici)
-printui-margins-custom-right-inches = Destra (pollici)
 printui-margins-custom-top-mm = Superiore (mm)
+printui-margins-custom-bottom = Inferiore
+printui-margins-custom-bottom-inches = Inferiore (pollici)
 printui-margins-custom-bottom-mm = Inferiore (mm)
+printui-margins-custom-left = Sinistra
+printui-margins-custom-left-inches = Sinistra (pollici)
 printui-margins-custom-left-mm = Sinistra (mm)
+printui-margins-custom-right = Destra
+printui-margins-custom-right-inches = Destra (pollici)
 printui-margins-custom-right-mm = Destra (mm)
 
 printui-system-dialog-link = Stampa utilizzando la finestra di dialogo del sistema…

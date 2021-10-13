@@ -1,6 +1,7 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 # This value isn't used directly, but is defined to avoid duplication
 # in the "credit-card-label-*" strings.
@@ -19,31 +20,10 @@ credit-card-expiration = Kedaluwarsa pada { $month }/{ $year }
 #
 # Variables:
 #   $number (String): Partially-redacted credit card number
-credit-card-label-number = { $number }
-# Label for a credit card with a number and name
-#
-# Variables:
-#   $number (String): Partially-redacted credit card number
-#   $name (String): Cardholder name
-credit-card-label-number-name = { $number }, { $name }
-# Label for a credit card with a number and expiration date
-#
-# Variables:
-#   $number (String): Partially-redacted credit card number
-credit-card-label-number-expiration = { $number }, { credit-card-expiration }
-# Label for a credit card with a number, name, and expiration date
-#
-# Variables:
-#   $number (String): Partially-redacted credit card number
-#   $name (String): Cardholder name
-credit-card-label-number-name-expiration = { $number }, { $name }, { credit-card-expiration }
-# Label for a credit card with a number only
-#
-# Variables:
-#   $number (String): Partially-redacted credit card number
 #   $type (String): Credit card type
 credit-card-label-number-2 = { $number }
     .aria-label = { $type } { credit-card-label-number-2 }
+
 # Label for a credit card with a number and name
 #
 # Variables:
@@ -52,6 +32,7 @@ credit-card-label-number-2 = { $number }
 #   $type (String): Credit card type
 credit-card-label-number-name-2 = { $number }, { $name }
     .aria-label = { $type } { credit-card-label-number-name-2 }
+
 # Label for a credit card with a number and expiration date
 #
 # Variables:
@@ -59,6 +40,7 @@ credit-card-label-number-name-2 = { $number }, { $name }
 #   $type (String): Credit card type
 credit-card-label-number-expiration-2 = { $number }, { credit-card-expiration }
     .aria-label = { $type } { credit-card-label-number-expiration-2 }
+
 # Label for a credit card with a number, name, and expiration date
 #
 # Variables:

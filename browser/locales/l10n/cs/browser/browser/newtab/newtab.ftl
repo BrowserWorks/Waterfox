@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Nový panel
 newtab-settings-button =
     .title = Přizpůsobení stránky nového panelu
-newtab-personalize-button-label = Přizpůsobit
+newtab-personalize-icon-label =
     .title = Přizpůsobení nového panelu
     .aria-label = Přizpůsobení nového panelu
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Vyhledat
     .aria-label = Vyhledat
-newtab-search-box-search-the-web-text = Vyhledat na webu
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Zadejte webovou adresu nebo dotaz pro vyhledávač { $engine }
@@ -172,6 +171,11 @@ newtab-label-sponsored = { $sponsorOrSource } · sponzrováno
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Sponzorováno společností { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } min.
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -223,11 +227,26 @@ newtab-discovery-empty-section-topstories-timed-out = Jejda, při načítání o
 ## Pocket Content Section.
 
 # This is shown at the bottom of the trending stories section and precedes a list of links to popular topics.
-newtab-pocket-read-more = Populární témata:
+newtab-pocket-read-more = Oblíbená témata:
+newtab-pocket-new-topics-title = Chcete další články? Podívejte se na oblíbené témata v { -pocket-brand-name(case: "loc") }.
 newtab-pocket-more-recommendations = Další doporučení
 newtab-pocket-learn-more = Zjistit více
 newtab-pocket-cta-button = Získejte { -pocket-brand-name(case: "acc") }
 newtab-pocket-cta-text = Ukládejte si články do { -pocket-brand-name(case: "gen") } a užívejte si skvělé čtení.
+newtab-pocket-pocket-firefox-family = { -pocket-brand-name } je součástí rodiny { -brand-product-name(case: "gen") }
+# A save to Pocket button that shows over the card thumbnail on hover.
+newtab-pocket-save-to-pocket = Uložit do { -pocket-brand-name(case: "gen") }
+newtab-pocket-saved-to-pocket = Uloženo do { -pocket-brand-name(case: "gen") }
+# This is a button shown at the bottom of the Pocket section that loads more stories when clicked.
+newtab-pocket-load-more-stories-button = Načíst další články
+
+## Pocket Final Card Section.
+## This is for the final card in the Pocket grid.
+
+newtab-pocket-last-card-title = Už jste všechno přečetli.
+newtab-pocket-last-card-desc = Další články zde najdete později.
+newtab-pocket-last-card-image =
+    .alt = Už jste všechno přečetli
 
 ## Error Fallback Content.
 ## This message and suggested action link are shown in each section of UI that fails to render.
@@ -241,7 +260,7 @@ newtab-custom-shortcuts-title = Zkratky
 newtab-custom-shortcuts-subtitle = Uložené nebo navštěvované stránky
 newtab-custom-row-selector =
     { $num ->
-        [one] Jeden řádek
+        [one] { $num } řádek
         [few] { $num } řádky
        *[other] { $num } řádků
     }
@@ -252,10 +271,4 @@ newtab-custom-pocket-sponsored = Sponzorované články
 newtab-custom-recent-title = Nedávná aktivita
 newtab-custom-recent-subtitle = Výběr z nedávných stránek a obsahu
 newtab-custom-close-button = Zavřít
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Útržky
-newtab-custom-snippets-subtitle = Tipy a novinky od { -vendor-short-name(case: "gen") } a aplikace { -brand-product-name }
 newtab-custom-settings = Další nastavení

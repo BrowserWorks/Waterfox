@@ -1,15 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 # Addressing widget
 
-#   $type (String) - the type of the addressing row
-remove-address-row-type = Usuń adresy z pola „{ $type }”
-#   $type (String) - the type of the addressing row
-remove-address-row-type-label =
-    .tooltiptext = Usuń adresy z pola „{ $type }”
 #   $type (String) - the type of the addressing row
 remove-address-row-button =
     .title = Usuń adresy z pola „{ $type }”
@@ -69,6 +64,10 @@ toolbar-button-add-attachment =
 add-attachment-notification-reminder =
     .label = Dodaj załącznik…
     .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
+add-attachment-notification-reminder2 =
+    .label = Dodaj załącznik…
+    .accesskey = D
+    .tooltiptext = { toolbar-button-add-attachment.tooltiptext }
 menuitem-attach-files =
     .label = Plik…
     .accesskey = P
@@ -87,22 +86,14 @@ attachment-bucket-count =
            *[many] { $count } załączników
         }
     .accesskey = z
-#   $count (Number) - the number of attachments in the attachment bucket
-attachments-placeholder-tooltip =
-    .tooltiptext =
-        { $count ->
-            [1] { $count } załącznik
-            [one] { $count } załącznik
-            [few] { $count } załączniki
-           *[many] { $count } załączników
-        }
-#   { attachment-bucket-count.accesskey } - Do not localize this message.
-key-toggle-attachment-pane =
-    .key = { attachment-bucket-count.accesskey }
 expand-attachment-pane-tooltip =
     .tooltiptext = Pokaż listę załączników ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 collapse-attachment-pane-tooltip =
     .tooltiptext = Ukryj listę załączników ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-show =
+    .title = Pokaż listę załączników ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
+attachment-area-hide =
+    .title = Ukryj listę załączników ({ ctrl-cmd-shift-pretty-prefix }{ toggle-attachment-pane-key })
 drop-file-label-attachment =
     { $count ->
         [one] Dodaj jako załącznik
@@ -129,8 +120,13 @@ move-attachment-last-panel-button =
 button-return-receipt =
     .label = Potwierdzenie
     .tooltiptext = Żądaj potwierdzenia dostarczenia tej wiadomości
-#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
-consider-bcc-notification = { $count } odbiorców w polach Do i Kopia może widzieć swoje adresy. Można uniknąć ujawniania odbiorców, używając zamiast tego pola Ukryta kopia.
+
+# Encryption
+
+message-to-be-signed-icon =
+    .alt = Podpisz wiadomość
+message-to-be-encrypted-icon =
+    .alt = Zaszyfruj wiadomość
 
 # Addressing Area
 
@@ -166,15 +162,89 @@ bcc-compose-show-address-row-label =
     .tooltiptext = Pokaż pole „{ bcc-compose-address-row-label.value }” ({ bcc-compose-show-address-row-menuitem.acceltext })
 #   $count (Number) - the count of addresses in the "To" and "Cc" fields.
 many-public-recipients-info = { $count } odbiorców w polach Do i Kopia będzie widzieć swoje adresy. Można uniknąć ujawniania odbiorców, używając zamiast tego pola Ukryta kopia.
+to-address-row-label =
+    .value = Do
+#   $key (String) - the shortcut key for this field
+show-to-row-main-menuitem =
+    .label = Pole „Do”
+    .accesskey = D
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-to-row-button text.
+show-to-row-extra-menuitem =
+    .label = Do
+    .accesskey = D
+#   $key (String) - the shortcut key for this field
+show-to-row-button = Do
+    .title = Pokaż pole „Do” ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+cc-address-row-label =
+    .value = Kopia
+#   $key (String) - the shortcut key for this field
+show-cc-row-main-menuitem =
+    .label = Pole „Kopia”
+    .accesskey = K
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-cc-row-button text.
+show-cc-row-extra-menuitem =
+    .label = Kopia
+    .accesskey = K
+#   $key (String) - the shortcut key for this field
+show-cc-row-button = Kopia
+    .title = Pokaż pole „Kopia” ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+bcc-address-row-label =
+    .value = Ukryta kopia
+#   $key (String) - the shortcut key for this field
+show-bcc-row-main-menuitem =
+    .label = Pole „Ukryta kopia”
+    .accesskey = U
+    .acceltext = { ctrl-cmd-shift-pretty-prefix }{ $key }
+# No acceltext should be shown.
+# The label should match the show-bcc-row-button text.
+show-bcc-row-extra-menuitem =
+    .label = Ukryta kopia
+    .accesskey = U
+#   $key (String) - the shortcut key for this field
+show-bcc-row-button = Ukryta kopia
+    .title = Pokaż pole „Ukryta kopia” ({ ctrl-cmd-shift-pretty-prefix }{ $key })
+extra-address-rows-menu-button =
+    .title = Pozostałe pola adresowania
+#   $count (Number) - the count of addresses in the "To" and "Cc" fields.
+many-public-recipients-notice =
+    { $count ->
+        [one] Wiadomość ma publicznego odbiorcę. Można uniknąć ujawniania odbiorców, używając zamiast tego pola Ukryta kopia.
+        [few] { $count } odbiorców w polach Do i Kopia będzie widzieć swoje adresy. Można uniknąć ujawniania odbiorców, używając zamiast tego pola Ukryta kopia.
+       *[many] { $count } odbiorców w polach Do i Kopia będzie widzieć swoje adresy. Można uniknąć ujawniania odbiorców, używając zamiast tego pola Ukryta kopia.
+    }
 many-public-recipients-bcc =
     .label = Użyj pola Ukryta kopia
     .accesskey = U
 many-public-recipients-ignore =
     .label = Ujawnij odbiorców
     .accesskey = w
+many-public-recipients-prompt-title = Za dużo publicznych odbiorców
+#   $count (Number) - the count of addresses in the public recipients fields.
+many-public-recipients-prompt-msg =
+    { $count ->
+        [one] Wiadomość ma publicznego odbiorcę. Może to budzić obawy dotyczące prywatności. Można tego uniknąć, przenosząc odbiorcę z pól Do/Kopia do pola Ukryta kopia.
+        [few] Wiadomość ma { $count } publicznych odbiorców, którzy będą mogli widzieć swoje adresy. Może to budzić obawy dotyczące prywatności. Można uniknąć ujawniania odbiorców, przenosząc ich z pól Do/Kopia do pola Ukryta kopia.
+       *[many] Wiadomość ma { $count } publicznych odbiorców, którzy będą mogli widzieć swoje adresy. Może to budzić obawy dotyczące prywatności. Można uniknąć ujawniania odbiorców, przenosząc ich z pól Do/Kopia do pola Ukryta kopia.
+    }
+many-public-recipients-prompt-cancel = Anuluj wysyłanie
+many-public-recipients-prompt-send = Wyślij mimo to
 
 ## Notifications
 
 # Variables:
 # $identity (string) - The name of the used identity, most likely an email address.
 compose-missing-identity-warning = Nie odnaleziono unikalnej tożsamości pasującej do adresu nadawcy. Wiadomość zostanie wysłana za pomocą obecnego pola nadawcy i ustawień z tożsamości „{ $identity }”.
+encrypted-bcc-warning = Podczas wysyłania zaszyfrowanej wiadomości odbiorcy w polu Ukryta kopia nie są w pełni ukryci. Wszyscy odbiorcy mogą być w stanie ich rozpoznać.
+encrypted-bcc-ignore-button = Rozumiem
+
+## Editing
+
+
+# Tools
+
+compose-tool-button-remove-text-styling =
+    .tooltiptext = Usuń styl tekstu

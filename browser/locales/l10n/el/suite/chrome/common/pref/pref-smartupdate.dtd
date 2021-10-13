@@ -1,13 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
 <!ENTITY pref.smartUpdate.title               "Εγκατάσταση λογισμικού">
 <!ENTITY addOnsTitle.label                    "Πρόσθετα">
-<!ENTITY addOnsAllow.label                    "Να επιτρέπεται στις ιστοσελίδες η εγκατάσταση προσθέτων και ενημερώσεων">
+<!ENTITY addOnsAllow.label                    "Να επιτρέπεται σε ιστοτόπους η εγκατάσταση προσθέτων και ενημερώσεων">
 <!ENTITY addOnsAllow.accesskey                "π">
-<!ENTITY allowedSitesLink.label               "Επιτρεπόμενες ιστοσελίδες">
+<!ENTITY allowedSitesLink.label               "Επιτρεπόμενοι ιστότοποι">
 <!ENTITY autoAddOnsUpdates.label              "Αυτόματος έλεγχος για ενημερώσεις">
 <!ENTITY autoAddOnsUpdates.accesskey          "ο">
 <!ENTITY daily.label                          "ημερησίως">

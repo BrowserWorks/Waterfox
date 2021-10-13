@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -47,7 +47,6 @@
 <!ENTITY getNewMsgForCmd.accesskey "p">
 <!ENTITY getAllNewMsgCmdPopupMenu.label "Alle Accounts">
 <!ENTITY getAllNewMsgCmdPopupMenu.accesskey "A">
-<!ENTITY getAllNewMsgCmd.label "Alle neuen Nachrichten empfangen">
 <!ENTITY getAllNewMsgCmd2.key "d">
 <!ENTITY getNextNMsgCmd.label "Nächste 500 News-Nachrichten abrufen">
 <!ENTITY getNextNMsgCmd.accesskey "ä">
@@ -58,9 +57,9 @@
 <!ENTITY renameFolder.label "Ordner umbenennen…">
 <!ENTITY renameFolder.accesskey "m">
 <!ENTITY compactFolders.label "Account-Ordner komprimieren">
-<!ENTITY compactFolders.accesskey		"k">
+<!ENTITY compactFolders.accesskey "k">
 <!ENTITY emptyTrashCmd.label "Papierkorb leeren">
-<!ENTITY emptyTrashCmd.accesskey		"P">
+<!ENTITY emptyTrashCmd.accesskey "P">
 <!ENTITY offlineMenu.label "Offline">
 <!ENTITY offlineMenu.accesskey "O">
 <!ENTITY synchronizeOfflineCmd.label "Jetzt Herunterladen/Synchronisieren…">
@@ -94,6 +93,8 @@
 <!ENTITY selectThreadCmd.key "a">
 <!ENTITY selectFlaggedCmd.label "Gekennzeichnete Nachrichten">
 <!ENTITY selectFlaggedCmd.accesskey "G">
+<!ENTITY menuFavoriteFolder.label "Favoriten-Ordner">
+<!ENTITY menuFavoriteFolder.accesskey "F">
 <!ENTITY folderPropsCmd.label "Eigenschaften…">
 <!ENTITY folderPropsFolderCmd.label "Ordnereigenschaften…">
 <!ENTITY folderPropsNewsgroupCmd.label "Newsgroup-Eigenschaften…">
@@ -133,6 +134,9 @@
 <!ENTITY showThreadPaneCmd.accesskey "T">
 <!ENTITY showFolderPaneCmd.label "Ordnerliste">
 <!ENTITY showFolderPaneCmd.accesskey "O">
+<!-- LOCALIZATION NOTE (toggleFolderPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleFolderPaneCmd.key "S">
 
 <!-- sortMenu is also used by addressbook -->
 <!ENTITY sortMenu.label "Sortieren nach">
@@ -272,6 +276,8 @@
 <!ENTITY goForwardCmd.commandKey "]">
 <!ENTITY prevFlaggedMsgCmd.label "Gekennzeichnete Nachricht">
 <!ENTITY prevFlaggedMsgCmd.accesskey "k">
+<!ENTITY folderMenu.label "Ordner">
+<!ENTITY folderMenu.accesskey "O">
 <!ENTITY startPageCmd.label "Mail-Startseite">
 <!ENTITY startPageCmd.accesskey "M">
 
@@ -284,23 +290,23 @@
 <!ENTITY newNewMsgCmd.accesskey "N">
 <!ENTITY replyMsgCmd.label "Antwort">
 <!ENTITY replyMsgCmd.accesskey "A">
-<!ENTITY replyMsgCmd.key	"r">
+<!ENTITY replyMsgCmd.key "r">
 <!ENTITY replyListCmd.label "Antwort an Liste">
 <!ENTITY replyListCmd.accesskey "s">
 <!ENTITY replyNewsgroupCmd.label "Antwort an Newsgroup">
-<!ENTITY replyNewsgroupCmd.accesskey	"A">
+<!ENTITY replyNewsgroupCmd.accesskey "A">
 <!ENTITY replySenderCmd.label "Antwort nur an Absender">
 <!ENTITY replySenderCmd.accesskey "u">
 <!ENTITY replyToAllMsgCmd.label "Antwort an alle">
-<!ENTITY replyToAllMsgCmd.accesskey	"o">
-<!ENTITY replyToAllMsgCmd.key	"r">
+<!ENTITY replyToAllMsgCmd.accesskey "o">
+<!ENTITY replyToAllMsgCmd.key "r">
 <!ENTITY replyToSenderAndNewsgroupCmd.label "Antwort an Absender und Newsgroup">
 <!ENTITY replyToSenderAndNewsgroupCmd.accesskey "o">
 <!ENTITY replyToAllRecipientsCmd.label "Antwort an alle Empfänger">
 <!ENTITY replyToAllRecipientsCmd.accesskey "E">
 <!ENTITY forwardMsgCmd.label "Weiterleiten">
 <!ENTITY forwardMsgCmd.accesskey "W">
-<!ENTITY forwardMsgCmd.key	"l">
+<!ENTITY forwardMsgCmd.key "l">
 <!ENTITY forwardAsMenu.label "Weiterleiten als">
 <!ENTITY forwardAsMenu.accesskey "l">
 <!ENTITY forwardAsInline.label "Innerhalb">
@@ -402,6 +408,8 @@
 
 <!-- Toolbar items -->
 <!ENTITY getMsgButton.label "Abrufen">
+<!ENTITY getAllNewMsgCmd.label "Alle neuen Nachrichten empfangen">
+<!ENTITY getAllNewMsgCmd.accesskey "p">
 <!ENTITY newMsgButton.label "Verfassen">
 <!ENTITY newHTMLMessageCmd.label "In HTML verfassen">
 <!ENTITY newHTMLMessageCmd.accesskey "T">
@@ -417,6 +425,7 @@
 <!ENTITY deleteButton.label "Löschen">
 <!ENTITY undeleteButton.label "Wiederherstellen">
 <!ENTITY markButton.label "Markieren">
+<!ENTITY printButton.label "Drucken">
 <!ENTITY stopButton.label "Stopp">
 <!ENTITY junkButton.label "Junk">
 <!ENTITY notJunkButton.label "Kein Junk">
@@ -440,8 +449,8 @@
 <!ENTITY deleteButton.tooltip "Gewählte Nachricht oder Ordner löschen">
 <!ENTITY undeleteButton.tooltip "Ausgewählte Nachricht wiederherstellen">
 <!ENTITY markButton.tooltip "Markiere Nachrichten">
+<!ENTITY printButton.tooltip "Diese Nachricht drucken">
 <!ENTITY stopButton.tooltip "Aktuelle Übertragung stoppen">
-<!ENTITY throbber.tooltip "&vendorShortName;-Homepage aufrufen">
 <!ENTITY junkButton.tooltip "Die aktuelle Nachricht als Junk markieren">
 <!ENTITY notJunkButton.tooltip "Die aktuelle Nachricht als &quot;Kein Junk&quot; markieren">
 
@@ -483,6 +492,8 @@
 <!ENTITY contextCopyMsgMenu.accesskey "K">
 <!ENTITY contextMoveCopyMsgRecentMenu.label "Kürzlich verwendet">
 <!ENTITY contextMoveCopyMsgRecentMenu.accesskey "K">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "Favoriten">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "F">
 <!ENTITY contextSaveAs.label "Speichern unter…">
 <!ENTITY contextSaveAs.accesskey "S">
 <!ENTITY contextPrint.label "Drucken…">
@@ -493,6 +504,8 @@
 <!-- Folder Pane Context Menu -->
 <!ENTITY folderContextGetMessages.label "Nachrichten für Account abrufen">
 <!ENTITY folderContextGetMessages.accesskey "N">
+<!ENTITY folderContextMarkAllFoldersRead.label "Alle Ordner als gelesen markieren">
+<!ENTITY folderContextMarkAllFoldersRead.accesskey "g">
 <!ENTITY folderContextOpenNewWindow.label "In neuem Mail-Fenster öffnen">
 <!ENTITY folderContextOpenNewWindow.accesskey "F">
 <!ENTITY folderContextOpenNewTab.label "In neuem Tab öffnen">
@@ -523,6 +536,8 @@
 <!ENTITY folderContextSearchMessages.accesskey "s">
 <!ENTITY folderContextProperties.label "Eigenschaften…">
 <!ENTITY folderContextProperties.accesskey "E">
+<!ENTITY folderContextFavoriteFolder.label "Favoriten-Ordner">
+<!ENTITY folderContextFavoriteFolder.accesskey "F">
 <!ENTITY folderContextSettings.label "Einstellungen…">
 <!ENTITY folderContextSettings.accesskey "E">
 

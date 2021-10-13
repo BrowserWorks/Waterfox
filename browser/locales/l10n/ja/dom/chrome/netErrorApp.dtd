@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,7 +6,7 @@
      from netError.dtd; Applications which want to do this should override
      this file with their own version of netErrorApp.dtd -->
 
-<!-- An example (from Firefox):
+<!-- An example (from Waterfox):
 
 <!ENTITY securityOverride.linkText		"例外として扱うこともできます...">
 <!ENTITY securityOverride.getMeOutOfHereButton	"スタートページに戻る">

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,7 +11,6 @@
 
 <!ENTITY feedLocation.label          "URL do RSS:">
 <!ENTITY feedLocation.accesskey      "U">
-<!ENTITY feedLocation.placeholder    "Forneça uma URL de RSS válida a adicionar">
 <!ENTITY feedLocation2.placeholder   "Forneça um URL de RSS válido">
 <!ENTITY locationValidate.label      "Validar">
 <!ENTITY validateText.label          "Verificar validação e carregar uma URL válida.">

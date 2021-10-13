@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,13 +20,6 @@ toolbar-context-menu-bookmark-selected-tabs =
 toolbar-context-menu-select-all-tabs =
     .label = Vel alle faner
     .accesskey = V
-toolbar-context-menu-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Angre attlating av faner
-           *[other] Angre attlating av faner
-        }
-    .accesskey = A
 toolbar-context-menu-reopen-closed-tabs =
     .label =
         { $tabCount ->
@@ -41,7 +34,7 @@ toolbar-context-menu-remove-extension =
     .label = Fjern utviding
     .accesskey = F
 # This label is used in the extensions toolbar buttons context menus,
-# a user can use this command to submit to Mozilla an abuse report
+# a user can use this command to submit to Waterfox an abuse report
 # related to that extension. "Report" is a verb.
 toolbar-context-menu-report-extension =
     .label = Rapporter utviding
@@ -52,9 +45,6 @@ toolbar-context-menu-report-extension =
 toolbar-context-menu-pin-to-overflow-menu =
     .label = Fest til overflytsmenyen
     .accesskey = F
-toolbar-context-menu-auto-hide-downloads-button =
-    .label = Gøym automatisk i verktøylinja
-    .accesskey = a
 toolbar-context-menu-auto-hide-downloads-button-2 =
     .label = Gøym knapp når han er tom
     .accesskey = G
@@ -79,3 +69,6 @@ toolbar-context-menu-bookmarks-toolbar-on-new-tab-2 =
 toolbar-context-menu-bookmarks-show-other-bookmarks =
     .label = Vis andre bokmerke
     .accesskey = V
+toolbar-context-menu-menu-bar-cmd =
+    .toolbarname = Menylinje
+    .accesskey = M

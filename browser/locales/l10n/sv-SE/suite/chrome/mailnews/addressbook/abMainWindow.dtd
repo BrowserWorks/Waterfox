@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -98,8 +98,6 @@
 <!ENTITY newIM.tooltip                                  "Skicka ett snabbmeddelande eller chatta">
 <!ENTITY printButton.tooltip                            "Skriv ut valt objekt">
 <!ENTITY deleteItemButton.tooltip                       "Radera valt objekt">
-<!ENTITY throbber.tooltip                               "Gå till &vendorShortName;s webbplats">
-<!ENTITY throbber.tooltip2                              "Gå till &brandShortName;s webbplats">
 <!ENTITY advancedButton.tooltip                         "Avancerad adressökning">
 
 <!-- Dir Tree header -->

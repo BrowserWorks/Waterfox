@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,19 +9,16 @@
 <!ENTITY autoHide.accesskey2 "e">
 <!ENTITY background.label "Mudar para novos separadores abertos a partir de ligações">
 <!ENTITY background.accesskey "s">
+<!ENTITY diverted.label "Mudar para novos separadores abertos a partir de ligações redirecionadas">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "Focar janela do navegador para ligações abertas em separadores a partir de outras aplicações">
+<!ENTITY browserFocus.accesskey "F">
 <!ENTITY warnOnClose.label "Avisar-me quando fechar uma janela com múltiplos separadores">
 <!ENTITY warnOnClose.accesskey "n">
 <!ENTITY relatedAfterCurrent.label "Abrir separadores relacionados depois do separador atual">
 <!ENTITY relatedAfterCurrent.accesskey "o">
 
-<!ENTITY loadGroup.label "Ao abrir um grupo de marcadores">
-<!ENTITY loadGroupAppend.label "Adicionar separadores">
-<!ENTITY loadGroupAppend.accesskey "A">
-<!ENTITY loadGroupReplace.label "Substituir separadores existentes">
-<!ENTITY loadGroupReplace.accesskey "r">
-
 <!ENTITY openTabs.label "Abrir separadores em vez de janelas">
-
 <!ENTITY middleClick.label "Clique no botão do meio, Ctrl+clique ou Ctrl+Enter nas ligações de uma página de Internet">
 <!ENTITY middleClick.accesskey "M">
 <!ENTITY middleClickMac.label "Clique no botão do meio, &#8984;+clique ou &#8984;+Enter nas ligações numa página de Internet">

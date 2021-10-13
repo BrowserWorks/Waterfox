@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -20,10 +20,3 @@
 <!ENTITY loadNoImagesRadio.accesskey    "i">
 <!ENTITY viewPermissions.label          "Hantera tillåtna bilder">
 <!ENTITY viewPermissions.accesskey      "t">
-<!ENTITY animLoopingTitle.label         "Animeringssekvensen i animerade bilder ska visas">
-<!ENTITY animLoopAsSpecified.label      "Så många gånger som anges i bilden">
-<!ENTITY animLoopAsSpecified.accesskey  "m">
-<!ENTITY animLoopOnce.label             "En gång">
-<!ENTITY animLoopOnce.accesskey         "E">
-<!ENTITY animLoopNever.label            "Aldrig">
-<!ENTITY animLoopNever.accesskey        "d">
