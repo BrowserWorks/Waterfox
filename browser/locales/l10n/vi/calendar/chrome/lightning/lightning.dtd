@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,12 +17,6 @@
 <!ENTITY lightning.menupopup.new.task.accesskey "T">
 <!ENTITY lightning.menupopup.new.calendar.label "Lịch…">
 <!ENTITY lightning.menupopup.new.calendar.accesskey "n">
-
-<!-- Open menu popup in File menu -->
-<!ENTITY lightning.menupopup.open.label               "Mở">
-<!ENTITY lightning.menupopup.open.accesskey           "O">
-<!ENTITY lightning.menupopup.open.message.label       "Thư đã lưu…">
-<!ENTITY lightning.menupopup.open.message.accesskey   "M">
 
 <!-- Open menu popup in File menu -->
 <!ENTITY lightning.menupopup.open.calendar.label      "Tập tin lịch…">
@@ -51,6 +45,10 @@
      - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Hiện tại, bạn chỉ có thể kích hoạt tính năng này sau khi thiết lập lịch này trong hộp thoại thuộc tính của nó nếu máy chủ lịch đảm nhiệm việc lên lịch.">
 <!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Tùy chọn này chỉ khả dụng nếu máy chủ lịch xử lý lập lịch. Kích hoạt sẽ cho phép quay trở lại lịch trình dựa trên email tiêu chuẩn thay vì để nó đến máy chủ.">
+
+<!-- The notifications settings in the properties dialog -->
+<!ENTITY lightning.calendarproperties.notifications.label                   "Thông báo">
+<!ENTITY lightning.calendarproperties.globalNotifications.label             "Tuỳ chọn thông báo tổng quát…">
 
 <!-- iMIP Bar (meeting support) -->
 <!ENTITY lightning.imipbar.btnAccept.label                                  "Chấp nhận">

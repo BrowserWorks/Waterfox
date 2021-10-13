@@ -1,14 +1,16 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY pref.history.title "Cronologia">
+
 <!ENTITY pref.history.caption "Cronologia di navigazione">
 <!ENTITY historyPages.label "La cronologia è un elenco di pagine visitate.">
 <!ENTITY enableHistory.label "Ricorda pagine visitate">
 <!ENTITY enableHistory.accesskey "R">
 <!ENTITY clearHistory.label "Svuota cronologia">
 <!ENTITY clearHistory.accesskey "S">
+
 <!ENTITY locationBarHistory.caption "Cronologia barra degli indirizzi">
 <!ENTITY urlBarHistoryEnabled.caption "Abilita la cronologia della Barra degli indirizzi">
 <!ENTITY urlBarHistoryEnabled.accesskey "b">

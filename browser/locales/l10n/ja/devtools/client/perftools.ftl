@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -91,8 +91,8 @@ perftools-thread-img-decoder =
   .title = 画像デコードスレッドです
 perftools-thread-dns-resolver =
   .title = DNS の名前解決が行われるスレッドです
-perftools-thread-js-helper =
-  .title = メインスレッド外コンパイルなど、JS エンジンのバックエンド処理のスレッドです
+perftools-thread-task-controller =
+  .title = タスクコントローラのスレッドプールにあるスレッドです
 
 ##
 

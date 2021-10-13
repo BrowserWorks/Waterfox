@@ -1,10 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY sidebar.customize.title.label "Personalizar &sidebarName;">
-<!ENTITY sidebar.customize.current.label "Pestañas en &sidebarName;:">
-<!ENTITY sidebar.customize.current.accesskey "T">
 <!ENTITY sidebar.customize.title "Personalizar el panel lateral">
 <!ENTITY sidebar.customize.current2.label "Pestañas en el panel lateral:">
 <!ENTITY sidebar.customize.current2.accesskey "T">

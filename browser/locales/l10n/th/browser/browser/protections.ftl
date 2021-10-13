@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -22,14 +22,14 @@ graph-private-window = { -brand-short-name } จะปิดกั้นตั�
 graph-week-summary-private-window = ตัวติดตามที่ { -brand-short-name } ปิดกั้นในสัปดาห์นี้
 protection-report-webpage-title = แดชบอร์ดการป้องกัน
 protection-report-page-content-title = แดชบอร์ดการป้องกัน
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } สามารถปกป้องความเป็นส่วนตัวของคุณในเบื้องหลังขณะที่คุณเรียกดูได้ นี่คือข้อมูลสรุปส่วนตัวของการปกป้องเหล่านั้น รวมถึงเครื่องมือที่ใช้ควบคุมความปลอดภัยออนไลน์ของคุณ
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } จะปกป้องความเป็นส่วนตัวของคุณในเบื้องหลังขณะที่คุณเรียกดู นี่คือข้อมูลสรุปส่วนตัวของการปกป้องเหล่านั้น รวมถึงเครื่องมือที่ใช้ควบคุมความปลอดภัยออนไลน์ของคุณ
 protection-report-settings-link = จัดการการตั้งค่าความเป็นส่วนตัวและความปลอดภัย
 etp-card-title-always = การป้องกันการติดตามที่มากขึ้น: เปิดตลอด
 etp-card-title-custom-not-blocking = การป้องกันการติดตามที่มากขึ้น: ปิด
-etp-card-content-description = { -brand-short-name } จะหยุดบริษัทต่าง ๆ ไม่ให้ติดตามคุณอย่างลับ ๆ ขณะที่คุณท่องเว็บโดยอัตโนมัติ
+etp-card-content-description = { -brand-short-name } จะหยุดบริษัทต่าง ๆ ไม่ให้ติดตามคุณอย่างลับ ๆ ขณะที่คุณเรียกดูโดยอัตโนมัติ
 protection-report-etp-card-content-custom-not-blocking = การป้องกันทั้งหมดถูกปิดในขณนี้ เลือกตัวติดตามที่จะปิดกั้นโดยจัดการการตั้งค่าการป้องกัน { -brand-short-name } ของคุณ
 protection-report-manage-protections = จัดการการตั้งค่า
 # This string is used to label the X axis of a graph. Other days of the week are generated via Intl.DateTimeFormat,
@@ -79,8 +79,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] รหัสผ่านของคุณถูกเก็บอย่างปลอดภัย
     }
 lockwise-how-it-works-link = วิธีการทำงาน
-turn-on-sync = เปิด { -sync-brand-short-name }…
-    .title = ไปที่ค่ากำหนดการซิงค์
 monitor-title = ให้เราช่วยคอยเฝ้าระวังดูการละเมิดข้อมูล
 monitor-link = วิธีการทำงาน
 monitor-header-content-no-account = ตรวจสอบ { -monitor-brand-name } เพื่อดูว่าคุณเป็นส่วนหนึ่งของการรั่วไหลข้อมูลหรือไม่ และรับการแจ้งเตือนเกี่ยวกับข้อมูลที่รั่วไหลใหม่

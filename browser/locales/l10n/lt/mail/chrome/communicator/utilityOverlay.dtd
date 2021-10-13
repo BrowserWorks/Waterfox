@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,10 +17,6 @@
 <!ENTITY redoCmd.accesskey          "s">
 <!ENTITY deleteCmd.label          "Pašalinti">
 <!ENTITY deleteCmd.accesskey        "š">
-<!ENTITY preferencesCmd2.label "Nuostatos">
-<!ENTITY preferencesCmd2.accesskey "N">
-<!ENTITY preferencesCmdUnix.label       "Nuostatos">
-<!ENTITY preferencesCmdUnix.accesskey     "N">
 
 <!ENTITY customizeCmd.label "Tinkinimas">
 <!ENTITY customizeCmd.accesskey "t">

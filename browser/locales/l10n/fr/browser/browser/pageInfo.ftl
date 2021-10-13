@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/. --
 
@@ -128,6 +128,8 @@ security-site-data-only = Oui, { $value } { $unit } de données de sites
 
 security-site-data-cookies-only = Oui, des cookies
 security-site-data-no = Non
+
+##
 
 image-size-unknown = Inconnu
 page-info-not-specified =

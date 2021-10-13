@@ -1,9 +1,7 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY loginAtStartup.label "启动时检查是否有新文章。">
-<!ENTITY loginAtStartup.accesskey "C">
 <!ENTITY biffAll.label "启用所有收取点的更新">
 <!ENTITY biffAll.accesskey "E">
 

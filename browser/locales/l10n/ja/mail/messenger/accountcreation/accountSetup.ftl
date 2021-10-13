@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,8 +7,11 @@ account-setup-tab-title = アカウントのセットアップ
 ## Header
 
 account-setup-title = 既存のメールアドレスのセットアップ
-account-setup-description = 現在のメールアドレスを使用するには、そのアカウント情報を記入してください。<br/>
-    { -brand-product-name } が自動的に有効なサーバー設定を検索します。
+account-setup-description = 現在のメールアドレスを使用するには、そのアカウント情報を記入してください。
+account-setup-secondary-description = { -brand-product-name } が自動的に有効なサーバー設定を検索します。
+account-setup-success-title = アカウントの作成が完了しました
+account-setup-success-description = このアカウントを { -brand-short-name } で使用できるようになりました。
+account-setup-success-secondary-description = 関連するサービスへ接続したりアカウント設定の詳細を変更することにより、さらに使いやすくなります。
 
 ## Form fields
 
@@ -35,7 +38,11 @@ account-setup-password-label = パスワード
 account-provisioner-button = 新しいメールアドレスを取得
     .accesskey = G
 account-setup-password-toggle =
-    .title = パスワードを表示または隠す
+    .title = パスワードを表示または隠します
+account-setup-password-toggle-show =
+    .title = パスワードを平文で表示します
+account-setup-password-toggle-hide =
+    .title = パスワードを隠します
 account-setup-remember-password = パスワードを記憶する
     .accesskey = m
 account-setup-exchange-label = ログイン名
@@ -69,8 +76,8 @@ account-setup-looking-up-settings-guess = アカウント設定の検索: 一般
 account-setup-looking-up-settings-half-manual = アカウント設定の検索: サーバーを調べています...
 account-setup-looking-up-disk = アカウント設定の検索: { -brand-short-name } のインストールフォルダーから検索しています...
 account-setup-looking-up-isp = アカウント設定の検索: メールプロバイダーから検索しています...
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-looking-up-db = アカウント設定の検索: Mozilla ISP データベースから検索しています...
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-looking-up-db = アカウント設定の検索: Waterfox ISP データベースから検索しています...
 account-setup-looking-up-mx = アカウント設定の検索: 受信メールのドメインから検索しています...
 account-setup-looking-up-exchange = アカウント設定の検索: Exchange サーバーから検索しています...
 account-setup-checking-password = パスワードを確認しています...
@@ -80,8 +87,8 @@ account-setup-success-guess = アカウント設定が、一般的なサーバ�
 account-setup-success-guess-offline = 現在オフラインモードです。仮設定を行いましたが、正しい設定を入力してオンラインで確認する必要があります。
 account-setup-success-password = パスワード OK
 account-setup-success-addon = アドオンのインストールが完了しました
-# Note: Do not translate or replace Mozilla. It stands for the public project mozilla.org, not Mozilla Corporation. The database is a generic, public domain facility usable by any client.
-account-setup-success-settings-db = アカウント設定が Mozilla ISP データベースから見つかりました。
+# Note: Do not translate or replace Waterfox. It stands for the public project mozilla.org, not Waterfox Corporation. The database is a generic, public domain facility usable by any client.
+account-setup-success-settings-db = アカウント設定が Waterfox ISP データベースから見つかりました。
 account-setup-success-settings-disk = アカウント設定が { -brand-short-name } のインストールフォルダーから見つかりました。
 account-setup-success-settings-isp = アカウント設定がメールプロバイダーから見つかりました。
 # Note: Microsoft Exchange is a product name.
@@ -97,11 +104,16 @@ account-setup-step3-image =
     .title = 設定が見つかりました
 account-setup-step4-image =
     .title = 接続エラー
-account-setup-privacy-footnote = あなたの認証情報は私たちの <a data-l10n-name="privacy-policy-link">プライバシーポリシー</a> に従って使用され、ローカルのあなたのコンピュータにのみ保存されます。
+account-setup-step5-image =
+    .title = アカウントを作成しました
+account-setup-privacy-footnote2 = あなたの認証情報はローカルのあなたのコンピュータにのみ保存されます。
 account-setup-selection-help = どれを選択したらよいか分からないときは？
-account-setup-selection-error = 助けが必要な方は？
+account-setup-selection-error = 助けが必要な場合は？
+account-setup-success-help = 次の手順について知りたいときは？
 account-setup-documentation-help = セットアップのドキュメント
 account-setup-forum-help = サポートフォーラム
+account-setup-privacy-help = プライバシーポリシー
+account-setup-getting-started = はじめにお読みください
 
 ## Results area
 
@@ -120,7 +132,8 @@ account-setup-result-pop = POP3
 account-setup-result-pop-description = フォルダーとメールがあなたのコンピュータに保存されます
 # Note: Exchange is the name of a product.
 account-setup-result-exchange = Exchange
-account-setup-result-exchange-description = Microsoft Exchange サーバー
+# Note: Exchange, Office365 are the name of products.
+account-setup-result-exchange2-description = Microsoft Exchange サーバーまたは Office365 クラウドサービスを使用します
 account-setup-incoming-title = 受信
 account-setup-outgoing-title = 送信
 account-setup-username-title = ユーザー名
@@ -199,6 +212,17 @@ exchange-dialog-question = { -brand-short-name } が { $domain } 上にあなた
 exchange-dialog-confirm-button = ログイン
 exchange-dialog-cancel-button = キャンセル
 
+## Dismiss account creation dialog
+
+exit-dialog-title = 設定されたメールアカウントがありません
+exit-dialog-description = セットアップ処理をキャンセルしますか？ メールアカウントなしでも { -brand-short-name } を使用できますが、多くの機能が使用できないままになります。
+account-setup-no-account-checkbox = メールアカウントなしで { -brand-short-name } を使用する
+    .accesskey = U
+exit-dialog-cancel-button = セットアップを続行
+    .accesskey = C
+exit-dialog-confirm-button = セットアップを終了
+    .accesskey = E
+
 ## Alert dialogs
 
 account-setup-creation-error-title = アカウント作成エラー
@@ -210,5 +234,70 @@ account-setup-confirm-advanced-description = このダイアログを閉じる�
 
 account-setup-addon-install-title = インストール
 account-setup-addon-install-intro = サードパーティのアドオンを利用することにより、このサーバー上のメールアカウントにアクセスできます:
-
 account-setup-addon-no-protocol = このメールサーバーは、残念ながらオープンプロトコルに対応していません。{ account-setup-addon-install-intro }
+
+## Success view
+
+account-setup-settings-button = アカウント設定
+account-setup-encryption-button = エンドツーエンド暗号化
+account-setup-signature-button = 署名を追加
+account-setup-dictionaries-button = スペルチェック辞書をダウンロード
+account-setup-address-book-carddav-button = CardDAV アドレス帳に接続
+account-setup-address-book-ldap-button = LDAP アドレス帳に接続
+account-setup-calendar-button = リモートカレンダーに接続
+account-setup-linked-services-title = リンクしたサービスへの接続
+account-setup-linked-services-description = { -brand-short-name } があなたのメールアカウントにリンクされた別のサービスを検出しました。
+account-setup-no-linked-description = 別のサービスをセットアップして { -brand-short-name } を最大限に活用しましょう。
+
+# Variables:
+# $count (Number) - The number of address books found during autoconfig.
+account-setup-found-address-books-description =
+    { $count ->
+        [one] { -brand-short-name } がメールアカウントにリンクされたアドレス帳を見つけました。
+        *[other] { -brand-short-name } がメールアカウントにリンクされたアドレス帳を { $count } 冊見つけました。
+    }
+# Variables:
+# $count (Number) - The number of calendars found during autoconfig.
+account-setup-found-calendars-description =
+    { $count ->
+        [one] { -brand-short-name } がメールアカウントにリンクされたカレンダーを見つけました。
+        *[other] { -brand-short-name } がメールアカウントにリンクされたカレンダーを { $count } 個見つけました。
+    }
+account-setup-button-finish = 完了
+    .accesskey = F
+account-setup-looking-up-address-books = アドレス帳を探しています...
+account-setup-looking-up-calendars = カレンダーを探しています...
+account-setup-address-books-button = アドレス帳
+account-setup-calendars-button = カレンダー
+account-setup-connect-link = 接続
+account-setup-existing-address-book = 接続済み
+    .title = このアドレス帳はすでに接続されています
+account-setup-existing-calendar = 接続済み
+    .title = このカレンダーはすでに接続されています
+account-setup-connect-all-calendars = すべてのカレンダーを接続する
+account-setup-connect-all-address-books = すべてのアドレス帳を接続する
+
+## Calendar synchronization dialog
+
+calendar-dialog-title = カレンダーの接続
+calendar-dialog-cancel-button = キャンセル
+    .accesskey = C
+calendar-dialog-confirm-button = 接続
+    .accesskey = n
+account-setup-calendar-name-label = カレンダー名
+account-setup-calendar-name-input =
+    .placeholder = マイカレンダー
+account-setup-calendar-color-label = 色
+account-setup-calendar-refresh-label = 更新
+account-setup-calendar-refresh-manual = 手動
+account-setup-calendar-refresh-interval =
+    { $count ->
+        [one] 1 分間隔
+        *[other] { $count } 分間隔
+    }
+account-setup-calendar-read-only = 読み取り専用
+    .accesskey = R
+account-setup-calendar-show-reminders = アラームを表示
+    .accesskey = S
+account-setup-calendar-offline-support = オフラインサポート
+    .accesskey = O

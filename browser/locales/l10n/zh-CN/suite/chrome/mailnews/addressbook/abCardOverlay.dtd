@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "显示名称：">
 <!ENTITY DisplayName.accesskey          "D">
 <!ENTITY preferDisplayName.label        "消息头优先列出显示名称">
-<!ENTITY preferDisplayName.accesskey    "A">
 <!ENTITY preferDisplayName2.accesskey   "y">
 <!ENTITY NickName.label                 "昵称：">
 <!ENTITY NickName.accesskey             "N">
@@ -46,8 +45,6 @@
 <!ENTITY PlainText.label                "纯文本">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "未知">
-<!ENTITY ScreenName.label               "屏幕名：">
-<!ENTITY ScreenName.accesskey           "S">
 
 <!ENTITY chatName.label                 "聊天名称：">
 
@@ -145,7 +142,6 @@
 
 <!ENTITY Photo.tab                      "照片">
 <!ENTITY Photo.accesskey                "o">
-<!ENTITY PhotoDesc.label                "从下面的挑选一个：">
 <!ENTITY GenericPhoto.label             "一般照片">
 <!ENTITY GenericPhoto.accesskey         "G">
 <!ENTITY DefaultPhoto.label             "默认值">

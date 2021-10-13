@@ -1,18 +1,28 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
 <!ENTITY pref.advanced.title              "Advanced">
 
-<!ENTITY systemPref.caption               "System Preferences">
-<!ENTITY systemPrefCheck.label            "Use Preferences from System">
-<!ENTITY systemPrefCheck.accesskey        "U">
-<!ENTITY systemPref.desc                  "With this option, &brandShortName; inherits preferences from the system. These system settings will override the &brandShortName; preferences.">
-
 <!ENTITY prefCheckDefault.caption         "System Integration">
 <!ENTITY prefCheckDefaultClient.label     "Check default application settings on startup">
 <!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY defaultClientFor.description     "Make &brandShortName; the default application for:">
+<!ENTITY setDefaultBrowser.label          "Browser">
+<!ENTITY setDefaultBrowser.accesskey      "B">
+<!ENTITY setDefaultMail.label             "Mail">
+<!ENTITY setDefaultMail.accesskey         "M">
+<!ENTITY setDefaultNews.label             "News">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Feeds">
+<!ENTITY setDefaultFeed.accesskey         "F">
+<!ENTITY useInternalSettings.description  "Use &brandShortName; Mail &amp; News when opening browser links for:">
+<!ENTITY useInternalMail.label            "Mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "News (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "e">
 
 <!ENTITY printing.label                   "Printing">
 <!ENTITY useNativePrintDialog.label       "Use Native Print Dialogue (where supported)">

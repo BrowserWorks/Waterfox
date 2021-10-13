@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -15,6 +15,7 @@
 <!ENTITY findAsYouTypeAutoText.accesskey "C">
 <!ENTITY findAsYouTypeAutoLinks.label "Sólo enlaces">
 <!ENTITY findAsYouTypeAutoLinks.accesskey "S">
+
 <!ENTITY findAsYouTypeFindbarEnable.label "Mostrar la barra de búsqueda al encontrar a medida que escribe">
 <!ENTITY findAsYouTypeFindbarEnable.accesskey "M">
 <!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: Encontrar a medida que escribe sin mostrar la barra de búsqueda no permite introducir caracteres internacionales.">

@@ -1,10 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY spellAddToDictionary.label "사전 추가">
+<!ENTITY spellAddToDictionary.label "사전에 추가">
 <!ENTITY spellAddToDictionary.accesskey "o">
-<!ENTITY spellUndoAddToDictionary.label "맞춤법 검사 사전 추가 실행 취소">
+<!ENTITY spellUndoAddToDictionary.label "사전에 추가 취소">
 <!ENTITY spellUndoAddToDictionary.accesskey "n">
 <!ENTITY spellCheckToggle.label "맞춤법 검사">
 <!ENTITY spellCheckToggle.accesskey "g">
@@ -14,11 +14,3 @@
 
 <!ENTITY searchTextBox.clear.label "지우기">
 
-<!ENTITY fillLoginMenu.label          "로그인 입력">
-<!ENTITY fillLoginMenu.accesskey      "F">
-<!ENTITY fillPasswordMenu.label       "비밀번호 입력">
-<!ENTITY fillPasswordMenu.accesskey   "F">
-<!ENTITY fillUsernameMenu.label       "사용자 이름 입력">
-<!ENTITY fillUsernameMenu.accesskey   "F">
-<!ENTITY noLoginSuggestions.label     "(로그인 추천 없음)">
-<!ENTITY viewSavedLogins.label        "저장된 로그인 보기">

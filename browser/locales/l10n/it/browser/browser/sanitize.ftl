@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -81,6 +81,10 @@ data-section-label = Dati
 item-site-preferences =
     .label = Preferenze dei siti web
     .accesskey = P
+
+item-site-settings =
+    .label = Impostazioni dei siti web
+    .accesskey = w
 
 item-offline-apps =
     .label = Dati non in linea dei siti web

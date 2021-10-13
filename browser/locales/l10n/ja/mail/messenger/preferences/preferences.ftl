@@ -1,15 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 close-button =
     .aria-label = 閉じる
-preferences-title =
-    .title =
-        { PLATFORM() ->
-            [windows] オプション
-           *[other] 環境設定
-        }
 preferences-doc-title = 設定
 category-list =
     .aria-label = カテゴリー
@@ -90,29 +84,19 @@ update-in-progress-ok-button = 破棄(&D)
 # Continue is the cancel button so pressing escape or using a platform standard
 # method of closing the UI will not discard the update.
 update-in-progress-cancel-button = 続行(&C)
-addons-button = 拡張機能とテーマ
 account-button = アカウント設定
 open-addons-sidebar-button = アドオンとテーマ
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = マスターパスワードを作成するには、Windows のログイン資格情報を入力してください。これはアカウントのセキュリティ保護に役立ちます。
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Thunderbird is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = マスターパスワードを作成
-
 # This message can be seen by trying to add a Primary Password.
+# en-US: "Primary Password"
 primary-password-os-auth-dialog-message-win = マスターパスワードを作成するには、Windows のログイン資格情報を入力してください。これはアカウントのセキュリティ保護に役立ちます。
-
 # This message can be seen by trying to add a Primary Password.
 # The macOS strings are preceded by the operating system with "Thunderbird is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = マスターパスワードを作成
-
 # Don't change this label.
 master-password-os-auth-dialog-caption = { -brand-full-name }
 
@@ -166,11 +150,8 @@ animated-alert-label =
     .label = デスクトップ通知を表示する
     .accesskey = S
 customize-alert-label =
-    .label = 設定...
+    .label = カスタマイズ...
     .accesskey = C
-tray-icon-label =
-    .label = トレイアイコンを表示する
-    .accesskey = t
 biff-use-system-alert =
     .label = システムの通知を使用する
 tray-icon-unread-label =
@@ -265,6 +246,9 @@ diskspace-legend = ディスク領域
 offline-compact-folder =
     .label = ディスク領域を合計
     .accesskey = a
+offline-compact-folder-automatically =
+    .label = 最適化する前に毎回確認する
+    .accesskey = b
 compact-folder-size =
     .value = MB 以上節約できるときはフォルダーを最適化する
 
@@ -327,8 +311,6 @@ smaller-size-item =
 quoted-text-color =
     .label = 色:
     .accesskey = o
-search-input =
-    .placeholder = 検索
 search-handler-table =
     .placeholder = ファイルの種類と動作設定の絞り込み
 type-column-label = ファイルの種類
@@ -547,27 +529,16 @@ passwords-description = { -brand-short-name } で利用するすべてのアカ�
 passwords-button =
     .label = 保存されているパスワード...
     .accesskey = S
-master-password-description = マスターパスワードを使用すると、保存されたすべてのパスワードが保護されます。ただし、セッションごとに入力を求められます。
-master-password-label =
-    .label = マスターパスワードを使用する
-    .accesskey = U
-master-password-button =
-    .label = マスターパスワードを変更...
-    .accesskey = C
-
+# en-US: "Primary Password"
 primary-password-description = マスターパスワードを使用すると、保存されたすべてのパスワードが保護されます。ただし、セッションごとに入力を求められます。
-
 primary-password-label =
     .label = マスターパスワードを使用する
     .accesskey = U
-
 primary-password-button =
     .label = マスターパスワードを変更...
     .accesskey = C
-
 forms-primary-pw-fips-title = 現在 FIPS モードです。FIPS は空でないマスターパスワードを必要とします。
 forms-master-pw-fips-desc = パスワードを変更できませんでした
-
 junk-description = 既定の迷惑メールフィルターの動作を設定します。アカウントごとの迷惑メールフィルターの設定は [アカウント設定] で行います。
 junk-label =
     .label = 迷惑メールであると手動でマークしたときに次の処理を実行する:
@@ -699,24 +670,6 @@ no-preview-description = このテーマは正しくないか現在利用でき�
 chat-variant-label =
     .value = 色調:
     .accesskey = V
-chat-header-label =
-    .label = ヘッダーを表示する
-    .accesskey = H
-
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder = { PLATFORM() ->
-        [windows] オプションを検索
-        *[other] 設定を検索
-    }
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
 #

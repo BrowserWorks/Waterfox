@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,7 +7,6 @@
 <!ENTITY alwaysClear.label "Limpiar siempre mis datos privados cuando cierre &brandShortName;">
 <!ENTITY alwaysClear.accesskey "L">
 <!ENTITY askBeforeClear.label "Preguntarme antes de limpiar datos privados">
-<!ENTITY askBeforeClear.accesskey "P">
 <!ENTITY clearDataSettings.label "Cuando le pida a &brandShortName; limpiar mis datos privados, debería borrar:">
 <!ENTITY clearData.label "Limpiar estos datos privados:">
 <!ENTITY clearData.cpd.label "Manualmente">

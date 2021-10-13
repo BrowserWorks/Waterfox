@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,8 +17,8 @@
 
 <!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
   -  is displayed as a message for why the real time overview graph is disabled
-  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
-<!ENTITY performanceUI.disabledRealTime.disabledE10S "Ενεργοποιήστε τον πολλαπλών διεργασιών Firefox στις προτιμήσεις για την απόδοση των δεδομένων εγγραφής σε πραγματικό χρόνο.">
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "Ενεργοποιήστε τον πολλαπλών διεργασιών Waterfox στις προτιμήσεις για την απόδοση των δεδομένων εγγραφής σε πραγματικό χρόνο.">
 
 <!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
   -  is displayed when the profiler's circular buffer has started to overlap. -->
@@ -43,7 +43,7 @@
 <!ENTITY performanceUI.toolbar.allocations.tooltiptext "Εμφανίζει πως η μνήμη ήταν καταμερισμένη κατά την εγγραφή.">
 <!ENTITY performanceUI.toolbar.js-flamegraph "Γράφημα Φωτιάς JS">
 <!ENTITY performanceUI.toolbar.js-flamegraph.tooltiptext "Εμφανίζει τη στοίβα κλήσεων JavaScript από όλη τη διάρκεια της εγγραφής.">
-<!ENTITY performanceUI.toolbar.memory-flamegraph 'Γράφημα "flame" εκχωρήσεων'>
+<!ENTITY performanceUI.toolbar.memory-flamegraph "Γράφημα εκχωρήσεων «flame»">
 
 <!-- LOCALIZATION NOTE (performanceUI.table.*): These strings are displayed
   -  in the call tree headers for a recording. -->
@@ -60,7 +60,7 @@
 <!ENTITY performanceUI.table.function                 "Συνάρτηση">
 <!ENTITY performanceUI.table.function.tooltip         "Το όνομα και η τοποθεσία στον κώδικα της συνάρτησης δειγματοληψίας.">
 <!ENTITY performanceUI.table.totalAlloc               "Συνολικοί Καταμερισμοί Δειγμάτων">
-<!ENTITY performanceUI.table.totalAlloc.tooltip       "Ο συνολικός αριθμός εκχωρήσεων αντικειμένων, από τα οποία λήφθηκε δείγμα σε αυτή την τοποθεσία και στους καλούντες.">
+<!ENTITY performanceUI.table.totalAlloc.tooltip       "Ο συνολικός αριθμός εκχωρήσεων αντικειμένων, από τα οποία λήφθηκε δείγμα σε αυτήν την τοποθεσία και στους καλούμενους.">
 
 <!-- LOCALIZATION NOTE (performanceUI.options.filter.tooltiptext): This string
   -  is displayed next to the filter button-->
@@ -77,7 +77,7 @@
 
 <!-- LOCALIZATION NOTE (performanceUI.invertFlameGraph): This is the label shown next to
   -  a checkbox that inverts and un-inverts the profiler's flame graph. -->
-<!ENTITY performanceUI.invertFlameGraph             'Αναστροφή γραφήματος "flame"'>
+<!ENTITY performanceUI.invertFlameGraph             "Αναστροφή γραφήματος «flame»">
 <!ENTITY performanceUI.invertFlameGraph.tooltiptext 'Η αναστροφή του γραφήματος "flame" εμφανίζει τις διαδρομές κλήσεων σε προφίλ, ξεκινώντας από τα νεώτερα πλαίσια έως και τα παλαιότερα.'>
 
 <!-- LOCALIZATION NOTE (performanceUI.showPlatformData): This is the

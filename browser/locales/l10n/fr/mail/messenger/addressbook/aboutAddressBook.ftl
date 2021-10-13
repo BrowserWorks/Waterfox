@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,10 +8,6 @@ about-addressbook-title = Carnet d’adresses
 
 about-addressbook-toolbar-new-address-book =
     .label = Nouveau carnet d’adresses
-about-addressbook-toolbar-new-carddav-address-book =
-    .label = Nouveau carnet d’adresses CardDAV
-about-addressbook-toolbar-new-ldap-address-book =
-    .label = Nouveau carnet d’adresses LDAP
 about-addressbook-toolbar-add-carddav-address-book =
     .label = Ajouter un carnet d’adresses CardDAV
 about-addressbook-toolbar-add-ldap-address-book =
@@ -20,6 +16,8 @@ about-addressbook-toolbar-new-contact =
     .label = Nouveau contact
 about-addressbook-toolbar-new-list =
     .label = Nouvelle liste
+about-addressbook-toolbar-import =
+    .label = Importer
 
 ## Books
 
@@ -30,10 +28,14 @@ about-addressbook-books-context-synchronize =
     .label = Synchroniser
 about-addressbook-books-context-print =
     .label = Imprimer…
+about-addressbook-books-context-export =
+    .label = Exporter…
 about-addressbook-books-context-delete =
     .label = Supprimer
 about-addressbook-books-context-remove =
     .label = Supprimer
+about-addressbook-books-context-startup-default =
+    .label = Annuaire par défaut
 about-addressbook-confirm-delete-book-title = Supprimer le carnet d’adresses
 # Variables:
 # $name (String) - Name of the address book to be deleted.
@@ -67,6 +69,8 @@ about-addressbook-sort-email-ascending =
     .label = Trier par adresse électronique (A > Z)
 about-addressbook-sort-email-descending =
     .label = Trier par adresse électronique (Z > A)
+about-addressbook-cards-context-write =
+    .label = Écrire
 about-addressbook-confirm-delete-mixed-title = Supprimer des contacts et des listes
 # Variables:
 # $count (Number) - The number of contacts and lists to be deleted. Always greater than 1.

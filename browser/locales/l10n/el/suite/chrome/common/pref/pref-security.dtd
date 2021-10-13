@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -6,17 +6,17 @@
 <!ENTITY pref.security.title              "Απόρρητο &amp; ασφάλεια">
 
 <!ENTITY tracking.label                   "Παρακολούθηση χρήστη">
-<!ENTITY trackingIntro.label              "Οι ιστοσελίδες ενδέχεται να παρακολουθούν το πώς τις χρησιμοποιείτε, επηρεάζοντας έτσι το απόρρητό σας.">
+<!ENTITY trackingIntro.label              "Οι ιστότοποι ενδέχεται να καταγράφουν το πώς τους χρησιμοποιείτε, επηρεάζοντας έτσι το απόρρητό σας.">
 
-<!ENTITY doNotTrack.label                 "Να ενημερώνονται οι ιστοσελίδες ότι δεν επιθυμώ να καταγράφεται η περιήγησή μου">
+<!ENTITY doNotTrack.label                 "Να ενημερώνονται οι ιστότοποι ότι δεν επιθυμώ να καταγράφεται η περιήγησή μου">
 <!ENTITY doNotTrack.accesskey             "Ν">
-<!ENTITY trackProtect.label               "Αποτροπή καταγραφής δραστηριοτήτων από γνωστές ιστοσελίδες">
+<!ENTITY trackProtect.label               "Αποτροπή καταγραφής δραστηριοτήτων από γνωστούς ιστοτόπους">
 <!ENTITY trackProtect.accesskey           "τ">
 <!ENTITY warnTrackContent.label           "Προειδοποίηση όταν ανιχνεύονται γνωστές δραστηριότητες παρακολούθησης">
 <!ENTITY warnTrackContent.accesskey       "Π">
 
 <!ENTITY geoLocation.label                "Περιήγηση βάσει τοποθεσίας">
-<!ENTITY geoIntro.label                   "Οι ιστοσελίδες ενδέχεται να ζητήσουν περαιτέρω πληροφορίες σχετικά με την τρέχουσα τοποθεσία σας.">
+<!ENTITY geoIntro.label                   "Οι ιστότοποι ενδέχεται να ζητήσουν περαιτέρω πληροφορίες σχετικά με την τρέχουσα τοποθεσία σας.">
 
 <!ENTITY geoEnabled.label                 "Ερώτηση για παραχώρηση δικαιώματος αν υπάρξει αίτημα">
 <!ENTITY geoEnabled.accesskey             "ρ">
@@ -30,10 +30,13 @@
   meaning "reported" (and not something like "known").
 -->
 <!ENTITY safeBrowsing.label               "Ασφαλής περιήγηση">
-<!ENTITY safeBrowsingIntro.label          "Το &brandShortName; μπορεί να αποκλείσει ιστοσελίδες που έχουν αναφερθεί για κακόβουλο περιεχόμενο.">
+<!ENTITY safeBrowsingIntro.label          "Το &brandShortName; μπορεί να αποκλείσει ιστοτόπους που έχουν αναφερθεί για κακόβουλο περιεχόμενο.">
 
-<!ENTITY blockAttackSites.label           "Φραγή ιστοσελίδων με αναφορές για επιθέσεις (κακόβουλο λογισμικό, ιοί)">
+<!ENTITY blockAttackSites.label           "Φραγή ιστοτόπων με αναφορές για επιθέσεις (κακόβουλο λογισμικό, ιοί)">
 <!ENTITY blockAttackSites.accesskey       "Φ">
 
 <!ENTITY blockWebForgeries.label          "Φραγή σελίδων με αναφορές για πλαστογραφία (Ηλεκτρονικό ψάρεμα)">
 <!ENTITY blockWebForgeries.accesskey      "Η">
+
+<!ENTITY blockAutoRefresh.label           "Προειδοποίηση όταν οι ιστότοποι προσπαθούν να ανακατευθύνουν ή να φορτώσουν ξανά τη σελίδα">
+<!ENTITY blockAutoRefresh.accesskey       "δ">

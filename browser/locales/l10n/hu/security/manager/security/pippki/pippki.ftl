@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Jelszó minősége
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Mesterjelszó megváltoztatása
 
 change-device-password-window =
     .title = Jelszó módosítása
@@ -20,10 +17,6 @@ change-password-new = Új jelszó:
 change-password-reenter = Új jelszó (ismét):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Mesterjelszó törlése
-    .style = width: 40em
 
 pippki-failed-pw-change = Nem sikerült megváltoztatni a jelszót.
 pippki-incorrect-pw = Nem helyesen adta meg a jelenlegi jelszót. Próbálja újra.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Alaphelyzet
-reset-password-text = Ha törli a mesterjelszót, minden tárolt webes és e-mail jelszó, űrlapadat, valamint a személyes tanúsítványok és a személyes kulcsok elvesznek. Biztosan törli a mesterjelszót?
 
 reset-primary-password-text = Ha visszaállítja az elsődleges jelszót, akkor minden tárolt webes és e-mail-jelszó, űrlapadat, valamint személyes tanúsítvány és privát kulcs elvész. Biztos, hogy visszaállítja az elsődleges jelszót?
 

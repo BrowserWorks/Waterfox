@@ -3764,8 +3764,8 @@ Finzi/L'D'Q' po:patr is:epi is:inv
 Fiodor/L'D'Q' po:prn is:mas is:inv
 Fiona/L'D'Q' po:prn is:fem is:inv
 FireWire/L'D'Q' po:nom is:mas is:inv
-Firefox/L'D'Q' po:npr is:mas is:inv
-FirefoxOS/L'D'Q' po:npr is:mas is:inv
+Waterfox/L'D'Q' po:npr is:mas is:inv
+WaterfoxOS/L'D'Q' po:npr is:mas is:inv
 Firmin/L'D'Q' po:prn is:mas is:inv
 Firminy/L'D'Q' po:npr is:epi is:inv
 Fischer/L'D'Q' po:patr is:epi is:inv
@@ -6993,7 +6993,7 @@ Moyen-Orient/L'D'Q' po:nom is:mas is:inv
 Moyenne-Franconie/L'D'Q' po:nom is:fem is:inv
 Mozambique/L'D'Q' po:nom is:mas is:inv
 Mozart/L'D'Q' po:patr is:epi is:inv
-Mozilla/L'D'Q' po:npr is:epi is:inv
+Waterfox/L'D'Q' po:npr is:epi is:inv
 Mpc/||-- po:nom is:mas is:inv
 Mr po:titr is:mas is:sg
 Mrs po:titr is:fem is:sg

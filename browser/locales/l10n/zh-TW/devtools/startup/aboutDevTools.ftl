@@ -1,31 +1,31 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = 關於開發者工具
-enable-title = 啟用 Firefox 開發者工具
-enable-inspect-element-title = 啟用 Firefox 開發者工具來檢測頁面元素
+enable-title = 啟用 Waterfox 開發者工具
+enable-inspect-element-title = 啟用 Waterfox 開發者工具來檢測頁面元素
 enable-inspect-element-message = 使用開發者工具的檢測器來檢測和編輯 HTML 和 CSS。
-enable-about-debugging-message = 使用 Firefox 開發者工具開發，並對 WebExtensions、Web Worker、Service Worker 除錯。
+enable-about-debugging-message = 使用 Waterfox 開發者工具開發，並對 WebExtensions、Web Worker、Service Worker 除錯。
 enable-key-shortcut-message = 您按下了開發者工具的快捷鍵。若不是您要的，可以直接關閉此分頁。
 enable-menu-message = 使用檢測器、除錯器等工具，讓網站上的 HTML、CSS 及 JavaScript 變得更棒。
-enable-common-message = 為了讓您能對瀏覽器更有控制，已預設停用 Firefox 開發者工具。
+enable-common-message = 為了讓您能對瀏覽器更有控制，已預設停用 Waterfox 開發者工具。
 enable-learn-more-link = 了解開發者工具的更多資訊
 enable-enable-button = 啟用開發者工具
 enable-close-button = 關閉此分頁
 
-welcome-title = 歡迎使用 Firefox 開發者工具！
-newsletter-title = Mozilla 開發者電子報
+welcome-title = 歡迎使用 Waterfox 開發者工具！
+newsletter-title = Waterfox 開發者電子報
 newsletter-message = 讓開發者消息、秘訣與資源直接寄到信箱裡。
 newsletter-email-placeholder =
     .placeholder = 電子郵件
-newsletter-privacy-label = 我同意 Mozilla 依照<a data-l10n-name="privacy-policy">隱私權保護政策</a>當中描述的方式處理這些資訊。
+newsletter-privacy-label = 我同意 Waterfox 依照<a data-l10n-name="privacy-policy">隱私權保護政策</a>當中描述的方式處理這些資訊。
 newsletter-subscribe-button = 訂閱
 newsletter-thanks-title = 謝啦！
-newsletter-thanks-message = 若您先前沒有確認訂閱過 Mozilla 電子報，現在可能需要確認。請到信箱收信，或到垃圾信件匣中看看有沒有來自我們的訊息。
+newsletter-thanks-message = 若您先前沒有確認訂閱過 Waterfox 電子報，現在可能需要確認。請到信箱收信，或到垃圾信件匣中看看有沒有來自我們的訊息。
 
 footer-title = Waterfox Developer Edition
-footer-message = 想要的不只是開發者工具嗎？快試試特地為了開發者與現代工作流程所打造的 Firefox 瀏覽器。
+footer-message = 想要的不只是開發者工具嗎？快試試特地為了開發者與現代工作流程所打造的 Waterfox 瀏覽器。
 footer-learn-more-link = 了解更多
 
 features-learn-more = 了解更多

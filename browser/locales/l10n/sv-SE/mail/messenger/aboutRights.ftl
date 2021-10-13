@@ -1,13 +1,13 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = Om dina rättigheter
 rights-intro = { -brand-full-name } är fri programvara baserad på öppen källkod, byggd av en community av tusentals personer över hela världen. Det finns några saker du bör känna till:
-rights-intro-point-1 = { -brand-short-name } görs tillgänglig enligt villkoren i <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Det betyder att du får använda, kopiera och distribuera { -brand-short-name } till andra. Du får också modifiera källkoden i { -brand-short-name } för att bättre passa dina behov. Mozilla Public License ger dig även rätt att distribuera de modifierade versionerna.
+rights-intro-point-1 = { -brand-short-name } görs tillgänglig enligt villkoren i <a data-l10n-name="mozilla-public-license-link">Waterfox Public License</a>. Det betyder att du får använda, kopiera och distribuera { -brand-short-name } till andra. Du får också modifiera källkoden i { -brand-short-name } för att bättre passa dina behov. Waterfox Public License ger dig även rätt att distribuera de modifierade versionerna.
 rights-intro-point-2 =
     Du beviljas inte några varumärkesrättigheter eller licenser för varumärkena till
-    Mozilla Foundation eller någon part, inklusive utan begränsning Thunderbird-namnet
+    Waterfox Foundation eller någon part, inklusive utan begränsning Thunderbird-namnet
     eller logotypen. Ytterligare information om varumärken kan hittas
     <a data-l10n-name="mozilla-trademarks-link">här</a>.
 rights-intro-point-3 = Vissa funktioner i { -brand-short-name }, såsom Kraschrapportören, ger dig möjlighet att ge feedback till { -vendor-short-name }. Genom att skicka in feedback ger du { -vendor-short-name } tillstånd att använda den för att förbättra sina produkter, publicera denna feedback på sina webbplatser och att distribuera den.

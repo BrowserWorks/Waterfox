@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Bildschirmfoto aufnehmen
 screenshot-toolbarbutton =
     .label = Bildschirmfoto
     .tooltiptext = Bildschirmfoto aufnehmen
-screenshots-my-shots-button = Meine Bildschirmfotos
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Ziehen oder klicken Sie auf der Seite, um einen Bereich auszuwählen. Drücken Sie ESC zum Abbrechen.
 screenshots-cancel-button = Abbrechen
 screenshots-save-visible-button = Sichtbaren Bereich speichern
@@ -31,7 +31,6 @@ screenshots-connection-error-details = Bitte überprüfen Sie Ihre Internetverbi
 screenshots-login-error-details = Ihr Bildschirmfoto konnte nicht gespeichert werden, weil ein Problem mit dem Dienst { -screenshots-brand-name } aufgetreten ist. Bitte versuchen Sie es später erneut.
 screenshots-unshootable-page-error-title = Ein Bildschirmfoto dieser Seite ist nicht möglich.
 screenshots-unshootable-page-error-details = Dies ist keine Standard-Webseite, deshalb sind keine Bildschirmfotos von ihr möglich.
-screenshots-self-screenshot-error-title = Sie können kein Bildschirmfoto einer { -screenshots-brand-name }-Seite machen!
 screenshots-empty-selection-error-title = Ihr Auswahlbereich ist zu klein
 screenshots-private-window-error-title = { -screenshots-brand-name } ist im Privaten Modus deaktiviert
 screenshots-private-window-error-details = Wir bitten um Entschuldigung für diese Unannehmlichkeiten. Wir arbeiten daran, diese Funktion in zukünftigen Versionen zur Verfügung zu stellen.

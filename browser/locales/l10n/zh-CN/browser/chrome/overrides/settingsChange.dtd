@@ -1,7 +1,0 @@
-<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY  settingsChangePreferences.label  "可以在 &brandShortName; 的 首选项 -> 应用程序 选项卡中修改相关设置。">
-<!ENTITY  settingsChangeOptions.label      "可以在 &brandShortName; 的 选项 -> 应用程序 选项卡中修改相关设置。">

@@ -1,16 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 containers-window-new =
     .title = 新しいコンテナーを追加する
     .style = width: 45em
-# Variables
-#   $name (String) - Name of the container
-containers-window-update =
-    .title = { $name } コンテナーの設定
-    .style = width: 45em
-
 # Variables
 #   $name (String) - Name of the container
 containers-window-update-settings =
@@ -40,9 +34,6 @@ containers-icon-label = アイコン
 containers-color-label = 色
     .accesskey = o
     .style = { -containers-labels-style }
-containers-button-done =
-    .label = 完了
-    .accesskey = D
 containers-dialog =
     .buttonlabelaccept = 完了
     .buttonaccesskeyaccept = D

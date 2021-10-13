@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = Серийный номер
-
-fips-nonempty-password-required = Для работы в режиме соответствия FIPS необходимо для каждого устройства защиты установить мастер-пароль. Установите этот пароль перед переключением в данный режим.
 
 fips-nonempty-primary-password-required = Для работы в режиме соответствия FIPS необходимо для каждого устройства защиты установить мастер-пароль. Установите этот пароль перед переходом в данный режим.
 unable-to-toggle-fips = Не удалось сменить режим соответствия FIPS для устройства защиты. Мы рекомендуем вам закрыть и перезапустить это приложение.

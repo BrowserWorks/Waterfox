@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -49,7 +49,7 @@ clear-time-duration-value-everything =
     .label = Alles
 
 clear-time-duration-suffix =
-    .value = löschen
+    .value = { " löschen" }
 
 ## These strings are used as section comments and checkboxes
 ## to select the items to remove
@@ -79,6 +79,10 @@ item-form-search-history =
 data-section-label = Daten
 
 item-site-preferences =
+    .label = Website-Einstellungen
+    .accesskey = W
+
+item-site-settings =
     .label = Website-Einstellungen
     .accesskey = W
 

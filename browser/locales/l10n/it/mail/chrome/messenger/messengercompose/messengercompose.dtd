@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Nuovo">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Messaggio">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "M">
 <!ENTITY newContact.label "Contatto rubrica…">
 <!ENTITY newContact.accesskey "o">
 <!ENTITY attachMenu.label "Allega">
 <!ENTITY attachMenu.accesskey "A">
-<!ENTITY attachFileCmd.label "File…">
-<!ENTITY attachFileCmd.accesskey "f">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Filelink">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "Pagina web…">
@@ -28,7 +23,7 @@
 <!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
 <!ENTITY attachVCardCmd.label "Biglietto da visita elettronico (vCard)">
 <!ENTITY attachVCardCmd.accesskey "B">
-<!ENTITY remindLater.label "Ricordalo più tardi">
+<!ENTITY remindLater.label "Ricordamelo più tardi">
 <!ENTITY remindLater.accesskey "p">
 <!ENTITY closeCmd.label "Chiudi">
 <!ENTITY closeCmd.key "W">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Invia dopo">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "D">
-<!ENTITY printSetupCmd.label "Impostazione pagina…">
-<!ENTITY printSetupCmd.accesskey "p">
-<!ENTITY printPreviewCmd.label "Anteprima di stampa">
-<!ENTITY printPreviewCmd.accesskey "n">
 <!ENTITY printCmd.label "Stampa…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "m">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Riordina allegati…">
 <!ENTITY reorderAttachmentsCmd.accesskey "o">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Riquadro allegati">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "d">
 <!ENTITY selectAllCmd.accesskey "z">
 <!ENTITY findBarCmd.label "Trova…">
 <!ENTITY findBarCmd.accesskey "T">
@@ -102,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Riordina allegati">
-<!ENTITY moveAttachmentTopPanelBtn.label "Sposta in cima">
-<!ENTITY moveAttachmentUpPanelBtn.label "Sposta su">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "Sposta assieme">
-<!ENTITY moveAttachmentDownPanelBtn.label "Sposta giù">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Sposta in basso">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Impostazioni account">
 <!ENTITY accountManagerCmd2.accesskey "I">
 <!ENTITY accountManagerCmdUnix2.accesskey "I">
-<!ENTITY preferencesCmd2.label "Opzioni">
-<!ENTITY preferencesCmd2.accesskey "O">
-<!ENTITY preferencesCmdUnix.label "Preferenze">
-<!ENTITY preferencesCmdUnix.accesskey "p">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Invia">
 <!ENTITY quoteButton.label "Cita">
 <!ENTITY addressButton.label "Contatti">
-<!ENTITY attachButton.label "Allega">
 <!ENTITY spellingButton.label "Ortografia">
 <!ENTITY saveButton.label "Salva">
 <!ENTITY printButton.label "Stampa">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "invia più tardi">
 <!ENTITY quoteButton.tooltip "Cita il messaggio precedente">
 <!ENTITY addressButton.tooltip "Scegli un destinatario dalla Rubrica">
-<!ENTITY attachButton.tooltip2 "Aggiungi allegato">
 <!ENTITY spellingButton.tooltip "Controlla l’ortografia del testo selezionato o dell’intero messaggio">
 <!ENTITY saveButton.tooltip "Salva questo messaggio">
 <!ENTITY cutButton.tooltip              "Taglia">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Altri tipi di campi destinatario">
 <!ENTITY fromAddr2.label "Da">
 <!ENTITY fromAddr.accesskey "D">
-<!ENTITY toAddr2.label "A">
-<!ENTITY ccAddr2.label "Cc">
-<!ENTITY bccAddr2.label "Ccn">
 <!ENTITY replyAddr2.label "Rispondi a">
 <!ENTITY newsgroupsAddr2.label "Gruppo di discussione">
 <!ENTITY followupAddr2.label "Inoltra a">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "v">
 <!ENTITY selectAll.label "Seleziona tutto">
 <!ENTITY selectAll.accesskey "z">
-<!ENTITY attachFile.label "Allega file…">
-<!ENTITY attachFile.accesskey "F">
 <!ENTITY attachCloud.label "Filelink…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "Converti in…">

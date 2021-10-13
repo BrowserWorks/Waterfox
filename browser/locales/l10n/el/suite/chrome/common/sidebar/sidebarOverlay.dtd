@@ -1,19 +1,19 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY sidebar.panels.label           "Πλευρική στήλη">
+<!ENTITY sidebar.panels.label           "Πλαϊνή γραμμή">
 <!ENTITY sidebar.reload.label           "Ανανέωση">
 <!ENTITY sidebar.reload.accesskey       "Α">
 <!ENTITY sidebar.picker.label           "Καρτέλες">
-<!ENTITY sidebar.customize.label        "Προσαρμογή πλευρικής στήλης…">
+<!ENTITY sidebar.customize.label        "Προσαρμογή πλαϊνής γραμμής…">
 <!ENTITY sidebar.customize.accesskey    "ρ">
 <!ENTITY sidebar.hide.label             "Απόκρυψη καρτέλας">
 <!ENTITY sidebar.hide.accesskey         "Α">
 <!ENTITY sidebar.switch.label           "Εναλλαγή σε καρτέλα">
 <!ENTITY sidebar.switch.accesskey       "κ">
-<!ENTITY sidebarCmd.label               "Πλευρική στήλη">
-<!ENTITY sidebarCmd.accesskey           "σ">
+<!ENTITY sidebarCmd.label               "Πλαϊνή γραμμή">
+<!ENTITY sidebarCmd.accesskey           "γ">
 <!ENTITY sidebar.loading.label          "Φόρτωση…">
 <!ENTITY sidebar.loadstopped.label      "Η φόρτωση διακόπηκε">
 <!ENTITY sidebar.loading.stop.label     "Διακοπή">
@@ -23,14 +23,14 @@
      mac platform, other platforms use VK_F9. -->
 <!ENTITY showHideSidebarCmd.key         "S">
 
-<!ENTITY sidebar.no-panels.state     "Η πλευρική στήλη είναι προς το παρόν άδεια.">
-<!ENTITY sidebar.no-panels.add       'Μπορείτε να προσθέσετε καρτέλες κάνοντας κλικ στο κουμπί "Καρτέλες" παραπάνω.'>
-<!ENTITY sidebar.no-panels.hide      'Αν θέλετε να αποκρύψετε εντελώς την πλευρική στήλη, κάντε κλικ στο μενού "Προβολή" παραπάνω και επιλέξτε "Πλευρική στήλη" από το υπομενού "Εμφάνιση/Απόκρυψη".'>
-<!ENTITY sidebar.sbDirectory.label   "Κατάλογος πλευρικής στήλης…">
+<!ENTITY sidebar.no-panels.state     "Η πλαϊνή γραμμή είναι προς το παρόν άδεια.">
+<!ENTITY sidebar.no-panels.add       'Μπορείτε να προσθέσετε καρτέλες κάνοντας κλικ στο κουμπί «Καρτέλες» παραπάνω.'>
+<!ENTITY sidebar.no-panels.hide      'Αν θέλετε να αποκρύψετε εντελώς την πλαϊνή γραμμή, κάντε κλικ στο μενού «Προβολή» παραπάνω και επιλέξτε «Πλαϊνή γραμμή» από το υπομενού «Εμφάνιση/Απόκρυψη».'>
+<!ENTITY sidebar.sbDirectory.label   "Κατάλογος πλαϊνής γραμμής…">
 
-<!ENTITY sidebar.pagenotfound.label  "Αυτή η καρτέλα δεν είναι διαθέσιμη αυτή τη στιγμή.">
-<!ENTITY sidebar.close.tooltip       "Κλείσιμο πλευρικής στήλης">
-<!ENTITY sidebar.open.tooltip        "Άνοιγμα πλευρικής στήλης">
+<!ENTITY sidebar.pagenotfound.label  "Αυτή η καρτέλα δεν είναι διαθέσιμη αυτήν τη στιγμή.">
+<!ENTITY sidebar.close.tooltip       "Κλείσιμο πλαϊνής γραμμής">
+<!ENTITY sidebar.open.tooltip        "Άνοιγμα πλαϊνής γραμμής">
 
 <!ENTITY sidebar.search.label         "Αναζήτηση">
 <!ENTITY sidebar.client-bookmarks.label     "Σελιδοδείκτες">

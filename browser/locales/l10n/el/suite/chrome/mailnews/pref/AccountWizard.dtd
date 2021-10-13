@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -17,9 +17,6 @@
 <!ENTITY accountTypeMail.accesskey "m">
 <!ENTITY accountTypeNews.label "Λογαριασμός ομάδας συζήτησης">
 <!ENTITY accountTypeNews.accesskey "μ">
-<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
-<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
-<!ENTITY accountTypeMovemail.accesskey "U">
 
 <!-- Entities for Identity page -->
 
@@ -60,7 +57,7 @@
 <!ENTITY leaveMsgsOnSrvr.label "Διατήρηση μηνυμάτων στον διακομιστή">
 <!ENTITY leaveMsgsOnSrvr.accesskey "Δ">
 <!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
-<!ENTITY incomingUsername.description "Εισάγετε το όνομα χρήστη εισερχομένων που σας παραχώρησε ο πάροχος email σας (για παράδειγμα, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.description "Εισαγάγετε το όνομα χρήστη εισερχομένων που σας παραχώρησε ο πάροχος ηλεκτρονικού ταχυδρομείου σας (για παράδειγμα, «gpapad»).">
 <!ENTITY incomingUsername.label "Όνομα χρήστη:">
 <!ENTITY incomingUsername.accesskey "χ">
 <!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
@@ -120,7 +117,7 @@
 <!ENTITY newsServerNamePrefix.label "Όνομα διακομιστή ειδήσεων (NNTP):">
 <!ENTITY downloadOnLogin.label "Λήψη μηνυμάτων τώρα">
 <!ENTITY downloadOnLogin.accesskey "Λ">
-<!ENTITY deferStorageDesc.label "Ενεργοποιήστε αυτή την επιλογή για αποθήκευση email για αυτό τον λογαριασμό στα Γενικά εισερχόμενα των τοπικών φακέλων. Διαφορετικά, ο λογαριασμός εμφανίζεται ως λογαριασμός ανώτερου επιπέδου και τα email του αποθηκεύονται στον δικό τους κατάλογο.">
+<!ENTITY deferStorageDesc.label "Ενεργοποιήστε αυτήν την επιλογή για αποθήκευση email για αυτό τον λογαριασμό στα Γενικά εισερχόμενα των τοπικών φακέλων. Διαφορετικά, ο λογαριασμός εμφανίζεται ως λογαριασμός ανώτερου επιπέδου και τα email του αποθηκεύονται στον δικό τους κατάλογο.">
 <!ENTITY deferStorage.label "Χρήση γενικών εισερχομένων (αποθήκευση email σε τοπικούς φακέλους)">
 <!ENTITY deferStorage.accesskey "γ">
 <!ENTITY clickFinish.label 'Κάντε κλικ στο "Τέλος" για αποθήκευση ρυθμίσεων και κλείσιμο του Βοηθού λογαριασμών.'>

@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -32,7 +32,6 @@
 <!ENTITY DisplayName.label              "Display:">
 <!ENTITY DisplayName.accesskey          "D">
 <!ENTITY preferDisplayName.label        "Always prefer display name over message header">
-<!ENTITY preferDisplayName.accesskey    "A">
 <!ENTITY preferDisplayName2.accesskey   "y">
 <!ENTITY NickName.label                 "Nickname:">
 <!ENTITY NickName.accesskey             "N">
@@ -46,8 +45,6 @@
 <!ENTITY PlainText.label                "Plain Text">
 <!ENTITY HTML.label                     "HTML">
 <!ENTITY Unknown.label                  "Unknown">
-<!ENTITY ScreenName.label               "Screen Name:">
-<!ENTITY ScreenName.accesskey           "S">
 
 <!ENTITY chatName.label                 "Chat Name:">
 
@@ -145,7 +142,6 @@
 
 <!ENTITY Photo.tab                      "Photo">
 <!ENTITY Photo.accesskey                "o">
-<!ENTITY PhotoDesc.label                "Pick one of the following:">
 <!ENTITY GenericPhoto.label             "Generic Photo">
 <!ENTITY GenericPhoto.accesskey         "G">
 <!ENTITY DefaultPhoto.label             "Default">

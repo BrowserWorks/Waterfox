@@ -1,23 +1,13 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
 <!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
 
-<!ENTITY appmenu.tooltip                     "打开菜单">
-
 <!ENTITY navbarOverflow.label                "更多工具…">
 
 <!-- Tab context menu -->
-
-<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
-used as a metaphor for expressing the fact that these tabs are "pinned" to the
-left edge of the tabstrip. Really we just want the string to express the idea
-that this is a lightweight and reversible action that keeps your tab where you
-can reach it easily. -->
-<!ENTITY  pinTab.label                       "固定标签页">
-<!ENTITY  unpinTab.label                     "取消固定标签页">
 
 <!ENTITY  listAllTabs.label      "列出全部标签页">
 
@@ -25,78 +15,27 @@ can reach it easily. -->
 <!ENTITY openFileCmd.label "打开文件…">
 <!ENTITY printCmd.label "打印…">
 
-<!ENTITY taskManagerCmd.label "任务管理器">
-
 <!ENTITY menubarCmd.label "菜单栏">
 <!ENTITY menubarCmd.accesskey "M">
 <!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
 include the word "toolbar" or such, because screen readers already know that
 this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY navbar.accessibleLabel "导航">
-<!ENTITY personalbarCmd.label "书签工具栏">
-<!ENTITY personalbarCmd.accesskey "B">
-<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
-include the word "toolbar" or such, because screen readers already know that
-this container is a toolbar. This avoids double-speaking. -->
-<!ENTITY personalbar.accessibleLabel "书签">
-<!ENTITY bookmarksToolbarItem.label "书签工具栏项目">
 
 <!ENTITY fullScreenCmd.label "全屏">
 
 <!ENTITY pictureInPictureHideToggle.label "隐藏画中画切换按钮">
 <!ENTITY pictureInPictureHideToggle.accesskey "H">
 
-<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
-     followed by the user's email. -->
-<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label;服务设置">
-<!ENTITY fxa.menu.connectAnotherDevice2.label "绑定其他设备…">
-<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.signin.label "登录 &brandProductName;">
-<!ENTITY fxa.menu.turnOnSync.label "开启&syncBrand.shortName.label;服务">
-<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; 服务">
-<!ENTITY fxa.menu.account.label "账户">
-<!ENTITY fxa.menu.settings.label "设置">
-<!ENTITY fxa.menu.accountSettings.label "账户设置">
-<!ENTITY fxa.menu.manageAccount2.label "管理账户">
-<!ENTITY fxa.menu.signOut.label "退出登录…">
-<!ENTITY fxa.menu.setupSync.label "设置&syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "立即发送标签页到任何您登录过的设备。">
-
-<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
-     fullscreenWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring fullscreen.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY fullscreenWarning.beforeDomain.label "">
-<!ENTITY fullscreenWarning.afterDomain.label "已进入全屏模式">
-<!ENTITY fullscreenWarning.generic.label "此文档已进入全屏模式">
-
-<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
-     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
-     is uppercase, while on Mac keyboards it is lowercase -->
-<!ENTITY exitDOMFullscreen.button "退出全屏模式(Esc)">
-<!ENTITY exitDOMFullscreenMac.button "退出全屏模式 (Esc)">
-
-<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
-     pointerlockWarning.afterDomain.label): these two strings are used
-     respectively before and after the domain requiring pointerlock.
-     Localizers can use one of them, or both, to better adapt this
-     sentence to their language. -->
-<!ENTITY pointerlockWarning.beforeDomain.label "">
-<!ENTITY pointerlockWarning.afterDomain.label "已控制您的鼠标指针。按 Esc 键可收回控制权。">
-<!ENTITY pointerlockWarning.generic.label "此文档已控制您的鼠标指针。按 Esc 键可收回控制权。">
-
-<!ENTITY showAllBookmarks2.label "管理所有书签">
-<!ENTITY recentBookmarks.label "最近的书签">
-<!ENTITY bookmarksToolbarChevron.tooltip "显示更多书签">
 
 <!ENTITY printButton.label            "打印">
 <!ENTITY printButton.tooltip          "打印当前页">
@@ -107,28 +46,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY homeButton.label             "主页">
 <!ENTITY homeButton.defaultPage.tooltip "&brandShortName; 主页">
 
-<!ENTITY bookmarksButton.label          "书签">
-
-<!ENTITY bookmarksSubview.label             "书签">
-<!ENTITY bookmarksMenuButton2.label         "书签菜单">
-<!ENTITY bookmarksMenuButton.other.label    "其他书签">
-<!ENTITY bookmarksMenuButton.mobile.label   "移动设备上的书签">
-<!ENTITY viewBookmarksSidebar2.label        "显示书签侧栏">
-<!ENTITY hideBookmarksSidebar.label         "隐藏书签侧栏">
-<!ENTITY viewBookmarksToolbar.label         "查看书签工具栏">
-<!ENTITY hideBookmarksToolbar.label         "隐藏书签工具栏">
-<!ENTITY searchBookmarks.label              "在书签中搜索">
-<!ENTITY bookmarkingTools.label             "书签工具">
-<!ENTITY addBookmarksMenu.label             "添加书签菜单到工具栏">
-<!ENTITY removeBookmarksMenu.label          "从工具栏移除书签菜单">
-
 <!ENTITY historyButton.label            "历史">
 
 <!ENTITY downloads.label              "下载">
 <!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
   -  downloads.label, but used in the Library panel. -->
 <!ENTITY libraryDownloads.label       "下载">
-<!ENTITY addons.label                 "附加组件">
 
 <!ENTITY webDeveloperMenu.label       "Web 开发者">
 
@@ -144,27 +67,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY overflowCustomizeToolbar.accesskey   "C">
 
 <!ENTITY historyMenu.label "历史">
-<!ENTITY historyUndoMenu.label "最近关闭的标签页">
-<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
-<!ENTITY historyUndoWindowMenu.label "最近关闭的窗口">
 
-<!ENTITY appMenuHistory.showAll.label "管理所有历史记录">
-
-<!ENTITY appMenuHistory.clearRecent.label "清除最近的历史记录…">
-<!ENTITY appMenuHistory.restoreSession.label "恢复先前的浏览状态">
-<!ENTITY appMenuHistory.viewSidebar.label "查看历史记录侧栏">
-<!ENTITY appMenuHistory.hideSidebar.label "隐藏历史记录侧栏">
-<!ENTITY appMenuHistory.recentHistory.label "近期历史记录">
 <!ENTITY appMenuHelp.label "帮助">
-
-<!ENTITY appMenuRemoteTabs.label "受同步的标签页">
 
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
      the name of a device when that device has no open tabs -->
 <!ENTITY appMenuRemoteTabs.notabs.label "没有打开的标签页">
-<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
-     This is shown after the tabs list if we can display more tabs by clicking on the button -->
-<!ENTITY appMenuRemoteTabs.showMore.label "显示更多">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.tooltip):
      This is shown after the tabs list if we can display more tabs by clicking on the button -->
 <!ENTITY appMenuRemoteTabs.showMore.tooltip "显示此设备的更多标签页">
@@ -177,19 +85,12 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "打开标签页同步功能，就能看到其他设备上打开的标签页。">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "想查看您在其他设备上的标签页吗？">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "打开同步首选项">
 <!ENTITY appMenuRemoteTabs.welcome.label "查看您的其他设备上的标签页列表。">
 <!ENTITY appMenuRemoteTabs.unverified.label "您的账号需要验证。">
-<!ENTITY appMenuRemoteTabs.signintosync.label "登录&syncBrand.shortName.label;服务">
-<!ENTITY appMenuRemoteTabs.turnonsync.label "开启&syncBrand.shortName.label;服务…">
-<!ENTITY appMenuRemoteTabs.managedevices.label "管理设备…">
-<!ENTITY appMenuRemoteTabs.sidebar.label "显示受同步标签页侧栏">
-<!ENTITY appMenuRemoteTabs.hidesidebar.label "隐藏受同步标签页侧栏">
 <!ENTITY appMenuRemoteTabs.connectdevice.label "关联其他设备">
-
-<!ENTITY appMenuRecentHighlights.label "近期聚焦">
 
 <!ENTITY customizeMenu.addToToolbar.label "添加到工具栏">
 <!ENTITY customizeMenu.addToToolbar.accesskey "A">
@@ -201,8 +102,6 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.label "移出折叠菜单">
 <!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
-<!ENTITY customizeMenu.removeFromToolbar.label "从工具栏中移除">
-<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
 <!ENTITY customizeMenu.addMoreItems.label "添加更多项目…">
 <!ENTITY customizeMenu.addMoreItems.accesskey "A">
 
@@ -220,25 +119,9 @@ this container is a toolbar. This avoids double-speaking. -->
 
 <!ENTITY openLinkCmdInTab.accesskey   "T">
 
-<!ENTITY pageAction.copyLink.label    "复制链接">
-
-<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
-  "Pocket" is a brand name. -->
-<!ENTITY saveToPocketCmd.label        "保存页面到 Pocket">
-<!ENTITY pocketMenuitem.label         "查看 Pocket 列表">
-
-<!ENTITY emailPageCmd.label           "用邮件发送链接…">
-
 <!ENTITY fullZoom.label                 "缩放">
 
 <!ENTITY sidebarCloseButton.tooltip     "关闭侧栏">
-
-<!ENTITY quitApplicationCmdWin2.label       "退出">
-<!ENTITY quitApplicationCmdWin2.accesskey   "x">
-<!ENTITY quitApplicationCmdWin2.tooltip     "退出 &brandShorterName;">
-<!ENTITY quitApplicationCmd.label       "退出">
-<!ENTITY quitApplicationCmd.accesskey   "Q">
-<!ENTITY quitApplicationCmdMac2.label   "退出 &brandShorterName;">
 
 <!ENTITY allowPopups.accesskey "p">
 <!-- On Windows we use the term "Options" to describe settings, but
@@ -258,10 +141,6 @@ this container is a toolbar. This avoids double-speaking. -->
      The word "toolbar" is appended automatically and should not be contained below! -->
 <!ENTITY tabsToolbar.label "浏览器标签页">
 
-<!ENTITY syncBrand.shortName.label    "同步">
-
-<!ENTITY customizeMode.autoHideDownloadsButton.label "自动隐藏">
-
 
 <!ENTITY uiTour.infoPanel.close "关闭">
 
@@ -269,15 +148,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY panicButton.thankyou.msg2                "享受安全的浏览体验吧！">
 <!ENTITY panicButton.thankyou.buttonlabel         "谢谢！">
 
-<!ENTITY updateAvailable.panelUI.label "下载 &brandShorterName; 更新">
-<!ENTITY updateManual.panelUI.label "下载 &brandShorterName; 完整包">
-<!ENTITY updateUnsupported.panelUI.label "无法执行进一步的更新">
-<!ENTITY updateRestart.panelUI.label2 "重启 &brandShorterName; 以更新">
-
 <!ENTITY sendToDevice.syncNotReady.label "正在同步设备…">
-
-<!ENTITY pageAction.shareUrl.label "共享">
-<!ENTITY pageAction.shareMore.label "更多…">
 
 <!ENTITY libraryButton.tooltip "查看浏览历史、已保存的书签等">
 

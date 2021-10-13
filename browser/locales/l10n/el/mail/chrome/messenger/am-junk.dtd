@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,7 +9,7 @@
 
 <!ENTITY move.label "Μετακίνηση νέων ανεπιθύμητων μηνυμάτων:">
 <!ENTITY move.accesskey "ν">
-<!ENTITY junkFolderOn.label "Στον φάκελο &quot;Ανεπιθύμητα&quot; του:">
+<!ENTITY junkFolderOn.label "Στον φάκελο «Ανεπιθύμητα» του:">
 <!ENTITY junkFolderOn.accesskey "θ">
 <!ENTITY otherFolder.label "Σε άλλο:">
 <!ENTITY otherFolder.accesskey "λ">

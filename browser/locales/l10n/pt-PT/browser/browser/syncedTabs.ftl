@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Pretende ver os seus separadores de out
 synced-tabs-sidebar-intro = Ver uma lista de separadores dos seus outros dispositivos.
 synced-tabs-sidebar-unverified = A sua conta necessita de ser verificada.
 synced-tabs-sidebar-notabs = Sem separadores abertos
-synced-tabs-sidebar-openprefs = Abrir preferências do { -sync-brand-short-name }
 synced-tabs-sidebar-open-settings = Abrir definições de sincronização
 synced-tabs-sidebar-tabsnotsyncing = Ative a sincronização de separadores para ver uma lista de separadores dos seus outros dispositivos.
 synced-tabs-sidebar-connect-another-device = Ligar outro dispositivo
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Sincronizar agora
     .accesskey = S
-fxa-sign-in = Iniciar sessão no { -sync-brand-short-name }
-turn-on-sync = Ativar { -sync-brand-short-name }
 synced-tabs-fxa-sign-in = Iniciar sessão para sincronizar
 synced-tabs-turn-on-sync = Ativar sincronização

@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-screenshots-context-menu = Chụp ảnh màn hình
 screenshot-toolbarbutton =
     .label = Ảnh chụp màn hình
     .tooltiptext = Tạo một ảnh chụp màn hình
-screenshots-my-shots-button = Các ảnh chụp của tôi
+screenshot-shortcut =
+    .key = S
 screenshots-instructions = Kéo hoặc nhấp vào trang để chọn một khu vực. Nhấn ESC để hủy bỏ.
 screenshots-cancel-button = Hủy bỏ
 screenshots-save-visible-button = Lưu phần nhìn thấy
@@ -31,7 +31,6 @@ screenshots-connection-error-details = Vui lòng kiểm tra kết nối Internet
 screenshots-login-error-details = Chúng tôi không thể lưu hình của bạn vì có sự cố với dịch vụ { -screenshots-brand-name }. Vui lòng thử lại sau.
 screenshots-unshootable-page-error-title = Chúng tôi không thể chụp màn hình trang này.
 screenshots-unshootable-page-error-details = Đây không phải là trang Web bình thường, bạn không thể chụp ảnh màn hình nó.
-screenshots-self-screenshot-error-title = Bạn không thể chụp một trang của { -screenshots-brand-name }!
 screenshots-empty-selection-error-title = Vùng chọn của bạn quá nhỏ
 screenshots-private-window-error-title = { -screenshots-brand-name } đã bị tắt trong chế độ duyệt web riêng tư
 screenshots-private-window-error-details = Xin lỗi vì sự bất tiện này. Chúng tôi đang làm việc trên các tính năng này cho bản phát hành trong tương lai.

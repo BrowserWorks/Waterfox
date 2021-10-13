@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -9,21 +9,21 @@ enable-inspect-element-message = 開発ツールの要素調査機能で HTML �
 enable-about-debugging-message = Waterfox 開発ツールで、ブラウザー拡張機能や Web Worker、Service Worker を開発、デバッグできます。
 enable-key-shortcut-message = 開発ツールのショートカットを有効にしました。誤操作だった場合はこのタブを閉じてください。
 enable-menu-message = インスペクターやデバッガーなどのツールで、あなたのサイトの HTML や CSS、JavaScript が完璧になります。
-enable-common-message = ブラウザをより詳細にコントロールできる Firefox 開発ツールは既定の設定では無効になっています。
+enable-common-message = ブラウザをより詳細にコントロールできる Waterfox 開発ツールは既定の設定では無効になっています。
 enable-learn-more-link = 開発ツールの詳細
 enable-enable-button = Waterfox 開発ツールを有効にする
 enable-close-button = このタブを閉じる
 welcome-title = Waterfox 開発ツールにようこそ！
-newsletter-title = Mozilla Developer Newsletter
+newsletter-title = Waterfox Developer Newsletter
 newsletter-message = 開発者向けのニュースや小技、リソースをメールでお届けします。
 newsletter-email-placeholder =
     .placeholder = メールアドレス
-newsletter-privacy-label = <a data-l10n-name="privacy-policy">Mozilla プライバシーポリシー</a>で説明される個人情報の取扱いに同意します。
+newsletter-privacy-label = <a data-l10n-name="privacy-policy">Waterfox プライバシーポリシー</a>で説明される個人情報の取扱いに同意します。
 newsletter-subscribe-button = 購読
 newsletter-thanks-title = ありがとうございます！
-newsletter-thanks-message = 今までに Mozilla 関連のニュースレターを購読したことがない場合は、受信トレイやスパムフィルターを確認してください。
+newsletter-thanks-message = 今までに Waterfox 関連のニュースレターを購読したことがない場合は、受信トレイやスパムフィルターを確認してください。
 footer-title = Waterfox Developer Edition
-footer-message = 単なる開発ツール以上のものをお探しですか？ 開発者と新しい作業フローのために特別にビルドされた Firefox をお試しください。
+footer-message = 単なる開発ツール以上のものをお探しですか？ 開発者と新しい作業フローのために特別にビルドされた Waterfox をお試しください。
 footer-learn-more-link = 詳細
 features-learn-more = 詳細
 features-inspector-title = インスペクター

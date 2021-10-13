@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -24,6 +24,7 @@
 <!ENTITY printAddressBook.accesskey "A">
 <!ENTITY printPreviewAddressBook.label "Vista preliminar de la libreta de direcciones">
 <!ENTITY printPreviewAddressBook.accesskey "B">
+
 <!ENTITY deleteAbCmd.label "Eliminar libreta de direcciones">
 <!ENTITY deleteContactCmd.label "Eliminar contacto">
 <!ENTITY deleteContactsCmd.label "Eliminar contactos seleccionados">
@@ -35,6 +36,7 @@
 <!ENTITY propertiesCmd.label "Propiedades…">
 <!ENTITY propertiesCmd.accesskey "i">
 <!ENTITY propertiesCmd.key "i">
+
 <!ENTITY showAbToolbarCmd.label "Barra de herramientas de direcciones">
 <!ENTITY showAbToolbarCmd.accesskey "o">
 <!ENTITY layoutMenu.label "Disposición">
@@ -52,10 +54,12 @@
 <!ENTITY displayNameCmd.label "Nombre mostrado">
 <!ENTITY displayNameCmd.accesskey "D">
 <!ENTITY toggleDirectoryPaneCmd.key "S">
+
 <!ENTITY importCmd.label "Importar…">
 <!ENTITY importCmd.accesskey "I">
 <!ENTITY exportCmd.label "Exportar…">
 <!ENTITY exportCmd.accesskey "E">
+
 <!ENTITY newContactButton.label "Nuevo contacto">
 <!ENTITY newContactButton.accesskey "C">
 <!ENTITY newlistButton.label "Nueva lista">
@@ -72,6 +76,7 @@
 <!ENTITY printButton.accesskey "r">
 <!ENTITY searchNameAndEmail.placeholder "Buscar en el nombre y dirección de correo">
 <!ENTITY searchBox.title "Buscar">
+
 <!ENTITY addressbookToolbar.tooltip "Barra de herramientas de direcciones">
 <!ENTITY newContactButton.tooltip "Crear un nuevo contacto de la libreta de direcciones">
 <!ENTITY newlistButton.tooltip "Crear nueva lista">
@@ -81,7 +86,11 @@
 <!ENTITY printButton.tooltip "Imprimir elemento seleccionado">
 <!ENTITY deleteItemButton.tooltip "Eliminar elemento seleccionado">
 <!ENTITY advancedButton.tooltip "Búsqueda avanzada de direcciones">
+
 <!ENTITY dirTreeHeader.label "Libretas de direcciones">
+
+<!-- Card Summary Pane -->
+<!-- Card Summary Pane -->
 <!ENTITY contact.heading "Contacto">
 <!ENTITY home.heading "Casa">
 <!ENTITY other.heading "Otros">
@@ -92,5 +101,9 @@
 <!ENTITY addresses.heading "Direcciones">
 <!ENTITY mapItButton.label "Obtener mapa">
 <!ENTITY mapIt.tooltip "Obtener de la web un mapa de esta dirección">
+
 <!ENTITY statusText.label "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
 <!ENTITY hideSwapFnLnUI "true">

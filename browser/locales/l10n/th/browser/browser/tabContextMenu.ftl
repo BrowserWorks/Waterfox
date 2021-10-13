@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = เพิ่มที่คั่นหน้าสำหรับแท็บ
     .accesskey = พ
-reopen-in-container =
-    .label = เปิดใหม่ในการแยกข้อมูล
-    .accesskey = ย
 tab-context-open-in-new-container-tab =
     .label = เปิดในแท็บแยกข้อมูลใหม่
     .accesskey = ย
@@ -69,25 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = ปิดหลายแท็บ
     .accesskey = ล
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] เรียกคืนแท็บที่เพิ่งปิด
-           *[other] เรียกคืนแท็บที่เพิ่งปิด
-        }
-    .accesskey = ร
-close-tab =
-    .label = ปิดแท็บ
-    .accesskey = ป
-close-tabs =
-    .label = ปิดแท็บ
-    .accesskey = ป
-move-tabs =
-    .label = ย้ายแท็บ
-    .accesskey = บ
-move-tab =
-    .label = ย้ายแท็บ
-    .accesskey = บ
 tab-context-share-url =
     .label = แบ่งปัน
     .accesskey = h
@@ -111,6 +89,13 @@ tab-context-close-tabs =
            *[other] ปิดแท็บ
         }
     .accesskey = ป
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] ปิดแท็บ
+           *[other] ปิด { $tabCount } แท็บ
+        }
+    .accesskey = ป
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -118,3 +103,6 @@ tab-context-move-tabs =
            *[other] ย้ายแท็บ
         }
     .accesskey = ย
+tab-context-send-tabs-to-device =
+    .label = ส่ง { $tabCount } แท็บไปยังอุปกรณ์
+    .accesskey = ส

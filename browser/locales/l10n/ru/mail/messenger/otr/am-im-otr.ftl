@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,14 +15,12 @@ view-fingerprint-button =
 otr-settings-title = Настройки OTR
 otr-log =
     .label = Включать зашифрованные сообщения OTR в журналы разговоров
-otr-requireEncryption =
-    .label = Требовать сквозного шифрования для разговоров один на один
+
 otr-require-encryption =
     .label = Требовать сквозного шифрования для разговоров один на один
 otr-require-encryption-info = Если было запрошено сквозное шифрование, то сообщения в разговорах один на один не будут отправлены, если их не удалось зашифровать. Полученные незашифрованные сообщения не будет отображаться как часть обычного разговора и не будут заноситься в логи.
-otr-verifyNudge =
-    .label = Всегда напоминать мне о проверке непроверенного контакта
-otr-notYetAvailable = пока недоступно
 otr-verify-nudge =
     .label = Всегда напоминать мне о проверке непроверенного контакта
+
 otr-not-yet-available = пока недоступно
+

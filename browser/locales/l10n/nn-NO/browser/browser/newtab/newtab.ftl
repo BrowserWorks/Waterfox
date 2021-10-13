@@ -1,14 +1,14 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = Ny fane
 newtab-settings-button =
     .title = Tilpass sida for Ny fane
-newtab-personalize-button-label = Tilpass
+newtab-personalize-icon-label =
     .title = Tilpass ny fane-side
     .aria-label = Tilpass ny fane-side
 newtab-personalize-dialog-label =
@@ -20,7 +20,6 @@ newtab-personalize-dialog-label =
 newtab-search-box-search-button =
     .title = Søk
     .aria-label = Søk
-newtab-search-box-search-the-web-text = Søk på nettet
 # Variables
 #  $engine (String): the name of the user's default search engine
 newtab-search-box-handoff-text = Søk med { $engine } eller skriv inn ei adresse
@@ -169,6 +168,11 @@ newtab-label-sponsored = { $sponsorOrSource } · Sponsa
 # Variables:
 #  $sponsor (String): This is the name of a sponsor
 newtab-label-sponsored-by = Sponsa av { $sponsor }
+# This string is used under the image of story cards to indicate source and time to read
+# Variables:
+#  $source (String): This is the name of a company or their domain
+#  $timeToRead (Number): This is the estimated number of minutes to read this story
+newtab-label-source-read-time = { $source } · { $timeToRead } min
 
 ## Section Menu: These strings are displayed in the section context menu and are
 ## meant as a call to action for the given section.
@@ -248,10 +252,4 @@ newtab-custom-pocket-sponsored = Sponsa historier
 newtab-custom-recent-title = Nyleg aktivitet
 newtab-custom-recent-subtitle = Eit utval av nylege nettstadar og innhald
 newtab-custom-close-button = Lat att
-# For the "Snippets" feature traditionally on about:home.
-# Alternative translation options: "Small Note" or something that
-# expresses the idea of "a small message, shortened from something else,
-# and non-essential but also not entirely trivial and useless.
-newtab-custom-snippets-title = Snuttar
-newtab-custom-snippets-subtitle = Tips og nyheiter frå { -vendor-short-name } og { -brand-product-name }
 newtab-custom-settings = Handter fleire innstillingar

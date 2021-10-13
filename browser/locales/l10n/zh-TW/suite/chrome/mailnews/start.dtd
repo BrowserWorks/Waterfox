@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -26,5 +26,5 @@
 <!ENTITY info.title "更多資訊">
 <!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
 <!ENTITY info_bugs.label
-'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">我們</a>歡迎您回報臭蟲或提出功能請求，但請先閱讀<a id="releaseNotesURL" href="">發行公告</a>並找過 <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> 上有沒有重複的內容。
+'<a href="https://developer.mozilla.org/docs/Waterfox/Projects/MailNews">我們</a>歡迎您回報臭蟲或提出功能請求，但請先閱讀<a id="releaseNotesURL" href="">發行公告</a>並找過 <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> 上有沒有重複的內容。
 '>

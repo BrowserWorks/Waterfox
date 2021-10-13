@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "Keterangan:">
 
 <!ENTITY generalInfo.label                       "Informasi Umum">
-<!ENTITY folderCharsetFallback2.label            "Pengodean Teks Alternatif:">
-<!ENTITY folderCharsetFallback2.accesskey        "E">
-<!ENTITY folderCharsetEnforce2.label             "Terapkan penyandian ke semua pesan di folder (pengaturan penyandian teks pesan individual dan deteksi otomatis akan diabaikan)">
-<!ENTITY folderCharsetEnforce2.accesskey         "A">
 <!ENTITY folderRebuildSummaryFileTip2.label      "Buat Ulang Berkas Indeks Ringkasan">
 <!ENTITY folderRebuildSummaryFile2.label         "Perbaiki Folder">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "P">

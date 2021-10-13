@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -22,18 +22,9 @@
 <!ENTITY alwaysAsk.label                "Rákérdezés a fájlok letöltési helyére">
 <!ENTITY alwaysAsk.accesskey            "R">
 
-<!ENTITY downloadHistory.label          "Letöltési előzmények">
-<!ENTITY removeEntries.label            "Letöltött elemek eltávolítása">
-<!ENTITY removeEntries.accesskey        "L">
-<!ENTITY whenCompleted.label            "Letöltés befejezésekor">
-<!ENTITY whenQuittingApp.label          "A &brandShortName; bezárásakor">
-<!ENTITY neverRemove.label              "Soha">
-
 <!ENTITY finishedBehavior.label         "A letöltés befejeztekor">
 <!ENTITY playSound.label                "Hangjelzés">
 <!ENTITY playSound.accesskey            "H">
-<!ENTITY showAlert.label                "Figyelmeztető ablak">
-<!ENTITY showAlert.accesskey            "i">
 <!ENTITY browse.label                   "Tallózás…">
 <!ENTITY browse.accesskey               "T">
 <!ENTITY playButton.label               "Lejátszás">

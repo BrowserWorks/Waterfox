@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -8,6 +8,10 @@
 <!ENTITY autoHide.accesskey2 "r">
 <!ENTITY background.label "Cambiar a las nuevas pestañas abiertas a partir de enlaces">
 <!ENTITY background.accesskey "S">
+<!ENTITY diverted.label "Cambiar a las nuevas pestañas abiertas a partir de enlaces redirigidos">
+<!ENTITY diverted.accesskey "a">
+<!ENTITY browserFocus.label "Pasar a primer plano la ventana del navegador al abrir en pestañas enlaces desde otras aplicaciones">
+<!ENTITY browserFocus.accesskey "P">
 <!ENTITY warnOnClose.label "Advertirme al cerrar una ventana con múltiples pestañas">
 <!ENTITY warnOnClose.accesskey "c">
 <!ENTITY relatedAfterCurrent.label "Abrir pestañas relacionadas tras la pestaña actual">

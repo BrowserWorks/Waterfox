@@ -1,8 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 protections-panel-sendreportview-error = Hubo un error al enviar el mensaje. Por favor, intenta de nuevo más tarde.
+
 # A link shown when ETP is disabled for a site. Opens the breakage report subview when clicked.
 protections-panel-sitefixedsendreport-label = ¿Sitio reparado? Envía un reporte
 
@@ -21,10 +22,13 @@ protections-popup-footer-protection-label-standard = Estándar
 # The text a screen reader speaks when focused on the info button.
 protections-panel-etp-more-info =
     .aria-label = Más información sobre la protección antirrastreo mejorada
+
 protections-panel-etp-on-header = La protección antirrastreo mejorada está ACTIVADA en este sitio
 protections-panel-etp-off-header = La protección antirrastreo mejorada está DESACTIVADA en este sitio
+
 # The link to be clicked to open the sub-panel view
 protections-panel-site-not-working = ¿No funciona el sitio?
+
 # The heading/title of the sub-panel view
 protections-panel-site-not-working-view =
     .title = ¿No funciona el sitio?
@@ -39,7 +43,9 @@ protections-panel-not-blocking-why-etp-off-tooltip = Todos los rastreadores en e
 ##
 
 protections-panel-no-trackers-found = Ningún rastreador conocido por { -brand-short-name } fue detectado en esta página.
+
 protections-panel-content-blocking-tracking-protection = Contenido de rastreo
+
 protections-panel-content-blocking-socialblock = Rastreadores de redes sociales
 protections-panel-content-blocking-cryptominers-label = Criptomineros
 protections-panel-content-blocking-fingerprinters-label = Huellas dactilares
@@ -65,12 +71,14 @@ protections-panel-protectionsdashboard-label = Panel de protección
 
 # The header of the list
 protections-panel-site-not-working-view-header = Desactiva las protecciones si experimentas problemas con:
+
 # The list items, shown in a <ul>
 protections-panel-site-not-working-view-issue-list-login-fields = Campos de inicio de sesión
 protections-panel-site-not-working-view-issue-list-forms = Formularios
 protections-panel-site-not-working-view-issue-list-payments = Pagos
 protections-panel-site-not-working-view-issue-list-comments = Comentarios
 protections-panel-site-not-working-view-issue-list-videos = Videos
+
 protections-panel-site-not-working-view-send-report = Envía un reporte
 
 ##
@@ -80,16 +88,19 @@ protections-panel-cryptominers = Los criptomineros utilizan la potencia informá
 protections-panel-fingerprinters = Las huellas digitales recopilan configuraciones de tu navegador y computadora para crear un perfil tuyo. Con esta huella digital, pueden rastrearte a través de diferentes sitios web.
 protections-panel-tracking-content = Los sitios web pueden cargar anuncios externos, videos y otro tipo de contenido gracias a un código de rastreo. Si bloqueas el contenido de rastreo, los sitios se cargarán más rápido, pero puede que algunos botones y formularios dejen de funcionar.
 protections-panel-social-media-trackers = Las redes sociales ubican rastreadores en otros sitios web para seguir lo que haces, ves y miras en línea. Esto permite que las empresas de redes sociales aprendan más sobre ti, más allá de lo que compartes en tus perfiles de redes sociales.
+
 protections-panel-description-shim-allowed = Algunos rastreadores marcados abajo han sido parcialmente desbloqueados en esta página porque interactuaste con ellos.
 protections-panel-description-shim-allowed-learn-more = Saber más
 protections-panel-shim-allowed-indicator =
     .tooltiptext = Rastreador parcialmente desbloqueado
+
 protections-panel-content-blocking-manage-settings =
     .label = Administrar ajustes de protección
     .accesskey = M
+
 protections-panel-content-blocking-breakage-report-view =
     .title = Informar de un sitio no funcional
-protections-panel-content-blocking-breakage-report-view-description = El bloqueo de ciertos rastreadores puede causar problemas con algunos sitios web. Informar sobre estos problemas ayuda a que { -brand-short-name } sea mejor para todos. Al enviar este informe, se enviará a Mozilla una URL e información sobre la configuración de tu navegador. <label data-l10n-name="learn-more">Más información</label>
+protections-panel-content-blocking-breakage-report-view-description = El bloqueo de ciertos rastreadores puede causar problemas con algunos sitios web. Informar sobre estos problemas ayuda a que { -brand-short-name } sea mejor para todos. Al enviar este informe, se enviará a Waterfox una URL e información sobre la configuración de tu navegador. <label data-l10n-name="learn-more">Más información</label>
 protections-panel-content-blocking-breakage-report-view-collection-url = URL
 protections-panel-content-blocking-breakage-report-view-collection-url-label =
     .aria-label = URL

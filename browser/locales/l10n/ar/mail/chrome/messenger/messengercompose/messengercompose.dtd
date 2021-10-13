@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "جديد">
 <!ENTITY newMenu.accesskey "ج">
 <!ENTITY newMessage.label "رسالة">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "ر">
 <!ENTITY newContact.label "جهة اتصال دفتر العناوين…">
 <!ENTITY newContact.accesskey "ت">
 <!ENTITY attachMenu.label "أرفق">
 <!ENTITY attachMenu.accesskey "ف">
-<!ENTITY attachFileCmd.label "ملفات…">
-<!ENTITY attachFileCmd.accesskey "م">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Filelink">
 <!ENTITY attachCloudCmd.accesskey "i">
 <!ENTITY attachPageCmd.label "صفحة وِب…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "أرسِل لاحقًا">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "ح">
-<!ENTITY printSetupCmd.label "إعداد الصفحة…">
-<!ENTITY printSetupCmd.accesskey "ع">
-<!ENTITY printPreviewCmd.label "عاين الطباعة">
-<!ENTITY printPreviewCmd.accesskey "ع">
 <!ENTITY printCmd.label "اطبع…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "ط">
@@ -82,11 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "غيّر ترتيب المرفقات…">
 <!ENTITY reorderAttachmentsCmd.accesskey "غ">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "لوحة المرفقات">
-<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
-     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
-     as attachments.accesskey. -->
-<!ENTITY toggleAttachmentPaneCmd.accesskey "م">
 <!ENTITY selectAllCmd.accesskey "ك">
 <!ENTITY findBarCmd.label "ابحث…">
 <!ENTITY findBarCmd.accesskey "ب">
@@ -105,11 +91,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "غيّر ترتيب المرفقات">
-<!ENTITY moveAttachmentTopPanelBtn.label "انقل إلى البداية">
-<!ENTITY moveAttachmentUpPanelBtn.label "انقل لأعلى">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label "انقلهم معًا">
-<!ENTITY moveAttachmentDownPanelBtn.label "انقل لأسفل">
-<!ENTITY moveAttachmentBottomPanelBtn.label "انقل إلى النهاية">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -207,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "إعدادات الحساب">
 <!ENTITY accountManagerCmd2.accesskey "ع">
 <!ENTITY accountManagerCmdUnix2.accesskey "س">
-<!ENTITY preferencesCmd2.label "الخيارات">
-<!ENTITY preferencesCmd2.accesskey "خ">
-<!ENTITY preferencesCmdUnix.label "التفضيلات">
-<!ENTITY preferencesCmdUnix.accesskey "ف">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -223,7 +201,6 @@
 <!ENTITY sendButton.label "أرسِل">
 <!ENTITY quoteButton.label "اقتبس">
 <!ENTITY addressButton.label "جهات الاتصال">
-<!ENTITY attachButton.label "أرفق">
 <!ENTITY spellingButton.label "الإملاء">
 <!ENTITY saveButton.label "احفظ">
 <!ENTITY printButton.label "اطبع">
@@ -233,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "أرسِل هذه الرسالة لاحقًا">
 <!ENTITY quoteButton.tooltip "اقتبس الرسالة السابقة">
 <!ENTITY addressButton.tooltip "اختر مستلمًا من دفتر العناوين">
-<!ENTITY attachButton.tooltip2 "أضف مُرفقا">
 <!ENTITY spellingButton.tooltip "دقق إملاء التحديد أو كامل الرسالة">
 <!ENTITY saveButton.tooltip "احفظ هذه الرسالة">
 <!ENTITY cutButton.tooltip              "قصّ">
@@ -241,6 +217,7 @@
 <!ENTITY pasteButton.tooltip            "الصق">
 <!ENTITY printButton.tooltip "اطبع هذه الرسالة">
 
+<!-- Headers -->
 <!-- Headers -->
 <!ENTITY fromAddr.accesskey "م">
 <!ENTITY subject.accesskey "م">
@@ -297,8 +274,6 @@
 <!ENTITY removeAllAttachments.accesskey "ل">
 <!ENTITY selectAll.label "اختر الكل">
 <!ENTITY selectAll.accesskey "ك">
-<!ENTITY attachFile.label "أرفق ملفات…">
-<!ENTITY attachFile.accesskey "م">
 <!ENTITY attachCloud.label "Filelink…">
 <!ENTITY attachCloud.accesskey "i">
 <!ENTITY convertCloud.label "حوّل إلى…">

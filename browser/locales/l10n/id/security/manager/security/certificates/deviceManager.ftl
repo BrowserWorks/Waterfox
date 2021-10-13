@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = Nomor Seri
-
-fips-nonempty-password-required = Mode FIPS mewajibkan Anda untuk memiliki Sandi Utama yang digunakan untuk tiap perangkat keamanan. Silakan aktifkan sandi sebelum mengaktifkan mode FIPS.
 
 fips-nonempty-primary-password-required = Mode FIPS mewajibkan Anda untuk memiliki Sandi Utama yang digunakan untuk tiap perangkat keamanan. Silakan aktifkan sandi sebelum mengaktifkan mode FIPS.
 unable-to-toggle-fips = Gagal mengubah mode FIPS pada perangkat keamanan. Anda disarankan untuk keluar dan memulai ulang aplikasi ini.

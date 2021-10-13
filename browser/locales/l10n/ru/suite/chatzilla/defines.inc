@@ -1,6 +1,6 @@
 #filter emptyLines
 
-#define MOZ_LANGPACK_CREATOR Mozilla Russia
+#define MOZ_LANGPACK_CREATOR Waterfox Russia
 
 #define MOZ_LANGPACK_HOMEPAGE http://www.mozilla-russia.org/
 

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,14 +11,6 @@ navbar-tooltip-instruction =
 
 ## Back
 
-main-context-menu-back =
-    .tooltiptext = Regresar una página
-    .aria-label = Anterior
-    .accesskey = B
-navbar-tooltip-back =
-    .value = { main-context-menu-back.tooltiptext }
-toolbar-button-back =
-    .label = { main-context-menu-back.aria-label }
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the Go Back command.
 main-context-menu-back-2 =
@@ -36,14 +28,6 @@ toolbar-button-back-2 =
 
 ## Forward
 
-main-context-menu-forward =
-    .tooltiptext = Avanzar una página
-    .aria-label = Siguiente
-    .accesskey = F
-navbar-tooltip-forward =
-    .value = { main-context-menu-forward.tooltiptext }
-toolbar-button-forward =
-    .label = { main-context-menu-forward.aria-label }
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the Go Forward command.
 main-context-menu-forward-2 =
@@ -88,7 +72,7 @@ toolbar-button-stop =
 toolbar-button-stop-reload =
     .title = { main-context-menu-reload.aria-label }
 
-## Firefox Account Button
+## Waterfox Account Button
 
 toolbar-button-fxaccount =
     .label = { -fxaccount-brand-name }
@@ -99,8 +83,6 @@ toolbar-button-fxaccount =
 main-context-menu-page-save =
     .label = Guardar como…
     .accesskey = P
-toolbar-button-page-save =
-    .label = { main-context-menu-page-save.label }
 
 ## Simple menu items
 
@@ -151,9 +133,6 @@ main-context-menu-open-link-new-window =
 main-context-menu-open-link-new-private-window =
     .label = Abrir enlace en una nueva ventana privada
     .accesskey = p
-main-context-menu-bookmark-this-link =
-    .label = Agregar este enlace a marcadores
-    .accesskey = l
 main-context-menu-bookmark-link =
     .label = Añadir enlace a marcadores
     .accesskey = A
@@ -164,11 +143,6 @@ main-context-menu-save-link-to-pocket =
     .label = Guardar enlace en { -pocket-brand-name }
     .accesskey = o
 
-## The access keys for "Copy Link Location" and "Copy Email Address"
-## should be the same if possible; the two context menu items
-## are mutually exclusive.
-
-
 ## The access keys for "Copy Link" and "Copy Email Address"
 ## should be the same if possible; the two context menu items
 ## are mutually exclusive.
@@ -176,9 +150,6 @@ main-context-menu-save-link-to-pocket =
 main-context-menu-copy-email =
     .label = Copiar dirección de correo electrónico
     .accesskey = e
-main-context-menu-copy-link =
-    .label = Copiar dirección del enlace
-    .accesskey = a
 main-context-menu-copy-link-simple =
     .label = Copiar enlace
     .accesskey = l
@@ -204,26 +175,6 @@ main-context-menu-media-mute =
 main-context-menu-media-unmute =
     .label = Escuchar
     .accesskey = E
-main-context-menu-media-play-speed =
-    .label = Velocidad de reproducción
-    .accesskey = d
-main-context-menu-media-play-speed-slow =
-    .label = Lenta (0.5 ×)
-    .accesskey = L
-main-context-menu-media-play-speed-normal =
-    .label = Normal
-    .accesskey = N
-main-context-menu-media-play-speed-fast =
-    .label = Rápido (1.25 ×)
-    .accesskey = F
-main-context-menu-media-play-speed-faster =
-    .label = Rápido (1.5 ×)
-    .accesskey = a
-# "Ludicrous" is a reference to the movie "Space Balls" and is meant
-# to say that this speed is very fast.
-main-context-menu-media-play-speed-fastest =
-    .label = Ultra rápido (2×)
-    .accesskey = L
 main-context-menu-media-play-speed-2 =
     .label = Velocidad
     .accesskey = V
@@ -261,23 +212,12 @@ main-context-menu-media-video-leave-fullscreen =
     .accesskey = a
 # This is used when right-clicking on a video in the
 # content area when the Picture-in-Picture feature is enabled.
-main-context-menu-media-pip =
-    .label = Picture-in-Picture
-    .accesskey = u
-# This is used when right-clicking on a video in the
-# content area when the Picture-in-Picture feature is enabled.
 main-context-menu-media-watch-pip =
     .label = Ver en Picture-in-Picture
     .accesskey = i
 main-context-menu-image-reload =
     .label = Recargar imagen
     .accesskey = R
-main-context-menu-image-view =
-    .label = Ver imagen
-    .accesskey = i
-main-context-menu-video-view =
-    .label = Ver video
-    .accesskey = i
 main-context-menu-image-view-new-tab =
     .label = Abrir imagen en una nueva pestaña
     .accesskey = I
@@ -287,15 +227,6 @@ main-context-menu-video-view-new-tab =
 main-context-menu-image-copy =
     .label = Copiar imagen
     .accesskey = C
-main-context-menu-image-copy-location =
-    .label = Copiar dirección de la imagen
-    .accesskey = o
-main-context-menu-video-copy-location =
-    .label = Copiar dirección del video
-    .accesskey = o
-main-context-menu-audio-copy-location =
-    .label = Copiar dirección del audio
-    .accesskey = o
 main-context-menu-image-copy-link =
     .label = Copiar el enlace de la imagen
     .accesskey = o
@@ -311,9 +242,6 @@ main-context-menu-image-save-as =
 main-context-menu-image-email =
     .label = Enviar imagen…
     .accesskey = a
-main-context-menu-image-set-as-background =
-    .label = Establecer como fondo de escritorio…
-    .accesskey = s
 main-context-menu-image-set-image-as-background =
     .label = Establecer imagen como fondo de escritorio…
     .accesskey = s
@@ -328,9 +256,6 @@ main-context-menu-video-save-as =
     .accesskey = v
 main-context-menu-audio-save-as =
     .label = Guardar audio como…
-    .accesskey = G
-main-context-menu-video-image-save-as =
-    .label = Guardar captura como…
     .accesskey = G
 main-context-menu-video-take-snapshot =
     .label = Tomar captura…
@@ -353,12 +278,6 @@ main-context-menu-save-to-pocket =
 main-context-menu-send-to-device =
     .label = Enviar página a dispositivo
     .accesskey = d
-main-context-menu-view-background-image =
-    .label = Ver imagen de fondo
-    .accesskey = f
-main-context-menu-generate-new-password =
-    .label = Usar contraseña generada…
-    .accesskey = G
 
 ## The access keys for "Use Saved Login" and "Use Saved Password"
 ## should be the same if possible; the two context menu items
@@ -430,18 +349,12 @@ main-context-menu-take-frame-screenshot =
 main-context-menu-view-page-source =
     .label = Ver código fuente de esta página
     .accesskey = V
-main-context-menu-view-page-info =
-    .label = Ver información de esta página
-    .accesskey = i
 main-context-menu-bidi-switch-text =
     .label = Cambiar la orientación del texto
     .accesskey = o
 main-context-menu-bidi-switch-page =
     .label = Cambiar la orientación de esta página
     .accesskey = d
-main-context-menu-inspect-element =
-    .label = Inspeccionar elemento
-    .accesskey = I
 main-context-menu-inspect =
     .label = Inspeccionar
     .accesskey = Q
@@ -450,3 +363,8 @@ main-context-menu-inspect-a11y-properties =
 main-context-menu-eme-learn-more =
     .label = Aprende más acerca de DRM…
     .accesskey = D
+# Variables
+#   $containerName (String): The name of the current container
+main-context-menu-open-link-in-container-tab =
+    .label = Abrir enlace en una nueva pestaña { $containerName }
+    .accesskey = t

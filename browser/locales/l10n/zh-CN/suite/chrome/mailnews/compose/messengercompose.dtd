@@ -1,9 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
-<!ENTITY msgComposeWindow.title "Compose页：(无主题)">
+<!ENTITY msgComposeWindow.title "新邮件：(无主题)">
 
 <!ENTITY fromAddr.label "发件人:">
 <!ENTITY fromAddr.accesskey "r">
@@ -46,11 +46,6 @@
 <!ENTITY sendLaterCmd.label "以后发送">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "L">
-
-<!-- Edit menu items -->
-<!ENTITY editRewrapCmd.label "重新排版">
-<!ENTITY editRewrapCmd.key "R">
-<!ENTITY editRewrapCmd.accesskey  "w">
 
 <!-- Edit menu items -->
 <!ENTITY accountManagerCmd.label "邮件和新闻组账户设置…">

@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -39,8 +39,6 @@ inactive-css-position-property-on-unpositioned-box = この要素は配置の指
 
 inactive-text-overflow-when-no-overflow = <strong>overflow:hidden</strong> が設定されてないため、<strong>{ $property }</strong> はこの要素に影響を及ぼしません。
 
-inactive-outline-radius-when-outline-style-auto-or-none = この要素の <strong>outline-style</strong> は <strong>auto</strong> または <strong>none</strong> となっているため、<strong>{ $property }</strong> はこの要素に影響を及ぼしません。
-
 inactive-css-not-for-internal-table-elements = <strong>{ $property }</strong> はテーブルを構成する要素に影響を及ぼしません。
 
 inactive-css-not-for-internal-table-elements-except-table-cells = <strong>{ $property }</strong> はセル以外のテーブルを構成する要素に影響を及ぼしません。
@@ -58,6 +56,8 @@ inactive-css-not-grid-or-flex-container-fix = <strong>display:grid</strong> ま�
 inactive-css-not-grid-or-flex-container-or-multicol-container-fix = <strong>display:grid</strong>, <strong>display:flex</strong>, または <strong>columns:2</strong> のいずれかを追加してみてください。{ learn-more }
 
 inactive-css-not-grid-or-flex-item-fix-2 = <strong>display:grid</strong>, <strong>display:flex</strong>, <strong>display:inline-grid</strong>, または <strong>display:inline-flex</strong> を追加してみてください。{ learn-more }
+
+inactive-css-not-grid-or-flex-item-fix-3 = <strong>display:grid</strong>, <strong>display:flex</strong>, <strong>display:inline-grid</strong>, または <strong>display:inline-flex</strong> を親要素に追加してみてください。{ learn-more }
 
 inactive-css-not-grid-item-fix-2 =<strong>display:grid</strong> または <strong>display:inline-grid</strong> を要素の親に追加してみてください。{ learn-more }
 
@@ -82,8 +82,6 @@ inactive-text-overflow-when-no-overflow-fix = <strong>overflow:hidden</strong> �
 inactive-css-not-for-internal-table-elements-fix = <strong>セル</strong>、<strong>列</strong>、<strong>行</strong>、<strong>列グループ</strong>、<strong>行グループ</strong> または <strong>フッターグループ</strong> 以外の要素に <strong>display</strong> プロパティを設定してみてください。{ learn-more }
 
 inactive-css-not-for-internal-table-elements-except-table-cells-fix = <strong>列</strong>、<strong>行</strong>、<strong>列グループ</strong>、<strong>行グループ</strong> または <strong>フッターグループ</strong> 以外の要素に <strong>display</strong> プロパティを設定してみてください。{ learn-more }
-
-inactive-outline-radius-when-outline-style-auto-or-none-fix = <strong>outline-style</strong> プロパティに <strong>auto</strong> または <strong>none</strong> 以外の値を設定してみてください。{ learn-more }
 
 inactive-css-not-table-fix = <strong>display:table</strong> または <strong>display:inline-table</strong> を追加してみてください。{ learn-more }
 

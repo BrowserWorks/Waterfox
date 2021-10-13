@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -13,10 +13,18 @@
 <!ENTITY alwaysClear.label                "&brandShortName; の終了時にプライバシー情報を消去する">
 <!ENTITY alwaysClear.accesskey            "w">
 
+<!--LOCALIZATION NOTE : The askBeforeClear label is
+    no longer used but we might bring it back later
+-->
 <!ENTITY askBeforeClear.label             "消去する前に確認ダイアログを表示する">
 <!ENTITY askBeforeClear.accesskey         "k">
 
 <!ENTITY clearDataSettings.label          "次のプライバシー情報を消去する:">
+
+<!ENTITY clearData.label "次のプライバシー情報を消去します:">
+<!ENTITY clearData.cpd.label "手動">
+<!ENTITY clearData.onShutdown.label "終了時">
+
 
 <!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
   The only difference bettween the two labels is that one calls a dialog, the other doesn't.

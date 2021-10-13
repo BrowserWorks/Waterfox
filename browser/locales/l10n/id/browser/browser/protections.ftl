@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -25,9 +25,9 @@ graph-week-summary-private-window = Pelacak { -brand-short-name } diblokir pekan
 
 protection-report-webpage-title = Dasbor Perlindungan
 protection-report-page-content-title = Dasbor Perlindungan
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } dapat melindungi privasi Anda di balik layar ketika Anda menjelajah. Ini adalah ringkasan perlindungan tersebut yang dipersonalisasi, termasuk alat untuk mengendalikan keamanan daring Anda.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } melindungi privasi Anda di balik layar ketika Anda menjelajah. Ini adalah ringkasan dari perlindungan tersebut yang dipersonalisasi, termasuk peralatan untuk mengendalikan keamanan daring Anda.
 
 protection-report-settings-link = Kelola pengaturan privasi dan keamanan Anda.
@@ -96,9 +96,6 @@ lockwise-scanned-text-no-breached-logins =
        *[other] Kata sandi Anda disimpan dengan aman
     }
 lockwise-how-it-works-link = Cara kerjanya
-
-turn-on-sync = Aktifkan { -sync-brand-short-name }
-    .title = Buka pengaturan sinkronisasi
 
 monitor-title = Hati-hati terhadap kebocoran data
 monitor-link = Cara kerja

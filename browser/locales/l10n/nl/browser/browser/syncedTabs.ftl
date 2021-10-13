@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Wilt u hier uw tabbladen van andere app
 synced-tabs-sidebar-intro = Bekijk een lijst met tabbladen van uw overige apparaten.
 synced-tabs-sidebar-unverified = Uw account moet worden geverifieerd.
 synced-tabs-sidebar-notabs = Geen open tabbladen
-synced-tabs-sidebar-openprefs = { -sync-brand-short-name }-voorkeuren openen
 synced-tabs-sidebar-open-settings = Synchronisatie-instellingen openen
 synced-tabs-sidebar-tabsnotsyncing = Zet tabbladsynchronisatie aan om een lijst van tabbladen van uw andere apparaten weer te geven.
 synced-tabs-sidebar-connect-another-device = Een ander apparaat verbinden
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Nu synchroniseren
     .accesskey = N
-fxa-sign-in = Aanmelden bij { -sync-brand-short-name }
-turn-on-sync = { -sync-brand-short-name } inschakelen
 synced-tabs-fxa-sign-in = Aanmelden om te synchroniseren
 synced-tabs-turn-on-sync = Synchronisatie inschakelen

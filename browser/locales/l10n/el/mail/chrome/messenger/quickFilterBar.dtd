@@ -1,13 +1,6 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!-- LOCALIZATION NOTE (quickFilterBar.qfbShowFilterBar.label):
-     The label  for the button on the tab bar that toggles the visibility of
-     the quick filter bar.
-     -->
-<!ENTITY quickFilterBar.qfbShowFilterBar.label
-         "Γρήγορο φιλτράρισμα">
 
 <!-- LOCALIZATION NOTE (quickFilterBar.toggleBarVisibility.menu.label):
      The label to display for the "View... Toolbars..." menu item that controls
@@ -117,7 +110,7 @@
      include messages with attachments.
      -->
 <!ENTITY quickFilterBar.attachment.tooltip
-         "Προβολή μόνο των μηνυμάτων με συνημμένα">
+         "Εμφάνιση μόνο των μηνυμάτων με συνημμένα">
 
 <!-- LOCALIZATION NOTE (quickFilterBar.resultsLabel.some.formatString):
      This is used to populate the results box; it either displays the
@@ -259,7 +252,7 @@
      body for the string.
      -->
 <!ENTITY quickFilterBar.textFilter.body.label
-         "Σώμα μηνύματος">
+         "Σώμα">
 
 <!-- LOCALIZATION NOTE (quickFilterBar.glodaUpsell.continueSearch):
      The first line of the panel popup that tells the user we found no matches
@@ -273,4 +266,4 @@
      This line will have #1 replaced with what the user has typed so far.
      -->
 <!ENTITY quickFilterBar.glodaUpsell.pressEnterAndCurrent
-         "Πατήστε 'Enter' ξανά για να συνεχίσετε την αναζήτησή σας για: #1">
+         "Πατήστε «Enter» ξανά για να συνεχίσετε την αναζήτησή σας για: #1">

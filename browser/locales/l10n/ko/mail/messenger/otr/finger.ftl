@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,8 +8,6 @@ otr-finger =
 
 finger-intro = 이전 종단간 암호화 대화의 OTR 키 지문
 
-finger-screenName =
-    .label = 연락처
 finger-verified =
     .label = 확인 상태
 finger-fingerprint =

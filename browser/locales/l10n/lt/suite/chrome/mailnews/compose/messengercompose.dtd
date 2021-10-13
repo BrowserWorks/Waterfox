@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
@@ -11,6 +11,7 @@
 <!ENTITY subject.accesskey "m">
 <!ENTITY attachments.label "Priedai:">
 <!ENTITY attachments.accesskey "e">
+
 <!-- menu items:  the . means that the menu item isn't implemented yet -->
 <!-- File menu items -->
 
@@ -42,9 +43,6 @@
 <!ENTITY sendLaterCmd.accesskey "v">
 <!-- Edit menu items -->
 
-<!ENTITY editRewrapCmd.label "Laužyti iš naujo">
-<!ENTITY editRewrapCmd.key "R">
-<!ENTITY editRewrapCmd.accesskey  "n">
 <!ENTITY accountManagerCmd.label "Paskyrų nuostatos…">
 <!ENTITY accountManagerCmd.accesskey "P">
 <!-- View menu items -->
@@ -100,6 +98,7 @@
 <!ENTITY fileCarbonCopyCmd.label "Laiško kopiją įdėti į">
 <!ENTITY fileCarbonCopyCmd.accesskey "L">
 <!ENTITY fileHereMenu.label "Perkelti į aplanką">
+
 <!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
 <!-- Toolbar items -->
 
@@ -109,6 +108,7 @@
 <!ENTITY spellingButton.label "Tikrinti rašybą">
 <!ENTITY saveButton.label "Įrašyti">
 <!ENTITY stopButton.label "Stabdyti">
+
 <!--tooltips-->
 <!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
 

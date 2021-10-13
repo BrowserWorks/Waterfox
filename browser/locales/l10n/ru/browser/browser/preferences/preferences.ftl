@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -8,26 +8,6 @@ do-not-track-option-default-content-blocking-known =
     .label = Только когда { -brand-short-name } настроен на блокировку известных трекеров
 do-not-track-option-always =
     .label = Всегда
-pref-page-title =
-    { PLATFORM() ->
-        [windows] Настройки
-       *[other] Настройки
-    }
-# This is used to determine the width of the search field in about:preferences,
-# in order to make the entire placeholder string visible
-#
-# Please keep the placeholder string short to avoid truncation.
-#
-# Notice: The value of the `.style` attribute is a CSS string, and the `width`
-# is the name of the CSS property. It is intended only to adjust the element's width.
-# Do not translate.
-search-input-box =
-    .style = width: 15.4em
-    .placeholder =
-        { PLATFORM() ->
-            [windows] Найти в Настройках
-           *[other] Найти в Настройках
-        }
 settings-page-title = Настройки
 # This is used to determine the width of the search field in about:preferences,
 # in order to make the entire placeholder string visible
@@ -55,9 +35,6 @@ category-search =
 pane-privacy-title = Приватность и Защита
 category-privacy =
     .tooltiptext = { pane-privacy-title }
-pane-sync-title2 = { -sync-brand-short-name }
-category-sync2 =
-    .tooltiptext = { pane-sync-title2 }
 pane-sync-title3 = Синхронизация
 category-sync3 =
     .tooltiptext = { pane-sync-title3 }
@@ -96,21 +73,12 @@ restart-later = Перезапустить позже
 ## Variables:
 ##   $name (String): name of the extension
 
-# This string is shown to notify the user that their home page
-# is being controlled by an extension.
-extension-controlled-homepage-override = Расширение <img data-l10n-name="icon"/> { $name } контролирует вашу домашнюю страницу.
-# This string is shown to notify the user that their new tab page
-# is being controlled by an extension.
-extension-controlled-new-tab-url = Расширение <img data-l10n-name="icon"/> { $name } контролирует вашу страницу новой вкладки.
 # This string is shown to notify the user that the password manager setting
 # is being controlled by an extension
 extension-controlled-password-saving = Расширение <img data-l10n-name="icon"/> { $name } контролирует этот параметр.
 # This string is shown to notify the user that their notifications permission
 # is being controlled by an extension.
 extension-controlled-web-notifications = Расширение <img data-l10n-name="icon"/> { $name } контролирует этот параметр.
-# This string is shown to notify the user that the default search engine
-# is being controlled by an extension.
-extension-controlled-default-search = Расширение <img data-l10n-name="icon"/> { $name } установило вашу поисковую систему по умолчанию.
 # This string is shown to notify the user that Container Tabs
 # are being enabled by an extension.
 extension-controlled-privacy-containers = Расширение <img data-l10n-name="icon"/> { $name } требует для своей работы «Вкладки в контейнере».
@@ -131,25 +99,12 @@ extension-controlled-enable = Чтобы включить расширение, 
 
 search-results-header = Результаты поиска
 # `<span data-l10n-name="query"></span>` will be replaced by the search term.
-search-results-empty-message =
-    { PLATFORM() ->
-        [windows] Извините! В настройках не найдено результатов для «<span data-l10n-name="query"></span>».
-       *[other] Извините! В настройках не найдено результатов для «<span data-l10n-name="query"></span>».
-    }
-# `<span data-l10n-name="query"></span>` will be replaced by the search term.
 search-results-empty-message2 = Извините! В настройках не найдено результатов для «<span data-l10n-name="query"></span>».
 search-results-help-link = Нужна помощь? Посетите <a data-l10n-name="url">Сайт поддержки { -brand-short-name }</a>
 
 ## General Section
 
 startup-header = Запуск
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
-separate-profile-mode =
-    .label = Разрешить одновременный запуск { -brand-short-name } и Firefox
-use-firefox-sync = Совет: При этом используются отдельные профили. Используйте { -sync-brand-short-name(case: "accusative") } для обмена между ними данными.
-get-started-not-logged-in = Войти в { -sync-brand-short-name(case: "accusative") }…
-get-started-configured = Открыть настройки { -sync-brand-short-name(case: "genitive") }
 always-check-default =
     .label = Всегда проверять, является ли { -brand-short-name } вашим браузером по умолчанию
     .accesskey = а
@@ -161,6 +116,9 @@ set-as-my-default-browser =
 startup-restore-previous-session =
     .label = Восстанавливать предыдущую сессию
     .accesskey = о
+startup-restore-windows-and-tabs =
+    .label = Открыть предыдущие окна и вкладки
+    .accesskey = п
 startup-restore-warn-on-quit =
     .label = Предупреждать при выходе из браузера
 disable-extension =
@@ -175,12 +133,20 @@ open-new-link-as-tabs =
 warn-on-close-multiple-tabs =
     .label = Предупреждать при закрытии нескольких вкладок
     .accesskey = д
+confirm-on-close-multiple-tabs =
+    .label = Подтвердить перед закрытием нескольких вкладок
+    .accesskey = е
+# This string is used for the confirm before quitting preference.
+# Variables:
+#   $quitKey (String) - the quit keyboard shortcut, and formatted
+#                       in the same manner as it would appear,
+#                       for example, in the File menu.
+confirm-on-quit-with-key =
+    .label = Подтвердить перед выходом с помощью { $quitKey }
+    .accesskey = м
 warn-on-open-many-tabs =
     .label = Предупреждать, когда открытие нескольких вкладок может замедлить { -brand-short-name }
     .accesskey = р
-switch-links-to-new-tabs =
-    .label = Переключаться на открываемую вкладку
-    .accesskey = к
 switch-to-new-tabs =
     .label = Переключаться на открываемую ссылку, изображение или медиа
     .accesskey = ю
@@ -257,6 +223,7 @@ confirm-browser-language-change-button = Применить и перезапу�
 translate-web-pages =
     .label = Перевод веб-страниц
     .accesskey = и
+fx-translate-web-pages = { -translations-brand-name }
 # The <img> element is replaced by the logo of the provider
 # used to provide machine translations for web pages.
 translate-attribution = Перевод выполняется <img data-l10n-name="logo"/>
@@ -329,10 +296,6 @@ applications-manage-app =
     .label = Сведения о приложении…
 applications-always-ask =
     .label = Всегда спрашивать
-applications-type-pdf = Portable Document Format (PDF)
-# Variables:
-#   $type (String) - the MIME type (e.g application/binary)
-applications-type-pdf-with-type = { applications-type-pdf } ({ $type })
 # Variables:
 #   $type-description (String) - Description of the type (e.g "Portable Document Format")
 #   $type (String) - the MIME type (e.g application/binary)
@@ -399,15 +362,6 @@ update-application-warning-cross-user-setting = Этот параметр при
 update-application-use-service =
     .label = Использовать фоновую службу для установки обновлений
     .accesskey = ф
-update-setting-write-failure-title = Ошибка при сохранении настроек обновления
-# Variables:
-#   $path (String) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message =
-    { -brand-short-name } столкнулся с ошибкой и не смог сохранить это изменение. Обратите внимание, что для установки этой настройки обновления требуется разрешение на запись в файл, указанный ниже. Вы или системный администратор можете исправить эту проблему, если предоставите группе «Пользователи» полный доступ к этому файлу.
-    
-    Не удалось произвести запись в файл: { $path }
 update-setting-write-failure-title2 = Ошибка при сохранении настроек обновления
 # Variables:
 #   $path (String) - Path to the configuration file
@@ -502,7 +456,7 @@ home-restore-defaults =
 # "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Домашняя страница Firefox (по умолчанию)
+    .label = Домашняя страница Waterfox (по умолчанию)
 home-mode-choice-custom =
     .label = Мой URL...
 home-mode-choice-blank =
@@ -524,15 +478,15 @@ choose-bookmark =
     .label = Использовать закладку…
     .accesskey = в
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Домашняя страница Firefox
-home-prefs-content-description = Выберите, какое содержимое вы хотите видеть на домашней странице Firefox.
+home-prefs-content-header = Домашняя страница Waterfox
+home-prefs-content-description = Выберите, какое содержимое вы хотите видеть на домашней странице Waterfox.
 home-prefs-search-header =
     .label = Поиск в Интернете
 home-prefs-topsites-header =
     .label = Топ сайтов
-home-prefs-topsites-description = Сайты, которые вы чаще всего посещаете
+home-prefs-topsites-description = Самые посещаемые сайты
 home-prefs-topsites-by-option-sponsored =
     .label = Топ сайтов спонсоров
 home-prefs-shortcuts-header =
@@ -593,9 +547,9 @@ search-bar-shown =
     .label = Добавить панель поиска на панель инструментов
 search-engine-default-header = Поисковая система по умолчанию
 search-engine-default-desc-2 = Это ваша поисковая система по умолчанию в адресной строке и панели поиска. Вы можете сменить её в любое время.
-search-engine-default-private-desc-2 = Выберите другую поисковую систему по умолчанию для использования только в Приватных окнах
+search-engine-default-private-desc-2 = Выберите другую поисковую систему по умолчанию для использования только в приватных окнах
 search-separate-default-engine =
-    .label = Использовать в Приватных окнах эту поисковую систему
+    .label = Использовать эту поисковую систему в приватных окнах
     .accesskey = п
 search-suggestions-header = Поисковые предложения
 search-suggestions-desc = Выберите, где будут появляться предложения от поисковых систем.
@@ -613,11 +567,9 @@ search-show-suggestions-url-bar-option =
 search-show-suggestions-above-history-option =
     .label = Отображать поисковые предложения перед историей веб-сёрфинга при использовании панели адреса
 search-show-suggestions-private-windows =
-    .label = Отображать поисковые предложения в Приватных окнах
-suggestions-addressbar-settings-generic = Изменить другие настройки предложений в адресной строке
+    .label = Отображать поисковые предложения в приватных окнах
 suggestions-addressbar-settings-generic2 = Изменить другие настройки предложений в адресной строке
 search-suggestions-cant-show = При использовании панели адреса поисковые предложения отображаться не будут, так как вы настроили { -brand-short-name } никогда не запоминать историю.
-search-one-click-header = Поиск одним щелчком
 search-one-click-header2 = Значки поисковых систем
 search-one-click-desc = Выберите альтернативные поисковые системы, которые появятся под панелью адреса и панелью поиска, когда вы начнёте вводить ключевое слово.
 search-choose-engine-column =
@@ -639,17 +591,11 @@ search-find-more-link = Найти другие поисковые систем�
 search-keyword-warning-title = Краткое имя уже используется
 # Variables:
 #   $name (String) - Name of a search engine.
-search-keyword-warning-engine = Вы выбрали краткое имя, которое в данный момент используется «{ $name }». Пожалуйста, выберите другое.
-search-keyword-warning-bookmark = Вы выбрали краткое имя, которое в данный момент используется одной из закладок. Пожалуйста, выберите другое.
+search-keyword-warning-engine = Вы выбрали краткое имя, которое в данный момент используется { $name }. Выберите другое.
+search-keyword-warning-bookmark = Вы выбрали краткое имя, которое в данный момент используется одной из закладок. Выберите другое.
 
 ## Containers Section
 
-containers-back-button =
-    .aria-label =
-        { PLATFORM() ->
-            [windows] Вернуться в настройки
-           *[other] Вернуться в настройки
-        }
 containers-back-button2 =
     .aria-label = Вернуться в настройки
 containers-header = Вкладки в контейнере
@@ -659,21 +605,15 @@ containers-add-button =
 containers-new-tab-check =
     .label = Выбирать контейнер для каждой новой вкладки
     .accesskey = ы
-containers-preferences-button =
-    .label = Настройки
 containers-settings-button =
     .label = Настройки
 containers-remove-button =
     .label = Удалить
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Waterfox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Возьмите свой Интернет с собой
-sync-signedout-description = Синхронизируйте свои закладки, историю, вкладки, пароли, дополнения и настройки на всех ваших устройствах.
-sync-signedout-account-signin2 =
-    .label = Войти в { -sync-brand-short-name(case: "accusative") }…
-    .accesskey = о
 sync-signedout-description2 = Синхронизируйте свои закладки, историю, вкладки, пароли, дополнения и настройки со всеми своими устройствами.
 sync-signedout-account-signin3 =
     .label = Войти в Синхронизацию…
@@ -686,9 +626,9 @@ sync-signedout-account-signin3 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Загрузите Firefox для <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> или <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS,</a> чтобы синхронизироваться со своим мобильным устройством.
+sync-mobile-promo = Загрузите Waterfox для <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> или <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS,</a> чтобы синхронизироваться со своим мобильным устройством.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Изменить фотографию в профиле
@@ -713,10 +653,6 @@ sync-sign-in =
 
 prefs-syncing-on = Синхронизация: ВКЛЮЧЕНА
 prefs-syncing-off = Синхронизация: ОТКЛЮЧЕНА
-prefs-sync-setup =
-    .label = Настроить { -sync-brand-short-name(case: "accusative") }…
-    .accesskey = а
-prefs-sync-offer-setup-label = Синхронизируйте свои закладки, историю, вкладки, пароли, дополнения и настройки на всех ваших устройствах.
 prefs-sync-turn-on-syncing =
     .label = Включить синхронизацию…
     .accesskey = ю
@@ -736,11 +672,6 @@ sync-currently-syncing-logins-passwords = Логины и пароли
 sync-currently-syncing-addresses = Адреса
 sync-currently-syncing-creditcards = Банковские карты
 sync-currently-syncing-addons = Дополнения
-sync-currently-syncing-prefs =
-    { PLATFORM() ->
-        [windows] Настройки
-       *[other] Настройки
-    }
 sync-currently-syncing-settings = Настройки
 sync-change-options =
     .label = Изменить…
@@ -779,16 +710,8 @@ sync-engine-creditcards =
     .accesskey = н
 sync-engine-addons =
     .label = Дополнения
-    .tooltiptext = Расширения и темы для Firefox на компьютере
+    .tooltiptext = Расширения и темы для Waterfox на компьютере
     .accesskey = п
-sync-engine-prefs =
-    .label =
-        { PLATFORM() ->
-            [windows] Настройки
-           *[other] Настройки
-        }
-    .tooltiptext = Изменённые вами настройки: Общие, Приватность и Защита
-    .accesskey = й
 sync-engine-settings =
     .label = Настройки
     .tooltiptext = Изменённые вами общие настройки, настройки приватности и безопасности
@@ -838,9 +761,6 @@ forms-fill-logins-and-passwords =
 forms-saved-logins =
     .label = Сохранённые логины…
     .accesskey = х
-forms-master-pw-use =
-    .label = Использовать мастер-пароль
-    .accesskey = о
 forms-primary-pw-use =
     .label = Использовать мастер-пароль
     .accesskey = о
@@ -851,7 +771,6 @@ forms-primary-pw-learn-more-link = Подробнее
 forms-master-pw-change =
     .label = Сменить мастер-пароль…
     .accesskey = м
-forms-master-pw-fips-title = Вы работаете в режиме соответствия FIPS. При работе в этом режиме необходимо установить мастер-пароль.
 forms-primary-pw-change =
     .label = Сменить мастер-пароль…
     .accesskey = м
@@ -861,20 +780,17 @@ forms-primary-pw-change =
 forms-primary-pw-former-name = { "" }
 forms-primary-pw-fips-title = Вы работаете в режиме соответствия FIPS. При работе в этом режиме необходимо установить мастер-пароль.
 forms-master-pw-fips-desc = Смена пароля не удалась
+forms-windows-sso =
+    .label = Разрешить единый вход Windows для учётных записей Microsoft, учётных записей на работе и в учебных заведениях
+forms-windows-sso-learn-more-link = Подробнее
+forms-windows-sso-desc = Управление аккаунтами в настройках вашего устройства
 
 ## OS Authentication dialog
 
-# This message can be seen by trying to add a Master Password.
-master-password-os-auth-dialog-message-win = Чтобы создать мастер-пароль, введите ваши учётные данные для входа в Windows. Это поможет защитить безопасность ваших аккаунтов.
-# This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
-# and includes subtitle of "Enter password for the user "xxx" to allow this." These
-# notes are only valid for English. Please test in your locale.
-master-password-os-auth-dialog-message-macosx = создать мастер-пароль
 # This message can be seen by trying to add a Primary Password.
 primary-password-os-auth-dialog-message-win = Чтобы создать мастер-пароль, введите ваши учётные данные для входа в Windows. Это поможет защитить безопасность ваших аккаунтов.
 # This message can be seen by trying to add a Primary Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with "Waterfox is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 primary-password-os-auth-dialog-message-macosx = создать мастер-пароль
@@ -886,12 +802,12 @@ history-header = История
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# "Waterfox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
 #   - Simply as "Waterfox", moving the verb into each option.
 #     This will result in "Waterfox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - As a stand-alone message, for example "Waterfox history settings:".
 history-remember-label = { -brand-short-name }
     .accesskey = i
 history-remember-option-all =
@@ -901,10 +817,10 @@ history-remember-option-never =
 history-remember-option-custom =
     .label = будет использовать ваши настройки хранения истории
 history-remember-description = { -brand-short-name } будет помнить историю посещений, загрузок, поиска и сохранять данные форм.
-history-dontremember-description = { -brand-short-name } будет использовать те же настройки, что и при приватном просмотре, и не будет помнить историю вашей работы с веб-сайтами.
+history-dontremember-description = { -brand-short-name } будет использовать те же настройки, что и в приватном режиме, и не будет помнить историю вашей работы с веб-сайтами.
 history-private-browsing-permanent =
-    .label = Всегда работать в режиме приватного просмотра
-    .accesskey = т
+    .label = Всегда работать в приватном режиме
+    .accesskey = и
 history-remember-browser-option =
     .label = Помнить историю посещений и загрузок
     .accesskey = и
@@ -933,7 +849,7 @@ sitedata-learn-more = Подробнее
 sitedata-delete-on-close =
     .label = Удалять куки и данные сайтов при закрытии { -brand-short-name }
     .accesskey = д
-sitedata-delete-on-close-private-browsing = В режиме постоянного приватного просмотра, куки и данные сайтов всегда будут удаляться при закрытии { -brand-short-name }.
+sitedata-delete-on-close-private-browsing = В постоянном приватном режиме куки и данные сайтов всегда будут удаляться при закрытии { -brand-short-name }.
 sitedata-allow-cookies-option =
     .label = Принимать куки и данные сайтов
     .accesskey = и
@@ -966,9 +882,6 @@ sitedata-clear =
 sitedata-settings =
     .label = Управление данными…
     .accesskey = ы
-sitedata-cookies-permissions =
-    .label = Управление разрешениями…
-    .accesskey = п
 sitedata-cookies-exceptions =
     .label = Управление исключениями…
     .accesskey = ю
@@ -1028,7 +941,7 @@ content-blocking-etp-blocking-desc = { -brand-short-name } блокирует с
 content-blocking-private-windows = Отслеживающее содержимое в приватных окнах
 content-blocking-cross-site-cookies-in-all-windows = Межсайтовые куки во всех окнах (включая отслеживающие куки)
 content-blocking-cross-site-tracking-cookies = Межсайтовые отслеживающие куки
-content-blocking-all-cross-site-cookies-private-windows = Межсайтовые куки в Приватных окнах
+content-blocking-all-cross-site-cookies-private-windows = Межсайтовые куки в приватных окнах
 content-blocking-cross-site-tracking-cookies-plus-isolate = Межсайтовые отслеживающие куки, а также изолировать оставшиеся куки
 content-blocking-social-media-trackers = Трекеры социальных сетей
 content-blocking-all-cookies = Все куки
@@ -1113,16 +1026,18 @@ permissions-block-popups =
 permissions-block-popups-exceptions =
     .label = Исключения…
     .accesskey = ю
+# "popup" is a misspelling that is more popular than the correct spelling of
+# "pop-up" so it's included as a search keyword, not displayed in the UI.
+permissions-block-popups-exceptions-button =
+    .label = Исключения…
+    .accesskey = ю
+    .searchkeywords = popup
 permissions-addon-install-warning =
     .label = Предупреждать при попытке веб-сайтов установить дополнения
     .accesskey = е
 permissions-addon-exceptions =
     .label = Исключения…
     .accesskey = с
-permissions-a11y-privacy-checkbox =
-    .label = Запретить службам поддержки доступности доступ к вашему браузеру
-    .accesskey = е
-permissions-a11y-privacy-link = Подробнее
 
 ## Privacy Section - Data Collection
 
@@ -1144,10 +1059,6 @@ addon-recommendations-link = Подробнее
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled = Для этой конфигурации сборки отправка данных отключена
-collection-backlogged-crash-reports =
-    .label = Разрешить { -brand-short-name } отправлять от вашего имени накопившиеся сообщения о падениях
-    .accesskey = ш
-collection-backlogged-crash-reports-link = Подробнее
 collection-backlogged-crash-reports-with-link = Разрешить { -brand-short-name } отправлять от вашего имени накопившиеся сообщения о падениях <a data-l10n-name="crash-reports-link">Подробнее</a>
     .accesskey = ш
 
@@ -1172,13 +1083,6 @@ security-block-uncommon-software =
 ## Privacy Section - Certificates
 
 certs-header = Сертификаты
-certs-personal-label = Когда сервер запрашивает личный сертификат
-certs-select-auto-option =
-    .label = Отправлять автоматически
-    .accesskey = а
-certs-select-ask-option =
-    .label = Спрашивать каждый раз
-    .accesskey = ш
 certs-enable-ocsp =
     .label = Запрашивать у OCSP-серверов подтверждение текущего статуса сертификатов
     .accesskey = п
@@ -1188,29 +1092,6 @@ certs-view =
 certs-devices =
     .label = Устройства защиты…
     .accesskey = т
-space-alert-learn-more-button =
-    .label = Подробнее
-    .accesskey = о
-space-alert-over-5gb-pref-button =
-    .label =
-        { PLATFORM() ->
-            [windows] Открыть настройки
-           *[other] Открыть настройки
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] ы
-           *[other] ы
-        }
-space-alert-over-5gb-message =
-    { PLATFORM() ->
-        [windows] У { -brand-short-name } заканчивается место на диске. Содержимое веб-сайтов может отображаться неправильно. Вы можете удалить сохранённые данные через Настройки > Приватность и Защита > Куки и данные сайтов.
-       *[other] У { -brand-short-name } заканчивается место на диске. Содержимое веб-сайтов может отображаться неправильно. Вы можете удалить сохранённые данные через Настройки > Приватность и Защита > Куки и данные сайтов.
-    }
-space-alert-under-5gb-ok-button =
-    .label = OK, понятно
-    .accesskey = я
-space-alert-under-5gb-message = У { -brand-short-name } заканчивается место на диске. Содержимое веб-сайтов может отображаться неправильно. Щёлкните «Подробнее», чтобы оптимизировать использование вашего диска для улучшения веб-сёрфинга.
 space-alert-over-5gb-settings-button =
     .label = Открыть Настройки
     .accesskey = к

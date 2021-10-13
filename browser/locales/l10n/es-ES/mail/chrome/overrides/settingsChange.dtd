@@ -1,6 +1,0 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-<!ENTITY settingsChangePreferences.label "La configuración puede cambiarse en la pestaña Adjuntos de las preferencias de &brandShortName;.">
-<!ENTITY settingsChangeOptions.label "La configuración puede cambiarse en la pestaña Adjuntos de las opciones de &brandShortName;.">

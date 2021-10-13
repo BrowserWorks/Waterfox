@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -17,7 +17,7 @@ pocket-panel-saved-error-only-links = Chỉ các các liên kết mới có th�
 pocket-panel-saved-error-not-saved = Trang chưa được lưu
 pocket-panel-saved-error-no-internet = Bạn phải kết nối Internet để lưu vào { -pocket-brand-name }. Vui lòng kết nối Internet và thử lại.
 pocket-panel-saved-page-removed = Trang đã bị xóa
-pocket-panel-saved-page-saved = Đã được lưu vào { -pocket-brand-name }
+pocket-panel-saved-page-saved = Đã lưu vào { -pocket-brand-name }
 pocket-panel-saved-processing-remove = Đang xóa trang...
 pocket-panel-saved-processing-tags = Đang thêm các tag...
 pocket-panel-saved-remove-page = Xóa trang

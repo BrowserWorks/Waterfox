@@ -1,6 +1,8 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
 
 <!ENTITY pref.cache.title "Caché">
 <!ENTITY pref.cache.caption "Establecer opciones de caché">
@@ -22,9 +24,11 @@
 <!ENTITY checkEveryTime.label "Cada vez que vea la página">
 <!ENTITY checkNever.label "Nunca">
 <!ENTITY checkAutomatically.label "Cuando la página esté obsoleta">
+
 <!ENTITY prefetchTitle.label "Precarga de enlaces">
 <!ENTITY enablePrefetch.label "Precargar las páginas web mientras está inactivo, para que los enlaces en las páginas web diseñadas para ello se carguen más rápido">
 <!ENTITY enablePrefetch.accesskey "P">
+
 <!ENTITY debugCache.label "Depuración">
 <!ENTITY debugEnableMemCache.label "Activar caché de memoria">
 <!ENTITY debugEnableMemCache.accesskey "E">

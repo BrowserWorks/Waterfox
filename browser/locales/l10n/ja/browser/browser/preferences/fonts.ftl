@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -107,50 +107,6 @@ fonts-minsize-none =
 fonts-allow-own =
     .label = ウェブページが指定したフォントを優先する
     .accesskey = A
-
-## Text Encodings
-##
-## Translate the encoding names as adjectives for an encoding, not as the name
-## of the language.
-
-fonts-languages-fallback-header = 古いウェブページでのテキストエンコーディング
-fonts-languages-fallback-desc = このテキストエンコーディングは、テキストエンコーディングが宣言されていない古いウェブページで使用されます。
-
-fonts-languages-fallback-label = 代替テキストエンコーディング
-    .accesskey = T
-
-fonts-languages-fallback-name-auto =
-    .label = 現在のロケールの既定値
-fonts-languages-fallback-name-arabic =
-    .label = アラビア語
-fonts-languages-fallback-name-baltic =
-    .label = バルト諸語
-fonts-languages-fallback-name-ceiso =
-    .label = 中欧 (ISO)
-fonts-languages-fallback-name-cewindows =
-    .label = 中欧 (Windows)
-fonts-languages-fallback-name-simplified =
-    .label = 簡体字中国語
-fonts-languages-fallback-name-traditional =
-    .label = 繁体字中国語
-fonts-languages-fallback-name-cyrillic =
-    .label = キリル文字
-fonts-languages-fallback-name-greek =
-    .label = ギリシャ語
-fonts-languages-fallback-name-hebrew =
-    .label = ヘブライ語
-fonts-languages-fallback-name-japanese =
-    .label = 日本語
-fonts-languages-fallback-name-korean =
-    .label = 韓国語
-fonts-languages-fallback-name-thai =
-    .label = タイ語
-fonts-languages-fallback-name-turkish =
-    .label = トルコ語
-fonts-languages-fallback-name-vietnamese =
-    .label = ベトナム語
-fonts-languages-fallback-name-other =
-    .label = その他 (西欧含む)
 
 # Variables:
 #   $name {string, "Arial"} - Name of the default font

@@ -1,14 +1,10 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label           "属性">
 
 <!ENTITY generalInfo.label                       "基本信息">
-<!ENTITY folderCharsetFallback2.label            "后备文字编码：">
-<!ENTITY folderCharsetFallback2.accesskey        "E">
-<!ENTITY folderCharsetEnforce2.label             "应用编码到该文件夹中的所有消息（个别消息的文字编码设置和自动检测将被忽略）">
-<!ENTITY folderCharsetEnforce2.accesskey         "A">
 <!ENTITY folderRebuildSummaryFileTip2.label      "重建概要文件索引">
 <!ENTITY folderRebuildSummaryFile2.label         "修复文件夹">
 <!ENTITY folderRebuildSummaryFile2.accesskey     "R">

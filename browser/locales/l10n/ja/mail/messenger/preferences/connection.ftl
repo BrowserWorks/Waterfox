@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -73,11 +73,8 @@ no-proxy-label =
     .value = プロキシーなしで接続:
     .accesskey = n
 no-proxy-example = 例: .mozilla.org, .net.nz, 192.168.1.0/24
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = localhost, 127.0.0.1 および ::1 への接続はプロキシーが使用されません。
 # Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
 connection-proxy-noproxy-localhost-desc-2 = localhost、127.0.0.1/8 および ::1 への接続はプロキシーが使用されません。
-
 proxy-password-prompt =
     .label = パスワードを保存してある場合は認証を確認しない
     .accesskey = i

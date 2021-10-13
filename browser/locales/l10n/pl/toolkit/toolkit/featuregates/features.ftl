@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,6 +7,11 @@
 experimental-features-css-masonry2 =
     .label = CSS: układ typu „Masonry”
 experimental-features-css-masonry-description = Włącza obsługę eksperymentalnego układu CSS typu „Masonry”. Ta <a data-l10n-name="explainer">strona</a> zawiera jego ogólny opis. W <a data-l10n-name="w3c-issue">tym zgłoszeniu w serwisie GitHub</a> lub <a data-l10n-name="bug">tym błędzie</a> można dodać komentarz na jego temat.
+# The title of the experiment should be kept in English as it may be referenced
+# by various online articles and is technical in nature.
+experimental-features-css-cascade-layers =
+    .label = CSS: warstwy kaskadowe
+experimental-features-css-cascade-layers-description = Włącza obsługę kaskadowych warstw CSS. <a data-l10n-name="spec">Specyfikacja robocza</a> zawiera więcej informacji. Błędy związane z tą funkcją powinny być zgłaszane blokując <a data-l10n-name="bugzilla">błąd 1699215</a>.
 # The title of the experiment should be kept in English as it may be referenced
 # by various online articles and is technical in nature.
 experimental-features-web-gpu2 =
@@ -85,9 +90,6 @@ experimental-features-fission-description = Fission (izolacja witryn) to ekspery
 experimental-features-multi-pip =
     .label = Obsługa wielu okien „Obraz w obrazie”
 experimental-features-multi-pip-description = Eksperymentalna obsługa otwierania wielu okien „Obraz w obrazie” jednocześnie.
-experimental-features-http3 =
-    .label = Protokół HTTP/3
-experimental-features-http3-description = Eksperymentalna obsługa protokołu HTTP/3.
 # Search during IME
 experimental-features-ime-search =
     .label = Pasek adresu: wyświetlanie wyników podczas edycji IME

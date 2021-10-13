@@ -1,20 +1,24 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 fonts-window-close =
     .key = w
+
 # Variables:
 #   $name {string, "Arial"} - Name of the default font
 fonts-label-default =
     .label = Numatytasis ({ $name })
 fonts-label-default-unnamed =
     .label = Numatytasis
+
 fonts-encoding-dialog-title =
     .title = Šriftai ir koduotės
+
 fonts-language-legend =
     .value = Kalbų grupė:
     .accesskey = K
+
 fonts-proportional-label =
     .value = Įvairiaplotis:
     .accesskey = v
@@ -85,38 +89,45 @@ font-language-group-tibetan =
 
 default-font-serif =
     .label = Su užraitais
+
 default-font-sans-serif =
     .label = Be užraitų
-font-size-label =
-    .value = Dydis:
-    .accesskey = D
+
 font-size-proportional-label =
     .value = Dydis:
     .accesskey = d
+
 font-size-monospace-label =
     .value = Dydis:
     .accesskey = y
+
 font-serif-label =
     .value = Su užraitais:
     .accesskey = u
+
 font-sans-serif-label =
     .value = Be užraitų:
     .accesskey = B
+
 font-monospace-label =
     .value = Lygiaplotis:
     .accesskey = L
+
 font-min-size-label =
     .value = Minimalus šrifto dydis:
     .accesskey = M
+
 min-size-none =
     .label = Nenurodytas
 
 ## Fonts in message
 
 font-control-legend = Šriftų valdymas
+
 use-document-fonts-checkbox =
     .label = Leisti laiškuose naudoti kitus šriftus
     .accesskey = k
+
 use-fixed-width-plain-checkbox =
     .label = Grynojo teksto laiškus rodyti lygiapločiu šriftu
     .accesskey = G
@@ -124,13 +135,17 @@ use-fixed-width-plain-checkbox =
 ## Language settings
 
 text-encoding-legend = Simbolių koduotė
+
 text-encoding-description = Laiškų rašymo ir skaitymo numatytosios koduotės
+
 font-outgoing-email-label =
     .value = Laiškų rašymo:
     .accesskey = r
+
 font-incoming-email-label =
     .value = Laiškų skaitymo:
     .accesskey = s
+
 default-font-reply-checkbox =
     .label = Kai galima, numatytąją koduotę naudoti ir atsakant į laiškus
     .accesskey = n

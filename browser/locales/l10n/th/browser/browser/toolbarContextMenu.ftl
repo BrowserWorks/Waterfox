@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -20,13 +20,6 @@ toolbar-context-menu-bookmark-selected-tabs =
 toolbar-context-menu-select-all-tabs =
     .label = เลือกแท็บทั้งหมด
     .accesskey = ล
-toolbar-context-menu-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] เรียกคืนแท็บที่เพิ่งปิด
-           *[other] เรียกคืนแท็บที่เพิ่งปิด
-        }
-    .accesskey = ร
 toolbar-context-menu-reopen-closed-tabs =
     .label =
         { $tabCount ->
@@ -41,7 +34,7 @@ toolbar-context-menu-remove-extension =
     .label = เอาส่วนขยายออก
     .accesskey = อ
 # This label is used in the extensions toolbar buttons context menus,
-# a user can use this command to submit to Mozilla an abuse report
+# a user can use this command to submit to Waterfox an abuse report
 # related to that extension. "Report" is a verb.
 toolbar-context-menu-report-extension =
     .label = รายงานส่วนขยาย
@@ -52,9 +45,6 @@ toolbar-context-menu-report-extension =
 toolbar-context-menu-pin-to-overflow-menu =
     .label = ปักหมุดไปยังเมนูล้น
     .accesskey = ป
-toolbar-context-menu-auto-hide-downloads-button =
-    .label = ซ่อนอัตโนมัติในแถบเครื่องมือ
-    .accesskey = ซ
 toolbar-context-menu-auto-hide-downloads-button-2 =
     .label = ซ่อนปุ่มเมื่อว่างเปล่า
     .accesskey = ซ
@@ -79,3 +69,6 @@ toolbar-context-menu-bookmarks-toolbar-on-new-tab-2 =
 toolbar-context-menu-bookmarks-show-other-bookmarks =
     .label = แสดงที่คั่นหน้าอื่น ๆ
     .accesskey = h
+toolbar-context-menu-menu-bar-cmd =
+    .toolbarname = แถบเมนู
+    .accesskey = ถ

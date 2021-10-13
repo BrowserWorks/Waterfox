@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -23,6 +23,13 @@ connection-dialog-window =
         }
 connection-disable-extension =
     .label = Wyłącz rozszerzenie
+disable-extension-button = Wyłącz rozszerzenie
+# Variables:
+#   $name (String) - The extension that is controlling the proxy settings.
+#
+# The extension-icon is the extension's icon, or a fallback image. It should be
+# purely decoration for the actual extension name, with alt="".
+proxy-settings-controlled-by-extension = Rozszerzenie „{ $name }” <img data-l10n-name="extension-icon" alt="" /> kontroluje, jak { -brand-short-name } łączy się z Internetem.
 connection-proxy-legend = Konfiguracja serwerów proxy do połączenia z Internetem
 proxy-type-no =
     .label = Bez serwera proxy
@@ -73,8 +80,6 @@ no-proxy-label =
     .value = Nie używaj proxy dla:
     .accesskey = N
 no-proxy-example = Przykład: .mozilla.org, .com.pl, 192.168.1.0/24
-# Note: Do not translate localhost, 127.0.0.1 and ::1.
-no-proxy-localhost-label = Połączania z localhost, 127.0.0.1 i ::1 nigdy nie używają serwera proxy.
 # Do not translate "localhost", "127.0.0.1/8" and "::1". (You can translate "and".)
 connection-proxy-noproxy-localhost-desc-2 = Połączania z localhost, 127.0.0.1/8 i ::1 nigdy nie używają serwera proxy.
 proxy-password-prompt =

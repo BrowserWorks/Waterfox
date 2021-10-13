@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -35,7 +35,9 @@ perftools-range-interval-milliseconds = { NUMBER($interval, maxFractionalUnits: 
 
 # The size of the memory buffer used to store things in the profiler.
 perftools-range-entries-label = Tamanho do buffer:
+
 perftools-custom-threads-label = Adicionar threads personalizados por nome:
+
 perftools-devtools-interval-label = Intervalo:
 perftools-devtools-threads-label = Threads:
 perftools-devtools-settings-label = Configurações
@@ -88,12 +90,14 @@ perftools-thread-img-decoder =
     .title = Threads de decodificação de imagens
 perftools-thread-dns-resolver =
     .title = A resolução de DNS acontece neste thread
-perftools-thread-js-helper =
-    .title = Trabalho em segundo plano do mecanismo JavaScript, como compilações fora do thread principal
+
+perftools-thread-task-controller =
+    .title = Threads do conjunto de threads do TaskController
 
 ##
 
 perftools-record-all-registered-threads = Ignorar as seleções acima e gravar todos os threads registrados
+
 perftools-tools-threads-input-label =
     .title = Esses nomes de thread ficam numa lista separada por vírgulas, usada para ativar a gravação de profiles dos threads no profiler. O nome precisa ser apenas uma correspondência parcial do nome do thread a ser incluído. É sensível a espaços em branco.
 
@@ -101,9 +105,10 @@ perftools-tools-threads-input-label =
 ## both devtools.performance.new-panel-onboarding & devtools.performance.new-panel-enabled
 ## preferences are true.
 
--profiler-brand-name = Profiler do Firefox
 perftools-onboarding-message = <b>Novo</b>: Agora o { -profiler-brand-name } é integrado nas ferramentas de desenvolvimento. <a>Saiba mais</a> sobre esta nova ferramenta poderosa.
+
 # `options-context-advanced-settings` is defined in toolbox-options.ftl
 perftools-onboarding-reenable-old-panel = (por um tempo limitado, você pode acessar o painel Desempenho original via <a>{ options-context-advanced-settings }</a>)
+
 perftools-onboarding-close-button =
     .aria-label = Fechar a mensagem de integração

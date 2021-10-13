@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,7 +7,6 @@ synced-tabs-sidebar-noclients-subtitle = Chcete zde vidět své panely z ostatn�
 synced-tabs-sidebar-intro = Seznam panelů z ostatních zařízení
 synced-tabs-sidebar-unverified = Je potřeba ověřit váš účet.
 synced-tabs-sidebar-notabs = Žádné otevřené panely
-synced-tabs-sidebar-openprefs = Otevřít předvolby { -sync-brand-short-name(case: "gen") }
 synced-tabs-sidebar-open-settings = Otevřít nastavení synchronizace
 synced-tabs-sidebar-tabsnotsyncing = Zapněte synchronizaci panelů pro zobrazení seznamu panelů z vašich ostatních zařízení.
 synced-tabs-sidebar-connect-another-device = Připojit další zařízení
@@ -40,7 +39,5 @@ synced-tabs-context-manage-devices =
 synced-tabs-context-sync-now =
     .label = Synchronizovat
     .accesskey = S
-fxa-sign-in = Přihlášení k { -sync-brand-short-name(case: "dat") }
-turn-on-sync = Zapnout { -sync-brand-short-name(case: "acc") }
 synced-tabs-fxa-sign-in = Přihlásit se k synchronizaci
 synced-tabs-turn-on-sync = Zapnout synchronizaci

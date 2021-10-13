@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -12,16 +12,11 @@
 <!ENTITY newMenu.label			"新規作成">
 <!ENTITY newMenu.accesskey		"N">
 <!ENTITY newMessage.label		"メッセージ">
-<!ENTITY newMessage.key			"M">
 <!ENTITY newMessageCmd2.key		"N">
-<!ENTITY newMessage.accesskey		"M">
 <!ENTITY newContact.label		"連絡先...">
 <!ENTITY newContact.accesskey		"C">
 <!ENTITY attachMenu.label		"添付">
 <!ENTITY attachMenu.accesskey		"h">
-<!ENTITY attachFileCmd.label		"ファイル...">
-<!ENTITY attachFileCmd.accesskey	"F">
-<!ENTITY attachFileCmd.key		"A">
 <!ENTITY attachCloudCmd.label		"Filelink">
 <!ENTITY attachCloudCmd.accesskey	"i">
 <!ENTITY attachPageCmd.label		"ウェブページ...">
@@ -51,10 +46,6 @@
 <!ENTITY sendLaterCmd.label		"後で送信">
 <!ENTITY sendLaterCmd.keycode		"VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey		"L">
-<!ENTITY printSetupCmd.label		"ページ設定...">
-<!ENTITY printSetupCmd.accesskey	"u">
-<!ENTITY printPreviewCmd.label		"印刷プレビュー">
-<!ENTITY printPreviewCmd.accesskey	"v">
 <!ENTITY printCmd.label			"印刷...">
 <!ENTITY printCmd.key			"P">
 <!ENTITY printCmd.accesskey		"P">
@@ -83,8 +74,6 @@
 <!ENTITY reorderAttachmentsCmd.label	"添付ファイルを並べ替え...">
 <!ENTITY reorderAttachmentsCmd.accesskey	"s">
 <!ENTITY reorderAttachmentsCmd.key	"x">
-<!ENTITY toggleAttachmentPaneCmd.label	"添付ペイン">
-<!ENTITY toggleAttachmentPaneCmd.accesskey	"m">
 <!ENTITY selectAllCmd.accesskey		"a">
 <!ENTITY findBarCmd.label		"検索...">
 <!ENTITY findBarCmd.accesskey		"F">
@@ -103,11 +92,7 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label			"添付ファイルの並べ替え">
-<!ENTITY moveAttachmentTopPanelBtn.label		"最上部へ移動">
-<!ENTITY moveAttachmentUpPanelBtn.label			"上へ移動">
 <!ENTITY moveAttachmentBundleUpPanelBtn.label		"一緒に移動">
-<!ENTITY moveAttachmentDownPanelBtn.label		"下へ移動">
-<!ENTITY moveAttachmentBottomPanelBtn.label		"最下部へ移動">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
@@ -205,10 +190,6 @@
 <!ENTITY accountManagerCmd2.label	"アカウント設定">
 <!ENTITY accountManagerCmd2.accesskey	"S">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label		"オプション">
-<!ENTITY preferencesCmd2.accesskey	"O">
-<!ENTITY preferencesCmdUnix.label	"設定">
-<!ENTITY preferencesCmdUnix.accesskey	"n">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key		"m">
@@ -221,7 +202,6 @@
 <!ENTITY sendButton.label		"送信">
 <!ENTITY quoteButton.label		"引用">
 <!ENTITY addressButton.label		"アドレス"><!-- (^^; Contacts -->
-<!ENTITY attachButton.label		"添付">
 <!ENTITY spellingButton.label		"スペル">
 <!ENTITY saveButton.label		"保存">
 <!ENTITY printButton.label		"印刷">
@@ -231,7 +211,6 @@
 <!ENTITY sendlaterButton.tooltip	"このメッセージを後で送信します">
 <!ENTITY quoteButton.tooltip		"前のメッセージを引用します">
 <!ENTITY addressButton.tooltip		"アドレス帳から宛先を選択します">
-<!ENTITY attachButton.tooltip2		"ファイルを添付します">
 <!ENTITY spellingButton.tooltip		"選択したテキストまたはメッセージ全体のスペルチェックをします">
 <!ENTITY saveButton.tooltip		"このメッセージを保存します">
 <!ENTITY cutButton.tooltip		"切り取り">
@@ -246,9 +225,6 @@
 <!ENTITY extraRecipients.tooltip	"他の種類の宛先入力">
 <!ENTITY fromAddr2.label		"差出人">
 <!ENTITY fromAddr.accesskey		"r">
-<!ENTITY toAddr2.label			"宛先">
-<!ENTITY ccAddr2.label			"Cc">
-<!ENTITY bccAddr2.label			"Bcc">
 <!ENTITY replyAddr2.label		"Reply-To">
 <!ENTITY newsgroupsAddr2.label		"Newsgroup">
 <!ENTITY followupAddr2.label		"Followup-To">
@@ -307,8 +283,6 @@
 <!ENTITY removeAllAttachments.accesskey	"v">
 <!ENTITY selectAll.label		"すべて選択">
 <!ENTITY selectAll.accesskey		"A">
-<!ENTITY attachFile.label		"ファイルを添付...">
-<!ENTITY attachFile.accesskey		"F">
 <!ENTITY attachCloud.label		"Filelink...">
 <!ENTITY attachCloud.accesskey		"i">
 <!ENTITY convertCloud.label		"添付転換...">

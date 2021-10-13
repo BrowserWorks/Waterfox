@@ -1,11 +1,11 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 rights-title = 關於您的權利
 rights-intro = { -brand-full-name } 是一套自由且開放原始碼的軟體，由來自世界各地數千位成員組成的社群所打造。有一些您應該知道的事：
-rights-intro-point-1 = { -brand-short-name } 是依照 <a data-l10n-name="mozilla-public-license-link">Mozilla 公眾授權條款</a>中的條件所提供給您的。這表示您可以使用、複製，或散布 { -brand-short-name } 給其他人。歡迎您自行修改 { -brand-short-name } 的原始碼以滿足您的需求；Mozilla 公眾授權條款也同時賦予您散佈修改版本的權利。
-rights-intro-point-2 = 您並未被授權使用 Mozilla 基金會或任何相關部門的商標，包含但不限於 Thunderbird 的名稱或圖示。您可以在<a data-l10n-name="mozilla-trademarks-link">這裡</a>找到更多關於商標的使用條款。
+rights-intro-point-1 = { -brand-short-name } 是依照 <a data-l10n-name="mozilla-public-license-link">Waterfox 公眾授權條款</a>中的條件所提供給您的。這表示您可以使用、複製，或散布 { -brand-short-name } 給其他人。歡迎您自行修改 { -brand-short-name } 的原始碼以滿足您的需求；Waterfox 公眾授權條款也同時賦予您散佈修改版本的權利。
+rights-intro-point-2 = 您並未被授權使用 Waterfox 基金會或任何相關部門的商標，包含但不限於 Thunderbird 的名稱或圖示。您可以在<a data-l10n-name="mozilla-trademarks-link">這裡</a>找到更多關於商標的使用條款。
 rights-intro-point-3 = { -brand-short-name } 當中的一些功能，像是程式錯誤回報員，將會讓您可以選擇是否要送出回饋給 { -vendor-short-name }。在送出回饋時，您必須授權 { -vendor-short-name } 使用您所送出的回饋內容以改善其產品、發布回饋內容於其網站，並散佈這些使用者回饋。
 rights-intro-point-4 = 關於我們如何使用您透過 { -brand-short-name } 送出給 { -vendor-short-name } 的個人資訊的方法位於 <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name } 隱私權保護政策</a>。
 rights-intro-point-4-unbranded = 適用此產品的隱私權保護政策應在此處列出。

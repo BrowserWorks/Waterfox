@@ -1,14 +1,20 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
 <!ENTITY menu_securityEncryptRequire.label "Cifrar este mensaje">
 <!ENTITY menu_securityEncryptRequire.accesskey "E">
+
 <!ENTITY menu_securitySign.label "Firmar digitalmente este mensaje">
 <!ENTITY menu_securitySign.accesskey "F">
+
 <!ENTITY menu_securityStatus.label "Ver información de seguridad">
 <!ENTITY menu_securityStatus.accesskey "I">
+
 <!ENTITY securityButton.label "Seguridad">
 <!ENTITY securityButton.tooltip "Ver o cambiar la configuración de seguridad">
+
 <!ENTITY menu_viewSecurityStatus.label "Información de seguridad del mensaje">
 <!ENTITY menu_viewSecurityStatus.accesskey "I">

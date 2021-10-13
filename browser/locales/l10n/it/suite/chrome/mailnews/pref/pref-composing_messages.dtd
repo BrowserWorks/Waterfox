@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -9,6 +9,7 @@
 <!ENTITY inline.accesskey "I">
 <!ENTITY asAttachment.label "Come allegato">
 <!ENTITY asAttachment.accesskey "a">
+
 <!ENTITY replyQuoteInline.label "Cita gli allegati in linea nelle risposte">
 <!ENTITY replyQuoteInline.accesskey "e">
 <!ENTITY warnOnSendAccelKey.label "Chiedi conferma quando si spedisce usando la scorciatoia da tastiera">
@@ -19,6 +20,7 @@
 <!ENTITY wrapOutMsg.label "Manda a capo i messaggi di testo a">
 <!ENTITY wrapOutMsg.accesskey "M">
 <!ENTITY char.label "caratteri">
+
 <!ENTITY defaultMessagesHeader.label "Impostazioni predefinite messaggi HTML">
 <!ENTITY font.label "Carattere:">
 <!ENTITY font.accesskey "r">
@@ -33,6 +35,7 @@
 <!ENTITY defaultBodyText.accesskey "o">
 <!ENTITY defaultParagraph.label "Paragrafo (il tasto invio crea un nuovo paragrafo)">
 <!ENTITY defaultParagraph.accesskey "P">
+
 <!ENTITY selectHeaderType.label "Selezionare il tipo di intestazione di risposta:">
 <!ENTITY selectHeaderType.accesskey "e">
 <!ENTITY noReplyOption.label "Nessuna intestazione di risposta">

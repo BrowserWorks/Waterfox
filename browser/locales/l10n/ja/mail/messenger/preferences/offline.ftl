@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -7,13 +7,12 @@ offline-dialog-window =
 autodetect-online-label =
     .label = 検出された状態に自動的に従う
     .accesskey = d
-startup-label = 起動時の状態を手動で設定する:
 offline-preference-startup-label = 起動時の状態を手動で設定する:
 status-radio-remember =
-    .label = 前回終了時と同じ
+    .label = 前回終了時の状態を記憶する
     .accesskey = R
 status-radio-ask =
-    .label = 確認する
+    .label = オンライン状態を確認する
     .accesskey = k
 status-radio-always-online =
     .label = オンライン

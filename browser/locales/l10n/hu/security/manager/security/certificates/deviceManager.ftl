@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -115,8 +115,6 @@ devinfo-label =
 
 devinfo-serialnum =
     .label = Sorozatszám
-
-fips-nonempty-password-required = A FIPS-módhoz szükséges, hogy minden adatvédelmi eszközhöz legyen mesterjelszó beállítva. Állítsa be a jelszót a FIPS-mód engedélyezése előtt.
 
 fips-nonempty-primary-password-required = A FIPS-módhoz szükséges, hogy minden adatvédelmi eszközhöz legyen elsődleges jelszó beállítva. Állítsa be a jelszót a FIPS-mód engedélyezése előtt.
 unable-to-toggle-fips = Nem sikerült módosítani a biztonsági eszköz FIPS-módját. Javasoljuk, hogy lépjen ki az alkalmazásból, és indítsa újra.

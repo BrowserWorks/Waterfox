@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -51,9 +51,6 @@ bookmark-selected-tabs =
 bookmark-tab =
     .label = Bladwijzer voor tabblad maken
     .accesskey = t
-reopen-in-container =
-    .label = Opnieuw openen in Container
-    .accesskey = C
 tab-context-open-in-new-container-tab =
     .label = Openen in nieuw containertabblad
     .accesskey = e
@@ -69,26 +66,6 @@ move-to-new-window =
 tab-context-close-multiple-tabs =
     .label = Meerdere tabbladen sluiten
     .accesskey = M
-tab-context-undo-close-tabs =
-    .label =
-        { $tabCount ->
-            [1] Tabblad sluiten ongedaan maken
-            [one] Tabblad sluiten ongedaan maken
-           *[other] Tabbladen sluiten ongedaan maken
-        }
-    .accesskey = o
-close-tab =
-    .label = Tabblad sluiten
-    .accesskey = s
-close-tabs =
-    .label = Tabbladen sluiten
-    .accesskey = s
-move-tabs =
-    .label = Tabbladen verplaatsen
-    .accesskey = l
-move-tab =
-    .label = Tabblad verplaatsen
-    .accesskey = l
 tab-context-share-url =
     .label = Delen
     .accesskey = e
@@ -114,6 +91,14 @@ tab-context-close-tabs =
            *[other] Tabbladen sluiten
         }
     .accesskey = T
+tab-context-close-n-tabs =
+    .label =
+        { $tabCount ->
+            [1] Tabblad sluiten
+            [one] { $tabCount } tabblad sluiten
+           *[other] { $tabCount } tabbladen sluiten
+        }
+    .accesskey = s
 tab-context-move-tabs =
     .label =
         { $tabCount ->
@@ -122,3 +107,11 @@ tab-context-move-tabs =
            *[other] Tabbladen verplaatsen
         }
     .accesskey = v
+
+tab-context-send-tabs-to-device =
+    .label =
+        { $tabCount ->
+            [one] Tabblad naar apparaat verzenden
+           *[other] { $tabCount } tabbladen naar apparaat verzenden
+        }
+    .accesskey = z

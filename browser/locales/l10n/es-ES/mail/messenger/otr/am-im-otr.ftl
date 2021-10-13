@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -15,15 +15,10 @@ view-fingerprint-button =
 otr-settings-title = Ajustes OTR
 otr-log =
     .label = Incluir mensajes cifrados OTR en los registros de conversaciones
-otr-requireEncryption =
-    .label = Requerir cifrado extremo-a-extremo para conversaciones uno-a-uno
+
 otr-require-encryption-info =
     Al requerir cifrado de extremo a extremo, los mensajes en conversaciones
     uno a uno no se enviarán a menos que puedan ser cifrados. Los mensajes
     recibidos no cifrados no se mostrarán como parte de la conversación normal
     ni tampoco serán registrados.
-otr-verifyNudge =
-    .label = Recordarme siempre verificar los contactos no verificados
-
-otr-notYetAvailable = aún no disponible
 

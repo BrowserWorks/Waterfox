@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -89,10 +89,6 @@
 <!ENTITY printCmd.label "Печать…">
 <!ENTITY printCmd.accesskey "е">
 <!ENTITY printCmd.key "p">
-<!ENTITY printPreviewCmd.label "Предварительный просмотр">
-<!ENTITY printPreviewCmd.accesskey "д">
-<!ENTITY printSetupCmd.label "Параметры страницы…">
-<!ENTITY printSetupCmd.accesskey "а">
 
 <!-- Edit Menu -->
 <!ENTITY deleteMsgCmd.label "Удалить сообщение">
@@ -172,8 +168,6 @@
 <!ENTITY recentFolders.accesskey "о">
 <!ENTITY compactVersion.label "Компактный вид">
 <!ENTITY compactVersion.accesskey "о">
-<!ENTITY folderPaneBar.label "Панель вида папок">
-<!ENTITY folderPaneBar.accesskey "а">
 
 <!-- Sort Menu -->
 <!ENTITY sortMenu.label "Сортировка">
@@ -468,12 +462,6 @@
 <!ENTITY addressBookCmd.label "Адресная книга">
 <!ENTITY addressBookCmd.accesskey "А">
 <!ENTITY addressBookCmd.key "B">
-<!ENTITY addons.label "Дополнения">
-<!ENTITY addons.accesskey "Д">
-<!ENTITY addonPrefs.label "Настройки дополнений">
-<!ENTITY addonPrefs.accesskey "а">
-<!ENTITY addonPrefsUnix.label "Настройки дополнений">
-<!ENTITY addonPrefsUnix.accesskey "а">
 <!ENTITY addonNoPrefs.label "Настройки дополнений не найдены.">
 <!ENTITY activitymanager.label "Диспетчер работы">
 <!ENTITY activitymanager.accesskey "и">
@@ -502,6 +490,8 @@
 <!ENTITY deleteJunk.accesskey "д">
 <!ENTITY importCmd.label "Импорт…">
 <!ENTITY importCmd.accesskey "И">
+<!ENTITY exportCmd.label "Экспорт…">
+<!ENTITY exportCmd.accesskey "к">
 <!ENTITY clearRecentHistory.label "Стереть недавнюю историю…">
 <!ENTITY clearRecentHistory.accesskey "т">
 <!ENTITY accountManagerCmd2.label "Параметры учётной записи">
@@ -520,8 +510,6 @@
 <!ENTITY devToolboxCmd.commandkey "i">
 <!ENTITY debugAddonsCmd.label "Отладка дополнений">
 <!ENTITY debugAddonsCmd.accesskey "л">
-<!ENTITY tabsDebugCmd.label "Отладчик фрейма содержимого">
-<!ENTITY tabsDebugCmd.accesskey "и">
 <!ENTITY errorConsoleCmd.label "Консоль ошибок">
 <!ENTITY errorConsoleCmd.accesskey "н">
 <!ENTITY errorConsoleCmd.commandkey "j">
@@ -545,15 +533,11 @@
 <!ENTITY backButton1.label "Назад">
 <!ENTITY goForwardButton1.label "Вперёд">
 <!ENTITY deleteItem.title "Удалить">
-<!ENTITY deleteButton.label "Удалить">
-<!ENTITY undeleteButton.label "Восстановить">
 <!ENTITY markButton.label "Отметить">
 <!ENTITY printButton.label "Печать">
 <!ENTITY stopButton.label "Остановить">
 <!ENTITY throbberItem.title "Индикатор активности">
 <!ENTITY junkItem.title "Спам">
-<!ENTITY junkButton.label "Спам">
-<!ENTITY notJunkButton.label "Не спам">
 <!ENTITY addressBookButton.label "Адресная книга">
 <!ENTITY chatButton.label "Чат">
 <!ENTITY glodaSearch.title "Глобальный поиск">
@@ -585,19 +569,14 @@
 <!ENTITY previousMsgButton.tooltip "Перейти к предыдущему сообщению">
 <!ENTITY goForwardButton.tooltip "Перейти к следующему сообщению">
 <!ENTITY goBackButton.tooltip "Перейти к предыдущему сообщению">
-<!ENTITY deleteButton.tooltip "Удалить выбранное сообщение или папку">
-<!ENTITY undeleteButton.tooltip "Восстановить выбранное сообщение">
 <!ENTITY markButton.tooltip "Отметить сообщения">
 <!ENTITY printButton.tooltip "Распечатать это сообщение">
 <!ENTITY stopButton.tooltip "Остановить текущую передачу данных">
-<!ENTITY junkButton.tooltip "Отметить выбранные сообщения как спам">
-<!ENTITY notJunkButton.tooltip "Отметить выбранные сообщение как не спам">
 <!ENTITY addressBookButton.tooltip "Открыть адресную книгу">
 <!ENTITY chatButton.tooltip "Показать вкладку чата">
 <!ENTITY tagButton.tooltip "Присвоить сообщению метку">
 <!ENTITY compactButton.tooltip "Убрать удалённые сообщения из выбранной папки">
 <!ENTITY appmenuButton1.tooltip "Открыть меню &brandShortName;">
-<!ENTITY addonsButton.tooltip "Управление вашими дополнениями">
 
 <!-- Toolbar Button Popup -->
 <!ENTITY buttonMenuForwardAsInline.label "Переслать внутри сообщения">

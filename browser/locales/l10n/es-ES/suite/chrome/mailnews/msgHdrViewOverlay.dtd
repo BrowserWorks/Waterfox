@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -7,11 +7,13 @@
 <!ENTITY senderField.label "Remitente: ">
 <!ENTITY organizationField.label "Organización: ">
 <!ENTITY replyToField.label "Responder a: ">
+
 <!ENTITY subjectField.label "Asunto: ">
 <!ENTITY ccField.label "Cc: ">
 <!ENTITY bccField.label "Bcc: ">
 <!ENTITY newsgroupsField.label "Grupos de noticias: ">
 <!ENTITY followupToField.label "Redireccionar a: ">
+
 <!ENTITY tagsHdr.label "Etiquetas: ">
 <!ENTITY dateField.label "Fecha: ">
 <!ENTITY userAgentField.label "Agente de usuario: ">
@@ -19,8 +21,10 @@
 <!ENTITY messageIdField.label "Message-ID: ">
 <!ENTITY inReplyToField.label "In-Reply-To: ">
 <!ENTITY originalWebsite.label "Sitio web: ">
+
 <!ENTITY editMessage.label "Editar borrador…">
 <!ENTITY editMessage.accesskey "D">
+
 <!ENTITY attachmentsTree.label "Adjuntos:">
 <!ENTITY attachmentsTree.accesskey "d">
 <!ENTITY openAttachmentCmd.label "Abrir">

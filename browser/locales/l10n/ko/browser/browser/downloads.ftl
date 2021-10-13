@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,11 @@ downloads-panel =
 # in-progress and blocked downloads.
 downloads-panel-list =
     .style = width: 70ch
+# The style attribute has the width of the Downloads Panel expressed using
+# a CSS unit. The longest labels that should fit are usually those of
+# in-progress and blocked downloads.
+downloads-panel-items =
+    .style = width: 35em
 downloads-cmd-pause =
     .label = 일시 중지
     .accesskey = P
@@ -30,7 +35,7 @@ downloads-cmd-cancel-panel =
     .aria-label = 취소
 # This message is only displayed on Windows and Linux devices
 downloads-cmd-show-menuitem =
-    .label = 폴더 열기
+    .label = 상위 폴더 열기
     .accesskey = F
 # This message is only displayed on macOS devices
 downloads-cmd-show-menuitem-mac =
@@ -46,19 +51,19 @@ downloads-cmd-show-button =
     .tooltiptext =
         { PLATFORM() ->
             [macos] Finder에서 보기
-           *[other] 폴더 열기
+           *[other] 상위 폴더 열기
         }
 downloads-cmd-show-panel =
     .aria-label =
         { PLATFORM() ->
             [macos] Finder에서 보기
-           *[other] 폴더 열기
+           *[other] 상위 폴더 열기
         }
 downloads-cmd-show-description =
     .value =
         { PLATFORM() ->
             [macos] Finder에서 보기
-           *[other] 폴더 열기
+           *[other] 상위 폴더 열기
         }
 downloads-cmd-show-downloads =
     .label = 다운로드 폴더 보기
@@ -76,7 +81,7 @@ downloads-cmd-remove-from-history =
     .label = 기록에서 삭제
     .accesskey = e
 downloads-cmd-clear-list =
-    .label = 미리보기 패널 지우기
+    .label = 미리보기 패널 정리
     .accesskey = a
 downloads-cmd-clear-downloads =
     .label = 다운로드 정리
@@ -107,11 +112,28 @@ downloads-cmd-choose-open-panel =
 # Displayed when hovering a blocked download, indicates that it's possible to
 # show more information for user to take the next action.
 downloads-show-more-information =
-    .value = 정보 더 보기
+    .value = 자세히 보기
 # Displayed when hovering a complete download, indicates that it's possible to
 # open the file using an app available in the system.
 downloads-open-file =
     .value = 파일 열기
+
+## Displayed when the user clicked on a download in process. Indicates that the
+## downloading file will be opened after certain amount of time using an app
+## available in the system.
+## Variables:
+##   $hours (number) - Amount of hours left till the file opens.
+##   $seconds (number) - Amount of seconds left till the file opens.
+##   $minutes (number) - Amount of minutes till the file opens.
+
+downloading-file-opens-in-hours-and-minutes = { $hours }시간 { $minutes }분 후 열림…
+downloading-file-opens-in-minutes = { $minutes }분 후 열림…
+downloading-file-opens-in-minutes-and-seconds = { $minutes }분 { $seconds }초 후 열림…
+downloading-file-opens-in-seconds = { $seconds }초 후 열림…
+downloading-file-opens-in-some-time = 완료 후 열림…
+
+##
+
 # Displayed when hovering a download which is able to be retried by users,
 # indicates that it's possible to download this file again.
 downloads-retry-download =
@@ -129,7 +151,7 @@ downloads-history =
 # This string is shown at the top of the Download Details Panel, to indicate
 # that we are showing the details of a single download.
 downloads-details =
-    .title = 다운로드 상세
+    .title = 다운로드 상세 정보
 downloads-clear-downloads-button =
     .label = 다운로드 정리
     .tooltiptext = 완료, 취소 및 실패한 다운로드 항목 지우기

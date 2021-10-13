@@ -1,13 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 password-quality-meter = Passwort-Qualitätsmessung
 
 ## Change Password dialog
-
-change-password-window =
-    .title = Master-Passwort ändern
 
 change-device-password-window =
     .title = Passwort ändern
@@ -20,10 +17,6 @@ change-password-new = Neues Passwort:
 change-password-reenter = Neues Passwort (nochmals):
 
 ## Reset Password dialog
-
-reset-password-window =
-    .title = Master-Passwort zurücksetzen
-    .style = width: 40em
 
 pippki-failed-pw-change = Passwort konnte nicht geändert werden.
 pippki-incorrect-pw = Sie haben nicht das richtige aktuelle Passwort eingegeben. Bitte versuchen Sie es erneut.
@@ -42,7 +35,6 @@ reset-primary-password-window =
     .style = width: 40em
 reset-password-button-label =
     .label = Zurücksetzen
-reset-password-text = Wenn Sie Ihr Master-Passwort zurücksetzen, gehen all Ihre gespeicherten Web- und E-Mail-Passwörter, Formulardaten, persönlichen Zertifikate und privaten Schlüssel verloren. Soll Ihr Master-Passwort trotzdem zurückgesetzt werden?
 
 reset-primary-password-text = Wenn Sie Ihr Hauptpasswort zurücksetzen, gehen all Ihre gespeicherten Web- und E-Mail-Passwörter, Formulardaten, persönlichen Zertifikate und privaten Schlüssel verloren. Soll Ihr Hauptpasswort trotzdem zurückgesetzt werden?
 

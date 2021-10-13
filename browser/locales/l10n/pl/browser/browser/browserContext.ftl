@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -11,51 +11,41 @@ navbar-tooltip-instruction =
 
 ## Back
 
-main-context-menu-back =
-    .tooltiptext = Przejdź do poprzedniej strony
-    .aria-label = Wstecz
-    .accesskey = W
-navbar-tooltip-back =
-    .value = { main-context-menu-back.tooltiptext }
-toolbar-button-back =
-    .label = { main-context-menu-back.aria-label }
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the Go Back command.
 main-context-menu-back-2 =
     .tooltiptext = Przejdź do poprzedniej strony ({ $shortcut })
     .aria-label = Wstecz
     .accesskey = W
+
 # This menuitem is only visible on macOS
 main-context-menu-back-mac =
     .label = Wstecz
     .accesskey = W
+
 navbar-tooltip-back-2 =
     .value = { main-context-menu-back-2.tooltiptext }
+
 toolbar-button-back-2 =
     .label = { main-context-menu-back-2.aria-label }
 
 ## Forward
 
-main-context-menu-forward =
-    .tooltiptext = Przejdź do następnej strony
-    .aria-label = Do przodu
-    .accesskey = D
-navbar-tooltip-forward =
-    .value = { main-context-menu-forward.tooltiptext }
-toolbar-button-forward =
-    .label = { main-context-menu-forward.aria-label }
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the Go Forward command.
 main-context-menu-forward-2 =
     .tooltiptext = Przejdź do następnej strony ({ $shortcut })
     .aria-label = Do przodu
     .accesskey = D
+
 # This menuitem is only visible on macOS
 main-context-menu-forward-mac =
     .label = Do przodu
     .accesskey = D
+
 navbar-tooltip-forward-2 =
     .value = { main-context-menu-forward-2.tooltiptext }
+
 toolbar-button-forward-2 =
     .label = { main-context-menu-forward-2.aria-label }
 
@@ -64,10 +54,12 @@ toolbar-button-forward-2 =
 main-context-menu-reload =
     .aria-label = Odśwież
     .accesskey = O
+
 # This menuitem is only visible on macOS
 main-context-menu-reload-mac =
     .label = Odśwież
     .accesskey = O
+
 toolbar-button-reload =
     .label = { main-context-menu-reload.aria-label }
 
@@ -76,10 +68,12 @@ toolbar-button-reload =
 main-context-menu-stop =
     .aria-label = Zatrzymaj
     .accesskey = Z
+
 # This menuitem is only visible on macOS
 main-context-menu-stop-mac =
     .label = Zatrzymaj
     .accesskey = Z
+
 toolbar-button-stop =
     .label = { main-context-menu-stop.aria-label }
 
@@ -88,7 +82,7 @@ toolbar-button-stop =
 toolbar-button-stop-reload =
     .title = { main-context-menu-reload.aria-label }
 
-## Firefox Account Button
+## Waterfox Account Button
 
 toolbar-button-fxaccount =
     .label = { -fxaccount-brand-name }
@@ -99,8 +93,6 @@ toolbar-button-fxaccount =
 main-context-menu-page-save =
     .label = Zapisz stronę jako…
     .accesskey = s
-toolbar-button-page-save =
-    .label = { main-context-menu-page-save.label }
 
 ## Simple menu items
 
@@ -108,58 +100,68 @@ main-context-menu-bookmark-add =
     .aria-label = Dodaj zakładkę do tej strony
     .accesskey = D
     .tooltiptext = Dodaj zakładkę do tej strony
+
 # This menuitem is only visible on macOS
 # Cannot be shown at the same time as main-context-menu-bookmark-edit-mac,
 # so should probably have the same access key if possible.
 main-context-menu-bookmark-add-mac =
     .label = Dodaj zakładkę do tej strony
     .accesskey = D
+
 # This menuitem is only visible on macOS
 # Cannot be shown at the same time as main-context-menu-bookmark-add-mac,
 # so should probably have the same access key if possible.
 main-context-menu-bookmark-edit-mac =
     .label = Edytuj zakładkę
     .accesskey = d
+
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the add bookmark command.
 main-context-menu-bookmark-add-with-shortcut =
     .aria-label = Dodaj zakładkę do tej strony
     .accesskey = D
     .tooltiptext = Dodaj zakładkę do tej strony ({ $shortcut })
+
 main-context-menu-bookmark-change =
     .aria-label = Edytuj tę zakładkę
     .accesskey = d
     .tooltiptext = Edytuj tę zakładkę
+
 # Variables
 #   $shortcut (String) - A keyboard shortcut for the edit bookmark command.
 main-context-menu-bookmark-change-with-shortcut =
     .aria-label = Edytuj tę zakładkę
     .accesskey = d
     .tooltiptext = Edytuj tę zakładkę ({ $shortcut })
+
 main-context-menu-open-link =
     .label = Otwórz odnośnik
     .accesskey = O
+
 main-context-menu-open-link-new-tab =
     .label = Otwórz odnośnik w nowej karcie
     .accesskey = j
+
 main-context-menu-open-link-container-tab =
     .label = Otwórz odnośnik w nowej karcie z kontekstem
     .accesskey = k
+
 main-context-menu-open-link-new-window =
     .label = Otwórz odnośnik w nowym oknie
     .accesskey = n
+
 main-context-menu-open-link-new-private-window =
     .label = Otwórz odnośnik w nowym oknie w trybie prywatnym
     .accesskey = w
-main-context-menu-bookmark-this-link =
-    .label = Dodaj zakładkę do tego odnośnika
-    .accesskey = D
+
 main-context-menu-bookmark-link =
     .label = Dodaj zakładkę do tego odnośnika
     .accesskey = D
+
 main-context-menu-save-link =
     .label = Zapisz element docelowy jako…
     .accesskey = s
+
 main-context-menu-save-link-to-pocket =
     .label = Wyślij odnośnik do { -pocket-brand-name }
     .accesskey = o
@@ -176,9 +178,7 @@ main-context-menu-save-link-to-pocket =
 main-context-menu-copy-email =
     .label = Kopiuj adres e-mail
     .accesskey = o
-main-context-menu-copy-link =
-    .label = Kopiuj adres odnośnika
-    .accesskey = o
+
 main-context-menu-copy-link-simple =
     .label = Kopiuj odnośnik
     .accesskey = o
@@ -192,6 +192,7 @@ main-context-menu-copy-link-simple =
 main-context-menu-media-play =
     .label = Odtwórz
     .accesskey = z
+
 main-context-menu-media-pause =
     .label = Wstrzymaj
     .accesskey = W
@@ -201,42 +202,30 @@ main-context-menu-media-pause =
 main-context-menu-media-mute =
     .label = Wycisz
     .accesskey = c
+
 main-context-menu-media-unmute =
     .label = Włącz dźwięk
     .accesskey = c
-main-context-menu-media-play-speed =
-    .label = Szybkość odtwarzania
-    .accesskey = S
-main-context-menu-media-play-speed-slow =
-    .label = Zmniejszona (0,5×)
-    .accesskey = Z
-main-context-menu-media-play-speed-normal =
-    .label = Normalna
-    .accesskey = N
-main-context-menu-media-play-speed-fast =
-    .label = Zwiększona (1,25×)
-    .accesskey = k
-main-context-menu-media-play-speed-faster =
-    .label = Wysoka (1,5×)
-    .accesskey = W
-# "Ludicrous" is a reference to the movie "Space Balls" and is meant
-# to say that this speed is very fast.
-main-context-menu-media-play-speed-fastest =
-    .label = Absurdalna (2×)
-    .accesskey = A
+
 main-context-menu-media-play-speed-2 =
     .label = Szybkość
     .accesskey = S
+
 main-context-menu-media-play-speed-slow-2 =
     .label = 0,5×
+
 main-context-menu-media-play-speed-normal-2 =
     .label = 1,0×
+
 main-context-menu-media-play-speed-fast-2 =
     .label = 1,25×
+
 main-context-menu-media-play-speed-faster-2 =
     .label = 1,5×
+
 main-context-menu-media-play-speed-fastest-2 =
     .label = 2×
+
 main-context-menu-media-loop =
     .label = Zapętl
     .accesskey = Z
@@ -247,6 +236,7 @@ main-context-menu-media-loop =
 main-context-menu-media-show-controls =
     .label = Wyświetl elementy sterujące
     .accesskey = e
+
 main-context-menu-media-hide-controls =
     .label = Ukryj elementy sterujące
     .accesskey = e
@@ -256,109 +246,100 @@ main-context-menu-media-hide-controls =
 main-context-menu-media-video-fullscreen =
     .label = Tryb pełnoekranowy
     .accesskey = n
+
 main-context-menu-media-video-leave-fullscreen =
     .label = Opuść tryb pełnoekranowy
     .accesskey = u
-# This is used when right-clicking on a video in the
-# content area when the Picture-in-Picture feature is enabled.
-main-context-menu-media-pip =
-    .label = Obraz w obrazie
-    .accesskey = O
+
 # This is used when right-clicking on a video in the
 # content area when the Picture-in-Picture feature is enabled.
 main-context-menu-media-watch-pip =
     .label = Oglądaj w trybie „Obraz w obrazie”
     .accesskey = O
+
 main-context-menu-image-reload =
     .label = Odśwież obraz
     .accesskey = O
-main-context-menu-image-view =
-    .label = Pokaż obraz
-    .accesskey = P
-main-context-menu-video-view =
-    .label = Pokaż wideo
-    .accesskey = k
+
 main-context-menu-image-view-new-tab =
     .label = Otwórz obraz w nowej karcie
     .accesskey = n
+
 main-context-menu-video-view-new-tab =
     .label = Otwórz wideo w nowej karcie
     .accesskey = n
+
 main-context-menu-image-copy =
     .label = Kopiuj obraz
     .accesskey = r
-main-context-menu-image-copy-location =
-    .label = Kopiuj adres obrazu
-    .accesskey = u
-main-context-menu-video-copy-location =
-    .label = Kopiuj adres wideo
-    .accesskey = u
-main-context-menu-audio-copy-location =
-    .label = Kopiuj adres dźwięku
-    .accesskey = u
+
 main-context-menu-image-copy-link =
     .label = Kopiuj odnośnik do obrazu
     .accesskey = u
+
 main-context-menu-video-copy-link =
     .label = Kopiuj odnośnik do wideo
     .accesskey = u
+
 main-context-menu-audio-copy-link =
     .label = Kopiuj odnośnik do dźwięku
     .accesskey = u
+
 main-context-menu-image-save-as =
     .label = Zapisz obraz jako…
     .accesskey = Z
+
 main-context-menu-image-email =
     .label = Wyślij obraz…
     .accesskey = o
-main-context-menu-image-set-as-background =
-    .label = Ustaw jako tło pulpitu…
-    .accesskey = t
+
 main-context-menu-image-set-image-as-background =
     .label = Ustaw obraz jako tło pulpitu…
     .accesskey = t
+
 main-context-menu-image-info =
     .label = Pokaż informacje o obrazie
     .accesskey = f
+
 main-context-menu-image-desc =
     .label = Pokaż opis
     .accesskey = s
+
 main-context-menu-video-save-as =
     .label = Zapisz wideo jako…
     .accesskey = s
+
 main-context-menu-audio-save-as =
     .label = Zapisz dźwięk jako…
     .accesskey = s
-main-context-menu-video-image-save-as =
-    .label = Zapisz klatkę jako…
-    .accesskey = k
+
 main-context-menu-video-take-snapshot =
     .label = Zapisz klatkę…
     .accesskey = k
+
 main-context-menu-video-email =
     .label = Wyślij wideo…
     .accesskey = o
+
 main-context-menu-audio-email =
     .label = Wyślij dźwięk…
     .accesskey = d
+
 main-context-menu-plugin-play =
     .label = Aktywuj tę wtyczkę
     .accesskey = w
+
 main-context-menu-plugin-hide =
     .label = Ukryj tę wtyczkę
     .accesskey = U
+
 main-context-menu-save-to-pocket =
     .label = Wyślij stronę do { -pocket-brand-name }
     .accesskey = l
+
 main-context-menu-send-to-device =
     .label = Wyślij stronę do
     .accesskey = W
-main-context-menu-view-background-image =
-    .label = Pokaż obraz tła
-    .accesskey = t
-main-context-menu-generate-new-password =
-    .label = Użyj wygenerowanego hasła…
-    .accesskey = h
 
 ## The access keys for "Use Saved Login" and "Use Saved Password"
 ## should be the same if possible; the two context menu items
@@ -367,6 +348,7 @@ main-context-menu-generate-new-password =
 main-context-menu-use-saved-login =
     .label = Użyj zachowanych danych logowania
     .accesskey = U
+
 main-context-menu-use-saved-password =
     .label = Użyj zachowanego hasła
     .accesskey = U
@@ -376,77 +358,100 @@ main-context-menu-use-saved-password =
 main-context-menu-suggest-strong-password =
     .label = Zaproponuj silne hasło…
     .accesskey = s
+
 main-context-menu-manage-logins2 =
     .label = Zarządzaj danymi logowania
     .accesskey = d
+
 main-context-menu-keyword =
     .label = Utwórz słowo kluczowe dla tej wyszukiwarki…
     .accesskey = U
+
 main-context-menu-link-send-to-device =
     .label = Wyślij odnośnik do
     .accesskey = W
+
 main-context-menu-frame =
     .label = Ta ramka
     .accesskey = r
+
 main-context-menu-frame-show-this =
     .label = Pokaż tylko tę ramkę
     .accesskey = r
+
 main-context-menu-frame-open-tab =
     .label = Otwórz ramkę w nowej karcie
     .accesskey = j
+
 main-context-menu-frame-open-window =
     .label = Otwórz ramkę w nowym oknie
     .accesskey = n
+
 main-context-menu-frame-reload =
     .label = Odśwież ramkę
     .accesskey = O
+
 main-context-menu-frame-bookmark =
     .label = Dodaj zakładkę do tej ramki
     .accesskey = D
+
 main-context-menu-frame-save-as =
     .label = Zapisz ramkę jako…
     .accesskey = Z
+
 main-context-menu-frame-print =
     .label = Drukuj ramkę…
     .accesskey = u
+
 main-context-menu-frame-view-source =
     .label = Pokaż źródło ramki
     .accesskey = P
+
 main-context-menu-frame-view-info =
     .label = Pokaż informacje o ramce
     .accesskey = i
+
 main-context-menu-print-selection =
     .label = Drukuj tylko zaznaczenie
     .accesskey = u
+
 main-context-menu-view-selection-source =
     .label = Pokaż źródło zaznaczenia
     .accesskey = d
+
 main-context-menu-take-screenshot =
     .label = Wykonaj zrzut ekranu
     .accesskey = u
+
 main-context-menu-take-frame-screenshot =
     .label = Wykonaj zrzut ekranu
     .accesskey = e
+
 main-context-menu-view-page-source =
     .label = Pokaż źródło strony
     .accesskey = y
-main-context-menu-view-page-info =
-    .label = Pokaż informacje o stronie
-    .accesskey = I
+
 main-context-menu-bidi-switch-text =
     .label = Przełącz kierunek tekstu
     .accesskey = t
+
 main-context-menu-bidi-switch-page =
     .label = Przełącz kierunek strony
     .accesskey = s
-main-context-menu-inspect-element =
-    .label = Zbadaj element
-    .accesskey = b
+
 main-context-menu-inspect =
     .label = Zbadaj
     .accesskey = b
+
 main-context-menu-inspect-a11y-properties =
     .label = Zbadaj własności dostępności
+
 main-context-menu-eme-learn-more =
     .label = Więcej informacji o DRM…
     .accesskey = D
+
+# Variables
+#   $containerName (String): The name of the current container
+main-context-menu-open-link-in-container-tab =
+    .label = Otwórz w nowej karcie z kontekstem „{ $containerName }”
+    .accesskey = k

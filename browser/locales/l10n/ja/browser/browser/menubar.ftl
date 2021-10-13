@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -69,7 +69,7 @@ menu-file-new-private-window =
     .accesskey = W
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = URL を開く...
 menu-file-open-file =
@@ -87,6 +87,9 @@ menu-file-save-page =
 menu-file-email-link =
     .label = ページの URL をメールで送信...
     .accesskey = E
+menu-file-share-url =
+    .label = 共有
+    .accesskey = h
 menu-file-print-setup =
     .label = ページ設定...
     .accesskey = u
@@ -108,9 +111,6 @@ menu-file-go-offline =
 menu-edit =
     .label = 編集
     .accesskey = E
-menu-edit-find-on =
-    .label = このページを検索...
-    .accesskey = F
 menu-edit-find-in-page =
     .label = ページを検索...
     .accesskey = F
@@ -129,9 +129,6 @@ menu-view =
 menu-view-toolbars-menu =
     .label = ツールバー
     .accesskey = T
-menu-view-customize-toolbar =
-    .label = カスタマイズ...
-    .accesskey = C
 menu-view-customize-toolbar2 =
     .label = ツールバーをカスタマイズ...
     .accesskey = C
@@ -168,10 +165,6 @@ menu-view-page-style-no-style =
 menu-view-page-basic-style =
     .label = 標準スタイルシート
     .accesskey = b
-menu-view-charset =
-    .label = テキストエンコーディング
-    .accesskey = c
-
 menu-view-repair-text-encoding =
     .label = テキストエンコーディングを修復
     .accesskey = c
@@ -226,10 +219,6 @@ menu-history-reopen-all-windows = ウィンドウをすべて開きなおす
 menu-bookmarks-menu =
     .label = ブックマーク
     .accesskey = B
-menu-bookmarks-show-all =
-    .label = すべてのブックマークを表示
-menu-bookmark-this-page =
-    .label = このページをブックマーク
 menu-bookmarks-manage =
     .label = ブックマークを管理
 menu-bookmark-current-tab =
@@ -253,15 +242,6 @@ menu-tools =
 menu-tools-downloads =
     .label = ダウンロード
     .accesskey = D
-menu-tools-addons =
-    .label = アドオン
-    .accesskey = A
-menu-tools-fxa-sign-in =
-    .label = { -brand-product-name } にログイン...
-    .accesskey = g
-menu-tools-turn-on-sync =
-    .label = { -sync-brand-short-name } をオンにする...
-    .accesskey = n
 menu-tools-addons-and-themes =
     .label = アドオンとテーマ
     .accesskey = A
@@ -277,9 +257,6 @@ menu-tools-sync-now =
 menu-tools-fxa-re-auth =
     .label = { -brand-product-name } にログイン...
     .accesskey = R
-menu-tools-web-developer =
-    .label = ウェブ開発
-    .accesskey = W
 menu-tools-browser-tools =
     .label = ブラウザーツール
     .accesskey = B
@@ -292,17 +269,6 @@ menu-tools-page-source =
 menu-tools-page-info =
     .label = ページの情報
     .accesskey = I
-menu-preferences =
-    .label =
-        { PLATFORM() ->
-            [windows] オプション
-           *[other] 設定
-        }
-    .accesskey =
-        { PLATFORM() ->
-            [windows] O
-           *[other] n
-        }
 menu-settings =
     .label = 設定
     .accesskey =
@@ -334,21 +300,6 @@ menu-window-bring-all-to-front =
 menu-help =
     .label = ヘルプ
     .accesskey = H
-menu-help-product =
-    .label = { -brand-shorter-name } ヘルプ
-    .accesskey = H
-menu-help-show-tour =
-    .label = { -brand-shorter-name } ツアー
-    .accesskey = o
-menu-help-import-from-another-browser =
-    .label = 他のブラウザーからインポート...
-    .accesskey = I
-menu-help-keyboard-shortcuts =
-    .label = キーボードショートカット
-    .accesskey = K
-menu-help-troubleshooting-info =
-    .label = トラブルシューティング情報...
-    .accesskey = T
 menu-get-help =
     .label = ヘルプを表示
     .accesskey = H
@@ -360,12 +311,6 @@ menu-help-report-site-issue =
 menu-help-feedback-page =
     .label = フィードバックを送信...
     .accesskey = S
-menu-help-safe-mode-without-addons =
-    .label = アドオンを無効にして再起動...
-    .accesskey = R
-menu-help-safe-mode-with-addons =
-    .label = アドオンを有効にして再起動
-    .accesskey = R
 menu-help-enter-troubleshoot-mode2 =
     .label = トラブルシューティングモード...
     .accesskey = M

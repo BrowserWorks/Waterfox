@@ -1,8 +1,9 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY folderProps.windowtitle.label "Proprietà">
+
 <!ENTITY generalInfo.label "Informazioni generali">
 <!ENTITY folderCharsetFallback2.label "Codifica del testo di riserva:">
 <!ENTITY folderCharsetFallback2.accesskey "C">
@@ -14,6 +15,7 @@
 <!ENTITY folderRebuildSummaryFile.explanation "Talvolta il file indice (.msf) della cartella può rovinarsi e i messaggi possono risultare mancanti o continuano ad essere visibili anche se cancellati. Riparando la cartella si può risolvere il problema.">
 <!ENTITY folderIncludeInGlobalSearch.label "Includi i messaggi di questa cartella nei risultati della ricerca globale">
 <!ENTITY folderIncludeInGlobalSearch.accesskey "b">
+
 <!ENTITY retention.label "Politica di conservazione">
 <!ENTITY retentionUseAccount.label "Utilizza le impostazioni dell'account">
 <!ENTITY retentionUseAccount.accesskey "U">
@@ -30,30 +32,36 @@
 <!ENTITY retentionKeepRecent.accesskey "n">
 <!ENTITY retentionApplyToFlagged.label "Conserva sempre i messaggi segnati">
 <!ENTITY retentionApplyToFlagged.accesskey "e">
+
 <!ENTITY folderSynchronizationTab.label "Sincronizzazione">
 <!ENTITY folderCheckForNewMessages2.label "Quando si ricevono nuovi messaggi per questo account, verificare sempre questa cartella">
 <!ENTITY folderCheckForNewMessages2.accesskey "v">
+
 <!ENTITY offlineFolder.check.label "Seleziona questa cartella per l'uso non in linea">
 <!ENTITY offlineFolder.check.accesskey "S">
 <!ENTITY offlineFolder.button.label "Scarica ora">
 <!ENTITY offlineFolder.button.accesskey "S">
+
 <!ENTITY selectofflineNewsgroup.check.label "Seleziona questo gruppo di discussione per l'uso non in linea">
 <!ENTITY selectofflineNewsgroup.check.accesskey "o">
 <!ENTITY offlineNewsgroup.button.label "Scarica ora">
 <!ENTITY offlineNewsgroup.button.accesskey "S">
+
 <!ENTITY folderProps.name.label "Nome:">
 <!ENTITY folderProps.name.accesskey "N">
 <!ENTITY folderProps.location.label "Posizione:">
 <!ENTITY folderProps.location.accesskey "P">
+
 <!ENTITY folderSharingTab.label "Condivisione">
 <!ENTITY privileges.button.label "Privilegi…">
 <!ENTITY privileges.button.accesskey "P">
 <!ENTITY permissionsDesc.label "Si possiedono i seguenti privilegi:">
 <!ENTITY folderType.label "Tipo cartella:">
+
 <!ENTITY folderQuotaTab.label "Quota">
-<!ENTITY folderQuotaRoot.label "Quota radice:">
 <!ENTITY folderQuotaUsage.label "Utilizzo:">
 <!ENTITY folderQuotaStatus.label "Stato:">
+
 <!ENTITY numberOfMessages.label "Numero di messaggi:">
 <!ENTITY numberUnknown.label "sconosciuto">
 <!ENTITY sizeOnDisk.label "Spazio sul disco:">

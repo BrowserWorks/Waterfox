@@ -1,12 +1,12 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Over Ontwikkelaarshulpmiddelen
 enable-title = Waterfox-ontwikkelaarshulpmiddelen inschakelen
-enable-inspect-element-title = Schakel Firefox-ontwikkelaarshulpmiddelen in om Element inspecteren te gebruiken
+enable-inspect-element-title = Schakel Waterfox-ontwikkelaarshulpmiddelen in om Element inspecteren te gebruiken
 enable-inspect-element-message = Bestudeer en bewerk HTML en CSS met de Inspector van de ontwikkelaarshulpmiddelen.
-enable-about-debugging-message = Ontwikkel en debug WebExtensions, web workers, service workers en meer met de Firefox-ontwikkelaarshulpmiddelen.
+enable-about-debugging-message = Ontwikkel en debug WebExtensions, web workers, service workers en meer met de Waterfox-ontwikkelaarshulpmiddelen.
 enable-key-shortcut-message = U hebt een sneltoets van de ontwikkelaarshulpmiddelen geactiveerd. Als dat niet de bedoeling was, kunt u dit tabblad sluiten.
 enable-menu-message = Optimaliseer HTML, CSS en JavaScript van uw website met hulpmiddelen zoals de Inspector en Debugger.
 enable-common-message = Waterfox-ontwikkelaarshulpmiddelen zijn standaard uitgeschakeld, zodat u meer controle hebt over uw browser.
@@ -14,18 +14,18 @@ enable-learn-more-link = Meer info over ontwikkelaarshulpmiddelen
 enable-enable-button = Ontwikkelaarshulpmiddelen inschakelen
 enable-close-button = Dit tabblad sluiten
 
-welcome-title = Welkom bij de Firefox-ontwikkelaarshulpmiddelen!
-newsletter-title = Mozilla Developer-nieuwsbrief
+welcome-title = Welkom bij de Waterfox-ontwikkelaarshulpmiddelen!
+newsletter-title = Waterfox Developer-nieuwsbrief
 newsletter-message = Ontvang ontwikkelaarsnieuws, trucs en hulpbronnen rechtstreeks in uw Postvak IN.
 newsletter-email-placeholder =
     .placeholder = E-mailadres
-newsletter-privacy-label = Ik ga akkoord met het gebruik van mijn gegevens door Mozilla, zoals uitgelegd in dit <a data-l10n-name="privacy-policy">Privacybeleid</a>.
+newsletter-privacy-label = Ik ga akkoord met het gebruik van mijn gegevens door Waterfox, zoals uitgelegd in dit <a data-l10n-name="privacy-policy">Privacybeleid</a>.
 newsletter-subscribe-button = Inschrijven
 newsletter-thanks-title = Bedankt!
-newsletter-thanks-message = Als u nog niet eerder een inschrijving voor een Mozilla-gerelateerde nieuwsbrief hebt bevestigd, dient u dit mogelijk te doen. Controleer uw Postvak IN of uw spamfilter voor een e-mail van ons.
+newsletter-thanks-message = Als u nog niet eerder een inschrijving voor een Waterfox-gerelateerde nieuwsbrief hebt bevestigd, dient u dit mogelijk te doen. Controleer uw Postvak IN of uw spamfilter voor een e-mail van ons.
 
 footer-title = Waterfox Developer Edition
-footer-message = Zoekt u meer dan alleen ontwikkelaarshulpmiddelen? Probeer de Firefox-browser die specifiek gebouwd is voor ontwikkelaars en moderne werkstromen.
+footer-message = Zoekt u meer dan alleen ontwikkelaarshulpmiddelen? Probeer de Waterfox-browser die specifiek gebouwd is voor ontwikkelaars en moderne werkstromen.
 footer-learn-more-link = Meer info
 
 features-learn-more = Meer info

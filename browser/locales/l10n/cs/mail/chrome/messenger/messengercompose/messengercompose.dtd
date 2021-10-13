@@ -1,4 +1,4 @@
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!-- This Source Code Form is subject to the terms of the Waterfox Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
@@ -11,16 +11,11 @@
 <!ENTITY newMenu.label "Nový">
 <!ENTITY newMenu.accesskey "N">
 <!ENTITY newMessage.label "Zpráva">
-<!ENTITY newMessage.key "M">
 <!ENTITY newMessageCmd2.key "N">
-<!ENTITY newMessage.accesskey "Z">
 <!ENTITY newContact.label "Kontakt…">
 <!ENTITY newContact.accesskey "K">
 <!ENTITY attachMenu.label "Připojit">
 <!ENTITY attachMenu.accesskey "t">
-<!ENTITY attachFileCmd.label "Soubor…">
-<!ENTITY attachFileCmd.accesskey "S">
-<!ENTITY attachFileCmd.key "A">
 <!ENTITY attachCloudCmd.label "Soubor přes úložiště">
 <!ENTITY attachCloudCmd.accesskey "b">
 <!ENTITY attachPageCmd.label "Webovou stránku…">
@@ -50,10 +45,6 @@
 <!ENTITY sendLaterCmd.label "Odeslat později">
 <!ENTITY sendLaterCmd.keycode "VK_RETURN">
 <!ENTITY sendLaterCmd.accesskey "p">
-<!ENTITY printSetupCmd.label "Vzhled stránky…">
-<!ENTITY printSetupCmd.accesskey "V">
-<!ENTITY printPreviewCmd.label "Náhled tisku">
-<!ENTITY printPreviewCmd.accesskey "h">
 <!ENTITY printCmd.label "Tisk…">
 <!ENTITY printCmd.key "P">
 <!ENTITY printCmd.accesskey "T">
@@ -82,8 +73,6 @@
 <!ENTITY reorderAttachmentsCmd.label "Uspořádat přílohy…">
 <!ENTITY reorderAttachmentsCmd.accesskey "s">
 <!ENTITY reorderAttachmentsCmd.key "x">
-<!ENTITY toggleAttachmentPaneCmd.label "Lišta příloh">
-<!ENTITY toggleAttachmentPaneCmd.accesskey "P">
 <!ENTITY selectAllCmd.accesskey "a">
 <!ENTITY findBarCmd.label "Najít…">
 <!ENTITY findBarCmd.accesskey "N">
@@ -102,22 +91,18 @@
 
 <!-- Reorder Attachment Panel -->
 <!ENTITY reorderAttachmentsPanel.label "Uspořádat přílohy">
-<!ENTITY moveAttachmentTopPanelBtn.label "Přesunout nahoru">
-<!ENTITY moveAttachmentUpPanelBtn.label "Posunout výše">
-<!ENTITY moveAttachmentBundleUpPanelBtn.label "Přesunout hromadně">
-<!ENTITY moveAttachmentDownPanelBtn.label "Posunout níže">
-<!ENTITY moveAttachmentBottomPanelBtn.label "Přesunout dolů">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Umístit vedle sebe">
 
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
      Please ensure that this translation matches
      sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
-<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Uspořádat od A do Z">
-<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Uspořádat od Z do A">
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Seřadit od A do Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Seřadit od Z do A">
 <!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
      Please ensure that this translation matches
      sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
-<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Uspořádat výběr od A do Z">
-<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Uspořádat výběr od Z do A">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Seřadit výběr od A do Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Seřadit výběr od Z do A">
 <!ENTITY sortAttachmentsPanelBtn.key "y">
 
 <!-- View Menu -->
@@ -125,7 +110,7 @@
 <!ENTITY viewMenu.accesskey "Z">
 <!ENTITY viewToolbarsMenuNew.label "Nástrojové lišty">
 <!ENTITY viewToolbarsMenuNew.accesskey "N">
-<!ENTITY menubarCmd.label "Lišta nabídky">
+<!ENTITY menubarCmd.label "Hlavní nabídka">
 <!ENTITY menubarCmd.accesskey "n">
 <!ENTITY showCompositionToolbarCmd.label "Lišta pošty">
 <!ENTITY showCompositionToolbarCmd.accesskey "p">
@@ -204,10 +189,6 @@
 <!ENTITY accountManagerCmd2.label "Nastavení účtu">
 <!ENTITY accountManagerCmd2.accesskey "t">
 <!ENTITY accountManagerCmdUnix2.accesskey "S">
-<!ENTITY preferencesCmd2.label "Možnosti">
-<!ENTITY preferencesCmd2.accesskey "M">
-<!ENTITY preferencesCmdUnix.label "Předvolby">
-<!ENTITY preferencesCmdUnix.accesskey "e">
 
 <!--  Mac OS X Window Menu -->
 <!ENTITY minimizeWindow.key "m">
@@ -220,7 +201,6 @@
 <!ENTITY sendButton.label "Odeslat">
 <!ENTITY quoteButton.label "Citovat">
 <!ENTITY addressButton.label "Kontakty">
-<!ENTITY attachButton.label "Připojit">
 <!ENTITY spellingButton.label "Pravopis">
 <!ENTITY saveButton.label "Uložit">
 <!ENTITY printButton.label "Tisk">
@@ -230,7 +210,6 @@
 <!ENTITY sendlaterButton.tooltip "Odešle tuto zprávu později">
 <!ENTITY quoteButton.tooltip "Ocituje předchozí zprávu">
 <!ENTITY addressButton.tooltip "Vybere příjemce z kontaktů">
-<!ENTITY attachButton.tooltip2 "Přidat přílohu">
 <!ENTITY spellingButton.tooltip "Zkontroluje pravopis vybrané části nebo celé zprávy">
 <!ENTITY saveButton.tooltip "Uloží tuto zprávu">
 <!ENTITY cutButton.tooltip              "Vyjmout">
@@ -245,9 +224,6 @@
 <!ENTITY extraRecipients.tooltip "Další typy polí adres">
 <!ENTITY fromAddr2.label "Od">
 <!ENTITY fromAddr.accesskey "O">
-<!ENTITY toAddr2.label "Komu">
-<!ENTITY ccAddr2.label "Kopie">
-<!ENTITY bccAddr2.label "Skrytá kopie">
 <!ENTITY replyAddr2.label "Adresa pro odpověď">
 <!ENTITY newsgroupsAddr2.label "Diskusní skupina">
 <!ENTITY followupAddr2.label "Odpověď na">
@@ -306,8 +282,6 @@
 <!ENTITY removeAllAttachments.accesskey "V">
 <!ENTITY selectAll.label "Vybrat vše">
 <!ENTITY selectAll.accesskey "a">
-<!ENTITY attachFile.label "Připojit soubor…">
-<!ENTITY attachFile.accesskey "s">
 <!ENTITY attachCloud.label "Soubor přes úložiště…">
 <!ENTITY attachCloud.accesskey "b">
 <!ENTITY convertCloud.label "Převést na…">

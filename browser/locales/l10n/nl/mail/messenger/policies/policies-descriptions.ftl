@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -18,6 +18,8 @@ policy-AppUpdateURL = Aangepaste app-update-URL instellen.
 
 policy-Authentication = Geïntegreerde authenticatie configureren voor websites die dit ondersteunen.
 
+policy-BackgroundAppUpdate2 = Achtergrondupdates in- of uitschakelen.
+
 policy-BlockAboutAddons = Toegang tot de Add-onbeheerder (about:addons) blokkeren.
 
 policy-BlockAboutConfig = Toegang tot de about:config-pagina blokkeren.
@@ -31,6 +33,8 @@ policy-CaptivePortal = Ondersteuning voor hotspot-aanmeldingspagina inschakelen 
 policy-CertificatesDescription = Certificaten toevoegen of ingebouwde certificaten gebruiken.
 
 policy-Cookies = Toestaan of weigeren dat websites cookies instellen.
+
+policy-DisableBuiltinPDFViewer = PDF.js uitschakelen, de ingebouwde PDF-viewer in { -brand-short-name }.
 
 policy-DisabledCiphers = Coderingssuites uitschakelen.
 
@@ -85,6 +89,8 @@ policy-ExtensionSettings = Alle aspecten van installatie van extensies beheren.
 
 policy-ExtensionUpdate = Automatische extensie-updates inschakelen of uitschakelen.
 
+policy-Handlers = Standaard toepassinghandlers configureren
+
 policy-HardwareAcceleration = Wanneer false, hardwareversnelling uitschakelen.
 
 policy-InstallAddonsPermission = Toestaan dat bepaalde websites add-ons installeren.
@@ -100,6 +106,8 @@ policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Op specifieke websites
 ##
 
 policy-LocalFileLinks = Specifieke websites toestaan te koppelen naar lokale bestanden.
+
+policy-ManualAppUpdateOnly = Alleen handmatige updates toestaan en de gebruiker niet over updates informeren.
 
 policy-NetworkPrediction = ‘Network prediction’ (DNS prefetching) inschakelen of uitschakelen.
 
@@ -120,6 +128,8 @@ policy-Permissions2 = Toestemmingen voor camera, microfoon, locatie, notificatie
 
 policy-Preferences = De waarde voor een subset van voorkeuren instellen en vergrendelen.
 
+policy-PrimaryPassword = Een hoofdwachtwoord vereisen of voorkomen.
+
 policy-PromptForDownloadLocation = Vragen waar gedownloade bestanden moeten worden opgeslagen.
 
 policy-Proxy = Proxyinstellingen configureren.
@@ -132,7 +142,7 @@ policy-SearchEngines = Instellingen voor zoekmachines configureren. Deze beleids
 
 policy-SearchSuggestEnabled = Zoeksuggesties inschakelen of uitschakelen.
 
-# For more information, see https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/PKCS11/Module_Installation
+# For more information, see https://developer.mozilla.org/en-US/docs/Waterfox/Projects/NSS/PKCS11/Module_Installation
 policy-SecurityDevices = PKCS #11-modules installeren.
 
 policy-SSLVersionMax = De maximale SSL-versie instellen.

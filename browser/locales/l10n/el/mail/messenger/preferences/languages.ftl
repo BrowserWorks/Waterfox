@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -42,4 +42,4 @@ messenger-languages-select-language =
 messenger-languages-installed-label = Εγκατεστημένες γλώσσες
 messenger-languages-available-label = Διαθέσιμες γλώσσες
 
-messenger-languages-error = Το { -brand-short-name } δεν μπορεί να αναβαθμίσει τις γλώσσες σας αυτή τη στιγμή. Ελέγξτε ότι είστε συνδεδεμένος στο διαδίκτυο ή δοκιμάστε πάλι.
+messenger-languages-error = Το { -brand-short-name } δεν μπορεί να αναβαθμίσει τις γλώσσες σας αυτήν τη στιγμή. Ελέγξτε αν έχετε συνδεθεί στο διαδίκτυο ή δοκιμάστε ξανά.
