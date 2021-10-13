@@ -1,9 +1,9 @@
 "use-strict";
 
-(function() {
-	const style = document.createElement('style');
-	style.setAttribute('id', 'wf-addons-store-style')
-	style.textContent = `
+function init() {
+  const style = document.createElement("style");
+  style.setAttribute("id", "wf-addons-store-style");
+  style.textContent = `
 		a.btn-install.btn-with-plus
 		{
 			border-radius: 2px;
@@ -32,10 +32,17 @@
 		}
 	`;
 
-	document.documentElement.insertBefore(style, document.documentElement.firstChild);
-})()
+  document.documentElement.insertBefore(
+    style,
+    document.documentElement.firstChild
+  );
+}
 
 function uninit() {
-	var style = document.getElementById('wf-addons-store-style');
-	if (style) style.parentNode.removeChild(style);
+  var style = document.getElementById("wf-addons-store-style");
+  if (style) {
+    style.remove(style);
+  }
 }
+
+init();

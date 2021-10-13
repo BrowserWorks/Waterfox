@@ -6,10 +6,20 @@
 
 DIRS += ['locales']
 
+XPCSHELL_TESTS_MANIFESTS += [
+    'test/unit/xpcshell.ini',
+]
+
+XPCOM_MANIFESTS += [
+    'components.conf',
+]
+
 EXTRA_JS_MODULES += [
   'aboutpreferences/AboutPreferencesExtension.jsm',
+  'content/AddonStores.jsm',
   'content/BrowserUtils.jsm',
   'content/PrefUtils.jsm',
+  'content/StoreHandler.jsm',
   'privatetab/PrivateTab.jsm',
   'statusbar/StatusBar.jsm',
   'tabfeatures/TabFeatures.jsm',
@@ -35,6 +45,11 @@ FINAL_TARGET_FILES.features['extensibles@waterfox.net']['statusbar'] += [
 
 FINAL_TARGET_FILES.features['extensibles@waterfox.net']['tabfeatures'] += [
   'tabfeatures/background.js',
+]
+
+FINAL_TARGET_FILES.features['extensibles@waterfox.net']['addon-stores'] += [
+  'addon-stores/cws.js',
+  'addon-stores/ows.js',
 ]
 
 FINAL_TARGET_FILES.features['extensibles@waterfox.net']['_locales']['en'] += [

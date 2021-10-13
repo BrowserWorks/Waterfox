@@ -4,12 +4,8 @@ http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
 const MANIFESTS = {
-  success: {
-
-  },
-  fail: {
-
-  }
+  success: {},
+  fail: {},
 };
 
 const UNSUPPORTED_APIS = [
@@ -39,18 +35,16 @@ const UNSUPPORTED_APIS = [
   "permissions.debugger",
   "permissions.pageCapture",
   "permissions.tabCapture",
-  "version_name"
-]
+  "version_name",
+];
 
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 
 function arraysEqual(arr1, arr2) {
-  if(arr1.length !== arr2.length)
-      return false;
-  for(var i = arr1.length; i--;) {
-      if(arr1[i] !== arr2[i])
-          return false;
+  if (arr1.length !== arr2.length) return false;
+  for (var i = arr1.length; i--; ) {
+    if (arr1[i] !== arr2[i]) return false;
   }
 
   return true;
@@ -72,8 +66,8 @@ add_task(async function test_remove_chrome_header() {
   equal(res, true);
   // assert that reading the updated crx starts with correct bytes
   let updatedCrx = await OS.File.read(crx);
-  let magic = new Uint8Array(updatedCrx.slice(0,4));
-  equal(JSON.stringify(Array.from(magic)), JSON.stringify([80,75,3,4]));
+  let magic = new Uint8Array(updatedCrx.slice(0, 4));
+  equal(JSON.stringify(Array.from(magic)), JSON.stringify([80, 75, 3, 4]));
   // corrupt file (no zip magic) should fail
   let small = "data/invalid.xpi";
   let res2 = await sh._removeChromeHeaders(small);
@@ -90,13 +84,13 @@ add_task(async function test_parse_manifest() {
 
 add_task(async function test_locale_check() {
   // _locales and subdir en present, no default_locale in manifest
-  let locale = do_get_file("data/locale.xpi")
+  let locale = do_get_file("data/locale.xpi");
   let zr = new ZipReader(locale);
   let manifest = StoreHandler._parseManifest(zr);
   equal(manifest.default_locale, undefined);
   let res = StoreHandler._localeCheck(manifest, zr);
   // en should be added as default_locale
-  equal(res.default_locale, "en")
+  equal(res.default_locale, "en");
   // _locales not present, default_locale in manifest
   let noLocale = do_get_file("data/nolocale.xpi");
   let zr2 = new ZipReader(noLocale);
@@ -116,7 +110,7 @@ add_task(async function test_compat_check() {
   let manifest = JSON.parse(fileContents);
   let manifestRes = StoreHandler._manifestCompatCheck(manifest);
   // should return list of all unsupported APIs
-  equal(arraysEqual(manifestRes, UNSUPPORTED_APIS), true)
+  equal(arraysEqual(manifestRes, UNSUPPORTED_APIS), true);
 });
 
 add_task(async function test_amend_manifest() {
@@ -125,10 +119,10 @@ add_task(async function test_amend_manifest() {
   let xpi3 = do_get_file("data/unsupported.xpi");
   // fail if manifest v > 2
   let res = StoreHandler._amendManifest(xpi);
-  equal(res, false)
+  equal(res, false);
   // manifest_version not present
   let res2 = StoreHandler._amendManifest(xpi2);
-  equal(res, false)
+  equal(res, false);
   // if unsupportedAPIs return Array, else Object
   let res3 = StoreHandler._amendManifest(xpi3);
   equal(Array.isArray(res3), true);
@@ -137,15 +131,11 @@ add_task(async function test_amend_manifest() {
   // if successful should add id and delete update url
   let xpi4 = do_get_file("data/locale.xpi");
   let manifest = JSON.parse(StoreHandler._amendManifest(xpi4));
-  equal(typeof manifest.applications.gecko.id,  "string")
-  equal(manifest.update_url, undefined)
+  equal(typeof manifest.applications.gecko.id, "string");
+  equal(manifest.update_url, undefined);
 });
 
 // test replace xpi manifest
-add_task(async function test_replace_manifest() {
-
-});
+add_task(async function test_replace_manifest() {});
 // test install updated addon
-add_task(async function test_install_xpi() {
-
-});
+add_task(async function test_install_xpi() {});
